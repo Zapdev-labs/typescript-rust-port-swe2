@@ -1,0 +1,15 @@
+[package]
+name = "tsc-evaluator"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+tsc-ast = { path = "../ast" }
+tsc-core = { path = "../core" }
+tsc-jsnum = { path = "../jsnum" }
+tsc-stringutil = { path = "../stringutil" }

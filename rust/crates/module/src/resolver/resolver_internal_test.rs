@@ -34,18 +34,102 @@ fn test_normalize_path_for_cjs_resolution_preserves_directory_intent() {
     }
 
     let tests = [
-        Case { name: "file", containing_directory: "/project", module_name: "file", path: "/project/file", text: "/project/file", directory_only: false },
-        Case { name: "trailing separator", containing_directory: "/project", module_name: "directory/", path: "/project/directory", text: "/project/directory/", directory_only: true },
-        Case { name: "current directory", containing_directory: "/project", module_name: ".", path: "/project", text: "/project/", directory_only: true },
-        Case { name: "current directory with backslash", containing_directory: "/project", module_name: ".\\", path: "/project", text: "/project/", directory_only: true },
-        Case { name: "nested parent directory", containing_directory: "/project/src", module_name: "../lib/", path: "/project/lib", text: "/project/lib/", directory_only: true },
-        Case { name: "nested parent directory with backslashes", containing_directory: "/project/src", module_name: "..\\lib\\", path: "/project/lib", text: "/project/lib/", directory_only: true },
-        Case { name: "posix root", containing_directory: "/project", module_name: "..", path: "/", text: "/", directory_only: true },
-        Case { name: "drive root", containing_directory: "c:/project", module_name: "..", path: "c:/", text: "c:/", directory_only: true },
-        Case { name: "drive root without separator", containing_directory: "/project", module_name: "c:", path: "c:/", text: "c:/", directory_only: true },
-        Case { name: "UNC root without separator", containing_directory: "/project", module_name: "//server", path: "//server/", text: "//server/", directory_only: true },
-        Case { name: "URL root", containing_directory: "file:///project", module_name: "..", path: "file:///", text: "file:///", directory_only: true },
-        Case { name: "URL authority root without separator", containing_directory: "/project", module_name: "file://server", path: "file://server/", text: "file://server/", directory_only: true },
+        Case {
+            name: "file",
+            containing_directory: "/project",
+            module_name: "file",
+            path: "/project/file",
+            text: "/project/file",
+            directory_only: false,
+        },
+        Case {
+            name: "trailing separator",
+            containing_directory: "/project",
+            module_name: "directory/",
+            path: "/project/directory",
+            text: "/project/directory/",
+            directory_only: true,
+        },
+        Case {
+            name: "current directory",
+            containing_directory: "/project",
+            module_name: ".",
+            path: "/project",
+            text: "/project/",
+            directory_only: true,
+        },
+        Case {
+            name: "current directory with backslash",
+            containing_directory: "/project",
+            module_name: ".\\",
+            path: "/project",
+            text: "/project/",
+            directory_only: true,
+        },
+        Case {
+            name: "nested parent directory",
+            containing_directory: "/project/src",
+            module_name: "../lib/",
+            path: "/project/lib",
+            text: "/project/lib/",
+            directory_only: true,
+        },
+        Case {
+            name: "nested parent directory with backslashes",
+            containing_directory: "/project/src",
+            module_name: "..\\lib\\",
+            path: "/project/lib",
+            text: "/project/lib/",
+            directory_only: true,
+        },
+        Case {
+            name: "posix root",
+            containing_directory: "/project",
+            module_name: "..",
+            path: "/",
+            text: "/",
+            directory_only: true,
+        },
+        Case {
+            name: "drive root",
+            containing_directory: "c:/project",
+            module_name: "..",
+            path: "c:/",
+            text: "c:/",
+            directory_only: true,
+        },
+        Case {
+            name: "drive root without separator",
+            containing_directory: "/project",
+            module_name: "c:",
+            path: "c:/",
+            text: "c:/",
+            directory_only: true,
+        },
+        Case {
+            name: "UNC root without separator",
+            containing_directory: "/project",
+            module_name: "//server",
+            path: "//server/",
+            text: "//server/",
+            directory_only: true,
+        },
+        Case {
+            name: "URL root",
+            containing_directory: "file:///project",
+            module_name: "..",
+            path: "file:///",
+            text: "file:///",
+            directory_only: true,
+        },
+        Case {
+            name: "URL authority root without separator",
+            containing_directory: "/project",
+            module_name: "file://server",
+            path: "file://server/",
+            text: "file://server/",
+            directory_only: true,
+        },
         Case {
             name: "dynamic reserved prefix",
             containing_directory: "^/~ts-uri~/custom/ts-nul-authority/folder",
@@ -85,12 +169,7 @@ fn test_normalize_path_for_cjs_resolution_preserves_directory_intent() {
             &tsc_tspath::rooted_directory_path_from_normalized(test.containing_directory),
             test.module_name,
         );
-        assert_eq!(
-            candidate.path.as_string(),
-            test.path,
-            "{}: path",
-            test.name
-        );
+        assert_eq!(candidate.path.as_string(), test.path, "{}: path", test.name);
         assert_eq!(
             candidate.directory_only, test.directory_only,
             "{}: directoryOnly",
@@ -114,13 +193,15 @@ fn test_package_json_path_with_trailing_separator_does_not_resolve_as_file() {
         CaseSensitivity::CaseSensitive,
     );
     let resolver = resolver_for_fs(fs);
-    let mut state =
-        ResolutionState::bare(&resolver, Arc::new(CompilerOptions::default()));
+    let mut state = ResolutionState::bare(&resolver, Arc::new(CompilerOptions::default()));
 
     let candidate = resolve_resolution_candidate("/project", &["index.d.ts/"]);
     // PORT: `result.shouldContinueSearching()` is `Option::is_none()`.
-    let result =
-        state.load_file_name_from_package_json_field(EXTENSIONS_DECLARATION, &candidate, "./index.d.ts/");
+    let result = state.load_file_name_from_package_json_field(
+        EXTENSIONS_DECLARATION,
+        &candidate,
+        "./index.d.ts/",
+    );
     assert!(result.is_none(), "directory-only candidate resolved");
 }
 
@@ -133,10 +214,8 @@ fn test_extension_replacement_preserves_empty_and_dot_stems() {
         ("...js", "/project/...native.ts"),
         (".js", "/project/.native.d.ts"),
     ] {
-        let fs = tsc_vfs::vfstest::from_map(
-            [(expected, "export {};")],
-            CaseSensitivity::CaseSensitive,
-        );
+        let fs =
+            tsc_vfs::vfstest::from_map([(expected, "export {};")], CaseSensitivity::CaseSensitive);
         let resolver = resolver_for_fs(fs);
         let mut state = ResolutionState::bare(
             &resolver,

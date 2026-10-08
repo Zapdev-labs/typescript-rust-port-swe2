@@ -9,6 +9,8 @@ license.workspace = true
 workspace = true
 
 [dependencies]
+rustc-hash.workspace = true
+serde = { workspace = true, features = ["derive"] }
 tsc-core = { path = "../core" }
 tsc-debug = { path = "../debug" }
 tsc-json = { path = "../json" }

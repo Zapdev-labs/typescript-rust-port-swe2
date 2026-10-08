@@ -168,6 +168,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "tsc-astnav"
+version = "0.0.0"
+dependencies = [
+ "tsc-ast",
+ "tsc-core",
+ "tsc-scanner",
+]
+
+[[package]]
 name = "tsc-bundled"
 version = "0.0.0"
 dependencies = [
@@ -209,6 +218,29 @@ version = "0.0.0"
 dependencies = [
  "serde_json",
  "tsc-locale",
+]
+
+[[package]]
+name = "tsc-diagnosticwriter"
+version = "0.0.0"
+dependencies = [
+ "tsc-ast",
+ "tsc-core",
+ "tsc-diagnostics",
+ "tsc-locale",
+ "tsc-scanner",
+ "tsc-spanmap",
+ "tsc-tspath",
+]
+
+[[package]]
+name = "tsc-evaluator"
+version = "0.0.0"
+dependencies = [
+ "tsc-ast",
+ "tsc-core",
+ "tsc-jsnum",
+ "tsc-stringutil",
 ]
 
 [[package]]
@@ -291,6 +323,13 @@ name = "tsc-nativepath"
 version = "0.0.0"
 
 [[package]]
+name = "tsc-nodebuilder"
+version = "0.0.0"
+dependencies = [
+ "tsc-ast",
+]
+
+[[package]]
 name = "tsc-osutil"
 version = "0.0.0"
 
@@ -315,6 +354,22 @@ dependencies = [
  "tsc-diagnostics",
  "tsc-json",
  "tsc-semver",
+ "tsc-tspath",
+]
+
+[[package]]
+name = "tsc-parser"
+version = "0.0.0"
+dependencies = [
+ "rustc-hash",
+ "tsc-ast",
+ "tsc-collections",
+ "tsc-core",
+ "tsc-debug",
+ "tsc-diagnostics",
+ "tsc-repo",
+ "tsc-scanner",
+ "tsc-stringutil",
  "tsc-tspath",
 ]
 
@@ -348,6 +403,21 @@ name = "tsc-semver"
 version = "0.0.0"
 
 [[package]]
+name = "tsc-sourcemap"
+version = "0.0.0"
+dependencies = [
+ "rustc-hash",
+ "serde",
+ "serde_json",
+ "tsc-core",
+ "tsc-debug",
+ "tsc-json",
+ "tsc-scanner",
+ "tsc-stringutil",
+ "tsc-tspath",
+]
+
+[[package]]
 name = "tsc-spanmap"
 version = "0.0.0"
 dependencies = [
@@ -361,6 +431,31 @@ name = "tsc-stringutil"
 version = "0.0.0"
 dependencies = [
  "memchr",
+]
+
+[[package]]
+name = "tsc-symlinks"
+version = "0.0.0"
+dependencies = [
+ "rustc-hash",
+ "tsc-ast",
+ "tsc-collections",
+ "tsc-core",
+ "tsc-module",
+ "tsc-tspath",
+]
+
+[[package]]
+name = "tsc-tracing"
+version = "0.0.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "tsc-ast",
+ "tsc-json",
+ "tsc-scanner",
+ "tsc-tspath",
+ "tsc-vfs",
 ]
 
 [[package]]

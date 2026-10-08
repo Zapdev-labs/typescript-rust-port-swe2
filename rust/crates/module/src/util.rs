@@ -66,7 +66,9 @@ pub fn parse_package_name(module_name: &str) -> (&str, &str) {
     let mut idx = module_name.find('/').map_or(-1i64, |i| i as i64);
     if !module_name.is_empty() && module_name.as_bytes()[0] == b'@' {
         let offset = (idx + 1) as usize;
-        idx = module_name[offset..].find('/').map_or(-1, |i| i as i64 + offset as i64);
+        idx = module_name[offset..]
+            .find('/')
+            .map_or(-1, |i| i as i64 + offset as i64);
     }
     if idx == -1 {
         return (module_name, "");
@@ -182,9 +184,7 @@ pub fn get_resolution_diagnostic(
         if file.is_declaration_file || options.allow_arbitrary_extensions.is_true() {
             return None;
         }
-        Some(
-            &tsc_diagnostics::Module_0_was_resolved_to_1_but_allowArbitraryExtensions_is_not_set,
-        )
+        Some(&tsc_diagnostics::Module_0_was_resolved_to_1_but_allowArbitraryExtensions_is_not_set)
     };
 
     if resolved_module.resolved_using_extra_extensions {

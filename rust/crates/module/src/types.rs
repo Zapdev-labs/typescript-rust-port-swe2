@@ -149,7 +149,13 @@ impl PackageId {
 /// `func (p *PackageId) String() string`
 impl fmt::Display for PackageId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}@{}{}", self.package_name(), self.version, self.peer_dependencies)
+        write!(
+            f,
+            "{}@{}{}",
+            self.package_name(),
+            self.version,
+            self.peer_dependencies
+        )
     }
 }
 

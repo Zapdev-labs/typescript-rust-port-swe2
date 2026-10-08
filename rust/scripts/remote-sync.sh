@@ -4,7 +4,7 @@
 set -euo pipefail
 
 REMOTE_HOST="${TS_REMOTE_HOST:-dih@192.168.1.15}"
-REMOTE_DIR="${TS_REMOTE_DIR:-~/TypeScript}"
+REMOTE_DIR="${TS_REMOTE_DIR:-/tmp/TypeScript}"
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 
 # --inplace: the remote ~/ is on btrfs with exhausted device allocation;

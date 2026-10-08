@@ -45,6 +45,14 @@ use crate::utilities::{
 pub struct NodeList {
     pub loc: TextRange,
     pub nodes: Box<[NodeId]>,
+    /// `missingListNodes` sentinel — `true` marks the parser's "missing"
+    /// list (a bracketed list whose opening token was absent), produced by
+    /// `Parser.createMissingList`. Go detects it by comparing the backing
+    /// array address against a shared cap-1 sentinel slice; a
+    /// `Box<[NodeId]>` carries no capacity and cannot alias a static, so the
+    /// marker is a flag instead.
+    #[doc(hidden)]
+    pub is_missing: bool,
 }
 
 impl NodeList {
@@ -52,6 +60,7 @@ impl NodeList {
         NodeList {
             loc: TextRange::undefined(),
             nodes: nodes.into(),
+            is_missing: false,
         }
     }
 
@@ -100,6 +109,9 @@ impl NodeList {
         // boxed slice keeps the shared-allocation cost model equivalent.
         let mut result = NodeList::new(self.nodes.clone());
         result.loc = self.loc;
+        // Go clones share the sentinel backing array — a clone of a missing
+        // list is still missing.
+        result.is_missing = self.is_missing;
         result
     }
 }
@@ -144,6 +156,7 @@ impl ModifierList {
         NodeList {
             loc: self.loc,
             nodes: self.nodes.clone(),
+            is_missing: false,
         }
     }
 

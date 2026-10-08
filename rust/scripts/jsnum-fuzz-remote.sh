@@ -13,7 +13,7 @@ CORPUS="/tmp/jsnum-corpus.tsv"
 
 ssh -o BatchMode=yes "$REMOTE_HOST" "
   set -euo pipefail
-  cd ~/TypeScript/rust
+  cd /tmp/TypeScript/rust
   node scripts/jsnum-fuzz-gen.mjs '$CORPUS' '$COUNT'
   \"\$HOME/.cargo/bin/cargo\" run --release -p tsc-jsnum --example fuzzcheck -- '$CORPUS'
 "

@@ -9,9 +9,7 @@ use tsc_vfs::Vfs;
 
 use crate::cache::ResolverOptions;
 use crate::resolver::DefaultResolver;
-use crate::staticresolver::{
-    StaticResolutionEntry, new_static_resolutions, new_static_resolver,
-};
+use crate::staticresolver::{StaticResolutionEntry, new_static_resolutions, new_static_resolver};
 use crate::types::{ResolutionHost, ResolvedModule, Resolver};
 
 /// `type resolutionTestInputs struct` — minimal host providing an FS and cwd.
@@ -34,7 +32,10 @@ impl ResolutionHost for ResolutionTestInputs {
 fn test_static_resolver() {
     let fs = tsc_vfs::vfstest::from_map(
         [
-            ("/repo/node_modules/fallback/package.json", "{\"name\":\"fallback\",\"types\":\"index.d.ts\"}"),
+            (
+                "/repo/node_modules/fallback/package.json",
+                "{\"name\":\"fallback\",\"types\":\"index.d.ts\"}",
+            ),
             ("/repo/node_modules/fallback/index.d.ts", "export {};"),
         ],
         CaseSensitivity::CaseSensitive,
@@ -104,8 +105,7 @@ fn test_static_resolver() {
         CaseSensitivity::CaseSensitive,
     )
     .expect("new_static_resolutions failed");
-    let resolver: Arc<dyn Resolver> =
-        Arc::new(new_static_resolver(fallback, resolutions));
+    let resolver: Arc<dyn Resolver> = Arc::new(new_static_resolver(fallback, resolutions));
 
     struct Case {
         name: &'static str,
@@ -114,12 +114,42 @@ fn test_static_resolver() {
         resolved_file_name: &'static str,
     }
     let tests = [
-        Case { name: "provided", containing_file: "/repo/src/index.ts", mode: RESOLUTION_MODE_ESM, resolved_file_name: "/directory-esm.d.ts" },
-        Case { name: "provided", containing_file: "/repo/src/index.ts", mode: RESOLUTION_MODE_COMMON_JS, resolved_file_name: "/directory.d.ts" },
-        Case { name: "provided", containing_file: "/repo/other/index.ts", mode: RESOLUTION_MODE_ESM, resolved_file_name: "/esm.d.ts" },
-        Case { name: "provided", containing_file: "/repo/other/index.ts", mode: RESOLUTION_MODE_COMMON_JS, resolved_file_name: "/global.d.ts" },
-        Case { name: "fallback", containing_file: "/repo/src/index.ts", mode: RESOLUTION_MODE_ESM, resolved_file_name: "/repo/node_modules/fallback/index.d.ts" },
-        Case { name: "unresolved", containing_file: "/repo/src/index.ts", mode: RESOLUTION_MODE_ESM, resolved_file_name: "" },
+        Case {
+            name: "provided",
+            containing_file: "/repo/src/index.ts",
+            mode: RESOLUTION_MODE_ESM,
+            resolved_file_name: "/directory-esm.d.ts",
+        },
+        Case {
+            name: "provided",
+            containing_file: "/repo/src/index.ts",
+            mode: RESOLUTION_MODE_COMMON_JS,
+            resolved_file_name: "/directory.d.ts",
+        },
+        Case {
+            name: "provided",
+            containing_file: "/repo/other/index.ts",
+            mode: RESOLUTION_MODE_ESM,
+            resolved_file_name: "/esm.d.ts",
+        },
+        Case {
+            name: "provided",
+            containing_file: "/repo/other/index.ts",
+            mode: RESOLUTION_MODE_COMMON_JS,
+            resolved_file_name: "/global.d.ts",
+        },
+        Case {
+            name: "fallback",
+            containing_file: "/repo/src/index.ts",
+            mode: RESOLUTION_MODE_ESM,
+            resolved_file_name: "/repo/node_modules/fallback/index.d.ts",
+        },
+        Case {
+            name: "unresolved",
+            containing_file: "/repo/src/index.ts",
+            mode: RESOLUTION_MODE_ESM,
+            resolved_file_name: "",
+        },
     ];
     for test in tests {
         let (result, _traces) = resolver.resolve_module_name(
@@ -131,9 +161,8 @@ fn test_static_resolver() {
         if test.resolved_file_name.is_empty() {
             assert!(result.is_none(), "{}: expected unresolved", test.name);
         } else {
-            let result = result.unwrap_or_else(|| {
-                panic!("{}: expected {}", test.name, test.resolved_file_name)
-            });
+            let result = result
+                .unwrap_or_else(|| panic!("{}: expected {}", test.name, test.resolved_file_name));
             assert_eq!(
                 result.resolved_file_name.as_string(),
                 test.resolved_file_name,

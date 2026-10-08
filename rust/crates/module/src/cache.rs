@@ -59,7 +59,8 @@ pub(crate) struct TypeRefDirectiveResolutionCacheKey {
 /// `type typeRefDirectiveResolutionCache struct`
 #[derive(Default)]
 pub(crate) struct TypeRefDirectiveResolutionCache {
-    pub(crate) cache: SyncMap<TypeRefDirectiveResolutionCacheKey, Arc<ResolvedTypeReferenceDirective>>,
+    pub(crate) cache:
+        SyncMap<TypeRefDirectiveResolutionCacheKey, Arc<ResolvedTypeReferenceDirective>>,
 }
 
 impl TypeRefDirectiveResolutionCache {
@@ -107,7 +108,10 @@ impl ParsedPatternsCache {
             return patterns;
         }
         self.cache
-            .load_or_store(key, Arc::new(crate::resolver::try_parse_patterns(path_mappings)))
+            .load_or_store(
+                key,
+                Arc::new(crate::resolver::try_parse_patterns(path_mappings)),
+            )
             .0
     }
 }
@@ -184,10 +188,7 @@ impl ResolutionData {
     }
 
     /// `func (c *ResolutionData) PackageJsonCacheEntries(f func(key tspath.PathKey, value *packagejson.InfoCacheEntry) bool)`
-    pub fn package_json_cache_entries(
-        &self,
-        f: impl FnMut(PathKey, Arc<InfoCacheEntry>) -> bool,
-    ) {
+    pub fn package_json_cache_entries(&self, f: impl FnMut(PathKey, Arc<InfoCacheEntry>) -> bool) {
         self.package_json_info_cache.range(f);
     }
 }

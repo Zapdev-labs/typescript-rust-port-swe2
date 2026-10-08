@@ -13,5 +13,12 @@ REMOTE_HOST="${TS_REMOTE_HOST:-dih@192.168.1.15}"
 # Remote env fixes (see scanner agent report): rust-lld SIGBUS-crashes on
 # btrfs → GNU ld via -lld linker-features opt-out; target dir on tmpfs to
 # avoid btrfs allocation ENOSPC; incremental off (tmpfs is not persistent).
+# NOTE: `--workspace` overrides `-p` selections, so when -p args are given we
+# drop it — in-flight crates otherwise fail the run.
+if [[ "$*" == *"-p "* || "$*" == *"-p"* ]]; then
+  SCOPE="$*"
+else
+  SCOPE="--workspace $*"
+fi
 ssh -o BatchMode=yes "$REMOTE_HOST" \
-  "cd ~/TypeScript/rust && env CARGO_TARGET_DIR=/tmp/tsc-target CARGO_INCREMENTAL=0 RUSTFLAGS='-C linker-features=-lld' \"\$HOME/.cargo/bin/cargo\" test --workspace $*"
+  "cd /tmp/TypeScript/rust && env CARGO_TARGET_DIR=/tmp/tsc-target CARGO_INCREMENTAL=0 RUSTFLAGS='-C linker-features=-lld' \"\$HOME/.cargo/bin/cargo\" test $SCOPE"
