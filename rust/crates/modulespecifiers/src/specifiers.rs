@@ -403,8 +403,8 @@ pub fn get_each_file_name_of_module<H: ModuleSpecifierGenerationHost>(
     let imported_path = case_sensitivity.path_key(&imported_file_name.as_path());
     let mut reference_redirect = RootedFilePath::default();
     if let Some(output_and_reference) = host.get_project_reference_from_source(&imported_path) {
-        if !output_and_reference.is_empty() {
-            reference_redirect = output_and_reference;
+        if !output_and_reference.output_dts.is_empty() {
+            reference_redirect = output_and_reference.output_dts.clone();
         }
     }
 

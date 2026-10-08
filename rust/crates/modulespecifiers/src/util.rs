@@ -6,6 +6,7 @@ use rustc_hash::FxHashMap;
 use tsc_collections::OrderedMap;
 use tsc_core::core::index_after;
 use tsc_core::options_generated::CompilerOptions;
+use tsc_core::tristate::TS_TRUE;
 use tsc_module as module;
 use tsc_module::Ending;
 use tsc_packagejson::ExportsOrImports;
@@ -1067,16 +1068,13 @@ pub(crate) fn try_get_any_file_from_path<H: ModuleSpecifierGenerationHost>(
 ) -> bool {
     // !!! TODO: shouldn't this use readdir instead of fileexists for perf?
     // We check all js, `node` and `json` extensions in addition to TS, since node module resolution would also choose those over the directory
-    //
-    // PORT(deferred): Go calls `tsoptions.GetSupportedExtensions(
-    //     &core.CompilerOptions{AllowJs: core.TSTrue}, []string{".node", ".json"})`.
-    // tsc-tsoptions is still in flight; with `allowJs` forced on, that call is
-    // exactly `tspath.AllSupportedExtensions` followed by the extra `.node`/
-    // `.json` groups (neither occurs in the builtin lists). Replace with the
-    // tsoptions call once the crate lands.
-    let extra: [&[&str]; 2] = [&[".node"], &[tspath::EXTENSION_JSON]];
-    for exts in tspath::ALL_SUPPORTED_EXTENSIONS.iter().chain(extra.iter()) {
-        for e in *exts {
+    let options = CompilerOptions {
+        allow_js: TS_TRUE,
+        ..Default::default()
+    };
+    let extra: [String; 2] = [".node".to_string(), tspath::EXTENSION_JSON.to_string()];
+    for exts in tsc_tsoptions::tsconfigparsing::get_supported_extensions(&options, &extra) {
+        for e in &exts {
             if host.file_exists(&path.append_suffix(e)) {
                 return true;
             }

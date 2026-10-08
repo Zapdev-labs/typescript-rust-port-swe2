@@ -19,15 +19,10 @@ tsc-packagejson = { path = "../packagejson" }
 tsc-stringutil = { path = "../stringutil" }
 tsc-symlinks = { path = "../symlinks" }
 tsc-tspath = { path = "../tspath" }
+tsc-tsoptions = { path = "../tsoptions" }
 rustc-hash = { workspace = true }
 
 [dev-dependencies]
 # PORT: Go tests build `ExportsOrImports` struct literals; the Rust type has a
 # private `object_kind` field, so the tests decode them from JSON via tsc-json.
 tsc-json = { path = "../json" }
-
-# PORT(deferred): `tsc-tsoptions` is still in flight; the only uses were
-# `tsoptions.GetSupportedExtensions` (inlined in util.rs at
-# `try_get_any_file_from_path`) and `tsoptions.SourceOutputAndProjectReference`
-# (the host trait returns just the `OutputDts` path — see types.rs). Add the
-# dependency and reconcile once the crate lands.

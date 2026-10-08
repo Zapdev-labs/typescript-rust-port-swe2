@@ -13,6 +13,7 @@ use tsc_module::ResolvedModule;
 use tsc_outputpaths::OutputPathsHost;
 use tsc_packagejson::{ExportsOrImports, InfoCacheEntry};
 use tsc_symlinks::{KnownDirectoryLink, KnownSymlinks};
+use tsc_tsoptions::parsedcommandline::SourceOutputAndProjectReference;
 use tsc_tspath::{self as tspath, CaseSensitivity, PathKey, RootedDirectoryPath, RootedFilePath};
 
 use crate::specifiers::{
@@ -180,7 +181,10 @@ impl ModuleSpecifierGenerationHost for MockModuleSpecifierGenerationHost {
         RootedDirectoryPath::default()
     }
 
-    fn get_project_reference_from_source(&self, _path: &PathKey) -> Option<RootedFilePath> {
+    fn get_project_reference_from_source(
+        &self,
+        _path: &PathKey,
+    ) -> Option<Arc<SourceOutputAndProjectReference>> {
         None
     }
 

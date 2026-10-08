@@ -1,0 +1,21 @@
+[package]
+name = "tsc-printer"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+tsc-ast = { path = "../ast" }
+tsc-binder = { path = "../binder" }
+tsc-collections = { path = "../collections" }
+tsc-core = { path = "../core" }
+tsc-debug = { path = "../debug" }
+tsc-scanner = { path = "../scanner" }
+tsc-sourcemap = { path = "../sourcemap" }
+tsc-stringutil = { path = "../stringutil" }
+tsc-tspath = { path = "../tspath" }
+rustc-hash = { workspace = true }

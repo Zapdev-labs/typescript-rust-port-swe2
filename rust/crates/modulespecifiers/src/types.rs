@@ -10,6 +10,7 @@ use tsc_module::ResolvedModule;
 use tsc_outputpaths::OutputPathsHost;
 use tsc_packagejson::InfoCacheEntry;
 use tsc_symlinks::KnownSymlinks;
+use tsc_tsoptions::parsedcommandline::SourceOutputAndProjectReference;
 use tsc_tspath::{ModuleSpecifier, PathKey, RootedDirectoryPath, RootedFilePath};
 
 /// `type SourceFileForSpecifierGeneration interface`.
@@ -108,13 +109,10 @@ pub trait ModuleSpecifierGenerationHost: OutputPathsHost {
     fn base_directory(&self) -> RootedDirectoryPath;
 
     /// `GetProjectReferenceFromSource(path)`.
-    ///
-    // PORT(deferred): Go returns `*tsoptions.SourceOutputAndProjectReference`,
-    // of which only `.OutputDts` is consumed (specifiers.go
-    // `GetEachFileNameOfModule`). tsc-tsoptions has not landed yet, so the
-    // method returns the output declaration path directly. Revisit to return
-    // the full struct once `tsc-tsoptions` provides it.
-    fn get_project_reference_from_source(&self, path: &PathKey) -> Option<RootedFilePath>;
+    fn get_project_reference_from_source(
+        &self,
+        path: &PathKey,
+    ) -> Option<Arc<SourceOutputAndProjectReference>>;
     /// `GetRedirectTargets(path)`.
     fn get_redirect_targets(&self, path: &PathKey) -> Vec<RootedFilePath>;
     /// `GetSourceOfProjectReferenceIfOutputIncluded(file)`.
