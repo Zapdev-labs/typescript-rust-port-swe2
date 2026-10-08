@@ -52,6 +52,17 @@ pub trait SymbolTracker {
     fn push_error_fallback_node(&mut self, node: NodeId);
     /// `PopErrorFallbackNode()`
     fn pop_error_fallback_node(&mut self);
+
+    /// PORT: `NewSymbolTrackerImpl` in the checker peels nested
+    /// `*SymbolTrackerImpl` wrappers via a `tracker.(*SymbolTrackerImpl)`
+    /// loop. `dyn SymbolTracker` can't express that type assertion, so the
+    /// trait exposes this hook: for a `SymbolTrackerImpl` it takes and
+    /// returns `Some(self.inner)` (the wrapped tracker, itself possibly
+    /// `None`); the default returns `None` for "not a `SymbolTrackerImpl`".
+    #[doc(hidden)]
+    fn take_symbol_tracker_impl_inner(&mut self) -> Option<Option<Box<dyn SymbolTracker>>> {
+        None
+    }
 }
 
 // PORT: `flag_type!` is crate-private to tsc-ast, so the same bitmask newtype

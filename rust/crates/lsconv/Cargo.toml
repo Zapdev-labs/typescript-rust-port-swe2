@@ -1,0 +1,28 @@
+[package]
+name = "tsc-lsconv"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+memchr.workspace = true
+tsc-ast = { path = "../ast" }
+tsc-bundled = { path = "../bundled" }
+tsc-collections = { path = "../collections" }
+tsc-core = { path = "../core" }
+tsc-debug = { path = "../debug" }
+tsc-diagnostics = { path = "../diagnostics" }
+tsc-diagnosticwriter = { path = "../diagnosticwriter" }
+tsc-locale = { path = "../locale" }
+tsc-lsproto = { path = "../lsproto" }
+tsc-spanmap = { path = "../spanmap" }
+tsc-tspath = { path = "../tspath" }
+
+[dev-dependencies]
+tsc-json = { path = "../json" }
+tsc-parser = { path = "../parser" }
+serde = { workspace = true, features = ["derive"] }

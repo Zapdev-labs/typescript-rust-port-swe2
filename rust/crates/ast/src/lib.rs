@@ -44,7 +44,8 @@ mod positionmap_test;
 
 // Go package-level names land at the crate root, mirroring `package ast`.
 pub use ast::*;
-pub use ast_generated::NodeData;
+pub use ast_generated::*;
+pub use utilities::*;
 pub use flow::{FlowFlags, FlowList, FlowNode};
 pub use ids::{FlowListId, FlowNodeId, NodeId, SymbolId};
 pub use kind_generated::Kind;

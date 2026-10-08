@@ -538,6 +538,82 @@ to "2" so tsc-collections can build.
   tsc-tsoptions` — 63 tests, 0 failures. Go-side tests were read as the
   oracle but not run (local Go toolchain < go.work's 1.27).
 
+## 2026-10-10 crates/lsconv — tsc/internal/ls/lsconv port shape
+
+- `linemap.rs` = `linemap.go`, `converters.rs` = `converters.go`,
+  `converters_test.rs` = `converters_test.go`, `runes.rs` = local copies of
+  the Go `utf8.DecodeRuneInString`/`utf16.RuneLen` shims (same as
+  `tsc-scanner`; `tsc-stringutil`'s `unicode` module is crate-private).
+- The Go `Script` interface is a `Script` trait plus impls:
+  `SourceFileScript { file: NodeId, nodes: &[Node] }` (Go's `*SourceFile`),
+  `DiagnosticFileScript { file: &DiagnosticFile, nodes: &[Node] }` (the
+  diagnostic file handle — `original_file_name` resolves
+  `CanonicalSourceFile` through `file.node`+`nodes`, falling back to
+  `file_name` for node-less handles which cannot be supplemental), and
+  `OriginalTextScript { file_name, text }` (Go's `originalTextScript`
+  value). `Box<dyn Script + 's>` stands in for `Script` interface returns
+  in `virtual_range_to_original`/`virtual_position_to_original`/
+  `diagnostic_script_and_range`; a blanket `impl Script for &T` lets `&T`
+  fill the `T` slot of `MappedSpan<T>`/`MappedPosition<T>` (Go embeds
+  `spanmap.MappedSpan`/`MappedPosition` — their fields are flattened to
+  `span`/`position`/`fidelity`).
+- `Script::text()`/`original_text()` return `&[u8]`, not `&str`: Go strings
+  carry invalid UTF-8, and both the converters' `DecodeRuneInString` loops
+  and `TestConvertersInvalidUTF8` depend on byte-exact invalid-input
+  stepping. `compute_lsp_line_starts` likewise takes `&[u8]`.
+- `Converters.get_line_map` is
+  `Box<dyn Fn(&RootedFilePath) -> &'a LspLineMap + 'a>` — the returned map
+  must outlive the converters (Go returns a cache-held `*LSPLineMap`).
+- `locale.FromContext`: `tsc_locale::from_context` needs the `LocaleContext`
+  trait, which `tsc_core::context::Context` can't implement (tsc-locale is
+  dependency-free; orphan rule). lsconv stores the locale under its own
+  `ContextKey` (`with_locale`/`locale_from_context`, mirroring
+  `lsproto::with_client_capabilities`); nothing sets it yet, so
+  `Locale::default()` = Go's absent-key result.
+- `DiagnosticToLSPPull`/`Push` take an extra `nodes: &[Node]` param (the
+  arena `DiagnosticFile.node` resolves through) — needed by
+  `message_chain_to_string` → `write_flattened_ast_diagnostic_message`.
+- `url.PathEscape` is ported in-line (`path_escape`/`should_escape_path_segment`,
+  `encodePathSegment` mode) plus `extra_escape_replacer` — the vscode-uri
+  escaping recipe; Go's `net/url` isn't a dependency.
+- Positions are converted in `i64` where `core.TextPos` (`int`) would
+  silently fit u32 wire values that overflow i32.
+- `related.File() == nil` → `debug::fail` (Go nil-panics later anyway).
+- The JS-reference UTF-16 test still shells out to `node -e` and skips
+  (returns early) when node is absent, like Go's `t.Skipf`.
+- Verification: `cargo test -p tsc-lsconv` via `scripts/remote-test.sh` on
+  the remote builder (dih@192.168.1.15) — 6 tests passed, 0 failed
+  (incl. `test_converters_against_js_reference` run against node, which is
+  present on the remote).
+
+## 2026-11-14 crates/printer — tsc/internal/printer port (arena/owner deviations)
+- Go's `*ast.Node` graph is a `Vec<Node>` arena threaded as `nodes:
+  &mut Vec<Node>`; nilable `*Node` results become `Option<NodeId>` and
+  `*NodeList` becomes `Option<NodeList>` (cloned where Go would share the
+  header). `Printer` owns emission state; the Go `NameGenerator` struct's
+  methods live in `impl Printer` (`name_generator.rs`) because scope push/pop
+  interleaves with emit.
+- `EmitContext` owns a `crate::factory::NodeFactory` (a wrapper around
+  `ast::NodeFactory` carrying the `Shared` `Rc<RefCell<EmitContextShared>>`),
+  so Go's `emitContext.Factory`/`autoGenerate` maps resolve through
+  `emit_context.shared()`.
+- `EmitTextWriter` is a trait object; downcasting (`as_any_mut`) is used by
+  `get_trailing_semicolon_deferring_writer` in place of Go type assertions.
+- `ScriptKind::JSON` maps to `ScriptKind::Json`; resolution-mode and option
+  constants come from `tsc_core::compileroptions`/`options_generated`.
+- `emit_jsx_text` reads the `JsxText` text field directly because
+  `Node::text()` (like Go's `Node.Text()`) does not handle `Kind::JsxText`.
+- Source-map emit through `tsc_sourcemap::Generator` is partial
+  (`PORT(deferred)` markers in `printer.rs`); `MapSourcePosition` returns a
+  source-list index instead of a `Source` trait object.
+- Tests: `namegenerator_test.go`'s free-standing `NameGenerator` cases are
+  `#[cfg(test)]` unit tests in `name_generator.rs` (15 cases, all passing);
+  `utilities_test.go` is ported to `utilities.rs` (4 tests, all passing);
+  `printer_test.go`'s `TestEmit` table is `tests/emit_test.rs` (553 cases;
+  the 3 trailing-comma entries are `PORT(deferred)` exactly as commented out
+  in Go). The `TestParenthesize*` tests, which build ASTs via `NodeFactory`
+  rather than the parser, are `PORT(deferred)`.
+
 ## Deferred crates
 
 - **pprof**: `tsc/internal/pprof` wraps `runtime/pprof` (Go runtime CPU/heap

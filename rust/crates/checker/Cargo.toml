@@ -1,0 +1,39 @@
+[package]
+name = "tsc-checker"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+tsc-ast = { path = "../ast" }
+# PORT: tsc-astnav is needed by services.rs's get_possible_symbol_reference_*
+# (Go `astnav.GetTouchingPropertyName`); it was not in the original dep list
+# handed to this port — see PORTING-NOTES.md.
+tsc-astnav = { path = "../astnav" }
+tsc-binder = { path = "../binder" }
+tsc-collections = { path = "../collections" }
+tsc-core = { path = "../core" }
+tsc-debug = { path = "../debug" }
+tsc-diagnostics = { path = "../diagnostics" }
+tsc-evaluator = { path = "../evaluator" }
+tsc-jsnum = { path = "../jsnum" }
+tsc-json = { path = "../json" }
+tsc-module = { path = "../module" }
+tsc-nodebuilder = { path = "../nodebuilder" }
+tsc-parser = { path = "../parser" }
+# PORT: checker.go's utilities.go `ValueToString` uses
+# `printer.EscapeString`; tsc-printer does not depend on the checker, so no
+# cycle is introduced.
+tsc-printer = { path = "../printer" }
+tsc-pseudochecker = { path = "../pseudochecker" }
+tsc-repo = { path = "../repo" }
+tsc-scanner = { path = "../scanner" }
+tsc-stringutil = { path = "../stringutil" }
+tsc-tracing = { path = "../tracing" }
+tsc-tspath = { path = "../tspath" }
+rustc-hash = { workspace = true }
+serde_json = { workspace = true }

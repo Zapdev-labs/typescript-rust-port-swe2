@@ -1017,6 +1017,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "tsc-checker"
+version = "0.0.0"
+dependencies = [
+ "rustc-hash",
+ "serde_json",
+ "tsc-ast",
+ "tsc-astnav",
+ "tsc-binder",
+ "tsc-collections",
+ "tsc-core",
+ "tsc-debug",
+ "tsc-diagnostics",
+ "tsc-evaluator",
+ "tsc-jsnum",
+ "tsc-json",
+ "tsc-module",
+ "tsc-nodebuilder",
+ "tsc-parser",
+ "tsc-printer",
+ "tsc-pseudochecker",
+ "tsc-repo",
+ "tsc-scanner",
+ "tsc-stringutil",
+ "tsc-tracing",
+ "tsc-tspath",
+]
+
+[[package]]
 name = "tsc-collections"
 version = "0.0.0"
 dependencies = [
@@ -1153,6 +1181,27 @@ name = "tsc-locale"
 version = "0.0.0"
 
 [[package]]
+name = "tsc-lsconv"
+version = "0.0.0"
+dependencies = [
+ "memchr",
+ "serde",
+ "tsc-ast",
+ "tsc-bundled",
+ "tsc-collections",
+ "tsc-core",
+ "tsc-debug",
+ "tsc-diagnostics",
+ "tsc-diagnosticwriter",
+ "tsc-json",
+ "tsc-locale",
+ "tsc-lsproto",
+ "tsc-parser",
+ "tsc-spanmap",
+ "tsc-tspath",
+]
+
+[[package]]
 name = "tsc-lsproto"
 version = "0.0.0"
 dependencies = [
@@ -1197,6 +1246,7 @@ dependencies = [
  "tsc-packagejson",
  "tsc-stringutil",
  "tsc-symlinks",
+ "tsc-tsoptions",
  "tsc-tspath",
 ]
 
@@ -1263,6 +1313,26 @@ dependencies = [
  "pprof",
  "prost",
  "tsc-core",
+]
+
+[[package]]
+name = "tsc-printer"
+version = "0.0.0"
+dependencies = [
+ "rustc-hash",
+ "tsc-ast",
+ "tsc-binder",
+ "tsc-collections",
+ "tsc-core",
+ "tsc-debug",
+ "tsc-evaluator",
+ "tsc-nodebuilder",
+ "tsc-parser",
+ "tsc-scanner",
+ "tsc-sourcemap",
+ "tsc-stringutil",
+ "tsc-tsoptions",
+ "tsc-tspath",
 ]
 
 [[package]]
