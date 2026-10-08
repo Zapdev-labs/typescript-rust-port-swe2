@@ -10,3 +10,6 @@ workspace = true
 
 [dependencies]
 tsc-core = { path = "../core" }
+pprof = { workspace = true }
+flate2 = { workspace = true }
+prost = { workspace = true }

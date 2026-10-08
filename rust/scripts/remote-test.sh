@@ -21,4 +21,4 @@ else
   SCOPE="--workspace $*"
 fi
 ssh -o BatchMode=yes "$REMOTE_HOST" \
-  "cd /tmp/TypeScript/rust && env CARGO_TARGET_DIR=/tmp/tsc-target CARGO_INCREMENTAL=0 RUSTFLAGS='-C linker-features=-lld' \"\$HOME/.cargo/bin/cargo\" test $SCOPE"
+  "cd /tmp/TypeScript/rust && env CARGO_TARGET_DIR=/tmp/tsc-target CARGO_INCREMENTAL=0 RUSTFLAGS='-C linker-features=-lld -C debuginfo=0' \"\$HOME/.cargo/bin/cargo\" test $SCOPE"

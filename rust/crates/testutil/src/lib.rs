@@ -19,10 +19,12 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::{env, fs, panic, process};
 
 pub mod baseline;
+pub mod contentmappertest;
 pub mod filefixture;
 pub mod fixtures;
 pub mod fsbaselineutil;
 pub mod jstest;
+pub mod parsetestutil;
 pub mod race;
 pub mod stringtestutil;
 

@@ -1,0 +1,38 @@
+[package]
+name = "tsc-tsoptions"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+tsc-ast = { path = "../ast" }
+tsc-collections = { path = "../collections" }
+tsc-contentmapper = { path = "../contentmapper" }
+tsc-core = { path = "../core" }
+tsc-debug = { path = "../debug" }
+tsc-diagnostics = { path = "../diagnostics" }
+tsc-glob = { path = "../glob" }
+tsc-jsnum = { path = "../jsnum" }
+tsc-json = { path = "../json" }
+tsc-locale = { path = "../locale" }
+tsc-module = { path = "../module" }
+tsc-outputpaths = { path = "../outputpaths" }
+tsc-packagejson = { path = "../packagejson" }
+tsc-parser = { path = "../parser" }
+tsc-scanner = { path = "../scanner" }
+tsc-stringutil = { path = "../stringutil" }
+tsc-tspath = { path = "../tspath" }
+tsc-vfs = { path = "../vfs" }
+rustc-hash = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+[dev-dependencies]
+tsc-diagnosticwriter = { path = "../diagnosticwriter" }
+tsc-repo = { path = "../repo" }
+tsc-testutil = { path = "../testutil" }
+serde_json = { workspace = true }

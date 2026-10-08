@@ -9,11 +9,21 @@ license.workspace = true
 workspace = true
 
 [dependencies]
+tsc-ast = { path = "../ast" }
 tsc-collections = { path = "../collections" }
+tsc-contentmapper = { path = "../contentmapper" }
+tsc-core = { path = "../core" }
+tsc-diagnosticwriter = { path = "../diagnosticwriter" }
+tsc-diagnostics = { path = "../diagnostics" }
+tsc-ipc = { path = "../ipc" }
 tsc-json = { path = "../json" }
+tsc-locale = { path = "../locale" }
+tsc-parser = { path = "../parser" }
 tsc-repo = { path = "../repo" }
+tsc-spanmap = { path = "../spanmap" }
 tsc-stringutil = { path = "../stringutil" }
 tsc-tspath = { path = "../tspath" }
 tsc-vfs = { path = "../vfs" }
 serde = { workspace = true }
-serde_json = { workspace = true }
+# "raw_value" for `serde_json::value::RawValue` (tsc-json's `Value` type).
+serde_json = { workspace = true, features = ["raw_value"] }

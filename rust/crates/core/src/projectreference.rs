@@ -9,7 +9,9 @@ fn bool_is_false(v: &bool) -> bool {
     !*v
 }
 
-#[derive(Clone, Default, Debug, Serialize, Deserialize)]
+// PORT: `PartialEq` backs `*a == *b` in `tsoptions::ParsedOptions::equals`
+// (Go `slices.EqualFunc` with value equality).
+#[derive(Clone, Default, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct ProjectReference {
     // Path is a normalized path on disk.

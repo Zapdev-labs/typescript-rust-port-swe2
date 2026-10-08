@@ -419,3 +419,68 @@ pub fn get_build_info_file_name(
         .remove_file_extension()
         .append_suffix(tspath::EXTENSION_TS_BUILD_INFO)
 }
+
+// ---------------------------------------------------------------------------
+// Ported from tsc/internal/outputpaths/commonsourcedirectory.go
+// ---------------------------------------------------------------------------
+
+/// `computeCommonSourceDirectoryOfFilenames`.
+fn compute_common_source_directory_of_filenames(
+    file_names: &[RootedFilePath],
+    current_directory: RootedDirectoryPath,
+    case_sensitivity: CaseSensitivity,
+) -> RootedDirectoryPath {
+    if file_names.is_empty() {
+        // Can happen when all input files are .d.ts files.
+        return current_directory;
+    }
+    case_sensitivity.common_directory_of_files(file_names)
+}
+
+/// `GetComputedCommonSourceDirectory`.
+pub fn get_computed_common_source_directory(
+    emitted_files: &[RootedFilePath],
+    current_directory: RootedDirectoryPath,
+    case_sensitivity: CaseSensitivity,
+) -> RootedDirectoryPath {
+    compute_common_source_directory_of_filenames(
+        emitted_files,
+        current_directory,
+        case_sensitivity,
+    )
+}
+
+/// `GetCommonSourceDirectory`.
+///
+/// PORT: `files` stays a callback (Go lazily queries it only when needed);
+/// `checkSourceFilesBelongToPath` is `Option<&dyn Fn>` for Go's nilable func.
+pub fn get_common_source_directory(
+    options: &CompilerOptions,
+    files: impl Fn() -> Vec<RootedFilePath>,
+    current_directory: RootedDirectoryPath,
+    case_sensitivity: CaseSensitivity,
+    check_source_files_belong_to_path: Option<&dyn Fn(&[RootedFilePath], RootedDirectoryPath) -> bool>,
+) -> RootedDirectoryPath {
+    let common_source_directory;
+    if !options.root_dir.is_empty() {
+        // If a rootDir is specified use it as the commonSourceDirectory
+        common_source_directory = options.root_dir.clone();
+        if let Some(check) = check_source_files_belong_to_path {
+            check(&files(), common_source_directory.clone());
+        }
+    } else if !options.config_file_path.is_empty() {
+        // If the rootDir is not specified, then the common source directory
+        // is the directory of the config file.
+        common_source_directory = options.config_file_path.directory();
+        if let Some(check) = check_source_files_belong_to_path {
+            check(&files(), common_source_directory.clone());
+        }
+    } else {
+        common_source_directory = compute_common_source_directory_of_filenames(
+            &files(),
+            current_directory,
+            case_sensitivity,
+        );
+    }
+    common_source_directory
+}

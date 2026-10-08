@@ -1337,6 +1337,10 @@ pub struct TypeAcquisition {
     pub disable_filename_based_type_acquisition: Tristate,
 }
 
+// `TypeAcquisition::equals` lives in typeacquisition.rs (hand-ported from
+// typeacquisition.go); do not re-emit it here — duplicate impl blocks are
+// E0592.
+
 // PORT: Go's `_ noCopy` marker is unneeded.
 #[derive(Clone, Default, Debug, Serialize, Deserialize)]
 #[serde(default)]

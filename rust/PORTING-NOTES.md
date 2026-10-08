@@ -262,14 +262,285 @@ to "2" so tsc-collections can build.
   unsafe FFI or an unapproved crate; `new_pipe_transport` fails with
   `Unsupported` under `cfg(windows)`. `generate_pipe_path` is ported.
 
+## 2026-10-10 crates/fswatch — notify-backed API-surface port
+- `tsc/internal/fswatch` is ~11.4k LOC of hand-rolled OS watchers (inotify,
+  fanotify, FSEvents-over-CGO-asm, kqueue, ReadDirectoryChangesW). Only the
+  consumed API surface is ported (`Watcher` trait, `Watch`, `Event`,
+  `EventKind`, `WatchDirectoryRequest`, `WithRecursive`/`WithIgnore`,
+  `Default`/`Kqueue`, `ErrOverflow`/`ErrWatchTerminated`, and the
+  `debounce.go`/`event.go` coalescing semantics); the syscall backends are
+  replaced by the `notify` crate's `RecommendedWatcher` (inotify on Linux).
+  `notify = "8"` added to `[workspace.dependencies]` (extends the §5.11
+  third-party list like `num-bigint`/`pprof`).
+- Backend mapping (`notify_backend.rs`, ports `inotify_linux.go`):
+  `Create`/`Modify(Name(To))` → `create`, `Modify(Data)` → `update`,
+  `Remove`/`Modify(Name(From))` → `remove`, paired `RenameMode::Both` →
+  remove+create, `need_rescan()` (IN_Q_OVERFLOW) → `ERR_OVERFLOW`,
+  self-delete/move of a watch root → `remove` + wrapped
+  `ERR_WATCH_TERMINATED`. `Access` and `Modify(Metadata)` are dropped — Go's
+  inotify mask never subscribed to `IN_ATTRIB`/`IN_OPEN`/`IN_CLOSE_*`.
+- `default()`/`kqueue()` return the same shared notify-backed watcher —
+  backend selection is a Go artifact; `name()` reports the platform backend
+  Go would select ("inotify" on Linux; note Go's `Default()` prefers
+  fanotify, which notify lacks). `has_fast_recursive_backend()` keeps Go's
+  windows/fsevents predicate.
+- Go's channel-latch debouncer (`waitCh`/`triggerCh` close+replace) becomes
+  `Mutex`+`Condvar` + `notified`/`trigger_epoch` in `debounce.rs`;
+  50ms quiet-period / 500ms-since-last-fire semantics are preserved,
+  including the immediate fire on the first-ever trigger (Go's zero
+  `lastTime` yields an infinite gap).
+- `dirWatch` sharing by `(dir, recursive)` key, per-callback `sinceSeq`
+  cutoffs (`drain_for_sequences`), and the `triggerCallbacks` filter order
+  are ported. FSEvents-only consolidation (`canShareRecursiveDirWatches`)
+  and the volume-aware `pathComparer` are NOT ported — on non-Darwin the Go
+  comparer is exact-byte anyway. `physicalDirFor` uses
+  `tsc_nativepath::realpath`; display paths are rebased at dispatch.
+- `notify` records one `is_recursive` flag per watched path and its
+  `unwatch` removes whole subtrees, so the dispatcher explicitly re-arms
+  recursive subdirectory watches on create/move-in events and `watch_remove`
+  re-arms overlapping surviving watches after an unwatch (Go's per-wd
+  subscription multimap makes this unnecessary). `watched_paths` mirrors
+  notify's internal watch set for dedup.
+- `Event.Path` is `String` — non-UTF-8 paths are lossy-decoded at the notify
+  boundary (Go strings carry arbitrary bytes). `Event::new` substitutes for
+  Go's cross-package composite literals.
+- `Watch` is a concrete struct (`io.Closer` equivalent) with idempotent
+  `close()` + `Drop`; `WatchCallback` is `Arc<dyn Fn(Vec<Event>,
+  Option<Error>)>`; `WatchDirectoryRequest.callback` is `Option` so nil →
+  `Error::NilCallback` is preserved.
+
+## 2026-10-08 crates/apiencoder — tsc/internal/api/encoder port shape
+- Go `*ast.Node` references become `NodeId`s into an explicit
+  `&mut Vec<Node>` arena threaded through `encode_source_file` /
+  `encode_node` / `decode_nodes` / `decode_source_file` (which return
+  `(Vec<u8>, NodeIndexTable)` / `(NodeId, Vec<Node>)`). `NodeIndexTable.nodes`
+  is `Box<[Option<NodeId>]>` — `None` is Go's nil entry (index 0 sentinel and
+  node-list pseudo-node slots); a parallel `FxHashMap<NodeId, u32>` backs
+  `get_index` since pointer-identity lookup is impossible.
+- Go's `encodeTree` visitor closures mutate shared traversal state
+  (`prevSibling`, per-parent last-child patches); the port uses `RefCell`/
+  `Cell` state plus `NodeVisitor`/`NodeVisitorHooks`, with the `VisitFn`
+  receiving `&NodeVisitor` explicitly (Rust closures cannot capture the
+  visitor under construction — the established visitor.rs pattern).
+- `stringTable` stores the source-file `NodeId` rather than sharing a Go
+  `string`; source-text slices are resolved through the arena at
+  `record_string` time — identical string-offset output.
+- `AstDecoder::create_children_node` destructures decoder state and uses
+  free helper functions instead of methods so factory calls like
+  `factory.new_x(&mut arena, helper(children))` satisfy the borrow checker;
+  Go's `d.childBuf` scratch slice becomes a caller-owned buffer.
+- Go's unchecked `ast.Kind(u32)` cast is a checked `kind_from_u32` — an
+  out-of-range kind produces the same "unhandled node kind" error Go
+  reports (the truncated ordinal is never a known kind anyway).
+- `getString` returns raw bytes with `from_utf8_lossy` applied at the
+  boundaries Go's WTF-8-tolerant `string` slicing would touch; the checked
+  `language_variant`/`script_kind` mapping replaces Go's unchecked casts
+  (unknown ordinals → `ScriptKind::Unknown`, matching the decoder's error
+  surface for malformed input).
+- `sortedOnce`/`sortedIdx` (lazy sorted index for `GetIndex`) map to
+  `Arc<OnceLock>`. `PositionMap::utf8_to_utf16` takes `usize`, so negative
+  Go `pos` values are clamped rather than sign-extended.
+- Header offsets/protocol constants are exported as `SCREAMING_SNAKE_CASE`
+  (`HEADER_OFFSET_NODES`, `PROTOCOL_VERSION`, …). Benchmarks are kept as
+  `#[ignore]`d single-iteration tests; `formatEncodedSourceFile` lives in
+  `encoder_test.rs` and its output matches the Go `api` reference baselines
+  (`encodeSourceFile{,WithUnicodeEscapes}.txt`) byte-for-byte — note the
+  baselines cover the formatted dump, not the raw wire bytes.
+
+## 2026-10-08 crates/lsproto — tsc/internal/lsp/lsproto port shape
+
+- `lsp_generated.rs` (~44k lines) is produced by `crates/lsproto/gen.py`
+  from `lsp_generated.go`, not handwritten; regenerate with
+  `python3 gen.py <lsp_generated.go> src/lsp_generated.rs` then
+  `cargo fmt -p tsc-lsproto`. Never edit the generated file — change the
+  generator.
+- Go's reflection-driven `structcodec` (required-field tracking, `lsp:
+  "required"`/`"nullable"` tags, reject-`null` on nilable fields, unknown
+  field skipping, discriminator-before-field deferral) cannot ride on
+  serde derives, so gen.py compiles the equivalent checks into each
+  type's `json::UnmarshalerFrom` + `Deserialize` impl (bitset for required
+  fields, `dec.read_value()` for raw member names, `skip_value` for
+  unknowns). Shared helpers live in `structcodec.rs`/`lsp.rs`
+  (`decode_member`, `err_null`, `err_missing`, `json_object_raw_field`,
+  `json_object_has_key`, `norm_kind`).
+- `*T`/`[]T`/`map[K]V` fields become `Option<...>` (Go nil vs absent);
+  `any` becomes `serde_json::Value`; `struct{}` becomes `EmptyObject`
+  (accepts any object, marshals `{}`). Union types keep Go's
+  pointer-per-arm shape as `Option<T>` fields; marshaling asserts exactly
+  one arm (`assertOnlyOne`/`assertAtMostOne`), nullable unions emit `null`
+  when all arms are `None`.
+- Unions decode via the Go dispatch forms: JSON leading-kind switch
+  (`norm_kind` folds `-`/`1`-`9` into `'0'`), key-presence
+  (`json_object_has_key`), discriminator scan (`json_object_raw_field` —
+  so `kind` may appear after payload fields), and try-each-arm
+  `from_slice` fallthrough.
+- `SelectionRange.parent` is `Option<Box<SelectionRange>>` — the only
+  direct `*Self` recursion; `Box` breaks the infinite size without
+  changing semantics.
+- `Registration` decodes `registerOptions` only after `method` is known
+  (raw-field scan then per-method arm decode), matching the Go custom
+  codec; `registerOptions` is `json:"-"` and encoded by arm.
+- `Resolved*` capability types are lenient (serde `default` +
+  `null_to_default`) and `resolve(Option<&T>)` collapses them into the
+  fully-populated view Go's `Resolve()` builds.
+- `RequestMessage.params`/`ResponseMessage.result` are
+  `Option<json::Value>` (raw member bytes) so inbound messages keep the
+  absent-vs-`null` distinction; `unmarshal_params::<T>()` uses
+  `TypeId == TypeId::of::<NoParams>()` for Go's `any(params).(NoParams)`
+  and returns `ParamsError{code: ErrorCode::InvalidParams}` (Go's
+  `ErrorIs` wrapping). Go's "empty `json.Value`" sub-case has no safe-Rust
+  construction (`RawValue::from_string` validates; `unsafe` is forbidden),
+  so it is implemented (`len == 0` accepted) but untested.
+- `DocumentUri`/`URI`/`Method` are `String`/`Cow<'static, str>` newtypes;
+  `DocumentUri::path` ports `net/url`-on-`file://` plus the dynamic-URI
+  encoding round-trip. Enum `String()` becomes `Display`; numeric enums
+  are newtype structs with `Type`-style associated consts.
+- Go benchmarks (`BenchmarkUnmarshalDiscriminatedUnion`) are not ported —
+  `#[bench]` requires nightly.
+- Workspace blockage encountered during verification (not ours):
+  `crates/core/src/options_generated.rs` had gained a duplicate
+  `TypeAcquisition::equals` impl (in-flight regen) vs `typeacquisition.rs`;
+  removed the generated-side copy.
+
+## 2026-10-08 crates/modulespecifiers — tsc/internal/modulespecifiers port shape
+
+- Ports `compare.go`, `preferences.go`, `specifiers.go`, `util.go`, and the
+  testable subset of `specifiers_test.go` at baseline
+  `ec47d33c23e464a17cdf2475632cba629bee8763`. Public entry points match Go
+  (`get_module_specifiers`, `get_module_specifiers_with_info`,
+  `get_module_specifiers_for_file_with_info`, `get_module_specifier`,
+  `update_module_specifier`, `get_each_file_name_of_module`,
+  `get_node_modules_package_name`, etc.) plus the trait surface Go exposes
+  as interfaces.
+- Go interfaces become traits: `SourceFileForSpecifierGeneration`
+  (implemented for `ast::SourceFile`), `CheckerShape`
+  (`get_ambient_module_symbol` → `Option<SymbolId>`), and
+  `ModuleSpecifierGenerationHost` (extends
+  `outputpaths::OutputPathsHost`). Go nil returns map to `Option` except
+  `get_source_of_project_reference_if_output_included`, which returns the
+  `RootedFilePath` default ("") Go callers use as the nil signal.
+- `IsExcludedByRegex` cannot use a regex crate (forbidden dependency), so
+  `util.rs` ships a small RE2-subset engine: a `RegexParser` → `Ast` →
+  `Program` (Inst list) → Pike-VM executor supporting alternation,
+  grouping, `* + ? {m,n}` (lazy variants as leftmost-longest — RE2/Pike-VM
+  semantics), char classes/shorthands, `^ $ \b \B (?i)` inline flags and
+  `/pattern/flags` literal syntax. Go's `regexp.Compile` accepts a superset
+  (Perl classes, `\p{...}`); those parse as `Err` and — matching Go's
+  ignored-error behavior — fail closed (pattern simply doesn't match).
+  Octal escapes follow RE2's strict 3-digit `\ooo` ≤ 0o377 rule; `\1`-`\9`
+  are rejected as backreferences.
+- Go pointer/aliasing quirks documented inline: `ModulePath` keeps
+  `is_in_node_modules`/`is_redirect`/`file_name` per-path; the ambient
+  module symbol path threads `NodeId`/`SymbolId` into arenas
+  (`symbols[id.index()]`, `nodes[d]`); `specPair` abstracts
+  `Vec<String>` (VersionPaths) vs `Option<Vec<String>>` (paths).
+- `tsc-tsoptions` is deliberately NOT a dependency (crate is in flight):
+  `tsoptions.GetSupportedExtensions` is inlined at
+  `util.rs::try_get_any_file_from_path` and
+  `tsoptions.SourceOutputAndProjectReference` is reduced to the
+  `OutputDts` path in the host trait — both marked `PORT(deferred)`.
+- `tsc-json` is a dev-dependency only: Go tests build
+  `ExportsOrImports` struct literals, but its `object_kind` field is
+  private, so test fixtures decode JSON strings via `json::unmarshal`.
+- Verification: remote `cargo test -p tsc-modulespecifiers` (192.168.1.15,
+  `CARGO_TARGET_DIR=/tmp/tsc-target CARGO_INCREMENTAL=0
+  RUSTFLAGS="-C linker-features=-lld"`) — 10 tests, 10 passed, 0 warnings.
+  No `tsc-tsoptions` errors surfaced during this crate's build.
+- Not ported: Go integration tests that need a full Program/Checker
+  (`TestGetModuleSpecifiers`-style end-to-end cases) — they belong to the
+  LSP/compiler harness milestone; the ported tests cover node_modules path
+  parts, ending processing, parent-relative detection, exports/imports
+  matching, ignored paths, and symlink alternatives.
+
+## 2026-10-10 crates/tsoptions — tsc/internal/tsoptions port shape
+
+- Ports the whole `tsc/internal/tsoptions` package at baseline
+  `ec47d33c23e464a17cdf2475632cba629bee8763`: `commandlineoption.rs`,
+  `commandlineparser.rs`, `contentmappers.rs`, `diagnostics.rs`,
+  `enummaps.rs`, `errors.rs`, `namemap.rs`, `parsedbuildcommandline.rs`,
+  `parsedcommandline.rs`, `parsedoptions.rs`, `parsinghelpers.rs`,
+  `rawcompileroptions.rs`, `showconfig.rs`, `tsconfigparsing.rs`,
+  `wildcarddirectories.rs`, plus `value.rs` and generated tables under
+  `src/generated/` (`declarations.rs` ← `declarations_generated.go`,
+  `options.rs` ← `options_generated.go`).
+- `value.rs` — `enum Value` replaces Go `any`: it deliberately keeps the
+  type distinctions Go type-assertions rely on — `Map` (decoder's
+  `*collections.OrderedMap[string,any]`) vs `GoMap` (`map[string]any`),
+  `List` (`[]any`) vs `StringList`/`FilePathList`/`DirPathList` (typed
+  slices), `Plugins` (`[]core.PluginImport`), `EmptyStruct` (`struct{}`),
+  `Null`. `Value`'s `PartialEq` models Go comparability (map/slice-bearing
+  variants are not structurally comparable). A custom `Deserialize` impl
+  emits `Value::Map` recursively so `RawCompilerOptions` preserves JSON
+  document order (Go `json.Unmarshal` into `*OrderedMap` does too; the
+  serde_json default `Map` sorts keys and would lose `"paths"` order).
+- `normalize_json_value` converts `GoMap`/`StringList`/typed lists the way
+  Go's `normalizeJsonValue` handles arbitrary `map[string]any`/slices before
+  `ParseJsonConfigFileContent` processes them (plain maps are sorted by
+  key, matching Go's `slices.Sorted(maps.Keys(...))`).
+- `commandlineparser.rs` — `commandLineParser` keeps
+  `response_file_stack` entries live until recursive `parse_strings`
+  returns (Go's `defer p.responseFileStack.Delete(path)`), which makes
+  cyclic `@file` response files terminate instead of recursing forever.
+  `ParseCommandLineWorkerDiagnostics.option_declarations` is an
+  `Arc<dyn Fn>` so `parse_command_line_test_worker` can inject custom
+  option tables exactly like Go's test hook. The test worker returns the
+  raw `TestCommandLineParser { file_names, options, errors }` mirroring
+  `export_test.go`'s `*commandLineParser` result.
+- `tsconfigparsing.rs` — `compile_on_save` defaults to `Some(false)` (Go
+  `compileOnSave := new(bool)`), not `None`. `TsConfigSourceFile` splits
+  `*ast.SourceFile` into `source_file: NodeId` + `nodes: Vec<Node>` (the
+  arena owning the ids); `ExtendedSourceFiles`/`configFileSpecs` live
+  behind `Mutex` so `Arc<TsConfigSourceFile>` matches Go's shared
+  mutation. `SourceFileCtx` bundles the `(NodeId, &[Node])` view passed to
+  functions that took `*ast.SourceFile`. `ExtendedConfigCache` is a trait;
+  `get_extended_config` returns `Option<ExtendedConfigCacheEntry>` where
+  `None` defers to `parse_extended_config` (a Go nil-entry is impossible,
+  so `None` means "cache miss").
+- `getPropFromRaw` quirk preserved: a present array prop produces
+  `wrong_value == ""` (Go's `propOfRaw{sliceValue: ...}` leaves
+  `wrongValue` at its zero value), which is what lets non-empty
+  `references` suppress the empty-`files` diagnostic.
+- `parsedoptions.rs` — `ParsedOptions` keeps Go's nilability where it
+  matters for `Equals`: `compiler_options`/`type_acquisition` are
+  `Option`, `content_mappers` is `Vec<Arc<Mapper>>` (`Mapper::equals`
+  starts with pointer identity like Go's `m == other`), and
+  `Option<Vec<_>>` fields carry nil-vs-empty. `file_names`/
+  `project_references` cannot distinguish nil from empty (plain `Vec` —
+  the distinction is unobservable in `equals`).
+- `parsedcommandline.rs` — `errors` is `Mutex<Vec<DiagnosticRef>>` (Go
+  mutates the field on a shared pointer); `config_file:
+  Option<Arc<TsConfigSourceFile>>` owns the config-file arena so
+  diagnostics' `DiagnosticFile.node` ids resolve.
+- Tests: all `*_test.go` files are ported — the baseline-driven suites
+  (`TestCommandLineParseResult`, `TestParseCommandLineVerifyNull`,
+  `TestParseBuildCommandLine`, `TestParseConfigFileTextToJson`,
+  `TestParseJsonConfigFileContent`,
+  `TestParseJsonSourceFileConfigFileContent`, `TestParseTypeAcquisition`)
+  compare byte-for-byte against the checked-in reference baselines under
+  `tsc/testdata/baselines/reference/`, so Go-vs-Rust output drift fails
+  the test. Test-side quirks:
+  - The command-line baseline tests re-decode marshaled options through a
+    `unmarshal_options_go_semantics` helper that strips `null` members
+    first — Go `json.Unmarshal` treats `null` as a no-op while serde
+    rejects it for non-`Option` fields.
+  - Error sections render via `errors_of`, which strips
+    `DiagnosticFile.node` before `from_ast_diagnostics` — the snapshot's
+    `text`/`file_name`/`span_map` are enough, and the node id indexes a
+    per-file arena the writer no longer holds (Go's `*SourceFile`
+    pointers are self-contained).
+  - `rawcompileroptions.rs` gets `RawCompilerOptions` deserialized
+    straight into `Option<OrderedMap<String, Value>>` (never through
+    `serde_json::Value`) and converts non-`paths` nested objects to
+    `GoMap`, matching Go's generic-unmarshal map shape.
+  - Enum serialization uses the first matching enum-map key (`"es6"`, not
+    `"es2015"`), matching Go's map iteration in showconfig.
+- Verification: `cargo check` (workspace) and `cargo test -p
+  tsc-tsoptions` — 63 tests, 0 failures. Go-side tests were read as the
+  oracle but not run (local Go toolchain < go.work's 1.27).
+
 ## Deferred crates
 
 - **pprof**: `tsc/internal/pprof` wraps `runtime/pprof` (Go runtime CPU/heap
   profiles). There is no Rust equivalent of the Go pprof runtime format;
   when the CLI reaches profiling flags, substitute a tracing/perf-based
   capture and note it here.
-- **fswatch**: `tsc/internal/fswatch` is a hand-rolled OS watcher stack
-  (inotify, fanotify, FSEvents via assembly FFI, kqueue, Win32 ReadDirectoryChanges).
-  Strategy TBD when watch mode is reached: either a polling-watch subset
-  faithful to `PollingWatcher` semantics plus `notify` for OS events, or a
-  syscall-level port. Do not treat as ported.

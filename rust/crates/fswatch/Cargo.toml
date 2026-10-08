@@ -9,9 +9,6 @@ license.workspace = true
 workspace = true
 
 [dependencies]
-tsc-core = { path = "../core" }
-tsc-nativepath = { path = "../nativepath" }
-tsc-collections = { path = "../collections" }
-tsc-vfs = { path = "../vfs" }
-tsc-tspath = { path = "../tspath" }
+notify = { workspace = true }
 rustc-hash = { workspace = true }
+tsc-nativepath = { path = "../nativepath" }

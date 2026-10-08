@@ -1,0 +1,23 @@
+[package]
+name = "tsc-apiencoder"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+tsc-ast = { path = "../ast" }
+tsc-contentmapper = { path = "../contentmapper" }
+tsc-core = { path = "../core" }
+tsc-spanmap = { path = "../spanmap" }
+tsc-tspath = { path = "../tspath" }
+rustc-hash.workspace = true
+xxhash-rust = { workspace = true, features = ["xxh3"] }
+
+[dev-dependencies]
+tsc-parser = { path = "../parser" }
+tsc-repo = { path = "../repo" }
+tsc-testutil = { path = "../testutil" }

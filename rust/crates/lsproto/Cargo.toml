@@ -1,0 +1,18 @@
+[package]
+name = "tsc-lsproto"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+tsc-bundled = { path = "../bundled" }
+tsc-core = { path = "../core" }
+tsc-json = { path = "../json" }
+tsc-jsonrpc = { path = "../jsonrpc" }
+tsc-tspath = { path = "../tspath" }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }

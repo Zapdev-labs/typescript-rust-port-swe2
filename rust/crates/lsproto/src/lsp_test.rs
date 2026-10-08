@@ -1,0 +1,108 @@
+// Ported from tsc/internal/lsp/lsproto/lsp_test.go @ ec47d33c23e464a17cdf2475632cba629bee8763
+
+use tsc_json as json;
+use tsc_tspath as tspath;
+
+use crate::*;
+
+#[test]
+fn test_unmarshal_completion_item() {
+    let message = r#"{
+    "label": "pageXOffset",
+    "insertTextFormat": 1,
+    "textEdit": {
+        "newText": "pageXOffset",
+        "insert": {
+            "start": {
+                "line": 4,
+                "character": 0
+            },
+            "end": {
+                "line": 4,
+                "character": 4
+            }
+        },
+        "replace": {
+            "start": {
+                "line": 4,
+                "character": 0
+            },
+            "end": {
+                "line": 4,
+                "character": 4
+            }
+        }
+    },
+    "kind": 6,
+    "sortText": "15",
+    "commitCharacters": [
+        ".",
+        ",",
+        ";"
+    ]
+}"#;
+
+    let result: CompletionItem = json::unmarshal(message.as_bytes(), &[]).unwrap();
+
+    assert_eq!(
+        result,
+        CompletionItem {
+            label: "pageXOffset".to_string(),
+            insert_text_format: Some(InsertTextFormat::PlainText),
+            text_edit: Some(TextEditOrInsertReplaceEdit {
+                insert_replace_edit: Some(InsertReplaceEdit {
+                    new_text: "pageXOffset".to_string(),
+                    insert: Range {
+                        start: Position {
+                            line: 4,
+                            character: 0,
+                        },
+                        end: Position {
+                            line: 4,
+                            character: 4,
+                        },
+                    },
+                    replace: Range {
+                        start: Position {
+                            line: 4,
+                            character: 0,
+                        },
+                        end: Position {
+                            line: 4,
+                            character: 4,
+                        },
+                    },
+                }),
+                ..Default::default()
+            }),
+            kind: Some(CompletionItemKind::Variable),
+            sort_text: Some("15".to_string()),
+            commit_characters: Some(vec![".".to_string(), ",".to_string(), ";".to_string()]),
+            ..Default::default()
+        }
+    );
+}
+
+#[test]
+fn test_try_dynamic_file_name_to_document_uri() {
+    let uri = DocumentUri("untitled://wsl+ubuntu/home/user/file.ts?version=1".to_string());
+    let path = uri.path();
+    let round_trip = try_dynamic_file_name_to_document_uri(&path);
+    assert!(round_trip.is_some());
+    assert_eq!(round_trip.unwrap(), uri);
+
+    for malformed in [
+        "^/invalid",
+        "^/~ts-uri~//authority/path",
+        "^/~ts-uri~/scheme/~ts-uri-escape~zz~/path",
+        "^/~ts-uri~/scheme/authority/~ts-uri-escape~zz~",
+        "^/~ts-uri~/scheme/authority/~ts-uri-no-path~zz~",
+    ] {
+        let malformed = tspath::RootedPath::from(malformed);
+        assert!(
+            try_dynamic_file_name_to_document_uri(&malformed).is_none(),
+            "expected {:?} to be rejected",
+            malformed.as_string(),
+        );
+    }
+}
