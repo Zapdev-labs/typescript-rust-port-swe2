@@ -29,6 +29,7 @@ serde_json = "1"
 # Spec deviation (PORTING-NOTES): Go uses math/big for PseudoBigInt and
 # huge-int parsing; Rust has no std bigint so num-bigint fills that role.
 num-bigint = "0.4"
+xxhash-rust = { version = "0.8", features = ["xxh3"] }
 
 [profile.release]
 lto = "fat"

@@ -557,6 +557,32 @@ pub fn parse_source_file(
     (file, p.nodes)
 }
 
+/// [`parse_source_file`] variant that appends into an existing arena —
+/// used by contentmapper's `ParseResult` to keep a canonical source file
+/// and its supplemental outputs in one `Vec<Node>` (Go's heap pointers need
+/// no arena, but `nodes[id]` resolves `NodeId`s by `local_index`, so
+/// `canonical_source_file`/`supplemental_source_files` ids must index a
+/// shared arena). The new file still gets a fresh `file_index` from
+/// `initialize_state`, so its `NodeId`s stay globally unique.
+pub fn parse_source_file_into(
+    opts: SourceFileParseOptions,
+    source_text: &str,
+    script_kind: ScriptKind,
+    nodes: Vec<Node>,
+) -> (NodeId, Vec<Node>) {
+    register_jsdoc_parse_hook();
+    let mut p = Parser::new();
+    p.nodes = nodes;
+    p.initialize_state(opts, source_text, script_kind);
+    p.next_token();
+    let file = if p.script_kind == ScriptKind::Json {
+        p.parse_json_text()
+    } else {
+        p.parse_source_file_worker()
+    };
+    (file, p.nodes)
+}
+
 /// `type expressions any` in `parseJSONText` — either one `*ast.Expression`
 /// or a `[]*ast.Expression` accumulated during error recovery.
 enum JsonExpressions {
@@ -839,13 +865,12 @@ impl<'a> Parser<'a> {
         let pragmas = get_comment_pragmas(&mut self.factory, self.source_text);
         self.nodes[result].as_source_file_mut().pragmas = pragmas.into();
         self.process_pragmas_into_fields(result);
-        let diags = std::mem::take(&mut self.diagnostics);
-        let diags = attach_file_to_diagnostics(diags, result, &self.nodes);
+        let diags = attach_file_to_diagnostics(self.diagnostics.clone(), result, &self.nodes);
         self.nodes[result]
             .as_source_file_mut()
             .set_diagnostics(diags);
-        let jsdoc_diags = std::mem::take(&mut self.jsdoc_diagnostics);
-        let jsdoc_diags = attach_file_to_diagnostics(jsdoc_diags, result, &self.nodes);
+        let jsdoc_diags =
+            attach_file_to_diagnostics(self.jsdoc_diagnostics.clone(), result, &self.nodes);
         self.nodes[result]
             .as_source_file_mut()
             .set_jsdoc_diagnostics(jsdoc_diags);
@@ -919,6 +944,7 @@ impl<'a> Parser<'a> {
         if self.possible_await_spans.len() % 2 == 1 {
             panic!("possibleAwaitSpans malformed: odd number of indices, not paired into spans.");
         }
+
         let mut statements: Vec<NodeId> = Vec::new();
         let saved_parse_diagnostics = std::mem::take(&mut self.diagnostics);
 
@@ -4731,7 +4757,7 @@ impl<'a> Parser<'a> {
 
     /// `func (p *Parser) reScanSlashToken() ast.Kind`
     fn rescan_slash_token(&mut self) -> Kind {
-        self.token = self.scanner.rescan_slash_token(true);
+        self.token = self.scanner.rescan_slash_token(false);
         self.drain_scanner_errors();
         self.token
     }
@@ -6707,27 +6733,18 @@ impl<'a> Parser<'a> {
         //  - "(x,y)" is a comma expression parsed as a signature with two parameters that
         //    have no type annotations or default values.
         //  - "(a ? b : c)" is a conditional expression, etc.
-        // So we parse the body as an expression and check that it conforms to the arrow function
-        // grammar. If it doesn't, we have to bail out and re-parse as if it were an expression.
+        //  - "a ? (b): (function() {})" as well, but inside of a parenthesized type with an arbitrary amount of nesting.
+        //
+        // So we need just a bit of lookahead to ensure that it can only be a signature.
         if !allow_ambiguity
-            && !matches!(
-                self.token,
-                Kind::EqualsGreaterThanToken | Kind::OpenBraceToken | Kind::ColonToken
-            )
+            && self.token != Kind::EqualsGreaterThanToken
+            && self.token != Kind::OpenBraceToken
         {
+            // Returning undefined here will cause our caller to rewind to where we started from.
             return None;
         }
-        // If we have an arrow function, we need to check if the parameters are valid as
-        // arrow function parameters.
-        if allow_ambiguity
-            && !matches!(
-                self.token,
-                Kind::EqualsGreaterThanToken | Kind::OpenBraceToken
-            )
-        {
-            return None;
-        }
-        // Go on to parse the arrow function assuming no further issues.
+        // If we have an arrow, then try to parse the body. Even if not, try to parse if we
+        // have an opening brace, just in case we're in an error state.
         let last_token = self.token;
         let equals_greater_than_token = self.parse_expected_token(Kind::EqualsGreaterThanToken);
         let body = if last_token == Kind::EqualsGreaterThanToken
@@ -7481,7 +7498,7 @@ impl<'a> Parser<'a> {
         loop {
             let current_token = self
                 .scanner
-                .scan_jsx_token_ex(true /*allowMultilineJsxText*/);
+                .rescan_jsx_token(true /*allowMultilineJsxText*/);
             self.drain_scanner_errors();
             let child = self.parse_jsx_child(opening_tag, current_token);
             let Some(child) = child else {

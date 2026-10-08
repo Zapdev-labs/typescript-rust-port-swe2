@@ -9,6 +9,7 @@ pub mod utilities;
 
 pub use parser::{
     Parser, ParsingContext, attach_file_to_diagnostics, get_comment_pragmas, parse_source_file,
+    parse_source_file_into,
 };
 pub use references::collect_external_module_references;
 pub use types::ParseFlags;

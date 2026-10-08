@@ -75,6 +75,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "parsecorpus"
+version = "0.0.0"
+dependencies = [
+ "serde_json",
+ "tsc-ast",
+ "tsc-core",
+ "tsc-parser",
+ "tsc-tspath",
+]
+
+[[package]]
 name = "proc-macro2"
 version = "1.0.107"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -177,6 +188,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "tsc-binder"
+version = "0.0.0"
+dependencies = [
+ "rustc-hash",
+ "tsc-ast",
+ "tsc-collections",
+ "tsc-core",
+ "tsc-debug",
+ "tsc-diagnostics",
+ "tsc-parser",
+ "tsc-scanner",
+ "tsc-tspath",
+]
+
+[[package]]
 name = "tsc-bundled"
 version = "0.0.0"
 dependencies = [
@@ -192,6 +218,28 @@ dependencies = [
  "rustc-hash",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "tsc-contentmapper"
+version = "0.0.0"
+dependencies = [
+ "rustc-hash",
+ "serde",
+ "serde_json",
+ "tsc-ast",
+ "tsc-collections",
+ "tsc-core",
+ "tsc-diagnostics",
+ "tsc-ipc",
+ "tsc-json",
+ "tsc-jsonrpc",
+ "tsc-locale",
+ "tsc-parser",
+ "tsc-spanmap",
+ "tsc-tspath",
+ "tsc-vfs",
+ "xxhash-rust",
 ]
 
 [[package]]
@@ -381,6 +429,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "tsc-pseudochecker"
+version = "0.0.0"
+dependencies = [
+ "tsc-ast",
+ "tsc-core",
+ "tsc-debug",
+ "tsc-parser",
+]
+
+[[package]]
 name = "tsc-repo"
 version = "0.0.0"
 
@@ -502,6 +560,12 @@ name = "unicode-ident"
 version = "1.0.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d245f478577f809a851594d02313b640fb437e0bb33866753cff937863096954"
+
+[[package]]
+name = "xxhash-rust"
+version = "0.8.19"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "550a2b930b62486a393c52d5c3b84bff264b28aa437ed64694d31e93b1757af7"
 
 [[package]]
 name = "zmij"

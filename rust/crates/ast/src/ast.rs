@@ -221,6 +221,14 @@ impl core::ops::IndexMut<NodeId> for Vec<Node> {
     }
 }
 
+// PORT: lets `debug::fail_bad_syntax_kind!(node)` accept `Node`/`&Node`,
+// matching Go's `interface{ KindString() string }` argument contract.
+impl tsc_debug::KindString for Node {
+    fn kind_string(&self) -> String {
+        Node::kind_string(self).to_string()
+    }
+}
+
 // NodeFactoryHooks / NodeFactory
 
 /// Hook invoked when a node is created. Receives the arena and the new node id.

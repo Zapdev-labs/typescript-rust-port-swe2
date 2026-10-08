@@ -24,3 +24,4 @@ tsc-vfs = { path = "../vfs" }
 serde = { workspace = true }
 serde_json = { workspace = true }
 rustc-hash = { workspace = true }
+xxhash-rust = { workspace = true }
