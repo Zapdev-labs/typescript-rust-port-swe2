@@ -1192,7 +1192,7 @@ pub fn set_imports_of_source_file(
     if !is_source_file(&nodes[source_file]) {
         return;
     }
-    nodes[source_file].as_source_file_mut().imports = Some(imports);
+    nodes[source_file].as_source_file_mut().imports = imports.into();
 }
 
 /// `FindAncestorResult` — return value of `FindAncestorOrQuit` callbacks.
@@ -1586,9 +1586,9 @@ pub fn is_var_let(node: NodeId, nodes: &[Node]) -> bool {
     get_combined_node_flags(node, nodes) & NodeFlags::BLOCK_SCOPED == NodeFlags::LET
 }
 
-/// `IsLet(node)` — `isLet` in Go checks `NodeFlagsLet` intersection.
-pub fn is_let(node: &Node) -> bool {
-    node.flags.intersects(NodeFlags::LET)
+/// `IsLet(node)` — same computation as `IsVarLet` (combined flags).
+pub fn is_let(node: NodeId, nodes: &[Node]) -> bool {
+    get_combined_node_flags(node, nodes) & NodeFlags::BLOCK_SCOPED == NodeFlags::LET
 }
 
 // PORT(deferred): GetJSDocDeprecatedTag — needs `Node::JSDoc`/`file.jsdocCache`
@@ -1644,8 +1644,8 @@ pub fn walk_up_binding_elements_and_patterns(binding: NodeId, nodes: &[Node]) ->
 
 /// `IsSourceFileJS(file)`.
 pub fn is_source_file_js(file: &SourceFile) -> bool {
-    file.script_kind == crate::scriptkind::ScriptKind::JS
-        || file.script_kind == crate::scriptkind::ScriptKind::JSX
+    file.script_kind == tsc_core::scriptkind::ScriptKind::JS
+        || file.script_kind == tsc_core::scriptkind::ScriptKind::JSX
 }
 
 /// `IsInJSFile(node)`.
@@ -1674,34 +1674,29 @@ pub fn is_declaration(node: &Node) -> bool {
 pub fn is_declaration_name(name: NodeId, nodes: &[Node]) -> bool {
     !is_source_file(&nodes[name])
         && !is_binding_pattern(&nodes[name])
-        && nodes[name].parent.is_some_and(|p| {
-            is_declaration(&nodes[p]) && nodes[p].name() == Some(name)
-        })
+        && is_declaration(&nodes[nodes[name].parent.expect("nil parent in IsDeclarationName")])
+        && nodes[nodes[name].parent.unwrap()].name() == Some(name)
 }
 
-/// `IsDeclarationNameOrImportPropertyName(name)`.
+/// `IsDeclarationNameOrImportPropertyName(name)` — like `isDeclarationName`,
+/// but returns true for the LHS of `import { x as y }` or `export { x as y }`.
 pub fn is_declaration_name_or_import_property_name(name: NodeId, nodes: &[Node]) -> bool {
-    if let Some(parent) = nodes[name].parent {
-        let pk = nodes[parent].kind;
-        match pk {
-            Kind::ImportSpecifier | Kind::ExportSpecifier => {
-                return nodes[parent].property_name() == Some(name);
-            }
-            Kind::ImportClause | Kind::NamespaceImport => {
-                return nodes[parent].name() == Some(name);
-            }
-            _ => {}
+    match nodes[nodes[name].parent.expect("nil parent in IsDeclarationNameOrImportPropertyName")].kind {
+        Kind::ImportSpecifier | Kind::ExportSpecifier => {
+            is_identifier(&nodes[name]) || nodes[name].kind == Kind::StringLiteral
         }
+        _ => is_declaration_name(name, nodes),
     }
-    is_declaration_name(name, nodes)
 }
 
-/// `IsLiteralComputedPropertyDeclarationName(node)`.
+/// `IsLiteralComputedPropertyDeclarationName(node)` — `node` is the literal
+/// inside a `["name"]` computed property name.
 pub fn is_literal_computed_property_declaration_name(node: NodeId, nodes: &[Node]) -> bool {
-    is_computed_property_name(&nodes[node])
-        && nodes[node]
-            .expression()
-            .is_some_and(|e| is_string_literal_like(&nodes[e]) || is_numeric_literal(&nodes[e]))
+    is_string_or_numeric_literal_like(&nodes[node])
+        && nodes[node].parent.is_some_and(|p| nodes[p].kind == Kind::ComputedPropertyName)
+        && nodes[nodes[node].parent.unwrap()]
+            .parent
+            .is_some_and(|gp| is_declaration(&nodes[gp]))
 }
 
 /// `IsExternalModuleImportEqualsDeclaration(node)`.
@@ -1718,16 +1713,10 @@ pub fn is_module_or_enum_declaration(node: &Node) -> bool {
 
 /// `IsLiteralImportTypeNode(node)`.
 pub fn is_literal_import_type_node(node: &Node, nodes: &[Node]) -> bool {
-    if !is_import_type_node(node) {
-        return false;
-    }
-    node.as_import_type_node()
-        .argument
-        .is_some_and(|arg| {
+    is_import_type_node(node)
+        && node.as_import_type_node().argument.is_some_and(|arg| {
             is_literal_type_node(&nodes[arg])
-                && nodes[arg]
-                    .expression()
-                    .is_some_and(|e| is_string_literal(&nodes[e]))
+                && is_string_literal(&nodes[nodes[arg].as_literal_type_node().literal.unwrap()])
         })
 }
 
@@ -1743,27 +1732,26 @@ pub fn is_jsx_tag_name(node: NodeId, nodes: &[Node]) -> bool {
     }
 }
 
-/// `IsImportOrExportSpecifier(node)` — KindJSAttributeLike? matches Go:
-/// `node.Kind == KindImportSpecifier || node.Kind == KindExportSpecifier`.
+/// `IsImportOrExportSpecifier(node)`.
 pub fn is_import_or_export_specifier(node: &Node) -> bool {
-    node.kind == Kind::ImportSpecifier || node.kind == Kind::ExportSpecifier
+    is_import_specifier(node) || is_export_specifier(node)
 }
 
-/// `IsVoidZero(node)`.
+/// `IsVoidZero(node)` — `void 0`.
 pub fn is_void_zero(node: &Node, nodes: &[Node]) -> bool {
-    node.kind == Kind::VoidExpression
+    is_void_expression(node)
         && node.expression().is_some_and(|e| {
             is_numeric_literal(&nodes[e]) && nodes[e].text(nodes) == "0"
         })
 }
 
-/// `IsExportsIdentifier(node)` — in JS files only.
-pub fn is_exports_identifier(node: &Node, nodes: &[Node]) -> bool {
+/// `IsExportsIdentifier(node)`.
+pub fn is_exports_identifier(node: &Node) -> bool {
     is_identifier(node) && node.as_identifier().text == "exports"
 }
 
 /// `IsModuleIdentifier(node)`.
-pub fn is_module_identifier(node: &Node, nodes: &[Node]) -> bool {
+pub fn is_module_identifier(node: &Node) -> bool {
     is_identifier(node) && node.as_identifier().text == "module"
 }
 
@@ -1781,184 +1769,1908 @@ pub fn is_this_parameter(parameter: &Node, nodes: &[Node]) -> bool {
 // ---------------------------------------------------------------------------
 // Bindable static access expressions
 
-/// `IsBindableStaticAccessExpression(node)` — `expr?.name` chains.
-pub fn is_bindable_static_access_expression(node: &Node, nodes: &[Node]) -> bool {
+/// `IsBindableStaticAccessExpression(node, excludeThisKeyword)`.
+pub fn is_bindable_static_access_expression(
+    node: &Node,
+    nodes: &[Node],
+    exclude_this_keyword: bool,
+) -> bool {
     is_property_access_expression(node)
-        && !node.flags.intersects(NodeFlags::OPTIONAL_CHAIN)
-        && node.name().is_some_and(|n| {
-            let n = &nodes[n];
-            is_identifier(n) || is_keyword_expression_kind(n.kind)
-        })
+        && ((!exclude_this_keyword
+            && node.expression().is_some_and(|e| nodes[e].kind == Kind::ThisKeyword))
+            || (node.name().is_some_and(|n| is_identifier(&nodes[n]))
+                && node.expression().is_some_and(|e| {
+                    is_bindable_static_name_expression(e, nodes, true /* excludeThisKeyword */)
+                })))
+        || is_bindable_static_element_access_expression(node, nodes, exclude_this_keyword)
 }
 
-// PORT: `is_bindable_static_access_expression` on a non-optional-chain checks
-// the last token is an identifier-ish — Go's `isPushOrUnshiftIdentifier` and
-// `IsIdentifier` exclusions are handled by `is_bindable_static_name_expression`.
-
-/// `IsBindableStaticElementAccessExpression(node, excludeComputedLiterals)`.
+/// `IsBindableStaticElementAccessExpression(node, excludeThisKeyword)`.
 pub fn is_bindable_static_element_access_expression(
     node: &Node,
     nodes: &[Node],
-    exclude_computed_literals: bool,
+    exclude_this_keyword: bool,
 ) -> bool {
-    if !is_literal_like_element_access(node, nodes) {
-        return false;
-    }
-    if exclude_computed_literals
-        && !is_bindable_static_name_expression(
-            nodes[node.as_element_access_expression().expression.unwrap()].id,
-            nodes,
-        )
-    {
-        return false;
-    }
-    true
+    is_literal_like_element_access(node, nodes)
+        && (node.expression().is_some_and(|e| {
+            (!exclude_this_keyword && nodes[e].kind == Kind::ThisKeyword)
+                || is_entity_name_expression(&nodes[e])
+                || is_bindable_static_access_expression(
+                    &nodes[e],
+                    nodes,
+                    true, /* excludeThisKeyword */
+                )
+        }))
 }
 
 /// `IsPrototypeAccess(expression)`.
 pub fn is_prototype_access(node: &Node, nodes: &[Node]) -> bool {
-    is_bindable_static_access_expression(node, nodes)
-        && node.name().is_some_and(|n| nodes[n].text(nodes) == "prototype")
+    if is_bindable_static_access_expression(node, nodes, false /* excludeThisKeyword */) {
+        if let Some(name) = get_element_or_property_access_name(node, nodes) {
+            return nodes[name].text(nodes) == "prototype";
+        }
+    }
+    false
 }
 
 /// `IsLiteralLikeElementAccess(node)` — element access with a literal arg.
 pub fn is_literal_like_element_access(node: &Node, nodes: &[Node]) -> bool {
     is_element_access_expression(node)
-        && !node.flags.intersects(NodeFlags::OPTIONAL_CHAIN)
         && node.as_element_access_expression().argument_expression.is_some_and(|a| {
             is_string_or_numeric_literal_like(&nodes[a])
-                || is_entity_name_expression_ex(&nodes[a], nodes)
         })
 }
 
-/// `IsBindableStaticNameExpression(node, excludeKeywordLiterals)` —
-/// `isBindableStaticNameExpression` in Go.
-pub fn is_bindable_static_name_expression(node: NodeId, nodes: &[Node]) -> bool {
+/// `IsBindableStaticNameExpression(node, excludeThisKeyword)`.
+pub fn is_bindable_static_name_expression(
+    node: NodeId,
+    nodes: &[Node],
+    exclude_this_keyword: bool,
+) -> bool {
     let node = &nodes[node];
-    is_entity_name_expression_ex(node, nodes)
-        || is_bindable_static_access_expression(node, nodes)
-        || is_bindable_static_element_access_expression(node, nodes, false /* excludeComputedLiterals */)
+    is_entity_name_expression(node)
+        || is_bindable_static_access_expression(node, nodes, exclude_this_keyword)
 }
 
-/// `GetElementOrPropertyAccessName(access)`.
-pub fn get_element_or_property_access_name(access: &Node, nodes: &[Node]) -> Option<Cow<'_, str>> {
-    if is_property_access_expression(access) {
-        return access.name().map(|n| nodes[n].text(nodes));
-    }
-    if is_element_access_expression(access) {
-        if let Some(arg) = access.as_element_access_expression().argument_expression {
-            let arg_node = &nodes[arg];
-            if is_string_or_numeric_literal_like(arg_node) {
-                return Some(arg_node.text(nodes));
+/// `GetElementOrPropertyAccessName(node)` — the name node of a
+/// `x.y`/`x["y"]`/`x[0]` access, or `None`.
+///
+/// Does not handle signed numeric names like `a[+0]` (matching Go).
+pub fn get_element_or_property_access_name(node: &Node, nodes: &[Node]) -> Option<NodeId> {
+    match node.kind {
+        Kind::PropertyAccessExpression => {
+            let name = node.name().unwrap();
+            if is_identifier(&nodes[name]) {
+                return Some(name);
             }
-            if is_entity_name_expression_ex(arg_node, nodes) {
-                return Some(get_right_most_entity_name(arg, nodes).text(nodes));
-            }
+            None
         }
-    }
-    None
-}
-
-/// `getRightMostEntityName(expr)` — walks `.Left`/`Right`/`Expression`/`Name`
-/// to the right-most identifier — used by `GetElementOrPropertyAccessName`.
-fn get_right_most_entity_name(node: NodeId, nodes: &[Node]) -> NodeId {
-    let mut node = node;
-    loop {
-        match nodes[node].kind {
-            Kind::QualifiedName => node = nodes[node].as_qualified_name().right.unwrap(),
-            Kind::PropertyAccessExpression | Kind::ElementAccessExpression => {
-                if let Some(n) = nodes[node].name() {
-                    node = n;
-                } else {
-                    break;
-                }
+        Kind::ElementAccessExpression => {
+            let arg = skip_parentheses(
+                node.as_element_access_expression().argument_expression.unwrap(),
+                nodes,
+            );
+            if is_string_or_numeric_literal_like(&nodes[arg]) {
+                return Some(arg);
             }
-            _ => break,
+            None
         }
+        _ => panic!("Unhandled case in GetElementOrPropertyAccessName"),
     }
-    node
 }
 
-/// `GetInitializerOfBinaryExpression(expr)`.
-pub fn get_initializer_of_binary_expression(expr: &Node, nodes: &[Node]) -> Option<NodeId> {
-    if !is_assignment_expression(expr, nodes, true /* excludeCompoundAssignment */) {
-        return None;
+/// `GetInitializerOfBinaryExpression(expr)` — the innermost right operand of
+/// a right-associative binary expression chain.
+///
+/// PORT: Go calls `expr.Right.Expression()` which panics on `*Node` kinds
+/// without an `Expression` field; the Rust accessor returns `Option`, so this
+/// returns `None` where Go would panic.
+pub fn get_initializer_of_binary_expression(mut expr: NodeId, nodes: &[Node]) -> Option<NodeId> {
+    while is_binary_expression(&nodes[nodes[expr].as_binary_expression().right.unwrap()]) {
+        expr = nodes[expr].as_binary_expression().right.unwrap();
     }
-    expr.as_binary_expression().right
+    nodes[nodes[expr].as_binary_expression().right.unwrap()].expression()
 }
 
 /// `IsExpressionWithTypeArgumentsInClassExtendsClause(node)`.
 pub fn is_expression_with_type_arguments_in_class_extends_clause(
-    node: &Node,
+    node: NodeId,
     nodes: &[Node],
 ) -> bool {
-    // PORT: Go walks `node.Parent` -> heritage clause -> class heritage clause.
-    node.parent
-        .is_some_and(|p| try_get_class_extends_clause_node(p, nodes))
+    try_get_class_extending_expression_with_type_arguments(node, nodes).is_some()
 }
 
-/// `tryGetClassExtendsClauseNode` — `IsExpressionWithTypeArgumentsInClassExtendsClause` helper.
-fn try_get_class_extends_clause_node(node: NodeId, nodes: &[Node]) -> bool {
-    let Some(clause) = try_get_class_implementing_or_extending_heritage_clause_element(node, nodes)
-    else {
-        return false;
-    };
-    nodes[clause.clause_node].kind == Kind::HeritageClause
-        && nodes[clause.clause_node].as_heritage_clause().token == Kind::ExtendsKeyword
-        && is_class_like(clause.parent, nodes)
-}
-
-/// `TryGetClassExtendingExpressionWithTypeArguments(node)`.
+/// `TryGetClassExtendingExpressionWithTypeArguments(node)` — returns the
+/// containing class declaration.
 pub fn try_get_class_extending_expression_with_type_arguments(
     node: NodeId,
     nodes: &[Node],
 ) -> Option<NodeId> {
-    let cls = try_get_class_implementing_or_extending_heritage_clause_element(node, nodes)?;
-    if is_class_like(cls.parent, nodes) && nodes[cls.clause_node].as_heritage_clause().token == Kind::ExtendsKeyword {
-        return Some(cls.node);
+    if !is_expression_with_type_arguments(&nodes[node]) {
+        return None;
+    }
+    let (cls, is_implements) =
+        try_get_class_implementing_or_extending_heritage_clause_element(node, nodes);
+    if cls.is_some() && !is_implements {
+        return cls;
     }
     None
 }
 
-/// `HeritageClauseElement` — Go's returned `{node, parent, clauseNode}` from
-/// `TryGetClassImplementingOrExtendingHeritageClauseElement`.
-#[derive(Clone, Copy, Debug)]
-pub struct HeritageClauseElement {
-    /// The `ExpressionWithTypeArguments`/`TypeReference`-ish element node.
-    pub node: NodeId,
-    /// The class-like or interface declaration node.
-    pub parent: NodeId,
-    /// The `HeritageClause` node.
-    pub clause_node: NodeId,
-}
-
-/// `TryGetClassImplementingOrExtendingHeritageClauseElement(node)`.
+/// `TryGetClassImplementingOrExtendingHeritageClauseElement(node)` — returns
+/// `(classLikeDeclaration, isImplements)`.
 pub fn try_get_class_implementing_or_extending_heritage_clause_element(
     node: NodeId,
     nodes: &[Node],
-) -> Option<HeritageClauseElement> {
-    let decl = &nodes[node];
-    let (is_heritage_clause, parent_kinds) = match decl.kind {
-        Kind::ExpressionWithTypeArguments => (true, &[Kind::ClassDeclaration, Kind::ClassExpression][..]),
-        Kind::TypeReference => (true, &[Kind::InterfaceDeclaration][..]),
-        _ => (false, &[][..]),
+) -> (Option<NodeId>, bool) {
+    let n = &nodes[node];
+    if (is_expression_with_type_arguments(n) || is_type_reference_node(n))
+        && n.parent.is_some_and(|p| is_heritage_clause(&nodes[p]))
+        && nodes[n.parent.unwrap()]
+            .parent
+            .is_some_and(|p| is_class_like(Some(p), nodes))
+    {
+        return (
+            nodes[n.parent.unwrap()].parent,
+            nodes[n.parent.unwrap()].as_heritage_clause().token == Kind::ImplementsKeyword,
+        );
+    }
+    (None, false)
+}
+
+// ---------------------------------------------------------------------------
+// Names of declarations / JS declaration kinds
+
+/// `GetNameOfDeclaration(declaration)`.
+pub fn get_name_of_declaration(declaration: Option<NodeId>, nodes: &[Node]) -> Option<NodeId> {
+    let declaration = declaration?;
+    if let Some(non_assigned_name) = get_non_assigned_name_of_declaration(declaration, nodes) {
+        return Some(non_assigned_name);
+    }
+    let d = &nodes[declaration];
+    if is_function_expression(d) || is_arrow_function(d) || is_class_expression(d) {
+        return get_assigned_name(declaration, nodes);
+    }
+    None
+}
+
+/// `GetNonAssignedNameOfDeclaration(declaration)`.
+pub fn get_non_assigned_name_of_declaration(
+    declaration: NodeId,
+    nodes: &[Node],
+) -> Option<NodeId> {
+    // !!!
+    let decl = &nodes[declaration];
+    match decl.kind {
+        Kind::BinaryExpression | Kind::CallExpression => {
+            match get_assignment_declaration_kind(declaration, nodes) {
+                JsDeclarationKind::Property
+                | JsDeclarationKind::ThisProperty
+                | JsDeclarationKind::ExportsProperty => {
+                    let left = decl.as_binary_expression().left.unwrap();
+                    if let Some(name) =
+                        get_element_or_property_access_name(&nodes[left], nodes)
+                    {
+                        return Some(name);
+                    }
+                    return Some(left);
+                }
+                JsDeclarationKind::ObjectDefinePropertyValue
+                | JsDeclarationKind::ObjectDefinePropertyExports => {
+                    return decl.arguments().map(|args| args[1]);
+                }
+                _ => {}
+            }
+            None
+        }
+        Kind::ExportAssignment => {
+            let expr = decl.expression()?;
+            if is_identifier(&nodes[expr]) {
+                return Some(expr);
+            }
+            None
+        }
+        _ => decl.name(),
+    }
+}
+
+/// `GetAssignedName(node)`.
+pub fn get_assigned_name(node: NodeId, nodes: &[Node]) -> Option<NodeId> {
+    let parent = nodes[node].parent?;
+    let p = &nodes[parent];
+    match p.kind {
+        Kind::PropertyAssignment => p.as_property_assignment().name,
+        Kind::BindingElement => p.as_binding_element().name,
+        Kind::BinaryExpression => {
+            let be = p.as_binary_expression();
+            if Some(node) == be.right {
+                let left = be.left.unwrap();
+                match nodes[left].kind {
+                    Kind::Identifier => return Some(left),
+                    Kind::PropertyAccessExpression => return nodes[left].name(),
+                    Kind::ElementAccessExpression => {
+                        let arg = skip_parentheses(
+                            nodes[left]
+                                .as_element_access_expression()
+                                .argument_expression
+                                .unwrap(),
+                            nodes,
+                        );
+                        if is_string_or_numeric_literal_like(&nodes[arg]) {
+                            return Some(arg);
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            None
+        }
+        Kind::VariableDeclaration => {
+            let name = p.as_variable_declaration().name?;
+            if is_identifier(&nodes[name]) {
+                return Some(name);
+            }
+            None
+        }
+        _ => None,
+    }
+}
+
+/// `JSDeclarationKind` — classification of JS-assignment declarations.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Default)]
+pub enum JsDeclarationKind {
+    /// `JSDeclarationKindNone`.
+    #[default]
+    None = 0,
+    /// `JSDeclarationKindModuleExports` — `module.exports = expr` (except
+    /// `module.exports = exports`).
+    ModuleExports,
+    /// `JSDeclarationKindExportsProperty` — `exports.name = expr` /
+    /// `module.exports.name = expr`.
+    ExportsProperty,
+    /// `JSDeclarationKindThisProperty` — `this.name = expr`.
+    ThisProperty,
+    /// `JSDeclarationKindProperty` — `F.name = expr`, `F[name] = expr`, in JS
+    /// or TS file.
+    Property,
+    /// `JSDeclarationKindObjectDefinePropertyValue` —
+    /// `Object.defineProperty(x, 'name', ...)`.
+    ObjectDefinePropertyValue,
+    /// `JSDeclarationKindObjectDefinePropertyExports` —
+    /// `Object.defineProperty(exports || module.exports, 'name', ...)`.
+    ObjectDefinePropertyExports,
+}
+
+/// `GetAssignmentDeclarationKind(node)`.
+pub fn get_assignment_declaration_kind(node: NodeId, nodes: &[Node]) -> JsDeclarationKind {
+    match nodes[node].kind {
+        Kind::BinaryExpression => {
+            let bin = nodes[node].as_binary_expression();
+            if nodes[bin.operator_token.unwrap()].kind == Kind::EqualsToken
+                && is_access_expression(&nodes[bin.left.unwrap()])
+            {
+                let left = bin.left.unwrap();
+                if is_in_js_file(Some(left), nodes) {
+                    if is_module_exports_access_expression(&nodes[left], nodes)
+                        && !is_exports_identifier(&nodes[bin.right.unwrap()])
+                    {
+                        return JsDeclarationKind::ModuleExports;
+                    }
+                    if (is_module_exports_access_expression(
+                        &nodes[nodes[left].expression().unwrap()],
+                        nodes,
+                    ) || is_exports_identifier(
+                        &nodes[nodes[left].expression().unwrap()],
+                    )) && get_element_or_property_access_name(&nodes[left], nodes).is_some()
+                    {
+                        return JsDeclarationKind::ExportsProperty;
+                    }
+                    if nodes[left].expression().is_some_and(|e| {
+                        nodes[e].kind == Kind::ThisKeyword
+                    }) {
+                        return JsDeclarationKind::ThisProperty;
+                    }
+                }
+                if nodes[left].kind == Kind::PropertyAccessExpression
+                    && is_entity_name_expression_ex(
+                        &nodes[nodes[left].expression().unwrap()],
+                        is_in_js_file(Some(left), nodes),
+                        nodes,
+                    )
+                    && nodes[left].name().is_some_and(|n| is_identifier(&nodes[n]))
+                    || nodes[left].kind == Kind::ElementAccessExpression
+                        && is_entity_name_expression_ex(
+                            &nodes[nodes[left].expression().unwrap()],
+                            is_in_js_file(Some(left), nodes),
+                            nodes,
+                        )
+                {
+                    return JsDeclarationKind::Property;
+                }
+            }
+            JsDeclarationKind::None
+        }
+        Kind::CallExpression => {
+            if is_in_js_file(Some(node), nodes)
+                && is_bindable_object_define_property_call(node, nodes)
+            {
+                let entity_name = nodes[node].arguments().unwrap()[0];
+                if is_exports_identifier(&nodes[entity_name])
+                    || is_module_exports_access_expression(&nodes[entity_name], nodes)
+                {
+                    return JsDeclarationKind::ObjectDefinePropertyExports;
+                }
+                return JsDeclarationKind::ObjectDefinePropertyValue;
+            }
+            JsDeclarationKind::None
+        }
+        _ => JsDeclarationKind::None,
+    }
+}
+
+/// `IsBindableObjectDefinePropertyCall(node)`.
+pub fn is_bindable_object_define_property_call(node: NodeId, nodes: &[Node]) -> bool {
+    if let Some(args) = nodes[node].arguments() {
+        if args.len() == 3 {
+            if let Some(expr) = nodes[node].expression() {
+                let e = &nodes[expr];
+                if is_property_access_expression(e)
+                    && e.expression().is_some_and(|x| {
+                        is_identifier(&nodes[x]) && nodes[x].text(nodes) == "Object"
+                    })
+                    && e.name().is_some_and(|n| nodes[n].text(nodes) == "defineProperty")
+                    && is_string_or_numeric_literal_like(&nodes[args[1]])
+                    && is_bindable_static_name_expression(
+                        args[0],
+                        nodes,
+                        true, /* excludeThisKeyword */
+                    )
+                {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
+
+/// `HasDynamicName(declaration)` — declaration has a computed name that is not
+/// a literal or signed numeric literal.
+pub fn has_dynamic_name(declaration: NodeId, nodes: &[Node]) -> bool {
+    get_name_of_declaration(Some(declaration), nodes)
+        .is_some_and(|name| is_dynamic_name(name, nodes))
+}
+
+/// `IsDynamicName(name)`.
+pub fn is_dynamic_name(name: NodeId, nodes: &[Node]) -> bool {
+    let expr: NodeId = match nodes[name].kind {
+        Kind::ComputedPropertyName => nodes[name].expression().unwrap(),
+        Kind::ElementAccessExpression => {
+            skip_parentheses(
+                nodes[name]
+                    .as_element_access_expression()
+                    .argument_expression
+                    .unwrap(),
+                nodes,
+            )
+        }
+        _ => return false,
     };
-    if !is_heritage_clause {
-        return None;
+    !is_string_or_numeric_literal_like(&nodes[expr]) && !is_signed_numeric_literal(&nodes[expr], nodes)
+}
+
+/// `IsEntityNameExpression(node)` — a simple or dotted name.
+pub fn is_entity_name_expression(node: &Node, nodes: &[Node]) -> bool {
+    is_entity_name_expression_ex(node, false /* allowJS */, nodes)
+}
+
+/// `IsEntityNameExpressionEx(node, allowJS)`.
+pub fn is_entity_name_expression_ex(node: &Node, allow_js: bool, nodes: &[Node]) -> bool {
+    is_identifier(node)
+        || is_property_access_entity_name_expression(node, allow_js, nodes)
+        || (allow_js
+            && (node.kind == Kind::ThisKeyword
+                || is_element_access_entity_name_expression(node, allow_js, nodes)))
+}
+
+/// `IsPropertyAccessEntityNameExpression(node, allowJS)`.
+pub fn is_property_access_entity_name_expression(
+    node: &Node,
+    allow_js: bool,
+    nodes: &[Node],
+) -> bool {
+    is_property_access_expression(node)
+        && node.name().is_some_and(|n| is_identifier(&nodes[n]))
+        && node
+            .expression()
+            .is_some_and(|e| is_entity_name_expression_ex(&nodes[e], allow_js, nodes))
+}
+
+/// `isElementAccessEntityNameExpression(node, allowJS)`.
+fn is_element_access_entity_name_expression(node: &Node, allow_js: bool, nodes: &[Node]) -> bool {
+    is_element_access_expression(node)
+        && node.as_element_access_expression().argument_expression.is_some_and(|a| {
+            is_string_or_numeric_literal_like(&nodes[a])
+        })
+        && node
+            .expression()
+            .is_some_and(|e| is_entity_name_expression_ex(&nodes[e], allow_js, nodes))
+}
+
+/// `IsDottedName(node)`.
+pub fn is_dotted_name(node: &Node, nodes: &[Node]) -> bool {
+    match node.kind {
+        Kind::Identifier | Kind::ThisKeyword | Kind::SuperKeyword | Kind::MetaProperty => true,
+        Kind::PropertyAccessExpression | Kind::ParenthesizedExpression => {
+            is_dotted_name(&nodes[node.expression().unwrap()], nodes)
+        }
+        _ => false,
     }
-    let clause = decl.parent?;
-    if !is_heritage_clause(&nodes[clause]) {
-        return None;
+}
+
+/// `HasSamePropertyAccessName(node1, node2)`.
+pub fn has_same_property_access_name(node1: &Node, node2: &Node, nodes: &[Node]) -> bool {
+    if node1.kind == Kind::Identifier && node2.kind == Kind::Identifier {
+        node1.text(nodes) == node2.text(nodes)
+    } else if node1.kind == Kind::PropertyAccessExpression
+        && node2.kind == Kind::PropertyAccessExpression
+    {
+        let name1 = node1.as_property_access_expression().name.unwrap();
+        let name2 = node2.as_property_access_expression().name.unwrap();
+        nodes[name1].text(nodes) == nodes[name2].text(nodes)
+            && has_same_property_access_name(
+                &nodes[node1.expression().unwrap()],
+                &nodes[node2.expression().unwrap()],
+                nodes,
+            )
+    } else {
+        false
     }
-    let parent = nodes[clause].parent?;
-    if !parent_kinds.contains(&nodes[parent].kind) {
-        return None;
+}
+
+// ---------------------------------------------------------------------------
+// Modules
+
+/// `IsAmbientModule(node)`.
+pub fn is_ambient_module(node: &Node, nodes: &[Node]) -> bool {
+    is_module_declaration(node)
+        && (node.name().is_some_and(|n| nodes[n].kind == Kind::StringLiteral)
+            || is_global_scope_augmentation(node))
+}
+
+/// `IsAmbientModuleSymbolName(s)` — delegates to the port in `symbol.rs`.
+pub fn is_ambient_module_symbol_name_util(s: &str) -> bool {
+    is_ambient_module_symbol_name(s)
+}
+
+/// `TryGetAmbientModuleNameFromSymbolName(s)` — delegates to `symbol.rs`.
+pub fn try_get_ambient_module_name_from_symbol_name_util(s: &str) -> Option<String> {
+    try_get_ambient_module_name_from_symbol_name(s)
+}
+
+/// `IsExternalModule(file)`.
+pub fn is_external_module(file: &SourceFile) -> bool {
+    file.external_module_indicator.is_some()
+}
+
+/// `IsExternalOrCommonJSModule(file)`.
+pub fn is_external_or_commonjs_module(file: &SourceFile) -> bool {
+    file.external_module_indicator.is_some() || file.common_js_module_indicator.is_some()
+}
+
+// TODO: Should we deprecate `IsExternalOrCommonJSModule` in favor of this function?
+/// `IsEffectiveExternalModule(node, compilerOptions)`.
+pub fn is_effective_external_module(
+    node: &SourceFile,
+    compiler_options: &CompilerOptions,
+) -> bool {
+    is_external_module(node)
+        || (is_commonjs_containing_module_kind(compiler_options.get_emit_module_kind())
+            && node.common_js_module_indicator.is_some())
+}
+
+/// `isCommonJSContainingModuleKind(kind)`.
+fn is_commonjs_containing_module_kind(kind: ModuleKind) -> bool {
+    kind == ModuleKind::CommonJS
+        || (ModuleKind::Node16 <= kind && kind <= ModuleKind::NodeNext)
+}
+
+/// `IsExternalModuleIndicator(node)` — exported top-level member indicates
+/// moduleness.
+pub fn is_external_module_indicator(node: &Node) -> bool {
+    is_any_import_or_re_export(node)
+        || is_export_assignment(node)
+        || has_syntactic_modifier(node, ModifierFlags::EXPORT)
+}
+
+/// `IsExportNamespaceAsDefaultDeclaration(node)`.
+pub fn is_export_namespace_as_default_declaration(node: &Node, nodes: &[Node]) -> bool {
+    if is_export_declaration(node) {
+        let decl = node.as_export_declaration();
+        return decl.export_clause.is_some_and(|clause| {
+            is_namespace_export(&nodes[clause])
+                && nodes[clause].name().is_some_and(|n| {
+                    module_export_name_is_default(&nodes[n], nodes)
+                })
+        });
     }
-    Some(HeritageClauseElement {
-        node,
-        parent,
-        clause_node: clause,
+    false
+}
+
+/// `IsGlobalScopeAugmentation(node)`.
+pub fn is_global_scope_augmentation(node: &Node) -> bool {
+    is_module_declaration(node) && node.as_module_declaration().keyword == Kind::GlobalKeyword
+}
+
+/// `IsModuleAugmentationExternal(node)`.
+pub fn is_module_augmentation_external(node: &Node, nodes: &[Node]) -> bool {
+    // external module augmentation is a ambient module declaration that is either:
+    // - defined in the top level scope and source file is an external module
+    // - defined inside ambient module declaration located in the top level scope and source file not an external module
+    let parent = node.parent.expect("nil parent in IsModuleAugmentationExternal");
+    match nodes[parent].kind {
+        Kind::SourceFile => is_external_module(nodes[parent].as_source_file()),
+        Kind::ModuleBlock => {
+            let grand_parent = nodes[parent]
+                .parent
+                .expect("nil grandparent in IsModuleAugmentationExternal");
+            is_ambient_module(&nodes[grand_parent], nodes)
+                && nodes[grand_parent].parent.is_some_and(|gp| {
+                    is_source_file(&nodes[gp])
+                        && !is_external_module(nodes[gp].as_source_file())
+                })
+        }
+        _ => false,
+    }
+}
+
+/// `IsModuleWithStringLiteralName(node)`.
+pub fn is_module_with_string_literal_name(node: &Node, nodes: &[Node]) -> bool {
+    is_module_declaration(node)
+        && node.name().is_some_and(|n| nodes[n].kind == Kind::StringLiteral)
+}
+
+/// `GetContainingClass(node)`.
+pub fn get_containing_class(node: NodeId, nodes: &[Node]) -> Option<NodeId> {
+    find_ancestor(nodes[node].parent, nodes, &mut |n, _| {
+        matches!(
+            n.kind,
+            Kind::ClassDeclaration | Kind::ClassExpression
+        )
     })
+}
+
+/// `GetExtendsHeritageClauseElements(node)`.
+pub fn get_extends_heritage_clause_elements(node: &Node, nodes: &[Node]) -> Option<&[NodeId]> {
+    get_heritage_elements(node, Kind::ExtendsKeyword, nodes)
+}
+
+/// `GetImplementsHeritageClauseElements(node)`.
+pub fn get_implements_heritage_clause_elements(
+    node: &Node,
+    nodes: &[Node],
+) -> Option<&[NodeId]> {
+    get_heritage_elements(node, Kind::ImplementsKeyword, nodes)
+}
+
+/// `GetHeritageElements(node, kind)`.
+pub fn get_heritage_elements<'a>(
+    node: &Node,
+    kind: Kind,
+    nodes: &'a [Node],
+) -> Option<&'a [NodeId]> {
+    let clause = get_heritage_clause(node, kind, nodes)?;
+    Some(nodes[clause].as_heritage_clause().types.nodes())
+}
+
+/// `GetHeritageClauseElementName(node)` — the expression or type name of a
+/// heritage clause element.
+pub fn get_heritage_clause_element_name(node: &Node, _nodes: &[Node]) -> Option<NodeId> {
+    if is_type_reference_node(node) {
+        return node.as_type_reference_node().type_name;
+    }
+    node.as_expression_with_type_arguments().expression
+}
+
+/// `IsNameOfHeritageClauseTypeReference(node)`.
+pub fn is_name_of_heritage_clause_type_reference(mut node: NodeId, nodes: &[Node]) -> bool {
+    while nodes[node].parent.is_some_and(|p| is_qualified_name(&nodes[p])) {
+        node = nodes[node].parent.unwrap();
+    }
+    nodes[node].parent.is_some_and(|p| {
+        is_type_reference_node(&nodes[p])
+            && nodes[p].as_type_reference_node().type_name == Some(node)
+            && nodes[p].parent.is_some_and(|gp| is_heritage_clause(&nodes[gp]))
+    })
+}
+
+/// `GetHeritageClause(node, kind)`.
+pub fn get_heritage_clause(node: &Node, kind: Kind, nodes: &[Node]) -> Option<NodeId> {
+    if let Some(clauses) = get_heritage_clauses(node) {
+        for &clause in clauses.nodes() {
+            if nodes[clause].as_heritage_clause().token == kind {
+                return Some(clause);
+            }
+        }
+    }
+    None
+}
+
+/// `getHeritageClauses(node)`.
+fn get_heritage_clauses(node: &Node) -> Option<&NodeList> {
+    match node.kind {
+        Kind::ClassDeclaration => node.as_class_declaration().heritage_clauses.as_ref(),
+        Kind::ClassExpression => node.as_class_expression().heritage_clauses.as_ref(),
+        Kind::InterfaceDeclaration => node.as_interface_declaration().heritage_clauses.as_ref(),
+        _ => None,
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Containers / contexts
+
+/// `IsPartOfTypeQuery(node)`.
+pub fn is_part_of_type_query(mut node: NodeId, nodes: &[Node]) -> bool {
+    while matches!(nodes[node].kind, Kind::QualifiedName | Kind::Identifier) {
+        node = nodes[node].parent.expect("nil parent in IsPartOfTypeQuery");
+    }
+    nodes[node].kind == Kind::TypeQuery
+}
+
+/// `IsPartOfParameterDeclaration(node)` — the root declaration is a parameter.
+pub fn is_part_of_parameter_declaration(node: NodeId, nodes: &[Node]) -> bool {
+    nodes[get_root_declaration(node, nodes)].kind == Kind::Parameter
+}
+
+/// `IsInTopLevelContext(node)`.
+pub fn is_in_top_level_context(mut node: NodeId, nodes: &[Node]) -> bool {
+    // The name of a class or function declaration is a BindingIdentifier in its
+    // surrounding scope.
+    if is_identifier(&nodes[node]) {
+        let parent = nodes[node].parent;
+        if let Some(p) = parent {
+            if (is_class_declaration(&nodes[p]) || is_function_declaration(&nodes[p]))
+                && nodes[p].name() == Some(node)
+            {
+                node = p;
+            }
+        }
+    }
+    let container = get_this_container(
+        node,
+        nodes,
+        true,  /* includeArrowFunctions */
+        false, /* includeClassComputedPropertyName */
+    );
+    is_source_file(&nodes[container])
+}
+
+/// `GetThisContainer(node, includeArrowFunctions, includeClassComputedPropertyName)`.
+pub fn get_this_container(
+    mut node: NodeId,
+    nodes: &[Node],
+    include_arrow_functions: bool,
+    include_class_computed_property_name: bool,
+) -> NodeId {
+    loop {
+        node = nodes[node]
+            .parent
+            .expect("nil parent in GetThisContainer");
+        match nodes[node].kind {
+            Kind::ComputedPropertyName => {
+                if include_class_computed_property_name
+                    && nodes[node].parent.is_some_and(|p| {
+                        nodes[p]
+                            .parent
+                            .is_some_and(|gp| is_class_like(Some(gp), nodes))
+                    })
+                {
+                    return node;
+                }
+                node = nodes[node]
+                    .parent
+                    .and_then(|p| nodes[p].parent)
+                    .expect("nil parent in GetThisContainer");
+            }
+            Kind::Decorator => {
+                let parent = nodes[node].parent.expect("nil parent in GetThisContainer");
+                if nodes[parent].kind == Kind::Parameter
+                    && nodes[parent]
+                        .parent
+                        .is_some_and(|gp| is_class_element(&nodes[gp]))
+                {
+                    // If the decorator's parent is a ParameterDeclaration, we
+                    // resolve the this container from the grandparent class
+                    // declaration.
+                    node = nodes[parent].parent.unwrap();
+                } else if is_class_element(&nodes[parent]) {
+                    // If the decorator's parent is a class element, we resolve
+                    // the 'this' container from the parent class declaration.
+                    node = parent;
+                }
+            }
+            Kind::ArrowFunction => {
+                if include_arrow_functions {
+                    return node;
+                }
+            }
+            Kind::FunctionDeclaration
+            | Kind::FunctionExpression
+            | Kind::ModuleDeclaration
+            | Kind::ClassStaticBlockDeclaration
+            | Kind::PropertyDeclaration
+            | Kind::PropertySignature
+            | Kind::MethodDeclaration
+            | Kind::MethodSignature
+            | Kind::Constructor
+            | Kind::GetAccessor
+            | Kind::SetAccessor
+            | Kind::CallSignature
+            | Kind::ConstructSignature
+            | Kind::IndexSignature
+            | Kind::EnumDeclaration
+            | Kind::SourceFile => return node,
+            _ => {}
+        }
+    }
+}
+
+/// `GetSuperContainer(node, stopOnFunctions)`.
+pub fn get_super_container(node: NodeId, nodes: &[Node], stop_on_functions: bool) -> Option<NodeId> {
+    let mut node = nodes[node].parent;
+    while let Some(n) = node {
+        match nodes[n].kind {
+            Kind::ComputedPropertyName => {
+                node = nodes[n].parent;
+            }
+            Kind::FunctionDeclaration | Kind::FunctionExpression | Kind::ArrowFunction => {
+                if stop_on_functions {
+                    return Some(n);
+                }
+            }
+            Kind::PropertyDeclaration
+            | Kind::PropertySignature
+            | Kind::MethodDeclaration
+            | Kind::MethodSignature
+            | Kind::Constructor
+            | Kind::GetAccessor
+            | Kind::SetAccessor
+            | Kind::ClassStaticBlockDeclaration => return Some(n),
+            Kind::Decorator => {
+                // Decorators are always applied outside of the body of a class
+                // or method.
+                let parent = nodes[n].parent;
+                if parent.is_some_and(|p| nodes[p].kind == Kind::Parameter)
+                    && parent
+                        .and_then(|p| nodes[p].parent)
+                        .is_some_and(|gp| is_class_element(&nodes[gp]))
+                {
+                    // If the decorator's parent is a ParameterDeclaration, we
+                    // resolve the this container from the grandparent class
+                    // declaration.
+                    node = parent.and_then(|p| nodes[p].parent);
+                } else if parent.is_some_and(|p| is_class_element(&nodes[p])) {
+                    // If the decorator's parent is a class element, we resolve
+                    // the 'this' container from the parent class declaration.
+                    node = parent;
+                }
+            }
+            _ => {}
+        }
+        node = node.and_then(|n| nodes[n].parent);
+    }
+    None
+}
+
+/// `GetImmediatelyInvokedFunctionExpression(fn)`.
+pub fn get_immediately_invoked_function_expression(
+    fn_: NodeId,
+    nodes: &[Node],
+) -> Option<NodeId> {
+    if is_function_expression_or_arrow_function(&nodes[fn_]) {
+        let mut prev = fn_;
+        let mut parent = nodes[fn_].parent;
+        while let Some(p) = parent {
+            if !is_parenthesized_expression(&nodes[p]) {
+                break;
+            }
+            prev = p;
+            parent = nodes[p].parent;
+        }
+        if let Some(p) = parent {
+            if is_call_expression(&nodes[p]) && nodes[p].expression() == Some(prev) {
+                return Some(p);
+            }
+        }
+    }
+    None
+}
+
+/// `IsEnumConst(node)`.
+pub fn is_enum_const(node: NodeId, nodes: &[Node]) -> bool {
+    get_combined_modifier_flags(node, nodes).intersects(ModifierFlags::CONST)
+}
+
+/// `ExpressionIsAlias(node)`.
+pub fn expression_is_alias(node: &Node, nodes: &[Node]) -> bool {
+    is_entity_name_expression(node, nodes) || is_class_expression(node)
+}
+
+/// `IsInstanceOfExpression(node)`.
+pub fn is_instance_of_expression(node: &Node, nodes: &[Node]) -> bool {
+    is_binary_expression(node)
+        && nodes[node.as_binary_expression().operator_token.unwrap()].kind
+            == Kind::InstanceOfKeyword
+}
+
+/// `IsAnyImportOrReExport(node)`.
+pub fn is_any_import_or_re_export(node: &Node) -> bool {
+    is_import_node(node) || is_export_declaration(node)
+}
+
+/// `IsImportNode(node)`.
+pub fn is_import_node(node: &Node) -> bool {
+    is_any_import_syntax(node) || node_kind_is(node, &[Kind::JSImportDeclaration])
+}
+
+/// `IsAnyImportSyntax(node)` — a genuine import declaration (the re-parsed
+/// `KindJSImportDeclaration` is explicitly excluded; see `IsImportNode`).
+pub fn is_any_import_syntax(node: &Node) -> bool {
+    node_kind_is(node, &[Kind::ImportDeclaration, Kind::ImportEqualsDeclaration])
+}
+
+/// `IsJsonSourceFile(file)`.
+pub fn is_json_source_file(file: &SourceFile) -> bool {
+    file.script_kind == tsc_core::scriptkind::ScriptKind::JSON
+}
+
+/// `IsInJsonFile(node)`.
+pub fn is_in_json_file(node: &Node) -> bool {
+    node.flags.intersects(NodeFlags::JSON_FILE)
+}
+
+/// `GetExternalModuleName(node)` — the module specifier expression.
+pub fn get_external_module_name(node: &Node, nodes: &[Node]) -> Option<NodeId> {
+    match node.kind {
+        Kind::ImportDeclaration | Kind::JSImportDeclaration | Kind::ExportDeclaration => {
+            node.module_specifier()
+        }
+        Kind::ImportEqualsDeclaration => {
+            let decl = node.as_import_equals_declaration();
+            if nodes[decl.module_reference.unwrap()].kind == Kind::ExternalModuleReference {
+                return nodes[decl.module_reference.unwrap()].expression();
+            }
+            None
+        }
+        Kind::ImportType => get_import_type_node_literal(node, nodes),
+        Kind::CallExpression => node.arguments().and_then(|a| a.first()).copied(),
+        Kind::ModuleDeclaration => {
+            let name = node.as_module_declaration().name.unwrap();
+            if is_string_literal(&nodes[name]) {
+                return Some(name);
+            }
+            None
+        }
+        _ => panic!("Unhandled case in getExternalModuleName"),
+    }
+}
+
+/// `HasImportAttributes(node)` — node kinds that can carry attributes.
+pub fn has_import_attributes(node: &Node) -> bool {
+    matches!(
+        node.kind,
+        Kind::ImportDeclaration
+            | Kind::JSImportDeclaration
+            | Kind::ExportDeclaration
+            | Kind::ImportType
+    )
+}
+
+/// `GetImportAttributes(node)`.
+pub fn get_import_attributes(node: &Node) -> Option<NodeId> {
+    match node.kind {
+        Kind::ImportDeclaration | Kind::JSImportDeclaration => {
+            node.as_import_declaration().attributes
+        }
+        Kind::ExportDeclaration => node.as_export_declaration().attributes,
+        Kind::ImportType => node.as_import_type_node().attributes,
+        _ => panic!("Unhandled case in getImportAttributes"),
+    }
+}
+
+/// `getImportTypeNodeLiteral(node)`.
+pub fn get_import_type_node_literal(node: &Node, nodes: &[Node]) -> Option<NodeId> {
+    if is_import_type_node(node) {
+        let import_type_node = node.as_import_type_node();
+        if let Some(arg) = import_type_node.argument {
+            if is_literal_type_node(&nodes[arg]) {
+                let literal_type_node = nodes[arg].as_literal_type_node();
+                if let Some(lit) = literal_type_node.literal {
+                    if is_string_literal(&nodes[lit]) {
+                        return Some(lit);
+                    }
+                }
+            }
+        }
+    }
+    None
+}
+
+// ---------------------------------------------------------------------------
+// Expression context / type nodes
+
+/// `IsExpressionNode(node)`.
+pub fn is_expression_node(node: NodeId, nodes: &[Node]) -> bool {
+    let mut node = node;
+    match nodes[node].kind {
+        Kind::SuperKeyword
+        | Kind::NullKeyword
+        | Kind::TrueKeyword
+        | Kind::FalseKeyword
+        | Kind::RegularExpressionLiteral
+        | Kind::ArrayLiteralExpression
+        | Kind::ObjectLiteralExpression
+        | Kind::PropertyAccessExpression
+        | Kind::ElementAccessExpression
+        | Kind::CallExpression
+        | Kind::NewExpression
+        | Kind::TaggedTemplateExpression
+        | Kind::AsExpression
+        | Kind::TypeAssertionExpression
+        | Kind::SatisfiesExpression
+        | Kind::NonNullExpression
+        | Kind::ParenthesizedExpression
+        | Kind::FunctionExpression
+        | Kind::ClassExpression
+        | Kind::ArrowFunction
+        | Kind::VoidExpression
+        | Kind::DeleteExpression
+        | Kind::TypeOfExpression
+        | Kind::PrefixUnaryExpression
+        | Kind::PostfixUnaryExpression
+        | Kind::BinaryExpression
+        | Kind::ConditionalExpression
+        | Kind::SpreadElement
+        | Kind::TemplateExpression
+        | Kind::OmittedExpression
+        | Kind::JsxElement
+        | Kind::JsxSelfClosingElement
+        | Kind::JsxFragment
+        | Kind::YieldExpression
+        | Kind::AwaitExpression => true,
+        Kind::MetaProperty => {
+            // `import.<phase>` in `import.<phase>(...)` is not an expression
+            let Some(parent) = nodes[node].parent else {
+                return false;
+            };
+            !is_import_call(&nodes[parent], nodes) || nodes[parent].expression() != Some(node)
+        }
+        Kind::ExpressionWithTypeArguments => {
+            nodes[node]
+                .parent
+                .is_none_or(|p| !is_heritage_clause(&nodes[p]))
+        }
+        Kind::QualifiedName => {
+            while nodes[node]
+                .parent
+                .is_some_and(|p| nodes[p].kind == Kind::QualifiedName)
+            {
+                node = nodes[node].parent.unwrap();
+            }
+            let parent = nodes[node].parent.expect("nil parent in IsExpressionNode");
+            is_type_query_node(&nodes[parent])
+                || is_js_doc_link_like(&nodes[parent])
+                || is_js_doc_name_reference(&nodes[parent])
+                || is_jsx_tag_name(node, nodes)
+        }
+        Kind::PrivateIdentifier => {
+            let Some(parent) = nodes[node].parent else {
+                return false;
+            };
+            is_binary_expression(&nodes[parent])
+                && nodes[parent].as_binary_expression().left == Some(node)
+                && nodes[nodes[parent].as_binary_expression().operator_token.unwrap()].kind
+                    == Kind::InKeyword
+        }
+        Kind::Identifier => {
+            let parent = nodes[node].parent.expect("nil parent in IsExpressionNode");
+            let pn = &nodes[parent];
+            if is_type_query_node(pn)
+                || is_js_doc_link_like(pn)
+                || is_js_doc_name_reference(pn)
+                || is_jsx_tag_name(node, nodes)
+            {
+                return true;
+            }
+            // fallthrough
+            is_in_expression_context(node, nodes)
+        }
+        Kind::NumericLiteral
+        | Kind::BigIntLiteral
+        | Kind::StringLiteral
+        | Kind::NoSubstitutionTemplateLiteral
+        | Kind::ThisKeyword => is_in_expression_context(node, nodes),
+        _ => false,
+    }
+}
+
+/// `IsInExpressionContext(node)`.
+pub fn is_in_expression_context(node: NodeId, nodes: &[Node]) -> bool {
+    let parent = nodes[node]
+        .parent
+        .expect("nil parent in IsInExpressionContext");
+    let pn = &nodes[parent];
+    match pn.kind {
+        Kind::VariableDeclaration
+        | Kind::Parameter
+        | Kind::PropertyDeclaration
+        | Kind::PropertySignature
+        | Kind::EnumMember
+        | Kind::PropertyAssignment
+        | Kind::BindingElement => pn.initializer() == Some(node),
+        Kind::ExpressionStatement
+        | Kind::IfStatement
+        | Kind::DoStatement
+        | Kind::WhileStatement
+        | Kind::ReturnStatement
+        | Kind::WithStatement
+        | Kind::SwitchStatement
+        | Kind::CaseClause
+        | Kind::DefaultClause
+        | Kind::ThrowStatement
+        | Kind::TypeAssertionExpression
+        | Kind::AsExpression
+        | Kind::TemplateSpan
+        | Kind::ComputedPropertyName
+        | Kind::SatisfiesExpression => pn.expression() == Some(node),
+        Kind::ForStatement => {
+            let s = pn.as_for_statement();
+            (s.initializer == Some(node)
+                && nodes[s.initializer.unwrap()].kind != Kind::VariableDeclarationList)
+                || s.condition == Some(node)
+                || s.incrementor == Some(node)
+        }
+        Kind::ForInStatement | Kind::ForOfStatement => {
+            let s = pn.as_for_in_or_of_statement();
+            (s.initializer == Some(node)
+                && nodes[s.initializer.unwrap()].kind != Kind::VariableDeclarationList)
+                || s.expression == Some(node)
+        }
+        Kind::Decorator
+        | Kind::JsxExpression
+        | Kind::JsxSpreadAttribute
+        | Kind::SpreadAssignment => true,
+        Kind::ExpressionWithTypeArguments => {
+            pn.expression() == Some(node) && !is_part_of_type_node(parent, nodes)
+        }
+        Kind::ShorthandPropertyAssignment => {
+            pn.as_shorthand_property_assignment().object_assignment_initializer == Some(node)
+        }
+        Kind::FunctionExpression | Kind::ClassExpression => {
+            // The name of a function or class expression is a declaration name,
+            // not an expression.
+            pn.name() != Some(node)
+        }
+        _ => is_expression_node(parent, nodes),
+    }
+}
+
+/// `IsPartOfTypeNode(node)`.
+pub fn is_part_of_type_node(mut node: NodeId, nodes: &[Node]) -> bool {
+    let kind = nodes[node].kind;
+    if kind >= Kind::FIRST_TYPE_NODE && kind <= Kind::LAST_TYPE_NODE {
+        return true;
+    }
+    match nodes[node].kind {
+        Kind::AnyKeyword
+        | Kind::UnknownKeyword
+        | Kind::NumberKeyword
+        | Kind::BigIntKeyword
+        | Kind::StringKeyword
+        | Kind::BooleanKeyword
+        | Kind::SymbolKeyword
+        | Kind::ObjectKeyword
+        | Kind::UndefinedKeyword
+        | Kind::NullKeyword
+        | Kind::NeverKeyword => true,
+        Kind::VoidKeyword => {
+            nodes[node].parent.is_some_and(|p| nodes[p].kind != Kind::VoidExpression)
+        }
+        Kind::ExpressionWithTypeArguments => {
+            is_part_of_type_expression_with_type_arguments(node, nodes)
+        }
+        Kind::TypeParameter => nodes[node].parent.is_some_and(|p| {
+            matches!(nodes[p].kind, Kind::MappedType | Kind::InferType)
+        }),
+        Kind::Identifier => {
+            let parent = nodes[node].parent.expect("nil parent in IsPartOfTypeNode");
+            if is_qualified_name(&nodes[parent])
+                && nodes[parent].as_qualified_name().right == Some(node)
+            {
+                return is_part_of_type_node_in_parent(parent, nodes);
+            }
+            if is_property_access_expression(&nodes[parent])
+                && nodes[parent].name() == Some(node)
+            {
+                return is_part_of_type_node_in_parent(parent, nodes);
+            }
+            is_part_of_type_node_in_parent(node, nodes)
+        }
+        Kind::QualifiedName | Kind::PropertyAccessExpression | Kind::ThisKeyword => {
+            is_part_of_type_node_in_parent(node, nodes)
+        }
+        _ => false,
+    }
+}
+
+/// `isPartOfTypeNodeInParent(node)`.
+fn is_part_of_type_node_in_parent(node: NodeId, nodes: &[Node]) -> bool {
+    let parent = nodes[node]
+        .parent
+        .expect("nil parent in isPartOfTypeNodeInParent");
+    let pn = &nodes[parent];
+    if pn.kind == Kind::TypeQuery {
+        return false;
+    }
+    if pn.kind == Kind::ImportType {
+        return !pn.as_import_type_node().is_type_of;
+    }
+
+    // Do not recursively call isPartOfTypeNode on the parent. In the example:
+    //
+    //     let a: A.B.C;
+    //
+    // Calling isPartOfTypeNode would consider the qualified name A.B a type
+    // node. Only C and A.B.C are type nodes.
+    if pn.kind >= Kind::FIRST_TYPE_NODE && pn.kind <= Kind::LAST_TYPE_NODE {
+        return true;
+    }
+    match pn.kind {
+        Kind::ExpressionWithTypeArguments => {
+            is_part_of_type_expression_with_type_arguments(parent, nodes)
+        }
+        Kind::TypeParameter => {
+            Some(node) == pn.as_type_parameter_declaration().constraint
+        }
+        Kind::VariableDeclaration
+        | Kind::Parameter
+        | Kind::PropertyDeclaration
+        | Kind::PropertySignature
+        | Kind::FunctionDeclaration
+        | Kind::FunctionExpression
+        | Kind::ArrowFunction
+        | Kind::Constructor
+        | Kind::MethodDeclaration
+        | Kind::MethodSignature
+        | Kind::GetAccessor
+        | Kind::SetAccessor
+        | Kind::CallSignature
+        | Kind::ConstructSignature
+        | Kind::IndexSignature
+        | Kind::TypeAssertionExpression => pn.type_() == Some(node),
+        Kind::CallExpression | Kind::NewExpression | Kind::TaggedTemplateExpression => {
+            pn.type_arguments().is_some_and(|args| args.contains(&node))
+        }
+        _ => false,
+    }
+}
+
+/// `isPartOfTypeExpressionWithTypeArguments(node)`.
+fn is_part_of_type_expression_with_type_arguments(node: NodeId, nodes: &[Node]) -> bool {
+    let parent = nodes[node]
+        .parent
+        .expect("nil parent in isPartOfTypeExpressionWithTypeArguments");
+    (is_heritage_clause(&nodes[parent])
+        && (!is_class_like(nodes[parent].parent, nodes)
+            || nodes[parent].as_heritage_clause().token == Kind::ImplementsKeyword))
+        || is_js_doc_implements_tag(&nodes[parent])
+        || is_js_doc_augments_tag(&nodes[parent])
+}
+
+/// `IsJSDocLinkLike(node)`.
+pub fn is_js_doc_link_like(node: &Node) -> bool {
+    node_kind_is(
+        node,
+        &[Kind::JSDocLink, Kind::JSDocLinkCode, Kind::JSDocLinkPlain],
+    )
+}
+
+/// `IsJSDocTag(node)`.
+pub fn is_js_doc_tag(node: &Node) -> bool {
+    node.kind >= Kind::FIRST_J_S_DOC_TAG_NODE && node.kind <= Kind::LAST_J_S_DOC_TAG_NODE
+}
+
+/// `IsSuperCall(node)`.
+pub fn is_super_call(node: &Node, nodes: &[Node]) -> bool {
+    is_call_expression(node)
+        && node
+            .expression()
+            .is_some_and(|e| nodes[e].kind == Kind::SuperKeyword)
+}
+
+/// `IsImportCall(node)`.
+pub fn is_import_call(node: &Node, nodes: &[Node]) -> bool {
+    if !is_call_expression(node) {
+        return false;
+    }
+    let Some(e) = node.expression() else {
+        return false;
+    };
+    nodes[e].kind == Kind::ImportKeyword || is_import_phase_meta_property(&nodes[e], nodes)
+}
+
+/// `IsSourcePhaseImport(node)` — `import source ... from ...` or
+/// `import.source(...)`.
+pub fn is_source_phase_import(node: &Node, nodes: &[Node]) -> bool {
+    if is_import_declaration(node) {
+        let clause = node.as_import_declaration().import_clause;
+        return clause.is_some_and(|c| {
+            nodes[c].as_import_clause().phase_modifier == Kind::SourceKeyword
+        });
+    }
+    is_source_phase_import_call(node, nodes)
+}
+
+/// `IsSourcePhaseImportCall(node)` — `import.source(...)`.
+pub fn is_source_phase_import_call(node: &Node, nodes: &[Node]) -> bool {
+    is_call_expression(node)
+        && node
+            .expression()
+            .is_some_and(|e| is_import_source_meta_property(&nodes[e], nodes))
+}
+
+/// `IsComputedNonLiteralName(name)`.
+pub fn is_computed_non_literal_name(name: &Node, nodes: &[Node]) -> bool {
+    is_computed_property_name(name)
+        && name
+            .expression()
+            .is_some_and(|e| !is_string_or_numeric_literal_like(&nodes[e]))
+}
+
+/// `IsQuestionToken(node)` — may be `None` (Go's nil `*Node`).
+pub fn is_question_token(node: Option<NodeId>, nodes: &[Node]) -> bool {
+    node.is_some_and(|n| nodes[n].kind == Kind::QuestionToken)
+}
+
+/// `EntityNameToString(name, getTextOfNode)`.
+pub fn entity_name_to_string(
+    name: NodeId,
+    nodes: &[Node],
+    mut get_text_of_node: Option<&mut dyn FnMut(&[Node], NodeId) -> String>,
+) -> String {
+    match nodes[name].kind {
+        Kind::ThisKeyword => "this".to_string(),
+        Kind::Identifier | Kind::PrivateIdentifier => {
+            if node_is_synthesized(&nodes[name]) || get_text_of_node.is_none() {
+                return nodes[name].text(nodes).into_owned();
+            }
+            get_text_of_node.as_deref_mut().unwrap()(nodes, name)
+        }
+        Kind::QualifiedName => {
+            let q = nodes[name].as_qualified_name();
+            format!(
+                "{}.{}",
+                entity_name_to_string(q.left.unwrap(), nodes, get_text_of_node.as_deref_mut()),
+                entity_name_to_string(q.right.unwrap(), nodes, get_text_of_node.as_deref_mut()),
+            )
+        }
+        Kind::PropertyAccessExpression => {
+            let expr = nodes[name].expression().unwrap();
+            let pname = nodes[name].as_property_access_expression().name.unwrap();
+            format!(
+                "{}.{}",
+                entity_name_to_string(expr, nodes, get_text_of_node.as_deref_mut()),
+                entity_name_to_string(pname, nodes, get_text_of_node.as_deref_mut()),
+            )
+        }
+        Kind::JsxNamespacedName => {
+            let j = nodes[name].as_jsx_namespaced_name();
+            format!(
+                "{}:{}",
+                entity_name_to_string(j.namespace.unwrap(), nodes, get_text_of_node.as_deref_mut()),
+                entity_name_to_string(j.name.unwrap(), nodes, get_text_of_node.as_deref_mut()),
+            )
+        }
+        _ => panic!("Unhandled case in EntityNameToString"),
+    }
+}
+
+/// `GetTextOfPropertyName(name)` — the property name text or `""`.
+pub fn get_text_of_property_name(name: NodeId, nodes: &[Node]) -> String {
+    try_get_text_of_property_name(name, nodes).0.unwrap_or_default()
+}
+
+/// `TryGetTextOfPropertyName(name)` — `(text, ok)`.
+pub fn try_get_text_of_property_name(name: NodeId, nodes: &[Node]) -> (Option<String>, bool) {
+    match nodes[name].kind {
+        Kind::Identifier
+        | Kind::PrivateIdentifier
+        | Kind::StringLiteral
+        | Kind::NumericLiteral
+        | Kind::BigIntLiteral
+        | Kind::NoSubstitutionTemplateLiteral => {
+            (Some(nodes[name].text(nodes).into_owned()), true)
+        }
+        Kind::ComputedPropertyName => {
+            let expr = nodes[name].expression();
+            if let Some(e) = expr {
+                if is_string_or_numeric_literal_like(&nodes[e]) {
+                    return (Some(nodes[e].text(nodes).into_owned()), true);
+                }
+            }
+            (None, false)
+        }
+        Kind::JsxNamespacedName => {
+            let j = nodes[name].as_jsx_namespaced_name();
+            (
+                Some(format!(
+                    "{}:{}",
+                    nodes[j.namespace.unwrap()].text(nodes),
+                    nodes[j.name.unwrap()].text(nodes)
+                )),
+                true,
+            )
+        }
+        _ => (None, false),
+    }
+}
+
+/// `IsJSDocNode(node)`.
+pub fn is_js_doc_node(node: &Node) -> bool {
+    node.kind.is_js_doc_node_kind()
+}
+
+/// `IsNonWhitespaceToken(node)` — token kinds that are not whitespace-only
+/// JSX text.
+pub fn is_non_whitespace_token(node: &Node) -> bool {
+    node.kind.is_token_kind() && !is_whitespace_only_jsx_text(node)
+}
+
+/// `IsWhitespaceOnlyJsxText(node)`.
+pub fn is_whitespace_only_jsx_text(node: &Node) -> bool {
+    node.kind == Kind::JsxText && node.as_jsx_text().contains_only_trivia_white_spaces
+}
+
+/// `GetNewTargetContainer(node)`.
+pub fn get_new_target_container(node: NodeId, nodes: &[Node]) -> Option<NodeId> {
+    let container = get_this_container(
+        node,
+        nodes,
+        false, /* includeArrowFunctions */
+        false, /* includeClassComputedPropertyName */
+    );
+    match nodes[container].kind {
+        Kind::Constructor | Kind::FunctionDeclaration | Kind::FunctionExpression => {
+            Some(container)
+        }
+        _ => None,
+    }
+}
+
+/// `GetEnclosingBlockScopeContainer(node)`.
+pub fn get_enclosing_block_scope_container(node: NodeId, nodes: &[Node]) -> Option<NodeId> {
+    find_ancestor(nodes[node].parent, nodes, &mut |current, nodes| {
+        is_block_scope(current, nodes)
+    })
+}
+
+/// `IsBlockScope(node, parentNode)`.
+pub fn is_block_scope(node: &Node, nodes: &[Node]) -> bool {
+    match node.kind {
+        Kind::SourceFile
+        | Kind::CaseBlock
+        | Kind::CatchClause
+        | Kind::ModuleDeclaration
+        | Kind::ForStatement
+        | Kind::ForInStatement
+        | Kind::ForOfStatement
+        | Kind::Constructor
+        | Kind::MethodDeclaration
+        | Kind::GetAccessor
+        | Kind::SetAccessor
+        | Kind::FunctionDeclaration
+        | Kind::FunctionExpression
+        | Kind::ArrowFunction
+        | Kind::PropertyDeclaration
+        | Kind::ClassStaticBlockDeclaration => true,
+        Kind::Block => {
+            // function block is not considered block-scope container
+            // see comment in binder.ts: bind(...), case for SyntaxKind.Block
+            !is_function_like_or_class_static_block_declaration(node.parent, nodes)
+        }
+        _ => false,
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Semantic meaning
+
+/// `SemanticMeaning` — `SemanticMeaning` bitmask in utilities.go.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+pub struct SemanticMeaning(pub i32);
+
+impl SemanticMeaning {
+    /// `SemanticMeaningNone`.
+    pub const NONE: SemanticMeaning = SemanticMeaning(0);
+    /// `SemanticMeaningValue`.
+    pub const VALUE: SemanticMeaning = SemanticMeaning(1 << 0);
+    /// `SemanticMeaningType`.
+    pub const TYPE: SemanticMeaning = SemanticMeaning(1 << 1);
+    /// `SemanticMeaningNamespace`.
+    pub const NAMESPACE: SemanticMeaning = SemanticMeaning(1 << 2);
+    /// `SemanticMeaningAll`.
+    pub const ALL: SemanticMeaning = SemanticMeaning(
+        Self::VALUE.0 | Self::TYPE.0 | Self::NAMESPACE.0,
+    );
+}
+
+impl std::ops::BitOr for SemanticMeaning {
+    type Output = Self;
+    fn bitor(self, rhs: Self) -> Self {
+        SemanticMeaning(self.0 | rhs.0)
+    }
+}
+
+impl std::ops::BitAnd for SemanticMeaning {
+    type Output = Self;
+    fn bitand(self, rhs: Self) -> Self {
+        SemanticMeaning(self.0 & rhs.0)
+    }
+}
+
+impl std::ops::BitOrAssign for SemanticMeaning {
+    fn bitor_assign(&mut self, rhs: Self) {
+        self.0 |= rhs.0;
+    }
+}
+
+/// `GetMeaningFromDeclaration(node)`.
+pub fn get_meaning_from_declaration(node: &Node, nodes: &[Node]) -> SemanticMeaning {
+    match node.kind {
+        Kind::VariableDeclaration => SemanticMeaning::VALUE,
+        Kind::Parameter
+        | Kind::BindingElement
+        | Kind::PropertyDeclaration
+        | Kind::PropertySignature
+        | Kind::PropertyAssignment
+        | Kind::ShorthandPropertyAssignment
+        | Kind::MethodDeclaration
+        | Kind::MethodSignature
+        | Kind::Constructor
+        | Kind::GetAccessor
+        | Kind::SetAccessor
+        | Kind::FunctionDeclaration
+        | Kind::FunctionExpression
+        | Kind::ArrowFunction
+        | Kind::CatchClause
+        | Kind::JsxAttribute => SemanticMeaning::VALUE,
+        Kind::TypeParameter
+        | Kind::InterfaceDeclaration
+        | Kind::TypeAliasDeclaration
+        | Kind::JSTypeAliasDeclaration
+        | Kind::TypeLiteral => SemanticMeaning::TYPE,
+        Kind::EnumMember | Kind::ClassDeclaration => {
+            SemanticMeaning::VALUE | SemanticMeaning::TYPE
+        }
+        Kind::ModuleDeclaration => {
+            if is_ambient_module(node, nodes) {
+                SemanticMeaning::NAMESPACE | SemanticMeaning::VALUE
+            } else if get_module_instance_state(node.id, nodes) == ModuleInstanceState::Instantiated
+            {
+                SemanticMeaning::NAMESPACE | SemanticMeaning::VALUE
+            } else {
+                SemanticMeaning::NAMESPACE
+            }
+        }
+        Kind::EnumDeclaration
+        | Kind::NamedImports
+        | Kind::ImportSpecifier
+        | Kind::ImportEqualsDeclaration
+        | Kind::ImportDeclaration
+        | Kind::JSImportDeclaration
+        | Kind::ExportAssignment
+        | Kind::ExportDeclaration => SemanticMeaning::ALL,
+        // An external module can be a Value
+        Kind::SourceFile => SemanticMeaning::NAMESPACE | SemanticMeaning::VALUE,
+        _ => SemanticMeaning::ALL,
+    }
+}
+
+/// `IsPropertyAccessOrQualifiedName(node)`.
+pub fn is_property_access_or_qualified_name(node: &Node) -> bool {
+    node.kind == Kind::PropertyAccessExpression || node.kind == Kind::QualifiedName
+}
+
+/// `IsLabelName(node)`.
+pub fn is_label_name(node: NodeId, nodes: &[Node]) -> bool {
+    is_label_of_labeled_statement(node, nodes) || is_jump_statement_target(node, nodes)
+}
+
+/// `IsLabelOfLabeledStatement(node)`.
+pub fn is_label_of_labeled_statement(node: NodeId, nodes: &[Node]) -> bool {
+    if !is_identifier(&nodes[node]) {
+        return false;
+    }
+    let Some(parent) = nodes[node].parent else {
+        return false;
+    };
+    if !is_labeled_statement(&nodes[parent]) {
+        return false;
+    }
+    nodes[parent].as_labeled_statement().label == Some(node)
+}
+
+/// `IsJumpStatementTarget(node)`.
+pub fn is_jump_statement_target(node: NodeId, nodes: &[Node]) -> bool {
+    if !is_identifier(&nodes[node]) {
+        return false;
+    }
+    let Some(parent) = nodes[node].parent else {
+        return false;
+    };
+    if !is_break_or_continue_statement(&nodes[parent]) {
+        return false;
+    }
+    nodes[parent].label() == Some(node)
+}
+
+/// `IsBreakOrContinueStatement(node)`.
+pub fn is_break_or_continue_statement(node: &Node) -> bool {
+    node_kind_is(node, &[Kind::BreakStatement, Kind::ContinueStatement])
+}
+
+// ---------------------------------------------------------------------------
+// Module instance state
+
+/// `pushAncestor(ancestors, parent)`.
+fn push_ancestor(ancestors: &mut Vec<NodeId>, parent: NodeId) {
+    ancestors.push(parent);
+}
+
+/// `popAncestor(ancestors, node)` — returns the virtual parent or the real
+/// `Parent` of `node`.
+fn pop_ancestor(ancestors: &mut Vec<NodeId>, node: NodeId, nodes: &[Node]) -> Option<NodeId> {
+    if ancestors.is_empty() {
+        return nodes[node].parent;
+    }
+    ancestors.pop()
+}
+
+/// `GetModuleInstanceState(node)` — `ancestors` and `visited` are virtual
+/// parent stacks/caches used during binding.
+pub fn get_module_instance_state(node: NodeId, nodes: &[Node]) -> ModuleInstanceState {
+    get_module_instance_state_full(node, &mut Vec::new(), None, nodes)
+}
+
+/// `getModuleInstanceState(node, ancestors, visited)`.
+pub fn get_module_instance_state_full(
+    node: NodeId,
+    ancestors: &mut Vec<NodeId>,
+    visited: Option<&mut FxHashMap<NodeId, ModuleInstanceState>>,
+    nodes: &[Node],
+) -> ModuleInstanceState {
+    let module = nodes[node].as_module_declaration();
+    if let Some(body) = module.body {
+        ancestors.push(node);
+        get_module_instance_state_cached(body, ancestors, visited, nodes)
+    } else {
+        ModuleInstanceState::Instantiated
+    }
+}
+
+fn get_module_instance_state_cached(
+    node: NodeId,
+    ancestors: &mut Vec<NodeId>,
+    visited: Option<&mut FxHashMap<NodeId, ModuleInstanceState>>,
+    nodes: &[Node],
+) -> ModuleInstanceState {
+    // PORT: `visited` in Go is lazily created map; callers passing `None` get
+    // a fresh local map.
+    let mut local;
+    let visited: &mut FxHashMap<NodeId, ModuleInstanceState> = match visited {
+        Some(v) => v,
+        None => {
+            local = FxHashMap::default();
+            &mut local
+        }
+    };
+    let node_id = get_node_id(&nodes[node]);
+    if let Some(&cached) = visited.get(&node_id) {
+        if cached != ModuleInstanceState::Unknown {
+            return cached;
+        }
+        return ModuleInstanceState::NonInstantiated;
+    }
+    visited.insert(node_id, ModuleInstanceState::Unknown);
+    let result = get_module_instance_state_worker(node, ancestors, visited, nodes);
+    visited.insert(node_id, result);
+    result
+}
+
+/// `getModuleInstanceStateWorker(node, ancestors, visited)`.
+fn get_module_instance_state_worker(
+    node: NodeId,
+    ancestors: &mut Vec<NodeId>,
+    visited: &mut FxHashMap<NodeId, ModuleInstanceState>,
+    nodes: &[Node],
+) -> ModuleInstanceState {
+    // A module is uninstantiated if it contains only
+    match nodes[node].kind {
+        Kind::InterfaceDeclaration | Kind::TypeAliasDeclaration | Kind::JSTypeAliasDeclaration => {
+            return ModuleInstanceState::NonInstantiated;
+        }
+        Kind::EnumDeclaration => {
+            if is_enum_const(node, nodes) {
+                return ModuleInstanceState::ConstEnumOnly;
+            }
+        }
+        Kind::ImportDeclaration | Kind::JSImportDeclaration | Kind::ImportEqualsDeclaration => {
+            if !has_syntactic_modifier(&nodes[node], ModifierFlags::EXPORT) {
+                return ModuleInstanceState::NonInstantiated;
+            }
+        }
+        Kind::ExportDeclaration => {
+            let decl = nodes[node].as_export_declaration();
+            if decl.module_specifier.is_none()
+                && decl.export_clause.is_some_and(|c| nodes[c].kind == Kind::NamedExports)
+            {
+                let mut state = ModuleInstanceState::NonInstantiated;
+                ancestors.push(node);
+                ancestors.push(decl.export_clause.unwrap());
+                for specifier in nodes[decl.export_clause.unwrap()].elements().unwrap_or(&[]) {
+                    let specifier_state = get_module_instance_state_for_alias_target(
+                        *specifier,
+                        ancestors,
+                        visited,
+                        nodes,
+                    );
+                    if specifier_state > state {
+                        state = specifier_state;
+                    }
+                    if state == ModuleInstanceState::Instantiated {
+                        return state;
+                    }
+                }
+                return state;
+            }
+        }
+        Kind::ModuleBlock => {
+            let mut state = ModuleInstanceState::NonInstantiated;
+            ancestors.push(node);
+            // Collect children so we can iterate while calling back into
+            // functions that borrow `nodes`.
+            let mut children = Vec::new();
+            nodes[node].for_each_child(nodes, &mut |n| {
+                children.push(n);
+                false
+            });
+            for child in children {
+                let child_state =
+                    get_module_instance_state_cached(child, ancestors, Some(&mut *visited), nodes);
+                match child_state {
+                    ModuleInstanceState::NonInstantiated => {}
+                    ModuleInstanceState::ConstEnumOnly => {
+                        state = ModuleInstanceState::ConstEnumOnly;
+                    }
+                    ModuleInstanceState::Instantiated => {
+                        return ModuleInstanceState::Instantiated;
+                    }
+                    ModuleInstanceState::Unknown => {
+                        panic!("Unhandled case in getModuleInstanceStateWorker")
+                    }
+                }
+            }
+            return state;
+        }
+        Kind::ModuleDeclaration => {
+            return get_module_instance_state_full(node, ancestors, Some(&mut *visited), nodes);
+        }
+        _ => {}
+    }
+    ModuleInstanceState::Instantiated
+}
+
+/// `getModuleInstanceStateForAliasTarget(node, ancestors, visited)`.
+fn get_module_instance_state_for_alias_target(
+    node: NodeId,
+    ancestors: &mut Vec<NodeId>,
+    visited: &mut FxHashMap<NodeId, ModuleInstanceState>,
+    nodes: &[Node],
+) -> ModuleInstanceState {
+    let name = nodes[node].property_name_or_name().unwrap();
+    if nodes[name].kind != Kind::Identifier {
+        // Skip for invalid syntax like this: export { "x" }
+        return ModuleInstanceState::Instantiated;
+    }
+    let mut p = pop_ancestor(ancestors, node, nodes);
+    while let Some(parent) = p {
+        if is_block(&nodes[parent]) || is_module_block(&nodes[parent]) || is_source_file(&nodes[parent]) {
+            let mut found = ModuleInstanceState::Unknown;
+            let mut statements_ancestors = ancestors.clone();
+            push_ancestor(&mut statements_ancestors, parent);
+            for &statement in nodes[parent].statements().unwrap_or(&[]) {
+                if node_has_name(statement, name, nodes) {
+                    let state = get_module_instance_state_cached(
+                        statement,
+                        &mut statements_ancestors,
+                        Some(&mut *visited),
+                        nodes,
+                    );
+                    if found == ModuleInstanceState::Unknown || state > found {
+                        found = state;
+                    }
+                    if found == ModuleInstanceState::Instantiated {
+                        return found;
+                    }
+                    if nodes[statement].kind == Kind::ImportEqualsDeclaration {
+                        // Treat re-exports of import aliases as instantiated
+                        // since they're ambiguous.
+                        found = ModuleInstanceState::Instantiated;
+                    }
+                }
+            }
+            if found != ModuleInstanceState::Unknown {
+                return found;
+            }
+        }
+        p = pop_ancestor(ancestors, parent, nodes);
+    }
+    // Couldn't locate, assume could refer to a value
+    ModuleInstanceState::Instantiated
+}
+
+/// `IsInstantiatedModule(node, preserveConstEnums)`.
+pub fn is_instantiated_module(node: NodeId, preserve_const_enums: bool, nodes: &[Node]) -> bool {
+    let module_state = get_module_instance_state(node, nodes);
+    module_state == ModuleInstanceState::Instantiated
+        || (preserve_const_enums && module_state == ModuleInstanceState::ConstEnumOnly)
+}
+
+/// `NodeHasName(statement, id)`.
+pub fn node_has_name(statement: NodeId, id: NodeId, nodes: &[Node]) -> bool {
+    if let Some(name) = nodes[statement].name() {
+        return is_identifier(&nodes[name]) && nodes[name].text(nodes) == nodes[id].text(nodes);
+    }
+    if is_variable_statement(&nodes[statement]) {
+        let declarations = nodes[statement]
+            .as_variable_statement()
+            .declaration_list
+            .map(|dl| {
+                nodes[dl]
+                    .as_variable_declaration_list()
+                    .declarations
+                    .nodes()
+                    .to_vec()
+            })
+            .unwrap_or_default();
+        return declarations
+            .iter()
+            .any(|&d| node_has_name(d, id, nodes));
+    }
+    false
+}
+
+/// `IsInternalModuleImportEqualsDeclaration(node)`.
+pub fn is_internal_module_import_equals_declaration(node: &Node, nodes: &[Node]) -> bool {
+    is_import_equals_declaration(node)
+        && nodes[node.as_import_equals_declaration().module_reference.unwrap()].kind
+            != Kind::ExternalModuleReference
+}
+
+/// `IsConstAssertion(node)` — `expr as const` or `<const>expr`.
+pub fn is_const_assertion(node: &Node, nodes: &[Node]) -> bool {
+    match node.kind {
+        Kind::AsExpression | Kind::TypeAssertionExpression => node
+            .type_()
+            .is_some_and(|t| is_const_type_reference(&nodes[t], nodes)),
+        _ => false,
+    }
+}
+
+/// `IsConstTypeReference(node)`.
+pub fn is_const_type_reference(node: &Node, nodes: &[Node]) -> bool {
+    is_type_reference_node(node)
+        && node.type_arguments().is_none_or(|args| args.is_empty())
+        && node.as_type_reference_node().type_name.is_some_and(|tn| {
+            is_identifier(&nodes[tn]) && nodes[tn].text(nodes) == "const"
+        })
+}
+
+/// `IsGlobalSourceFile(node)`.
+pub fn is_global_source_file(node: &Node, nodes: &[Node]) -> bool {
+    node.kind == Kind::SourceFile && !is_external_or_commonjs_module(nodes[node.id].as_source_file())
+}
+
+// PORT: `is_global_source_file` takes `&Node` but reaches back into the arena
+// for `as_source_file` — the `nodes` param satisfies that; the `node.id`
+// round-trip mirrors Go's `node.AsSourceFile()`.
+
+/// `IsParameterLike(node)` — might be `IsIdentifier` for computed property
+/// names in old AST — checks kinds here.
+pub fn is_parameter_like(node: &Node) -> bool {
+    matches!(node.kind, Kind::Parameter | Kind::TypeParameter)
+}
+
+/// `GetDeclarationOfKind(symbol, kind)`.
+pub fn get_declaration_of_kind(symbol: &Symbol, kind: Kind, nodes: &[Node]) -> Option<NodeId> {
+    for &declaration in &symbol.declarations {
+        if nodes[declaration].kind == kind {
+            return Some(declaration);
+        }
+    }
+    None
+}
+
+/// `FindConstructorDeclaration(node)` — the constructor with a body.
+pub fn find_constructor_declaration(node: &Node, nodes: &[Node]) -> Option<NodeId> {
+    for &member in node.members().unwrap_or(&[]) {
+        if is_constructor_declaration(&nodes[member])
+            && node_is_present(nodes[member].body(), nodes)
+        {
+            return Some(member);
+        }
+    }
+    None
+}
+
+/// `GetFirstIdentifier(node)`.
+pub fn get_first_identifier(node: NodeId, nodes: &[Node]) -> NodeId {
+    match nodes[node].kind {
+        Kind::Identifier => node,
+        Kind::QualifiedName => {
+            get_first_identifier(nodes[node].as_qualified_name().left.unwrap(), nodes)
+        }
+        Kind::PropertyAccessExpression => {
+            get_first_identifier(nodes[node].expression().unwrap(), nodes)
+        }
+        _ => panic!("Unhandled case in GetFirstIdentifier"),
+    }
+}
+
+/// `GetNamespaceDeclarationNode(node)`.
+pub fn get_namespace_declaration_node(node: &Node, nodes: &[Node]) -> Option<NodeId> {
+    match node.kind {
+        Kind::ImportDeclaration | Kind::JSImportDeclaration => {
+            if let Some(import_clause) = node.import_clause() {
+                if let Some(named_bindings) = nodes[import_clause].as_import_clause().named_bindings
+                {
+                    if is_namespace_import(&nodes[named_bindings]) {
+                        return Some(named_bindings);
+                    }
+                }
+            }
+            None
+        }
+        Kind::ImportEqualsDeclaration => Some(node.id),
+        Kind::ExportDeclaration => {
+            let export_clause = node.as_export_declaration().export_clause;
+            if let Some(clause) = export_clause {
+                if is_namespace_export(&nodes[clause]) {
+                    return Some(clause);
+                }
+            }
+            None
+        }
+        _ => panic!("Unhandled case in getNamespaceDeclarationNode"),
+    }
+}
+
+/// `ModuleExportNameIsDefault(node)`.
+pub fn module_export_name_is_default(node: &Node, nodes: &[Node]) -> bool {
+    node.text(nodes) == "default"
+}
+
+/// `IsDefaultImport(node)` — `ImportDeclaration | ImportEqualsDeclaration |
+/// ExportDeclaration`.
+pub fn is_default_import(node: &Node, nodes: &[Node]) -> bool {
+    match node.kind {
+        Kind::ImportDeclaration | Kind::JSImportDeclaration => {
+            node.import_clause().is_some_and(|clause| {
+                nodes[clause].as_import_clause().name.is_some()
+            })
+        }
+        _ => false,
+    }
 }
 
 // __NEXT__

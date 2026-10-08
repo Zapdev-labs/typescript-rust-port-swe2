@@ -33,7 +33,7 @@ pub(crate) const NON_BINARY_UNICODE_PROPERTY_NAMES: &[&str] = &[
 ///
 /// Table 67: Binary Unicode property aliases and their canonical property names
 /// https://tc39.es/ecma262/#table-binary-unicode-properties
-static BINARY_UNICODE_PROPERTIES: &[&str] = &[
+pub(crate) static BINARY_UNICODE_PROPERTIES: &[&str] = &[
     "AHex", "ASCII", "ASCII_Hex_Digit", "Alpha", "Alphabetic", "Any", "Assigned", "Bidi_C",
     "Bidi_Control", "Bidi_M", "Bidi_Mirrored", "CI", "CWCF", "CWCM", "CWKCF", "CWL", "CWT", "CWU",
     "Case_Ignorable", "Cased", "Changes_When_Casefolded", "Changes_When_Casemapped",
@@ -60,7 +60,7 @@ pub(crate) fn is_binary_unicode_property(name: &str) -> bool {
 ///
 /// Table 68: Binary Unicode properties of strings
 /// https://tc39.es/ecma262/#table-binary-unicode-properties-of-strings
-static BINARY_UNICODE_PROPERTIES_OF_STRINGS: &[&str] = &[
+pub(crate) static BINARY_UNICODE_PROPERTIES_OF_STRINGS: &[&str] = &[
     "Basic_Emoji", "Emoji_Keycap_Sequence", "RGI_Emoji", "RGI_Emoji_Flag_Sequence",
     "RGI_Emoji_Modifier_Sequence", "RGI_Emoji_Tag_Sequence", "RGI_Emoji_ZWJ_Sequence",
 ];
@@ -71,7 +71,7 @@ pub(crate) fn is_binary_unicode_property_of_strings(name: &str) -> bool {
 }
 
 /// `var scriptValues` — Unicode 15.1
-static SCRIPT_VALUES: &[&str] = &[
+pub(crate) static SCRIPT_VALUES: &[&str] = &[
     "Adlam", "Adlm", "Aghb", "Ahom", "Anatolian_Hieroglyphs", "Arab", "Arabic", "Armenian", "Armi",
     "Armn", "Avestan", "Avst", "Bali", "Balinese", "Bamu", "Bamum", "Bass", "Bassa_Vah", "Batak",
     "Batk", "Beng", "Bengali", "Bhaiksuki", "Bhks", "Bopo", "Bopomofo", "Brah", "Brahmi", "Brai",
@@ -111,7 +111,7 @@ static SCRIPT_VALUES: &[&str] = &[
     "Zanb", "Zinh", "Zyyy", "Zzzz",
 ];
 
-static GENERAL_CATEGORY_VALUES: &[&str] = &[
+pub(crate) static GENERAL_CATEGORY_VALUES: &[&str] = &[
     "C", "Cased_Letter", "Cc", "Cf", "Close_Punctuation", "Cn", "Co", "Combining_Mark",
     "Connector_Punctuation", "Control", "Cs", "Currency_Symbol", "Dash_Punctuation",
     "Decimal_Number", "Enclosing_Mark", "Final_Punctuation", "Format", "Initial_Punctuation",
@@ -139,4 +139,9 @@ pub(crate) fn values_of_non_binary_unicode_property(
         "Script" | "Script_Extensions" => SCRIPT_VALUES,
         _ => return None,
     })
+}
+
+/// `valuesOfNonBinaryUnicodeProperties["General_Category"].Has(name)`
+pub(crate) fn is_general_category_value(name: &str) -> bool {
+    GENERAL_CATEGORY_VALUES.binary_search(&name).is_ok()
 }

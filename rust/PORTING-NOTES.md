@@ -116,6 +116,42 @@ to "2" so tsc-collections can build.
   helpers). `deepclone`, `positionmap`, `precedence`, diagnostic types are
   M2 items — Go has no tests for the ported portion.
 
+## 2026-10-08 crates/ast/src/diagnostic.rs — ast/diagnostic.go port shape
+- `*Diagnostic` → `DiagnosticRef = Arc<Mutex<Diagnostic>>`. Go's pointer is
+  load-bearing: `DiagnosticsCollection.Add` dedups and returns the canonical
+  diagnostic which callers keep mutating, and `d1 == d2` checks in
+  `EqualDiagnostics`/`CompareDiagnostics` terminate recursion on
+  self-referential chains (`Rc` alone can't satisfy `Send + Sync`, which
+  Go's `sync.Mutex`-guarded collection implies). `Arc::ptr_eq` is the `==`
+  check; a diagnostic's lock is never held while another's is taken — the
+  compare/equal helpers snapshot fields into `DiagnosticView` — so no lock
+  ordering exists. Both mutexes tolerate poison (`into_inner`), matching
+  Go's panic-safe `sync.Mutex`.
+- `file *SourceFile` → `Option<DiagnosticFile>`: a cloneable handle with
+  `node: Option<NodeId>` (arena address of the `*SourceFile`) plus
+  `path_key`, `file_name`, `text`, `original_text`, `span_map`. Rust
+  `SourceFile` is `NodeData` in the node arena and does not yet carry
+  `parseOptions`/`contentMapperInfo`; the diagnostics all read immutable,
+  parse-time-fixed attributes, so the snapshot can't go stale. When
+  `SourceFile` gains `content_mapper_info`, `DiagnosticFile::from_node`
+  should populate `span_map`/`original_text` from it.
+- `display_message_args` compares byte-wise (Go slices strings at byte
+  offsets) and lossy-decodes a non-UTF-8 original span — Rust `String`
+  cannot hold arbitrary bytes. Unreachable until contentmapper lands
+  (deferred), since `span_map` is always `None` today.
+- `CompareDiagnostics` returns `i32` like Go's `int`; `strings.Compare`/
+  `slices.Compare` map to `Ord::cmp as i32` (-1/0/+1), and the `a - b`
+  integer subtractions map to `cmp` (only the sign is ever read; avoids
+  i32 wrap Go can't hit but Rust would panic on in debug).
+- `Lookup` uses `partition_point(cmp < 0)` + equality check — Go's
+  `slices.BinarySearchFunc` returns the *first* equal element; Rust
+  `binary_search_by` does not guarantee that.
+- `Clone()` clones `Vec<DiagnosticRef>` (new Vec, shared `Arc` elements) —
+  Go's `result := *d` shares slice backing, but only element sharing is
+  observable (nobody writes `d.messageChain[i] = x` in place).
+- New `tsc-ast` → `tsc-spanmap` path dep mirrors Go's `ast` importing
+  `spanmap` (`SourceFile.SpanMap()` / `AliasForVirtualSpan`).
+
 ## 2026-10-08 crates/ast — positionmap.rs, precedence.rs, parseoptions.rs
 - `positionmap.rs`: Go `int` offsets → `usize`; `text string` → `&[u8]`
   (source text can carry the `EncodeJSStringRune` lone-surrogate CESU-8

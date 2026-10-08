@@ -32,10 +32,11 @@ pub mod utilities;
 pub mod visitor;
 
 #[cfg(test)]
-mod positionmap_test;
-
+mod ast_accessor_test;
 #[cfg(test)]
 mod kind_ordinals_test;
+#[cfg(test)]
+mod positionmap_test;
 
 // Go package-level names land at the crate root, mirroring `package ast`.
 pub use ast::*;
