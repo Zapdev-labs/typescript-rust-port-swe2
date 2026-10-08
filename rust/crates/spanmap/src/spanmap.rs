@@ -563,16 +563,16 @@ impl SpanMap {
     /// segmentIndexAt returns the index of the segment containing pos and true, or, when pos lies in a gap,
     /// the index of the segment immediately before pos (-1 if none) and false.
     ///
-    /// PORT: the `int` index may be -1 → `i32`; `slices.BinarySearchFunc` →
-    /// `binary_search_by` (Err(i) is the same insertion-point index).
+    /// PORT: the `int` index may be -1 → `i32`; `slices.BinarySearchFunc` is
+    /// `sort.Search(cmp >= 0)` + `cmp == 0` → `partition_point` + equality,
+    /// which also preserves Go's first-match guarantee on duplicate
+    /// `virtual_start`s (Rust's `binary_search_by` is unspecified there).
     fn segment_index_at(&self, pos: TextPos) -> (i32, bool) {
-        let (idx, found) = match self
+        let idx = self
             .segments
-            .binary_search_by(|s| s.virtual_start.wrapping_sub(pos).cmp(&0))
-        {
-            Ok(i) => (i as i32, true),
-            Err(i) => (i as i32, false),
-        };
+            .partition_point(|s| s.virtual_start.wrapping_sub(pos) < 0);
+        let found = idx < self.segments.len() && self.segments[idx].virtual_start == pos;
+        let idx = idx as i32;
         if found {
             return (idx, true);
         }
@@ -700,8 +700,8 @@ impl SpanMap {
     /// that may be unrelated to the original range. These cross-group results have approximate fidelity.
     /// If either boundary is uncovered or disabled for feature, there are no results. A nil SpanMap maps identically.
     ///
-    /// PORT: `slices.Sort`/`slices.BinarySearch` (unstable orderings) →
-    /// `sort_unstable`/`binary_search`.
+    /// PORT: `slices.Sort`/`slices.BinarySearch` (unstable ordering, first-
+    /// index semantics) → `sort_unstable`/`partition_point`.
     pub fn original_to_virtual_spans(
         this: Option<&SpanMap>,
         r: TextRange,
@@ -716,8 +716,7 @@ impl SpanMap {
         let start: TextPos = r.pos();
         let end = r.end().max(start);
         if start == end {
-            // PORT(shim): `core.Map` → iterator collect (tsc_core::core::map
-            // is not yet exported from tsc-core's lib.rs).
+            // `core.Map` → iterator collect.
             return Self::original_to_virtual_positions(Some(m), start, feature)
                 .into_iter()
                 .map(|position| MappedSpan {
@@ -759,10 +758,9 @@ impl SpanMap {
         ends.sort_unstable();
         let mut results = Vec::with_capacity(starts.len().min(ends.len()));
         for (i, virtual_start) in starts.iter().enumerate() {
-            let end_index = match ends.binary_search(virtual_start) {
-                Ok(i) => i,
-                Err(i) => i,
-            };
+            // PORT: `slices.BinarySearch` = `sort.Search(ends[i] >= x)` →
+            // `partition_point`; Go's `found` bool is discarded (`_`).
+            let end_index = ends.partition_point(|e| e < virtual_start);
             if end_index == ends.len() || i + 1 < starts.len() && starts[i + 1] <= ends[end_index] {
                 continue;
             }

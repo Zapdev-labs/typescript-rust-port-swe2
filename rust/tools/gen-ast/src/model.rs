@@ -21,6 +21,8 @@ pub struct Field {
     pub optional: bool,
     /// `false` when the Go field is unexported (e.g. `name`, `modifiers`).
     pub exported: bool,
+    /// Rust type override for `ty == FieldType::Other` (SourceFile fields).
+    pub rust_ty: Option<String>,
 }
 
 /// Type tags for `Field::ty`. These map Go types to Rust types in emit.rs.
@@ -48,6 +50,8 @@ pub enum FieldType {
     Kind,
     /// `TokenFlags` → `TokenFlags`
     TokenFlags,
+    /// `NodeFlags` → `NodeFlags` (ctor/update args only)
+    NodeFlags,
     /// `*Symbol` → `Option<SymbolId>`
     Symbol,
     /// `SymbolTable` → `SymbolTable`
@@ -101,6 +105,9 @@ pub struct CtorArg {
     /// Init expression override (e.g. masked flags) — a mini-AST:
     /// `mask:TokenFlagsStringLiteralFlags` means `arg & MASK`.
     pub init_mask: Option<String>,
+    /// The Go argument type, preserved for `*SyntaxKind` aliases so the
+    /// node's kind list can be resolved from `[[kind_aliases]]`.
+    pub go_ty: String,
 }
 
 #[derive(Debug, Clone)]
@@ -216,8 +223,12 @@ pub struct NodeDef {
     pub facts: Vec<FactOp>,
     /// `generated` | `custom` | `typescript` | `none`
     pub facts_mode: String,
-    /// `default` | `typescript` | `custom` | `none` | `{exclusions:<name>}`
+    /// `default` | `typescript` | `custom` | `exclusions`
     pub propagate_mode: String,
+    /// `SubtreeExclusionsX` name when `propagate_mode == "exclusions"`.
+    pub propagate_exclusions: Option<String>,
+    /// Extra `| propagateSubtreeFacts(node.F)` terms (Method/Property name).
+    pub propagate_fields: Vec<String>,
     /// `is` predicate name (`IsIfStatement` → emitted as `is_if_statement`).
     pub is_fn: Option<String>,
     /// Methods implemented by hand outside the generated file:
@@ -228,7 +239,8 @@ pub struct NodeDef {
     pub extra: bool,
 }
 
-/// A `IsXKind` kind predicate (tail of ast_generated.go).
+/// A `IsXKind` kind predicate (tail of ast_generated.go) or a node-level
+/// `IsX(node)` predicate recorded in `node_preds`.
 #[derive(Debug, Clone)]
 pub struct KindPred {
     pub name: String,
@@ -236,6 +248,8 @@ pub struct KindPred {
     pub range: Option<[String; 2]>,
     /// Case list otherwise.
     pub kinds: Vec<String>,
+    /// `Some(pred)` when the body delegates, e.g. `return IsXKind(node.Kind)`.
+    pub delegate: Option<String>,
 }
 
 /// `KindFirstX = KindY` const aliases from kind_generated.go.
@@ -249,6 +263,9 @@ pub struct KindConst {
 #[derive(Debug, Clone)]
 pub struct KindAlias {
     pub name: String,
+    /// Kind names (without `Kind`) listed in the alias's doc comment —
+    /// the authoritative kind set for the alias.
+    pub kinds: Vec<String>,
 }
 
 /// Root schema.
@@ -259,6 +276,39 @@ pub struct Schema {
     pub kind_consts: Vec<KindConst>,
     pub kind_aliases: Vec<KindAlias>,
     pub kind_preds: Vec<KindPred>,
+    /// `IsX(node)` predicates that don't map 1:1 onto a node struct.
+    pub node_preds: Vec<KindPred>,
     pub bases: Vec<BaseDef>,
     pub nodes: Vec<NodeDef>,
+}
+
+impl Schema {
+    pub fn base_map(&self) -> std::collections::BTreeMap<&str, &BaseDef> {
+        self.bases.iter().map(|b| (b.name.as_str(), b)).collect()
+    }
+
+    /// Whether `bases` transitively embeds `target` (e.g. `TypeSyntaxBase`).
+    pub fn has_base(&self, bases: &[String], target: &str) -> bool {
+        let map = self.base_map();
+        let mut stack: Vec<&str> = bases.iter().map(|s| s.as_str()).collect();
+        let mut seen = std::collections::BTreeSet::new();
+        while let Some(b) = stack.pop() {
+            if b == target {
+                return true;
+            }
+            if !seen.insert(b) {
+                continue;
+            }
+            if let Some(def) = map.get(b) {
+                for f in &def.fields {
+                    if f.ty == FieldType::Embed
+                        && let Some(e) = &f.embed
+                    {
+                        stack.push(e);
+                    }
+                }
+            }
+        }
+        false
+    }
 }

@@ -8,7 +8,7 @@ pub type TextPos = i32;
 
 // TextRange
 
-#[derive(Clone, Copy, Default, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Default, PartialEq, Eq, Hash, Debug)]
 pub struct TextRange {
     pos: TextPos,
     end: TextPos,
