@@ -26,3 +26,42 @@ Node `""+n`/`+str` oracle — 0 mismatches (`scripts/jsnum-fuzz-remote.sh`).
 Spec-layered M1 packages deferred (depend on ast/parser, see
 PORTING-NOTES): contentmapper, symlinks, sourcemap.
 
+## M2 — AST remainder (green)
+
+`tsc-ast` complete: utilities (~6.6k LOC), visitor/factory codegen,
+deepclone, positionmap, precedence, parseoptions, diagnostic ordering
+(same-file → pos → code → message), `tsc-bundled` (lib.d.ts embedding).
+Kind ordinals verified 1:1 against Go (387 constants, 0 mismatches).
+`VisitorCx` uses two lifetimes — Go's visitor closure semantics.
+
+## M3 — Scanner + Parser (green, corpus parity)
+
+scanner.rs (full port incl. regexp validation, unicode escapes, JSDoc
+detection) + parser.rs/jsdoc.rs/reparser.rs (~15k LOC). Corpus gate
+(`scripts/corpus-gate.sh`) parses **all 13,017 files** under
+`tsc/testdata/tests/cases` + `tsc/testdata/fixtures` with the Rust parser
+and a Go oracle (`tsc/internal/parsecorpus`), comparing diagnostics
+(code, pos, end, category, message key, args):
+
+- **0 panics** on either side
+- **0 diagnostic mismatches** (100% parity)
+
+Fidelity bugs found by the gate and fixed: JSX children rescan
+(`rescan_jsx_token` resets to fullStartPos — 216 .tsx divergences),
+`finish_source_file` must clone (not drain) `self.diagnostics` so
+`reparse_top_level_await` can save them, arrow-speculation bail-outs that
+swapped `'_0_expected'` for `Expression_expected`,
+`rescan_slash_token` regex gating, lossy-UTF-8 corpus reads.
+
+Parse throughput (release, 12,851 files, remote host): Rust ~0.95s vs Go
+~1.49s — **~1.55x faster** including JSONL output.
+
+## M4 wave 1 — binder + contentmapper + pseudochecker (green)
+
+`tsc-binder` (binder.go, nameresolver.go, referenceresolver.go — symbol
+merge/declaration, flow graph, strict-mode, CommonJS/expando, unreachable
+flow), `tsc-contentmapper` (transform identity hashing via xxhash-rust
+byte-identical to zeebo/xxh3, JSON-RPC mapper host protocol, 32 tests),
+`tsc-pseudochecker` (all 20 pseudo-type kinds, lookup/inference, 10
+tests). Full remote workspace: 79 test suites green.
+
