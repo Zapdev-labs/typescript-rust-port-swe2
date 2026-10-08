@@ -3,10 +3,15 @@
 // PORT: Go's `regExpParser` borrows the caller's `*Scanner` and both reads its
 // state (pos/end/tokenValue/tokenStart/tokenFlags/scriptTarget) and calls its
 // methods (char/charAt/charAndSize/errorAt/scanIdentifier/scanEscapeSequence/
-// scanUnicodeEscape/...). Those Scanner methods live in scanner.go, which is
-// ported separately. Until scanner.rs lands and reconciles, the parser owns
-// the subset of scanner state it needs and carries private ports of the
-// required Scanner helpers — see the "Scanner helpers" section at the bottom.
+// scanUnicodeEscape/...). Rust has no struct embedding, so the parser owns a
+// parallel copy of that scanner state; `Scanner::rescan_slash_token`
+// (scanner.rs) transfers text/pos/end/script_target/token_flags/on_error in
+// via `RegExpParser::new` and copies `token_flags` back after `run()`, which
+// preserves the observable shared-state behavior. The scanner method ports
+// the parser needs (`scan_identifier`, `scan_escape_sequence`, ...) are kept
+// as private mirrors on `impl RegExpParser` operating over those fields; the
+// *free* helpers (identifier predicates, UTF-8 decode, escape flags,
+// `IdentifierVariant`) are shared from `crate::scanner`.
 // The flag-scanning loop of `Scanner.ReScanSlashToken` (scanner.go) is also
 // ported here as `scan_regular_expression_flags` since it only consumes the
 // flag tables defined in this file.
@@ -33,6 +38,15 @@ use tsc_debug as debug;
 use tsc_diagnostics::{self as diagnostics, Message};
 use tsc_stringutil as stringutil;
 
+use crate::scanner::{
+    ESCAPE_SEQUENCE_SCANNING_FLAGS_ALLOW_EXTENDED_UNICODE_ESCAPE,
+    ESCAPE_SEQUENCE_SCANNING_FLAGS_ANNEX_B, ESCAPE_SEQUENCE_SCANNING_FLAGS_ANY_UNICODE_MODE,
+    ESCAPE_SEQUENCE_SCANNING_FLAGS_ATOM_ESCAPE, ESCAPE_SEQUENCE_SCANNING_FLAGS_REGULAR_EXPRESSION,
+    ESCAPE_SEQUENCE_SCANNING_FLAGS_REPORT_INVALID_ESCAPE_ERRORS, EscapeSequenceScanningFlags,
+    IdentifierVariant, RUNE_ERROR, RUNE_SELF, decode_rune_in_string, is_ascii_letter, is_digit,
+    is_hex_digit, is_identifier_part, is_identifier_part_ex, is_identifier_start, is_octal_digit,
+    is_word_character, rune_to_string, utf16_rune_len,
+};
 use crate::unicodeproperties::{
     NON_BINARY_UNICODE_PROPERTY_NAMES, is_binary_unicode_property,
     is_binary_unicode_property_of_strings, is_general_category_value, non_binary_unicode_property,
@@ -237,6 +251,8 @@ impl<'a> RegExpParser<'a> {
     /// `Scanner.ReScanSlashToken` — `text` is the whole source text, `pos` is
     /// startOfRegExpBody, `end` is endOfRegExpBody. `reg_exp_flags` is the
     /// accumulated flag set from `scan_regular_expression_flags`.
+    /// `token_flags` seeds the shared scanner token flags (escape scanning may
+    /// add to them); read the result back with `token_flags()` after `run()`.
     /// `named_capture_groups` is the first-pass guess from ReScanSlashToken;
     /// Go always constructs the parser with `annexB: true`.
     pub(crate) fn new(
@@ -247,6 +263,7 @@ impl<'a> RegExpParser<'a> {
         named_capture_groups: bool,
         script_target: ScriptTarget,
         on_error: Option<&'a mut ErrorCallback<'a>>,
+        token_flags: TokenFlags,
     ) -> Self {
         Self {
             text,
@@ -254,7 +271,7 @@ impl<'a> RegExpParser<'a> {
             end,
             token_value: Vec::new(),
             token_start: 0,
-            token_flags: TokenFlags::NONE,
+            token_flags,
             script_target,
             on_error,
             end_of_body: end,
@@ -287,6 +304,13 @@ impl<'a> RegExpParser<'a> {
     #[allow(dead_code)]
     pub(crate) fn set_pos(&mut self, v: usize) {
         self.pos = v;
+    }
+
+    /// The accumulated token flags after `run` — Go shares `s.tokenFlags` with
+    /// the parser, so callers copy this back into the scanner.
+    #[allow(dead_code)]
+    pub(crate) fn token_flags(&self) -> TokenFlags {
+        self.token_flags
     }
 
     /// `func (p *regExpParser) incPos` — `n` is signed because Go passes -1 to
@@ -1746,38 +1770,11 @@ pub(crate) fn scan_regular_expression_flags(
 }
 
 // =============================================================================
-// PORT: local ports of the Scanner helpers from scanner.go that regexp.go
-// needs (Go shares one package; here the owner is still in flight). These are
-// `pub(crate)` so scanner.rs can reconcile them onto the real `Scanner`.
+// The Scanner method ports that regexp.go's `regExpParser` inherits via Go
+// struct embedding live on `impl RegExpParser` below, operating over the
+// parser-owned copy of the scanner state (see the file header). The shared
+// *free* helpers they call are imported from `crate::scanner`.
 // =============================================================================
-
-/// `type identifierVariant int32`
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub(crate) enum IdentifierVariant {
-    #[allow(dead_code)] // used by scanner.rs's identifier paths, not regexp.go
-    Standard,
-    Jsx,
-    RegExpGroupName,
-}
-
-/// `type EscapeSequenceScanningFlags int32`
-pub(crate) type EscapeSequenceScanningFlags = u32;
-
-pub(crate) const ESCAPE_SEQUENCE_SCANNING_FLAGS_STRING: EscapeSequenceScanningFlags = 1 << 0;
-pub(crate) const ESCAPE_SEQUENCE_SCANNING_FLAGS_REPORT_ERRORS: EscapeSequenceScanningFlags = 1 << 1;
-pub(crate) const ESCAPE_SEQUENCE_SCANNING_FLAGS_REGULAR_EXPRESSION: EscapeSequenceScanningFlags =
-    1 << 2;
-pub(crate) const ESCAPE_SEQUENCE_SCANNING_FLAGS_ANNEX_B: EscapeSequenceScanningFlags = 1 << 3;
-pub(crate) const ESCAPE_SEQUENCE_SCANNING_FLAGS_ANY_UNICODE_MODE: EscapeSequenceScanningFlags =
-    1 << 4;
-pub(crate) const ESCAPE_SEQUENCE_SCANNING_FLAGS_ATOM_ESCAPE: EscapeSequenceScanningFlags = 1 << 5;
-pub(crate) const ESCAPE_SEQUENCE_SCANNING_FLAGS_REPORT_INVALID_ESCAPE_ERRORS:
-    EscapeSequenceScanningFlags = ESCAPE_SEQUENCE_SCANNING_FLAGS_REGULAR_EXPRESSION
-    | ESCAPE_SEQUENCE_SCANNING_FLAGS_REPORT_ERRORS;
-#[allow(dead_code)]
-pub(crate) const ESCAPE_SEQUENCE_SCANNING_FLAGS_ALLOW_EXTENDED_UNICODE_ESCAPE:
-    EscapeSequenceScanningFlags =
-    ESCAPE_SEQUENCE_SCANNING_FLAGS_STRING | ESCAPE_SEQUENCE_SCANNING_FLAGS_ANY_UNICODE_MODE;
 
 impl RegExpParser<'_> {
     /// `func (s *Scanner) scanIdentifier`
@@ -2286,130 +2283,6 @@ impl RegExpParser<'_> {
         digits.make_ascii_lowercase(); // standardize hex literals to lowercase
         digits
     }
-}
-
-// =============================================================================
-// PORT: identifier/UTF-8 free helpers from scanner.go + unicode/utf8.
-// =============================================================================
-
-/// `func isWordCharacter(ch rune) bool` — Section 6.1.4
-pub(crate) fn is_word_character(ch: i32) -> bool {
-    is_ascii_letter(ch) || is_digit(ch) || ch == i32::from(b'_')
-}
-
-/// `func IsIdentifierStart(ch rune) bool`
-pub(crate) fn is_identifier_start(ch: i32) -> bool {
-    is_ascii_letter(ch)
-        || ch == i32::from(b'_')
-        || ch == i32::from(b'$')
-        || ch >= RUNE_SELF
-            && char::from_u32(ch as u32).is_some_and(stringutil::is_unicode_identifier_start)
-}
-
-/// `func IsIdentifierPart(ch rune) bool`
-pub(crate) fn is_identifier_part(ch: i32) -> bool {
-    is_identifier_part_ex(ch, LanguageVariant::Standard)
-}
-
-/// `func IsIdentifierPartEx(ch rune, languageVariant core.LanguageVariant) bool`
-pub(crate) fn is_identifier_part_ex(ch: i32, language_variant: LanguageVariant) -> bool {
-    is_word_character(ch)
-        || ch == i32::from(b'$')
-        || ch >= RUNE_SELF
-            && char::from_u32(ch as u32).is_some_and(stringutil::is_unicode_identifier_part)
-        || language_variant == LanguageVariant::Jsx && ch == i32::from(b'-') // ":" is part of JSXNamespacedName, but not JSXIdentifier.
-}
-
-/// `stringutil.IsASCIILetter` on a Go rune (byte or decoded code point; -1 = EOF).
-fn is_ascii_letter(ch: i32) -> bool {
-    matches!(u8::try_from(ch), Ok(b'a'..=b'z' | b'A'..=b'Z'))
-}
-
-/// `stringutil.IsDigit` on a Go rune.
-fn is_digit(ch: i32) -> bool {
-    matches!(u8::try_from(ch), Ok(b'0'..=b'9'))
-}
-
-/// `stringutil.IsOctalDigit` on a Go rune.
-fn is_octal_digit(ch: i32) -> bool {
-    matches!(u8::try_from(ch), Ok(b'0'..=b'7'))
-}
-
-/// `stringutil.IsHexDigit` on a Go rune.
-fn is_hex_digit(ch: i32) -> bool {
-    matches!(
-        u8::try_from(ch),
-        Ok(b'0'..=b'9' | b'a'..=b'f' | b'A'..=b'F')
-    )
-}
-
-const RUNE_ERROR: i32 = 0xFFFD; // utf8.RuneError — U+FFFD
-const RUNE_SELF: i32 = 0x80; // utf8.RuneSelf
-
-/// `utf16.RuneLen` — 1 for values below 0x10000, 2 for non-BMP code points,
-/// -1 for out-of-range values.
-fn utf16_rune_len(ch: i32) -> i32 {
-    if !(0..=0x10FFFF).contains(&ch) {
-        -1
-    } else if ch < 0x10000 {
-        1
-    } else {
-        2
-    }
-}
-
-/// Go `string(ch)` where a rune becomes a diagnostic arg — the UTF-8 encoding
-/// of the code point; invalid runes give U+FFFD like Go.
-fn rune_to_string(ch: i32) -> String {
-    char::from_u32(ch as u32).unwrap_or('\u{FFFD}').to_string()
-}
-
-/// PORT: mirrors Go's utf8.DecodeRuneInString (RFC 3629-strict decoding):
-/// empty input -> (RuneError, 0); invalid encoding -> (RuneError, 1);
-/// otherwise the decoded rune and its width in bytes. Local copy — the
-/// decoder in tsc-stringutil is crate-private (glob.rs keeps an identical
-/// local port returning `char` instead of i32).
-fn decode_rune_in_string(s: &[u8]) -> (i32, usize) {
-    if s.is_empty() {
-        return (RUNE_ERROR, 0);
-    }
-    let p0 = s[0];
-    if p0 < 0x80 {
-        return (i32::from(p0), 1);
-    }
-    // (size, accept range for the first continuation byte)
-    let (size, lo, hi): (usize, u8, u8) = match p0 {
-        0xC2..=0xDF => (2, 0x80, 0xBF),
-        0xE0 => (3, 0xA0, 0xBF),
-        0xE1..=0xEC => (3, 0x80, 0xBF),
-        0xED => (3, 0x80, 0x9F),
-        0xEE..=0xEF => (3, 0x80, 0xBF),
-        0xF0 => (4, 0x90, 0xBF),
-        0xF1..=0xF3 => (4, 0x80, 0xBF),
-        0xF4 => (4, 0x80, 0x8F),
-        _ => return (RUNE_ERROR, 1),
-    };
-    if s.len() < size {
-        return (RUNE_ERROR, 1);
-    }
-    let b1 = s[1];
-    if !(lo..=hi).contains(&b1) {
-        return (RUNE_ERROR, 1);
-    }
-    let mut r = match size {
-        2 => u32::from(p0 & 0x1F),
-        3 => u32::from(p0 & 0x0F),
-        _ => u32::from(p0 & 0x07),
-    };
-    r = (r << 6) | u32::from(b1 & 0x3F);
-    for &b in &s[2..size] {
-        if !(0x80..=0xBF).contains(&b) {
-            return (RUNE_ERROR, 1);
-        }
-        r = (r << 6) | u32::from(b & 0x3F);
-    }
-    // The accept ranges above exclude surrogates and out-of-range code points.
-    (char::from_u32(r).map_or(RUNE_ERROR, |c| c as i32), size)
 }
 
 #[cfg(test)]

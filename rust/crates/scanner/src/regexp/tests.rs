@@ -6,6 +6,7 @@
 // diagnostic text (with {0} placeholders unsubstituted), position, length, and
 // args.
 
+use tsc_ast::TokenFlags;
 use tsc_core::options_generated::ScriptTarget;
 use tsc_diagnostics::Message;
 
@@ -33,6 +34,7 @@ fn parse(
             named_capture_groups,
             script_target,
             Some(&mut cb),
+            TokenFlags::NONE,
         );
         parser.run();
     }
@@ -93,6 +95,7 @@ fn parse_literal(pattern: &str, flag_text: &str, script_target: ScriptTarget) ->
             named_capture_groups,
             script_target,
             Some(&mut cb),
+            TokenFlags::NONE,
         );
         parser.run();
     }

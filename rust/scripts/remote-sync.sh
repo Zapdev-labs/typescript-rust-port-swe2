@@ -7,7 +7,9 @@ REMOTE_HOST="${TS_REMOTE_HOST:-dih@192.168.1.15}"
 REMOTE_DIR="${TS_REMOTE_DIR:-~/TypeScript}"
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 
-rsync -az --delete \
+# --inplace: the remote ~/ is on btrfs with exhausted device allocation;
+# in-place writes avoid the ENOSPC that copy-then-rename triggers there.
+rsync -az --inplace --delete \
   --exclude '.git' \
   --exclude 'node_modules' \
   --exclude 'target' \

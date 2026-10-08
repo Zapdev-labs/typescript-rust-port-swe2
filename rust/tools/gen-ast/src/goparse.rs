@@ -1334,9 +1334,11 @@ fn read_struct_fields_lenient(
     Ok((fields, i))
 }
 
-/// Curated minimal `SourceFile` payload — the Go struct carries dozens of
-/// binder/parser/checker fields; the port keeps the core set and grows it in
-/// `kinds.toml` as needed. `Other`-typed fields carry `rust_ty`.
+/// Full `SourceFile` payload, in Go field order. Go mutexes collapse: the
+/// arena is only mutated under `&mut Vec<Node>`, so `sync.Mutex`-guarded maps
+/// are plain fields and `sync.Once`-guarded read-only computations are
+/// `OnceLock` cells (see crates/ast/src/ast.rs for the accessors). `Other`-
+/// typed fields carry `rust_ty`.
 fn push_source_file(schema: &mut Schema) {
     let field = |name: &str, ty: FieldType, rust_ty: Option<&str>| Field {
         go_name: name.to_string(),
@@ -1358,10 +1360,49 @@ fn push_source_file(schema: &mut Schema) {
             "CompositeBase".into(),
         ],
         fields: vec![
-            field("fileName", FieldType::Other, Some("String")),
+            // Fields set by NewSourceFile.
+            field(
+                "fileName",
+                FieldType::Other,
+                Some("tsc_tspath::RootedFilePath"),
+            ),
+            field(
+                "parseOptions",
+                FieldType::Other,
+                Some("crate::parseoptions::SourceFileParseOptions"),
+            ),
             field("text", FieldType::Str, None),
+            field(
+                "contentMapperInfo",
+                FieldType::Other,
+                Some("Option<Box<crate::ast::ContentMapperSourceFileInfo>>"),
+            ),
             field("statements", FieldType::NodeList, None),
             field("endOfFileToken", FieldType::Node, None),
+            // Lazily-computed data owned by packages outside ast (dataMu +
+            // data map[sourceFileDataKey]any — the typed once-cell registry
+            // lives in crate::sourcefiledata).
+            field(
+                "data",
+                FieldType::Other,
+                Some("crate::sourcefiledata::SourceFileData"),
+            ),
+            // Fields set by parser.
+            field(
+                "diagnostics",
+                FieldType::Other,
+                Some("Vec<crate::diagnostic::DiagnosticRef>"),
+            ),
+            field(
+                "jsDiagnostics",
+                FieldType::Other,
+                Some("Vec<crate::diagnostic::DiagnosticRef>"),
+            ),
+            field(
+                "jsdocDiagnostics",
+                FieldType::Other,
+                Some("Vec<crate::diagnostic::DiagnosticRef>"),
+            ),
             field(
                 "languageVariant",
                 FieldType::Other,
@@ -1387,6 +1428,18 @@ fn push_source_file(schema: &mut Schema) {
                 FieldType::Other,
                 Some("Box<[crate::ast::CommentDirective]>"),
             ),
+            field(
+                "jsdocCache",
+                FieldType::Other,
+                Some("rustc_hash::FxHashMap<NodeId, Vec<NodeId>>"),
+            ),
+            field("hasLazyJSDoc", FieldType::Bool, None),
+            field(
+                "identifiers",
+                FieldType::Other,
+                Some("std::sync::OnceLock<tsc_collections::Set<String>>"),
+            ),
+            field("reparsedClones", FieldType::NodeSlice, None),
             field(
                 "pragmas",
                 FieldType::Other,
@@ -1416,6 +1469,22 @@ fn push_source_file(schema: &mut Schema) {
             field("textCount", FieldType::Int, None),
             field("commonJSModuleIndicator", FieldType::Node, None),
             field("externalModuleIndicator", FieldType::Node, None),
+            // Fields set by binder.
+            field(
+                "isBound",
+                FieldType::Other,
+                Some("std::sync::atomic::AtomicBool"),
+            ),
+            field(
+                "bindOnce",
+                FieldType::Other,
+                Some("std::sync::atomic::AtomicBool"),
+            ),
+            field(
+                "bindDiagnostics",
+                FieldType::Other,
+                Some("Vec<crate::diagnostic::DiagnosticRef>"),
+            ),
             field("symbolCount", FieldType::Int, None),
             field(
                 "patternAmbientModules",
@@ -1423,7 +1492,40 @@ fn push_source_file(schema: &mut Schema) {
                 Some("Box<[crate::ast::PatternAmbientModule]>"),
             ),
             field("globalExports", FieldType::SymbolTable, None),
-            field("reparsedClones", FieldType::NodeSlice, None),
+            // Fields set by ECMALineMap.
+            field(
+                "ecmaLineMap",
+                FieldType::Other,
+                Some("std::sync::OnceLock<Vec<tsc_core::text::TextPos>>"),
+            ),
+            // Fields set by language service.
+            field("hash", FieldType::Other, Some("crate::ast::Uint128")),
+            field(
+                "tokenCache",
+                FieldType::Other,
+                Some("rustc_hash::FxHashMap<crate::ast::TokenCacheKey, NodeId>"),
+            ),
+            field(
+                "tokenFactory",
+                FieldType::Other,
+                Some("Option<crate::ast::NodeFactory<'static>>"),
+            ),
+            field(
+                "declarationMap",
+                FieldType::Other,
+                Some("Option<rustc_hash::FxHashMap<String, Vec<NodeId>>>"),
+            ),
+            field(
+                "nameTable",
+                FieldType::Other,
+                Some("Option<rustc_hash::FxHashMap<String, i32>>"),
+            ),
+            // Fields for UTF-8 to UTF-16 position mapping.
+            field(
+                "positionMap",
+                FieldType::Other,
+                Some("std::sync::OnceLock<crate::positionmap::PositionMap>"),
+            ),
         ],
         // `computeSubtreeFacts` = propagateNodeListSubtreeFacts(Statements).
         facts: vec![FactOp {

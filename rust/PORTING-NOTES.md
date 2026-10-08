@@ -231,3 +231,45 @@ to "2" so tsc-collections can build.
   is not observable (Go's own map order is random anyway).
   `NON_BINARY_UNICODE_PROPERTY_NAMES` keeps Go literal insertion order — it
   is only iterated, never searched.
+
+## 2026-10-08 crates/ipc — tsc/internal/ipc port shape
+- Go `error` returns become a crate `Error` enum; `ErrConnClosed`/
+  `ErrRequestTimeout` are unit variants, `%w`/`errors.Join` become
+  `Wrapped`/`Joined` nodes, and `Error::is` replays `errors.Is` chain
+  walking. `Error` is `Clone` (leaves `Arc`-wrapped) because Go stores the
+  terminal error and also returns/sends it — interface sharing becomes
+  value copying.
+- `Protocol` methods take `&self` with per-half `Mutex`es inside
+  `JsonRpcProtocol`, so a blocked read never stalls handler writes (Go gets
+  this free from a concurrent `io.ReadWriter`). `params any`/`result any`
+  become `Option<json::Value>` (raw `Box<RawValue>`) for dyn-safety; callers
+  marshal via `marshal_params`. Note for the future `api` port:
+  `MessagePackProtocol.WriteResponse`'s `RawBinary` fast-path does not fit
+  that shape and will need a dedicated method.
+- `NewJSONRPCProtocol(rw)` sharing one stream → `new_json_rpc_protocol`
+  takes `Arc<S>` and splits it via `SharedIo` (`&S: Read + Write`; std
+  provides that for `&UnixStream`/`&TcpStream`, `StdioConn` does it with
+  per-half mutexes). `io.Closer` → `IoClose` (`shutdown` in place of fd
+  close).
+- `AsyncConn`: `pending` map → `mpsc::SyncSender` values (dropping the
+  sender = `close(ch)`); `handlers sync.WaitGroup` → `thread::scope`;
+  `ctx.Done()` in `Call` polls via `recv_timeout` (≤10 ms vs
+  select-instant); `recover()` → `catch_unwind` + `Backtrace` (the default
+  panic hook still prints to stderr — cosmetic).
+- `PipeTransport` (unix): nonblocking `UnixListener` + `closed` flag stands
+  in for `listener.Close()` unblocking `Accept` (safe std cannot close a
+  listener fd). **Windows named pipes deferred**: `winio.ListenPipe` needs
+  unsafe FFI or an unapproved crate; `new_pipe_transport` fails with
+  `Unsupported` under `cfg(windows)`. `generate_pipe_path` is ported.
+
+## Deferred crates
+
+- **pprof**: `tsc/internal/pprof` wraps `runtime/pprof` (Go runtime CPU/heap
+  profiles). There is no Rust equivalent of the Go pprof runtime format;
+  when the CLI reaches profiling flags, substitute a tracing/perf-based
+  capture and note it here.
+- **fswatch**: `tsc/internal/fswatch` is a hand-rolled OS watcher stack
+  (inotify, fanotify, FSEvents via assembly FFI, kqueue, Win32 ReadDirectoryChanges).
+  Strategy TBD when watch mode is reached: either a polling-watch subset
+  faithful to `PollingWatcher` semantics plus `notify` for OS events, or a
+  syscall-level port. Do not treat as ported.

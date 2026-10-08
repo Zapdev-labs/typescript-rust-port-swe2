@@ -212,8 +212,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "tsc-fswatch"
+version = "0.0.0"
+dependencies = [
+ "rustc-hash",
+ "tsc-collections",
+ "tsc-core",
+ "tsc-nativepath",
+ "tsc-tspath",
+ "tsc-vfs",
+]
+
+[[package]]
 name = "tsc-glob"
 version = "0.0.0"
+
+[[package]]
+name = "tsc-ipc"
+version = "0.0.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "tsc-core",
+ "tsc-json",
+ "tsc-jsonrpc",
+]
 
 [[package]]
 name = "tsc-jsnum"
@@ -231,6 +254,15 @@ version = "0.0.0"
 dependencies = [
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "tsc-jsonrpc"
+version = "0.0.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "tsc-json",
 ]
 
 [[package]]
@@ -284,6 +316,13 @@ dependencies = [
  "tsc-json",
  "tsc-semver",
  "tsc-tspath",
+]
+
+[[package]]
+name = "tsc-pprof"
+version = "0.0.0"
+dependencies = [
+ "tsc-core",
 ]
 
 [[package]]

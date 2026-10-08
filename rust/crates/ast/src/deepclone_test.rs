@@ -6,11 +6,13 @@
 // deepclone machinery is exercised now.
 
 use tsc_core::text::TextRange;
+use tsc_tspath::RootedFilePath;
 
 use crate::ast::{Node, NodeFactory, NodeFactoryHooks};
 use crate::ids::NodeId;
 use crate::kind_generated::Kind;
 use crate::nodeflags::NodeFlags;
+use crate::parseoptions::SourceFileParseOptions;
 use crate::tokenflags::TokenFlags;
 
 fn assert_trees_isomorphic(nodes: &[Node], original: NodeId, copy: NodeId) {
@@ -71,7 +73,16 @@ fn test_deep_clone_node_synthetic_tree() {
     let stmt = f.new_expression_statement(&mut nodes, Some(call));
     let stmts = f.new_node_list(vec![stmt].into_boxed_slice());
     let eof = f.new_token(&mut nodes, Kind::EndOfFile);
-    let file = f.new_source_file(&mut nodes, "test.ts", "f(x, \"s\")", Some(stmts), Some(eof));
+    let file = f.new_source_file(
+        &mut nodes,
+        &SourceFileParseOptions {
+            file_name: RootedFilePath::from("test.ts"),
+            ..Default::default()
+        },
+        "f(x, \"s\")",
+        Some(stmts),
+        Some(eof),
+    );
 
     // Real locations on the source tree.
     nodes[call].loc = TextRange::new(0, 9);

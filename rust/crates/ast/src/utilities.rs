@@ -6481,10 +6481,9 @@ pub fn is_tag_name(node: NodeId, nodes: &[Node]) -> bool {
 /// require("something")`, element access `a["propname"]`, computed property
 /// declaration name, etc.).
 ///
-/// PORT: package-private in Go (used by the binder); `#[allow(dead_code)]`
-/// until the binder port lands.
-#[allow(dead_code)]
-fn literal_is_name(node: NodeId, nodes: &[Node]) -> bool {
+/// PORT: package-private in Go (used by the binder and by
+/// `compute_name_table`); `pub(crate)` here for the same reach.
+pub(crate) fn literal_is_name(node: NodeId, nodes: &[Node]) -> bool {
     // PORT: `node.Parent.Kind` is an unconditional dereference in Go — panic
     // on `None` mirrors the nil-pointer panic.
     is_declaration_name(node, nodes)

@@ -1,0 +1,18 @@
+[package]
+name = "tsc-diagnosticwriter"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+tsc-ast = { path = "../ast" }
+tsc-core = { path = "../core" }
+tsc-diagnostics = { path = "../diagnostics" }
+tsc-locale = { path = "../locale" }
+tsc-scanner = { path = "../scanner" }
+tsc-spanmap = { path = "../spanmap" }
+tsc-tspath = { path = "../tspath" }

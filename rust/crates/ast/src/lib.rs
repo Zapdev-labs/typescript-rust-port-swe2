@@ -25,6 +25,7 @@ pub mod nodeflags;
 pub mod parseoptions;
 pub mod positionmap;
 pub mod precedence;
+pub mod sourcefiledata;
 pub mod subtreefacts;
 pub mod symbol;
 pub mod symbolflags;
@@ -49,6 +50,9 @@ pub use ids::{FlowListId, FlowNodeId, NodeId, SymbolId};
 pub use kind_generated::Kind;
 pub use modifierflags::ModifierFlags;
 pub use nodeflags::NodeFlags;
+pub use sourcefiledata::{
+    SourceFileData, SourceFileDataKey, get_or_compute_data, new_source_file_data_key,
+};
 pub use subtreefacts::SubtreeFacts;
 pub use symbol::{Symbol, SymbolTable};
 pub use symbolflags::SymbolFlags;

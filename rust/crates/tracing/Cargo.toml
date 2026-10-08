@@ -1,0 +1,17 @@
+[package]
+name = "tsc-tracing"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+tsc-ast = { path = "../ast" }
+tsc-json = { path = "../json" }
+tsc-scanner = { path = "../scanner" }
+tsc-tspath = { path = "../tspath" }
+tsc-vfs = { path = "../vfs" }
+serde_json = { workspace = true }

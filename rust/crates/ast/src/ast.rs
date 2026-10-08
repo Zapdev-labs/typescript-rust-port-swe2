@@ -9,18 +9,33 @@
 // `Vec<Node>` owned by a `SourceFile`.
 
 use std::borrow::Cow;
+use std::collections::hash_map::Entry;
+use std::sync::atomic::Ordering;
+use std::sync::{Arc, RwLock};
 
-use tsc_collections::OrderedMap;
+use rustc_hash::{FxBuildHasher, FxHashMap};
+use tsc_collections::{OrderedMap, Set};
+use tsc_core::core::compute_ecma_line_starts;
 use tsc_core::options_generated::ModuleKind;
 use tsc_core::text::{TextPos, TextRange};
-use tsc_tspath::RootedDirectoryPath;
+use tsc_spanmap::SpanMap;
+use tsc_tspath::{PathKey, RootedDirectoryPath, RootedFilePath};
 
 use crate::ast_generated::*;
+use crate::diagnostic::DiagnosticRef;
 use crate::ids::{NodeId, SymbolId};
 use crate::kind_generated::Kind;
 use crate::modifierflags::ModifierFlags;
 use crate::nodeflags::NodeFlags;
+use crate::parseoptions::SourceFileParseOptions;
+use crate::positionmap::{PositionMap, compute_position_map};
 use crate::symbol::SymbolTable;
+use crate::tokenflags::TokenFlags;
+use crate::utilities::{
+    JsDeclarationKind, get_assignment_declaration_kind, get_non_assigned_name_of_declaration,
+    get_source_file_of_node, has_syntactic_modifier, is_binding_pattern, is_property_name,
+    is_string_or_numeric_literal_like, is_tag_name, literal_is_name,
+};
 
 // NodeList
 
@@ -1476,6 +1491,71 @@ pub struct CheckJsDirective {
     pub range: CommentRange,
 }
 
+/// `type SourceFileLike interface` — `Text()` + `ECMALineMap()`.
+pub trait SourceFileLike {
+    /// `Text()`.
+    fn text(&self) -> &str;
+    /// `ECMALineMap()`.
+    fn ecma_line_map(&self) -> &[TextPos];
+}
+
+/// `type TokenCacheKey struct` — `{parent *Node, loc core.TextRange}`.
+///
+/// PORT: `parent` is a `NodeId`; Go's `GetOrCreateToken` dereferences the
+/// pointer unconditionally, so a nil parent would panic there anyway.
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
+pub struct TokenCacheKey {
+    pub parent: NodeId,
+    pub loc: TextRange,
+}
+
+/// `xxh3.Uint128` — the language-service content hash stored on `SourceFile`.
+/// Only the value type is needed here; the xxh3 hash function lands with the
+/// API/encoder layer that computes it.
+#[derive(Clone, Copy, Default, PartialEq, Eq, Hash, Debug)]
+pub struct Uint128 {
+    pub hi: u64,
+    pub lo: u64,
+}
+
+/// `type MappedDiagnosticDirectivePolicy uint8`.
+#[derive(Clone, Copy, Default, PartialEq, Eq, Debug)]
+pub enum MappedDiagnosticDirectivePolicy {
+    /// `MappedDiagnosticDirectivePolicyIgnore`
+    #[default]
+    Ignore = 0,
+    /// `MappedDiagnosticDirectivePolicyExpect`
+    Expect = 1,
+}
+
+/// `type MappedDiagnosticDirective struct`
+#[derive(Clone, Default)]
+pub struct MappedDiagnosticDirective {
+    pub original_range: TextRange,
+    pub virtual_range: TextRange,
+    pub policy: MappedDiagnosticDirectivePolicy,
+    pub unused_code: i32,
+    pub unused_message_text: String,
+    pub source: String,
+}
+
+/// `type ContentMapperSourceFileInfo struct`
+///
+/// PORT: `*SourceFile` members are `NodeId`s into the owning arena;
+/// `*spanmap.SpanMap` is a shared pointer, so `Option<Arc<SpanMap>>`.
+#[derive(Clone, Default)]
+pub struct ContentMapperSourceFileInfo {
+    pub content_mapper: String,
+    pub transform_identity: String,
+    pub parse_options: SourceFileParseOptions,
+    pub virtual_file_name: RootedFilePath,
+    pub original_text: String,
+    pub span_map: Option<Arc<SpanMap>>,
+    pub diagnostic_directives: Vec<MappedDiagnosticDirective>,
+    pub supplemental_source_files: Vec<NodeId>,
+    pub canonical_source_file: Option<NodeId>,
+}
+
 /// `type CommentRange struct`
 #[derive(Clone, Copy, Default)]
 pub struct CommentRange {
@@ -1562,19 +1642,20 @@ pub fn visit_each_child_js_doc_parameter_or_property_tag<'v>(
 }
 
 impl NodeFactory<'_> {
-    /// `f.NewSourceFile(opts, text, statements, endOfFileToken)` — the parse
-    /// options collapse to `file_name`/`language_variant`/`script_kind` here;
-    /// the remaining `SourceFileParseOptions` members are set post-construction.
+    /// `f.NewSourceFile(opts, text, statements, endOfFileToken)` — sets
+    /// `fileName`/`parseOptions`/`text`/`Statements`/`EndOfFileToken`; every
+    /// other field keeps its zero value.
     pub fn new_source_file(
         &mut self,
         nodes: &mut Vec<Node>,
-        file_name: &str,
+        opts: &SourceFileParseOptions,
         text: &str,
         statements: Option<NodeList>,
         end_of_file_token: Option<NodeId>,
     ) -> NodeId {
         let data = SourceFile {
-            file_name: file_name.to_string(),
+            file_name: opts.file_name.clone(),
+            parse_options: opts.clone(),
             text: text.to_string(),
             statements,
             end_of_file_token,
@@ -1592,17 +1673,16 @@ impl NodeFactory<'_> {
         statements: Option<NodeList>,
         end_of_file_token: Option<NodeId>,
     ) -> Option<NodeId> {
-        let (changed, file_name, text) = {
+        let (changed, opts, text) = {
             let d = nodes[node].as_source_file();
             (
                 statements != d.statements || end_of_file_token != d.end_of_file_token,
-                d.file_name.clone(),
+                d.parse_options.clone(),
                 d.text.clone(),
             )
         };
         if changed {
-            let updated =
-                self.new_source_file(nodes, &file_name, &text, statements, end_of_file_token);
+            let updated = self.new_source_file(nodes, &opts, &text, statements, end_of_file_token);
             copy_source_file_from(nodes, updated, node);
             return Some(update_node(nodes, updated, node, &mut self.hooks));
         }
@@ -1610,19 +1690,28 @@ impl NodeFactory<'_> {
     }
 }
 
-/// `(node *SourceFile) copyFrom(other)` — copies every field not set by
-/// `NewSourceFile`, then ORs the flags. Implemented by taking the new
+/// `(node *SourceFile) copyFrom(other)` — copies exactly the field list Go's
+/// `copyFrom` copies (contentMapperInfo through ExternalModuleIndicator),
+/// then ORs the flags. Fields set by `NewSourceFile` (text, parseOptions,
+/// fileName, Statements, EndOfFileToken), the diagnostics, counters,
+/// `checkJsDirective`, binder state, `ReparsedClones`, and every
+/// lazily-computed cache are deliberately NOT copied — Go leaves them at
+/// their zero values on the updated file. Implemented by taking the new
 /// file's data, filling it from `other`, and writing it back (the arena
 /// forbids holding two mutable borrows).
 fn copy_source_file_from(nodes: &mut [Node], new_file: NodeId, other: NodeId) {
     let mut d = std::mem::take(nodes[new_file].as_source_file_mut());
     {
         let o = nodes[other].as_source_file();
+        // `if other.contentMapperInfo != nil { node.SetContentMapperInfo(...) }`
+        // — `d` is fresh, so the slot is always empty.
+        if o.content_mapper_info.is_some() {
+            d.content_mapper_info = o.content_mapper_info.clone();
+        }
         d.language_variant = o.language_variant;
         d.script_kind = o.script_kind;
         d.is_declaration_file = o.is_declaration_file;
         d.uses_uri_style_node_core_modules = o.uses_uri_style_node_core_modules;
-        d.identifier_count = o.identifier_count;
         d.imports = o.imports.clone();
         d.module_augmentations = o.module_augmentations.clone();
         d.ambient_module_names = o.ambient_module_names.clone();
@@ -1631,15 +1720,8 @@ fn copy_source_file_from(nodes: &mut [Node], new_file: NodeId, other: NodeId) {
         d.referenced_files = o.referenced_files.clone();
         d.type_reference_directives = o.type_reference_directives.clone();
         d.lib_reference_directives = o.lib_reference_directives.clone();
-        d.check_js_directive = o.check_js_directive;
-        d.node_count = o.node_count;
-        d.text_count = o.text_count;
         d.common_js_module_indicator = o.common_js_module_indicator;
         d.external_module_indicator = o.external_module_indicator;
-        d.symbol_count = o.symbol_count;
-        d.pattern_ambient_modules = o.pattern_ambient_modules.clone();
-        d.global_exports = o.global_exports.clone();
-        d.reparsed_clones = o.reparsed_clones.clone();
     }
     *nodes[new_file].as_source_file_mut() = d;
     let other_flags = nodes[other].flags;
@@ -1652,18 +1734,803 @@ pub(crate) fn clone_source_file(
     nodes: &mut Vec<Node>,
     node: NodeId,
 ) -> NodeId {
-    let (file_name, text, statements, end_of_file_token) = {
+    let (opts, text, statements, end_of_file_token) = {
         let d = nodes[node].as_source_file();
         (
-            d.file_name.clone(),
+            d.parse_options.clone(),
             d.text.clone(),
             d.statements.clone(),
             d.end_of_file_token,
         )
     };
-    let updated = f.new_source_file(nodes, &file_name, &text, statements, end_of_file_token);
+    let updated = f.new_source_file(nodes, &opts, &text, statements, end_of_file_token);
     copy_source_file_from(nodes, updated, node);
     clone_node(nodes, updated, node, &mut f.hooks)
+}
+
+// SourceFile accessors and lazily-computed state — the `*SourceFile` methods
+// of ast.go. Methods that only read take `&self`; Go's `sync.Once` fields map
+// to `std::sync::OnceLock` where the computation is read-only, while
+// computations that can grow the arena (lazy JSDoc, token creation,
+// JSDoc-aware walks) are free functions taking `&mut Vec<Node>` — exclusive
+// arena access replaces Go's `sync.Mutex`/`sync.RWMutex` guards.
+
+impl SourceFile {
+    /// `(node *SourceFile) ParseOptions()`.
+    pub fn parse_options(&self) -> &SourceFileParseOptions {
+        &self.parse_options
+    }
+
+    /// `(node *SourceFile) Text()`.
+    pub fn text(&self) -> &str {
+        &self.text
+    }
+
+    /// `(node *SourceFile) OriginalText()` — the untransformed source text
+    /// for content-mapped files, or `Text()` otherwise.
+    pub fn original_text(&self) -> &str {
+        if !self.content_mapper().is_empty() {
+            return &self.content_mapper_info.as_ref().unwrap().original_text;
+        }
+        &self.text
+    }
+
+    /// `(node *SourceFile) OriginalFileName()` — the canonical filename
+    /// associated with a supplemental source file, or `FileName()`.
+    pub fn original_file_name<'a>(&'a self, nodes: &'a [Node]) -> &'a RootedFilePath {
+        if let Some(canonical) = self.canonical_source_file() {
+            return nodes[canonical].as_source_file().file_name();
+        }
+        self.file_name()
+    }
+
+    /// `(node *SourceFile) SpanMap()` — positions in this file's transformed
+    /// `Text()` mapped back to its original content. `None` is Go's nil map,
+    /// which maps positions identically.
+    pub fn span_map(&self) -> Option<Arc<SpanMap>> {
+        self.content_mapper_info
+            .as_ref()
+            .and_then(|info| info.span_map.clone())
+    }
+
+    /// `(node *SourceFile) IsContentMapped()`.
+    pub fn is_content_mapped(&self) -> bool {
+        self.content_mapper_info.is_some()
+    }
+
+    /// `(node *SourceFile) ContentMapper()` — the mapper's identity, or "".
+    pub fn content_mapper(&self) -> &str {
+        self.content_mapper_info
+            .as_ref()
+            .map_or("", |info| info.content_mapper.as_str())
+    }
+
+    /// `(node *SourceFile) IsContentMapperFailureStub()`.
+    pub fn is_content_mapper_failure_stub(&self) -> bool {
+        !self.content_mapper().is_empty() && self.span_map().is_none()
+    }
+
+    /// `(node *SourceFile) ContentMapperTransformIdentity()`.
+    pub fn content_mapper_transform_identity(&self) -> &str {
+        self.content_mapper_info
+            .as_ref()
+            .map_or("", |info| info.transform_identity.as_str())
+    }
+
+    /// `(node *SourceFile) VirtualFileName()`.
+    pub fn virtual_file_name(&self) -> RootedFilePath {
+        self.content_mapper_info
+            .as_ref()
+            .map(|info| info.virtual_file_name.clone())
+            .unwrap_or_default()
+    }
+
+    /// `(node *SourceFile) ContentMapperParseOptions()` — the parse options
+    /// used to acquire this file from the mapped parse cache.
+    pub fn content_mapper_parse_options(&self) -> SourceFileParseOptions {
+        self.content_mapper_info
+            .as_ref()
+            .map(|info| info.parse_options.clone())
+            .unwrap_or_default()
+    }
+
+    /// `(node *SourceFile) SetContentMapperInfo(info)` — initializes all
+    /// content-mapper metadata before the source file is published; panics
+    /// if already set.
+    pub fn set_content_mapper_info(&mut self, info: ContentMapperSourceFileInfo) {
+        if self.content_mapper_info.is_some() {
+            panic!("content mapper source file info already set");
+        }
+        self.content_mapper_info = Some(Box::new(info));
+    }
+
+    /// `(node *SourceFile) DiagnosticDirectives()`.
+    pub fn diagnostic_directives(&self) -> &[MappedDiagnosticDirective] {
+        self.content_mapper_info
+            .as_ref()
+            .map_or(&[], |info| info.diagnostic_directives.as_slice())
+    }
+
+    /// `(node *SourceFile) SupplementalSourceFiles()` — additional outputs
+    /// produced from this canonical source file.
+    pub fn supplemental_source_files(&self) -> &[NodeId] {
+        self.content_mapper_info
+            .as_ref()
+            .map_or(&[], |info| info.supplemental_source_files.as_slice())
+    }
+
+    /// `(node *SourceFile) CanonicalSourceFile()` — the canonical output
+    /// associated with this supplemental source file.
+    pub fn canonical_source_file(&self) -> Option<NodeId> {
+        self.content_mapper_info
+            .as_ref()
+            .and_then(|info| info.canonical_source_file)
+    }
+
+    /// `(node *SourceFile) IsContentMapperSupplemental()`.
+    pub fn is_content_mapper_supplemental(&self) -> bool {
+        self.canonical_source_file().is_some()
+    }
+
+    /// `(node *SourceFile) FileName()` — `parseOptions.FileName` (the
+    /// `file_name` field is debug-only, as in Go).
+    pub fn file_name(&self) -> &RootedFilePath {
+        &self.parse_options.file_name
+    }
+
+    /// `(node *SourceFile) PathKey()` — `parseOptions.PathKey`.
+    pub fn path_key(&self) -> &PathKey {
+        &self.parse_options.path_key
+    }
+
+    /// `(node *SourceFile) Imports()`.
+    pub fn imports(&self) -> &[NodeId] {
+        &self.imports
+    }
+
+    /// `(node *SourceFile) Diagnostics()`.
+    pub fn diagnostics(&self) -> &[DiagnosticRef] {
+        &self.diagnostics
+    }
+
+    /// `(node *SourceFile) SetDiagnostics(diags)`.
+    pub fn set_diagnostics(&mut self, diags: Vec<DiagnosticRef>) {
+        self.diagnostics = diags;
+    }
+
+    /// `(node *SourceFile) JSDiagnostics()`.
+    pub fn js_diagnostics(&self) -> &[DiagnosticRef] {
+        &self.js_diagnostics
+    }
+
+    /// `(node *SourceFile) SetJSDiagnostics(diags)`.
+    pub fn set_js_diagnostics(&mut self, diags: Vec<DiagnosticRef>) {
+        self.js_diagnostics = diags;
+    }
+
+    /// `(node *SourceFile) JSDocDiagnostics()`.
+    pub fn jsdoc_diagnostics(&self) -> &[DiagnosticRef] {
+        &self.jsdoc_diagnostics
+    }
+
+    /// `(node *SourceFile) SetJSDocDiagnostics(diags)`.
+    pub fn set_jsdoc_diagnostics(&mut self, diags: Vec<DiagnosticRef>) {
+        self.jsdoc_diagnostics = diags;
+    }
+
+    /// `(node *SourceFile) SetJSDocCache(cache)` — the parser seeds the
+    /// eagerly-parsed cache before `SetHasLazyJSDoc`.
+    pub fn set_jsdoc_cache(&mut self, cache: FxHashMap<NodeId, Vec<NodeId>>) {
+        self.jsdoc_cache = cache;
+    }
+
+    /// `(node *SourceFile) SetHasLazyJSDoc(lazy)`.
+    pub fn set_has_lazy_jsdoc(&mut self, lazy: bool) {
+        self.has_lazy_js_doc = lazy;
+    }
+
+    /// `(node *SourceFile) BindDiagnostics()`.
+    pub fn bind_diagnostics(&self) -> &[DiagnosticRef] {
+        &self.bind_diagnostics
+    }
+
+    /// `(node *SourceFile) SetBindDiagnostics(diags)`.
+    pub fn set_bind_diagnostics(&mut self, diags: Vec<DiagnosticRef>) {
+        self.bind_diagnostics = diags;
+    }
+
+    /// `(node *SourceFile) IsJS()` — `IsSourceFileJS(node)`.
+    pub fn is_js(&self) -> bool {
+        crate::utilities::is_source_file_js(self)
+    }
+
+    /// `(node *SourceFile) ECMALineMap()` — `OnceLock` is the
+    /// `ecmaLineMapMu` double-checked lock; the computation only reads
+    /// `self.text`.
+    pub fn ecma_line_map(&self) -> &[TextPos] {
+        self.ecma_line_map
+            .get_or_init(|| compute_ecma_line_starts(&self.text))
+    }
+
+    /// `(node *SourceFile) IsBound()`.
+    pub fn is_bound(&self) -> bool {
+        self.is_bound.load(Ordering::Acquire)
+    }
+
+    /// `(file *SourceFile) GetPositionMap()` — the `PositionMap` for this
+    /// source file, computed lazily (`positionMapOnce`/`positionMap`).
+    pub fn position_map(&self) -> &PositionMap {
+        self.position_map
+            .get_or_init(|| compute_position_map(self.text.as_bytes()))
+    }
+}
+
+impl SourceFileLike for SourceFile {
+    fn text(&self) -> &str {
+        SourceFile::text(self)
+    }
+
+    fn ecma_line_map(&self) -> &[TextPos] {
+        SourceFile::ecma_line_map(self)
+    }
+}
+
+/// `SourceFile` satisfies Go's `HasFileName` interface (`FileName()` +
+/// `PathKey()`).
+impl crate::utilities::HasFileName for SourceFile {
+    fn file_name(&self) -> &RootedFilePath {
+        SourceFile::file_name(self)
+    }
+
+    fn path_key(&self) -> &PathKey {
+        SourceFile::path_key(self)
+    }
+}
+
+/// `(file *SourceFile) HasIdentifier(name)` — `identifiersOnce` +
+/// `identifiers` become a `OnceLock<Set<String>>`; the collection walk is
+/// read-only, so `&[Node]` suffices.
+pub fn has_identifier(nodes: &[Node], file: NodeId, name: &str) -> bool {
+    nodes[file]
+        .as_source_file()
+        .identifiers
+        .get_or_init(|| collect_identifiers_for_source_file(file, nodes))
+        .has(name)
+}
+
+/// `collectIdentifiersForSourceFile` — every identifier/literal text in the
+/// file. `collect` never returns true, so the child loop is a plain
+/// recursion.
+fn collect_identifiers_for_source_file(source_file: NodeId, nodes: &[Node]) -> Set<String> {
+    fn collect(node: NodeId, nodes: &[Node], identifiers: &mut Set<String>) {
+        match nodes[node].kind {
+            Kind::Identifier
+            | Kind::PrivateIdentifier
+            | Kind::StringLiteral
+            | Kind::NumericLiteral
+            | Kind::BigIntLiteral
+            | Kind::NoSubstitutionTemplateLiteral => {
+                identifiers.add(nodes[node].text(nodes).into_owned());
+            }
+            _ => {}
+        }
+        let children: Vec<NodeId> = nodes[node].iter_children(nodes).map(|c| c.id).collect();
+        for child in children {
+            collect(child, nodes, identifiers);
+        }
+    }
+    let mut identifiers = Set::new();
+    collect(source_file, nodes, &mut identifiers);
+    identifiers
+}
+
+/// `(node *SourceFile) BindOnce(bind)` — `bindOnce sync.Once` +
+/// `isBound atomic.Bool`. The once-flag flips before `bind` runs, matching
+/// Go 1.21+ semantics where a panicking `Do` still marks the `Once` done
+/// (and `isBound` stays false, matching Go's store-after-`bind` order).
+/// PORT: `bind` takes the arena — the binder's `func()` closes over it.
+pub fn bind_once(nodes: &mut Vec<Node>, file: NodeId, bind: impl FnOnce(&mut Vec<Node>)) {
+    if nodes[file]
+        .as_source_file()
+        .bind_once
+        .swap(true, Ordering::AcqRel)
+    {
+        return;
+    }
+    bind(nodes);
+    nodes[file]
+        .as_source_file()
+        .is_bound
+        .store(true, Ordering::Release);
+}
+
+// Lazy JSDoc — `parseJSDocForNode`, `SetParseJSDocForNode`, `resolveJSDoc`,
+// `Node.JSDoc`, `Node.EagerJSDoc`.
+
+/// `parseJSDocForNode` — the package-level lazy JSDoc parse function,
+/// registered by the parser (Go: `SetParseJSDocForNode` from parser's
+/// `init()`). Receives `(nodes, sourceFile, node)` — the Go
+/// `(*SourceFile, *Node)` pair as arena handles.
+pub type ParseJsDocForNodeFn = fn(&mut Vec<Node>, NodeId, NodeId) -> Vec<NodeId>;
+
+/// The `parseJSDocForNode` package var — an `RwLock` keeps the Go "plain
+/// var" semantics (re-settable, readable without mutation).
+static PARSE_JSDOC_FOR_NODE: RwLock<Option<ParseJsDocForNodeFn>> = RwLock::new(None);
+
+/// `SetParseJSDocForNode(fn)` — registers the lazy JSDoc parse function.
+pub fn set_parse_jsdoc_for_node(f: ParseJsDocForNodeFn) {
+    // Go's plain-var assignment never fails; `into_inner` recovers from a
+    // poisoned lock the way Go's mutexes stay usable after a panic.
+    *PARSE_JSDOC_FOR_NODE
+        .write()
+        .unwrap_or_else(|e| e.into_inner()) = Some(f);
+}
+
+fn parse_jsdoc_for_node_fn() -> ParseJsDocForNodeFn {
+    PARSE_JSDOC_FOR_NODE
+        .read()
+        .unwrap_or_else(|e| e.into_inner())
+        .unwrap_or_else(|| {
+            panic!("resolveJSDoc called but parseJSDocForNode is not registered; ensure the parser package is imported")
+        })
+}
+
+/// `(node *SourceFile) resolveJSDoc(n)` — `jsdocMu` collapses into the
+/// exclusive `&mut Vec<Node>` borrow; the read/write-lock double-check is
+/// unnecessary under `&mut`.
+pub(crate) fn resolve_jsdoc(nodes: &mut Vec<Node>, file: NodeId, n: NodeId) -> Vec<NodeId> {
+    // Go panics on an unregistered hook before touching the cache.
+    let parse = parse_jsdoc_for_node_fn();
+    if let Some(jsdocs) = nodes[file].as_source_file().jsdoc_cache.get(&n) {
+        return jsdocs.clone();
+    }
+    let jsdocs = parse(nodes, file, n);
+    nodes[file]
+        .as_source_file_mut()
+        .jsdoc_cache
+        .insert(n, jsdocs.clone());
+    jsdocs
+}
+
+/// `(node *Node) JSDoc(file)` — `None` for `file` walks to the root of the
+/// tree to find the file, like Go's nil. Returns the cached or lazily-parsed
+/// JSDoc nodes for `node` (empty when absent, like Go's nil slice).
+pub fn js_doc(nodes: &mut Vec<Node>, node: NodeId, file: Option<NodeId>) -> Vec<NodeId> {
+    if !nodes[node].flags.intersects(NodeFlags::HAS_JSDOC) {
+        return Vec::new();
+    }
+    let file = match file.or_else(|| get_source_file_of_node(Some(node), nodes)) {
+        Some(file) => file,
+        None => return Vec::new(),
+    };
+    if nodes[file].as_source_file().has_lazy_js_doc {
+        return resolve_jsdoc(nodes, file, node);
+    }
+    nodes[file]
+        .as_source_file()
+        .jsdoc_cache
+        .get(&node)
+        .cloned()
+        .unwrap_or_default()
+}
+
+/// `(node *Node) EagerJSDoc(file)` — JSDoc nodes already parsed and cached,
+/// without triggering lazy JSDoc parsing.
+pub fn eager_js_doc(nodes: &[Node], node: NodeId, file: Option<NodeId>) -> Vec<NodeId> {
+    if !nodes[node].flags.intersects(NodeFlags::HAS_JSDOC) {
+        return Vec::new();
+    }
+    let Some(file) = file.or_else(|| get_source_file_of_node(Some(node), nodes)) else {
+        return Vec::new();
+    };
+    // Go reads through `jsdocMu` when `hasLazyJSDoc` — moot under a shared
+    // borrow; the lookup is identical either way.
+    nodes[file]
+        .as_source_file()
+        .jsdoc_cache
+        .get(&node)
+        .cloned()
+        .unwrap_or_default()
+}
+
+// Token cache — `GetOrCreateToken`/`createToken`.
+
+/// `(node *SourceFile) GetOrCreateToken(kind, pos, end, parent, flags)` —
+/// gets a token from the file's token cache, creating it if it does not
+/// already exist. NOT for synthetic tokens that aren't in the file.
+/// `tokenCacheMu` collapses into the exclusive `&mut Vec<Node>` borrow.
+pub fn get_or_create_token(
+    nodes: &mut Vec<Node>,
+    file: NodeId,
+    kind: Kind,
+    pos: TextPos,
+    end: TextPos,
+    parent: NodeId,
+    flags: TokenFlags,
+) -> NodeId {
+    let loc = TextRange::new(pos, end);
+    let key = TokenCacheKey { parent, loc };
+    if let Some(&token) = nodes[file].as_source_file().token_cache.get(&key) {
+        let cached_kind = nodes[token].kind;
+        if cached_kind != kind {
+            panic!(
+                "Token cache mismatch: {} != {}",
+                cached_kind.kind_string(),
+                kind.kind_string()
+            );
+        }
+        return token;
+    }
+    if nodes[parent].flags.intersects(NodeFlags::REPARSED) {
+        panic!(
+            "Cannot create token from reparsed node of kind {}",
+            nodes[parent].kind_string()
+        );
+    }
+    let token = create_token(nodes, file, kind, pos, end, flags);
+    nodes[token].loc = loc;
+    nodes[token].parent = Some(parent);
+    nodes[file]
+        .as_source_file_mut()
+        .token_cache
+        .insert(key, token);
+    token
+}
+
+/// `createToken(kind, file, pos, end, flags)` — `kind` is a token kind.
+fn create_token(
+    nodes: &mut Vec<Node>,
+    file: NodeId,
+    kind: Kind,
+    pos: TextPos,
+    end: TextPos,
+    flags: TokenFlags,
+) -> NodeId {
+    // `file.tokenFactory`, created lazily (Go: `*NodeFactory`). PORT: the
+    // factory's `new_*` methods need `&mut Vec<Node>` to mint arena nodes, so
+    // the stored factory is taken out of the file for the call and put back
+    // afterwards. `NodeFactory<'static>` because `SourceFile` cannot carry a
+    // borrow-bound lifetime.
+    let mut factory = match nodes[file].as_source_file_mut().token_factory.take() {
+        Some(factory) => factory,
+        None => {
+            let mut factory = NodeFactory::new(NodeFactoryHooks::default());
+            factory.set_file_index(nodes[file].id.file_index());
+            factory
+        }
+    };
+    let text = nodes[file].as_source_file().text[pos as usize..end as usize].to_string();
+    let token = match kind {
+        Kind::NumericLiteral => factory.new_numeric_literal(nodes, &text, flags),
+        Kind::BigIntLiteral => factory.new_big_int_literal(nodes, &text, flags),
+        Kind::StringLiteral => factory.new_string_literal(nodes, &text, flags),
+        Kind::JsxText | Kind::JsxTextAllWhiteSpaces => {
+            // `NewJsxText` always mints `KindJsxText`, even for
+            // `KindJsxTextAllWhiteSpaces` input — same as Go.
+            factory.new_jsx_text(nodes, &text, kind == Kind::JsxTextAllWhiteSpaces)
+        }
+        Kind::RegularExpressionLiteral => {
+            factory.new_regular_expression_literal(nodes, &text, flags)
+        }
+        Kind::NoSubstitutionTemplateLiteral => {
+            factory.new_no_substitution_template_literal(nodes, &text, flags)
+        }
+        Kind::TemplateHead => factory.new_template_head(nodes, &text, "", flags),
+        Kind::TemplateMiddle => factory.new_template_middle(nodes, &text, "", flags),
+        Kind::TemplateTail => factory.new_template_tail(nodes, &text, "", flags),
+        Kind::Identifier => factory.new_identifier(nodes, &text),
+        Kind::PrivateIdentifier => factory.new_private_identifier(nodes, &text),
+        // Punctuation and keywords.
+        _ => factory.new_token(nodes, kind),
+    };
+    nodes[file].as_source_file_mut().token_factory = Some(factory);
+    token
+}
+
+// Declaration map — `GetDeclarationMap`/`computeDeclarationMap`/
+// `GetDeclarationName`.
+
+/// `(node *SourceFile) GetDeclarationMap()` — `declarationMapMu` collapses
+/// to `Option` under exclusive arena access (the compute is read-only).
+pub fn get_declaration_map<'a>(
+    nodes: &'a mut Vec<Node>,
+    file: NodeId,
+) -> &'a FxHashMap<String, Vec<NodeId>> {
+    if nodes[file].as_source_file().declaration_map.is_none() {
+        let map = compute_declaration_map(nodes, file);
+        nodes[file].as_source_file_mut().declaration_map = Some(map);
+    }
+    nodes[file]
+        .as_source_file()
+        .declaration_map
+        .as_ref()
+        .unwrap()
+}
+
+/// `(node *SourceFile) computeDeclarationMap` — a read-only tree walk.
+fn compute_declaration_map(nodes: &[Node], file: NodeId) -> FxHashMap<String, Vec<NodeId>> {
+    fn add_declaration(
+        nodes: &[Node],
+        result: &mut FxHashMap<String, Vec<NodeId>>,
+        declaration: NodeId,
+    ) {
+        let name = get_declaration_name(nodes, declaration);
+        if !name.is_empty() {
+            result.entry(name).or_default().push(declaration);
+        }
+    }
+
+    fn for_each_child(node: NodeId, nodes: &[Node]) -> Vec<NodeId> {
+        // `node.ForEachChild(visit)` — `visit` never returns true.
+        nodes[node].iter_children(nodes).map(|c| c.id).collect()
+    }
+
+    /// `case KindParameter (fallthrough), KindVariableDeclaration,
+    /// KindBindingElement` — the shared `name`/`IsBindingPattern` walk.
+    fn visit_declared_name(
+        node: NodeId,
+        nodes: &[Node],
+        result: &mut FxHashMap<String, Vec<NodeId>>,
+    ) {
+        let Some(name) = nodes[node].name() else {
+            return;
+        };
+        if is_binding_pattern(&nodes[name]) {
+            for child in for_each_child(name, nodes) {
+                visit(child, nodes, result);
+            }
+        } else {
+            if let Some(initializer) = nodes[node].initializer() {
+                visit(initializer, nodes, result);
+            }
+            add_declaration(nodes, result, node);
+        }
+    }
+
+    fn visit(node: NodeId, nodes: &[Node], result: &mut FxHashMap<String, Vec<NodeId>>) {
+        match nodes[node].kind {
+            Kind::FunctionDeclaration
+            | Kind::FunctionExpression
+            | Kind::MethodDeclaration
+            | Kind::MethodSignature => {
+                let declaration_name = get_declaration_name(nodes, node);
+                if !declaration_name.is_empty() {
+                    let declarations = result.entry(declaration_name).or_default();
+                    // Check whether this declaration belongs to an
+                    // "overload group".
+                    let last_declaration = declarations.last().copied();
+                    if last_declaration.is_some_and(|last| {
+                        nodes[node].parent == nodes[last].parent
+                            && nodes[node].symbol() == nodes[last].symbol()
+                    }) {
+                        // Overwrite the last declaration if it was an
+                        // overload and this one is an implementation.
+                        let last = last_declaration.unwrap();
+                        if nodes[node].body().is_some() && nodes[last].body().is_none() {
+                            let len = declarations.len();
+                            declarations[len - 1] = node;
+                        }
+                    } else {
+                        declarations.push(node);
+                    }
+                }
+                for child in for_each_child(node, nodes) {
+                    visit(child, nodes, result);
+                }
+            }
+            Kind::ClassDeclaration
+            | Kind::ClassExpression
+            | Kind::InterfaceDeclaration
+            | Kind::TypeAliasDeclaration
+            | Kind::EnumDeclaration
+            | Kind::ModuleDeclaration
+            | Kind::ImportEqualsDeclaration
+            | Kind::ImportClause
+            | Kind::NamespaceImport
+            | Kind::GetAccessor
+            | Kind::SetAccessor
+            | Kind::TypeLiteral => {
+                add_declaration(nodes, result, node);
+                for child in for_each_child(node, nodes) {
+                    visit(child, nodes, result);
+                }
+            }
+            Kind::ImportSpecifier | Kind::ExportSpecifier => {
+                if nodes[node].property_name().is_some() {
+                    add_declaration(nodes, result, node);
+                }
+            }
+            Kind::Parameter => {
+                // Only consider parameter properties. Go `break` exits the
+                // switch — non-parameter properties are not traversed.
+                if has_syntactic_modifier(&nodes[node], ModifierFlags::PARAMETER_PROPERTY_MODIFIER)
+                {
+                    visit_declared_name(node, nodes, result);
+                }
+            }
+            Kind::VariableDeclaration | Kind::BindingElement => {
+                visit_declared_name(node, nodes, result);
+            }
+            Kind::EnumMember | Kind::PropertyDeclaration | Kind::PropertySignature => {
+                add_declaration(nodes, result, node);
+            }
+            Kind::ExportDeclaration => {
+                // Handle named exports case e.g.:
+                //    export {a, b as B} from "mod";
+                if let Some(export_clause) = nodes[node].as_export_declaration().export_clause {
+                    if is_named_exports(&nodes[export_clause]) {
+                        if let Some(elements) = nodes[export_clause].elements() {
+                            for &element in elements {
+                                visit(element, nodes, result);
+                            }
+                        }
+                    } else if let Some(name) = nodes[export_clause].as_namespace_export().name {
+                        visit(name, nodes, result);
+                    }
+                }
+            }
+            Kind::ImportDeclaration => {
+                if let Some(import_clause) = nodes[node].as_import_declaration().import_clause {
+                    // Handle default import case e.g.:
+                    //    import d from "mod";
+                    if let Some(name) = nodes[import_clause].name() {
+                        add_declaration(nodes, result, name);
+                    }
+                    // Handle named bindings in imports e.g.:
+                    //    import * as NS from "mod";
+                    //    import {a, b as B} from "mod";
+                    if let Some(named_bindings) =
+                        nodes[import_clause].as_import_clause().named_bindings
+                    {
+                        if nodes[named_bindings].kind == Kind::NamespaceImport {
+                            add_declaration(nodes, result, named_bindings);
+                        } else if let Some(elements) = nodes[named_bindings].elements() {
+                            for &element in elements {
+                                visit(element, nodes, result);
+                            }
+                        }
+                    }
+                }
+            }
+            Kind::BinaryExpression => {
+                match get_assignment_declaration_kind(node, nodes) {
+                    JsDeclarationKind::ExportsProperty
+                    | JsDeclarationKind::ThisProperty
+                    | JsDeclarationKind::Property => add_declaration(nodes, result, node),
+                    _ => {}
+                }
+                for child in for_each_child(node, nodes) {
+                    visit(child, nodes, result);
+                }
+            }
+            _ => {
+                for child in for_each_child(node, nodes) {
+                    visit(child, nodes, result);
+                }
+            }
+        }
+    }
+
+    let mut result = FxHashMap::default();
+    // `node.ForEachChild(visit)` on the file itself — statements, then the
+    // EOF token.
+    let mut children = Vec::new();
+    for_each_child_source_file(
+        nodes[file].as_source_file(),
+        &mut |child| {
+            children.push(child);
+            false
+        },
+        nodes,
+    );
+    for child in children {
+        visit(child, nodes, &mut result);
+    }
+    result
+}
+
+/// `GetDeclarationName(declaration)` — the name text for a declaration node,
+/// or "".
+pub fn get_declaration_name(nodes: &[Node], declaration: NodeId) -> String {
+    let Some(name) = get_non_assigned_name_of_declaration(declaration, nodes) else {
+        return String::new();
+    };
+    let name_node = &nodes[name];
+    if is_computed_property_name(name_node) {
+        // `name.Expression()` — the nil dereference of a missing expression
+        // mirrors Go's unchecked field read.
+        let expression = name_node
+            .expression()
+            .expect("ComputedPropertyName without Expression in GetDeclarationName");
+        let e = &nodes[expression];
+        if is_string_or_numeric_literal_like(e) {
+            return e.text(nodes).into_owned();
+        }
+        if is_property_access_expression(e)
+            && let Some(inner) = e.name()
+        {
+            return nodes[inner].text(nodes).into_owned();
+        }
+    } else if is_property_name(name_node) {
+        return name_node.text(nodes).into_owned();
+    }
+    String::new()
+}
+
+// Name table — `GetNameTable`.
+
+/// `(file *SourceFile) GetNameTable()` — a map of all names in the file to
+/// their positions (`-1` when a name appears more than once).
+/// `nameTableOnce` collapses to `Option`; computing it may lazily parse
+/// JSDoc, so it needs `&mut Vec<Node>`.
+pub fn get_name_table<'a>(nodes: &'a mut Vec<Node>, file: NodeId) -> &'a FxHashMap<String, i32> {
+    if nodes[file].as_source_file().name_table.is_none() {
+        let table = compute_name_table(nodes, file);
+        nodes[file].as_source_file_mut().name_table = Some(table);
+    }
+    nodes[file].as_source_file().name_table.as_ref().unwrap()
+}
+
+/// The `nameTableOnce.Do` body — `walk` never returns true, so the
+/// `ForEachChild` calls are plain child loops.
+fn compute_name_table(nodes: &mut Vec<Node>, file: NodeId) -> FxHashMap<String, i32> {
+    fn walk(
+        node: NodeId,
+        file: NodeId,
+        nodes: &mut Vec<Node>,
+        name_table: &mut FxHashMap<String, i32>,
+    ) {
+        let children = {
+            let n = &nodes[node];
+            if (is_identifier(n) && !is_tag_name(node, nodes) && !n.text(nodes).is_empty())
+                || (is_string_or_numeric_literal_like(n) && literal_is_name(node, nodes))
+                || is_private_identifier(n)
+            {
+                let text = n.text(nodes).into_owned();
+                match name_table.entry(text) {
+                    Entry::Occupied(mut e) => {
+                        *e.get_mut() = -1;
+                    }
+                    Entry::Vacant(e) => {
+                        e.insert(n.pos());
+                    }
+                }
+            }
+            // `node.ForEachChild(walk)`.
+            n.iter_children(nodes).map(|c| c.id).collect::<Vec<_>>()
+        };
+        for child in children {
+            walk(child, file, nodes, name_table);
+        }
+        // `jsdocNodes := node.JSDoc(file)` then `jsdoc.ForEachChild(walk)`.
+        for jsdoc in js_doc(nodes, node, Some(file)) {
+            let children = nodes[jsdoc]
+                .iter_children(nodes)
+                .map(|c| c.id)
+                .collect::<Vec<_>>();
+            for child in children {
+                walk(child, file, nodes, name_table);
+            }
+        }
+    }
+
+    // `make(map[string]int, file.IdentifierCount)`.
+    let identifier_count = nodes[file].as_source_file().identifier_count.max(0) as usize;
+    let mut name_table = FxHashMap::with_capacity_and_hasher(identifier_count, FxBuildHasher);
+    // `file.ForEachChild(walk)` — statements, then the EOF token.
+    let mut children = Vec::new();
+    for_each_child_source_file(
+        nodes[file].as_source_file(),
+        &mut |child| {
+            children.push(child);
+            false
+        },
+        nodes,
+    );
+    for child in children {
+        walk(child, file, nodes, &mut name_table);
+    }
+    name_table
 }
 
 /// `f.NewCommentRange(kind, pos, end, hasTrailingNewLine)`

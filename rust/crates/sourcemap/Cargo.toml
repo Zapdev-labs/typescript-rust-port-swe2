@@ -1,0 +1,18 @@
+[package]
+name = "tsc-sourcemap"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+tsc-core = { path = "../core" }
+tsc-debug = { path = "../debug" }
+tsc-json = { path = "../json" }
+tsc-scanner = { path = "../scanner" }
+tsc-stringutil = { path = "../stringutil" }
+tsc-tspath = { path = "../tspath" }
+serde_json = { workspace = true }

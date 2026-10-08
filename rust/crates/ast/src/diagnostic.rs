@@ -72,14 +72,12 @@ pub struct RepopulateDiagnosticInfo {
 /// `diagnosticLocationKey`), `FileName()` (ordering), and
 /// `Text()`/`OriginalText()`/`SpanMap()` (the `displayMessageArgs` alias
 /// substitution). In Rust a `SourceFile` is `NodeData` inside the `nodes`
-/// arena and does not yet carry `parseOptions`/`PathKey` or
-/// `contentMapperInfo`, so diagnostics store this cloneable handle instead:
-/// `node` is the arena address of the file node (resolve it through `nodes`
-/// for line maps and other live data), and the remaining fields are the
-/// file attributes diagnostics read directly. Go fixes all of them before
-/// the file is published (`parseOptions` at construction,
-/// `contentMapperInfo` via `SetContentMapperInfo`), so the snapshot cannot
-/// go stale.
+/// arena, so diagnostics store this cloneable handle instead: `node` is the
+/// arena address of the file node (resolve it through `nodes` for line maps
+/// and other live data), and the remaining fields are the file attributes
+/// diagnostics read directly. Go fixes all of them before the file is
+/// published (`parseOptions` at construction, `contentMapperInfo` via
+/// `SetContentMapperInfo`), so the snapshot cannot go stale.
 #[derive(Clone, Default)]
 pub struct DiagnosticFile {
     /// `NodeId` of the `Kind::SourceFile` node — the arena address of the
@@ -98,29 +96,23 @@ pub struct DiagnosticFile {
     /// file is not content-mapped.
     pub original_text: Arc<str>,
     /// `file.SpanMap()` — `None` for unmapped files (Go's map is nil-safe,
-    /// so `None` mirrors nil). Always `None` until `SourceFile` carries
-    /// `content_mapper_info` — contentmapper is deferred (PORTING-NOTES).
+    /// so `None` mirrors nil).
     pub span_map: Option<Arc<SpanMap>>,
 }
 
 impl DiagnosticFile {
-    /// Builds the handle for a parsed `SourceFile` node. `path_key` is
-    /// `file.PathKey()`: the Rust `SourceFile` does not store
-    /// `parseOptions` yet, so the caller supplies the key it computed when
-    /// loading the file.
-    ///
-    /// Until `SourceFile` gains `content_mapper_info`, `OriginalText()` is
-    /// `Text()` and `SpanMap()` is nil — the same values Go's accessors
-    /// return for an unmapped file.
-    pub fn from_node(node: NodeId, nodes: &[Node], path_key: PathKey) -> DiagnosticFile {
+    /// Builds the handle for a parsed `SourceFile` node, reading
+    /// `FileName()`/`PathKey()`/`Text()`/`OriginalText()`/`SpanMap()` off the
+    /// node's `SourceFile` data.
+    pub fn from_node(node: NodeId, nodes: &[Node]) -> DiagnosticFile {
         let d = nodes[node].as_source_file();
         DiagnosticFile {
             node: Some(node),
-            file_name: RootedFilePath::from(d.file_name.clone()),
-            path_key,
-            text: Arc::from(d.text.as_str()),
-            original_text: Arc::from(d.text.as_str()),
-            span_map: None,
+            file_name: d.file_name().clone(),
+            path_key: d.path_key().clone(),
+            text: Arc::from(d.text()),
+            original_text: Arc::from(d.original_text()),
+            span_map: d.span_map(),
         }
     }
 }
