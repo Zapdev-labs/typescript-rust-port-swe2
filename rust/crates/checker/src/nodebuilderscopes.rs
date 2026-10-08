@@ -208,7 +208,7 @@ impl<'a> NodeBuilderImpl<'a> {
             .map(|v| v.into_iter().map(Some).collect())
             .unwrap_or_default();
         let (declaration, type_parameters, parameters, mapper) = {
-            let sig = c.signatures.get(signature);
+            let sig = c.signature_arena.get(signature);
             (
                 sig.declaration,
                 sig.type_parameters.clone(),
@@ -298,14 +298,14 @@ impl<'a> NodeBuilderImpl<'a> {
                             // param list for some reason.
                             if let Some(original_param) = original_param {
                                 additions.push((
-                                    c.symbols.borrow()[original_param.index()].name.clone(),
+                                    c.symbol_arena.borrow()[original_param.index()].name.clone(),
                                     original_param,
                                 ));
                             }
                         } else if !collect_binding_pattern_symbols(
                             c, nodes, param, &mut additions,
                         ) {
-                            additions.push((c.symbols.borrow()[param.index()].name.clone(), param));
+                            additions.push((c.symbol_arena.borrow()[param.index()].name.clone(), param));
                         }
                     }
                 }
@@ -529,11 +529,11 @@ fn collect_binding_pattern_symbols(
         // omitted expressions are now parsed as nameless binding patterns
         // and also have no symbol
         if let Some(symbol) = symbol {
-            additions.push((c.symbols.borrow()[symbol.index()].name.clone(), symbol));
+            additions.push((c.symbol_arena.borrow()[symbol.index()].name.clone(), symbol));
         }
     }
 
-    let declarations = c.symbols.borrow()[param.index()].declarations.clone();
+    let declarations = c.symbol_arena.borrow()[param.index()].declarations.clone();
     for d in declarations {
         if ast::is_parameter_declaration(&nodes[d])
             && let Some(name) = nodes[d].name()

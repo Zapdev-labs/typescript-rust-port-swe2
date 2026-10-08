@@ -23,6 +23,10 @@ tsc-evaluator = { path = "../evaluator" }
 tsc-jsnum = { path = "../jsnum" }
 tsc-json = { path = "../json" }
 tsc-module = { path = "../module" }
+# PORT: modulespecifiers+tsoptions are needed by checker_types.rs's
+# `Host`/`Program` trait surface (checker.go's `Host` interface embeds
+# `ModuleSpecifierGenerationHost` and references `*tsoptions.ParsedCommandLine`).
+tsc-modulespecifiers = { path = "../modulespecifiers" }
 tsc-nodebuilder = { path = "../nodebuilder" }
 tsc-parser = { path = "../parser" }
 # PORT: checker.go's utilities.go `ValueToString` uses
@@ -34,6 +38,8 @@ tsc-repo = { path = "../repo" }
 tsc-scanner = { path = "../scanner" }
 tsc-stringutil = { path = "../stringutil" }
 tsc-tracing = { path = "../tracing" }
+tsc-tsoptions = { path = "../tsoptions" }
 tsc-tspath = { path = "../tspath" }
 rustc-hash = { workspace = true }
 serde_json = { workspace = true }
+xxhash-rust = { workspace = true, features = ["xxh3"] }

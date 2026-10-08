@@ -778,3 +778,44 @@ ported separately against this API.
 - `SingleOrMany` takes `&mut ast::NodeFactory` (the `NewSyntaxList` half)
   instead of `*printer.NodeFactory`; `list` is `Option<Vec<NodeId>>`
   (`None` ↔ Go nil slice).
+
+## 2026-10-08 crates/checker — `checker.go` Checker state skeleton + `NewChecker`
+`checker_core.rs` now carries the full Go `Checker` field list in declaration
+order plus a faithful `Checker::new_checker` initialization sequence. New
+modules hold the auxiliary state Go defines next to each domain:
+`checker_types.rs` (cache keys, `keyBuilder`, `TypeFacts`, `IterationUse`,
+`Program`/`Host` traits, thunk aliases), `relater.rs` (`Relation`,
+`Relater` shell, `ExpandingFlags`, `RecursionFlags`, `IntersectionState`,
+`RelationComparisonResult`, `ErrorChain`), `flow.rs` (`FlowType`,
+`SharedFlow`, `FlowState`, `typeof_ne_facts`), `inference.rs`
+(`InferenceKey`, `InferenceState`), `emitresolver.rs`, `nodebuilder.rs`,
+`symbolaccessibility.rs` (`SymbolTableId`, `ExternalModuleContainerIndex`).
+Key mapping decisions:
+- Go `func` fields stored on the checker (`compareSymbols`, `evaluate`,
+  `resolveName`, `getGlobal*Resolver`, iteration closures) become
+  `Rc`/`Box` thunk aliases taking an explicit `&mut Checker` receiver —
+  Rust closures cannot capture the checker they are stored inside.
+  `core.Memoize` becomes an `Rc<RefCell<Option<..>>>` cell inside the `Rc`
+  thunk so the memo is shared across every cloned field/resolver.
+- `binder.NameResolver` hooks need `&mut Checker` (`error`, `lookup`,
+  `symbolReferenced`, scope-change caches), but `binder::NameResolver`'s
+  hook signatures don't take it. `create_name_resolver` returns a thunk
+  that defers to `resolve_name_via_binder` at call time; the real wiring
+  lands with the binder/caller wave (PORT(deferred)).
+- `evaluator::new_evaluator` takes no checker parameter, so `evaluate`
+  defers to `evaluate_entity` at call time (PORT(deferred)).
+- `c.globalThisSymbol.Exports = c.globals` shares the Go map header; the
+  port's `SymbolTable` is a value, so the constructor clones the table —
+  later `globals` inserts do not reflect into `exports` (PORT(divergence);
+  may need `Rc<RefCell<SymbolTable>>`).
+- `jsnum.Number` isn't `Eq + Hash` (NaN): `NumberLiteralKey` hashes
+  normalized float bits; `EnumLiteralKey` hashes `evaluator::Value`
+  variants with the same float semantics. `map[jsnum.PseudoBigInt]` uses
+  `PseudoBigInt` directly (already `Hash`).
+- `new_checker` currently panics at `boolean_type`'s `get_union_type`
+  (PORT(deferred)); the constructor sequence after that point —
+  `initialize_closures`, `initialize_iteration_resolvers`,
+  `initialize_checker` — is in place and will run once the deferred
+  helpers land. Verified with `cargo check -p tsc-checker`.
+- `IndexInfo` gained `Clone` because `set_structured_type_members`
+  copies arena'd `*IndexInfo` values into `StructuredType.index_infos`.

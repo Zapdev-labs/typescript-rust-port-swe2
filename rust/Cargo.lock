@@ -1033,6 +1033,7 @@ dependencies = [
  "tsc-jsnum",
  "tsc-json",
  "tsc-module",
+ "tsc-modulespecifiers",
  "tsc-nodebuilder",
  "tsc-parser",
  "tsc-printer",
@@ -1041,7 +1042,9 @@ dependencies = [
  "tsc-scanner",
  "tsc-stringutil",
  "tsc-tracing",
+ "tsc-tsoptions",
  "tsc-tspath",
+ "xxhash-rust",
 ]
 
 [[package]]
@@ -1113,6 +1116,14 @@ dependencies = [
  "tsc-scanner",
  "tsc-spanmap",
  "tsc-tspath",
+]
+
+[[package]]
+name = "tsc-dirty"
+version = "0.0.0"
+dependencies = [
+ "rustc-hash",
+ "tsc-collections",
 ]
 
 [[package]]
@@ -1336,6 +1347,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "tsc-project-logging"
+version = "0.0.0"
+
+[[package]]
 name = "tsc-pseudochecker"
 version = "0.0.0"
 dependencies = [
@@ -1447,6 +1462,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "tsc-transformers"
+version = "0.0.0"
+dependencies = [
+ "tsc-ast",
+ "tsc-binder",
+ "tsc-collections",
+ "tsc-core",
+ "tsc-debug",
+ "tsc-printer",
+ "tsc-scanner",
+]
+
+[[package]]
 name = "tsc-tsoptions"
 version = "0.0.0"
 dependencies = [
@@ -1498,6 +1526,16 @@ dependencies = [
  "tsc-osutil",
  "tsc-repo",
  "tsc-stringutil",
+ "tsc-tspath",
+]
+
+[[package]]
+name = "tsc-watchmanager"
+version = "0.0.0"
+dependencies = [
+ "rustc-hash",
+ "tsc-core",
+ "tsc-fswatch",
  "tsc-tspath",
 ]
 

@@ -3002,7 +3002,9 @@ impl TypePredicate {
 // IndexInfo
 
 /// `type IndexInfo struct`.
-#[derive(Default)]
+/// PORT: `Clone` is needed where Go shared `*IndexInfo` values — the port
+/// clones arena'd `IndexInfo`s into `StructuredType.index_infos`.
+#[derive(Clone, Default)]
 pub struct IndexInfo {
     /// `keyType`.
     pub key_type: Option<TypeId>,
@@ -3016,6 +3018,51 @@ pub struct IndexInfo {
     pub index_symbol: Option<SymbolId>,
     /// `components` — `ElementWithComputedPropertyName`.
     pub components: Vec<NodeId>,
+}
+
+/// `IndexInfoId` — index into `Checker::index_info_arena` (Go `*IndexInfo`).
+/// Go's `IndexInfo` values are arena-allocated and shared by pointer (e.g.
+/// `enumNumberIndexInfo`/`anyBaseTypeIndexInfo` are compared for identity);
+/// the inline `Vec<IndexInfo>` fields on structured types store copies.
+#[derive(Clone, Copy, Default, PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
+#[repr(transparent)]
+pub struct IndexInfoId(pub u32);
+
+impl IndexInfoId {
+    /// The absent value (Go nil `*IndexInfo` where a bare id is required).
+    pub const NONE: IndexInfoId = IndexInfoId(u32::MAX);
+
+    /// The arena index of this id.
+    #[inline]
+    pub const fn index(self) -> usize {
+        self.0 as usize
+    }
+}
+
+/// `IndexInfoArena` — the port's `core.Arena[IndexInfo]`, a plain `Vec`
+/// indexed by `IndexInfoId` (mirroring `SignatureArena`).
+#[derive(Default)]
+pub struct IndexInfoArena {
+    index_infos: Vec<IndexInfo>,
+}
+
+impl IndexInfoArena {
+    /// `indexInfoArena.New()` — allocate a slot, returning its `IndexInfoId`.
+    pub fn alloc(&mut self, info: IndexInfo) -> IndexInfoId {
+        let id = IndexInfoId(self.index_infos.len() as u32);
+        self.index_infos.push(info);
+        id
+    }
+
+    /// `*IndexInfo` field access.
+    pub fn get(&self, id: IndexInfoId) -> &IndexInfo {
+        &self.index_infos[id.index()]
+    }
+
+    /// `*IndexInfo` field write.
+    pub fn get_mut(&mut self, id: IndexInfoId) -> &mut IndexInfo {
+        &mut self.index_infos[id.index()]
+    }
 }
 
 impl IndexInfo {

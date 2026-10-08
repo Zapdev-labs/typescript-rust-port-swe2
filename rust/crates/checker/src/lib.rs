@@ -1,24 +1,35 @@
 //! `tsc-checker` — in-progress port of `tsc/internal/checker`.
 //!
-//! FOUNDATION phase: printer-free data-model layer only — `types.go`,
-//! `links.go`, `mapper.go`, `nodebuilderscopes.go`, `symboltracker.go`,
-//! `tracer.go`, `jsdoc.go`, `stringer_generated.go`, and the free functions
-//! of `services.go`. The full `Checker` (`checker.go`, `relater.go`,
-//! `inference.go`, `flow.go`, `jsx.go`, `exports.go`, `grammarchecks.go`)
-//! is deferred; `checker_core.rs` holds a `PORT(partial)` stub exposing only
-//! what the ported foundation files reference. See PORTING-NOTES.md.
+//! Foundation layer: `types.go`, `links.go`, `mapper.go`,
+//! `nodebuilderscopes.go`, `symboltracker.go`, `tracer.go`, `jsdoc.go`,
+//! `stringer_generated.go`, and the free functions of `services.go`.
+//! `checker_core.rs` now carries the `Checker` state skeleton (Go
+//! `checker.go` fields in declaration order) plus a faithful `new_checker`
+//! initialization sequence; the per-domain modules `checker_types.rs`,
+//! `relater.rs`, `flow.rs`, `inference.rs`, `emitresolver.rs`,
+//! `symbolaccessibility.rs`, and `nodebuilder.rs` hold the auxiliary state
+//! types those files define in Go. Method bodies for relation checking,
+//! flow analysis, inference, and diagnostics remain `PORT(deferred)`.
+//! See PORTING-NOTES.md.
 //!
 //! Baseline Go commit: `ec47d33c23e464a17cdf2475632cba629bee8763`.
 
 pub mod checker_core;
+pub mod checker_types;
+pub mod emitresolver;
 pub mod flagdef;
+pub mod flow;
+pub mod inference;
 pub mod jsdoc;
 pub mod links;
 pub mod mapper;
+pub mod nodebuilder;
 pub mod nodebuilderimpl;
 pub mod nodebuilderscopes;
+pub mod relater;
 pub mod services;
 pub mod stringer_generated;
+pub mod symbolaccessibility;
 pub mod symboltracker;
 pub mod tracer;
 pub mod types;
