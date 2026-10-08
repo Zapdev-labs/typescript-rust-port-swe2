@@ -15,8 +15,7 @@ pub struct Replacements {
     pub case_sensitivity: Option<Box<dyn Fn() -> CaseSensitivity + Send + Sync>>,
     pub file_exists: Option<Box<dyn Fn(&RootedFilePath) -> bool + Send + Sync>>,
     pub read_file: Option<Box<dyn Fn(&RootedFilePath) -> Option<String> + Send + Sync>>,
-    pub write_file:
-        Option<Box<dyn Fn(&RootedFilePath, &str) -> Result<(), FsError> + Send + Sync>>,
+    pub write_file: Option<Box<dyn Fn(&RootedFilePath, &str) -> Result<(), FsError> + Send + Sync>>,
     pub append_file:
         Option<Box<dyn Fn(&RootedFilePath, &str) -> Result<(), FsError> + Send + Sync>>,
     pub remove: Option<Box<dyn Fn(&RootedPath) -> Result<(), FsError> + Send + Sync>>,
@@ -24,8 +23,7 @@ pub struct Replacements {
         Box<dyn Fn(&RootedPath, SystemTime, SystemTime) -> Result<(), FsError> + Send + Sync>,
     >,
     pub directory_exists: Option<Box<dyn Fn(&RootedDirectoryPath) -> bool + Send + Sync>>,
-    pub get_accessible_entries:
-        Option<Box<dyn Fn(&RootedDirectoryPath) -> Entries + Send + Sync>>,
+    pub get_accessible_entries: Option<Box<dyn Fn(&RootedDirectoryPath) -> Entries + Send + Sync>>,
     pub stat: Option<Box<dyn Fn(&RootedPath) -> Option<Arc<dyn FileInfo>> + Send + Sync>>,
     pub realpath: Option<Box<dyn Fn(&RootedPath) -> RootedPath + Send + Sync>>,
 }

@@ -14,7 +14,7 @@ pub mod walkdir;
 pub mod wrapvfs;
 
 pub use vfs::{
-    Entries, Vfs, WalkDirFunc, ERR_CLOSED, ERR_EXIST, ERR_INVALID, ERR_NOT_EXIST, ERR_PERMISSION,
-    SKIP_ALL, SKIP_DIR,
+    ERR_CLOSED, ERR_EXIST, ERR_INVALID, ERR_NOT_EXIST, ERR_PERMISSION, Entries, SKIP_ALL, SKIP_DIR,
+    Vfs, WalkDirFunc,
 };
-pub use walkdir::walk_dir as walk_dir;
+pub use walkdir::walk_dir;

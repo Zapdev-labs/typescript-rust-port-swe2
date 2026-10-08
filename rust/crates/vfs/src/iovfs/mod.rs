@@ -24,8 +24,7 @@ pub trait WritableFs: Fs {
     fn mkdir_all(&self, path: &str, perm: FileMode) -> Result<(), FsError>;
     /// Removes `path` and all its contents. Will return the first error it encounters.
     fn remove(&self, path: &str) -> Result<(), FsError>;
-    fn chtimes(&self, path: &str, a_time: SystemTime, m_time: SystemTime)
-    -> Result<(), FsError>;
+    fn chtimes(&self, path: &str, a_time: SystemTime, m_time: SystemTime) -> Result<(), FsError>;
 }
 
 /// FsWithSys is iovfs.FsWithSys.
@@ -112,9 +111,7 @@ pub fn from(fsys: Arc<dyn Fs>, case_sensitivity: CaseSensitivity) -> Arc<IoFs> {
         append_file = Arc::new(|_: &str, _: &str| -> Result<(), FsError> {
             panic!("appendFile not supported")
         });
-        mkdir_all = Arc::new(|_: &str| -> Result<(), FsError> {
-            panic!("mkdirAll not supported")
-        });
+        mkdir_all = Arc::new(|_: &str| -> Result<(), FsError> { panic!("mkdirAll not supported") });
         remove = Arc::new(|_: &str| -> Result<(), FsError> { panic!("remove not supported") });
         chtimes = Arc::new(
             |_: &str, _: SystemTime, _: SystemTime| -> Result<(), FsError> {

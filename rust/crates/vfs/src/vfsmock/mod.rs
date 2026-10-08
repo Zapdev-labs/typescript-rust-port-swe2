@@ -28,16 +28,14 @@ pub struct FsMock {
     pub chtimes_func: Option<
         Box<dyn Fn(&RootedPath, SystemTime, SystemTime) -> Result<(), FsError> + Send + Sync>,
     >,
-    pub directory_exists_func:
-        Option<Box<dyn Fn(&RootedDirectoryPath) -> bool + Send + Sync>>,
+    pub directory_exists_func: Option<Box<dyn Fn(&RootedDirectoryPath) -> bool + Send + Sync>>,
     pub file_exists_func: Option<Box<dyn Fn(&RootedFilePath) -> bool + Send + Sync>>,
     pub get_accessible_entries_func:
         Option<Box<dyn Fn(&RootedDirectoryPath) -> Entries + Send + Sync>>,
     pub read_file_func: Option<Box<dyn Fn(&RootedFilePath) -> Option<String> + Send + Sync>>,
     pub realpath_func: Option<Box<dyn Fn(&RootedPath) -> RootedPath + Send + Sync>>,
     pub remove_func: Option<Box<dyn Fn(&RootedPath) -> Result<(), FsError> + Send + Sync>>,
-    pub stat_func:
-        Option<Box<dyn Fn(&RootedPath) -> Option<Arc<dyn FileInfo>> + Send + Sync>>,
+    pub stat_func: Option<Box<dyn Fn(&RootedPath) -> Option<Arc<dyn FileInfo>> + Send + Sync>>,
     pub write_file_func:
         Option<Box<dyn Fn(&RootedFilePath, &str) -> Result<(), FsError> + Send + Sync>>,
 
@@ -181,9 +179,11 @@ impl Vfs for FsMock {
     }
 
     fn file_exists(&self, path: &RootedFilePath) -> bool {
-        self.calls.lock().unwrap().file_exists.push(FileExistsCall {
-            path: path.clone(),
-        });
+        self.calls
+            .lock()
+            .unwrap()
+            .file_exists
+            .push(FileExistsCall { path: path.clone() });
         match &self.file_exists_func {
             None => panic!("mock out the FileExists method"),
             Some(f) => f(path),
@@ -203,9 +203,11 @@ impl Vfs for FsMock {
     }
 
     fn read_file(&self, path: &RootedFilePath) -> Option<String> {
-        self.calls.lock().unwrap().read_file.push(ReadFileCall {
-            path: path.clone(),
-        });
+        self.calls
+            .lock()
+            .unwrap()
+            .read_file
+            .push(ReadFileCall { path: path.clone() });
         match &self.read_file_func {
             None => panic!("mock out the ReadFile method"),
             Some(f) => f(path),
@@ -213,9 +215,11 @@ impl Vfs for FsMock {
     }
 
     fn realpath(&self, path: &RootedPath) -> RootedPath {
-        self.calls.lock().unwrap().realpath.push(RealpathCall {
-            path: path.clone(),
-        });
+        self.calls
+            .lock()
+            .unwrap()
+            .realpath
+            .push(RealpathCall { path: path.clone() });
         match &self.realpath_func {
             None => panic!("mock out the Realpath method"),
             Some(f) => f(path),
@@ -223,9 +227,11 @@ impl Vfs for FsMock {
     }
 
     fn remove(&self, path: &RootedPath) -> Result<(), FsError> {
-        self.calls.lock().unwrap().remove.push(RemoveCall {
-            path: path.clone(),
-        });
+        self.calls
+            .lock()
+            .unwrap()
+            .remove
+            .push(RemoveCall { path: path.clone() });
         match &self.remove_func {
             None => panic!("mock out the Remove method"),
             Some(f) => f(path),
@@ -233,9 +239,11 @@ impl Vfs for FsMock {
     }
 
     fn stat(&self, path: &RootedPath) -> Option<Arc<dyn FileInfo>> {
-        self.calls.lock().unwrap().stat.push(StatCall {
-            path: path.clone(),
-        });
+        self.calls
+            .lock()
+            .unwrap()
+            .stat
+            .push(StatCall { path: path.clone() });
         match &self.stat_func {
             None => panic!("mock out the Stat method"),
             Some(f) => f(path),

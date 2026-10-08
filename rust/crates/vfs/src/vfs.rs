@@ -91,4 +91,3 @@ pub type WalkDirFunc<'a> = dyn FnMut(&RootedPath, Option<&dyn DirEntry>, Option<
 pub use crate::fs::SKIP_ALL;
 // SkipDir is fs.SkipDir.
 pub use crate::fs::SKIP_DIR;
-

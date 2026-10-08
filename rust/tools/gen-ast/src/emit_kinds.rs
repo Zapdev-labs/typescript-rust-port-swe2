@@ -30,7 +30,7 @@ pub fn emit(schema: &Schema) -> String {
     out.push_str("/// AST node kind. `i16` repr matches Go `type Kind int16`.\n");
     out.push_str("#[repr(i16)]\n");
     out.push_str(
-        "#[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]\npub enum Kind {\n",
+        "#[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Default, Debug)]\npub enum Kind {\n",
     );
     for (i, k) in schema.kinds.iter().enumerate() {
         let def = if i == 0 { "\n    #[default]" } else { "" };

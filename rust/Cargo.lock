@@ -155,6 +155,12 @@ dependencies = [
 [[package]]
 name = "tsc-ast"
 version = "0.0.0"
+dependencies = [
+ "rustc-hash",
+ "tsc-collections",
+ "tsc-core",
+ "tsc-tspath",
+]
 
 [[package]]
 name = "tsc-collections"

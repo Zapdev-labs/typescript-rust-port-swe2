@@ -11,10 +11,17 @@ use crate::vfs::Entries;
 ///
 /// PORT: Go's `RootFor func(root string) fs.FS` may return nil for URL roots
 /// handled by [fs::sub] failure; here it returns Option.
+/// RootForFn is `RootFor func(root string) fs.FS`; PORT: returns Option since
+/// Go may return nil for URL roots handled by [fs::sub] failure.
+pub type RootForFn = dyn Fn(&str) -> Option<Arc<dyn Fs>> + Send + Sync;
+
+/// IsReparsePointFn reports whether a path is a Windows reparse point.
+pub type IsReparsePointFn = dyn Fn(&str) -> bool + Send + Sync;
+
 #[derive(Clone)]
 pub struct Common {
-    pub root_for: Arc<dyn Fn(&str) -> Option<Arc<dyn Fs>> + Send + Sync>,
-    pub is_reparse_point: Option<Arc<dyn Fn(&str) -> bool + Send + Sync>>,
+    pub root_for: Arc<RootForFn>,
+    pub is_reparse_point: Option<Arc<IsReparsePointFn>>,
 }
 
 pub fn root_length(p: &str) -> usize {
@@ -73,12 +80,7 @@ impl Common {
             ..Default::default()
         };
 
-        fn add_to_result(
-            result: &mut Entries,
-            name: &str,
-            mode: FileMode,
-            is_link: bool,
-        ) -> bool {
+        fn add_to_result(result: &mut Entries, name: &str, mode: FileMode, is_link: bool) -> bool {
             if mode.is_dir() {
                 result.directories.push(name.to_string());
             } else if mode.is_regular() {
@@ -113,12 +115,14 @@ impl Common {
                 continue;
             }
 
-            if entry_type & MODE_IRREGULAR != FileMode(0) && self.is_reparse_point.is_some() {
+            if entry_type & MODE_IRREGULAR != FileMode(0)
+                && let Some(is_reparse_point) = self.is_reparse_point.as_ref()
+            {
                 // Could be a Windows junction or other reparse point.
                 // Check using the OS-specific helper.
                 let name = entry.name();
                 let full_path = path.resolve_file(&name);
-                if self.is_reparse_point.as_ref().unwrap()(full_path.as_string()) {
+                if is_reparse_point(full_path.as_string()) {
                     if let Some(stat) = self.stat(&full_path.as_path()) {
                         add_to_result(&mut result, &name, stat.mode(), true);
                     }
@@ -136,10 +140,7 @@ impl Common {
             return Vec::new();
         };
 
-        match fs::read_dir(&*fsys, &rest) {
-            Ok(entries) => entries,
-            Err(_) => Vec::new(),
-        }
+        fs::read_dir(&*fsys, &rest).unwrap_or_default()
     }
 
     pub fn read_file(&self, path: &RootedFilePath) -> Option<String> {
@@ -192,4 +193,3 @@ fn decode_utf16(s: &[u8], little_endian: bool) -> String {
     // String::from_utf16_lossy.
     String::from_utf16_lossy(&units)
 }
-

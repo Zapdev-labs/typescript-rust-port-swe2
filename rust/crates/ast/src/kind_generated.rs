@@ -4,7 +4,7 @@
 
 /// AST node kind. `i16` repr matches Go `type Kind int16`.
 #[repr(i16)]
-#[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Default, Debug)]
 pub enum Kind {
 
     #[default]

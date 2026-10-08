@@ -3,7 +3,7 @@
 
 use std::cell::Cell;
 
-use crate::ast::{ModifierList, Node, NodeList, Visitor};
+use crate::ast::{ModifierList, Node, NodeFactory, NodeList, Visitor};
 use crate::ids::{FlowListId, FlowNodeId, NodeId, SymbolId};
 use crate::kind_generated::Kind;
 use crate::modifierflags::ModifierFlags;
@@ -127,6 +127,11 @@ pub struct CompositeBase {
     pub facts: Cell<u32>,
 }
 
+/// `type TypeSyntaxBase struct`.
+#[derive(Default)]
+pub struct TypeSyntaxBase {
+}
+
 /// `type FunctionLikeBase struct`.
 #[derive(Default)]
 pub struct FunctionLikeBase {
@@ -197,6 +202,16 @@ pub struct TemplateLiteralLikeNodeBase {
     pub template_flags: TokenFlags,
 }
 
+/// `type TypeElementBase struct`.
+#[derive(Default)]
+pub struct TypeElementBase {
+}
+
+/// `type ClassElementBase struct`.
+#[derive(Default)]
+pub struct ClassElementBase {
+}
+
 /// `type NamedMemberBase struct`.
 #[derive(Default)]
 pub struct NamedMemberBase {
@@ -204,6 +219,11 @@ pub struct NamedMemberBase {
     pub modifiers_base: ModifiersBase,
     pub name: Option<NodeId>,
     pub postfix_token: Option<NodeId>,
+}
+
+/// `type ObjectLiteralElementBase struct`.
+#[derive(Default)]
+pub struct ObjectLiteralElementBase {
 }
 
 /// `type AccessorDeclarationBase struct`.
@@ -2234,14 +2254,53 @@ pub struct JSDocParameterOrPropertyTag {
 /// `type SourceFile struct`.
 #[derive(Default)]
 pub struct SourceFile {
+    /// embedded `DeclarationBase`
+    pub declaration_base: DeclarationBase,
+    /// embedded `LocalsContainerBase`
+    pub locals_container_base: LocalsContainerBase,
+    /// embedded `CompositeBase`
+    pub composite_base: CompositeBase,
     pub file_name: String,
     pub text: String,
     pub statements: Option<NodeList>,
     pub end_of_file_token: Option<NodeId>,
-    pub language_variant: tsc_core::LanguageVariant,
-    pub script_kind: tsc_core::ScriptKind,
+    pub language_variant: tsc_core::languagevariant::LanguageVariant,
+    pub script_kind: tsc_core::scriptkind::ScriptKind,
     pub is_declaration_file: bool,
+    pub uses_uri_style_node_core_modules: tsc_core::tristate::Tristate,
+    pub identifier_count: i32,
+    pub imports: Box<[NodeId]>,
+    pub module_augmentations: Box<[NodeId]>,
+    pub ambient_module_names: Box<[String]>,
+    pub comment_directives: Box<[crate::ast::CommentDirective]>,
+    pub pragmas: Box<[crate::ast::Pragma]>,
+    pub referenced_files: Box<[crate::ast::FileReference]>,
+    pub type_reference_directives: Box<[crate::ast::FileReference]>,
+    pub lib_reference_directives: Box<[crate::ast::FileReference]>,
+    pub check_js_directive: Option<crate::ast::CheckJsDirective>,
+    pub node_count: i32,
+    pub text_count: i32,
+    pub common_js_module_indicator: Option<NodeId>,
     pub external_module_indicator: Option<NodeId>,
+    pub symbol_count: i32,
+    pub pattern_ambient_modules: Box<[crate::ast::PatternAmbientModule]>,
+    pub global_exports: SymbolTable,
+    pub reparsed_clones: Box<[NodeId]>,
+}
+
+/// `type FlowSwitchClauseData struct`.
+#[derive(Default)]
+pub struct FlowSwitchClauseData {
+    pub switch_statement: Option<NodeId>,
+    pub clause_start: i32,
+    pub clause_end: i32,
+}
+
+/// `type FlowReduceLabelData struct`.
+#[derive(Default)]
+pub struct FlowReduceLabelData {
+    pub target: Option<FlowNodeId>,
+    pub antecedents: Option<FlowListId>,
 }
 
 /// `nodeData` — the payload enum; every variant is a
@@ -2439,6 +2498,8 @@ pub enum NodeData {
     JSDocTypeLiteral(JSDocTypeLiteral),
     JSDocParameterOrPropertyTag(JSDocParameterOrPropertyTag),
     SourceFile(SourceFile),
+    FlowSwitchClauseData(FlowSwitchClauseData),
+    FlowReduceLabelData(FlowReduceLabelData),
 }
 
 impl NodeData {
@@ -5514,6 +5575,38 @@ impl NodeData {
         }
     }
 
+    /// `n.AsFlowSwitchClauseData()`.
+    pub fn as_flow_switch_clause_data(&self) -> &FlowSwitchClauseData {
+        match self {
+            NodeData::FlowSwitchClauseData(d) => d,
+            _ => panic!("as_flow_switch_clause_data on wrong data variant"),
+        }
+    }
+
+    /// mutable `AsFlowSwitchClauseData()`.
+    pub fn as_flow_switch_clause_data_mut(&mut self) -> &mut FlowSwitchClauseData {
+        match self {
+            NodeData::FlowSwitchClauseData(d) => d,
+            _ => panic!("as_flow_switch_clause_data_mut on wrong data variant"),
+        }
+    }
+
+    /// `n.AsFlowReduceLabelData()`.
+    pub fn as_flow_reduce_label_data(&self) -> &FlowReduceLabelData {
+        match self {
+            NodeData::FlowReduceLabelData(d) => d,
+            _ => panic!("as_flow_reduce_label_data on wrong data variant"),
+        }
+    }
+
+    /// mutable `AsFlowReduceLabelData()`.
+    pub fn as_flow_reduce_label_data_mut(&mut self) -> &mut FlowReduceLabelData {
+        match self {
+            NodeData::FlowReduceLabelData(d) => d,
+            _ => panic!("as_flow_reduce_label_data_mut on wrong data variant"),
+        }
+    }
+
     /// `data.ForEachChild(v)` — `true` stops traversal.
     pub fn for_each_child(&self, visitor: &mut Visitor<'_>, nodes: &[Node]) -> bool {
         match self {
@@ -5959,6 +6052,8 @@ impl NodeData {
             NodeData::JSDocTypeLiteral(d) => crate::ast::visit_nodes(visitor, &d.js_doc_property_tags, nodes),
             NodeData::JSDocParameterOrPropertyTag(d) => crate::ast::for_each_child_js_doc_parameter_or_property_tag(d, visitor, nodes),
             NodeData::SourceFile(d) => crate::ast::for_each_child_source_file(d, visitor, nodes),
+            NodeData::FlowSwitchClauseData(_) => false,
+            NodeData::FlowReduceLabelData(_) => false,
         }
     }
 
@@ -6144,7 +6239,7 @@ impl NodeData {
 
     /// `data.FlowNodeData()` — the embedded `FlowNodeBase` when present.
     pub fn flow_node_data_mut(&mut self) -> Option<&mut FlowNodeBase> {
-        match mut self {
+        match self {
             NodeData::Identifier(d) => Some(&mut d.flow_node_base),
             NodeData::QualifiedName(d) => Some(&mut d.flow_node_base),
             NodeData::EmptyStatement(d) => Some(&mut d.statement_base.flow_node_base),
@@ -6251,13 +6346,14 @@ impl NodeData {
             NodeData::ImportSpecifier(d) => Some(&d.declaration_base),
             NodeData::TypeParameterDeclaration(d) => Some(&d.declaration_base),
             NodeData::JSDocTypeLiteral(d) => Some(&d.declaration_base),
+            NodeData::SourceFile(d) => Some(&d.declaration_base),
             _ => None,
         }
     }
 
     /// `data.DeclarationData()` — the embedded `DeclarationBase` when present.
     pub fn declaration_data_mut(&mut self) -> Option<&mut DeclarationBase> {
-        match mut self {
+        match self {
             NodeData::VariableDeclaration(d) => Some(&mut d.declaration_base),
             NodeData::ParameterDeclaration(d) => Some(&mut d.declaration_base),
             NodeData::BindingElement(d) => Some(&mut d.declaration_base),
@@ -6313,6 +6409,7 @@ impl NodeData {
             NodeData::ImportSpecifier(d) => Some(&mut d.declaration_base),
             NodeData::TypeParameterDeclaration(d) => Some(&mut d.declaration_base),
             NodeData::JSDocTypeLiteral(d) => Some(&mut d.declaration_base),
+            NodeData::SourceFile(d) => Some(&mut d.declaration_base),
             _ => None,
         }
     }
@@ -6340,7 +6437,7 @@ impl NodeData {
 
     /// `data.ExportableData()` — the embedded `ExportableBase` when present.
     pub fn exportable_data_mut(&mut self) -> Option<&mut ExportableBase> {
-        match mut self {
+        match self {
             NodeData::VariableDeclaration(d) => Some(&mut d.exportable_base),
             NodeData::BindingElement(d) => Some(&mut d.exportable_base),
             NodeData::FunctionDeclaration(d) => Some(&mut d.exportable_base),
@@ -6388,13 +6485,14 @@ impl NodeData {
             NodeData::ConstructorTypeNode(d) => Some(&d.function_or_constructor_type_node_base.function_like_base.locals_container_base),
             NodeData::JSDocSignature(d) => Some(&d.function_like_base.locals_container_base),
             NodeData::ModuleDeclaration(d) => Some(&d.locals_container_base),
+            NodeData::SourceFile(d) => Some(&d.locals_container_base),
             _ => None,
         }
     }
 
     /// `data.LocalsContainerData()` — the embedded `LocalsContainerBase` when present.
     pub fn locals_container_data_mut(&mut self) -> Option<&mut LocalsContainerBase> {
-        match mut self {
+        match self {
             NodeData::ForStatement(d) => Some(&mut d.locals_container_base),
             NodeData::ForInOrOfStatement(d) => Some(&mut d.locals_container_base),
             NodeData::CaseBlock(d) => Some(&mut d.locals_container_base),
@@ -6421,6 +6519,7 @@ impl NodeData {
             NodeData::ConstructorTypeNode(d) => Some(&mut d.function_or_constructor_type_node_base.function_like_base.locals_container_base),
             NodeData::JSDocSignature(d) => Some(&mut d.function_like_base.locals_container_base),
             NodeData::ModuleDeclaration(d) => Some(&mut d.locals_container_base),
+            NodeData::SourceFile(d) => Some(&mut d.locals_container_base),
             _ => None,
         }
     }
@@ -6448,7 +6547,7 @@ impl NodeData {
 
     /// `data.FunctionLikeData()` — the embedded `FunctionLikeBase` when present.
     pub fn function_like_data_mut(&mut self) -> Option<&mut FunctionLikeBase> {
-        match mut self {
+        match self {
             NodeData::FunctionDeclaration(d) => Some(&mut d.function_like_with_body_base.function_like_base),
             NodeData::CallSignatureDeclaration(d) => Some(&mut d.function_like_base),
             NodeData::ConstructSignatureDeclaration(d) => Some(&mut d.function_like_base),
@@ -6478,7 +6577,7 @@ impl NodeData {
 
     /// `data.ClassLikeData()` — the embedded `ClassLikeBase` when present.
     pub fn class_like_data_mut(&mut self) -> Option<&mut ClassLikeBase> {
-        match mut self {
+        match self {
             NodeData::ClassDeclaration(d) => Some(&mut d.class_like_base),
             NodeData::ClassExpression(d) => Some(&mut d.class_like_base),
             _ => None,
@@ -6502,7 +6601,7 @@ impl NodeData {
 
     /// `data.BodyData()` — the embedded `BodyBase` when present.
     pub fn body_data_mut(&mut self) -> Option<&mut BodyBase> {
-        match mut self {
+        match self {
             NodeData::FunctionDeclaration(d) => Some(&mut d.function_like_with_body_base.body_base),
             NodeData::ConstructorDeclaration(d) => Some(&mut d.function_like_with_body_base.body_base),
             NodeData::GetAccessorDeclaration(d) => Some(&mut d.accessor_declaration_base.function_like_with_body_base.body_base),
@@ -6533,7 +6632,7 @@ impl NodeData {
 
     /// `data.LiteralLikeNodeData()` — the embedded `LiteralLikeNodeBase` when present.
     pub fn literal_like_data_mut(&mut self) -> Option<&mut LiteralLikeNodeBase> {
-        match mut self {
+        match self {
             NodeData::StringLiteral(d) => Some(&mut d.literal_expression_base.literal_like_node_base),
             NodeData::NumericLiteral(d) => Some(&mut d.literal_expression_base.literal_like_node_base),
             NodeData::BigIntLiteral(d) => Some(&mut d.literal_expression_base.literal_like_node_base),
@@ -6560,7 +6659,7 @@ impl NodeData {
 
     /// `data.TemplateLiteralLikeNodeData()` — the embedded `TemplateLiteralLikeNodeBase` when present.
     pub fn template_literal_like_data_mut(&mut self) -> Option<&mut TemplateLiteralLikeNodeBase> {
-        match mut self {
+        match self {
             NodeData::NoSubstitutionTemplateLiteral(d) => Some(&mut d.template_literal_like_node_base),
             NodeData::TemplateHead(d) => Some(&mut d.template_literal_like_node_base),
             NodeData::TemplateMiddle(d) => Some(&mut d.template_literal_like_node_base),
@@ -6573,7 +6672,7 @@ impl NodeData {
     /// computed on demand otherwise.
     pub fn subtree_facts(&self, node: &Node, nodes: &[Node]) -> SubtreeFacts {
         match self {
-            NodeData::Token(d) => SubtreeFacts::NONE,
+            NodeData::Token(d) => crate::subtreefacts::compute_token(node, nodes),
             NodeData::Identifier(d) => crate::subtreefacts::compute_identifier(node, nodes),
             NodeData::PrivateIdentifier(d) => crate::subtreefacts::compute_private_identifier(node, nodes),
             NodeData::QualifiedName(d) => {
@@ -6928,7 +7027,7 @@ impl NodeData {
             NodeData::ConstructorDeclaration(d) => {
                 let cached = SubtreeFacts(d.composite_base.facts.get());
                 if !cached.intersects(SubtreeFacts::COMPUTED) {
-                    let f = SubtreeFacts::NONE | SubtreeFacts::COMPUTED;
+                    let f = crate::subtreefacts::compute_constructor_declaration(node, nodes) | SubtreeFacts::COMPUTED;
                     d.composite_base.facts.set(f.0);
                     return f.without(SubtreeFacts::COMPUTED);
                 }
@@ -6987,7 +7086,7 @@ impl NodeData {
             NodeData::KeywordExpression(d) => crate::subtreefacts::compute_keyword_expression(node, nodes),
             NodeData::StringLiteral(d) => SubtreeFacts::NONE,
             NodeData::NumericLiteral(d) => SubtreeFacts::NONE,
-            NodeData::BigIntLiteral(d) => SubtreeFacts::NONE,
+            NodeData::BigIntLiteral(d) => crate::subtreefacts::compute_big_int_literal(node, nodes),
             NodeData::RegularExpressionLiteral(d) => SubtreeFacts::NONE,
             NodeData::NoSubstitutionTemplateLiteral(d) => crate::subtreefacts::compute_no_substitution_template_literal(node, nodes),
             NodeData::BinaryExpression(d) => {
@@ -7001,7 +7100,7 @@ impl NodeData {
             },
             NodeData::PrefixUnaryExpression(d) => propagate_subtree_facts_opt(nodes, d.operand),
             NodeData::PostfixUnaryExpression(d) => propagate_subtree_facts_opt(nodes, d.operand),
-            NodeData::YieldExpression(d) => SubtreeFacts::NONE,
+            NodeData::YieldExpression(d) => crate::subtreefacts::compute_yield_expression(node, nodes),
             NodeData::ArrowFunction(d) => {
                 let cached = SubtreeFacts(d.composite_base.facts.get());
                 if !cached.intersects(SubtreeFacts::COMPUTED) {
@@ -7359,7 +7458,17 @@ impl NodeData {
                     propagate_subtree_facts_opt(nodes, d.this_arg),
             NodeData::JSDocTypeLiteral(d) => SubtreeFacts::CONTAINS_TYPE_SCRIPT,
             NodeData::JSDocParameterOrPropertyTag(d) => SubtreeFacts::NONE,
-            NodeData::SourceFile(d) => crate::subtreefacts::compute_source_file(node, nodes),
+            NodeData::SourceFile(d) => {
+                let cached = SubtreeFacts(d.composite_base.facts.get());
+                if !cached.intersects(SubtreeFacts::COMPUTED) {
+                    let f = propagate_node_list_subtree_facts(nodes, &d.statements) | SubtreeFacts::COMPUTED;
+                    d.composite_base.facts.set(f.0);
+                    return f.without(SubtreeFacts::COMPUTED);
+                }
+                cached.without(SubtreeFacts::COMPUTED)
+            },
+            NodeData::FlowSwitchClauseData(d) => SubtreeFacts::NONE,
+            NodeData::FlowReduceLabelData(d) => SubtreeFacts::NONE,
         }
     }
 
@@ -7559,6 +7668,8 @@ impl NodeData {
             NodeData::JSDocTypeLiteral(_d) => SubtreeFacts::CONTAINS_TYPE_SCRIPT,
             NodeData::JSDocParameterOrPropertyTag(_d) => node.subtree_facts(nodes).without(SubtreeFacts::EXCLUSIONS_NODE),
             NodeData::SourceFile(_d) => node.subtree_facts(nodes).without(SubtreeFacts::EXCLUSIONS_NODE),
+            NodeData::FlowSwitchClauseData(_d) => node.subtree_facts(nodes).without(SubtreeFacts::EXCLUSIONS_NODE),
+            NodeData::FlowReduceLabelData(_d) => node.subtree_facts(nodes).without(SubtreeFacts::EXCLUSIONS_NODE),
         }
     }
 }
@@ -9485,6 +9596,26 @@ impl Node {
     /// mutable `AsSourceFile()`.
     pub fn as_source_file_mut(&mut self) -> &mut SourceFile {
         self.data.as_source_file_mut()
+    }
+    /// `n.AsFlowSwitchClauseData()` — panics on kind mismatch, like Go's
+    /// unchecked type assertion.
+    pub fn as_flow_switch_clause_data(&self) -> &FlowSwitchClauseData {
+        self.data.as_flow_switch_clause_data()
+    }
+
+    /// mutable `AsFlowSwitchClauseData()`.
+    pub fn as_flow_switch_clause_data_mut(&mut self) -> &mut FlowSwitchClauseData {
+        self.data.as_flow_switch_clause_data_mut()
+    }
+    /// `n.AsFlowReduceLabelData()` — panics on kind mismatch, like Go's
+    /// unchecked type assertion.
+    pub fn as_flow_reduce_label_data(&self) -> &FlowReduceLabelData {
+        self.data.as_flow_reduce_label_data()
+    }
+
+    /// mutable `AsFlowReduceLabelData()`.
+    pub fn as_flow_reduce_label_data_mut(&mut self) -> &mut FlowReduceLabelData {
+        self.data.as_flow_reduce_label_data_mut()
     }
 }
 
@@ -13846,7 +13977,7 @@ impl NodeFactory<'_> {
     pub fn update_syntax_list(&mut self, nodes: &mut Vec<Node>, node: NodeId, children: &[NodeId]) -> Option<NodeId> {
         let changed = {
             let d = nodes[node].as_syntax_list();
-            children != d.children
+            *children != *d.children
         };
         if changed {
             let a0 = children;
@@ -13854,6 +13985,14 @@ impl NodeFactory<'_> {
             return Some(crate::ast::update_node(nodes, updated, node, &mut self.hooks));
         }
         None
+    }
+
+    /// `NewJSDoc`.
+    pub fn new_js_doc(&mut self, nodes: &mut Vec<Node>, comment: Option<NodeList>, tags: Option<NodeList>) -> NodeId {
+        let mut data = JSDoc::default();
+        data.comment = comment;
+        data.tags = tags;
+        self.new_node(nodes, Kind::JSDoc, NodeData::JSDoc(data))
     }
 
     /// `UpdateJSDoc` — `None` when nothing changed (Go returned the
@@ -14012,6 +14151,14 @@ impl NodeFactory<'_> {
             return Some(crate::ast::update_node(nodes, updated, node, &mut self.hooks));
         }
         None
+    }
+
+    /// `NewJSDocUnknownTag`.
+    pub fn new_js_doc_unknown_tag(&mut self, nodes: &mut Vec<Node>, tag_name: Option<NodeId>, comment: Option<NodeList>) -> NodeId {
+        let mut data = JSDocUnknownTag::default();
+        data.js_doc_tag_base.tag_name = tag_name;
+        data.js_doc_tag_base.comment = comment;
+        self.new_node(nodes, Kind::JSDocUnknownTag, NodeData::JSDocUnknownTag(data))
     }
 
     /// `UpdateJSDocUnknownTag` — `None` when nothing changed (Go returned the
@@ -14202,6 +14349,14 @@ impl NodeFactory<'_> {
             return Some(crate::ast::update_node(nodes, updated, node, &mut self.hooks));
         }
         None
+    }
+
+    /// `NewJSDocDeprecatedTag`.
+    pub fn new_js_doc_deprecated_tag(&mut self, nodes: &mut Vec<Node>, tag_name: Option<NodeId>, comment: Option<NodeList>) -> NodeId {
+        let mut data = JSDocDeprecatedTag::default();
+        data.js_doc_tag_base.tag_name = tag_name;
+        data.js_doc_tag_base.comment = comment;
+        self.new_node(nodes, Kind::JSDocDeprecatedTag, NodeData::JSDocDeprecatedTag(data))
     }
 
     /// `UpdateJSDocDeprecatedTag` — `None` when nothing changed (Go returned the
@@ -14706,6 +14861,14 @@ impl NodeFactory<'_> {
         None
     }
 
+    /// `NewJSDocText`.
+    pub fn new_js_doc_text(&mut self, nodes: &mut Vec<Node>, text: &[String]) -> NodeId {
+        let mut data = JSDocText::default();
+        data.js_doc_comment_base.text = text.into();
+        self.text_count += 1;
+        self.new_node(nodes, Kind::JSDocText, NodeData::JSDocText(data))
+    }
+
     /// `NewJSDocLink`.
     pub fn new_js_doc_link(&mut self, nodes: &mut Vec<Node>, name: Option<NodeId>, text: &[String]) -> NodeId {
         let mut data = JSDocLink::default();
@@ -14720,7 +14883,7 @@ impl NodeFactory<'_> {
     pub fn update_js_doc_link(&mut self, nodes: &mut Vec<Node>, node: NodeId, name: Option<NodeId>, text: &[String]) -> Option<NodeId> {
         let changed = {
             let d = nodes[node].as_js_doc_link();
-            name != d.name || text != d.js_doc_comment_base.text
+            name != d.name || *text != *d.js_doc_comment_base.text
         };
         if changed {
             let a0 = name;
@@ -14745,7 +14908,7 @@ impl NodeFactory<'_> {
     pub fn update_js_doc_link_plain(&mut self, nodes: &mut Vec<Node>, node: NodeId, name: Option<NodeId>, text: &[String]) -> Option<NodeId> {
         let changed = {
             let d = nodes[node].as_js_doc_link_plain();
-            name != d.name || text != d.js_doc_comment_base.text
+            name != d.name || *text != *d.js_doc_comment_base.text
         };
         if changed {
             let a0 = name;
@@ -14770,7 +14933,7 @@ impl NodeFactory<'_> {
     pub fn update_js_doc_link_code(&mut self, nodes: &mut Vec<Node>, node: NodeId, name: Option<NodeId>, text: &[String]) -> Option<NodeId> {
         let changed = {
             let d = nodes[node].as_js_doc_link_code();
-            name != d.name || text != d.js_doc_comment_base.text
+            name != d.name || *text != *d.js_doc_comment_base.text
         };
         if changed {
             let a0 = name;
@@ -14848,7 +15011,7 @@ impl NodeFactory<'_> {
     pub fn update_js_doc_type_literal(&mut self, nodes: &mut Vec<Node>, node: NodeId, jsdoc_property_tags: &[NodeId], is_array_type: bool) -> Option<NodeId> {
         let changed = {
             let d = nodes[node].as_js_doc_type_literal();
-            jsdoc_property_tags != d.js_doc_property_tags || is_array_type != d.is_array_type
+            *jsdoc_property_tags != *d.js_doc_property_tags || is_array_type != d.is_array_type
         };
         if changed {
             let a0 = jsdoc_property_tags;
@@ -14905,12 +15068,12 @@ impl NodeFactory<'_> {
             },
             Kind::Identifier => {
                 let t0 = nodes[node].as_identifier().text.clone();
-                let updated = self.new_identifier(nodes, t0);
+                let updated = self.new_identifier(nodes, &t0);
                 crate::ast::clone_node(nodes, updated, node, &mut self.hooks)
             },
             Kind::PrivateIdentifier => {
                 let t0 = nodes[node].as_private_identifier().text.clone();
-                let updated = self.new_private_identifier(nodes, t0);
+                let updated = self.new_private_identifier(nodes, &t0);
                 crate::ast::clone_node(nodes, updated, node, &mut self.hooks)
             },
             Kind::QualifiedName => {
@@ -15237,27 +15400,27 @@ impl NodeFactory<'_> {
             },
             Kind::StringLiteral => {
                 let t0 = nodes[node].as_string_literal().literal_expression_base.literal_like_node_base.text.clone();let t1 = nodes[node].as_string_literal().literal_expression_base.literal_like_node_base.token_flags.clone();
-                let updated = self.new_string_literal(nodes, t0, t1);
+                let updated = self.new_string_literal(nodes, &t0, t1);
                 crate::ast::clone_node(nodes, updated, node, &mut self.hooks)
             },
             Kind::NumericLiteral => {
                 let t0 = nodes[node].as_numeric_literal().literal_expression_base.literal_like_node_base.text.clone();let t1 = nodes[node].as_numeric_literal().literal_expression_base.literal_like_node_base.token_flags.clone();
-                let updated = self.new_numeric_literal(nodes, t0, t1);
+                let updated = self.new_numeric_literal(nodes, &t0, t1);
                 crate::ast::clone_node(nodes, updated, node, &mut self.hooks)
             },
             Kind::BigIntLiteral => {
                 let t0 = nodes[node].as_big_int_literal().literal_expression_base.literal_like_node_base.text.clone();let t1 = nodes[node].as_big_int_literal().literal_expression_base.literal_like_node_base.token_flags.clone();
-                let updated = self.new_big_int_literal(nodes, t0, t1);
+                let updated = self.new_big_int_literal(nodes, &t0, t1);
                 crate::ast::clone_node(nodes, updated, node, &mut self.hooks)
             },
             Kind::RegularExpressionLiteral => {
                 let t0 = nodes[node].as_regular_expression_literal().literal_expression_base.literal_like_node_base.text.clone();let t1 = nodes[node].as_regular_expression_literal().literal_expression_base.literal_like_node_base.token_flags.clone();
-                let updated = self.new_regular_expression_literal(nodes, t0, t1);
+                let updated = self.new_regular_expression_literal(nodes, &t0, t1);
                 crate::ast::clone_node(nodes, updated, node, &mut self.hooks)
             },
             Kind::NoSubstitutionTemplateLiteral => {
                 let t0 = nodes[node].as_no_substitution_template_literal().template_literal_like_node_base.literal_like_node_base.text.clone();let t1 = nodes[node].as_no_substitution_template_literal().template_literal_like_node_base.template_flags.clone();
-                let updated = self.new_no_substitution_template_literal(nodes, t0, t1);
+                let updated = self.new_no_substitution_template_literal(nodes, &t0, t1);
                 crate::ast::clone_node(nodes, updated, node, &mut self.hooks)
             },
             Kind::BinaryExpression => {
@@ -15535,17 +15698,17 @@ impl NodeFactory<'_> {
             },
             Kind::TemplateHead => {
                 let t0 = nodes[node].as_template_head().template_literal_like_node_base.literal_like_node_base.text.clone();let t1 = nodes[node].as_template_head().template_literal_like_node_base.raw_text.clone();let t2 = nodes[node].as_template_head().template_literal_like_node_base.template_flags.clone();
-                let updated = self.new_template_head(nodes, t0, t1, t2);
+                let updated = self.new_template_head(nodes, &t0, &t1, t2);
                 crate::ast::clone_node(nodes, updated, node, &mut self.hooks)
             },
             Kind::TemplateMiddle => {
                 let t0 = nodes[node].as_template_middle().template_literal_like_node_base.literal_like_node_base.text.clone();let t1 = nodes[node].as_template_middle().template_literal_like_node_base.raw_text.clone();let t2 = nodes[node].as_template_middle().template_literal_like_node_base.template_flags.clone();
-                let updated = self.new_template_middle(nodes, t0, t1, t2);
+                let updated = self.new_template_middle(nodes, &t0, &t1, t2);
                 crate::ast::clone_node(nodes, updated, node, &mut self.hooks)
             },
             Kind::TemplateTail => {
                 let t0 = nodes[node].as_template_tail().template_literal_like_node_base.literal_like_node_base.text.clone();let t1 = nodes[node].as_template_tail().template_literal_like_node_base.raw_text.clone();let t2 = nodes[node].as_template_tail().template_literal_like_node_base.template_flags.clone();
-                let updated = self.new_template_tail(nodes, t0, t1, t2);
+                let updated = self.new_template_tail(nodes, &t0, &t1, t2);
                 crate::ast::clone_node(nodes, updated, node, &mut self.hooks)
             },
             Kind::TemplateLiteralType => {
@@ -15628,12 +15791,12 @@ impl NodeFactory<'_> {
             },
             Kind::JsxText => {
                 let t0 = nodes[node].as_jsx_text().literal_like_node_base.text.clone();let t1 = nodes[node].as_jsx_text().contains_only_trivia_white_spaces.clone();
-                let updated = self.new_jsx_text(nodes, t0, t1);
+                let updated = self.new_jsx_text(nodes, &t0, t1);
                 crate::ast::clone_node(nodes, updated, node, &mut self.hooks)
             },
             Kind::SyntaxList => {
                 let t0 = nodes[node].as_syntax_list().children.clone();
-                let updated = self.new_syntax_list(nodes, t0);
+                let updated = self.new_syntax_list(nodes, &t0);
                 crate::ast::clone_node(nodes, updated, node, &mut self.hooks)
             },
             Kind::JSDoc => {
@@ -15812,22 +15975,22 @@ impl NodeFactory<'_> {
             },
             Kind::JSDocText => {
                 let t0 = nodes[node].as_js_doc_text().js_doc_comment_base.text.clone();
-                let updated = self.new_js_doc_text(nodes, t0);
+                let updated = self.new_js_doc_text(nodes, &t0);
                 crate::ast::clone_node(nodes, updated, node, &mut self.hooks)
             },
             Kind::JSDocLink => {
                 let t0 = nodes[node].as_js_doc_link().name.clone();let t1 = nodes[node].as_js_doc_link().js_doc_comment_base.text.clone();
-                let updated = self.new_js_doc_link(nodes, t0, t1);
+                let updated = self.new_js_doc_link(nodes, t0, &t1);
                 crate::ast::clone_node(nodes, updated, node, &mut self.hooks)
             },
             Kind::JSDocLinkPlain => {
                 let t0 = nodes[node].as_js_doc_link_plain().name.clone();let t1 = nodes[node].as_js_doc_link_plain().js_doc_comment_base.text.clone();
-                let updated = self.new_js_doc_link_plain(nodes, t0, t1);
+                let updated = self.new_js_doc_link_plain(nodes, t0, &t1);
                 crate::ast::clone_node(nodes, updated, node, &mut self.hooks)
             },
             Kind::JSDocLinkCode => {
                 let t0 = nodes[node].as_js_doc_link_code().name.clone();let t1 = nodes[node].as_js_doc_link_code().js_doc_comment_base.text.clone();
-                let updated = self.new_js_doc_link_code(nodes, t0, t1);
+                let updated = self.new_js_doc_link_code(nodes, t0, &t1);
                 crate::ast::clone_node(nodes, updated, node, &mut self.hooks)
             },
             Kind::TypeParameter => {
@@ -15842,7 +16005,7 @@ impl NodeFactory<'_> {
             },
             Kind::JSDocTypeLiteral => {
                 let t0 = nodes[node].as_js_doc_type_literal().js_doc_property_tags.clone();let t1 = nodes[node].as_js_doc_type_literal().is_array_type.clone();
-                let updated = self.new_js_doc_type_literal(nodes, t0, t1);
+                let updated = self.new_js_doc_type_literal(nodes, &t0, t1);
                 crate::ast::clone_node(nodes, updated, node, &mut self.hooks)
             },
             Kind::JSDocParameterTag | Kind::JSDocPropertyTag => {
@@ -15850,6 +16013,7 @@ impl NodeFactory<'_> {
                 let updated = self.new_js_doc_parameter_or_property_tag(nodes, nodes[node].kind, t1, t2, t3, t4, t5, t6);
                 crate::ast::clone_node(nodes, updated, node, &mut self.hooks)
             },
+            Kind::SourceFile => crate::ast::clone_source_file(self, nodes, node),
             _ => panic!("Clone on node kind {:?}", nodes[node].kind),
         }
     }

@@ -170,6 +170,23 @@ impl core::ops::IndexMut<NodeId> for [Node] {
     }
 }
 
+// `Vec<Node>` has its own `Index` impl (via SliceIndex) that would shadow the
+// slice impl — add explicit impls so `nodes[id]` works on the arena directly.
+impl core::ops::Index<NodeId> for Vec<Node> {
+    type Output = Node;
+    #[inline]
+    fn index(&self, id: NodeId) -> &Node {
+        &self.as_slice()[id]
+    }
+}
+
+impl core::ops::IndexMut<NodeId> for Vec<Node> {
+    #[inline]
+    fn index_mut(&mut self, id: NodeId) -> &mut Node {
+        &mut self.as_mut_slice()[id]
+    }
+}
+
 // NodeFactoryHooks / NodeFactory
 
 /// Hook invoked when a node is created. Receives the arena and the new node id.
@@ -196,8 +213,10 @@ pub struct NodeFactoryHooks<'a> {
 pub struct NodeFactory<'a> {
     pub(crate) hooks: NodeFactoryHooks<'a>,
     node_count: u64,
-    identifier_count: u64,
-    text_count: u64,
+    /// `f.identifierCount` — incremented by generated `new_*` methods.
+    pub(crate) identifier_count: u64,
+    /// `f.textCount` — incremented by generated `new_*` methods.
+    pub(crate) text_count: u64,
     file_index: u32,
 }
 
@@ -509,16 +528,18 @@ impl Node {
             Kind::Identifier => Cow::Borrowed(self.as_identifier().text.as_str()),
             Kind::PrivateIdentifier => Cow::Borrowed(self.as_private_identifier().text.as_str()),
             Kind::StringLiteral => {
-                Cow::Borrowed(self.as_string_literal().literal_like_node_base.text.as_str())
+                Cow::Borrowed(self.as_string_literal().literal_expression_base.literal_like_node_base.text.as_str())
             }
             Kind::NumericLiteral => {
-                Cow::Borrowed(self.as_numeric_literal().literal_like_node_base.text.as_str())
+                Cow::Borrowed(self.as_numeric_literal().literal_expression_base.literal_like_node_base.text.as_str())
             }
             Kind::BigIntLiteral => {
-                Cow::Borrowed(self.as_big_int_literal().literal_like_node_base.text.as_str())
+                Cow::Borrowed(self.as_big_int_literal().literal_expression_base.literal_like_node_base.text.as_str())
             }
             Kind::MetaProperty => {
-                let name = self.as_meta_property().name();
+                let name = self.as_meta_property().name.unwrap_or_else(|| {
+                    panic!("MetaProperty without name in Node.Text")
+                });
                 nodes[name].text(nodes)
             }
             Kind::NoSubstitutionTemplateLiteral => Cow::Borrowed(
@@ -528,34 +549,34 @@ impl Node {
                     .as_str(),
             ),
             Kind::TemplateHead => {
-                Cow::Borrowed(self.as_template_head().template_literal_like_node_base.text.as_str())
+                Cow::Borrowed(self.as_template_head().template_literal_like_node_base.literal_like_node_base.text.as_str())
             }
             Kind::TemplateMiddle => {
-                Cow::Borrowed(self.as_template_middle().template_literal_like_node_base.text.as_str())
+                Cow::Borrowed(self.as_template_middle().template_literal_like_node_base.literal_like_node_base.text.as_str())
             }
             Kind::TemplateTail => {
-                Cow::Borrowed(self.as_template_tail().template_literal_like_node_base.text.as_str())
+                Cow::Borrowed(self.as_template_tail().template_literal_like_node_base.literal_like_node_base.text.as_str())
             }
             Kind::JsxNamespacedName => {
                 let d = self.as_jsx_namespaced_name();
-                let mut s = nodes[d.namespace].text(nodes).into_owned();
+                let mut s = nodes[d.namespace.unwrap()].text(nodes).into_owned();
                 s.push(':');
-                s.push_str(&nodes[d.name].text(nodes));
+                s.push_str(&nodes[d.name.unwrap()].text(nodes));
                 Cow::Owned(s)
             }
             Kind::RegularExpressionLiteral => Cow::Borrowed(
                 self.as_regular_expression_literal()
-                    .literal_like_node_base
+                    .literal_expression_base.literal_like_node_base
                     .text
                     .as_str(),
             ),
-            Kind::JSDocText => Cow::Owned(self.as_jsdoc_text().jsdoc_comment_base.text.join("")),
-            Kind::JSDocLink => Cow::Owned(self.as_jsdoc_link().jsdoc_comment_base.text.join("")),
+            Kind::JSDocText => Cow::Owned(self.as_js_doc_text().js_doc_comment_base.text.join("")),
+            Kind::JSDocLink => Cow::Owned(self.as_js_doc_link().js_doc_comment_base.text.join("")),
             Kind::JSDocLinkCode => {
-                Cow::Owned(self.as_jsdoc_link_code().jsdoc_comment_base.text.join(""))
+                Cow::Owned(self.as_js_doc_link_code().js_doc_comment_base.text.join(""))
             }
             Kind::JSDocLinkPlain => {
-                Cow::Owned(self.as_jsdoc_link_plain().jsdoc_comment_base.text.join(""))
+                Cow::Owned(self.as_js_doc_link_plain().js_doc_comment_base.text.join(""))
             }
             _ => panic!("Unhandled case in Node.Text: {}", self.kind_string()),
         }
@@ -689,12 +710,12 @@ impl Node {
             Kind::TaggedTemplateExpression => {
                 self.as_tagged_template_expression().type_arguments.as_ref()
             }
-            Kind::TypeReference => self.as_type_reference_node().type_arguments.as_ref(),
+            Kind::TypeReference => self.as_type_reference_node().node_with_type_arguments_base.type_arguments.as_ref(),
             Kind::ExpressionWithTypeArguments => {
                 self.as_expression_with_type_arguments().type_arguments.as_ref()
             }
-            Kind::ImportType => self.as_import_type_node().type_arguments.as_ref(),
-            Kind::TypeQuery => self.as_type_query_node().type_arguments.as_ref(),
+            Kind::ImportType => self.as_import_type_node().node_with_type_arguments_base.type_arguments.as_ref(),
+            Kind::TypeQuery => self.as_type_query_node().node_with_type_arguments_base.type_arguments.as_ref(),
             Kind::JsxOpeningElement => self.as_jsx_opening_element().type_arguments.as_ref(),
             Kind::JsxSelfClosingElement => self.as_jsx_self_closing_element().type_arguments.as_ref(),
             _ => panic!("Unhandled case in Node.TypeArguments"),
@@ -712,12 +733,12 @@ impl Node {
             Kind::ClassDeclaration => self.as_class_declaration().class_like_base.type_parameters.as_ref(),
             Kind::ClassExpression => self.as_class_expression().class_like_base.type_parameters.as_ref(),
             Kind::InterfaceDeclaration => {
-                self.as_interface_declaration().class_like_base.type_parameters.as_ref()
+                self.as_interface_declaration().type_parameters.as_ref()
             }
             Kind::TypeAliasDeclaration | Kind::JSTypeAliasDeclaration => {
                 self.as_type_alias_declaration().type_parameters.as_ref()
             }
-            Kind::JSDocTemplateTag => self.as_jsdoc_template_tag().type_parameters.as_ref(),
+            Kind::JSDocTemplateTag => self.as_js_doc_template_tag().type_parameters.as_ref(),
             _ => {
                 let func_like = self
                     .function_like_data()
@@ -737,7 +758,7 @@ impl Node {
         match self.kind {
             Kind::ClassDeclaration => self.as_class_declaration().class_like_base.members.as_ref(),
             Kind::ClassExpression => self.as_class_expression().class_like_base.members.as_ref(),
-            Kind::InterfaceDeclaration => self.as_interface_declaration().class_like_base.members.as_ref(),
+            Kind::InterfaceDeclaration => self.as_interface_declaration().members.as_ref(),
             Kind::EnumDeclaration => self.as_enum_declaration().members.as_ref(),
             Kind::TypeLiteral => self.as_type_literal_node().members.as_ref(),
             Kind::MappedType => self.as_mapped_type_node().members.as_ref(),
@@ -812,13 +833,13 @@ impl Node {
             Kind::OptionalType => self.as_optional_type_node().type_,
             Kind::RestType => self.as_rest_type_node().type_,
             Kind::TemplateLiteralTypeSpan => self.as_template_literal_type_span().type_,
-            Kind::JSDocTypeExpression => self.as_jsdoc_type_expression().type_,
+            Kind::JSDocTypeExpression => self.as_js_doc_type_expression().type_,
             Kind::JSDocParameterTag | Kind::JSDocPropertyTag => {
-                self.as_jsdoc_parameter_or_property_tag().type_expression
+                self.as_js_doc_parameter_or_property_tag().type_expression
             }
-            Kind::JSDocNullableType => self.as_jsdoc_nullable_type().type_,
-            Kind::JSDocNonNullableType => self.as_jsdoc_non_nullable_type().type_,
-            Kind::JSDocOptionalType => self.as_jsdoc_optional_type().type_,
+            Kind::JSDocNullableType => self.as_js_doc_nullable_type().type_,
+            Kind::JSDocNonNullableType => self.as_js_doc_non_nullable_type().type_,
+            Kind::JSDocOptionalType => self.as_js_doc_optional_type().type_,
             Kind::ExportAssignment => self.as_export_assignment().type_,
             Kind::BinaryExpression => self.as_binary_expression().type_,
             _ => {
@@ -856,13 +877,13 @@ impl Node {
             Kind::OptionalType => data.as_optional_type_node_mut().type_ = t,
             Kind::RestType => data.as_rest_type_node_mut().type_ = t,
             Kind::TemplateLiteralTypeSpan => data.as_template_literal_type_span_mut().type_ = t,
-            Kind::JSDocTypeExpression => data.as_jsdoc_type_expression_mut().type_ = t,
+            Kind::JSDocTypeExpression => data.as_js_doc_type_expression_mut().type_ = t,
             Kind::JSDocParameterTag | Kind::JSDocPropertyTag => {
-                data.as_jsdoc_parameter_or_property_tag_mut().type_expression = t;
+                data.as_js_doc_parameter_or_property_tag_mut().type_expression = t;
             }
-            Kind::JSDocNullableType => data.as_jsdoc_nullable_type_mut().type_ = t,
-            Kind::JSDocNonNullableType => data.as_jsdoc_non_nullable_type_mut().type_ = t,
-            Kind::JSDocOptionalType => data.as_jsdoc_optional_type_mut().type_ = t,
+            Kind::JSDocNullableType => data.as_js_doc_nullable_type_mut().type_ = t,
+            Kind::JSDocNonNullableType => data.as_js_doc_non_nullable_type_mut().type_ = t,
+            Kind::JSDocOptionalType => data.as_js_doc_optional_type_mut().type_ = t,
             Kind::ExportAssignment => data.as_export_assignment_mut().type_ = t,
             Kind::BinaryExpression => data.as_binary_expression_mut().type_ = t,
             _ => {
@@ -919,29 +940,29 @@ impl Node {
             Kind::JsxOpeningElement => self.as_jsx_opening_element().tag_name,
             Kind::JsxClosingElement => self.as_jsx_closing_element().tag_name,
             Kind::JsxSelfClosingElement => self.as_jsx_self_closing_element().tag_name,
-            Kind::JSDocUnknownTag => self.as_jsdoc_unknown_tag().jsdoc_tag_base.tag_name,
-            Kind::JSDocAugmentsTag => self.as_jsdoc_augments_tag().jsdoc_tag_base.tag_name,
-            Kind::JSDocImplementsTag => self.as_jsdoc_implements_tag().jsdoc_tag_base.tag_name,
-            Kind::JSDocDeprecatedTag => self.as_jsdoc_deprecated_tag().jsdoc_tag_base.tag_name,
-            Kind::JSDocPublicTag => self.as_jsdoc_public_tag().jsdoc_tag_base.tag_name,
-            Kind::JSDocPrivateTag => self.as_jsdoc_private_tag().jsdoc_tag_base.tag_name,
-            Kind::JSDocProtectedTag => self.as_jsdoc_protected_tag().jsdoc_tag_base.tag_name,
-            Kind::JSDocReadonlyTag => self.as_jsdoc_readonly_tag().jsdoc_tag_base.tag_name,
-            Kind::JSDocOverrideTag => self.as_jsdoc_override_tag().jsdoc_tag_base.tag_name,
-            Kind::JSDocCallbackTag => self.as_jsdoc_callback_tag().jsdoc_tag_base.tag_name,
-            Kind::JSDocOverloadTag => self.as_jsdoc_overload_tag().jsdoc_tag_base.tag_name,
+            Kind::JSDocUnknownTag => self.as_js_doc_unknown_tag().js_doc_tag_base.tag_name,
+            Kind::JSDocAugmentsTag => self.as_js_doc_augments_tag().js_doc_tag_base.tag_name,
+            Kind::JSDocImplementsTag => self.as_js_doc_implements_tag().js_doc_tag_base.tag_name,
+            Kind::JSDocDeprecatedTag => self.as_js_doc_deprecated_tag().js_doc_tag_base.tag_name,
+            Kind::JSDocPublicTag => self.as_js_doc_public_tag().js_doc_tag_base.tag_name,
+            Kind::JSDocPrivateTag => self.as_js_doc_private_tag().js_doc_tag_base.tag_name,
+            Kind::JSDocProtectedTag => self.as_js_doc_protected_tag().js_doc_tag_base.tag_name,
+            Kind::JSDocReadonlyTag => self.as_js_doc_readonly_tag().js_doc_tag_base.tag_name,
+            Kind::JSDocOverrideTag => self.as_js_doc_override_tag().js_doc_tag_base.tag_name,
+            Kind::JSDocCallbackTag => self.as_js_doc_callback_tag().js_doc_tag_base.tag_name,
+            Kind::JSDocOverloadTag => self.as_js_doc_overload_tag().js_doc_tag_base.tag_name,
             Kind::JSDocParameterTag | Kind::JSDocPropertyTag => {
-                self.as_jsdoc_parameter_or_property_tag().jsdoc_tag_base.tag_name
+                self.as_js_doc_parameter_or_property_tag().js_doc_tag_base.tag_name
             }
-            Kind::JSDocReturnTag => self.as_jsdoc_return_tag().jsdoc_tag_base.tag_name,
-            Kind::JSDocThisTag => self.as_jsdoc_this_tag().jsdoc_tag_base.tag_name,
-            Kind::JSDocTypeTag => self.as_jsdoc_type_tag().jsdoc_tag_base.tag_name,
-            Kind::JSDocTemplateTag => self.as_jsdoc_template_tag().jsdoc_tag_base.tag_name,
-            Kind::JSDocTypedefTag => self.as_jsdoc_typedef_tag().jsdoc_tag_base.tag_name,
-            Kind::JSDocSeeTag => self.as_jsdoc_see_tag().jsdoc_tag_base.tag_name,
-            Kind::JSDocSatisfiesTag => self.as_jsdoc_satisfies_tag().jsdoc_tag_base.tag_name,
-            Kind::JSDocThrowsTag => self.as_jsdoc_throws_tag().jsdoc_tag_base.tag_name,
-            Kind::JSDocImportTag => self.as_jsdoc_import_tag().jsdoc_tag_base.tag_name,
+            Kind::JSDocReturnTag => self.as_js_doc_return_tag().js_doc_tag_base.tag_name,
+            Kind::JSDocThisTag => self.as_js_doc_this_tag().js_doc_tag_base.tag_name,
+            Kind::JSDocTypeTag => self.as_js_doc_type_tag().js_doc_tag_base.tag_name,
+            Kind::JSDocTemplateTag => self.as_js_doc_template_tag().js_doc_tag_base.tag_name,
+            Kind::JSDocTypedefTag => self.as_js_doc_typedef_tag().js_doc_tag_base.tag_name,
+            Kind::JSDocSeeTag => self.as_js_doc_see_tag().js_doc_tag_base.tag_name,
+            Kind::JSDocSatisfiesTag => self.as_js_doc_satisfies_tag().js_doc_tag_base.tag_name,
+            Kind::JSDocThrowsTag => self.as_js_doc_throws_tag().js_doc_tag_base.tag_name,
+            Kind::JSDocImportTag => self.as_js_doc_import_tag().js_doc_tag_base.tag_name,
             _ => panic!("Unhandled case in Node.TagName: {}", self.kind_string()),
         }
     }
@@ -978,30 +999,30 @@ impl Node {
     /// If updating this function, also update `hasComment`.
     pub fn comment_list(&self) -> Option<&NodeList> {
         match self.kind {
-            Kind::JSDoc => self.as_jsdoc().comment.as_ref(),
-            Kind::JSDocUnknownTag => self.as_jsdoc_unknown_tag().comment.as_ref(),
-            Kind::JSDocAugmentsTag => self.as_jsdoc_augments_tag().comment.as_ref(),
-            Kind::JSDocImplementsTag => self.as_jsdoc_implements_tag().comment.as_ref(),
-            Kind::JSDocDeprecatedTag => self.as_jsdoc_deprecated_tag().comment.as_ref(),
-            Kind::JSDocPublicTag => self.as_jsdoc_public_tag().comment.as_ref(),
-            Kind::JSDocPrivateTag => self.as_jsdoc_private_tag().comment.as_ref(),
-            Kind::JSDocProtectedTag => self.as_jsdoc_protected_tag().comment.as_ref(),
-            Kind::JSDocReadonlyTag => self.as_jsdoc_readonly_tag().comment.as_ref(),
-            Kind::JSDocOverrideTag => self.as_jsdoc_override_tag().comment.as_ref(),
-            Kind::JSDocCallbackTag => self.as_jsdoc_callback_tag().comment.as_ref(),
-            Kind::JSDocOverloadTag => self.as_jsdoc_overload_tag().comment.as_ref(),
+            Kind::JSDoc => self.as_js_doc().comment.as_ref(),
+            Kind::JSDocUnknownTag => self.as_js_doc_unknown_tag().js_doc_tag_base.comment.as_ref(),
+            Kind::JSDocAugmentsTag => self.as_js_doc_augments_tag().js_doc_tag_base.comment.as_ref(),
+            Kind::JSDocImplementsTag => self.as_js_doc_implements_tag().js_doc_tag_base.comment.as_ref(),
+            Kind::JSDocDeprecatedTag => self.as_js_doc_deprecated_tag().js_doc_tag_base.comment.as_ref(),
+            Kind::JSDocPublicTag => self.as_js_doc_public_tag().js_doc_tag_base.comment.as_ref(),
+            Kind::JSDocPrivateTag => self.as_js_doc_private_tag().js_doc_tag_base.comment.as_ref(),
+            Kind::JSDocProtectedTag => self.as_js_doc_protected_tag().js_doc_tag_base.comment.as_ref(),
+            Kind::JSDocReadonlyTag => self.as_js_doc_readonly_tag().js_doc_tag_base.comment.as_ref(),
+            Kind::JSDocOverrideTag => self.as_js_doc_override_tag().js_doc_tag_base.comment.as_ref(),
+            Kind::JSDocCallbackTag => self.as_js_doc_callback_tag().js_doc_tag_base.comment.as_ref(),
+            Kind::JSDocOverloadTag => self.as_js_doc_overload_tag().js_doc_tag_base.comment.as_ref(),
             Kind::JSDocParameterTag | Kind::JSDocPropertyTag => {
-                self.as_jsdoc_parameter_or_property_tag().comment.as_ref()
+                self.as_js_doc_parameter_or_property_tag().js_doc_tag_base.comment.as_ref()
             }
-            Kind::JSDocReturnTag => self.as_jsdoc_return_tag().comment.as_ref(),
-            Kind::JSDocThisTag => self.as_jsdoc_this_tag().comment.as_ref(),
-            Kind::JSDocTypeTag => self.as_jsdoc_type_tag().comment.as_ref(),
-            Kind::JSDocTemplateTag => self.as_jsdoc_template_tag().comment.as_ref(),
-            Kind::JSDocTypedefTag => self.as_jsdoc_typedef_tag().comment.as_ref(),
-            Kind::JSDocSeeTag => self.as_jsdoc_see_tag().comment.as_ref(),
-            Kind::JSDocSatisfiesTag => self.as_jsdoc_satisfies_tag().comment.as_ref(),
-            Kind::JSDocThrowsTag => self.as_jsdoc_throws_tag().comment.as_ref(),
-            Kind::JSDocImportTag => self.as_jsdoc_import_tag().comment.as_ref(),
+            Kind::JSDocReturnTag => self.as_js_doc_return_tag().js_doc_tag_base.comment.as_ref(),
+            Kind::JSDocThisTag => self.as_js_doc_this_tag().js_doc_tag_base.comment.as_ref(),
+            Kind::JSDocTypeTag => self.as_js_doc_type_tag().js_doc_tag_base.comment.as_ref(),
+            Kind::JSDocTemplateTag => self.as_js_doc_template_tag().js_doc_tag_base.comment.as_ref(),
+            Kind::JSDocTypedefTag => self.as_js_doc_typedef_tag().js_doc_tag_base.comment.as_ref(),
+            Kind::JSDocSeeTag => self.as_js_doc_see_tag().js_doc_tag_base.comment.as_ref(),
+            Kind::JSDocSatisfiesTag => self.as_js_doc_satisfies_tag().js_doc_tag_base.comment.as_ref(),
+            Kind::JSDocThrowsTag => self.as_js_doc_throws_tag().js_doc_tag_base.comment.as_ref(),
+            Kind::JSDocImportTag => self.as_js_doc_import_tag().js_doc_tag_base.comment.as_ref(),
             _ => panic!("Unhandled case in Node.CommentList: {}", self.kind_string()),
         }
     }
@@ -1047,7 +1068,7 @@ impl Node {
                 self.as_import_declaration().module_specifier
             }
             Kind::ExportDeclaration => self.as_export_declaration().module_specifier,
-            Kind::JSDocImportTag => self.as_jsdoc_import_tag().module_specifier,
+            Kind::JSDocImportTag => self.as_js_doc_import_tag().module_specifier,
             _ => panic!("Unhandled case in Node.ModuleSpecifier: {}", self.kind_string()),
         }
     }
@@ -1056,7 +1077,7 @@ impl Node {
     pub fn import_clause(&self) -> Option<NodeId> {
         match self.kind {
             Kind::ImportDeclaration | Kind::JSImportDeclaration => self.as_import_declaration().import_clause,
-            Kind::JSDocImportTag => self.as_jsdoc_import_tag().import_clause,
+            Kind::JSDocImportTag => self.as_js_doc_import_tag().import_clause,
             _ => panic!("Unhandled case in Node.ImportClause: {}", self.kind_string()),
         }
     }
@@ -1064,9 +1085,9 @@ impl Node {
     /// `n.Statement()`
     pub fn statement(&self) -> Option<NodeId> {
         match self.kind {
-            Kind::DoStatement => self.as_do_statement().statement,
-            Kind::WhileStatement => self.as_while_statement().statement,
-            Kind::ForStatement => self.as_for_statement().statement,
+            Kind::DoStatement => self.as_do_statement().iteration_statement_base.statement,
+            Kind::WhileStatement => self.as_while_statement().iteration_statement_base.statement,
+            Kind::ForStatement => self.as_for_statement().iteration_statement_base.statement,
             Kind::ForInStatement | Kind::ForOfStatement => self.as_for_in_or_of_statement().statement,
             Kind::WithStatement => self.as_with_statement().statement,
             Kind::LabeledStatement => self.as_labeled_statement().statement,
@@ -1110,15 +1131,15 @@ impl Node {
     /// `n.PostfixToken()`
     pub fn postfix_token(&self) -> Option<NodeId> {
         match self.kind {
-            Kind::MethodDeclaration => self.as_method_declaration().postfix_token,
-            Kind::ShorthandPropertyAssignment => self.as_shorthand_property_assignment().postfix_token,
-            Kind::MethodSignature => self.as_method_signature_declaration().postfix_token,
-            Kind::PropertySignature => self.as_property_signature_declaration().postfix_token,
-            Kind::PropertyAssignment => self.as_property_assignment().postfix_token,
-            Kind::PropertyDeclaration => self.as_property_declaration().postfix_token,
-            Kind::EnumMember => self.as_enum_member().postfix_token,
-            Kind::GetAccessor => self.as_get_accessor_declaration().postfix_token,
-            Kind::SetAccessor => self.as_set_accessor_declaration().postfix_token,
+            Kind::MethodDeclaration => self.as_method_declaration().named_member_base.postfix_token,
+            Kind::ShorthandPropertyAssignment => self.as_shorthand_property_assignment().named_member_base.postfix_token,
+            Kind::MethodSignature => self.as_method_signature_declaration().named_member_base.postfix_token,
+            Kind::PropertySignature => self.as_property_signature_declaration().named_member_base.postfix_token,
+            Kind::PropertyAssignment => self.as_property_assignment().named_member_base.postfix_token,
+            Kind::PropertyDeclaration => self.as_property_declaration().named_member_base.postfix_token,
+            Kind::EnumMember => self.as_enum_member().named_member_base.postfix_token,
+            Kind::GetAccessor => self.as_get_accessor_declaration().named_member_base.postfix_token,
+            Kind::SetAccessor => self.as_set_accessor_declaration().named_member_base.postfix_token,
             _ => None,
         }
     }
@@ -1151,14 +1172,14 @@ impl Node {
     pub fn type_expression(&self) -> Option<NodeId> {
         match self.kind {
             Kind::JSDocParameterTag | Kind::JSDocPropertyTag => {
-                self.as_jsdoc_parameter_or_property_tag().type_expression
+                self.as_js_doc_parameter_or_property_tag().type_expression
             }
-            Kind::JSDocReturnTag => self.as_jsdoc_return_tag().type_expression,
-            Kind::JSDocTypeTag => self.as_jsdoc_type_tag().type_expression,
-            Kind::JSDocTypedefTag => self.as_jsdoc_typedef_tag().type_expression,
-            Kind::JSDocCallbackTag => self.as_jsdoc_callback_tag().type_expression,
-            Kind::JSDocSatisfiesTag => self.as_jsdoc_satisfies_tag().type_expression,
-            Kind::JSDocThrowsTag => self.as_jsdoc_throws_tag().type_expression,
+            Kind::JSDocReturnTag => self.as_js_doc_return_tag().type_expression,
+            Kind::JSDocTypeTag => self.as_js_doc_type_tag().type_expression,
+            Kind::JSDocTypedefTag => self.as_js_doc_typedef_tag().type_expression,
+            Kind::JSDocCallbackTag => self.as_js_doc_callback_tag().type_expression,
+            Kind::JSDocSatisfiesTag => self.as_js_doc_satisfies_tag().type_expression,
+            Kind::JSDocThrowsTag => self.as_js_doc_throws_tag().type_expression,
             _ => panic!("Unhandled case in Node.TypeExpression: {}", self.kind_string()),
         }
     }
@@ -1166,8 +1187,8 @@ impl Node {
     /// `n.ClassName()`
     pub fn class_name(&self) -> Option<NodeId> {
         match self.kind {
-            Kind::JSDocAugmentsTag => self.as_jsdoc_augments_tag().class_name,
-            Kind::JSDocImplementsTag => self.as_jsdoc_implements_tag().class_name,
+            Kind::JSDocAugmentsTag => self.as_js_doc_augments_tag().class_name,
+            Kind::JSDocImplementsTag => self.as_js_doc_implements_tag().class_name,
             _ => panic!("Unhandled case in Node.ClassName: {}", self.kind_string()),
         }
     }
@@ -1194,7 +1215,7 @@ impl Node {
 // container itself lives in `crate::source_file`.
 
 /// `type PatternAmbientModule struct`
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct PatternAmbientModule {
     pub pattern: tsc_core::pattern::Pattern,
     pub symbol: Option<SymbolId>,
@@ -1238,6 +1259,185 @@ pub struct CommentRange {
     pub text_range: TextRange,
     pub kind: Kind,
     pub has_trailing_new_line: bool,
+}
+
+// SourceFile — hand-written traversal, construction, update, and clone
+// (Go's `SourceFile` methods are hand-written in ast.go; the generator
+// leaves them to this module via `custom` markers in kinds.toml).
+
+/// `(node *SourceFile) ForEachChild` — `forEachChild` for Kind::SourceFile.
+pub fn for_each_child_source_file(
+    d: &SourceFile,
+    visitor: &mut Visitor<'_>,
+    nodes: &[Node],
+) -> bool {
+    visit_node_list(visitor, &d.statements, nodes) || visit(visitor, d.end_of_file_token, nodes)
+}
+
+/// `(node *SourceFile) VisitEachChild` — rebuilds via `UpdateSourceFile`.
+pub fn visit_each_child_source_file(
+    cx: &mut crate::visitor::VisitorCx<'_>,
+    v: &crate::visitor::NodeVisitor<'_>,
+    node: NodeId,
+) -> Option<NodeId> {
+    let (statements, end_of_file_token) = {
+        let d = cx.nodes[node].as_source_file();
+        (d.statements.clone(), d.end_of_file_token)
+    };
+    let statements = v.visit_top_level_statements_hooked(cx, statements);
+    let end_of_file_token = v.visit_token_hooked(cx, end_of_file_token);
+    cx.factory
+        .update_source_file(cx.nodes, node, statements, end_of_file_token)
+}
+
+/// `forEachChild_JSDocParameterOrPropertyTag` — the `IsNameFirst` conditional
+/// ordering is a hand-written special case in ast.go.
+pub fn for_each_child_js_doc_parameter_or_property_tag(
+    d: &JSDocParameterOrPropertyTag,
+    visitor: &mut Visitor<'_>,
+    nodes: &[Node],
+) -> bool {
+    visit(visitor, d.js_doc_tag_base.tag_name, nodes)
+        || (d.is_name_first
+            && (visit(visitor, d.name, nodes) || visit(visitor, d.type_expression, nodes)))
+        || (!d.is_name_first
+            && (visit(visitor, d.type_expression, nodes) || visit(visitor, d.name, nodes)))
+        || visit_node_list(visitor, &d.js_doc_tag_base.comment, nodes)
+}
+
+/// `visitEachChild_JSDocParameterOrPropertyTag`.
+pub fn visit_each_child_js_doc_parameter_or_property_tag(
+    cx: &mut crate::visitor::VisitorCx<'_>,
+    v: &crate::visitor::NodeVisitor<'_>,
+    node: NodeId,
+) -> Option<NodeId> {
+    let (tag_name, name, is_bracketed, type_expression, is_name_first, comment) = {
+        let d = cx.nodes[node].as_js_doc_parameter_or_property_tag();
+        (
+            d.js_doc_tag_base.tag_name,
+            d.name,
+            d.is_bracketed,
+            d.type_expression,
+            d.is_name_first,
+            d.js_doc_tag_base.comment.clone(),
+        )
+    };
+    let tag_name = v.visit_node_hooked(cx, tag_name);
+    let name = v.visit_node_hooked(cx, name);
+    let type_expression = v.visit_node_hooked(cx, type_expression);
+    let comment = v.visit_nodes_hooked(cx, comment);
+    cx.factory.update_js_doc_parameter_or_property_tag(
+        cx.nodes,
+        node,
+        tag_name,
+        name,
+        is_bracketed,
+        type_expression,
+        is_name_first,
+        comment,
+    )
+}
+
+impl NodeFactory<'_> {
+    /// `f.NewSourceFile(opts, text, statements, endOfFileToken)` — the parse
+    /// options collapse to `file_name`/`language_variant`/`script_kind` here;
+    /// the remaining `SourceFileParseOptions` members are set post-construction.
+    pub fn new_source_file(
+        &mut self,
+        nodes: &mut Vec<Node>,
+        file_name: &str,
+        text: &str,
+        statements: Option<NodeList>,
+        end_of_file_token: Option<NodeId>,
+    ) -> NodeId {
+        let mut data = SourceFile::default();
+        data.file_name = file_name.to_string();
+        data.text = text.to_string();
+        data.statements = statements;
+        data.end_of_file_token = end_of_file_token;
+        self.new_node(nodes, Kind::SourceFile, NodeData::SourceFile(data))
+    }
+
+    /// `f.UpdateSourceFile` — `None` when nothing changed. Mirrors
+    /// `updated.copyFrom(node)` by copying the non-constructor fields.
+    pub fn update_source_file(
+        &mut self,
+        nodes: &mut Vec<Node>,
+        node: NodeId,
+        statements: Option<NodeList>,
+        end_of_file_token: Option<NodeId>,
+    ) -> Option<NodeId> {
+        let (changed, file_name, text) = {
+            let d = nodes[node].as_source_file();
+            (
+                statements != d.statements || end_of_file_token != d.end_of_file_token,
+                d.file_name.clone(),
+                d.text.clone(),
+            )
+        };
+        if changed {
+            let updated =
+                self.new_source_file(nodes, &file_name, &text, statements, end_of_file_token);
+            copy_source_file_from(nodes, updated, node);
+            return Some(update_node(nodes, updated, node, &mut self.hooks));
+        }
+        None
+    }
+}
+
+/// `(node *SourceFile) copyFrom(other)` — copies every field not set by
+/// `NewSourceFile`, then ORs the flags. Implemented by taking the new
+/// file's data, filling it from `other`, and writing it back (the arena
+/// forbids holding two mutable borrows).
+fn copy_source_file_from(nodes: &mut Vec<Node>, new_file: NodeId, other: NodeId) {
+    let mut d = std::mem::take(nodes[new_file].as_source_file_mut());
+    {
+        let o = nodes[other].as_source_file();
+        d.language_variant = o.language_variant;
+        d.script_kind = o.script_kind;
+        d.is_declaration_file = o.is_declaration_file;
+        d.uses_uri_style_node_core_modules = o.uses_uri_style_node_core_modules;
+        d.identifier_count = o.identifier_count;
+        d.imports = o.imports.clone();
+        d.module_augmentations = o.module_augmentations.clone();
+        d.ambient_module_names = o.ambient_module_names.clone();
+        d.comment_directives = o.comment_directives.clone();
+        d.pragmas = o.pragmas.clone();
+        d.referenced_files = o.referenced_files.clone();
+        d.type_reference_directives = o.type_reference_directives.clone();
+        d.lib_reference_directives = o.lib_reference_directives.clone();
+        d.check_js_directive = o.check_js_directive;
+        d.node_count = o.node_count;
+        d.text_count = o.text_count;
+        d.common_js_module_indicator = o.common_js_module_indicator;
+        d.external_module_indicator = o.external_module_indicator;
+        d.symbol_count = o.symbol_count;
+        d.pattern_ambient_modules = o.pattern_ambient_modules.clone();
+        d.global_exports = o.global_exports.clone();
+        d.reparsed_clones = o.reparsed_clones.clone();
+    }
+    *nodes[new_file].as_source_file_mut() = d;
+    nodes[new_file].flags |= nodes[other].flags;
+}
+
+/// `(node *SourceFile) Clone(f)` — NewSourceFile + copyFrom.
+pub(crate) fn clone_source_file(
+    f: &mut NodeFactory<'_>,
+    nodes: &mut Vec<Node>,
+    node: NodeId,
+) -> NodeId {
+    let (file_name, text, statements, end_of_file_token) = {
+        let d = nodes[node].as_source_file();
+        (
+            d.file_name.clone(),
+            d.text.clone(),
+            d.statements.clone(),
+            d.end_of_file_token,
+        )
+    };
+    let updated = f.new_source_file(nodes, &file_name, &text, statements, end_of_file_token);
+    copy_source_file_from(nodes, updated, node);
+    clone_node(nodes, updated, node, &mut f.hooks)
 }
 
 /// `f.NewCommentRange(kind, pos, end, hasTrailingNewLine)`

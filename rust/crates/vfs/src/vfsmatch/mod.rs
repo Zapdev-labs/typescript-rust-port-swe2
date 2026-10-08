@@ -4,12 +4,13 @@
 // MATCHING_ALGORITHM.md. No regex is used: patterns are compiled to
 // component/segment lists and matched with an explicit iterative algorithm.
 
+#[cfg(test)]
+mod tests;
+
 use std::sync::Arc;
 
 use tsc_collections::set::Set;
-use tsc_tspath::{
-    CaseSensitivity, PathKey, PathPattern, RootedDirectoryPath, RootedFilePath,
-};
+use tsc_tspath::{CaseSensitivity, PathKey, PathPattern, RootedDirectoryPath, RootedFilePath};
 
 use crate::vfs::Vfs;
 
@@ -96,9 +97,9 @@ fn get_include_base_path(absolute: &str) -> String {
             if !tsc_tspath::has_extension(absolute) {
                 absolute.to_string()
             } else {
-                tsc_tspath::remove_trailing_directory_separator(
-                    &tsc_tspath::get_directory_path(absolute),
-                )
+                tsc_tspath::remove_trailing_directory_separator(&tsc_tspath::get_directory_path(
+                    absolute,
+                ))
                 .to_string()
             }
         }
@@ -109,7 +110,9 @@ fn get_include_base_path(absolute: &str) -> String {
                 .rfind(tsc_tspath::DIRECTORY_SEPARATOR)
                 .map(|i| i as i64)
                 .unwrap_or(-1);
-            let idx = last_sep.max(tsc_tspath::get_root_length(absolute) as i64).max(0);
+            let idx = last_sep
+                .max(tsc_tspath::get_root_length(absolute) as i64)
+                .max(0);
             absolute[..idx as usize].to_string()
         }
     }
@@ -180,7 +183,7 @@ struct GlobPattern {
 /// Examples: "src" (literal), "*" (wildcard), "*.ts" (wildcard), "**" (recursive)
 struct Component {
     kind: ComponentKind,
-    literal: String,       // for Literal: the exact string to match
+    literal: String,        // for Literal: the exact string to match
     segments: Vec<Segment>, // for Wildcard: parsed wildcard pattern
     /// Include patterns with wildcards skip common package folders (node_modules, etc.)
     skip_package_folders: bool,
@@ -230,7 +233,10 @@ fn compile_glob_pattern(
     parts[0] = tsc_tspath::remove_trailing_directory_separator(&parts[0]).to_string();
     if tsc_tspath::is_encoded_dynamic_file_name(&parts[0]) {
         let root_parts: Vec<String> = parts[0].split('/').map(|s| s.to_string()).collect();
-        parts = root_parts.into_iter().chain(parts[1..].iter().cloned()).collect();
+        parts = root_parts
+            .into_iter()
+            .chain(parts[1..].iter().cloned())
+            .collect();
     }
 
     // Directories implicitly match all files: "src" -> "src/**/*"
@@ -346,8 +352,7 @@ impl GlobPattern {
         prefix_only: bool,
     ) -> bool {
         loop {
-            let (path_part, next_offset, ok) =
-                next_path_part_parts(prefix, suffix, path_offset);
+            let (path_part, next_offset, ok) = next_path_part_parts(prefix, suffix, path_offset);
             if !ok {
                 if prefix_only {
                     return true;
@@ -421,7 +426,7 @@ impl GlobPattern {
         {
             let suffix = &segs[1].literal;
             if s.len() < suffix.len()
-                || !self.strings_equal(suffix, &s[s.len() - suffix.len()..])
+                || !self.bytes_equal(suffix.as_bytes(), &s.as_bytes()[s.len() - suffix.len()..])
             {
                 return false;
             }
@@ -445,8 +450,11 @@ impl GlobPattern {
                 match seg.kind {
                     SegmentKind::Literal => {
                         let end = s_idx + seg.literal.len();
+                        // PORT: Go slices bytes (never panics); compare on the
+                        // byte slice so a multi-byte rune can't split a char
+                        // boundary mid-comparison.
                         if end <= s.len()
-                            && self.strings_equal(&seg.literal, &s[s_idx..end])
+                            && self.bytes_equal(seg.literal.as_bytes(), &bytes[s_idx..end])
                         {
                             s_idx = end;
                             seg_idx += 1;
@@ -539,14 +547,27 @@ impl GlobPattern {
 
     /// stringsEqual compares strings with appropriate case sensitivity.
     fn strings_equal(&self, a: &str, b: &str) -> bool {
+        self.bytes_equal(a.as_bytes(), b.as_bytes())
+    }
+
+    /// bytesEqual compares byte slices with appropriate case sensitivity.
+    /// Invalid UTF-8 (e.g. a slice ending inside a multi-byte rune) compares
+    /// unequal unless byte-identical — matching Go, where EqualFold decodes
+    /// invalid bytes to RuneError and can never equal a valid literal.
+    fn bytes_equal(&self, a: &[u8], b: &[u8]) -> bool {
         if self.case_sensitivity.is_case_sensitive() {
             a == b
         } else {
-            // strings.EqualFold — ASCII fast path plus full Unicode folding.
-            // PORT: uses tsc-stringutil's comparer semantics via eq_ignore_ascii_case
-            // for ASCII; non-ASCII fold is approximated by char-wise lowercase
-            // comparison (Go's EqualFold is rune-wise simple folding).
-            a.eq_ignore_ascii_case(b) || fold_equal(a, b)
+            match (std::str::from_utf8(a), std::str::from_utf8(b)) {
+                (Ok(a), Ok(b)) => {
+                    // strings.EqualFold — ASCII fast path plus full Unicode folding.
+                    // PORT: uses tsc-stringutil's comparer semantics via eq_ignore_ascii_case
+                    // for ASCII; non-ASCII fold is approximated by char-wise lowercase
+                    // comparison (Go's EqualFold is rune-wise simple folding).
+                    a.eq_ignore_ascii_case(b) || fold_equal(a, b)
+                }
+                _ => a == b,
+            }
         }
     }
 }
@@ -694,9 +715,7 @@ fn new_glob_matcher<T: PathPatternInput>(
     };
 
     for spec in include_specs {
-        if let Some(p) =
-            compile_glob_pattern(spec.as_str(), base_path, usage, case_sensitivity)
-        {
+        if let Some(p) = compile_glob_pattern(spec.as_str(), base_path, usage, case_sensitivity) {
             m.includes.push(p);
         }
     }
@@ -792,13 +811,11 @@ impl GlobVisitor<'_> {
         let entries = self.host.get_accessible_entries(absolute_path);
 
         let abs_prefix =
-            tsc_tspath::ensure_trailing_directory_separator(absolute_path.as_string())
-                .into_owned();
+            tsc_tspath::ensure_trailing_directory_separator(absolute_path.as_string()).into_owned();
 
         let ext_refs: Vec<&str> = self.extensions.iter().map(String::as_str).collect();
         for file in &entries.files {
-            if !ext_refs.is_empty() && !tsc_tspath::file_extension_is_one_of(file, &ext_refs)
-            {
+            if !ext_refs.is_empty() && !tsc_tspath::file_extension_is_one_of(file, &ext_refs) {
                 continue;
             }
             if let Some(idx) = self.file_matcher.matches_file_parts(&abs_prefix, file) {
@@ -814,7 +831,10 @@ impl GlobVisitor<'_> {
         }
 
         for dir in &entries.directories {
-            if !self.directory_matcher.matches_directory_parts(&abs_prefix, dir) {
+            if !self
+                .directory_matcher
+                .matches_directory_parts(&abs_prefix, dir)
+            {
                 continue;
             }
             let abs_dir = absolute_path.resolve_directory(dir);
@@ -847,8 +867,13 @@ fn match_file_names<T: PathPatternInput>(
     let case_sensitivity = host.case_sensitivity();
 
     let file_matcher = new_glob_matcher(includes, excludes, path, case_sensitivity, Usage::Files);
-    let directory_matcher =
-        new_glob_matcher(includes, excludes, path, case_sensitivity, Usage::Directories);
+    let directory_matcher = new_glob_matcher(
+        includes,
+        excludes,
+        path,
+        case_sensitivity,
+        Usage::Directories,
+    );
 
     let result_count = file_matcher.includes.len().max(1);
     let mut v = GlobVisitor {
@@ -916,8 +941,7 @@ pub fn new_spec_matcher<T: PathPatternInput>(
     }
     let mut patterns = Vec::with_capacity(specs.len());
     for spec in specs {
-        if let Some(p) = compile_glob_pattern(spec.as_str(), base_path, usage, case_sensitivity)
-        {
+        if let Some(p) = compile_glob_pattern(spec.as_str(), base_path, usage, case_sensitivity) {
             patterns.push(p);
         }
     }

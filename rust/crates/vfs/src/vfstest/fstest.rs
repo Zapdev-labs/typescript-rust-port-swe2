@@ -23,9 +23,8 @@ use std::time::SystemTime;
 use rustc_hash::FxHashMap;
 
 use crate::fs::{
-    self, DirEntry, File, FileInfo, FileMode, Fs, FsError, ReadDirFile, ReadDirFs,
-    ReadFileFs, ReadLinkFs, ReaderAt, SeekWhence, Seeker, StatFs, MODE_DIR,
-    MODE_SYMLINK,
+    self, DirEntry, File, FileInfo, FileMode, Fs, FsError, MODE_DIR, MODE_SYMLINK, ReadDirFile,
+    ReadDirFs, ReadFileFs, ReadLinkFs, ReaderAt, SeekWhence, Seeker, StatFs,
 };
 
 /// A MapFs is a simple in-memory file system for use in tests,
@@ -58,7 +57,10 @@ impl IntoIterator for MapFs {
     type IntoIter = std::collections::hash_map::IntoIter<String, MapFile>;
     fn into_iter(self) -> Self::IntoIter {
         // FxHashMap iterates like std HashMap.
-        self.map.into_iter().collect::<FxHashMap<_, _>>().into_iter()
+        self.map
+            .into_iter()
+            .collect::<FxHashMap<_, _>>()
+            .into_iter()
     }
 }
 
@@ -392,7 +394,9 @@ impl File for OpenMapFile {
         if *offset < 0 {
             return Err(fs::path_error("read", &self.path, FsError::Invalid));
         }
-        let n = b.len().min(self.map_file_info.f.data.len() - *offset as usize);
+        let n = b
+            .len()
+            .min(self.map_file_info.f.data.len() - *offset as usize);
         b[..n].copy_from_slice(&self.map_file_info.f.data[*offset as usize..*offset as usize + n]);
         *offset += n as i64;
         Ok(n)
@@ -821,12 +825,7 @@ impl<'a> FsTester<'a> {
                 return;
             }
             Ok(list2) => {
-                self.check_dir_list(
-                    dir,
-                    "first Open+ReadDir(-1) vs fs.ReadDir",
-                    &list,
-                    &list2,
-                );
+                self.check_dir_list(dir, "first Open+ReadDir(-1) vs fs.ReadDir", &list, &list2);
                 for i in 0..list2.len().saturating_sub(1) {
                     if list2[i].name() >= list2[i + 1].name() {
                         self.errorf(format!(
@@ -848,9 +847,7 @@ impl<'a> FsTester<'a> {
     /// implements GlobFS.
     fn check_glob(&mut self, dir: &str, list: &[Arc<dyn DirEntry>]) {
         let _ = (dir, list);
-        if self.fsys.as_glob_fs().is_none() {
-            return;
-        }
+        let _ = self.fsys.as_glob_fs();
         // PORT: no Fs implementation in this crate implements GlobFs, so the
         // glob-pattern checks are unreachable and omitted.
     }
@@ -953,7 +950,6 @@ impl<'a> FsTester<'a> {
             match lsys.lstat(path) {
                 Err(err) => {
                     self.errorf(format!("{}: fsys.Lstat: {}", path, err));
-                    return;
                 }
                 Ok(info2) => {
                     if fentry != format_info_entry(&*info2) {
@@ -1107,12 +1103,7 @@ impl<'a> FsTester<'a> {
                     return;
                 }
                 Ok(data2) => {
-                    self.check_file_read(
-                        file,
-                        "Readall vs second fsys.ReadFile",
-                        &data,
-                        &data2,
-                    );
+                    self.check_file_read(file, "Readall vs second fsys.ReadFile", &data, &data2);
                 }
             }
 
@@ -1208,7 +1199,12 @@ impl<'a> FsTester<'a> {
 
 /// formatEntry formats an fs.DirEntry into a string for error messages and comparison.
 fn format_entry(entry: &dyn DirEntry) -> String {
-    format!("{} IsDir={} Type={}", entry.name(), entry.is_dir(), entry.type_())
+    format!(
+        "{} IsDir={} Type={}",
+        entry.name(),
+        entry.is_dir(),
+        entry.type_()
+    )
 }
 
 /// formatInfoEntry formats an fs.FileInfo into a string like the result of formatEntry, for error messages and comparison.
@@ -1315,11 +1311,9 @@ fn iotest_test_reader(r: &dyn File, content: &[u8]) -> Result<(), String> {
                 return Err(format!(
                     "Seek(0, 1) from EOF = {}, nil, want {}, nil",
                     off, len
-                ))
+                ));
             }
-            Err(e) => {
-                return Err(format!("Seek(0, 1) from EOF = 0, {}, want {}, nil", e, len))
-            }
+            Err(e) => return Err(format!("Seek(0, 1) from EOF = 0, {}, want {}, nil", e, len)),
         }
 
         // Seek backward partway through file, in two steps.
@@ -1333,14 +1327,14 @@ fn iotest_test_reader(r: &dyn File, content: &[u8]) -> Result<(), String> {
                         "Seek(-1, 1) from EOF = {}, nil, want {}, nil",
                         off,
                         len - 1
-                    ))
+                    ));
                 }
                 Err(e) => {
                     return Err(format!(
                         "Seek(-1, 1) from EOF = 0, {}, want {}, nil",
                         e,
                         len - 1
-                    ))
+                    ));
                 }
             }
             match seeker.seek(-(len / 3), SeekWhence::Current) {
@@ -1352,7 +1346,7 @@ fn iotest_test_reader(r: &dyn File, content: &[u8]) -> Result<(), String> {
                         len - 1,
                         off,
                         middle - 1
-                    ))
+                    ));
                 }
                 Err(e) => {
                     return Err(format!(
@@ -1361,7 +1355,7 @@ fn iotest_test_reader(r: &dyn File, content: &[u8]) -> Result<(), String> {
                         len - 1,
                         e,
                         middle - 1
-                    ))
+                    ));
                 }
             }
             match seeker.seek(1, SeekWhence::Current) {
@@ -1372,7 +1366,7 @@ fn iotest_test_reader(r: &dyn File, content: &[u8]) -> Result<(), String> {
                         middle - 1,
                         off,
                         middle
-                    ))
+                    ));
                 }
                 Err(e) => {
                     return Err(format!(
@@ -1380,7 +1374,7 @@ fn iotest_test_reader(r: &dyn File, content: &[u8]) -> Result<(), String> {
                         middle - 1,
                         e,
                         middle
-                    ))
+                    ));
                 }
             }
         }
@@ -1392,13 +1386,13 @@ fn iotest_test_reader(r: &dyn File, content: &[u8]) -> Result<(), String> {
                 return Err(format!(
                     "Seek(0, 1) from {} = {}, nil, want {}, nil",
                     middle, off, middle
-                ))
+                ));
             }
             Err(e) => {
                 return Err(format!(
                     "Seek(0, 1) from {} = 0, {}, want {}, nil",
                     middle, e, middle
-                ))
+                ));
             }
         }
 
@@ -1425,7 +1419,7 @@ fn iotest_test_reader(r: &dyn File, content: &[u8]) -> Result<(), String> {
                     middle / 2,
                     off,
                     middle / 2
-                ))
+                ));
             }
             Err(e) => {
                 return Err(format!(
@@ -1433,7 +1427,7 @@ fn iotest_test_reader(r: &dyn File, content: &[u8]) -> Result<(), String> {
                     middle / 2,
                     e,
                     middle / 2
-                ))
+                ));
             }
         }
         match seeker.seek(-(len / 3), SeekWhence::End) {
@@ -1445,7 +1439,7 @@ fn iotest_test_reader(r: &dyn File, content: &[u8]) -> Result<(), String> {
                     middle / 2,
                     off,
                     middle
-                ))
+                ));
             }
             Err(e) => {
                 return Err(format!(
@@ -1454,7 +1448,7 @@ fn iotest_test_reader(r: &dyn File, content: &[u8]) -> Result<(), String> {
                     middle / 2,
                     e,
                     middle
-                ))
+                ));
             }
         }
 
@@ -1481,7 +1475,7 @@ fn iotest_test_reader(r: &dyn File, content: &[u8]) -> Result<(), String> {
                     middle / 2,
                     off,
                     middle / 2
-                ))
+                ));
             }
             Err(e) => {
                 return Err(format!(
@@ -1489,7 +1483,7 @@ fn iotest_test_reader(r: &dyn File, content: &[u8]) -> Result<(), String> {
                     middle / 2,
                     e,
                     middle / 2
-                ))
+                ));
             }
         }
         let data = match fs::read_all(r) {
@@ -1516,7 +1510,7 @@ fn iotest_test_reader(r: &dyn File, content: &[u8]) -> Result<(), String> {
                     data.len(),
                     n,
                     data.len()
-                ))
+                ));
             }
             // At end of input, (len(data), EOF) is also acceptable.
             Err(e) if e.is_eof() => {}
@@ -1526,7 +1520,7 @@ fn iotest_test_reader(r: &dyn File, content: &[u8]) -> Result<(), String> {
                     data.len(),
                     e,
                     data.len()
-                ))
+                ));
             }
         }
         if data != content {
@@ -1546,15 +1540,9 @@ fn iotest_test_reader(r: &dyn File, content: &[u8]) -> Result<(), String> {
                     "ReadAt(1, {}) = {}, nil, want 0, EOF",
                     data.len(),
                     n
-                ))
+                ));
             }
-            Err(e) => {
-                return Err(format!(
-                    "ReadAt(1, {}) = 0, {}, want 0, EOF",
-                    data.len(),
-                    e
-                ))
-            }
+            Err(e) => return Err(format!("ReadAt(1, {}) = 0, {}, want 0, EOF", data.len(), e)),
         }
 
         for b in data.iter_mut() {
@@ -1571,7 +1559,7 @@ fn iotest_test_reader(r: &dyn File, content: &[u8]) -> Result<(), String> {
                     over.len(),
                     n,
                     data.len()
-                ))
+                ));
             }
             Err(e) => {
                 return Err(format!(
@@ -1579,35 +1567,37 @@ fn iotest_test_reader(r: &dyn File, content: &[u8]) -> Result<(), String> {
                     over.len(),
                     e,
                     data.len()
-                ))
+                ));
             }
         }
-        if over[..data.len()] != data[..] {
+        if over[..data.len()] != *content {
             return Err(format!(
                 "ReadAt({}, 0) = {:?}\n\twant {:?}",
                 over.len(),
                 &over[..data.len()],
-                data
+                content
             ));
         }
 
         for b in data.iter_mut() {
             *b = 0xfe;
         }
-        for i in 0..data.len() {
+        for (i, &want_byte) in content.iter().enumerate() {
             let mut b1 = [0xfeu8; 1];
             match ra.read_at(&mut b1, i as i64) {
                 Ok(1) => {}
-                Ok(n) => {
-                    return Err(format!("ReadAt(1, {}) = {}, nil, want 1, nil", i, n))
-                }
+                Ok(n) => return Err(format!("ReadAt(1, {}) = {}, nil, want 1, nil", i, n)),
                 Err(e) if e.is_eof() && i == data.len() - 1 => {}
                 Err(e) => {
-                    let want = if i == data.len() - 1 { "nil or EOF" } else { "nil" };
+                    let want = if i == data.len() - 1 {
+                        "nil or EOF"
+                    } else {
+                        "nil"
+                    };
                     return Err(format!("ReadAt(1, {}) = ?, {}, want 1, {}", i, e, want));
                 }
             }
-            if b1[0] != content[i] {
+            if b1[0] != want_byte {
                 return Err(format!("ReadAt(1, {}) bad byte", i));
             }
         }

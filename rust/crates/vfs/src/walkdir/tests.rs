@@ -40,12 +40,10 @@ fn test_walk_dir() {
                     entries
                 }))
             },
-            realpath: Some(Box::new(|path: &RootedPath| {
-                match path.as_string() {
-                    "/root/link" => RootedPath::from("/target"),
-                    "/root/link/hidden.ts" => RootedPath::from("/target/hidden.ts"),
-                    _ => path.clone(),
-                }
+            realpath: Some(Box::new(|path: &RootedPath| match path.as_string() {
+                "/root/link" => RootedPath::from("/target"),
+                "/root/link/hidden.ts" => RootedPath::from("/target/hidden.ts"),
+                _ => path.clone(),
             })),
             ..Default::default()
         },
@@ -72,7 +70,13 @@ fn test_walk_dir() {
     assert!(err.is_ok());
     assert_eq!(
         *paths.lock().unwrap(),
-        vec!["/root", "/root/a.ts", "/root/dir", "/root/dir/b.ts", "/root/link"]
+        vec![
+            "/root",
+            "/root/a.ts",
+            "/root/dir",
+            "/root/dir/b.ts",
+            "/root/link"
+        ]
     );
     assert_eq!(
         *modes.lock().unwrap(),
@@ -212,10 +216,14 @@ fn test_walk_dir_skip_all() {
 #[test]
 fn test_walk_dir_consumes_skip_dir_for_root_file() {
     let file_system = fs_with(&[("/root.ts", "")]);
-    let err = walk_dir(&file_system, &RootedPath::from("/root.ts"), &mut |_p, _e, err| {
-        assert!(err.is_none());
-        Err(FsError::SkipDir)
-    });
+    let err = walk_dir(
+        &file_system,
+        &RootedPath::from("/root.ts"),
+        &mut |_p, _e, err| {
+            assert!(err.is_none());
+            Err(FsError::SkipDir)
+        },
+    );
     assert!(err.is_ok());
 }
 
@@ -223,14 +231,18 @@ fn test_walk_dir_consumes_skip_dir_for_root_file() {
 fn test_walk_dir_consumes_skip_for_missing_root() {
     let file_system = fs_with(&[]);
     for sentinel_is_dir in [true, false] {
-        let err = walk_dir(&file_system, &RootedPath::from("/missing"), &mut |_p, _e, err| {
-            assert!(err.unwrap().is_not_exist());
-            Err(if sentinel_is_dir {
-                FsError::SkipDir
-            } else {
-                FsError::SkipAll
-            })
-        });
+        let err = walk_dir(
+            &file_system,
+            &RootedPath::from("/missing"),
+            &mut |_p, _e, err| {
+                assert!(err.unwrap().is_not_exist());
+                Err(if sentinel_is_dir {
+                    FsError::SkipDir
+                } else {
+                    FsError::SkipAll
+                })
+            },
+        );
         assert!(err.is_ok());
     }
 }

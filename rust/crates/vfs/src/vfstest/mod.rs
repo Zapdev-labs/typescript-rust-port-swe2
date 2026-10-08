@@ -3,6 +3,8 @@
 // fstest is the port of GOROOT testing/fstest (MapFS + TestFS) and
 // testing/iotest (TestReader) that the Go vfstest package builds upon.
 pub mod fstest;
+#[cfg(test)]
+mod tests;
 
 use std::any::Any;
 use std::sync::{Arc, RwLock};
@@ -11,13 +13,13 @@ use std::time::{Duration, SystemTime};
 use rustc_hash::FxHashMap;
 use tsc_tspath::CaseSensitivity;
 
+use self::fstest::{MapFile, MapFs as FstestMapFs};
 use crate::fs::{
-    self, DirEntry, File, FileInfo, FileMode, Fs, FsError, ReadDirFile, ReaderAt, Seeker,
-    MODE_DIR, MODE_SYMLINK,
+    self, DirEntry, File, FileInfo, FileMode, Fs, FsError, MODE_DIR, MODE_SYMLINK, ReadDirFile,
+    ReaderAt, Seeker,
 };
 use crate::iovfs::{self, RealpathFs, WritableFs};
 use crate::vfs::Vfs;
-use self::fstest::{MapFile, MapFs as FstestMapFs};
 
 /// A MapFS is a test VFS backed by an fstest MapFS whose keys are canonical
 /// (case-normalized) paths. It tracks symlinks separately so that realpath
@@ -161,10 +163,8 @@ where
 
     let mut input: FxHashMap<String, MapFile> = FxHashMap::default();
     // Sorted creation to ensure times are always guaranteed to be in order.
-    let mut keyed: Vec<(String, TestFile)> = m
-        .into_iter()
-        .map(|(k, f)| (k.into(), f.into()))
-        .collect();
+    let mut keyed: Vec<(String, TestFile)> =
+        m.into_iter().map(|(k, f)| (k.into(), f.into())).collect();
     keyed.sort_by(|a, b| compare_paths_by_parts(&a.0, &b.0));
     for (p, f) in keyed {
         check_path(&p);
@@ -260,7 +260,10 @@ fn convert_map_fs(
         if !dir_name(&p).is_empty() {
             let dir = dir_name(&p);
             if let Err(err) = m.mkdir_all(&dir, FileMode(0o777)) {
-                panic!("failed to create intermediate directories for {:?}: {}", p, err);
+                panic!(
+                    "failed to create intermediate directories for {:?}: {}",
+                    p, err
+                );
             }
         }
         let canonical = m.get_canonical_path(&p);
@@ -411,7 +414,9 @@ impl MapFs {
         if file.mode & MODE_SYMLINK != FileMode(0) {
             let target = String::from_utf8_lossy(&file.data).into_owned();
             let canonical_target = self.get_canonical_path(&target);
-            state.symlinks.insert(canonical.to_string(), canonical_target);
+            state
+                .symlinks
+                .insert(canonical.to_string(), canonical_target);
         }
     }
 
@@ -424,8 +429,7 @@ impl MapFs {
         // Fast path; already exists.
         {
             let state = self.state.read().unwrap();
-            let (other, _, err) =
-                self.get_following_symlinks(&state, &self.get_canonical_path(p));
+            let (other, _, err) = self.get_following_symlinks(&state, &self.get_canonical_path(p));
             if err.is_none() {
                 let other = other.expect("no error implies a file");
                 if !other.mode.is_dir() {
@@ -445,8 +449,7 @@ impl MapFs {
             let (dir, rest) = split_path(&p, offset);
             let canonical = self.get_canonical_path(&dir);
             let state = self.state.read().unwrap();
-            let (other, other_path, err) =
-                self.get_following_symlinks(&state, &canonical);
+            let (other, other_path, err) = self.get_following_symlinks(&state, &canonical);
             if let Some(err) = err {
                 drop(state);
                 if !err.is_not_exist() {
@@ -619,7 +622,7 @@ impl ReadDirFile for WrappedReadDirFile {
                     "readdir",
                     "",
                     FsError::Message("not implemented".to_string()),
-                ))
+                ));
             }
         };
         let list = rd.read_dir(n)?;
@@ -735,9 +738,9 @@ impl ReadDirFile for RootDirFile {
         let list = rd.read_dir(n)?;
         let mut entries: Vec<Arc<dyn DirEntry>> = Vec::with_capacity(list.len());
         for entry in list {
-            let info = entry.info().map_err(|e| {
-                FsError::Message(format!("entry.Info: {}", e))
-            })?;
+            let info = entry
+                .info()
+                .map_err(|e| FsError::Message(format!("entry.Info: {}", e)))?;
             match convert_info(&info) {
                 None => panic!("unexpected synthesized dir: {:?}", info.name()),
                 Some(new_info) => {
@@ -752,8 +755,7 @@ impl ReadDirFile for RootDirFile {
 impl RealpathFs for MapFs {
     fn realpath(&self, name: &str) -> Result<String, FsError> {
         let state = self.state.read().unwrap();
-        let (file, _, err) =
-            self.get_following_symlinks(&state, &self.get_canonical_path(name));
+        let (file, _, err) = self.get_following_symlinks(&state, &self.get_canonical_path(name));
         if let Some(err) = err {
             return Err(err);
         }
@@ -775,8 +777,7 @@ impl WritableFs for MapFs {
             let parent = dir_name(path);
             let canonical = self.get_canonical_path(&parent);
             let state = self.state.read().unwrap();
-            let (parent_file, _, err) =
-                self.get_following_symlinks(&state, &canonical);
+            let (parent_file, _, err) = self.get_following_symlinks(&state, &canonical);
             if let Some(err) = err {
                 return Err(FsError::Wrap {
                     msg: format!("write {}", fs::go_quote(path)),
@@ -795,8 +796,7 @@ impl WritableFs for MapFs {
         let cp;
         {
             let state = self.state.read().unwrap();
-            let (file, resolved, err) =
-                self.get_following_symlinks(&state, &canonical);
+            let (file, resolved, err) = self.get_following_symlinks(&state, &canonical);
             match err {
                 Some(err) => {
                     if !err.is_not_exist() && !err.is_broken_symlink() {
@@ -838,8 +838,7 @@ impl WritableFs for MapFs {
             let parent = dir_name(path);
             let canonical = self.get_canonical_path(&parent);
             let state = self.state.read().unwrap();
-            let (parent_file, _, err) =
-                self.get_following_symlinks(&state, &canonical);
+            let (parent_file, _, err) = self.get_following_symlinks(&state, &canonical);
             if let Some(err) = err {
                 return Err(FsError::Wrap {
                     msg: format!("append {}", fs::go_quote(path)),
@@ -860,8 +859,7 @@ impl WritableFs for MapFs {
         let cp;
         {
             let state = self.state.read().unwrap();
-            let (file, resolved, err) =
-                self.get_following_symlinks(&state, &canonical);
+            let (file, resolved, err) = self.get_following_symlinks(&state, &canonical);
             match err {
                 Some(err) => {
                     if !err.is_not_exist() && !err.is_broken_symlink() {

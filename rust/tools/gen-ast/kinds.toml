@@ -608,6 +608,11 @@ fields = [
 ]
 
 [[bases]]
+name = "TypeSyntaxBase"
+fields = [
+]
+
+[[bases]]
 name = "FunctionLikeBase"
 fields = [
     { name = "locals_container_base", ty = "embed", embed = "LocalsContainerBase", go_name = "LocalsContainerBase" },
@@ -668,11 +673,26 @@ fields = [
 ]
 
 [[bases]]
+name = "TypeElementBase"
+fields = [
+]
+
+[[bases]]
+name = "ClassElementBase"
+fields = [
+]
+
+[[bases]]
 name = "NamedMemberBase"
 fields = [
     { name = "modifiers_base", ty = "embed", embed = "ModifiersBase", go_name = "ModifiersBase" },
     { name = "name", ty = "node", exported = false },
     { name = "postfix_token", ty = "node", go_name = "PostfixToken", optional = true },
+]
+
+[[bases]]
+name = "ObjectLiteralElementBase"
+fields = [
 ]
 
 [[bases]]
@@ -4673,6 +4693,9 @@ fields = [
     { name = "comment", ty = "node_list", go_name = "Comment" },
     { name = "tags", ty = "node_list", go_name = "Tags", optional = true },
 ]
+news = [
+    { name = "NewJSDoc", kind = "JSDoc", args = [{ name = "comment", ty = "node_list", field = "comment", go_ty = "*NodeList" }, { name = "tags", ty = "node_list", field = "tags", go_ty = "*NodeList" }] },
+]
 update = { name = "UpdateJSDoc", args = [{ name = "comment", ty = "node_list" }, { name = "tags", ty = "node_list" }], compares = [{ lhs = "comment", field = "comment", op = "neq" }, { lhs = "tags", field = "tags", op = "neq" }], new_fn = "NewJSDoc", new_args = ["comment", "tags"] }
 for_each_child = [
     { op = "visitNodeList", field = "comment" },
@@ -4856,6 +4879,9 @@ bases = ["JSDocTagBase"]
 is_fn = "IsJSDocUnknownTag"
 facts_mode = "none"
 fields = [
+]
+news = [
+    { name = "NewJSDocUnknownTag", kind = "JSDocUnknownTag", args = [{ name = "tagName", ty = "node", field = "tag_name", go_ty = "*IdentifierNode" }, { name = "comment", ty = "node_list", field = "comment", go_ty = "*NodeList" }] },
 ]
 update = { name = "UpdateJSDocUnknownTag", args = [{ name = "tagName", ty = "node" }, { name = "comment", ty = "node_list" }], compares = [{ lhs = "tagName", field = "tag_name", op = "neq" }, { lhs = "comment", field = "comment", op = "neq" }], new_fn = "NewJSDocUnknownTag", new_args = ["tagName", "comment"] }
 for_each_child = [
@@ -5054,6 +5080,9 @@ bases = ["JSDocTagBase"]
 is_fn = "IsJSDocDeprecatedTag"
 facts_mode = "none"
 fields = [
+]
+news = [
+    { name = "NewJSDocDeprecatedTag", kind = "JSDocDeprecatedTag", args = [{ name = "tagName", ty = "node", field = "tag_name", go_ty = "*IdentifierNode" }, { name = "comment", ty = "node_list", field = "comment", go_ty = "*NodeList" }] },
 ]
 update = { name = "UpdateJSDocDeprecatedTag", args = [{ name = "tagName", ty = "node" }, { name = "comment", ty = "node_list" }], compares = [{ lhs = "tagName", field = "tag_name", op = "neq" }, { lhs = "comment", field = "comment", op = "neq" }], new_fn = "NewJSDocDeprecatedTag", new_args = ["tagName", "comment"] }
 for_each_child = [
@@ -5596,6 +5625,9 @@ is_fn = "IsJSDocText"
 facts_mode = "none"
 fields = [
 ]
+news = [
+    { name = "NewJSDocText", kind = "JSDocText", args = [{ name = "text", ty = "string_slice", field = "text", go_ty = "[]string" }], counts_text = true },
+]
 clone = [
     { new_fn = "NewJSDocText", args = ["field:text"] },
 ]
@@ -5796,10 +5828,10 @@ fields = [
     { name = "text", ty = "str", optional = true },
     { name = "statements", ty = "node_list", optional = true },
     { name = "end_of_file_token", ty = "node", go_name = "endOfFileToken", optional = true },
-    { name = "language_variant", ty = "other", go_name = "languageVariant", optional = true, rust_ty = "tsc_core::LanguageVariant" },
-    { name = "script_kind", ty = "other", go_name = "scriptKind", optional = true, rust_ty = "tsc_core::ScriptKind" },
+    { name = "language_variant", ty = "other", go_name = "languageVariant", optional = true, rust_ty = "tsc_core::languagevariant::LanguageVariant" },
+    { name = "script_kind", ty = "other", go_name = "scriptKind", optional = true, rust_ty = "tsc_core::scriptkind::ScriptKind" },
     { name = "is_declaration_file", ty = "bool", go_name = "isDeclarationFile", optional = true },
-    { name = "uses_uri_style_node_core_modules", ty = "other", go_name = "usesUriStyleNodeCoreModules", optional = true, rust_ty = "tsc_core::Tristate" },
+    { name = "uses_uri_style_node_core_modules", ty = "other", go_name = "usesUriStyleNodeCoreModules", optional = true, rust_ty = "tsc_core::tristate::Tristate" },
     { name = "identifier_count", ty = "int", go_name = "identifierCount", optional = true },
     { name = "imports", ty = "node_slice", optional = true },
     { name = "module_augmentations", ty = "node_slice", go_name = "moduleAugmentations", optional = true },
@@ -5821,5 +5853,26 @@ fields = [
 ]
 facts = [
     { op = "propagateList", field = "statements" },
+]
+
+[[nodes]]
+name = "FlowSwitchClauseData"
+bases = ["NodeBase"]
+extra = true
+facts_mode = "none"
+fields = [
+    { name = "switch_statement", ty = "node", go_name = "SwitchStatement" },
+    { name = "clause_start", ty = "int", go_name = "ClauseStart" },
+    { name = "clause_end", ty = "int", go_name = "ClauseEnd" },
+]
+
+[[nodes]]
+name = "FlowReduceLabelData"
+bases = ["NodeBase"]
+extra = true
+facts_mode = "none"
+fields = [
+    { name = "target", ty = "flow_node", go_name = "Target" },
+    { name = "antecedents", ty = "flow_list", go_name = "Antecedents" },
 ]
 

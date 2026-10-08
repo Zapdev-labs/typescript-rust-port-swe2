@@ -15,10 +15,9 @@ use tsc_core::semaphore::{Semaphore, new_limited_semaphore};
 use tsc_tspath::{CaseSensitivity, RootedDirectoryPath, RootedFilePath, RootedPath};
 
 use crate::fs::{
-    self, DirEntry, File, FileInfo, FileMode, Fs, FsError, ReadDirFile, ReadDirFs,
-    ReadFileFs, ReadLinkFs, ReaderAt, SeekWhence, Seeker, StatFs, MODE_CHAR_DEVICE,
-    MODE_DEVICE, MODE_DIR, MODE_IRREGULAR, MODE_NAMED_PIPE, MODE_PERM, MODE_SOCKET,
-    MODE_SYMLINK,
+    self, DirEntry, File, FileInfo, FileMode, Fs, FsError, MODE_CHAR_DEVICE, MODE_DEVICE, MODE_DIR,
+    MODE_IRREGULAR, MODE_NAMED_PIPE, MODE_PERM, MODE_SOCKET, MODE_SYMLINK, ReadDirFile, ReadDirFs,
+    ReadFileFs, ReadLinkFs, ReaderAt, SeekWhence, Seeker, StatFs,
 };
 use crate::internal::Common;
 use crate::vfs::{Entries, Vfs};
@@ -239,7 +238,7 @@ fn from_slash(path: &str) -> String {
     if std::path::MAIN_SEPARATOR == '/' {
         return path.to_string();
     }
-    path.replace('/', &std::path::MAIN_SEPARATOR.to_string())
+    path.replace('/', std::path::MAIN_SEPARATOR_STR)
 }
 
 /// filepath.Abs — lexical join against the current working directory.
@@ -249,16 +248,15 @@ fn abs_path(path: &str) -> Result<String, std::io::Error> {
     }
     let cwd = std::env::current_dir()?;
     let joined = cwd.join(path);
-    joined
-        .into_os_string()
-        .into_string()
-        .map_err(|_| std::io::Error::new(std::io::ErrorKind::InvalidData, "path is not valid UTF-8"))
+    joined.into_os_string().into_string().map_err(|_| {
+        std::io::Error::new(std::io::ErrorKind::InvalidData, "path is not valid UTF-8")
+    })
 }
 
 fn is_reparse_point(path: &str) -> bool {
     #[cfg(unix)]
     {
-        return tsc_nativepath::is_symlink_or_reparse_point(&from_slash(path));
+        tsc_nativepath::is_symlink_or_reparse_point(&from_slash(path))
     }
     #[cfg(not(unix))]
     {
@@ -315,7 +313,7 @@ fn user_cache_dir() -> Option<std::path::PathBuf> {
             dir.push(".cache");
             return Some(dir);
         }
-        return None;
+        None
     }
     #[cfg(not(unix))]
     {
@@ -336,7 +334,9 @@ pub struct DirFs {
 
 impl DirFs {
     pub fn new(dir: &str) -> DirFs {
-        DirFs { dir: dir.to_string() }
+        DirFs {
+            dir: dir.to_string(),
+        }
     }
 
     /// join returns the path for name in dir.
@@ -350,7 +350,7 @@ impl DirFs {
             return Err(FsError::Invalid);
         }
         let name = if std::path::MAIN_SEPARATOR != '/' {
-            name.replace('/', &std::path::MAIN_SEPARATOR.to_string())
+            name.replace('/', std::path::MAIN_SEPARATOR_STR)
         } else {
             name.to_string()
         };
@@ -429,7 +429,7 @@ impl ReadDirFs for DirFs {
                 }
             }
         }
-        entries.sort_by(|a, b| a.name().cmp(&b.name()));
+        entries.sort_by_key(|a| a.name());
         Ok(entries)
     }
 }
@@ -538,15 +538,14 @@ impl File for OsFile {
     }
 
     fn read(&self, buf: &mut [u8]) -> Result<usize, FsError> {
-        self.with_file_mut("read", |f| f.read(buf))
-            .and_then(|n| {
-                if n == 0 && !buf.is_empty() {
-                    // io.Reader contract: (0, io.EOF) at end of file.
-                    Err(FsError::Eof)
-                } else {
-                    Ok(n)
-                }
-            })
+        self.with_file_mut("read", |f| f.read(buf)).and_then(|n| {
+            if n == 0 && !buf.is_empty() {
+                // io.Reader contract: (0, io.EOF) at end of file.
+                Err(FsError::Eof)
+            } else {
+                Ok(n)
+            }
+        })
     }
 
     fn close(&self) -> Result<(), FsError> {
@@ -583,21 +582,13 @@ impl ReadDirFile for OsFile {
             self.with_file("readdirent", |_| Ok(()))?;
             let mut entries: Vec<Arc<dyn DirEntry>> = Vec::new();
             match std::fs::read_dir(&self.path) {
-                Err(err) => {
-                    return Err(fs::path_error("readdirent", &self.name, err.into()))
-                }
+                Err(err) => return Err(fs::path_error("readdirent", &self.name, err.into())),
                 Ok(read_dir) => {
                     for entry in read_dir {
                         match entry {
-                            Ok(entry) => {
-                                entries.push(Arc::new(OsDirEntry::new(&self.path, entry)))
-                            }
+                            Ok(entry) => entries.push(Arc::new(OsDirEntry::new(&self.path, entry))),
                             Err(err) => {
-                                return Err(fs::path_error(
-                                    "readdirent",
-                                    &self.name,
-                                    err.into(),
-                                ))
+                                return Err(fs::path_error("readdirent", &self.name, err.into()));
                             }
                         }
                     }
@@ -614,8 +605,7 @@ impl ReadDirFile for OsFile {
         if count > 0 && n > count as usize {
             n = count as usize;
         }
-        let list: Vec<Arc<dyn DirEntry>> =
-            state.entries[state.offset..state.offset + n].to_vec();
+        let list: Vec<Arc<dyn DirEntry>> = state.entries[state.offset..state.offset + n].to_vec();
         state.offset += n;
         Ok(list)
     }
@@ -665,7 +655,13 @@ impl ReaderAt for OsFile {
             let _ = f.seek(std::io::SeekFrom::Start(prev));
             n
         })
-        .and_then(|n| if n < buf.len() { Err(FsError::Eof) } else { Ok(n) })
+        .and_then(|n| {
+            if n < buf.len() {
+                Err(FsError::Eof)
+            } else {
+                Ok(n)
+            }
+        })
     }
 }
 

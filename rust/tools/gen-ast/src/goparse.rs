@@ -21,10 +21,15 @@ pub fn bootstrap(dir: &Path) -> Result<Schema, String> {
         .map_err(|e| format!("ast_generated.go: {e}"))?;
     let ast_hand = std::fs::read_to_string(dir.join("ast.go"))
         .map_err(|e| format!("ast.go: {e}"))?;
+    let flow_src = std::fs::read_to_string(dir.join("flow.go"))
+        .map_err(|e| format!("flow.go: {e}"))?;
 
     parse_kinds(&kind_src, &mut schema)?;
     parse_ast(&ast_src, &mut schema)?;
     parse_hand(&ast_hand, &mut schema)?;
+    // flow.go carries the synthetic `FlowSwitchClauseData` /
+    // `FlowReduceLabelData` node payloads.
+    parse_hand(&flow_src, &mut schema)?;
     postprocess(&mut schema)?;
     Ok(schema)
 }
@@ -440,8 +445,16 @@ fn parse_ast(src: &str, schema: &mut Schema) -> Result<(), String> {
     let mut funcs: Vec<FuncSig> = Vec::new();
     while i < lines.len() {
         let t = lines[i].trim();
-        if t.starts_with("type ") && t.ends_with("struct {") {
-            let name = t[5..t.len() - 8].trim().to_string();
+        // `type X struct {` (multi-line) or `type X struct{}` (empty).
+        let is_struct = t.ends_with("struct {") || t.ends_with("struct{}");
+        if t.starts_with("type ") && is_struct {
+            let cut = "struct {}".len();
+            let name = t[5..t.len() - cut].trim().to_string();
+            if t.ends_with("struct{}") {
+                structs.push((name, Vec::new()));
+                i += 1;
+                continue;
+            }
             if name == "NodeFactory" {
                 // arenas/hooks — skip without field parsing
                 while lines[i].trim() != "}" {
@@ -593,7 +606,15 @@ fn parse_factory_fn(
         let Some(target) = target else {
             return Err(format!("{}: no data := for New fn", f.name));
         };
-        let Some(&ni) = idx.get(&target) else {
+        let ni_opt = idx.get(&target).copied().or_else(|| {
+            // Arena names aren't always consistent with struct casing
+            // (e.g. `f.jsdocArena` → struct `JSDoc`), so fall back to a
+            // case-insensitive match.
+            idx.iter()
+                .find(|(k, _)| k.eq_ignore_ascii_case(&target))
+                .map(|(_, v)| *v)
+        });
+        let Some(ni) = ni_opt else {
             // e.g. NewNodeList/NewModifierList — handled by hand-written core.
             return Ok(());
         };
@@ -1266,13 +1287,13 @@ fn push_source_file(schema: &mut Schema) {
             field("text", FieldType::Str, None),
             field("statements", FieldType::NodeList, None),
             field("endOfFileToken", FieldType::Node, None),
-            field("languageVariant", FieldType::Other, Some("tsc_core::LanguageVariant")),
-            field("scriptKind", FieldType::Other, Some("tsc_core::ScriptKind")),
+            field("languageVariant", FieldType::Other, Some("tsc_core::languagevariant::LanguageVariant")),
+            field("scriptKind", FieldType::Other, Some("tsc_core::scriptkind::ScriptKind")),
             field("isDeclarationFile", FieldType::Bool, None),
             field(
                 "usesUriStyleNodeCoreModules",
                 FieldType::Other,
-                Some("tsc_core::Tristate"),
+                Some("tsc_core::tristate::Tristate"),
             ),
             field("identifierCount", FieldType::Int, None),
             field("imports", FieldType::NodeSlice, None),

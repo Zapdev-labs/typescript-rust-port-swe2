@@ -172,8 +172,9 @@ fn test_get_accessible_entries() {
     }
 
     // Non-symlink directory should have empty Symlinks.
-    let entries =
-        fs.get_accessible_entries(&rooted_directory_path_from_absolute(target.to_str().unwrap()));
+    let entries = fs.get_accessible_entries(&rooted_directory_path_from_absolute(
+        target.to_str().unwrap(),
+    ));
     assert_eq!(entries.directories, ["dir1", "dir2"]);
     assert_eq!(entries.files, ["file1", "file2"]);
     let symlinks = entries

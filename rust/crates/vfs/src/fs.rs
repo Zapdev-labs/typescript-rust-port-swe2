@@ -564,6 +564,23 @@ pub fn stat(fsys: &dyn Fs, name: &str) -> Result<Arc<dyn FileInfo>, FsError> {
     result
 }
 
+/// lstat is fs.Lstat: returns info about the named file without following
+/// symbolic links; falls back to [stat] when the FS has no ReadLinkFS.
+pub fn lstat(fsys: &dyn Fs, name: &str) -> Result<Arc<dyn FileInfo>, FsError> {
+    if let Some(fsys) = fsys.as_read_link_fs() {
+        return fsys.lstat(name);
+    }
+    stat(fsys, name)
+}
+
+/// read_link is fs.ReadLink.
+pub fn read_link(fsys: &dyn Fs, name: &str) -> Result<String, FsError> {
+    if let Some(fsys) = fsys.as_read_link_fs() {
+        return fsys.read_link(name);
+    }
+    Err(path_error("readlink", name, ERR_INVALID))
+}
+
 /// read_dir is fs.ReadDir: reads the named directory and returns a list of
 /// directory entries sorted by filename.
 pub fn read_dir(fsys: &dyn Fs, name: &str) -> Result<Vec<Arc<dyn DirEntry>>, FsError> {
@@ -594,7 +611,7 @@ pub(crate) fn read_dir_via_open(
     let result = dir.read_dir(-1);
     let _ = file.close();
     let mut list = result?;
-    list.sort_by(|a, b| a.name().cmp(&b.name()));
+    list.sort_by_key(|a| a.name());
     Ok(list)
 }
 
@@ -722,7 +739,7 @@ impl SubFsImpl {
         }
         if name.len() >= self.dir.len() + 2
             && name.as_bytes()[self.dir.len()] == b'/'
-            && &name[..self.dir.len()] == self.dir
+            && name[..self.dir.len()] == self.dir
         {
             return Some(&name[self.dir.len() + 1..]);
         }
@@ -785,22 +802,12 @@ impl ReadFileFs for SubFsImpl {
 impl ReadLinkFs for SubFsImpl {
     fn read_link(&self, name: &str) -> Result<String, FsError> {
         let full = self.full_name("readlink", name)?;
-        let target = self
-            .fsys
-            .as_read_link_fs()
-            .map(|f| f.read_link(&full))
-            .unwrap_or_else(|| Err(ERR_INVALID));
-        target.map_err(|e| self.fix_err(e))
+        read_link(&*self.fsys, &full).map_err(|e| self.fix_err(e))
     }
 
     fn lstat(&self, name: &str) -> Result<Arc<dyn FileInfo>, FsError> {
         let full = self.full_name("lstat", name)?;
-        let info = self
-            .fsys
-            .as_read_link_fs()
-            .map(|f| f.lstat(&full))
-            .unwrap_or_else(|| Err(ERR_INVALID));
-        info.map_err(|e| self.fix_err(e))
+        lstat(&*self.fsys, &full).map_err(|e| self.fix_err(e))
     }
 }
 

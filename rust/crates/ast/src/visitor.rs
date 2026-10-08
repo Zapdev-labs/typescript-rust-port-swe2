@@ -12,7 +12,6 @@
 // mirroring Go nil).
 
 use crate::ast::{ModifierList, Node, NodeFactory};
-use crate::ast_generated::SourceFile;
 use crate::ids::NodeId;
 use crate::kind_generated::Kind;
 
@@ -185,12 +184,12 @@ impl<'a> NodeVisitor<'a> {
         let nodes = nodes?;
         self.visit.as_ref()?;
         if let Some(result) = self.visit_slice(cx, &nodes.nodes) {
-            let mut list = ModifierList {
+            let modifier_flags = crate::utilities::modifiers_to_flags(&result, cx.nodes);
+            let list = ModifierList {
                 loc: nodes.loc,
                 nodes: result.into_boxed_slice(),
-                modifier_flags: crate::utilities::modifiers_to_flags(&result, cx.nodes),
+                modifier_flags,
             };
-            list.loc = nodes.loc;
             return Some(list);
         }
         Some(nodes)
@@ -268,8 +267,9 @@ impl<'a> NodeVisitor<'a> {
         if let Some(hook) = &self.hooks.visit_embedded_statement {
             return hook(cx, node?, self);
         }
-        if let Some(hook) = &self.hooks.visit_node {
-            return Some(self.lift_to_block(cx, hook(cx, node?, self)?));
+        if self.hooks.visit_node.is_some() {
+            let hooked = self.visit_node_hooked(cx, node)?;
+            return Some(self.lift_to_block(cx, hooked));
         }
         self.visit_embedded_statement(cx, node)
     }
@@ -380,21 +380,3 @@ impl<'a> NodeVisitor<'a> {
     }
 }
 
-// `SourceFile` (the data struct) is referenced for `visit_source_file`'s
-// convenience return type; see source_file.rs for the owning container.
-impl NodeVisitor<'_> {
-    /// `(node *SourceFile) VisitEachChild(v)` — implemented in source_file.rs
-    /// via this helper to keep the hand-written visitEachChild for SourceFile
-    /// next to the other SourceFile methods.
-    pub(crate) fn visit_source_file_children(
-        &self,
-        cx: &mut VisitorCx<'a>,
-        node: &SourceFile,
-        node_id: NodeId,
-    ) -> Option<NodeId> {
-        let statements = self.visit_top_level_statements_hooked(cx, node.statements.clone());
-        let end_of_file_token = self.visit_token_hooked(cx, node.end_of_file_token);
-        cx.factory
-            .update_source_file(cx.nodes, node_id, statements, end_of_file_token)
-    }
-}

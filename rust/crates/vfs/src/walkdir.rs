@@ -28,11 +28,7 @@ pub fn walk_dir(
     let root_path = root;
     let root_info = file_system.stat(root_path);
     let Some(root_info) = root_info else {
-        return normalize_walk_dir_error(walk_fn(
-            root_path,
-            None,
-            Some(&ERR_NOT_EXIST),
-        ));
+        return normalize_walk_dir_error(walk_fn(root_path, None, Some(&ERR_NOT_EXIST)));
     };
 
     let case_sensitivity = file_system.case_sensitivity();
@@ -84,8 +80,7 @@ pub fn walk_dir(
 
         let directory = rooted_directory_path_from_path(path.clone());
         let entries = ctx.file_system.get_accessible_entries(&directory);
-        let directories: HashSet<&str> =
-            entries.directories.iter().map(String::as_str).collect();
+        let directories: HashSet<&str> = entries.directories.iter().map(String::as_str).collect();
         let mut names: Vec<String> = entries
             .directories
             .iter()
@@ -162,11 +157,10 @@ pub fn walk_dir(
     let root_realpath = file_system.realpath(root_path);
     if root_path != &root_prefix.as_path() {
         let parent = root_path.directory();
-        let expected_realpath = rooted_directory_path_from_path(
-            file_system.realpath(&parent.as_path()),
-        )
-        .resolve_directory(&root_path.base_name())
-        .as_path();
+        let expected_realpath =
+            rooted_directory_path_from_path(file_system.realpath(&parent.as_path()))
+                .resolve_directory(root_path.base_name())
+                .as_path();
         if !equivalent(&root_realpath, &expected_realpath) {
             root_entry = Arc::new(WalkDirEntry {
                 file_system: file_system.clone(),
