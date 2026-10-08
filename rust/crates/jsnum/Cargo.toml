@@ -1,0 +1,21 @@
+[package]
+name = "tsc-jsnum"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+num-bigint = { workspace = true }
+# Declared per porting contract; tsc-stringutil is ported concurrently and does
+# not yet expose is_digit/is_octal_digit/is_hex_digit, so src/stringutil_shim.rs
+# provides faithful minimal ports (marked `// PORT(shim):`). Switch the `as
+# stringutil` import in string.rs to `tsc_stringutil` once it lands.
+tsc-stringutil = { path = "../stringutil" }
+
+[dev-dependencies]
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
