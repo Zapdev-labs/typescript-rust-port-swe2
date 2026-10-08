@@ -2,8 +2,6 @@
 //
 // ModifierFlags
 
-use crate::flagdef::flag_type;
-
 flag_type! {
     pub struct ModifierFlags(pub u32);
 }
@@ -63,11 +61,17 @@ impl ModifierFlags {
     pub const SYNTACTIC_MODIFIERS: ModifierFlags =
         ModifierFlags(Self::SYNTACTIC_OR_JSDOC_MODIFIERS.0 | Self::SYNTACTIC_ONLY_MODIFIERS.0);
     pub const JSDOC_CACHE_ONLY_MODIFIERS: ModifierFlags = ModifierFlags(
-        Self::JSDOC_PUBLIC.0 | Self::JSDOC_PRIVATE.0 | Self::JSDOC_PROTECTED.0 | Self::JSDOC_READONLY.0 | Self::JSDOC_OVERRIDE.0,
+        Self::JSDOC_PUBLIC.0
+            | Self::JSDOC_PRIVATE.0
+            | Self::JSDOC_PROTECTED.0
+            | Self::JSDOC_READONLY.0
+            | Self::JSDOC_OVERRIDE.0,
     );
     pub const JSDOC_ONLY_MODIFIERS: ModifierFlags = Self::DEPRECATED;
     pub const NON_CACHE_ONLY_MODIFIERS: ModifierFlags = ModifierFlags(
-        Self::SYNTACTIC_OR_JSDOC_MODIFIERS.0 | Self::SYNTACTIC_ONLY_MODIFIERS.0 | Self::JSDOC_ONLY_MODIFIERS.0,
+        Self::SYNTACTIC_OR_JSDOC_MODIFIERS.0
+            | Self::SYNTACTIC_ONLY_MODIFIERS.0
+            | Self::JSDOC_ONLY_MODIFIERS.0,
     );
 
     pub const ACCESSIBILITY_MODIFIER: ModifierFlags =
@@ -112,6 +116,7 @@ impl ModifierFlags {
             | Self::DECORATOR.0,
     );
     pub const MODIFIER: ModifierFlags = ModifierFlags(Self::ALL.0 & !Self::DECORATOR.0);
-    pub const JAVA_SCRIPT: ModifierFlags =
-        ModifierFlags(Self::EXPORT.0 | Self::STATIC.0 | Self::ACCESSOR.0 | Self::ASYNC.0 | Self::DEFAULT.0);
+    pub const JAVA_SCRIPT: ModifierFlags = ModifierFlags(
+        Self::EXPORT.0 | Self::STATIC.0 | Self::ACCESSOR.0 | Self::ASYNC.0 | Self::DEFAULT.0,
+    );
 }

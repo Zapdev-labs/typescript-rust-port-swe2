@@ -358,13 +358,19 @@ fn write_node_body(out: &mut String, n: &NodeDef) {
         out.push_str(&format!("facts_mode = {}\n", toml::escape(&n.facts_mode)));
     }
     if !n.propagate_mode.is_empty() && n.propagate_mode != "default" {
-        out.push_str(&format!("propagate_mode = {}\n", toml::escape(&n.propagate_mode)));
+        out.push_str(&format!(
+            "propagate_mode = {}\n",
+            toml::escape(&n.propagate_mode)
+        ));
     }
     if let Some(e) = &n.propagate_exclusions {
         out.push_str(&format!("propagate_exclusions = {}\n", toml::escape(e)));
     }
     if !n.propagate_fields.is_empty() {
-        out.push_str(&format!("propagate_fields = {}\n", str_array(&n.propagate_fields)));
+        out.push_str(&format!(
+            "propagate_fields = {}\n",
+            str_array(&n.propagate_fields)
+        ));
     }
     write_fields(out, "fields", &n.fields);
     write_news(out, &n.news);
@@ -386,7 +392,11 @@ fn get_str<'a>(t: &'a std::collections::BTreeMap<String, Value>, key: &str) -> O
 fn get_strs(t: &std::collections::BTreeMap<String, Value>, key: &str) -> Vec<String> {
     t.get(key)
         .and_then(|v| v.as_array())
-        .map(|a| a.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect())
+        .map(|a| {
+            a.iter()
+                .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                .collect()
+        })
         .unwrap_or_default()
 }
 
@@ -425,7 +435,10 @@ fn read_field(t: &std::collections::BTreeMap<String, Value>) -> Result<Field, St
     })
 }
 
-fn read_fields(t: &std::collections::BTreeMap<String, Value>, key: &str) -> Result<Vec<Field>, String> {
+fn read_fields(
+    t: &std::collections::BTreeMap<String, Value>,
+    key: &str,
+) -> Result<Vec<Field>, String> {
     get_tables(t, key).iter().map(|f| read_field(f)).collect()
 }
 
@@ -448,7 +461,9 @@ fn read_ctor(t: &std::collections::BTreeMap<String, Value>) -> Result<CtorDef, S
     let mut args = Vec::new();
     for a in get_tables(t, "args") {
         args.push(CtorArg {
-            name: get_str(a, "name").ok_or("ctor arg missing name")?.to_string(),
+            name: get_str(a, "name")
+                .ok_or("ctor arg missing name")?
+                .to_string(),
             ty: ty_from_tag(get_str(a, "ty").ok_or("ctor arg missing ty")?)?,
             field: get_str(a, "field").map(|s| s.to_string()),
             init_mask: get_str(a, "mask").map(|s| s.to_string()),
@@ -481,7 +496,9 @@ fn read_update(t: &std::collections::BTreeMap<String, Value>) -> Result<UpdateDe
     let mut args = Vec::new();
     for a in get_tables(t, "args") {
         args.push(UpdateArg {
-            name: get_str(a, "name").ok_or("update arg missing name")?.to_string(),
+            name: get_str(a, "name")
+                .ok_or("update arg missing name")?
+                .to_string(),
             ty: ty_from_tag(get_str(a, "ty").ok_or("update arg missing ty")?)?,
         });
     }
@@ -489,7 +506,9 @@ fn read_update(t: &std::collections::BTreeMap<String, Value>) -> Result<UpdateDe
     for c in get_tables(t, "compares") {
         compares.push(UpdateCompare {
             lhs: get_str(c, "lhs").ok_or("compare missing lhs")?.to_string(),
-            field: get_str(c, "field").ok_or("compare missing field")?.to_string(),
+            field: get_str(c, "field")
+                .ok_or("compare missing field")?
+                .to_string(),
             op: get_str(c, "op").ok_or("compare missing op")?.to_string(),
         });
     }
@@ -497,7 +516,9 @@ fn read_update(t: &std::collections::BTreeMap<String, Value>) -> Result<UpdateDe
         name: get_str(t, "name").ok_or("update missing name")?.to_string(),
         args,
         compares,
-        new_fn: get_str(t, "new_fn").ok_or("update missing new_fn")?.to_string(),
+        new_fn: get_str(t, "new_fn")
+            .ok_or("update missing new_fn")?
+            .to_string(),
         new_args: get_strs(t, "new_args"),
     })
 }
@@ -578,23 +599,26 @@ fn defaults_apply(schema: &mut Schema) {
 
 pub fn read_schema(doc: &Document) -> Result<Schema, String> {
     let mut schema = Schema::default();
-    let kinds_table = doc
-        .tables
-        .get("kinds")
-        .ok_or("missing [kinds] section")?;
+    let kinds_table = doc.tables.get("kinds").ok_or("missing [kinds] section")?;
     schema.kinds = get_strs(kinds_table, "names");
     if schema.kinds.is_empty() {
         return Err("[kinds].names is empty".into());
     }
     for t in doc.arrays.get("kind_consts").cloned().unwrap_or_default() {
         schema.kind_consts.push(KindConst {
-            name: get_str(&t, "name").ok_or("kind_const missing name")?.to_string(),
-            value: get_str(&t, "value").ok_or("kind_const missing value")?.to_string(),
+            name: get_str(&t, "name")
+                .ok_or("kind_const missing name")?
+                .to_string(),
+            value: get_str(&t, "value")
+                .ok_or("kind_const missing value")?
+                .to_string(),
         });
     }
     for t in doc.arrays.get("kind_aliases").cloned().unwrap_or_default() {
         schema.kind_aliases.push(KindAlias {
-            name: get_str(&t, "name").ok_or("kind_alias missing name")?.to_string(),
+            name: get_str(&t, "name")
+                .ok_or("kind_alias missing name")?
+                .to_string(),
             kinds: get_strs(&t, "kinds"),
         });
     }

@@ -42,7 +42,7 @@ pub fn symbol_is_static(s: &Symbol, nodes: &[crate::Node]) -> bool {
         return false;
     };
     let node = &nodes[value_declaration.local_index() as usize];
-    node.modifier_flags(nodes).intersects(ModifierFlags::STATIC)
+    node.modifier_flags().intersects(ModifierFlags::STATIC)
 }
 
 // SymbolTable
@@ -82,6 +82,7 @@ pub fn symbol_name<'a>(symbol: &'a Symbol, nodes: &'a [crate::Node]) -> std::bor
     if let Some(value_declaration) = symbol.value_declaration
         && is_private_identifier_class_element_declaration(
             &nodes[value_declaration.local_index() as usize],
+            nodes,
         )
         && let Some(name) = nodes[value_declaration.local_index() as usize].name()
     {

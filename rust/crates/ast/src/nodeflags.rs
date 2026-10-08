@@ -2,8 +2,6 @@
 //
 // NodeFlags
 
-use crate::flagdef::flag_type;
-
 flag_type! {
     pub struct NodeFlags(pub u32);
 }
@@ -75,7 +73,8 @@ impl NodeFlags {
     );
 
     /// Exclude these flags when parsing a Type
-    pub const TYPE_EXCLUDES_FLAGS: NodeFlags = NodeFlags(Self::YIELD_CONTEXT.0 | Self::AWAIT_CONTEXT.0);
+    pub const TYPE_EXCLUDES_FLAGS: NodeFlags =
+        NodeFlags(Self::YIELD_CONTEXT.0 | Self::AWAIT_CONTEXT.0);
 
     /// Represents all flags that are potentially set once and
     /// never cleared on SourceFiles which get re-used in between incremental parses.

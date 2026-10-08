@@ -26,13 +26,6 @@ impl Value {
         }
     }
 
-    pub fn as_int(&self) -> Option<i64> {
-        match self {
-            Value::Int(i) => Some(*i),
-            _ => None,
-        }
-    }
-
     pub fn as_bool(&self) -> Option<bool> {
         match self {
             Value::Bool(b) => Some(*b),
@@ -84,38 +77,6 @@ pub fn escape(s: &str) -> String {
     out
 }
 
-pub fn fmt_value(v: &Value) -> String {
-    match v {
-        Value::Str(s) => escape(s),
-        Value::Int(i) => i.to_string(),
-        Value::Bool(b) => b.to_string(),
-        Value::Array(items) => {
-            let mut out = String::from("[");
-            for (i, item) in items.iter().enumerate() {
-                if i > 0 {
-                    out.push_str(", ");
-                }
-                out.push_str(&fmt_value(item));
-            }
-            out.push(']');
-            out
-        }
-        Value::Table(t) => {
-            let mut out = String::from("{ ");
-            for (i, (k, v)) in t.iter().enumerate() {
-                if i > 0 {
-                    out.push_str(", ");
-                }
-                out.push_str(k);
-                out.push_str(" = ");
-                out.push_str(&fmt_value(v));
-            }
-            out.push_str(" }");
-            out
-        }
-    }
-}
-
 // ── Parser ─────────────────────────────────────────────────────────────────
 
 pub fn parse(text: &str) -> Result<Document, String> {
@@ -136,7 +97,10 @@ pub fn parse(text: &str) -> Result<Document, String> {
                 .ok_or_else(|| format!("line {}: malformed [[...]] header", ln + 1))?
                 .trim()
                 .to_string();
-            doc.arrays.entry(name.clone()).or_default().push(BTreeMap::new());
+            doc.arrays
+                .entry(name.clone())
+                .or_default()
+                .push(BTreeMap::new());
             section = Some(name);
             cur_table = None;
             continue;
@@ -176,17 +140,12 @@ pub fn parse(text: &str) -> Result<Document, String> {
                 .and_then(|v| v.last_mut())
                 .ok_or_else(|| format!("line {}: no array table open", ln + 1))?
                 .insert(key, value),
-            (None, Some(t)) => doc
+            (None, Some(t)) => doc.tables.get_mut(t).unwrap().insert(key, value),
+            (None, None) => doc
                 .tables
-                .get_mut(t)
-                .unwrap()
+                .entry(String::new())
+                .or_default()
                 .insert(key, value),
-            (None, None) => {
-                doc.tables
-                    .entry(String::new())
-                    .or_default()
-                    .insert(key, value)
-            }
         };
     }
     Ok(doc)
@@ -232,7 +191,9 @@ fn value_complete(s: &str) -> bool {
     depth <= 0 && !in_str
 }
 
-fn parse_value(chars: &mut std::iter::Peekable<std::str::CharIndices<'_>>) -> Result<Value, String> {
+fn parse_value(
+    chars: &mut std::iter::Peekable<std::str::CharIndices<'_>>,
+) -> Result<Value, String> {
     skip_ws(chars);
     match chars.peek() {
         Some((_, '"')) => Ok(Value::Str(parse_string(chars)?)),
@@ -298,7 +259,9 @@ fn parse_value(chars: &mut std::iter::Peekable<std::str::CharIndices<'_>>) -> Re
     }
 }
 
-fn parse_string(chars: &mut std::iter::Peekable<std::str::CharIndices<'_>>) -> Result<String, String> {
+fn parse_string(
+    chars: &mut std::iter::Peekable<std::str::CharIndices<'_>>,
+) -> Result<String, String> {
     debug_assert_eq!(chars.next().map(|t| t.1), Some('"'));
     let mut s = String::new();
     while let Some((_, c)) = chars.next() {
@@ -359,7 +322,11 @@ fn parse_inline_table(
                 chars.next();
                 break;
             }
-            other => return Err(format!("expected ',' or '}}' in inline table, got {other:?}")),
+            other => {
+                return Err(format!(
+                    "expected ',' or '}}' in inline table, got {other:?}"
+                ));
+            }
         }
     }
     Ok(Value::Table(t))

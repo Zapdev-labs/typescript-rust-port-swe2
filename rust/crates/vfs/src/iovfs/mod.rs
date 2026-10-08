@@ -44,8 +44,13 @@ pub trait FsWithSys: Vfs {
 ///
 /// PORT: returns the concrete [IoFs] so callers can coerce it to
 /// `Arc<dyn Vfs>` or `Arc<dyn FsWithSys>` (Go returns the interface type).
+type RealpathFn = dyn Fn(&str) -> Result<String, FsError> + Send + Sync;
+type WriteFn = dyn Fn(&str, &str) -> Result<(), FsError> + Send + Sync;
+type PathResultFn = dyn Fn(&str) -> Result<(), FsError> + Send + Sync;
+type ChtimesFn = dyn Fn(&str, SystemTime, SystemTime) -> Result<(), FsError> + Send + Sync;
+
 pub fn from(fsys: Arc<dyn Fs>, case_sensitivity: CaseSensitivity) -> Arc<IoFs> {
-    let realpath: Arc<dyn Fn(&str) -> Result<String, FsError> + Send + Sync>;
+    let realpath: Arc<RealpathFn>;
     if let Some(realpath_fs) = fsys.as_realpath_fs() {
         // PORT: the closure captures the trait object, equivalent to Go's
         // `fsys.(RealpathFS)` re-assertion inside the closure.
@@ -68,11 +73,11 @@ pub fn from(fsys: Arc<dyn Fs>, case_sensitivity: CaseSensitivity) -> Arc<IoFs> {
         realpath = Arc::new(|path: &str| Ok(path.to_string()));
     }
 
-    let write_file: Arc<dyn Fn(&str, &str) -> Result<(), FsError> + Send + Sync>;
-    let append_file: Arc<dyn Fn(&str, &str) -> Result<(), FsError> + Send + Sync>;
-    let mkdir_all: Arc<dyn Fn(&str) -> Result<(), FsError> + Send + Sync>;
-    let remove: Arc<dyn Fn(&str) -> Result<(), FsError> + Send + Sync>;
-    let chtimes: Arc<dyn Fn(&str, SystemTime, SystemTime) -> Result<(), FsError> + Send + Sync>;
+    let write_file: Arc<WriteFn>;
+    let append_file: Arc<WriteFn>;
+    let mkdir_all: Arc<PathResultFn>;
+    let remove: Arc<PathResultFn>;
+    let chtimes: Arc<ChtimesFn>;
     if fsys.as_writable_fs().is_some() {
         let wfs = fsys.clone();
         write_file = Arc::new(move |path: &str, content: &str| {
@@ -161,12 +166,12 @@ pub struct IoFs {
     common: Common,
 
     case_sensitivity: CaseSensitivity,
-    realpath: Arc<dyn Fn(&str) -> Result<String, FsError> + Send + Sync>,
-    write_file: Arc<dyn Fn(&str, &str) -> Result<(), FsError> + Send + Sync>,
-    append_file: Arc<dyn Fn(&str, &str) -> Result<(), FsError> + Send + Sync>,
-    mkdir_all: Arc<dyn Fn(&str) -> Result<(), FsError> + Send + Sync>,
-    remove: Arc<dyn Fn(&str) -> Result<(), FsError> + Send + Sync>,
-    chtimes: Arc<dyn Fn(&str, SystemTime, SystemTime) -> Result<(), FsError> + Send + Sync>,
+    realpath: Arc<RealpathFn>,
+    write_file: Arc<WriteFn>,
+    append_file: Arc<WriteFn>,
+    mkdir_all: Arc<PathResultFn>,
+    remove: Arc<PathResultFn>,
+    chtimes: Arc<ChtimesFn>,
     fsys: Arc<dyn Fs>,
 }
 
@@ -175,7 +180,7 @@ impl IoFs {
         &self,
         path: &RootedFilePath,
         content: &str,
-        write: &Arc<dyn Fn(&str, &str) -> Result<(), FsError> + Send + Sync>,
+        write: &Arc<WriteFn>,
     ) -> Result<(), FsError> {
         let path_string = path.as_string();
         if write(path_string, content).is_ok() {

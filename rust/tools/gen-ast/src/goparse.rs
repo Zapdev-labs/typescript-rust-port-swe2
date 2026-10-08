@@ -19,10 +19,10 @@ pub fn bootstrap(dir: &Path) -> Result<Schema, String> {
         .map_err(|e| format!("kind_generated.go: {e}"))?;
     let ast_src = std::fs::read_to_string(dir.join("ast_generated.go"))
         .map_err(|e| format!("ast_generated.go: {e}"))?;
-    let ast_hand = std::fs::read_to_string(dir.join("ast.go"))
-        .map_err(|e| format!("ast.go: {e}"))?;
-    let flow_src = std::fs::read_to_string(dir.join("flow.go"))
-        .map_err(|e| format!("flow.go: {e}"))?;
+    let ast_hand =
+        std::fs::read_to_string(dir.join("ast.go")).map_err(|e| format!("ast.go: {e}"))?;
+    let flow_src =
+        std::fs::read_to_string(dir.join("flow.go")).map_err(|e| format!("flow.go: {e}"))?;
 
     parse_kinds(&kind_src, &mut schema)?;
     parse_ast(&ast_src, &mut schema)?;
@@ -78,7 +78,10 @@ fn parse_kinds(src: &str, schema: &mut Schema) -> Result<(), String> {
         } else if in_type {
             // `TokenSyntaxKind = Kind // KindX | KindY ...`
             let Some(eq) = code.find('=') else {
-                return Err(format!("kind_generated.go:{} bad type alias: {code}", ln + 1));
+                return Err(format!(
+                    "kind_generated.go:{} bad type alias: {code}",
+                    ln + 1
+                ));
             };
             let name = code[..eq].trim().to_string();
             let kinds: Vec<String> = raw
@@ -86,7 +89,12 @@ fn parse_kinds(src: &str, schema: &mut Schema) -> Result<(), String> {
                 .nth(1)
                 .map(|c| {
                     c.split('|')
-                        .map(|k| k.trim().strip_prefix("Kind").unwrap_or(k.trim()).to_string())
+                        .map(|k| {
+                            k.trim()
+                                .strip_prefix("Kind")
+                                .unwrap_or(k.trim())
+                                .to_string()
+                        })
                         .filter(|k| !k.is_empty())
                         .collect()
                 })
@@ -201,9 +209,10 @@ pub fn rust_name(go: &str) -> String {
         "type" => "type_".into(),
         "mod" | "ref" | "box" | "loop" | "move" | "self" | "super" | "crate" | "fn" | "for"
         | "if" | "in" | "let" | "match" | "pub" | "struct" | "enum" | "const" | "static"
-        | "trait" | "impl" | "use" | "while" | "yield" | "mut" | "extern" | "unsafe"
-        | "return" | "break" | "continue" | "else" | "as" | "where" | "async" | "await"
-        | "dyn" | "gen" => format!("{out}_"),
+        | "trait" | "impl" | "use" | "while" | "yield" | "mut" | "extern" | "unsafe" | "return"
+        | "break" | "continue" | "else" | "as" | "where" | "async" | "await" | "dyn" | "gen" => {
+            format!("{out}_")
+        }
         _ => out,
     }
 }
@@ -323,11 +332,18 @@ fn read_func(lines: &[&str], start: usize) -> Result<(FuncSig, usize), String> {
         && let Some(open) = header.find('{')
         && header.ends_with('}')
     {
-        let sig = header[..open].trim().strip_prefix("func ").unwrap_or(header[..open].trim());
+        let sig = header[..open]
+            .trim()
+            .strip_prefix("func ")
+            .unwrap_or(header[..open].trim());
         let (recv_ty, rest) = if let Some(r) = sig.strip_prefix('(') {
             let close = r.find(')').ok_or("bad receiver")?;
             let recv = &r[..close];
-            let ty = recv.rsplit(' ').next().unwrap_or("").trim_start_matches('*');
+            let ty = recv
+                .rsplit(' ')
+                .next()
+                .unwrap_or("")
+                .trim_start_matches('*');
             (ty.to_string(), r[close + 1..].trim().to_string())
         } else {
             (String::new(), sig.to_string())
@@ -337,10 +353,18 @@ fn read_func(lines: &[&str], start: usize) -> Result<(FuncSig, usize), String> {
         let args_end = matching_paren(&rest, paren).ok_or("bad func args")?;
         let args = split_args(&rest[paren + 1..args_end]);
         let body = format!("{}\n", header[open + 1..header.len() - 1].trim());
-        return Ok((FuncSig { recv_ty, name, args, body }, start));
+        return Ok((
+            FuncSig {
+                recv_ty,
+                name,
+                args,
+                body,
+            },
+            start,
+        ));
     }
-    let (sig, body_start) = if header.ends_with('{') {
-        (header[..header.len() - 1].trim().to_string(), start + 1)
+    let (sig, body_start) = if let Some(h) = header.strip_suffix('{') {
+        (h.trim().to_string(), start + 1)
     } else {
         // multi-line signature — join until `{`
         let mut s = header.to_string();
@@ -357,7 +381,11 @@ fn read_func(lines: &[&str], start: usize) -> Result<(FuncSig, usize), String> {
     let (recv_ty, rest) = if let Some(r) = sig.strip_prefix('(') {
         let close = r.find(')').ok_or("bad receiver")?;
         let recv = &r[..close];
-        let ty = recv.rsplit(' ').next().unwrap_or("").trim_start_matches('*');
+        let ty = recv
+            .rsplit(' ')
+            .next()
+            .unwrap_or("")
+            .trim_start_matches('*');
         (ty.to_string(), r[close + 1..].trim().to_string())
     } else {
         (String::new(), sig)
@@ -377,7 +405,15 @@ fn read_func(lines: &[&str], start: usize) -> Result<(FuncSig, usize), String> {
         body.push('\n');
         i += 1;
     }
-    Ok((FuncSig { recv_ty, name, args, body }, i))
+    Ok((
+        FuncSig {
+            recv_ty,
+            name,
+            args,
+            body,
+        },
+        i,
+    ))
 }
 
 fn parse_field(line: &str, ln: usize) -> Result<Field, String> {
@@ -400,7 +436,10 @@ fn parse_field(line: &str, ln: usize) -> Result<Field, String> {
             ty: FieldType::Embed,
             embed: Some(go_name.to_string()),
             optional,
-            exported: go_name.chars().next().is_some_and(|c| c.is_ascii_uppercase()),
+            exported: go_name
+                .chars()
+                .next()
+                .is_some_and(|c| c.is_ascii_uppercase()),
             rust_ty: None,
         });
     }
@@ -408,7 +447,9 @@ fn parse_field(line: &str, ln: usize) -> Result<Field, String> {
     if fty == FieldType::Other {
         // Unknown field types are hard errors in generated code — extend
         // `go_field_type`.
-        return Err(format!("line {ln}: unhandled field type `{ty}` for {go_name}"));
+        return Err(format!(
+            "line {ln}: unhandled field type `{ty}` for {go_name}"
+        ));
     }
     Ok(Field {
         go_name: go_name.to_string(),
@@ -416,7 +457,10 @@ fn parse_field(line: &str, ln: usize) -> Result<Field, String> {
         ty: fty,
         embed: None,
         optional,
-        exported: go_name.chars().next().is_some_and(|c| c.is_ascii_uppercase()),
+        exported: go_name
+            .chars()
+            .next()
+            .is_some_and(|c| c.is_ascii_uppercase()),
         rust_ty: None,
     })
 }
@@ -572,7 +616,10 @@ fn parse_factory_fn(
                 let Some(eq) = rest.find('=') else {
                     return Err(format!("{}: bad assign `{l}`", f.name));
                 };
-                assigns.push((rest[..eq].trim().to_string(), rest[eq + 1..].trim().to_string()));
+                assigns.push((
+                    rest[..eq].trim().to_string(),
+                    rest[eq + 1..].trim().to_string(),
+                ));
             } else if l == "f.textCount++" {
                 counts_text = true;
             } else if l == "f.identifierCount++" {
@@ -621,10 +668,7 @@ fn parse_factory_fn(
         let node = &mut schema.nodes[ni];
         let (kind, kind_arg) = match kind_expr.as_deref() {
             Some("kind") => (None, Some("kind".to_string())),
-            Some(k) => (
-                Some(k.strip_prefix("Kind").unwrap_or(k).to_string()),
-                None,
-            ),
+            Some(k) => (Some(k.strip_prefix("Kind").unwrap_or(k).to_string()), None),
             None => return Err(format!("{}: no newNode call", f.name)),
         };
         let mut args: Vec<CtorArg> = Vec::new();
@@ -651,7 +695,10 @@ fn parse_factory_fn(
         }
         // Non-arg-derived assignments (literals): record for the emitter.
         for (fname, expr) in &assigns {
-            if args.iter().any(|a| a.field.as_deref() == Some(&rust_name(fname))) {
+            if args
+                .iter()
+                .any(|a| a.field.as_deref() == Some(&rust_name(fname)))
+            {
                 continue;
             }
             args.push(CtorArg {
@@ -690,7 +737,9 @@ fn parse_factory_fn(
         let body = body
             .strip_prefix("if ")
             .ok_or_else(|| format!("{}: no if", f.name))?;
-        let brace = body.find('{').ok_or_else(|| format!("{}: no if body", f.name))?;
+        let brace = body
+            .find('{')
+            .ok_or_else(|| format!("{}: no if body", f.name))?;
         let cond = body[..brace].trim().to_string();
         let mut compares = Vec::new();
         for term in split_top_level_op(&cond, "||") {
@@ -723,7 +772,7 @@ fn parse_factory_fn(
             }
         }
         // `return updateNode(f.NewY(args), node.AsNode(), f.hooks)`
-        let Some((_, call_args)) = extract_call(&body, "updateNode") else {
+        let Some((_, call_args)) = extract_call(body, "updateNode") else {
             return Err(format!("{}: no updateNode", f.name));
         };
         let new_call = call_args.first().cloned().unwrap_or_default();
@@ -763,7 +812,11 @@ fn parse_factory_fn(
     Ok(())
 }
 
-fn parse_is_fn(f: &FuncSig, schema: &mut Schema, idx: &BTreeMap<String, usize>) -> Result<(), String> {
+fn parse_is_fn(
+    f: &FuncSig,
+    schema: &mut Schema,
+    idx: &BTreeMap<String, usize>,
+) -> Result<(), String> {
     let body = f.body.trim().to_string();
     let arg_ty = f.args.first().map(|a| a.1.as_str()).unwrap_or("");
 
@@ -789,18 +842,32 @@ fn parse_is_fn(f: &FuncSig, schema: &mut Schema, idx: &BTreeMap<String, usize>) 
             }
         }
     } else if let Some(rest) = ret.strip_prefix("Is") {
-        if let Some(inner) = rest.strip_suffix("(node.Kind)").or_else(|| rest.strip_suffix("(kind)")) {
+        if let Some(inner) = rest
+            .strip_suffix("(node.Kind)")
+            .or_else(|| rest.strip_suffix("(kind)"))
+        {
             delegate = Some(format!("Is{inner}"));
         }
     }
     if delegate.is_none() && !body.starts_with("switch") {
         // `a >= KindX && a <= KindY` or `a == KindX || a == KindY ...`
-        let lhs = if arg_ty == "Kind" { "kind" } else { "node.Kind" };
+        let lhs = if arg_ty == "Kind" {
+            "kind"
+        } else {
+            "node.Kind"
+        };
         if let Some(rest) = ret.strip_prefix(&format!("{lhs} >= ")) {
             if let Some((lo, rest2)) = rest.split_once(&format!("&& {lhs} <= ")) {
                 range = Some([
-                    lo.trim().strip_prefix("Kind").unwrap_or(lo.trim()).to_string(),
-                    rest2.trim().strip_prefix("Kind").unwrap_or(rest2.trim()).to_string(),
+                    lo.trim()
+                        .strip_prefix("Kind")
+                        .unwrap_or(lo.trim())
+                        .to_string(),
+                    rest2
+                        .trim()
+                        .strip_prefix("Kind")
+                        .unwrap_or(rest2.trim())
+                        .to_string(),
                 ]);
             }
         } else {
@@ -978,8 +1045,14 @@ fn classify_visit_arg(arg: &str) -> Result<VisitArg, String> {
         }
     }
     match arg {
-        "node.Kind" => Ok(VisitArg { op: "kind".into(), field: None }),
-        "node.Flags" => Ok(VisitArg { op: "flags".into(), field: None }),
+        "node.Kind" => Ok(VisitArg {
+            op: "kind".into(),
+            field: None,
+        }),
+        "node.Flags" => Ok(VisitArg {
+            op: "flags".into(),
+            field: None,
+        }),
         a if a.starts_with("node.") => Ok(VisitArg {
             op: "field".into(),
             field: Some(rust_name(&a["node.".len()..])),
@@ -1008,7 +1081,9 @@ fn parse_clone_call(body: &str) -> Result<CloneArm, String> {
     let open = body.find("cloneNode(").ok_or("no cloneNode")?;
     let inner = &body[open + "cloneNode(".len()..];
     // inner: `f.AsNodeFactory().NewX(args), node.AsNode(), f.AsNodeFactory().hooks)`
-    let p = inner.find("New").ok_or_else(|| format!("bad clone `{body}`"))?;
+    let p = inner
+        .find("New")
+        .ok_or_else(|| format!("bad clone `{body}`"))?;
     let call = &inner[p..];
     let open = call.find('(').ok_or("bad clone call")?;
     let end = matching_paren(call, open).ok_or("bad clone call")?;
@@ -1287,8 +1362,16 @@ fn push_source_file(schema: &mut Schema) {
             field("text", FieldType::Str, None),
             field("statements", FieldType::NodeList, None),
             field("endOfFileToken", FieldType::Node, None),
-            field("languageVariant", FieldType::Other, Some("tsc_core::languagevariant::LanguageVariant")),
-            field("scriptKind", FieldType::Other, Some("tsc_core::scriptkind::ScriptKind")),
+            field(
+                "languageVariant",
+                FieldType::Other,
+                Some("tsc_core::languagevariant::LanguageVariant"),
+            ),
+            field(
+                "scriptKind",
+                FieldType::Other,
+                Some("tsc_core::scriptkind::ScriptKind"),
+            ),
             field("isDeclarationFile", FieldType::Bool, None),
             field(
                 "usesUriStyleNodeCoreModules",
@@ -1389,11 +1472,7 @@ fn postprocess(schema: &mut Schema) -> Result<(), String> {
         let snap = &nodes_snapshot[i];
         if node.kinds.is_empty() {
             if !node.news.is_empty() && node.news.iter().all(|n| n.kind.is_some()) {
-                let mut ks: Vec<String> = node
-                    .news
-                    .iter()
-                    .filter_map(|n| n.kind.clone())
-                    .collect();
+                let mut ks: Vec<String> = node.news.iter().filter_map(|n| n.kind.clone()).collect();
                 ks.sort();
                 ks.dedup();
                 node.kinds = ks;
@@ -1477,6 +1556,34 @@ fn postprocess(schema: &mut Schema) -> Result<(), String> {
     }
     schema.node_preds = keep;
 
+    // `kind`-parameterized constructors (`NewToken(kind)`, `NewKeywordTypeNode`,
+    // ...) act as fallbacks over a whole kind range — but a kind claimed by a
+    // specific node (`Identifier`, `StringLiteral`, `KeywordExpression`, ...)
+    // belongs to that node's data variant. Resolve each contested kind to the
+    // most specific claimant (fewest kinds; ties broken by name for
+    // determinism) so kind dispatch (clone/update/visit) is unambiguous,
+    // mirroring Go's data-type selection.
+    {
+        let mut owner: BTreeMap<String, usize> = BTreeMap::new();
+        for (i, n) in schema.nodes.iter().enumerate() {
+            for k in &n.kinds {
+                let better = match owner.get(k) {
+                    None => true,
+                    Some(&j) => {
+                        let o = &schema.nodes[j];
+                        (n.kinds.len(), n.name.as_str()) < (o.kinds.len(), o.name.as_str())
+                    }
+                };
+                if better {
+                    owner.insert(k.clone(), i);
+                }
+            }
+        }
+        for (i, n) in schema.nodes.iter_mut().enumerate() {
+            n.kinds.retain(|k| owner.get(k) == Some(&i));
+        }
+    }
+
     // Every node needs kinds for the as_* accessors — extras excepted
     // (dispatched by data variant, not kind).
     let missing: Vec<&str> = schema
@@ -1493,10 +1600,6 @@ fn postprocess(schema: &mut Schema) -> Result<(), String> {
         );
     }
     Ok(())
-}
-
-fn snap_bases_have(schema: &Schema, bases: &[String], target: &str) -> bool {
-    schema.has_base(bases, target)
 }
 
 /// Helper for tests — verifies name lists dedup cleanly.

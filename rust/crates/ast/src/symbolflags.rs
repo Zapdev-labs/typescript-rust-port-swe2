@@ -2,8 +2,6 @@
 //
 // SymbolFlags
 
-use crate::flagdef::flag_type;
-
 flag_type! {
     pub struct SymbolFlags(pub u32);
 }
@@ -117,18 +115,26 @@ impl SymbolFlags {
     pub const FUNCTION_EXCLUDES: SymbolFlags =
         Self::VALUE.without(Self::FUNCTION.with(Self::VALUE_MODULE).with(Self::CLASS));
     /// class-interface mergability done in checker.ts
-    pub const CLASS_EXCLUDES: SymbolFlags = Self::VALUE
-        .with(Self::TYPE)
-        .without(Self::VALUE_MODULE.with(Self::INTERFACE).with(Self::FUNCTION));
+    pub const CLASS_EXCLUDES: SymbolFlags = Self::VALUE.with(Self::TYPE).without(
+        Self::VALUE_MODULE
+            .with(Self::INTERFACE)
+            .with(Self::FUNCTION),
+    );
     pub const INTERFACE_EXCLUDES: SymbolFlags =
         Self::TYPE.without(Self::INTERFACE.with(Self::CLASS));
     /// regular enums merge only with regular enums and modules
-    pub const REGULAR_ENUM_EXCLUDES: SymbolFlags =
-        Self::VALUE.with(Self::TYPE).without(Self::REGULAR_ENUM.with(Self::VALUE_MODULE));
+    pub const REGULAR_ENUM_EXCLUDES: SymbolFlags = Self::VALUE
+        .with(Self::TYPE)
+        .without(Self::REGULAR_ENUM.with(Self::VALUE_MODULE));
     /// const enums merge only with const enums
-    pub const CONST_ENUM_EXCLUDES: SymbolFlags = Self::VALUE.with(Self::TYPE).without(Self::CONST_ENUM);
-    pub const VALUE_MODULE_EXCLUDES: SymbolFlags =
-        Self::VALUE.without(Self::FUNCTION.with(Self::CLASS).with(Self::REGULAR_ENUM).with(Self::VALUE_MODULE));
+    pub const CONST_ENUM_EXCLUDES: SymbolFlags =
+        Self::VALUE.with(Self::TYPE).without(Self::CONST_ENUM);
+    pub const VALUE_MODULE_EXCLUDES: SymbolFlags = Self::VALUE.without(
+        Self::FUNCTION
+            .with(Self::CLASS)
+            .with(Self::REGULAR_ENUM)
+            .with(Self::VALUE_MODULE),
+    );
     pub const NAMESPACE_MODULE_EXCLUDES: SymbolFlags = Self::NONE;
     pub const METHOD_EXCLUDES: SymbolFlags = Self::VALUE.without(Self::METHOD);
     pub const GET_ACCESSOR_EXCLUDES: SymbolFlags =
@@ -161,6 +167,10 @@ impl SymbolFlags {
     pub const EXPORT_DOES_NOT_SUPPORT_DEFAULT_MODIFIER: SymbolFlags =
         SymbolFlags(!Self::EXPORT_SUPPORTS_DEFAULT_MODIFIER.0);
     pub const LATE_BINDING_CONTAINER: SymbolFlags = SymbolFlags(
-        Self::CLASS.0 | Self::INTERFACE.0 | Self::TYPE_LITERAL.0 | Self::OBJECT_LITERAL.0 | Self::FUNCTION.0,
+        Self::CLASS.0
+            | Self::INTERFACE.0
+            | Self::TYPE_LITERAL.0
+            | Self::OBJECT_LITERAL.0
+            | Self::FUNCTION.0,
     );
 }

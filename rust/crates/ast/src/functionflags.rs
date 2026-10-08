@@ -2,7 +2,6 @@
 //
 // FunctionFlags
 
-use crate::flagdef::flag_type;
 use crate::{Kind, Node};
 
 flag_type! {
@@ -36,10 +35,10 @@ pub fn get_function_flags(node: Option<&Node>) -> FunctionFlags {
                 flags |= FunctionFlags::ASYNC;
             }
         }
-        Kind::ArrowFunction => {
-            if crate::utilities::has_syntactic_modifier(node, crate::ModifierFlags::ASYNC) {
-                flags |= FunctionFlags::ASYNC;
-            }
+        Kind::ArrowFunction
+            if crate::utilities::has_syntactic_modifier(node, crate::ModifierFlags::ASYNC) =>
+        {
+            flags |= FunctionFlags::ASYNC;
         }
         _ => {}
     }

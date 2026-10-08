@@ -8,24 +8,27 @@ use tsc_tspath::{CaseSensitivity, RootedDirectoryPath, RootedFilePath, RootedPat
 use crate::fs::{FileInfo, FsError};
 use crate::vfs::{Entries, Vfs};
 
+/// Boxed function overrides used by [Replacements].
+type ReplFn0<R> = Box<dyn Fn() -> R + Send + Sync>;
+type ReplFn1<A, R> = Box<dyn Fn(&A) -> R + Send + Sync>;
+type ReplFn2<A, B, R> = Box<dyn for<'a, 'b> Fn(&'a A, &'b B) -> R + Send + Sync>;
+type ReplFn3<A, B, C, R> = Box<dyn Fn(&A, B, C) -> R + Send + Sync>;
+
 /// Replacements is wrapvfs.Replacements: per-method overrides for [wrap].
 /// None fields delegate to the wrapped [Vfs].
 #[derive(Default)]
 pub struct Replacements {
-    pub case_sensitivity: Option<Box<dyn Fn() -> CaseSensitivity + Send + Sync>>,
-    pub file_exists: Option<Box<dyn Fn(&RootedFilePath) -> bool + Send + Sync>>,
-    pub read_file: Option<Box<dyn Fn(&RootedFilePath) -> Option<String> + Send + Sync>>,
-    pub write_file: Option<Box<dyn Fn(&RootedFilePath, &str) -> Result<(), FsError> + Send + Sync>>,
-    pub append_file:
-        Option<Box<dyn Fn(&RootedFilePath, &str) -> Result<(), FsError> + Send + Sync>>,
-    pub remove: Option<Box<dyn Fn(&RootedPath) -> Result<(), FsError> + Send + Sync>>,
-    pub chtimes: Option<
-        Box<dyn Fn(&RootedPath, SystemTime, SystemTime) -> Result<(), FsError> + Send + Sync>,
-    >,
-    pub directory_exists: Option<Box<dyn Fn(&RootedDirectoryPath) -> bool + Send + Sync>>,
-    pub get_accessible_entries: Option<Box<dyn Fn(&RootedDirectoryPath) -> Entries + Send + Sync>>,
-    pub stat: Option<Box<dyn Fn(&RootedPath) -> Option<Arc<dyn FileInfo>> + Send + Sync>>,
-    pub realpath: Option<Box<dyn Fn(&RootedPath) -> RootedPath + Send + Sync>>,
+    pub case_sensitivity: Option<ReplFn0<CaseSensitivity>>,
+    pub file_exists: Option<ReplFn1<RootedFilePath, bool>>,
+    pub read_file: Option<ReplFn1<RootedFilePath, Option<String>>>,
+    pub write_file: Option<ReplFn2<RootedFilePath, str, Result<(), FsError>>>,
+    pub append_file: Option<ReplFn2<RootedFilePath, str, Result<(), FsError>>>,
+    pub remove: Option<ReplFn1<RootedPath, Result<(), FsError>>>,
+    pub chtimes: Option<ReplFn3<RootedPath, SystemTime, SystemTime, Result<(), FsError>>>,
+    pub directory_exists: Option<ReplFn1<RootedDirectoryPath, bool>>,
+    pub get_accessible_entries: Option<ReplFn1<RootedDirectoryPath, Entries>>,
+    pub stat: Option<ReplFn1<RootedPath, Option<Arc<dyn FileInfo>>>>,
+    pub realpath: Option<ReplFn1<RootedPath, RootedPath>>,
 }
 
 /// wrap is wrapvfs.Wrap.

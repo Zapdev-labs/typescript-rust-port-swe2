@@ -6,7 +6,6 @@
 #[repr(i16)]
 #[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Default, Debug)]
 pub enum Kind {
-
     #[default]
     Unknown = 0,
 
@@ -806,7 +805,9 @@ impl Kind {
             Kind::MinusMinusToken => "KindMinusMinusToken",
             Kind::LessThanLessThanToken => "KindLessThanLessThanToken",
             Kind::GreaterThanGreaterThanToken => "KindGreaterThanGreaterThanToken",
-            Kind::GreaterThanGreaterThanGreaterThanToken => "KindGreaterThanGreaterThanGreaterThanToken",
+            Kind::GreaterThanGreaterThanGreaterThanToken => {
+                "KindGreaterThanGreaterThanGreaterThanToken"
+            }
             Kind::AmpersandToken => "KindAmpersandToken",
             Kind::BarToken => "KindBarToken",
             Kind::CaretToken => "KindCaretToken",
@@ -829,7 +830,9 @@ impl Kind {
             Kind::PercentEqualsToken => "KindPercentEqualsToken",
             Kind::LessThanLessThanEqualsToken => "KindLessThanLessThanEqualsToken",
             Kind::GreaterThanGreaterThanEqualsToken => "KindGreaterThanGreaterThanEqualsToken",
-            Kind::GreaterThanGreaterThanGreaterThanEqualsToken => "KindGreaterThanGreaterThanGreaterThanEqualsToken",
+            Kind::GreaterThanGreaterThanGreaterThanEqualsToken => {
+                "KindGreaterThanGreaterThanGreaterThanEqualsToken"
+            }
             Kind::AmpersandEqualsToken => "KindAmpersandEqualsToken",
             Kind::BarEqualsToken => "KindBarEqualsToken",
             Kind::BarBarEqualsToken => "KindBarBarEqualsToken",
@@ -1165,7 +1168,9 @@ impl Kind {
             "KindMinusMinusToken" => Kind::MinusMinusToken,
             "KindLessThanLessThanToken" => Kind::LessThanLessThanToken,
             "KindGreaterThanGreaterThanToken" => Kind::GreaterThanGreaterThanToken,
-            "KindGreaterThanGreaterThanGreaterThanToken" => Kind::GreaterThanGreaterThanGreaterThanToken,
+            "KindGreaterThanGreaterThanGreaterThanToken" => {
+                Kind::GreaterThanGreaterThanGreaterThanToken
+            }
             "KindAmpersandToken" => Kind::AmpersandToken,
             "KindBarToken" => Kind::BarToken,
             "KindCaretToken" => Kind::CaretToken,
@@ -1188,7 +1193,9 @@ impl Kind {
             "KindPercentEqualsToken" => Kind::PercentEqualsToken,
             "KindLessThanLessThanEqualsToken" => Kind::LessThanLessThanEqualsToken,
             "KindGreaterThanGreaterThanEqualsToken" => Kind::GreaterThanGreaterThanEqualsToken,
-            "KindGreaterThanGreaterThanGreaterThanEqualsToken" => Kind::GreaterThanGreaterThanGreaterThanEqualsToken,
+            "KindGreaterThanGreaterThanGreaterThanEqualsToken" => {
+                Kind::GreaterThanGreaterThanGreaterThanEqualsToken
+            }
             "KindAmpersandEqualsToken" => Kind::AmpersandEqualsToken,
             "KindBarEqualsToken" => Kind::BarEqualsToken,
             "KindBarBarEqualsToken" => Kind::BarBarEqualsToken,
@@ -1475,142 +1482,476 @@ impl Kind {
 }
 
 impl Kind {
-        /// `IsTriviaKind`.
-        pub fn is_trivia_kind(&self) -> bool {
-            matches!(self, Kind::SingleLineCommentTrivia | Kind::MultiLineCommentTrivia | Kind::NewLineTrivia | Kind::WhitespaceTrivia | Kind::ConflictMarkerTrivia)
-        }
-        /// `IsLiteralKind`.
-        pub fn is_literal_kind(&self) -> bool {
-            *self >= Kind::FIRST_LITERAL_TOKEN && *self <= Kind::LAST_LITERAL_TOKEN
-        }
-        /// `IsPseudoLiteralKind`.
-        pub fn is_pseudo_literal_kind(&self) -> bool {
-            matches!(self, Kind::TemplateHead | Kind::TemplateMiddle | Kind::TemplateTail)
-        }
-        /// `IsPunctuationKind`.
-        pub fn is_punctuation_kind(&self) -> bool {
-            *self >= Kind::FIRST_PUNCTUATION && *self <= Kind::LAST_PUNCTUATION
-        }
-        /// `IsKeywordKind`.
-        pub fn is_keyword_kind(&self) -> bool {
-            *self >= Kind::FIRST_KEYWORD && *self <= Kind::LAST_KEYWORD
-        }
-        /// `IsModifierKind`.
-        pub fn is_modifier_kind(&self) -> bool {
-            matches!(self, Kind::AbstractKeyword | Kind::AccessorKeyword | Kind::AsyncKeyword | Kind::ConstKeyword | Kind::DeclareKeyword | Kind::DefaultKeyword | Kind::ExportKeyword | Kind::InKeyword | Kind::PrivateKeyword | Kind::ProtectedKeyword | Kind::PublicKeyword | Kind::ReadonlyKeyword | Kind::OutKeyword | Kind::OverrideKeyword | Kind::StaticKeyword)
-        }
-        /// `IsKeywordTypeKind`.
-        pub fn is_keyword_type_kind(&self) -> bool {
-            matches!(self, Kind::AnyKeyword | Kind::BigIntKeyword | Kind::BooleanKeyword | Kind::IntrinsicKeyword | Kind::NeverKeyword | Kind::NumberKeyword | Kind::ObjectKeyword | Kind::StringKeyword | Kind::SymbolKeyword | Kind::UndefinedKeyword | Kind::UnknownKeyword | Kind::VoidKeyword)
-        }
-        /// `IsKeywordExpressionKind`.
-        pub fn is_keyword_expression_kind(&self) -> bool {
-            matches!(self, Kind::NullKeyword | Kind::TrueKeyword | Kind::FalseKeyword | Kind::ThisKeyword | Kind::SuperKeyword | Kind::ImportKeyword)
-        }
-        /// `IsTokenKind`.
-        pub fn is_token_kind(&self) -> bool {
-            *self >= Kind::FIRST_TOKEN && *self <= Kind::LAST_TOKEN
-        }
-        /// `IsJsxTokenKind`.
-        pub fn is_jsx_token_kind(&self) -> bool {
-            matches!(self, Kind::LessThanSlashToken | Kind::EndOfFile | Kind::ConflictMarkerTrivia | Kind::JsxText | Kind::JsxTextAllWhiteSpaces | Kind::OpenBraceToken | Kind::LessThanToken)
-        }
-        /// `IsJSDocNodeKind`.
-        pub fn is_js_doc_node_kind(&self) -> bool {
-            *self >= Kind::FIRST_J_S_DOC_NODE && *self <= Kind::LAST_J_S_DOC_NODE
-        }
-        /// `IsImportPhaseModifierKind`.
-        pub fn is_import_phase_modifier_kind(&self) -> bool {
-            matches!(self, Kind::TypeKeyword | Kind::DeferKeyword | Kind::SourceKeyword)
-        }
-        /// `IsPostfixUnaryOperator`.
-        pub fn is_postfix_unary_operator(&self) -> bool {
-            matches!(self, Kind::PlusPlusToken | Kind::MinusMinusToken)
-        }
-        /// `IsPrefixUnaryOperator`.
-        pub fn is_prefix_unary_operator(&self) -> bool {
-            matches!(self, Kind::PlusToken | Kind::MinusToken | Kind::TildeToken | Kind::ExclamationToken | Kind::PlusPlusToken | Kind::MinusMinusToken)
-        }
-        /// `IsAssignmentOperator`.
-        pub fn is_assignment_operator(&self) -> bool {
-            matches!(self, Kind::EqualsToken | Kind::PlusEqualsToken | Kind::MinusEqualsToken | Kind::AsteriskAsteriskEqualsToken | Kind::AsteriskEqualsToken | Kind::SlashEqualsToken | Kind::PercentEqualsToken | Kind::AmpersandEqualsToken | Kind::BarEqualsToken | Kind::CaretEqualsToken | Kind::LessThanLessThanEqualsToken | Kind::GreaterThanGreaterThanGreaterThanEqualsToken | Kind::GreaterThanGreaterThanEqualsToken | Kind::BarBarEqualsToken | Kind::AmpersandAmpersandEqualsToken | Kind::QuestionQuestionEqualsToken)
-        }
-        /// `IsBinaryOperator`.
-        pub fn is_binary_operator(&self) -> bool {
-            matches!(self, Kind::QuestionQuestionToken | Kind::AsteriskAsteriskToken | Kind::AsteriskToken | Kind::SlashToken | Kind::PercentToken | Kind::PlusToken | Kind::MinusToken | Kind::LessThanLessThanToken | Kind::GreaterThanGreaterThanToken | Kind::GreaterThanGreaterThanGreaterThanToken | Kind::LessThanToken | Kind::LessThanEqualsToken | Kind::GreaterThanToken | Kind::GreaterThanEqualsToken | Kind::InstanceOfKeyword | Kind::InKeyword | Kind::EqualsEqualsToken | Kind::EqualsEqualsEqualsToken | Kind::ExclamationEqualsEqualsToken | Kind::ExclamationEqualsToken | Kind::AmpersandToken | Kind::BarToken | Kind::CaretToken | Kind::AmpersandAmpersandToken | Kind::BarBarToken | Kind::EqualsToken | Kind::PlusEqualsToken | Kind::MinusEqualsToken | Kind::AsteriskAsteriskEqualsToken | Kind::AsteriskEqualsToken | Kind::SlashEqualsToken | Kind::PercentEqualsToken | Kind::AmpersandEqualsToken | Kind::BarEqualsToken | Kind::CaretEqualsToken | Kind::LessThanLessThanEqualsToken | Kind::GreaterThanGreaterThanGreaterThanEqualsToken | Kind::GreaterThanGreaterThanEqualsToken | Kind::BarBarEqualsToken | Kind::AmpersandAmpersandEqualsToken | Kind::QuestionQuestionEqualsToken | Kind::CommaToken)
-        }
-        /// `IsExponentiationOperator`.
-        pub fn is_exponentiation_operator(&self) -> bool {
-            matches!(self, Kind::AsteriskAsteriskToken)
-        }
-        /// `IsMultiplicativeOperator`.
-        pub fn is_multiplicative_operator(&self) -> bool {
-            matches!(self, Kind::AsteriskToken | Kind::SlashToken | Kind::PercentToken)
-        }
-        /// `IsMultiplicativeOperatorOrHigher`.
-        pub fn is_multiplicative_operator_or_higher(&self) -> bool {
-            matches!(self, Kind::AsteriskAsteriskToken | Kind::AsteriskToken | Kind::SlashToken | Kind::PercentToken)
-        }
-        /// `IsAdditiveOperator`.
-        pub fn is_additive_operator(&self) -> bool {
-            matches!(self, Kind::PlusToken | Kind::MinusToken)
-        }
-        /// `IsAdditiveOperatorOrHigher`.
-        pub fn is_additive_operator_or_higher(&self) -> bool {
-            matches!(self, Kind::AsteriskAsteriskToken | Kind::AsteriskToken | Kind::SlashToken | Kind::PercentToken | Kind::PlusToken | Kind::MinusToken)
-        }
-        /// `IsShiftOperator`.
-        pub fn is_shift_operator(&self) -> bool {
-            matches!(self, Kind::LessThanLessThanToken | Kind::GreaterThanGreaterThanToken | Kind::GreaterThanGreaterThanGreaterThanToken)
-        }
-        /// `IsShiftOperatorOrHigher`.
-        pub fn is_shift_operator_or_higher(&self) -> bool {
-            matches!(self, Kind::AsteriskAsteriskToken | Kind::AsteriskToken | Kind::SlashToken | Kind::PercentToken | Kind::PlusToken | Kind::MinusToken | Kind::LessThanLessThanToken | Kind::GreaterThanGreaterThanToken | Kind::GreaterThanGreaterThanGreaterThanToken)
-        }
-        /// `IsRelationalOperator`.
-        pub fn is_relational_operator(&self) -> bool {
-            matches!(self, Kind::LessThanToken | Kind::LessThanEqualsToken | Kind::GreaterThanToken | Kind::GreaterThanEqualsToken | Kind::InstanceOfKeyword | Kind::InKeyword)
-        }
-        /// `IsRelationalOperatorOrHigher`.
-        pub fn is_relational_operator_or_higher(&self) -> bool {
-            matches!(self, Kind::AsteriskAsteriskToken | Kind::AsteriskToken | Kind::SlashToken | Kind::PercentToken | Kind::PlusToken | Kind::MinusToken | Kind::LessThanLessThanToken | Kind::GreaterThanGreaterThanToken | Kind::GreaterThanGreaterThanGreaterThanToken | Kind::LessThanToken | Kind::LessThanEqualsToken | Kind::GreaterThanToken | Kind::GreaterThanEqualsToken | Kind::InstanceOfKeyword | Kind::InKeyword)
-        }
-        /// `IsEqualityOperator`.
-        pub fn is_equality_operator(&self) -> bool {
-            matches!(self, Kind::EqualsEqualsToken | Kind::EqualsEqualsEqualsToken | Kind::ExclamationEqualsEqualsToken | Kind::ExclamationEqualsToken)
-        }
-        /// `IsEqualityOperatorOrHigher`.
-        pub fn is_equality_operator_or_higher(&self) -> bool {
-            matches!(self, Kind::AsteriskAsteriskToken | Kind::AsteriskToken | Kind::SlashToken | Kind::PercentToken | Kind::PlusToken | Kind::MinusToken | Kind::LessThanLessThanToken | Kind::GreaterThanGreaterThanToken | Kind::GreaterThanGreaterThanGreaterThanToken | Kind::LessThanToken | Kind::LessThanEqualsToken | Kind::GreaterThanToken | Kind::GreaterThanEqualsToken | Kind::InstanceOfKeyword | Kind::InKeyword | Kind::EqualsEqualsToken | Kind::EqualsEqualsEqualsToken | Kind::ExclamationEqualsEqualsToken | Kind::ExclamationEqualsToken)
-        }
-        /// `IsBitwiseOperator`.
-        pub fn is_bitwise_operator(&self) -> bool {
-            matches!(self, Kind::AmpersandToken | Kind::BarToken | Kind::CaretToken)
-        }
-        /// `IsBitwiseOperatorOrHigher`.
-        pub fn is_bitwise_operator_or_higher(&self) -> bool {
-            matches!(self, Kind::AsteriskAsteriskToken | Kind::AsteriskToken | Kind::SlashToken | Kind::PercentToken | Kind::PlusToken | Kind::MinusToken | Kind::LessThanLessThanToken | Kind::GreaterThanGreaterThanToken | Kind::GreaterThanGreaterThanGreaterThanToken | Kind::LessThanToken | Kind::LessThanEqualsToken | Kind::GreaterThanToken | Kind::GreaterThanEqualsToken | Kind::InstanceOfKeyword | Kind::InKeyword | Kind::EqualsEqualsToken | Kind::EqualsEqualsEqualsToken | Kind::ExclamationEqualsEqualsToken | Kind::ExclamationEqualsToken | Kind::AmpersandToken | Kind::BarToken | Kind::CaretToken)
-        }
-        /// `IsLogicalOperator`.
-        pub fn is_logical_operator(&self) -> bool {
-            matches!(self, Kind::AmpersandAmpersandToken | Kind::BarBarToken)
-        }
-        /// `IsLogicalOperatorOrHigher`.
-        pub fn is_logical_operator_or_higher(&self) -> bool {
-            matches!(self, Kind::AsteriskAsteriskToken | Kind::AsteriskToken | Kind::SlashToken | Kind::PercentToken | Kind::PlusToken | Kind::MinusToken | Kind::LessThanLessThanToken | Kind::GreaterThanGreaterThanToken | Kind::GreaterThanGreaterThanGreaterThanToken | Kind::LessThanToken | Kind::LessThanEqualsToken | Kind::GreaterThanToken | Kind::GreaterThanEqualsToken | Kind::InstanceOfKeyword | Kind::InKeyword | Kind::EqualsEqualsToken | Kind::EqualsEqualsEqualsToken | Kind::ExclamationEqualsEqualsToken | Kind::ExclamationEqualsToken | Kind::AmpersandToken | Kind::BarToken | Kind::CaretToken | Kind::AmpersandAmpersandToken | Kind::BarBarToken)
-        }
-        /// `IsCompoundAssignmentOperator`.
-        pub fn is_compound_assignment_operator(&self) -> bool {
-            matches!(self, Kind::PlusEqualsToken | Kind::MinusEqualsToken | Kind::AsteriskAsteriskEqualsToken | Kind::AsteriskEqualsToken | Kind::SlashEqualsToken | Kind::PercentEqualsToken | Kind::AmpersandEqualsToken | Kind::BarEqualsToken | Kind::CaretEqualsToken | Kind::LessThanLessThanEqualsToken | Kind::GreaterThanGreaterThanGreaterThanEqualsToken | Kind::GreaterThanGreaterThanEqualsToken | Kind::BarBarEqualsToken | Kind::AmpersandAmpersandEqualsToken | Kind::QuestionQuestionEqualsToken)
-        }
-        /// `IsAssignmentOperatorOrHigher`.
-        pub fn is_assignment_operator_or_higher(&self) -> bool {
-            matches!(self, Kind::QuestionQuestionToken | Kind::AsteriskAsteriskToken | Kind::AsteriskToken | Kind::SlashToken | Kind::PercentToken | Kind::PlusToken | Kind::MinusToken | Kind::LessThanLessThanToken | Kind::GreaterThanGreaterThanToken | Kind::GreaterThanGreaterThanGreaterThanToken | Kind::LessThanToken | Kind::LessThanEqualsToken | Kind::GreaterThanToken | Kind::GreaterThanEqualsToken | Kind::InstanceOfKeyword | Kind::InKeyword | Kind::EqualsEqualsToken | Kind::EqualsEqualsEqualsToken | Kind::ExclamationEqualsEqualsToken | Kind::ExclamationEqualsToken | Kind::AmpersandToken | Kind::BarToken | Kind::CaretToken | Kind::AmpersandAmpersandToken | Kind::BarBarToken | Kind::EqualsToken | Kind::PlusEqualsToken | Kind::MinusEqualsToken | Kind::AsteriskAsteriskEqualsToken | Kind::AsteriskEqualsToken | Kind::SlashEqualsToken | Kind::PercentEqualsToken | Kind::AmpersandEqualsToken | Kind::BarEqualsToken | Kind::CaretEqualsToken | Kind::LessThanLessThanEqualsToken | Kind::GreaterThanGreaterThanGreaterThanEqualsToken | Kind::GreaterThanGreaterThanEqualsToken | Kind::BarBarEqualsToken | Kind::AmpersandAmpersandEqualsToken | Kind::QuestionQuestionEqualsToken)
-        }
-        /// `IsLogicalOrCoalescingAssignmentOperator`.
-        pub fn is_logical_or_coalescing_assignment_operator(&self) -> bool {
-            matches!(self, Kind::AmpersandAmpersandEqualsToken | Kind::BarBarEqualsToken | Kind::QuestionQuestionEqualsToken)
-        }
+    /// `IsTriviaKind`.
+    pub fn is_trivia_kind(&self) -> bool {
+        matches!(
+            self,
+            Kind::SingleLineCommentTrivia
+                | Kind::MultiLineCommentTrivia
+                | Kind::NewLineTrivia
+                | Kind::WhitespaceTrivia
+                | Kind::ConflictMarkerTrivia
+        )
+    }
+    /// `IsLiteralKind`.
+    pub fn is_literal_kind(&self) -> bool {
+        *self >= Kind::FIRST_LITERAL_TOKEN && *self <= Kind::LAST_LITERAL_TOKEN
+    }
+    /// `IsPseudoLiteralKind`.
+    pub fn is_pseudo_literal_kind(&self) -> bool {
+        matches!(
+            self,
+            Kind::TemplateHead | Kind::TemplateMiddle | Kind::TemplateTail
+        )
+    }
+    /// `IsPunctuationKind`.
+    pub fn is_punctuation_kind(&self) -> bool {
+        *self >= Kind::FIRST_PUNCTUATION && *self <= Kind::LAST_PUNCTUATION
+    }
+    /// `IsKeywordKind`.
+    pub fn is_keyword_kind(&self) -> bool {
+        *self >= Kind::FIRST_KEYWORD && *self <= Kind::LAST_KEYWORD
+    }
+    /// `IsModifierKind`.
+    pub fn is_modifier_kind(&self) -> bool {
+        matches!(
+            self,
+            Kind::AbstractKeyword
+                | Kind::AccessorKeyword
+                | Kind::AsyncKeyword
+                | Kind::ConstKeyword
+                | Kind::DeclareKeyword
+                | Kind::DefaultKeyword
+                | Kind::ExportKeyword
+                | Kind::InKeyword
+                | Kind::PrivateKeyword
+                | Kind::ProtectedKeyword
+                | Kind::PublicKeyword
+                | Kind::ReadonlyKeyword
+                | Kind::OutKeyword
+                | Kind::OverrideKeyword
+                | Kind::StaticKeyword
+        )
+    }
+    /// `IsKeywordTypeKind`.
+    pub fn is_keyword_type_kind(&self) -> bool {
+        matches!(
+            self,
+            Kind::AnyKeyword
+                | Kind::BigIntKeyword
+                | Kind::BooleanKeyword
+                | Kind::IntrinsicKeyword
+                | Kind::NeverKeyword
+                | Kind::NumberKeyword
+                | Kind::ObjectKeyword
+                | Kind::StringKeyword
+                | Kind::SymbolKeyword
+                | Kind::UndefinedKeyword
+                | Kind::UnknownKeyword
+                | Kind::VoidKeyword
+        )
+    }
+    /// `IsKeywordExpressionKind`.
+    pub fn is_keyword_expression_kind(&self) -> bool {
+        matches!(
+            self,
+            Kind::NullKeyword
+                | Kind::TrueKeyword
+                | Kind::FalseKeyword
+                | Kind::ThisKeyword
+                | Kind::SuperKeyword
+                | Kind::ImportKeyword
+        )
+    }
+    /// `IsTokenKind`.
+    pub fn is_token_kind(&self) -> bool {
+        *self >= Kind::FIRST_TOKEN && *self <= Kind::LAST_TOKEN
+    }
+    /// `IsJsxTokenKind`.
+    pub fn is_jsx_token_kind(&self) -> bool {
+        matches!(
+            self,
+            Kind::LessThanSlashToken
+                | Kind::EndOfFile
+                | Kind::ConflictMarkerTrivia
+                | Kind::JsxText
+                | Kind::JsxTextAllWhiteSpaces
+                | Kind::OpenBraceToken
+                | Kind::LessThanToken
+        )
+    }
+    /// `IsJSDocNodeKind`.
+    pub fn is_js_doc_node_kind(&self) -> bool {
+        *self >= Kind::FIRST_J_S_DOC_NODE && *self <= Kind::LAST_J_S_DOC_NODE
+    }
+    /// `IsImportPhaseModifierKind`.
+    pub fn is_import_phase_modifier_kind(&self) -> bool {
+        matches!(
+            self,
+            Kind::TypeKeyword | Kind::DeferKeyword | Kind::SourceKeyword
+        )
+    }
+    /// `IsPostfixUnaryOperator`.
+    pub fn is_postfix_unary_operator(&self) -> bool {
+        matches!(self, Kind::PlusPlusToken | Kind::MinusMinusToken)
+    }
+    /// `IsPrefixUnaryOperator`.
+    pub fn is_prefix_unary_operator(&self) -> bool {
+        matches!(
+            self,
+            Kind::PlusToken
+                | Kind::MinusToken
+                | Kind::TildeToken
+                | Kind::ExclamationToken
+                | Kind::PlusPlusToken
+                | Kind::MinusMinusToken
+        )
+    }
+    /// `IsAssignmentOperator`.
+    pub fn is_assignment_operator(&self) -> bool {
+        matches!(
+            self,
+            Kind::EqualsToken
+                | Kind::PlusEqualsToken
+                | Kind::MinusEqualsToken
+                | Kind::AsteriskAsteriskEqualsToken
+                | Kind::AsteriskEqualsToken
+                | Kind::SlashEqualsToken
+                | Kind::PercentEqualsToken
+                | Kind::AmpersandEqualsToken
+                | Kind::BarEqualsToken
+                | Kind::CaretEqualsToken
+                | Kind::LessThanLessThanEqualsToken
+                | Kind::GreaterThanGreaterThanGreaterThanEqualsToken
+                | Kind::GreaterThanGreaterThanEqualsToken
+                | Kind::BarBarEqualsToken
+                | Kind::AmpersandAmpersandEqualsToken
+                | Kind::QuestionQuestionEqualsToken
+        )
+    }
+    /// `IsBinaryOperator`.
+    pub fn is_binary_operator(&self) -> bool {
+        matches!(
+            self,
+            Kind::QuestionQuestionToken
+                | Kind::AsteriskAsteriskToken
+                | Kind::AsteriskToken
+                | Kind::SlashToken
+                | Kind::PercentToken
+                | Kind::PlusToken
+                | Kind::MinusToken
+                | Kind::LessThanLessThanToken
+                | Kind::GreaterThanGreaterThanToken
+                | Kind::GreaterThanGreaterThanGreaterThanToken
+                | Kind::LessThanToken
+                | Kind::LessThanEqualsToken
+                | Kind::GreaterThanToken
+                | Kind::GreaterThanEqualsToken
+                | Kind::InstanceOfKeyword
+                | Kind::InKeyword
+                | Kind::EqualsEqualsToken
+                | Kind::EqualsEqualsEqualsToken
+                | Kind::ExclamationEqualsEqualsToken
+                | Kind::ExclamationEqualsToken
+                | Kind::AmpersandToken
+                | Kind::BarToken
+                | Kind::CaretToken
+                | Kind::AmpersandAmpersandToken
+                | Kind::BarBarToken
+                | Kind::EqualsToken
+                | Kind::PlusEqualsToken
+                | Kind::MinusEqualsToken
+                | Kind::AsteriskAsteriskEqualsToken
+                | Kind::AsteriskEqualsToken
+                | Kind::SlashEqualsToken
+                | Kind::PercentEqualsToken
+                | Kind::AmpersandEqualsToken
+                | Kind::BarEqualsToken
+                | Kind::CaretEqualsToken
+                | Kind::LessThanLessThanEqualsToken
+                | Kind::GreaterThanGreaterThanGreaterThanEqualsToken
+                | Kind::GreaterThanGreaterThanEqualsToken
+                | Kind::BarBarEqualsToken
+                | Kind::AmpersandAmpersandEqualsToken
+                | Kind::QuestionQuestionEqualsToken
+                | Kind::CommaToken
+        )
+    }
+    /// `IsExponentiationOperator`.
+    pub fn is_exponentiation_operator(&self) -> bool {
+        matches!(self, Kind::AsteriskAsteriskToken)
+    }
+    /// `IsMultiplicativeOperator`.
+    pub fn is_multiplicative_operator(&self) -> bool {
+        matches!(
+            self,
+            Kind::AsteriskToken | Kind::SlashToken | Kind::PercentToken
+        )
+    }
+    /// `IsMultiplicativeOperatorOrHigher`.
+    pub fn is_multiplicative_operator_or_higher(&self) -> bool {
+        matches!(
+            self,
+            Kind::AsteriskAsteriskToken
+                | Kind::AsteriskToken
+                | Kind::SlashToken
+                | Kind::PercentToken
+        )
+    }
+    /// `IsAdditiveOperator`.
+    pub fn is_additive_operator(&self) -> bool {
+        matches!(self, Kind::PlusToken | Kind::MinusToken)
+    }
+    /// `IsAdditiveOperatorOrHigher`.
+    pub fn is_additive_operator_or_higher(&self) -> bool {
+        matches!(
+            self,
+            Kind::AsteriskAsteriskToken
+                | Kind::AsteriskToken
+                | Kind::SlashToken
+                | Kind::PercentToken
+                | Kind::PlusToken
+                | Kind::MinusToken
+        )
+    }
+    /// `IsShiftOperator`.
+    pub fn is_shift_operator(&self) -> bool {
+        matches!(
+            self,
+            Kind::LessThanLessThanToken
+                | Kind::GreaterThanGreaterThanToken
+                | Kind::GreaterThanGreaterThanGreaterThanToken
+        )
+    }
+    /// `IsShiftOperatorOrHigher`.
+    pub fn is_shift_operator_or_higher(&self) -> bool {
+        matches!(
+            self,
+            Kind::AsteriskAsteriskToken
+                | Kind::AsteriskToken
+                | Kind::SlashToken
+                | Kind::PercentToken
+                | Kind::PlusToken
+                | Kind::MinusToken
+                | Kind::LessThanLessThanToken
+                | Kind::GreaterThanGreaterThanToken
+                | Kind::GreaterThanGreaterThanGreaterThanToken
+        )
+    }
+    /// `IsRelationalOperator`.
+    pub fn is_relational_operator(&self) -> bool {
+        matches!(
+            self,
+            Kind::LessThanToken
+                | Kind::LessThanEqualsToken
+                | Kind::GreaterThanToken
+                | Kind::GreaterThanEqualsToken
+                | Kind::InstanceOfKeyword
+                | Kind::InKeyword
+        )
+    }
+    /// `IsRelationalOperatorOrHigher`.
+    pub fn is_relational_operator_or_higher(&self) -> bool {
+        matches!(
+            self,
+            Kind::AsteriskAsteriskToken
+                | Kind::AsteriskToken
+                | Kind::SlashToken
+                | Kind::PercentToken
+                | Kind::PlusToken
+                | Kind::MinusToken
+                | Kind::LessThanLessThanToken
+                | Kind::GreaterThanGreaterThanToken
+                | Kind::GreaterThanGreaterThanGreaterThanToken
+                | Kind::LessThanToken
+                | Kind::LessThanEqualsToken
+                | Kind::GreaterThanToken
+                | Kind::GreaterThanEqualsToken
+                | Kind::InstanceOfKeyword
+                | Kind::InKeyword
+        )
+    }
+    /// `IsEqualityOperator`.
+    pub fn is_equality_operator(&self) -> bool {
+        matches!(
+            self,
+            Kind::EqualsEqualsToken
+                | Kind::EqualsEqualsEqualsToken
+                | Kind::ExclamationEqualsEqualsToken
+                | Kind::ExclamationEqualsToken
+        )
+    }
+    /// `IsEqualityOperatorOrHigher`.
+    pub fn is_equality_operator_or_higher(&self) -> bool {
+        matches!(
+            self,
+            Kind::AsteriskAsteriskToken
+                | Kind::AsteriskToken
+                | Kind::SlashToken
+                | Kind::PercentToken
+                | Kind::PlusToken
+                | Kind::MinusToken
+                | Kind::LessThanLessThanToken
+                | Kind::GreaterThanGreaterThanToken
+                | Kind::GreaterThanGreaterThanGreaterThanToken
+                | Kind::LessThanToken
+                | Kind::LessThanEqualsToken
+                | Kind::GreaterThanToken
+                | Kind::GreaterThanEqualsToken
+                | Kind::InstanceOfKeyword
+                | Kind::InKeyword
+                | Kind::EqualsEqualsToken
+                | Kind::EqualsEqualsEqualsToken
+                | Kind::ExclamationEqualsEqualsToken
+                | Kind::ExclamationEqualsToken
+        )
+    }
+    /// `IsBitwiseOperator`.
+    pub fn is_bitwise_operator(&self) -> bool {
+        matches!(
+            self,
+            Kind::AmpersandToken | Kind::BarToken | Kind::CaretToken
+        )
+    }
+    /// `IsBitwiseOperatorOrHigher`.
+    pub fn is_bitwise_operator_or_higher(&self) -> bool {
+        matches!(
+            self,
+            Kind::AsteriskAsteriskToken
+                | Kind::AsteriskToken
+                | Kind::SlashToken
+                | Kind::PercentToken
+                | Kind::PlusToken
+                | Kind::MinusToken
+                | Kind::LessThanLessThanToken
+                | Kind::GreaterThanGreaterThanToken
+                | Kind::GreaterThanGreaterThanGreaterThanToken
+                | Kind::LessThanToken
+                | Kind::LessThanEqualsToken
+                | Kind::GreaterThanToken
+                | Kind::GreaterThanEqualsToken
+                | Kind::InstanceOfKeyword
+                | Kind::InKeyword
+                | Kind::EqualsEqualsToken
+                | Kind::EqualsEqualsEqualsToken
+                | Kind::ExclamationEqualsEqualsToken
+                | Kind::ExclamationEqualsToken
+                | Kind::AmpersandToken
+                | Kind::BarToken
+                | Kind::CaretToken
+        )
+    }
+    /// `IsLogicalOperator`.
+    pub fn is_logical_operator(&self) -> bool {
+        matches!(self, Kind::AmpersandAmpersandToken | Kind::BarBarToken)
+    }
+    /// `IsLogicalOperatorOrHigher`.
+    pub fn is_logical_operator_or_higher(&self) -> bool {
+        matches!(
+            self,
+            Kind::AsteriskAsteriskToken
+                | Kind::AsteriskToken
+                | Kind::SlashToken
+                | Kind::PercentToken
+                | Kind::PlusToken
+                | Kind::MinusToken
+                | Kind::LessThanLessThanToken
+                | Kind::GreaterThanGreaterThanToken
+                | Kind::GreaterThanGreaterThanGreaterThanToken
+                | Kind::LessThanToken
+                | Kind::LessThanEqualsToken
+                | Kind::GreaterThanToken
+                | Kind::GreaterThanEqualsToken
+                | Kind::InstanceOfKeyword
+                | Kind::InKeyword
+                | Kind::EqualsEqualsToken
+                | Kind::EqualsEqualsEqualsToken
+                | Kind::ExclamationEqualsEqualsToken
+                | Kind::ExclamationEqualsToken
+                | Kind::AmpersandToken
+                | Kind::BarToken
+                | Kind::CaretToken
+                | Kind::AmpersandAmpersandToken
+                | Kind::BarBarToken
+        )
+    }
+    /// `IsCompoundAssignmentOperator`.
+    pub fn is_compound_assignment_operator(&self) -> bool {
+        matches!(
+            self,
+            Kind::PlusEqualsToken
+                | Kind::MinusEqualsToken
+                | Kind::AsteriskAsteriskEqualsToken
+                | Kind::AsteriskEqualsToken
+                | Kind::SlashEqualsToken
+                | Kind::PercentEqualsToken
+                | Kind::AmpersandEqualsToken
+                | Kind::BarEqualsToken
+                | Kind::CaretEqualsToken
+                | Kind::LessThanLessThanEqualsToken
+                | Kind::GreaterThanGreaterThanGreaterThanEqualsToken
+                | Kind::GreaterThanGreaterThanEqualsToken
+                | Kind::BarBarEqualsToken
+                | Kind::AmpersandAmpersandEqualsToken
+                | Kind::QuestionQuestionEqualsToken
+        )
+    }
+    /// `IsAssignmentOperatorOrHigher`.
+    pub fn is_assignment_operator_or_higher(&self) -> bool {
+        matches!(
+            self,
+            Kind::QuestionQuestionToken
+                | Kind::AsteriskAsteriskToken
+                | Kind::AsteriskToken
+                | Kind::SlashToken
+                | Kind::PercentToken
+                | Kind::PlusToken
+                | Kind::MinusToken
+                | Kind::LessThanLessThanToken
+                | Kind::GreaterThanGreaterThanToken
+                | Kind::GreaterThanGreaterThanGreaterThanToken
+                | Kind::LessThanToken
+                | Kind::LessThanEqualsToken
+                | Kind::GreaterThanToken
+                | Kind::GreaterThanEqualsToken
+                | Kind::InstanceOfKeyword
+                | Kind::InKeyword
+                | Kind::EqualsEqualsToken
+                | Kind::EqualsEqualsEqualsToken
+                | Kind::ExclamationEqualsEqualsToken
+                | Kind::ExclamationEqualsToken
+                | Kind::AmpersandToken
+                | Kind::BarToken
+                | Kind::CaretToken
+                | Kind::AmpersandAmpersandToken
+                | Kind::BarBarToken
+                | Kind::EqualsToken
+                | Kind::PlusEqualsToken
+                | Kind::MinusEqualsToken
+                | Kind::AsteriskAsteriskEqualsToken
+                | Kind::AsteriskEqualsToken
+                | Kind::SlashEqualsToken
+                | Kind::PercentEqualsToken
+                | Kind::AmpersandEqualsToken
+                | Kind::BarEqualsToken
+                | Kind::CaretEqualsToken
+                | Kind::LessThanLessThanEqualsToken
+                | Kind::GreaterThanGreaterThanGreaterThanEqualsToken
+                | Kind::GreaterThanGreaterThanEqualsToken
+                | Kind::BarBarEqualsToken
+                | Kind::AmpersandAmpersandEqualsToken
+                | Kind::QuestionQuestionEqualsToken
+        )
+    }
+    /// `IsLogicalOrCoalescingAssignmentOperator`.
+    pub fn is_logical_or_coalescing_assignment_operator(&self) -> bool {
+        matches!(
+            self,
+            Kind::AmpersandAmpersandEqualsToken
+                | Kind::BarBarEqualsToken
+                | Kind::QuestionQuestionEqualsToken
+        )
+    }
 }
 
 // `type XSyntaxKind = Kind` aliases — the kind sets they
@@ -1619,62 +1960,491 @@ impl Kind {
     /// `TriviaSyntaxKind` kinds.
     #[allow(dead_code)]
     pub fn is_is_trivia(&self) -> bool {
-        matches!(self, Kind::SingleLineCommentTrivia | Kind::MultiLineCommentTrivia | Kind::NewLineTrivia | Kind::WhitespaceTrivia | Kind::ConflictMarkerTrivia)
+        matches!(
+            self,
+            Kind::SingleLineCommentTrivia
+                | Kind::MultiLineCommentTrivia
+                | Kind::NewLineTrivia
+                | Kind::WhitespaceTrivia
+                | Kind::ConflictMarkerTrivia
+        )
     }
     /// `LiteralSyntaxKind` kinds.
     #[allow(dead_code)]
     pub fn is_is_literal(&self) -> bool {
-        matches!(self, Kind::NumericLiteral | Kind::BigIntLiteral | Kind::StringLiteral | Kind::JsxText | Kind::JsxTextAllWhiteSpaces | Kind::RegularExpressionLiteral | Kind::NoSubstitutionTemplateLiteral)
+        matches!(
+            self,
+            Kind::NumericLiteral
+                | Kind::BigIntLiteral
+                | Kind::StringLiteral
+                | Kind::JsxText
+                | Kind::JsxTextAllWhiteSpaces
+                | Kind::RegularExpressionLiteral
+                | Kind::NoSubstitutionTemplateLiteral
+        )
     }
     /// `PseudoLiteralSyntaxKind` kinds.
     #[allow(dead_code)]
     pub fn is_is_pseudo_literal(&self) -> bool {
-        matches!(self, Kind::TemplateHead | Kind::TemplateMiddle | Kind::TemplateTail)
+        matches!(
+            self,
+            Kind::TemplateHead | Kind::TemplateMiddle | Kind::TemplateTail
+        )
     }
     /// `PunctuationSyntaxKind` kinds.
     #[allow(dead_code)]
     pub fn is_is_punctuation(&self) -> bool {
-        matches!(self, Kind::OpenBraceToken | Kind::CloseBraceToken | Kind::OpenParenToken | Kind::CloseParenToken | Kind::OpenBracketToken | Kind::CloseBracketToken | Kind::DotToken | Kind::DotDotDotToken | Kind::SemicolonToken | Kind::CommaToken | Kind::QuestionDotToken | Kind::LessThanToken | Kind::LessThanSlashToken | Kind::GreaterThanToken | Kind::LessThanEqualsToken | Kind::GreaterThanEqualsToken | Kind::EqualsEqualsToken | Kind::ExclamationEqualsToken | Kind::EqualsEqualsEqualsToken | Kind::ExclamationEqualsEqualsToken | Kind::EqualsGreaterThanToken | Kind::PlusToken | Kind::MinusToken | Kind::AsteriskToken | Kind::AsteriskAsteriskToken | Kind::SlashToken | Kind::PercentToken | Kind::PlusPlusToken | Kind::MinusMinusToken | Kind::LessThanLessThanToken | Kind::GreaterThanGreaterThanToken | Kind::GreaterThanGreaterThanGreaterThanToken | Kind::AmpersandToken | Kind::BarToken | Kind::CaretToken | Kind::ExclamationToken | Kind::TildeToken | Kind::AmpersandAmpersandToken | Kind::BarBarToken | Kind::QuestionToken | Kind::ColonToken | Kind::AtToken | Kind::QuestionQuestionToken | Kind::BacktickToken | Kind::HashToken | Kind::EqualsToken | Kind::PlusEqualsToken | Kind::MinusEqualsToken | Kind::AsteriskEqualsToken | Kind::AsteriskAsteriskEqualsToken | Kind::SlashEqualsToken | Kind::PercentEqualsToken | Kind::LessThanLessThanEqualsToken | Kind::GreaterThanGreaterThanEqualsToken | Kind::GreaterThanGreaterThanGreaterThanEqualsToken | Kind::AmpersandEqualsToken | Kind::BarEqualsToken | Kind::BarBarEqualsToken | Kind::AmpersandAmpersandEqualsToken | Kind::QuestionQuestionEqualsToken | Kind::CaretEqualsToken)
+        matches!(
+            self,
+            Kind::OpenBraceToken
+                | Kind::CloseBraceToken
+                | Kind::OpenParenToken
+                | Kind::CloseParenToken
+                | Kind::OpenBracketToken
+                | Kind::CloseBracketToken
+                | Kind::DotToken
+                | Kind::DotDotDotToken
+                | Kind::SemicolonToken
+                | Kind::CommaToken
+                | Kind::QuestionDotToken
+                | Kind::LessThanToken
+                | Kind::LessThanSlashToken
+                | Kind::GreaterThanToken
+                | Kind::LessThanEqualsToken
+                | Kind::GreaterThanEqualsToken
+                | Kind::EqualsEqualsToken
+                | Kind::ExclamationEqualsToken
+                | Kind::EqualsEqualsEqualsToken
+                | Kind::ExclamationEqualsEqualsToken
+                | Kind::EqualsGreaterThanToken
+                | Kind::PlusToken
+                | Kind::MinusToken
+                | Kind::AsteriskToken
+                | Kind::AsteriskAsteriskToken
+                | Kind::SlashToken
+                | Kind::PercentToken
+                | Kind::PlusPlusToken
+                | Kind::MinusMinusToken
+                | Kind::LessThanLessThanToken
+                | Kind::GreaterThanGreaterThanToken
+                | Kind::GreaterThanGreaterThanGreaterThanToken
+                | Kind::AmpersandToken
+                | Kind::BarToken
+                | Kind::CaretToken
+                | Kind::ExclamationToken
+                | Kind::TildeToken
+                | Kind::AmpersandAmpersandToken
+                | Kind::BarBarToken
+                | Kind::QuestionToken
+                | Kind::ColonToken
+                | Kind::AtToken
+                | Kind::QuestionQuestionToken
+                | Kind::BacktickToken
+                | Kind::HashToken
+                | Kind::EqualsToken
+                | Kind::PlusEqualsToken
+                | Kind::MinusEqualsToken
+                | Kind::AsteriskEqualsToken
+                | Kind::AsteriskAsteriskEqualsToken
+                | Kind::SlashEqualsToken
+                | Kind::PercentEqualsToken
+                | Kind::LessThanLessThanEqualsToken
+                | Kind::GreaterThanGreaterThanEqualsToken
+                | Kind::GreaterThanGreaterThanGreaterThanEqualsToken
+                | Kind::AmpersandEqualsToken
+                | Kind::BarEqualsToken
+                | Kind::BarBarEqualsToken
+                | Kind::AmpersandAmpersandEqualsToken
+                | Kind::QuestionQuestionEqualsToken
+                | Kind::CaretEqualsToken
+        )
     }
     /// `KeywordSyntaxKind` kinds.
     #[allow(dead_code)]
     pub fn is_is_keyword(&self) -> bool {
-        matches!(self, Kind::BreakKeyword | Kind::CaseKeyword | Kind::CatchKeyword | Kind::ClassKeyword | Kind::ConstKeyword | Kind::ContinueKeyword | Kind::DebuggerKeyword | Kind::DefaultKeyword | Kind::DeleteKeyword | Kind::DoKeyword | Kind::ElseKeyword | Kind::EnumKeyword | Kind::ExportKeyword | Kind::ExtendsKeyword | Kind::FalseKeyword | Kind::FinallyKeyword | Kind::ForKeyword | Kind::FunctionKeyword | Kind::IfKeyword | Kind::ImportKeyword | Kind::InKeyword | Kind::InstanceOfKeyword | Kind::NewKeyword | Kind::NullKeyword | Kind::ReturnKeyword | Kind::SuperKeyword | Kind::SwitchKeyword | Kind::ThisKeyword | Kind::ThrowKeyword | Kind::TrueKeyword | Kind::TryKeyword | Kind::TypeOfKeyword | Kind::VarKeyword | Kind::VoidKeyword | Kind::WhileKeyword | Kind::WithKeyword | Kind::ImplementsKeyword | Kind::InterfaceKeyword | Kind::LetKeyword | Kind::PackageKeyword | Kind::PrivateKeyword | Kind::ProtectedKeyword | Kind::PublicKeyword | Kind::StaticKeyword | Kind::YieldKeyword | Kind::AbstractKeyword | Kind::AccessorKeyword | Kind::AsKeyword | Kind::AssertsKeyword | Kind::AssertKeyword | Kind::AnyKeyword | Kind::AsyncKeyword | Kind::AwaitKeyword | Kind::BooleanKeyword | Kind::ConstructorKeyword | Kind::DeclareKeyword | Kind::GetKeyword | Kind::ImmediateKeyword | Kind::InferKeyword | Kind::IntrinsicKeyword | Kind::IsKeyword | Kind::KeyOfKeyword | Kind::ModuleKeyword | Kind::NamespaceKeyword | Kind::NeverKeyword | Kind::OutKeyword | Kind::ReadonlyKeyword | Kind::RequireKeyword | Kind::NumberKeyword | Kind::ObjectKeyword | Kind::SatisfiesKeyword | Kind::SetKeyword | Kind::StringKeyword | Kind::SymbolKeyword | Kind::TypeKeyword | Kind::UndefinedKeyword | Kind::UniqueKeyword | Kind::UnknownKeyword | Kind::UsingKeyword | Kind::FromKeyword | Kind::GlobalKeyword | Kind::BigIntKeyword | Kind::OverrideKeyword | Kind::OfKeyword | Kind::DeferKeyword | Kind::SourceKeyword)
+        matches!(
+            self,
+            Kind::BreakKeyword
+                | Kind::CaseKeyword
+                | Kind::CatchKeyword
+                | Kind::ClassKeyword
+                | Kind::ConstKeyword
+                | Kind::ContinueKeyword
+                | Kind::DebuggerKeyword
+                | Kind::DefaultKeyword
+                | Kind::DeleteKeyword
+                | Kind::DoKeyword
+                | Kind::ElseKeyword
+                | Kind::EnumKeyword
+                | Kind::ExportKeyword
+                | Kind::ExtendsKeyword
+                | Kind::FalseKeyword
+                | Kind::FinallyKeyword
+                | Kind::ForKeyword
+                | Kind::FunctionKeyword
+                | Kind::IfKeyword
+                | Kind::ImportKeyword
+                | Kind::InKeyword
+                | Kind::InstanceOfKeyword
+                | Kind::NewKeyword
+                | Kind::NullKeyword
+                | Kind::ReturnKeyword
+                | Kind::SuperKeyword
+                | Kind::SwitchKeyword
+                | Kind::ThisKeyword
+                | Kind::ThrowKeyword
+                | Kind::TrueKeyword
+                | Kind::TryKeyword
+                | Kind::TypeOfKeyword
+                | Kind::VarKeyword
+                | Kind::VoidKeyword
+                | Kind::WhileKeyword
+                | Kind::WithKeyword
+                | Kind::ImplementsKeyword
+                | Kind::InterfaceKeyword
+                | Kind::LetKeyword
+                | Kind::PackageKeyword
+                | Kind::PrivateKeyword
+                | Kind::ProtectedKeyword
+                | Kind::PublicKeyword
+                | Kind::StaticKeyword
+                | Kind::YieldKeyword
+                | Kind::AbstractKeyword
+                | Kind::AccessorKeyword
+                | Kind::AsKeyword
+                | Kind::AssertsKeyword
+                | Kind::AssertKeyword
+                | Kind::AnyKeyword
+                | Kind::AsyncKeyword
+                | Kind::AwaitKeyword
+                | Kind::BooleanKeyword
+                | Kind::ConstructorKeyword
+                | Kind::DeclareKeyword
+                | Kind::GetKeyword
+                | Kind::ImmediateKeyword
+                | Kind::InferKeyword
+                | Kind::IntrinsicKeyword
+                | Kind::IsKeyword
+                | Kind::KeyOfKeyword
+                | Kind::ModuleKeyword
+                | Kind::NamespaceKeyword
+                | Kind::NeverKeyword
+                | Kind::OutKeyword
+                | Kind::ReadonlyKeyword
+                | Kind::RequireKeyword
+                | Kind::NumberKeyword
+                | Kind::ObjectKeyword
+                | Kind::SatisfiesKeyword
+                | Kind::SetKeyword
+                | Kind::StringKeyword
+                | Kind::SymbolKeyword
+                | Kind::TypeKeyword
+                | Kind::UndefinedKeyword
+                | Kind::UniqueKeyword
+                | Kind::UnknownKeyword
+                | Kind::UsingKeyword
+                | Kind::FromKeyword
+                | Kind::GlobalKeyword
+                | Kind::BigIntKeyword
+                | Kind::OverrideKeyword
+                | Kind::OfKeyword
+                | Kind::DeferKeyword
+                | Kind::SourceKeyword
+        )
     }
     /// `ModifierSyntaxKind` kinds.
     #[allow(dead_code)]
     pub fn is_is_modifier(&self) -> bool {
-        matches!(self, Kind::AbstractKeyword | Kind::AccessorKeyword | Kind::AsyncKeyword | Kind::ConstKeyword | Kind::DeclareKeyword | Kind::DefaultKeyword | Kind::ExportKeyword | Kind::InKeyword | Kind::PrivateKeyword | Kind::ProtectedKeyword | Kind::PublicKeyword | Kind::ReadonlyKeyword | Kind::OutKeyword | Kind::OverrideKeyword | Kind::StaticKeyword)
+        matches!(
+            self,
+            Kind::AbstractKeyword
+                | Kind::AccessorKeyword
+                | Kind::AsyncKeyword
+                | Kind::ConstKeyword
+                | Kind::DeclareKeyword
+                | Kind::DefaultKeyword
+                | Kind::ExportKeyword
+                | Kind::InKeyword
+                | Kind::PrivateKeyword
+                | Kind::ProtectedKeyword
+                | Kind::PublicKeyword
+                | Kind::ReadonlyKeyword
+                | Kind::OutKeyword
+                | Kind::OverrideKeyword
+                | Kind::StaticKeyword
+        )
     }
     /// `KeywordTypeSyntaxKind` kinds.
     #[allow(dead_code)]
     pub fn is_is_keyword_type(&self) -> bool {
-        matches!(self, Kind::AnyKeyword | Kind::BigIntKeyword | Kind::BooleanKeyword | Kind::IntrinsicKeyword | Kind::NeverKeyword | Kind::NumberKeyword | Kind::ObjectKeyword | Kind::StringKeyword | Kind::SymbolKeyword | Kind::UndefinedKeyword | Kind::UnknownKeyword | Kind::VoidKeyword)
+        matches!(
+            self,
+            Kind::AnyKeyword
+                | Kind::BigIntKeyword
+                | Kind::BooleanKeyword
+                | Kind::IntrinsicKeyword
+                | Kind::NeverKeyword
+                | Kind::NumberKeyword
+                | Kind::ObjectKeyword
+                | Kind::StringKeyword
+                | Kind::SymbolKeyword
+                | Kind::UndefinedKeyword
+                | Kind::UnknownKeyword
+                | Kind::VoidKeyword
+        )
     }
     /// `KeywordExpressionSyntaxKind` kinds.
     #[allow(dead_code)]
     pub fn is_is_keyword_expression(&self) -> bool {
-        matches!(self, Kind::NullKeyword | Kind::TrueKeyword | Kind::FalseKeyword | Kind::ThisKeyword | Kind::SuperKeyword | Kind::ImportKeyword)
+        matches!(
+            self,
+            Kind::NullKeyword
+                | Kind::TrueKeyword
+                | Kind::FalseKeyword
+                | Kind::ThisKeyword
+                | Kind::SuperKeyword
+                | Kind::ImportKeyword
+        )
     }
     /// `TokenSyntaxKind` kinds.
     #[allow(dead_code)]
     pub fn is_is_token(&self) -> bool {
-        matches!(self, Kind::Unknown | Kind::EndOfFile | Kind::SingleLineCommentTrivia | Kind::MultiLineCommentTrivia | Kind::NewLineTrivia | Kind::WhitespaceTrivia | Kind::ConflictMarkerTrivia | Kind::NonTextFileMarkerTrivia | Kind::NumericLiteral | Kind::BigIntLiteral | Kind::StringLiteral | Kind::JsxText | Kind::JsxTextAllWhiteSpaces | Kind::RegularExpressionLiteral | Kind::NoSubstitutionTemplateLiteral | Kind::TemplateHead | Kind::TemplateMiddle | Kind::TemplateTail | Kind::OpenBraceToken | Kind::CloseBraceToken | Kind::OpenParenToken | Kind::CloseParenToken | Kind::OpenBracketToken | Kind::CloseBracketToken | Kind::DotToken | Kind::DotDotDotToken | Kind::SemicolonToken | Kind::CommaToken | Kind::QuestionDotToken | Kind::LessThanToken | Kind::LessThanSlashToken | Kind::GreaterThanToken | Kind::LessThanEqualsToken | Kind::GreaterThanEqualsToken | Kind::EqualsEqualsToken | Kind::ExclamationEqualsToken | Kind::EqualsEqualsEqualsToken | Kind::ExclamationEqualsEqualsToken | Kind::EqualsGreaterThanToken | Kind::PlusToken | Kind::MinusToken | Kind::AsteriskToken | Kind::AsteriskAsteriskToken | Kind::SlashToken | Kind::PercentToken | Kind::PlusPlusToken | Kind::MinusMinusToken | Kind::LessThanLessThanToken | Kind::GreaterThanGreaterThanToken | Kind::GreaterThanGreaterThanGreaterThanToken | Kind::AmpersandToken | Kind::BarToken | Kind::CaretToken | Kind::ExclamationToken | Kind::TildeToken | Kind::AmpersandAmpersandToken | Kind::BarBarToken | Kind::QuestionToken | Kind::ColonToken | Kind::AtToken | Kind::QuestionQuestionToken | Kind::BacktickToken | Kind::HashToken | Kind::EqualsToken | Kind::PlusEqualsToken | Kind::MinusEqualsToken | Kind::AsteriskEqualsToken | Kind::AsteriskAsteriskEqualsToken | Kind::SlashEqualsToken | Kind::PercentEqualsToken | Kind::LessThanLessThanEqualsToken | Kind::GreaterThanGreaterThanEqualsToken | Kind::GreaterThanGreaterThanGreaterThanEqualsToken | Kind::AmpersandEqualsToken | Kind::BarEqualsToken | Kind::BarBarEqualsToken | Kind::AmpersandAmpersandEqualsToken | Kind::QuestionQuestionEqualsToken | Kind::CaretEqualsToken | Kind::Identifier | Kind::PrivateIdentifier | Kind::JSDocCommentTextToken | Kind::BreakKeyword | Kind::CaseKeyword | Kind::CatchKeyword | Kind::ClassKeyword | Kind::ConstKeyword | Kind::ContinueKeyword | Kind::DebuggerKeyword | Kind::DefaultKeyword | Kind::DeleteKeyword | Kind::DoKeyword | Kind::ElseKeyword | Kind::EnumKeyword | Kind::ExportKeyword | Kind::ExtendsKeyword | Kind::FalseKeyword | Kind::FinallyKeyword | Kind::ForKeyword | Kind::FunctionKeyword | Kind::IfKeyword | Kind::ImportKeyword | Kind::InKeyword | Kind::InstanceOfKeyword | Kind::NewKeyword | Kind::NullKeyword | Kind::ReturnKeyword | Kind::SuperKeyword | Kind::SwitchKeyword | Kind::ThisKeyword | Kind::ThrowKeyword | Kind::TrueKeyword | Kind::TryKeyword | Kind::TypeOfKeyword | Kind::VarKeyword | Kind::VoidKeyword | Kind::WhileKeyword | Kind::WithKeyword | Kind::ImplementsKeyword | Kind::InterfaceKeyword | Kind::LetKeyword | Kind::PackageKeyword | Kind::PrivateKeyword | Kind::ProtectedKeyword | Kind::PublicKeyword | Kind::StaticKeyword | Kind::YieldKeyword | Kind::AbstractKeyword | Kind::AccessorKeyword | Kind::AsKeyword | Kind::AssertsKeyword | Kind::AssertKeyword | Kind::AnyKeyword | Kind::AsyncKeyword | Kind::AwaitKeyword | Kind::BooleanKeyword | Kind::ConstructorKeyword | Kind::DeclareKeyword | Kind::GetKeyword | Kind::ImmediateKeyword | Kind::InferKeyword | Kind::IntrinsicKeyword | Kind::IsKeyword | Kind::KeyOfKeyword | Kind::ModuleKeyword | Kind::NamespaceKeyword | Kind::NeverKeyword | Kind::OutKeyword | Kind::ReadonlyKeyword | Kind::RequireKeyword | Kind::NumberKeyword | Kind::ObjectKeyword | Kind::SatisfiesKeyword | Kind::SetKeyword | Kind::StringKeyword | Kind::SymbolKeyword | Kind::TypeKeyword | Kind::UndefinedKeyword | Kind::UniqueKeyword | Kind::UnknownKeyword | Kind::UsingKeyword | Kind::FromKeyword | Kind::GlobalKeyword | Kind::BigIntKeyword | Kind::OverrideKeyword | Kind::OfKeyword | Kind::DeferKeyword | Kind::SourceKeyword)
+        matches!(
+            self,
+            Kind::Unknown
+                | Kind::EndOfFile
+                | Kind::SingleLineCommentTrivia
+                | Kind::MultiLineCommentTrivia
+                | Kind::NewLineTrivia
+                | Kind::WhitespaceTrivia
+                | Kind::ConflictMarkerTrivia
+                | Kind::NonTextFileMarkerTrivia
+                | Kind::NumericLiteral
+                | Kind::BigIntLiteral
+                | Kind::StringLiteral
+                | Kind::JsxText
+                | Kind::JsxTextAllWhiteSpaces
+                | Kind::RegularExpressionLiteral
+                | Kind::NoSubstitutionTemplateLiteral
+                | Kind::TemplateHead
+                | Kind::TemplateMiddle
+                | Kind::TemplateTail
+                | Kind::OpenBraceToken
+                | Kind::CloseBraceToken
+                | Kind::OpenParenToken
+                | Kind::CloseParenToken
+                | Kind::OpenBracketToken
+                | Kind::CloseBracketToken
+                | Kind::DotToken
+                | Kind::DotDotDotToken
+                | Kind::SemicolonToken
+                | Kind::CommaToken
+                | Kind::QuestionDotToken
+                | Kind::LessThanToken
+                | Kind::LessThanSlashToken
+                | Kind::GreaterThanToken
+                | Kind::LessThanEqualsToken
+                | Kind::GreaterThanEqualsToken
+                | Kind::EqualsEqualsToken
+                | Kind::ExclamationEqualsToken
+                | Kind::EqualsEqualsEqualsToken
+                | Kind::ExclamationEqualsEqualsToken
+                | Kind::EqualsGreaterThanToken
+                | Kind::PlusToken
+                | Kind::MinusToken
+                | Kind::AsteriskToken
+                | Kind::AsteriskAsteriskToken
+                | Kind::SlashToken
+                | Kind::PercentToken
+                | Kind::PlusPlusToken
+                | Kind::MinusMinusToken
+                | Kind::LessThanLessThanToken
+                | Kind::GreaterThanGreaterThanToken
+                | Kind::GreaterThanGreaterThanGreaterThanToken
+                | Kind::AmpersandToken
+                | Kind::BarToken
+                | Kind::CaretToken
+                | Kind::ExclamationToken
+                | Kind::TildeToken
+                | Kind::AmpersandAmpersandToken
+                | Kind::BarBarToken
+                | Kind::QuestionToken
+                | Kind::ColonToken
+                | Kind::AtToken
+                | Kind::QuestionQuestionToken
+                | Kind::BacktickToken
+                | Kind::HashToken
+                | Kind::EqualsToken
+                | Kind::PlusEqualsToken
+                | Kind::MinusEqualsToken
+                | Kind::AsteriskEqualsToken
+                | Kind::AsteriskAsteriskEqualsToken
+                | Kind::SlashEqualsToken
+                | Kind::PercentEqualsToken
+                | Kind::LessThanLessThanEqualsToken
+                | Kind::GreaterThanGreaterThanEqualsToken
+                | Kind::GreaterThanGreaterThanGreaterThanEqualsToken
+                | Kind::AmpersandEqualsToken
+                | Kind::BarEqualsToken
+                | Kind::BarBarEqualsToken
+                | Kind::AmpersandAmpersandEqualsToken
+                | Kind::QuestionQuestionEqualsToken
+                | Kind::CaretEqualsToken
+                | Kind::Identifier
+                | Kind::PrivateIdentifier
+                | Kind::JSDocCommentTextToken
+                | Kind::BreakKeyword
+                | Kind::CaseKeyword
+                | Kind::CatchKeyword
+                | Kind::ClassKeyword
+                | Kind::ConstKeyword
+                | Kind::ContinueKeyword
+                | Kind::DebuggerKeyword
+                | Kind::DefaultKeyword
+                | Kind::DeleteKeyword
+                | Kind::DoKeyword
+                | Kind::ElseKeyword
+                | Kind::EnumKeyword
+                | Kind::ExportKeyword
+                | Kind::ExtendsKeyword
+                | Kind::FalseKeyword
+                | Kind::FinallyKeyword
+                | Kind::ForKeyword
+                | Kind::FunctionKeyword
+                | Kind::IfKeyword
+                | Kind::ImportKeyword
+                | Kind::InKeyword
+                | Kind::InstanceOfKeyword
+                | Kind::NewKeyword
+                | Kind::NullKeyword
+                | Kind::ReturnKeyword
+                | Kind::SuperKeyword
+                | Kind::SwitchKeyword
+                | Kind::ThisKeyword
+                | Kind::ThrowKeyword
+                | Kind::TrueKeyword
+                | Kind::TryKeyword
+                | Kind::TypeOfKeyword
+                | Kind::VarKeyword
+                | Kind::VoidKeyword
+                | Kind::WhileKeyword
+                | Kind::WithKeyword
+                | Kind::ImplementsKeyword
+                | Kind::InterfaceKeyword
+                | Kind::LetKeyword
+                | Kind::PackageKeyword
+                | Kind::PrivateKeyword
+                | Kind::ProtectedKeyword
+                | Kind::PublicKeyword
+                | Kind::StaticKeyword
+                | Kind::YieldKeyword
+                | Kind::AbstractKeyword
+                | Kind::AccessorKeyword
+                | Kind::AsKeyword
+                | Kind::AssertsKeyword
+                | Kind::AssertKeyword
+                | Kind::AnyKeyword
+                | Kind::AsyncKeyword
+                | Kind::AwaitKeyword
+                | Kind::BooleanKeyword
+                | Kind::ConstructorKeyword
+                | Kind::DeclareKeyword
+                | Kind::GetKeyword
+                | Kind::ImmediateKeyword
+                | Kind::InferKeyword
+                | Kind::IntrinsicKeyword
+                | Kind::IsKeyword
+                | Kind::KeyOfKeyword
+                | Kind::ModuleKeyword
+                | Kind::NamespaceKeyword
+                | Kind::NeverKeyword
+                | Kind::OutKeyword
+                | Kind::ReadonlyKeyword
+                | Kind::RequireKeyword
+                | Kind::NumberKeyword
+                | Kind::ObjectKeyword
+                | Kind::SatisfiesKeyword
+                | Kind::SetKeyword
+                | Kind::StringKeyword
+                | Kind::SymbolKeyword
+                | Kind::TypeKeyword
+                | Kind::UndefinedKeyword
+                | Kind::UniqueKeyword
+                | Kind::UnknownKeyword
+                | Kind::UsingKeyword
+                | Kind::FromKeyword
+                | Kind::GlobalKeyword
+                | Kind::BigIntKeyword
+                | Kind::OverrideKeyword
+                | Kind::OfKeyword
+                | Kind::DeferKeyword
+                | Kind::SourceKeyword
+        )
     }
     /// `JsxTokenSyntaxKind` kinds.
     #[allow(dead_code)]
     pub fn is_is_jsx_token(&self) -> bool {
-        matches!(self, Kind::LessThanSlashToken | Kind::EndOfFile | Kind::ConflictMarkerTrivia | Kind::JsxText | Kind::JsxTextAllWhiteSpaces | Kind::OpenBraceToken | Kind::LessThanToken)
+        matches!(
+            self,
+            Kind::LessThanSlashToken
+                | Kind::EndOfFile
+                | Kind::ConflictMarkerTrivia
+                | Kind::JsxText
+                | Kind::JsxTextAllWhiteSpaces
+                | Kind::OpenBraceToken
+                | Kind::LessThanToken
+        )
     }
     /// `JSDocNodeSyntaxKind` kinds.
     #[allow(dead_code)]
     pub fn is_is_js_doc_node(&self) -> bool {
-        matches!(self, Kind::JSDocTypeExpression | Kind::JSDocNameReference | Kind::JSDocAllType | Kind::JSDocNullableType | Kind::JSDocNonNullableType | Kind::JSDocOptionalType | Kind::JSDocVariadicType | Kind::JSDoc | Kind::JSDocText | Kind::JSDocTypeLiteral | Kind::JSDocSignature | Kind::JSDocLink | Kind::JSDocLinkCode | Kind::JSDocLinkPlain | Kind::JSDocUnknownTag | Kind::JSDocAugmentsTag | Kind::JSDocImplementsTag | Kind::JSDocDeprecatedTag | Kind::JSDocPublicTag | Kind::JSDocPrivateTag | Kind::JSDocProtectedTag | Kind::JSDocReadonlyTag | Kind::JSDocOverrideTag | Kind::JSDocCallbackTag | Kind::JSDocOverloadTag | Kind::JSDocParameterTag | Kind::JSDocReturnTag | Kind::JSDocThisTag | Kind::JSDocTypeTag | Kind::JSDocTemplateTag | Kind::JSDocTypedefTag | Kind::JSDocSeeTag | Kind::JSDocPropertyTag | Kind::JSDocThrowsTag | Kind::JSDocSatisfiesTag | Kind::JSDocImportTag)
+        matches!(
+            self,
+            Kind::JSDocTypeExpression
+                | Kind::JSDocNameReference
+                | Kind::JSDocAllType
+                | Kind::JSDocNullableType
+                | Kind::JSDocNonNullableType
+                | Kind::JSDocOptionalType
+                | Kind::JSDocVariadicType
+                | Kind::JSDoc
+                | Kind::JSDocText
+                | Kind::JSDocTypeLiteral
+                | Kind::JSDocSignature
+                | Kind::JSDocLink
+                | Kind::JSDocLinkCode
+                | Kind::JSDocLinkPlain
+                | Kind::JSDocUnknownTag
+                | Kind::JSDocAugmentsTag
+                | Kind::JSDocImplementsTag
+                | Kind::JSDocDeprecatedTag
+                | Kind::JSDocPublicTag
+                | Kind::JSDocPrivateTag
+                | Kind::JSDocProtectedTag
+                | Kind::JSDocReadonlyTag
+                | Kind::JSDocOverrideTag
+                | Kind::JSDocCallbackTag
+                | Kind::JSDocOverloadTag
+                | Kind::JSDocParameterTag
+                | Kind::JSDocReturnTag
+                | Kind::JSDocThisTag
+                | Kind::JSDocTypeTag
+                | Kind::JSDocTemplateTag
+                | Kind::JSDocTypedefTag
+                | Kind::JSDocSeeTag
+                | Kind::JSDocPropertyTag
+                | Kind::JSDocThrowsTag
+                | Kind::JSDocSatisfiesTag
+                | Kind::JSDocImportTag
+        )
     }
     /// `ImportPhaseModifierSyntaxKind` kinds.
     #[allow(dead_code)]
     pub fn is_is_import_phase_modifier(&self) -> bool {
-        matches!(self, Kind::TypeKeyword | Kind::DeferKeyword | Kind::SourceKeyword)
+        matches!(
+            self,
+            Kind::TypeKeyword | Kind::DeferKeyword | Kind::SourceKeyword
+        )
     }
     /// `PostfixUnaryOperator` kinds.
     #[allow(dead_code)]
@@ -1684,17 +2454,87 @@ impl Kind {
     /// `PrefixUnaryOperator` kinds.
     #[allow(dead_code)]
     pub fn is_is_prefix_unary_operator(&self) -> bool {
-        matches!(self, Kind::PlusToken | Kind::MinusToken | Kind::TildeToken | Kind::ExclamationToken | Kind::PlusPlusToken | Kind::MinusMinusToken)
+        matches!(
+            self,
+            Kind::PlusToken
+                | Kind::MinusToken
+                | Kind::TildeToken
+                | Kind::ExclamationToken
+                | Kind::PlusPlusToken
+                | Kind::MinusMinusToken
+        )
     }
     /// `AssignmentOperator` kinds.
     #[allow(dead_code)]
     pub fn is_is_assignment_operator(&self) -> bool {
-        matches!(self, Kind::EqualsToken | Kind::PlusEqualsToken | Kind::MinusEqualsToken | Kind::AsteriskAsteriskEqualsToken | Kind::AsteriskEqualsToken | Kind::SlashEqualsToken | Kind::PercentEqualsToken | Kind::AmpersandEqualsToken | Kind::BarEqualsToken | Kind::CaretEqualsToken | Kind::LessThanLessThanEqualsToken | Kind::GreaterThanGreaterThanGreaterThanEqualsToken | Kind::GreaterThanGreaterThanEqualsToken | Kind::BarBarEqualsToken | Kind::AmpersandAmpersandEqualsToken | Kind::QuestionQuestionEqualsToken)
+        matches!(
+            self,
+            Kind::EqualsToken
+                | Kind::PlusEqualsToken
+                | Kind::MinusEqualsToken
+                | Kind::AsteriskAsteriskEqualsToken
+                | Kind::AsteriskEqualsToken
+                | Kind::SlashEqualsToken
+                | Kind::PercentEqualsToken
+                | Kind::AmpersandEqualsToken
+                | Kind::BarEqualsToken
+                | Kind::CaretEqualsToken
+                | Kind::LessThanLessThanEqualsToken
+                | Kind::GreaterThanGreaterThanGreaterThanEqualsToken
+                | Kind::GreaterThanGreaterThanEqualsToken
+                | Kind::BarBarEqualsToken
+                | Kind::AmpersandAmpersandEqualsToken
+                | Kind::QuestionQuestionEqualsToken
+        )
     }
     /// `BinaryOperator` kinds.
     #[allow(dead_code)]
     pub fn is_is_binary_operator(&self) -> bool {
-        matches!(self, Kind::QuestionQuestionToken | Kind::AsteriskAsteriskToken | Kind::AsteriskToken | Kind::SlashToken | Kind::PercentToken | Kind::PlusToken | Kind::MinusToken | Kind::LessThanLessThanToken | Kind::GreaterThanGreaterThanToken | Kind::GreaterThanGreaterThanGreaterThanToken | Kind::LessThanToken | Kind::LessThanEqualsToken | Kind::GreaterThanToken | Kind::GreaterThanEqualsToken | Kind::InstanceOfKeyword | Kind::InKeyword | Kind::EqualsEqualsToken | Kind::EqualsEqualsEqualsToken | Kind::ExclamationEqualsEqualsToken | Kind::ExclamationEqualsToken | Kind::AmpersandToken | Kind::BarToken | Kind::CaretToken | Kind::AmpersandAmpersandToken | Kind::BarBarToken | Kind::EqualsToken | Kind::PlusEqualsToken | Kind::MinusEqualsToken | Kind::AsteriskAsteriskEqualsToken | Kind::AsteriskEqualsToken | Kind::SlashEqualsToken | Kind::PercentEqualsToken | Kind::AmpersandEqualsToken | Kind::BarEqualsToken | Kind::CaretEqualsToken | Kind::LessThanLessThanEqualsToken | Kind::GreaterThanGreaterThanGreaterThanEqualsToken | Kind::GreaterThanGreaterThanEqualsToken | Kind::BarBarEqualsToken | Kind::AmpersandAmpersandEqualsToken | Kind::QuestionQuestionEqualsToken | Kind::CommaToken)
+        matches!(
+            self,
+            Kind::QuestionQuestionToken
+                | Kind::AsteriskAsteriskToken
+                | Kind::AsteriskToken
+                | Kind::SlashToken
+                | Kind::PercentToken
+                | Kind::PlusToken
+                | Kind::MinusToken
+                | Kind::LessThanLessThanToken
+                | Kind::GreaterThanGreaterThanToken
+                | Kind::GreaterThanGreaterThanGreaterThanToken
+                | Kind::LessThanToken
+                | Kind::LessThanEqualsToken
+                | Kind::GreaterThanToken
+                | Kind::GreaterThanEqualsToken
+                | Kind::InstanceOfKeyword
+                | Kind::InKeyword
+                | Kind::EqualsEqualsToken
+                | Kind::EqualsEqualsEqualsToken
+                | Kind::ExclamationEqualsEqualsToken
+                | Kind::ExclamationEqualsToken
+                | Kind::AmpersandToken
+                | Kind::BarToken
+                | Kind::CaretToken
+                | Kind::AmpersandAmpersandToken
+                | Kind::BarBarToken
+                | Kind::EqualsToken
+                | Kind::PlusEqualsToken
+                | Kind::MinusEqualsToken
+                | Kind::AsteriskAsteriskEqualsToken
+                | Kind::AsteriskEqualsToken
+                | Kind::SlashEqualsToken
+                | Kind::PercentEqualsToken
+                | Kind::AmpersandEqualsToken
+                | Kind::BarEqualsToken
+                | Kind::CaretEqualsToken
+                | Kind::LessThanLessThanEqualsToken
+                | Kind::GreaterThanGreaterThanGreaterThanEqualsToken
+                | Kind::GreaterThanGreaterThanEqualsToken
+                | Kind::BarBarEqualsToken
+                | Kind::AmpersandAmpersandEqualsToken
+                | Kind::QuestionQuestionEqualsToken
+                | Kind::CommaToken
+        )
     }
     /// `ExponentiationOperator` kinds.
     #[allow(dead_code)]
@@ -1704,12 +2544,21 @@ impl Kind {
     /// `MultiplicativeOperator` kinds.
     #[allow(dead_code)]
     pub fn is_is_multiplicative_operator(&self) -> bool {
-        matches!(self, Kind::AsteriskToken | Kind::SlashToken | Kind::PercentToken)
+        matches!(
+            self,
+            Kind::AsteriskToken | Kind::SlashToken | Kind::PercentToken
+        )
     }
     /// `MultiplicativeOperatorOrHigher` kinds.
     #[allow(dead_code)]
     pub fn is_is_multiplicative_operator_or_higher(&self) -> bool {
-        matches!(self, Kind::AsteriskAsteriskToken | Kind::AsteriskToken | Kind::SlashToken | Kind::PercentToken)
+        matches!(
+            self,
+            Kind::AsteriskAsteriskToken
+                | Kind::AsteriskToken
+                | Kind::SlashToken
+                | Kind::PercentToken
+        )
     }
     /// `AdditiveOperator` kinds.
     #[allow(dead_code)]
@@ -1719,47 +2568,150 @@ impl Kind {
     /// `AdditiveOperatorOrHigher` kinds.
     #[allow(dead_code)]
     pub fn is_is_additive_operator_or_higher(&self) -> bool {
-        matches!(self, Kind::AsteriskAsteriskToken | Kind::AsteriskToken | Kind::SlashToken | Kind::PercentToken | Kind::PlusToken | Kind::MinusToken)
+        matches!(
+            self,
+            Kind::AsteriskAsteriskToken
+                | Kind::AsteriskToken
+                | Kind::SlashToken
+                | Kind::PercentToken
+                | Kind::PlusToken
+                | Kind::MinusToken
+        )
     }
     /// `ShiftOperator` kinds.
     #[allow(dead_code)]
     pub fn is_is_shift_operator(&self) -> bool {
-        matches!(self, Kind::LessThanLessThanToken | Kind::GreaterThanGreaterThanToken | Kind::GreaterThanGreaterThanGreaterThanToken)
+        matches!(
+            self,
+            Kind::LessThanLessThanToken
+                | Kind::GreaterThanGreaterThanToken
+                | Kind::GreaterThanGreaterThanGreaterThanToken
+        )
     }
     /// `ShiftOperatorOrHigher` kinds.
     #[allow(dead_code)]
     pub fn is_is_shift_operator_or_higher(&self) -> bool {
-        matches!(self, Kind::AsteriskAsteriskToken | Kind::AsteriskToken | Kind::SlashToken | Kind::PercentToken | Kind::PlusToken | Kind::MinusToken | Kind::LessThanLessThanToken | Kind::GreaterThanGreaterThanToken | Kind::GreaterThanGreaterThanGreaterThanToken)
+        matches!(
+            self,
+            Kind::AsteriskAsteriskToken
+                | Kind::AsteriskToken
+                | Kind::SlashToken
+                | Kind::PercentToken
+                | Kind::PlusToken
+                | Kind::MinusToken
+                | Kind::LessThanLessThanToken
+                | Kind::GreaterThanGreaterThanToken
+                | Kind::GreaterThanGreaterThanGreaterThanToken
+        )
     }
     /// `RelationalOperator` kinds.
     #[allow(dead_code)]
     pub fn is_is_relational_operator(&self) -> bool {
-        matches!(self, Kind::LessThanToken | Kind::LessThanEqualsToken | Kind::GreaterThanToken | Kind::GreaterThanEqualsToken | Kind::InstanceOfKeyword | Kind::InKeyword)
+        matches!(
+            self,
+            Kind::LessThanToken
+                | Kind::LessThanEqualsToken
+                | Kind::GreaterThanToken
+                | Kind::GreaterThanEqualsToken
+                | Kind::InstanceOfKeyword
+                | Kind::InKeyword
+        )
     }
     /// `RelationalOperatorOrHigher` kinds.
     #[allow(dead_code)]
     pub fn is_is_relational_operator_or_higher(&self) -> bool {
-        matches!(self, Kind::AsteriskAsteriskToken | Kind::AsteriskToken | Kind::SlashToken | Kind::PercentToken | Kind::PlusToken | Kind::MinusToken | Kind::LessThanLessThanToken | Kind::GreaterThanGreaterThanToken | Kind::GreaterThanGreaterThanGreaterThanToken | Kind::LessThanToken | Kind::LessThanEqualsToken | Kind::GreaterThanToken | Kind::GreaterThanEqualsToken | Kind::InstanceOfKeyword | Kind::InKeyword)
+        matches!(
+            self,
+            Kind::AsteriskAsteriskToken
+                | Kind::AsteriskToken
+                | Kind::SlashToken
+                | Kind::PercentToken
+                | Kind::PlusToken
+                | Kind::MinusToken
+                | Kind::LessThanLessThanToken
+                | Kind::GreaterThanGreaterThanToken
+                | Kind::GreaterThanGreaterThanGreaterThanToken
+                | Kind::LessThanToken
+                | Kind::LessThanEqualsToken
+                | Kind::GreaterThanToken
+                | Kind::GreaterThanEqualsToken
+                | Kind::InstanceOfKeyword
+                | Kind::InKeyword
+        )
     }
     /// `EqualityOperator` kinds.
     #[allow(dead_code)]
     pub fn is_is_equality_operator(&self) -> bool {
-        matches!(self, Kind::EqualsEqualsToken | Kind::EqualsEqualsEqualsToken | Kind::ExclamationEqualsEqualsToken | Kind::ExclamationEqualsToken)
+        matches!(
+            self,
+            Kind::EqualsEqualsToken
+                | Kind::EqualsEqualsEqualsToken
+                | Kind::ExclamationEqualsEqualsToken
+                | Kind::ExclamationEqualsToken
+        )
     }
     /// `EqualityOperatorOrHigher` kinds.
     #[allow(dead_code)]
     pub fn is_is_equality_operator_or_higher(&self) -> bool {
-        matches!(self, Kind::AsteriskAsteriskToken | Kind::AsteriskToken | Kind::SlashToken | Kind::PercentToken | Kind::PlusToken | Kind::MinusToken | Kind::LessThanLessThanToken | Kind::GreaterThanGreaterThanToken | Kind::GreaterThanGreaterThanGreaterThanToken | Kind::LessThanToken | Kind::LessThanEqualsToken | Kind::GreaterThanToken | Kind::GreaterThanEqualsToken | Kind::InstanceOfKeyword | Kind::InKeyword | Kind::EqualsEqualsToken | Kind::EqualsEqualsEqualsToken | Kind::ExclamationEqualsEqualsToken | Kind::ExclamationEqualsToken)
+        matches!(
+            self,
+            Kind::AsteriskAsteriskToken
+                | Kind::AsteriskToken
+                | Kind::SlashToken
+                | Kind::PercentToken
+                | Kind::PlusToken
+                | Kind::MinusToken
+                | Kind::LessThanLessThanToken
+                | Kind::GreaterThanGreaterThanToken
+                | Kind::GreaterThanGreaterThanGreaterThanToken
+                | Kind::LessThanToken
+                | Kind::LessThanEqualsToken
+                | Kind::GreaterThanToken
+                | Kind::GreaterThanEqualsToken
+                | Kind::InstanceOfKeyword
+                | Kind::InKeyword
+                | Kind::EqualsEqualsToken
+                | Kind::EqualsEqualsEqualsToken
+                | Kind::ExclamationEqualsEqualsToken
+                | Kind::ExclamationEqualsToken
+        )
     }
     /// `BitwiseOperator` kinds.
     #[allow(dead_code)]
     pub fn is_is_bitwise_operator(&self) -> bool {
-        matches!(self, Kind::AmpersandToken | Kind::BarToken | Kind::CaretToken)
+        matches!(
+            self,
+            Kind::AmpersandToken | Kind::BarToken | Kind::CaretToken
+        )
     }
     /// `BitwiseOperatorOrHigher` kinds.
     #[allow(dead_code)]
     pub fn is_is_bitwise_operator_or_higher(&self) -> bool {
-        matches!(self, Kind::AsteriskAsteriskToken | Kind::AsteriskToken | Kind::SlashToken | Kind::PercentToken | Kind::PlusToken | Kind::MinusToken | Kind::LessThanLessThanToken | Kind::GreaterThanGreaterThanToken | Kind::GreaterThanGreaterThanGreaterThanToken | Kind::LessThanToken | Kind::LessThanEqualsToken | Kind::GreaterThanToken | Kind::GreaterThanEqualsToken | Kind::InstanceOfKeyword | Kind::InKeyword | Kind::EqualsEqualsToken | Kind::EqualsEqualsEqualsToken | Kind::ExclamationEqualsEqualsToken | Kind::ExclamationEqualsToken | Kind::AmpersandToken | Kind::BarToken | Kind::CaretToken)
+        matches!(
+            self,
+            Kind::AsteriskAsteriskToken
+                | Kind::AsteriskToken
+                | Kind::SlashToken
+                | Kind::PercentToken
+                | Kind::PlusToken
+                | Kind::MinusToken
+                | Kind::LessThanLessThanToken
+                | Kind::GreaterThanGreaterThanToken
+                | Kind::GreaterThanGreaterThanGreaterThanToken
+                | Kind::LessThanToken
+                | Kind::LessThanEqualsToken
+                | Kind::GreaterThanToken
+                | Kind::GreaterThanEqualsToken
+                | Kind::InstanceOfKeyword
+                | Kind::InKeyword
+                | Kind::EqualsEqualsToken
+                | Kind::EqualsEqualsEqualsToken
+                | Kind::ExclamationEqualsEqualsToken
+                | Kind::ExclamationEqualsToken
+                | Kind::AmpersandToken
+                | Kind::BarToken
+                | Kind::CaretToken
+        )
     }
     /// `LogicalOperator` kinds.
     #[allow(dead_code)]
@@ -1769,21 +2721,112 @@ impl Kind {
     /// `LogicalOperatorOrHigher` kinds.
     #[allow(dead_code)]
     pub fn is_is_logical_operator_or_higher(&self) -> bool {
-        matches!(self, Kind::AsteriskAsteriskToken | Kind::AsteriskToken | Kind::SlashToken | Kind::PercentToken | Kind::PlusToken | Kind::MinusToken | Kind::LessThanLessThanToken | Kind::GreaterThanGreaterThanToken | Kind::GreaterThanGreaterThanGreaterThanToken | Kind::LessThanToken | Kind::LessThanEqualsToken | Kind::GreaterThanToken | Kind::GreaterThanEqualsToken | Kind::InstanceOfKeyword | Kind::InKeyword | Kind::EqualsEqualsToken | Kind::EqualsEqualsEqualsToken | Kind::ExclamationEqualsEqualsToken | Kind::ExclamationEqualsToken | Kind::AmpersandToken | Kind::BarToken | Kind::CaretToken | Kind::AmpersandAmpersandToken | Kind::BarBarToken)
+        matches!(
+            self,
+            Kind::AsteriskAsteriskToken
+                | Kind::AsteriskToken
+                | Kind::SlashToken
+                | Kind::PercentToken
+                | Kind::PlusToken
+                | Kind::MinusToken
+                | Kind::LessThanLessThanToken
+                | Kind::GreaterThanGreaterThanToken
+                | Kind::GreaterThanGreaterThanGreaterThanToken
+                | Kind::LessThanToken
+                | Kind::LessThanEqualsToken
+                | Kind::GreaterThanToken
+                | Kind::GreaterThanEqualsToken
+                | Kind::InstanceOfKeyword
+                | Kind::InKeyword
+                | Kind::EqualsEqualsToken
+                | Kind::EqualsEqualsEqualsToken
+                | Kind::ExclamationEqualsEqualsToken
+                | Kind::ExclamationEqualsToken
+                | Kind::AmpersandToken
+                | Kind::BarToken
+                | Kind::CaretToken
+                | Kind::AmpersandAmpersandToken
+                | Kind::BarBarToken
+        )
     }
     /// `CompoundAssignmentOperator` kinds.
     #[allow(dead_code)]
     pub fn is_is_compound_assignment_operator(&self) -> bool {
-        matches!(self, Kind::PlusEqualsToken | Kind::MinusEqualsToken | Kind::AsteriskAsteriskEqualsToken | Kind::AsteriskEqualsToken | Kind::SlashEqualsToken | Kind::PercentEqualsToken | Kind::AmpersandEqualsToken | Kind::BarEqualsToken | Kind::CaretEqualsToken | Kind::LessThanLessThanEqualsToken | Kind::GreaterThanGreaterThanGreaterThanEqualsToken | Kind::GreaterThanGreaterThanEqualsToken | Kind::BarBarEqualsToken | Kind::AmpersandAmpersandEqualsToken | Kind::QuestionQuestionEqualsToken)
+        matches!(
+            self,
+            Kind::PlusEqualsToken
+                | Kind::MinusEqualsToken
+                | Kind::AsteriskAsteriskEqualsToken
+                | Kind::AsteriskEqualsToken
+                | Kind::SlashEqualsToken
+                | Kind::PercentEqualsToken
+                | Kind::AmpersandEqualsToken
+                | Kind::BarEqualsToken
+                | Kind::CaretEqualsToken
+                | Kind::LessThanLessThanEqualsToken
+                | Kind::GreaterThanGreaterThanGreaterThanEqualsToken
+                | Kind::GreaterThanGreaterThanEqualsToken
+                | Kind::BarBarEqualsToken
+                | Kind::AmpersandAmpersandEqualsToken
+                | Kind::QuestionQuestionEqualsToken
+        )
     }
     /// `AssignmentOperatorOrHigher` kinds.
     #[allow(dead_code)]
     pub fn is_is_assignment_operator_or_higher(&self) -> bool {
-        matches!(self, Kind::QuestionQuestionToken | Kind::AsteriskAsteriskToken | Kind::AsteriskToken | Kind::SlashToken | Kind::PercentToken | Kind::PlusToken | Kind::MinusToken | Kind::LessThanLessThanToken | Kind::GreaterThanGreaterThanToken | Kind::GreaterThanGreaterThanGreaterThanToken | Kind::LessThanToken | Kind::LessThanEqualsToken | Kind::GreaterThanToken | Kind::GreaterThanEqualsToken | Kind::InstanceOfKeyword | Kind::InKeyword | Kind::EqualsEqualsToken | Kind::EqualsEqualsEqualsToken | Kind::ExclamationEqualsEqualsToken | Kind::ExclamationEqualsToken | Kind::AmpersandToken | Kind::BarToken | Kind::CaretToken | Kind::AmpersandAmpersandToken | Kind::BarBarToken | Kind::EqualsToken | Kind::PlusEqualsToken | Kind::MinusEqualsToken | Kind::AsteriskAsteriskEqualsToken | Kind::AsteriskEqualsToken | Kind::SlashEqualsToken | Kind::PercentEqualsToken | Kind::AmpersandEqualsToken | Kind::BarEqualsToken | Kind::CaretEqualsToken | Kind::LessThanLessThanEqualsToken | Kind::GreaterThanGreaterThanGreaterThanEqualsToken | Kind::GreaterThanGreaterThanEqualsToken | Kind::BarBarEqualsToken | Kind::AmpersandAmpersandEqualsToken | Kind::QuestionQuestionEqualsToken)
+        matches!(
+            self,
+            Kind::QuestionQuestionToken
+                | Kind::AsteriskAsteriskToken
+                | Kind::AsteriskToken
+                | Kind::SlashToken
+                | Kind::PercentToken
+                | Kind::PlusToken
+                | Kind::MinusToken
+                | Kind::LessThanLessThanToken
+                | Kind::GreaterThanGreaterThanToken
+                | Kind::GreaterThanGreaterThanGreaterThanToken
+                | Kind::LessThanToken
+                | Kind::LessThanEqualsToken
+                | Kind::GreaterThanToken
+                | Kind::GreaterThanEqualsToken
+                | Kind::InstanceOfKeyword
+                | Kind::InKeyword
+                | Kind::EqualsEqualsToken
+                | Kind::EqualsEqualsEqualsToken
+                | Kind::ExclamationEqualsEqualsToken
+                | Kind::ExclamationEqualsToken
+                | Kind::AmpersandToken
+                | Kind::BarToken
+                | Kind::CaretToken
+                | Kind::AmpersandAmpersandToken
+                | Kind::BarBarToken
+                | Kind::EqualsToken
+                | Kind::PlusEqualsToken
+                | Kind::MinusEqualsToken
+                | Kind::AsteriskAsteriskEqualsToken
+                | Kind::AsteriskEqualsToken
+                | Kind::SlashEqualsToken
+                | Kind::PercentEqualsToken
+                | Kind::AmpersandEqualsToken
+                | Kind::BarEqualsToken
+                | Kind::CaretEqualsToken
+                | Kind::LessThanLessThanEqualsToken
+                | Kind::GreaterThanGreaterThanGreaterThanEqualsToken
+                | Kind::GreaterThanGreaterThanEqualsToken
+                | Kind::BarBarEqualsToken
+                | Kind::AmpersandAmpersandEqualsToken
+                | Kind::QuestionQuestionEqualsToken
+        )
     }
     /// `LogicalOrCoalescingAssignmentOperator` kinds.
     #[allow(dead_code)]
     pub fn is_is_logical_or_coalescing_assignment_operator(&self) -> bool {
-        matches!(self, Kind::AmpersandAmpersandEqualsToken | Kind::BarBarEqualsToken | Kind::QuestionQuestionEqualsToken)
+        matches!(
+            self,
+            Kind::AmpersandAmpersandEqualsToken
+                | Kind::BarBarEqualsToken
+                | Kind::QuestionQuestionEqualsToken
+        )
     }
 }

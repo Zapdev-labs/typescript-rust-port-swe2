@@ -99,7 +99,7 @@ impl<'a> NodeVisitor<'a> {
 
     /// `v.VisitSourceFile(node)`
     pub fn visit_source_file(&self, cx: &mut VisitorCx<'a>, node: NodeId) -> Option<NodeId> {
-        self.visit_node(cx, node)
+        self.visit_node(cx, Some(node))
     }
 
     /// `v.VisitNode` — visits a Node, possibly returning a new Node in its
@@ -159,11 +159,7 @@ impl<'a> NodeVisitor<'a> {
     ///
     /// NOTE: Go takes `*NodeList` and returns `*NodeList`; the slice is
     /// cloned here because the arena is borrowed mutably by the context.
-    pub fn visit_nodes(
-        &self,
-        cx: &mut VisitorCx<'a>,
-        nodes: Option<NodeList>,
-    ) -> Option<NodeList> {
+    pub fn visit_nodes(&self, cx: &mut VisitorCx<'a>, nodes: Option<NodeList>) -> Option<NodeList> {
         let nodes = nodes?;
         self.visit.as_ref()?;
         if let Some(result) = self.visit_slice(cx, &nodes.nodes) {
@@ -379,4 +375,3 @@ impl<'a> NodeVisitor<'a> {
         node
     }
 }
-

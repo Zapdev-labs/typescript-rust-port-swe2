@@ -58,7 +58,10 @@ pub fn emit(schema: &Schema) -> String {
             value
         ));
     }
-    out.push_str(&format!("    pub const COUNT: i16 = {};\n", schema.kinds.len()));
+    out.push_str(&format!(
+        "    pub const COUNT: i16 = {};\n",
+        schema.kinds.len()
+    ));
     out.push_str("}\n\n");
 
     // `Kind.String()` — Go stringer returns the full `KindX` name.
@@ -131,9 +134,15 @@ fn emit_pred_body(out: &mut String, method: &str, p: &KindPred, indent: &str) {
         ));
     } else if !p.kinds.is_empty() {
         let arms: Vec<String> = p.kinds.iter().map(|k| format!("Kind::{k}")).collect();
-        out.push_str(&format!("{indent}    matches!(self, {})\n", arms.join(" | ")));
+        out.push_str(&format!(
+            "{indent}    matches!(self, {})\n",
+            arms.join(" | ")
+        ));
     } else {
-        out.push_str(&format!("{indent}    false // TODO: {name} not emitted\n", name = p.name));
+        out.push_str(&format!(
+            "{indent}    false // TODO: {name} not emitted\n",
+            name = p.name
+        ));
     }
     out.push_str(&format!("{indent}}}\n"));
 }

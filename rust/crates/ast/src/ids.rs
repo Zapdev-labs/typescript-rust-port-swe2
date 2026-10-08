@@ -20,6 +20,7 @@ impl NodeId {
 
     const FILE_SHIFT: u64 = 44;
     const LOCAL_MASK: u64 = (1 << Self::FILE_SHIFT) - 1;
+    #[allow(dead_code)]
     const FILE_MASK: u64 = !Self::LOCAL_MASK;
 
     /// The maximum file index representable in a `NodeId`.
@@ -33,8 +34,14 @@ impl NodeId {
     /// Panics if `file_index` exceeds 20 bits or `local_index` exceeds 44 bits.
     #[inline]
     pub fn new(file_index: u32, local_index: u64) -> NodeId {
-        debug_assert!(file_index <= Self::MAX_FILE_INDEX, "file index out of range");
-        debug_assert!(local_index <= Self::MAX_LOCAL_INDEX, "local node index out of range");
+        debug_assert!(
+            file_index <= Self::MAX_FILE_INDEX,
+            "file index out of range"
+        );
+        debug_assert!(
+            local_index <= Self::MAX_LOCAL_INDEX,
+            "local node index out of range"
+        );
         NodeId(((file_index as u64) << Self::FILE_SHIFT) | local_index)
     }
 

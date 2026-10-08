@@ -2,8 +2,6 @@
 //
 // TokenFlags
 
-use crate::flagdef::flag_type;
-
 flag_type! {
     pub struct TokenFlags(pub u32);
 }

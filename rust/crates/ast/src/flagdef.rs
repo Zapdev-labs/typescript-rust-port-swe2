@@ -112,5 +112,3 @@ macro_rules! flag_type {
         }
     };
 }
-
-pub(crate) use flag_type;

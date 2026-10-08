@@ -7,10 +7,6 @@ use tsc_tspath::{RootedDirectoryPath, RootedFilePath, RootedPath};
 use crate::fs::{self, DirEntry, FileInfo, FileMode, Fs, MODE_IRREGULAR, MODE_SYMLINK};
 use crate::vfs::Entries;
 
-/// Common holds the shared implementation backing iovfs.ioFS and osvfs.osFS.
-///
-/// PORT: Go's `RootFor func(root string) fs.FS` may return nil for URL roots
-/// handled by [fs::sub] failure; here it returns Option.
 /// RootForFn is `RootFor func(root string) fs.FS`; PORT: returns Option since
 /// Go may return nil for URL roots handled by [fs::sub] failure.
 pub type RootForFn = dyn Fn(&str) -> Option<Arc<dyn Fs>> + Send + Sync;
@@ -18,6 +14,10 @@ pub type RootForFn = dyn Fn(&str) -> Option<Arc<dyn Fs>> + Send + Sync;
 /// IsReparsePointFn reports whether a path is a Windows reparse point.
 pub type IsReparsePointFn = dyn Fn(&str) -> bool + Send + Sync;
 
+/// Common holds the shared implementation backing iovfs.ioFS and osvfs.osFS.
+///
+/// PORT: Go's `RootFor func(root string) fs.FS` may return nil for URL roots
+/// handled by [fs::sub] failure; here it returns Option.
 #[derive(Clone)]
 pub struct Common {
     pub root_for: Arc<RootForFn>,

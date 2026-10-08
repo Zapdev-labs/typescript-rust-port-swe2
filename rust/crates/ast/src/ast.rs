@@ -266,7 +266,11 @@ impl<'a> NodeFactory<'a> {
     }
 
     /// `f.NewModifierList(nodes)` — computes `ModifierFlags` like Go.
-    pub fn new_modifier_list(&self, nodes: &[Node], modifiers: impl Into<Box<[NodeId]>>) -> ModifierList {
+    pub fn new_modifier_list(
+        &self,
+        nodes: &[Node],
+        modifiers: impl Into<Box<[NodeId]>>,
+    ) -> ModifierList {
         let modifiers = modifiers.into();
         let modifier_flags = crate::utilities::modifiers_to_flags(&modifiers, nodes);
         ModifierList {
@@ -327,7 +331,9 @@ pub(crate) fn clone_node(
     hooks: &mut NodeFactoryHooks<'_>,
 ) -> NodeId {
     update_node(nodes, updated, original, hooks);
-    if updated != original && let Some(on_clone) = hooks.on_clone.as_mut() {
+    if updated != original
+        && let Some(on_clone) = hooks.on_clone.as_mut()
+    {
         on_clone(nodes, updated, original);
     }
     updated
@@ -335,13 +341,13 @@ pub(crate) fn clone_node(
 
 // Child traversal helpers
 
-/// The Go `Visitor` — a callback receiving a child `&Node`; returns `true` to
-/// stop traversal early.
-pub type Visitor<'a> = dyn FnMut(&Node) -> bool + 'a;
+/// The Go `Visitor` — a callback receiving a child `NodeId` (Go passes
+/// `*Node`); returns `true` to stop traversal early.
+pub type Visitor<'a> = dyn FnMut(NodeId) -> bool + 'a;
 
 /// `visit(v, node)` — visits a single optional child.
-pub fn visit(v: &mut Visitor<'_>, node: Option<NodeId>, nodes: &[Node]) -> bool {
-    node.is_some_and(|id| v(&nodes[id]))
+pub fn visit(v: &mut Visitor<'_>, node: Option<NodeId>, _nodes: &[Node]) -> bool {
+    node.is_some_and(v)
 }
 
 /// `visitNodeList(v, children)` — visits each element of an optional list.
@@ -354,13 +360,17 @@ pub fn visit_node_list(v: &mut Visitor<'_>, children: &Option<NodeList>, nodes: 
 }
 
 /// `visitNodes(v, children)` — visits each element of a `[]*Node` slice.
-pub fn visit_nodes(v: &mut Visitor<'_>, children: &[NodeId], nodes: &[Node]) -> bool {
-    children.iter().any(|&id| v(&nodes[id]))
+pub fn visit_nodes(v: &mut Visitor<'_>, children: &[NodeId], _nodes: &[Node]) -> bool {
+    children.iter().any(|&id| v(id))
 }
 
 /// `visitModifiers(v, modifiers)` — visits each element of an optional
 /// `ModifierList`.
-pub fn visit_modifiers(v: &mut Visitor<'_>, modifiers: &Option<ModifierList>, nodes: &[Node]) -> bool {
+pub fn visit_modifiers(
+    v: &mut Visitor<'_>,
+    modifiers: &Option<ModifierList>,
+    nodes: &[Node],
+) -> bool {
     if let Some(modifiers) = modifiers {
         visit_nodes(v, &modifiers.nodes, nodes)
     } else {
@@ -406,12 +416,12 @@ impl Node {
 
     /// `n.IterChildren()` — yields each direct child `&Node`.
     pub fn iter_children<'a>(&'a self, nodes: &'a [Node]) -> impl Iterator<Item = &'a Node> + 'a {
-        let mut children: Vec<&'a Node> = Vec::new();
+        let mut children: Vec<NodeId> = Vec::new();
         self.for_each_child(nodes, &mut |child| {
             children.push(child);
             false
         });
-        children.into_iter()
+        children.into_iter().map(|id| &nodes[id])
     }
 
     /// `n.data.Modifiers()`
@@ -456,11 +466,12 @@ impl Node {
 
     /// `n.ParameterList()`
     pub fn parameter_list(&self) -> Option<&NodeList> {
-        self.function_like_data().and_then(|d| d.parameters.as_ref())
+        self.function_like_data()
+            .and_then(|d| d.parameters.as_ref())
     }
 
     /// `n.Parameters()`
-    pub fn parameters<'a>(&'a self) -> Option<&'a [NodeId]> {
+    pub fn parameters(&self) -> Option<&[NodeId]> {
         self.parameter_list().map(|l| l.nodes())
     }
 
@@ -527,36 +538,62 @@ impl Node {
         match self.kind {
             Kind::Identifier => Cow::Borrowed(self.as_identifier().text.as_str()),
             Kind::PrivateIdentifier => Cow::Borrowed(self.as_private_identifier().text.as_str()),
-            Kind::StringLiteral => {
-                Cow::Borrowed(self.as_string_literal().literal_expression_base.literal_like_node_base.text.as_str())
-            }
-            Kind::NumericLiteral => {
-                Cow::Borrowed(self.as_numeric_literal().literal_expression_base.literal_like_node_base.text.as_str())
-            }
-            Kind::BigIntLiteral => {
-                Cow::Borrowed(self.as_big_int_literal().literal_expression_base.literal_like_node_base.text.as_str())
-            }
+            Kind::StringLiteral => Cow::Borrowed(
+                self.as_string_literal()
+                    .literal_expression_base
+                    .literal_like_node_base
+                    .text
+                    .as_str(),
+            ),
+            Kind::NumericLiteral => Cow::Borrowed(
+                self.as_numeric_literal()
+                    .literal_expression_base
+                    .literal_like_node_base
+                    .text
+                    .as_str(),
+            ),
+            Kind::BigIntLiteral => Cow::Borrowed(
+                self.as_big_int_literal()
+                    .literal_expression_base
+                    .literal_like_node_base
+                    .text
+                    .as_str(),
+            ),
             Kind::MetaProperty => {
-                let name = self.as_meta_property().name.unwrap_or_else(|| {
-                    panic!("MetaProperty without name in Node.Text")
-                });
+                let name = self
+                    .as_meta_property()
+                    .name
+                    .unwrap_or_else(|| panic!("MetaProperty without name in Node.Text"));
                 nodes[name].text(nodes)
             }
             Kind::NoSubstitutionTemplateLiteral => Cow::Borrowed(
                 self.as_no_substitution_template_literal()
                     .template_literal_like_node_base
+                    .literal_like_node_base
                     .text
                     .as_str(),
             ),
-            Kind::TemplateHead => {
-                Cow::Borrowed(self.as_template_head().template_literal_like_node_base.literal_like_node_base.text.as_str())
-            }
-            Kind::TemplateMiddle => {
-                Cow::Borrowed(self.as_template_middle().template_literal_like_node_base.literal_like_node_base.text.as_str())
-            }
-            Kind::TemplateTail => {
-                Cow::Borrowed(self.as_template_tail().template_literal_like_node_base.literal_like_node_base.text.as_str())
-            }
+            Kind::TemplateHead => Cow::Borrowed(
+                self.as_template_head()
+                    .template_literal_like_node_base
+                    .literal_like_node_base
+                    .text
+                    .as_str(),
+            ),
+            Kind::TemplateMiddle => Cow::Borrowed(
+                self.as_template_middle()
+                    .template_literal_like_node_base
+                    .literal_like_node_base
+                    .text
+                    .as_str(),
+            ),
+            Kind::TemplateTail => Cow::Borrowed(
+                self.as_template_tail()
+                    .template_literal_like_node_base
+                    .literal_like_node_base
+                    .text
+                    .as_str(),
+            ),
             Kind::JsxNamespacedName => {
                 let d = self.as_jsx_namespaced_name();
                 let mut s = nodes[d.namespace.unwrap()].text(nodes).into_owned();
@@ -566,7 +603,8 @@ impl Node {
             }
             Kind::RegularExpressionLiteral => Cow::Borrowed(
                 self.as_regular_expression_literal()
-                    .literal_expression_base.literal_like_node_base
+                    .literal_expression_base
+                    .literal_like_node_base
                     .text
                     .as_str(),
             ),
@@ -575,9 +613,12 @@ impl Node {
             Kind::JSDocLinkCode => {
                 Cow::Owned(self.as_js_doc_link_code().js_doc_comment_base.text.join(""))
             }
-            Kind::JSDocLinkPlain => {
-                Cow::Owned(self.as_js_doc_link_plain().js_doc_comment_base.text.join(""))
-            }
+            Kind::JSDocLinkPlain => Cow::Owned(
+                self.as_js_doc_link_plain()
+                    .js_doc_comment_base
+                    .text
+                    .join(""),
+            ),
             _ => panic!("Unhandled case in Node.Text: {}", self.kind_string()),
         }
     }
@@ -590,7 +631,9 @@ impl Node {
             Kind::ParenthesizedExpression => self.as_parenthesized_expression().expression,
             Kind::CallExpression => self.as_call_expression().expression,
             Kind::NewExpression => self.as_new_expression().expression,
-            Kind::ExpressionWithTypeArguments => self.as_expression_with_type_arguments().expression,
+            Kind::ExpressionWithTypeArguments => {
+                self.as_expression_with_type_arguments().expression
+            }
             Kind::ComputedPropertyName => self.as_computed_property_name().expression,
             Kind::NonNullExpression => self.as_non_null_expression().expression,
             Kind::TypeAssertionExpression => self.as_type_assertion().expression,
@@ -631,9 +674,15 @@ impl Node {
         let kind = self.kind;
         let data = &mut self.data;
         match kind {
-            Kind::PropertyAccessExpression => data.as_property_access_expression_mut().expression = expr,
-            Kind::ElementAccessExpression => data.as_element_access_expression_mut().expression = expr,
-            Kind::ParenthesizedExpression => data.as_parenthesized_expression_mut().expression = expr,
+            Kind::PropertyAccessExpression => {
+                data.as_property_access_expression_mut().expression = expr
+            }
+            Kind::ElementAccessExpression => {
+                data.as_element_access_expression_mut().expression = expr
+            }
+            Kind::ParenthesizedExpression => {
+                data.as_parenthesized_expression_mut().expression = expr
+            }
             Kind::CallExpression => data.as_call_expression_mut().expression = expr,
             Kind::NewExpression => data.as_new_expression_mut().expression = expr,
             Kind::ExpressionWithTypeArguments => {
@@ -667,23 +716,38 @@ impl Node {
             Kind::ExpressionStatement => data.as_expression_statement_mut().expression = expr,
             Kind::ReturnStatement => data.as_return_statement_mut().expression = expr,
             Kind::ThrowStatement => data.as_throw_statement_mut().expression = expr,
-            Kind::ExternalModuleReference => data.as_external_module_reference_mut().expression = expr,
+            Kind::ExternalModuleReference => {
+                data.as_external_module_reference_mut().expression = expr
+            }
             Kind::ExportAssignment => data.as_export_assignment_mut().expression = expr,
             Kind::Decorator => data.as_decorator_mut().expression = expr,
             Kind::JsxExpression => data.as_jsx_expression_mut().expression = expr,
             Kind::JsxSpreadAttribute => data.as_jsx_spread_attribute_mut().expression = expr,
-            _ => panic!("Unhandled case in mutableNode.SetExpression: {}", kind.kind_string()),
+            _ => panic!(
+                "Unhandled case in mutableNode.SetExpression: {}",
+                kind.kind_string()
+            ),
         }
     }
 
     /// `n.RawText()`
     pub fn raw_text(&self) -> &str {
         match self.kind {
-            Kind::TemplateHead => self.as_template_head().template_literal_like_node_base.raw_text.as_str(),
-            Kind::TemplateMiddle => {
-                self.as_template_middle().template_literal_like_node_base.raw_text.as_str()
-            }
-            Kind::TemplateTail => self.as_template_tail().template_literal_like_node_base.raw_text.as_str(),
+            Kind::TemplateHead => self
+                .as_template_head()
+                .template_literal_like_node_base
+                .raw_text
+                .as_str(),
+            Kind::TemplateMiddle => self
+                .as_template_middle()
+                .template_literal_like_node_base
+                .raw_text
+                .as_str(),
+            Kind::TemplateTail => self
+                .as_template_tail()
+                .template_literal_like_node_base
+                .raw_text
+                .as_str(),
             _ => panic!("Unhandled case in Node.RawText: {}", self.kind_string()),
         }
     }
@@ -698,7 +762,7 @@ impl Node {
     }
 
     /// `n.Arguments()`
-    pub fn arguments<'a>(&'a self) -> Option<&'a [NodeId]> {
+    pub fn arguments(&self) -> Option<&[NodeId]> {
         self.argument_list().map(|l| l.nodes())
     }
 
@@ -710,31 +774,52 @@ impl Node {
             Kind::TaggedTemplateExpression => {
                 self.as_tagged_template_expression().type_arguments.as_ref()
             }
-            Kind::TypeReference => self.as_type_reference_node().node_with_type_arguments_base.type_arguments.as_ref(),
-            Kind::ExpressionWithTypeArguments => {
-                self.as_expression_with_type_arguments().type_arguments.as_ref()
-            }
-            Kind::ImportType => self.as_import_type_node().node_with_type_arguments_base.type_arguments.as_ref(),
-            Kind::TypeQuery => self.as_type_query_node().node_with_type_arguments_base.type_arguments.as_ref(),
+            Kind::TypeReference => self
+                .as_type_reference_node()
+                .node_with_type_arguments_base
+                .type_arguments
+                .as_ref(),
+            Kind::ExpressionWithTypeArguments => self
+                .as_expression_with_type_arguments()
+                .type_arguments
+                .as_ref(),
+            Kind::ImportType => self
+                .as_import_type_node()
+                .node_with_type_arguments_base
+                .type_arguments
+                .as_ref(),
+            Kind::TypeQuery => self
+                .as_type_query_node()
+                .node_with_type_arguments_base
+                .type_arguments
+                .as_ref(),
             Kind::JsxOpeningElement => self.as_jsx_opening_element().type_arguments.as_ref(),
-            Kind::JsxSelfClosingElement => self.as_jsx_self_closing_element().type_arguments.as_ref(),
+            Kind::JsxSelfClosingElement => {
+                self.as_jsx_self_closing_element().type_arguments.as_ref()
+            }
             _ => panic!("Unhandled case in Node.TypeArguments"),
         }
     }
 
     /// `n.TypeArguments()`
-    pub fn type_arguments<'a>(&'a self) -> Option<&'a [NodeId]> {
+    pub fn type_arguments(&self) -> Option<&[NodeId]> {
         self.type_argument_list().map(|l| l.nodes())
     }
 
     /// `n.TypeParameterList()`
     pub fn type_parameter_list(&self) -> Option<&NodeList> {
         match self.kind {
-            Kind::ClassDeclaration => self.as_class_declaration().class_like_base.type_parameters.as_ref(),
-            Kind::ClassExpression => self.as_class_expression().class_like_base.type_parameters.as_ref(),
-            Kind::InterfaceDeclaration => {
-                self.as_interface_declaration().type_parameters.as_ref()
-            }
+            Kind::ClassDeclaration => self
+                .as_class_declaration()
+                .class_like_base
+                .type_parameters
+                .as_ref(),
+            Kind::ClassExpression => self
+                .as_class_expression()
+                .class_like_base
+                .type_parameters
+                .as_ref(),
+            Kind::InterfaceDeclaration => self.as_interface_declaration().type_parameters.as_ref(),
             Kind::TypeAliasDeclaration | Kind::JSTypeAliasDeclaration => {
                 self.as_type_alias_declaration().type_parameters.as_ref()
             }
@@ -749,7 +834,7 @@ impl Node {
     }
 
     /// `n.TypeParameters()`
-    pub fn type_parameters<'a>(&'a self) -> Option<&'a [NodeId]> {
+    pub fn type_parameters(&self) -> Option<&[NodeId]> {
         self.type_parameter_list().map(|l| l.nodes())
     }
 
@@ -767,7 +852,7 @@ impl Node {
     }
 
     /// `n.Members()`
-    pub fn members<'a>(&'a self) -> Option<&'a [NodeId]> {
+    pub fn members(&self) -> Option<&[NodeId]> {
         self.member_list().map(|l| l.nodes())
     }
 
@@ -780,12 +865,15 @@ impl Node {
             Kind::CaseClause | Kind::DefaultClause => {
                 self.as_case_or_default_clause().statements.as_ref()
             }
-            _ => panic!("Unhandled case in Node.StatementList: {}", self.kind_string()),
+            _ => panic!(
+                "Unhandled case in Node.StatementList: {}",
+                self.kind_string()
+            ),
         }
     }
 
     /// `n.Statements()`
-    pub fn statements<'a>(&'a self) -> Option<&'a [NodeId]> {
+    pub fn statements(&self) -> Option<&[NodeId]> {
         self.statement_list().map(|l| l.nodes())
     }
 
@@ -793,7 +881,11 @@ impl Node {
     pub fn can_have_statements(&self) -> bool {
         matches!(
             self.kind,
-            Kind::SourceFile | Kind::Block | Kind::ModuleBlock | Kind::CaseClause | Kind::DefaultClause
+            Kind::SourceFile
+                | Kind::Block
+                | Kind::ModuleBlock
+                | Kind::CaseClause
+                | Kind::DefaultClause
         )
     }
 
@@ -806,7 +898,7 @@ impl Node {
     }
 
     /// `n.ModifierNodes()`
-    pub fn modifier_nodes<'a>(&'a self) -> Option<&'a [NodeId]> {
+    pub fn modifier_nodes(&self) -> Option<&[NodeId]> {
         self.modifiers().map(|m| m.nodes())
     }
 
@@ -862,7 +954,9 @@ impl Node {
             Kind::PropertySignature => data.as_property_signature_declaration_mut().type_ = t,
             Kind::PropertyDeclaration => data.as_property_declaration_mut().type_ = t,
             Kind::PropertyAssignment => data.as_property_assignment_mut().type_ = t,
-            Kind::ShorthandPropertyAssignment => data.as_shorthand_property_assignment_mut().type_ = t,
+            Kind::ShorthandPropertyAssignment => {
+                data.as_shorthand_property_assignment_mut().type_ = t
+            }
             Kind::TypePredicate => data.as_type_predicate_node_mut().type_ = t,
             Kind::ParenthesizedType => data.as_parenthesized_type_node_mut().type_ = t,
             Kind::TypeOperator => data.as_type_operator_node_mut().type_ = t,
@@ -879,7 +973,8 @@ impl Node {
             Kind::TemplateLiteralTypeSpan => data.as_template_literal_type_span_mut().type_ = t,
             Kind::JSDocTypeExpression => data.as_js_doc_type_expression_mut().type_ = t,
             Kind::JSDocParameterTag | Kind::JSDocPropertyTag => {
-                data.as_js_doc_parameter_or_property_tag_mut().type_expression = t;
+                data.as_js_doc_parameter_or_property_tag_mut()
+                    .type_expression = t;
             }
             Kind::JSDocNullableType => data.as_js_doc_nullable_type_mut().type_ = t,
             Kind::JSDocNonNullableType => data.as_js_doc_non_nullable_type_mut().type_ = t,
@@ -890,7 +985,10 @@ impl Node {
                 if let Some(func_like) = self.data.function_like_data_mut() {
                     func_like.type_ = t;
                 } else {
-                    panic!("Unhandled case in mutableNode.SetType: {}", kind.kind_string());
+                    panic!(
+                        "Unhandled case in mutableNode.SetType: {}",
+                        kind.kind_string()
+                    );
                 }
             }
         }
@@ -907,7 +1005,9 @@ impl Node {
             Kind::PropertyAssignment => self.as_property_assignment().initializer,
             Kind::EnumMember => self.as_enum_member().initializer,
             Kind::ForStatement => self.as_for_statement().initializer,
-            Kind::ForInStatement | Kind::ForOfStatement => self.as_for_in_or_of_statement().initializer,
+            Kind::ForInStatement | Kind::ForOfStatement => {
+                self.as_for_in_or_of_statement().initializer
+            }
             Kind::JsxAttribute => self.as_jsx_attribute().initializer,
             _ => panic!("Unhandled case in Node.Initializer"),
         }
@@ -918,11 +1018,17 @@ impl Node {
         let kind = self.kind;
         let data = &mut self.data;
         match kind {
-            Kind::VariableDeclaration => data.as_variable_declaration_mut().initializer = initializer,
+            Kind::VariableDeclaration => {
+                data.as_variable_declaration_mut().initializer = initializer
+            }
             Kind::Parameter => data.as_parameter_declaration_mut().initializer = initializer,
             Kind::BindingElement => data.as_binding_element_mut().initializer = initializer,
-            Kind::PropertyDeclaration => data.as_property_declaration_mut().initializer = initializer,
-            Kind::PropertySignature => data.as_property_signature_declaration_mut().initializer = initializer,
+            Kind::PropertyDeclaration => {
+                data.as_property_declaration_mut().initializer = initializer
+            }
+            Kind::PropertySignature => {
+                data.as_property_signature_declaration_mut().initializer = initializer
+            }
             Kind::PropertyAssignment => data.as_property_assignment_mut().initializer = initializer,
             Kind::EnumMember => data.as_enum_member_mut().initializer = initializer,
             Kind::ForStatement => data.as_for_statement_mut().initializer = initializer,
@@ -952,7 +1058,9 @@ impl Node {
             Kind::JSDocCallbackTag => self.as_js_doc_callback_tag().js_doc_tag_base.tag_name,
             Kind::JSDocOverloadTag => self.as_js_doc_overload_tag().js_doc_tag_base.tag_name,
             Kind::JSDocParameterTag | Kind::JSDocPropertyTag => {
-                self.as_js_doc_parameter_or_property_tag().js_doc_tag_base.tag_name
+                self.as_js_doc_parameter_or_property_tag()
+                    .js_doc_tag_base
+                    .tag_name
             }
             Kind::JSDocReturnTag => self.as_js_doc_return_tag().js_doc_tag_base.tag_name,
             Kind::JSDocThisTag => self.as_js_doc_this_tag().js_doc_tag_base.tag_name,
@@ -1000,27 +1108,81 @@ impl Node {
     pub fn comment_list(&self) -> Option<&NodeList> {
         match self.kind {
             Kind::JSDoc => self.as_js_doc().comment.as_ref(),
-            Kind::JSDocUnknownTag => self.as_js_doc_unknown_tag().js_doc_tag_base.comment.as_ref(),
-            Kind::JSDocAugmentsTag => self.as_js_doc_augments_tag().js_doc_tag_base.comment.as_ref(),
-            Kind::JSDocImplementsTag => self.as_js_doc_implements_tag().js_doc_tag_base.comment.as_ref(),
-            Kind::JSDocDeprecatedTag => self.as_js_doc_deprecated_tag().js_doc_tag_base.comment.as_ref(),
+            Kind::JSDocUnknownTag => self
+                .as_js_doc_unknown_tag()
+                .js_doc_tag_base
+                .comment
+                .as_ref(),
+            Kind::JSDocAugmentsTag => self
+                .as_js_doc_augments_tag()
+                .js_doc_tag_base
+                .comment
+                .as_ref(),
+            Kind::JSDocImplementsTag => self
+                .as_js_doc_implements_tag()
+                .js_doc_tag_base
+                .comment
+                .as_ref(),
+            Kind::JSDocDeprecatedTag => self
+                .as_js_doc_deprecated_tag()
+                .js_doc_tag_base
+                .comment
+                .as_ref(),
             Kind::JSDocPublicTag => self.as_js_doc_public_tag().js_doc_tag_base.comment.as_ref(),
-            Kind::JSDocPrivateTag => self.as_js_doc_private_tag().js_doc_tag_base.comment.as_ref(),
-            Kind::JSDocProtectedTag => self.as_js_doc_protected_tag().js_doc_tag_base.comment.as_ref(),
-            Kind::JSDocReadonlyTag => self.as_js_doc_readonly_tag().js_doc_tag_base.comment.as_ref(),
-            Kind::JSDocOverrideTag => self.as_js_doc_override_tag().js_doc_tag_base.comment.as_ref(),
-            Kind::JSDocCallbackTag => self.as_js_doc_callback_tag().js_doc_tag_base.comment.as_ref(),
-            Kind::JSDocOverloadTag => self.as_js_doc_overload_tag().js_doc_tag_base.comment.as_ref(),
-            Kind::JSDocParameterTag | Kind::JSDocPropertyTag => {
-                self.as_js_doc_parameter_or_property_tag().js_doc_tag_base.comment.as_ref()
-            }
+            Kind::JSDocPrivateTag => self
+                .as_js_doc_private_tag()
+                .js_doc_tag_base
+                .comment
+                .as_ref(),
+            Kind::JSDocProtectedTag => self
+                .as_js_doc_protected_tag()
+                .js_doc_tag_base
+                .comment
+                .as_ref(),
+            Kind::JSDocReadonlyTag => self
+                .as_js_doc_readonly_tag()
+                .js_doc_tag_base
+                .comment
+                .as_ref(),
+            Kind::JSDocOverrideTag => self
+                .as_js_doc_override_tag()
+                .js_doc_tag_base
+                .comment
+                .as_ref(),
+            Kind::JSDocCallbackTag => self
+                .as_js_doc_callback_tag()
+                .js_doc_tag_base
+                .comment
+                .as_ref(),
+            Kind::JSDocOverloadTag => self
+                .as_js_doc_overload_tag()
+                .js_doc_tag_base
+                .comment
+                .as_ref(),
+            Kind::JSDocParameterTag | Kind::JSDocPropertyTag => self
+                .as_js_doc_parameter_or_property_tag()
+                .js_doc_tag_base
+                .comment
+                .as_ref(),
             Kind::JSDocReturnTag => self.as_js_doc_return_tag().js_doc_tag_base.comment.as_ref(),
             Kind::JSDocThisTag => self.as_js_doc_this_tag().js_doc_tag_base.comment.as_ref(),
             Kind::JSDocTypeTag => self.as_js_doc_type_tag().js_doc_tag_base.comment.as_ref(),
-            Kind::JSDocTemplateTag => self.as_js_doc_template_tag().js_doc_tag_base.comment.as_ref(),
-            Kind::JSDocTypedefTag => self.as_js_doc_typedef_tag().js_doc_tag_base.comment.as_ref(),
+            Kind::JSDocTemplateTag => self
+                .as_js_doc_template_tag()
+                .js_doc_tag_base
+                .comment
+                .as_ref(),
+            Kind::JSDocTypedefTag => self
+                .as_js_doc_typedef_tag()
+                .js_doc_tag_base
+                .comment
+                .as_ref(),
             Kind::JSDocSeeTag => self.as_js_doc_see_tag().js_doc_tag_base.comment.as_ref(),
-            Kind::JSDocSatisfiesTag => self.as_js_doc_satisfies_tag().js_doc_tag_base.comment.as_ref(),
+            Kind::JSDocSatisfiesTag => self
+                .as_js_doc_satisfies_tag()
+                .js_doc_tag_base
+                .comment
+                .as_ref(),
             Kind::JSDocThrowsTag => self.as_js_doc_throws_tag().js_doc_tag_base.comment.as_ref(),
             Kind::JSDocImportTag => self.as_js_doc_import_tag().js_doc_tag_base.comment.as_ref(),
             _ => panic!("Unhandled case in Node.CommentList: {}", self.kind_string()),
@@ -1028,7 +1190,7 @@ impl Node {
     }
 
     /// `n.Comments()`
-    pub fn comments<'a>(&'a self) -> Option<&'a [NodeId]> {
+    pub fn comments(&self) -> Option<&[NodeId]> {
         self.comment_list().map(|l| l.nodes())
     }
 
@@ -1069,16 +1231,24 @@ impl Node {
             }
             Kind::ExportDeclaration => self.as_export_declaration().module_specifier,
             Kind::JSDocImportTag => self.as_js_doc_import_tag().module_specifier,
-            _ => panic!("Unhandled case in Node.ModuleSpecifier: {}", self.kind_string()),
+            _ => panic!(
+                "Unhandled case in Node.ModuleSpecifier: {}",
+                self.kind_string()
+            ),
         }
     }
 
     /// `n.ImportClause()`
     pub fn import_clause(&self) -> Option<NodeId> {
         match self.kind {
-            Kind::ImportDeclaration | Kind::JSImportDeclaration => self.as_import_declaration().import_clause,
+            Kind::ImportDeclaration | Kind::JSImportDeclaration => {
+                self.as_import_declaration().import_clause
+            }
             Kind::JSDocImportTag => self.as_js_doc_import_tag().import_clause,
-            _ => panic!("Unhandled case in Node.ImportClause: {}", self.kind_string()),
+            _ => panic!(
+                "Unhandled case in Node.ImportClause: {}",
+                self.kind_string()
+            ),
         }
     }
 
@@ -1088,7 +1258,9 @@ impl Node {
             Kind::DoStatement => self.as_do_statement().iteration_statement_base.statement,
             Kind::WhileStatement => self.as_while_statement().iteration_statement_base.statement,
             Kind::ForStatement => self.as_for_statement().iteration_statement_base.statement,
-            Kind::ForInStatement | Kind::ForOfStatement => self.as_for_in_or_of_statement().statement,
+            Kind::ForInStatement | Kind::ForOfStatement => {
+                self.as_for_in_or_of_statement().statement
+            }
             Kind::WithStatement => self.as_with_statement().statement,
             Kind::LabeledStatement => self.as_labeled_statement().statement,
             _ => panic!("Unhandled case in Node.Statement: {}", self.kind_string()),
@@ -1098,14 +1270,19 @@ impl Node {
     /// `n.PropertyList()`
     pub fn property_list(&self) -> Option<&NodeList> {
         match self.kind {
-            Kind::ObjectLiteralExpression => self.as_object_literal_expression().properties.as_ref(),
+            Kind::ObjectLiteralExpression => {
+                self.as_object_literal_expression().properties.as_ref()
+            }
             Kind::JsxAttributes => self.as_jsx_attributes().properties.as_ref(),
-            _ => panic!("Unhandled case in Node.PropertyList: {}", self.kind_string()),
+            _ => panic!(
+                "Unhandled case in Node.PropertyList: {}",
+                self.kind_string()
+            ),
         }
     }
 
     /// `n.Properties()`
-    pub fn properties<'a>(&'a self) -> Option<&'a [NodeId]> {
+    pub fn properties(&self) -> Option<&[NodeId]> {
         self.property_list().map(|l| l.nodes())
     }
 
@@ -1124,7 +1301,7 @@ impl Node {
     }
 
     /// `n.Elements()`
-    pub fn elements<'a>(&'a self) -> Option<&'a [NodeId]> {
+    pub fn elements(&self) -> Option<&[NodeId]> {
         self.element_list().map(|l| l.nodes())
     }
 
@@ -1132,14 +1309,44 @@ impl Node {
     pub fn postfix_token(&self) -> Option<NodeId> {
         match self.kind {
             Kind::MethodDeclaration => self.as_method_declaration().named_member_base.postfix_token,
-            Kind::ShorthandPropertyAssignment => self.as_shorthand_property_assignment().named_member_base.postfix_token,
-            Kind::MethodSignature => self.as_method_signature_declaration().named_member_base.postfix_token,
-            Kind::PropertySignature => self.as_property_signature_declaration().named_member_base.postfix_token,
-            Kind::PropertyAssignment => self.as_property_assignment().named_member_base.postfix_token,
-            Kind::PropertyDeclaration => self.as_property_declaration().named_member_base.postfix_token,
+            Kind::ShorthandPropertyAssignment => {
+                self.as_shorthand_property_assignment()
+                    .named_member_base
+                    .postfix_token
+            }
+            Kind::MethodSignature => {
+                self.as_method_signature_declaration()
+                    .named_member_base
+                    .postfix_token
+            }
+            Kind::PropertySignature => {
+                self.as_property_signature_declaration()
+                    .named_member_base
+                    .postfix_token
+            }
+            Kind::PropertyAssignment => {
+                self.as_property_assignment()
+                    .named_member_base
+                    .postfix_token
+            }
+            Kind::PropertyDeclaration => {
+                self.as_property_declaration()
+                    .named_member_base
+                    .postfix_token
+            }
             Kind::EnumMember => self.as_enum_member().named_member_base.postfix_token,
-            Kind::GetAccessor => self.as_get_accessor_declaration().named_member_base.postfix_token,
-            Kind::SetAccessor => self.as_set_accessor_declaration().named_member_base.postfix_token,
+            Kind::GetAccessor => {
+                self.as_get_accessor_declaration()
+                    .accessor_declaration_base
+                    .named_member_base
+                    .postfix_token
+            }
+            Kind::SetAccessor => {
+                self.as_set_accessor_declaration()
+                    .accessor_declaration_base
+                    .named_member_base
+                    .postfix_token
+            }
             _ => None,
         }
     }
@@ -1161,10 +1368,17 @@ impl Node {
     pub fn question_dot_token(&self) -> Option<NodeId> {
         match self.kind {
             Kind::ElementAccessExpression => self.as_element_access_expression().question_dot_token,
-            Kind::PropertyAccessExpression => self.as_property_access_expression().question_dot_token,
+            Kind::PropertyAccessExpression => {
+                self.as_property_access_expression().question_dot_token
+            }
             Kind::CallExpression => self.as_call_expression().question_dot_token,
-            Kind::TaggedTemplateExpression => self.as_tagged_template_expression().question_dot_token,
-            _ => panic!("Unhandled case in Node.QuestionDotToken: {}", self.kind_string()),
+            Kind::TaggedTemplateExpression => {
+                self.as_tagged_template_expression().question_dot_token
+            }
+            _ => panic!(
+                "Unhandled case in Node.QuestionDotToken: {}",
+                self.kind_string()
+            ),
         }
     }
 
@@ -1180,7 +1394,10 @@ impl Node {
             Kind::JSDocCallbackTag => self.as_js_doc_callback_tag().type_expression,
             Kind::JSDocSatisfiesTag => self.as_js_doc_satisfies_tag().type_expression,
             Kind::JSDocThrowsTag => self.as_js_doc_throws_tag().type_expression,
-            _ => panic!("Unhandled case in Node.TypeExpression: {}", self.kind_string()),
+            _ => panic!(
+                "Unhandled case in Node.TypeExpression: {}",
+                self.kind_string()
+            ),
         }
     }
 
@@ -1275,9 +1492,9 @@ pub fn for_each_child_source_file(
 }
 
 /// `(node *SourceFile) VisitEachChild` — rebuilds via `UpdateSourceFile`.
-pub fn visit_each_child_source_file(
-    cx: &mut crate::visitor::VisitorCx<'_>,
-    v: &crate::visitor::NodeVisitor<'_>,
+pub fn visit_each_child_source_file<'a>(
+    cx: &mut crate::visitor::VisitorCx<'a>,
+    v: &crate::visitor::NodeVisitor<'a>,
     node: NodeId,
 ) -> Option<NodeId> {
     let (statements, end_of_file_token) = {
@@ -1306,9 +1523,9 @@ pub fn for_each_child_js_doc_parameter_or_property_tag(
 }
 
 /// `visitEachChild_JSDocParameterOrPropertyTag`.
-pub fn visit_each_child_js_doc_parameter_or_property_tag(
-    cx: &mut crate::visitor::VisitorCx<'_>,
-    v: &crate::visitor::NodeVisitor<'_>,
+pub fn visit_each_child_js_doc_parameter_or_property_tag<'a>(
+    cx: &mut crate::visitor::VisitorCx<'a>,
+    v: &crate::visitor::NodeVisitor<'a>,
     node: NodeId,
 ) -> Option<NodeId> {
     let (tag_name, name, is_bracketed, type_expression, is_name_first, comment) = {
@@ -1350,11 +1567,13 @@ impl NodeFactory<'_> {
         statements: Option<NodeList>,
         end_of_file_token: Option<NodeId>,
     ) -> NodeId {
-        let mut data = SourceFile::default();
-        data.file_name = file_name.to_string();
-        data.text = text.to_string();
-        data.statements = statements;
-        data.end_of_file_token = end_of_file_token;
+        let data = SourceFile {
+            file_name: file_name.to_string(),
+            text: text.to_string(),
+            statements,
+            end_of_file_token,
+            ..Default::default()
+        };
         self.new_node(nodes, Kind::SourceFile, NodeData::SourceFile(data))
     }
 
@@ -1389,7 +1608,7 @@ impl NodeFactory<'_> {
 /// `NewSourceFile`, then ORs the flags. Implemented by taking the new
 /// file's data, filling it from `other`, and writing it back (the arena
 /// forbids holding two mutable borrows).
-fn copy_source_file_from(nodes: &mut Vec<Node>, new_file: NodeId, other: NodeId) {
+fn copy_source_file_from(nodes: &mut [Node], new_file: NodeId, other: NodeId) {
     let mut d = std::mem::take(nodes[new_file].as_source_file_mut());
     {
         let o = nodes[other].as_source_file();
@@ -1417,7 +1636,8 @@ fn copy_source_file_from(nodes: &mut Vec<Node>, new_file: NodeId, other: NodeId)
         d.reparsed_clones = o.reparsed_clones.clone();
     }
     *nodes[new_file].as_source_file_mut() = d;
-    nodes[new_file].flags |= nodes[other].flags;
+    let other_flags = nodes[other].flags;
+    nodes[new_file].flags |= other_flags;
 }
 
 /// `(node *SourceFile) Clone(f)` — NewSourceFile + copyFrom.

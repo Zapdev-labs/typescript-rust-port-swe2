@@ -16,28 +16,29 @@ use tsc_tspath::{CaseSensitivity, RootedDirectoryPath, RootedFilePath, RootedPat
 use crate::fs::{FileInfo, FsError};
 use crate::vfs::{Entries, Vfs};
 
+/// Boxed function fields used by [FsMock] and `wrap` closures.
+type MockFn0<R> = Box<dyn Fn() -> R + Send + Sync>;
+type MockFn1<A, R> = Box<dyn Fn(&A) -> R + Send + Sync>;
+type MockFn2<A, B, R> = Box<dyn for<'a, 'b> Fn(&'a A, &'b B) -> R + Send + Sync>;
+type MockFn3<A, B, C, R> = Box<dyn Fn(&A, B, C) -> R + Send + Sync>;
+
 /// FsMock is vfsmock.FSMock: a mock implementation of [Vfs].
 ///
 /// Each `*_func` field mocks the corresponding method; a missing func panics,
 /// matching moq's behavior.
 #[derive(Default)]
 pub struct FsMock {
-    pub append_file_func:
-        Option<Box<dyn Fn(&RootedFilePath, &str) -> Result<(), FsError> + Send + Sync>>,
-    pub case_sensitivity_func: Option<Box<dyn Fn() -> CaseSensitivity + Send + Sync>>,
-    pub chtimes_func: Option<
-        Box<dyn Fn(&RootedPath, SystemTime, SystemTime) -> Result<(), FsError> + Send + Sync>,
-    >,
-    pub directory_exists_func: Option<Box<dyn Fn(&RootedDirectoryPath) -> bool + Send + Sync>>,
-    pub file_exists_func: Option<Box<dyn Fn(&RootedFilePath) -> bool + Send + Sync>>,
-    pub get_accessible_entries_func:
-        Option<Box<dyn Fn(&RootedDirectoryPath) -> Entries + Send + Sync>>,
-    pub read_file_func: Option<Box<dyn Fn(&RootedFilePath) -> Option<String> + Send + Sync>>,
-    pub realpath_func: Option<Box<dyn Fn(&RootedPath) -> RootedPath + Send + Sync>>,
-    pub remove_func: Option<Box<dyn Fn(&RootedPath) -> Result<(), FsError> + Send + Sync>>,
-    pub stat_func: Option<Box<dyn Fn(&RootedPath) -> Option<Arc<dyn FileInfo>> + Send + Sync>>,
-    pub write_file_func:
-        Option<Box<dyn Fn(&RootedFilePath, &str) -> Result<(), FsError> + Send + Sync>>,
+    pub append_file_func: Option<MockFn2<RootedFilePath, str, Result<(), FsError>>>,
+    pub case_sensitivity_func: Option<MockFn0<CaseSensitivity>>,
+    pub chtimes_func: Option<MockFn3<RootedPath, SystemTime, SystemTime, Result<(), FsError>>>,
+    pub directory_exists_func: Option<MockFn1<RootedDirectoryPath, bool>>,
+    pub file_exists_func: Option<MockFn1<RootedFilePath, bool>>,
+    pub get_accessible_entries_func: Option<MockFn1<RootedDirectoryPath, Entries>>,
+    pub read_file_func: Option<MockFn1<RootedFilePath, Option<String>>>,
+    pub realpath_func: Option<MockFn1<RootedPath, RootedPath>>,
+    pub remove_func: Option<MockFn1<RootedPath, Result<(), FsError>>>,
+    pub stat_func: Option<MockFn1<RootedPath, Option<Arc<dyn FileInfo>>>>,
+    pub write_file_func: Option<MockFn2<RootedFilePath, str, Result<(), FsError>>>,
 
     /// calls tracks calls to the methods.
     calls: Mutex<Calls>,

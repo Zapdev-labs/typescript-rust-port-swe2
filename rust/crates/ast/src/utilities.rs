@@ -8,10 +8,8 @@
 
 use crate::ast::Node;
 use crate::ast_generated::{
-    is_array_literal_expression, is_binary_expression, is_call_expression,
-    is_identifier, is_meta_property, is_object_literal_expression,
-    is_private_identifier, is_property_assignment, is_shorthand_property_assignment,
-    is_spread_assignment, is_spread_element,
+    is_array_literal_expression, is_call_expression, is_identifier, is_meta_property,
+    is_object_literal_expression, is_private_identifier, is_spread_element,
 };
 use crate::ids::NodeId;
 use crate::kind_generated::Kind;
@@ -64,9 +62,7 @@ pub fn is_this_identifier(node: &Node) -> bool {
 fn is_import_meta_property(node: &Node, nodes: &[Node], name: &str) -> bool {
     is_meta_property(node)
         && node.as_meta_property().keyword_token == Kind::ImportKeyword
-        && node
-            .name()
-            .is_some_and(|n| nodes[n].text(nodes) == name)
+        && node.name().is_some_and(|n| nodes[n].text(nodes) == name)
 }
 
 /// `IsImportDeferMetaProperty(node)`.
@@ -147,11 +143,17 @@ pub fn is_left_hand_side_expression_kind(kind: Kind) -> bool {
 
 /// `IsLeftHandSideExpression(node)` — kind-only determination.
 pub fn is_left_hand_side_expression(node: &Node, nodes: &[Node]) -> bool {
-    is_left_hand_side_expression_kind(nodes[skip_partially_emitted_expressions(node.id, nodes)].kind)
+    is_left_hand_side_expression_kind(
+        nodes[skip_partially_emitted_expressions(node.id, nodes)].kind,
+    )
 }
 
 /// `IsAssignmentExpression(node, excludeCompoundAssignment)`.
-pub fn is_assignment_expression(node: &Node, nodes: &[Node], exclude_compound_assignment: bool) -> bool {
+pub fn is_assignment_expression(
+    node: &Node,
+    nodes: &[Node],
+    exclude_compound_assignment: bool,
+) -> bool {
     if node.kind != Kind::BinaryExpression {
         return false;
     }
@@ -217,15 +219,15 @@ pub fn get_target_of_binding_or_assignment_element(
     if is_object_literal_element(el) {
         match el.kind {
             Kind::PropertyAssignment => {
-                return el.initializer().and_then(|i| {
-                    get_target_of_binding_or_assignment_element(i, nodes)
-                });
+                return el
+                    .initializer()
+                    .and_then(|i| get_target_of_binding_or_assignment_element(i, nodes));
             }
             Kind::ShorthandPropertyAssignment => return el.name(),
             Kind::SpreadAssignment => {
-                return el.expression().and_then(|e| {
-                    get_target_of_binding_or_assignment_element(e, nodes)
-                });
+                return el
+                    .expression()
+                    .and_then(|e| get_target_of_binding_or_assignment_element(e, nodes));
             }
             _ => return None, // no target
         }

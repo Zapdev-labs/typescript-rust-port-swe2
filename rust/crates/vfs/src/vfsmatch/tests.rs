@@ -154,6 +154,7 @@ fn same_named_declarations_host() -> Arc<dyn Vfs> {
 }
 
 struct ReadDirCase {
+    #[allow(dead_code)]
     name: &'static str,
     host: fn() -> Arc<dyn Vfs>,
     current_dir: &'static str,
@@ -444,7 +445,7 @@ fn test_read_directory() {
             excludes: &[],
             includes: &["x/y/**/a.ts", "x/**/a.ts", "z/**/a.ts"],
             depth: 0,
-            expect: |got| assert!(got.len() > 0),
+            expect: |got| assert!(!got.is_empty()),
         },
         ReadDirCase {
             name: "wildcard case sensitive matching",
@@ -913,7 +914,7 @@ fn test_read_directory() {
             excludes: &[],
             includes: &["*.ts"],
             depth: 0,
-            expect: |got| assert!(got.len() > 0),
+            expect: |got| assert!(!got.is_empty()),
         },
         ReadDirCase {
             name: "same named declarations include tsx",
@@ -940,7 +941,7 @@ fn test_read_directory() {
             includes: &[],
             depth: 0,
             expect: |got| {
-                assert!(got.len() > 0);
+                assert!(!got.is_empty());
                 assert_contains(got, "/dev/a.ts");
             },
         },
@@ -967,7 +968,7 @@ fn test_read_directory() {
             excludes: &[],
             includes: &[],
             depth: 0,
-            expect: |got| assert!(got.len() > 0, "expected files to be returned"),
+            expect: |got| assert!(!got.is_empty(), "expected files to be returned"),
         },
     ];
 
@@ -1112,7 +1113,7 @@ fn test_read_directory_edge_cases() {
             excludes: &[],
             includes: &["z/*.ts"],
             depth: 0,
-            expect: |got| assert!(got.len() > 0),
+            expect: |got| assert!(!got.is_empty()),
         },
     ];
 
@@ -1715,7 +1716,14 @@ fn test_spec_matcher() {
 
 #[test]
 fn test_spec_matcher_match_string() {
-    let cases: &[(&str, &[&str], Usage, &[&str], &[bool])] = &[
+    type BoolCase = (
+        &'static str,
+        &'static [&'static str],
+        Usage,
+        &'static [&'static str],
+        &'static [bool],
+    );
+    let cases: &[BoolCase] = &[
         (
             "simple wildcard files",
             &["*.ts"],
@@ -1760,7 +1768,14 @@ fn test_spec_matcher_match_string() {
 
 #[test]
 fn test_single_spec_matcher_match_string() {
-    let cases: &[(&str, &str, Usage, &[&str], &[bool])] = &[
+    type BoolSpecCase = (
+        &'static str,
+        &'static str,
+        Usage,
+        &'static [&'static str],
+        &'static [bool],
+    );
+    let cases: &[BoolSpecCase] = &[
         (
             "single spec wildcard",
             "*.ts",
@@ -1794,7 +1809,14 @@ fn test_single_spec_matcher_match_string() {
 
 #[test]
 fn test_spec_matchers_match_index() {
-    let cases: &[(&str, &[&str], Usage, &[&str], &[i64])] = &[
+    type IdxCase = (
+        &'static str,
+        &'static [&'static str],
+        Usage,
+        &'static [&'static str],
+        &'static [i64],
+    );
+    let cases: &[IdxCase] = &[
         (
             "index lookup prefers first match",
             &["*.ts", "*.tsx"],

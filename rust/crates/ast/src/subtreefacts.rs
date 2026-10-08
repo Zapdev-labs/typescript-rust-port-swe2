@@ -19,15 +19,14 @@
 
 use crate::ast::{ModifierList, Node, NodeList};
 use crate::ast_generated::{
-    is_external_module_reference, is_identifier, is_private_identifier,
-    propagate_subtree_facts, propagate_subtree_facts_opt,
+    is_external_module_reference, is_identifier, is_private_identifier, propagate_subtree_facts,
+    propagate_subtree_facts_opt,
 };
 use crate::ids::NodeId;
 use crate::kind_generated::Kind;
 use crate::modifierflags::ModifierFlags;
 use crate::nodeflags::NodeFlags;
 use crate::tokenflags::TokenFlags;
-use crate::flagdef::flag_type;
 
 flag_type! {
     /// `type SubtreeFacts uint32` — see subtreefacts.go for the semantics of
@@ -95,9 +94,7 @@ impl SubtreeFacts {
     pub const EXCLUSIONS_PROPERTY_ACCESS: SubtreeFacts = Self::EXCLUSIONS_NODE;
     pub const EXCLUSIONS_ELEMENT_ACCESS: SubtreeFacts = Self::EXCLUSIONS_NODE;
     pub const EXCLUSIONS_ARROW_FUNCTION: SubtreeFacts = Self(
-        Self::EXCLUSIONS_NODE.0
-            | Self::CONTAINS_AWAIT.0
-            | Self::CONTAINS_OBJECT_REST_OR_SPREAD.0,
+        Self::EXCLUSIONS_NODE.0 | Self::CONTAINS_AWAIT.0 | Self::CONTAINS_OBJECT_REST_OR_SPREAD.0,
     );
     pub const EXCLUSIONS_FUNCTION: SubtreeFacts = Self(
         Self::EXCLUSIONS_NODE.0
@@ -110,15 +107,11 @@ impl SubtreeFacts {
     pub const EXCLUSIONS_METHOD: SubtreeFacts = Self::EXCLUSIONS_FUNCTION;
     pub const EXCLUSIONS_ACCESSOR: SubtreeFacts = Self::EXCLUSIONS_FUNCTION;
     pub const EXCLUSIONS_PROPERTY: SubtreeFacts = Self(
-        Self::EXCLUSIONS_NODE.0
-            | Self::CONTAINS_LEXICAL_THIS.0
-            | Self::CONTAINS_LEXICAL_SUPER.0,
+        Self::EXCLUSIONS_NODE.0 | Self::CONTAINS_LEXICAL_THIS.0 | Self::CONTAINS_LEXICAL_SUPER.0,
     );
     pub const EXCLUSIONS_CLASS: SubtreeFacts = Self::EXCLUSIONS_NODE;
     pub const EXCLUSIONS_MODULE: SubtreeFacts = Self(
-        Self::EXCLUSIONS_NODE.0
-            | Self::CONTAINS_LEXICAL_THIS.0
-            | Self::CONTAINS_LEXICAL_SUPER.0,
+        Self::EXCLUSIONS_NODE.0 | Self::CONTAINS_LEXICAL_THIS.0 | Self::CONTAINS_LEXICAL_SUPER.0,
     );
     pub const EXCLUSIONS_OBJECT_LITERAL: SubtreeFacts =
         Self(Self::EXCLUSIONS_NODE.0 | Self::CONTAINS_OBJECT_REST_OR_SPREAD.0);
@@ -263,9 +256,7 @@ pub fn compute_token(node: &Node, _nodes: &[Node]) -> SubtreeFacts {
         Kind::QuestionDotToken => SubtreeFacts::CONTAINS_OPTIONAL_CHAINING,
         Kind::QuestionQuestionEqualsToken
         | Kind::BarBarEqualsToken
-        | Kind::AmpersandAmpersandEqualsToken => {
-            SubtreeFacts::CONTAINS_LOGICAL_ASSIGNMENTS
-        }
+        | Kind::AmpersandAmpersandEqualsToken => SubtreeFacts::CONTAINS_LOGICAL_ASSIGNMENTS,
         _ => SubtreeFacts::NONE,
     }
 }
@@ -420,7 +411,6 @@ pub fn compute_function_declaration(node: &Node, nodes: &[Node]) -> SubtreeFacts
             d.function_like_with_body_base.body_base.asterisk_token,
             d.name,
             &d.function_like_with_body_base,
-            node,
             nodes,
         )
     }
@@ -446,11 +436,19 @@ fn compute_class_like(
 }
 
 pub fn compute_class_declaration(node: &Node, nodes: &[Node]) -> SubtreeFacts {
-    compute_class_like(node.modifiers(), &node.as_class_declaration().class_like_base, nodes)
+    compute_class_like(
+        node.modifiers(),
+        &node.as_class_declaration().class_like_base,
+        nodes,
+    )
 }
 
 pub fn compute_class_expression(node: &Node, nodes: &[Node]) -> SubtreeFacts {
-    compute_class_like(node.modifiers(), &node.as_class_expression().class_like_base, nodes)
+    compute_class_like(
+        node.modifiers(),
+        &node.as_class_expression().class_like_base,
+        nodes,
+    )
 }
 
 pub fn compute_heritage_clause(node: &Node, nodes: &[Node]) -> SubtreeFacts {
@@ -564,7 +562,9 @@ pub fn compute_export_specifier(node: &Node, nodes: &[Node]) -> SubtreeFacts {
 }
 
 pub fn compute_constructor_declaration(node: &Node, nodes: &[Node]) -> SubtreeFacts {
-    let fl = &node.as_constructor_declaration().function_like_with_body_base;
+    let fl = &node
+        .as_constructor_declaration()
+        .function_like_with_body_base;
     if fl.body_base.body.is_none() {
         SubtreeFacts::CONTAINS_TYPE_SCRIPT
     } else {
@@ -721,8 +721,7 @@ pub fn compute_binary_expression(node: &Node, nodes: &[Node]) -> SubtreeFacts {
         | prop(nodes, d.type_)
         | prop(nodes, d.operator_token)
         | prop(nodes, d.right)
-        | if op_kind == Kind::InKeyword
-            && d.left.is_some_and(|l| is_private_identifier(&nodes[l]))
+        | if op_kind == Kind::InKeyword && d.left.is_some_and(|l| is_private_identifier(&nodes[l]))
         {
             SubtreeFacts::CONTAINS_CLASS_FIELDS
                 | SubtreeFacts::CONTAINS_PRIVATE_IDENTIFIER_IN_EXPRESSION
@@ -768,7 +767,6 @@ pub fn compute_function_expression(node: &Node, nodes: &[Node]) -> SubtreeFacts 
         d.function_like_with_body_base.body_base.asterisk_token,
         d.name,
         &d.function_like_with_body_base,
-        node,
         nodes,
     )
 }
@@ -788,7 +786,9 @@ pub fn compute_property_access_expression(node: &Node, nodes: &[Node]) -> Subtre
     } else {
         SubtreeFacts::CONTAINS_PRIVATE_IDENTIFIER_IN_EXPRESSION
     };
-    prop(nodes, d.expression) | prop(nodes, d.question_dot_token) | prop(nodes, d.name)
+    prop(nodes, d.expression)
+        | prop(nodes, d.question_dot_token)
+        | prop(nodes, d.name)
         | private_name
 }
 
@@ -897,7 +897,9 @@ pub fn compute_jsx_opening_element(node: &Node, nodes: &[Node]) -> SubtreeFacts 
 
 pub fn compute_jsx_self_closing_element(node: &Node, nodes: &[Node]) -> SubtreeFacts {
     let d = node.as_jsx_self_closing_element();
-    prop(nodes, d.tag_name) | eraseable_list(d.type_arguments.as_ref()) | prop(nodes, d.attributes)
+    prop(nodes, d.tag_name)
+        | eraseable_list(d.type_arguments.as_ref())
+        | prop(nodes, d.attributes)
         | SubtreeFacts::CONTAINS_JSX
 }
 

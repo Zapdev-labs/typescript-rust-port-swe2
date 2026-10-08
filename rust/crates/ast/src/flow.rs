@@ -8,7 +8,6 @@
 // carry `Kind::Unknown`, matching Go's `newNode(KindUnknown, ...)`.
 
 use crate::ast_generated::FlowReduceLabelData;
-use crate::flagdef::flag_type;
 use crate::ids::{FlowListId, FlowNodeId, NodeId};
 use crate::{Node, NodeFactoryHooks};
 
@@ -84,16 +83,17 @@ pub fn new_flow_switch_clause_data(
     clause_start: i32,
     clause_end: i32,
 ) -> NodeId {
-    let mut data = crate::ast_generated::FlowSwitchClauseData::default();
-    data.switch_statement = switch_statement;
-    data.clause_start = clause_start;
-    data.clause_end = clause_end;
+    let data = crate::ast_generated::FlowSwitchClauseData {
+        switch_statement,
+        clause_start,
+        clause_end,
+    };
     crate::ast::new_node(
         nodes,
         0,
         crate::Kind::Unknown,
         crate::NodeData::FlowSwitchClauseData(data),
-        &NodeFactoryHooks::default(),
+        &mut NodeFactoryHooks::default(),
     )
 }
 
@@ -108,14 +108,15 @@ pub fn new_flow_reduce_label_data(
     target: Option<FlowNodeId>,
     antecedents: Option<FlowListId>,
 ) -> NodeId {
-    let mut data = FlowReduceLabelData::default();
-    data.target = target;
-    data.antecedents = antecedents;
+    let data = FlowReduceLabelData {
+        target,
+        antecedents,
+    };
     crate::ast::new_node(
         nodes,
         0,
         crate::Kind::Unknown,
         crate::NodeData::FlowReduceLabelData(data),
-        &NodeFactoryHooks::default(),
+        &mut NodeFactoryHooks::default(),
     )
 }

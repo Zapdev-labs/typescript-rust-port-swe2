@@ -78,10 +78,41 @@ fn bootstrap(go_dir: &Path, kinds_path: &Path) -> Result<(), String> {
     Ok(())
 }
 
+/// Run `rustfmt` over emitted Rust so generated files satisfy
+/// `cargo fmt --check` verbatim. Falls back to the raw text if `rustfmt` is
+/// unavailable.
+fn format_rust(content: String) -> String {
+    use std::io::Write;
+    use std::process::{Command, Stdio};
+    let Ok(mut child) = Command::new("rustfmt")
+        .arg("--edition")
+        .arg("2024")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
+    else {
+        return content;
+    };
+    if let Some(mut stdin) = child.stdin.take() {
+        let _ = stdin.write_all(content.as_bytes());
+    }
+    match child.wait_with_output() {
+        Ok(out) if out.status.success() => String::from_utf8(out.stdout).unwrap_or(content),
+        _ => content,
+    }
+}
+
 fn generate(kinds_path: &Path, out_dir: &Path) -> Result<(), String> {
     let schema = schema_io::load_schema(kinds_path)?;
-    write_if_changed(&out_dir.join("kind_generated.rs"), &emit_kinds::emit(&schema))?;
-    write_if_changed(&out_dir.join("ast_generated.rs"), &emit_ast::Emitter::new(&schema).emit())?;
+    write_if_changed(
+        &out_dir.join("kind_generated.rs"),
+        &format_rust(emit_kinds::emit(&schema)),
+    )?;
+    write_if_changed(
+        &out_dir.join("ast_generated.rs"),
+        &format_rust(emit_ast::Emitter::new(&schema).emit()),
+    )?;
     Ok(())
 }
 
@@ -91,11 +122,15 @@ fn check(kinds_path: &Path, out_dir: &Path) -> Result<(), String> {
         ("kind_generated.rs", emit_kinds::emit(&schema)),
         ("ast_generated.rs", emit_ast::Emitter::new(&schema).emit()),
     ] {
+        let want = format_rust(want);
         let path = out_dir.join(file);
-        let have = std::fs::read_to_string(&path)
-            .map_err(|e| format!("read {}: {e}", path.display()))?;
+        let have =
+            std::fs::read_to_string(&path).map_err(|e| format!("read {}: {e}", path.display()))?;
         if have != want {
-            return Err(format!("{} is stale — run `gen-ast generate`", path.display()));
+            return Err(format!(
+                "{} is stale — run `gen-ast generate`",
+                path.display()
+            ));
         }
     }
     eprintln!("gen-ast: generated files are up to date");

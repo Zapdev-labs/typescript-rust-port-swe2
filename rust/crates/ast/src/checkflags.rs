@@ -2,8 +2,6 @@
 //
 // CheckFlags
 
-use crate::flagdef::flag_type;
-
 flag_type! {
     pub struct CheckFlags(pub u32);
 }
@@ -64,7 +62,8 @@ impl CheckFlags {
     /// Synthetic property created from index signature
     pub const INDEX_SYMBOL: CheckFlags = CheckFlags(1 << 26);
 
-    pub const SYNTHETIC: CheckFlags = CheckFlags(Self::SYNTHETIC_PROPERTY.0 | Self::SYNTHETIC_METHOD.0);
+    pub const SYNTHETIC: CheckFlags =
+        CheckFlags(Self::SYNTHETIC_PROPERTY.0 | Self::SYNTHETIC_METHOD.0);
     pub const NON_UNIFORM_AND_LITERAL: CheckFlags =
         CheckFlags(Self::HAS_NON_UNIFORM_TYPE.0 | Self::HAS_LITERAL_TYPE.0);
     pub const PARTIAL: CheckFlags = CheckFlags(Self::READ_PARTIAL.0 | Self::WRITE_PARTIAL.0);
