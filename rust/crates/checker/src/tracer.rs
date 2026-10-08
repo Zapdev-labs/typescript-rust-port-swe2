@@ -36,6 +36,8 @@ use tsc_ast::{NodeId, SymbolId};
 use tsc_tracing::{
     self as tracing, Phase, RecursionIdentity, TraceArgs, TracedType, TypeTracer,
 };
+// `record_type` is a `tracing::Tracer` trait method on `TypeTracer`.
+use tsc_tracing::Tracer as _;
 
 use crate::types::{ObjectFlags, TypeArena, TypeFlags, TypeId, format_type_flags};
 

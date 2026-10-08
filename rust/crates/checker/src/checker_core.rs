@@ -32,13 +32,13 @@ use crate::links::{NodeLinkStore, SymbolArenaLinkStore};
 use crate::mapper::{TypeMapperArena, TypeMapperId};
 use crate::tracer::Tracer;
 use crate::types::{
-    AssertionLinks, ArrayLiteralLinks, ComputedNameNodeLinks, ContainingSymbolLinks,
-    DeclaredTypeLinks, DeferredSymbolLinks, EnumMemberLinks, ExportTypeLinks, LateBoundLinks,
-    MappedSymbolLinks, MarkedAssignmentSymbolLinks, MembersAndExportsLinks, ModuleSymbolLinks,
-    NodeLinks, ObjectFlags, Signature, SignatureArena, SignatureId, SignatureLinks,
-    SourceFileLinks, SpreadLinks, SwitchStatementLinks, SymbolNodeLinks, SymbolReferenceLinks,
-    Type, TypeAliasLinks, TypeArena, TypeFlags, TypeId, TypeNodeLinks, TypeParameter, ValueSymbolLinks,
-    VarianceLinks, TypeData,
+    AliasSymbolLinks, AssertionLinks, ArrayLiteralLinks, ComputedNameNodeLinks,
+    ContainingSymbolLinks, DeclaredTypeLinks, DeferredSymbolLinks, EnumMemberLinks,
+    ExportTypeLinks, LateBoundLinks, MappedSymbolLinks, MarkedAssignmentSymbolLinks,
+    MembersAndExportsLinks, ModuleSymbolLinks, NodeLinks, ObjectFlags, ReverseMappedSymbolLinks,
+    Signature, SignatureArena, SignatureId, SignatureLinks, SourceFileLinks, SpreadLinks,
+    SwitchStatementLinks, SymbolNodeLinks, SymbolReferenceLinks, Type, TypeAliasLinks, TypeArena,
+    TypeData, TypeFlags, TypeId, TypeNodeLinks, TypeParameter, ValueSymbolLinks, VarianceLinks,
 };
 
 /// `type CacheHashKey xxh3.Uint128` (checker.go) — `tsc_ast::Uint128` is the
@@ -804,21 +804,54 @@ impl Checker {
     }
 
     /// `c.runWithoutResolvedSignatureCaching` (services.go — a Checker
-    /// method; deferred per scope but declared since the free function
+    /// method; ported because the free function
     /// `get_resolved_signature_for_signature_help` routes through it).
+    ///
+    /// PORT: Go maps `*SignatureLinks`/`*ValueSymbolLinks` (link-store
+    /// entries) to their cleared values; link-store entries are keyed by
+    /// `NodeId`/`SymbolId` here, so the caches key by the owning node/symbol
+    /// — each ancestor is visited once, so the restore order is equivalent.
+    /// `get_symbol_of_declaration` is still `PORT(deferred)` and panics on
+    /// the function-expression branch until checker.rs lands.
     pub fn run_without_resolved_signature_caching<T>(
         &mut self,
+        nodes: &[ast::Node],
         node: NodeId,
         f: impl FnOnce(&mut Self) -> T,
     ) -> T {
-        let _ = node;
-        // PORT(deferred): real body clears resolvedSignature/resolvedType
-        // caches along the call/declaration ancestor chain (see services.go
-        // runWithoutResolvedSignatureCaching). Until it lands, call `f`
-        // directly — the ported caller compiles and the semantics land with
-        // checker.rs.
-        let _ = &self.signature_links;
-        f(self)
+        let mut callback = |n: &ast::Node, ns: &[ast::Node]| {
+            ast::is_call_like_or_function_like_expression(n, ns)
+        };
+        let mut ancestor_node = ast::find_ancestor(Some(node), nodes, &mut callback);
+        if ancestor_node.is_none() {
+            return f(self);
+        }
+        // `cachedResolvedSignatures map[*SignatureLinks]*Signature`
+        let mut cached_resolved_signatures: Vec<(NodeId, Option<SignatureId>)> = Vec::new();
+        // `cachedTypes map[*ValueSymbolLinks]*Type`
+        let mut cached_types: Vec<(SymbolId, Option<TypeId>)> = Vec::new();
+        while let Some(ancestor) = ancestor_node {
+            let signature_links = self.signature_links.get(ancestor);
+            cached_resolved_signatures.push((ancestor, signature_links.resolved_signature));
+            signature_links.resolved_signature = None;
+            if ast::is_function_expression_or_arrow_function(&nodes[ancestor]) {
+                let symbol = self
+                    .get_symbol_of_declaration(ancestor)
+                    .expect("getSymbolOfDeclaration: nil symbol (Go would panic on GetSymbolId(nil))");
+                let symbol_links = self.value_symbol_links.get(symbol);
+                cached_types.push((symbol, symbol_links.resolved_type));
+                symbol_links.resolved_type = None;
+            }
+            ancestor_node = ast::find_ancestor(nodes[ancestor].parent, nodes, &mut callback);
+        }
+        let result = f(self);
+        for (node, resolved_signature) in cached_resolved_signatures {
+            self.signature_links.get(node).resolved_signature = resolved_signature;
+        }
+        for (symbol, resolved_type) in cached_types {
+            self.value_symbol_links.get(symbol).resolved_type = resolved_type;
+        }
+        result
     }
 
     /// `c.error` (checker.go) — diagnostics sink; used by deferred JSDoc

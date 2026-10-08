@@ -84,8 +84,10 @@ impl<K: Eq + Hash, V> CopyOnWriteMap<K, V> {
     ///
     /// PORT: the returned closure takes the map as an argument —
     /// `let restore = c.enter_scope(); ...; restore(&mut c)` — instead of
-    /// closing over `c` as the Go func does.
-    pub fn enter_scope(&mut self) -> impl FnOnce(&mut Self) {
+    /// closing over `c` as the Go func does. `use<K, V>` because the closure
+    /// captures only the `Rc` snapshot, not the `&mut self` borrow (edition
+    /// 2024 captures all in-scope lifetimes into `impl Trait` otherwise).
+    pub fn enter_scope(&mut self) -> impl FnOnce(&mut Self) + use<K, V> {
         let saved = Rc::clone(&self.m);
         move |c: &mut Self| c.m = saved
     }
@@ -133,8 +135,9 @@ impl<K: Eq + Hash> CopyOnWriteSet<K> {
     /// the parent scope: reads see the inherited entries, and the first mutation
     /// transparently clones the storage so the parent's view is not modified.
     ///
-    /// PORT: same restore-closure signature change as `CopyOnWriteMap::enter_scope`.
-    pub fn enter_scope(&mut self) -> impl FnOnce(&mut Self) {
+    /// PORT: same restore-closure signature change as `CopyOnWriteMap::enter_scope`
+    /// (including the `use<K>` precise-capture).
+    pub fn enter_scope(&mut self) -> impl FnOnce(&mut Self) + use<K> {
         let restore = self.m.enter_scope();
         move |s: &mut Self| restore(&mut s.m)
     }

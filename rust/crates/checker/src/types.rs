@@ -38,7 +38,7 @@
 //   enum covers exactly those alternatives.
 
 use std::fmt;
-use std::sync::{Arc, MappedRwLockReadGuard, MappedRwLockWriteGuard, RwLock, RwLockReadGuard, RwLockWriteGuard};
+use std::sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use rustc_hash::FxHashMap;
 use tsc_ast::symbolflags::SymbolFlags;
@@ -1717,7 +1717,7 @@ impl Type {
         if self.flags.intersects(TypeFlags::OBJECT)
             && self.object_flags.intersects(ObjectFlags::MAPPED)
         {
-            return self.as_mapped_type().target;
+            return self.as_mapped_type().object_type.target;
         }
         panic!("Unhandled case in Type.Target")
     }
@@ -1836,10 +1836,8 @@ impl Type {
 /// `AsStructuredType`/`AsObjectType`/`AsTypeReference`/`AsInterfaceType`/
 /// `AsUnionOrIntersectionType` become `Option` accessors; `AsType` is
 /// unnecessary (the `Type` is the arena element, reached via `TypeId`).
-#[derive(Default)]
 pub enum TypeData {
     /// `*IntrinsicType`.
-    #[default]
     Intrinsic(IntrinsicType),
     /// `*LiteralType`.
     Literal(LiteralType),
@@ -1880,6 +1878,14 @@ pub enum TypeData {
     Substitution(SubstitutionType),
     /// `*ConditionalType`.
     Conditional(ConditionalType),
+}
+
+/// Go's zero `TypeData` is a nil interface; `Type::default()` uses the
+/// `Intrinsic` tombstone (fields are always inspected through flag checks).
+impl Default for TypeData {
+    fn default() -> Self {
+        TypeData::Intrinsic(IntrinsicType::default())
+    }
 }
 
 impl TypeData {
@@ -3171,6 +3177,42 @@ pub struct TypeArena {
     types: Arc<RwLock<Vec<Type>>>,
 }
 
+/// `TypeArena::get` result — derefs to `Type`. PORT: a custom guard instead
+/// of `MappedRwLockReadGuard` (`mapped_lock_guards` is unstable on stable).
+pub struct TypeReadGuard<'a> {
+    guard: RwLockReadGuard<'a, Vec<Type>>,
+    index: usize,
+}
+
+impl std::ops::Deref for TypeReadGuard<'_> {
+    type Target = Type;
+    #[inline]
+    fn deref(&self) -> &Type {
+        &self.guard[self.index]
+    }
+}
+
+/// `TypeArena::get_mut` result — derefs to `Type` (mutable).
+pub struct TypeWriteGuard<'a> {
+    guard: RwLockWriteGuard<'a, Vec<Type>>,
+    index: usize,
+}
+
+impl std::ops::Deref for TypeWriteGuard<'_> {
+    type Target = Type;
+    #[inline]
+    fn deref(&self) -> &Type {
+        &self.guard[self.index]
+    }
+}
+
+impl std::ops::DerefMut for TypeWriteGuard<'_> {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Type {
+        &mut self.guard[self.index]
+    }
+}
+
 impl TypeArena {
     /// Allocate a type in the arena, returning its `TypeId`.
     pub fn alloc(&self, t: Type) -> TypeId {
@@ -3183,19 +3225,21 @@ impl TypeArena {
     /// Read-locked access to a single type — the Go `t.field` read shape.
     /// Do not hold across `get_mut`/`alloc` (same-thread RwLock recursion
     /// deadlocks).
-    pub fn get(&self, id: TypeId) -> MappedRwLockReadGuard<'_, Type> {
-        RwLockReadGuard::map(self.types.read().unwrap(), |types| {
-            &types[id.index()]
-        })
+    pub fn get(&self, id: TypeId) -> TypeReadGuard<'_> {
+        TypeReadGuard {
+            guard: self.types.read().unwrap(),
+            index: id.index(),
+        }
     }
 
     /// Write-locked access to a single type — the Go `t.field = v` write
     /// shape. Compute the value before calling (a nested `get`/`get_mut` on
     /// the same arena deadlocks while the guard is held).
-    pub fn get_mut(&self, id: TypeId) -> MappedRwLockWriteGuard<'_, Type> {
-        RwLockWriteGuard::map(self.types.write().unwrap(), |types| {
-            &mut types[id.index()]
-        })
+    pub fn get_mut(&self, id: TypeId) -> TypeWriteGuard<'_> {
+        TypeWriteGuard {
+            guard: self.types.write().unwrap(),
+            index: id.index(),
+        }
     }
 
     /// `len(types)`.
@@ -3215,7 +3259,7 @@ impl TypeArena {
     /// Panics like Go if the target is not an interface type... the Go code
     /// would panic on the nil/type-assertion paths too.
     pub fn target_interface_type(&self, t: TypeId) -> Option<TypeId> {
-        let target = self.get(t).as_type_reference().target?;
+        let target = self.get(t).as_type_reference().object_type.target?;
         // Go asserts the target is an InterfaceType — check here so misuse
         // panics at the same point as Go's `AsInterfaceType()` on a non-nil
         // non-interface type would.
@@ -3227,7 +3271,7 @@ impl TypeArena {
     /// `t.AsTypeReference().target.AsTupleType()`. Same arena shape as
     /// `target_interface_type`.
     pub fn target_tuple_type(&self, t: TypeId) -> Option<TypeId> {
-        let target = self.get(t).as_type_reference().target?;
+        let target = self.get(t).as_type_reference().object_type.target?;
         debug_assert!(matches!(self.get(target).data, TypeData::Tuple(_)));
         Some(target)
     }

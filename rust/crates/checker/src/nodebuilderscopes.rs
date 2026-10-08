@@ -53,25 +53,27 @@ use crate::types::{SignatureId, TypeId};
 /// ```
 ///
 /// PORT: Go returns `func()`; `CopyOnWriteMap::enter_scope`'s restore
-/// closure takes the map by `&mut`, so the returned closure takes the whole
-/// context to route each restore at its field.
+/// closures take the map by `&mut`, so the returned closure takes the whole
+/// context to route each restore at its field. It is boxed so the `'static`
+/// capture (each `enter_scope` restore owns an `Rc`, not a borrow) does not
+/// extend the `&mut context` borrow across `enter_new_scope`'s body.
 pub fn clone_node_builder_context(
     context: &mut NodeBuilderContext,
-) -> impl FnOnce(&mut NodeBuilderContext) + '_ {
+) -> Box<dyn FnOnce(&mut NodeBuilderContext)> {
     let restore_names = context.type_parameter_names.enter_scope();
     let restore_names_by_text = context.type_parameter_names_by_text.enter_scope();
     let restore_names_by_text_next_name_count = context
         .type_parameter_names_by_text_next_name_count
         .enter_scope();
     let restore_symbol_list = context.type_parameter_symbol_list.enter_scope();
-    move |context: &mut NodeBuilderContext| {
+    Box::new(move |context: &mut NodeBuilderContext| {
         restore_names(&mut context.type_parameter_names);
         restore_names_by_text(&mut context.type_parameter_names_by_text);
         restore_names_by_text_next_name_count(
             &mut context.type_parameter_names_by_text_next_name_count,
         );
         restore_symbol_list(&mut context.type_parameter_symbol_list);
-    }
+    })
 }
 
 /// `type localsRecord struct` (declared in nodebuilderscopes.go; the struct
@@ -108,7 +110,7 @@ impl ScopeUndo {
     fn restore(mut self, nodes: &mut Vec<ast::Node>) {
         let detached_fallback;
         let locals: &mut ast::SymbolTable = match nodes[self.fake_scope]
-            .locals_container_data_mut()
+            .data.locals_container_data_mut()
         {
             Some(d) => &mut d.locals,
             None => {
@@ -173,7 +175,7 @@ impl<'a> NodeBuilderImpl<'a> {
         &mut self,
         symbol: SymbolId,
         t: TypeId,
-    ) -> impl FnOnce(&mut NodeBuilderContext) {
+    ) -> impl FnOnce(&mut NodeBuilderContext) + use<> {
         let (old_type, old_type_exists) = match self.ctx.enclosing_symbol_types.get(&symbol) {
             Some(&old) => (Some(old), true),
             None => (None, false),
@@ -338,7 +340,7 @@ impl<'a> NodeBuilderImpl<'a> {
         ScopeCleanup {
             params: cleanup_params,
             type_params: cleanup_type_params,
-            context: Box::new(cleanup_context),
+            context: cleanup_context,
             old_enclosing_decl,
             old_mapper,
         }
@@ -386,7 +388,7 @@ impl<'a> NodeBuilderImpl<'a> {
         let mut old_locals: Vec<LocalsRecord> = Vec::new();
 
         if let Some(scope) = existing_fake_scope {
-            match nodes[scope].locals_container_data_mut() {
+            match nodes[scope].data.locals_container_data_mut() {
                 Some(d) => {
                     apply_additions(&mut d.locals, &additions, &mut new_locals, &mut old_locals, true);
                     Some(ScopeUndo {
@@ -429,7 +431,7 @@ impl<'a> NodeBuilderImpl<'a> {
             self.links
                 .get(fake_scope)
                 .fake_scope_for_signature_declaration = Some(kind.to_string());
-            if let Some(data) = nodes[fake_scope].locals_container_data_mut() {
+            if let Some(data) = nodes[fake_scope].data.locals_container_data_mut() {
                 data.locals = locals;
             }
             nodes[fake_scope].parent = Some(enclosing);
@@ -464,9 +466,10 @@ fn apply_additions(
         // Add cleanup information only if we don't own the fake scope.
         if track_undo {
             match locals.get(name.as_str()) {
-                // `!ok || oldSymbol == nil` → newLocals.
+                // `!ok || oldSymbol == nil` → newLocals. The port's
+                // "nil symbol" sentinel is `SymbolId::NONE` (see header).
                 None => new_locals.push(name.clone()),
-                Some(&old) if old.is_none() => new_locals.push(name.clone()),
+                Some(&old) if old == SymbolId::NONE => new_locals.push(name.clone()),
                 Some(&old) => old_locals.push(LocalsRecord {
                     name: name.clone(),
                     old_symbol: Some(old),

@@ -1,0 +1,16 @@
+[package]
+name = "tsc-transformers"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+tsc-ast = { path = "../ast" }
+tsc-binder = { path = "../binder" }
+tsc-core = { path = "../core" }
+tsc-printer = { path = "../printer" }
+tsc-scanner = { path = "../scanner" }

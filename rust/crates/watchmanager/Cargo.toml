@@ -1,0 +1,15 @@
+[package]
+name = "tsc-watchmanager"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+rustc-hash = { workspace = true }
+tsc-core = { path = "../core" }
+tsc-fswatch = { path = "../fswatch" }
+tsc-tspath = { path = "../tspath" }

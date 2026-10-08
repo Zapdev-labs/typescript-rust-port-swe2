@@ -65,3 +65,20 @@ byte-identical to zeebo/xxh3, JSON-RPC mapper host protocol, 32 tests),
 `tsc-pseudochecker` (all 20 pseudo-type kinds, lookup/inference, 10
 tests). Full remote workspace: 79 test suites green.
 
+
+## M5 wave 1 — tsoptions + printer + lsconv (green)
+
+`tsc-tsoptions`: command-line + tsconfig parsing, wildcard directories,
+parsed-options model — 63 tests incl. checked-in baseline comparisons.
+`tsc-modulespecifiers` reconciled onto the real tsoptions API
+(`get_supported_extensions`, `SourceOutputAndProjectReference`).
+
+`tsc-printer` (~18k LOC): full emitter core — printer.rs, emit context,
+name generator, emit factory, text/semicolon/single-line writers,
+resolver+host traits. **553/553 round-trip emit cases byte-for-byte
+identical to Go**, 19 unit tests. This unlocks transformers → checker →
+compiler.
+
+`tsc-lsconv`: LSP converters (diagnostic pull/push, URI escaping,
+UTF-8/UTF-16 rune mapping, LSP line maps) — 6/6 remote tests including
+the Node.js UTF-16 reference comparison.

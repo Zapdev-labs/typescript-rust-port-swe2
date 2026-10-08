@@ -620,3 +620,161 @@ to "2" so tsc-collections can build.
   profiles). There is no Rust equivalent of the Go pprof runtime format;
   when the CLI reaches profiling flags, substitute a tracing/perf-based
   capture and note it here.
+
+## 2026-11-19 crates/checker — tsc/internal/checker FOUNDATION port shape
+Foundation-phase port only (types.go, links.go, mapper.go,
+nodebuilderscopes.go, symboltracker.go, tracer.go, jsdoc.go,
+stringer_generated.go, free fns of services.go). `checker_core.rs` is a
+deliberate `PORT(partial)` `Checker` stub — the real `Checker` lands in
+checker.rs; checker.go/relater.go/inference.go/flow.go/jsx.go/exports.go/
+grammarchecks.go are deferred entirely.
+- `*Type` → `TypeId` into `TypeArena` (`Arc<RwLock<Vec<Type>>>`): `Arc` because
+  `tracing::TracedType` is `Send + Sync` and the tracer adapter holds an arena
+  share post-hoc (Go: `tracedTypeAdapter.t *Type` heap pointer). `get`/`get_mut`
+  return mapped `RwLock` guards — never hold one across another arena access
+  (same-thread re-entry deadlocks); fields are staged into locals first.
+- `Type.checker *Checker` back-pointer → `checker_shard: u16`; readers needing
+  checker state take `&mut Checker` explicitly (SPEC §5.4). `TypeData`
+  interface → `TypeData` enum; `as_*()` casts panic like Go type assertions.
+- `*TypeMapper` → `TypeMapperId`/`TypeMapperArena` (`Arc<RwLock<Vec>>`) so
+  `map()` can take `&mut Checker` without a self-borrow; `DeferredTypeMapper`/
+  `FunctionTypeMapper` closures become `Fn(&mut Checker, ...) -> TypeId`.
+  `*InferenceContext` → `InferenceContextId` into `Checker::inference_contexts`.
+- Link stores: `core.LinkStore[*ast.Node, V]` → `LinkStore<NodeId, V>`;
+  `symbolArenaLinkStore` keeps `PagedLinkStore<Option<Box<V>>>` slots — a slot
+  is `Some` iff `Get` populated it (Go's arena-pointer `Has` semantics).
+- Go scope-cleanup `func()` closures in nodebuilderscopes.go → explicit
+  `ScopeCleanup`/`ScopeUndo` records with `restore(b, nodes)` (closures can't
+  disjointly capture `b.ctx`/`b.links`/`nodes`); the `add` callback is an
+  eagerly-collected `Vec<(String, SymbolId)>`.
+- `SymbolTrackerImpl` holds `Rc<RefCell<Vec<Symbol>>>` (shared with
+  `Checker.symbols`) for the `symbol.Flags` type-parameter skip — Go reads it
+  through `*ast.Symbol`. The `tracker.(*SymbolTrackerImpl)` peel loop is a
+  `take_symbol_tracker_impl_inner` trait hook on `nodebuilder::SymbolTracker`.
+- `Tracer` (`tracer.rs`): Go's `tracedTypeAdapter.checker` is unreachable from
+  `Send + Sync` `TracedType`, so `RecursionIdentity` is computed eagerly in
+  `Checker::trace_record_type` (its inputs are creation-time fields) and
+  `Display` returns "" until `type_to_string` lands — PORT(deferred).
+  `push`'s `checkerId` arg mutation on the caller's map is preserved verbatim.
+- New deps beyond the handed list: `tsc-astnav` (services.go
+  `GetTouchingPropertyName`), `tsc-printer` (utilities.go `ValueToString` →
+  `printer.EscapeString`; no cycle — printer does not import checker),
+  `rustc-hash`, `serde_json` (tracer args).
+- `services.rs::get_possible_symbol_reference_positions` keeps Go's
+  container-relative first index verbatim (`strings.Index(text[Pos():], …)`
+  quirk); all real call sites pass the whole file where `Pos()==0`.
+
+## 2026-10-08 crates/dirty — tsc/internal/project/dirty port shape
+`Cloneable[T]` interface → `Cloneable` trait (`clone_value()` is Go's
+`Clone()`; `Clone::clone` plays Go's assignment — shallow for handle types).
+Go's zero-value/nil returns → `Option` everywhere (`Value()`/`Original()`/
+nil base maps are `None`).
+- `*MapEntry`/`*SyncMapEntry` aliasing → `Rc<RefCell<EntryState>>` /
+  `Arc<Mutex<SyncEntryState>>` handles; Go's `entry.mu`/`sync.Mutex` →
+  `std::sync::Mutex`; `collections.SyncMap` → `tsc_collections::SyncMap`.
+- `Value[T]`/`LockedEntry[T]` interfaces → `Value` trait + concrete
+  `LockedEntry` guard (Rust has no Go's implicit `mu.Lock()` scoping — the
+  guard borrows the entry for the locked region instead of unlock-by-defer).
+- `SyncMap`'s concurrent-mutation proxy race is preserved: `Change`/
+  `Delete`/`Locked` re-resolve the entry through the `SyncMap` and recurse
+  through `proxy_for` links exactly like Go's `entry.proxyFor` chain.
+- `Map`/`Box`/`MapBuilder` are `Rc`-based single-threaded (Go's non-sync
+  variants assume single-goroutine use too); `Map::finalize` returns the
+  base map itself when clean (Go's `if len(dirty)==0 return base`).
+- `syncmap_test.go` ported 1:1 (4 tests).
+
+## 2026-10-08 crates/projectlogging — tsc/internal/project/logging port shape
+`Logger` interface → `Logger` trait; `io.Writer` → `Box<dyn io::Write +
+Send>`; `sync.Mutex` writer serialization → `Mutex`; `atomic.Int32`/`Bool` →
+`AtomicI32`/`AtomicBool`.
+- Go's nil-receiver no-ops become `Option<&dyn Logger>` return from
+  `verbose()` (callers use `if let`/`map`) — `WriterLogger::verbose`
+  returns `Some(self)`/`None` like Go's `if l.verbose { return l }`.
+- Log prefix `[HH:MM:SS.mmm]` is hand-rolled in `timefmt.rs` from
+  `SystemTime` (Go `time.Now().Format("15:04:05.000")`).
+- `LogTree`: `Fork`/`Embed` share `Arc<LogTreeInner>` (Go's shared `*LogTree`
+  + `root` back-pointer → `Weak` to avoid the child→root Arc cycle);
+  sequence numbering stays atomic (`AtomicU64` counter + `AtomicI32`
+  per-tree `count`/`stringLength`).
+- `NewTestLogger` → `new_test_logger` collecting into `Arc<Mutex<Vec<u8>>>`
+  behind a shared `io::Write` impl (Go's `bytes.Buffer`).
+- `logtree_test.go` ported (2 tests).
+
+## 2026-10-08 crates/watchmanager — tsc/internal/execute/watchmanager port shape
+`WatchBackend` interface → `WatchBackend` trait; `fswatch.Watch`/`io.Closer`
+→ `WatchHandle` trait object (`close(&self)`, wrapped in `Option` inside
+`WatchedDir` since Go assigns the closer post-`WatchDirectories`).
+- `wm.mu`/`wm.changedMu` → `Mutex<Inner>` + `Mutex<ChangedState>`;
+  `wm.Lock`/`Unlock` + the locked-only methods → `WatchManager::lock()`
+  guard (`WatchManagerLock`) so `reconcile_watches`/`ensure_default_backend`
+  can only run under the lock — Go's contract, enforced by the type.
+- `doCycleCh chan struct{}` (cap 1, non-blocking send) →
+  `mpsc::sync_channel(1)` + `try_send`; `RunLoop`'s `select` on
+  `ctx.Done()`/`doCycleCh` → `recv_timeout(RUN_LOOP_POLL_INTERVAL)` poll —
+  PORT: cancel latency bounded by 10ms instead of select-instant.
+- Watch callbacks capture `Weak<WatchManager>` (Go's strong `*WatchManager`
+  capture would Arc-cycle wm → watched dir → callback → wm); dead-manager
+  late events are dropped.
+- `reconcile_watches` collects removals then deletes keys after
+  `diff_maps_func` (Go deletes `watchedDirs` inside the diff callbacks —
+  legal under Go's range-during-delete; identical result).
+- `mpsc::Receiver` is `!Sync`, so `do_cycle_rx` is `Mutex`-wrapped
+  (uncontended — only `run_loop`/`do_cycle_ch` consumers receive).
+- `watchmanager_test.go` ported (12 tests) including DirWatchSet coverage/
+  case-sensitivity, resolve-desired-dirs ancestor fallback, and the
+  case-only-spelling reconcile regression.
+
+## 2026-12-01 crates/transformers — tsc/internal/transformers ROOT port shape
+Root files only (`transformer.go`, `chain.go`, `utilities.go`,
+`modifiervisitor.go`, `destructuring.go`); the transform subpackages are
+ported separately against this API.
+- `Transformer` keeps `emit_context` in `Rc<RefCell<EmitContext>>` (Go's
+  shared `*EmitContext` — a `Chain` hands one context to every component,
+  and `TransformOptions.Context` is `Option<Rc<RefCell<EmitContext>>>`).
+  Go's `tx.factory == emitContext.Factory` identity cannot be expressed:
+  `VisitorCx.factory` must be `&mut ast::NodeFactory`, and holding a `&mut`
+  to `emit_context.factory` for the visit would make the `EmitContext`
+  unreachable inside callbacks. `Transformer` therefore owns a second,
+  hooks-equivalent `ast::NodeFactory` (`new_transform_factory`) used purely
+  as `cx.factory`; its `on_create`/`on_update`/`on_clone` hooks mirror the
+  emit context's via `Weak` upgrades. Explicit `tx.Factory().New*` calls in
+  transform code should use `emit_context().borrow_mut().factory` (the real
+  printer factory) — `Transformer::with_factory` wraps that borrow.
+  `tx.Factory()` itself is `with_factory(|f| ...)` because returning a
+  `&mut` out of a `RefCell` is impossible.
+- `PORT(deferred)`: the stand-in factory's `on_clone` cannot copy the
+  `autoGenerate` entry (it lives in `EmitContextShared`, private to
+  tsc-printer), so clones of generated identifiers made through
+  `cx.factory.clone_node` lose regeneration metadata. Route such clones
+  through `emit_context().borrow_mut().factory.clone_node`, whose real
+  `on_clone` copies the entry (transformer.rs).
+- `flattener`'s four function fields (`emitBindingOrAssignment`,
+  `create{Array,Object}BindingOrAssignmentPattern`,
+  `createArrayBindingOrAssignmentElement`) become a `FlattenMode` enum —
+  Rust has no method values. `f.tx`/visitor/cx access threads
+  `&Transformer` + `&mut VisitorCx` through every flattener method.
+  `CreateAssignmentCallback` additionally receives `(&NodeVisitor,
+  &mut VisitorCx)` since Go callbacks captured `*Transformer` and Rust
+  closures cannot capture the not-yet-constructed visitor/transformer
+  pair; the `value` arg is `Option<NodeId>` (Go `*ast.Expression`).
+- `chainedTransformer.components` is `Rc<Vec<Transformer>>` captured by
+  the chained visit closure (the closure cannot borrow the transformer it
+  is installed on). Component source-file visits re-enter
+  `transform_source_file` with a fresh `VisitorCx` per component, exactly
+  like Go's sequential `t.TransformSourceFile(result)` loop.
+- `ExtractModifiers`'s `modifierVisitor` struct collapses into the
+  `modifier_visit` closure + one-shot `Transformer`; `emitContext` is
+  `Option<&Rc<RefCell<EmitContext>>>` (Go nilable).
+- `emitBinding`'s `append(f.expressions, value)` may append Go nil; the
+  `Option<NodeId>` element is dropped instead since `InlineExpressions`
+  takes `&[NodeId]`. `set_original` calls are skipped for `None`
+  originals (Go stores a nil `original` pointer — observably identical).
+- `is_original_node_single_line` uses the *ast* `SourceFileLike`
+  (`ecma_line_map()` cached slice) + `scanner::compute_line_of_position`;
+  `ast::SourceFile` does not implement the scanner's `SourceFileLike`.
+- Element slices from `GetElementsOfBindingOrAssignmentPattern` are
+  cloned before iteration because the arena is borrowed mutably while
+  flattening (Go shares the backing array with the AST).
+- `SingleOrMany` takes `&mut ast::NodeFactory` (the `NewSyntaxList` half)
+  instead of `*printer.NodeFactory`; `list` is `Option<Vec<NodeId>>`
+  (`None` ↔ Go nil slice).
