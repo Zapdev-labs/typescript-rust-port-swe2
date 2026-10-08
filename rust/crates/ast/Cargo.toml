@@ -11,6 +11,7 @@ tsc-core = { path = "../core" }
 tsc-debug = { path = "../debug" }
 tsc-diagnostics = { path = "../diagnostics" }
 tsc-locale = { path = "../locale" }
+tsc-spanmap = { path = "../spanmap" }
 tsc-stringutil = { path = "../stringutil" }
 tsc-tspath = { path = "../tspath" }
 rustc-hash = { workspace = true }

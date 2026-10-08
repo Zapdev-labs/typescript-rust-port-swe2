@@ -14,6 +14,7 @@ mod flagdef;
 pub mod ast;
 pub mod ast_generated;
 pub mod checkflags;
+pub mod diagnostic;
 pub mod flow;
 pub mod functionflags;
 pub mod ids;

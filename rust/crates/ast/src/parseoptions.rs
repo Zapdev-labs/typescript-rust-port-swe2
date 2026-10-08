@@ -88,11 +88,8 @@ fn is_file_forced_to_be_module_by_format(
     // Excludes declaration files - they still require an explicit `export {}` or the like
     // for back compat purposes. The only non-declaration files _not_ forced to be a module are `.js` files
     // that aren't esm-mode (meaning not in a `type: module` scope).
-    get_implied_node_format_for_emit_worker(
-        file_name,
-        options.get_emit_module_kind(),
-        metadata,
-    ) == ModuleKind::ESNext
+    get_implied_node_format_for_emit_worker(file_name, options.get_emit_module_kind(), metadata)
+        == ModuleKind::ESNext
         || file_name.extension_is_one_of(IS_FILE_FORCED_TO_BE_MODULE_BY_FORMAT_EXTENSIONS)
 }
 
@@ -100,7 +97,7 @@ fn is_file_forced_to_be_module_by_format(
 pub fn set_external_module_indicator(
     file: NodeId,
     opts: ExternalModuleIndicatorOptions,
-    nodes: &mut Vec<Node>,
+    nodes: &mut [Node],
 ) {
     let indicator = get_external_module_indicator(file, opts, nodes);
     nodes[file].as_source_file_mut().external_module_indicator = indicator;

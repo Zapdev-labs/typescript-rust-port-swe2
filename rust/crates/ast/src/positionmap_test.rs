@@ -110,6 +110,9 @@ fn test_position_map_roundtrip() {
     for i in 0..=utf16_len {
         let utf8_pos = pm.utf16_to_utf8(i);
         let back = pm.utf8_to_utf16(utf8_pos);
-        assert_eq!(back, i, "roundtrip UTF16->UTF8->UTF16: {i} -> {utf8_pos} -> {back}");
+        assert_eq!(
+            back, i,
+            "roundtrip UTF16->UTF8->UTF16: {i} -> {utf8_pos} -> {back}"
+        );
     }
 }

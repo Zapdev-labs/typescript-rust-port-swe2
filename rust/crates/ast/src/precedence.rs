@@ -197,11 +197,13 @@ impl OperatorPrecedence {
 
 fn get_operator(expression: &Node, nodes: &[Node]) -> Kind {
     match expression.kind {
-        Kind::BinaryExpression => nodes[expression
-            .as_binary_expression()
-            .operator_token
-            .expect("BinaryExpression without OperatorToken in getOperator")]
-        .kind,
+        Kind::BinaryExpression => {
+            nodes[expression
+                .as_binary_expression()
+                .operator_token
+                .expect("BinaryExpression without OperatorToken in getOperator")]
+            .kind
+        }
         Kind::PrefixUnaryExpression => expression.as_prefix_unary_expression().operator,
         Kind::PostfixUnaryExpression => expression.as_postfix_unary_expression().operator,
         _ => expression.kind,

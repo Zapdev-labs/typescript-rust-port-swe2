@@ -23,14 +23,14 @@ pub struct PositionMap {
     /// `asciiOnly` is true if the text contains only ASCII characters,
     /// meaning UTF-8 byte offsets and UTF-16 code unit offsets are identical.
     ascii_only: bool,
-    /// For each multi-byte character, we store:
-    ///   - the UTF-8 byte offset of the character
-    ///   - the cumulative delta (utf8Offset - utf16Offset) at that character
-    /// This allows O(log n) conversion in either direction.
-    ///
-    /// `entries[i].utf8_pos` is the byte offset of the i-th multi-byte character.
-    /// `entries[i].delta` is the total (utf8 - utf16) difference accumulated
-    /// through and including the i-th multi-byte character.
+    // For each multi-byte character, we store:
+    //   - the UTF-8 byte offset of the character
+    //   - the cumulative delta (utf8Offset - utf16Offset) at that character
+    // This allows O(log n) conversion in either direction.
+    //
+    // `entries[i].utf8_pos` is the byte offset of the i-th multi-byte character.
+    // `entries[i].delta` is the total (utf8 - utf16) difference accumulated
+    // through and including the i-th multi-byte character.
     entries: Vec<PositionMapEntry>,
 }
 
@@ -117,4 +117,3 @@ impl PositionMap {
         utf16_offset + self.entries[lo - 1].delta
     }
 }
-

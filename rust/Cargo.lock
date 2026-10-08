@@ -162,6 +162,7 @@ dependencies = [
  "tsc-debug",
  "tsc-diagnostics",
  "tsc-locale",
+ "tsc-spanmap",
  "tsc-stringutil",
  "tsc-tspath",
 ]

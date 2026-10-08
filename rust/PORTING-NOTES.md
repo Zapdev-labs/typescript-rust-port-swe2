@@ -116,6 +116,38 @@ to "2" so tsc-collections can build.
   helpers). `deepclone`, `positionmap`, `precedence`, diagnostic types are
   M2 items — Go has no tests for the ported portion.
 
+## 2026-10-08 crates/ast — positionmap.rs, precedence.rs, parseoptions.rs
+- `positionmap.rs`: Go `int` offsets → `usize`; `text string` → `&[u8]`
+  (source text can carry the `EncodeJSStringRune` lone-surrogate CESU-8
+  sentinel, which is not valid UTF-8, so `&str` cannot model it — the Go
+  test exercises exactly that). Go `ComputePositionMap` returns
+  `*PositionMap` (always non-nil) → `PositionMap` by value. Go benchmarks
+  omitted — no stable-Rust `testing.B` equivalent.
+- `precedence.rs`: `OperatorPrecedence` (`int`) and `TypePrecedence`
+  (`int32`) are transparent `i32` newtypes with SCREAMING associated consts
+  (crate flag-type convention) rather than Rust enums — Go relies on the
+  out-of-band `OperatorPrecedenceInvalid = -1` and callers compare with
+  `<`/`>`. `OperatorPrecedenceFlags` uses `flag_type!`. Nil `*Node` field
+  dereferences (`OperatorToken`, `Operand`, `Condition`, `Tag`,
+  `TypeParameter`, `Expression()`) become `.expect(...)` panics — same
+  failure mode as Go's nil-pointer panic.
+- `parseoptions.rs`: `*SourceFile`/`*Node` params → `NodeId`; `*Node`
+  results → `Option<NodeId>`; arenas threaded as `nodes: &[Node]` /
+  `&mut [Node]` appended after the Go parameter list. `SourceFile` node
+  fields read via `nodes[file].as_source_file()`. `for _, s := range
+  file.Statements.Nodes` on a `NodeList` → `if let Some(list) =
+  &d.statements { for &s in list.nodes() }` — `None` is unreachable for a
+  parsed file (Go would nil-panic), treated as empty. Go closures that
+  recurse (`findChildNode`, `walkTreeForJSXTags`) become nested `fn`s with
+  the result out-param (`&mut Option<NodeId>`) since Rust closures can't
+  self-recurse.
+- `utilities.rs` gained the utilities.go helpers the two files need:
+  `is_optional_chain`, `is_import_meta`, `is_jsx_opening_like_element`,
+  `get_implied_node_format_for_emit_worker`. `ModuleReference` nil →
+  `is_some_and(...)` returns `false` where Go would nil-panic (unreachable
+  on a well-formed `ImportEqualsDeclaration`; matches the existing
+  `is_assignment_expression` `let-else` convention).
+
 ## 2026-10-08 crates/bundled — lib embedding
 - `libs` is a symlink to `tsc/internal/bundled/libs` (rsync `-a` preserves it
   on remote since the whole repo syncs).
