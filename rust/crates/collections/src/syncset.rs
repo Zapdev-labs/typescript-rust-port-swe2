@@ -55,6 +55,13 @@ impl<T: Eq + Hash> SyncSet<T> {
         self.m.delete(key);
     }
 
+    /// Clear removes all keys (Go: `*s = SyncSet[T]{}` reinitialization —
+    /// like the Go assignment, the shared set is emptied in place, so other
+    /// holders of the same set observe it empty).
+    pub fn clear(&self) {
+        self.m.clear();
+    }
+
     /// Range calls f for each key in the set until f returns false.
     ///
     /// PORT: iterates a cloned snapshot — see `SyncMap::range`.

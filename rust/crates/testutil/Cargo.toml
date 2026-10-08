@@ -1,0 +1,19 @@
+[package]
+name = "tsc-testutil"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+tsc-collections = { path = "../collections" }
+tsc-json = { path = "../json" }
+tsc-repo = { path = "../repo" }
+tsc-stringutil = { path = "../stringutil" }
+tsc-tspath = { path = "../tspath" }
+tsc-vfs = { path = "../vfs" }
+serde = { workspace = true }
+serde_json = { workspace = true }

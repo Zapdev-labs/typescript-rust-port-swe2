@@ -446,6 +446,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "tsc-testutil"
+version = "0.0.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "tsc-collections",
+ "tsc-json",
+ "tsc-repo",
+ "tsc-stringutil",
+ "tsc-tspath",
+ "tsc-vfs",
+]
+
+[[package]]
 name = "tsc-tracing"
 version = "0.0.0"
 dependencies = [
