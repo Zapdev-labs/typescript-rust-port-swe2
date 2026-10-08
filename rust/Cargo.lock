@@ -229,6 +229,17 @@ version = "0.0.0"
 [[package]]
 name = "tsc-packagejson"
 version = "0.0.0"
+dependencies = [
+ "rustc-hash",
+ "serde",
+ "serde_json",
+ "tsc-collections",
+ "tsc-core",
+ "tsc-diagnostics",
+ "tsc-json",
+ "tsc-semver",
+ "tsc-tspath",
+]
 
 [[package]]
 name = "tsc-repo"

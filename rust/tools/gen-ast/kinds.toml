@@ -725,7 +725,7 @@ name = "Token"
 kinds = ["Unknown", "EndOfFile", "SingleLineCommentTrivia", "MultiLineCommentTrivia", "NewLineTrivia", "WhitespaceTrivia", "ConflictMarkerTrivia", "NonTextFileMarkerTrivia", "NumericLiteral", "BigIntLiteral", "StringLiteral", "JsxText", "JsxTextAllWhiteSpaces", "RegularExpressionLiteral", "NoSubstitutionTemplateLiteral", "TemplateHead", "TemplateMiddle", "TemplateTail", "OpenBraceToken", "CloseBraceToken", "OpenParenToken", "CloseParenToken", "OpenBracketToken", "CloseBracketToken", "DotToken", "DotDotDotToken", "SemicolonToken", "CommaToken", "QuestionDotToken", "LessThanToken", "LessThanSlashToken", "GreaterThanToken", "LessThanEqualsToken", "GreaterThanEqualsToken", "EqualsEqualsToken", "ExclamationEqualsToken", "EqualsEqualsEqualsToken", "ExclamationEqualsEqualsToken", "EqualsGreaterThanToken", "PlusToken", "MinusToken", "AsteriskToken", "AsteriskAsteriskToken", "SlashToken", "PercentToken", "PlusPlusToken", "MinusMinusToken", "LessThanLessThanToken", "GreaterThanGreaterThanToken", "GreaterThanGreaterThanGreaterThanToken", "AmpersandToken", "BarToken", "CaretToken", "ExclamationToken", "TildeToken", "AmpersandAmpersandToken", "BarBarToken", "QuestionToken", "ColonToken", "AtToken", "QuestionQuestionToken", "BacktickToken", "HashToken", "EqualsToken", "PlusEqualsToken", "MinusEqualsToken", "AsteriskEqualsToken", "AsteriskAsteriskEqualsToken", "SlashEqualsToken", "PercentEqualsToken", "LessThanLessThanEqualsToken", "GreaterThanGreaterThanEqualsToken", "GreaterThanGreaterThanGreaterThanEqualsToken", "AmpersandEqualsToken", "BarEqualsToken", "BarBarEqualsToken", "AmpersandAmpersandEqualsToken", "QuestionQuestionEqualsToken", "CaretEqualsToken", "Identifier", "PrivateIdentifier", "JSDocCommentTextToken", "BreakKeyword", "CaseKeyword", "CatchKeyword", "ClassKeyword", "ConstKeyword", "ContinueKeyword", "DebuggerKeyword", "DefaultKeyword", "DeleteKeyword", "DoKeyword", "ElseKeyword", "EnumKeyword", "ExportKeyword", "ExtendsKeyword", "FalseKeyword", "FinallyKeyword", "ForKeyword", "FunctionKeyword", "IfKeyword", "ImportKeyword", "InKeyword", "InstanceOfKeyword", "NewKeyword", "NullKeyword", "ReturnKeyword", "SuperKeyword", "SwitchKeyword", "ThisKeyword", "ThrowKeyword", "TrueKeyword", "TryKeyword", "TypeOfKeyword", "VarKeyword", "VoidKeyword", "WhileKeyword", "WithKeyword", "ImplementsKeyword", "InterfaceKeyword", "LetKeyword", "PackageKeyword", "PrivateKeyword", "ProtectedKeyword", "PublicKeyword", "StaticKeyword", "YieldKeyword", "AbstractKeyword", "AccessorKeyword", "AsKeyword", "AssertsKeyword", "AssertKeyword", "AnyKeyword", "AsyncKeyword", "AwaitKeyword", "BooleanKeyword", "ConstructorKeyword", "DeclareKeyword", "GetKeyword", "ImmediateKeyword", "InferKeyword", "IntrinsicKeyword", "IsKeyword", "KeyOfKeyword", "ModuleKeyword", "NamespaceKeyword", "NeverKeyword", "OutKeyword", "ReadonlyKeyword", "RequireKeyword", "NumberKeyword", "ObjectKeyword", "SatisfiesKeyword", "SetKeyword", "StringKeyword", "SymbolKeyword", "TypeKeyword", "UndefinedKeyword", "UniqueKeyword", "UnknownKeyword", "UsingKeyword", "FromKeyword", "GlobalKeyword", "BigIntKeyword", "OverrideKeyword", "OfKeyword", "DeferKeyword", "SourceKeyword"]
 bases = ["NodeBase"]
 is_fn = "IsToken"
-facts_mode = "none"
+facts_mode = "custom"
 fields = [
 ]
 news = [
@@ -992,6 +992,7 @@ facts = [
 
 [[nodes]]
 name = "ForInOrOfStatement"
+kinds = ["ForInStatement", "ForOfStatement"]
 bases = ["StatementBase", "LocalsContainerBase", "CompositeBase"]
 facts_mode = "custom"
 fields = [
@@ -1177,6 +1178,7 @@ facts = [
 
 [[nodes]]
 name = "CaseOrDefaultClause"
+kinds = ["CaseClause", "DefaultClause"]
 bases = ["NodeBase", "CompositeBase"]
 facts_mode = "generated"
 fields = [
@@ -1476,6 +1478,7 @@ clone = [
 
 [[nodes]]
 name = "BindingPattern"
+kinds = ["ObjectBindingPattern", "ArrayBindingPattern"]
 bases = ["NodeBase", "CompositeBase"]
 facts_mode = "custom"
 propagate_mode = "exclusions"
@@ -2209,7 +2212,7 @@ name = "ConstructorDeclaration"
 kinds = ["Constructor"]
 bases = ["ClassElementBase", "NodeBase", "DeclarationBase", "ModifiersBase", "FunctionLikeWithBodyBase", "CompositeBase"]
 is_fn = "IsConstructorDeclaration"
-facts_mode = "none"
+facts_mode = "custom"
 propagate_mode = "exclusions"
 propagate_exclusions = "SubtreeExclusionsConstructor"
 fields = [
@@ -2588,7 +2591,7 @@ name = "BigIntLiteral"
 kinds = ["BigIntLiteral"]
 bases = ["LiteralExpressionBase"]
 is_fn = "IsBigIntLiteral"
-facts_mode = "none"
+facts_mode = "custom"
 fields = [
 ]
 news = [
@@ -2723,7 +2726,7 @@ name = "YieldExpression"
 kinds = ["YieldExpression"]
 bases = ["ExpressionBase"]
 is_fn = "IsYieldExpression"
-facts_mode = "none"
+facts_mode = "custom"
 fields = [
     { name = "asterisk_token", ty = "node", go_name = "AsteriskToken", optional = true },
     { name = "expression", ty = "node", go_name = "Expression", optional = true },
@@ -5762,6 +5765,7 @@ clone = [
 
 [[nodes]]
 name = "JSDocParameterOrPropertyTag"
+kinds = ["JSDocParameterTag", "JSDocPropertyTag"]
 bases = ["JSDocTagBase"]
 custom = ["for_each_child", "visit_each_child"]
 facts_mode = "none"
@@ -5782,10 +5786,11 @@ clone = [
 [[nodes]]
 name = "SourceFile"
 kinds = ["SourceFile"]
+bases = ["DeclarationBase", "LocalsContainerBase", "CompositeBase"]
 is_fn = "IsSourceFile"
 custom = ["ctor", "for_each_child", "visit_each_child", "clone", "update"]
 extra = true
-facts_mode = "custom"
+facts_mode = "generated"
 fields = [
     { name = "file_name", ty = "other", go_name = "fileName", optional = true, rust_ty = "String" },
     { name = "text", ty = "str", optional = true },
@@ -5794,6 +5799,27 @@ fields = [
     { name = "language_variant", ty = "other", go_name = "languageVariant", optional = true, rust_ty = "tsc_core::LanguageVariant" },
     { name = "script_kind", ty = "other", go_name = "scriptKind", optional = true, rust_ty = "tsc_core::ScriptKind" },
     { name = "is_declaration_file", ty = "bool", go_name = "isDeclarationFile", optional = true },
+    { name = "uses_uri_style_node_core_modules", ty = "other", go_name = "usesUriStyleNodeCoreModules", optional = true, rust_ty = "tsc_core::Tristate" },
+    { name = "identifier_count", ty = "int", go_name = "identifierCount", optional = true },
+    { name = "imports", ty = "node_slice", optional = true },
+    { name = "module_augmentations", ty = "node_slice", go_name = "moduleAugmentations", optional = true },
+    { name = "ambient_module_names", ty = "string_slice", go_name = "ambientModuleNames", optional = true },
+    { name = "comment_directives", ty = "other", go_name = "commentDirectives", optional = true, rust_ty = "Box<[crate::ast::CommentDirective]>" },
+    { name = "pragmas", ty = "other", optional = true, rust_ty = "Box<[crate::ast::Pragma]>" },
+    { name = "referenced_files", ty = "other", go_name = "referencedFiles", optional = true, rust_ty = "Box<[crate::ast::FileReference]>" },
+    { name = "type_reference_directives", ty = "other", go_name = "typeReferenceDirectives", optional = true, rust_ty = "Box<[crate::ast::FileReference]>" },
+    { name = "lib_reference_directives", ty = "other", go_name = "libReferenceDirectives", optional = true, rust_ty = "Box<[crate::ast::FileReference]>" },
+    { name = "check_js_directive", ty = "other", go_name = "checkJsDirective", optional = true, rust_ty = "Option<crate::ast::CheckJsDirective>" },
+    { name = "node_count", ty = "int", go_name = "nodeCount", optional = true },
+    { name = "text_count", ty = "int", go_name = "textCount", optional = true },
+    { name = "common_js_module_indicator", ty = "node", go_name = "commonJSModuleIndicator", optional = true },
     { name = "external_module_indicator", ty = "node", go_name = "externalModuleIndicator", optional = true },
+    { name = "symbol_count", ty = "int", go_name = "symbolCount", optional = true },
+    { name = "pattern_ambient_modules", ty = "other", go_name = "patternAmbientModules", optional = true, rust_ty = "Box<[crate::ast::PatternAmbientModule]>" },
+    { name = "global_exports", ty = "symbol_table", go_name = "globalExports", optional = true },
+    { name = "reparsed_clones", ty = "node_slice", go_name = "reparsedClones", optional = true },
+]
+facts = [
+    { op = "propagateList", field = "statements" },
 ]
 

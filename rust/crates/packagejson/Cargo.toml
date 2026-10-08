@@ -7,3 +7,18 @@ license.workspace = true
 
 [lints]
 workspace = true
+
+[dependencies]
+rustc-hash.workspace = true
+# "derive" is used by test-local struct targets (mirroring the Go tests'
+# `json.Unmarshal(&p)` into a typed struct).
+serde = { workspace = true, features = ["derive"] }
+# "raw_value" exposes serde_json::value::RawValue — the serde equivalent of
+# the raw member bytes Go's UnmarshalJSON receives (tsc-json does the same).
+serde_json = { workspace = true, features = ["raw_value"] }
+tsc-collections = { path = "../collections" }
+tsc-core = { path = "../core" }
+tsc-diagnostics = { path = "../diagnostics" }
+tsc-json = { path = "../json" }
+tsc-semver = { path = "../semver" }
+tsc-tspath = { path = "../tspath" }

@@ -311,6 +311,29 @@ fn split_args(args: &str) -> Vec<(String, String)> {
 /// the index of the closing `}` line.
 fn read_func(lines: &[&str], start: usize) -> Result<(FuncSig, usize), String> {
     let header = lines[start].trim();
+    // Single-line body: `func (x *T) M() R { return x.f }`. The `{...}` body
+    // must be peeled off so the signature loop below doesn't eat the next
+    // function header while hunting for a trailing `{`.
+    if !header.ends_with('{')
+        && let Some(open) = header.find('{')
+        && header.ends_with('}')
+    {
+        let sig = header[..open].trim().strip_prefix("func ").unwrap_or(header[..open].trim());
+        let (recv_ty, rest) = if let Some(r) = sig.strip_prefix('(') {
+            let close = r.find(')').ok_or("bad receiver")?;
+            let recv = &r[..close];
+            let ty = recv.rsplit(' ').next().unwrap_or("").trim_start_matches('*');
+            (ty.to_string(), r[close + 1..].trim().to_string())
+        } else {
+            (String::new(), sig.to_string())
+        };
+        let paren = rest.find('(').ok_or("bad func sig")?;
+        let name = rest[..paren].trim().to_string();
+        let args_end = matching_paren(&rest, paren).ok_or("bad func args")?;
+        let args = split_args(&rest[paren + 1..args_end]);
+        let body = format!("{}\n", header[open + 1..header.len() - 1].trim());
+        return Ok((FuncSig { recv_ty, name, args, body }, start));
+    }
     let (sig, body_start) = if header.ends_with('{') {
         (header[..header.len() - 1].trim().to_string(), start + 1)
     } else {
@@ -1231,6 +1254,13 @@ fn push_source_file(schema: &mut Schema) {
     schema.nodes.push(NodeDef {
         name: "SourceFile".into(),
         kinds: vec!["SourceFile".into()],
+        // Go: NodeBase (header — outside NodeData) + DeclarationBase +
+        // LocalsContainerBase + CompositeBase.
+        bases: vec![
+            "DeclarationBase".into(),
+            "LocalsContainerBase".into(),
+            "CompositeBase".into(),
+        ],
         fields: vec![
             field("fileName", FieldType::Other, Some("String")),
             field("text", FieldType::Str, None),
@@ -1239,9 +1269,65 @@ fn push_source_file(schema: &mut Schema) {
             field("languageVariant", FieldType::Other, Some("tsc_core::LanguageVariant")),
             field("scriptKind", FieldType::Other, Some("tsc_core::ScriptKind")),
             field("isDeclarationFile", FieldType::Bool, None),
+            field(
+                "usesUriStyleNodeCoreModules",
+                FieldType::Other,
+                Some("tsc_core::Tristate"),
+            ),
+            field("identifierCount", FieldType::Int, None),
+            field("imports", FieldType::NodeSlice, None),
+            field("moduleAugmentations", FieldType::NodeSlice, None),
+            field("ambientModuleNames", FieldType::StringSlice, None),
+            field(
+                "commentDirectives",
+                FieldType::Other,
+                Some("Box<[crate::ast::CommentDirective]>"),
+            ),
+            field(
+                "pragmas",
+                FieldType::Other,
+                Some("Box<[crate::ast::Pragma]>"),
+            ),
+            field(
+                "referencedFiles",
+                FieldType::Other,
+                Some("Box<[crate::ast::FileReference]>"),
+            ),
+            field(
+                "typeReferenceDirectives",
+                FieldType::Other,
+                Some("Box<[crate::ast::FileReference]>"),
+            ),
+            field(
+                "libReferenceDirectives",
+                FieldType::Other,
+                Some("Box<[crate::ast::FileReference]>"),
+            ),
+            field(
+                "checkJsDirective",
+                FieldType::Other,
+                Some("Option<crate::ast::CheckJsDirective>"),
+            ),
+            field("nodeCount", FieldType::Int, None),
+            field("textCount", FieldType::Int, None),
+            field("commonJSModuleIndicator", FieldType::Node, None),
             field("externalModuleIndicator", FieldType::Node, None),
+            field("symbolCount", FieldType::Int, None),
+            field(
+                "patternAmbientModules",
+                FieldType::Other,
+                Some("Box<[crate::ast::PatternAmbientModule]>"),
+            ),
+            field("globalExports", FieldType::SymbolTable, None),
+            field("reparsedClones", FieldType::NodeSlice, None),
         ],
-        facts_mode: "custom".into(),
+        // `computeSubtreeFacts` = propagateNodeListSubtreeFacts(Statements).
+        facts: vec![FactOp {
+            op: "propagateList".into(),
+            field: Some("statements".into()),
+            value: None,
+        }],
+        facts_mode: "generated".into(),
         propagate_mode: "default".into(),
         custom: vec![
             "ctor".into(),
@@ -1302,6 +1388,26 @@ fn postprocess(schema: &mut Schema) -> Result<(), String> {
                 if let Some(ks) = alias_kinds.get(&go_ty) {
                     node.kinds = ks.clone();
                 }
+            }
+            if node.kinds.is_empty() {
+                // The ctor's `kind` param is the bare `Kind` type, so no
+                // alias documents the set — use the `IsX` predicates' known
+                // members (verified against utilities.go / ast_generated.go).
+                node.kinds = match node.name.as_str() {
+                    "ForInOrOfStatement" => {
+                        vec!["ForInStatement".into(), "ForOfStatement".into()]
+                    }
+                    "CaseOrDefaultClause" => {
+                        vec!["CaseClause".into(), "DefaultClause".into()]
+                    }
+                    "BindingPattern" => {
+                        vec!["ObjectBindingPattern".into(), "ArrayBindingPattern".into()]
+                    }
+                    "JSDocParameterOrPropertyTag" => {
+                        vec!["JSDocParameterTag".into(), "JSDocPropertyTag".into()]
+                    }
+                    _ => vec![],
+                };
             }
         }
         if node.facts_mode.is_empty() {

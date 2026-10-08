@@ -3,6 +3,9 @@
 // The DirFs implementation below is a port of os.dirFS (os/file.go), which the
 // Go code uses via `RootFor: os.DirFS`.
 
+#[cfg(test)]
+mod tests;
+
 use std::any::Any;
 use std::io::{Read, Seek, Write};
 use std::sync::{Arc, Mutex, OnceLock};

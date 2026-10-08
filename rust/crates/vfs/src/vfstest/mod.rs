@@ -332,12 +332,17 @@ impl MapFs {
         }
     }
 
-    /// Symlink creates a MapFile describing a symlink to target.
+    /// getFollowingSymlinks is vfstest.MapFS.getFollowingSymlinks.
+    ///
+    /// PORT: Go returns `(file *fstest.MapFile, cp canonicalPath, err error)`
+    /// — the resolved path is meaningful even when err != nil (e.g. WriteFile
+    /// stores new content at the resolved canonical path of a broken symlink).
+    /// Here that is modeled as `(Option<MapFile>, String, Option<FsError>)`.
     fn get_following_symlinks(
         &self,
         state: &MapFsState,
         p: &str,
-    ) -> Result<(MapFile, String), FsError> {
+    ) -> (Option<MapFile>, String, Option<FsError>) {
         self.get_following_symlinks_worker(state, p, "", "")
     }
 
@@ -347,15 +352,16 @@ impl MapFs {
         p: &str,
         symlink_from: &str,
         symlink_to: &str,
-    ) -> Result<(MapFile, String), FsError> {
+    ) -> (Option<MapFile>, String, Option<FsError>) {
         if let Some(file) = state.m.map.get(p) {
             if file.mode & MODE_SYMLINK == FileMode(0) {
-                return Ok((file.clone(), p.to_string()));
+                return (Some(file.clone()), p.to_string(), None);
             }
         }
 
         if let Some(target) = state.symlinks.get(p) {
-            return self.get_following_symlinks_worker(state, target, p, target);
+            let target = target.clone();
+            return self.get_following_symlinks_worker(state, &target, p, &target);
         }
 
         // This could be a path underneath a symlinked directory.
@@ -379,14 +385,15 @@ impl MapFs {
             return self.get_following_symlinks_worker(state, &joined, other, target);
         }
 
-        let mut err = FsError::NotExist;
-        if !symlink_from.is_empty() {
-            err = FsError::BrokenSymlink {
+        let err = if !symlink_from.is_empty() {
+            FsError::BrokenSymlink {
                 from: symlink_from.to_string(),
                 to: symlink_to.to_string(),
-            };
-        }
-        Err(err)
+            }
+        } else {
+            FsError::NotExist
+        };
+        (None, p.to_string(), Some(err))
     }
 
     fn set_entry(&self, realpath: &str, canonical: &str, mut file: MapFile) {
@@ -417,9 +424,10 @@ impl MapFs {
         // Fast path; already exists.
         {
             let state = self.state.read().unwrap();
-            if let Ok((other, _)) =
-                self.get_following_symlinks(&state, &self.get_canonical_path(p))
-            {
+            let (other, _, err) =
+                self.get_following_symlinks(&state, &self.get_canonical_path(p));
+            if err.is_none() {
+                let other = other.expect("no error implies a file");
                 if !other.mode.is_dir() {
                     return Err(FsError::Message(format!(
                         "mkdir {}: path exists but is not a directory",
@@ -437,36 +445,36 @@ impl MapFs {
             let (dir, rest) = split_path(&p, offset);
             let canonical = self.get_canonical_path(&dir);
             let state = self.state.read().unwrap();
-            match self.get_following_symlinks(&state, &canonical) {
-                Err(err) => {
-                    drop(state);
-                    if !err.is_not_exist() {
-                        return Err(err);
-                    }
-                    to_create.push(dir.clone());
+            let (other, other_path, err) =
+                self.get_following_symlinks(&state, &canonical);
+            if let Some(err) = err {
+                drop(state);
+                if !err.is_not_exist() {
+                    return Err(err);
                 }
-                Ok((other, other_path)) => {
-                    if !other.mode.is_dir() {
-                        drop(state);
-                        return Err(FsError::Message(format!(
-                            "mkdir {}: path exists but is not a directory",
-                            fs::go_quote(&other_path)
-                        )));
-                    }
-                    if canonical != other_path {
-                        // We have a symlinked parent, reset and start again.
-                        let realpath = other
-                            .sys
-                            .as_ref()
-                            .and_then(|s| s.downcast_ref::<Sys>())
-                            .map(|s| s.realpath.clone())
-                            .unwrap_or_default();
-                        drop(state);
-                        p = format!("{}/{}", realpath, rest);
-                        to_create.clear();
-                        offset = 0;
-                        continue;
-                    }
+                to_create.push(dir.clone());
+            } else {
+                let other = other.expect("no error implies a file");
+                if !other.mode.is_dir() {
+                    drop(state);
+                    return Err(FsError::Message(format!(
+                        "mkdir {}: path exists but is not a directory",
+                        fs::go_quote(&other_path)
+                    )));
+                }
+                if canonical != other_path {
+                    // We have a symlinked parent, reset and start again.
+                    let realpath = other
+                        .sys
+                        .as_ref()
+                        .and_then(|s| s.downcast_ref::<Sys>())
+                        .map(|s| s.realpath.clone())
+                        .unwrap_or_default();
+                    drop(state);
+                    p = format!("{}/{}", realpath, rest);
+                    to_create.clear();
+                    offset = 0;
+                    continue;
                 }
             }
             if rest.is_empty() {
@@ -640,10 +648,7 @@ impl Fs for MapFs {
 
         let canonical = self.get_canonical_path(name);
         // Go: _, cp, _ := m.getFollowingSymlinks(...) — the error is ignored.
-        let cp = match self.get_following_symlinks(&state, &canonical) {
-            Ok((_, cp)) => cp,
-            Err(_) => canonical,
-        };
+        let (_, cp, _) = self.get_following_symlinks(&state, &canonical);
 
         // m.open(cp)
         let f = state.m.open(&cp)?;
@@ -747,8 +752,12 @@ impl ReadDirFile for RootDirFile {
 impl RealpathFs for MapFs {
     fn realpath(&self, name: &str) -> Result<String, FsError> {
         let state = self.state.read().unwrap();
-        let (file, _) =
-            self.get_following_symlinks(&state, &self.get_canonical_path(name))?;
+        let (file, _, err) =
+            self.get_following_symlinks(&state, &self.get_canonical_path(name));
+        if let Some(err) = err {
+            return Err(err);
+        }
+        let file = file.expect("no error implies a file");
         // Go: file.Sys.(*sys).realpath — every stored entry has a sys.
         file.sys
             .and_then(|s| s.downcast_ref::<Sys>().map(|s| s.realpath.clone()))
@@ -766,22 +775,19 @@ impl WritableFs for MapFs {
             let parent = dir_name(path);
             let canonical = self.get_canonical_path(&parent);
             let state = self.state.read().unwrap();
-            match self.get_following_symlinks(&state, &canonical) {
-                Err(err) => {
-                    return Err(FsError::Message(format!(
-                        "write {}: {}",
-                        fs::go_quote(path),
-                        err
-                    )))
-                }
-                Ok((parent_file, _)) => {
-                    if !parent_file.mode.is_dir() {
-                        return Err(FsError::Message(format!(
-                            "write {}: parent path exists but is not a directory",
-                            fs::go_quote(path)
-                        )));
-                    }
-                }
+            let (parent_file, _, err) =
+                self.get_following_symlinks(&state, &canonical);
+            if let Some(err) = err {
+                return Err(FsError::Wrap {
+                    msg: format!("write {}", fs::go_quote(path)),
+                    err: Box::new(err),
+                });
+            }
+            if !parent_file.expect("no error implies a file").mode.is_dir() {
+                return Err(FsError::Message(format!(
+                    "write {}: parent path exists but is not a directory",
+                    fs::go_quote(path)
+                )));
             }
         }
 
@@ -789,15 +795,20 @@ impl WritableFs for MapFs {
         let cp;
         {
             let state = self.state.read().unwrap();
-            match self.get_following_symlinks(&state, &canonical) {
-                Err(err) => {
+            let (file, resolved, err) =
+                self.get_following_symlinks(&state, &canonical);
+            match err {
+                Some(err) => {
                     if !err.is_not_exist() && !err.is_broken_symlink() {
                         // No other errors are possible.
                         panic!("{}", err);
                     }
-                    cp = canonical.clone();
+                    // The resolved path is still valid on error (it is the
+                    // symlink's canonical target for broken symlinks).
+                    cp = resolved;
                 }
-                Ok((file, resolved)) => {
+                None => {
+                    let file = file.expect("no error implies a file");
                     if !file.mode.is_regular() {
                         return Err(FsError::Message(format!(
                             "write {}: path exists but is not a regular file",
@@ -827,22 +838,19 @@ impl WritableFs for MapFs {
             let parent = dir_name(path);
             let canonical = self.get_canonical_path(&parent);
             let state = self.state.read().unwrap();
-            match self.get_following_symlinks(&state, &canonical) {
-                Err(err) => {
-                    return Err(FsError::Message(format!(
-                        "append {}: {}",
-                        fs::go_quote(path),
-                        err
-                    )))
-                }
-                Ok((parent_file, _)) => {
-                    if !parent_file.mode.is_dir() {
-                        return Err(FsError::Message(format!(
-                            "append {}: parent path exists but is not a directory",
-                            fs::go_quote(path)
-                        )));
-                    }
-                }
+            let (parent_file, _, err) =
+                self.get_following_symlinks(&state, &canonical);
+            if let Some(err) = err {
+                return Err(FsError::Wrap {
+                    msg: format!("append {}", fs::go_quote(path)),
+                    err: Box::new(err),
+                });
+            }
+            if !parent_file.expect("no error implies a file").mode.is_dir() {
+                return Err(FsError::Message(format!(
+                    "append {}: parent path exists but is not a directory",
+                    fs::go_quote(path)
+                )));
             }
         }
 
@@ -852,15 +860,18 @@ impl WritableFs for MapFs {
         let cp;
         {
             let state = self.state.read().unwrap();
-            match self.get_following_symlinks(&state, &canonical) {
-                Err(err) => {
+            let (file, resolved, err) =
+                self.get_following_symlinks(&state, &canonical);
+            match err {
+                Some(err) => {
                     if !err.is_not_exist() && !err.is_broken_symlink() {
                         // No other errors are possible.
                         panic!("{}", err);
                     }
-                    cp = canonical.clone();
+                    cp = resolved;
                 }
-                Ok((file, resolved)) => {
+                None => {
+                    let file = file.expect("no error implies a file");
                     if !file.mode.is_regular() {
                         return Err(FsError::Message(format!(
                             "append {}: path exists but is not a regular file",

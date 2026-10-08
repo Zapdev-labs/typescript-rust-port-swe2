@@ -1,5 +1,8 @@
 // Ported from tsc/internal/vfs/walkdir.go @ ec47d33c23e464a17cdf2475632cba629bee8763
 
+#[cfg(test)]
+mod tests;
+
 use std::collections::HashSet;
 use std::sync::Arc;
 use std::time::SystemTime;
