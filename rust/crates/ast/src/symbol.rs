@@ -20,7 +20,7 @@ pub struct Symbol {
     pub check_flags: CheckFlags,
     pub name: String,
     pub declarations: Vec<NodeId>,
-    pub value_declaration: NodeId,
+    pub value_declaration: Option<NodeId>,
     pub members: SymbolTable,
     pub exports: SymbolTable,
     // Go stores a lazily-assigned `id atomic.Uint64`; the slot index in the
@@ -38,10 +38,10 @@ impl Symbol {
 /// Ported from `(s *Symbol).IsStatic`. Needs the node arena to inspect the
 /// value declaration's modifier flags.
 pub fn symbol_is_static(s: &Symbol, nodes: &[crate::Node]) -> bool {
-    if s.value_declaration.is_none() {
+    let Some(value_declaration) = s.value_declaration else {
         return false;
-    }
-    let node = &nodes[s.value_declaration.local_index() as usize];
+    };
+    let node = &nodes[value_declaration.local_index() as usize];
     node.modifier_flags(nodes).intersects(ModifierFlags::STATIC)
 }
 
@@ -79,15 +79,13 @@ pub const INTERNAL_SYMBOL_NAME_MODULE_EXPORTS: &str = "module.exports";
 
 /// Ported from `SymbolName`.
 pub fn symbol_name<'a>(symbol: &'a Symbol, nodes: &'a [crate::Node]) -> std::borrow::Cow<'a, str> {
-    if symbol.value_declaration.is_some()
+    if let Some(value_declaration) = symbol.value_declaration
         && is_private_identifier_class_element_declaration(
-            &nodes[symbol.value_declaration.local_index() as usize],
+            &nodes[value_declaration.local_index() as usize],
         )
+        && let Some(name) = nodes[value_declaration.local_index() as usize].name()
     {
-        let node = &nodes[symbol.value_declaration.local_index() as usize];
-        if let Some(name) = node.name() {
-            return nodes[name.local_index() as usize].text(nodes);
-        }
+        return nodes[name.local_index() as usize].text(nodes);
     }
     std::borrow::Cow::Borrowed(symbol.name.as_str())
 }

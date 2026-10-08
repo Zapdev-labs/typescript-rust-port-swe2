@@ -56,7 +56,7 @@ impl FlowFlags {
 pub struct FlowNode {
     pub flags: FlowFlags,
     /// Associated AST node
-    pub node: NodeId,
+    pub node: Option<NodeId>,
     /// Antecedent for all but FlowLabel
     pub antecedent: Option<FlowNodeId>,
     /// Linked list of antecedents for FlowLabel
@@ -80,7 +80,7 @@ pub struct FlowList {
 /// Ported from `NewFlowSwitchClauseData` in flow.go.
 pub fn new_flow_switch_clause_data(
     nodes: &mut Vec<Node>,
-    switch_statement: NodeId,
+    switch_statement: Option<NodeId>,
     clause_start: i32,
     clause_end: i32,
 ) -> NodeId {

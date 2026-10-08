@@ -58,3 +58,39 @@ to "2" so tsc-collections can build.
   first-seen key order is a deterministic superset of the Go contract.
 - `Set`/`MultiMap` keep their public `m` field (Go `M`); `Set.keys()` returns
   `&FxHashSet<T>` mirroring Go returning the map itself.
+
+## 2026-10-07 crates/core — M1/M2 core.go et al. port shape
+- `context.go`: Go's `context.Context` (channel/select cancellation) becomes an
+  explicit `Context` bag holding `request_id`, `checker_lifetime`, and an
+  atomic cancellation flag + `Condvar`. Cancellation wakeups are
+  Condvar-latency-bound rather than select-instant; documented `// PORT:` at
+  each site.
+- `workgroup.go`: `SingleThreaded` workgroup runs fns via `Vec::pop` (Go's
+  `pop()` is inlined at the call site). `ThrottleGroup` uses a shared
+  `Semaphore` + first-error `Mutex<Option<E>>` + inflight counter instead of
+  Go's goroutine+done-channel fan-out; error precedence (first error wins) is
+  preserved.
+- `semaphore.go`: `Unlimited` is a no-op struct; `Limited` is a
+  `Mutex<usize>` + `Condvar` counting semaphore.
+- `bfs.go`: job arena is `Vec<BreadthFirstSearchJob>` indexed by `u32`
+  (Go uses pointers into a job arena); parent chains stored as `Option<u32>`.
+  Level-parallel execution via scoped threads; goal/fallback selection uses
+  `AtomicI64` min-index so earliest-indexed result wins deterministically.
+- `core.go`: `sync.Pool` of levenshtein buffers → `thread_local! RefCell`
+  (const-initialized). `iter.Seq` helpers become `impl FnMut`/`Iterator`
+  adapters per §7.4. `memoize` retains+clones its value (Go can return the
+  cached value; Rust must clone since the closure may be `Fn`).
+- `options_generated.go`: `json:"...,omitzero"` →
+  `#[serde(skip_serializing_if = "...")]` + `#[serde(default)]`; nil-able
+  `[]string`/`*int`/`*OrderedMap` → `Option<_>` to preserve nil-vs-empty in
+  `Equals`. i32 enums serialize via a local `serde_i32_enum!` macro producing
+  `From<i32>`/`TryFrom<i32>` impls used by `#[serde(into/try_from = "i32")]`;
+  unknown ordinals reject on deserialize (Go unmarshals into the typed int
+  enum without range checks — Rust is stricter here, matching tsconfig
+  validation downstream).
+- Stringers (`*_stringer_generated.rs`): checked-in `Display` impls over
+  `_name`/`_index` tables; Go's `T(-N)` out-of-range fallback is unreachable
+  because Rust enums cannot hold out-of-range ordinals.
+- `nodemodules.go`: `sync.OnceValue` package-scope set →
+  `LazyLock<FxHashSet<String>>`.
+- No `unsafe`; nothing added to the unsafe justification list.

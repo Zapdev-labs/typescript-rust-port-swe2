@@ -4,7 +4,7 @@
 
 use std::collections::HashMap;
 use std::fmt;
-use std::sync::{OnceLock, RwLock};
+use std::sync::{LazyLock, OnceLock, RwLock};
 
 use tsc_locale::Locale;
 
@@ -104,7 +104,8 @@ fn messages_by_key() -> &'static HashMap<Key, &'static Message> {
 }
 
 /// `func keyToMessage(key Key) *Message` — `None` is Go's nil.
-pub(crate) fn key_to_message(key: Key) -> Option<&'static Message> {
+/// (Takes `&str` rather than `Key` so lookups work with borrowed keys.)
+pub(crate) fn key_to_message(key: &str) -> Option<&'static Message> {
     messages_by_key().get(key).copied()
 }
 
@@ -112,12 +113,7 @@ pub(crate) fn key_to_message(key: Key) -> Option<&'static Message> {
 ///
 /// `None` for `message` mirrors Go's nil: the message is then looked up by
 /// `key`, panicking on an unknown key.
-pub fn localize(
-    locale: &Locale,
-    message: Option<&Message>,
-    key: Key,
-    args: &[String],
-) -> String {
+pub fn localize(locale: &Locale, message: Option<&Message>, key: Key, args: &[String]) -> String {
     let message = match message.or_else(|| key_to_message(key)) {
         Some(m) => m,
         None => panic!("Unknown diagnostic message: {key}"),
@@ -136,9 +132,10 @@ pub fn localize(
 /// `var localizedMessagesCache sync.Map // map[language.Tag]map[Key]string`
 ///
 /// The cached `Option` is Go's stored nil (`localize` caches misses too).
-static LOCALIZED_MESSAGES_CACHE: RwLock<
-    HashMap<String, Option<&'static HashMap<Key, String>>>,
-> = RwLock::new(HashMap::new());
+type LocalizedMessagesCache =
+    LazyLock<RwLock<HashMap<String, Option<&'static HashMap<Key, String>>>>>;
+static LOCALIZED_MESSAGES_CACHE: LocalizedMessagesCache =
+    LazyLock::new(|| RwLock::new(HashMap::new()));
 
 fn get_localized_messages(loc: &Locale) -> Option<&'static HashMap<Key, String>> {
     let tag = loc.to_string();
@@ -162,14 +159,17 @@ fn get_localized_messages(loc: &Locale) -> Option<&'static HashMap<Key, String>>
         .filter(|&i| i < LOCALE_FUNCS.len())
         .and_then(|i| LOCALE_FUNCS[i].map(|f| f()));
 
-    LOCALIZED_MESSAGES_CACHE.write().unwrap().insert(tag, messages);
+    LOCALIZED_MESSAGES_CACHE
+        .write()
+        .unwrap()
+        .insert(tag, messages);
     messages
 }
 
 /// `func Format(text string, args []string) string` — replaces `{n}`
 /// placeholders. Go implements this with `regexp.MustCompile("{(\d+)}")`
-/// + `ReplaceAllStringFunc`; this is a hand-rolled scan of the same pattern
-/// (PORT: no regex crate per repo rules).
+/// plus `ReplaceAllStringFunc`; this is a hand-rolled scan of the same
+/// pattern (PORT: no regex crate per repo rules).
 ///
 /// Panics on an out-of-range placeholder index
 /// ("Invalid formatting placeholder"), like Go.
@@ -244,7 +244,7 @@ pub fn new_adhoc_message(message: String) -> &'static Message {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::{BTreeMap, HashMap};
+    use std::collections::{BTreeMap, BTreeSet, HashMap};
     use std::fs;
     use std::path::PathBuf;
 
@@ -405,8 +405,7 @@ mod tests {
     }
 
     fn loc_dir() -> PathBuf {
-        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("../../../tsc/internal/diagnostics/loc")
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../tsc/internal/diagnostics/loc")
     }
 
     #[test]
@@ -432,18 +431,12 @@ mod tests {
                 .trim_end_matches(".generated.json")
                 .to_string();
             let data = fs::read(&path).unwrap();
-            validate_locale_file(
-                &data,
-                get_localized_messages(&must_parse(&locale_name)),
-            );
+            validate_locale_file(&data, get_localized_messages(&must_parse(&locale_name)));
         }
     }
 
-    fn validate_locale_file(
-        data: &[u8],
-        runtime_messages: Option<&HashMap<Key, String>>,
-    ) {
-        let handback: BTreeMap<Key, String> = serde_json::from_slice(data).unwrap();
+    fn validate_locale_file(data: &[u8], runtime_messages: Option<&HashMap<Key, String>>) {
+        let handback: BTreeMap<String, String> = serde_json::from_slice(data).unwrap();
         validate_localized_messages(&handback);
 
         // Go: `expected = json.MarshalIndent(&orderedMessages, "", "  ")` then
@@ -452,19 +445,18 @@ mod tests {
         // slices.Sorted(maps.Keys(handback)). PORT: Go's encoder is the
         // internal tsc json package, which does not HTML-escape — matching
         // serde_json's behavior.
-        let mut expected = String::from("{\r\n");
-        for (i, (k, v)) in handback.iter().enumerate() {
-            if i > 0 {
-                expected.push_str(",\r\n");
+        let mut expected = "{}".to_string();
+        if !handback.is_empty() {
+            expected = String::from("{\r\n");
+            for (i, (k, v)) in handback.iter().enumerate() {
+                if i > 0 {
+                    expected.push_str(",\r\n");
+                }
+                expected.push_str("  ");
+                expected.push_str(&serde_json::to_string(k).unwrap());
+                expected.push_str(": ");
+                expected.push_str(&serde_json::to_string(v).unwrap());
             }
-            expected.push_str("  ");
-            expected.push_str(&serde_json::to_string(k).unwrap());
-            expected.push_str(": ");
-            expected.push_str(&serde_json::to_string(v).unwrap());
-        }
-        if handback.is_empty() {
-            expected = "{}".to_string();
-        } else {
             expected.push_str("\r\n}");
         }
         assert_eq!(
@@ -473,15 +465,15 @@ mod tests {
             "handback must use sorted keys and canonical formatting"
         );
 
-        let active: BTreeMap<Key, &String> = handback
+        let active: BTreeMap<&str, &String> = handback
             .iter()
             .filter(|(key, _)| key_to_message(key).is_some())
-            .map(|(&k, v)| (k, v))
+            .map(|(k, v)| (k.as_str(), v))
             .collect();
         if active.is_empty() {
             assert_eq!(runtime_messages.map_or(0, HashMap::len), 0);
         } else {
-            let runtime: BTreeMap<Key, &String> = runtime_messages
+            let runtime: BTreeMap<&str, &String> = runtime_messages
                 .expect("runtime messages missing for non-empty locale")
                 .iter()
                 .map(|(&k, v)| (k, v))
@@ -511,7 +503,7 @@ mod tests {
     // codegen moved to build.rs (SPEC §5.8), so there is no Go program to
     // invoke; determinism is covered by build.rs itself.
 
-    fn validate_localized_messages(localized_messages: &BTreeMap<Key, String>) {
+    fn validate_localized_messages(localized_messages: &BTreeMap<String, String>) {
         for (key, localized_text) in localized_messages {
             let Some(message) = key_to_message(key) else {
                 continue;
@@ -532,10 +524,10 @@ mod tests {
         }
     }
 
-    fn placeholder_set(text: &str) -> BTreeMap<String, bool> {
+    fn placeholder_set(text: &str) -> BTreeSet<String> {
         // Same `{(\d+)}` scan as `format` — collect placeholder strings.
         let bytes = text.as_bytes();
-        let mut result = BTreeMap::new();
+        let mut result = BTreeSet::new();
         let mut i = 0;
         while i < bytes.len() {
             if bytes[i] == b'{' {
@@ -544,7 +536,7 @@ mod tests {
                     j += 1;
                 }
                 if j > i + 1 && j < bytes.len() && bytes[j] == b'}' {
-                    result.insert(text[i..=j].to_string(), true);
+                    result.insert(text[i..=j].to_string());
                     i = j + 1;
                     continue;
                 }

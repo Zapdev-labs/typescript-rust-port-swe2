@@ -4,7 +4,7 @@
 // the equivalent table is emitted by this crate's `build.rs` into OUT_DIR
 // (SPEC §5.8) and included here.
 
-use crate::{Category, Key, Message};
+use crate::{Category, Message};
 
 include!(concat!(env!("OUT_DIR"), "/messages_generated.rs"));
 

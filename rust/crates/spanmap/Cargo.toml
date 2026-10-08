@@ -7,3 +7,8 @@ license.workspace = true
 
 [lints]
 workspace = true
+
+[dependencies]
+tsc-core = { path = "../core" }
+tsc-json = { path = "../json" }
+serde_json = { workspace = true }

@@ -124,7 +124,7 @@ fn generate_diagnostics(diagnostic_messages: &[DiagnosticMessage]) -> String {
     // Addresses can be statically initialized even across package initialization calls.
     // Copying the pointer variables or using a large map literal generates substantial initialization code.
     buf.push_str("/// Go: `var allMessages = [...]**Message`.\n");
-    buf.push_str("pub static ALL_MESSAGES: &[&'static Message] = &[\n");
+    buf.push_str("pub static ALL_MESSAGES: &[&Message] = &[\n");
     for m in diagnostic_messages {
         let (var_name, _) = convert_property_name(&m.key, m.code);
         writeln!(buf, "    &{var_name},").unwrap();
@@ -266,8 +266,9 @@ fn generate_localizations(
             continue;
         }
 
-        // Convert locale code to valid Rust identifier (Go: strip - and _).
-        let locale_var = tgt_cul.replace(['-', '_'], "").to_lowercase();
+        // Convert locale code to a valid Rust identifier (Go strips `-`/`_`
+        // to get `zhCN`; the snake_case mirror is `zh_cn`).
+        let locale_var = tgt_cul.to_lowercase().replace('-', "_");
 
         locales.push(LocaleInfo {
             var_name: locale_var,
