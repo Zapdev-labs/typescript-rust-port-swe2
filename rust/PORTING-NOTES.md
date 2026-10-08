@@ -199,3 +199,35 @@ to "2" so tsc-collections can build.
   `BundledFileInfo::mod_time` returns `SystemTime::UNIX_EPOCH` as the "unset"
   sentinel.
 - Write/remove/chtimes on bundled paths `panic!` exactly as Go panics.
+
+## 2026-10-08 crates/scanner/regexp.rs — tsc/internal/scanner/regexp.go
+- Go's `regExpParser` borrows the caller's `*Scanner`. scanner.rs is being
+  ported by another agent in parallel, so `RegExpParser` temporarily owns the
+  scanner-state subset it needs (text/pos/end, token value+flags, script
+  target, error sink) plus private ports of the Scanner helpers it calls
+  (`scanIdentifier` group-name variant, `scanEscapeSequence`,
+  `scanUnicodeEscape`, `peekUnicodeEscape`, `scanHexDigits`, surrogate
+  plumbing). The `ReScanSlashToken` flag-scanning loop is ported as
+  `scan_regular_expression_flags`. Reconcile by moving the helper block into
+  scanner.rs and handing the parser a scanner reference.
+- Strings returned by scan helpers are `Vec<u8>`, not `String`: Go strings
+  hold arbitrary bytes, and lone UTF-16 surrogates ride through as
+  tsc-stringutil's CESU-8 sentinels (encode/decode_js_string_rune), which is
+  not valid UTF-8. Positions stay byte offsets into the UTF-8 source.
+- `s.hexDigitCache` memoization is dropped; the per-call cost is one table
+  lookup, so the transform is neutral.
+- `errorAt(args ...any)` becomes `error_at(&[String])`; every diagnostic call
+  site already knows its format args.
+- MSRV 1.85: Go's `if a && b {` combined with `let`-bindings is written with
+  pre-bound `Option` temporaries instead of Rust let-chains (edition 2024
+  let-chains need 1.88+). Go `fallthrough` arms are flattened into sequential
+  `if`s with comments noting the fallthrough origin.
+
+## 2026-10-08 crates/scanner/unicodeproperties.rs — tsc/internal/scanner/unicodeproperties.go
+- Go `map[string]string`/`collections.Set[string]` tables become sorted
+  `&[&str]` arrays + `binary_search`. Set membership semantics are identical;
+  the only iteration consumers are spelling suggestions, where
+  `get_spelling_suggestion_for_strings` picks the best match so input order
+  is not observable (Go's own map order is random anyway).
+  `NON_BINARY_UNICODE_PROPERTY_NAMES` keeps Go literal insertion order — it
+  is only iterated, never searched.

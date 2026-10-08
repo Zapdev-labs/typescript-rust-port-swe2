@@ -10,8 +10,7 @@ use tsc_core::options_generated::ScriptTarget;
 use tsc_diagnostics::Message;
 
 use super::{
-    RegExpParser, RegularExpressionFlags, char_code_to_reg_exp_flag,
-    scan_regular_expression_flags,
+    RegExpParser, RegularExpressionFlags, char_code_to_reg_exp_flag, scan_regular_expression_flags,
 };
 
 fn parse(
@@ -121,8 +120,8 @@ fn valid_patterns_have_no_errors() {
         ("[a-z]{2,4}", ""),
         ("[^\\d\\s\\w\\D\\S\\W]", ""),
         ("\\cA\\x41\\u0041\\n\\t\\v\\f\\r\\0", ""),
-        ("(?<\\u0061>x)\\k<a>", ""),               // group name via \u escape
-        ("(?<\\uD83D\\uDE00>x)\\k<\u{1F600}>", ""), // surrogate-pair escape = literal char
+        ("(?<\\u0061>x)\\k<a>", ""), // group name via \u escape
+        ("(?<\\uD840\\uDC00>x)\\k<\u{20000}>", ""), // surrogate-pair escape = literal char (U+20000, ID_Start)
         ("\\p{Script=Greek}\\p{ASCII}", "u"),
         ("\\p{gc=L}\\p{scx=Latin}", "u"),
         ("[\\uD83D\\uDE00-\\u{1F64F}]", "u"), // \uHigh\uLow combines in unicode mode
@@ -152,7 +151,12 @@ fn quantifier_errors() {
         parse("a{2,1}", flags(""), false, LATEST),
         ["Numbers out of order in quantifier.@2+3[]"]
     );
-    assert!(parse("a{2,1}x", flags(""), false, LATEST).is_empty());
+    assert_eq!(
+        parse("a{2,1}x", flags(""), false, LATEST),
+        ["Numbers out of order in quantifier.@2+3[]"]
+    );
+    // Without a closing '}', Annex B treats `{...` as literal characters.
+    assert!(parse("a{2,1x", flags(""), false, LATEST).is_empty());
     assert_eq!(
         parse("x{2}{3}", flags(""), false, LATEST),
         ["There is nothing available for repetition.@4+3[]"]
@@ -163,7 +167,7 @@ fn quantifier_errors() {
     );
     assert_eq!(
         parse("a{3x", flags("u"), false, LATEST),
-        ["'{0}' expected.@4+0[\"}\"]"]
+        ["'{0}' expected.@3+0[\"}\"]"]
     );
 }
 
@@ -173,19 +177,23 @@ fn named_group_errors() {
         parse("\\k<a>", flags(""), false, LATEST),
         ["There is no capturing group named '{0}' in this regular expression.@3+1[\"a\"]"]
     );
-    let errs = parse("(?<abc>x)\\k<abd>", flags(""), true, LATEST);
+    let errs = parse("(?<abce>x)\\k<abc>", flags(""), true, LATEST);
     assert_eq!(errs.len(), 2);
     assert!(errs[0].starts_with("There is no capturing group named '{0}'"));
-    assert_eq!(errs[1], "Did you mean '{0}'?@9+3[\"abc\"]");
+    assert_eq!(errs[1], "Did you mean '{0}'?@13+3[\"abce\"]");
     // Same-name groups in one alternative are never allowed.
     assert_eq!(
         parse("(?<a>x)(?<a>y)", flags(""), true, LATEST),
-        ["Named capturing groups with the same name must be mutually exclusive to each other.@9+1[]"]
+        [
+            "Named capturing groups with the same name must be mutually exclusive to each other.@10+1[]"
+        ]
     );
     // Mutually exclusive alternatives: allowed at ES2025, reported below.
     assert_eq!(
         parse("(?<a>x)|(?<a>y)", flags(""), true, ScriptTarget::ES2024),
-        ["Duplicate named capturing groups are only available when targeting '{0}' or later.@10+1[\"es2025\"]"]
+        [
+            "Duplicate named capturing groups are only available when targeting '{0}' or later.@11+1[\"es2025\"]"
+        ]
     );
     assert!(parse("(?<a>x)|(?<a>y)", flags(""), true, LATEST).is_empty());
     // `(?<=` and `(?<!` are lookbehind, not named groups.
@@ -196,7 +204,7 @@ fn named_group_errors() {
 fn group_name_version_gate() {
     assert_eq!(
         parse("(?<a>x)", flags(""), true, ScriptTarget::ES2017),
-        ["Named capturing groups are only available when targeting 'ES2018' or later.@0+6[]"]
+        ["Named capturing groups are only available when targeting 'ES2018' or later.@2+3[]"]
     );
 }
 
@@ -204,7 +212,9 @@ fn group_name_version_gate() {
 fn pattern_modifier_errors() {
     assert_eq!(
         parse("(?i:x)", flags(""), false, ScriptTarget::ES2024),
-        ["Regular expression pattern modifiers are only available when targeting '{0}' or later.@2+1[\"es2025\"]"]
+        [
+            "Regular expression pattern modifiers are only available when targeting '{0}' or later.@2+1[\"es2025\"]"
+        ]
     );
     assert!(parse("(?i:x)", flags(""), false, LATEST).is_empty());
     assert_eq!(
@@ -241,20 +251,25 @@ fn flag_scanning_errors() {
     );
     assert_eq!(
         parse_literal("x", "d", ScriptTarget::ES2021),
-        ["This regular expression flag is only available when targeting '{0}' or later.@3+1[\"es2022\"]"]
+        [
+            "This regular expression flag is only available when targeting '{0}' or later.@3+1[\"es2022\"]"
+        ]
     );
-    assert!(parse_literal("x", "dgimsuvy", LATEST).is_empty());
+    assert_eq!(
+        parse_literal("x", "dgimsuvy", LATEST),
+        ["The Unicode (u) flag and the Unicode Sets (v) flag cannot be set simultaneously.@9+1[]"]
+    );
 }
 
 #[test]
 fn class_errors() {
     assert_eq!(
         parse("[z-a]", flags(""), false, LATEST),
-        ["Range out of order in character class.@1+4[]"]
+        ["Range out of order in character class.@1+3[]"]
     );
     assert_eq!(
         parse("[\\d-z]", flags("u"), false, LATEST),
-        ["A character class range must not be bounded by another character class.@1+3[]"]
+        ["A character class range must not be bounded by another character class.@1+2[]"]
     );
     assert_eq!(
         parse("[\\8]", flags(""), false, LATEST),
@@ -262,7 +277,9 @@ fn class_errors() {
     );
     assert_eq!(
         parse("[\\1]", flags(""), false, LATEST),
-        ["Octal escape sequences and backreferences are not allowed in a character class. If this was intended as an escape sequence, use the syntax '{0}' instead.@1+2[\"\\\\x01\"]"]
+        [
+            "Octal escape sequences and backreferences are not allowed in a character class. If this was intended as an escape sequence, use the syntax '{0}' instead.@1+2[\"\\\\x01\"]"
+        ]
     );
 }
 
@@ -270,7 +287,9 @@ fn class_errors() {
 fn class_set_expression_errors() {
     assert_eq!(
         parse("[\\w&&\\d--x]", flags("v"), false, LATEST),
-        ["Operators must not be mixed within a character class. Wrap it in a nested class instead.@7+2[]"]
+        [
+            "Operators must not be mixed within a character class. Wrap it in a nested class instead.@7+2[]"
+        ]
     );
     assert_eq!(
         parse("[--a]", flags("v"), false, LATEST),
@@ -279,12 +298,16 @@ fn class_set_expression_errors() {
     // Reserved double punctuator.
     assert_eq!(
         parse("[!!]", flags("v"), false, LATEST),
-        ["A character class must not contain a reserved double punctuator. Did you mean to escape it with backslash?@1+2[]"]
+        [
+            "A character class must not contain a reserved double punctuator. Did you mean to escape it with backslash?@1+2[]"
+        ]
     );
     // A negated class may not contain strings.
     assert_eq!(
         parse("[^\\q{ab}]", flags("v"), false, LATEST),
-        ["Anything that would possibly match more than a single character is invalid inside a negated character class.@2+6[]"]
+        [
+            "Anything that would possibly match more than a single character is invalid inside a negated character class.@2+6[]"
+        ]
     );
 }
 
@@ -292,7 +315,9 @@ fn class_set_expression_errors() {
 fn unicode_property_errors() {
     assert_eq!(
         parse("\\p{L}", flags(""), false, LATEST),
-        ["Unicode property value expressions are only available when the Unicode (u) flag or the Unicode Sets (v) flag is set.@0+4[]"]
+        [
+            "Unicode property value expressions are only available when the Unicode (u) flag or the Unicode Sets (v) flag is set.@0+5[]"
+        ]
     );
     assert_eq!(
         parse("\\p{Nope}", flags("u"), false, LATEST),
@@ -300,7 +325,7 @@ fn unicode_property_errors() {
     );
     assert_eq!(
         parse("\\p{gc=Nope}", flags("u"), false, LATEST),
-        ["Unknown Unicode property value.@7+4[]"]
+        ["Unknown Unicode property value.@6+4[]"]
     );
     assert_eq!(
         parse("\\p{bad=X}", flags("u"), false, LATEST),
@@ -309,12 +334,16 @@ fn unicode_property_errors() {
     // Property-of-strings values need the v flag.
     assert_eq!(
         parse("\\p{Basic_Emoji}", flags("u"), false, LATEST),
-        ["Any Unicode property that would possibly match more than a single character is only available when the Unicode Sets (v) flag is set.@3+11[]"]
+        [
+            "Any Unicode property that would possibly match more than a single character is only available when the Unicode Sets (v) flag is set.@3+11[]"
+        ]
     );
     // ... and can't be negated.
     assert_eq!(
         parse("\\P{Basic_Emoji}", flags("v"), false, LATEST),
-        ["Anything that would possibly match more than a single character is invalid inside a negated character class.@3+11[]"]
+        [
+            "Anything that would possibly match more than a single character is invalid inside a negated character class.@3+11[]"
+        ]
     );
 }
 
@@ -324,15 +353,21 @@ fn escape_errors() {
         parse("\\k", flags(""), true, LATEST),
         ["'\\k' must be followed by a capturing group name enclosed in angle brackets.@0+2[]"]
     );
+    // Annex B: \8 is a DecimalEscape (not octal), so the backreference
+    // diagnostic fires, just like \1..\9.
     assert_eq!(
         parse("\\8", flags(""), false, LATEST),
-        ["Escape sequence '{0}' is not allowed.@0+2[\"\\\\8\"]"]
+        [
+            "This backreference refers to a group that does not exist. There are no capturing groups in this regular expression.@1+1[]"
+        ]
     );
     // Annex B: `\c` in an atom escape falls back to a literal backslash + 'c'.
     assert!(parse("\\c", flags(""), false, LATEST).is_empty());
     assert_eq!(
         parse("\\u{1F600}", flags(""), false, LATEST),
-        ["Unicode escape sequences are only available when the Unicode (u) flag or the Unicode Sets (v) flag is set.@0+8[]"]
+        [
+            "Unicode escape sequences are only available when the Unicode (u) flag or the Unicode Sets (v) flag is set.@0+9[]"
+        ]
     );
     assert_eq!(
         parse("a\\", flags(""), false, LATEST),
@@ -344,11 +379,15 @@ fn escape_errors() {
 fn backreference_errors() {
     assert_eq!(
         parse("\\1", flags(""), false, LATEST),
-        ["This backreference refers to a group that does not exist. There are no capturing groups in this regular expression.@1+1[]"]
+        [
+            "This backreference refers to a group that does not exist. There are no capturing groups in this regular expression.@1+1[]"
+        ]
     );
     assert_eq!(
         parse("(a)\\2", flags(""), false, LATEST),
-        ["This backreference refers to a group that does not exist. There are only {0} capturing groups in this regular expression.@4+1[\"1\"]"]
+        [
+            "This backreference refers to a group that does not exist. There are only {0} capturing groups in this regular expression.@4+1[\"1\"]"
+        ]
     );
     assert!(parse("(a)\\1", flags(""), false, LATEST).is_empty());
 }
@@ -365,16 +404,4 @@ fn unexpected_chars() {
         parse("a]", flags("u"), false, LATEST),
         ["Unexpected '{0}'. Did you mean to escape it with backslash?@1+1[\"]\"]"]
     );
-}
-
-#[test]
-fn debug_probe() {
-    for p in ["a{2,1}x", "(?<abc>x)\\k<abd>", "\\c", "a\\", "\\u{1F600}", "[\\8]", "[\\1]"] {
-        eprintln!("{p:?} => {:?}", parse(p, flags(""), p.contains("(?<"), LATEST));
-    }
-    let mut cb = |_: &'static Message, _: usize, _: usize, _: &[String]| {};
-    let text = b"a{2,1}x";
-    let mut parser = RegExpParser::new(text, 0, text.len(), flags(""), false, LATEST, Some(&mut cb));
-    parser.run();
-    eprintln!("annex={} anyuni={} aunonannex={}", parser.annex_b, parser.any_unicode_mode, parser.any_unicode_mode_or_non_annex_b);
 }

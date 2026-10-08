@@ -17,6 +17,10 @@
 // (encode_js_string_rune/decode_js_string_rune), which is not valid UTF-8.
 // Positions remain byte offsets into the UTF-8 source text, as in Go.
 
+// No non-test caller exists yet (scanner.rs is being ported in parallel), so
+// the pub(crate) Scanner surface below would otherwise warn as dead code.
+#![allow(dead_code)]
+
 use std::cmp::Ordering;
 use std::fmt;
 
@@ -31,8 +35,8 @@ use tsc_stringutil as stringutil;
 
 use crate::unicodeproperties::{
     NON_BINARY_UNICODE_PROPERTY_NAMES, is_binary_unicode_property,
-    is_binary_unicode_property_of_strings, is_general_category_value,
-    non_binary_unicode_property, values_of_non_binary_unicode_property,
+    is_binary_unicode_property_of_strings, is_general_category_value, non_binary_unicode_property,
+    values_of_non_binary_unicode_property,
 };
 
 /// `type regularExpressionFlags int32`
@@ -58,8 +62,7 @@ impl RegularExpressionFlags {
     /// y
     pub const STICKY: Self = Self(1 << 7);
     pub const ANY_UNICODE_MODE: Self = Self(Self::UNICODE.0 | Self::UNICODE_SETS.0);
-    pub const MODIFIERS: Self =
-        Self(Self::IGNORE_CASE.0 | Self::MULTILINE.0 | Self::DOT_ALL.0);
+    pub const MODIFIERS: Self = Self(Self::IGNORE_CASE.0 | Self::MULTILINE.0 | Self::DOT_ALL.0);
 
     /// `self & other != 0`
     pub const fn intersects(self, other: Self) -> bool {
@@ -143,8 +146,9 @@ pub(crate) fn check_regular_expression_flag_availability(
     size: usize,
     on_error: &mut ErrorCallback,
 ) {
-    if let Some(available_from) = reg_exp_flag_to_first_available_language_version(flag)
-        && language_version < available_from
+    // PORT: `.filter` instead of an `if let ... && ...` let-chain (needs Rust 1.88+).
+    if let Some(available_from) =
+        reg_exp_flag_to_first_available_language_version(flag).filter(|v| language_version < *v)
     {
         on_error(
             &diagnostics::This_regular_expression_flag_is_only_available_when_targeting_0_or_later,
@@ -157,6 +161,7 @@ pub(crate) fn check_regular_expression_flag_availability(
 
 /// `type classSetExpressionType int`
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[allow(dead_code)] // Unknown/ClassUnion exist for Go parity; only the operator types are dispatched on.
 enum ClassSetExpressionType {
     Unknown,
     ClassUnion,
@@ -194,7 +199,11 @@ pub(crate) struct RegExpParser<'a> {
     on_error: Option<&'a mut ErrorCallback<'a>>,
 
     // ==== regExpParser fields ====
+    // PORT: end_of_body/reg_exp_flags are kept for Go parity (ReScanSlashToken
+    // also reads them), but `run()` only needs the decoded booleans.
+    #[allow(dead_code)]
     end_of_body: usize,
+    #[allow(dead_code)]
     reg_exp_flags: RegularExpressionFlags,
     any_unicode_mode: bool,
     unicode_sets_mode: bool,
@@ -267,11 +276,15 @@ impl<'a> RegExpParser<'a> {
 
     /// The scanner position after `run`, for the caller to copy back (Go reads
     /// it off the shared `s.pos`).
+    // PORT: pos()/set_pos() are the Scanner surface the main scanner agent
+    // will consume via ReScanSlashToken.
+    #[allow(dead_code)]
     pub(crate) fn pos(&self) -> usize {
         self.pos
     }
 
     /// `func (p *regExpParser) setPos`
+    #[allow(dead_code)]
     pub(crate) fn set_pos(&mut self, v: usize) {
         self.pos = v;
     }
@@ -295,8 +308,6 @@ impl<'a> RegExpParser<'a> {
     /// patterns; `None` is Go's -1.
     fn byte(&self) -> Option<u8> {
         if self.pos < self.end {
-            #[cfg(test)]
-            eprintln!("DEBUG byte pos={} end={} raw={}", self.pos, self.end, self.text[self.pos]);
             Some(self.text[self.pos])
         } else {
             None
@@ -319,13 +330,7 @@ impl<'a> RegExpParser<'a> {
     }
 
     /// `func (p *regExpParser) error` → `s.errorAt`.
-    fn error_at(
-        &mut self,
-        msg: &'static Message,
-        pos: usize,
-        length: usize,
-        args: &[String],
-    ) {
+    fn error_at(&mut self, msg: &'static Message, pos: usize, length: usize, args: &[String]) {
         if let Some(on_error) = self.on_error.as_deref_mut() {
             on_error(msg, pos, length, args);
         }
@@ -562,7 +567,12 @@ impl<'a> RegExpParser<'a> {
                             let max_str = self.token_value.clone();
                             if min_str.is_empty() {
                                 if !max_str.is_empty() || self.byte() == Some(b'}') {
-                                    self.error_at(&diagnostics::Incomplete_quantifier_Digit_expected, digits_start, 0, &[]);
+                                    self.error_at(
+                                        &diagnostics::Incomplete_quantifier_Digit_expected,
+                                        digits_start,
+                                        0,
+                                        &[],
+                                    );
                                 } else {
                                     self.error_at(&diagnostics::Unexpected_0_Did_you_mean_to_escape_it_with_backslash, start, 1, &[rune_to_string(ch)]);
                                     is_previous_term_quantifiable = true;
@@ -573,9 +583,12 @@ impl<'a> RegExpParser<'a> {
                                 && (self.any_unicode_mode_or_non_annex_b
                                     || self.byte() == Some(b'}'))
                             {
-                                #[cfg(test)]
-                                eprintln!("DEBUG Numbers pos={} aunab={} byte={:?} text={:?}", self.pos, self.any_unicode_mode_or_non_annex_b, self.byte(), String::from_utf8_lossy(self.text));
-                                self.error_at(&diagnostics::Numbers_out_of_order_in_quantifier, digits_start, self.pos - digits_start, &[]);
+                                self.error_at(
+                                    &diagnostics::Numbers_out_of_order_in_quantifier,
+                                    digits_start,
+                                    self.pos - digits_start,
+                                    &[],
+                                );
                             }
                         } else if min_str.is_empty() {
                             if self.any_unicode_mode_or_non_annex_b {
@@ -586,7 +599,12 @@ impl<'a> RegExpParser<'a> {
                         }
                         if self.byte() != Some(b'}') {
                             if self.any_unicode_mode_or_non_annex_b {
-                                self.error_at(&diagnostics::X_0_expected, self.pos, 0, &["}".to_string()]);
+                                self.error_at(
+                                    &diagnostics::X_0_expected,
+                                    self.pos,
+                                    0,
+                                    &["}".to_string()],
+                                );
                                 self.inc_pos(-1);
                             } else {
                                 is_previous_term_quantifiable = true;
@@ -601,7 +619,12 @@ impl<'a> RegExpParser<'a> {
                         self.inc_pos(1);
                     }
                     if !is_previous_term_quantifiable {
-                        self.error_at(&diagnostics::There_is_nothing_available_for_repetition, start, self.pos - start, &[]);
+                        self.error_at(
+                            &diagnostics::There_is_nothing_available_for_repetition,
+                            start,
+                            self.pos - start,
+                            &[],
+                        );
                     }
                     is_previous_term_quantifiable = false;
                 }
@@ -623,7 +646,12 @@ impl<'a> RegExpParser<'a> {
                 Ok(b')') if is_in_group => return,
                 Ok(b')' | b']' | b'}') => {
                     if self.any_unicode_mode_or_non_annex_b || ch == i32::from(b')') {
-                        self.error_at(&diagnostics::Unexpected_0_Did_you_mean_to_escape_it_with_backslash, self.pos, 1, &[rune_to_string(ch)]);
+                        self.error_at(
+                            &diagnostics::Unexpected_0_Did_you_mean_to_escape_it_with_backslash,
+                            self.pos,
+                            1,
+                            &[rune_to_string(ch)],
+                        );
                     }
                     self.inc_pos(1);
                     is_previous_term_quantifiable = true;
@@ -649,10 +677,20 @@ impl<'a> RegExpParser<'a> {
             }
             match char_code_to_reg_exp_flag(ch) {
                 None => {
-                    self.error_at(&diagnostics::Unknown_regular_expression_flag, self.pos, size, &[]);
+                    self.error_at(
+                        &diagnostics::Unknown_regular_expression_flag,
+                        self.pos,
+                        size,
+                        &[],
+                    );
                 }
                 Some(flag) if curr_flags.intersects(flag) => {
-                    self.error_at(&diagnostics::Duplicate_regular_expression_flag, self.pos, size, &[]);
+                    self.error_at(
+                        &diagnostics::Duplicate_regular_expression_flag,
+                        self.pos,
+                        size,
+                        &[],
+                    );
                 }
                 Some(flag) if !flag.intersects(RegularExpressionFlags::MODIFIERS) => {
                     self.error_at(&diagnostics::This_regular_expression_flag_cannot_be_toggled_within_a_subpattern, self.pos, size, &[]);
@@ -690,7 +728,12 @@ impl<'a> RegExpParser<'a> {
             }
             Some(b'q') if self.unicode_sets_mode => {
                 self.inc_pos(1);
-                self.error_at(&diagnostics::X_q_is_only_available_inside_character_class, self.pos - 2, 2, &[]);
+                self.error_at(
+                    &diagnostics::X_q_is_only_available_inside_character_class,
+                    self.pos - 2,
+                    2,
+                    &[],
+                );
             }
             _ => {
                 // PORT: Go's `case 'q':` falls through to `default` when not in
@@ -743,7 +786,12 @@ impl<'a> RegExpParser<'a> {
         match u8::try_from(ch) {
             Err(_) => {
                 // Go `case -1:`
-                self.error_at(&diagnostics::Undetermined_character_escape, self.pos - 1, 1, &[]);
+                self.error_at(
+                    &diagnostics::Undetermined_character_escape,
+                    self.pos - 1,
+                    1,
+                    &[],
+                );
                 b"\\".to_vec()
             }
             Ok(b'c') => {
@@ -754,7 +802,12 @@ impl<'a> RegExpParser<'a> {
                     return vec![(ch & 0x1f) as u8];
                 }
                 if self.any_unicode_mode_or_non_annex_b {
-                    self.error_at(&diagnostics::X_c_must_be_followed_by_an_ASCII_letter, self.pos - 2, 2, &[]);
+                    self.error_at(
+                        &diagnostics::X_c_must_be_followed_by_an_ASCII_letter,
+                        self.pos - 2,
+                        2,
+                        &[],
+                    );
                 } else if atom_escape {
                     self.inc_pos(-1);
                     return b"\\".to_vec();
@@ -762,8 +815,10 @@ impl<'a> RegExpParser<'a> {
                 // Go `string(ch)` — ch may be -1 here, which Go renders as U+FFFD.
                 stringutil::encode_js_string_rune(ch)
             }
-            Ok(b'^' | b'$' | b'/' | b'\\' | b'.' | b'*' | b'+' | b'?' | b'(' | b')' | b'['
-            | b']' | b'{' | b'}' | b'|') => {
+            Ok(
+                b'^' | b'$' | b'/' | b'\\' | b'.' | b'*' | b'+' | b'?' | b'(' | b')' | b'[' | b']'
+                | b'{' | b'}' | b'|',
+            ) => {
                 self.inc_pos(1);
                 stringutil::encode_js_string_rune(ch)
             }
@@ -789,7 +844,12 @@ impl<'a> RegExpParser<'a> {
         debug::assert_!(self.pos > 0 && self.text[self.pos - 1] == b'<');
         self.token_start = self.pos;
         if !self.scan_identifier(0, IdentifierVariant::RegExpGroupName) {
-            self.error_at(&diagnostics::Expected_a_capturing_group_name, self.pos, 0, &[]);
+            self.error_at(
+                &diagnostics::Expected_a_capturing_group_name,
+                self.pos,
+                0,
+                &[],
+            );
         } else if is_reference {
             self.group_name_references.push(GroupNameReference {
                 pos: self.token_start,
@@ -867,7 +927,12 @@ impl<'a> RegExpParser<'a> {
                     && max_character.len() == max_size
                     && min_character_value > max_character_value
                 {
-                    self.error_at(&diagnostics::Range_out_of_order_in_character_class, min_start, self.pos - min_start, &[]);
+                    self.error_at(
+                        &diagnostics::Range_out_of_order_in_character_class,
+                        min_start,
+                        self.pos - min_start,
+                        &[],
+                    );
                 }
             }
         }
@@ -988,23 +1053,33 @@ impl<'a> RegExpParser<'a> {
                                 && second_operand.len() == max_size
                                 && min_character_value > max_character_value
                             {
-                                self.error_at(&diagnostics::Range_out_of_order_in_character_class, start, self.pos - start, &[]);
+                                self.error_at(
+                                    &diagnostics::Range_out_of_order_in_character_class,
+                                    start,
+                                    self.pos - start,
+                                    &[],
+                                );
                             }
                         }
                     }
                 }
-                Ok(b'&') => {
-                    if self.pos + 1 < self.end && self.char_at(self.pos + 1) == i32::from(b'&') {
-                        start = self.pos;
-                        self.inc_pos(2);
-                        self.error_at(&diagnostics::Operators_must_not_be_mixed_within_a_character_class_Wrap_it_in_a_nested_class_instead, self.pos - 2, 2, &[]);
-                        if self.byte() == Some(b'&') {
-                            self.error_at(&diagnostics::Unexpected_0_Did_you_mean_to_escape_it_with_backslash, self.pos, 1, &[rune_to_string(ch)]);
-                            self.inc_pos(1);
-                        }
-                        operand = self.text()[start..self.pos].to_vec();
-                        continue;
+                Ok(b'&')
+                    if self.pos + 1 < self.end && self.char_at(self.pos + 1) == i32::from(b'&') =>
+                {
+                    start = self.pos;
+                    self.inc_pos(2);
+                    self.error_at(&diagnostics::Operators_must_not_be_mixed_within_a_character_class_Wrap_it_in_a_nested_class_instead, self.pos - 2, 2, &[]);
+                    if self.byte() == Some(b'&') {
+                        self.error_at(
+                            &diagnostics::Unexpected_0_Did_you_mean_to_escape_it_with_backslash,
+                            self.pos,
+                            1,
+                            &[rune_to_string(ch)],
+                        );
+                        self.inc_pos(1);
                     }
+                    operand = self.text()[start..self.pos].to_vec();
+                    continue;
                 }
                 _ => {}
             }
@@ -1064,11 +1139,21 @@ impl<'a> RegExpParser<'a> {
                             self.error_at(&diagnostics::Operators_must_not_be_mixed_within_a_character_class_Wrap_it_in_a_nested_class_instead, self.pos - 2, 2, &[]);
                         }
                         if self.byte() == Some(b'&') {
-                            self.error_at(&diagnostics::Unexpected_0_Did_you_mean_to_escape_it_with_backslash, self.pos, 1, &[rune_to_string(ch)]);
+                            self.error_at(
+                                &diagnostics::Unexpected_0_Did_you_mean_to_escape_it_with_backslash,
+                                self.pos,
+                                1,
+                                &[rune_to_string(ch)],
+                            );
                             self.inc_pos(1);
                         }
                     } else {
-                        self.error_at(&diagnostics::Unexpected_0_Did_you_mean_to_escape_it_with_backslash, self.pos - 1, 1, &[rune_to_string(ch)]);
+                        self.error_at(
+                            &diagnostics::Unexpected_0_Did_you_mean_to_escape_it_with_backslash,
+                            self.pos - 1,
+                            1,
+                            &[rune_to_string(ch)],
+                        );
                     }
                 }
                 _ => match expression_type {
@@ -1178,8 +1263,10 @@ impl<'a> RegExpParser<'a> {
                     self.inc_pos(1);
                     return b"\x08".to_vec();
                 }
-                Ok(b'&' | b'-' | b'!' | b'#' | b'%' | b',' | b':' | b';' | b'<' | b'='
-                | b'>' | b'@' | b'`' | b'~') => {
+                Ok(
+                    b'&' | b'-' | b'!' | b'#' | b'%' | b',' | b':' | b';' | b'<' | b'=' | b'>'
+                    | b'@' | b'`' | b'~',
+                ) => {
                     self.inc_pos(1);
                     return stringutil::encode_js_string_rune(inner_ch);
                 }
@@ -1187,24 +1274,42 @@ impl<'a> RegExpParser<'a> {
                     return self.scan_character_escape(false /*atomEscape*/);
                 }
             }
-        } else if self.pos + 1 < self.end && ch == self.char_at(self.pos + 1) {
-            match u8::try_from(ch) {
-                Ok(b'&' | b'!' | b'#' | b'%' | b'*' | b'+' | b',' | b'.' | b':' | b';'
-                | b'<' | b'=' | b'>' | b'?' | b'@' | b'`' | b'~') => {
-                    self.error_at(&diagnostics::A_character_class_must_not_contain_a_reserved_double_punctuator_Did_you_mean_to_escape_it_with_backslash, self.pos, 2, &[]);
-                    self.inc_pos(2);
-                    return self.text()[self.pos - 2..self.pos].to_vec();
-                }
-                _ => {}
-            }
+        } else if self.pos + 1 < self.end
+            && ch == self.char_at(self.pos + 1)
+            && matches!(
+                u8::try_from(ch),
+                Ok(b'&'
+                    | b'!'
+                    | b'#'
+                    | b'%'
+                    | b'*'
+                    | b'+'
+                    | b','
+                    | b'.'
+                    | b':'
+                    | b';'
+                    | b'<'
+                    | b'='
+                    | b'>'
+                    | b'?'
+                    | b'@'
+                    | b'`'
+                    | b'~')
+            )
+        {
+            self.error_at(&diagnostics::A_character_class_must_not_contain_a_reserved_double_punctuator_Did_you_mean_to_escape_it_with_backslash, self.pos, 2, &[]);
+            self.inc_pos(2);
+            return self.text()[self.pos - 2..self.pos].to_vec();
         }
-        match u8::try_from(ch) {
-            Ok(b'/' | b'(' | b')' | b'[' | b']' | b'{' | b'}' | b'-' | b'|') => {
-                self.error_at(&diagnostics::Unexpected_0_Did_you_mean_to_escape_it_with_backslash, self.pos, 1, &[rune_to_string(ch)]);
-                self.inc_pos(1);
-                return vec![ch as u8];
-            }
-            _ => {}
+        if let Ok(b'/' | b'(' | b')' | b'[' | b']' | b'{' | b'}' | b'-' | b'|') = u8::try_from(ch) {
+            self.error_at(
+                &diagnostics::Unexpected_0_Did_you_mean_to_escape_it_with_backslash,
+                self.pos,
+                1,
+                &[rune_to_string(ch)],
+            );
+            self.inc_pos(1);
+            return vec![ch as u8];
         }
         self.scan_source_character()
     }
@@ -1273,35 +1378,75 @@ impl<'a> RegExpParser<'a> {
                     if self.byte() == Some(b'=') {
                         let property_name = non_binary_unicode_property(property_name_or_value);
                         if self.pos == property_name_or_value_start {
-                            self.error_at(&diagnostics::Expected_a_Unicode_property_name, self.pos, 0, &[]);
+                            self.error_at(
+                                &diagnostics::Expected_a_Unicode_property_name,
+                                self.pos,
+                                0,
+                                &[],
+                            );
                         } else if property_name.is_none() {
-                            self.error_at(&diagnostics::Unknown_Unicode_property_name, property_name_or_value_start, self.pos - property_name_or_value_start, &[]);
+                            self.error_at(
+                                &diagnostics::Unknown_Unicode_property_name,
+                                property_name_or_value_start,
+                                self.pos - property_name_or_value_start,
+                                &[],
+                            );
                             if let Some(suggestion) = self
-                                .get_spelling_suggestion_for_unicode_property_name(property_name_or_value)
+                                .get_spelling_suggestion_for_unicode_property_name(
+                                    property_name_or_value,
+                                )
                             {
-                                self.error_at(&diagnostics::Did_you_mean_0, property_name_or_value_start, self.pos - property_name_or_value_start, &[suggestion.to_string()]);
+                                self.error_at(
+                                    &diagnostics::Did_you_mean_0,
+                                    property_name_or_value_start,
+                                    self.pos - property_name_or_value_start,
+                                    std::slice::from_ref(&suggestion),
+                                );
                             }
                         }
                         self.inc_pos(1);
                         let property_value_start = self.pos;
                         let property_value = self.scan_word_characters();
                         if self.pos == property_value_start {
-                            self.error_at(&diagnostics::Expected_a_Unicode_property_value, self.pos, 0, &[]);
-                        } else if let Some(property_name) = property_name
-                            && let Some(values) =
-                                values_of_non_binary_unicode_property(property_name)
-                            && values.binary_search(&property_value).is_err()
-                        {
-                            self.error_at(&diagnostics::Unknown_Unicode_property_value, property_value_start, self.pos - property_value_start, &[]);
+                            self.error_at(
+                                &diagnostics::Expected_a_Unicode_property_value,
+                                self.pos,
+                                0,
+                                &[],
+                            );
+                        } else if let Some(property_name) = property_name.filter(|pn| {
+                            values_of_non_binary_unicode_property(pn).is_some_and(|values| {
+                                values.binary_search(&property_value).is_err()
+                            })
+                        }) {
+                            self.error_at(
+                                &diagnostics::Unknown_Unicode_property_value,
+                                property_value_start,
+                                self.pos - property_value_start,
+                                &[],
+                            );
                             if let Some(suggestion) = self
-                                .get_spelling_suggestion_for_unicode_property_value(property_name, property_value)
+                                .get_spelling_suggestion_for_unicode_property_value(
+                                    property_name,
+                                    property_value,
+                                )
                             {
-                                self.error_at(&diagnostics::Did_you_mean_0, property_value_start, self.pos - property_value_start, &[suggestion.to_string()]);
+                                self.error_at(
+                                    &diagnostics::Did_you_mean_0,
+                                    property_value_start,
+                                    self.pos - property_value_start,
+                                    std::slice::from_ref(&suggestion),
+                                );
                             }
                         }
                     } else {
                         if self.pos == property_name_or_value_start {
-                            self.error_at(&diagnostics::Expected_a_Unicode_property_name_or_value, self.pos, 0, &[]);
+                            self.error_at(
+                                &diagnostics::Expected_a_Unicode_property_name_or_value,
+                                self.pos,
+                                0,
+                                &[],
+                            );
                         } else if is_binary_unicode_property_of_strings(property_name_or_value) {
                             if !self.unicode_sets_mode {
                                 self.error_at(&diagnostics::Any_Unicode_property_that_would_possibly_match_more_than_a_single_character_is_only_available_when_the_Unicode_Sets_v_flag_is_set, property_name_or_value_start, self.pos - property_name_or_value_start, &[]);
@@ -1313,11 +1458,23 @@ impl<'a> RegExpParser<'a> {
                         } else if !is_general_category_value(property_name_or_value)
                             && !is_binary_unicode_property(property_name_or_value)
                         {
-                            self.error_at(&diagnostics::Unknown_Unicode_property_name_or_value, property_name_or_value_start, self.pos - property_name_or_value_start, &[]);
+                            self.error_at(
+                                &diagnostics::Unknown_Unicode_property_name_or_value,
+                                property_name_or_value_start,
+                                self.pos - property_name_or_value_start,
+                                &[],
+                            );
                             if let Some(suggestion) = self
-                                .get_spelling_suggestion_for_unicode_property_name_or_value(property_name_or_value)
+                                .get_spelling_suggestion_for_unicode_property_name_or_value(
+                                    property_name_or_value,
+                                )
                             {
-                                self.error_at(&diagnostics::Did_you_mean_0, property_name_or_value_start, self.pos - property_name_or_value_start, &[suggestion.to_string()]);
+                                self.error_at(
+                                    &diagnostics::Did_you_mean_0,
+                                    property_name_or_value_start,
+                                    self.pos - property_name_or_value_start,
+                                    std::slice::from_ref(&suggestion),
+                                );
                             }
                         }
                     }
@@ -1340,15 +1497,9 @@ impl<'a> RegExpParser<'a> {
     /// `func (p *regExpParser) getSpellingSuggestionForUnicodePropertyName`
     // PORT: Go returns `string`; an owned `String` avoids coupling the
     // suggestion's lifetime to the `name` parameter.
-    fn get_spelling_suggestion_for_unicode_property_name(
-        &self,
-        name: &str,
-    ) -> Option<String> {
-        get_spelling_suggestion_for_strings(
-            name,
-            NON_BINARY_UNICODE_PROPERTY_NAMES.iter().copied(),
-        )
-        .map(str::to_string)
+    fn get_spelling_suggestion_for_unicode_property_name(&self, name: &str) -> Option<String> {
+        get_spelling_suggestion_for_strings(name, NON_BINARY_UNICODE_PROPERTY_NAMES.iter().copied())
+            .map(str::to_string)
     }
 
     /// `func (p *regExpParser) getSpellingSuggestionForUnicodePropertyValue`
@@ -1358,8 +1509,7 @@ impl<'a> RegExpParser<'a> {
         value: &str,
     ) -> Option<String> {
         let values = values_of_non_binary_unicode_property(property_name)?;
-        get_spelling_suggestion_for_strings(value, values.iter().copied())
-            .map(str::to_string)
+        get_spelling_suggestion_for_strings(value, values.iter().copied()).map(str::to_string)
     }
 
     /// `func (p *regExpParser) getSpellingSuggestionForUnicodePropertyNameOrValue`
@@ -1375,7 +1525,11 @@ impl<'a> RegExpParser<'a> {
             crate::unicodeproperties::GENERAL_CATEGORY_VALUES
                 .iter()
                 .copied()
-                .chain(crate::unicodeproperties::BINARY_UNICODE_PROPERTIES.iter().copied())
+                .chain(
+                    crate::unicodeproperties::BINARY_UNICODE_PROPERTIES
+                        .iter()
+                        .copied(),
+                )
                 .chain(
                     crate::unicodeproperties::BINARY_UNICODE_PROPERTIES_OF_STRINGS
                         .iter()
@@ -1396,8 +1550,7 @@ impl<'a> RegExpParser<'a> {
             self.inc_pos(1);
         }
         // Word characters are ASCII, so the slice is always valid UTF-8.
-        std::str::from_utf8(&self.text()[start..self.pos])
-            .expect("word characters are ASCII")
+        std::str::from_utf8(&self.text()[start..self.pos]).expect("word characters are ASCII")
     }
 
     /// `func (p *regExpParser) scanSourceCharacter`
@@ -1453,7 +1606,12 @@ impl<'a> RegExpParser<'a> {
         if self.byte() == Some(ch) {
             self.inc_pos(1);
         } else {
-            self.error_at(&diagnostics::X_0_expected, self.pos, 0, &[char::from(ch).to_string()]);
+            self.error_at(
+                &diagnostics::X_0_expected,
+                self.pos,
+                0,
+                &[char::from(ch).to_string()],
+            );
         }
     }
 
@@ -1478,7 +1636,12 @@ impl<'a> RegExpParser<'a> {
             let reference = &self.group_name_references[i];
             let (pos, end, name) = (reference.pos, reference.end, reference.name.clone());
             if !self.group_specifiers.has(&name) {
-                self.error_at(&diagnostics::There_is_no_capturing_group_named_0_in_this_regular_expression, pos, end - pos, &[String::from_utf8_lossy(&name).into_owned()]);
+                self.error_at(
+                    &diagnostics::There_is_no_capturing_group_named_0_in_this_regular_expression,
+                    pos,
+                    end - pos,
+                    &[String::from_utf8_lossy(&name).into_owned()],
+                );
                 if !self.group_specifiers.is_empty() {
                     // PORT: Go's `maps.Keys(p.groupSpecifiers)` for the
                     // suggestion candidates; group names may contain CESU-8
@@ -1490,9 +1653,6 @@ impl<'a> RegExpParser<'a> {
                         .iter()
                         .map(|k| String::from_utf8_lossy(k).into_owned())
                         .collect();
-                    #[cfg(test)]
-                    eprintln!("DEBUG sugg name={name:?} candidates={candidates:?} result={:?}",
-                        get_spelling_suggestion_for_strings(&name, candidates.iter().map(String::as_str)));
                     if let Some(suggestion) = get_spelling_suggestion_for_strings(
                         &name,
                         candidates.iter().map(String::as_str),
@@ -1547,13 +1707,24 @@ pub(crate) fn scan_regular_expression_flags(
         if should_report_errors {
             match char_code_to_reg_exp_flag(ch) {
                 None => {
-                    on_error(&diagnostics::Unknown_regular_expression_flag, pos, size, &[]);
+                    on_error(
+                        &diagnostics::Unknown_regular_expression_flag,
+                        pos,
+                        size,
+                        &[],
+                    );
                 }
                 Some(flag) if reg_exp_flags.intersects(flag) => {
-                    on_error(&diagnostics::Duplicate_regular_expression_flag, pos, size, &[]);
+                    on_error(
+                        &diagnostics::Duplicate_regular_expression_flag,
+                        pos,
+                        size,
+                        &[],
+                    );
                 }
                 Some(flag)
-                    if (reg_exp_flags | flag).contains(RegularExpressionFlags::ANY_UNICODE_MODE) =>
+                    if (reg_exp_flags | flag)
+                        .contains(RegularExpressionFlags::ANY_UNICODE_MODE) =>
                 {
                     on_error(&diagnostics::The_Unicode_u_flag_and_the_Unicode_Sets_v_flag_cannot_be_set_simultaneously, pos, size, &[]);
                 }
@@ -1583,6 +1754,7 @@ pub(crate) fn scan_regular_expression_flags(
 /// `type identifierVariant int32`
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub(crate) enum IdentifierVariant {
+    #[allow(dead_code)] // used by scanner.rs's identifier paths, not regexp.go
     Standard,
     Jsx,
     RegExpGroupName,
@@ -1592,8 +1764,7 @@ pub(crate) enum IdentifierVariant {
 pub(crate) type EscapeSequenceScanningFlags = u32;
 
 pub(crate) const ESCAPE_SEQUENCE_SCANNING_FLAGS_STRING: EscapeSequenceScanningFlags = 1 << 0;
-pub(crate) const ESCAPE_SEQUENCE_SCANNING_FLAGS_REPORT_ERRORS: EscapeSequenceScanningFlags =
-    1 << 1;
+pub(crate) const ESCAPE_SEQUENCE_SCANNING_FLAGS_REPORT_ERRORS: EscapeSequenceScanningFlags = 1 << 1;
 pub(crate) const ESCAPE_SEQUENCE_SCANNING_FLAGS_REGULAR_EXPRESSION: EscapeSequenceScanningFlags =
     1 << 2;
 pub(crate) const ESCAPE_SEQUENCE_SCANNING_FLAGS_ANNEX_B: EscapeSequenceScanningFlags = 1 << 3;
@@ -1620,9 +1791,7 @@ impl RegExpParser<'_> {
             && (is_ascii_letter(ch) || ch == i32::from(b'_') || ch == i32::from(b'$'))
         {
             self.pos += 1;
-            self.scan_ascii_while(|b| {
-                b.is_ascii_alphanumeric() || b == b'_' || b == b'$'
-            });
+            self.scan_ascii_while(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'$');
             let ch = self.char();
             if ch < RUNE_SELF && ch != i32::from(b'\\') {
                 self.token_value = self.text()[start..self.pos].to_vec();
@@ -1652,12 +1821,18 @@ impl RegExpParser<'_> {
             }
             return true;
         }
-        if ch == i32::from(b'\\')
-            && let Some(escaped) = self.scan_identifier_escape(
+        // PORT: `if ch == '\\' && let Some(escaped) = ...` can't be written as
+        // a let-chain before Rust 1.88 (workspace MSRV is 1.85), so the escape
+        // is bound first.
+        let escaped = if ch == i32::from(b'\\') {
+            self.scan_identifier_escape(
                 is_identifier_start,
                 variant == IdentifierVariant::RegExpGroupName,
             )
-        {
+        } else {
+            None
+        };
+        if let Some(escaped) = escaped {
             self.token_value = self.text()[start..identifier_start].to_vec();
             self.token_value
                 .extend_from_slice(&stringutil::encode_js_string_rune(escaped));
@@ -1725,12 +1900,15 @@ impl RegExpParser<'_> {
             self.scan_unicode_escape(false);
             // scanLowSurrogateEscape also accepts the braced form used in string literals,
             // but RegExpIdentifierName does not allow it.
-            if self.char_at_offset(2) != i32::from(b'{') {
-                if let Some(code_point) = self.scan_low_surrogate_escape(escaped) {
-                    if is_valid(code_point) {
-                        return Some(code_point);
-                    }
-                }
+            // PORT: `if ... { if let Some(cp) = ... { if is_valid(cp) { ... } } }`
+            // flattened via filter() since let-chains need Rust 1.88+.
+            let code_point = if self.char_at_offset(2) != i32::from(b'{') {
+                self.scan_low_surrogate_escape(escaped)
+            } else {
+                None
+            };
+            if let Some(code_point) = code_point.filter(|&cp| is_valid(cp)) {
+                return Some(code_point);
             }
             self.pos = saved_pos;
             self.token_flags = saved_token_flags;
@@ -1777,7 +1955,12 @@ impl RegExpParser<'_> {
                     {
                         self.error_at(&diagnostics::Octal_escape_sequences_and_backreferences_are_not_allowed_in_a_character_class_If_this_was_intended_as_an_escape_sequence_use_the_syntax_0_instead, start, self.pos - start, &[format!("\\x{code:02x}")]);
                     } else {
-                        self.error_at(&diagnostics::Octal_escape_sequences_are_not_allowed_Use_the_syntax_0, start, self.pos - start, &[format!("\\x{code:02x}")]);
+                        self.error_at(
+                            &diagnostics::Octal_escape_sequences_are_not_allowed_Use_the_syntax_0,
+                            start,
+                            self.pos - start,
+                            &[format!("\\x{code:02x}")],
+                        );
                     }
                     return stringutil::encode_js_string_rune(code as i32);
                 }
@@ -1792,7 +1975,12 @@ impl RegExpParser<'_> {
                     {
                         self.error_at(&diagnostics::Decimal_escape_sequences_and_backreferences_are_not_allowed_in_a_character_class, start, self.pos - start, &[]);
                     } else {
-                        self.error_at(&diagnostics::Escape_sequence_0_is_not_allowed, start, self.pos - start, &[String::from_utf8_lossy(&self.text()[start..self.pos]).into_owned()]);
+                        self.error_at(
+                            &diagnostics::Escape_sequence_0_is_not_allowed,
+                            start,
+                            self.pos - start,
+                            &[String::from_utf8_lossy(&self.text()[start..self.pos]).into_owned()],
+                        );
                     }
                     return stringutil::encode_js_string_rune(ch);
                 }
@@ -1814,12 +2002,9 @@ impl RegExpParser<'_> {
                     (flags & ESCAPE_SEQUENCE_SCANNING_FLAGS_REPORT_INVALID_ESCAPE_ERRORS) != 0,
                 );
                 if extended {
-                    if (flags & ESCAPE_SEQUENCE_SCANNING_FLAGS_ALLOW_EXTENDED_UNICODE_ESCAPE)
-                        == 0
-                    {
+                    if (flags & ESCAPE_SEQUENCE_SCANNING_FLAGS_ALLOW_EXTENDED_UNICODE_ESCAPE) == 0 {
                         self.token_flags |= TokenFlags::CONTAINS_INVALID_ESCAPE;
-                        if (flags
-                            & ESCAPE_SEQUENCE_SCANNING_FLAGS_REPORT_INVALID_ESCAPE_ERRORS)
+                        if (flags & ESCAPE_SEQUENCE_SCANNING_FLAGS_REPORT_INVALID_ESCAPE_ERRORS)
                             != 0
                         {
                             self.error_at(&diagnostics::Unicode_escape_sequences_are_only_available_when_the_Unicode_u_flag_or_the_Unicode_Sets_v_flag_is_set, start, self.pos - start, &[]);
@@ -1831,12 +2016,18 @@ impl RegExpParser<'_> {
                     // In string literals, a high surrogate \u{...} followed by a low
                     // surrogate escape forms a single code point, exactly as adjacent
                     // UTF-16 code units would in a JavaScript string.
-                    if (flags & ESCAPE_SEQUENCE_SCANNING_FLAGS_REGULAR_EXPRESSION) == 0
+                    // PORT: `if flags&RE == 0 && isHighSurrogate { if let Some(c) = ... }`
+                    // flattened since let-chains need Rust 1.88+.
+                    let combined = if (flags & ESCAPE_SEQUENCE_SCANNING_FLAGS_REGULAR_EXPRESSION)
+                        == 0
                         && stringutil::is_high_surrogate(code_point)
                     {
-                        if let Some(combined) = self.scan_low_surrogate_escape(code_point) {
-                            return stringutil::encode_js_string_rune(combined);
-                        }
+                        self.scan_low_surrogate_escape(code_point)
+                    } else {
+                        None
+                    };
+                    if let Some(combined) = combined {
+                        return stringutil::encode_js_string_rune(combined);
                     }
                     return stringutil::encode_js_string_rune(code_point);
                 }
@@ -1865,7 +2056,10 @@ impl RegExpParser<'_> {
                         );
                         if stringutil::is_low_surrogate(next_code_point) {
                             return stringutil::encode_js_string_rune(
-                                stringutil::surrogate_pair_to_code_point(code_point, next_code_point),
+                                stringutil::surrogate_pair_to_code_point(
+                                    code_point,
+                                    next_code_point,
+                                ),
                             );
                         }
                         self.pos = saved_pos;
@@ -1925,7 +2119,12 @@ impl RegExpParser<'_> {
                         && (flags & ESCAPE_SEQUENCE_SCANNING_FLAGS_ANNEX_B) == 0
                         && is_identifier_part(ch))
                 {
-                    self.error_at(&diagnostics::This_character_cannot_be_escaped_in_a_regular_expression, start, self.pos - start, &[]);
+                    self.error_at(
+                        &diagnostics::This_character_cannot_be_escaped_in_a_regular_expression,
+                        start,
+                        self.pos - start,
+                        &[],
+                    );
                 }
                 stringutil::encode_js_string_rune(ch)
             }
@@ -1937,14 +2136,13 @@ impl RegExpParser<'_> {
         self.pos += 2;
         let start = self.pos;
         let extended = self.byte() == Some(b'{');
-        let hex_digits;
-        if extended {
+        let hex_digits = if extended {
             self.pos += 1;
-            hex_digits = self.scan_hex_digits(1, true, false);
+            self.scan_hex_digits(1, true, false)
         } else {
             self.token_flags |= TokenFlags::UNICODE_ESCAPE;
-            hex_digits = self.scan_hex_digits(4, false, false);
-        }
+            self.scan_hex_digits(4, false, false)
+        };
         if hex_digits.is_empty() {
             self.token_flags |= TokenFlags::CONTAINS_INVALID_ESCAPE;
             if should_emit_invalid_escape_error {
@@ -1954,11 +2152,8 @@ impl RegExpParser<'_> {
         }
         // Go: `strconv.ParseInt(hexDigits, 16, 32)` — the error is ignored;
         // on overflow ParseInt yields the clamped max.
-        let hex_value = i64::from_str_radix(
-            std::str::from_utf8(&hex_digits).unwrap_or(""),
-            16,
-        )
-        .unwrap_or(i64::MAX);
+        let hex_value = i64::from_str_radix(std::str::from_utf8(&hex_digits).unwrap_or(""), 16)
+            .unwrap_or(i64::MAX);
         if extended {
             let mut is_invalid_extended_escape = false;
             if hex_value > 0x10FFFF {
@@ -2052,9 +2247,19 @@ impl RegExpParser<'_> {
                     allow_separator = false;
                     is_previous_token_separator = true;
                 } else if is_previous_token_separator {
-                    self.error_at(&diagnostics::Multiple_consecutive_numeric_separators_are_not_permitted, self.pos, 1, &[]);
+                    self.error_at(
+                        &diagnostics::Multiple_consecutive_numeric_separators_are_not_permitted,
+                        self.pos,
+                        1,
+                        &[],
+                    );
                 } else {
-                    self.error_at(&diagnostics::Numeric_separators_are_not_allowed_here, self.pos, 1, &[]);
+                    self.error_at(
+                        &diagnostics::Numeric_separators_are_not_allowed_here,
+                        self.pos,
+                        1,
+                        &[],
+                    );
                 }
             } else {
                 break;
@@ -2062,7 +2267,12 @@ impl RegExpParser<'_> {
             self.pos += 1;
         }
         if is_previous_token_separator {
-            self.error_at(&diagnostics::Numeric_separators_are_not_allowed_here, self.pos - 1, 1, &[]);
+            self.error_at(
+                &diagnostics::Numeric_separators_are_not_allowed_here,
+                self.pos - 1,
+                1,
+                &[],
+            );
         }
         if digit_count < min_count {
             return Vec::new();
@@ -2127,7 +2337,10 @@ fn is_octal_digit(ch: i32) -> bool {
 
 /// `stringutil.IsHexDigit` on a Go rune.
 fn is_hex_digit(ch: i32) -> bool {
-    matches!(u8::try_from(ch), Ok(b'0'..=b'9' | b'a'..=b'f' | b'A'..=b'F'))
+    matches!(
+        u8::try_from(ch),
+        Ok(b'0'..=b'9' | b'a'..=b'f' | b'A'..=b'F')
+    )
 }
 
 const RUNE_ERROR: i32 = 0xFFFD; // utf8.RuneError — U+FFFD
@@ -2148,9 +2361,7 @@ fn utf16_rune_len(ch: i32) -> i32 {
 /// Go `string(ch)` where a rune becomes a diagnostic arg — the UTF-8 encoding
 /// of the code point; invalid runes give U+FFFD like Go.
 fn rune_to_string(ch: i32) -> String {
-    char::from_u32(ch as u32)
-        .unwrap_or('\u{FFFD}')
-        .to_string()
+    char::from_u32(ch as u32).unwrap_or('\u{FFFD}').to_string()
 }
 
 /// PORT: mirrors Go's utf8.DecodeRuneInString (RFC 3629-strict decoding):
