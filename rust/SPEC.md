@@ -736,9 +736,10 @@ get listed in `rust/ACCEPTED-DELTAS.txt` with reason (mirrors Go's
 
 ## 10. Git & workflow protocol
 
-- **Branch:** work on `main` (local-only repo state; `origin` is upstream
-  microsoft/TypeScript — **never push**, never open PRs upstream; per
-  CONTRIBUTING.md this repo forbids bulk agent PRs — our work stays local).
+- **Branch:** work on `rust-port`. `main` is kept as a clean mirror of
+  `origin/main` (upstream microsoft/TypeScript — **never push**, never open
+  PRs upstream; per CONTRIBUTING.md this repo forbids bulk agent PRs — our
+  work stays local). All port commits land on `rust-port`.
 - **Checkpoint commits every 15 minutes.** A background loop commits all
   changes every 900 s when the tree is dirty:
   `wip(auto): checkpoint <HH:MM> — <files changed>`. These are safety
