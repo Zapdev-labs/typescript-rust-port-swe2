@@ -17,28 +17,26 @@
 // issued inside a single scan.
 
 use std::cell::RefCell;
-use std::fmt;
 use std::rc::Rc;
 use std::sync::atomic::{AtomicU32, Ordering};
 
 use rustc_hash::FxHashMap;
 use tsc_ast::ast_generated::*;
 use tsc_ast::diagnostic::{DiagnosticRef, lock_diagnostic, new_diagnostic};
+use tsc_ast::parseoptions::SourceFileParseOptions;
 use tsc_ast::precedence::{OperatorPrecedence, get_binary_operator_precedence};
 use tsc_ast::utilities::*;
-use tsc_ast::diagnostic::DiagnosticFile;
-use tsc_ast::parseoptions::SourceFileParseOptions;
 use tsc_ast::{
-    CommentRange, Kind, ModifierFlags, ModifierList, Node, NodeFactory, NodeId, NodeList,
-    NodeFlags, TokenFlags,
+    CommentRange, Kind, ModifierFlags, ModifierList, Node, NodeFactory, NodeFlags, NodeId,
+    NodeList, TokenFlags,
 };
 use tsc_collections::Set;
-use tsc_core::languagevariant::LanguageVariant;
-use tsc_core::options_generated::{ModuleKind, ScriptTarget};
-use tsc_core::scriptkind::ScriptKind;
-use tsc_core::text::{TextPos, TextRange};
-use tsc_core::tristate::{TS_FALSE, TS_TRUE, TS_UNKNOWN, Tristate};
 use tsc_core::core::{self as core};
+use tsc_core::languagevariant::LanguageVariant;
+use tsc_core::options_generated::ModuleKind;
+use tsc_core::scriptkind::ScriptKind;
+use tsc_core::text::TextRange;
+use tsc_core::tristate::{TS_FALSE, TS_TRUE, TS_UNKNOWN, Tristate};
 use tsc_diagnostics::{self as diagnostics, Message};
 use tsc_scanner::scanner::{self as scanner, Scanner, ScannerState};
 use tsc_scanner::utilities as scanner_utils;
@@ -55,7 +53,7 @@ use crate::utilities::{
 pub type ParsingContext = u8;
 
 #[allow(dead_code)]
-mod parsing_context {
+pub(crate) mod parsing_context {
     /// Elements in source file
     pub const PC_SOURCE_ELEMENTS: super::ParsingContext = 0;
     /// Statements in block
@@ -267,7 +265,8 @@ impl<'a> Parser<'a> {
         // `p.scanner.Reset()` — `set_text` below resets the scanned state;
         // caches are kept.
         self.scanner.reset();
-        self.factory.set_file_index(NEXT_FILE_INDEX.fetch_add(1, Ordering::Relaxed));
+        self.factory
+            .set_file_index(NEXT_FILE_INDEX.fetch_add(1, Ordering::Relaxed));
         self.opts = opts;
         self.source_text = source_text;
         self.script_kind = script_kind;
@@ -313,6 +312,7 @@ impl<'a> Parser<'a> {
     ///
     /// PORT: in Go this is the scanner's `onError` callback; in Rust the
     /// callback only buffers (see [`Parser::drain_scanner_errors`]).
+    #[allow(dead_code)]
     fn scan_error(&mut self, message: &'static Message, pos: i32, length: i32, args: &[String]) {
         self.parse_error_at_range(TextRange::new(pos, pos + length), message, args);
     }
@@ -335,7 +335,8 @@ impl<'a> Parser<'a> {
         message: &'static Message,
         args: &[String],
     ) -> Option<DiagnosticRef> {
-        self.parse_error_at_range(self.scanner.token_range(), message, args)
+        let __h0 = self.scanner.token_range();
+        self.parse_error_at_range(__h0, message, args)
     }
 
     /// `func (p *Parser) parseErrorAtRange(loc, message, args...)`
@@ -462,7 +463,8 @@ impl<'a> Parser<'a> {
 
     /// `func (p *Parser) finishNode(node *ast.Node, pos int) *ast.Node`
     pub fn finish_node(&mut self, node: NodeId, pos: i32) -> NodeId {
-        self.finish_node_with_end(node, pos, self.node_pos())
+        let __h1 = self.node_pos();
+        self.finish_node_with_end(node, pos, __h1)
     }
 
     /// `func (p *Parser) finishNodeWithEnd(node, pos, end)` — sets `loc`,
@@ -483,7 +485,7 @@ impl<'a> Parser<'a> {
     ///
     /// PORT: `p.currentParent`/`p.setParentFromContext` become a local
     /// child-id sweep — the visitor only carries `NodeId`s.
-    fn override_parent_in_immediate_children(&mut self, node: NodeId) {
+    pub(crate) fn override_parent_in_immediate_children(&mut self, node: NodeId) {
         let mut children = std::mem::take(&mut self.parent_scratch);
         {
             let children_ref = &mut children;
@@ -566,11 +568,12 @@ impl<'a> Parser<'a> {
     /// `func (p *Parser) parseJSONText() *ast.SourceFile`
     fn parse_json_text(&mut self) -> NodeId {
         let pos = self.node_pos();
-        let mut statements: NodeList;
+        let statements: NodeList;
         let eof: NodeId;
 
         if self.token == Kind::EndOfFile {
-            statements = self.new_node_list(TextRange::new(pos, self.node_pos()), Vec::new());
+            let __h2 = TextRange::new(pos, self.node_pos());
+            statements = self.new_node_list(__h2, Vec::new());
             eof = self.parse_token_node();
         } else {
             let mut expressions: Option<JsonExpressions> = None;
@@ -617,10 +620,7 @@ impl<'a> Parser<'a> {
                     }
                     None => {
                         if self.token != Kind::EndOfFile {
-                            self.parse_error_at_current_token(
-                                &diagnostics::Unexpected_token,
-                                &[],
-                            );
+                            self.parse_error_at_current_token(&diagnostics::Unexpected_token, &[]);
                         }
                         JsonExpressions::Single(expression)
                     }
@@ -629,7 +629,8 @@ impl<'a> Parser<'a> {
 
             let expression: NodeId = match expressions {
                 Some(JsonExpressions::Multiple(es)) => {
-                    let list = self.new_node_list(TextRange::new(pos, self.node_pos()), es);
+                    let __h3 = TextRange::new(pos, self.node_pos());
+                    let list = self.new_node_list(__h3, es);
                     let array = self.factory.new_array_literal_expression(
                         &mut self.nodes,
                         Some(list),
@@ -640,17 +641,19 @@ impl<'a> Parser<'a> {
                 Some(JsonExpressions::Single(e)) => e,
                 None => unreachable!(),
             };
-            let statement =
-                self.factory.new_expression_statement(&mut self.nodes, Some(expression));
+            let statement = self
+                .factory
+                .new_expression_statement(&mut self.nodes, Some(expression));
             let statement = self.finish_node(statement, pos);
-            let statement_list =
-                self.new_node_list(TextRange::new(pos, self.node_pos()), vec![statement]);
+            let __h4 = TextRange::new(pos, self.node_pos());
+            let statement_list = self.new_node_list(__h4, vec![statement]);
             statements = statement_list;
             eof = self.parse_expected_token(Kind::EndOfFile);
         }
+        let __h5 = &self.opts.clone();
         let sf = self.factory.new_source_file(
             &mut self.nodes,
-            &self.opts.clone(),
+            __h5,
             self.source_text,
             Some(statements),
             Some(eof),
@@ -662,7 +665,12 @@ impl<'a> Parser<'a> {
             .as_ref()
             .is_none_or(|s| s.nodes.is_empty())
         {
-            let first = self.nodes[node].as_source_file().statements.as_ref().unwrap().nodes[0];
+            let first = self.nodes[node]
+                .as_source_file()
+                .statements
+                .as_ref()
+                .unwrap()
+                .nodes[0];
             let expr = self.nodes[first].expression().unwrap();
             self.validate_json_value(node, Some(expr));
         }
@@ -683,10 +691,8 @@ impl<'a> Parser<'a> {
                 if !is_double_quoted_string(&self.nodes[value_expression]) {
                     let span =
                         get_error_span_for_node(self.source_text, value_expression, &self.nodes);
-                    let file = tsc_ast::diagnostic::DiagnosticFile::from_node(
-                        source_file,
-                        &self.nodes,
-                    );
+                    let file =
+                        tsc_ast::diagnostic::DiagnosticFile::from_node(source_file, &self.nodes);
                     self.diagnostics.push(new_diagnostic(
                         Some(file),
                         span,
@@ -744,8 +750,7 @@ impl<'a> Parser<'a> {
         for element in properties {
             if self.nodes[element].kind != Kind::PropertyAssignment {
                 let span = get_error_span_for_node(self.source_text, element, &self.nodes);
-                let file =
-                    tsc_ast::diagnostic::DiagnosticFile::from_node(source_file, &self.nodes);
+                let file = tsc_ast::diagnostic::DiagnosticFile::from_node(source_file, &self.nodes);
                 self.diagnostics.push(new_diagnostic(
                     Some(file),
                     span,
@@ -758,8 +763,7 @@ impl<'a> Parser<'a> {
                 && !is_double_quoted_string(&self.nodes[name])
             {
                 let span = get_error_span_for_node(self.source_text, name, &self.nodes);
-                let file =
-                    tsc_ast::diagnostic::DiagnosticFile::from_node(source_file, &self.nodes);
+                let file = tsc_ast::diagnostic::DiagnosticFile::from_node(source_file, &self.nodes);
                 self.diagnostics.push(new_diagnostic(
                     Some(file),
                     span,
@@ -792,9 +796,10 @@ impl<'a> Parser<'a> {
             statements.extend(std::mem::take(&mut self.reparse_list));
         }
         let statements_list = self.new_node_list(TextRange::new(pos, end), statements);
+        let __h6 = &self.opts.clone();
         let sf = self.factory.new_source_file(
             &mut self.nodes,
-            &self.opts.clone(),
+            __h6,
             self.source_text,
             Some(statements_list),
             Some(eof),
@@ -820,22 +825,25 @@ impl<'a> Parser<'a> {
         if is_in_js_file(Some(node), &self.nodes) {
             let diags = std::mem::take(&mut self.js_diagnostics);
             let diags = attach_file_to_diagnostics(diags, result, &self.nodes);
-            self.nodes[result].as_source_file_mut().set_js_diagnostics(diags);
+            self.nodes[result]
+                .as_source_file_mut()
+                .set_js_diagnostics(diags);
         }
         result
     }
 
     /// `func (p *Parser) finishSourceFile(result *ast.SourceFile, isDeclarationFile bool)`
     fn finish_source_file(&mut self, result: NodeId, is_declaration_file: bool) {
-        self.nodes[result]
-            .as_source_file_mut()
-            .comment_directives = self.scanner.comment_directives().to_vec().into();
+        self.nodes[result].as_source_file_mut().comment_directives =
+            self.scanner.comment_directives().to_vec().into();
         let pragmas = get_comment_pragmas(&mut self.factory, self.source_text);
         self.nodes[result].as_source_file_mut().pragmas = pragmas.into();
         self.process_pragmas_into_fields(result);
         let diags = std::mem::take(&mut self.diagnostics);
         let diags = attach_file_to_diagnostics(diags, result, &self.nodes);
-        self.nodes[result].as_source_file_mut().set_diagnostics(diags);
+        self.nodes[result]
+            .as_source_file_mut()
+            .set_diagnostics(diags);
         let jsdoc_diags = std::mem::take(&mut self.jsdoc_diagnostics);
         let jsdoc_diags = attach_file_to_diagnostics(jsdoc_diags, result, &self.nodes);
         self.nodes[result]
@@ -847,11 +855,11 @@ impl<'a> Parser<'a> {
         self.nodes[result].flags |= self.source_flags;
         self.nodes[result].as_source_file_mut().node_count = self.factory.node_count() as i32;
         self.nodes[result].as_source_file_mut().text_count = self.factory.text_count() as i32;
+        self.nodes[result].as_source_file_mut().identifier_count = self.identifier_count;
+        let cache = self.create_jsdoc_cache();
         self.nodes[result]
             .as_source_file_mut()
-            .identifier_count = self.identifier_count;
-        let cache = self.create_jsdoc_cache();
-        self.nodes[result].as_source_file_mut().set_jsdoc_cache(cache);
+            .set_jsdoc_cache(cache);
         // For non-JS files, enable lazy JSDoc parsing on demand
         if !self.is_java_script() {
             self.nodes[result]
@@ -862,9 +870,8 @@ impl<'a> Parser<'a> {
         let nodes = &self.nodes;
         self.reparsed_clones
             .sort_by(|&a, &b| compare_node_positions(&nodes[a], &nodes[b]).cmp(&0));
-        self.nodes[result]
-            .as_source_file_mut()
-            .reparsed_clones = std::mem::take(&mut self.reparsed_clones).into();
+        self.nodes[result].as_source_file_mut().reparsed_clones =
+            std::mem::take(&mut self.reparsed_clones).into();
         let opts = self.opts.external_module_indicator_options;
         tsc_ast::parseoptions::set_external_module_indicator(result, opts, &mut self.nodes);
     }
@@ -874,10 +881,8 @@ impl<'a> Parser<'a> {
         if self.jsdoc_infos.is_empty() {
             return FxHashMap::default();
         }
-        let mut result = FxHashMap::with_capacity_and_hasher(
-            self.jsdoc_infos.len(),
-            rustc_hash::FxBuildHasher,
-        );
+        let mut result =
+            FxHashMap::with_capacity_and_hasher(self.jsdoc_infos.len(), rustc_hash::FxBuildHasher);
         for info in &self.jsdoc_infos {
             result.insert(info.parent.unwrap(), info.js_docs.clone());
         }
@@ -931,7 +936,8 @@ impl<'a> Parser<'a> {
             // append all non-await statements between afterAwaitStatement and nextAwaitStatement
             let prev_statement = sf_statements[after_await_statement];
             let next_statement = sf_statements[next_await_statement];
-            statements.extend_from_slice(&sf_statements[after_await_statement..next_await_statement]);
+            statements
+                .extend_from_slice(&sf_statements[after_await_statement..next_await_statement]);
 
             // append all diagnostics associated with the copied range
             let prev_pos = self.nodes[prev_statement].pos();
@@ -1013,14 +1019,18 @@ impl<'a> Parser<'a> {
             }
         }
 
-        let opts = self.nodes[source_file].as_source_file().parse_options.clone();
+        let opts = self.nodes[source_file]
+            .as_source_file()
+            .parse_options
+            .clone();
         let statements_loc = self.nodes[source_file]
             .as_source_file()
             .statements
             .as_ref()
             .map(|s| s.loc);
         let eof = self.nodes[source_file].as_source_file().end_of_file_token;
-        let statements_list = self.new_node_list(statements_loc.unwrap_or_default(), statements.clone());
+        let statements_list =
+            self.new_node_list(statements_loc.unwrap_or_default(), statements.clone());
         let result = self.factory.new_source_file(
             &mut self.nodes,
             &opts,
@@ -1084,7 +1094,8 @@ impl<'a> Parser<'a> {
     ) -> NodeList {
         let pos = self.node_pos();
         let nodes = self.parse_list_index(kind, |p, _| parse_element(p));
-        self.new_node_list(TextRange::new(pos, self.node_pos()), nodes)
+        let __h7 = TextRange::new(pos, self.node_pos());
+        self.new_node_list(__h7, nodes)
     }
 
     /// `func (p *Parser) parseDelimitedList(kind, parseElement, expectSemi)` —
@@ -1155,7 +1166,8 @@ impl<'a> Parser<'a> {
             }
         }
         self.parsing_contexts = save_parsing_contexts;
-        Some(self.new_node_list(TextRange::new(pos, self.node_pos()), list))
+        let __h8 = TextRange::new(pos, self.node_pos());
+        Some(self.new_node_list(__h8, list))
     }
 
     /// `func (p *Parser) parseBracketedList(kind, parseElement, opening, closing)` —
@@ -1226,10 +1238,7 @@ impl<'a> Parser<'a> {
                 );
             }
             PC_SWITCH_CLAUSES => {
-                self.parse_error_at_current_token(
-                    &diagnostics::X_case_or_default_expected,
-                    &[],
-                );
+                self.parse_error_at_current_token(&diagnostics::X_case_or_default_expected, &[]);
             }
             PC_SWITCH_CLAUSE_STATEMENTS => {
                 self.parse_error_at_current_token(&diagnostics::Statement_expected, &[]);
@@ -1254,9 +1263,10 @@ impl<'a> Parser<'a> {
             }
             PC_VARIABLE_DECLARATIONS => {
                 if is_keyword(self.token) {
+                    let __h9 = &[scanner::token_to_string(self.token).to_string()];
                     self.parse_error_at_current_token(
                         &diagnostics::X_0_is_not_allowed_as_a_variable_declaration_name,
-                        &[scanner::token_to_string(self.token).to_string()],
+                        __h9,
                     );
                 } else {
                     self.parse_error_at_current_token(
@@ -1278,22 +1288,13 @@ impl<'a> Parser<'a> {
                 );
             }
             PC_ARGUMENT_EXPRESSIONS => {
-                self.parse_error_at_current_token(
-                    &diagnostics::Argument_expression_expected,
-                    &[],
-                );
+                self.parse_error_at_current_token(&diagnostics::Argument_expression_expected, &[]);
             }
             PC_OBJECT_LITERAL_MEMBERS => {
-                self.parse_error_at_current_token(
-                    &diagnostics::Property_assignment_expected,
-                    &[],
-                );
+                self.parse_error_at_current_token(&diagnostics::Property_assignment_expected, &[]);
             }
             PC_ARRAY_LITERAL_MEMBERS => {
-                self.parse_error_at_current_token(
-                    &diagnostics::Expression_or_comma_expected,
-                    &[],
-                );
+                self.parse_error_at_current_token(&diagnostics::Expression_or_comma_expected, &[]);
             }
             PC_JS_DOC_PARAMETERS => {
                 self.parse_error_at_current_token(
@@ -1303,9 +1304,10 @@ impl<'a> Parser<'a> {
             }
             PC_PARAMETERS => {
                 if is_keyword(self.token) {
+                    let __h10 = &[scanner::token_to_string(self.token).to_string()];
                     self.parse_error_at_current_token(
                         &diagnostics::X_0_is_not_allowed_as_a_parameter_name,
-                        &[scanner::token_to_string(self.token).to_string()],
+                        __h10,
                     );
                 } else {
                     self.parse_error_at_current_token(
@@ -1353,7 +1355,7 @@ impl<'a> Parser<'a> {
     }
 
     /// `func (p *Parser) parseExpectedJSDoc(kind ast.Kind) bool`
-    fn parse_expected_jsdoc(&mut self, kind: Kind) -> bool {
+    pub(crate) fn parse_expected_jsdoc(&mut self, kind: Kind) -> bool {
         if self.token == kind {
             self.next_token_jsdoc();
             return true;
@@ -1402,7 +1404,7 @@ impl<'a> Parser<'a> {
     }
 
     /// `func (p *Parser) parseOptional(token ast.Kind) bool`
-    fn parse_optional(&mut self, token: Kind) -> bool {
+    pub(crate) fn parse_optional(&mut self, token: Kind) -> bool {
         if self.token == token {
             self.next_token();
             return true;
@@ -1411,7 +1413,7 @@ impl<'a> Parser<'a> {
     }
 
     /// `func (p *Parser) parseExpected(kind ast.Kind) bool`
-    fn parse_expected(&mut self, kind: Kind) -> bool {
+    pub(crate) fn parse_expected(&mut self, kind: Kind) -> bool {
         self.parse_expected_with_diagnostic(kind, None, true)
     }
 
@@ -1465,13 +1467,14 @@ impl<'a> Parser<'a> {
                     &[scanner::token_to_string(kind).to_string()],
                 );
                 let token = self.factory.new_token(&mut self.nodes, kind);
-                self.finish_node(token, self.node_pos())
+                let __h11 = self.node_pos();
+                self.finish_node(token, __h11)
             }
         }
     }
 
     /// `func (p *Parser) parseOptionalToken(kind ast.Kind) *ast.Node`
-    fn parse_optional_token(&mut self, kind: Kind) -> Option<NodeId> {
+    pub(crate) fn parse_optional_token(&mut self, kind: Kind) -> Option<NodeId> {
         if self.token == kind {
             return Some(self.parse_token_node());
         }
@@ -1479,7 +1482,7 @@ impl<'a> Parser<'a> {
     }
 
     /// `func (p *Parser) parseExpectedTokenJSDoc(kind ast.Kind) *ast.Node`
-    fn parse_expected_token_jsdoc(&mut self, kind: Kind) -> NodeId {
+    pub(crate) fn parse_expected_token_jsdoc(&mut self, kind: Kind) -> NodeId {
         let optional = self.parse_optional_token_jsdoc(kind);
         match optional {
             Some(optional) => optional,
@@ -1492,13 +1495,14 @@ impl<'a> Parser<'a> {
                     &[scanner::token_to_string(kind).to_string()],
                 );
                 let token = self.factory.new_token(&mut self.nodes, kind);
-                self.finish_node(token, self.node_pos())
+                let __h12 = self.node_pos();
+                self.finish_node(token, __h12)
             }
         }
     }
 
     /// `func (p *Parser) parseOptionalTokenJSDoc(kind ast.Kind) *ast.Node`
-    fn parse_optional_token_jsdoc(&mut self, kind: Kind) -> Option<NodeId> {
+    pub(crate) fn parse_optional_token_jsdoc(&mut self, kind: Kind) -> Option<NodeId> {
         if self.token == kind {
             return Some(self.parse_token_node());
         }
@@ -1592,7 +1596,7 @@ fn is_type_heritage_clause(is_interface: bool, token: Kind) -> bool {
 }
 
 /// `func isReservedWord(token ast.Kind) bool`
-fn is_reserved_word(token: Kind) -> bool {
+pub(crate) fn is_reserved_word(token: Kind) -> bool {
     Kind::FIRST_RESERVED_WORD <= token && token <= Kind::LAST_RESERVED_WORD
 }
 
@@ -1605,52 +1609,40 @@ impl<'a> Parser<'a> {
                 return self.parse_block(false /*ignoreMissingOpenBrace*/, None);
             }
             Kind::VarKeyword => {
-                return self.parse_variable_statement(
-                    self.node_pos(),
-                    self.jsdoc_scanner_info(),
-                    None,
-                );
+                let __h13 = self.node_pos();
+                let __h14 = self.jsdoc_scanner_info();
+                return self.parse_variable_statement(__h13, __h14, None);
             }
             Kind::LetKeyword => {
                 if self.is_let_declaration() {
-                    return self.parse_variable_statement(
-                        self.node_pos(),
-                        self.jsdoc_scanner_info(),
-                        None,
-                    );
+                    let __h15 = self.node_pos();
+                    let __h16 = self.jsdoc_scanner_info();
+                    return self.parse_variable_statement(__h15, __h16, None);
                 }
             }
             Kind::AwaitKeyword => {
                 if self.is_await_using_declaration() {
-                    return self.parse_variable_statement(
-                        self.node_pos(),
-                        self.jsdoc_scanner_info(),
-                        None,
-                    );
+                    let __h17 = self.node_pos();
+                    let __h18 = self.jsdoc_scanner_info();
+                    return self.parse_variable_statement(__h17, __h18, None);
                 }
             }
             Kind::UsingKeyword => {
                 if self.is_using_declaration() {
-                    return self.parse_variable_statement(
-                        self.node_pos(),
-                        self.jsdoc_scanner_info(),
-                        None,
-                    );
+                    let __h19 = self.node_pos();
+                    let __h20 = self.jsdoc_scanner_info();
+                    return self.parse_variable_statement(__h19, __h20, None);
                 }
             }
             Kind::FunctionKeyword => {
-                return self.parse_function_declaration(
-                    self.node_pos(),
-                    self.jsdoc_scanner_info(),
-                    None,
-                );
+                let __h21 = self.node_pos();
+                let __h22 = self.jsdoc_scanner_info();
+                return self.parse_function_declaration(__h21, __h22, None);
             }
             Kind::ClassKeyword => {
-                return self.parse_class_declaration(
-                    self.node_pos(),
-                    self.jsdoc_scanner_info(),
-                    None,
-                );
+                let __h23 = self.node_pos();
+                let __h24 = self.jsdoc_scanner_info();
+                return self.parse_class_declaration(__h23, __h24, None);
             }
             Kind::IfKeyword => return self.parse_if_statement(),
             Kind::DoKeyword => return self.parse_do_statement(),
@@ -1755,9 +1747,8 @@ impl<'a> Parser<'a> {
                 return self.parse_module_declaration(pos, jsdoc, modifiers);
             }
             Kind::ImportKeyword => {
-                return self.parse_import_declaration_or_import_equals_declaration(
-                    pos, jsdoc, modifiers,
-                );
+                return self
+                    .parse_import_declaration_or_import_equals_declaration(pos, jsdoc, modifiers);
             }
             Kind::ExportKeyword => {
                 self.next_token();
@@ -1825,11 +1816,10 @@ impl<'a> Parser<'a> {
                 open_brace_parsed,
                 open_brace_position,
             );
-            let result = self.finish_node(
-                self.factory
-                    .new_block(&mut self.nodes, Some(statements), multiline),
-                pos,
-            );
+            let __h25 = self
+                .factory
+                .new_block(&mut self.nodes, Some(statements), multiline);
+            let result = self.finish_node(__h25, pos);
             self.with_jsdoc(result, jsdoc);
             if self.token == Kind::EqualsToken {
                 self.parse_error_at_current_token(&diagnostics::Declaration_or_statement_expected_This_follows_a_block_of_statements_so_if_you_intended_to_write_a_destructuring_assignment_you_might_need_to_wrap_the_whole_assignment_in_parentheses, &[]);
@@ -1837,14 +1827,9 @@ impl<'a> Parser<'a> {
             }
             return result;
         }
-        let result = self.finish_node(
-            self.factory.new_block(
-                &mut self.nodes,
-                Some(self.create_missing_list()),
-                multiline,
-            ),
-            pos,
-        );
+        let __h27 = Some(self.create_missing_list());
+        let __h26 = self.factory.new_block(&mut self.nodes, __h27, multiline);
+        let result = self.finish_node(__h26, pos);
         self.with_jsdoc(result, jsdoc);
         result
     }
@@ -1854,7 +1839,8 @@ impl<'a> Parser<'a> {
         let pos = self.node_pos();
         let jsdoc = self.jsdoc_scanner_info();
         self.parse_expected(Kind::SemicolonToken);
-        let result = self.finish_node(self.factory.new_empty_statement(&mut self.nodes), pos);
+        let __h28 = self.factory.new_empty_statement(&mut self.nodes);
+        let result = self.finish_node(__h28, pos);
         self.with_jsdoc(result, jsdoc);
         result
     }
@@ -1878,15 +1864,13 @@ impl<'a> Parser<'a> {
         if self.parse_optional(Kind::ElseKeyword) {
             else_statement = Some(self.parse_statement());
         }
-        let result = self.finish_node(
-            self.factory.new_if_statement(
-                &mut self.nodes,
-                Some(expression),
-                Some(then_statement),
-                else_statement,
-            ),
-            pos,
+        let __h29 = self.factory.new_if_statement(
+            &mut self.nodes,
+            Some(expression),
+            Some(then_statement),
+            else_statement,
         );
+        let result = self.finish_node(__h29, pos);
         self.with_jsdoc(result, jsdoc);
         result
     }
@@ -1912,11 +1896,10 @@ impl<'a> Parser<'a> {
         // spec but allowed in consensus reality. Approved -- this is the de-facto standard whereby
         //  do;while(0)x will have a semicolon inserted before x.
         self.parse_optional(Kind::SemicolonToken);
-        let result = self.finish_node(
+        let __h30 =
             self.factory
-                .new_do_statement(&mut self.nodes, Some(statement), Some(expression)),
-            pos,
-        );
+                .new_do_statement(&mut self.nodes, Some(statement), Some(expression));
+        let result = self.finish_node(__h30, pos);
         self.with_jsdoc(result, jsdoc);
         result
     }
@@ -1936,11 +1919,10 @@ impl<'a> Parser<'a> {
             open_paren_position,
         );
         let statement = self.parse_statement();
-        let result = self.finish_node(
+        let __h31 =
             self.factory
-                .new_while_statement(&mut self.nodes, Some(expression), Some(statement)),
-            pos,
-        );
+                .new_while_statement(&mut self.nodes, Some(expression), Some(statement));
+        let result = self.finish_node(__h31, pos);
         self.with_jsdoc(result, jsdoc);
         result
     }
@@ -2042,10 +2024,8 @@ impl<'a> Parser<'a> {
         self.parse_expected(Kind::BreakKeyword);
         let label = self.parse_identifier_unless_at_semicolon();
         self.parse_semicolon();
-        let result = self.finish_node(
-            self.factory.new_break_statement(&mut self.nodes, label),
-            pos,
-        );
+        let __h32 = self.factory.new_break_statement(&mut self.nodes, label);
+        let result = self.finish_node(__h32, pos);
         self.with_jsdoc(result, jsdoc);
         result
     }
@@ -2057,10 +2037,8 @@ impl<'a> Parser<'a> {
         self.parse_expected(Kind::ContinueKeyword);
         let label = self.parse_identifier_unless_at_semicolon();
         self.parse_semicolon();
-        let result = self.finish_node(
-            self.factory.new_continue_statement(&mut self.nodes, label),
-            pos,
-        );
+        let __h33 = self.factory.new_continue_statement(&mut self.nodes, label);
+        let result = self.finish_node(__h33, pos);
         self.with_jsdoc(result, jsdoc);
         result
     }
@@ -2083,11 +2061,10 @@ impl<'a> Parser<'a> {
             expression = Some(self.parse_expression_allow_in());
         }
         self.parse_semicolon();
-        let result = self.finish_node(
-            self.factory
-                .new_return_statement(&mut self.nodes, expression),
-            pos,
-        );
+        let __h34 = self
+            .factory
+            .new_return_statement(&mut self.nodes, expression);
+        let result = self.finish_node(__h34, pos);
         self.with_jsdoc(result, jsdoc);
         result
     }
@@ -2106,16 +2083,12 @@ impl<'a> Parser<'a> {
             open_paren_parsed,
             open_paren_position,
         );
-        let statement = self.do_in_context(
-            NodeFlags::IN_WITH_STATEMENT,
-            true,
-            Self::parse_statement,
-        );
-        let result = self.finish_node(
+        let statement =
+            self.do_in_context(NodeFlags::IN_WITH_STATEMENT, true, Self::parse_statement);
+        let __h35 =
             self.factory
-                .new_with_statement(&mut self.nodes, Some(expression), Some(statement)),
-            pos,
-        );
+                .new_with_statement(&mut self.nodes, Some(expression), Some(statement));
+        let result = self.finish_node(__h35, pos);
         self.with_jsdoc(result, jsdoc);
         result
     }
@@ -2127,17 +2100,14 @@ impl<'a> Parser<'a> {
         self.parse_expected(Kind::CaseKeyword);
         let expression = self.parse_expression_allow_in();
         self.parse_expected(Kind::ColonToken);
-        let statements =
-            self.parse_list(PC_SWITCH_CLAUSE_STATEMENTS, Self::parse_statement_some);
-        let result = self.finish_node(
-            self.factory.new_case_or_default_clause(
-                &mut self.nodes,
-                Kind::CaseClause,
-                Some(expression),
-                Some(statements),
-            ),
-            pos,
+        let statements = self.parse_list(PC_SWITCH_CLAUSE_STATEMENTS, Self::parse_statement_some);
+        let __h36 = self.factory.new_case_or_default_clause(
+            &mut self.nodes,
+            Kind::CaseClause,
+            Some(expression),
+            Some(statements),
         );
+        let result = self.finish_node(__h36, pos);
         self.with_jsdoc(result, jsdoc);
         result
     }
@@ -2148,17 +2118,14 @@ impl<'a> Parser<'a> {
         let jsdoc = self.jsdoc_scanner_info();
         self.parse_expected(Kind::DefaultKeyword);
         self.parse_expected(Kind::ColonToken);
-        let statements =
-            self.parse_list(PC_SWITCH_CLAUSE_STATEMENTS, Self::parse_statement_some);
-        let result = self.finish_node(
-            self.factory.new_case_or_default_clause(
-                &mut self.nodes,
-                Kind::DefaultClause,
-                None, /*expression*/
-                Some(statements),
-            ),
-            pos,
+        let statements = self.parse_list(PC_SWITCH_CLAUSE_STATEMENTS, Self::parse_statement_some);
+        let __h37 = self.factory.new_case_or_default_clause(
+            &mut self.nodes,
+            Kind::DefaultClause,
+            None, /*expression*/
+            Some(statements),
         );
+        let result = self.finish_node(__h37, pos);
         self.with_jsdoc(result, jsdoc);
         result
     }
@@ -2180,14 +2147,10 @@ impl<'a> Parser<'a> {
         let pos = self.node_pos();
         let jsdoc = self.jsdoc_scanner_info();
         self.parse_expected(Kind::OpenBraceToken);
-        let clauses =
-            self.parse_list(PC_SWITCH_CLAUSES, Self::parse_case_or_default_clause_some);
+        let clauses = self.parse_list(PC_SWITCH_CLAUSES, Self::parse_case_or_default_clause_some);
         self.parse_expected(Kind::CloseBraceToken);
-        let result = self.finish_node(
-            self.factory
-                .new_case_block(&mut self.nodes, Some(clauses)),
-            pos,
-        );
+        let __h38 = self.factory.new_case_block(&mut self.nodes, Some(clauses));
+        let result = self.finish_node(__h38, pos);
         self.with_jsdoc(result, jsdoc);
         result
     }
@@ -2201,14 +2164,10 @@ impl<'a> Parser<'a> {
         let expression = self.parse_expression_allow_in();
         self.parse_expected(Kind::CloseParenToken);
         let case_block = self.parse_case_block();
-        let result = self.finish_node(
-            self.factory.new_switch_statement(
-                &mut self.nodes,
-                Some(expression),
-                Some(case_block),
-            ),
-            pos,
-        );
+        let __h39 =
+            self.factory
+                .new_switch_statement(&mut self.nodes, Some(expression), Some(case_block));
+        let result = self.finish_node(__h39, pos);
         self.with_jsdoc(result, jsdoc);
         result
     }
@@ -2233,11 +2192,10 @@ impl<'a> Parser<'a> {
         if !self.try_parse_semicolon() {
             self.parse_error_for_missing_semicolon_after(expression);
         }
-        let result = self.finish_node(
-            self.factory
-                .new_throw_statement(&mut self.nodes, Some(expression)),
-            pos,
-        );
+        let __h40 = self
+            .factory
+            .new_throw_statement(&mut self.nodes, Some(expression));
+        let result = self.finish_node(__h40, pos);
         self.with_jsdoc(result, jsdoc);
         result
     }
@@ -2264,15 +2222,13 @@ impl<'a> Parser<'a> {
             );
             finally_block = Some(self.parse_block(false /*ignoreMissingOpenBrace*/, None));
         }
-        let result = self.finish_node(
-            self.factory.new_try_statement(
-                &mut self.nodes,
-                Some(try_block),
-                catch_clause,
-                finally_block,
-            ),
-            pos,
+        let __h41 = self.factory.new_try_statement(
+            &mut self.nodes,
+            Some(try_block),
+            catch_clause,
+            finally_block,
         );
+        let result = self.finish_node(__h41, pos);
         self.with_jsdoc(result, jsdoc);
         result
     }
@@ -2287,14 +2243,10 @@ impl<'a> Parser<'a> {
             self.parse_expected(Kind::CloseParenToken);
         }
         let block = self.parse_block(false /*ignoreMissingOpenBrace*/, None);
-        self.finish_node(
-            self.factory.new_catch_clause(
-                &mut self.nodes,
-                variable_declaration,
-                Some(block),
-            ),
-            pos,
-        )
+        let __h42 =
+            self.factory
+                .new_catch_clause(&mut self.nodes, variable_declaration, Some(block));
+        self.finish_node(__h42, pos)
     }
 
     /// `func (p *Parser) parseDebuggerStatement() *ast.Node`
@@ -2303,8 +2255,8 @@ impl<'a> Parser<'a> {
         let jsdoc = self.jsdoc_scanner_info();
         self.parse_expected(Kind::DebuggerKeyword);
         self.parse_semicolon();
-        let result =
-            self.finish_node(self.factory.new_debugger_statement(&mut self.nodes), pos);
+        let __h43 = self.factory.new_debugger_statement(&mut self.nodes);
+        let result = self.finish_node(__h43, pos);
         self.with_jsdoc(result, jsdoc);
         result
     }
@@ -2319,18 +2271,15 @@ impl<'a> Parser<'a> {
         let has_paren = self.token == Kind::OpenParenToken;
         let expression = self.parse_expression();
 
-        if self.nodes[expression].kind == Kind::Identifier
-            && self.parse_optional(Kind::ColonToken)
+        if self.nodes[expression].kind == Kind::Identifier && self.parse_optional(Kind::ColonToken)
         {
             let statement = self.parse_statement();
-            let result = self.finish_node(
-                self.factory.new_labeled_statement(
-                    &mut self.nodes,
-                    Some(expression),
-                    Some(statement),
-                ),
-                pos,
+            let __h44 = self.factory.new_labeled_statement(
+                &mut self.nodes,
+                Some(expression),
+                Some(statement),
             );
+            let result = self.finish_node(__h44, pos);
             self.with_jsdoc(result, jsdoc);
             return result;
         }
@@ -2338,11 +2287,10 @@ impl<'a> Parser<'a> {
         if !self.try_parse_semicolon() {
             self.parse_error_for_missing_semicolon_after(expression);
         }
-        let result = self.finish_node(
-            self.factory
-                .new_expression_statement(&mut self.nodes, Some(expression)),
-            pos,
-        );
+        let __h45 = self
+            .factory
+            .new_expression_statement(&mut self.nodes, Some(expression));
+        let result = self.finish_node(__h45, pos);
         if has_paren {
             jsdoc &= !JSDOC_SCANNER_INFO_HAS_JSDOC;
         }
@@ -2360,26 +2308,19 @@ impl<'a> Parser<'a> {
         let declaration_list =
             self.parse_variable_declaration_list(false /*inForStatementInitializer*/);
         self.parse_semicolon();
-        let result = self.finish_node(
-            self.factory.new_variable_statement(
-                &mut self.nodes,
-                modifiers,
-                Some(declaration_list),
-            ),
-            pos,
-        );
+        let __h46 =
+            self.factory
+                .new_variable_statement(&mut self.nodes, modifiers, Some(declaration_list));
+        let result = self.finish_node(__h46, pos);
         self.with_jsdoc(result, jsdoc);
         self.check_js_syntax(result);
         result
     }
 
     /// `func (p *Parser) parseVariableDeclarationList(inForStatementInitializer)`
-    fn parse_variable_declaration_list(
-        &mut self,
-        in_for_statement_initializer: bool,
-    ) -> NodeId {
+    fn parse_variable_declaration_list(&mut self, in_for_statement_initializer: bool) -> NodeId {
         let pos = self.node_pos();
-        let mut flags;
+        let flags;
         match self.token {
             Kind::VarKeyword => flags = NodeFlags::NONE,
             Kind::LetKeyword => flags = NodeFlags::LET,
@@ -2412,10 +2353,7 @@ impl<'a> Parser<'a> {
             declarations = Some(self.create_missing_list());
         } else {
             let save_context_flags = self.context_flags;
-            self.set_context_flags(
-                NodeFlags::DISALLOW_IN_CONTEXT,
-                in_for_statement_initializer,
-            );
+            self.set_context_flags(NodeFlags::DISALLOW_IN_CONTEXT, in_for_statement_initializer);
             declarations = self.parse_delimited_list(
                 PC_VARIABLE_DECLARATIONS,
                 if in_for_statement_initializer {
@@ -2427,11 +2365,10 @@ impl<'a> Parser<'a> {
             );
             self.context_flags = save_context_flags;
         }
-        let result = self.finish_node(
+        let __h47 =
             self.factory
-                .new_variable_declaration_list(&mut self.nodes, declarations, flags),
-            pos,
-        );
+                .new_variable_declaration_list(&mut self.nodes, declarations, flags);
+        let result = self.finish_node(__h47, pos);
         result
     }
 
@@ -2484,16 +2421,14 @@ impl<'a> Parser<'a> {
         if self.token != Kind::InKeyword && self.token != Kind::OfKeyword {
             initializer = self.parse_initializer();
         }
-        let result = self.finish_node(
-            self.factory.new_variable_declaration(
-                &mut self.nodes,
-                Some(name),
-                exclamation_token,
-                type_node,
-                initializer,
-            ),
-            pos,
+        let __h48 = self.factory.new_variable_declaration(
+            &mut self.nodes,
+            Some(name),
+            exclamation_token,
+            type_node,
+            initializer,
         );
+        let result = self.finish_node(__h48, pos);
         self.with_jsdoc(result, jsdoc);
         self.check_js_syntax(result);
         result
@@ -2531,14 +2466,10 @@ impl<'a> Parser<'a> {
         );
         self.context_flags = save_context_flags;
         self.parse_expected(Kind::CloseBracketToken);
-        self.finish_node(
-            self.factory.new_binding_pattern(
-                &mut self.nodes,
-                Kind::ArrayBindingPattern,
-                elements,
-            ),
-            pos,
-        )
+        let __h49 =
+            self.factory
+                .new_binding_pattern(&mut self.nodes, Kind::ArrayBindingPattern, elements);
+        self.finish_node(__h49, pos)
     }
 
     /// `func (p *Parser) parseArrayBindingElement() *ast.Node`
@@ -2553,16 +2484,14 @@ impl<'a> Parser<'a> {
             name = Some(self.parse_identifier_or_pattern());
             initializer = self.parse_initializer();
         }
-        self.finish_node(
-            self.factory.new_binding_element(
-                &mut self.nodes,
-                dot_dot_dot_token,
-                None, /*propertyName*/
-                name,
-                initializer,
-            ),
-            pos,
-        )
+        let __h50 = self.factory.new_binding_element(
+            &mut self.nodes,
+            dot_dot_dot_token,
+            None, /*propertyName*/
+            name,
+            initializer,
+        );
+        self.finish_node(__h50, pos)
     }
 
     fn parse_array_binding_element_some(&mut self) -> Option<NodeId> {
@@ -2582,14 +2511,10 @@ impl<'a> Parser<'a> {
         );
         self.context_flags = save_context_flags;
         self.parse_expected(Kind::CloseBraceToken);
-        self.finish_node(
-            self.factory.new_binding_pattern(
-                &mut self.nodes,
-                Kind::ObjectBindingPattern,
-                elements,
-            ),
-            pos,
-        )
+        let __h51 =
+            self.factory
+                .new_binding_pattern(&mut self.nodes, Kind::ObjectBindingPattern, elements);
+        self.finish_node(__h51, pos)
     }
 
     /// `func (p *Parser) parseObjectBindingElement() *ast.Node`
@@ -2607,16 +2532,14 @@ impl<'a> Parser<'a> {
             name = Some(self.parse_identifier_or_pattern());
         }
         let initializer = self.parse_initializer();
-        self.finish_node(
-            self.factory.new_binding_element(
-                &mut self.nodes,
-                dot_dot_dot_token,
-                property_name,
-                name,
-                initializer,
-            ),
-            pos,
-        )
+        let __h52 = self.factory.new_binding_element(
+            &mut self.nodes,
+            dot_dot_dot_token,
+            property_name,
+            name,
+            initializer,
+        );
+        self.finish_node(__h52, pos)
     }
 
     fn parse_object_binding_element_some(&mut self) -> Option<NodeId> {
@@ -2679,25 +2602,21 @@ impl<'a> Parser<'a> {
         }
         let parameters = self.parse_parameters(signature_flags);
         let return_type = self.parse_return_type(Kind::ColonToken, false /*isType*/);
-        let body = self.parse_function_block_or_semicolon(
-            signature_flags,
-            Some(&diagnostics::X_or_expected),
-        );
+        let body = self
+            .parse_function_block_or_semicolon(signature_flags, Some(&diagnostics::X_or_expected));
         self.context_flags = save_context_flags;
-        let result = self.finish_node(
-            self.factory.new_function_declaration(
-                &mut self.nodes,
-                modifiers,
-                asterisk_token,
-                name,
-                type_parameters,
-                Some(parameters),
-                return_type,
-                None, /*fullSignature*/
-                body,
-            ),
-            pos,
+        let __h53 = self.factory.new_function_declaration(
+            &mut self.nodes,
+            modifiers,
+            asterisk_token,
+            name,
+            type_parameters,
+            Some(parameters),
+            return_type,
+            None, /*fullSignature*/
+            body,
         );
+        let result = self.finish_node(__h53, pos);
         self.with_jsdoc(result, jsdoc);
         self.check_js_syntax(result);
         result
@@ -2717,9 +2636,11 @@ impl<'a> Parser<'a> {
 
     /// `func (p *Parser) parseClassExpression() *ast.Node`
     fn parse_class_expression(&mut self) -> NodeId {
+        let __h54 = self.node_pos();
+        let __h55 = self.jsdoc_scanner_info();
         self.parse_class_declaration_or_expression(
-            self.node_pos(),
-            self.jsdoc_scanner_info(),
+            __h54,
+            __h55,
             None, /*modifiers*/
             Kind::ClassExpression,
         )
@@ -2821,7 +2742,8 @@ impl<'a> Parser<'a> {
         // 'isImplementsClause' helps to disambiguate between these two cases
         if self.is_binding_identifier() && !self.is_implements_clause() {
             let save_has_await_identifier = self.statement_has_await_identifier;
-            let id = self.create_identifier(self.is_binding_identifier());
+            let __h56 = self.is_binding_identifier();
+            let id = self.create_identifier(__h56);
             self.statement_has_await_identifier = save_has_await_identifier;
             return Some(id);
         }
@@ -2864,11 +2786,11 @@ impl<'a> Parser<'a> {
                 false,
             )
         };
-        self.check_js_syntax(self.finish_node(
-            self.factory
-                .new_heritage_clause(&mut self.nodes, kind, types),
-            pos,
-        ))
+        let __h58 = self
+            .factory
+            .new_heritage_clause(&mut self.nodes, kind, types);
+        let __h57 = self.finish_node(__h58, pos);
+        self.check_js_syntax(__h57)
     }
 
     /// `func (p *Parser) parseTypeHeritageClauseElement() *ast.HeritageClauseElement`
@@ -2882,11 +2804,10 @@ impl<'a> Parser<'a> {
             return expression_with_type_arguments;
         }
         let type_name = self.convert_entity_name_expression_to_entity_name(expression.unwrap());
-        self.finish_node(
+        let __h59 =
             self.factory
-                .new_type_reference_node(&mut self.nodes, Some(type_name), type_arguments),
-            pos,
-        )
+                .new_type_reference_node(&mut self.nodes, Some(type_name), type_arguments);
+        self.finish_node(__h59, pos)
     }
 
     fn parse_type_heritage_clause_element_some(&mut self) -> Option<NodeId> {
@@ -2906,7 +2827,9 @@ impl<'a> Parser<'a> {
         let result = self
             .factory
             .new_qualified_name(&mut self.nodes, Some(left), name);
-        self.finish_node_with_end(result, self.nodes[node].pos(), self.nodes[node].end())
+        let __h60 = self.nodes[node].pos();
+        let __h61 = self.nodes[node].end();
+        self.finish_node_with_end(result, __h60, __h61)
     }
 
     /// `func (p *Parser) parseExpressionWithTypeArguments() *ast.Node`
@@ -2917,14 +2840,12 @@ impl<'a> Parser<'a> {
             return expression;
         }
         let type_arguments = self.parse_type_arguments();
-        self.finish_node(
-            self.factory.new_expression_with_type_arguments(
-                &mut self.nodes,
-                Some(expression),
-                type_arguments,
-            ),
-            pos,
-        )
+        let __h62 = self.factory.new_expression_with_type_arguments(
+            &mut self.nodes,
+            Some(expression),
+            type_arguments,
+        );
+        self.finish_node(__h62, pos)
     }
 
     fn parse_expression_with_type_arguments_some(&mut self) -> Option<NodeId> {
@@ -2937,10 +2858,8 @@ impl<'a> Parser<'a> {
         let jsdoc = self.jsdoc_scanner_info();
         if self.token == Kind::SemicolonToken {
             self.next_token();
-            let result = self.finish_node(
-                self.factory.new_semicolon_class_element(&mut self.nodes),
-                pos,
-            );
+            let __h63 = self.factory.new_semicolon_class_element(&mut self.nodes);
+            let result = self.finish_node(__h63, pos);
             self.with_jsdoc(result, jsdoc);
             return result;
         }
@@ -2949,9 +2868,7 @@ impl<'a> Parser<'a> {
             true, /*permitConstAsModifier*/
             true, /*stopOnStartOfClassStaticBlock*/
         );
-        if self.token == Kind::StaticKeyword
-            && self.look_ahead(Self::next_token_is_open_brace)
-        {
+        if self.token == Kind::StaticKeyword && self.look_ahead(Self::next_token_is_open_brace) {
             return self.parse_class_static_block_declaration(pos, jsdoc, modifiers);
         }
         if self.parse_contextual_modifier(Kind::GetKeyword) {
@@ -2980,11 +2897,8 @@ impl<'a> Parser<'a> {
             }
         }
         if self.is_index_signature() {
-            return self.check_js_syntax(self.parse_index_signature_declaration(
-                pos,
-                jsdoc,
-                modifiers,
-            ));
+            let __h64 = self.parse_index_signature_declaration(pos, jsdoc, modifiers);
+            return self.check_js_syntax(__h64);
         }
         // It is very important that we check this *after* checking indexers because
         // the [ token can start an index signature or a computed property name
@@ -3005,8 +2919,7 @@ impl<'a> Parser<'a> {
                 }
                 let save_context_flags = self.context_flags;
                 self.set_context_flags(NodeFlags::AMBIENT, true);
-                let result =
-                    self.parse_property_or_method_declaration(pos, jsdoc, Some(modifiers));
+                let result = self.parse_property_or_method_declaration(pos, jsdoc, Some(modifiers));
                 self.context_flags = save_context_flags;
                 return result;
             } else {
@@ -3043,14 +2956,10 @@ impl<'a> Parser<'a> {
     ) -> NodeId {
         self.parse_expected_token(Kind::StaticKeyword);
         let body = self.parse_class_static_block_body();
-        let result = self.finish_node(
-            self.factory.new_class_static_block_declaration(
-                &mut self.nodes,
-                modifiers,
-                Some(body),
-            ),
-            pos,
-        );
+        let __h65 =
+            self.factory
+                .new_class_static_block_declaration(&mut self.nodes, modifiers, Some(body));
+        let result = self.finish_node(__h65, pos);
         self.with_jsdoc(result, jsdoc);
         result
     }
@@ -3089,18 +2998,16 @@ impl<'a> Parser<'a> {
                 ParseFlags::NONE,
                 Some(&diagnostics::X_or_expected),
             );
-            let result = self.finish_node(
-                self.factory.new_constructor_declaration(
-                    &mut self.nodes,
-                    modifiers,
-                    type_parameters,
-                    Some(parameters),
-                    return_type,
-                    None, /*fullSignature*/
-                    body,
-                ),
-                pos,
+            let __h66 = self.factory.new_constructor_declaration(
+                &mut self.nodes,
+                modifiers,
+                type_parameters,
+                Some(parameters),
+                return_type,
+                None, /*fullSignature*/
+                body,
             );
+            let result = self.finish_node(__h66, pos);
             self.with_jsdoc(result, jsdoc);
             self.check_js_syntax(result);
             return Some(result);
@@ -3167,21 +3074,19 @@ impl<'a> Parser<'a> {
         let parameters = self.parse_parameters(signature_flags);
         let type_node = self.parse_return_type(Kind::ColonToken, false /*isType*/);
         let body = self.parse_function_block_or_semicolon(signature_flags, diagnostic_message);
-        let result = self.finish_node(
-            self.factory.new_method_declaration(
-                &mut self.nodes,
-                modifiers,
-                asterisk_token,
-                name,
-                question_token,
-                type_parameters,
-                Some(parameters),
-                type_node,
-                None, /*fullSignature*/
-                body,
-            ),
-            pos,
+        let __h67 = self.factory.new_method_declaration(
+            &mut self.nodes,
+            modifiers,
+            asterisk_token,
+            name,
+            question_token,
+            type_parameters,
+            Some(parameters),
+            type_node,
+            None, /*fullSignature*/
+            body,
         );
+        let result = self.finish_node(__h67, pos);
         self.with_jsdoc(result, jsdoc);
         self.check_js_syntax(result);
         result
@@ -3202,24 +3107,20 @@ impl<'a> Parser<'a> {
         }
         let type_node = self.parse_type_annotation();
         let initializer = self.do_in_context(
-            NodeFlags::YIELD_CONTEXT
-                | NodeFlags::AWAIT_CONTEXT
-                | NodeFlags::DISALLOW_IN_CONTEXT,
+            NodeFlags::YIELD_CONTEXT | NodeFlags::AWAIT_CONTEXT | NodeFlags::DISALLOW_IN_CONTEXT,
             false,
             Self::parse_initializer,
         );
         self.parse_semicolon_after_property_name(name.unwrap(), type_node, initializer);
-        let result = self.finish_node(
-            self.factory.new_property_declaration(
-                &mut self.nodes,
-                modifiers,
-                name,
-                postfix_token,
-                type_node,
-                initializer,
-            ),
-            pos,
+        let __h68 = self.factory.new_property_declaration(
+            &mut self.nodes,
+            modifiers,
+            name,
+            postfix_token,
+            type_node,
+            initializer,
         );
+        let result = self.finish_node(__h68, pos);
         self.with_jsdoc(result, jsdoc);
         self.check_js_syntax(result);
         result
@@ -3280,7 +3181,11 @@ impl<'a> Parser<'a> {
             let template_loc = self.nodes[node].as_tagged_template_expression().template;
             let loc = self.nodes[template_loc.unwrap()].loc;
             let range = self.skip_range_trivia(loc);
-            self.parse_error_at_range(range, &diagnostics::Module_declaration_names_may_only_use_or_quoted_strings, &[]);
+            self.parse_error_at_range(
+                range,
+                &diagnostics::Module_declaration_names_may_only_use_or_quoted_strings,
+                &[],
+            );
             return;
         }
         // Otherwise, if this isn't a well-known keyword-like identifier, give the generic fallback message.
@@ -3295,13 +3200,15 @@ impl<'a> Parser<'a> {
             );
             return;
         }
-        let pos = scanner::skip_trivia(self.source_text, self.nodes[node].pos());
+        let __h69 = self.nodes[node].pos();
+        let pos = scanner::skip_trivia(self.source_text, __h69);
         // Some known keywords are likely signs of syntax being used improperly.
         match expression_text.as_str() {
             "const" | "let" | "var" => {
+                let __h70 = self.nodes[node].end();
                 self.parse_error_at(
                     pos,
-                    self.nodes[node].end(),
+                    __h70,
                     &diagnostics::Variable_declaration_not_allowed_at_this_location,
                     &[],
                 );
@@ -3320,9 +3227,9 @@ impl<'a> Parser<'a> {
                 return;
             }
             "is" => {
+                let __h71 = self.scanner.token_start() as i32;
                 self.parse_error_at(
-                    pos,
-                    self.scanner.token_start() as i32,
+                    pos,__h71,
                     &diagnostics::A_type_predicate_is_only_allowed_in_return_type_position_for_functions_and_methods,
                     &[],
                 );
@@ -3357,9 +3264,10 @@ impl<'a> Parser<'a> {
             if s.is_empty() { None } else { Some(s) }
         });
         if let Some(suggestion) = suggestion {
+            let __h72 = self.nodes[node].end();
             self.parse_error_at(
                 pos,
-                self.nodes[node].end(),
+                __h72,
                 &diagnostics::Unknown_keyword_or_identifier_Did_you_mean_0,
                 &[suggestion],
             );
@@ -3369,10 +3277,11 @@ impl<'a> Parser<'a> {
         if self.token == Kind::Unknown {
             return;
         }
+        let __h73 = self.nodes[node].end();
         // Otherwise, we know this some kind of unknown word, not just a missing expected semicolon.
         self.parse_error_at(
             pos,
-            self.nodes[node].end(),
+            __h73,
             &diagnostics::Unexpected_keyword_or_identifier,
             &[],
         );
@@ -3405,17 +3314,15 @@ impl<'a> Parser<'a> {
         let type_parameters = self.parse_type_parameters();
         let heritage_clauses = self.parse_heritage_clauses(true /*isInterface*/);
         let members = self.parse_object_type_members();
-        let result = self.finish_node(
-            self.factory.new_interface_declaration(
-                &mut self.nodes,
-                modifiers,
-                Some(name),
-                type_parameters,
-                heritage_clauses,
-                Some(members),
-            ),
-            pos,
+        let __h74 = self.factory.new_interface_declaration(
+            &mut self.nodes,
+            modifiers,
+            Some(name),
+            type_parameters,
+            heritage_clauses,
+            Some(members),
         );
+        let result = self.finish_node(__h74, pos);
         self.with_jsdoc(result, jsdoc);
         self.check_js_syntax(result);
         result
@@ -3435,24 +3342,21 @@ impl<'a> Parser<'a> {
         let name = self.parse_identifier();
         let type_parameters = self.parse_type_parameters();
         self.parse_expected(Kind::EqualsToken);
-        let type_node = if self.token == Kind::IntrinsicKeyword
-            && self.look_ahead(Self::next_is_not_dot)
-        {
-            self.parse_keyword_type_node()
-        } else {
-            self.parse_type()
-        };
+        let type_node =
+            if self.token == Kind::IntrinsicKeyword && self.look_ahead(Self::next_is_not_dot) {
+                self.parse_keyword_type_node()
+            } else {
+                self.parse_type()
+            };
         self.parse_semicolon();
-        let result = self.finish_node(
-            self.factory.new_type_alias_declaration(
-                &mut self.nodes,
-                modifiers,
-                Some(name),
-                type_parameters,
-                Some(type_node),
-            ),
-            pos,
+        let __h75 = self.factory.new_type_alias_declaration(
+            &mut self.nodes,
+            modifiers,
+            Some(name),
+            type_parameters,
+            Some(type_node),
         );
+        let result = self.finish_node(__h75, pos);
         self.with_jsdoc(result, jsdoc);
         self.check_js_syntax(result);
         result
@@ -3477,11 +3381,10 @@ impl<'a> Parser<'a> {
             false,
             Self::parse_initializer,
         );
-        let result = self.finish_node(
-            self.factory
-                .new_enum_member(&mut self.nodes, Some(name), initializer),
-            pos,
-        );
+        let __h76 = self
+            .factory
+            .new_enum_member(&mut self.nodes, Some(name), initializer);
+        let result = self.finish_node(__h76, pos);
         self.with_jsdoc(result, jsdoc);
         result
     }
@@ -3504,25 +3407,17 @@ impl<'a> Parser<'a> {
         if self.parse_expected(Kind::OpenBraceToken) {
             let save_context_flags = self.context_flags;
             self.set_context_flags(NodeFlags::YIELD_CONTEXT | NodeFlags::AWAIT_CONTEXT, false);
-            members = self.parse_delimited_list(
-                PC_ENUM_MEMBERS,
-                Self::parse_enum_member_some,
-                false,
-            );
+            members =
+                self.parse_delimited_list(PC_ENUM_MEMBERS, Self::parse_enum_member_some, false);
             self.context_flags = save_context_flags;
             self.parse_expected(Kind::CloseBraceToken);
         } else {
             members = Some(self.create_missing_list());
         }
-        let result = self.finish_node(
-            self.factory.new_enum_declaration(
-                &mut self.nodes,
-                modifiers,
-                Some(name),
-                members,
-            ),
-            pos,
-        );
+        let __h77 =
+            self.factory
+                .new_enum_declaration(&mut self.nodes, modifiers, Some(name), members);
+        let result = self.finish_node(__h77, pos);
         self.with_jsdoc(result, jsdoc);
         self.check_js_syntax(result);
         self.statement_has_await_identifier = save_has_await_identifier;
@@ -3582,17 +3477,15 @@ impl<'a> Parser<'a> {
         } else {
             self.parse_semicolon();
         }
-        let result = self.finish_node(
-            self.factory.new_module_declaration(
-                &mut self.nodes,
-                modifiers,
-                keyword,
-                Some(name),
-                attributes,
-                body,
-            ),
-            pos,
+        let __h78 = self.factory.new_module_declaration(
+            &mut self.nodes,
+            modifiers,
+            keyword,
+            Some(name),
+            attributes,
+            body,
         );
+        let result = self.finish_node(__h78, pos);
         self.with_jsdoc(result, jsdoc);
         self.statement_has_await_identifier = save_has_await_identifier;
         result
@@ -3603,17 +3496,13 @@ impl<'a> Parser<'a> {
         let pos = self.node_pos();
         let statements: Option<NodeList>;
         if self.parse_expected(Kind::OpenBraceToken) {
-            statements =
-                Some(self.parse_list(PC_BLOCK_STATEMENTS, Self::parse_statement_some));
+            statements = Some(self.parse_list(PC_BLOCK_STATEMENTS, Self::parse_statement_some));
             self.parse_expected(Kind::CloseBraceToken);
         } else {
             statements = Some(self.create_missing_list());
         }
-        self.finish_node(
-            self.factory
-                .new_module_block(&mut self.nodes, statements),
-            pos,
-        )
+        let __h79 = self.factory.new_module_block(&mut self.nodes, statements);
+        self.finish_node(__h79, pos)
     }
 
     /// `func (p *Parser) parseModuleOrNamespaceDeclaration(pos, jsdoc, modifiers, nested, keyword)`
@@ -3637,10 +3526,8 @@ impl<'a> Parser<'a> {
             let implicit_export = self.factory.new_token(&mut self.nodes, Kind::ExportKeyword);
             self.nodes[implicit_export].loc = TextRange::new(implicit_pos, implicit_pos);
             self.nodes[implicit_export].flags = NodeFlags::REPARSED;
-            let implicit_modifiers = self.new_modifier_list(
-                self.nodes[implicit_export].loc,
-                vec![implicit_export],
-            );
+            let __h80 = self.nodes[implicit_export].loc;
+            let implicit_modifiers = self.new_modifier_list(__h80, vec![implicit_export]);
             let nested_pos = self.node_pos();
             body = self.parse_module_or_namespace_declaration(
                 nested_pos,
@@ -3652,17 +3539,15 @@ impl<'a> Parser<'a> {
         } else {
             body = self.parse_module_block();
         }
-        let result = self.finish_node(
-            self.factory.new_module_declaration(
-                &mut self.nodes,
-                modifiers,
-                keyword,
-                Some(name),
-                None,
-                Some(body),
-            ),
-            pos,
+        let __h81 = self.factory.new_module_declaration(
+            &mut self.nodes,
+            modifiers,
+            keyword,
+            Some(name),
+            None,
+            Some(body),
         );
+        let result = self.finish_node(__h81, pos);
         self.with_jsdoc(result, jsdoc);
         self.check_js_syntax(result);
         self.statement_has_await_identifier = save_has_await_identifier;
@@ -3716,13 +3601,14 @@ impl<'a> Parser<'a> {
             && phase_modifier != Kind::DeferKeyword
             && phase_modifier != Kind::SourceKeyword
         {
-            let import_equals = self.check_js_syntax(self.parse_import_equals_declaration(
+            let __h82 = self.parse_import_equals_declaration(
                 pos,
                 jsdoc,
                 modifiers,
                 Some(id),
                 phase_modifier == Kind::TypeKeyword,
-            ));
+            );
+            let import_equals = self.check_js_syntax(__h82);
             // Import= declaration is always parsed in an Await context, no need to reparse
             self.statement_has_await_identifier = save_has_await_identifier;
             return import_equals;
@@ -3738,16 +3624,14 @@ impl<'a> Parser<'a> {
         let module_specifier = self.parse_module_specifier();
         let attributes = self.try_parse_import_attributes();
         self.parse_semicolon();
-        let result = self.finish_node(
-            self.factory.new_import_declaration(
-                &mut self.nodes,
-                modifiers,
-                import_clause,
-                module_specifier,
-                attributes,
-            ),
-            pos,
+        let __h83 = self.factory.new_import_declaration(
+            &mut self.nodes,
+            modifiers,
+            import_clause,
+            module_specifier,
+            attributes,
         );
+        let result = self.finish_node(__h83, pos);
         self.with_jsdoc(result, jsdoc);
         self.check_js_syntax(result);
         result
@@ -3804,25 +3688,21 @@ impl<'a> Parser<'a> {
         self.parse_expected(Kind::EqualsToken);
         let module_reference = self.parse_module_reference();
         self.parse_semicolon();
-        let result = self.finish_node(
-            self.factory.new_import_equals_declaration(
-                &mut self.nodes,
-                modifiers,
-                is_type_only,
-                identifier,
-                Some(module_reference),
-            ),
-            pos,
+        let __h84 = self.factory.new_import_equals_declaration(
+            &mut self.nodes,
+            modifiers,
+            is_type_only,
+            identifier,
+            Some(module_reference),
         );
+        let result = self.finish_node(__h84, pos);
         self.with_jsdoc(result, jsdoc);
         result
     }
 
     /// `func (p *Parser) parseModuleReference() *ast.Node`
     fn parse_module_reference(&mut self) -> NodeId {
-        if self.token == Kind::RequireKeyword
-            && self.look_ahead(Self::next_token_is_open_paren)
-        {
+        if self.token == Kind::RequireKeyword && self.look_ahead(Self::next_token_is_open_paren) {
             return self.parse_external_module_reference();
         }
         self.parse_entity_name(
@@ -3841,17 +3721,16 @@ impl<'a> Parser<'a> {
         self.parse_expected(Kind::OpenParenToken);
         let expression = self.parse_module_specifier();
         self.parse_expected(Kind::CloseParenToken);
-        let result = self.finish_node(
-            self.factory
-                .new_external_module_reference(&mut self.nodes, expression),
-            pos,
-        );
+        let __h85 = self
+            .factory
+            .new_external_module_reference(&mut self.nodes, expression);
+        let result = self.finish_node(__h85, pos);
         self.statement_has_await_identifier = save_has_await_identifier;
         result
     }
 
     /// `func (p *Parser) parseModuleSpecifier() *ast.Expression`
-    fn parse_module_specifier(&mut self) -> Option<NodeId> {
+    pub(crate) fn parse_module_specifier(&mut self) -> Option<NodeId> {
         if self.token == Kind::StringLiteral {
             return Some(self.parse_literal_expression());
         }
@@ -3928,15 +3807,13 @@ impl<'a> Parser<'a> {
                 self.scanner.set_skip_jsdoc_leading_asterisks(false);
             }
         }
-        let result = self.finish_node(
-            self.factory.new_import_clause(
-                &mut self.nodes,
-                phase_modifier,
-                identifier,
-                named_bindings,
-            ),
-            pos,
+        let __h86 = self.factory.new_import_clause(
+            &mut self.nodes,
+            phase_modifier,
+            identifier,
+            named_bindings,
         );
+        let result = self.finish_node(__h86, pos);
         self.statement_has_await_identifier = save_has_await_identifier;
         result
     }
@@ -3949,11 +3826,10 @@ impl<'a> Parser<'a> {
         self.parse_expected(Kind::AsteriskToken);
         self.parse_expected(Kind::AsKeyword);
         let name = self.parse_identifier();
-        self.finish_node(
-            self.factory
-                .new_namespace_import(&mut self.nodes, Some(name)),
-            pos,
-        )
+        let __h87 = self
+            .factory
+            .new_namespace_import(&mut self.nodes, Some(name));
+        self.finish_node(__h87, pos)
     }
 
     /// `func (p *Parser) parseNamedImports() *ast.Node`
@@ -3969,11 +3845,8 @@ impl<'a> Parser<'a> {
             Kind::OpenBraceToken,
             Kind::CloseBraceToken,
         );
-        self.finish_node(
-            self.factory
-                .new_named_imports(&mut self.nodes, imports),
-            pos,
-        )
+        let __h88 = self.factory.new_named_imports(&mut self.nodes, imports);
+        self.finish_node(__h88, pos)
     }
 
     /// `func (p *Parser) parseImportSpecifier() *ast.Node`
@@ -3988,17 +3861,16 @@ impl<'a> Parser<'a> {
             let range = self.skip_range_trivia(loc);
             self.parse_error_at_range(range, &diagnostics::Identifier_expected, &[]);
             let identifier_name = self.new_identifier("");
-            self.finish_node(identifier_name, self.nodes[name].pos())
+            let __h89 = self.nodes[name].pos();
+            self.finish_node(identifier_name, __h89)
         };
-        let result = self.finish_node(
-            self.factory.new_import_specifier(
-                &mut self.nodes,
-                is_type_only,
-                property_name,
-                Some(identifier_name),
-            ),
-            pos,
+        let __h90 = self.factory.new_import_specifier(
+            &mut self.nodes,
+            is_type_only,
+            property_name,
+            Some(identifier_name),
         );
+        let result = self.finish_node(__h90, pos);
         self.check_js_syntax(result)
     }
 
@@ -4007,10 +3879,7 @@ impl<'a> Parser<'a> {
     }
 
     /// `func (p *Parser) parseImportOrExportSpecifier(kind) (isTypeOnly, propertyName, name)`
-    fn parse_import_or_export_specifier(
-        &mut self,
-        kind: Kind,
-    ) -> (bool, Option<NodeId>, NodeId) {
+    fn parse_import_or_export_specifier(&mut self, kind: Kind) -> (bool, Option<NodeId>, NodeId) {
         // ImportSpecifier:
         //   BindingIdentifier
         //   ModuleExportName as BindingIdentifier
@@ -4022,7 +3891,8 @@ impl<'a> Parser<'a> {
         let mut is_type_only = false;
         let mut property_name: Option<NodeId> = None;
         let (mut name, mut name_ok) = self.parse_module_export_name(disallow_keywords);
-        if self.nodes[name].kind == Kind::Identifier && self.nodes[name].text(&self.nodes) == "type" {
+        if self.nodes[name].kind == Kind::Identifier && self.nodes[name].text(&self.nodes) == "type"
+        {
             // If the first token of an import specifier is 'type', there are a lot of possibilities,
             // especially if we see 'as' afterwards:
             //
@@ -4100,7 +3970,7 @@ impl<'a> Parser<'a> {
     }
 
     /// `func (p *Parser) tryParseImportAttributes() *ast.Node`
-    fn try_parse_import_attributes(&mut self) -> Option<NodeId> {
+    pub(crate) fn try_parse_import_attributes(&mut self) -> Option<NodeId> {
         if self.token == Kind::WithKeyword
             || (self.token == Kind::AssertKeyword && !self.has_preceding_line_break())
         {
@@ -4132,16 +4002,14 @@ impl<'a> Parser<'a> {
         self.parse_semicolon();
         self.context_flags = save_context_flags;
         self.statement_has_await_identifier = save_has_await_identifier;
-        let result = self.finish_node(
-            self.factory.new_export_assignment(
-                &mut self.nodes,
-                modifiers,
-                is_export_equals,
-                None, /*typeNode*/
-                Some(expression),
-            ),
-            pos,
+        let __h91 = self.factory.new_export_assignment(
+            &mut self.nodes,
+            modifiers,
+            is_export_equals,
+            None, /*typeNode*/
+            Some(expression),
         );
+        let result = self.finish_node(__h91, pos);
         self.with_jsdoc(result, jsdoc);
         self.check_js_syntax(result);
         result
@@ -4160,15 +4028,11 @@ impl<'a> Parser<'a> {
         let name = self.parse_identifier();
         self.statement_has_await_identifier = save_has_await_identifier;
         self.parse_semicolon();
+        let __h92 =
+            self.factory
+                .new_namespace_export_declaration(&mut self.nodes, modifiers, Some(name));
         // NamespaceExportDeclaration nodes cannot have decorators or modifiers, we attach them here so we can report them in the grammar checker
-        let result = self.finish_node(
-            self.factory.new_namespace_export_declaration(
-                &mut self.nodes,
-                modifiers,
-                Some(name),
-            ),
-            pos,
-        );
+        let result = self.finish_node(__h92, pos);
         self.with_jsdoc(result, jsdoc);
         result
     }
@@ -4218,17 +4082,15 @@ impl<'a> Parser<'a> {
         self.parse_semicolon();
         self.context_flags = save_context_flags;
         self.statement_has_await_identifier = save_has_await_identifier;
-        let result = self.finish_node(
-            self.factory.new_export_declaration(
-                &mut self.nodes,
-                modifiers,
-                is_type_only,
-                export_clause,
-                module_specifier,
-                attributes,
-            ),
-            pos,
+        let __h93 = self.factory.new_export_declaration(
+            &mut self.nodes,
+            modifiers,
+            is_type_only,
+            export_clause,
+            module_specifier,
+            attributes,
         );
+        let result = self.finish_node(__h93, pos);
         self.with_jsdoc(result, jsdoc);
         self.check_js_syntax(result);
         result
@@ -4237,11 +4099,10 @@ impl<'a> Parser<'a> {
     /// `func (p *Parser) parseNamespaceExport(pos) *ast.Node`
     fn parse_namespace_export(&mut self, pos: i32) -> NodeId {
         let (export_name, _) = self.parse_module_export_name(false /*disallowKeywords*/);
-        self.finish_node(
-            self.factory
-                .new_namespace_export(&mut self.nodes, Some(export_name)),
-            pos,
-        )
+        let __h94 = self
+            .factory
+            .new_namespace_export(&mut self.nodes, Some(export_name));
+        self.finish_node(__h94, pos)
     }
 
     /// `func (p *Parser) parseNamedExports() *ast.Node`
@@ -4257,11 +4118,8 @@ impl<'a> Parser<'a> {
             Kind::OpenBraceToken,
             Kind::CloseBraceToken,
         );
-        self.finish_node(
-            self.factory
-                .new_named_exports(&mut self.nodes, exports),
-            pos,
-        )
+        let __h95 = self.factory.new_named_exports(&mut self.nodes, exports);
+        self.finish_node(__h95, pos)
     }
 
     /// `func (p *Parser) parseExportSpecifier() *ast.Node`
@@ -4270,15 +4128,13 @@ impl<'a> Parser<'a> {
         let jsdoc = self.jsdoc_scanner_info();
         let (is_type_only, property_name, name) =
             self.parse_import_or_export_specifier(Kind::ExportSpecifier);
-        let result = self.finish_node(
-            self.factory.new_export_specifier(
-                &mut self.nodes,
-                is_type_only,
-                property_name,
-                Some(name),
-            ),
-            pos,
+        let __h96 = self.factory.new_export_specifier(
+            &mut self.nodes,
+            is_type_only,
+            property_name,
+            Some(name),
         );
+        let result = self.finish_node(__h96, pos);
         self.with_jsdoc(result, jsdoc);
         self.check_js_syntax(result);
         result
@@ -4367,10 +4223,7 @@ impl<'a> Parser<'a> {
         let is_union_type = operator == Kind::BarToken;
         let has_leading_operator = self.parse_optional(operator);
         let mut type_node = if has_leading_operator {
-            self.parse_function_or_constructor_type_to_error(
-                is_union_type,
-                parse_constituent_type,
-            )
+            self.parse_function_or_constructor_type_to_error(is_union_type, parse_constituent_type)
         } else {
             parse_constituent_type(self)
         };
@@ -4382,8 +4235,8 @@ impl<'a> Parser<'a> {
                     parse_constituent_type,
                 ));
             }
-            let list =
-                self.new_node_list(TextRange::new(pos, self.node_pos()), types);
+            let __h97 = TextRange::new(pos, self.node_pos());
+            let list = self.new_node_list(__h97, types);
             type_node = self.create_union_or_intersection_type_node(operator, Some(list));
             self.finish_node(type_node, pos);
         }
@@ -4397,14 +4250,10 @@ impl<'a> Parser<'a> {
         types: Option<NodeList>,
     ) -> NodeId {
         match operator {
-            Kind::BarToken => {
-                self.factory
-                    .new_union_type_node(&mut self.nodes, types)
-            }
-            Kind::AmpersandToken => {
-                self.factory
-                    .new_intersection_type_node(&mut self.nodes, types)
-            }
+            Kind::BarToken => self.factory.new_union_type_node(&mut self.nodes, types),
+            Kind::AmpersandToken => self
+                .factory
+                .new_intersection_type_node(&mut self.nodes, types),
             _ => panic!("Unhandled case in createUnionOrIntersectionType"),
         }
     }
@@ -4431,11 +4280,10 @@ impl<'a> Parser<'a> {
         let pos = self.node_pos();
         self.parse_expected(operator);
         let type_node = self.parse_type_operator_or_higher();
-        self.finish_node(
-            self.factory
-                .new_type_operator_node(&mut self.nodes, operator, Some(type_node)),
-            pos,
-        )
+        let __h98 = self
+            .factory
+            .new_type_operator_node(&mut self.nodes, operator, Some(type_node));
+        self.finish_node(__h98, pos)
     }
 
     /// `func (p *Parser) parseInferType() *ast.Node`
@@ -4443,11 +4291,8 @@ impl<'a> Parser<'a> {
         let pos = self.node_pos();
         self.parse_expected(Kind::InferKeyword);
         let tp = self.parse_type_parameter_of_infer_type();
-        self.finish_node(
-            self.factory
-                .new_infer_type_node(&mut self.nodes, Some(tp)),
-            pos,
-        )
+        let __h99 = self.factory.new_infer_type_node(&mut self.nodes, Some(tp));
+        self.finish_node(__h99, pos)
     }
 
     /// `func (p *Parser) parseTypeParameterOfInferType() *ast.Node`
@@ -4455,17 +4300,15 @@ impl<'a> Parser<'a> {
         let pos = self.node_pos();
         let name = self.parse_identifier();
         let constraint = self.try_parse_constraint_of_infer_type();
-        self.finish_node(
-            self.factory.new_type_parameter_declaration(
-                &mut self.nodes,
-                None, /*modifiers*/
-                Some(name),
-                constraint,
-                None, /*expression*/
-                None, /*defaultType*/
-            ),
-            pos,
-        )
+        let __h100 = self.factory.new_type_parameter_declaration(
+            &mut self.nodes,
+            None, /*modifiers*/
+            Some(name),
+            constraint,
+            None, /*expression*/
+            None, /*defaultType*/
+        );
+        self.finish_node(__h100, pos)
     }
 
     /// `func (p *Parser) tryParseConstraintOfInferType() *ast.Node`
@@ -4477,9 +4320,7 @@ impl<'a> Parser<'a> {
                 true,
                 Self::parse_type,
             );
-            if self.in_disallow_conditional_types_context()
-                || self.token != Kind::QuestionToken
-            {
+            if self.in_disallow_conditional_types_context() || self.token != Kind::QuestionToken {
                 return Some(constraint);
             }
         }
@@ -4495,13 +4336,10 @@ impl<'a> Parser<'a> {
             match self.token {
                 Kind::ExclamationToken => {
                     self.next_token();
-                    type_node = self.finish_node(
-                        self.factory.new_js_doc_non_nullable_type(
-                            &mut self.nodes,
-                            Some(type_node),
-                        ),
-                        pos,
-                    );
+                    let __h101 = self
+                        .factory
+                        .new_js_doc_non_nullable_type(&mut self.nodes, Some(type_node));
+                    type_node = self.finish_node(__h101, pos);
                 }
                 Kind::QuestionToken => {
                     // If next token is start of a type we have a conditional type
@@ -4509,36 +4347,28 @@ impl<'a> Parser<'a> {
                         return type_node;
                     }
                     self.next_token();
-                    type_node = self.finish_node(
-                        self.factory.new_js_doc_nullable_type(
-                            &mut self.nodes,
-                            Some(type_node),
-                        ),
-                        pos,
-                    );
+                    let __h102 = self
+                        .factory
+                        .new_js_doc_nullable_type(&mut self.nodes, Some(type_node));
+                    type_node = self.finish_node(__h102, pos);
                 }
                 Kind::OpenBracketToken => {
                     self.parse_expected(Kind::OpenBracketToken);
                     if self.is_start_of_type(false /*isStartOfParameter*/) {
                         let index_type = self.parse_type();
                         self.parse_expected(Kind::CloseBracketToken);
-                        type_node = self.finish_node(
-                            self.factory.new_indexed_access_type_node(
-                                &mut self.nodes,
-                                Some(type_node),
-                                Some(index_type),
-                            ),
-                            pos,
+                        let __h103 = self.factory.new_indexed_access_type_node(
+                            &mut self.nodes,
+                            Some(type_node),
+                            Some(index_type),
                         );
+                        type_node = self.finish_node(__h103, pos);
                     } else {
                         self.parse_expected(Kind::CloseBracketToken);
-                        type_node = self.finish_node(
-                            self.factory.new_array_type_node(
-                                &mut self.nodes,
-                                Some(type_node),
-                            ),
-                            pos,
-                        );
+                        let __h104 = self
+                            .factory
+                            .new_array_type_node(&mut self.nodes, Some(type_node));
+                        type_node = self.finish_node(__h104, pos);
                     }
                 }
                 _ => return type_node,
@@ -4651,7 +4481,8 @@ impl<'a> Parser<'a> {
     fn parse_this_type_node(&mut self) -> NodeId {
         let pos = self.node_pos();
         self.next_token();
-        self.finish_node(self.factory.new_this_type_node(&mut self.nodes), pos)
+        let __h105 = self.factory.new_this_type_node(&mut self.nodes);
+        self.finish_node(__h105, pos)
     }
 
     /// `func (p *Parser) parseThisTypePredicate(lhs) *ast.Node`
@@ -4659,22 +4490,21 @@ impl<'a> Parser<'a> {
         let pos = self.nodes[lhs].pos();
         self.next_token();
         let type_node = self.parse_type();
-        self.finish_node(
-            self.factory.new_type_predicate_node(
-                &mut self.nodes,
-                None, /*assertsModifier*/
-                Some(lhs),
-                Some(type_node),
-            ),
-            pos,
-        )
+        let __h106 = self.factory.new_type_predicate_node(
+            &mut self.nodes,
+            None, /*assertsModifier*/
+            Some(lhs),
+            Some(type_node),
+        );
+        self.finish_node(__h106, pos)
     }
 
     /// `func (p *Parser) parseJSDocAllType() *ast.Node`
     fn parse_js_doc_all_type(&mut self) -> NodeId {
         let pos = self.node_pos();
         self.next_token();
-        self.finish_node(self.factory.new_js_doc_all_type(&mut self.nodes), pos)
+        let __h107 = self.factory.new_js_doc_all_type(&mut self.nodes);
+        self.finish_node(__h107, pos)
     }
 
     /// `func (p *Parser) parseJSDocNonNullableType() *ast.TypeNode`
@@ -4682,11 +4512,10 @@ impl<'a> Parser<'a> {
         let pos = self.node_pos();
         self.next_token();
         let t = self.parse_type_operator_or_higher();
-        self.finish_node(
-            self.factory
-                .new_js_doc_non_nullable_type(&mut self.nodes, Some(t)),
-            pos,
-        )
+        let __h108 = self
+            .factory
+            .new_js_doc_non_nullable_type(&mut self.nodes, Some(t));
+        self.finish_node(__h108, pos)
     }
 
     /// `func (p *Parser) parseJSDocNullableType() *ast.Node`
@@ -4695,11 +4524,10 @@ impl<'a> Parser<'a> {
         // skip the ?
         self.next_token();
         let t = self.parse_type_operator_or_higher();
-        self.finish_node(
-            self.factory
-                .new_js_doc_nullable_type(&mut self.nodes, Some(t)),
-            pos,
-        )
+        let __h109 = self
+            .factory
+            .new_js_doc_nullable_type(&mut self.nodes, Some(t));
+        self.finish_node(__h109, pos)
     }
 
     /// `func (p *Parser) parseJSDocType() *ast.TypeNode`
@@ -4710,19 +4538,17 @@ impl<'a> Parser<'a> {
         let mut t = self.parse_type_or_type_predicate();
         self.scanner.set_skip_jsdoc_leading_asterisks(false);
         if has_dot_dot_dot {
-            t = self.finish_node(
-                self.factory
-                    .new_js_doc_variadic_type(&mut self.nodes, Some(t)),
-                pos,
-            );
+            let __h110 = self
+                .factory
+                .new_js_doc_variadic_type(&mut self.nodes, Some(t));
+            t = self.finish_node(__h110, pos);
         }
         if self.token == Kind::EqualsToken {
             self.next_token();
-            return self.finish_node(
-                self.factory
-                    .new_js_doc_optional_type(&mut self.nodes, Some(t)),
-                pos,
-            );
+            let __h111 = self
+                .factory
+                .new_js_doc_optional_type(&mut self.nodes, Some(t));
+            return self.finish_node(__h111, pos);
         }
         t
     }
@@ -4742,20 +4568,17 @@ impl<'a> Parser<'a> {
             self.parse_literal_expression()
         };
         if negative {
-            expression = self.finish_node(
-                self.factory.new_prefix_unary_expression(
-                    &mut self.nodes,
-                    Kind::MinusToken,
-                    Some(expression),
-                ),
-                pos,
+            let __h112 = self.factory.new_prefix_unary_expression(
+                &mut self.nodes,
+                Kind::MinusToken,
+                Some(expression),
             );
+            expression = self.finish_node(__h112, pos);
         }
-        self.finish_node(
-            self.factory
-                .new_literal_type_node(&mut self.nodes, Some(expression)),
-            pos,
-        )
+        let __h113 = self
+            .factory
+            .new_literal_type_node(&mut self.nodes, Some(expression));
+        self.finish_node(__h113, pos)
     }
 
     /// `func (p *Parser) parseTypeReference() *ast.Node`
@@ -4763,14 +4586,10 @@ impl<'a> Parser<'a> {
         let pos = self.node_pos();
         let entity_name = self.parse_entity_name_of_type_reference();
         let type_arguments = self.parse_type_arguments_of_type_reference();
-        self.finish_node(
-            self.factory.new_type_reference_node(
-                &mut self.nodes,
-                entity_name,
-                type_arguments,
-            ),
-            pos,
-        )
+        let __h114 =
+            self.factory
+                .new_type_reference_node(&mut self.nodes, entity_name, type_arguments);
+        self.finish_node(__h114, pos)
     }
 
     /// `func (p *Parser) parseEntityNameOfTypeReference() *ast.Node`
@@ -4806,14 +4625,10 @@ impl<'a> Parser<'a> {
                 allow_private_name,
                 true, /*allowUnicodeEscapeSequenceInIdentifierName*/
             );
-            entity = self.finish_node(
-                self.factory.new_qualified_name(
-                    &mut self.nodes,
-                    Some(entity),
-                    Some(right),
-                ),
-                pos,
-            );
+            let __h115 =
+                self.factory
+                    .new_qualified_name(&mut self.nodes, Some(entity), Some(right));
+            entity = self.finish_node(__h115, pos);
         }
         Some(entity)
     }
@@ -4887,7 +4702,7 @@ impl<'a> Parser<'a> {
     }
 
     /// `func (p *Parser) createMissingIdentifier() *ast.Node`
-    fn create_missing_identifier(&mut self) -> NodeId {
+    pub(crate) fn create_missing_identifier(&mut self) -> NodeId {
         let pos = self.node_pos();
         let id = self.new_identifier("");
         self.finish_node(id, pos)
@@ -4898,11 +4713,8 @@ impl<'a> Parser<'a> {
         let pos = self.node_pos();
         let text = String::from_utf8_lossy(self.scanner.token_value()).into_owned();
         self.next_token();
-        self.finish_node(
-            self.factory
-                .new_private_identifier(&mut self.nodes, &text),
-            pos,
-        )
+        let __h116 = self.factory.new_private_identifier(&mut self.nodes, &text);
+        self.finish_node(__h116, pos)
     }
 
     /// `func (p *Parser) reScanLessThanToken() ast.Kind`
@@ -4933,8 +4745,7 @@ impl<'a> Parser<'a> {
 
     /// `func (p *Parser) parseTypeArgumentsOfTypeReference() *ast.NodeList`
     fn parse_type_arguments_of_type_reference(&mut self) -> Option<NodeList> {
-        if !self.has_preceding_line_break()
-            && self.rescan_less_than_token() == Kind::LessThanToken
+        if !self.has_preceding_line_break() && self.rescan_less_than_token() == Kind::LessThanToken
         {
             return self.parse_type_arguments();
         }
@@ -4942,7 +4753,7 @@ impl<'a> Parser<'a> {
     }
 
     /// `func (p *Parser) parseTypeArguments() *ast.NodeList`
-    fn parse_type_arguments(&mut self) -> Option<NodeList> {
+    pub(crate) fn parse_type_arguments(&mut self) -> Option<NodeList> {
         if self.token == Kind::LessThanToken {
             return self.parse_bracketed_list(
                 PC_TYPE_ARGUMENTS,
@@ -4989,16 +4800,11 @@ impl<'a> Parser<'a> {
                 );
             }
             self.parse_expected(Kind::ColonToken);
-            attributes =
-                Some(self.parse_import_attributes(current_token, true /*skipKeyword*/));
+            attributes = Some(self.parse_import_attributes(current_token, true /*skipKeyword*/));
             self.parse_optional(Kind::CommaToken);
-            if !self.parse_expected(Kind::CloseBraceToken)
-                && !self.diagnostics.is_empty()
-            {
+            if !self.parse_expected(Kind::CloseBraceToken) && !self.diagnostics.is_empty() {
                 let last_diagnostic = self.diagnostics.last().unwrap().clone();
-                if lock_diagnostic(&last_diagnostic).code()
-                    == diagnostics::X_0_expected.code()
-                {
+                if lock_diagnostic(&last_diagnostic).code() == diagnostics::X_0_expected.code() {
                     let related = new_diagnostic::<String>(
                         None,
                         TextRange::new(open_brace_position, open_brace_position),
@@ -5015,17 +4821,15 @@ impl<'a> Parser<'a> {
             qualifier = self.parse_entity_name_of_type_reference();
         }
         let type_arguments = self.parse_type_arguments_of_type_reference();
-        self.finish_node(
-            self.factory.new_import_type_node(
-                &mut self.nodes,
-                is_type_of,
-                Some(type_node),
-                attributes,
-                qualifier,
-                type_arguments,
-            ),
-            pos,
-        )
+        let __h117 = self.factory.new_import_type_node(
+            &mut self.nodes,
+            is_type_of,
+            Some(type_node),
+            attributes,
+            qualifier,
+            type_arguments,
+        );
+        self.finish_node(__h117, pos)
     }
 
     /// `func (p *Parser) parseImportAttribute() *ast.Node`
@@ -5046,11 +4850,10 @@ impl<'a> Parser<'a> {
             );
         }
         let value = self.parse_assignment_expression_or_higher();
-        self.finish_node(
-            self.factory
-                .new_import_attribute(&mut self.nodes, name, Some(value)),
-            pos,
-        )
+        let __h118 = self
+            .factory
+            .new_import_attribute(&mut self.nodes, name, Some(value));
+        self.finish_node(__h118, pos)
     }
 
     fn parse_import_attribute_some(&mut self) -> Option<NodeId> {
@@ -5068,20 +4871,15 @@ impl<'a> Parser<'a> {
         let open_brace_position = self.scanner.token_start() as i32;
         if self.parse_expected(Kind::OpenBraceToken) {
             multi_line = self.has_preceding_line_break();
-            elements = self
-                .parse_delimited_list(
-                    PC_IMPORT_ATTRIBUTES,
-                    Self::parse_import_attribute_some,
-                    false,
-                )
-                .unwrap_or_else(|| self.parse_empty_node_list());
-            if !self.parse_expected(Kind::CloseBraceToken)
-                && !self.diagnostics.is_empty()
-            {
+            let __h119 = self.parse_delimited_list(
+                PC_IMPORT_ATTRIBUTES,
+                Self::parse_import_attribute_some,
+                false,
+            );
+            elements = __h119.unwrap_or_else(|| self.parse_empty_node_list());
+            if !self.parse_expected(Kind::CloseBraceToken) && !self.diagnostics.is_empty() {
                 let last_diagnostic = self.diagnostics.last().unwrap().clone();
-                if lock_diagnostic(&last_diagnostic).code()
-                    == diagnostics::X_0_expected.code()
-                {
+                if lock_diagnostic(&last_diagnostic).code() == diagnostics::X_0_expected.code() {
                     let related = new_diagnostic::<String>(
                         None,
                         TextRange::new(open_brace_position, open_brace_position),
@@ -5094,15 +4892,10 @@ impl<'a> Parser<'a> {
         } else {
             elements = self.parse_empty_node_list();
         }
-        self.finish_node(
-            self.factory.new_import_attributes(
-                &mut self.nodes,
-                token,
-                Some(elements),
-                multi_line,
-            ),
-            pos,
-        )
+        let __h120 =
+            self.factory
+                .new_import_attributes(&mut self.nodes, token, Some(elements), multi_line);
+        self.finish_node(__h120, pos)
     }
 
     /// `func (p *Parser) parseTypeQuery() *ast.Node`
@@ -5119,11 +4912,10 @@ impl<'a> Parser<'a> {
         if !self.has_preceding_line_break() {
             type_arguments = self.parse_type_arguments();
         }
-        self.finish_node(
-            self.factory
-                .new_type_query_node(&mut self.nodes, entity_name, type_arguments),
-            pos,
-        )
+        let __h121 = self
+            .factory
+            .new_type_query_node(&mut self.nodes, entity_name, type_arguments);
+        self.finish_node(__h121, pos)
     }
 
     /// `func (p *Parser) nextIsStartOfMappedType() bool`
@@ -5175,18 +4967,16 @@ impl<'a> Parser<'a> {
         self.parse_semicolon();
         let members = self.parse_list(PC_TYPE_MEMBERS, Self::parse_type_member_some);
         self.parse_expected(Kind::CloseBraceToken);
-        self.finish_node(
-            self.factory.new_mapped_type_node(
-                &mut self.nodes,
-                readonly_token,
-                Some(type_parameter),
-                name_type,
-                question_token,
-                type_node,
-                Some(members),
-            ),
-            pos,
-        )
+        let __h122 = self.factory.new_mapped_type_node(
+            &mut self.nodes,
+            readonly_token,
+            Some(type_parameter),
+            name_type,
+            question_token,
+            type_node,
+            Some(members),
+        );
+        self.finish_node(__h122, pos)
     }
 
     /// `func (p *Parser) parseMappedTypeParameter() *ast.Node`
@@ -5195,17 +4985,15 @@ impl<'a> Parser<'a> {
         let name = self.parse_identifier_name();
         self.parse_expected(Kind::InKeyword);
         let type_node = self.parse_type();
-        self.finish_node(
-            self.factory.new_type_parameter_declaration(
-                &mut self.nodes,
-                None, /*modifiers*/
-                Some(name),
-                Some(type_node),
-                None, /*expression*/
-                None, /*defaultType*/
-            ),
-            pos,
-        )
+        let __h123 = self.factory.new_type_parameter_declaration(
+            &mut self.nodes,
+            None, /*modifiers*/
+            Some(name),
+            Some(type_node),
+            None, /*expression*/
+            None, /*defaultType*/
+        );
+        self.finish_node(__h123, pos)
     }
 
     /// `func (p *Parser) parseTypeMember() *ast.Node`
@@ -5315,8 +5103,7 @@ impl<'a> Parser<'a> {
             // user writes a constraint that is an expression and not an actual type, then parse
             // it out as an expression (so we can recover well), but report that a type is needed
             // instead.
-            if self.is_start_of_type(false /*inStartOfParameter*/)
-                || !self.is_start_of_expression()
+            if self.is_start_of_type(false /*inStartOfParameter*/) || !self.is_start_of_expression()
             {
                 constraint = Some(self.parse_type());
             } else {
@@ -5365,8 +5152,7 @@ impl<'a> Parser<'a> {
         // SingleNameBinding [Yield,Await]:
         //      BindingIdentifier[?Yield,?Await]Initializer [In, ?Yield,?Await] opt
         if self.parse_expected(Kind::OpenParenToken) {
-            let parameters =
-                self.parse_parameters_worker(flags, true /*allowAmbiguity*/);
+            let parameters = self.parse_parameters_worker(flags, true /*allowAmbiguity*/);
             self.parse_expected(Kind::CloseParenToken);
             return parameters.unwrap_or_else(|| self.create_missing_list());
         }
@@ -5379,8 +5165,7 @@ impl<'a> Parser<'a> {
         flags: ParseFlags,
         allow_ambiguity: bool,
     ) -> Option<NodeList> {
-        let in_await_context =
-            self.context_flags.intersects(NodeFlags::AWAIT_CONTEXT);
+        let in_await_context = self.context_flags.intersects(NodeFlags::AWAIT_CONTEXT);
         let save_context_flags = self.context_flags;
         self.set_context_flags(
             NodeFlags::YIELD_CONTEXT,
@@ -5393,8 +5178,7 @@ impl<'a> Parser<'a> {
         let parameters = self.parse_delimited_list(
             PC_PARAMETERS,
             move |p| {
-                let parameter =
-                    p.parse_parameter_ex(in_await_context, allow_ambiguity);
+                let parameter = p.parse_parameter_ex(in_await_context, allow_ambiguity);
                 if let Some(parameter) = parameter
                     && !flags.intersects(ParseFlags::TYPE)
                 {
@@ -5437,13 +5221,15 @@ impl<'a> Parser<'a> {
         self.context_flags = save_context_flags;
         if self.token == Kind::ThisKeyword {
             let name = self.create_identifier(true /*isIdentifier*/);
+            let __h124 = /*questionToken*/
+                self.parse_type_annotation();
             let result = self.factory.new_parameter_declaration(
                 &mut self.nodes,
                 modifiers.clone(),
                 None, /*dotDotDotToken*/
                 Some(name),
-                None, /*questionToken*/
-                self.parse_type_annotation(),
+                None,
+                __h124,
                 None, /*initializer*/
             );
             if let Some(mods) = modifiers.as_ref() {
@@ -5498,10 +5284,7 @@ impl<'a> Parser<'a> {
         let name = self.parse_identifier_or_pattern_with_diagnostic(Some(
             &diagnostics::Private_identifiers_cannot_be_used_as_parameters,
         ));
-        if self.nodes[name].loc.len() == 0
-            && modifiers.is_none()
-            && self.token.is_modifier_kind()
-        {
+        if self.nodes[name].loc.len() == 0 && modifiers.is_none() && self.token.is_modifier_kind() {
             // in cases like
             // 'use strict'
             // function foo(static)
@@ -5555,15 +5338,13 @@ impl<'a> Parser<'a> {
             if self.token == Kind::IsKeyword && !self.has_preceding_line_break() {
                 self.next_token();
                 let t = self.parse_type();
-                return self.finish_node(
-                    self.factory.new_type_predicate_node(
-                        &mut self.nodes,
-                        None, /*assertsModifier*/
-                        Some(id),
-                        Some(t),
-                    ),
-                    pos,
+                let __h125 = self.factory.new_type_predicate_node(
+                    &mut self.nodes,
+                    None, /*assertsModifier*/
+                    Some(id),
+                    Some(t),
                 );
+                return self.finish_node(__h125, pos);
             }
             self.rewind(state);
         }
@@ -5619,7 +5400,8 @@ impl<'a> Parser<'a> {
                 body,
             )
         };
-        self.with_jsdoc(self.finish_node(result, pos), jsdoc);
+        let __h126 = self.finish_node(result, pos);
+        self.with_jsdoc(__h126, jsdoc);
         if !flags.intersects(ParseFlags::TYPE) {
             self.check_js_syntax(result);
         }
@@ -5663,11 +5445,10 @@ impl<'a> Parser<'a> {
         // will error if it sees a comma expression.
         let expression = self.parse_expression_allow_in();
         self.parse_expected(Kind::CloseBracketToken);
-        self.finish_node(
-            self.factory
-                .new_computed_property_name(&mut self.nodes, Some(expression)),
-            pos,
-        )
+        let __h127 = self
+            .factory
+            .new_computed_property_name(&mut self.nodes, Some(expression));
+        self.finish_node(__h127, pos)
     }
 
     /// `func (p *Parser) parseFunctionBlockOrSemicolon(flags, diagnosticMessage)`
@@ -5790,15 +5571,13 @@ impl<'a> Parser<'a> {
         );
         let type_node = self.parse_type_annotation();
         self.parse_type_member_semicolon();
-        let result = self.finish_node(
-            self.factory.new_index_signature_declaration(
-                &mut self.nodes,
-                modifiers,
-                parameters,
-                type_node,
-            ),
-            pos,
+        let __h128 = self.factory.new_index_signature_declaration(
+            &mut self.nodes,
+            modifiers,
+            parameters,
+            type_node,
         );
+        let result = self.finish_node(__h128, pos);
         self.with_jsdoc(result, jsdoc);
         result
     }
@@ -5847,7 +5626,8 @@ impl<'a> Parser<'a> {
             );
         }
         self.parse_type_member_semicolon();
-        self.with_jsdoc(self.finish_node(result, pos), jsdoc);
+        let __h129 = self.finish_node(result, pos);
+        self.with_jsdoc(__h129, jsdoc);
         result
     }
 
@@ -5855,11 +5635,10 @@ impl<'a> Parser<'a> {
     pub fn parse_type_literal(&mut self) -> NodeId {
         let pos = self.node_pos();
         let members = self.parse_object_type_members();
-        self.finish_node(
-            self.factory
-                .new_type_literal_node(&mut self.nodes, Some(members)),
-            pos,
-        )
+        let __h130 = self
+            .factory
+            .new_type_literal_node(&mut self.nodes, Some(members));
+        self.finish_node(__h130, pos)
     }
 
     /// `func (p *Parser) parseObjectTypeMembers() *ast.NodeList`
@@ -5881,11 +5660,8 @@ impl<'a> Parser<'a> {
             Kind::OpenBracketToken,
             Kind::CloseBracketToken,
         );
-        self.finish_node(
-            self.factory
-                .new_tuple_type_node(&mut self.nodes, elements),
-            pos,
-        )
+        let __h131 = self.factory.new_tuple_type_node(&mut self.nodes, elements);
+        self.finish_node(__h131, pos)
     }
 
     /// `func (p *Parser) parseTupleElementNameOrTupleElementType() *ast.Node`
@@ -5898,16 +5674,14 @@ impl<'a> Parser<'a> {
             let question_token = self.parse_optional_token(Kind::QuestionToken);
             self.parse_expected(Kind::ColonToken);
             let type_node = self.parse_tuple_element_type();
-            let result = self.finish_node(
-                self.factory.new_named_tuple_member(
-                    &mut self.nodes,
-                    dot_dot_dot_token,
-                    Some(name),
-                    question_token,
-                    Some(type_node),
-                ),
-                pos,
+            let __h132 = self.factory.new_named_tuple_member(
+                &mut self.nodes,
+                dot_dot_dot_token,
+                Some(name),
+                question_token,
+                Some(type_node),
             );
+            let result = self.finish_node(__h132, pos);
             self.with_jsdoc(result, jsdoc);
             return result;
         }
@@ -5924,8 +5698,7 @@ impl<'a> Parser<'a> {
             return token_is_identifier_or_keyword(self.next_token())
                 && self.next_token_is_colon_or_question_colon();
         }
-        token_is_identifier_or_keyword(self.token)
-            && self.next_token_is_colon_or_question_colon()
+        token_is_identifier_or_keyword(self.token) && self.next_token_is_colon_or_question_colon()
     }
 
     /// `func (p *Parser) nextTokenIsColonOrQuestionColon() bool`
@@ -5939,16 +5712,12 @@ impl<'a> Parser<'a> {
         let pos = self.node_pos();
         if self.parse_optional(Kind::DotDotDotToken) {
             let t = self.parse_type();
-            return self.finish_node(
-                self.factory.new_rest_type_node(&mut self.nodes, Some(t)),
-                pos,
-            );
+            let __h133 = self.factory.new_rest_type_node(&mut self.nodes, Some(t));
+            return self.finish_node(__h133, pos);
         }
-        let mut type_node = self.parse_type();
+        let type_node = self.parse_type();
         if is_js_doc_nullable_type(&self.nodes[type_node]) {
-            let inner = self.nodes[type_node]
-                .as_js_doc_nullable_type()
-                .type_;
+            let inner = self.nodes[type_node].as_js_doc_nullable_type().type_;
             if let Some(inner) = inner
                 && self.nodes[type_node].pos() == self.nodes[inner].pos()
             {
@@ -5970,11 +5739,10 @@ impl<'a> Parser<'a> {
         self.parse_expected(Kind::OpenParenToken);
         let type_node = self.parse_type();
         self.parse_expected(Kind::CloseParenToken);
-        self.finish_node(
-            self.factory
-                .new_parenthesized_type_node(&mut self.nodes, Some(type_node)),
-            pos,
-        )
+        let __h134 = self
+            .factory
+            .new_parenthesized_type_node(&mut self.nodes, Some(type_node));
+        self.finish_node(__h134, pos)
     }
 
     /// `func (p *Parser) parseAssertsTypePredicate() *ast.TypeNode`
@@ -5990,15 +5758,13 @@ impl<'a> Parser<'a> {
         if self.parse_optional(Kind::IsKeyword) {
             type_node = Some(self.parse_type());
         }
-        self.finish_node(
-            self.factory.new_type_predicate_node(
-                &mut self.nodes,
-                Some(asserts_modifier),
-                Some(parameter_name),
-                type_node,
-            ),
-            pos,
-        )
+        let __h135 = self.factory.new_type_predicate_node(
+            &mut self.nodes,
+            Some(asserts_modifier),
+            Some(parameter_name),
+            type_node,
+        );
+        self.finish_node(__h135, pos)
     }
 
     /// `func (p *Parser) parseTemplateType() *ast.Node`
@@ -6006,14 +5772,10 @@ impl<'a> Parser<'a> {
         let pos = self.node_pos();
         let head = self.parse_template_head(false /*isTaggedTemplate*/);
         let spans = self.parse_template_type_spans();
-        self.finish_node(
-            self.factory.new_template_literal_type_node(
-                &mut self.nodes,
-                Some(head),
-                Some(spans),
-            ),
-            pos,
-        )
+        let __h136 =
+            self.factory
+                .new_template_literal_type_node(&mut self.nodes, Some(head), Some(spans));
+        self.finish_node(__h136, pos)
     }
 
     /// `func (p *Parser) parseTemplateHead(isTaggedTemplate) *ast.Node`
@@ -6030,12 +5792,9 @@ impl<'a> Parser<'a> {
         let text = String::from_utf8_lossy(self.scanner.token_value()).into_owned();
         let raw_text = self.get_template_literal_raw_text(2 /*endLength*/);
         let flags = self.scanner.token_flags();
-        let result = self.factory.new_template_head(
-            &mut self.nodes,
-            &text,
-            &raw_text,
-            flags,
-        );
+        let result = self
+            .factory
+            .new_template_head(&mut self.nodes, &text, &raw_text, flags);
         self.next_token();
         self.finish_node(result, pos)
     }
@@ -6059,16 +5818,15 @@ impl<'a> Parser<'a> {
         let mut list = Vec::new();
         loop {
             let span = self.parse_template_type_span();
-            let is_middle = self.nodes[span]
-                .as_template_literal_type_span()
-                .literal
-                .is_some_and(|l| self.nodes[l].kind == Kind::TemplateMiddle);
+            let __h137 = self.nodes[span].as_template_literal_type_span().literal;
+            let is_middle = __h137.is_some_and(|l| self.nodes[l].kind == Kind::TemplateMiddle);
             list.push(span);
             if !is_middle {
                 break;
             }
         }
-        self.new_node_list(TextRange::new(pos, self.node_pos()), list)
+        let __h138 = TextRange::new(pos, self.node_pos());
+        self.new_node_list(__h138, list)
     }
 
     /// `func (p *Parser) parseTemplateTypeSpan() *ast.Node`
@@ -6076,14 +5834,10 @@ impl<'a> Parser<'a> {
         let pos = self.node_pos();
         let t = self.parse_type();
         let literal = self.parse_literal_of_template_span(false /*isTaggedTemplate*/);
-        self.finish_node(
-            self.factory.new_template_literal_type_span(
-                &mut self.nodes,
-                Some(t),
-                Some(literal),
-            ),
-            pos,
-        )
+        let __h139 =
+            self.factory
+                .new_template_literal_type_span(&mut self.nodes, Some(t), Some(literal));
+        self.finish_node(__h139, pos)
     }
 
     /// `func (p *Parser) parseLiteralOfTemplateSpan(isTaggedTemplate) *ast.Node`
@@ -6097,15 +5851,10 @@ impl<'a> Parser<'a> {
             &[scanner::token_to_string(Kind::CloseBraceToken).to_string()],
         );
         let pos = self.node_pos();
-        self.finish_node(
-            self.factory.new_template_tail(
-                &mut self.nodes,
-                "",
-                "",
-                TokenFlags::NONE,
-            ),
-            pos,
-        )
+        let __h140 = self
+            .factory
+            .new_template_tail(&mut self.nodes, "", "", TokenFlags::NONE);
+        self.finish_node(__h140, pos)
     }
 
     /// `func (p *Parser) parseTemplateMiddleOrTail() *ast.Node`
@@ -6171,7 +5920,10 @@ impl<'a> Parser<'a> {
         let jsdoc = self.jsdoc_scanner_info();
         let modifiers = self.parse_modifiers_for_constructor_type();
         let is_constructor_type = self.parse_optional(Kind::NewKeyword);
-        tsc_debug::assert_!(modifiers.is_none() || is_constructor_type, "Per isStartOfFunctionOrConstructorType, a function type cannot have modifiers.");
+        tsc_debug::assert_!(
+            modifiers.is_none() || is_constructor_type,
+            "Per isStartOfFunctionOrConstructorType, a function type cannot have modifiers."
+        );
         let type_parameters = self.parse_type_parameters();
         let parameters = self.parse_parameters(ParseFlags::TYPE);
         let return_type =
@@ -6322,9 +6074,8 @@ impl<'a> Parser<'a> {
             }
         }
         if !list.is_empty() {
-            return Some(
-                self.new_modifier_list(TextRange::new(pos, self.node_pos()), list),
-            );
+            let __h141 = TextRange::new(pos, self.node_pos());
+            return Some(self.new_modifier_list(__h141, list));
         }
         None
     }
@@ -6338,11 +6089,10 @@ impl<'a> Parser<'a> {
             true,
             Self::parse_decorator_expression,
         );
-        self.finish_node(
-            self.factory
-                .new_decorator(&mut self.nodes, Some(expression)),
-            pos,
-        )
+        let __h142 = self
+            .factory
+            .new_decorator(&mut self.nodes, Some(expression));
+        self.finish_node(__h142, pos)
     }
 
     /// `func (p *Parser) parseDecoratorExpression() *ast.Expression`
@@ -6351,10 +6101,8 @@ impl<'a> Parser<'a> {
             // `@await` is disallowed in an [Await] context, but can cause parsing to go off the rails
             // This simply parses the missing identifier and moves on.
             let pos = self.node_pos();
-            let await_expression = self.parse_identifier_with_diagnostic(
-                Some(&diagnostics::Expression_expected),
-                None,
-            );
+            let await_expression = self
+                .parse_identifier_with_diagnostic(Some(&diagnostics::Expression_expected), None);
             self.next_token();
             let member_expression = self.parse_member_expression_rest(
                 pos,
@@ -6395,10 +6143,8 @@ impl<'a> Parser<'a> {
                 return None;
             }
         }
-        Some(self.finish_node(
-            self.factory.new_token(&mut self.nodes, kind),
-            pos,
-        ))
+        let __h143 = self.factory.new_token(&mut self.nodes, kind);
+        Some(self.finish_node(__h143, pos))
     }
 
     /// `func (p *Parser) parseContextualModifier(t) bool`
@@ -6454,10 +6200,9 @@ impl<'a> Parser<'a> {
     /// `func (p *Parser) nextTokenCanFollowDefaultKeyword() bool`
     fn next_token_can_follow_default_keyword(&mut self) -> bool {
         match self.next_token() {
-            Kind::ClassKeyword
-            | Kind::FunctionKeyword
-            | Kind::InterfaceKeyword
-            | Kind::AtToken => return true,
+            Kind::ClassKeyword | Kind::FunctionKeyword | Kind::InterfaceKeyword | Kind::AtToken => {
+                return true;
+            }
             Kind::AbstractKeyword => {
                 return self.look_ahead(Self::next_token_is_class_keyword_on_same_line);
             }
@@ -6470,7 +6215,7 @@ impl<'a> Parser<'a> {
     }
 
     /// `func (p *Parser) nextTokenIsIdentifierOrKeyword() bool`
-    fn next_token_is_identifier_or_keyword(&mut self) -> bool {
+    pub(crate) fn next_token_is_identifier_or_keyword(&mut self) -> bool {
         token_is_identifier_or_keyword(self.next_token())
     }
 
@@ -6577,7 +6322,11 @@ impl<'a> Parser<'a> {
 
     /// `func (p *Parser) parseExpressionAllowIn() *ast.Expression`
     fn parse_expression_allow_in(&mut self) -> NodeId {
-        self.do_in_context(NodeFlags::DISALLOW_IN_CONTEXT, false, Self::parse_expression)
+        self.do_in_context(
+            NodeFlags::DISALLOW_IN_CONTEXT,
+            false,
+            Self::parse_expression,
+        )
     }
 
     /// `func (p *Parser) parseAssignmentExpressionOrHigher() *ast.Expression`
@@ -6617,17 +6366,13 @@ impl<'a> Parser<'a> {
         // If we do successfully parse arrow-function, we must *not* recurse for productions 1, 2 or 3. An ArrowFunction is
         // not a LeftHandSideExpression, nor does it start a ConditionalExpression.  So we are done
         // with AssignmentExpression if we see one.
-        if let Some(arrow_expression) =
-            self.try_parse_parenthesized_arrow_function_expression(
-                allow_return_type_in_arrow_function,
-            )
+        if let Some(arrow_expression) = self
+            .try_parse_parenthesized_arrow_function_expression(allow_return_type_in_arrow_function)
         {
             return arrow_expression;
         }
-        if let Some(arrow_expression) =
-            self.try_parse_async_simple_arrow_function_expression(
-                allow_return_type_in_arrow_function,
-            )
+        if let Some(arrow_expression) = self
+            .try_parse_async_simple_arrow_function_expression(allow_return_type_in_arrow_function)
         {
             return arrow_expression;
         }
@@ -6646,9 +6391,7 @@ impl<'a> Parser<'a> {
         // To avoid a look-ahead, we did not handle the case of an arrow function with a single un-parenthesized
         // parameter ('x => ...') above. We handle it here by checking if the parsed expression was a single
         // identifier and the current token is an arrow.
-        if self.nodes[expr].kind == Kind::Identifier
-            && self.token == Kind::EqualsGreaterThanToken
-        {
+        if self.nodes[expr].kind == Kind::Identifier && self.token == Kind::EqualsGreaterThanToken {
             return self.parse_simple_arrow_function_expression(
                 pos,
                 expr,
@@ -6657,19 +6400,19 @@ impl<'a> Parser<'a> {
                 None, /*asyncModifier*/
             );
         }
+        let __h144 = &self.nodes[expr];
         // Now see if we might be in cases '2' or '3'.
         // If the expression was a LHS expression, and we have an assignment operator, then
         // we're in '2' or '3'. Consume the assignment and return.
         //
         // Note: we call reScanGreaterToken so that we get an appropriately merged token
         // for cases like `> > =` becoming `>>=`
-        if is_left_hand_side_expression(&self.nodes[expr], &self.nodes)
+        if is_left_hand_side_expression(__h144, &self.nodes)
             && self.rescan_greater_than_token().is_assignment_operator()
         {
             let operator_token = self.parse_token_node();
-            let right = self.parse_assignment_expression_or_higher_worker(
-                allow_return_type_in_arrow_function,
-            );
+            let right = self
+                .parse_assignment_expression_or_higher_worker(allow_return_type_in_arrow_function);
             return self.make_binary_expression(expr, operator_token, right, pos);
         }
         // It wasn't an assignment or a lambda.  This is a conditional expression:
@@ -6699,9 +6442,8 @@ impl<'a> Parser<'a> {
             // for now we just check if the next token is an identifier.  More heuristics
             // can be added here later as necessary.  We just need to make sure that we
             // don't accidentally consume something legal.
-            return self.look_ahead(
-                Self::next_token_is_identifier_or_keyword_or_literal_on_same_line,
-            );
+            return self
+                .look_ahead(Self::next_token_is_identifier_or_keyword_or_literal_on_same_line);
         }
         false
     }
@@ -6719,11 +6461,8 @@ impl<'a> Parser<'a> {
         {
             let asterisk_token = self.parse_optional_token(Kind::AsteriskToken);
             let expression = self.parse_assignment_expression_or_higher();
-            self.factory.new_yield_expression(
-                &mut self.nodes,
-                asterisk_token,
-                Some(expression),
-            )
+            self.factory
+                .new_yield_expression(&mut self.nodes, asterisk_token, Some(expression))
         } else {
             // if the next token is not on the same line as yield.  or we don't have an '*' or
             // the start of an expression, then this is just a simple "yield" expression.
@@ -6775,9 +6514,7 @@ impl<'a> Parser<'a> {
                 // but this is probably what the user intended.
                 let third = self.next_token();
                 match third {
-                    Kind::EqualsGreaterThanToken
-                    | Kind::ColonToken
-                    | Kind::OpenBraceToken => {
+                    Kind::EqualsGreaterThanToken | Kind::ColonToken | Kind::OpenBraceToken => {
                         return TS_TRUE;
                     }
                     _ => {}
@@ -6845,7 +6582,10 @@ impl<'a> Parser<'a> {
             // It is definitely not an arrow function
             TS_FALSE
         } else {
-            tsc_debug::assert_!(first == Kind::LessThanToken, "expected first token to be '<'");
+            tsc_debug::assert_!(
+                first == Kind::LessThanToken,
+                "expected first token to be '<'"
+            );
             // If we have "<" not followed by an identifier,
             // then this definitely is not an arrow function.
             if !self.is_identifier() && self.token != Kind::ConstKeyword {
@@ -6859,9 +6599,7 @@ impl<'a> Parser<'a> {
                     if third == Kind::ExtendsKeyword {
                         let fourth = p.next_token();
                         match fourth {
-                            Kind::EqualsToken
-                            | Kind::GreaterThanToken
-                            | Kind::SlashToken => {
+                            Kind::EqualsToken | Kind::GreaterThanToken | Kind::SlashToken => {
                                 return false;
                             }
                             _ => {}
@@ -6947,9 +6685,8 @@ impl<'a> Parser<'a> {
                     self.parse_parameters_worker(signature_flags, allow_ambiguity);
                 parameters = maybe_parameters?;
             } else {
-                parameters = self
-                    .parse_parameters_worker(signature_flags, allow_ambiguity)
-                    .unwrap_or_else(|| self.create_missing_list());
+                let __h145 = self.parse_parameters_worker(signature_flags, allow_ambiguity);
+                parameters = __h145.unwrap_or_else(|| self.create_missing_list());
             }
             if !self.parse_expected(Kind::CloseParenToken) && !allow_ambiguity {
                 return None;
@@ -6959,10 +6696,7 @@ impl<'a> Parser<'a> {
         let return_type = self.parse_return_type(Kind::ColonToken /*isType*/, false);
         if return_type.is_some()
             && !allow_ambiguity
-            && type_has_arrow_function_blocking_parse_error(
-                return_type.unwrap(),
-                &self.nodes,
-            )
+            && type_has_arrow_function_blocking_parse_error(return_type.unwrap(), &self.nodes)
         {
             return None;
         }
@@ -6986,21 +6720,20 @@ impl<'a> Parser<'a> {
         // If we have an arrow function, we need to check if the parameters are valid as
         // arrow function parameters.
         if allow_ambiguity
-            && !matches!(self.token, Kind::EqualsGreaterThanToken | Kind::OpenBraceToken)
+            && !matches!(
+                self.token,
+                Kind::EqualsGreaterThanToken | Kind::OpenBraceToken
+            )
         {
             return None;
         }
         // Go on to parse the arrow function assuming no further issues.
         let last_token = self.token;
-        let equals_greater_than_token =
-            self.parse_expected_token(Kind::EqualsGreaterThanToken);
+        let equals_greater_than_token = self.parse_expected_token(Kind::EqualsGreaterThanToken);
         let body = if last_token == Kind::EqualsGreaterThanToken
             || last_token == Kind::OpenBraceToken
         {
-            self.parse_arrow_function_expression_body(
-                is_async,
-                allow_return_type_in_arrow_function,
-            )
+            self.parse_arrow_function_expression_body(is_async, allow_return_type_in_arrow_function)
         } else {
             self.parse_identifier()
         };
@@ -7029,19 +6762,17 @@ impl<'a> Parser<'a> {
                 return None;
             }
         }
-        let result = self.finish_node(
-            self.factory.new_arrow_function(
-                &mut self.nodes,
-                modifiers,
-                type_parameters,
-                Some(parameters),
-                return_type,
-                None, /*fullSignature*/
-                Some(equals_greater_than_token),
-                Some(body),
-            ),
-            pos,
+        let __h146 = self.factory.new_arrow_function(
+            &mut self.nodes,
+            modifiers,
+            type_parameters,
+            Some(parameters),
+            return_type,
+            None, /*fullSignature*/
+            Some(equals_greater_than_token),
+            Some(body),
         );
+        let result = self.finish_node(__h146, pos);
         self.with_jsdoc(result, jsdoc);
         self.check_js_syntax(result);
         Some(result)
@@ -7052,11 +6783,8 @@ impl<'a> Parser<'a> {
         if self.token == Kind::AsyncKeyword {
             let pos = self.node_pos();
             self.next_token();
-            let modifier = self.finish_node(
-                self.factory
-                    .new_token(&mut self.nodes, Kind::AsyncKeyword),
-                pos,
-            );
+            let __h147 = self.factory.new_token(&mut self.nodes, Kind::AsyncKeyword);
+            let modifier = self.finish_node(__h147, pos);
             let loc = self.nodes[modifier].loc;
             return Some(self.new_modifier_list(loc, vec![modifier]));
         }
@@ -7112,9 +6840,8 @@ impl<'a> Parser<'a> {
         let save_context_flags = self.context_flags;
         self.set_context_flags(NodeFlags::AWAIT_CONTEXT, is_async);
         self.set_context_flags(NodeFlags::YIELD_CONTEXT, false);
-        let node = self.parse_assignment_expression_or_higher_worker(
-            allow_return_type_in_arrow_function,
-        );
+        let node =
+            self.parse_assignment_expression_or_higher_worker(allow_return_type_in_arrow_function);
         self.context_flags = save_context_flags;
         node
     }
@@ -7181,9 +6908,7 @@ impl<'a> Parser<'a> {
             self.next_token();
             // If the "async" is followed by "=>" token then it is not a beginning of an async arrow-function
             // but instead a simple arrow-function which will be parsed inside "parseAssignmentExpressionOrHigher"
-            if self.has_preceding_line_break()
-                || self.token == Kind::EqualsGreaterThanToken
-            {
+            if self.has_preceding_line_break() || self.token == Kind::EqualsGreaterThanToken {
                 return false;
             }
             // Check for un-parenthesized AsyncArrowFunction
@@ -7191,8 +6916,7 @@ impl<'a> Parser<'a> {
                 return false;
             }
             self.next_token_without_check();
-            return !self.has_preceding_line_break()
-                && self.token == Kind::EqualsGreaterThanToken;
+            return !self.has_preceding_line_break() && self.token == Kind::EqualsGreaterThanToken;
         }
         false
     }
@@ -7206,41 +6930,39 @@ impl<'a> Parser<'a> {
         jsdoc: JSDocScannerInfo,
         async_modifier: Option<ModifierList>,
     ) -> NodeId {
-        tsc_debug::assert_!(self.token == Kind::EqualsGreaterThanToken, "parseSimpleArrowFunctionExpression should only have been called if we had a =>");
-        let id_pos = self.nodes[identifier].pos();
-        let parameter = self.finish_node(
-            self.factory.new_parameter_declaration(
-                &mut self.nodes,
-                None, /*modifiers*/
-                None, /*dotDotDotToken*/
-                Some(identifier),
-                None, /*questionToken*/
-                None, /*typeNode*/
-                None, /*initializer*/
-            ),
-            id_pos,
+        tsc_debug::assert_!(
+            self.token == Kind::EqualsGreaterThanToken,
+            "parseSimpleArrowFunctionExpression should only have been called if we had a =>"
         );
-        let parameters =
-            self.new_node_list(self.nodes[parameter].loc, vec![parameter]);
-        let equals_greater_than_token =
-            self.parse_expected_token(Kind::EqualsGreaterThanToken);
+        let id_pos = self.nodes[identifier].pos();
+        let __h148 = self.factory.new_parameter_declaration(
+            &mut self.nodes,
+            None, /*modifiers*/
+            None, /*dotDotDotToken*/
+            Some(identifier),
+            None, /*questionToken*/
+            None, /*typeNode*/
+            None, /*initializer*/
+        );
+        let parameter = self.finish_node(__h148, id_pos);
+        let __h149 = self.nodes[parameter].loc;
+        let parameters = self.new_node_list(__h149, vec![parameter]);
+        let equals_greater_than_token = self.parse_expected_token(Kind::EqualsGreaterThanToken);
         let body = self.parse_arrow_function_expression_body(
             async_modifier.is_some(), /*isAsync*/
             allow_return_type_in_arrow_function,
         );
-        let result = self.finish_node(
-            self.factory.new_arrow_function(
-                &mut self.nodes,
-                async_modifier,
-                None, /*typeParameters*/
-                Some(parameters),
-                None, /*returnType*/
-                None, /*fullSignature*/
-                Some(equals_greater_than_token),
-                Some(body),
-            ),
-            pos,
+        let __h150 = self.factory.new_arrow_function(
+            &mut self.nodes,
+            async_modifier,
+            None, /*typeParameters*/
+            Some(parameters),
+            None, /*returnType*/
+            None, /*fullSignature*/
+            Some(equals_greater_than_token),
+            Some(body),
         );
+        let result = self.finish_node(__h150, pos);
         self.with_jsdoc(result, jsdoc);
         result
     }
@@ -7261,28 +6983,23 @@ impl<'a> Parser<'a> {
         // we do not that for the 'whenFalse' part.
         let save_context_flags = self.context_flags;
         self.set_context_flags(NodeFlags::DISALLOW_IN_CONTEXT, false);
-        let true_expression =
-            self.parse_assignment_expression_or_higher_worker(false);
+        let true_expression = self.parse_assignment_expression_or_higher_worker(false);
         self.context_flags = save_context_flags;
         let colon_token = self.parse_expected_token(Kind::ColonToken);
         let false_expression = if node_is_present(Some(colon_token), &self.nodes) {
-            self.parse_assignment_expression_or_higher_worker(
-                allow_return_type_in_arrow_function,
-            )
+            self.parse_assignment_expression_or_higher_worker(allow_return_type_in_arrow_function)
         } else {
             self.create_missing_identifier()
         };
-        self.finish_node(
-            self.factory.new_conditional_expression(
-                &mut self.nodes,
-                Some(left_operand),
-                Some(question_token),
-                Some(true_expression),
-                Some(colon_token),
-                Some(false_expression),
-            ),
-            pos,
-        )
+        let __h151 = self.factory.new_conditional_expression(
+            &mut self.nodes,
+            Some(left_operand),
+            Some(question_token),
+            Some(true_expression),
+            Some(colon_token),
+            Some(false_expression),
+        );
+        self.finish_node(__h151, pos)
     }
 
     /// `func (p *Parser) parseBinaryExpressionOrHigher(precedence) *ast.Expression`
@@ -7365,24 +7082,23 @@ impl<'a> Parser<'a> {
     /// `func (p *Parser) makeSatisfiesExpression(expression, typeNode)`
     fn make_satisfies_expression(&mut self, expression: NodeId, type_node: NodeId) -> NodeId {
         let pos = self.nodes[expression].pos();
-        self.check_js_syntax(self.finish_node(
-            self.factory.new_satisfies_expression(
-                &mut self.nodes,
-                Some(expression),
-                Some(type_node),
-            ),
-            pos,
-        ))
+        let __h153 = self.factory.new_satisfies_expression(
+            &mut self.nodes,
+            Some(expression),
+            Some(type_node),
+        );
+        let __h152 = self.finish_node(__h153, pos);
+        self.check_js_syntax(__h152)
     }
 
     /// `func (p *Parser) makeAsExpression(left, right)`
     fn make_as_expression(&mut self, left: NodeId, right: NodeId) -> NodeId {
         let pos = self.nodes[left].pos();
-        self.check_js_syntax(self.finish_node(
-            self.factory
-                .new_as_expression(&mut self.nodes, Some(left), Some(right)),
-            pos,
-        ))
+        let __h155 = self
+            .factory
+            .new_as_expression(&mut self.nodes, Some(left), Some(right));
+        let __h154 = self.finish_node(__h155, pos);
+        self.check_js_syntax(__h154)
     }
 
     /// `func (p *Parser) makeBinaryExpression(left, operatorToken, right, pos)`
@@ -7393,17 +7109,15 @@ impl<'a> Parser<'a> {
         right: NodeId,
         pos: i32,
     ) -> NodeId {
-        self.finish_node(
-            self.factory.new_binary_expression(
-                &mut self.nodes,
-                None, /*modifiers*/
-                Some(left),
-                None, /*typeNode*/
-                Some(operator_token),
-                Some(right),
-            ),
-            pos,
-        )
+        let __h156 = self.factory.new_binary_expression(
+            &mut self.nodes,
+            None, /*modifiers*/
+            Some(left),
+            None, /*typeNode*/
+            Some(operator_token),
+            Some(right),
+        );
+        self.finish_node(__h156, pos)
     }
 
     /// `func (p *Parser) parseUnaryExpressionOrHigher() *ast.Expression`
@@ -7435,10 +7149,8 @@ impl<'a> Parser<'a> {
         let unary_operator = self.token;
         let simple_unary_expression = self.parse_simple_unary_expression();
         if self.token == Kind::AsteriskAsteriskToken {
-            let pos = scanner::skip_trivia(
-                self.source_text,
-                self.nodes[simple_unary_expression].pos(),
-            );
+            let __h157 = self.nodes[simple_unary_expression].pos();
+            let pos = scanner::skip_trivia(self.source_text, __h157);
             let end = self.nodes[simple_unary_expression].end();
             if self.nodes[simple_unary_expression].kind == Kind::TypeAssertionExpression {
                 self.parse_error_at(pos, end, &diagnostics::A_type_assertion_expression_is_not_allowed_in_the_left_hand_side_of_an_exponentiation_expression_Consider_enclosing_the_expression_in_parentheses, &[]);
@@ -7474,23 +7186,19 @@ impl<'a> Parser<'a> {
             let operator = self.token;
             self.next_token();
             let lhs = self.parse_left_hand_side_expression_or_higher();
-            return self.finish_node(
-                self.factory.new_prefix_unary_expression(
-                    &mut self.nodes,
-                    operator,
-                    Some(lhs),
-                ),
-                pos,
-            );
+            let __h158 =
+                self.factory
+                    .new_prefix_unary_expression(&mut self.nodes, operator, Some(lhs));
+            return self.finish_node(__h158, pos);
         } else if self.language_variant == LanguageVariant::Jsx
             && self.token == Kind::LessThanToken
             && self.look_ahead(Self::next_token_is_identifier_or_keyword_or_greater_than)
         {
             // JSXElement is part of primaryExpression
             return self.parse_jsx_element_or_self_closing_element_or_fragment(
-                true, /*inExpressionContext*/
-                -1,   /*topInvalidNodePosition*/
-                None, /*openingTag*/
+                true,  /*inExpressionContext*/
+                -1,    /*topInvalidNodePosition*/
+                None,  /*openingTag*/
                 false, /*mustBeUnary*/
             );
         }
@@ -7500,14 +7208,12 @@ impl<'a> Parser<'a> {
         {
             let operator = self.token;
             self.next_token();
-            return self.finish_node(
-                self.factory.new_postfix_unary_expression(
-                    &mut self.nodes,
-                    Some(expression),
-                    operator,
-                ),
-                pos,
+            let __h159 = self.factory.new_postfix_unary_expression(
+                &mut self.nodes,
+                Some(expression),
+                operator,
             );
+            return self.finish_node(__h159, pos);
         }
         expression
     }
@@ -7540,9 +7246,7 @@ fn type_has_arrow_function_blocking_parse_error(node: NodeId, nodes: &[Node]) ->
             // `node.FunctionLikeData().Parameters` / `node.Type()`
             let type_node = nodes[node].type_();
             is_missing_node_list(parameters)
-                || type_node.is_some_and(|t| {
-                    type_has_arrow_function_blocking_parse_error(t, nodes)
-                })
+                || type_node.is_some_and(|t| type_has_arrow_function_blocking_parse_error(t, nodes))
         }
         Kind::ParenthesizedType => nodes[node]
             .type_()
@@ -7565,9 +7269,8 @@ impl<'a> Parser<'a> {
         must_be_unary: bool,
     ) -> NodeId {
         let pos = self.node_pos();
-        let opening = self.parse_jsx_opening_or_self_closing_element_or_opening_fragment(
-            in_expression_context,
-        );
+        let opening = self
+            .parse_jsx_opening_or_self_closing_element_or_opening_fragment(in_expression_context);
         let result: NodeId;
         match self.nodes[opening].kind {
             Kind::JsxOpeningElement => {
@@ -7577,23 +7280,20 @@ impl<'a> Parser<'a> {
                 if let Some(last_child) = last_child
                     && self.nodes[last_child].kind == Kind::JsxElement
                 {
-                    let last_opening =
-                        self.nodes[last_child].as_jsx_element().opening_element;
-                    let last_closing =
-                        self.nodes[last_child].as_jsx_element().closing_element;
-                    if last_opening.is_some()
-                        && last_closing.is_some()
-                        && !tag_names_are_equivalent(
-                            self.tag_name(last_opening.unwrap()),
-                            self.tag_name(last_closing.unwrap()),
-                            &self.nodes,
-                        )
-                        && tag_names_are_equivalent(
-                            self.tag_name(opening),
-                            self.tag_name(last_closing.unwrap()),
-                            &self.nodes,
-                        )
+                    let last_opening = self.nodes[last_child].as_jsx_element().opening_element;
+                    let last_closing = self.nodes[last_child].as_jsx_element().closing_element;
+                    let cond = if let (Some(last_opening), Some(last_closing)) =
+                        (last_opening, last_closing)
                     {
+                        let __h160 = self.tag_name(last_opening);
+                        let __h161 = self.tag_name(last_closing);
+                        let __h162 = self.tag_name(opening);
+                        !tag_names_are_equivalent(__h160, __h161, &self.nodes)
+                            && tag_names_are_equivalent(__h162, __h161, &self.nodes)
+                    } else {
+                        false
+                    };
+                    if cond {
                         // when an unclosed JsxOpeningElement incorrectly parses its parent's JsxClosingElement,
                         // restructure (<div>(...<span>...</div>)) --> (<div>(...<span>...</>)</div>)
                         // (no need to error; the parent will error)
@@ -7604,22 +7304,16 @@ impl<'a> Parser<'a> {
                         let new_closing_element = self
                             .factory
                             .new_jsx_closing_element(&mut self.nodes, Some(missing_identifier));
-                        let new_closing_element = self.finish_node_with_end(
-                            new_closing_element,
-                            end,
-                            end,
-                        );
+                        let new_closing_element =
+                            self.finish_node_with_end(new_closing_element, end, end);
                         let new_last = self.factory.new_jsx_element(
                             &mut self.nodes,
                             last_opening,
                             Some(children.clone()),
                             Some(new_closing_element),
                         );
-                        let new_last = self.finish_node_with_end(
-                            new_last,
-                            self.nodes[last_opening.unwrap()].pos(),
-                            end,
-                        );
+                        let __h164 = self.nodes[last_opening.unwrap()].pos();
+                        let new_last = self.finish_node_with_end(new_last, __h164, end);
                         // force reset parent pointers from discarded parse result
                         if let Some(o) = last_opening {
                             self.nodes[o].parent = Some(new_last);
@@ -7630,20 +7324,16 @@ impl<'a> Parser<'a> {
                         self.nodes[new_closing_element].parent = Some(new_last);
                         let mut new_nodes = children.nodes.clone();
                         *new_nodes.last_mut().unwrap() = new_last;
-                        children = self.new_node_list(
-                            TextRange::new(children.loc.pos(), self.nodes[new_last].end()),
-                            new_nodes.to_vec(),
-                        );
+                        let __h165 = TextRange::new(children.loc.pos(), self.nodes[new_last].end());
+                        children = self.new_node_list(__h165, new_nodes.to_vec());
                         closing_element = last_closing.unwrap();
-                        result = self.finish_node(
-                            self.factory.new_jsx_element(
-                                &mut self.nodes,
-                                Some(opening),
-                                Some(children),
-                                Some(closing_element),
-                            ),
-                            pos,
+                        let __h166 = self.factory.new_jsx_element(
+                            &mut self.nodes,
+                            Some(opening),
+                            Some(children),
+                            Some(closing_element),
                         );
+                        result = self.finish_node(__h166, pos);
                         self.nodes[closing_element].parent = Some(result);
                         // fallthrough handled after match
                         return self.finish_jsx(
@@ -7655,26 +7345,25 @@ impl<'a> Parser<'a> {
                         );
                     }
                 }
-                closing_element =
-                    self.parse_jsx_closing_element(opening, in_expression_context);
-                if !tag_names_are_equivalent(
-                    self.tag_name(opening),
-                    self.tag_name(closing_element),
-                    &self.nodes,
-                ) {
-                    if let Some(ot) = opening_tag
-                        && is_jsx_opening_element(&self.nodes[ot])
-                        && tag_names_are_equivalent(
-                            self.tag_name(closing_element),
-                            self.tag_name(ot),
-                            &self.nodes,
-                        )
-                    {
+                closing_element = self.parse_jsx_closing_element(opening, in_expression_context);
+                let __h167 = self.tag_name(opening);
+                let __h168 = self.tag_name(closing_element);
+                if !tag_names_are_equivalent(__h167, __h168, &self.nodes) {
+                    let cond = if let Some(ot) = opening_tag {
+                        let __h169 = self.tag_name(closing_element);
+                        let __h170 = self.tag_name(ot);
+                        is_jsx_opening_element(&self.nodes[ot])
+                            && tag_names_are_equivalent(__h169, __h170, &self.nodes)
+                    } else {
+                        false
+                    };
+                    if cond {
                         // opening incorrectly matched with its parent's closing -- put error on opening
                         let loc = self.nodes[self.tag_name(opening).unwrap()].loc;
+                        let __h171 = self.tag_name(opening).unwrap();
                         let arg = scanner_utils::get_text_of_node_from_source_text(
                             self.source_text,
-                            self.tag_name(opening).unwrap(),
+                            __h171,
                             false,
                             &self.nodes,
                         )
@@ -7687,9 +7376,10 @@ impl<'a> Parser<'a> {
                     } else {
                         // other opening/closing mismatches -- put error on closing
                         let loc = self.nodes[self.tag_name(closing_element).unwrap()].loc;
+                        let __h172 = self.tag_name(opening).unwrap();
                         let arg = scanner_utils::get_text_of_node_from_source_text(
                             self.source_text,
-                            self.tag_name(opening).unwrap(),
+                            __h172,
                             false,
                             &self.nodes,
                         )
@@ -7701,29 +7391,25 @@ impl<'a> Parser<'a> {
                         );
                     }
                 }
-                result = self.finish_node(
-                    self.factory.new_jsx_element(
-                        &mut self.nodes,
-                        Some(opening),
-                        Some(children),
-                        Some(closing_element),
-                    ),
-                    pos,
+                let __h173 = self.factory.new_jsx_element(
+                    &mut self.nodes,
+                    Some(opening),
+                    Some(children),
+                    Some(closing_element),
                 );
+                result = self.finish_node(__h173, pos);
                 self.nodes[closing_element].parent = Some(result);
             }
             Kind::JsxOpeningFragment => {
                 let children = self.parse_jsx_children(opening);
                 let closing = self.parse_jsx_closing_fragment(in_expression_context);
-                result = self.finish_node(
-                    self.factory.new_jsx_fragment(
-                        &mut self.nodes,
-                        Some(opening),
-                        Some(children),
-                        Some(closing),
-                    ),
-                    pos,
+                let __h174 = self.factory.new_jsx_fragment(
+                    &mut self.nodes,
+                    Some(opening),
+                    Some(children),
+                    Some(closing),
                 );
+                result = self.finish_node(__h174, pos);
             }
             Kind::JsxSelfClosingElement => {
                 // Nothing else to do for self-closing elements
@@ -7762,10 +7448,9 @@ impl<'a> Parser<'a> {
                 false, /*mustBeUnary*/
             );
             let operator_token = self.factory.new_token(&mut self.nodes, Kind::CommaToken);
-            self.nodes[operator_token].loc = TextRange::new(
-                self.nodes[invalid_element].pos(),
-                self.nodes[invalid_element].pos(),
-            );
+            let __h175 = self.nodes[invalid_element].pos();
+            let __h176 = self.nodes[invalid_element].pos();
+            self.nodes[operator_token].loc = TextRange::new(__h175, __h176);
             let start = scanner::skip_trivia(self.source_text, top_bad_pos);
             let end = self.nodes[invalid_element].end();
             self.parse_error_at(
@@ -7774,17 +7459,15 @@ impl<'a> Parser<'a> {
                 &diagnostics::JSX_expressions_must_have_one_parent_element,
                 &[],
             );
-            result = self.finish_node(
-                self.factory.new_binary_expression(
-                    &mut self.nodes,
-                    None, /*modifiers*/
-                    Some(result),
-                    None, /*typeNode*/
-                    Some(operator_token),
-                    Some(invalid_element),
-                ),
-                pos,
+            let __h177 = self.factory.new_binary_expression(
+                &mut self.nodes,
+                None, /*modifiers*/
+                Some(result),
+                None, /*typeNode*/
+                Some(operator_token),
+                Some(invalid_element),
             );
+            result = self.finish_node(__h177, pos);
         }
         result
     }
@@ -7808,30 +7491,28 @@ impl<'a> Parser<'a> {
             if is_jsx_opening_element(&self.nodes[opening_tag])
                 && self.nodes[child].kind == Kind::JsxElement
             {
-                let child_opening =
-                    self.nodes[child].as_jsx_element().opening_element;
-                let child_closing =
-                    self.nodes[child].as_jsx_element().closing_element;
-                if child_opening.is_some()
-                    && child_closing.is_some()
-                    && !tag_names_are_equivalent(
-                        self.tag_name(child_opening.unwrap()),
-                        self.tag_name(child_closing.unwrap()),
-                        &self.nodes,
-                    )
-                    && tag_names_are_equivalent(
-                        self.tag_name(opening_tag),
-                        self.tag_name(child_closing.unwrap()),
-                        &self.nodes,
-                    )
+                let child_opening = self.nodes[child].as_jsx_element().opening_element;
+                let child_closing = self.nodes[child].as_jsx_element().closing_element;
+                let cond = if let (Some(child_opening), Some(child_closing)) =
+                    (child_opening, child_closing)
                 {
+                    let __h178 = self.tag_name(child_opening);
+                    let __h179 = self.tag_name(child_closing);
+                    let __h180 = self.tag_name(opening_tag);
+                    !tag_names_are_equivalent(__h178, __h179, &self.nodes)
+                        && tag_names_are_equivalent(__h180, __h179, &self.nodes)
+                } else {
+                    false
+                };
+                if cond {
                     // stop after parsing a mismatched child like <div>...(<span></div>) in order to reattach the </div> higher
                     break;
                 }
             }
         }
         self.parsing_contexts = save_parsing_contexts;
-        self.new_node_list(TextRange::new(pos, self.node_pos()), list)
+        let __h182 = TextRange::new(pos, self.node_pos());
+        self.new_node_list(__h182, list)
     }
 
     /// `func (p *Parser) parseJsxChild(openingTag, token) *ast.Expression`
@@ -7851,13 +7532,10 @@ impl<'a> Parser<'a> {
                     // We want the error span to cover only 'Foo.Bar' in < Foo.Bar >
                     // or to cover only 'Foo' in < Foo >
                     let tag = self.tag_name(opening_tag).unwrap();
-                    let start = std::cmp::min(
-                        scanner::skip_trivia(
-                            self.source_text,
-                            self.nodes[tag].pos(),
-                        ),
-                        self.nodes[tag].end(),
-                    );
+                    let __h185 = self.nodes[tag].pos();
+                    let __h183 = scanner::skip_trivia(self.source_text, __h185);
+                    let __h184 = self.nodes[tag].end();
+                    let start = std::cmp::min(__h183, __h184);
                     let arg = scanner_utils::get_text_of_node_from_source_text(
                         self.source_text,
                         tag,
@@ -7865,9 +7543,10 @@ impl<'a> Parser<'a> {
                         &self.nodes,
                     )
                     .into_owned();
+                    let __h186 = self.nodes[tag].end();
                     self.parse_error_at(
                         start,
-                        self.nodes[tag].end(),
+                        __h186,
                         &diagnostics::JSX_element_0_has_no_corresponding_closing_tag,
                         &[arg],
                     );
@@ -7895,11 +7574,8 @@ impl<'a> Parser<'a> {
     fn parse_jsx_text(&mut self) -> NodeId {
         let pos = self.node_pos();
         let text = String::from_utf8_lossy(self.scanner.token_value()).into_owned();
-        let result = self.factory.new_jsx_text(
-            &mut self.nodes,
-            &text,
-            self.token == Kind::JsxTextAllWhiteSpaces,
-        );
+        let __h187 = self.token == Kind::JsxTextAllWhiteSpaces;
+        let result = self.factory.new_jsx_text(&mut self.nodes, &text, __h187);
         self.scan_jsx_text();
         self.finish_node(result, pos)
     }
@@ -7927,14 +7603,10 @@ impl<'a> Parser<'a> {
         } else if self.parse_expected_without_advancing(Kind::CloseBraceToken) {
             self.scan_jsx_text();
         }
-        self.finish_node(
-            self.factory.new_jsx_expression(
-                &mut self.nodes,
-                dot_dot_dot_token,
-                expression,
-            ),
-            pos,
-        )
+        let __h188 =
+            self.factory
+                .new_jsx_expression(&mut self.nodes, dot_dot_dot_token, expression);
+        self.finish_node(__h188, pos)
     }
 
     /// `func (p *Parser) scanJsxText() ast.Kind`
@@ -7959,11 +7631,7 @@ impl<'a> Parser<'a> {
     }
 
     /// `func (p *Parser) parseJsxClosingElement(open, inExpressionContext) *ast.Node`
-    fn parse_jsx_closing_element(
-        &mut self,
-        open: NodeId,
-        in_expression_context: bool,
-    ) -> NodeId {
+    fn parse_jsx_closing_element(&mut self, open: NodeId, in_expression_context: bool) -> NodeId {
         let pos = self.node_pos();
         self.parse_expected(Kind::LessThanSlashToken);
         let tag_name = self.parse_jsx_element_name();
@@ -7972,24 +7640,20 @@ impl<'a> Parser<'a> {
             None,  /*diagnosticMessage*/
             false, /*shouldAdvance*/
         ) {
+            let __h189 = self.tag_name(open);
             // manually advance the scanner in order to look for jsx text inside jsx
             if in_expression_context
-                || !tag_names_are_equivalent(
-                    self.tag_name(open),
-                    Some(tag_name),
-                    &self.nodes,
-                )
+                || !tag_names_are_equivalent(__h189, Some(tag_name), &self.nodes)
             {
                 self.next_token();
             } else {
                 self.scan_jsx_text();
             }
         }
-        self.finish_node(
-            self.factory
-                .new_jsx_closing_element(&mut self.nodes, Some(tag_name)),
-            pos,
-        )
+        let __h190 = self
+            .factory
+            .new_jsx_closing_element(&mut self.nodes, Some(tag_name));
+        self.finish_node(__h190, pos)
     }
 
     /// `func (p *Parser) parseJsxOpeningOrSelfClosingElementOrOpeningFragment(inExpressionContext)`
@@ -8002,10 +7666,8 @@ impl<'a> Parser<'a> {
         if self.token == Kind::GreaterThanToken {
             // See below for explanation of scanJsxText
             self.scan_jsx_text();
-            return self.finish_node(
-                self.factory.new_jsx_opening_fragment(&mut self.nodes),
-                pos,
-            );
+            let __h191 = self.factory.new_jsx_opening_fragment(&mut self.nodes);
+            return self.finish_node(__h191, pos);
         }
         let tag_name = self.parse_jsx_element_name();
         let mut type_arguments = None;
@@ -8062,16 +7724,14 @@ impl<'a> Parser<'a> {
                 false, /*allowPrivateIdentifiers*/
                 false, /*allowUnicodeEscapeSequenceInIdentifierName*/
             );
-            expression = self.finish_node(
-                self.factory.new_property_access_expression(
-                    &mut self.nodes,
-                    Some(expression),
-                    None, /*questionDotToken*/
-                    Some(right),
-                    NodeFlags::NONE,
-                ),
-                pos,
+            let __h192 = self.factory.new_property_access_expression(
+                &mut self.nodes,
+                Some(expression),
+                None, /*questionDotToken*/
+                Some(right),
+                NodeFlags::NONE,
             );
+            expression = self.finish_node(__h192, pos);
         }
         expression
     }
@@ -8085,14 +7745,10 @@ impl<'a> Parser<'a> {
         if self.parse_optional(Kind::ColonToken) {
             self.scan_jsx_identifier();
             let right = self.parse_identifier_name_error_on_unicode_escape_sequence();
-            return self.finish_node(
-                self.factory.new_jsx_namespaced_name(
-                    &mut self.nodes,
-                    Some(tag_name),
-                    Some(right),
-                ),
-                pos,
-            );
+            let __h193 =
+                self.factory
+                    .new_jsx_namespaced_name(&mut self.nodes, Some(tag_name), Some(right));
+            return self.finish_node(__h193, pos);
         }
         if is_this {
             let result = self
@@ -8106,13 +7762,11 @@ impl<'a> Parser<'a> {
     /// `func (p *Parser) parseJsxAttributes() *ast.Node`
     fn parse_jsx_attributes(&mut self) -> NodeId {
         let pos = self.node_pos();
-        let attributes =
-            self.parse_list(PC_JSX_ATTRIBUTES, Self::parse_jsx_attribute_some);
-        self.finish_node(
-            self.factory
-                .new_jsx_attributes(&mut self.nodes, Some(attributes)),
-            pos,
-        )
+        let attributes = self.parse_list(PC_JSX_ATTRIBUTES, Self::parse_jsx_attribute_some);
+        let __h194 = self
+            .factory
+            .new_jsx_attributes(&mut self.nodes, Some(attributes));
+        self.finish_node(__h194, pos)
     }
 
     /// `func (p *Parser) parseJsxAttribute() *ast.Node`
@@ -8123,11 +7777,10 @@ impl<'a> Parser<'a> {
         let pos = self.node_pos();
         let name = self.parse_jsx_attribute_name();
         let initializer = self.parse_jsx_attribute_value();
-        self.finish_node(
-            self.factory
-                .new_jsx_attribute(&mut self.nodes, Some(name), initializer),
-            pos,
-        )
+        let __h195 = self
+            .factory
+            .new_jsx_attribute(&mut self.nodes, Some(name), initializer);
+        self.finish_node(__h195, pos)
     }
 
     fn parse_jsx_attribute_some(&mut self) -> Option<NodeId> {
@@ -8141,11 +7794,10 @@ impl<'a> Parser<'a> {
         self.parse_expected(Kind::DotDotDotToken);
         let expression = self.parse_expression();
         self.parse_expected(Kind::CloseBraceToken);
-        self.finish_node(
-            self.factory
-                .new_jsx_spread_attribute(&mut self.nodes, Some(expression)),
-            pos,
-        )
+        let __h196 = self
+            .factory
+            .new_jsx_spread_attribute(&mut self.nodes, Some(expression));
+        self.finish_node(__h196, pos)
     }
 
     /// `func (p *Parser) parseJsxAttributeName() *ast.Node`
@@ -8156,14 +7808,10 @@ impl<'a> Parser<'a> {
         if self.parse_optional(Kind::ColonToken) {
             self.scan_jsx_identifier();
             let right = self.parse_identifier_name_error_on_unicode_escape_sequence();
-            return self.finish_node(
-                self.factory.new_jsx_namespaced_name(
-                    &mut self.nodes,
-                    Some(attr_name),
-                    Some(right),
-                ),
-                pos,
-            );
+            let __h197 =
+                self.factory
+                    .new_jsx_namespaced_name(&mut self.nodes, Some(attr_name), Some(right));
+            return self.finish_node(__h197, pos);
         }
         attr_name
     }
@@ -8208,10 +7856,8 @@ impl<'a> Parser<'a> {
                 self.scan_jsx_text();
             }
         }
-        self.finish_node(
-            self.factory.new_jsx_closing_fragment(&mut self.nodes),
-            pos,
-        )
+        let __h198 = self.factory.new_jsx_closing_fragment(&mut self.nodes);
+        self.finish_node(__h198, pos)
     }
 
     /// `n.TagName()` helper — `openingTag.TagName()` / `closingElement.TagName()`.
@@ -8221,19 +7867,15 @@ impl<'a> Parser<'a> {
 
     /// `lastChild.Children().End()` — end of the children list of a JsxElement.
     fn children_end(&self, node: NodeId) -> i32 {
-        self.nodes[node]
-            .children()
-            .map(|c| c.loc.end())
-            .unwrap_or_else(|| self.nodes[node].end())
+        let __h199 = self.nodes[node].children().map(|c| c.loc.end());
+        __h199.unwrap_or_else(|| self.nodes[node].end())
     }
 }
 
 /// `func getSpaceSuggestion(expressionText string) string`
 fn get_space_suggestion(expression_text: &str) -> String {
     for keyword in VIABLE_KEYWORD_SUGGESTIONS.iter() {
-        if expression_text.len() > keyword.len() + 2
-            && expression_text.starts_with(keyword)
-        {
+        if expression_text.len() > keyword.len() + 2 && expression_text.starts_with(keyword) {
             return format!("{} {}", keyword, &expression_text[keyword.len()..]);
         }
     }
@@ -8241,10 +7883,7 @@ fn get_space_suggestion(expression_text: &str) -> String {
 }
 
 /// `func isValidHeritageTypeReferenceExpression(node *ast.Node) bool`
-fn is_valid_heritage_type_reference_expression(
-    node: Option<NodeId>,
-    nodes: &[Node],
-) -> bool {
+fn is_valid_heritage_type_reference_expression(node: Option<NodeId>, nodes: &[Node]) -> bool {
     let Some(node) = node else {
         return false;
     };
@@ -8254,18 +7893,11 @@ fn is_valid_heritage_type_reference_expression(
     is_property_access_expression(&nodes[node])
         && !is_optional_chain(&nodes[node])
         && node_is_present(nodes[node].name(), nodes)
-        && is_valid_heritage_type_reference_expression(
-            nodes[node].expression(),
-            nodes,
-        )
+        && is_valid_heritage_type_reference_expression(nodes[node].expression(), nodes)
 }
 
 /// `func ast.TagNamesAreEquivalent(...)` for NodeIds.
-fn tag_names_are_equivalent(
-    left: Option<NodeId>,
-    right: Option<NodeId>,
-    nodes: &[Node],
-) -> bool {
+fn tag_names_are_equivalent(left: Option<NodeId>, right: Option<NodeId>, nodes: &[Node]) -> bool {
     match (left, right) {
         (Some(l), Some(r)) => tsc_ast::utilities::tag_names_are_equivalent(l, r, nodes),
         _ => false,
@@ -8281,8 +7913,9 @@ impl<'a> Parser<'a> {
     /// `func (p *Parser) parseSimpleUnaryExpression() *ast.Expression`
     fn parse_simple_unary_expression(&mut self) -> NodeId {
         match self.token {
-            Kind::PlusToken | Kind::MinusToken | Kind::TildeToken
-            | Kind::ExclamationToken => self.parse_prefix_unary_expression(),
+            Kind::PlusToken | Kind::MinusToken | Kind::TildeToken | Kind::ExclamationToken => {
+                self.parse_prefix_unary_expression()
+            }
             Kind::DeleteKeyword => self.parse_delete_expression(),
             Kind::TypeOfKeyword => self.parse_type_of_expression(),
             Kind::VoidKeyword => self.parse_void_expression(),
@@ -8318,11 +7951,10 @@ impl<'a> Parser<'a> {
         let operator = self.token;
         self.next_token();
         let operand = self.parse_simple_unary_expression();
-        self.finish_node(
+        let __h200 =
             self.factory
-                .new_prefix_unary_expression(&mut self.nodes, operator, Some(operand)),
-            pos,
-        )
+                .new_prefix_unary_expression(&mut self.nodes, operator, Some(operand));
+        self.finish_node(__h200, pos)
     }
 
     /// `func (p *Parser) parseDeleteExpression() *ast.Node`
@@ -8330,11 +7962,10 @@ impl<'a> Parser<'a> {
         let pos = self.node_pos();
         self.next_token();
         let operand = self.parse_simple_unary_expression();
-        self.finish_node(
-            self.factory
-                .new_delete_expression(&mut self.nodes, Some(operand)),
-            pos,
-        )
+        let __h201 = self
+            .factory
+            .new_delete_expression(&mut self.nodes, Some(operand));
+        self.finish_node(__h201, pos)
     }
 
     /// `func (p *Parser) parseTypeOfExpression() *ast.Node`
@@ -8342,11 +7973,10 @@ impl<'a> Parser<'a> {
         let pos = self.node_pos();
         self.next_token();
         let operand = self.parse_simple_unary_expression();
-        self.finish_node(
-            self.factory
-                .new_type_of_expression(&mut self.nodes, Some(operand)),
-            pos,
-        )
+        let __h202 = self
+            .factory
+            .new_type_of_expression(&mut self.nodes, Some(operand));
+        self.finish_node(__h202, pos)
     }
 
     /// `func (p *Parser) parseVoidExpression() *ast.Node`
@@ -8354,11 +7984,10 @@ impl<'a> Parser<'a> {
         let pos = self.node_pos();
         self.next_token();
         let operand = self.parse_simple_unary_expression();
-        self.finish_node(
-            self.factory
-                .new_void_expression(&mut self.nodes, Some(operand)),
-            pos,
-        )
+        let __h203 = self
+            .factory
+            .new_void_expression(&mut self.nodes, Some(operand));
+        self.finish_node(__h203, pos)
     }
 
     /// `func (p *Parser) isAwaitExpression() bool`
@@ -8368,9 +7997,8 @@ impl<'a> Parser<'a> {
                 return true;
             }
             // here we are using similar heuristics as 'isYieldExpression'
-            return self.look_ahead(
-                Self::next_token_is_identifier_or_keyword_or_literal_on_same_line,
-            );
+            return self
+                .look_ahead(Self::next_token_is_identifier_or_keyword_or_literal_on_same_line);
         }
         false
     }
@@ -8380,29 +8008,27 @@ impl<'a> Parser<'a> {
         let pos = self.node_pos();
         self.next_token();
         let operand = self.parse_simple_unary_expression();
-        self.finish_node(
-            self.factory
-                .new_await_expression(&mut self.nodes, Some(operand)),
-            pos,
-        )
+        let __h204 = self
+            .factory
+            .new_await_expression(&mut self.nodes, Some(operand));
+        self.finish_node(__h204, pos)
     }
 
     /// `func (p *Parser) parseTypeAssertion() *ast.Node`
     fn parse_type_assertion(&mut self) -> NodeId {
-        tsc_debug::assert_!(self.language_variant != LanguageVariant::Jsx, "Type assertions should never be parsed in JSX; they should be parsed as comparisons or JSX elements/fragments.");
+        tsc_debug::assert_!(
+            self.language_variant != LanguageVariant::Jsx,
+            "Type assertions should never be parsed in JSX; they should be parsed as comparisons or JSX elements/fragments."
+        );
         let pos = self.node_pos();
         self.parse_expected(Kind::LessThanToken);
         let type_node = self.parse_type();
         self.parse_expected(Kind::GreaterThanToken);
         let expression = self.parse_simple_unary_expression();
-        self.finish_node(
-            self.factory.new_type_assertion(
-                &mut self.nodes,
-                Some(type_node),
-                Some(expression),
-            ),
-            pos,
-        )
+        let __h205 =
+            self.factory
+                .new_type_assertion(&mut self.nodes, Some(type_node), Some(expression));
+        self.finish_node(__h205, pos)
     }
 
     /// `func (p *Parser) parseLeftHandSideExpressionOrHigher() *ast.Expression`
@@ -8424,7 +8050,7 @@ impl<'a> Parser<'a> {
         // 3)we have a MemberExpression which either completes the LeftHandSideExpression,
         // or starts the beginning of the first four CallExpression productions.
         let pos = self.node_pos();
-        let mut expression: NodeId;
+        let expression: NodeId;
         if self.token == Kind::ImportKeyword {
             if self.look_ahead(Self::next_token_is_open_paren_or_less_than) {
                 // We don't want to eagerly consume all import keyword as import call expression so we look ahead to find "("
@@ -8439,20 +8065,16 @@ impl<'a> Parser<'a> {
                 self.next_token(); // advance past the 'import'
                 self.next_token(); // advance past the dot
                 let name = self.parse_import_meta_property_name();
-                expression = self.finish_node(
-                    self.factory.new_meta_property(
-                        &mut self.nodes,
-                        Kind::ImportKeyword,
-                        Some(name),
-                    ),
-                    pos,
+                let __h206 = self.factory.new_meta_property(
+                    &mut self.nodes,
+                    Kind::ImportKeyword,
+                    Some(name),
                 );
-                if is_import_phase_meta_property(&self.nodes[expression], &self.nodes) {
-                    if self.token == Kind::OpenParenToken
-                        || self.token == Kind::LessThanToken
-                    {
-                        self.source_flags |=
-                            NodeFlags::POSSIBLY_CONTAINS_DYNAMIC_IMPORT;
+                expression = self.finish_node(__h206, pos);
+                let __h207 = &self.nodes[expression];
+                if is_import_phase_meta_property(__h207, &self.nodes) {
+                    if self.token == Kind::OpenParenToken || self.token == Kind::LessThanToken {
+                        self.source_flags |= NodeFlags::POSSIBLY_CONTAINS_DYNAMIC_IMPORT;
                     }
                 } else {
                     self.source_flags |= NodeFlags::POSSIBLY_CONTAINS_IMPORT_META;
@@ -8505,14 +8127,12 @@ impl<'a> Parser<'a> {
                     &[],
                 );
                 if !self.is_template_start_of_tagged_template() {
-                    expression = self.finish_node(
-                        self.factory.new_expression_with_type_arguments(
-                            &mut self.nodes,
-                            Some(expression),
-                            Some(type_arguments),
-                        ),
-                        pos,
+                    let __h208 = self.factory.new_expression_with_type_arguments(
+                        &mut self.nodes,
+                        Some(expression),
+                        Some(type_arguments),
                     );
+                    expression = self.finish_node(__h208, pos);
                 }
             }
         }
@@ -8534,22 +8154,19 @@ impl<'a> Parser<'a> {
             true, /*allowPrivateIdentifiers*/
             true, /*allowUnicodeEscapeSequenceInIdentifierName*/
         );
-        self.finish_node(
-            self.factory.new_property_access_expression(
-                &mut self.nodes,
-                Some(expression),
-                None, /*questionDotToken*/
-                Some(right),
-                NodeFlags::NONE,
-            ),
-            pos,
-        )
+        let __h209 = self.factory.new_property_access_expression(
+            &mut self.nodes,
+            Some(expression),
+            None, /*questionDotToken*/
+            Some(right),
+            NodeFlags::NONE,
+        );
+        self.finish_node(__h209, pos)
     }
 
     /// `func (p *Parser) isTemplateStartOfTaggedTemplate() bool`
     fn is_template_start_of_tagged_template(&self) -> bool {
-        self.token == Kind::NoSubstitutionTemplateLiteral
-            || self.token == Kind::TemplateHead
+        self.token == Kind::NoSubstitutionTemplateLiteral || self.token == Kind::TemplateHead
     }
 
     /// `func (p *Parser) tryParseTypeArgumentsInExpression() *ast.NodeList`
@@ -8559,8 +8176,7 @@ impl<'a> Parser<'a> {
         // (or `<<`, which reScanLessThanToken would split), there is nothing to speculatively parse and
         // the mark/rewind would be a no-op.
         if self.context_flags.intersects(NodeFlags::JAVA_SCRIPT_FILE)
-            || (self.token != Kind::LessThanToken
-                && self.token != Kind::LessThanLessThanToken)
+            || (self.token != Kind::LessThanToken && self.token != Kind::LessThanLessThanToken)
         {
             return None;
         }
@@ -8592,16 +8208,13 @@ impl<'a> Parser<'a> {
             // foo<x>(
             // foo<T> `...`
             // foo<T> `...${100}...`
-            Kind::OpenParenToken
-            | Kind::NoSubstitutionTemplateLiteral
-            | Kind::TemplateHead => true,
+            Kind::OpenParenToken | Kind::NoSubstitutionTemplateLiteral | Kind::TemplateHead => true,
             // A type argument list followed by `<` never makes sense, and a type argument list followed
             // by `>` is ambiguous with a (re-scanned) `>>` operator, so we disqualify both. Also, in
             // this context, `+` and `-` are unary operators, not binary operators.
-            Kind::LessThanToken
-            | Kind::GreaterThanToken
-            | Kind::PlusToken
-            | Kind::MinusToken => false,
+            Kind::LessThanToken | Kind::GreaterThanToken | Kind::PlusToken | Kind::MinusToken => {
+                false
+            }
             // We favor the type argument list interpretation when it is immediately followed by
             // a line break, a binary operator, or something that can't start an expression.
             _ => {
@@ -8633,33 +8246,25 @@ impl<'a> Parser<'a> {
         let mut expression = expression;
         loop {
             let mut question_dot_token = None;
-            let mut is_property_access = false;
-            if allow_optional_chain
-                && self.is_start_of_optional_property_or_element_access_chain()
+            let is_property_access;
+            if allow_optional_chain && self.is_start_of_optional_property_or_element_access_chain()
             {
-                question_dot_token =
-                    Some(self.parse_expected_token(Kind::QuestionDotToken));
+                question_dot_token = Some(self.parse_expected_token(Kind::QuestionDotToken));
                 is_property_access = token_is_identifier_or_keyword(self.token);
             } else {
                 is_property_access = self.parse_optional(Kind::DotToken);
             }
             if is_property_access {
-                expression = self.parse_property_access_expression_rest(
-                    pos,
-                    expression,
-                    question_dot_token,
-                );
+                expression =
+                    self.parse_property_access_expression_rest(pos, expression, question_dot_token);
                 continue;
             }
             // when in the [Decorator] context, we do not parse ElementAccess as it could be part of a ComputedPropertyName
             if (question_dot_token.is_some() || !self.in_decorator_context())
                 && self.parse_optional(Kind::OpenBracketToken)
             {
-                expression = self.parse_element_access_expression_rest(
-                    pos,
-                    expression,
-                    question_dot_token,
-                );
+                expression =
+                    self.parse_element_access_expression_rest(pos, expression, question_dot_token);
                 continue;
             }
             if self.is_template_start_of_tagged_template() {
@@ -8668,8 +8273,7 @@ impl<'a> Parser<'a> {
                     && is_expression_with_type_arguments(&self.nodes[expression])
                 {
                     let (original_expression, original_type_arguments) = {
-                        let original = self.nodes[expression]
-                            .as_expression_with_type_arguments();
+                        let original = self.nodes[expression].as_expression_with_type_arguments();
                         (original.expression, original.type_arguments.clone())
                     };
                     expression = self.parse_tagged_template_rest(
@@ -8694,31 +8298,25 @@ impl<'a> Parser<'a> {
                 continue;
             }
             if question_dot_token.is_none() {
-                if self.token == Kind::ExclamationToken
-                    && !self.has_preceding_line_break()
-                {
+                if self.token == Kind::ExclamationToken && !self.has_preceding_line_break() {
                     self.next_token();
-                    let non_null = self.finish_node(
-                        self.factory.new_non_null_expression(
-                            &mut self.nodes,
-                            Some(expression),
-                            NodeFlags::NONE,
-                        ),
-                        pos,
+                    let __h210 = self.factory.new_non_null_expression(
+                        &mut self.nodes,
+                        Some(expression),
+                        NodeFlags::NONE,
                     );
+                    let non_null = self.finish_node(__h210, pos);
                     expression = self.check_js_syntax(non_null);
                     continue;
                 }
                 let type_arguments = self.try_parse_type_arguments_in_expression();
                 if let Some(type_arguments) = type_arguments {
-                    expression = self.finish_node(
-                        self.factory.new_expression_with_type_arguments(
-                            &mut self.nodes,
-                            Some(expression),
-                            Some(type_arguments),
-                        ),
-                        pos,
+                    let __h211 = self.factory.new_expression_with_type_arguments(
+                        &mut self.nodes,
+                        Some(expression),
+                        Some(type_arguments),
                     );
+                    expression = self.finish_node(__h211, pos);
                     continue;
                 }
             }
@@ -8729,15 +8327,12 @@ impl<'a> Parser<'a> {
     /// `func (p *Parser) isStartOfOptionalPropertyOrElementAccessChain() bool`
     fn is_start_of_optional_property_or_element_access_chain(&mut self) -> bool {
         self.token == Kind::QuestionDotToken
-            && self.look_ahead(
-                Self::next_token_is_identifier_or_keyword_or_open_bracket_or_template,
-            )
+            && self
+                .look_ahead(Self::next_token_is_identifier_or_keyword_or_open_bracket_or_template)
     }
 
     /// `func (p *Parser) nextTokenIsIdentifierOrKeywordOrOpenBracketOrTemplate() bool`
-    fn next_token_is_identifier_or_keyword_or_open_bracket_or_template(
-        &mut self,
-    ) -> bool {
+    fn next_token_is_identifier_or_keyword_or_open_bracket_or_template(&mut self) -> bool {
         self.next_token();
         token_is_identifier_or_keyword(self.token)
             || self.token == Kind::OpenBracketToken
@@ -8770,7 +8365,8 @@ impl<'a> Parser<'a> {
             },
         );
         if is_optional_chain && is_private_identifier(&self.nodes[name]) {
-            let loc = self.skip_range_trivia(self.nodes[name].loc);
+            let __h212 = self.nodes[name].loc;
+            let loc = self.skip_range_trivia(__h212);
             self.parse_error_at_range(
                 loc,
                 &diagnostics::An_optional_chain_cannot_contain_private_identifiers,
@@ -8842,31 +8438,26 @@ impl<'a> Parser<'a> {
         self.parse_expected(Kind::CloseBracketToken);
         let is_optional_chain =
             question_dot_token.is_some() || self.try_reparse_optional_chain(expression);
-        self.finish_node(
-            self.factory.new_element_access_expression(
-                &mut self.nodes,
-                Some(expression),
-                question_dot_token,
-                Some(argument_expression),
-                if is_optional_chain {
-                    NodeFlags::OPTIONAL_CHAIN
-                } else {
-                    NodeFlags::NONE
-                },
-            ),
-            pos,
-        )
+        let __h213 = self.factory.new_element_access_expression(
+            &mut self.nodes,
+            Some(expression),
+            question_dot_token,
+            Some(argument_expression),
+            if is_optional_chain {
+                NodeFlags::OPTIONAL_CHAIN
+            } else {
+                NodeFlags::NONE
+            },
+        );
+        self.finish_node(__h213, pos)
     }
 
     /// `func (p *Parser) parseCallExpressionRest(pos, expression) *ast.Expression`
     fn parse_call_expression_rest(&mut self, pos: i32, expression: NodeId) -> NodeId {
         let mut expression = expression;
         loop {
-            expression = self.parse_member_expression_rest(
-                pos,
-                expression,
-                true, /*allowOptionalChain*/
-            );
+            expression = self
+                .parse_member_expression_rest(pos, expression, true /*allowOptionalChain*/);
             let mut type_arguments = None;
             let question_dot_token = self.parse_optional_token(Kind::QuestionDotToken);
             if question_dot_token.is_some() {
@@ -8887,8 +8478,7 @@ impl<'a> Parser<'a> {
                     && self.nodes[expression].kind == Kind::ExpressionWithTypeArguments
                 {
                     let (ewta_expression, ewta_type_arguments) = {
-                        let ewta = self.nodes[expression]
-                            .as_expression_with_type_arguments();
+                        let ewta = self.nodes[expression].as_expression_with_type_arguments();
                         (ewta.expression, ewta.type_arguments.clone())
                     };
                     type_arguments = ewta_type_arguments;
@@ -8896,23 +8486,21 @@ impl<'a> Parser<'a> {
                 }
                 let inner = expression;
                 let argument_list = self.parse_argument_list();
-                let is_optional_chain = question_dot_token.is_some()
-                    || self.try_reparse_optional_chain(expression);
-                let call = self.finish_node(
-                    self.factory.new_call_expression(
-                        &mut self.nodes,
-                        Some(expression),
-                        question_dot_token,
-                        type_arguments.clone(),
-                        argument_list,
-                        if is_optional_chain {
-                            NodeFlags::OPTIONAL_CHAIN
-                        } else {
-                            NodeFlags::NONE
-                        },
-                    ),
-                    pos,
+                let is_optional_chain =
+                    question_dot_token.is_some() || self.try_reparse_optional_chain(expression);
+                let __h214 = self.factory.new_call_expression(
+                    &mut self.nodes,
+                    Some(expression),
+                    question_dot_token,
+                    type_arguments.clone(),
+                    argument_list,
+                    if is_optional_chain {
+                        NodeFlags::OPTIONAL_CHAIN
+                    } else {
+                        NodeFlags::NONE
+                    },
                 );
+                let call = self.finish_node(__h214, pos);
                 expression = self.check_js_syntax(call);
                 self.unparse_expression_with_type_arguments(
                     Some(inner),
@@ -8925,16 +8513,14 @@ impl<'a> Parser<'a> {
                 // We parsed `?.` but then failed to parse anything, so report a missing identifier here.
                 self.parse_error_at_current_token(&diagnostics::Identifier_expected, &[]);
                 let name = self.create_missing_identifier();
-                expression = self.finish_node(
-                    self.factory.new_property_access_expression(
-                        &mut self.nodes,
-                        Some(expression),
-                        question_dot_token,
-                        Some(name),
-                        NodeFlags::OPTIONAL_CHAIN,
-                    ),
-                    pos,
+                let __h215 = self.factory.new_property_access_expression(
+                    &mut self.nodes,
+                    Some(expression),
+                    question_dot_token,
+                    Some(name),
+                    NodeFlags::OPTIONAL_CHAIN,
                 );
+                expression = self.finish_node(__h215, pos);
             }
             break;
         }
@@ -8970,10 +8556,11 @@ impl<'a> Parser<'a> {
     fn parse_argument_or_array_literal_element(&mut self) -> NodeId {
         match self.token {
             Kind::DotDotDotToken => self.parse_spread_element(),
-            Kind::CommaToken => self.finish_node(
-                self.factory.new_omitted_expression(&mut self.nodes),
-                self.node_pos(),
-            ),
+            Kind::CommaToken => {
+                let __h216 = self.factory.new_omitted_expression(&mut self.nodes);
+                let __h217 = self.node_pos();
+                self.finish_node(__h216, __h217)
+            }
             _ => self.parse_assignment_expression_or_higher(),
         }
     }
@@ -8983,11 +8570,10 @@ impl<'a> Parser<'a> {
         let pos = self.node_pos();
         self.parse_expected(Kind::DotDotDotToken);
         let expression = self.parse_assignment_expression_or_higher();
-        self.finish_node(
-            self.factory
-                .new_spread_element(&mut self.nodes, Some(expression)),
-            pos,
-        )
+        let __h218 = self
+            .factory
+            .new_spread_element(&mut self.nodes, Some(expression));
+        self.finish_node(__h218, pos)
     }
 
     /// `func (p *Parser) parseTaggedTemplateRest(pos, tag, questionDotToken, typeArguments)`
@@ -9006,21 +8592,19 @@ impl<'a> Parser<'a> {
         };
         let is_optional_chain = question_dot_token.is_some()
             || self.nodes[tag].flags.intersects(NodeFlags::OPTIONAL_CHAIN);
-        let result = self.finish_node(
-            self.factory.new_tagged_template_expression(
-                &mut self.nodes,
-                Some(tag),
-                question_dot_token,
-                type_arguments,
-                Some(template),
-                if is_optional_chain {
-                    NodeFlags::OPTIONAL_CHAIN
-                } else {
-                    NodeFlags::NONE
-                },
-            ),
-            pos,
+        let __h219 = self.factory.new_tagged_template_expression(
+            &mut self.nodes,
+            Some(tag),
+            question_dot_token,
+            type_arguments,
+            Some(template),
+            if is_optional_chain {
+                NodeFlags::OPTIONAL_CHAIN
+            } else {
+                NodeFlags::NONE
+            },
         );
+        let result = self.finish_node(__h219, pos);
         self.check_js_syntax(result)
     }
 
@@ -9029,14 +8613,10 @@ impl<'a> Parser<'a> {
         let pos = self.node_pos();
         let head = self.parse_template_head(is_tagged_template);
         let spans = self.parse_template_spans(is_tagged_template);
-        self.finish_node(
-            self.factory.new_template_expression(
-                &mut self.nodes,
-                Some(head),
-                Some(spans),
-            ),
-            pos,
-        )
+        let __h220 = self
+            .factory
+            .new_template_expression(&mut self.nodes, Some(head), Some(spans));
+        self.finish_node(__h220, pos)
     }
 
     /// `func (p *Parser) parseTemplateSpans(isTaggedTemplate) *ast.NodeList`
@@ -9045,16 +8625,15 @@ impl<'a> Parser<'a> {
         let mut list = Vec::new();
         loop {
             let span = self.parse_template_span(is_tagged_template);
-            let is_middle = self.nodes[span]
-                .as_template_span()
-                .literal
-                .is_some_and(|l| self.nodes[l].kind == Kind::TemplateMiddle);
+            let __h221 = self.nodes[span].as_template_span().literal;
+            let is_middle = __h221.is_some_and(|l| self.nodes[l].kind == Kind::TemplateMiddle);
             list.push(span);
             if !is_middle {
                 break;
             }
         }
-        self.new_node_list(TextRange::new(pos, self.node_pos()), list)
+        let __h222 = TextRange::new(pos, self.node_pos());
+        self.new_node_list(__h222, list)
     }
 
     /// `func (p *Parser) parseTemplateSpan(isTaggedTemplate) *ast.Node`
@@ -9062,14 +8641,10 @@ impl<'a> Parser<'a> {
         let pos = self.node_pos();
         let expression = self.parse_expression_allow_in();
         let literal = self.parse_literal_of_template_span(is_tagged_template);
-        self.finish_node(
-            self.factory.new_template_span(
-                &mut self.nodes,
-                Some(expression),
-                Some(literal),
-            ),
-            pos,
-        )
+        let __h223 =
+            self.factory
+                .new_template_span(&mut self.nodes, Some(expression), Some(literal));
+        self.finish_node(__h223, pos)
     }
 }
 
@@ -9124,19 +8699,15 @@ impl<'a> Parser<'a> {
                 if self.rescan_slash_token() == Kind::RegularExpressionLiteral {
                     return self.parse_literal_expression();
                 }
-                self.parse_identifier_with_diagnostic(
-                    Some(&diagnostics::Expression_expected),
-                    None,
-                )
+                self.parse_identifier_with_diagnostic(Some(&diagnostics::Expression_expected), None)
             }
             Kind::TemplateHead => {
                 self.parse_template_expression(false /*isTaggedTemplate*/)
             }
             Kind::PrivateIdentifier => self.parse_private_identifier(),
-            _ => self.parse_identifier_with_diagnostic(
-                Some(&diagnostics::Expression_expected),
-                None,
-            ),
+            _ => {
+                self.parse_identifier_with_diagnostic(Some(&diagnostics::Expression_expected), None)
+            }
         }
     }
 
@@ -9147,11 +8718,10 @@ impl<'a> Parser<'a> {
         self.parse_expected(Kind::OpenParenToken);
         let expression = self.parse_expression_allow_in();
         self.parse_expected(Kind::CloseParenToken);
-        let result = self.finish_node(
-            self.factory
-                .new_parenthesized_expression(&mut self.nodes, Some(expression)),
-            pos,
-        );
+        let __h224 = self
+            .factory
+            .new_parenthesized_expression(&mut self.nodes, Some(expression));
+        let result = self.finish_node(__h224, pos);
         self.with_jsdoc(result, jsdoc);
         result
     }
@@ -9173,11 +8743,10 @@ impl<'a> Parser<'a> {
             open_bracket_parsed,
             open_bracket_position,
         );
-        self.finish_node(
+        let __h225 =
             self.factory
-                .new_array_literal_expression(&mut self.nodes, elements, multi_line),
-            pos,
-        )
+                .new_array_literal_expression(&mut self.nodes, elements, multi_line);
+        self.finish_node(__h225, pos)
     }
 
     fn parse_argument_or_array_literal_element_some(&mut self) -> Option<NodeId> {
@@ -9201,11 +8770,10 @@ impl<'a> Parser<'a> {
             open_brace_parsed,
             open_brace_position,
         );
-        self.finish_node(
+        let __h226 =
             self.factory
-                .new_object_literal_expression(&mut self.nodes, properties, multi_line),
-            pos,
-        )
+                .new_object_literal_expression(&mut self.nodes, properties, multi_line);
+        self.finish_node(__h226, pos)
     }
 
     /// `func (p *Parser) parseObjectLiteralElement() *ast.Node`
@@ -9214,11 +8782,10 @@ impl<'a> Parser<'a> {
         let jsdoc = self.jsdoc_scanner_info();
         if self.parse_optional(Kind::DotDotDotToken) {
             let expression = self.parse_assignment_expression_or_higher();
-            let result = self.finish_node(
-                self.factory
-                    .new_spread_assignment(&mut self.nodes, Some(expression)),
-                pos,
-            );
+            let __h227 = self
+                .factory
+                .new_spread_assignment(&mut self.nodes, Some(expression));
+            let result = self.finish_node(__h227, pos);
             self.with_jsdoc(result, jsdoc);
             return result;
         }
@@ -9414,10 +8981,10 @@ impl<'a> Parser<'a> {
         }
         let node_pos = self.node_pos();
         self.parse_error_at(node_pos, node_pos, &diagnostics::Expression_expected, &[]);
-        self.finish_node(
-            self.factory.new_missing_declaration(&mut self.nodes, modifiers),
-            pos,
-        )
+        let __h228 = self
+            .factory
+            .new_missing_declaration(&mut self.nodes, modifiers);
+        self.finish_node(__h228, pos)
     }
 
     /// `func (p *Parser) unparseExpressionWithTypeArguments(expression, typeArguments, result)`
@@ -9444,25 +9011,19 @@ impl<'a> Parser<'a> {
         self.parse_expected(Kind::NewKeyword);
         if self.parse_optional(Kind::DotToken) {
             let name = self.parse_identifier_name();
-            return self.finish_node(
-                self.factory.new_meta_property(
-                    &mut self.nodes,
-                    Kind::NewKeyword,
-                    Some(name),
-                ),
-                pos,
-            );
+            let __h229 =
+                self.factory
+                    .new_meta_property(&mut self.nodes, Kind::NewKeyword, Some(name));
+            return self.finish_node(__h229, pos);
         }
         let expression_pos = self.node_pos();
         let primary = self.parse_primary_expression();
-        let mut expression =
-            self.parse_member_expression_rest(expression_pos, primary, false);
+        let mut expression = self.parse_member_expression_rest(expression_pos, primary, false);
         let mut type_arguments = None;
         // Absorb type arguments into NewExpression when preceding expression is ExpressionWithTypeArguments
         if self.nodes[expression].kind == Kind::ExpressionWithTypeArguments {
             let (ewta_expression, ewta_type_arguments) = {
-                let ewta =
-                    self.nodes[expression].as_expression_with_type_arguments();
+                let ewta = self.nodes[expression].as_expression_with_type_arguments();
                 (ewta.expression, ewta.type_arguments.clone())
             };
             type_arguments = ewta_type_arguments;
@@ -9485,21 +9046,15 @@ impl<'a> Parser<'a> {
         if self.token == Kind::OpenParenToken {
             argument_list = self.parse_argument_list();
         }
-        let result = self.finish_node(
-            self.factory.new_new_expression(
-                &mut self.nodes,
-                Some(expression),
-                type_arguments.clone(),
-                argument_list,
-            ),
-            pos,
-        );
-        let result = self.check_js_syntax(result);
-        self.unparse_expression_with_type_arguments(
+        let __h230 = self.factory.new_new_expression(
+            &mut self.nodes,
             Some(expression),
-            type_arguments,
-            result,
+            type_arguments.clone(),
+            argument_list,
         );
+        let result = self.finish_node(__h230, pos);
+        let result = self.check_js_syntax(result);
+        self.unparse_expression_with_type_arguments(Some(expression), type_arguments, result);
         result
     }
 
@@ -9531,16 +9086,13 @@ impl<'a> Parser<'a> {
                 self.factory
                     .new_big_int_literal(&mut self.nodes, &text, token_flags)
             }
-            Kind::RegularExpressionLiteral => self
-                .factory
-                .new_regular_expression_literal(&mut self.nodes, &text, token_flags),
+            Kind::RegularExpressionLiteral => {
+                self.factory
+                    .new_regular_expression_literal(&mut self.nodes, &text, token_flags)
+            }
             Kind::NoSubstitutionTemplateLiteral => self
                 .factory
-                .new_no_substitution_template_literal(
-                    &mut self.nodes,
-                    &text,
-                    token_flags,
-                ),
+                .new_no_substitution_template_literal(&mut self.nodes, &text, token_flags),
             _ => panic!("Unhandled case in parseLiteralExpression"),
         };
         self.next_token();
@@ -9549,14 +9101,14 @@ impl<'a> Parser<'a> {
 
     /// `func (p *Parser) parseIdentifierNameErrorOnUnicodeEscapeSequence() *ast.Node`
     fn parse_identifier_name_error_on_unicode_escape_sequence(&mut self) -> NodeId {
-        if self.scanner.has_unicode_escape() || self.scanner.has_extended_unicode_escape()
-        {
+        if self.scanner.has_unicode_escape() || self.scanner.has_extended_unicode_escape() {
             self.parse_error_at_current_token(
                 &diagnostics::Unicode_escape_sequence_cannot_appear_here,
                 &[],
             );
         }
-        self.create_identifier(token_is_identifier_or_keyword(self.token))
+        let __h231 = token_is_identifier_or_keyword(self.token);
+        self.create_identifier(__h231)
     }
 
     /// `func (p *Parser) parseBindingIdentifier() *ast.Node`
@@ -9570,8 +9122,9 @@ impl<'a> Parser<'a> {
         private_identifier_diagnostic_message: Option<&'static Message>,
     ) -> NodeId {
         let save_has_await_identifier = self.statement_has_await_identifier;
+        let __h232 = self.is_binding_identifier();
         let id = self.create_identifier_with_diagnostic(
-            self.is_binding_identifier(),
+            __h232,
             None, /*diagnosticMessage*/
             private_identifier_diagnostic_message,
         );
@@ -9589,11 +9142,8 @@ impl<'a> Parser<'a> {
         &mut self,
         diagnostic_message: Option<&'static Message>,
     ) -> NodeId {
-        self.create_identifier_with_diagnostic(
-            token_is_identifier_or_keyword(self.token),
-            diagnostic_message,
-            None,
-        )
+        let __h233 = token_is_identifier_or_keyword(self.token);
+        self.create_identifier_with_diagnostic(__h233, diagnostic_message, None)
     }
 
     /// `func (p *Parser) parseIdentifier() *ast.Node`
@@ -9607,8 +9157,9 @@ impl<'a> Parser<'a> {
         diagnostic_message: Option<&'static Message>,
         private_identifier_diagnostic_message: Option<&'static Message>,
     ) -> NodeId {
+        let __h234 = self.is_identifier();
         self.create_identifier_with_diagnostic(
-            self.is_identifier(),
+            __h234,
             diagnostic_message,
             private_identifier_diagnostic_message,
         )
@@ -9634,11 +9185,14 @@ impl<'a> Parser<'a> {
             };
             let text = String::from_utf8_lossy(self.scanner.token_value()).into_owned();
             self.next_token_without_check();
-            return self.finish_node(self.new_identifier(&text), pos);
+            let __h235 = self.new_identifier(&text);
+            return self.finish_node(__h235, pos);
         }
         if self.token == Kind::PrivateIdentifier {
             match private_identifier_diagnostic_message {
-                Some(msg) => { self.parse_error_at_current_token(msg, &[]); }
+                Some(msg) => {
+                    self.parse_error_at_current_token(msg, &[]);
+                }
                 None => {
                     self.parse_error_at_current_token(
                         &diagnostics::Private_identifiers_are_not_allowed_outside_class_bodies,
@@ -9767,9 +9321,7 @@ impl<'a> Parser<'a> {
         // If we were able to get any potential identifier...
         if id_token != Kind::Unknown {
             // If we have a non-keyword identifier, or if we have an accessor, then it's safe to parse.
-            if !is_keyword(id_token)
-                || id_token == Kind::SetKeyword
-                || id_token == Kind::GetKeyword
+            if !is_keyword(id_token) || id_token == Kind::SetKeyword || id_token == Kind::GetKeyword
             {
                 return true;
             }
@@ -9885,8 +9437,7 @@ impl<'a> Parser<'a> {
                 // When these don't start a declaration, they may be the start of a class member if an identifier
                 // immediately follows. Otherwise they're an identifier in an expression statement.
                 self.is_start_of_declaration()
-                    || !self
-                        .look_ahead(Self::next_token_is_identifier_or_keyword_on_same_line)
+                    || !self.look_ahead(Self::next_token_is_identifier_or_keyword_on_same_line)
             }
             _ => self.is_start_of_expression(),
         }
@@ -9947,9 +9498,7 @@ impl<'a> Parser<'a> {
                     if self.has_preceding_line_break() {
                         return false;
                     }
-                    if previous_token == Kind::DeclareKeyword
-                        && self.token == Kind::TypeKeyword
-                    {
+                    if previous_token == Kind::DeclareKeyword && self.token == Kind::TypeKeyword {
                         // If we see 'declare type', then commit to parsing a type alias. parseTypeAliasDeclaration will
                         // report Line_break_not_permitted_here if needed.
                         return true;
@@ -9986,8 +9535,7 @@ impl<'a> Parser<'a> {
                         self.next_token();
                         return self.token == Kind::AsteriskToken
                             || self.token == Kind::OpenBraceToken
-                            || (self.is_identifier()
-                                && !self.has_preceding_line_break());
+                            || (self.is_identifier() && !self.has_preceding_line_break());
                     }
                     continue;
                 }
@@ -10060,9 +9608,7 @@ impl<'a> Parser<'a> {
             | Kind::SlashToken
             | Kind::SlashEqualsToken
             | Kind::Identifier => true,
-            Kind::ImportKeyword => {
-                self.is_next_token_open_paren_or_less_than_or_dot()
-            }
+            Kind::ImportKeyword => self.is_next_token_open_paren_or_less_than_or_dot(),
             _ => self.is_identifier(),
         }
     }
@@ -10204,8 +9750,7 @@ impl<'a> Parser<'a> {
 
     /// `func (p *Parser) isImportAttributeName() bool`
     fn is_import_attribute_name(&self) -> bool {
-        token_is_identifier_or_keyword(self.token)
-            || self.token == Kind::StringLiteral
+        token_is_identifier_or_keyword(self.token) || self.token == Kind::StringLiteral
     }
 
     /// `func (p *Parser) isBinaryOperator() bool`
@@ -10283,9 +9828,7 @@ impl<'a> Parser<'a> {
     ) -> bool {
         self.next_token();
         if disallow_of && self.token == Kind::OfKeyword {
-            return self.look_ahead(
-                Self::next_token_is_equals_or_semicolon_or_colon_token,
-            );
+            return self.look_ahead(Self::next_token_is_equals_or_semicolon_or_colon_token);
         }
         (self.is_binding_identifier() || self.token == Kind::OpenBraceToken)
             && !self.has_preceding_line_break()
@@ -10323,7 +9866,7 @@ impl<'a> Parser<'a> {
     }
 
     /// `func (p *Parser) setContextFlags(flags ast.NodeFlags, value bool)`
-    fn set_context_flags(&mut self, flags: NodeFlags, value: bool) {
+    pub(crate) fn set_context_flags(&mut self, flags: NodeFlags, value: bool) {
         if value {
             self.context_flags |= flags;
         } else {
@@ -10352,7 +9895,8 @@ impl<'a> Parser<'a> {
 
     /// `func (p *Parser) inDisallowInContext() bool`
     fn in_disallow_in_context(&self) -> bool {
-        self.context_flags.intersects(NodeFlags::DISALLOW_IN_CONTEXT)
+        self.context_flags
+            .intersects(NodeFlags::DISALLOW_IN_CONTEXT)
     }
 
     /// `func (p *Parser) inDisallowConditionalTypesContext() bool`
@@ -10402,8 +9946,7 @@ impl<'a> Parser<'a> {
                     let resolution_mode = pragma.args.get("resolution-mode");
                     let preserve = pragma.args.get("preserve");
                     let no_default_lib = pragma.args.get("no-default-lib");
-                    let preserve_flag =
-                        preserve.is_some_and(|p| p.value == "true");
+                    let preserve_flag = preserve.is_some_and(|p| p.value == "true");
                     if no_default_lib.is_some_and(|d| d.value == "true") {
                         // Ignored.
                     } else if let Some(types) = types {
@@ -10491,16 +10034,8 @@ impl<'a> Parser<'a> {
     }
 
     /// `func (p *Parser) jsErrorAtRange(loc, message, args...)`
-    fn js_error_at_range(
-        &mut self,
-        loc: TextRange,
-        message: &'static Message,
-        args: &[String],
-    ) {
-        let range = TextRange::new(
-            scanner::skip_trivia(self.source_text, loc.pos()),
-            loc.end(),
-        );
+    fn js_error_at_range(&mut self, loc: TextRange, message: &'static Message, args: &[String]) {
+        let range = TextRange::new(scanner::skip_trivia(self.source_text, loc.pos()), loc.end());
         self.js_diagnostics
             .push(new_diagnostic(None, range, message, args));
     }
@@ -10518,11 +10053,7 @@ impl<'a> Parser<'a> {
             for modifier in &modifiers {
                 if is_decorator(&self.nodes[*modifier]) {
                     let loc = self.nodes[*modifier].loc;
-                    self.js_error_at_range(
-                        loc,
-                        &diagnostics::Decorators_are_not_valid_here,
-                        &[],
-                    );
+                    self.js_error_at_range(loc, &diagnostics::Decorators_are_not_valid_here, &[]);
                     break;
                 }
             }
@@ -10566,10 +10097,8 @@ impl<'a> Parser<'a> {
                         }
                         if trailing_decorator_index >= 0 {
                             let trailing_loc =
-                                self.nodes[modifiers[trailing_decorator_index as usize]]
-                                    .loc;
-                            let leading_loc =
-                                self.nodes[modifiers[decorator_index as usize]].loc;
+                                self.nodes[modifiers[trailing_decorator_index as usize]].loc;
+                            let leading_loc = self.nodes[modifiers[decorator_index as usize]].loc;
                             let diag = new_diagnostic::<String>(
                                 None,
                                 TextRange::new(
@@ -10585,10 +10114,7 @@ impl<'a> Parser<'a> {
                             let related = new_diagnostic::<String>(
                                 None,
                                 TextRange::new(
-                                    scanner::skip_trivia(
-                                        self.source_text,
-                                        leading_loc.pos(),
-                                    ),
+                                    scanner::skip_trivia(self.source_text, leading_loc.pos()),
                                     leading_loc.end(),
                                 ),
                                 &diagnostics::Decorator_used_before_export_here,
@@ -10605,7 +10131,9 @@ impl<'a> Parser<'a> {
 
     /// `func (p *Parser) checkJSSyntax(node *ast.Node) *ast.Node`
     pub fn check_js_syntax(&mut self, node: NodeId) -> NodeId {
-        if !self.nodes[node].flags.intersects(NodeFlags::JAVA_SCRIPT_FILE)
+        if !self.nodes[node]
+            .flags
+            .intersects(NodeFlags::JAVA_SCRIPT_FILE)
             || self.nodes[node]
                 .flags
                 .intersects(NodeFlags::JSDOC | NodeFlags::REPARSED)
@@ -10689,9 +10217,7 @@ impl<'a> Parser<'a> {
                 }
             }
             Kind::HeritageClause => {
-                if self.nodes[node].as_heritage_clause().token
-                    == Kind::ImplementsKeyword
-                {
+                if self.nodes[node].as_heritage_clause().token == Kind::ImplementsKeyword {
                     let loc = self.nodes[node].loc;
                     self.js_error_at_range(
                         loc,
@@ -10791,9 +10317,7 @@ impl<'a> Parser<'a> {
             }
             Kind::Parameter => {
                 if let Some(modifier_nodes) = self.nodes[node].modifier_nodes()
-                    && core::some(&modifier_nodes.to_vec(), |m| {
-                        is_modifier(&self.nodes[*m])
-                    })
+                    && core::some(&modifier_nodes.to_vec(), |m| is_modifier(&self.nodes[*m]))
                 {
                     let loc = self.nodes[node].modifiers().unwrap().loc;
                     self.js_error_at_range(
@@ -10846,8 +10370,7 @@ impl<'a> Parser<'a> {
 
     /// The fallthrough-shared `ast.IsFunctionLike`/`node.Type()` check.
     fn check_js_signature_or_type(&mut self, node: NodeId) {
-        if is_function_like(Some(node), &self.nodes) && self.nodes[node].body().is_none()
-        {
+        if is_function_like(Some(node), &self.nodes) && self.nodes[node].body().is_none() {
             let loc = self.nodes[node].loc;
             self.js_error_at_range(
                 loc,
@@ -10891,25 +10414,19 @@ impl<'a> Parser<'a> {
 }
 
 /// `func getCommentPragmas(f *ast.NodeFactory, sourceText string) []ast.Pragma`
-pub fn get_comment_pragmas(
-    f: &NodeFactory,
-    source_text: &str,
-) -> Vec<tsc_ast::Pragma> {
+pub fn get_comment_pragmas(f: &NodeFactory, source_text: &str) -> Vec<tsc_ast::Pragma> {
     let mut pragmas = Vec::new();
     for comment_range in scanner::get_leading_comment_ranges(f, source_text, 0) {
-        let comment =
-            &source_text[comment_range.text_range.pos() as usize..comment_range.text_range.end() as usize];
+        let comment = &source_text
+            [comment_range.text_range.pos() as usize..comment_range.text_range.end() as usize];
         pragmas.extend(extract_pragmas(comment_range, comment));
     }
     pragmas
 }
 
 /// `func extractPragmas(commentRange ast.CommentRange, text string) []ast.Pragma`
-fn extract_pragmas(
-    comment_range: CommentRange,
-    text: &str,
-) -> Vec<tsc_ast::Pragma> {
-    let bytes = text.as_bytes();
+fn extract_pragmas(comment_range: CommentRange, text: &str) -> Vec<tsc_ast::Pragma> {
+    let _bytes = text.as_bytes();
     if comment_range.kind == Kind::SingleLineCommentTrivia {
         let mut pos = 2usize;
         let triple_slash = pragma_match(text, pos, "/");
@@ -10923,10 +10440,8 @@ fn extract_pragmas(
                 return vec![];
             }
             pos += 10;
-            let mut args = tsc_collections::OrderedMap::<
-                String,
-                tsc_ast::PragmaArgument,
-            >::default();
+            let mut args =
+                tsc_collections::OrderedMap::<String, tsc_ast::PragmaArgument>::default();
             loop {
                 pos = skip_blanks(text, pos);
                 if pragma_match(text, pos, "/>") {
@@ -11007,10 +10522,8 @@ fn extract_pragmas(
                 let start = skip_blanks(text, name_end);
                 let arg_end = skip_non_blanks(text, start);
                 if arg_end != start {
-                    let mut args = tsc_collections::OrderedMap::<
-                        String,
-                        tsc_ast::PragmaArgument,
-                    >::default();
+                    let mut args =
+                        tsc_collections::OrderedMap::<String, tsc_ast::PragmaArgument>::default();
                     args.set(
                         "factory".to_string(),
                         tsc_ast::PragmaArgument {
@@ -11125,7 +10638,11 @@ fn extract_quoted_string(text: &str, pos: usize) -> Option<(String, usize)> {
 
 impl<'a> Parser<'a> {
     /// `func (p *Parser) isListElement(parsingContext ParsingContext, inErrorRecovery bool) bool`
-    fn is_list_element(&mut self, parsing_context: ParsingContext, in_error_recovery: bool) -> bool {
+    fn is_list_element(
+        &mut self,
+        parsing_context: ParsingContext,
+        in_error_recovery: bool,
+    ) -> bool {
         match parsing_context {
             PC_SOURCE_ELEMENTS | PC_BLOCK_STATEMENTS | PC_SWITCH_CLAUSE_STATEMENTS => {
                 // If we're in error recovery, then we don't want to treat ';' as an empty statement.
@@ -11182,8 +10699,7 @@ impl<'a> Parser<'a> {
                 // If we're in error recovery we tighten up what we're willing to match.
                 // That way we don't treat something like "this" as a valid heritage clause
                 // element during recovery.
-                self.is_identifier()
-                    && !self.is_heritage_clause_extends_or_implements_keyword()
+                self.is_identifier() && !self.is_heritage_clause_extends_or_implements_keyword()
             }
             PC_VARIABLE_DECLARATIONS => {
                 self.is_binding_identifier_or_private_identifier_or_pattern()
@@ -11229,8 +10745,7 @@ impl<'a> Parser<'a> {
                 token_is_identifier_or_keyword(self.token)
             }
             PC_JSX_ATTRIBUTES => {
-                token_is_identifier_or_keyword(self.token)
-                    || self.token == Kind::OpenBraceToken
+                token_is_identifier_or_keyword(self.token) || self.token == Kind::OpenBraceToken
             }
             PC_JSX_CHILDREN => true,
             PC_JS_DOC_COMMENT => true,
@@ -11287,11 +10802,11 @@ impl<'a> Parser<'a> {
             }
             PC_ARGUMENT_EXPRESSIONS => {
                 // Tokens other than ')' are here for better error recovery
-                self.token == Kind::CloseParenToken
-                    || self.token == Kind::SemicolonToken
+                self.token == Kind::CloseParenToken || self.token == Kind::SemicolonToken
             }
-            PC_ARRAY_LITERAL_MEMBERS | PC_TUPLE_ELEMENT_TYPES
-            | PC_ARRAY_BINDING_ELEMENTS => self.token == Kind::CloseBracketToken,
+            PC_ARRAY_LITERAL_MEMBERS | PC_TUPLE_ELEMENT_TYPES | PC_ARRAY_BINDING_ELEMENTS => {
+                self.token == Kind::CloseBracketToken
+            }
             PC_JS_DOC_PARAMETERS | PC_PARAMETERS | PC_REST_PROPERTIES => {
                 // Tokens other than ')' and ']' (the latter for index signatures) are here for better error recovery
                 self.token == Kind::CloseParenToken || self.token == Kind::CloseBracketToken
@@ -11307,8 +10822,7 @@ impl<'a> Parser<'a> {
                 self.token == Kind::GreaterThanToken || self.token == Kind::SlashToken
             }
             PC_JSX_CHILDREN => {
-                self.token == Kind::LessThanToken
-                    && self.look_ahead(Self::next_token_is_slash)
+                self.token == Kind::LessThanToken && self.look_ahead(Self::next_token_is_slash)
             }
             _ => false,
         }

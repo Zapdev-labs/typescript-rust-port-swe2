@@ -27,10 +27,7 @@ pub struct VisitorCx<'a, 'f> {
 }
 
 impl<'a, 'f> VisitorCx<'a, 'f> {
-    pub fn new(
-        nodes: &'a mut Vec<Node>,
-        factory: &'a mut NodeFactory<'f>,
-    ) -> VisitorCx<'a, 'f> {
+    pub fn new(nodes: &'a mut Vec<Node>, factory: &'a mut NodeFactory<'f>) -> VisitorCx<'a, 'f> {
         VisitorCx { nodes, factory }
     }
 }
@@ -43,27 +40,15 @@ impl<'a, 'f> VisitorCx<'a, 'f> {
 /// closures cannot capture the not-yet-constructed visitor, so the visitor is
 /// passed explicitly. The `'a` parameter is the closure-capture lifetime; the
 /// `VisitorCx` lifetimes are higher-ranked so any borrow pair can be passed.
-pub type VisitFn<'a> = dyn for<'cx, 'f> Fn(
-        &NodeVisitor<'a>,
-        &mut VisitorCx<'cx, 'f>,
-        NodeId,
-    ) -> Option<NodeId>
-    + 'a;
+pub type VisitFn<'a> =
+    dyn for<'cx, 'f> Fn(&NodeVisitor<'a>, &mut VisitorCx<'cx, 'f>, NodeId) -> Option<NodeId> + 'a;
 
 // Hook signatures mirror NodeVisitorHooks. Each receives `v` so the hook may
 // continue the default traversal.
-pub type VisitNodeHook<'a> = dyn for<'cx, 'f> Fn(
-        &mut VisitorCx<'cx, 'f>,
-        NodeId,
-        &NodeVisitor<'a>,
-    ) -> Option<NodeId>
-    + 'a;
+pub type VisitNodeHook<'a> =
+    dyn for<'cx, 'f> Fn(&mut VisitorCx<'cx, 'f>, NodeId, &NodeVisitor<'a>) -> Option<NodeId> + 'a;
 pub type VisitTokenHook<'a> = VisitNodeHook<'a>;
-pub type VisitNodesHook<'a> = dyn for<'cx, 'f> Fn(
-        &mut VisitorCx<'cx, 'f>,
-        Option<NodeList>,
-        &NodeVisitor<'a>,
-    ) -> Option<NodeList>
+pub type VisitNodesHook<'a> = dyn for<'cx, 'f> Fn(&mut VisitorCx<'cx, 'f>, Option<NodeList>, &NodeVisitor<'a>) -> Option<NodeList>
     + 'a;
 pub type VisitModifiersHook<'a> = dyn for<'cx, 'f> Fn(
         &mut VisitorCx<'cx, 'f>,
@@ -189,7 +174,11 @@ impl<'a> NodeVisitor<'a> {
     ///
     /// NOTE: Go takes `*NodeList` and returns `*NodeList`; the slice is
     /// cloned here because the arena is borrowed mutably by the context.
-    pub fn visit_nodes(&self, cx: &mut VisitorCx<'_, '_>, nodes: Option<NodeList>) -> Option<NodeList> {
+    pub fn visit_nodes(
+        &self,
+        cx: &mut VisitorCx<'_, '_>,
+        nodes: Option<NodeList>,
+    ) -> Option<NodeList> {
         let nodes = nodes?;
         self.visit.as_ref()?;
         if let Some(result) = self.visit_slice(cx, &nodes.nodes) {

@@ -1,0 +1,26 @@
+[package]
+name = "tsc-contentmapper"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+tsc-ast = { path = "../ast" }
+tsc-collections = { path = "../collections" }
+tsc-core = { path = "../core" }
+tsc-diagnostics = { path = "../diagnostics" }
+tsc-ipc = { path = "../ipc" }
+tsc-json = { path = "../json" }
+tsc-jsonrpc = { path = "../jsonrpc" }
+tsc-locale = { path = "../locale" }
+tsc-parser = { path = "../parser" }
+tsc-spanmap = { path = "../spanmap" }
+tsc-tspath = { path = "../tspath" }
+tsc-vfs = { path = "../vfs" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+rustc-hash = { workspace = true }

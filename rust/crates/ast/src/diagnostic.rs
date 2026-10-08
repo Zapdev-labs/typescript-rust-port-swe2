@@ -784,7 +784,11 @@ pub fn equal_diagnostics(d1: &DiagnosticRef, d2: &DiagnosticRef) -> bool {
     let v1 = view_of(d1);
     let v2 = view_of(d2);
     equal_views_no_related_info(&v1, &v2)
-        && slice_equal_func(&v1.related_information, &v2.related_information, equal_diagnostics)
+        && slice_equal_func(
+            &v1.related_information,
+            &v2.related_information,
+            equal_diagnostics,
+        )
 }
 
 /// `func EqualDiagnosticsNoRelatedInfo(d1, d2 *Diagnostic) bool`

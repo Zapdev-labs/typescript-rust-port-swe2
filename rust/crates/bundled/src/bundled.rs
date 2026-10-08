@@ -10,15 +10,17 @@ use std::any::Any;
 use std::sync::{Arc, OnceLock};
 use std::time::SystemTime;
 
-use tsc_tspath::{RootedDirectoryPath, RootedFilePath, RootedPath, rooted_directory_path_from_normalized};
+use tsc_tspath::{
+    RootedDirectoryPath, RootedFilePath, RootedPath, rooted_directory_path_from_normalized,
+};
 use tsc_vfs::fs::{DirEntry, FileInfo, FileMode, FsError, MODE_DIR};
 use tsc_vfs::{Entries, Vfs};
 
 mod generated {
     include!(concat!(env!("OUT_DIR"), "/libs_generated.rs"));
 }
-pub use generated::LIB_NAMES;
 use generated::EMBEDDED_CONTENTS;
+pub use generated::LIB_NAMES;
 
 /// `Embedded` is true if the bundled files are implemented through an embedded FS.
 pub const EMBEDDED: bool = true;
@@ -54,10 +56,7 @@ pub fn is_bundled(path: &str) -> bool {
 pub fn testing_lib_path() -> RootedDirectoryPath {
     static PATH: OnceLock<RootedDirectoryPath> = OnceLock::new();
     PATH.get_or_init(|| {
-        rooted_directory_path_from_normalized(&format!(
-            "{}/libs",
-            env!("CARGO_MANIFEST_DIR")
-        ))
+        rooted_directory_path_from_normalized(&format!("{}/libs", env!("CARGO_MANIFEST_DIR")))
     })
     .clone()
 }

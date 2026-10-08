@@ -10,9 +10,7 @@ use tsc_ast::utilities::{
     set_imports_of_source_file,
 };
 use tsc_ast::{ModifierFlags, Node, NodeFlags, NodeId};
-use tsc_core::nodemodules::{
-    EXCLUSIVELY_PREFIXED_NODE_CORE_MODULES, UNPREFIXED_NODE_CORE_MODULES,
-};
+use tsc_core::nodemodules::{EXCLUSIVELY_PREFIXED_NODE_CORE_MODULES, UNPREFIXED_NODE_CORE_MODULES};
 use tsc_core::tristate::{TS_FALSE, TS_TRUE, TS_UNKNOWN};
 use tsc_tspath as tspath;
 
@@ -39,8 +37,8 @@ pub fn collect_external_module_references(nodes: &mut Vec<Node>, file: NodeId) {
         let mut extra: Vec<NodeId> = Vec::new();
         for_each_dynamic_import_or_require_call(
             file,
-            true,  /*includeTypeSpaceImports*/
-            true,  /*requireStringLiteralLikeArgument*/
+            true, /*includeTypeSpaceImports*/
+            true, /*requireStringLiteralLikeArgument*/
             &mut |_node, module_specifier| {
                 extra.push(module_specifier);
                 false
@@ -72,19 +70,20 @@ fn collect_module_references(
         {
             let module_name = nodes[module_name_expr].text(nodes).into_owned();
             if !module_name.is_empty()
-                && (!in_ambient_module
-                    || !tspath::is_external_module_name_relative(&module_name))
+                && (!in_ambient_module || !tspath::is_external_module_name_relative(&module_name))
             {
                 let mut imports = nodes[file].as_source_file().imports.to_vec();
                 imports.push(module_name_expr);
                 set_imports_of_source_file(nodes, file, imports);
                 // !!! removed `&& p.currentNodeModulesDepth == 0`
-                if nodes[file].as_source_file().uses_uri_style_node_core_modules != TS_TRUE
+                if nodes[file]
+                    .as_source_file()
+                    .uses_uri_style_node_core_modules
+                    != TS_TRUE
                     && !nodes[file].as_source_file().is_declaration_file
                 {
                     if module_name.starts_with("node:")
-                        && !EXCLUSIVELY_PREFIXED_NODE_CORE_MODULES
-                            .contains(module_name.as_str())
+                        && !EXCLUSIVELY_PREFIXED_NODE_CORE_MODULES.contains(module_name.as_str())
                     {
                         // Presence of `node:` prefix takes precedence over unprefixed node core modules
                         nodes[file]
@@ -123,18 +122,13 @@ fn collect_module_references(
         if is_external_module(nodes[file].as_source_file())
             || (in_ambient_module && !tspath::is_external_module_name_relative(&name_text))
         {
-            let mut augmentations =
-                nodes[file].as_source_file().module_augmentations.to_vec();
+            let mut augmentations = nodes[file].as_source_file().module_augmentations.to_vec();
             augmentations.push(name);
-            nodes[file]
-                .as_source_file_mut()
-                .module_augmentations = augmentations.into();
+            nodes[file].as_source_file_mut().module_augmentations = augmentations.into();
         } else if !in_ambient_module {
             let mut ambient_names = nodes[file].as_source_file().ambient_module_names.to_vec();
             ambient_names.push(name_text);
-            nodes[file]
-                .as_source_file_mut()
-                .ambient_module_names = ambient_names.into();
+            nodes[file].as_source_file_mut().ambient_module_names = ambient_names.into();
             // An AmbientExternalModuleDeclaration declares an external module.
             // This type of declaration is permitted only in the global module.
             // The StringLiteral must specify a top - level external module name.
@@ -146,7 +140,9 @@ fn collect_module_references(
                     .map(|s| s.to_vec())
                     .unwrap_or_default();
                 for statement in body_statements {
-                    collect_module_references(nodes, file, statement, true /*inAmbientModule*/);
+                    collect_module_references(
+                        nodes, file, statement, true, /*inAmbientModule*/
+                    );
                 }
             }
         }

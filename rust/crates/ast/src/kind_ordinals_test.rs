@@ -65,6 +65,10 @@ fn kind_ordinals_match_go_table() {
             None => failures.push(format!("{name}: no Rust kind")),
         }
     }
-    assert!(failures.is_empty(), "ordinal mismatches:\n{}", failures.join("\n"));
+    assert!(
+        failures.is_empty(),
+        "ordinal mismatches:\n{}",
+        failures.join("\n")
+    );
     assert_eq!(checked, 387, "expected to check all 387 Go kind constants");
 }

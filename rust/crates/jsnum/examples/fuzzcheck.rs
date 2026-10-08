@@ -13,7 +13,9 @@ fn ieee_eq(a: f64, b: f64) -> bool {
 }
 
 fn main() {
-    let path = std::env::args().nth(1).expect("usage: fuzzcheck <corpus.tsv>");
+    let path = std::env::args()
+        .nth(1)
+        .expect("usage: fuzzcheck <corpus.tsv>");
     let text = std::fs::read_to_string(&path).expect("read corpus");
     let mut n_cases = 0u64;
     let mut mismatches = 0u64;
@@ -34,9 +36,7 @@ fn main() {
         // 1. Our Number::string must match JS ""+n byte-for-byte.
         let our_str = n.string();
         if our_str != js_str {
-            eprintln!(
-                "string mismatch bits={in_hex}: ours={our_str:?} js={js_str:?}"
-            );
+            eprintln!("string mismatch bits={in_hex}: ours={our_str:?} js={js_str:?}");
             mismatches += 1;
         }
 

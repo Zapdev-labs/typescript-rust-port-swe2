@@ -24,7 +24,10 @@ fn generated_accessors_and_updates() {
     // changed inputs → Some(new id) with the field updated.
     let qn = f.new_qualified_name(&mut nodes, Some(ident), Some(ident));
     assert_eq!(nodes[qn].kind, Kind::QualifiedName);
-    assert!(f.update_qualified_name(&mut nodes, qn, Some(ident), Some(ident)).is_none());
+    assert!(
+        f.update_qualified_name(&mut nodes, qn, Some(ident), Some(ident))
+            .is_none()
+    );
     let updated = f
         .update_qualified_name(&mut nodes, qn, None, Some(ident))
         .expect("changed update must produce a node");
