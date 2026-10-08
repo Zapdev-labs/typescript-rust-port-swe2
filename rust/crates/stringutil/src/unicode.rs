@@ -6,8 +6,6 @@
 // strings.EqualFold/ToLower. Data tables marked "(Go unicode/tables.go)" are
 // copied verbatim from the Go toolchain source.
 
-/// unicode.ReplacementChar / utf8.RuneError
-pub(crate) const REPLACEMENT_CHAR: i32 = 0xFFFD;
 /// unicode.MaxASCII
 const MAX_ASCII: i32 = 0x7F;
 /// unicode.MaxLatin1
@@ -41,7 +39,11 @@ pub(crate) struct Range32 {
 pub(crate) struct RangeTable {
     pub r16: &'static [Range16],
     pub r32: &'static [Range32],
-    pub latin_offset: usize, // number of entries in R16 with Hi <= MaxLatin1
+    // number of entries in R16 with Hi <= MaxLatin1; unused — Go reads it only
+    // in isExcludingLatin, which the ported helpers never call. Kept for table
+    // fidelity with the generated data.
+    #[allow(dead_code)]
+    pub latin_offset: usize,
 }
 
 // linearMax is the maximum size table for linear search for non-Latin1 rune.
@@ -401,13 +403,12 @@ pub(crate) fn equal_fold(s: &[u8], t: &[u8]) -> bool {
 pub(crate) fn strings_to_lower(s: &[u8]) -> Vec<u8> {
     let mut is_ascii = true;
     let mut has_upper = false;
-    for i in 0..s.len() {
-        let c = s[i];
+    for &c in s {
         if c >= utf8::RUNE_SELF as u8 {
             is_ascii = false;
             break;
         }
-        has_upper = has_upper || (0x41 <= c && c <= 0x5A);
+        has_upper = has_upper || (0x41..=0x5A).contains(&c);
     }
 
     if is_ascii {
@@ -468,7 +469,11 @@ pub(crate) mod utf16 {
     // the Unicode replacement code point U+FFFD.
     pub(crate) fn decode_rune(r1: i32, r2: i32) -> i32 {
         if (SURR1..SURR2).contains(&r1) && (SURR2..SURR3).contains(&r2) {
-            return (r1 - SURR1) << 10 | (r2 - SURR2) + SURR_SELF;
+            // PORT: extra parens — in Go `|` and `+` share a precedence level
+            // evaluated left-to-right, i.e. `((x<<10)|y)+surrSelf`; Rust binds
+            // `+` tighter than `|`, so the parens are required to keep Go's
+            // parse.
+            return (((r1 - SURR1) << 10) | (r2 - SURR2)) + SURR_SELF;
         }
         RUNE_ERROR
     }

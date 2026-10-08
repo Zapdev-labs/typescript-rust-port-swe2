@@ -94,7 +94,7 @@ impl PartialOrd<Number> for f64 {
     }
 }
 
-pub fn nan() -> Number {
+pub const fn nan() -> Number {
     Number(f64::NAN)
 }
 
@@ -104,8 +104,12 @@ impl Number {
     }
 }
 
-pub fn inf(sign: i32) -> Number {
-    Number(if sign >= 0 { f64::INFINITY } else { f64::NEG_INFINITY })
+pub const fn inf(sign: i32) -> Number {
+    Number(if sign >= 0 {
+        f64::INFINITY
+    } else {
+        f64::NEG_INFINITY
+    })
 }
 
 impl Number {
@@ -163,7 +167,7 @@ impl Number {
 
     // https://tc39.es/ecma262/2024/multipage/ecmascript-data-types-and-values.html#sec-numeric-types-number-signedRightShift
     pub fn signed_right_shift(self, y: Number) -> Number {
-        Number(self.to_int32() >> y.to_shift_count())
+        Number((self.to_int32() >> y.to_shift_count()) as f64)
     }
 
     // https://tc39.es/ecma262/2024/multipage/ecmascript-data-types-and-values.html#sec-numeric-types-number-unsignedRightShift
@@ -214,6 +218,8 @@ impl Number {
 }
 
 // PORT: Go `var negativeZero = Number(math.Copysign(0, -1))` → const.
+// Package-private in Go; only used by tests in this port.
+#[allow(dead_code)]
 pub(crate) const NEGATIVE_ZERO: Number = Number(-0.0);
 
 impl Number {
@@ -279,7 +285,11 @@ impl Number {
                 // passing the bound above that doesn't fit int64) converts to
                 // math.MinInt64. Rust's `as` saturates to i64::MAX instead —
                 // replicate Go's observable behavior exactly.
-                let bi = if b == 9_223_372_036_854_775_808.0 { i64::MIN } else { b as i64 };
+                let bi = if b == 9_223_372_036_854_775_808.0 {
+                    i64::MIN
+                } else {
+                    b as i64
+                };
                 // Go: new(big.Int).Exp(big.NewInt(int64(b)), big.NewInt(int64(e)), nil)
                 let ri = BigInt::from(bi).pow(e as u32);
                 // Go: new(big.Float).SetPrec(256).SetInt(ri).Float64()

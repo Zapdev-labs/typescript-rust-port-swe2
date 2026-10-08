@@ -1,15 +1,19 @@
 // Ported from tsc/internal/jsnum/jsnum_test.go @ ec47d33c23e464a17cdf2475632cba629bee8763
 
+// PORT: literals are kept verbatim from the Go test vectors; excess digits
+// are deliberate (they mirror the Go test data).
+#![allow(clippy::excessive_precision)]
+
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::sync::atomic::{AtomicUsize, Ordering as AtomicOrdering};
 use std::sync::OnceLock;
+use std::sync::atomic::{AtomicUsize, Ordering as AtomicOrdering};
 
 use serde::{Deserialize, Serialize};
 
-use crate::jsnum::{inf, nan, MAX_SAFE_INTEGER, MIN_SAFE_INTEGER, NEGATIVE_ZERO};
 use crate::Number;
+use crate::jsnum::{MAX_SAFE_INTEGER, MIN_SAFE_INTEGER, NEGATIVE_ZERO, inf, nan};
 
 pub(crate) fn assert_equal_number(got: Number, want: Number) {
     if got.is_nan() || want.is_nan() {
@@ -102,7 +106,7 @@ pub(crate) fn uint32s_to_num(a: [u32; 2]) -> Number {
 const LOADER_SCRIPT: &str = r#"import script from "./script.mjs";
 process.stdout.write(JSON.stringify(await script(...process.argv.slice(2))));"#;
 
-fn node_exe() -> Option<&'static str> {
+pub(crate) fn node_exe() -> Option<&'static str> {
     static NODE_EXE: OnceLock<Option<&'static str>> = OnceLock::new();
     *NODE_EXE.get_or_init(|| {
         Command::new("node")
@@ -114,7 +118,7 @@ fn node_exe() -> Option<&'static str> {
     })
 }
 
-fn temp_dir() -> PathBuf {
+pub(crate) fn temp_dir() -> PathBuf {
     static NEXT_ID: AtomicUsize = AtomicUsize::new(0);
     let dir = std::env::temp_dir().join(format!(
         "tsc-jsnum-test-{}-{}",
@@ -125,7 +129,11 @@ fn temp_dir() -> PathBuf {
     dir
 }
 
-fn eval_node_script<T: serde::de::DeserializeOwned>(script: &str, dir: &Path, args: &[&str]) -> T {
+pub(crate) fn eval_node_script<T: serde::de::DeserializeOwned>(
+    script: &str,
+    dir: &Path,
+    args: &[&str],
+) -> T {
     let exe = node_exe().expect("Node.js not found");
     let script_path = dir.join("script.mjs");
     fs::write(&script_path, script).expect("failed to write script.mjs");
@@ -207,7 +215,10 @@ fn eval_binary_op(op: &str, xs: &[Number], ys: &[Number]) -> Option<Vec<Number>>
     let inputs: Vec<BinaryInput> = xs
         .iter()
         .zip(ys.iter())
-        .map(|(&x, &y)| BinaryInput { x: num_to_uint32s(x), y: num_to_uint32s(y) })
+        .map(|(&x, &y)| BinaryInput {
+            x: num_to_uint32s(x),
+            y: num_to_uint32s(y),
+        })
         .collect();
 
     let json_input = serde_json::to_string(&inputs).unwrap();
@@ -231,8 +242,12 @@ fn eval_unary_op(op: &str, xs: &[Number]) -> Option<Vec<Number>> {
     node_exe()?;
 
     let tmpdir = temp_dir();
-    let inputs: Vec<UnaryInput> =
-        xs.iter().map(|&x| UnaryInput { x: num_to_uint32s(x) }).collect();
+    let inputs: Vec<UnaryInput> = xs
+        .iter()
+        .map(|&x| UnaryInput {
+            x: num_to_uint32s(x),
+        })
+        .collect();
 
     let json_input = serde_json::to_string(&inputs).unwrap();
 
@@ -260,52 +275,282 @@ struct ToInt32Test {
 }
 
 static TO_INT32_TESTS: &[ToInt32Test] = &[
-    ToInt32Test { name: "0.0", input: Number(0.0), want: 0, bench: true },
-    ToInt32Test { name: "-0.0", input: NEGATIVE_ZERO, want: 0, bench: false },
-    ToInt32Test { name: "NaN", input: nan(), want: 0, bench: true },
-    ToInt32Test { name: "+Inf", input: inf(1), want: 0, bench: true },
-    ToInt32Test { name: "-Inf", input: inf(-1), want: 0, bench: true },
-    ToInt32Test { name: "MaxInt32", input: Number(i32::MAX as f64), want: i32::MAX, bench: false },
-    ToInt32Test { name: "MaxInt32+1", input: Number(i32::MAX as f64 + 1.0), want: i32::MIN, bench: true },
-    ToInt32Test { name: "MinInt32", input: Number(i32::MIN as f64), want: i32::MIN, bench: false },
-    ToInt32Test { name: "MinInt32-1", input: Number(i32::MIN as f64 - 1.0), want: i32::MAX, bench: true },
-    ToInt32Test { name: "MIN_SAFE_INTEGER", input: MIN_SAFE_INTEGER, want: 1, bench: false },
-    ToInt32Test { name: "MIN_SAFE_INTEGER-1", input: Number(MIN_SAFE_INTEGER.0 - 1.0), want: 0, bench: false },
-    ToInt32Test { name: "MIN_SAFE_INTEGER+1", input: Number(MIN_SAFE_INTEGER.0 + 1.0), want: 2, bench: false },
-    ToInt32Test { name: "MAX_SAFE_INTEGER", input: MAX_SAFE_INTEGER, want: -1, bench: true },
-    ToInt32Test { name: "MAX_SAFE_INTEGER-1", input: Number(MAX_SAFE_INTEGER.0 - 1.0), want: -2, bench: true },
-    ToInt32Test { name: "MAX_SAFE_INTEGER+1", input: Number(MAX_SAFE_INTEGER.0 + 1.0), want: 0, bench: true },
-    ToInt32Test { name: "-8589934590", input: Number(-8589934590.0), want: 2, bench: false },
-    ToInt32Test { name: "0xDEADBEEF", input: Number(0xDEADBEEF as f64), want: -559038737, bench: true },
-    ToInt32Test { name: "4294967808", input: Number(4294967808.0), want: 512, bench: false },
-    ToInt32Test { name: "-0.4", input: Number(-0.4), want: 0, bench: false },
-    ToInt32Test { name: "SmallestNonzeroFloat64", input: Number(5e-324), want: 0, bench: false },
-    ToInt32Test { name: "-SmallestNonzeroFloat64", input: Number(-5e-324), want: 0, bench: false },
-    ToInt32Test { name: "MaxFloat64", input: Number(f64::MAX), want: 0, bench: false },
-    ToInt32Test { name: "-MaxFloat64", input: Number(-f64::MAX), want: 0, bench: false },
-    ToInt32Test { name: "Largest subnormal number", input: number_from_bits(0x000FFFFFFFFFFFFF), want: 0, bench: false },
-    ToInt32Test { name: "Smallest positive normal number", input: number_from_bits(0x0010000000000000), want: 0, bench: false },
-    ToInt32Test { name: "Largest normal number", input: Number(f64::MAX), want: 0, bench: false },
-    ToInt32Test { name: "-Largest normal number", input: Number(-f64::MAX), want: 0, bench: false },
-    ToInt32Test { name: "1.0", input: Number(1.0), want: 1, bench: false },
-    ToInt32Test { name: "-1.0", input: Number(-1.0), want: -1, bench: false },
-    ToInt32Test { name: "1e308", input: Number(1e308), want: 0, bench: false },
-    ToInt32Test { name: "-1e308", input: Number(-1e308), want: 0, bench: false },
-    ToInt32Test { name: "math.Pi", input: Number(std::f64::consts::PI), want: 3, bench: false },
-    ToInt32Test { name: "-math.Pi", input: Number(-std::f64::consts::PI), want: -3, bench: false },
-    ToInt32Test { name: "math.E", input: Number(std::f64::consts::E), want: 2, bench: false },
-    ToInt32Test { name: "-math.E", input: Number(-std::f64::consts::E), want: -2, bench: false },
-    ToInt32Test { name: "0.5", input: Number(0.5), want: 0, bench: false },
-    ToInt32Test { name: "-0.5", input: Number(-0.5), want: 0, bench: false },
-    ToInt32Test { name: "0.49999999999999994", input: Number(0.49999999999999994), want: 0, bench: false },
-    ToInt32Test { name: "-0.49999999999999994", input: Number(-0.49999999999999994), want: 0, bench: false },
-    ToInt32Test { name: "0.5000000000000001", input: Number(0.5000000000000001), want: 0, bench: false },
-    ToInt32Test { name: "-0.5000000000000001", input: Number(-0.5000000000000001), want: 0, bench: false },
-    ToInt32Test { name: "2^31 + 0.5", input: Number(2147483648.5), want: -2147483648, bench: false },
-    ToInt32Test { name: "-2^31 - 0.5", input: Number(-2147483648.5), want: -2147483648, bench: false },
-    ToInt32Test { name: "2^40", input: Number(1099511627776.0), want: 0, bench: false },
-    ToInt32Test { name: "-2^40", input: Number(-1099511627776.0), want: 0, bench: false },
-    ToInt32Test { name: "TypeFlagsNarrowable", input: Number(536624127.0), want: 536624127, bench: true },
+    ToInt32Test {
+        name: "0.0",
+        input: Number(0.0),
+        want: 0,
+        bench: true,
+    },
+    ToInt32Test {
+        name: "-0.0",
+        input: NEGATIVE_ZERO,
+        want: 0,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "NaN",
+        input: nan(),
+        want: 0,
+        bench: true,
+    },
+    ToInt32Test {
+        name: "+Inf",
+        input: inf(1),
+        want: 0,
+        bench: true,
+    },
+    ToInt32Test {
+        name: "-Inf",
+        input: inf(-1),
+        want: 0,
+        bench: true,
+    },
+    ToInt32Test {
+        name: "MaxInt32",
+        input: Number(i32::MAX as f64),
+        want: i32::MAX,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "MaxInt32+1",
+        input: Number(i32::MAX as f64 + 1.0),
+        want: i32::MIN,
+        bench: true,
+    },
+    ToInt32Test {
+        name: "MinInt32",
+        input: Number(i32::MIN as f64),
+        want: i32::MIN,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "MinInt32-1",
+        input: Number(i32::MIN as f64 - 1.0),
+        want: i32::MAX,
+        bench: true,
+    },
+    ToInt32Test {
+        name: "MIN_SAFE_INTEGER",
+        input: MIN_SAFE_INTEGER,
+        want: 1,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "MIN_SAFE_INTEGER-1",
+        input: Number(MIN_SAFE_INTEGER.0 - 1.0),
+        want: 0,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "MIN_SAFE_INTEGER+1",
+        input: Number(MIN_SAFE_INTEGER.0 + 1.0),
+        want: 2,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "MAX_SAFE_INTEGER",
+        input: MAX_SAFE_INTEGER,
+        want: -1,
+        bench: true,
+    },
+    ToInt32Test {
+        name: "MAX_SAFE_INTEGER-1",
+        input: Number(MAX_SAFE_INTEGER.0 - 1.0),
+        want: -2,
+        bench: true,
+    },
+    ToInt32Test {
+        name: "MAX_SAFE_INTEGER+1",
+        input: Number(MAX_SAFE_INTEGER.0 + 1.0),
+        want: 0,
+        bench: true,
+    },
+    ToInt32Test {
+        name: "-8589934590",
+        input: Number(-8589934590.0),
+        want: 2,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "0xDEADBEEF",
+        input: Number(0xDEADBEEF_u32 as f64),
+        want: -559038737,
+        bench: true,
+    },
+    ToInt32Test {
+        name: "4294967808",
+        input: Number(4294967808.0),
+        want: 512,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "-0.4",
+        input: Number(-0.4),
+        want: 0,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "SmallestNonzeroFloat64",
+        input: Number(5e-324),
+        want: 0,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "-SmallestNonzeroFloat64",
+        input: Number(-5e-324),
+        want: 0,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "MaxFloat64",
+        input: Number(f64::MAX),
+        want: 0,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "-MaxFloat64",
+        input: Number(-f64::MAX),
+        want: 0,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "Largest subnormal number",
+        input: number_from_bits(0x000FFFFFFFFFFFFF),
+        want: 0,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "Smallest positive normal number",
+        input: number_from_bits(0x0010000000000000),
+        want: 0,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "Largest normal number",
+        input: Number(f64::MAX),
+        want: 0,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "-Largest normal number",
+        input: Number(-f64::MAX),
+        want: 0,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "1.0",
+        input: Number(1.0),
+        want: 1,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "-1.0",
+        input: Number(-1.0),
+        want: -1,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "1e308",
+        input: Number(1e308),
+        want: 0,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "-1e308",
+        input: Number(-1e308),
+        want: 0,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "math.Pi",
+        input: Number(std::f64::consts::PI),
+        want: 3,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "-math.Pi",
+        input: Number(-std::f64::consts::PI),
+        want: -3,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "math.E",
+        input: Number(std::f64::consts::E),
+        want: 2,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "-math.E",
+        input: Number(-std::f64::consts::E),
+        want: -2,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "0.5",
+        input: Number(0.5),
+        want: 0,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "-0.5",
+        input: Number(-0.5),
+        want: 0,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "0.49999999999999994",
+        input: Number(0.49999999999999994),
+        want: 0,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "-0.49999999999999994",
+        input: Number(-0.49999999999999994),
+        want: 0,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "0.5000000000000001",
+        input: Number(0.5000000000000001),
+        want: 0,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "-0.5000000000000001",
+        input: Number(-0.5000000000000001),
+        want: 0,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "2^31 + 0.5",
+        input: Number(2147483648.5),
+        want: -2147483648,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "-2^31 - 0.5",
+        input: Number(-2147483648.5),
+        want: -2147483648,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "2^40",
+        input: Number(1099511627776.0),
+        want: 0,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "-2^40",
+        input: Number(-1099511627776.0),
+        want: 0,
+        bench: false,
+    },
+    ToInt32Test {
+        name: "TypeFlagsNarrowable",
+        input: Number(536624127.0),
+        want: 536624127,
+        bench: true,
+    },
 ];
 
 #[test]
@@ -407,8 +652,8 @@ fn test_bitwise_or() {
 fn test_bitwise_xor() {
     let tests: &[(Number, Number, Number)] = &[
         (Number(0.0), Number(0.0), Number(0.0)),
-        (Number(0.0), Number(1.0), Number(0.0)),
-        (Number(1.0), Number(0.0), Number(0.0)),
+        (Number(0.0), Number(1.0), Number(1.0)),
+        (Number(1.0), Number(0.0), Number(1.0)),
         (Number(1.0), Number(1.0), Number(0.0)),
     ];
 
@@ -603,9 +848,21 @@ fn test_exponentiate() {
         // computed via exact integer arithmetic (big.Int).
         // Cross-engine testing (V8, SpiderMonkey, QuickJS, XS via jsvu)
         // confirmed these match the majority of JS engines.
-        (Number(10.0), Number(308.0), number_from_bits(0x7fe1ccf385ebc8a0)),
-        (Number(5.0), Number(210.0), number_from_bits(0x5e68557f31326bbb)),
-        (Number(10.0), Number(200.0), number_from_bits(0x6974e718d7d7625a)),
+        (
+            Number(10.0),
+            Number(308.0),
+            number_from_bits(0x7fe1ccf385ebc8a0),
+        ),
+        (
+            Number(5.0),
+            Number(210.0),
+            number_from_bits(0x5e68557f31326bbb),
+        ),
+        (
+            Number(10.0),
+            Number(200.0),
+            number_from_bits(0x6974e718d7d7625a),
+        ),
     ];
 
     let xs: Vec<Number> = tests.iter().map(|t| t.0).collect();

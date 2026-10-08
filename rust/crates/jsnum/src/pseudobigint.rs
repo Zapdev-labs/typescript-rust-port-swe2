@@ -7,7 +7,7 @@ use crate::bigint_shim;
 // PseudoBigInt represents a JS-like bigint. The zero state of the struct represents the value 0.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 pub struct PseudoBigInt {
-    pub negative: bool,      // true if the value is a non-zero negative number.
+    pub negative: bool,       // true if the value is a non-zero negative number.
     pub base10_value: String, // The absolute value in base 10 with no leading zeros. The value zero is represented as an empty string.
 }
 

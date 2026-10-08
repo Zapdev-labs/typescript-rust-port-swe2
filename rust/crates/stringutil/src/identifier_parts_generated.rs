@@ -10,7 +10,6 @@
 
 use crate::unicode::{Range16, Range32, RangeTable};
 
-
 #[rustfmt::skip]
 pub(crate) static UNICODE_ESNEXT_IDENTIFIER_START: RangeTable = RangeTable {
     r16: &[

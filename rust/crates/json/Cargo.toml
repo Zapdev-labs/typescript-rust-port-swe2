@@ -7,3 +7,9 @@ license.workspace = true
 
 [lints]
 workspace = true
+
+[dependencies]
+serde = { workspace = true }
+# "raw_value" exposes serde_json::value::RawValue — the serde equivalent of
+# jsontext.Value (an uninterpreted raw JSON buffer).
+serde_json = { workspace = true, features = ["raw_value"] }

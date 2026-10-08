@@ -21,7 +21,7 @@ unimplemented = "warn"
 
 # Approved third-party deps only — see SPEC.md §5.11.
 [workspace.dependencies]
-rustc-hash = "3"
+rustc-hash = "2" # 3.x was yanked from crates.io; 2.1.x is the latest resolvable line
 indexmap = "2"
 memchr = "2"
 serde = "1"

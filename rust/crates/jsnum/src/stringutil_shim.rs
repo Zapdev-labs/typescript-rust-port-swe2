@@ -8,15 +8,15 @@
 
 // Ported from tsc/internal/stringutil/util.go (IsDigit).
 pub(crate) fn is_digit(ch: char) -> bool {
-    ch >= '0' && ch <= '9'
+    ch.is_ascii_digit()
 }
 
 // Ported from tsc/internal/stringutil/util.go (IsOctalDigit).
 pub(crate) fn is_octal_digit(ch: char) -> bool {
-    ch >= '0' && ch <= '7'
+    ('0'..='7').contains(&ch)
 }
 
 // Ported from tsc/internal/stringutil/util.go (IsHexDigit).
 pub(crate) fn is_hex_digit(ch: char) -> bool {
-    ch >= '0' && ch <= '9' || ch >= 'A' && ch <= 'F' || ch >= 'a' && ch <= 'f'
+    ch.is_ascii_hexdigit()
 }

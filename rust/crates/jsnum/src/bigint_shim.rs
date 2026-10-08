@@ -36,6 +36,9 @@ pub(crate) fn set_string_base0(s: &str) -> Option<BigInt> {
         _ => (10, s),
     };
     let digits: String = digits.chars().filter(|&c| c != '_').collect();
+    if digits.is_empty() {
+        return None; // Go: SetString fails when no digits follow the prefix
+    }
     let mut bi = BigInt::parse_bytes(digits.as_bytes(), radix)?;
     if negative {
         bi = -bi;
@@ -46,7 +49,6 @@ pub(crate) fn set_string_base0(s: &str) -> Option<BigInt> {
 // `bi.Float64()` — the float64 nearest to bi (round-half-even, single
 // correctly-rounded step: `new(big.Float).SetInt(x)` uses enough precision
 // to represent x exactly, then Float64 rounds to 53 bits).
-#[allow(dead_code)]
 pub(crate) fn float64_from_big_int(bi: &BigInt) -> f64 {
     float64_from_big_int_prec(bi, u64::MAX)
 }
@@ -62,7 +64,6 @@ pub(crate) fn float64_from_big_int_prec(bi: &BigInt, prec: u64) -> f64 {
         Sign::Plus => 1.0,
     };
     let mag = bi.magnitude();
-    let n = mag.bits(); // >= 1
 
     // First rounding step: keep the top `prec` bits of the magnitude.
     // After this, value == keep * 2^shift with keep.bits() <= prec.
