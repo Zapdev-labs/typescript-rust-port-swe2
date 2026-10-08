@@ -5,7 +5,7 @@ use std::fmt;
 use crate::Number;
 use crate::bigint_shim;
 use crate::jsnum::{MAX_SAFE_INTEGER, MIN_SAFE_INTEGER, inf, nan};
-use crate::stringutil_shim as stringutil;
+use tsc_stringutil as stringutil;
 
 impl Number {
     // https://tc39.es/ecma262/2024/multipage/ecmascript-data-types-and-values.html#sec-numeric-types-number-tostring

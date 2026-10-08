@@ -1,7 +1,7 @@
 // Ported from tsc/internal/semver/version_test.go @ ec47d33c23e464a17cdf2475632cba629bee8763
 
 use crate::version::{
-    try_parse_version, Version, COMPARISON_EQUAL_TO, COMPARISON_GREATER_THAN, COMPARISON_LESS_THAN,
+    COMPARISON_EQUAL_TO, COMPARISON_GREATER_THAN, COMPARISON_LESS_THAN, Version, try_parse_version,
 };
 
 fn strs(parts: &[&str]) -> Vec<String> {
@@ -43,12 +43,18 @@ fn test_try_parse_semver() {
         ),
         (
             "1.2.3",
-            Version { major: 1, minor: 2, patch: 3, prerelease: vec![], build: vec![] },
+            Version {
+                major: 1,
+                minor: 2,
+                patch: 3,
+                prerelease: vec![],
+                build: vec![],
+            },
         ),
     ];
 
     for (input, expected) in tests {
-        let v = try_parse_version(*input).unwrap();
+        let v = try_parse_version(input).unwrap();
         assert_version(&v, expected);
     }
 }
@@ -77,7 +83,13 @@ fn test_version_string() {
             "1.2.3-pre.4+build",
         ),
         (
-            Version { major: 1, minor: 2, patch: 3, prerelease: vec![], build: strs(&["build"]) },
+            Version {
+                major: 1,
+                minor: 2,
+                patch: 3,
+                prerelease: vec![],
+                build: strs(&["build"]),
+            },
             "1.2.3+build",
         ),
         (
@@ -100,7 +112,16 @@ fn test_version_string() {
             },
             "1.2.3+build.4",
         ),
-        (Version { major: 1, minor: 2, patch: 3, prerelease: vec![], build: vec![] }, "1.2.3"),
+        (
+            Version {
+                major: 1,
+                minor: 2,
+                patch: 3,
+                prerelease: vec![],
+                build: vec![],
+            },
+            "1.2.3",
+        ),
     ];
 
     for (input, expected) in tests {
@@ -169,13 +190,21 @@ fn test_version_compare() {
         ("1.0.0+build", "1.0.0+stuff", COMPARISON_EQUAL_TO),
         // https://semver.org/#spec-item-11
         // Edge cases for numeric and lexical comparison of prerelease identifiers.
-        ("1.0.0-alpha.99999", "1.0.0-alpha.100000", COMPARISON_LESS_THAN),
-        ("1.0.0-alpha.beta", "1.0.0-alpha.alpha", COMPARISON_GREATER_THAN),
+        (
+            "1.0.0-alpha.99999",
+            "1.0.0-alpha.100000",
+            COMPARISON_LESS_THAN,
+        ),
+        (
+            "1.0.0-alpha.beta",
+            "1.0.0-alpha.alpha",
+            COMPARISON_GREATER_THAN,
+        ),
     ];
 
     for (v1_text, v2_text, want) in tests {
-        let v1 = try_parse_version(*v1_text).unwrap();
-        let v2 = try_parse_version(*v2_text).unwrap();
+        let v1 = try_parse_version(v1_text).unwrap();
+        let v2 = try_parse_version(v2_text).unwrap();
         assert_eq!(Version::compare(Some(&v1), Some(&v2)), *want);
     }
 }

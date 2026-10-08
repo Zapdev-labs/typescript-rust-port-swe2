@@ -79,7 +79,7 @@ pub fn parse(pattern: &str) -> Result<Glob, ParseError> {
     Ok(g)
 }
 
-fn parse_nested<'a>(mut pattern: &'a str, nested: bool) -> Result<(Glob, &'a str), ParseError> {
+fn parse_nested(mut pattern: &str, nested: bool) -> Result<(Glob, &str), ParseError> {
     let mut g = Glob::default();
     while !pattern.is_empty() {
         match pattern.as_bytes()[0] {
@@ -230,8 +230,11 @@ fn decode_rune_in_string(s: &[u8]) -> (char, usize) {
 impl Glob {
     fn parse_literal<'a>(&mut self, pattern: &'a str, nested: bool) -> &'a str {
         let special_chars = if nested { "*?{[/}," } else { "*?{[/" };
-        let end = pattern.find(|c| special_chars.contains(c)).unwrap_or(pattern.len());
-        self.elems.push(Element::Literal(pattern[..end].to_string()));
+        let end = pattern
+            .find(|c| special_chars.contains(c))
+            .unwrap_or(pattern.len());
+        self.elems
+            .push(Element::Literal(pattern[..end].to_string()));
         &pattern[end..]
     }
 }
@@ -249,11 +252,11 @@ impl fmt::Display for Glob {
 // element types.
 #[derive(Clone, Debug, PartialEq)]
 enum Element {
-    Slash,          // One or more '/' separators
-    Literal(String), // string literal, not containing /, *, ?, {}, or []
-    Star,           // *
-    AnyChar,        // ?
-    StarStar,       // **
+    Slash,            // One or more '/' separators
+    Literal(String),  // string literal, not containing /, *, ?, {}, or []
+    Star,             // *
+    AnyChar,          // ?
+    StarStar,         // **
     Group(Vec<Glob>), // {foo, bar, ...} grouping
     CharRange {
         // [a-z] character range

@@ -15,6 +15,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
 
 [[package]]
+name = "gen-ast"
+version = "0.0.0"
+
+[[package]]
 name = "hashbrown"
 version = "0.17.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -149,6 +153,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "tsc-ast"
+version = "0.0.0"
+
+[[package]]
 name = "tsc-collections"
 version = "0.0.0"
 dependencies = [
@@ -169,6 +177,9 @@ version = "0.0.0"
 [[package]]
 name = "tsc-diagnostics"
 version = "0.0.0"
+dependencies = [
+ "tsc-locale",
+]
 
 [[package]]
 name = "tsc-glob"
@@ -181,6 +192,7 @@ dependencies = [
  "num-bigint",
  "serde",
  "serde_json",
+ "tsc-stringutil",
 ]
 
 [[package]]

@@ -15,7 +15,13 @@ pub(crate) fn args() -> Vec<String> {
 pub(crate) fn executable() -> Result<String, io::Error> {
     // os.Executable()
     // PORT: Go returns a byte-string path; Rust String must be UTF-8.
-    std::env::current_exe()?.into_os_string().into_string().map_err(|_| {
-        io::Error::new(io::ErrorKind::InvalidData, "executable path is not valid UTF-8")
-    })
+    std::env::current_exe()?
+        .into_os_string()
+        .into_string()
+        .map_err(|_| {
+            io::Error::new(
+                io::ErrorKind::InvalidData,
+                "executable path is not valid UTF-8",
+            )
+        })
 }

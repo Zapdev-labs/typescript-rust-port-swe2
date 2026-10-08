@@ -66,7 +66,9 @@ fn match_nr(s: &str) -> Option<(&str, &str)> {
 // prerelease and build groups. Returns the length of the leading run of
 // ASCII alphanumerics, '-' and '.'.
 pub(crate) fn qualifier_run_len(s: &str) -> usize {
-    s.bytes().take_while(|b| b.is_ascii_alphanumeric() || *b == b'-' || *b == b'.').count()
+    s.bytes()
+        .take_while(|b| b.is_ascii_alphanumeric() || *b == b'-' || *b == b'.')
+        .count()
 }
 
 // https://semver.org/#spec-item-9
@@ -84,7 +86,9 @@ fn prerelease_regexp_match(s: &str) -> bool {
 
 fn prerelease_part_regexp_match(s: &str) -> bool {
     let b = s.as_bytes();
-    let Some(&first) = b.first() else { return false };
+    let Some(&first) = b.first() else {
+        return false;
+    };
     if s == "0" {
         return true;
     }
@@ -133,16 +137,26 @@ pub struct Version {
 
 // var versionZero = Version{prerelease: []string{"0"}}
 pub(crate) fn version_zero() -> Version {
-    Version { prerelease: vec!["0".to_string()], ..Version::default() }
+    Version {
+        prerelease: vec!["0".to_string()],
+        ..Version::default()
+    }
 }
 
 impl Version {
     pub(crate) fn increment_major(&self) -> Version {
-        Version { major: self.major.wrapping_add(1), ..Version::default() }
+        Version {
+            major: self.major.wrapping_add(1),
+            ..Version::default()
+        }
     }
 
     pub(crate) fn increment_minor(&self) -> Version {
-        Version { major: self.major, minor: self.minor.wrapping_add(1), ..Version::default() }
+        Version {
+            major: self.major,
+            minor: self.minor.wrapping_add(1),
+            ..Version::default()
+        }
     }
 
     pub(crate) fn increment_patch(&self) -> Version {
@@ -178,9 +192,9 @@ impl Version {
     // nil cases stay explicit (a nil Version compares below any non-nil Version).
     pub fn compare(a: Option<&Version>, b: Option<&Version>) -> i32 {
         match (a, b) {
-            (None, None) => return COMPARISON_EQUAL_TO,
-            (None, Some(_)) => return COMPARISON_LESS_THAN,
-            (Some(_), None) => return COMPARISON_GREATER_THAN,
+            (None, None) => COMPARISON_EQUAL_TO,
+            (None, Some(_)) => COMPARISON_LESS_THAN,
+            (Some(_), None) => COMPARISON_GREATER_THAN,
             (Some(a), Some(b)) => {
                 if std::ptr::eq(a, b) {
                     return COMPARISON_EQUAL_TO;
@@ -307,7 +321,11 @@ impl fmt::Display for SemverParseError {
     // PORT: Rust's `{:?}` quoting differs from Go's `%q` for control/non-ASCII
     // characters; identical for typical ASCII version strings.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Could not parse version string from {:?}", self.orig_input)
+        write!(
+            f,
+            "Could not parse version string from {:?}",
+            self.orig_input
+        )
     }
 }
 
@@ -372,7 +390,10 @@ pub fn try_parse_version(text: &str) -> Result<Version, ParseError> {
     let mut result = Version::default();
 
     let Some(matched) = version_regexp_match(text) else {
-        return Err(SemverParseError { orig_input: text.to_string() }.into());
+        return Err(SemverParseError {
+            orig_input: text.to_string(),
+        }
+        .into());
     };
 
     let major_str = matched[0];
@@ -396,14 +417,20 @@ pub fn try_parse_version(text: &str) -> Result<Version, ParseError> {
 
     if !prerelease_str.is_empty() {
         if !prerelease_regexp_match(prerelease_str) {
-            return Err(SemverParseError { orig_input: text.to_string() }.into());
+            return Err(SemverParseError {
+                orig_input: text.to_string(),
+            }
+            .into());
         }
 
         result.prerelease = prerelease_str.split('.').map(str::to_string).collect();
     }
     if !build_str.is_empty() {
         if !build_reg_exp_match(build_str) {
-            return Err(SemverParseError { orig_input: text.to_string() }.into());
+            return Err(SemverParseError {
+                orig_input: text.to_string(),
+            }
+            .into());
         }
 
         result.build = build_str.split('.').map(str::to_string).collect();

@@ -6,7 +6,6 @@ mod bigint_shim;
 mod jsnum;
 mod pseudobigint;
 mod string;
-mod stringutil_shim;
 
 #[cfg(test)]
 mod jsnum_test;

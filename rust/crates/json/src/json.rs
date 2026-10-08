@@ -107,8 +107,7 @@ fn marshal_impl<T: ?Sized + Serialize>(
     let mut buf = Vec::new();
     match &o.indent {
         Some(indent) => {
-            let formatter =
-                serde_json::ser::PrettyFormatter::with_indent(indent.as_bytes());
+            let formatter = serde_json::ser::PrettyFormatter::with_indent(indent.as_bytes());
             let mut ser = serde_json::Serializer::with_formatter(&mut buf, formatter);
             if o.deterministic {
                 serde_json::to_value(in_)?.serialize(&mut ser)?;
@@ -132,7 +131,9 @@ fn marshal_impl<T: ?Sized + Serialize>(
 /// jsontext.WithIndentPrefix inserts `prefix` after every newline inside the
 /// encoded value; equivalent to a post-pass over the finished output.
 fn apply_prefix(buf: &mut Vec<u8>, o: &ResolvedOptions) {
-    let Some(prefix) = &o.indent_prefix else { return };
+    let Some(prefix) = &o.indent_prefix else {
+        return;
+    };
     if prefix.is_empty() {
         return;
     }
@@ -196,10 +197,7 @@ pub fn marshal_indent<T: ?Sized + Serialize>(
         // WithIndentPrefix and WithIndent imply multiline output, so skip them.
         return marshal(in_, &[]);
     }
-    marshal(
-        in_,
-        &[with_indent_prefix(prefix), with_indent(indent)],
-    )
+    marshal(in_, &[with_indent_prefix(prefix), with_indent(indent)])
 }
 
 /// `func MarshalIndentWrite(out io.Writer, in any, prefix, indent string) (err error)`
@@ -213,11 +211,7 @@ pub fn marshal_indent_write<W: io::Write, T: ?Sized + Serialize>(
         // WithIndentPrefix and WithIndent imply multiline output, so skip them.
         return marshal_write(out, in_, &[]);
     }
-    marshal_write(
-        out,
-        in_,
-        &[with_indent_prefix(prefix), with_indent(indent)],
-    )
+    marshal_write(out, in_, &[with_indent_prefix(prefix), with_indent(indent)])
 }
 
 /// `func Unmarshal(in []byte, out any, opts ...json.Options) (err error)`
@@ -312,7 +306,10 @@ fn normalize_kind(b: u8) -> Kind {
 /// jsontext reports stream exhaustion as `io.EOF`; an io error is the closest
 /// serde_json-error channel.
 fn unexpected_eof() -> serde_json::Error {
-    serde_json::Error::io(io::Error::new(io::ErrorKind::UnexpectedEof, "unexpected EOF"))
+    serde_json::Error::io(io::Error::new(
+        io::ErrorKind::UnexpectedEof,
+        "unexpected EOF",
+    ))
 }
 
 /// `type Token = jsontext.Token` — a JSON token: structural punctuation, a
@@ -406,10 +403,7 @@ pub const END_ARRAY: Token = Token {
 /// `MarshalJSONTo` impl implements `serde::Serialize` by buffering through an
 /// `Encoder` and re-emitting as `RawValue` — use `serialize_marshaler_to`.
 pub trait MarshalerTo {
-    fn marshal_json_to<W: io::Write>(
-        &self,
-        enc: &mut Encoder<W>,
-    ) -> Result<(), serde_json::Error>;
+    fn marshal_json_to<W: io::Write>(&self, enc: &mut Encoder<W>) -> Result<(), serde_json::Error>;
 }
 
 /// Helper for `impl serde::Serialize` on a `MarshalerTo` port:
@@ -423,10 +417,8 @@ pub fn serialize_marshaler_to<T: MarshalerTo + ?Sized, S: serde::Serializer>(
     value
         .marshal_json_to(&mut enc)
         .map_err(serde::ser::Error::custom)?;
-    let raw = RawValue::from_string(
-        String::from_utf8(buf).map_err(serde::ser::Error::custom)?,
-    )
-    .map_err(serde::ser::Error::custom)?;
+    let raw = RawValue::from_string(String::from_utf8(buf).map_err(serde::ser::Error::custom)?)
+        .map_err(serde::ser::Error::custom)?;
     raw.serialize(serializer)
 }
 
@@ -634,7 +626,7 @@ impl<R: io::Read> Decoder<R> {
                 return Err(serde_json::Error::io(io::Error::new(
                     io::ErrorKind::InvalidData,
                     format!("invalid token kind {}", kind as char),
-                )))
+                )));
             }
         };
         self.pending = None;
@@ -687,7 +679,7 @@ impl<R: io::Read> Decoder<R> {
                 return Err(serde_json::Error::io(io::Error::new(
                     io::ErrorKind::InvalidData,
                     format!("invalid token kind {}", kind as char),
-                )))
+                )));
             }
         }
         self.pending = None;
@@ -699,7 +691,7 @@ impl<R: io::Read> Decoder<R> {
         })?;
         // RawValue::from_string validates the raw JSON (jsontext does the
         // same validation on ReadValue).
-        Ok(RawValue::from_string(s)?)
+        RawValue::from_string(s)
     }
 
     /// `func (d *Decoder) SkipValue() error`
@@ -723,9 +715,7 @@ impl<R: io::Read> Decoder<R> {
             self.consume_byte();
             match b {
                 b'\\' => {
-                    let Some(escaped) =
-                        self.peek_byte().map_err(serde_json::Error::io)?
-                    else {
+                    let Some(escaped) = self.peek_byte().map_err(serde_json::Error::io)? else {
                         return Err(serde_json::Error::io(io::Error::new(
                             io::ErrorKind::UnexpectedEof,
                             "unexpected EOF in JSON string escape",
@@ -815,9 +805,7 @@ impl<W: io::Write> Encoder<W> {
     /// current depth — only when an indent option is set.
     fn write_indent(&mut self) -> Result<(), serde_json::Error> {
         if let Some(indent) = &self.resolved.indent {
-            self.out
-                .write_all(b"\n")
-                .map_err(serde_json::Error::io)?;
+            self.out.write_all(b"\n").map_err(serde_json::Error::io)?;
             if let Some(prefix) = &self.resolved.indent_prefix {
                 self.out
                     .write_all(prefix.as_bytes())
@@ -854,13 +842,9 @@ impl<W: io::Write> Encoder<W> {
                     frame.expect_name = false;
                 } else {
                     if self.resolved.indent.is_some() {
-                        self.out
-                            .write_all(b": ")
-                            .map_err(serde_json::Error::io)?;
+                        self.out.write_all(b": ").map_err(serde_json::Error::io)?;
                     } else {
-                        self.out
-                            .write_all(b":")
-                            .map_err(serde_json::Error::io)?;
+                        self.out.write_all(b":").map_err(serde_json::Error::io)?;
                     }
                     frame.expect_name = true;
                     frame.count += 1;
@@ -953,31 +937,26 @@ impl<W: io::Write> Encoder<W> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde::Deserialize;
+    use std::collections::BTreeMap;
 
-    #[derive(Serialize, Deserialize, Debug, PartialEq)]
-    struct Point {
-        x: i32,
-        y: i32,
+    fn point() -> BTreeMap<&'static str, i32> {
+        BTreeMap::from([("x", 1), ("y", 2)])
     }
 
     #[test]
     fn test_marshal() {
-        let bytes = marshal(&Point { x: 1, y: 2 }, &[]).unwrap();
+        let bytes = marshal(&point(), &[]).unwrap();
         assert_eq!(bytes, br#"{"x":1,"y":2}"#);
     }
 
     #[test]
     fn test_marshal_indent() {
         // MarshalIndent with empty prefix+indent is plain Marshal.
-        let bytes = marshal_indent(&Point { x: 1, y: 2 }, "", "").unwrap();
+        let bytes = marshal_indent(&point(), "", "").unwrap();
         assert_eq!(bytes, br#"{"x":1,"y":2}"#);
 
         let bytes = marshal_indent(&vec![1, 2], "", "  ").unwrap();
-        assert_eq!(
-            String::from_utf8(bytes).unwrap(),
-            "[\n  1,\n  2\n]"
-        );
+        assert_eq!(String::from_utf8(bytes).unwrap(), "[\n  1,\n  2\n]");
     }
 
     #[test]
@@ -989,20 +968,26 @@ mod tests {
     #[test]
     fn test_marshal_write() {
         let mut buf = Vec::new();
-        marshal_write(&mut buf, &Point { x: 1, y: 2 }, &[]).unwrap();
+        marshal_write(&mut buf, &point(), &[]).unwrap();
         assert_eq!(buf, br#"{"x":1,"y":2}"#);
     }
 
     #[test]
     fn test_unmarshal() {
-        let p: Point = unmarshal(br#"{"x":1,"y":2}"#, &[]).unwrap();
-        assert_eq!(p, Point { x: 1, y: 2 });
+        let p: BTreeMap<String, i32> = unmarshal(br#"{"x":1,"y":2}"#, &[]).unwrap();
+        assert_eq!(
+            p,
+            BTreeMap::from([("x".to_string(), 1), ("y".to_string(), 2)])
+        );
     }
 
     #[test]
     fn test_unmarshal_read() {
-        let p: Point = unmarshal_read(br#"{"x":1,"y":2}"#.as_slice(), &[]).unwrap();
-        assert_eq!(p, Point { x: 1, y: 2 });
+        let p: BTreeMap<String, i32> = unmarshal_read(br#"{"x":1,"y":2}"#.as_slice(), &[]).unwrap();
+        assert_eq!(
+            p,
+            BTreeMap::from([("x".to_string(), 1), ("y".to_string(), 2)])
+        );
     }
 
     #[test]

@@ -76,8 +76,7 @@ pub fn parse(locale_str: &str) -> (Locale, bool) {
                 canon.push('x');
                 continue;
             }
-            if !(2..=8).contains(&subtag.len())
-                || !subtag.bytes().all(|b| b.is_ascii_alphabetic())
+            if !(2..=8).contains(&subtag.len()) || !subtag.bytes().all(|b| b.is_ascii_alphabetic())
             {
                 return (Locale::default(), false);
             }

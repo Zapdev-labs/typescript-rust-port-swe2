@@ -10,14 +10,7 @@ workspace = true
 
 [dependencies]
 num-bigint = { workspace = true }
-# PORT: tsc-stringutil is ported concurrently and its generated sources do not
-# compile at this snapshot (js_case_generated.rs emits overlong \u{...}
-# escapes), so the dependency is left commented out to keep this crate
-# buildable. is_digit/is_octal_digit/is_hex_digit are provided by the private
-# src/stringutil_shim.rs (marked `// PORT(shim):`). Once tsc-stringutil builds,
-# re-enable the dep and switch the `as stringutil` import in string.rs to
-# `use tsc_stringutil as stringutil`.
-# tsc-stringutil = { path = "../stringutil" }
+tsc-stringutil = { path = "../stringutil" }
 
 [dev-dependencies]
 serde = { workspace = true, features = ["derive"] }

@@ -4,7 +4,9 @@
 
 use std::io;
 
-pub(crate) fn ignoring_eintr<T>(mut f: impl FnMut() -> Result<T, io::Error>) -> Result<T, io::Error> {
+pub(crate) fn ignoring_eintr<T>(
+    mut f: impl FnMut() -> Result<T, io::Error>,
+) -> Result<T, io::Error> {
     loop {
         match f() {
             // PORT: Go compares `err != syscall.EINTR` on the raw errno;

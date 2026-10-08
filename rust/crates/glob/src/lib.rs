@@ -2,4 +2,4 @@
 
 mod glob;
 
-pub use glob::{parse, Glob, ParseError};
+pub use glob::{Glob, ParseError, parse};

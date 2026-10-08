@@ -28,7 +28,9 @@ pub const COMPARISON_GREATER_THAN: Comparison = 1;
 // (U+1E9E), so first-char is NOT safe there — callers needing simple uppercase
 // must not use to_uppercase().next() blindly (see equate_string_case_insensitive
 // below, which compares the full mapping iterators instead).
-fn go_to_lower(c: char) -> char {
+// PORT(shim): temporary — remove once tsc-stringutil provides go_to_lower.
+// Used by tspath::to_file_name_lower_case (Go unicode.ToLower, simple mapping).
+pub(crate) fn go_to_lower(c: char) -> char {
     if c == '\u{0130}' {
         return c;
     }

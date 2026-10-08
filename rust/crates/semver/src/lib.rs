@@ -3,8 +3,8 @@
 mod version;
 mod version_range;
 
-pub use version::{must_parse, try_parse_version, NumError, ParseError, SemverParseError, Version};
-pub use version_range::{try_parse_version_range, VersionRange};
+pub use version::{NumError, ParseError, SemverParseError, Version, must_parse, try_parse_version};
+pub use version_range::{VersionRange, try_parse_version_range};
 
 #[cfg(test)]
 mod version_range_test;

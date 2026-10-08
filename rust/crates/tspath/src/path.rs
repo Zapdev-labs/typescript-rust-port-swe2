@@ -6,7 +6,7 @@ use std::fmt;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::dynamic::DYNAMIC_URI_FILE_NAME_PREFIX;
-use crate::rooted_path::RootedDirectoryPath;
+use crate::rooted_path::{RootedDirectoryPath, append_path_to_directory};
 // PORT(shim): temporary — replace with `use tsc_stringutil as stringutil` once
 // tsc-stringutil provides these functions.
 use crate::stringutil_shim as stringutil;
@@ -820,7 +820,7 @@ pub(crate) fn resolve_path_components_relative_to(
 // PORT: named `get_path_components_relative_to_worker` to avoid colliding with
 // the public `get_path_components_relative_to`; the Go original is
 // `getPathComponentsRelativeTo` taking component slices directly.
-fn get_path_components_relative_to_worker(
+pub(crate) fn get_path_components_relative_to_worker(
     from_components: &[String],
     to_components: &[String],
     case_sensitivity: CaseSensitivity,
@@ -1062,7 +1062,7 @@ pub fn get_longest_extension_from_path<'a>(
     let mut longest = "";
     for &extension in extensions {
         if extension.len() > longest.len() {
-            let matched = try_get_extension_from_path(path, extension, comparer);
+            let matched = try_get_extension_from_path_impl(path, extension, comparer);
             if !matched.is_empty() {
                 longest = matched;
             }
@@ -1077,7 +1077,7 @@ pub(crate) fn get_any_extension_from_path_worker<'a>(
     string_equality_comparer: fn(&str, &str) -> bool,
 ) -> &'a str {
     for &extension in extensions {
-        let result = try_get_extension_from_path(path, extension, string_equality_comparer);
+        let result = try_get_extension_from_path_impl(path, extension, string_equality_comparer);
         if !result.is_empty() {
             return result;
         }
@@ -1085,7 +1085,10 @@ pub(crate) fn get_any_extension_from_path_worker<'a>(
     ""
 }
 
-pub(crate) fn try_get_extension_from_path<'a>(
+// PORT: renamed with an `_impl` suffix — Go's private `tryGetExtensionFromPath`
+// collides in snake_case with the public `TryGetExtensionFromPath` in
+// extension.go.
+pub(crate) fn try_get_extension_from_path_impl<'a>(
     path: &'a str,
     extension: &str,
     string_equality_comparer: fn(&str, &str) -> bool,
@@ -1356,6 +1359,9 @@ pub fn split_volume_path(path: &str) -> (String, &str, bool) {
 //	/a/b/c/d, /a/b/c/e, /a/b/f/g, /x/y  =>  /
 //	/a/b/c/d, /a/b/c/e, /a/b/f/g, /x/y  (minComponents: 2)	=>  /a/b, /x/y
 //	c:/a/b/c/d, d:/a/b/c/d =>	c:/a/b/c/d, d:/a/b/c/d
+// PORT: in Go this helper is only exercised by package tests; gate it on
+// cfg(test) so the library build stays warning-free.
+#[cfg(test)]
 pub(crate) fn get_common_parents(
     paths: &[&str],
     min_components: usize,

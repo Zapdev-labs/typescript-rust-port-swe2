@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-use crate::version::{get_uint_component, qualifier_run_len, version_zero, Version};
+use crate::version::{Version, get_uint_component, qualifier_run_len, version_zero};
 
 // https://github.com/npm/node-semver#range-grammar
 //
@@ -308,7 +308,12 @@ fn test_comparator(comparator: &VersionComparator, version: Option<&Version>) ->
 pub fn try_parse_version_range(text: &str) -> (VersionRange, bool) {
     match parse_alternatives(text) {
         Some(alternatives) => (VersionRange { alternatives }, true),
-        None => (VersionRange { alternatives: Vec::new() }, false),
+        None => (
+            VersionRange {
+                alternatives: Vec::new(),
+            },
+            false,
+        ),
     }
 }
 
@@ -326,22 +331,13 @@ fn parse_alternatives(text: &str) -> Option<Vec<Vec<VersionComparator>>> {
         let mut comparators: Vec<VersionComparator> = Vec::new();
 
         if let Some((left, right)) = hyphen_reg_exp_match(r) {
-            if let Some(mut parsed_comparators) = parse_hyphen(left, right) {
-                comparators.append(&mut parsed_comparators);
-            } else {
-                return None;
-            }
+            let mut parsed_comparators = parse_hyphen(left, right)?;
+            comparators.append(&mut parsed_comparators);
         } else {
             for simple in whitespace_reg_exp_split(r) {
-                let Some(matched) = range_reg_exp_match(simple.trim()) else {
-                    return None;
-                };
-
-                if let Some(mut parsed_comparators) = parse_comparator(matched.0, matched.1) {
-                    comparators.append(&mut parsed_comparators);
-                } else {
-                    return None;
-                }
+                let matched = range_reg_exp_match(simple.trim())?;
+                let mut parsed_comparators = parse_comparator(matched.0, matched.1)?;
+                comparators.append(&mut parsed_comparators);
             }
         }
 
@@ -444,7 +440,6 @@ fn parse_partial(text: &str) -> Option<PartialVersion<'_>> {
             patch: patch_numeric,
             prerelease,
             build,
-            ..Version::default()
         },
         major_str,
         minor_str,
@@ -477,7 +472,10 @@ fn parse_comparator(op: &str, text: &str) -> Option<Vec<VersionComparator>> {
                     result.version.increment_minor()
                 };
 
-                let second = VersionComparator { operator: RANGE_LESS_THAN, operand: second_version };
+                let second = VersionComparator {
+                    operator: RANGE_LESS_THAN,
+                    operand: second_version,
+                };
                 comparators_result = vec![first, second];
             }
 
@@ -494,23 +492,35 @@ fn parse_comparator(op: &str, text: &str) -> Option<Vec<VersionComparator>> {
                 } else {
                     result.version.increment_patch()
                 };
-                let second = VersionComparator { operator: RANGE_LESS_THAN, operand: second_version };
+                let second = VersionComparator {
+                    operator: RANGE_LESS_THAN,
+                    operand: second_version,
+                };
                 comparators_result = vec![first, second];
             }
 
             "<" | ">=" => {
-                let operator: ComparatorOperator =
-                    if op == "<" { RANGE_LESS_THAN } else { RANGE_GREATER_THAN_EQUAL };
+                let operator: ComparatorOperator = if op == "<" {
+                    RANGE_LESS_THAN
+                } else {
+                    RANGE_GREATER_THAN_EQUAL
+                };
                 let mut version = result.version.clone();
                 if is_wildcard(result.minor_str) || is_wildcard(result.patch_str) {
                     version.prerelease = vec!["0".to_string()];
                 }
-                comparators_result = vec![VersionComparator { operator, operand: version }];
+                comparators_result = vec![VersionComparator {
+                    operator,
+                    operand: version,
+                }];
             }
 
             "<=" | ">" => {
-                let mut operator: ComparatorOperator =
-                    if op == "<=" { RANGE_LESS_THAN_EQUAL } else { RANGE_GREATER_THAN };
+                let mut operator: ComparatorOperator = if op == "<=" {
+                    RANGE_LESS_THAN_EQUAL
+                } else {
+                    RANGE_GREATER_THAN
+                };
                 let mut version = result.version.clone();
                 if is_wildcard(result.minor_str) {
                     if operator == RANGE_LESS_THAN_EQUAL {
@@ -532,7 +542,10 @@ fn parse_comparator(op: &str, text: &str) -> Option<Vec<VersionComparator>> {
                     version.prerelease = vec!["0".to_string()];
                 }
 
-                comparators_result = vec![VersionComparator { operator, operand: version }];
+                comparators_result = vec![VersionComparator {
+                    operator,
+                    operand: version,
+                }];
             }
             "=" | "" => {
                 // normalize empty string to `=`
@@ -552,12 +565,20 @@ fn parse_comparator(op: &str, text: &str) -> Option<Vec<VersionComparator>> {
                     second_version.prerelease = vec!["0".to_string()];
 
                     comparators_result = vec![
-                        VersionComparator { operator: RANGE_GREATER_THAN_EQUAL, operand: first_version },
-                        VersionComparator { operator: RANGE_LESS_THAN, operand: second_version },
+                        VersionComparator {
+                            operator: RANGE_GREATER_THAN_EQUAL,
+                            operand: first_version,
+                        },
+                        VersionComparator {
+                            operator: RANGE_LESS_THAN,
+                            operand: second_version,
+                        },
                     ];
                 } else {
-                    comparators_result =
-                        vec![VersionComparator { operator, operand: result.version.clone() }];
+                    comparators_result = vec![VersionComparator {
+                        operator,
+                        operand: result.version.clone(),
+                    }];
                 }
             }
             _ => panic!("Unexpected operator: {}", op),

@@ -32,9 +32,9 @@ use std::io;
 // paths; Rust String cannot — non-UTF-8 paths produce an error instead.
 #[cfg(unix)]
 pub(crate) fn path_to_string(path: std::path::PathBuf) -> Result<String, io::Error> {
-    path.into_os_string().into_string().map_err(|_| {
-        io::Error::new(io::ErrorKind::InvalidData, "path is not valid UTF-8")
-    })
+    path.into_os_string()
+        .into_string()
+        .map_err(|_| io::Error::new(io::ErrorKind::InvalidData, "path is not valid UTF-8"))
 }
 
 #[cfg(test)]
@@ -65,7 +65,9 @@ mod tests {
         std::os::unix::fs::symlink(&target, &link).unwrap();
         assert!(is_symlink_or_reparse_point(link.to_str().unwrap()));
         assert!(!is_symlink_or_reparse_point(target.to_str().unwrap()));
-        assert!(!is_symlink_or_reparse_point(dir.join("missing").to_str().unwrap()));
+        assert!(!is_symlink_or_reparse_point(
+            dir.join("missing").to_str().unwrap()
+        ));
         std::fs::remove_dir_all(&dir).unwrap();
     }
 }
