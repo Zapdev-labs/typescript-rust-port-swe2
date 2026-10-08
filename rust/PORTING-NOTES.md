@@ -21,10 +21,11 @@ IDE-resident. Agents use local `cargo test`/`clippy` with isolated
 authoritative gate remains `remote-test.sh` on dih@192.168.1.15; nothing
 local-only counts toward a milestone gate.
 
-## 2026-10-07 crates/collections — OrderedMap JSON marshalling deferred
-Go `OrderedMap.MarshalJSONTo`/`UnmarshalJSONFrom` (json.MarshalerTo impls)
-deferred behind `// TODO(port)` until `tsc-json` exists; serde
-Serialize/Deserialize impls provided in the interim.
+## 2026-10-07 crates/collections — OrderedMap JSON marshalling
+Go `OrderedMap.MarshalJSONTo`/`UnmarshalJSONFrom` (json.MarshalerTo impls) is
+covered by serde `Serialize`/`Deserialize` impls; `tsc-json` is a serde_json
+facade, so `json::marshal(&map)` produces the same insertion-ordered JSON
+object Go emits. Integer keys serialize as decimal object keys either way.
 
 ## 2026-10-07 SPEC corrections discovered while porting (Go is truth)
 - `json/` is a ~100-LOC facade over encoding/json/v2, not a JSONC parser.
@@ -94,3 +95,23 @@ to "2" so tsc-collections can build.
 - `nodemodules.go`: `sync.OnceValue` package-scope set →
   `LazyLock<FxHashSet<String>>`.
 - No `unsafe`; nothing added to the unsafe justification list.
+
+## 2026-10-08 crates/ast + tools/gen-ast — generated AST core
+- `tools/gen-ast` parses the Go `ast` package (`goparse`) into a checked-in
+  schema (`kinds.toml`, 353 kinds + bases + node shapes), then emits
+  `kind_generated.rs`/`ast_generated.rs`. `gen-ast check` verifies the emitted
+  files are current; `bootstrap` re-derives the schema from Go.
+- Go kind constants are sequential `iota`; Rust `Kind` uses explicit ordinals
+  verified against Go (0 mismatches). Go's 34 `KindFirst*`/`KindLast*`
+  sentinel aliases become `Kind::FIRST_*`/`LAST_*` associated consts.
+- `Node` is a flat arena struct: `id: NodeId` (packed `file:20|local:44`),
+  `kind`, `flags`, `loc: TextRange`, `parent: Option<NodeId>`,
+  `data: NodeData` enum — replacing Go's pointer graph + embedded base
+  structs. Embedding is flattened into named fields (`flow_node_base`,
+  `statement_base`). `Vec<Node>` indexes by `NodeId::local_index()`.
+- `*ast.Node` parameters/fields → `NodeId`; nil → `Option<NodeId>`.
+  `*ast.NodeList` → `NodeList` (inline `Vec<NodeId>` handle).
+- `utilities.rs` is partially ported: only helpers the AST core needs. The
+  remainder lands with the checker (Go file is 4.7k LOC of checker-facing
+  helpers). `deepclone`, `positionmap`, `precedence`, diagnostic types are
+  M2 items — Go has no tests for the ported portion.
