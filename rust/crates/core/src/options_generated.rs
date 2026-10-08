@@ -83,8 +83,11 @@ mod rooted_directory_path_vec_serde {
     pub fn deserialize<'de, D: Deserializer<'de>>(
         d: D,
     ) -> Result<Option<Vec<tspath::RootedDirectoryPath>>, D::Error> {
-        Ok(Option::<Vec<String>>::deserialize(d)?
-            .map(|v| v.into_iter().map(tspath::RootedDirectoryPath::from).collect()))
+        Ok(Option::<Vec<String>>::deserialize(d)?.map(|v| {
+            v.into_iter()
+                .map(tspath::RootedDirectoryPath::from)
+                .collect()
+        }))
     }
 }
 
@@ -141,10 +144,7 @@ pub struct CompilerOptions {
     pub assume_changes_only_affect_direct_dependencies: Tristate,
     #[serde(rename = "checkJs", skip_serializing_if = "Tristate::is_unknown")]
     pub check_js: Tristate,
-    #[serde(
-        rename = "customConditions",
-        skip_serializing_if = "Option::is_none"
-    )]
+    #[serde(rename = "customConditions", skip_serializing_if = "Option::is_none")]
     pub custom_conditions: Option<Vec<String>>,
     #[serde(rename = "composite", skip_serializing_if = "Tristate::is_unknown")]
     pub composite: Tristate,
@@ -160,10 +160,7 @@ pub struct CompilerOptions {
         skip_serializing_if = "Tristate::is_unknown"
     )]
     pub emit_decorator_metadata: Tristate,
-    #[serde(
-        rename = "declaration",
-        skip_serializing_if = "Tristate::is_unknown"
-    )]
+    #[serde(rename = "declaration", skip_serializing_if = "Tristate::is_unknown")]
     pub declaration: Tristate,
     #[serde(
         rename = "declarationDir",
@@ -231,30 +228,21 @@ pub struct CompilerOptions {
         skip_serializing_if = "Tristate::is_unknown"
     )]
     pub isolated_declarations: Tristate,
-    #[serde(
-        rename = "ignoreConfig",
-        skip_serializing_if = "Tristate::is_unknown"
-    )]
+    #[serde(rename = "ignoreConfig", skip_serializing_if = "Tristate::is_unknown")]
     pub ignore_config: Tristate,
     #[serde(
         rename = "ignoreDeprecations",
         skip_serializing_if = "String::is_empty"
     )]
     pub ignore_deprecations: String,
-    #[serde(
-        rename = "importHelpers",
-        skip_serializing_if = "Tristate::is_unknown"
-    )]
+    #[serde(rename = "importHelpers", skip_serializing_if = "Tristate::is_unknown")]
     pub import_helpers: Tristate,
     #[serde(
         rename = "inlineSourceMap",
         skip_serializing_if = "Tristate::is_unknown"
     )]
     pub inline_source_map: Tristate,
-    #[serde(
-        rename = "inlineSources",
-        skip_serializing_if = "Tristate::is_unknown"
-    )]
+    #[serde(rename = "inlineSources", skip_serializing_if = "Tristate::is_unknown")]
     pub inline_sources: Tristate,
     #[serde(rename = "init", skip_serializing_if = "Tristate::is_unknown")]
     pub init: Tristate,
@@ -269,10 +257,7 @@ pub struct CompilerOptions {
         skip_serializing_if = "String::is_empty"
     )]
     pub jsx_fragment_factory: String,
-    #[serde(
-        rename = "jsxImportSource",
-        skip_serializing_if = "String::is_empty"
-    )]
+    #[serde(rename = "jsxImportSource", skip_serializing_if = "String::is_empty")]
     pub jsx_import_source: String,
     #[serde(rename = "lib", skip_serializing_if = "Option::is_none")]
     pub lib: Option<Vec<String>>,
@@ -287,20 +272,11 @@ pub struct CompilerOptions {
     pub map_root: tspath::SourceMapLocation,
     #[serde(rename = "module", skip_serializing_if = "is_default")]
     pub module: ModuleKind,
-    #[serde(
-        rename = "moduleResolution",
-        skip_serializing_if = "is_default"
-    )]
+    #[serde(rename = "moduleResolution", skip_serializing_if = "is_default")]
     pub module_resolution: ModuleResolutionKind,
-    #[serde(
-        rename = "moduleSuffixes",
-        skip_serializing_if = "Option::is_none"
-    )]
+    #[serde(rename = "moduleSuffixes", skip_serializing_if = "Option::is_none")]
     pub module_suffixes: Option<Vec<String>>,
-    #[serde(
-        rename = "moduleDetection",
-        skip_serializing_if = "is_default"
-    )]
+    #[serde(rename = "moduleDetection", skip_serializing_if = "is_default")]
     pub module_detection: ModuleDetectionKind,
     #[serde(rename = "newLine", skip_serializing_if = "is_default")]
     pub new_line: NewLineKind,
@@ -318,10 +294,7 @@ pub struct CompilerOptions {
         skip_serializing_if = "Tristate::is_unknown"
     )]
     pub no_fallthrough_cases_in_switch: Tristate,
-    #[serde(
-        rename = "noImplicitAny",
-        skip_serializing_if = "Tristate::is_unknown"
-    )]
+    #[serde(rename = "noImplicitAny", skip_serializing_if = "Tristate::is_unknown")]
     pub no_implicit_any: Tristate,
     #[serde(
         rename = "noImplicitThis",
@@ -333,10 +306,7 @@ pub struct CompilerOptions {
         skip_serializing_if = "Tristate::is_unknown"
     )]
     pub no_implicit_returns: Tristate,
-    #[serde(
-        rename = "noEmitHelpers",
-        skip_serializing_if = "Tristate::is_unknown"
-    )]
+    #[serde(rename = "noEmitHelpers", skip_serializing_if = "Tristate::is_unknown")]
     pub no_emit_helpers: Tristate,
     #[serde(rename = "noLib", skip_serializing_if = "Tristate::is_unknown")]
     pub no_lib: Tristate,
@@ -350,10 +320,7 @@ pub struct CompilerOptions {
         skip_serializing_if = "Tristate::is_unknown"
     )]
     pub no_unchecked_indexed_access: Tristate,
-    #[serde(
-        rename = "noEmitOnError",
-        skip_serializing_if = "Tristate::is_unknown"
-    )]
+    #[serde(rename = "noEmitOnError", skip_serializing_if = "Tristate::is_unknown")]
     pub no_emit_on_error: Tristate,
     #[serde(
         rename = "noUnusedLocals",
@@ -431,10 +398,7 @@ pub struct CompilerOptions {
         skip_serializing_if = "Tristate::is_unknown"
     )]
     pub rewrite_relative_import_extensions: Tristate,
-    #[serde(
-        rename = "reactNamespace",
-        skip_serializing_if = "String::is_empty"
-    )]
+    #[serde(rename = "reactNamespace", skip_serializing_if = "String::is_empty")]
     pub react_namespace: String,
     #[serde(
         rename = "rootDir",
@@ -448,10 +412,7 @@ pub struct CompilerOptions {
         with = "rooted_directory_path_vec_serde"
     )]
     pub root_dirs: Option<Vec<tspath::RootedDirectoryPath>>,
-    #[serde(
-        rename = "skipLibCheck",
-        skip_serializing_if = "Tristate::is_unknown"
-    )]
+    #[serde(rename = "skipLibCheck", skip_serializing_if = "Tristate::is_unknown")]
     pub skip_lib_check: Tristate,
     #[serde(
         rename = "stableTypeOrdering",
@@ -485,10 +446,7 @@ pub struct CompilerOptions {
         skip_serializing_if = "Tristate::is_unknown"
     )]
     pub strict_property_initialization: Tristate,
-    #[serde(
-        rename = "stripInternal",
-        skip_serializing_if = "Tristate::is_unknown"
-    )]
+    #[serde(rename = "stripInternal", skip_serializing_if = "Tristate::is_unknown")]
     pub strip_internal: Tristate,
     #[serde(
         rename = "skipDefaultLibCheck",
@@ -552,10 +510,7 @@ pub struct CompilerOptions {
     )]
     pub allow_synthetic_default_imports: Tristate,
     // Deprecated: Do not use outside of options parsing and validation.
-    #[serde(
-        rename = "alwaysStrict",
-        skip_serializing_if = "Tristate::is_unknown"
-    )]
+    #[serde(rename = "alwaysStrict", skip_serializing_if = "Tristate::is_unknown")]
     pub always_strict: Tristate,
     // Deprecated: Do not use outside of options parsing and validation.
     #[serde(
@@ -585,7 +540,6 @@ pub struct CompilerOptions {
     pub out_file: tspath::RootedFilePath,
 
     // Internal fields
-
     #[serde(
         rename = "configFilePath",
         skip_serializing_if = "str::is_empty",
@@ -603,10 +557,7 @@ pub struct CompilerOptions {
         with = "rooted_directory_path_serde"
     )]
     pub paths_base_path: tspath::RootedDirectoryPath,
-    #[serde(
-        rename = "diagnostics",
-        skip_serializing_if = "Tristate::is_unknown"
-    )]
+    #[serde(rename = "diagnostics", skip_serializing_if = "Tristate::is_unknown")]
     pub diagnostics: Tristate,
     #[serde(
         rename = "extendedDiagnostics",
@@ -632,15 +583,9 @@ pub struct CompilerOptions {
     pub list_emitted_files: Tristate,
     #[serde(rename = "listFiles", skip_serializing_if = "Tristate::is_unknown")]
     pub list_files: Tristate,
-    #[serde(
-        rename = "explainFiles",
-        skip_serializing_if = "Tristate::is_unknown"
-    )]
+    #[serde(rename = "explainFiles", skip_serializing_if = "Tristate::is_unknown")]
     pub explain_files: Tristate,
-    #[serde(
-        rename = "listFilesOnly",
-        skip_serializing_if = "Tristate::is_unknown"
-    )]
+    #[serde(rename = "listFilesOnly", skip_serializing_if = "Tristate::is_unknown")]
     pub list_files_only: Tristate,
     #[serde(
         rename = "noEmitForJsFiles",
@@ -1147,7 +1092,9 @@ macro_rules! serde_i32_enum {
     };
 }
 
-#[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Serialize, Deserialize)]
+#[derive(
+    Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Serialize, Deserialize,
+)]
 #[serde(into = "i32", try_from = "i32")]
 #[repr(i32)]
 pub enum ModuleDetectionKind {
@@ -1157,9 +1104,17 @@ pub enum ModuleDetectionKind {
     Legacy = 2,
     Force = 3,
 }
-serde_i32_enum!(ModuleDetectionKind, None = 0, Auto = 1, Legacy = 2, Force = 3);
+serde_i32_enum!(
+    ModuleDetectionKind,
+    None = 0,
+    Auto = 1,
+    Legacy = 2,
+    Force = 3
+);
 
-#[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Serialize, Deserialize)]
+#[derive(
+    Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Serialize, Deserialize,
+)]
 #[serde(into = "i32", try_from = "i32")]
 #[repr(i32)]
 pub enum ModuleKind {
@@ -1189,11 +1144,25 @@ pub enum ModuleKind {
 }
 serde_i32_enum!(
     ModuleKind,
-    None = 0, CommonJS = 1, AMD = 2, UMD = 3, System = 4, ES2015 = 5, ES2020 = 6, ES2022 = 7,
-    ESNext = 99, Node16 = 100, Node18 = 101, Node20 = 102, NodeNext = 199, Preserve = 200,
+    None = 0,
+    CommonJS = 1,
+    AMD = 2,
+    UMD = 3,
+    System = 4,
+    ES2015 = 5,
+    ES2020 = 6,
+    ES2022 = 7,
+    ESNext = 99,
+    Node16 = 100,
+    Node18 = 101,
+    Node20 = 102,
+    NodeNext = 199,
+    Preserve = 200,
 );
 
-#[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Serialize, Deserialize)]
+#[derive(
+    Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Serialize, Deserialize,
+)]
 #[serde(into = "i32", try_from = "i32")]
 #[repr(i32)]
 pub enum ModuleResolutionKind {
@@ -1214,10 +1183,17 @@ pub enum ModuleResolutionKind {
 }
 serde_i32_enum!(
     ModuleResolutionKind,
-    Unknown = 0, Classic = 1, Node10 = 2, Node16 = 3, NodeNext = 99, Bundler = 100,
+    Unknown = 0,
+    Classic = 1,
+    Node10 = 2,
+    Node16 = 3,
+    NodeNext = 99,
+    Bundler = 100,
 );
 
-#[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Serialize, Deserialize)]
+#[derive(
+    Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Serialize, Deserialize,
+)]
 #[serde(into = "i32", try_from = "i32")]
 #[repr(i32)]
 pub enum NewLineKind {
@@ -1228,7 +1204,9 @@ pub enum NewLineKind {
 }
 serde_i32_enum!(NewLineKind, None = 0, CRLF = 1, LF = 2);
 
-#[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Serialize, Deserialize)]
+#[derive(
+    Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Serialize, Deserialize,
+)]
 #[serde(into = "i32", try_from = "i32")]
 #[repr(i32)]
 pub enum ScriptTarget {
@@ -1253,8 +1231,21 @@ pub enum ScriptTarget {
 }
 serde_i32_enum!(
     ScriptTarget,
-    None = 0, ES5 = 1, ES2015 = 2, ES2016 = 3, ES2017 = 4, ES2018 = 5, ES2019 = 6, ES2020 = 7,
-    ES2021 = 8, ES2022 = 9, ES2023 = 10, ES2024 = 11, ES2025 = 12, ES2026 = 13, ESNext = 99,
+    None = 0,
+    ES5 = 1,
+    ES2015 = 2,
+    ES2016 = 3,
+    ES2017 = 4,
+    ES2018 = 5,
+    ES2019 = 6,
+    ES2020 = 7,
+    ES2021 = 8,
+    ES2022 = 9,
+    ES2023 = 10,
+    ES2024 = 11,
+    ES2025 = 12,
+    ES2026 = 13,
+    ESNext = 99,
     JSON = 100,
 );
 
@@ -1263,7 +1254,9 @@ impl ScriptTarget {
     pub const LATEST_STANDARD: ScriptTarget = ScriptTarget::ES2026;
 }
 
-#[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Serialize, Deserialize)]
+#[derive(
+    Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Serialize, Deserialize,
+)]
 #[serde(into = "i32", try_from = "i32")]
 #[repr(i32)]
 pub enum JsxEmit {
@@ -1277,7 +1270,12 @@ pub enum JsxEmit {
 }
 serde_i32_enum!(
     JsxEmit,
-    None = 0, Preserve = 1, React = 2, ReactNative = 3, ReactJSX = 4, ReactJSXDev = 5,
+    None = 0,
+    Preserve = 1,
+    React = 2,
+    ReactNative = 3,
+    ReactJSX = 4,
+    ReactJSXDev = 5,
 );
 
 // PORT: `map[ModuleKind]ModuleResolutionKind` becomes a LazyLock map;
@@ -1297,7 +1295,9 @@ pub static MODULE_KIND_TO_MODULE_RESOLUTION_KIND: LazyLock<
 impl std::fmt::Display for ModuleResolutionKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ModuleResolutionKind::Unknown => panic!("should not use zero value of ModuleResolutionKind"),
+            ModuleResolutionKind::Unknown => {
+                panic!("should not use zero value of ModuleResolutionKind")
+            }
             ModuleResolutionKind::Classic => f.write_str("Classic"),
             ModuleResolutionKind::Node10 => f.write_str("Node10"),
             ModuleResolutionKind::Node16 => f.write_str("Node16"),
@@ -1356,7 +1356,6 @@ pub struct BuildOptions {
     pub stop_build_on_errors: Tristate,
 
     // Internal fields
-
     #[serde(rename = "clean", skip_serializing_if = "Tristate::is_unknown")]
     pub clean: Tristate,
 }

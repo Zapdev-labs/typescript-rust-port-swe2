@@ -8,7 +8,10 @@
 //
 // PORT: Go returns `int` indices; Rust slice indices are `usize`. The
 // comparator receives the borrowed element (`&E`) rather than a copy.
-pub fn binary_search_unique_func<E>(x: &[E], mut cmp: impl FnMut(usize, &E) -> i32) -> (usize, bool) {
+pub fn binary_search_unique_func<E>(
+    x: &[E],
+    mut cmp: impl FnMut(usize, &E) -> i32,
+) -> (usize, bool) {
     let n = x.len();
     if n == 0 {
         return (0, false);

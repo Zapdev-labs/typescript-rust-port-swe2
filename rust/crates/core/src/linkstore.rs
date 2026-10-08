@@ -15,7 +15,9 @@ pub struct LinkStore<K, V> {
 
 impl<K, V> Default for LinkStore<K, V> {
     fn default() -> Self {
-        Self { entries: HashMap::new() }
+        Self {
+            entries: HashMap::new(),
+        }
     }
 }
 
@@ -58,7 +60,10 @@ pub struct PagedLinkStore<V> {
 
 impl<V> Default for PagedLinkStore<V> {
     fn default() -> Self {
-        Self { page_map: HashMap::new(), page_list: Vec::new() }
+        Self {
+            page_map: HashMap::new(),
+            page_list: Vec::new(),
+        }
     }
 }
 
@@ -74,7 +79,8 @@ impl<V: Default> PagedLinkStore<V> {
             if idx >= self.page_list.len() {
                 self.page_list.resize_with(idx + 1, || None);
             }
-            self.page_list[idx].get_or_insert_with(|| Box::new(std::array::from_fn(|_| V::default())))
+            self.page_list[idx]
+                .get_or_insert_with(|| Box::new(std::array::from_fn(|_| V::default())))
         } else {
             self.page_map
                 .entry(page_index)

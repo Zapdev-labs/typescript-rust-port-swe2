@@ -169,6 +169,16 @@ dependencies = [
 [[package]]
 name = "tsc-core"
 version = "0.0.0"
+dependencies = [
+ "rustc-hash",
+ "serde",
+ "serde_json",
+ "tsc-collections",
+ "tsc-debug",
+ "tsc-json",
+ "tsc-stringutil",
+ "tsc-tspath",
+]
 
 [[package]]
 name = "tsc-debug"
@@ -178,6 +188,7 @@ version = "0.0.0"
 name = "tsc-diagnostics"
 version = "0.0.0"
 dependencies = [
+ "serde_json",
  "tsc-locale",
 ]
 

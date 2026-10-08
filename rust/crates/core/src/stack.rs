@@ -25,6 +25,8 @@ impl<T> Stack<T> {
         &self.data[self.data.len() - 1]
     }
 
+    // PORT: Go's Stack has no IsEmpty; keep the API faithful.
+    #[allow(clippy::len_without_is_empty)]
     pub fn len(&self) -> usize {
         self.data.len()
     }

@@ -30,7 +30,10 @@ impl Pattern {
             return "";
         }
         let star_index = self.star_index as usize;
-        &candidate[star_index..candidate.len() - self.text.len() + star_index + 1]
+        // PORT: Go computes `len(candidate)-len(p.Text)+p.StarIndex+1` in
+        // signed ints; reordered to avoid usize underflow (identical result
+        // — a matched candidate is always long enough).
+        &candidate[star_index..candidate.len() + star_index + 1 - self.text.len()]
     }
 }
 

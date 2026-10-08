@@ -22,31 +22,31 @@ pub const TS_FALSE: Tristate = Tristate::False;
 pub const TS_TRUE: Tristate = Tristate::True;
 
 impl Tristate {
-    pub fn is_true(self) -> bool {
-        self == TS_TRUE
+    pub fn is_true(&self) -> bool {
+        *self == TS_TRUE
     }
 
-    pub fn is_true_or_unknown(self) -> bool {
-        self == TS_TRUE || self == TS_UNKNOWN
+    pub fn is_true_or_unknown(&self) -> bool {
+        *self == TS_TRUE || *self == TS_UNKNOWN
     }
 
-    pub fn is_false(self) -> bool {
-        self == TS_FALSE
+    pub fn is_false(&self) -> bool {
+        *self == TS_FALSE
     }
 
-    pub fn is_false_or_unknown(self) -> bool {
-        self == TS_FALSE || self == TS_UNKNOWN
+    pub fn is_false_or_unknown(&self) -> bool {
+        *self == TS_FALSE || *self == TS_UNKNOWN
     }
 
-    pub fn is_unknown(self) -> bool {
-        self == TS_UNKNOWN
+    pub fn is_unknown(&self) -> bool {
+        *self == TS_UNKNOWN
     }
 
-    pub fn default_if_unknown(self, value: Tristate) -> Tristate {
-        if self == TS_UNKNOWN {
+    pub fn default_if_unknown(&self, value: Tristate) -> Tristate {
+        if *self == TS_UNKNOWN {
             return value;
         }
-        self
+        *self
     }
 }
 
@@ -57,7 +57,7 @@ impl<'de> Deserialize<'de> for Tristate {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         struct TristateVisitor;
 
-        impl Visitor<'_> for TristateVisitor {
+        impl<'de> Visitor<'de> for TristateVisitor {
             type Value = Tristate;
 
             fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -121,7 +121,7 @@ impl<'de> Deserialize<'de> for Tristate {
 // PORT: Go's `MarshalJSON` emits `true`/`false`/`null`.
 impl Serialize for Tristate {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
+        match *self {
             TS_TRUE => serializer.serialize_bool(true),
             TS_FALSE => serializer.serialize_bool(false),
             _ => serializer.serialize_unit(),

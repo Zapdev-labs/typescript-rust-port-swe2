@@ -10,3 +10,9 @@ workspace = true
 
 [dependencies]
 tsc-locale = { path = "../locale" }
+
+[build-dependencies]
+serde_json.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true

@@ -31,6 +31,8 @@ impl TextRange {
         self.end
     }
 
+    // PORT: Go's TextRange has no IsEmpty; keep the API faithful.
+    #[allow(clippy::len_without_is_empty)]
     pub fn len(&self) -> i32 {
         self.end - self.pos
     }
@@ -80,7 +82,9 @@ impl TextRange {
 
 pub fn compare_text_ranges(r1: &TextRange, r2: &TextRange) -> i32 {
     let c = r1.pos.wrapping_sub(r2.pos);
-    if c != 0 { return c; }
+    if c != 0 {
+        return c;
+    }
     r1.end.wrapping_sub(r2.end)
 }
 
@@ -118,8 +122,14 @@ mod tests {
         assert!(!r.overlaps(&TextRange::new(10, 20))); // touching is not overlapping
         assert!(r.intersects(&TextRange::new(10, 20))); // but is intersecting
 
-        assert_eq!(compare_text_ranges(&TextRange::new(1, 5), &TextRange::new(3, 4)), -2);
-        assert_eq!(compare_text_ranges(&TextRange::new(1, 5), &TextRange::new(1, 7)), -2);
+        assert_eq!(
+            compare_text_ranges(&TextRange::new(1, 5), &TextRange::new(3, 4)),
+            -2
+        );
+        assert_eq!(
+            compare_text_ranges(&TextRange::new(1, 5), &TextRange::new(1, 7)),
+            -2
+        );
         assert_eq!(compare_text_ranges(&r, &r), 0);
     }
 }

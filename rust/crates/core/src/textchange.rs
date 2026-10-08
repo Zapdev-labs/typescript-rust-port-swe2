@@ -20,8 +20,7 @@ impl Deref for TextChange {
 
 impl TextChange {
     pub fn apply_to(&self, text: &str) -> String {
-        let mut result =
-            String::with_capacity(text.len() + self.new_text.len());
+        let mut result = String::with_capacity(text.len() + self.new_text.len());
         result.push_str(&text[..self.pos() as usize]);
         result.push_str(&self.new_text);
         result.push_str(&text[self.end() as usize..]);

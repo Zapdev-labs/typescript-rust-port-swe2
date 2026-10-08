@@ -13,7 +13,6 @@ pub enum ScriptKind {
     Tsx = 4,
 
     // Value 5 is reserved (formerly ScriptKindExternal).
-
     Json = 6,
     // Value 7 is reserved (formerly ScriptKindDeferred).
 }

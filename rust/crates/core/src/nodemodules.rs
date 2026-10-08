@@ -89,7 +89,11 @@ pub static NODE_CORE_MODULES: LazyLock<FxHashSet<String>> = LazyLock::new(|| {
         node_core_modules.insert(unprefixed.to_string());
         node_core_modules.insert(format!("node:{unprefixed}"));
     }
-    node_core_modules.extend(EXCLUSIVELY_PREFIXED_NODE_CORE_MODULES.iter().map(|s| s.to_string()));
+    node_core_modules.extend(
+        EXCLUSIVELY_PREFIXED_NODE_CORE_MODULES
+            .iter()
+            .map(|s| s.to_string()),
+    );
     node_core_modules
 });
 

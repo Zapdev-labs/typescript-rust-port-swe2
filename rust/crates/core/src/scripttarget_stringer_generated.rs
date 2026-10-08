@@ -9,8 +9,7 @@ const SCRIPT_TARGET_NAME_0: &str =
     "NoneES5ES2015ES2016ES2017ES2018ES2019ES2020ES2021ES2022ES2023ES2024ES2025ES2026";
 const SCRIPT_TARGET_NAME_1: &str = "ESNextJSON";
 
-const SCRIPT_TARGET_INDEX_0: [u8; 15] =
-    [0, 4, 7, 13, 19, 25, 31, 37, 43, 49, 55, 61, 67, 73, 79];
+const SCRIPT_TARGET_INDEX_0: [u8; 15] = [0, 4, 7, 13, 19, 25, 31, 37, 43, 49, 55, 61, 67, 73, 79];
 const SCRIPT_TARGET_INDEX_1: [u8; 3] = [0, 6, 10];
 
 impl fmt::Display for ScriptTarget {
