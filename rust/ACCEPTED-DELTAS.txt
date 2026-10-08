@@ -1,0 +1,3 @@
+# Accepted baseline deltas vs tsc/testdata/baselines/reference
+# One relative path per line, with a trailing comment giving the reason.
+# Mirrors the role of tsc/testdata/submoduleAccepted.txt for the Go port.

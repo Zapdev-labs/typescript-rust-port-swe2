@@ -80,7 +80,11 @@ __debug_bin*
 
 # Local compiler baselines and test output
 tsc/testdata/baselines/local
+tsc/testdata/baselines/rust-local
 tsc/testdata/baselines/tmp
+
+# Rust port build output
+/rust/target/
 
 # Legacy Strada build and test output
 /.node_modules/
