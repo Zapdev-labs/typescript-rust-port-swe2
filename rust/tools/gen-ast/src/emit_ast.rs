@@ -930,7 +930,7 @@ impl<'a> Emitter<'a> {
 
     fn emit_visit_each_child(&self, out: &mut String) {
         out.push_str(
-            "// ── `VisitEachChild` dispatch ─────────────────────────────────────\n\n/// `(node *X) VisitEachChild(v)` — `None` when the node was unchanged.\npub fn visit_each_child<'a>(\n    cx: &mut VisitorCx<'a>,\n    v: &NodeVisitor<'a>,\n    node: NodeId,\n) -> Option<NodeId> {\n    match cx.nodes[node].kind {\n",
+            "// ── `VisitEachChild` dispatch ─────────────────────────────────────\n\n/// `(node *X) VisitEachChild(v)` — `None` when the node was unchanged.\npub fn visit_each_child<'v>(\n    cx: &mut VisitorCx<'_, '_>,\n    v: &NodeVisitor<'v>,\n    node: NodeId,\n) -> Option<NodeId> {\n    match cx.nodes[node].kind {\n",
         );
         for n in &self.schema.nodes {
             if n.custom.iter().any(|c| c == "visit_each_child") {

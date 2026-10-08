@@ -22741,9 +22741,9 @@ impl NodeFactory<'_> {
 // ── `VisitEachChild` dispatch ─────────────────────────────────────
 
 /// `(node *X) VisitEachChild(v)` — `None` when the node was unchanged.
-pub fn visit_each_child<'a>(
-    cx: &mut VisitorCx<'a>,
-    v: &NodeVisitor<'a>,
+pub fn visit_each_child<'v>(
+    cx: &mut VisitorCx<'_, '_>,
+    v: &NodeVisitor<'v>,
     node: NodeId,
 ) -> Option<NodeId> {
     match cx.nodes[node].kind {

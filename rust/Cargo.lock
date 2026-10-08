@@ -159,7 +159,20 @@ dependencies = [
  "rustc-hash",
  "tsc-collections",
  "tsc-core",
+ "tsc-debug",
+ "tsc-diagnostics",
+ "tsc-locale",
+ "tsc-spanmap",
+ "tsc-stringutil",
  "tsc-tspath",
+]
+
+[[package]]
+name = "tsc-bundled"
+version = "0.0.0"
+dependencies = [
+ "tsc-tspath",
+ "tsc-vfs",
 ]
 
 [[package]]
@@ -225,12 +238,38 @@ name = "tsc-locale"
 version = "0.0.0"
 
 [[package]]
+name = "tsc-module"
+version = "0.0.0"
+dependencies = [
+ "rustc-hash",
+ "tsc-ast",
+ "tsc-collections",
+ "tsc-core",
+ "tsc-debug",
+ "tsc-diagnostics",
+ "tsc-packagejson",
+ "tsc-semver",
+ "tsc-stringutil",
+ "tsc-tspath",
+ "tsc-vfs",
+]
+
+[[package]]
 name = "tsc-nativepath"
 version = "0.0.0"
 
 [[package]]
 name = "tsc-osutil"
 version = "0.0.0"
+
+[[package]]
+name = "tsc-outputpaths"
+version = "0.0.0"
+dependencies = [
+ "tsc-ast",
+ "tsc-core",
+ "tsc-tspath",
+]
 
 [[package]]
 name = "tsc-packagejson"
@@ -250,6 +289,20 @@ dependencies = [
 [[package]]
 name = "tsc-repo"
 version = "0.0.0"
+
+[[package]]
+name = "tsc-scanner"
+version = "0.0.0"
+dependencies = [
+ "rustc-hash",
+ "tsc-ast",
+ "tsc-collections",
+ "tsc-core",
+ "tsc-debug",
+ "tsc-diagnostics",
+ "tsc-jsnum",
+ "tsc-stringutil",
+]
 
 [[package]]
 name = "tsc-semver"

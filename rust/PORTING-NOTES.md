@@ -115,3 +115,119 @@ to "2" so tsc-collections can build.
   remainder lands with the checker (Go file is 4.7k LOC of checker-facing
   helpers). `deepclone`, `positionmap`, `precedence`, diagnostic types are
   M2 items — Go has no tests for the ported portion.
+
+## 2026-10-08 crates/ast/src/diagnostic.rs — ast/diagnostic.go port shape
+- `*Diagnostic` → `DiagnosticRef = Arc<Mutex<Diagnostic>>`. Go's pointer is
+  load-bearing: `DiagnosticsCollection.Add` dedups and returns the canonical
+  diagnostic which callers keep mutating, and `d1 == d2` checks in
+  `EqualDiagnostics`/`CompareDiagnostics` terminate recursion on
+  self-referential chains (`Rc` alone can't satisfy `Send + Sync`, which
+  Go's `sync.Mutex`-guarded collection implies). `Arc::ptr_eq` is the `==`
+  check; a diagnostic's lock is never held while another's is taken — the
+  compare/equal helpers snapshot fields into `DiagnosticView` — so no lock
+  ordering exists. Both mutexes tolerate poison (`into_inner`), matching
+  Go's panic-safe `sync.Mutex`.
+- `file *SourceFile` → `Option<DiagnosticFile>`: a cloneable handle with
+  `node: Option<NodeId>` (arena address of the `*SourceFile`) plus
+  `path_key`, `file_name`, `text`, `original_text`, `span_map`. Rust
+  `SourceFile` is `NodeData` in the node arena and does not yet carry
+  `parseOptions`/`contentMapperInfo`; the diagnostics all read immutable,
+  parse-time-fixed attributes, so the snapshot can't go stale. When
+  `SourceFile` gains `content_mapper_info`, `DiagnosticFile::from_node`
+  should populate `span_map`/`original_text` from it.
+- `display_message_args` compares byte-wise (Go slices strings at byte
+  offsets) and lossy-decodes a non-UTF-8 original span — Rust `String`
+  cannot hold arbitrary bytes. Unreachable until contentmapper lands
+  (deferred), since `span_map` is always `None` today.
+- `CompareDiagnostics` returns `i32` like Go's `int`; `strings.Compare`/
+  `slices.Compare` map to `Ord::cmp as i32` (-1/0/+1), and the `a - b`
+  integer subtractions map to `cmp` (only the sign is ever read; avoids
+  i32 wrap Go can't hit but Rust would panic on in debug).
+- `Lookup` uses `partition_point(cmp < 0)` + equality check — Go's
+  `slices.BinarySearchFunc` returns the *first* equal element; Rust
+  `binary_search_by` does not guarantee that.
+- `Clone()` clones `Vec<DiagnosticRef>` (new Vec, shared `Arc` elements) —
+  Go's `result := *d` shares slice backing, but only element sharing is
+  observable (nobody writes `d.messageChain[i] = x` in place).
+- New `tsc-ast` → `tsc-spanmap` path dep mirrors Go's `ast` importing
+  `spanmap` (`SourceFile.SpanMap()` / `AliasForVirtualSpan`).
+
+## 2026-10-08 crates/ast — positionmap.rs, precedence.rs, parseoptions.rs
+- `positionmap.rs`: Go `int` offsets → `usize`; `text string` → `&[u8]`
+  (source text can carry the `EncodeJSStringRune` lone-surrogate CESU-8
+  sentinel, which is not valid UTF-8, so `&str` cannot model it — the Go
+  test exercises exactly that). Go `ComputePositionMap` returns
+  `*PositionMap` (always non-nil) → `PositionMap` by value. Go benchmarks
+  omitted — no stable-Rust `testing.B` equivalent.
+- `precedence.rs`: `OperatorPrecedence` (`int`) and `TypePrecedence`
+  (`int32`) are transparent `i32` newtypes with SCREAMING associated consts
+  (crate flag-type convention) rather than Rust enums — Go relies on the
+  out-of-band `OperatorPrecedenceInvalid = -1` and callers compare with
+  `<`/`>`. `OperatorPrecedenceFlags` uses `flag_type!`. Nil `*Node` field
+  dereferences (`OperatorToken`, `Operand`, `Condition`, `Tag`,
+  `TypeParameter`, `Expression()`) become `.expect(...)` panics — same
+  failure mode as Go's nil-pointer panic.
+- `parseoptions.rs`: `*SourceFile`/`*Node` params → `NodeId`; `*Node`
+  results → `Option<NodeId>`; arenas threaded as `nodes: &[Node]` /
+  `&mut [Node]` appended after the Go parameter list. `SourceFile` node
+  fields read via `nodes[file].as_source_file()`. `for _, s := range
+  file.Statements.Nodes` on a `NodeList` → `if let Some(list) =
+  &d.statements { for &s in list.nodes() }` — `None` is unreachable for a
+  parsed file (Go would nil-panic), treated as empty. Go closures that
+  recurse (`findChildNode`, `walkTreeForJSXTags`) become nested `fn`s with
+  the result out-param (`&mut Option<NodeId>`) since Rust closures can't
+  self-recurse.
+- `utilities.rs` gained the utilities.go helpers the two files need:
+  `is_optional_chain`, `is_import_meta`, `is_jsx_opening_like_element`,
+  `get_implied_node_format_for_emit_worker`. `ModuleReference` nil →
+  `is_some_and(...)` returns `false` where Go would nil-panic (unreachable
+  on a well-formed `ImportEqualsDeclaration`; matches the existing
+  `is_assignment_expression` `let-else` convention).
+
+## 2026-10-08 crates/bundled — lib embedding
+- `libs` is a symlink to `tsc/internal/bundled/libs` (rsync `-a` preserves it
+  on remote since the whole repo syncs).
+- `//go:embed`/`embed_generated.go` → `build.rs` walks `libs/` and emits
+  `libs_generated.rs` (`LIB_NAMES` + `EMBEDDED_CONTENTS` sorted static table
+  of `include_str!`). Deterministic: filenames sorted at build time.
+- `noembed.go` (build-tag fallback serving libs from disk) is NOT ported —
+  `EMBEDDED` is always true; the embed path is the shipping configuration.
+- `TestingLibPath`/`bundledSourceDir`: Go uses `runtime.Caller` + `testing.
+  Testing()`; Rust uses `env!("CARGO_MANIFEST_DIR")` + `/libs` at compile
+  time — equivalent inside a workspace checkout.
+- `fileInfo.ModTime`: Go returns `time.Time{}` (year 1, unrepresentable);
+  `BundledFileInfo::mod_time` returns `SystemTime::UNIX_EPOCH` as the "unset"
+  sentinel.
+- Write/remove/chtimes on bundled paths `panic!` exactly as Go panics.
+
+## 2026-10-08 crates/scanner/regexp.rs — tsc/internal/scanner/regexp.go
+- Go's `regExpParser` borrows the caller's `*Scanner`. scanner.rs is being
+  ported by another agent in parallel, so `RegExpParser` temporarily owns the
+  scanner-state subset it needs (text/pos/end, token value+flags, script
+  target, error sink) plus private ports of the Scanner helpers it calls
+  (`scanIdentifier` group-name variant, `scanEscapeSequence`,
+  `scanUnicodeEscape`, `peekUnicodeEscape`, `scanHexDigits`, surrogate
+  plumbing). The `ReScanSlashToken` flag-scanning loop is ported as
+  `scan_regular_expression_flags`. Reconcile by moving the helper block into
+  scanner.rs and handing the parser a scanner reference.
+- Strings returned by scan helpers are `Vec<u8>`, not `String`: Go strings
+  hold arbitrary bytes, and lone UTF-16 surrogates ride through as
+  tsc-stringutil's CESU-8 sentinels (encode/decode_js_string_rune), which is
+  not valid UTF-8. Positions stay byte offsets into the UTF-8 source.
+- `s.hexDigitCache` memoization is dropped; the per-call cost is one table
+  lookup, so the transform is neutral.
+- `errorAt(args ...any)` becomes `error_at(&[String])`; every diagnostic call
+  site already knows its format args.
+- MSRV 1.85: Go's `if a && b {` combined with `let`-bindings is written with
+  pre-bound `Option` temporaries instead of Rust let-chains (edition 2024
+  let-chains need 1.88+). Go `fallthrough` arms are flattened into sequential
+  `if`s with comments noting the fallthrough origin.
+
+## 2026-10-08 crates/scanner/unicodeproperties.rs — tsc/internal/scanner/unicodeproperties.go
+- Go `map[string]string`/`collections.Set[string]` tables become sorted
+  `&[&str]` arrays + `binary_search`. Set membership semantics are identical;
+  the only iteration consumers are spelling suggestions, where
+  `get_spelling_suggestion_for_strings` picks the best match so input order
+  is not observable (Go's own map order is random anyway).
+  `NON_BINARY_UNICODE_PROPERTY_NAMES` keeps Go literal insertion order — it
+  is only iterated, never searched.

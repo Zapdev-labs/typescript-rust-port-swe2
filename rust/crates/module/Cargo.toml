@@ -1,0 +1,22 @@
+[package]
+name = "tsc-module"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+tsc-ast = { path = "../ast" }
+tsc-collections = { path = "../collections" }
+tsc-core = { path = "../core" }
+tsc-debug = { path = "../debug" }
+tsc-diagnostics = { path = "../diagnostics" }
+tsc-packagejson = { path = "../packagejson" }
+tsc-semver = { path = "../semver" }
+tsc-stringutil = { path = "../stringutil" }
+tsc-tspath = { path = "../tspath" }
+tsc-vfs = { path = "../vfs" }
+rustc-hash = { workspace = true }

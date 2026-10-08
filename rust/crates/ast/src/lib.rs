@@ -14,18 +14,32 @@ mod flagdef;
 pub mod ast;
 pub mod ast_generated;
 pub mod checkflags;
+pub mod deepclone;
+pub mod diagnostic;
 pub mod flow;
 pub mod functionflags;
 pub mod ids;
 pub mod kind_generated;
 pub mod modifierflags;
 pub mod nodeflags;
+pub mod parseoptions;
+pub mod positionmap;
+pub mod precedence;
 pub mod subtreefacts;
 pub mod symbol;
 pub mod symbolflags;
 pub mod tokenflags;
 pub mod utilities;
 pub mod visitor;
+
+#[cfg(test)]
+mod ast_accessor_test;
+#[cfg(test)]
+mod deepclone_test;
+#[cfg(test)]
+mod kind_ordinals_test;
+#[cfg(test)]
+mod positionmap_test;
 
 // Go package-level names land at the crate root, mirroring `package ast`.
 pub use ast::*;

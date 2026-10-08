@@ -118,6 +118,12 @@ impl ModifierList {
         &self.nodes
     }
 
+    /// `(list *ModifierList) HasTrailingComma` — promoted from the embedded
+    /// `NodeList` in Go.
+    pub fn has_trailing_comma(&self, nodes: &[Node]) -> bool {
+        self.as_node_list().has_trailing_comma(nodes)
+    }
+
     /// The embedded `NodeList` view (Go's promoted `NodeList` fields).
     pub fn as_node_list(&self) -> NodeList {
         NodeList {
@@ -1492,9 +1498,9 @@ pub fn for_each_child_source_file(
 }
 
 /// `(node *SourceFile) VisitEachChild` — rebuilds via `UpdateSourceFile`.
-pub fn visit_each_child_source_file<'a>(
-    cx: &mut crate::visitor::VisitorCx<'a>,
-    v: &crate::visitor::NodeVisitor<'a>,
+pub fn visit_each_child_source_file<'v>(
+    cx: &mut crate::visitor::VisitorCx<'_, '_>,
+    v: &crate::visitor::NodeVisitor<'v>,
     node: NodeId,
 ) -> Option<NodeId> {
     let (statements, end_of_file_token) = {
@@ -1523,9 +1529,9 @@ pub fn for_each_child_js_doc_parameter_or_property_tag(
 }
 
 /// `visitEachChild_JSDocParameterOrPropertyTag`.
-pub fn visit_each_child_js_doc_parameter_or_property_tag<'a>(
-    cx: &mut crate::visitor::VisitorCx<'a>,
-    v: &crate::visitor::NodeVisitor<'a>,
+pub fn visit_each_child_js_doc_parameter_or_property_tag<'v>(
+    cx: &mut crate::visitor::VisitorCx<'_, '_>,
+    v: &crate::visitor::NodeVisitor<'v>,
     node: NodeId,
 ) -> Option<NodeId> {
     let (tag_name, name, is_bracketed, type_expression, is_name_first, comment) = {
