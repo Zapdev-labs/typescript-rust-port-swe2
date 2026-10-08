@@ -334,7 +334,7 @@ pub trait FileInfo: Send + Sync {
     fn sys(&self) -> Option<Arc<dyn Any + Send + Sync>>;
 }
 
-impl fmt::Debug for dyn FileInfo {
+impl fmt::Debug for dyn FileInfo + '_ {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
@@ -371,7 +371,7 @@ pub trait DirEntry: Send + Sync {
     fn info(&self) -> Result<Arc<dyn FileInfo>, FsError>;
 }
 
-impl fmt::Debug for dyn DirEntry {
+impl fmt::Debug for dyn DirEntry + '_ {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,

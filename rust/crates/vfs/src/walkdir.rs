@@ -4,9 +4,7 @@ use std::collections::HashSet;
 use std::sync::Arc;
 use std::time::SystemTime;
 
-use tsc_tspath::{
-    RootedDirectoryPath, RootedPath, rooted_directory_path_from_path,
-};
+use tsc_tspath::{RootedPath, rooted_directory_path_from_path};
 
 use crate::fs::{
     DirEntry, FileInfo, FileMode, FsError, MODE_DIR, MODE_SYMLINK, file_info_to_dir_entry,
@@ -107,7 +105,7 @@ pub fn walk_dir(
             }
 
             let mut child_realpath = RootedPath::default();
-            let mut is_symlink = false;
+            let is_symlink;
             if let Some(symlinks) = &entries.symlinks {
                 is_symlink = symlinks.contains(&name);
                 if !is_symlink && mode.is_dir() {

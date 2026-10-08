@@ -23,8 +23,9 @@ use std::time::SystemTime;
 use rustc_hash::FxHashMap;
 
 use crate::fs::{
-    self, DirEntry, File, FileInfo, FileMode, Fs, FsError, ReadDirFile, ReadLinkFs,
-    ReaderAt, SeekWhence, Seeker, MODE_DIR, MODE_SYMLINK,
+    self, DirEntry, File, FileInfo, FileMode, Fs, FsError, ReadDirFile, ReadDirFs,
+    ReadFileFs, ReadLinkFs, ReaderAt, SeekWhence, Seeker, StatFs, MODE_DIR,
+    MODE_SYMLINK,
 };
 
 /// A MapFs is a simple in-memory file system for use in tests,
@@ -181,11 +182,17 @@ impl Fs for MapFs {
         }))
     }
 
-    // PORT: Go's MapFS implements StatFS/ReadDirFS/ReadFileFS/ReadLinkFS via
-    // fsOnly wrappers that route back through Open. We implement the real
-    // read_link/lstat (which are genuine methods) but leave stat/read_dir/
-    // read_file unset so the free functions take the same open-based path;
-    // the observable behavior is identical.
+    // Go's MapFS implements StatFS/ReadDirFS/ReadFileFS via fsOnly wrappers
+    // that route back through Open; see the impls at the bottom of this file.
+    fn as_stat_fs(&self) -> Option<&dyn StatFs> {
+        Some(self)
+    }
+    fn as_read_dir_fs(&self) -> Option<&dyn ReadDirFs> {
+        Some(self)
+    }
+    fn as_read_file_fs(&self) -> Option<&dyn ReadFileFs> {
+        Some(self)
+    }
     fn as_read_link_fs(&self) -> Option<&dyn ReadLinkFs> {
         Some(self)
     }
@@ -526,18 +533,17 @@ fn test_fs_impl(fsys: &Arc<dyn Fs>, expected: &[&str]) -> Result<(), FsError> {
     let mut t = FsTester::new(fsys);
     t.check_dir(".");
     t.check_open(".");
-    let mut found: HashSet<&str> = HashSet::new();
+    let mut found: HashSet<String> = HashSet::new();
     for dir in &t.dirs {
-        found.insert(dir);
+        found.insert(dir.clone());
     }
     for file in &t.files {
-        found.insert(file);
+        found.insert(file.clone());
     }
     found.remove(".");
     if expected.is_empty() && !found.is_empty() {
-        let mut list: Vec<&str> = found.into_iter().collect();
+        let mut list: Vec<String> = found.iter().cloned().collect();
         list.sort();
-        let mut list: Vec<String> = list.iter().map(|s| s.to_string()).collect();
         if list.len() > 15 {
             list.truncate(10);
             list.push("...".to_string());
@@ -548,7 +554,7 @@ fn test_fs_impl(fsys: &Arc<dyn Fs>, expected: &[&str]) -> Result<(), FsError> {
         ));
     }
     for name in expected {
-        if !found.contains(name) {
+        if !found.contains(*name) {
             t.errorf(format!("expected but not found: {}", name));
         }
     }
@@ -584,417 +590,1052 @@ impl<'a> FsTester<'a> {
         self.errors.push(msg);
     }
 
+    fn open_dir(&mut self, dir: &str) -> Option<Box<dyn File>> {
+        let f = match self.fsys.open(dir) {
+            Err(err) => {
+                self.errorf(format!("{}: Open: {}", dir, err));
+                return None;
+            }
+            Ok(f) => f,
+        };
+        if f.as_read_dir_file().is_none() {
+            let _ = f.close();
+            self.errorf(format!(
+                "{}: Open returned File that is not a fs.ReadDirFile",
+                dir
+            ));
+            return None;
+        }
+        Some(f)
+    }
+
+    /// check_dir checks the directory dir, which is expected to exist
+    /// (it is either the root or was found in a directory listing with
+    /// is_dir true).
     fn check_dir(&mut self, dir: &str) {
-        let mut paths = vec![
-            dir.to_string(),
-            // check ending in slash
-            format!("{}/", dir.trim_end_matches('/')),
-        ];
-        if dir != "." {
-            // check earlier prefixes of dir
-            loop {
-                let i = {
-                    let d = paths.last().unwrap();
-                    match d.rfind('/') {
-                        None => d.len(),
-                        Some(i) => i,
-                    }
-                };
-                if i == 0 {
-                    break;
-                }
-                paths.push(paths.last().unwrap()[..i].to_string());
-            }
-        }
-        for dir in &paths {
-            if let Err(err) = self.fsys.open(dir) {
-                self.errorf(format!("{}: error from Open: {}", dir, err));
-            }
-            if let Ok(entries) = fs::read_dir(self.fsys, dir) {
-                for entry in entries {
-                    self.check_bad_path(&entry.name(), "ReadDir output");
-                }
-            }
-        }
-        if dir == "." {
-            self.check_dir_list(dir, &[]);
-        }
-    }
-
-    /// checkBadPath checks that name is rejected by Open, Stat, and ReadDir.
-    fn check_bad_path(&mut self, name: &str, output: &str) {
-        if fs::valid_path(name) {
-            return;
-        }
-
-        self.errorf(format!("{}: bad name {}", output, fs::go_quote(name)));
-
-        match self.fsys.open(name) {
-            Ok(_) => self.errorf(format!("Open({}): succeeded, want error", name)),
-            Err(err) => {
-                if !Self::bad_path_error("Open", name, &err) {
-                    self.errorf(format!(
-                        "Open({}): can return error; continue anyway",
-                        name
-                    ));
-                }
-            }
-        }
-
-        match fs::stat(self.fsys, name) {
-            Ok(_) => self.errorf(format!("Stat({}): succeeded, want error", name)),
-            Err(err) => {
-                if !Self::bad_path_error("Stat", name, &err) {
-                    self.errorf(format!(
-                        "Stat({}): can return error; continue anyway",
-                        name
-                    ));
-                }
-            }
-        }
-
-        match fs::read_dir(self.fsys, name) {
-            Ok(_) => self.errorf(format!("ReadDir({}): succeeded, want error", name)),
-            Err(err) => {
-                if !Self::bad_path_error("ReadDir", name, &err) {
-                    self.errorf(format!(
-                        "ReadDir({}): can return error; continue anyway",
-                        name
-                    ));
-                }
-            }
-        }
-    }
-
-    /// badPathError reports whether err is an acceptable error from
-    /// fs.Stat, fs.Open, or fs.ReadDir for a bad path name.
-    /// The error must be an err kind that can be returned by those functions.
-    fn bad_path_error(op: &str, name: &str, err: &FsError) -> bool {
-        match err {
-            FsError::NotExist => true,
-            FsError::Invalid => true,
-            FsError::Permission => true,
-            FsError::Io(e) if e.kind() == std::io::ErrorKind::NotFound => true,
-            FsError::Path { op: _, path: _, err } => {
-                let _ = (op, name);
-                Self::bad_path_error_inner(err)
-            }
-            _ => false,
-        }
-    }
-
-    fn bad_path_error_inner(err: &FsError) -> bool {
-        match err {
-            FsError::NotExist | FsError::Invalid | FsError::Permission => true,
-            FsError::Io(e) if e.kind() == std::io::ErrorKind::NotFound => true,
-            FsError::Path { err, .. } => Self::bad_path_error_inner(err),
-            FsError::Join(errs) => errs.iter().all(Self::bad_path_error_inner),
-            _ => false,
-        }
-    }
-
-    /// checkOpen checks that all files can be opened
-    /// and that they read from their current directories correctly.
-    fn check_open(&mut self, dir: &str) {
-        let Ok(list) = fs::read_dir(self.fsys, dir) else {
-            self.errorf(format!("{}: cannot read directory", dir));
+        // Read entire directory.
+        self.dirs.push(dir.to_string());
+        let Some(d) = self.open_dir(dir) else {
             return;
         };
-        for elem in list {
-            let name = fs::path_join(dir, &elem.name());
-            if elem.is_dir() {
-                self.dirs.push(name.clone());
-                self.check_dir(&name);
-            } else {
-                self.files.push(name.clone());
-                self.check_file(&name);
+        let rd = d.as_read_dir_file().unwrap();
+        let list = match rd.read_dir(-1) {
+            Err(err) => {
+                let _ = d.close();
+                self.errorf(format!("{}: ReadDir(-1): {}", dir, err));
+                return;
+            }
+            Ok(list) => list,
+        };
+
+        // Check all children.
+        let prefix = if dir == "." {
+            String::new()
+        } else {
+            format!("{}/", dir)
+        };
+        for info in &list {
+            let name = info.name();
+            if name == "." || name == ".." || name.is_empty() {
+                self.errorf(format!(
+                    "{}: ReadDir: child has invalid name: {}",
+                    dir,
+                    fs::go_quote(&name)
+                ));
+                continue;
+            } else if name.contains('/') {
+                self.errorf(format!(
+                    "{}: ReadDir: child name contains slash: {}",
+                    dir,
+                    fs::go_quote(&name)
+                ));
+                continue;
+            } else if name.contains('\\') {
+                self.errorf(format!(
+                    "{}: ReadDir: child name contains backslash: {}",
+                    dir,
+                    fs::go_quote(&name)
+                ));
+                continue;
+            }
+            let path = format!("{}{}", prefix, name);
+            self.check_stat(&path, &**info);
+            self.check_open(&path);
+            match info.type_() {
+                t if t == MODE_DIR => self.check_dir(&path),
+                t if t == MODE_SYMLINK => {
+                    // No further processing.
+                    // Avoid following symlinks to avoid potentially unbounded recursion.
+                    self.files.push(path);
+                }
+                _ => self.check_file(&path),
             }
         }
-    }
 
-    /// checkFile checks a basic file named name.
-    fn check_file(&mut self, name: &str) {
-        if name == "." {
-            return;
+        // Check ReadDir(-1) at EOF.
+        match rd.read_dir(-1) {
+            Ok(list2) if list2.is_empty() => {}
+            result => {
+                let _ = d.close();
+                let (n, e) = match result {
+                    Ok(l) => (l.len(), "nil".to_string()),
+                    Err(e) => (0, e.to_string()),
+                };
+                self.errorf(format!(
+                    "{}: ReadDir(-1) at EOF = {} entries, {}, wanted 0 entries, nil",
+                    dir, n, e
+                ));
+                return;
+            }
         }
-        if let Some(lsys) = self.fsys.as_read_link_fs() {
-            if lsys.lstat(name).is_ok() {
-                if let Ok(link) = lsys.read_link(name) {
-                    self.check_bad_path(&link, "ReadLink output");
+
+        // Check ReadDir(1) at EOF (different results).
+        match rd.read_dir(1) {
+            Err(e) if e.is_eof() => {}
+            result => {
+                let _ = d.close();
+                let (n, e) = match result {
+                    Ok(l) => (l.len(), "nil".to_string()),
+                    Err(e) => (0, e.to_string()),
+                };
+                self.errorf(format!(
+                    "{}: ReadDir(1) at EOF = {} entries, {}, wanted 0 entries, EOF",
+                    dir, n, e
+                ));
+                return;
+            }
+        }
+
+        // Check that close does not report an error.
+        if let Err(err) = d.close() {
+            self.errorf(format!("{}: Close: {}", dir, err));
+        }
+
+        // Check that closing twice doesn't crash.
+        // The return value doesn't matter.
+        let _ = d.close();
+
+        // Reopen directory, read a second time, make sure contents match.
+        let Some(d2) = self.open_dir(dir) else {
+            return;
+        };
+        let list2 = match d2.as_read_dir_file().unwrap().read_dir(-1) {
+            Err(err) => {
+                self.errorf(format!("{}: second Open+ReadDir(-1): {}", dir, err));
+                return;
+            }
+            Ok(list2) => list2,
+        };
+        self.check_dir_list(
+            dir,
+            "first Open+ReadDir(-1) vs second Open+ReadDir(-1)",
+            &list,
+            &list2,
+        );
+        let _ = d2.close();
+
+        // Reopen directory, read a third time in pieces, make sure contents match.
+        let Some(d3) = self.open_dir(dir) else {
+            return;
+        };
+        let rd3 = d3.as_read_dir_file().unwrap();
+        let mut list2: Vec<Arc<dyn DirEntry>> = Vec::new();
+        loop {
+            let n: i32 = if list2.is_empty() { 1 } else { 2 };
+            match rd3.read_dir(n) {
+                Ok(frag) => {
+                    if frag.len() > n as usize {
+                        self.errorf(format!(
+                            "{}: third Open: ReadDir({}) after {}: {} entries (too many)",
+                            dir,
+                            n,
+                            list2.len(),
+                            frag.len()
+                        ));
+                        return;
+                    }
+                    if frag.is_empty() {
+                        self.errorf(format!(
+                            "{}: third Open: ReadDir({}) after {}: 0 entries but nil error",
+                            dir,
+                            n,
+                            list2.len()
+                        ));
+                        return;
+                    }
+                    list2.extend(frag);
+                }
+                Err(e) if e.is_eof() => break,
+                Err(e) => {
+                    self.errorf(format!(
+                        "{}: third Open: ReadDir({}) after {}: {}",
+                        dir,
+                        n,
+                        list2.len(),
+                        e
+                    ));
+                    return;
+                }
+            }
+        }
+        let _ = d3.close();
+        self.check_dir_list(
+            dir,
+            "first Open+ReadDir(-1) vs third Open+ReadDir(1,2) loop",
+            &list,
+            &list2,
+        );
+
+        // If fsys has ReadDir, check that it matches and is sorted.
+        if let Some(rfs) = self.fsys.as_read_dir_fs() {
+            match rfs.read_dir(dir) {
+                Err(err) => {
+                    self.errorf(format!("{}: fsys.ReadDir: {}", dir, err));
+                    return;
+                }
+                Ok(list2) => {
+                    self.check_dir_list(
+                        dir,
+                        "first Open+ReadDir(-1) vs fsys.ReadDir",
+                        &list,
+                        &list2,
+                    );
+                    for i in 0..list2.len().saturating_sub(1) {
+                        if list2[i].name() >= list2[i + 1].name() {
+                            self.errorf(format!(
+                                "{}: fsys.ReadDir: list not sorted: {} before {}",
+                                dir,
+                                list2[i].name(),
+                                list2[i + 1].name()
+                            ));
+                        }
+                    }
                 }
             }
         }
 
-        let f = match self.fsys.open(name) {
+        // Check fs.ReadDir as well.
+        match fs::read_dir(&**self.fsys, dir) {
             Err(err) => {
-                self.errorf(format!("{}: Open: {}", name, err));
+                self.errorf(format!("{}: fs.ReadDir: {}", dir, err));
+                return;
+            }
+            Ok(list2) => {
+                self.check_dir_list(
+                    dir,
+                    "first Open+ReadDir(-1) vs fs.ReadDir",
+                    &list,
+                    &list2,
+                );
+                for i in 0..list2.len().saturating_sub(1) {
+                    if list2[i].name() >= list2[i + 1].name() {
+                        self.errorf(format!(
+                            "{}: fs.ReadDir: list not sorted: {} before {}",
+                            dir,
+                            list2[i].name(),
+                            list2[i + 1].name()
+                        ));
+                    }
+                }
+            }
+        }
+
+        // Go passes the fs.ReadDir list here; checkGlob no-ops without GlobFs.
+        self.check_glob(dir, &list);
+    }
+
+    /// checkGlob checks that various glob patterns work if the file system
+    /// implements GlobFS.
+    fn check_glob(&mut self, dir: &str, list: &[Arc<dyn DirEntry>]) {
+        let _ = (dir, list);
+        if self.fsys.as_glob_fs().is_none() {
+            return;
+        }
+        // PORT: no Fs implementation in this crate implements GlobFs, so the
+        // glob-pattern checks are unreachable and omitted.
+    }
+
+    /// checkStat checks that a direct stat of path matches entry,
+    /// which was found in the parent's directory listing.
+    fn check_stat(&mut self, path: &str, entry: &dyn DirEntry) {
+        let file = match self.fsys.open(path) {
+            Err(err) => {
+                self.errorf(format!("{}: Open: {}", path, err));
+                return;
+            }
+            Ok(file) => file,
+        };
+        let info_result = file.stat();
+        let _ = file.close();
+        let info = match info_result {
+            Err(err) => {
+                self.errorf(format!("{}: Stat: {}", path, err));
+                return;
+            }
+            Ok(info) => info,
+        };
+        let fentry = format_entry(entry);
+        let fientry = format_info_entry(&*info);
+        // Note: mismatch here is OK for symlink, because Open dereferences symlink.
+        if fentry != fientry && entry.type_() & MODE_SYMLINK == FileMode(0) {
+            self.errorf(format!(
+                "{}: mismatch:\n\tentry = {}\n\tfile.Stat() = {}",
+                path, fentry, fientry
+            ));
+        }
+
+        let einfo = match entry.info() {
+            Err(err) => {
+                self.errorf(format!("{}: entry.Info: {}", path, err));
+                return;
+            }
+            Ok(einfo) => einfo,
+        };
+        let finfo = format_info(&*info);
+        if entry.type_() & MODE_SYMLINK != FileMode(0) {
+            // For symlink, just check that entry.Info matches entry on common fields.
+            // Open dereferences symlink, so info itself may differ.
+            let feentry = format_info_entry(&*einfo);
+            if fentry != feentry {
+                self.errorf(format!(
+                    "{}: mismatch\n\tentry = {}\n\tentry.Info() = {}\n",
+                    path, fentry, feentry
+                ));
+            }
+        } else {
+            let feinfo = format_info(&*einfo);
+            if feinfo != finfo {
+                self.errorf(format!(
+                    "{}: mismatch:\n\tentry.Info() = {}\n\tfile.Stat() = {}\n",
+                    path, feinfo, finfo
+                ));
+            }
+        }
+
+        // Stat should be the same as Open+Stat, even for symlinks.
+        match fs::stat(&**self.fsys, path) {
+            Err(err) => {
+                self.errorf(format!("{}: fs.Stat: {}", path, err));
+                return;
+            }
+            Ok(info2) => {
+                if format_info(&*info2) != finfo {
+                    self.errorf(format!(
+                        "{}: fs.Stat(...) = {}\n\twant {}",
+                        path,
+                        format_info(&*info2),
+                        finfo
+                    ));
+                }
+            }
+        }
+
+        if let Some(sfs) = self.fsys.as_stat_fs() {
+            match sfs.stat(path) {
+                Err(err) => {
+                    self.errorf(format!("{}: fsys.Stat: {}", path, err));
+                    return;
+                }
+                Ok(info2) => {
+                    if format_info(&*info2) != finfo {
+                        self.errorf(format!(
+                            "{}: fsys.Stat(...) = {}\n\twant {}",
+                            path,
+                            format_info(&*info2),
+                            finfo
+                        ));
+                    }
+                }
+            }
+        }
+
+        if let Some(lsys) = self.fsys.as_read_link_fs() {
+            match lsys.lstat(path) {
+                Err(err) => {
+                    self.errorf(format!("{}: fsys.Lstat: {}", path, err));
+                    return;
+                }
+                Ok(info2) => {
+                    if fentry != format_info_entry(&*info2) {
+                        self.errorf(format!(
+                            "{}: mismatch:\n\tentry = {}\n\tfsys.Lstat(...) = {}",
+                            path,
+                            fentry,
+                            format_info_entry(&*info2)
+                        ));
+                    }
+                    let feinfo = format_info(&*einfo);
+                    let finfo2 = format_info(&*info2);
+                    if feinfo != finfo2 {
+                        self.errorf(format!(
+                            "{}: mismatch:\n\tentry.Info() = {}\n\tfsys.Lstat(...) = {}\n",
+                            path, feinfo, finfo2
+                        ));
+                    }
+                }
+            }
+        }
+    }
+
+    /// checkDirList checks that two directory lists contain the same files
+    /// and file info. The order of the lists need not match.
+    fn check_dir_list(
+        &mut self,
+        dir: &str,
+        desc: &str,
+        list1: &[Arc<dyn DirEntry>],
+        list2: &[Arc<dyn DirEntry>],
+    ) {
+        let mut old: FxHashMap<String, Arc<dyn DirEntry>> = FxHashMap::default();
+        for entry1 in list1 {
+            self.check_entry_mode(dir, &**entry1);
+            old.insert(entry1.name(), entry1.clone());
+        }
+
+        let mut diffs: Vec<String> = Vec::new();
+        for entry2 in list2 {
+            match old.get(&entry2.name()) {
+                None => {
+                    self.check_entry_mode(dir, &**entry2);
+                    diffs.push(format!("+ {}", format_entry(&**entry2)));
+                }
+                Some(entry1) => {
+                    if format_entry(&**entry1) != format_entry(&**entry2) {
+                        diffs.push(format!("- {}", format_entry(&**entry1)));
+                        diffs.push(format!("+ {}", format_entry(&**entry2)));
+                    }
+                    old.remove(&entry2.name());
+                }
+            }
+        }
+        for (_, entry1) in old {
+            diffs.push(format!("- {}", format_entry(&*entry1)));
+        }
+
+        if diffs.is_empty() {
+            return;
+        }
+
+        // Go: slices.SortFunc comparing fa[1]+" "+fb[0] vs fb[1]+" "+fa[0]
+        // (sort by name, then +/-).
+        diffs.sort_by(|a, b| {
+            let fa: Vec<&str> = a.split_whitespace().collect();
+            let fb: Vec<&str> = b.split_whitespace().collect();
+            let ka = format!(
+                "{} {}",
+                fa.get(1).copied().unwrap_or(""),
+                fb.first().copied().unwrap_or("")
+            );
+            let kb = format!(
+                "{} {}",
+                fb.get(1).copied().unwrap_or(""),
+                fa.first().copied().unwrap_or("")
+            );
+            ka.cmp(&kb)
+        });
+
+        self.errorf(format!("{}: diff {}:\n\t{}", dir, desc, diffs.join("\n\t")));
+    }
+
+    fn check_entry_mode(&mut self, dir: &str, entry: &dyn DirEntry) {
+        if entry.is_dir() != (entry.type_() & MODE_DIR != FileMode(0)) {
+            if entry.is_dir() {
+                self.errorf(format!(
+                    "{}: ReadDir returned {} with IsDir() = true, Type() & ModeDir = 0",
+                    dir,
+                    entry.name()
+                ));
+            } else {
+                self.errorf(format!(
+                    "{}: ReadDir returned {} with IsDir() = false, Type() & ModeDir = ModeDir",
+                    dir,
+                    entry.name()
+                ));
+            }
+        }
+    }
+
+    /// checkFile checks that basic file reading works correctly.
+    fn check_file(&mut self, file: &str) {
+        self.files.push(file.to_string());
+
+        // Read entire file.
+        let f = match self.fsys.open(file) {
+            Err(err) => {
+                self.errorf(format!("{}: Open: {}", file, err));
                 return;
             }
             Ok(f) => f,
         };
 
-        let data = match fs::read_file(self.fsys, name) {
+        let data = match fs::read_all(&*f) {
             Err(err) => {
-                self.errorf(format!("{}: fs.ReadFile: {}", name, err));
+                let _ = f.close();
+                self.errorf(format!("{}: Open+ReadAll: {}", file, err));
                 return;
             }
             Ok(data) => data,
         };
 
-        if let Err(err) = iotest_test_reader(&*f, &data) {
-            self.errorf(format!("{}: {}", name, err));
+        if let Err(err) = f.close() {
+            self.errorf(format!("{}: Close: {}", file, err));
         }
+
+        // Check that closing twice doesn't crash.
+        // The return value doesn't matter.
         let _ = f.close();
 
-        let info = match f.stat() {
-            Ok(info) => info,
-            Err(err) => {
-                self.errorf(format!("{}: Stat: {}", name, err));
-                return;
-            }
-        };
-        self.check_stat(name, &*info);
+        // Check that ReadFile works if present.
+        if let Some(rfs) = self.fsys.as_read_file_fs() {
+            let mut data2 = match rfs.read_file(file) {
+                Err(err) => {
+                    self.errorf(format!("{}: fsys.ReadFile: {}", file, err));
+                    return;
+                }
+                Ok(data2) => data2,
+            };
+            self.check_file_read(file, "ReadAll vs fsys.ReadFile", &data, &data2);
 
-        let file_info = match fs::file_info_to_dir_entry(&*info) {
-            Ok(fi) => fi,
-            Err(err) => {
-                self.errorf(format!("{}: FileInfoToDirEntry: {}", name, err));
-                return;
+            // Modify the data and check it again. Modifying the
+            // returned byte slice should not affect the next call.
+            for b in data2.iter_mut() {
+                *b = b.wrapping_add(1);
             }
-        };
-
-        if file_info.name() != info.name() {
-            self.errorf(format!(
-                "{}: FileInfoToDirEntry name mismatch: FileInfoToDirEntry.Name = {}, want {}",
-                name,
-                file_info.name(),
-                info.name()
-            ));
-        }
-        if file_info.is_dir() != info.is_dir() {
-            self.errorf(format!(
-                "{}: FileInfoToDirEntry IsDir mismatch: FileInfoToDirEntry.IsDir = {}, want {}",
-                name,
-                file_info.is_dir(),
-                info.is_dir()
-            ));
-        }
-        if file_info.type_() != info.mode().type_() {
-            self.errorf(format!(
-                "{}: FileInfoToDirEntry Type mismatch: FileInfoToDirEntry.Type = {}, want {}",
-                name,
-                file_info.type_(),
-                info.mode().type_()
-            ));
-        }
-        match file_info.info() {
-            Err(err) => self.errorf(format!("{}: FileInfoToDirEntry Info: {}", name, err)),
-            Ok(finfo) => {
-                if finfo.name() != info.name()
-                    || finfo.size() != info.size()
-                    || finfo.mode() != info.mode()
-                    || finfo.mod_time() != info.mod_time()
-                    || finfo.is_dir() != info.is_dir()
-                {
-                    self.errorf(format!(
-                        "{}: FileInfoToDirEntry Info mismatch:\nentry:\t{}\nfile:\t{}",
-                        name,
-                        format_info(&*finfo),
-                        format_info(&*info)
-                    ));
+            match rfs.read_file(file) {
+                Err(err) => {
+                    self.errorf(format!("{}: second call to fsys.ReadFile: {}", file, err));
+                    return;
+                }
+                Ok(data2) => {
+                    self.check_file_read(
+                        file,
+                        "Readall vs second fsys.ReadFile",
+                        &data,
+                        &data2,
+                    );
                 }
             }
-        }
-    }
 
-    /// checkStat checks that a FileInfo is consistent.
-    fn check_stat(&mut self, dir: &str, file: &dyn FileInfo) {
-        if fs::path_is_abs(&file.name()) || !fs::valid_path(&file.name()) {
-            self.errorf(format!("{}: invalid name {}", dir, fs::go_quote(&file.name())));
+            self.check_bad_path(file, "ReadFile", &mut |name| {
+                rfs.read_file(name).map(|_| ())
+            });
         }
-        if file.name() == "." {
-            // special case for current directory, which must have a Method
-            if file.mode() & MODE_DIR == FileMode(0) {
-                self.errorf(format!("{}: not a directory:\n\t{}", dir, format_info(file)));
+
+        // Check that fs.ReadFile works with t.fsys.
+        match fs::read_file(&**self.fsys, file) {
+            Err(err) => {
+                self.errorf(format!("{}: fs.ReadFile: {}", file, err));
+                return;
+            }
+            Ok(data2) => {
+                self.check_file_read(file, "ReadAll vs fs.ReadFile", &data, &data2);
             }
         }
-        let file_name = file.name();
-        if fs::path_join(dir, &file_name)
-            != fs::path_join(dir, &file_name.replace('\\', "/"))
-        {
-            self.errorf(format!(
-                "{}: filename contains backslash:\n\t{}",
-                dir,
-                format_info(file)
-            ));
-        }
-        if file.is_dir() != file.mode().is_dir() {
-            self.errorf(format!(
-                "{}: inconsistent IsDir/Mode.IsDir:\n\t{}",
-                dir,
-                format_info(file)
-            ));
-        }
-    }
 
-    /// checkDirList checks that the directory listing contains
-    /// exactly the specified file names, in sorted order.
-    /// Check "." directory too, to make sure it is excluded.
-    /// If want is nil, check that all files are listed.
-    /// If want is nil and an empty list is returned,
-    /// checkDirList uses ReadDirFile to double-check.
-    fn check_dir_list(&mut self, dir: &str, want: &[&str]) {
-        let Ok(list) = fs::read_dir(self.fsys, dir) else {
-            self.errorf(format!("{}: cannot read directory", dir));
-            return;
-        };
-
-        let mut sorted: Vec<String> = list.iter().map(|e| e.name()).collect();
-        sorted.sort();
-        if want.is_empty() {
-            self.check_bad_path(".", "ReadDir output");
-            for e in &list {
-                self.check_bad_path(&e.name(), "ReadDir output");
+        // Use iotest.TestReader to check small reads, Seek, ReadAt.
+        let f = match self.fsys.open(file) {
+            Err(err) => {
+                self.errorf(format!("{}: second Open: {}", file, err));
+                return;
             }
-        }
-        let _ = sorted;
-    }
-
-    /// openDir opens dir for reading.
-    /// If err is nil, the caller must close the returned file.
-    fn open_dir(&self, dir: &str) -> Result<Box<dyn File>, String> {
-        let f = match self.fsys.open(dir) {
-            Err(err) => return Err(format!("error from Open: {}", err)),
             Ok(f) => f,
         };
-        if f.as_read_dir_file().is_none() {
-            return Err("claimed to be directory but not implementing ReadDirFile".to_string());
+        let result = iotest_test_reader(&*f, &data);
+        let _ = f.close();
+        if let Err(err) = result {
+            self.errorf(format!(
+                "{}: failed TestReader:\n\t{}",
+                file,
+                err.replace('\n', "\n\t")
+            ));
         }
-        Ok(f)
+    }
+
+    fn check_file_read(&mut self, file: &str, desc: &str, data1: &[u8], data2: &[u8]) {
+        if data1 != data2 {
+            self.errorf(format!(
+                "{}: {}: different data returned\n\t{:?}\n\t{:?}",
+                file, desc, data1, data2
+            ));
+        }
+    }
+
+    /// checkOpen validates file opening behavior by attempting to open and
+    /// then close the given file path.
+    fn check_open(&mut self, file: &str) {
+        let fsys = self.fsys;
+        self.check_bad_path(file, "Open", &mut |file| match fsys.open(file) {
+            Ok(f) => {
+                let _ = f.close();
+                Ok(())
+            }
+            Err(err) => Err(err),
+        });
+    }
+
+    /// checkBadPath checks that various invalid forms of file's name cannot
+    /// be opened using open.
+    fn check_bad_path(
+        &mut self,
+        file: &str,
+        desc: &str,
+        open: &mut dyn FnMut(&str) -> Result<(), FsError>,
+    ) {
+        let mut bad = vec![format!("/{}", file), format!("{}/.", file)];
+        if file == "." {
+            bad.push("/".to_string());
+        }
+        if let Some(i) = file.find('/') {
+            bad.push(format!("{}//{}", &file[..i], &file[i + 1..]));
+            bad.push(format!("{}/./{}", &file[..i], &file[i + 1..]));
+            bad.push(format!("{}\\{}", &file[..i], &file[i + 1..]));
+            bad.push(format!("{}/../{}", &file[..i], file));
+        }
+        if let Some(i) = file.rfind('/') {
+            bad.push(format!("{}//{}", &file[..i], &file[i + 1..]));
+            bad.push(format!("{}/./{}", &file[..i], &file[i + 1..]));
+            bad.push(format!("{}\\{}", &file[..i], &file[i + 1..]));
+            bad.push(format!("{}/../{}", file, &file[i + 1..]));
+        }
+
+        for b in &bad {
+            if open(b).is_ok() {
+                self.errorf(format!("{}: {}({}) succeeded, want error", file, desc, b));
+            }
+        }
     }
 }
 
-/// formatEntry outputs a formatted version of e for reporting errors by TestFS.
-fn format_entry(e: &dyn DirEntry) -> String {
-    match e.info() {
-        Err(err) => format!("{} {:v}", e.name(), err),
-        Ok(i) => format!("{} IsDir={} type={} info={}", e.name(), e.is_dir(), e.type_(), format_info(&*i)),
-    }
+/// formatEntry formats an fs.DirEntry into a string for error messages and comparison.
+fn format_entry(entry: &dyn DirEntry) -> String {
+    format!("{} IsDir={} Type={}", entry.name(), entry.is_dir(), entry.type_())
 }
 
-/// formatInfo outputs a formatted version of i for reporting errors by TestFS.
-fn format_info(i: &dyn FileInfo) -> String {
-    format!("{} IsDir={} mode={} size={} modTime={:?}", i.name(), i.is_dir(), i.mode(), i.size(), i.mod_time())
+/// formatInfoEntry formats an fs.FileInfo into a string like the result of formatEntry, for error messages and comparison.
+fn format_info_entry(info: &dyn FileInfo) -> String {
+    format!(
+        "{} IsDir={} Type={}",
+        info.name(),
+        info.is_dir(),
+        info.mode().type_()
+    )
+}
+
+/// formatInfo formats an fs.FileInfo into a string for error messages and comparison.
+fn format_info(info: &dyn FileInfo) -> String {
+    format!("{:?}", info)
 }
 
 // ---------------------------------------------------------------------------
 // testing/iotest TestReader
 // ---------------------------------------------------------------------------
 
-/// test_reader is iotest.TestReader: it tests that the file implements
-/// Read, ReadAt, and Seek correctly. Returned string is the collected error
-/// text (TestReader logs errors and returns a single error at the end).
+/// smallByteReader is iotest.smallByteReader.
+struct SmallByteReader<'a> {
+    r: &'a dyn File,
+    off: usize,
+    n: usize,
+}
+
+impl SmallByteReader<'_> {
+    fn read(&mut self, p: &mut [u8]) -> Result<usize, FsError> {
+        if p.is_empty() {
+            return Ok(0);
+        }
+        self.n = self.n % 3 + 1;
+        let n = self.n.min(p.len());
+        match self.r.read(&mut p[..n]) {
+            Ok(n) => {
+                self.off += n;
+                Ok(n)
+            }
+            Err(e) if e.is_eof() => Err(e),
+            Err(e) => Err(FsError::Message(format!(
+                "Read({} bytes at offset {}): {}",
+                n, self.off, e
+            ))),
+        }
+    }
+}
+
+fn small_read_all(r: &dyn File) -> Result<Vec<u8>, FsError> {
+    let mut sr = SmallByteReader { r, off: 0, n: 0 };
+    let mut data = Vec::new();
+    let mut buf = [0u8; 512];
+    loop {
+        match sr.read(&mut buf) {
+            Ok(0) => break,
+            Ok(n) => data.extend_from_slice(&buf[..n]),
+            Err(e) if e.is_eof() => break,
+            Err(e) => return Err(e),
+        }
+    }
+    Ok(data)
+}
+
+/// test_reader is iotest.TestReader: it tests that reading from r returns
+/// the expected file content. It does reads of different sizes, until EOF.
+/// If r implements ReaderAt or Seeker, it also checks that those operations
+/// behave as they should.
+///
+/// PORT: io.Reader can report (n, err) pairs; our File::read returns only
+/// Result<usize>, so checks on the n of a failing read are elided.
 fn iotest_test_reader(r: &dyn File, content: &[u8]) -> Result<(), String> {
-    let mut errors: Vec<String> = Vec::new();
-    let len = content.len() as i64;
-
-    // Read len/2 bytes.
-    let buf1 = {
-        let mut b = vec![0u8; content.len() / 2];
-        match r.read(&mut b) {
-            Ok(n) => b.truncate(n),
-            Err(e) if e == FsError::Eof => b.clear(),
-            Err(e) => errors.push(format!("read: {}", e)),
+    if !content.is_empty() {
+        match r.read(&mut []) {
+            Ok(0) => {}
+            Ok(n) => return Err(format!("Read(0) = {}, nil, want 0, nil", n)),
+            Err(e) => return Err(format!("Read(0) = 0, {}, want 0, nil", e)),
         }
-        b
+    }
+
+    let data = match small_read_all(r) {
+        Err(e) => return Err(e.to_string()),
+        Ok(data) => data,
     };
-    if buf1 != content[..buf1.len()] {
-        errors.push("bad read".to_string());
+    if data != content {
+        return Err(format!(
+            "ReadAll(small amounts) = {:?}\n\twant {:?}",
+            data, content
+        ));
+    }
+    let mut buf10 = [0u8; 10];
+    match r.read(&mut buf10) {
+        Err(e) if e.is_eof() => {}
+        Ok(n) => return Err(format!("Read(10) at EOF = {}, nil, want 0, EOF", n)),
+        Err(e) => return Err(format!("Read(10) at EOF = 0, {}, want 0, EOF", e)),
     }
 
-    // Read next len/2 bytes.
-    {
-        let mut b = vec![0u8; content.len() - content.len() / 2];
-        match r.read(&mut b) {
-            Ok(_n) => {}
-            Err(e) if e == FsError::Eof => {}
-            Err(e) => errors.push(format!("read: {}", e)),
-        }
-        if b[..] != content[content.len() / 2..] {
-            errors.push("bad read".to_string());
-        }
-    }
-
-    // Read EOF.
-    {
-        let mut b = vec![0u8; 4];
-        match r.read(&mut b) {
-            Err(e) if e == FsError::Eof => {}
-            _ => errors.push("expected EOF".to_string()),
-        }
-    }
-
-    // ReadAt.
-    if let Some(ra) = r.as_reader_at() {
-        let data = {
-            let mut b = vec![0u8; content.len().min(10)];
-            match ra.read_at(&mut b, 0) {
-                Ok(_n) => {}
-                Err(e) => errors.push(format!("ReadAt(0): {}", e)),
+    if let Some(seeker) = r.as_seeker() {
+        let len = content.len() as i64;
+        // Seek(0, Current) should report the current file position (EOF).
+        match seeker.seek(0, SeekWhence::Current) {
+            Ok(off) if off == len => {}
+            Ok(off) => {
+                return Err(format!(
+                    "Seek(0, 1) from EOF = {}, nil, want {}, nil",
+                    off, len
+                ))
             }
-            b
-        };
-        if data[..] != content[..data.len()] {
-            errors.push("ReadAt(0): bad bytes".to_string());
-        }
-        {
-            let mut b = vec![0u8; content.len().min(10)];
-            match ra.read_at(&mut b, len / 2) {
-                Ok(_n) => {}
-                Err(e) => errors.push(format!("ReadAt(mid): {}", e)),
-            }
-            if b[..] != content[(len as usize / 2)..(len as usize / 2 + b.len())] {
-                errors.push("ReadAt(mid): bad bytes".to_string());
+            Err(e) => {
+                return Err(format!("Seek(0, 1) from EOF = 0, {}, want {}, nil", e, len))
             }
         }
-    } else {
-        errors.push("Reader does not implement io.ReaderAt".to_string());
-    }
 
-    // Seek.
-    if let Some(seek) = r.as_seeker() {
-        if let Err(e) = seek.seek(len / 2, SeekWhence::Start) {
-            errors.push(format!("Seek(mid): {}", e));
-        } else {
-            let mut b = vec![0u8; 1];
-            match r.read(&mut b) {
-                Ok(1) => {
-                    if b[0] != content[len as usize / 2] {
-                        errors.push("Seek(mid) read wrong byte".to_string());
-                    }
+        // Seek backward partway through file, in two steps.
+        // If middle == 0, len(content) == 0, can't use the -1 and +1 seeks.
+        let middle = len - len / 3;
+        if middle > 0 {
+            match seeker.seek(-1, SeekWhence::Current) {
+                Ok(off) if off == len - 1 => {}
+                Ok(off) => {
+                    return Err(format!(
+                        "Seek(-1, 1) from EOF = {}, nil, want {}, nil",
+                        off,
+                        len - 1
+                    ))
                 }
-                _ => errors.push("Seek(mid) failed to read".to_string()),
+                Err(e) => {
+                    return Err(format!(
+                        "Seek(-1, 1) from EOF = 0, {}, want {}, nil",
+                        e,
+                        len - 1
+                    ))
+                }
+            }
+            match seeker.seek(-(len / 3), SeekWhence::Current) {
+                Ok(off) if off == middle - 1 => {}
+                Ok(off) => {
+                    return Err(format!(
+                        "Seek({}, 1) from {} = {}, nil, want {}, nil",
+                        -(len / 3),
+                        len - 1,
+                        off,
+                        middle - 1
+                    ))
+                }
+                Err(e) => {
+                    return Err(format!(
+                        "Seek({}, 1) from {} = 0, {}, want {}, nil",
+                        -(len / 3),
+                        len - 1,
+                        e,
+                        middle - 1
+                    ))
+                }
+            }
+            match seeker.seek(1, SeekWhence::Current) {
+                Ok(off) if off == middle => {}
+                Ok(off) => {
+                    return Err(format!(
+                        "Seek(+1, 1) from {} = {}, nil, want {}, nil",
+                        middle - 1,
+                        off,
+                        middle
+                    ))
+                }
+                Err(e) => {
+                    return Err(format!(
+                        "Seek(+1, 1) from {} = 0, {}, want {}, nil",
+                        middle - 1,
+                        e,
+                        middle
+                    ))
+                }
             }
         }
-        if let Err(e) = seek.seek(0, SeekWhence::Start) {
-            errors.push(format!("Seek(start): {}", e));
-        } else {
-            let mut b = vec![0u8; 1];
-            let mut got = Vec::new();
-            while let Ok(n) = r.read(&mut b) {
-                got.extend_from_slice(&b[..n]);
+
+        // Seek(0, Current) should report the current file position (middle).
+        match seeker.seek(0, SeekWhence::Current) {
+            Ok(off) if off == middle => {}
+            Ok(off) => {
+                return Err(format!(
+                    "Seek(0, 1) from {} = {}, nil, want {}, nil",
+                    middle, off, middle
+                ))
             }
-            if got != content {
-                errors.push("Seek(start) then read: bad content".to_string());
+            Err(e) => {
+                return Err(format!(
+                    "Seek(0, 1) from {} = 0, {}, want {}, nil",
+                    middle, e, middle
+                ))
             }
         }
-    } else {
-        errors.push("Reader does not implement io.Seeker".to_string());
+
+        // Reading forward should return the last part of the file.
+        let data = match small_read_all(r) {
+            Err(e) => return Err(format!("ReadAll from offset {}: {}", middle, e)),
+            Ok(data) => data,
+        };
+        if data != content[middle as usize..] {
+            return Err(format!(
+                "ReadAll from offset {} = {:?}\n\twant {:?}",
+                middle,
+                data,
+                &content[middle as usize..]
+            ));
+        }
+
+        // Seek relative to end of file, but start elsewhere.
+        match seeker.seek(middle / 2, SeekWhence::Start) {
+            Ok(off) if off == middle / 2 => {}
+            Ok(off) => {
+                return Err(format!(
+                    "Seek({}, 0) from EOF = {}, nil, want {}, nil",
+                    middle / 2,
+                    off,
+                    middle / 2
+                ))
+            }
+            Err(e) => {
+                return Err(format!(
+                    "Seek({}, 0) from EOF = 0, {}, want {}, nil",
+                    middle / 2,
+                    e,
+                    middle / 2
+                ))
+            }
+        }
+        match seeker.seek(-(len / 3), SeekWhence::End) {
+            Ok(off) if off == middle => {}
+            Ok(off) => {
+                return Err(format!(
+                    "Seek({}, 2) from {} = {}, nil, want {}, nil",
+                    -(len / 3),
+                    middle / 2,
+                    off,
+                    middle
+                ))
+            }
+            Err(e) => {
+                return Err(format!(
+                    "Seek({}, 2) from {} = 0, {}, want {}, nil",
+                    -(len / 3),
+                    middle / 2,
+                    e,
+                    middle
+                ))
+            }
+        }
+
+        // Reading forward should return the last part of the file (again).
+        let data = match small_read_all(r) {
+            Err(e) => return Err(format!("ReadAll from offset {}: {}", middle, e)),
+            Ok(data) => data,
+        };
+        if data != content[middle as usize..] {
+            return Err(format!(
+                "ReadAll from offset {} = {:?}\n\twant {:?}",
+                middle,
+                data,
+                &content[middle as usize..]
+            ));
+        }
+
+        // Absolute seek & read forward.
+        match seeker.seek(middle / 2, SeekWhence::Start) {
+            Ok(off) if off == middle / 2 => {}
+            Ok(off) => {
+                return Err(format!(
+                    "Seek({}, 0) from EOF = {}, nil, want {}, nil",
+                    middle / 2,
+                    off,
+                    middle / 2
+                ))
+            }
+            Err(e) => {
+                return Err(format!(
+                    "Seek({}, 0) from EOF = 0, {}, want {}, nil",
+                    middle / 2,
+                    e,
+                    middle / 2
+                ))
+            }
+        }
+        let data = match fs::read_all(r) {
+            Err(e) => return Err(format!("ReadAll from offset {}: {}", middle / 2, e)),
+            Ok(data) => data,
+        };
+        if data != content[(middle / 2) as usize..] {
+            return Err(format!(
+                "ReadAll from offset {} = {:?}\n\twant {:?}",
+                middle / 2,
+                data,
+                &content[(middle / 2) as usize..]
+            ));
+        }
     }
 
-    if errors.is_empty() {
-        Ok(())
-    } else {
-        Err(errors.join("\n"))
+    if let Some(ra) = r.as_reader_at() {
+        let mut data = vec![0xfeu8; content.len()];
+        match ra.read_at(&mut data, 0) {
+            Ok(n) if n == data.len() => {}
+            Ok(n) => {
+                return Err(format!(
+                    "ReadAt({}, 0) = {}, nil, want {}, nil or EOF",
+                    data.len(),
+                    n,
+                    data.len()
+                ))
+            }
+            // At end of input, (len(data), EOF) is also acceptable.
+            Err(e) if e.is_eof() => {}
+            Err(e) => {
+                return Err(format!(
+                    "ReadAt({}, 0) = ?, {}, want {}, nil or EOF",
+                    data.len(),
+                    e,
+                    data.len()
+                ))
+            }
+        }
+        if data != content {
+            return Err(format!(
+                "ReadAt({}, 0) = {:?}\n\twant {:?}",
+                data.len(),
+                data,
+                content
+            ));
+        }
+
+        let mut b1 = [0xfeu8; 1];
+        match ra.read_at(&mut b1, content.len() as i64) {
+            Err(e) if e.is_eof() => {}
+            Ok(n) => {
+                return Err(format!(
+                    "ReadAt(1, {}) = {}, nil, want 0, EOF",
+                    data.len(),
+                    n
+                ))
+            }
+            Err(e) => {
+                return Err(format!(
+                    "ReadAt(1, {}) = 0, {}, want 0, EOF",
+                    data.len(),
+                    e
+                ))
+            }
+        }
+
+        for b in data.iter_mut() {
+            *b = 0xfe;
+        }
+        let mut over = vec![0xfeu8; content.len() + 1];
+        match ra.read_at(&mut over, 0) {
+            // PORT: Go expects (len(data), io.EOF); our read_at reports the
+            // EOF without the count, so accept Err(EOF) and verify the bytes.
+            Err(e) if e.is_eof() => {}
+            Ok(n) => {
+                return Err(format!(
+                    "ReadAt({}, 0) = {}, nil, want {}, EOF",
+                    over.len(),
+                    n,
+                    data.len()
+                ))
+            }
+            Err(e) => {
+                return Err(format!(
+                    "ReadAt({}, 0) = ?, {}, want {}, EOF",
+                    over.len(),
+                    e,
+                    data.len()
+                ))
+            }
+        }
+        if over[..data.len()] != data[..] {
+            return Err(format!(
+                "ReadAt({}, 0) = {:?}\n\twant {:?}",
+                over.len(),
+                &over[..data.len()],
+                data
+            ));
+        }
+
+        for b in data.iter_mut() {
+            *b = 0xfe;
+        }
+        for i in 0..data.len() {
+            let mut b1 = [0xfeu8; 1];
+            match ra.read_at(&mut b1, i as i64) {
+                Ok(1) => {}
+                Ok(n) => {
+                    return Err(format!("ReadAt(1, {}) = {}, nil, want 1, nil", i, n))
+                }
+                Err(e) if e.is_eof() && i == data.len() - 1 => {}
+                Err(e) => {
+                    let want = if i == data.len() - 1 { "nil or EOF" } else { "nil" };
+                    return Err(format!("ReadAt(1, {}) = ?, {}, want 1, {}", i, e, want));
+                }
+            }
+            if b1[0] != content[i] {
+                return Err(format!("ReadAt(1, {}) bad byte", i));
+            }
+        }
+    }
+    Ok(())
+}
+
+// PORT: Go routes these through fsOnly{fsys}, an fs.FS wrapper that hides the
+// optional interfaces so the helpers fall back to Open. We call the open-based
+// fallbacks directly — same behavior without a wrapper type (a &MapFs wrapper
+// could not satisfy the `Fs: 'static` bound anyway).
+impl StatFs for MapFs {
+    fn stat(&self, name: &str) -> Result<Arc<dyn FileInfo>, FsError> {
+        let file = self.open(name)?;
+        let result = file.stat();
+        let _ = file.close();
+        result
+    }
+}
+
+impl ReadDirFs for MapFs {
+    fn read_dir(&self, name: &str) -> Result<Vec<Arc<dyn DirEntry>>, FsError> {
+        fs::read_dir_via_open(self, name)
+    }
+}
+
+impl ReadFileFs for MapFs {
+    fn read_file(&self, name: &str) -> Result<Vec<u8>, FsError> {
+        fs::read_file_via_open(self, name)
     }
 }

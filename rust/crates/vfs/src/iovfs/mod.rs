@@ -39,7 +39,10 @@ pub trait FsWithSys: Vfs {
 ///
 /// From does not actually handle case-insensitivity; ensure the passed in [Fs]
 /// respects case-insensitive file names if needed. Consider using [crate::vfstest::from_map] for testing.
-pub fn from(fsys: Arc<dyn Fs>, case_sensitivity: CaseSensitivity) -> Arc<dyn FsWithSys> {
+///
+/// PORT: returns the concrete [IoFs] so callers can coerce it to
+/// `Arc<dyn Vfs>` or `Arc<dyn FsWithSys>` (Go returns the interface type).
+pub fn from(fsys: Arc<dyn Fs>, case_sensitivity: CaseSensitivity) -> Arc<IoFs> {
     let realpath: Arc<dyn Fn(&str) -> Result<String, FsError> + Send + Sync>;
     if let Some(realpath_fs) = fsys.as_realpath_fs() {
         // PORT: the closure captures the trait object, equivalent to Go's

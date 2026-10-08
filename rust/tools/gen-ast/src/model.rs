@@ -194,7 +194,7 @@ pub struct FactOp {
 
 /// A node struct (`type X struct` in ast_generated.go plus the three
 /// hand-written payloads: SourceFile, FlowSwitchClauseData, FlowReduceLabelData).
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct NodeDef {
     /// Go struct name.
     pub name: String,

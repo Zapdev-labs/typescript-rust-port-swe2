@@ -419,6 +419,14 @@ fn parse_ast(src: &str, schema: &mut Schema) -> Result<(), String> {
         let t = lines[i].trim();
         if t.starts_with("type ") && t.ends_with("struct {") {
             let name = t[5..t.len() - 8].trim().to_string();
+            if name == "NodeFactory" {
+                // arenas/hooks — skip without field parsing
+                while lines[i].trim() != "}" {
+                    i += 1;
+                }
+                i += 1;
+                continue;
+            }
             let (fields, end) = read_struct_fields(&lines, i)?;
             structs.push((name, fields));
             i = end + 1;
@@ -1258,6 +1266,18 @@ fn postprocess(schema: &mut Schema) -> Result<(), String> {
 
     // snapshot for immutable lookups during the mutable pass
     let nodes_snapshot: Vec<NodeDef> = schema.nodes.clone();
+    let ts_bases: Vec<bool> = nodes_snapshot
+        .iter()
+        .map(|n| schema.has_base(&n.bases, "TypeSyntaxBase"))
+        .collect();
+    let clike_bases: Vec<bool> = nodes_snapshot
+        .iter()
+        .map(|n| schema.has_base(&n.bases, "ClassLikeBase"))
+        .collect();
+    let accessor_bases: Vec<bool> = nodes_snapshot
+        .iter()
+        .map(|n| schema.has_base(&n.bases, "AccessorDeclarationBase"))
+        .collect();
     for (i, node) in schema.nodes.iter_mut().enumerate() {
         let snap = &nodes_snapshot[i];
         if node.kinds.is_empty() {
@@ -1287,24 +1307,48 @@ fn postprocess(schema: &mut Schema) -> Result<(), String> {
         if node.facts_mode.is_empty() {
             node.facts_mode = if !node.facts.is_empty() {
                 "generated"
-            } else if snap_bases_have(schema, &snap.bases, "TypeSyntaxBase") {
+            } else if ts_bases[i] {
                 "typescript"
+            } else if clike_bases[i] || accessor_bases[i] {
+                // ClassLikeBase/AccessorDeclarationBase have hand-written
+                // computeSubtreeFacts in ast.go.
+                "custom"
             } else {
                 "none"
             }
             .into();
         }
         if node.propagate_mode.is_empty() {
-            node.propagate_mode = if snap_bases_have(schema, &snap.bases, "TypeSyntaxBase") {
-                "typescript"
+            if accessor_bases[i] {
+                // AccessorDeclarationBase::propagateSubtreeFacts is hand-written.
+                node.propagate_mode = "exclusions".into();
+                node.propagate_exclusions = Some("SubtreeExclusionsAccessor".into());
+                node.propagate_fields = vec!["name".into()];
             } else {
-                "default"
+                node.propagate_mode = if ts_bases[i] { "typescript" } else { "default" }.into();
             }
-            .into();
         }
-        // `extra` payloads never carry generated update/clone unless parsed.
-        let _ = node;
+        let _ = snap;
     }
+
+    // `IsX(node)` preds recorded before their target node existed
+    // (SourceFile is parsed from ast.go) — re-attach.
+    let node_names: BTreeSet<String> = schema.nodes.iter().map(|n| n.name.clone()).collect();
+    let mut keep = Vec::new();
+    for p in std::mem::take(&mut schema.node_preds) {
+        let target = p.name.strip_prefix("Is").unwrap_or(&p.name);
+        if node_names.contains(target) {
+            let ni = schema.nodes.iter().position(|n| n.name == target).unwrap();
+            let node = &mut schema.nodes[ni];
+            node.is_fn = Some(p.name.clone());
+            if node.kinds.is_empty() && !p.kinds.is_empty() {
+                node.kinds = p.kinds.clone();
+            }
+        } else {
+            keep.push(p);
+        }
+    }
+    schema.node_preds = keep;
 
     // Every node needs kinds for the as_* accessors — extras excepted
     // (dispatched by data variant, not kind).

@@ -4,7 +4,7 @@
 // Go code uses via `RootFor: os.DirFS`.
 
 use std::any::Any;
-use std::io::{Read, Seek};
+use std::io::{Read, Seek, Write};
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::SystemTime;
 

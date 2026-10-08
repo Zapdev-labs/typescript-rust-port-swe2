@@ -6,7 +6,7 @@ use std::time::SystemTime;
 use rustc_hash::FxHashSet;
 use tsc_tspath::{CaseSensitivity, RootedDirectoryPath, RootedFilePath, RootedPath};
 
-use crate::fs::{DirEntry, FileInfo, Fs, FsError};
+use crate::fs::{DirEntry, FileInfo, FsError};
 
 // Vfs is a file system abstraction over rooted, normalized paths. Operations
 // declare whether they require a file, directory, or either kind of path.
