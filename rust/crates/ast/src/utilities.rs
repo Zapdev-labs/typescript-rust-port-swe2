@@ -2,18 +2,26 @@
 // generated AST and subtree-facts code @ ec47d33c23e464a17cdf2475632cba629bee8763.
 //
 // Only the helpers referenced by the AST core live here — modifier-flag
-// rollup, identifier/import-call predicates used by subtree facts, and the
-// binding/assignment-pattern machinery behind `ContainsObjectRestOrSpread`.
-// The remaining ~4000 lines of utilities.go port alongside the checker.
+// rollup, identifier/import-call predicates used by subtree facts, the
+// binding/assignment-pattern machinery behind `ContainsObjectRestOrSpread`,
+// and the handful of predicates/implied-format helpers needed by
+// `precedence.rs`/`parseoptions.rs`. The remaining ~4000 lines of
+// utilities.go port alongside the checker.
 
-use crate::ast::Node;
+use tsc_core::compileroptions::ResolutionMode;
+use tsc_core::options_generated::ModuleKind;
+use tsc_tspath::{self as tspath, RootedFilePath};
+
+use crate::ast::{Node, SourceFileMetaData};
 use crate::ast_generated::{
-    is_array_literal_expression, is_call_expression, is_identifier, is_meta_property,
+    is_array_literal_expression, is_call_expression, is_identifier,
+    is_jsx_opening_element, is_jsx_self_closing_element, is_meta_property,
     is_object_literal_expression, is_private_identifier, is_spread_element,
 };
 use crate::ids::NodeId;
 use crate::kind_generated::Kind;
 use crate::modifierflags::ModifierFlags;
+use crate::nodeflags::NodeFlags;
 use crate::subtreefacts::SubtreeFacts;
 
 /// `ModifierToFlag(token)`.
@@ -275,6 +283,55 @@ pub fn contains_object_rest_or_spread(node: &Node, nodes: &[Node]) -> bool {
         }
     }
     false
+}
+
+/// `IsOptionalChain(node)` — determines if a node is part of an OptionalChain.
+pub fn is_optional_chain(node: &Node) -> bool {
+    if node.flags.intersects(NodeFlags::OPTIONAL_CHAIN) {
+        return matches!(
+            node.kind,
+            Kind::PropertyAccessExpression
+                | Kind::ElementAccessExpression
+                | Kind::CallExpression
+                | Kind::NonNullExpression
+        );
+    }
+    false
+}
+
+/// `IsImportMeta(node)`.
+pub fn is_import_meta(node: &Node, nodes: &[Node]) -> bool {
+    is_import_meta_property(node, nodes, "meta")
+}
+
+/// `IsJsxOpeningLikeElement(node)`.
+pub fn is_jsx_opening_like_element(node: &Node) -> bool {
+    is_jsx_opening_element(node) || is_jsx_self_closing_element(node)
+}
+
+/// `GetImpliedNodeFormatForEmitWorker(fileName, emitModuleKind, sourceFileMetaData)`.
+/// Ported here from utilities.go for `parseoptions.rs`.
+pub fn get_implied_node_format_for_emit_worker(
+    file_name: &RootedFilePath,
+    emit_module_kind: ModuleKind,
+    source_file_meta_data: &SourceFileMetaData,
+) -> ResolutionMode {
+    if ModuleKind::Node16 <= emit_module_kind && emit_module_kind <= ModuleKind::NodeNext {
+        return source_file_meta_data.implied_node_format;
+    }
+    if source_file_meta_data.implied_node_format == ModuleKind::CommonJS
+        && (source_file_meta_data.package_json_type == "commonjs"
+            || file_name.extension_is_one_of(&[tspath::EXTENSION_CJS, tspath::EXTENSION_CTS]))
+    {
+        return ModuleKind::CommonJS;
+    }
+    if source_file_meta_data.implied_node_format == ModuleKind::ESNext
+        && (source_file_meta_data.package_json_type == "module"
+            || file_name.extension_is_one_of(&[tspath::EXTENSION_MJS, tspath::EXTENSION_MTS]))
+    {
+        return ModuleKind::ESNext;
+    }
+    ModuleKind::None
 }
 
 /// `IsMethodOrAccessor(node)` — used by

@@ -1,0 +1,19 @@
+[package]
+name = "tsc-scanner"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+tsc-ast = { path = "../ast" }
+tsc-collections = { path = "../collections" }
+tsc-core = { path = "../core" }
+tsc-debug = { path = "../debug" }
+tsc-diagnostics = { path = "../diagnostics" }
+tsc-jsnum = { path = "../jsnum" }
+tsc-stringutil = { path = "../stringutil" }
+rustc-hash = { workspace = true }

@@ -115,3 +115,19 @@ to "2" so tsc-collections can build.
   remainder lands with the checker (Go file is 4.7k LOC of checker-facing
   helpers). `deepclone`, `positionmap`, `precedence`, diagnostic types are
   M2 items — Go has no tests for the ported portion.
+
+## 2026-10-08 crates/bundled — lib embedding
+- `libs` is a symlink to `tsc/internal/bundled/libs` (rsync `-a` preserves it
+  on remote since the whole repo syncs).
+- `//go:embed`/`embed_generated.go` → `build.rs` walks `libs/` and emits
+  `libs_generated.rs` (`LIB_NAMES` + `EMBEDDED_CONTENTS` sorted static table
+  of `include_str!`). Deterministic: filenames sorted at build time.
+- `noembed.go` (build-tag fallback serving libs from disk) is NOT ported —
+  `EMBEDDED` is always true; the embed path is the shipping configuration.
+- `TestingLibPath`/`bundledSourceDir`: Go uses `runtime.Caller` + `testing.
+  Testing()`; Rust uses `env!("CARGO_MANIFEST_DIR")` + `/libs` at compile
+  time — equivalent inside a workspace checkout.
+- `fileInfo.ModTime`: Go returns `time.Time{}` (year 1, unrepresentable);
+  `BundledFileInfo::mod_time` returns `SystemTime::UNIX_EPOCH` as the "unset"
+  sentinel.
+- Write/remove/chtimes on bundled paths `panic!` exactly as Go panics.
