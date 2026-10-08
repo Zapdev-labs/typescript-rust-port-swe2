@@ -1,0 +1,17 @@
+[package]
+name = "tsc-tspath"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+rustc-hash = { workspace = true }
+serde = { workspace = true }
+tsc-stringutil = { path = "../stringutil" }
+
+[dev-dependencies]
+serde_json = { workspace = true }
+
+[lints]
+workspace = true

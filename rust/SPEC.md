@@ -110,7 +110,7 @@ naturally. LOC figures are non-test Go LOC, for sizing the port effort.
 | `tsc-jsnum` | `jsnum/` | ~500 | **Critical.** JavaScript `number` semantics: `ToString`/`ParseFloat` exact-matching JS (`strconv`-equivalent ported already in Go — port *that*), pseudo-BigInt helpers. JS numeric formatting (`1e21`, `0.1+0.2`) must match byte-for-byte. |
 | `tsc-nativepath` | `nativepath/` | ~200 | OS-native path helpers. |
 | `tsc-tspath` | `tspath/` | ~1500 | normalized slash-paths, `Path`/`DirectoryPath` newtypes, relative/combine, `comparePaths`, getPathComponents. |
-| `tsc-json` | `json/` | ~800 | strict-enough JSONC-ish parser used for tsconfig (comments, trailing commas allowed at the tsconfig layer — keep the Go behavior). |
+| `tsc-json` | `json/` | ~100 | Thin facade over `encoding/json/v2` (Marshal/Unmarshal/options/streaming Encoder-Decoder tokens). **Correction:** the JSONC-ish tsconfig parsing lives in `tsoptions`, not here. |
 | `tsc-locale` | `locale/` | small | diagnostic message localization hook (English only for now; keep the indirection). |
 | `tsc-debug` | `debug/` | ~300 | `debug.Assert`, `assertNever`, panic helpers → `debug_assert!` + `unreachable!` + explicit `panic!` for the "asserts are never too strict" cases (repo rule: **never remove assertions**). |
 | `tsc-repo` | `repo/` | tiny | testdata path constants (`testdata/baselines/...`). |
@@ -121,13 +121,13 @@ naturally. LOC figures are non-test Go LOC, for sizing the port effort.
 | Crate | Go source | Contents |
 |---|---|---|
 | `tsc-diagnostics` | `diagnostics/` | `Message` registry (~6.7k generated LOC from `diagnosticMessages.json`, ~2900 messages incl. `_2` format-arg variants), `Diagnostic`, `DiagnosticCollection`, category, `loc` localization table. Codegen via `build.rs` reading `tsc/internal/diagnostics/diagnosticMessages.json` (single source of truth — do not fork the JSON). |
-| `tsc-vfs` | `vfs/` | `VFS` trait + `osvfs` + `vfstest` in-memory FS. Trait-object based (`Arc<dyn Vfs>`) — matches Go interface usage. |
-| `tsc-contentmapper` | `contentmapper/` | maps synthetic→source positions for mixed content (e.g. `.ts` inside HTML/Svelte — used by content-mapped LS tests). |
-| `tsc-glob` | `glob/` | glob → regex for tsconfig `include`/`exclude`/`files` wildcards. |
+| `tsc-vfs` | `vfs/` | `VFS` trait + `osvfs` + `vfstest` in-memory FS. Trait-object based (`Arc<dyn Vfs>`) — matches Go interface usage. **Correction:** also imports `osutil` (ported in M1 as `tsc-osutil`). |
+| `tsc-contentmapper` | `contentmapper/` | maps synthetic→source positions for mixed content (e.g. `.ts` inside HTML/Svelte — used by content-mapped LS tests). **Correction:** imports `ast`/`parser`/`ipc`/`jsonrpc` — cannot port at Layer 1; deferred to post-M3. |
+| `tsc-glob` | `glob/` | Glob matcher for tsconfig `include`/`exclude`/`files` wildcards (hand-rolled segment matcher, not regex — **correction**). |
 | `tsc-packagejson` | `packagejson/` | minimal package.json model + validation. |
 | `tsc-semver` | `semver/` | semver subset TS needs (`@types` resolution, `typesVersions`). |
-| `tsc-sourcemap` | `sourcemap/` | sourcemap emit/parse, VLQ. |
-| `tsc-symlinks` | `symlinks/` | realpath cache + symlink dedup for module resolution. |
+| `tsc-sourcemap` | `sourcemap/` | sourcemap emit/parse, VLQ. **Correction:** imports `scanner` — deferred to M3+. |
+| `tsc-symlinks` | `symlinks/` | realpath cache + symlink dedup for module resolution. **Correction:** imports `ast`/`module` — deferred to post-M4. |
 | `tsc-tracing` | `tracing/` | build/trace event emission (`.trace` JSON) — port late, stub early. |
 | `tsc-spanmap` | `spanmap/` | `MultiMap`-of-spans used by LS features (document highlights etc.). |
 

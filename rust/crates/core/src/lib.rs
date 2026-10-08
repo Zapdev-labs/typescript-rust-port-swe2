@@ -1,4 +1,26 @@
-// Ported from tsc/internal/core @ ec47d33c23e464a17cdf2475632cba629bee8763
 pub mod arena;
+pub mod bfs;
+pub mod binarysearch;
+pub mod compileroptions;
+pub mod context;
+pub mod core;
+pub mod languagevariant;
+pub mod languagevariant_stringer_generated;
 pub mod linkstore;
+pub mod modulekind_stringer_generated;
+pub mod nodemodules;
+pub mod options_generated;
+pub mod pattern;
+pub mod projectreference;
+pub mod scriptkind;
+pub mod scriptkind_stringer_generated;
+pub mod scripttarget_stringer_generated;
+pub mod semaphore;
+pub mod stack;
 pub mod text;
+pub mod textchange;
+pub mod tristate;
+pub mod tristate_stringer_generated;
+pub mod typeacquisition;
+pub mod version;
+pub mod workgroup;

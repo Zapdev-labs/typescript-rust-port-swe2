@@ -1,0 +1,18 @@
+[package]
+name = "tsc-diagnostics"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+tsc-locale = { path = "../locale" }
+
+[build-dependencies]
+serde_json.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
