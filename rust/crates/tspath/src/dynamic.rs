@@ -41,7 +41,10 @@ pub fn encode_dynamic_uri_path_with_suffix(path: &str, suffix: &str) -> String {
         before = format!("{}/", encode_dynamic_uri_directory_path(&path[..slash]));
     }
     let segment = &path[slash.map_or(0, |s| s + 1)..];
-    format!("{before}{}", force_encode_dynamic_uri_path_segment_with_suffix(segment, suffix))
+    format!(
+        "{before}{}",
+        force_encode_dynamic_uri_path_segment_with_suffix(segment, suffix)
+    )
 }
 
 pub fn encode_dynamic_uri_directory_path(path: &str) -> Cow<'_, str> {
@@ -54,7 +57,10 @@ fn encode_dynamic_uri_path_root_aware(path: &str, preserve_final_extension: bool
         return encoded;
     }
     match encoded.split_once('/') {
-        None => Cow::Owned(force_encode_dynamic_uri_path_segment(&encoded, preserve_final_extension)),
+        None => Cow::Owned(force_encode_dynamic_uri_path_segment(
+            &encoded,
+            preserve_final_extension,
+        )),
         Some((first, rest)) => Cow::Owned(format!(
             "{}/{rest}",
             force_encode_dynamic_uri_path_segment(first, false)
@@ -79,7 +85,8 @@ fn encode_dynamic_uri_path_impl(path: &str, preserve_final_extension: bool) -> C
         return Cow::Borrowed(path);
     }
 
-    let mut result = String::with_capacity(path.len() + DYNAMIC_URI_PATH_SEGMENT_ESCAPE_PREFIX.len());
+    let mut result =
+        String::with_capacity(path.len() + DYNAMIC_URI_PATH_SEGMENT_ESCAPE_PREFIX.len());
     let mut path = path;
     loop {
         let (segment, rest, found) = match path.split_once('/') {
@@ -215,7 +222,10 @@ fn dynamic_uri_path_needs_encoding(path: &str) -> bool {
 
 fn encode_dynamic_uri_path_segment<'a>(segment: &'a str, preserve_extension: bool) -> Cow<'a, str> {
     if dynamic_uri_path_segment_needs_encoding(segment) {
-        return Cow::Owned(force_encode_dynamic_uri_path_segment(segment, preserve_extension));
+        return Cow::Owned(force_encode_dynamic_uri_path_segment(
+            segment,
+            preserve_extension,
+        ));
     }
     Cow::Borrowed(segment)
 }
@@ -231,7 +241,10 @@ fn dynamic_uri_path_segment_needs_encoding(segment: &str) -> bool {
 }
 
 pub fn encode_dynamic_uri_no_path(suffix: &str) -> String {
-    format!("{DYNAMIC_URI_NO_PATH_ESCAPE_PREFIX}{}~", hex_encode(suffix.as_bytes()))
+    format!(
+        "{DYNAMIC_URI_NO_PATH_ESCAPE_PREFIX}{}~",
+        hex_encode(suffix.as_bytes())
+    )
 }
 
 pub fn decode_dynamic_uri_no_path(path: &str) -> Option<String> {
@@ -288,7 +301,7 @@ pub fn decode_dynamic_uri_path(path: &str) -> Cow<'_, str> {
     }
     let segments: Vec<String> = path
         .split('/')
-        .map(|segment| decode_dynamic_uri_path_segment(segment))
+        .map(decode_dynamic_uri_path_segment)
         .collect();
     Cow::Owned(segments.join("/"))
 }
@@ -296,9 +309,9 @@ pub fn decode_dynamic_uri_path(path: &str) -> Cow<'_, str> {
 pub fn try_decode_dynamic_uri_path(path: &str) -> Option<String> {
     let mut segments: Vec<String> = Vec::new();
     for segment in path.split('/') {
-        match try_decode_dynamic_uri_path_segment(segment) {
-            None => return None,
-            Some(decoded) => segments.push(decoded),
+        {
+            let decoded = try_decode_dynamic_uri_path_segment(segment)?;
+            segments.push(decoded)
         }
     }
     Some(segments.join("/"))

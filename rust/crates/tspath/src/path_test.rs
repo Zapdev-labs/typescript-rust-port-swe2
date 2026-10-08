@@ -2,23 +2,27 @@
 //
 // PORT: Go benchmarks (BenchmarkCombinePaths, BenchmarkGetNormalizedAbsolutePath,
 // BenchmarkToFileNameLowerCase, BenchmarkHasRelativePathSegment,
-// BenchmarkPathIsRelative) and fuzz tests (FuzzGetNormalizedAbsolutePath,
-// FuzzToFileNameLowerCase, FuzzHasRelativePathSegment) have no stable-Rust cargo
-// test equivalent, so they are omitted along with their helpers (shortenName,
-// normalizePath_old, getNormalizedAbsolutePath_old, oldToFileNameLowerCase,
-// oldHasRelativePathSegment, the regexp-based reference implementations, and the
-// bench/fuzz-only test tables). No regex is used per porting rules.
+// BenchmarkPathIsRelative) have no stable-Rust cargo test equivalent and are
+// omitted, as is the shortenName helper they use for sub-benchmark names.
+// The Go fuzz tests (FuzzGetNormalizedAbsolutePath, FuzzToFileNameLowerCase,
+// FuzzHasRelativePathSegment) are differential tests that run each seed-corpus
+// entry through the optimized implementation and an older reference
+// implementation; those are ported below as regular tests over the same corpora
+// (see the *_differential tests at the bottom of this file).
 
 use rustc_hash::FxHashSet;
 
-use crate::path::{get_common_parents, reduce_path_components};
+use crate::path::{get_common_parents, has_relative_path_segment, reduce_path_components};
+use crate::stringutil_shim::go_to_lower;
 use crate::{
-    CaseSensitivity, RootedDirectoryPath, combine_paths, get_directory_path,
-    get_longest_extension_from_path, get_normalized_absolute_path, get_path_components,
-    get_relative_path_to_directory_or_url, get_root_length, is_rooted_disk_path, is_url,
-    normalize_path, normalize_slashes, path_is_absolute, path_is_relative,
-    remove_any_file_extension, resolve_path, resolve_path_without_trailing_directory_separator,
-    to_file_name_lower_case,
+    CaseSensitivity, RootedDirectoryPath, combine_paths, ensure_trailing_directory_separator,
+    get_directory_path, get_longest_extension_from_path, get_normalized_absolute_path,
+    get_normalized_path_components, get_path_components, get_path_from_path_components,
+    get_relative_path_to_directory_or_url, get_root_length, has_trailing_directory_separator,
+    is_rooted_disk_path, is_url, normalize_path, normalize_slashes, path_is_absolute,
+    path_is_relative, remove_any_file_extension, resolve_path,
+    resolve_path_without_trailing_directory_separator, to_file_name_lower_case,
+    to_rooted_directory_path,
 };
 
 fn ss(v: &[&str]) -> Vec<String> {
@@ -30,7 +34,10 @@ fn test_normalize_slashes() {
     assert_eq!(normalize_slashes("a").as_ref(), "a");
     assert_eq!(normalize_slashes("a/b").as_ref(), "a/b");
     assert_eq!(normalize_slashes("a\\b").as_ref(), "a/b");
-    assert_eq!(normalize_slashes("\\\\server\\path").as_ref(), "//server/path");
+    assert_eq!(
+        normalize_slashes("\\\\server\\path").as_ref(),
+        "//server/path"
+    );
 }
 
 #[test]
@@ -164,52 +171,113 @@ fn test_get_directory_path() {
     assert_eq!(get_directory_path("//server/share/").as_ref(), "//server/");
     assert_eq!(get_directory_path("\\\\server").as_ref(), "//server");
     assert_eq!(get_directory_path("\\\\server\\").as_ref(), "//server/");
-    assert_eq!(get_directory_path("\\\\server\\share").as_ref(), "//server/");
-    assert_eq!(get_directory_path("\\\\server\\share\\").as_ref(), "//server/");
+    assert_eq!(
+        get_directory_path("\\\\server\\share").as_ref(),
+        "//server/"
+    );
+    assert_eq!(
+        get_directory_path("\\\\server\\share\\").as_ref(),
+        "//server/"
+    );
     assert_eq!(get_directory_path("file:///").as_ref(), "file:///");
     assert_eq!(get_directory_path("file:///path").as_ref(), "file:///");
     assert_eq!(get_directory_path("file:///path/").as_ref(), "file:///");
     assert_eq!(get_directory_path("file:///c:").as_ref(), "file:///c:");
     assert_eq!(get_directory_path("file:///c:d").as_ref(), "file:///");
     assert_eq!(get_directory_path("file:///c:/").as_ref(), "file:///c:/");
-    assert_eq!(get_directory_path("file:///c:/path").as_ref(), "file:///c:/");
-    assert_eq!(get_directory_path("file:///c:/path/").as_ref(), "file:///c:/");
-    assert_eq!(get_directory_path("file://server").as_ref(), "file://server");
-    assert_eq!(get_directory_path("file://server/").as_ref(), "file://server/");
-    assert_eq!(get_directory_path("file://server/path").as_ref(), "file://server/");
-    assert_eq!(get_directory_path("file://server/path/").as_ref(), "file://server/");
-    assert_eq!(get_directory_path("http://server").as_ref(), "http://server");
-    assert_eq!(get_directory_path("http://server/").as_ref(), "http://server/");
-    assert_eq!(get_directory_path("http://server/path").as_ref(), "http://server/");
-    assert_eq!(get_directory_path("http://server/path/").as_ref(), "http://server/");
+    assert_eq!(
+        get_directory_path("file:///c:/path").as_ref(),
+        "file:///c:/"
+    );
+    assert_eq!(
+        get_directory_path("file:///c:/path/").as_ref(),
+        "file:///c:/"
+    );
+    assert_eq!(
+        get_directory_path("file://server").as_ref(),
+        "file://server"
+    );
+    assert_eq!(
+        get_directory_path("file://server/").as_ref(),
+        "file://server/"
+    );
+    assert_eq!(
+        get_directory_path("file://server/path").as_ref(),
+        "file://server/"
+    );
+    assert_eq!(
+        get_directory_path("file://server/path/").as_ref(),
+        "file://server/"
+    );
+    assert_eq!(
+        get_directory_path("http://server").as_ref(),
+        "http://server"
+    );
+    assert_eq!(
+        get_directory_path("http://server/").as_ref(),
+        "http://server/"
+    );
+    assert_eq!(
+        get_directory_path("http://server/path").as_ref(),
+        "http://server/"
+    );
+    assert_eq!(
+        get_directory_path("http://server/path/").as_ref(),
+        "http://server/"
+    );
 }
 
 #[test]
 fn test_get_longest_extension_from_path() {
     let extensions: &[&str] = &[".z", ".y.z", ".other"];
     assert_eq!(
-        get_longest_extension_from_path("/src/Component.y.z", extensions, CaseSensitivity::CaseSensitive),
+        get_longest_extension_from_path(
+            "/src/Component.y.z",
+            extensions,
+            CaseSensitivity::CaseSensitive
+        ),
         ".y.z"
     );
     assert_eq!(
-        get_longest_extension_from_path("/src/Component.z", extensions, CaseSensitivity::CaseSensitive),
+        get_longest_extension_from_path(
+            "/src/Component.z",
+            extensions,
+            CaseSensitivity::CaseSensitive
+        ),
         ".z"
     );
     assert_eq!(
-        get_longest_extension_from_path("/src/Component.y.Z", extensions, CaseSensitivity::CaseSensitive),
+        get_longest_extension_from_path(
+            "/src/Component.y.Z",
+            extensions,
+            CaseSensitivity::CaseSensitive
+        ),
         ""
     );
     assert_eq!(
-        get_longest_extension_from_path("/src/Component.y.Z", extensions, CaseSensitivity::CaseInsensitive),
+        get_longest_extension_from_path(
+            "/src/Component.y.Z",
+            extensions,
+            CaseSensitivity::CaseInsensitive
+        ),
         ".y.Z"
     );
 }
 
 #[test]
 fn test_remove_any_file_extension() {
-    assert_eq!(remove_any_file_extension("/src/Component.vue").as_ref(), "/src/Component");
-    assert_eq!(remove_any_file_extension("/src/Component.d.ts").as_ref(), "/src/Component");
-    assert_eq!(remove_any_file_extension("/src/Component").as_ref(), "/src/Component");
+    assert_eq!(
+        remove_any_file_extension("/src/Component.vue").as_ref(),
+        "/src/Component"
+    );
+    assert_eq!(
+        remove_any_file_extension("/src/Component.d.ts").as_ref(),
+        "/src/Component"
+    );
+    assert_eq!(
+        remove_any_file_extension("/src/Component").as_ref(),
+        "/src/Component"
+    );
 }
 
 // !!!
@@ -230,19 +298,40 @@ fn test_get_path_components() {
     assert_eq!(get_path_components("c:/path"), ss(&["c:/", "path"]));
     assert_eq!(get_path_components("//server"), ss(&["//server"]));
     assert_eq!(get_path_components("//server/"), ss(&["//server/"]));
-    assert_eq!(get_path_components("//server/share"), ss(&["//server/", "share"]));
+    assert_eq!(
+        get_path_components("//server/share"),
+        ss(&["//server/", "share"])
+    );
     assert_eq!(get_path_components("file:///"), ss(&["file:///"]));
-    assert_eq!(get_path_components("file:///path"), ss(&["file:///", "path"]));
+    assert_eq!(
+        get_path_components("file:///path"),
+        ss(&["file:///", "path"])
+    );
     assert_eq!(get_path_components("file:///c:"), ss(&["file:///c:"]));
     assert_eq!(get_path_components("file:///c:d"), ss(&["file:///", "c:d"]));
     assert_eq!(get_path_components("file:///c:/"), ss(&["file:///c:/"]));
-    assert_eq!(get_path_components("file:///c:/path"), ss(&["file:///c:/", "path"]));
+    assert_eq!(
+        get_path_components("file:///c:/path"),
+        ss(&["file:///c:/", "path"])
+    );
     assert_eq!(get_path_components("file://server"), ss(&["file://server"]));
-    assert_eq!(get_path_components("file://server/"), ss(&["file://server/"]));
-    assert_eq!(get_path_components("file://server/path"), ss(&["file://server/", "path"]));
+    assert_eq!(
+        get_path_components("file://server/"),
+        ss(&["file://server/"])
+    );
+    assert_eq!(
+        get_path_components("file://server/path"),
+        ss(&["file://server/", "path"])
+    );
     assert_eq!(get_path_components("http://server"), ss(&["http://server"]));
-    assert_eq!(get_path_components("http://server/"), ss(&["http://server/"]));
-    assert_eq!(get_path_components("http://server/path"), ss(&["http://server/", "path"]));
+    assert_eq!(
+        get_path_components("http://server/"),
+        ss(&["http://server/"])
+    );
+    assert_eq!(
+        get_path_components("http://server/path"),
+        ss(&["http://server/", "path"])
+    );
 }
 
 #[test]
@@ -274,17 +363,29 @@ fn test_reduce_path_components() {
 #[test]
 fn test_combine_paths() {
     // Non-rooted
-    assert_eq!(combine_paths("path", &["to", "file.ext"]), "path/to/file.ext");
+    assert_eq!(
+        combine_paths("path", &["to", "file.ext"]),
+        "path/to/file.ext"
+    );
     assert_eq!(
         combine_paths("path", &["dir", "..", "to", "file.ext"]),
         "path/dir/../to/file.ext"
     );
     // POSIX
-    assert_eq!(combine_paths("/path", &["to", "file.ext"]), "/path/to/file.ext");
+    assert_eq!(
+        combine_paths("/path", &["to", "file.ext"]),
+        "/path/to/file.ext"
+    );
     assert_eq!(combine_paths("/path", &["/to", "file.ext"]), "/to/file.ext");
     // DOS
-    assert_eq!(combine_paths("c:/path", &["to", "file.ext"]), "c:/path/to/file.ext");
-    assert_eq!(combine_paths("c:/path", &["c:/to", "file.ext"]), "c:/to/file.ext");
+    assert_eq!(
+        combine_paths("c:/path", &["to", "file.ext"]),
+        "c:/path/to/file.ext"
+    );
+    assert_eq!(
+        combine_paths("c:/path", &["c:/to", "file.ext"]),
+        "c:/to/file.ext"
+    );
     // URL
     assert_eq!(
         combine_paths("file:///path", &["to", "file.ext"]),
@@ -295,7 +396,10 @@ fn test_combine_paths() {
         "file:///to/file.ext"
     );
 
-    assert_eq!(combine_paths("/", &["/node_modules/@types"]), "/node_modules/@types");
+    assert_eq!(
+        combine_paths("/", &["/node_modules/@types"]),
+        "/node_modules/@types"
+    );
     assert_eq!(combine_paths("/a/..", &[""]), "/a/..");
     assert_eq!(combine_paths("/a/..", &["b"]), "/a/../b");
     assert_eq!(combine_paths("/a/..", &["b/"]), "/a/../b/");
@@ -337,10 +441,22 @@ fn test_resolve_path() {
 
 #[test]
 fn test_resolve_path_without_trailing_directory_separator() {
-    assert_eq!(resolve_path_without_trailing_directory_separator("/", &[]), "/");
-    assert_eq!(resolve_path_without_trailing_directory_separator("c:/", &[]), "c:/");
-    assert_eq!(resolve_path_without_trailing_directory_separator("/a/", &[]), "/a");
-    assert_eq!(resolve_path_without_trailing_directory_separator("a", &["b/"]), "a/b");
+    assert_eq!(
+        resolve_path_without_trailing_directory_separator("/", &[]),
+        "/"
+    );
+    assert_eq!(
+        resolve_path_without_trailing_directory_separator("c:/", &[]),
+        "c:/"
+    );
+    assert_eq!(
+        resolve_path_without_trailing_directory_separator("/a/", &[]),
+        "/a"
+    );
+    assert_eq!(
+        resolve_path_without_trailing_directory_separator("a", &["b/"]),
+        "a/b"
+    );
 }
 
 #[test]
@@ -357,42 +473,138 @@ fn test_get_normalized_absolute_path() {
     assert_eq!(get_normalized_absolute_path("/../", &dir("")).as_ref(), "/");
     assert_eq!(get_normalized_absolute_path("/a", &dir("")).as_ref(), "/a");
     assert_eq!(get_normalized_absolute_path("/a/", &dir("")).as_ref(), "/a");
-    assert_eq!(get_normalized_absolute_path("/a/.", &dir("")).as_ref(), "/a");
-    assert_eq!(get_normalized_absolute_path("/a/foo.", &dir("")).as_ref(), "/a/foo.");
-    assert_eq!(get_normalized_absolute_path("/a/./", &dir("")).as_ref(), "/a");
-    assert_eq!(get_normalized_absolute_path("/a/./b", &dir("")).as_ref(), "/a/b");
-    assert_eq!(get_normalized_absolute_path("/a/./b/", &dir("")).as_ref(), "/a/b");
-    assert_eq!(get_normalized_absolute_path("/a/..", &dir("")).as_ref(), "/");
-    assert_eq!(get_normalized_absolute_path("/a/../", &dir("")).as_ref(), "/");
-    assert_eq!(get_normalized_absolute_path("/a/../", &dir("")).as_ref(), "/");
-    assert_eq!(get_normalized_absolute_path("/a/../b", &dir("")).as_ref(), "/b");
-    assert_eq!(get_normalized_absolute_path("/a/../b/", &dir("")).as_ref(), "/b");
-    assert_eq!(get_normalized_absolute_path("/a/..", &dir("")).as_ref(), "/");
-    assert_eq!(get_normalized_absolute_path("/a/..", &dir("/")).as_ref(), "/");
-    assert_eq!(get_normalized_absolute_path("/a/..", &dir("b/")).as_ref(), "/");
-    assert_eq!(get_normalized_absolute_path("/a/..", &dir("/b")).as_ref(), "/");
-    assert_eq!(get_normalized_absolute_path("/a/.", &dir("b")).as_ref(), "/a");
-    assert_eq!(get_normalized_absolute_path("/a/.", &dir(".")).as_ref(), "/a");
+    assert_eq!(
+        get_normalized_absolute_path("/a/.", &dir("")).as_ref(),
+        "/a"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("/a/foo.", &dir("")).as_ref(),
+        "/a/foo."
+    );
+    assert_eq!(
+        get_normalized_absolute_path("/a/./", &dir("")).as_ref(),
+        "/a"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("/a/./b", &dir("")).as_ref(),
+        "/a/b"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("/a/./b/", &dir("")).as_ref(),
+        "/a/b"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("/a/..", &dir("")).as_ref(),
+        "/"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("/a/../", &dir("")).as_ref(),
+        "/"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("/a/../", &dir("")).as_ref(),
+        "/"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("/a/../b", &dir("")).as_ref(),
+        "/b"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("/a/../b/", &dir("")).as_ref(),
+        "/b"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("/a/..", &dir("")).as_ref(),
+        "/"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("/a/..", &dir("/")).as_ref(),
+        "/"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("/a/..", &dir("b/")).as_ref(),
+        "/"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("/a/..", &dir("/b")).as_ref(),
+        "/"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("/a/.", &dir("b")).as_ref(),
+        "/a"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("/a/.", &dir(".")).as_ref(),
+        "/a"
+    );
 
     // Tests as above, but with backslashes.
     assert_eq!(get_normalized_absolute_path("\\", &dir("")).as_ref(), "/");
     assert_eq!(get_normalized_absolute_path("\\.", &dir("")).as_ref(), "/");
-    assert_eq!(get_normalized_absolute_path("\\.\\", &dir("")).as_ref(), "/");
-    assert_eq!(get_normalized_absolute_path("\\..\\", &dir("")).as_ref(), "/");
-    assert_eq!(get_normalized_absolute_path("\\a\\.\\", &dir("")).as_ref(), "/a");
-    assert_eq!(get_normalized_absolute_path("\\a\\.\\b", &dir("")).as_ref(), "/a/b");
-    assert_eq!(get_normalized_absolute_path("\\a\\.\\b\\", &dir("")).as_ref(), "/a/b");
-    assert_eq!(get_normalized_absolute_path("\\a\\..", &dir("")).as_ref(), "/");
-    assert_eq!(get_normalized_absolute_path("\\a\\..\\", &dir("")).as_ref(), "/");
-    assert_eq!(get_normalized_absolute_path("\\a\\..\\", &dir("")).as_ref(), "/");
-    assert_eq!(get_normalized_absolute_path("\\a\\..\\b", &dir("")).as_ref(), "/b");
-    assert_eq!(get_normalized_absolute_path("\\a\\..\\b\\", &dir("")).as_ref(), "/b");
-    assert_eq!(get_normalized_absolute_path("\\a\\..", &dir("")).as_ref(), "/");
-    assert_eq!(get_normalized_absolute_path("\\a\\..", &dir("\\")).as_ref(), "/");
-    assert_eq!(get_normalized_absolute_path("\\a\\..", &dir("b\\")).as_ref(), "/");
-    assert_eq!(get_normalized_absolute_path("\\a\\..", &dir("\\b")).as_ref(), "/");
-    assert_eq!(get_normalized_absolute_path("\\a\\.", &dir("b")).as_ref(), "/a");
-    assert_eq!(get_normalized_absolute_path("\\a\\.", &dir(".")).as_ref(), "/a");
+    assert_eq!(
+        get_normalized_absolute_path("\\.\\", &dir("")).as_ref(),
+        "/"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("\\..\\", &dir("")).as_ref(),
+        "/"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("\\a\\.\\", &dir("")).as_ref(),
+        "/a"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("\\a\\.\\b", &dir("")).as_ref(),
+        "/a/b"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("\\a\\.\\b\\", &dir("")).as_ref(),
+        "/a/b"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("\\a\\..", &dir("")).as_ref(),
+        "/"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("\\a\\..\\", &dir("")).as_ref(),
+        "/"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("\\a\\..\\", &dir("")).as_ref(),
+        "/"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("\\a\\..\\b", &dir("")).as_ref(),
+        "/b"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("\\a\\..\\b\\", &dir("")).as_ref(),
+        "/b"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("\\a\\..", &dir("")).as_ref(),
+        "/"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("\\a\\..", &dir("\\")).as_ref(),
+        "/"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("\\a\\..", &dir("b\\")).as_ref(),
+        "/"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("\\a\\..", &dir("\\b")).as_ref(),
+        "/"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("\\a\\.", &dir("b")).as_ref(),
+        "/a"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("\\a\\.", &dir(".")).as_ref(),
+        "/a"
+    );
 
     // Relative paths on an empty currentDirectory.
     assert_eq!(get_normalized_absolute_path("", &dir("")).as_ref(), "");
@@ -403,71 +615,212 @@ fn test_get_normalized_absolute_path() {
     assert_eq!(get_normalized_absolute_path("../", &dir("")).as_ref(), "..");
 
     // Interaction between relative paths and currentDirectory.
-    assert_eq!(get_normalized_absolute_path("", &dir("/home")).as_ref(), "/home");
-    assert_eq!(get_normalized_absolute_path(".", &dir("/home")).as_ref(), "/home");
-    assert_eq!(get_normalized_absolute_path("./", &dir("/home")).as_ref(), "/home");
-    assert_eq!(get_normalized_absolute_path("..", &dir("/home")).as_ref(), "/");
-    assert_eq!(get_normalized_absolute_path("../", &dir("/home")).as_ref(), "/");
+    assert_eq!(
+        get_normalized_absolute_path("", &dir("/home")).as_ref(),
+        "/home"
+    );
+    assert_eq!(
+        get_normalized_absolute_path(".", &dir("/home")).as_ref(),
+        "/home"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("./", &dir("/home")).as_ref(),
+        "/home"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("..", &dir("/home")).as_ref(),
+        "/"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("../", &dir("/home")).as_ref(),
+        "/"
+    );
     assert_eq!(get_normalized_absolute_path("a", &dir("b")).as_ref(), "b/a");
-    assert_eq!(get_normalized_absolute_path("a", &dir("b/c")).as_ref(), "b/c/a");
+    assert_eq!(
+        get_normalized_absolute_path("a", &dir("b/c")).as_ref(),
+        "b/c/a"
+    );
 
     // Base names starting or ending with a dot do not affect normalization.
     assert_eq!(get_normalized_absolute_path(".a", &dir("")).as_ref(), ".a");
-    assert_eq!(get_normalized_absolute_path("..a", &dir("")).as_ref(), "..a");
+    assert_eq!(
+        get_normalized_absolute_path("..a", &dir("")).as_ref(),
+        "..a"
+    );
     assert_eq!(get_normalized_absolute_path("a.", &dir("")).as_ref(), "a.");
-    assert_eq!(get_normalized_absolute_path("a..", &dir("")).as_ref(), "a..");
+    assert_eq!(
+        get_normalized_absolute_path("a..", &dir("")).as_ref(),
+        "a.."
+    );
 
-    assert_eq!(get_normalized_absolute_path("/base/./.a", &dir("")).as_ref(), "/base/.a");
-    assert_eq!(get_normalized_absolute_path("/base/../.a", &dir("")).as_ref(), "/.a");
-    assert_eq!(get_normalized_absolute_path("/base/./..a", &dir("")).as_ref(), "/base/..a");
-    assert_eq!(get_normalized_absolute_path("/base/../..a", &dir("")).as_ref(), "/..a");
-    assert_eq!(get_normalized_absolute_path("/base/./..a/b", &dir("")).as_ref(), "/base/..a/b");
-    assert_eq!(get_normalized_absolute_path("/base/../..a/b", &dir("")).as_ref(), "/..a/b");
+    assert_eq!(
+        get_normalized_absolute_path("/base/./.a", &dir("")).as_ref(),
+        "/base/.a"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("/base/../.a", &dir("")).as_ref(),
+        "/.a"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("/base/./..a", &dir("")).as_ref(),
+        "/base/..a"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("/base/../..a", &dir("")).as_ref(),
+        "/..a"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("/base/./..a/b", &dir("")).as_ref(),
+        "/base/..a/b"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("/base/../..a/b", &dir("")).as_ref(),
+        "/..a/b"
+    );
 
-    assert_eq!(get_normalized_absolute_path("/base/./a.", &dir("")).as_ref(), "/base/a.");
-    assert_eq!(get_normalized_absolute_path("/base/../a.", &dir("")).as_ref(), "/a.");
-    assert_eq!(get_normalized_absolute_path("/base/./a..", &dir("")).as_ref(), "/base/a..");
-    assert_eq!(get_normalized_absolute_path("/base/../a..", &dir("")).as_ref(), "/a..");
-    assert_eq!(get_normalized_absolute_path("/base/./a../b", &dir("")).as_ref(), "/base/a../b");
-    assert_eq!(get_normalized_absolute_path("/base/../a../b", &dir("")).as_ref(), "/a../b");
+    assert_eq!(
+        get_normalized_absolute_path("/base/./a.", &dir("")).as_ref(),
+        "/base/a."
+    );
+    assert_eq!(
+        get_normalized_absolute_path("/base/../a.", &dir("")).as_ref(),
+        "/a."
+    );
+    assert_eq!(
+        get_normalized_absolute_path("/base/./a..", &dir("")).as_ref(),
+        "/base/a.."
+    );
+    assert_eq!(
+        get_normalized_absolute_path("/base/../a..", &dir("")).as_ref(),
+        "/a.."
+    );
+    assert_eq!(
+        get_normalized_absolute_path("/base/./a../b", &dir("")).as_ref(),
+        "/base/a../b"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("/base/../a../b", &dir("")).as_ref(),
+        "/a../b"
+    );
 
     assert_eq!(get_normalized_absolute_path("a/..", &dir("")).as_ref(), "");
-    assert_eq!(get_normalized_absolute_path("/a//", &dir("")).as_ref(), "/a");
-    assert_eq!(get_normalized_absolute_path("//a", &dir("a")).as_ref(), "//a/");
+    assert_eq!(
+        get_normalized_absolute_path("/a//", &dir("")).as_ref(),
+        "/a"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("//a", &dir("a")).as_ref(),
+        "//a/"
+    );
     assert_eq!(get_normalized_absolute_path("/\\", &dir("")).as_ref(), "//");
-    assert_eq!(get_normalized_absolute_path("a///", &dir("a")).as_ref(), "a/a");
+    assert_eq!(
+        get_normalized_absolute_path("a///", &dir("a")).as_ref(),
+        "a/a"
+    );
     assert_eq!(get_normalized_absolute_path("/.//", &dir("")).as_ref(), "/");
-    assert_eq!(get_normalized_absolute_path("//\\\\", &dir("")).as_ref(), "///");
-    assert_eq!(get_normalized_absolute_path(".//a", &dir(".")).as_ref(), "a");
-    assert_eq!(get_normalized_absolute_path("a/../..", &dir("")).as_ref(), "..");
-    assert_eq!(get_normalized_absolute_path("../..", &dir("\\a")).as_ref(), "/");
-    assert_eq!(get_normalized_absolute_path("a:", &dir("b")).as_ref(), "a:/");
-    assert_eq!(get_normalized_absolute_path("a/../..", &dir("..")).as_ref(), "../..");
-    assert_eq!(get_normalized_absolute_path("a/../..", &dir("b")).as_ref(), "");
-    assert_eq!(get_normalized_absolute_path("a//../..", &dir("..")).as_ref(), "../..");
+    assert_eq!(
+        get_normalized_absolute_path("//\\\\", &dir("")).as_ref(),
+        "///"
+    );
+    assert_eq!(
+        get_normalized_absolute_path(".//a", &dir(".")).as_ref(),
+        "a"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("a/../..", &dir("")).as_ref(),
+        ".."
+    );
+    assert_eq!(
+        get_normalized_absolute_path("../..", &dir("\\a")).as_ref(),
+        "/"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("a:", &dir("b")).as_ref(),
+        "a:/"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("a/../..", &dir("..")).as_ref(),
+        "../.."
+    );
+    assert_eq!(
+        get_normalized_absolute_path("a/../..", &dir("b")).as_ref(),
+        ""
+    );
+    assert_eq!(
+        get_normalized_absolute_path("a//../..", &dir("..")).as_ref(),
+        "../.."
+    );
 
     // Consecutive intermediate slashes are normalized to a single slash.
-    assert_eq!(get_normalized_absolute_path("a//b", &dir("")).as_ref(), "a/b");
-    assert_eq!(get_normalized_absolute_path("a///b", &dir("")).as_ref(), "a/b");
-    assert_eq!(get_normalized_absolute_path("a/b//c", &dir("")).as_ref(), "a/b/c");
-    assert_eq!(get_normalized_absolute_path("/a/b//c", &dir("")).as_ref(), "/a/b/c");
-    assert_eq!(get_normalized_absolute_path("//a/b//c", &dir("")).as_ref(), "//a/b/c");
+    assert_eq!(
+        get_normalized_absolute_path("a//b", &dir("")).as_ref(),
+        "a/b"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("a///b", &dir("")).as_ref(),
+        "a/b"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("a/b//c", &dir("")).as_ref(),
+        "a/b/c"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("/a/b//c", &dir("")).as_ref(),
+        "/a/b/c"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("//a/b//c", &dir("")).as_ref(),
+        "//a/b/c"
+    );
 
     // Backslashes are converted to slashes,
     // and then consecutive intermediate slashes are normalized to a single slash
-    assert_eq!(get_normalized_absolute_path("a\\\\b", &dir("")).as_ref(), "a/b");
-    assert_eq!(get_normalized_absolute_path("a\\\\\\b", &dir("")).as_ref(), "a/b");
-    assert_eq!(get_normalized_absolute_path("a\\b\\\\c", &dir("")).as_ref(), "a/b/c");
-    assert_eq!(get_normalized_absolute_path("\\a\\b\\\\c", &dir("")).as_ref(), "/a/b/c");
-    assert_eq!(get_normalized_absolute_path("\\\\a\\b\\\\c", &dir("")).as_ref(), "//a/b/c");
+    assert_eq!(
+        get_normalized_absolute_path("a\\\\b", &dir("")).as_ref(),
+        "a/b"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("a\\\\\\b", &dir("")).as_ref(),
+        "a/b"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("a\\b\\\\c", &dir("")).as_ref(),
+        "a/b/c"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("\\a\\b\\\\c", &dir("")).as_ref(),
+        "/a/b/c"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("\\\\a\\b\\\\c", &dir("")).as_ref(),
+        "//a/b/c"
+    );
 
     // The same occurs for mixed slashes.
-    assert_eq!(get_normalized_absolute_path("a/\\b", &dir("")).as_ref(), "a/b");
-    assert_eq!(get_normalized_absolute_path("a\\/b", &dir("")).as_ref(), "a/b");
-    assert_eq!(get_normalized_absolute_path("a\\/\\b", &dir("")).as_ref(), "a/b");
-    assert_eq!(get_normalized_absolute_path("a\\b//c", &dir("")).as_ref(), "a/b/c");
-    assert_eq!(get_normalized_absolute_path("\\a\\b\\\\c", &dir("")).as_ref(), "/a/b/c");
-    assert_eq!(get_normalized_absolute_path("\\\\a\\b\\\\c", &dir("")).as_ref(), "//a/b/c");
+    assert_eq!(
+        get_normalized_absolute_path("a/\\b", &dir("")).as_ref(),
+        "a/b"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("a\\/b", &dir("")).as_ref(),
+        "a/b"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("a\\/\\b", &dir("")).as_ref(),
+        "a/b"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("a\\b//c", &dir("")).as_ref(),
+        "a/b/c"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("\\a\\b\\\\c", &dir("")).as_ref(),
+        "/a/b/c"
+    );
+    assert_eq!(
+        get_normalized_absolute_path("\\\\a\\b\\\\c", &dir("")).as_ref(),
+        "//a/b/c"
+    );
 }
 
 #[test]
@@ -496,19 +849,39 @@ fn test_get_relative_path_to_directory_or_url() {
         "../b"
     );
     assert_eq!(
-        get_relative_path_to_directory_or_url("/a/b", "/b", false, CaseSensitivity::CaseInsensitive),
+        get_relative_path_to_directory_or_url(
+            "/a/b",
+            "/b",
+            false,
+            CaseSensitivity::CaseInsensitive
+        ),
         "../../b"
     );
     assert_eq!(
-        get_relative_path_to_directory_or_url("/a/b/c", "/b", false, CaseSensitivity::CaseInsensitive),
+        get_relative_path_to_directory_or_url(
+            "/a/b/c",
+            "/b",
+            false,
+            CaseSensitivity::CaseInsensitive
+        ),
         "../../../b"
     );
     assert_eq!(
-        get_relative_path_to_directory_or_url("/a/b/c", "/b/c", false, CaseSensitivity::CaseInsensitive),
+        get_relative_path_to_directory_or_url(
+            "/a/b/c",
+            "/b/c",
+            false,
+            CaseSensitivity::CaseInsensitive
+        ),
         "../../../b/c"
     );
     assert_eq!(
-        get_relative_path_to_directory_or_url("/a/b/c", "/a/b", false, CaseSensitivity::CaseInsensitive),
+        get_relative_path_to_directory_or_url(
+            "/a/b/c",
+            "/a/b",
+            false,
+            CaseSensitivity::CaseInsensitive
+        ),
         ".."
     );
     assert_eq!(
@@ -516,43 +889,93 @@ fn test_get_relative_path_to_directory_or_url() {
         "d:/"
     );
     assert_eq!(
-        get_relative_path_to_directory_or_url("file:///", "file:///", false, CaseSensitivity::CaseInsensitive),
+        get_relative_path_to_directory_or_url(
+            "file:///",
+            "file:///",
+            false,
+            CaseSensitivity::CaseInsensitive
+        ),
         ""
     );
     assert_eq!(
-        get_relative_path_to_directory_or_url("file:///a", "file:///a", false, CaseSensitivity::CaseInsensitive),
+        get_relative_path_to_directory_or_url(
+            "file:///a",
+            "file:///a",
+            false,
+            CaseSensitivity::CaseInsensitive
+        ),
         ""
     );
     assert_eq!(
-        get_relative_path_to_directory_or_url("file:///a/", "file:///a", false, CaseSensitivity::CaseInsensitive),
+        get_relative_path_to_directory_or_url(
+            "file:///a/",
+            "file:///a",
+            false,
+            CaseSensitivity::CaseInsensitive
+        ),
         ""
     );
     assert_eq!(
-        get_relative_path_to_directory_or_url("file:///a", "file:///", false, CaseSensitivity::CaseInsensitive),
+        get_relative_path_to_directory_or_url(
+            "file:///a",
+            "file:///",
+            false,
+            CaseSensitivity::CaseInsensitive
+        ),
         ".."
     );
     assert_eq!(
-        get_relative_path_to_directory_or_url("file:///a", "file:///b", false, CaseSensitivity::CaseInsensitive),
+        get_relative_path_to_directory_or_url(
+            "file:///a",
+            "file:///b",
+            false,
+            CaseSensitivity::CaseInsensitive
+        ),
         "../b"
     );
     assert_eq!(
-        get_relative_path_to_directory_or_url("file:///a/b", "file:///b", false, CaseSensitivity::CaseInsensitive),
+        get_relative_path_to_directory_or_url(
+            "file:///a/b",
+            "file:///b",
+            false,
+            CaseSensitivity::CaseInsensitive
+        ),
         "../../b"
     );
     assert_eq!(
-        get_relative_path_to_directory_or_url("file:///a/b/c", "file:///b", false, CaseSensitivity::CaseInsensitive),
+        get_relative_path_to_directory_or_url(
+            "file:///a/b/c",
+            "file:///b",
+            false,
+            CaseSensitivity::CaseInsensitive
+        ),
         "../../../b"
     );
     assert_eq!(
-        get_relative_path_to_directory_or_url("file:///a/b/c", "file:///b/c", false, CaseSensitivity::CaseInsensitive),
+        get_relative_path_to_directory_or_url(
+            "file:///a/b/c",
+            "file:///b/c",
+            false,
+            CaseSensitivity::CaseInsensitive
+        ),
         "../../../b/c"
     );
     assert_eq!(
-        get_relative_path_to_directory_or_url("file:///a/b/c", "file:///a/b", false, CaseSensitivity::CaseInsensitive),
+        get_relative_path_to_directory_or_url(
+            "file:///a/b/c",
+            "file:///a/b",
+            false,
+            CaseSensitivity::CaseInsensitive
+        ),
         ".."
     );
     assert_eq!(
-        get_relative_path_to_directory_or_url("file:///c:", "file:///d:", false, CaseSensitivity::CaseInsensitive),
+        get_relative_path_to_directory_or_url(
+            "file:///c:",
+            "file:///d:",
+            false,
+            CaseSensitivity::CaseInsensitive
+        ),
         "file:///d:/"
     );
 }
@@ -580,22 +1003,26 @@ fn test_to_file_name_lower_case() {
 #[test]
 fn test_case_sensitivity_trim_prefix() {
     // case-sensitive exact match
-    let (suffix, ok) = CaseSensitivity::CaseSensitive.trim_prefix("/project/src/file.ts", "/project/src");
+    let (suffix, ok) =
+        CaseSensitivity::CaseSensitive.trim_prefix("/project/src/file.ts", "/project/src");
     assert!(ok);
     assert_eq!(suffix, "/file.ts");
 
     // case-sensitive mismatch
-    let (suffix, ok) = CaseSensitivity::CaseSensitive.trim_prefix("/project/SRC/file.ts", "/project/src");
+    let (suffix, ok) =
+        CaseSensitivity::CaseSensitive.trim_prefix("/project/SRC/file.ts", "/project/src");
     assert!(!ok);
     assert_eq!(suffix, "/project/SRC/file.ts");
 
     // case-insensitive match
-    let (suffix, ok) = CaseSensitivity::CaseInsensitive.trim_prefix("/project/SRC/file.ts", "/project/src");
+    let (suffix, ok) =
+        CaseSensitivity::CaseInsensitive.trim_prefix("/project/SRC/file.ts", "/project/src");
     assert!(ok);
     assert_eq!(suffix, "/file.ts");
 
     // no match
-    let (suffix, ok) = CaseSensitivity::CaseInsensitive.trim_prefix("/other/file.ts", "/project/src");
+    let (suffix, ok) =
+        CaseSensitivity::CaseInsensitive.trim_prefix("/other/file.ts", "/project/src");
     assert!(!ok);
     assert_eq!(suffix, "/other/file.ts");
 
@@ -607,7 +1034,8 @@ fn test_case_sensitivity_trim_prefix() {
     // len(prefix) bytes would panic here ([10:9]); TrimPrefix must
     // clamp per-rune instead, like the reference implementation's substring
     // does.
-    let (suffix, ok) = CaseSensitivity::CaseInsensitive.trim_prefix("/kkk/a.ts", "/\u{212A}\u{212A}\u{212A}");
+    let (suffix, ok) =
+        CaseSensitivity::CaseInsensitive.trim_prefix("/kkk/a.ts", "/\u{212A}\u{212A}\u{212A}");
     assert!(ok);
     assert_eq!(suffix, "/a.ts");
 
@@ -733,4 +1161,199 @@ fn test_get_common_parents() {
     assert!(ignored.is_empty());
     let expected = ss(&["/a/x/1/p", "/a/x/2/q", "/a/y/3/r"]);
     assert_eq!(got, expected);
+}
+
+// ---------------------------------------------------------------------------
+// Differential tests ported from the Go fuzz tests.
+//
+// Go's fuzz harness runs each seed-corpus entry through both the optimized
+// implementation and an older reference implementation and asserts equality.
+// Stable Rust has no fuzzer; we run the same old-vs-new comparison over the
+// same seed corpora here.
+
+// Go: normalizePath_old (path_test.go)
+fn normalize_path_old(path: &str) -> String {
+    let path = normalize_slashes(path).into_owned();
+    // Most paths don't require normalization
+    if !has_relative_path_segment(&path) {
+        return path;
+    }
+    // Some paths only require cleanup of `/./` or leading `./`
+    let simplified = path.replace("/./", "/");
+    let simplified = simplified
+        .strip_prefix("./")
+        .map_or(simplified.clone(), str::to_string);
+    if simplified != path && !has_relative_path_segment(&simplified) {
+        return simplified;
+    }
+    // Other paths require full normalization
+    let mut normalized =
+        get_path_from_path_components(&reduce_path_components(&get_path_components(&path)));
+    if !normalized.is_empty() && has_trailing_directory_separator(&path) {
+        normalized = ensure_trailing_directory_separator(&normalized).into_owned();
+    }
+    normalized
+}
+
+// Go: getNormalizedAbsolutePath_old (path_test.go)
+fn get_normalized_absolute_path_old(file_name: &str, current_directory: &str) -> String {
+    get_path_from_path_components(&get_normalized_path_components(
+        file_name,
+        current_directory,
+    ))
+}
+
+// Go: normalizedTestDirectory (path_test.go)
+fn normalized_test_directory(path: &str) -> RootedDirectoryPath {
+    if path.is_empty() {
+        return RootedDirectoryPath::from("");
+    }
+    to_rooted_directory_path(path, &RootedDirectoryPath::from("/"))
+}
+
+// Go: FuzzGetNormalizedAbsolutePath, reduced to its seed corpus.
+#[test]
+fn test_get_normalized_absolute_path_differential() {
+    // Go: getNormalizedAbsolutePathTests
+    let non_normalized_inputs: &[(&str, &str)] = &[
+        ("/.", ""),
+        ("/./", ""),
+        ("/../", ""),
+        ("/a/", ""),
+        ("/a/.", ""),
+        ("/a/foo.", ""),
+        ("/a/./", ""),
+        ("/a/./b", ""),
+        ("/a/./b/", ""),
+        ("/a/..", ""),
+        ("/a/../", ""),
+        ("/a/../", ""),
+        ("/a/../b", ""),
+        ("/a/../b/", ""),
+        ("/a/..", ""),
+        ("/a/..", "/"),
+        ("/a/..", "b/"),
+        ("/a/..", "/b"),
+        ("/a/.", "b"),
+        ("/a/.", "."),
+    ];
+    let normalized_inputs: &[(&str, &str)] = &[
+        ("/a/b", ""),
+        ("/one/two/three", ""),
+        ("/users/root/project/src/foo.ts", ""),
+    ];
+    let normalized_inputs_long: &[(&str, &str)] = &[
+        ("/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z", ""),
+        (
+            "/one/two/three/four/five/six/seven/eight/nine/ten/eleven/twelve/thirteen/fourteen/fifteen/sixteen/seventeen/eighteen/nineteen/twenty",
+            "",
+        ),
+        (
+            "/users/root/project/src/foo/bar/baz/qux/quux/corge/grault/garply/waldo/fred/plugh/xyzzy/thud",
+            "",
+        ),
+        (
+            "/lorem/ipsum/dolor/sit/amet/consectetur/adipiscing/elit/sed/do/eiusmod/tempor/incididunt/ut/labore/et/dolore/magna/aliqua/ut/enim/ad/minim/veniam",
+            "",
+        ),
+    ];
+
+    for &(p, dir) in non_normalized_inputs
+        .iter()
+        .chain(normalized_inputs)
+        .chain(normalized_inputs_long)
+    {
+        let current_directory = normalized_test_directory(dir);
+        assert_eq!(
+            get_normalized_absolute_path(p, &current_directory).as_ref(),
+            get_normalized_absolute_path_old(p, current_directory.as_string()),
+            "p={p:?}, dir={dir:?}"
+        );
+
+        // normalizePath_old is not called by any Go test/fuzz function; run the
+        // same old-vs-new comparison for normalize_path over the corpus inputs.
+        assert_eq!(
+            normalize_path(p).as_ref(),
+            normalize_path_old(p),
+            "normalize_path p={p:?}"
+        );
+    }
+}
+
+// Go: oldToFileNameLowerCase (path_test.go). The Go regexp
+// `[^\x{0130}\x{0131}\x{00DF}a-z0-9\\/:\-_. ]+` matches maximal runs of chars
+// outside that whitelist and replaces each run with strings.ToLower(run);
+// strings.ToLower applies the simple lowercase mapping per rune, so this is
+// equivalent to mapping each non-whitelisted char through go_to_lower.
+fn old_to_file_name_lower_case(file_name: &str) -> String {
+    file_name
+        .chars()
+        .map(|c| {
+            if matches!(c, 'a'..='z' | '0'..='9' | '\\' | '/' | ':' | '-' | '_' | '.' | ' ')
+                || c == '\u{0130}'
+                || c == '\u{0131}'
+                || c == '\u{00DF}'
+            {
+                c
+            } else {
+                go_to_lower(c)
+            }
+        })
+        .collect()
+}
+
+// Go: FuzzToFileNameLowerCase, reduced to its seed corpus.
+#[test]
+fn test_to_file_name_lower_case_differential() {
+    // Go: toFileNameLowerCaseTests
+    let tests = [
+        "/path/to/file.ext",
+        "/PATH/TO/FILE.EXT",
+        "/path/to/FILE.EXT",
+        "/user/UserName/projects/Project/file.ts",
+        "/user/UserName/projects/projectß/file.ts",
+        "/user/UserName/projects/İproject/file.ts",
+        "/user/UserName/projects/ı/file.ts",
+    ];
+    let long = "FoO/".repeat(100);
+
+    for p in tests.iter().copied().chain(std::iter::once(long.as_str())) {
+        assert_eq!(
+            to_file_name_lower_case(p).as_ref(),
+            old_to_file_name_lower_case(p),
+            "p={p:?}"
+        );
+    }
+}
+
+// Go: oldHasRelativePathSegment (path_test.go). The Go regexp
+// `//|(?:^|/)\.\.?(?:$|/)` matches a literal "//" or a "." / ".." segment.
+fn old_has_relative_path_segment(p: &str) -> bool {
+    p.contains("//") || p.split('/').any(|seg| seg == "." || seg == "..")
+}
+
+// Go: FuzzHasRelativePathSegment, reduced to its seed corpus.
+#[test]
+fn test_has_relative_path_segment_differential() {
+    // Go: hasRelativePathSegmentTests (the `bench` field only selected
+    // benchmark inputs; it is omitted here)
+    let tests = [
+        "//",
+        "foo/bar/baz",
+        "foo/./baz",
+        "foo/../baz",
+        "foo/bar/baz/.",
+        "./some/path",
+        "/foo//bar/",
+        "/foo/./bar/../../.",
+    ];
+    let long = format!("{}..", "foo/".repeat(100));
+
+    for p in tests.iter().copied().chain(std::iter::once(long.as_str())) {
+        assert_eq!(
+            has_relative_path_segment(p),
+            old_has_relative_path_segment(p),
+            "p={p:?}"
+        );
+    }
 }

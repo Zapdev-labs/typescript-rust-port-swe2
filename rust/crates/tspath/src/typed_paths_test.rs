@@ -6,15 +6,15 @@
 
 use crate::{
     CaseSensitivity, FileNameStem, ModuleSpecifier, PathKey, RelativePath, RootedDirectoryPath,
-    RootedFilePath, RootedPath, get_encoded_root_length, get_normalized_absolute_path,
-    get_root_length, is_rooted_disk_path, path_key_from_canonical, relative_path_from_normalized,
-    rooted_directory_path_from_absolute, rooted_directory_path_from_normalized,
-    rooted_directory_path_from_path, rooted_file_path_from_absolute,
-    rooted_file_path_from_normalized, rooted_file_path_from_path, rooted_path_from_absolute,
-    rooted_path_from_normalized, to_module_specifier, to_relative_path, to_rooted_directory_path,
-    to_rooted_file_path, to_rooted_path, to_source_map_location, try_path_key_from_canonical,
-    try_rooted_file_path_from_absolute, try_rooted_file_path_from_normalized,
-    try_rooted_path_from_absolute, try_rooted_path_from_normalized,
+    RootedFilePath, RootedPath, get_root_length, path_key_from_canonical,
+    relative_path_from_normalized, rooted_directory_path_from_absolute,
+    rooted_directory_path_from_normalized, rooted_directory_path_from_path,
+    rooted_file_path_from_absolute, rooted_file_path_from_normalized, rooted_file_path_from_path,
+    rooted_path_from_absolute, rooted_path_from_normalized, to_module_specifier, to_relative_path,
+    to_rooted_directory_path, to_rooted_file_path, to_rooted_path, to_source_map_location,
+    try_path_key_from_canonical, try_rooted_file_path_from_absolute,
+    try_rooted_file_path_from_normalized, try_rooted_path_from_absolute,
+    try_rooted_path_from_normalized,
 };
 
 fn assert_panics(f: impl FnOnce()) {
@@ -48,12 +48,21 @@ fn test_to_rooted_file_path() {
         ("c:", "c:/"),
         ("//server", "//server/"),
         ("file://server", "file://server/"),
-        ("^/~ts-uri~/custom/ts-nul-authority", "^/~ts-uri~/custom/ts-nul-authority/"),
-        ("^/~ts-uri~/custom/authority?query", "^/~ts-uri~/custom/authority?query/"),
+        (
+            "^/~ts-uri~/custom/ts-nul-authority",
+            "^/~ts-uri~/custom/ts-nul-authority/",
+        ),
+        (
+            "^/~ts-uri~/custom/authority?query",
+            "^/~ts-uri~/custom/authority?query/",
+        ),
     ] {
         assert_eq!(to_rooted_path(input, &ignored).as_string(), expected);
         assert_eq!(to_rooted_file_path(input, &ignored).as_string(), expected);
-        assert_eq!(to_rooted_directory_path(input, &ignored).as_string(), expected);
+        assert_eq!(
+            to_rooted_directory_path(input, &ignored).as_string(),
+            expected
+        );
     }
     let disk_with_scheme_text = to_rooted_path("/a://b?x/../y", &ignored);
     assert_eq!(disk_with_scheme_text.as_string(), "/a:/y");
@@ -98,7 +107,8 @@ fn test_to_rooted_file_path() {
         rooted_file_path_from_normalized("http://server/file.ts").change_extension(".js?query");
     });
     assert_panics(|| {
-        rooted_file_path_from_normalized("http://server/file.ts").change_full_extension(".js#fragment");
+        rooted_file_path_from_normalized("http://server/file.ts")
+            .change_full_extension(".js#fragment");
     });
     assert_panics(|| {
         rooted_file_path_from_normalized("http://server/file.ts").change_any_extension(
@@ -245,8 +255,16 @@ fn test_extension_mutations_preserve_normalized_invariant() {
         );
     }
 
-    assert!(PathKey::from("").split_at_canonical_component("node_modules").is_none());
-    assert!(RootedFilePath::from("").split_at_component("node_modules").is_none());
+    assert!(
+        PathKey::from("")
+            .split_at_canonical_component("node_modules")
+            .is_none()
+    );
+    assert!(
+        RootedFilePath::from("")
+            .split_at_component("node_modules")
+            .is_none()
+    );
 }
 
 #[test]
@@ -277,11 +295,16 @@ fn test_file_name_stems_preserve_filename_prefixes() {
         assert_eq!(stem0, stem);
         if file_name.is_empty() {
             assert_eq!(stem.append_suffix(""), output);
-            assert_panics(|| stem.append_suffix(".js"));
+            assert_panics(|| {
+                stem.append_suffix(".js");
+            });
         } else {
             let output0 = stem.append_suffix(".js");
             assert_eq!(output0, output);
-            assert_eq!(rooted_file_path_from_normalized(output0.as_string()), output0);
+            assert_eq!(
+                rooted_file_path_from_normalized(output0.as_string()),
+                output0
+            );
             assert_eq!(
                 file_name.remove_extension(".ts").append_suffix(".ts"),
                 file_name
@@ -296,15 +319,23 @@ fn test_file_name_stems_preserve_filename_prefixes() {
         });
     }
     let stem = RootedFilePath::from("/project/file.ts").remove_file_extension();
-    assert_panics(|| stem.append_suffix("/other.js"));
-    assert_panics(|| stem.append_suffix("\\other.js"));
+    assert_panics(|| {
+        stem.append_suffix("/other.js");
+    });
+    assert_panics(|| {
+        stem.append_suffix("\\other.js");
+    });
     assert_panics(|| {
         RootedFilePath::from("http://example.com/.ts")
             .remove_file_extension()
-            .append_suffix("?query")
+            .append_suffix("?query");
     });
-    assert_panics(|| RootedFilePath::from("/project/file.ts").remove_extension(".js"));
-    assert_panics(|| RootedFilePath::from("/project/file.ts").remove_extension("/file.ts"));
+    assert_panics(|| {
+        RootedFilePath::from("/project/file.ts").remove_extension(".js");
+    });
+    assert_panics(|| {
+        RootedFilePath::from("/project/file.ts").remove_extension("/file.ts");
+    });
 }
 
 #[test]
@@ -356,10 +387,14 @@ fn test_split_at_root_level_component_keeps_root() {
             .path_key(&file_name.as_path())
             .split_at_canonical_component("node_modules")
             .unwrap();
-        assert_eq!(key_before, CaseSensitivity::CaseSensitive.path_key(&root.as_path()));
+        assert_eq!(
+            key_before,
+            CaseSensitivity::CaseSensitive.path_key(&root.as_path())
+        );
         assert_eq!(
             key_through,
-            CaseSensitivity::CaseSensitive.path_key(&root.resolve_directory("node_modules").as_path())
+            CaseSensitivity::CaseSensitive
+                .path_key(&root.resolve_directory("node_modules").as_path())
         );
     }
 }
@@ -403,7 +438,10 @@ fn test_rooted_file_path_from_normalized() {
         "/project/src/a.ts"
     );
     assert_eq!(rooted_file_path_from_normalized("c:/").as_string(), "c:/");
-    assert_eq!(rooted_file_path_from_normalized("//server/").as_string(), "//server/");
+    assert_eq!(
+        rooted_file_path_from_normalized("//server/").as_string(),
+        "//server/"
+    );
     assert_eq!(
         rooted_file_path_from_normalized("file://server/").as_string(),
         "file://server/"
@@ -479,7 +517,10 @@ fn test_typed_path_constructors_and_decoders() {
         rooted_directory_path_from_normalized("/project/src").as_string(),
         "/project/src"
     );
-    assert_eq!(path_key_from_canonical("/project/src").as_string(), "/project/src");
+    assert_eq!(
+        path_key_from_canonical("/project/src").as_string(),
+        "/project/src"
+    );
     assert_eq!(
         CaseSensitivity::CaseSensitive.path_key(&rooted_path_from_absolute("/project/src/")),
         PathKey::from("/project/src")
@@ -511,8 +552,10 @@ fn test_typed_path_constructors_and_decoders() {
         assert!(try_path_key_from_canonical(value).is_none());
     }
     assert_panics(|| {
-        CaseSensitivity::CaseSensitive
-            .path_key(&to_rooted_path("project/src", &RootedDirectoryPath::default()));
+        CaseSensitivity::CaseSensitive.path_key(&to_rooted_path(
+            "project/src",
+            &RootedDirectoryPath::default(),
+        ));
     });
 }
 
@@ -559,13 +602,11 @@ fn test_relative_path() {
         ModuleSpecifier::from("pkg/dist/file.js")
     );
     assert_eq!(
-        to_module_specifier("pkg")
-            .resolve_relative(&relative_path_from_normalized("lib/file.js")),
+        to_module_specifier("pkg").resolve_relative(&relative_path_from_normalized("lib/file.js")),
         ModuleSpecifier::from("pkg/lib/file.js")
     );
     assert_eq!(
-        to_module_specifier("pkg")
-            .combine_relative(&relative_path_from_normalized("lib/file.js")),
+        to_module_specifier("pkg").combine_relative(&relative_path_from_normalized("lib/file.js")),
         ModuleSpecifier::from("pkg/lib/file.js")
     );
     assert_eq!(
@@ -634,7 +675,12 @@ fn test_rooted_file_path_directory() {
             .as_string(),
         "/project/src"
     );
-    assert_eq!(rooted_file_path_from_normalized("/").directory().as_string(), "/");
+    assert_eq!(
+        rooted_file_path_from_normalized("/")
+            .directory()
+            .as_string(),
+        "/"
+    );
     assert_eq!(
         rooted_file_path_from_normalized("c:/project/src/a.ts")
             .directory()
@@ -667,8 +713,8 @@ fn test_rooted_file_path_without_root() {
 
 #[test]
 fn test_rooted_file_path_root_and_relative_path() {
-    let (root, relative) =
-        rooted_file_path_from_normalized("file:///project/src/a.ts").root_and_relative_path();
+    let file = rooted_file_path_from_normalized("file:///project/src/a.ts");
+    let (root, relative) = file.root_and_relative_path();
     assert_eq!(root.as_string(), "file:///");
     assert_eq!(relative, "project/src/a.ts");
     assert_eq!(
@@ -847,19 +893,22 @@ fn test_contains_file_path() {
         let directory = rooted_directory_path_from_normalized(test.directory);
         let file_name = rooted_file_path_from_normalized(test.file_name);
         assert_eq!(
-            test.case_sensitivity.contains_file_path(&directory, &file_name),
+            test.case_sensitivity
+                .contains_file_path(&directory, &file_name),
             test.contained,
             "{}",
             test.name
         );
         assert_eq!(
-            test.case_sensitivity.contains_path(&directory, &file_name.as_path()),
+            test.case_sensitivity
+                .contains_path(&directory, &file_name.as_path()),
             test.contained,
             "{}",
             test.name
         );
         assert_eq!(
-            test.case_sensitivity.starts_with_directory(&file_name, &directory),
+            test.case_sensitivity
+                .starts_with_directory(&file_name, &directory),
             test.contained && !test.relative.is_empty(),
             "{}",
             test.name
@@ -912,8 +961,7 @@ fn test_source_map_location() {
         "/maps/generated"
     );
 
-    let decoded: crate::SourceMapLocation =
-        serde_json::from_str("\"maps\\\\generated\"").unwrap();
+    let decoded: crate::SourceMapLocation = serde_json::from_str("\"maps\\\\generated\"").unwrap();
     assert_eq!(decoded.as_string(), "maps/generated");
     let encoded = serde_json::to_string(&decoded).unwrap();
     assert_eq!(encoded, "\"maps/generated\"");
@@ -947,8 +995,7 @@ fn test_rooted_path_compare() {
         -1
     );
     assert_eq!(
-        rooted_file_path_from_normalized("/a")
-            .compare(&rooted_file_path_from_normalized("/a")),
+        rooted_file_path_from_normalized("/a").compare(&rooted_file_path_from_normalized("/a")),
         0
     );
     assert_eq!(
@@ -961,7 +1008,11 @@ fn test_rooted_path_compare() {
 #[test]
 fn test_path_operations_separate_rooting() {
     assert_eq!(
-        crate::compare_paths("src/a.ts", "/project/src/a.ts", CaseSensitivity::CaseSensitive),
+        crate::compare_paths(
+            "src/a.ts",
+            "/project/src/a.ts",
+            CaseSensitivity::CaseSensitive
+        ),
         -1
     );
     assert_eq!(
@@ -973,8 +1024,16 @@ fn test_path_operations_separate_rooting() {
         ),
         0
     );
-    assert!(crate::contains_path("src", "src/a.ts", CaseSensitivity::CaseSensitive));
-    assert!(!crate::contains_path("/project/src", "src/a.ts", CaseSensitivity::CaseSensitive));
+    assert!(crate::contains_path(
+        "src",
+        "src/a.ts",
+        CaseSensitivity::CaseSensitive
+    ));
+    assert!(!crate::contains_path(
+        "/project/src",
+        "src/a.ts",
+        CaseSensitivity::CaseSensitive
+    ));
     assert_eq!(
         crate::get_relative_path_from_directory("src", "lib/a.ts", CaseSensitivity::CaseSensitive),
         "../lib/a.ts"
@@ -1005,19 +1064,26 @@ fn test_rooted_file_path_extension_operations_preserve_invariants() {
         rooted_file_path_from_normalized("/project/src/file.d.ts").change_full_extension(""),
         rooted_file_path_from_normalized("/project/src/file")
     );
-    assert_panics(|| file_name.change_extension("../other"));
-    assert_panics(|| file_name.change_full_extension("\\nested"));
-    assert_panics(|| file_name.remove_extension(".js"));
+    assert_panics(|| {
+        file_name.change_extension("../other");
+    });
+    assert_panics(|| {
+        file_name.change_full_extension("\\nested");
+    });
+    assert_panics(|| {
+        file_name.remove_extension(".js");
+    });
 }
 
 #[test]
 fn test_for_each_ancestor_directory_path() {
     let mut ancestors: Vec<RootedDirectoryPath> = Vec::new();
-    rooted_directory_path_from_normalized("/project/src/lib")
-        .for_each_ancestor_directory(|directory| {
+    rooted_directory_path_from_normalized("/project/src/lib").for_each_ancestor_directory(
+        |directory| {
             ancestors.push(directory.clone());
             ((), false)
-        });
+        },
+    );
     assert_eq!(
         ancestors,
         vec![
@@ -1031,14 +1097,20 @@ fn test_for_each_ancestor_directory_path() {
 
 #[test]
 fn test_rooted_file_path_components() {
-    let file_name = rooted_file_path_from_normalized("/store/node_modules/pkg/node_modules/dep/index.d.ts");
+    let file_name =
+        rooted_file_path_from_normalized("/store/node_modules/pkg/node_modules/dep/index.d.ts");
     assert_eq!(
         file_name.directory_before(23),
         rooted_directory_path_from_normalized("/store/node_modules/pkg")
     );
-    assert_eq!(file_name.suffix_after_separator(23), "node_modules/dep/index.d.ts");
+    assert_eq!(
+        file_name.suffix_after_separator(23),
+        "node_modules/dep/index.d.ts"
+    );
     let relative = file_name
-        .relative_to(&rooted_directory_path_from_normalized("/store/node_modules/pkg"))
+        .relative_to(&rooted_directory_path_from_normalized(
+            "/store/node_modules/pkg",
+        ))
         .unwrap();
     assert_eq!(relative.as_string(), "node_modules/dep/index.d.ts");
     assert!(
@@ -1049,7 +1121,10 @@ fn test_rooted_file_path_components() {
 
     let (before, through) = file_name.split_at_component("node_modules").unwrap();
     assert_eq!(before, rooted_directory_path_from_normalized("/store"));
-    assert_eq!(through, rooted_directory_path_from_normalized("/store/node_modules"));
+    assert_eq!(
+        through,
+        rooted_directory_path_from_normalized("/store/node_modules")
+    );
 
     let (before, through) = file_name.split_at_last_component("node_modules").unwrap();
     assert_eq!(
@@ -1082,11 +1157,17 @@ fn test_case_sensitivity_key() {
         "/project/src/a.ts"
     );
     assert_eq!(
-        case_sensitive.compare_file_paths(&file_name, &rooted_file_path_from_normalized("/Project/SRC/b.ts")),
+        case_sensitive.compare_file_paths(
+            &file_name,
+            &rooted_file_path_from_normalized("/Project/SRC/b.ts")
+        ),
         -1
     );
     assert_eq!(
-        case_insensitive.compare_file_paths(&file_name, &rooted_file_path_from_normalized("/project/src/A.ts")),
+        case_insensitive.compare_file_paths(
+            &file_name,
+            &rooted_file_path_from_normalized("/project/src/A.ts")
+        ),
         0
     );
     assert_eq!(file_name.directory_separator_count(), 3);
@@ -1095,8 +1176,14 @@ fn test_case_sensitivity_key() {
 #[test]
 fn test_path_key_construction_methods() {
     let path = PathKey::from("/project/src");
-    assert_eq!(path.append_canonical_component("node_modules").as_string(), "/project/src/node_modules");
-    assert_eq!(path.append_canonical_suffix(".0.ts").as_string(), "/project/src.0.ts");
+    assert_eq!(
+        path.append_canonical_component("node_modules").as_string(),
+        "/project/src/node_modules"
+    );
+    assert_eq!(
+        path.append_canonical_suffix(".0.ts").as_string(),
+        "/project/src.0.ts"
+    );
     assert_eq!(path.append_canonical_suffix(".ts").extension(), ".ts");
     let (before, through) = PathKey::from("/project/node_modules/pkg/index.d.ts")
         .split_at_canonical_component("node_modules")
@@ -1178,7 +1265,11 @@ fn test_rooted_directory_path_resolution_matches_general_rooting() {
         "c:/absolute/file.ts",
         "file:///absolute/file.ts",
     ] {
-        assert_eq!(base.resolve_file(path), to_rooted_file_path(path, &base), "{path}");
+        assert_eq!(
+            base.resolve_file(path),
+            to_rooted_file_path(path, &base),
+            "{path}"
+        );
         assert_eq!(
             base.resolve_directory(path),
             to_rooted_directory_path(path, &base),

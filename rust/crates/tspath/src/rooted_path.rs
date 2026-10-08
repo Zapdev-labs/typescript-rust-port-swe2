@@ -10,12 +10,12 @@ use crate::extension::{
     change_any_extension, change_extension, change_full_extension, file_extension_is_one_of,
     get_declaration_emit_extension_for_path, get_declaration_file_extension_from_normalized,
     get_possible_original_input_extension_for_extension, has_implementation_ts_file_extension,
-    has_json_file_extension, has_js_file_extension, has_ts_file_extension, remove_extension,
+    has_js_file_extension, has_json_file_extension, has_ts_file_extension, remove_extension,
     remove_file_extension, try_extract_ts_extension, try_get_extension_from_path,
 };
 use crate::module_specifier::ModuleSpecifier;
 use crate::path::{
-    DIRECTORY_SEPARATOR, URL_SCHEME_SEPARATOR, CaseSensitivity, file_extension_is,
+    CaseSensitivity, DIRECTORY_SEPARATOR, URL_SCHEME_SEPARATOR, file_extension_is,
     get_base_file_name_from_normalized, get_directory_path_from_normalized,
     get_encoded_root_length, get_normalized_absolute_path,
     get_normalized_absolute_path_from_directory,
@@ -267,7 +267,10 @@ pub(crate) fn has_url_root(path: &str) -> bool {
 
 // ToRootedFilePath resolves fileName against currentDirectory, normalizes it,
 // and gives it file intent.
-pub fn to_rooted_file_path(file_name: &str, current_directory: &RootedDirectoryPath) -> RootedFilePath {
+pub fn to_rooted_file_path(
+    file_name: &str,
+    current_directory: &RootedDirectoryPath,
+) -> RootedFilePath {
     RootedFilePath(to_rooted_path(file_name, current_directory).0)
 }
 
@@ -471,7 +474,11 @@ impl RootedFilePath {
         crate::path::get_any_extension_from_path(&self.0, extensions, case_sensitivity)
     }
 
-    pub fn longest_extension(&self, extensions: &[&str], case_sensitivity: CaseSensitivity) -> &str {
+    pub fn longest_extension(
+        &self,
+        extensions: &[&str],
+        case_sensitivity: CaseSensitivity,
+    ) -> &str {
         crate::path::get_longest_extension_from_path(&self.0, extensions, case_sensitivity)
     }
 
@@ -550,9 +557,9 @@ impl RootedFilePath {
         }
         let mut offset = root_length - 1;
         loop {
-            let index = match path[offset..].find(&needle) {
-                None => return None,
-                Some(i) => i + offset,
+            let index = {
+                let i = path[offset..].find(&needle)?;
+                i + offset
             };
             let end = index + needle.len();
             if end == path.len() || path.as_bytes()[end] == DIRECTORY_SEPARATOR as u8 {
@@ -585,10 +592,7 @@ impl RootedFilePath {
         let path = self.as_string();
         let mut end = path.len();
         while end > 0 {
-            let index = match path[..end].rfind(&needle) {
-                None => return None,
-                Some(i) => i,
-            };
+            let index = path[..end].rfind(&needle)?;
             let component_end = index + needle.len();
             // PORT: `index + 1 >= root_length` is Go's `index >= f.RootLength()-1`
             // without the usize underflow when root_length == 0.
@@ -625,7 +629,9 @@ impl RootedPath {
             return RootedDirectoryPath(self.0.clone());
         }
         let path = remove_trailing_directory_separator(path);
-        RootedDirectoryPath::from(&path[..root_length.max(last_directory_separator(path).unwrap_or(0))])
+        RootedDirectoryPath::from(
+            &path[..root_length.max(last_directory_separator(path).unwrap_or(0))],
+        )
     }
 
     pub fn root_and_relative_path(&self) -> (RootedDirectoryPath, &str) {
@@ -842,7 +848,11 @@ impl CaseSensitivity {
         {
             return None;
         }
-        Some(relative.strip_prefix(DIRECTORY_SEPARATOR).unwrap_or(relative))
+        Some(
+            relative
+                .strip_prefix(DIRECTORY_SEPARATOR)
+                .unwrap_or(relative),
+        )
     }
 
     // CommonDirectoryOfFiles returns the deepest directory containing every file.
@@ -957,10 +967,13 @@ pub fn get_common_parent_directories(
         }
     }
 
-    let results = crate::path::get_common_parents_worker(&path_components, min_components, case_sensitivity);
+    let results =
+        crate::path::get_common_parents_worker(&path_components, min_components, case_sensitivity);
     let parents: Vec<RootedDirectoryPath> = results
         .iter()
-        .map(|components| rooted_directory_path_from_absolute(&get_path_from_path_components(components)))
+        .map(|components| {
+            rooted_directory_path_from_absolute(&get_path_from_path_components(components))
+        })
         .collect();
     (parents, ignored)
 }
@@ -1078,14 +1091,16 @@ impl RootedDirectoryPath {
             panic!("relative URL path must not contain a query or fragment");
         }
         if can_append_path_without_normalization(path) {
-            return RootedDirectoryPath(rooted_file_path_from_resolved(&append_path_to_directory(self, path)).0);
+            return RootedDirectoryPath(
+                rooted_file_path_from_resolved(&append_path_to_directory(self, path)).0,
+            );
         }
         if is_normalized_slashes_relative_path(path) {
             return RootedDirectoryPath(
                 rooted_file_path_from_resolved(
-                    &get_normalized_absolute_path_from_normalized_slashes(&append_path_to_directory(
-                        self, path,
-                    )),
+                    &get_normalized_absolute_path_from_normalized_slashes(
+                        &append_path_to_directory(self, path),
+                    ),
                 )
                 .0,
             );
@@ -1103,7 +1118,9 @@ impl RootedDirectoryPath {
             if stop {
                 return Some(result);
             }
-            let parent = RootedDirectoryPath::from(get_directory_path_from_normalized(directory.as_string()));
+            let parent = RootedDirectoryPath::from(get_directory_path_from_normalized(
+                directory.as_string(),
+            ));
             if parent == directory {
                 return None;
             }

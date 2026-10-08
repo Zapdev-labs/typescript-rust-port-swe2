@@ -3,7 +3,9 @@
 use std::borrow::Cow;
 use std::fmt;
 
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashMap;
+#[cfg(test)]
+use rustc_hash::FxHashSet;
 
 use crate::dynamic::DYNAMIC_URI_FILE_NAME_PREFIX;
 use crate::rooted_path::{RootedDirectoryPath, append_path_to_directory};
@@ -17,7 +19,7 @@ use crate::stringutil_shim as stringutil;
 pub const DIRECTORY_SEPARATOR: char = '/';
 pub(crate) const URL_SCHEME_SEPARATOR: &str = "://";
 
-//// Path Tests
+// Path Tests
 
 // Determines whether a byte corresponds to `/` or `\`.
 pub(crate) fn is_any_directory_separator(char: u8) -> bool {
@@ -196,8 +198,8 @@ pub fn get_encoded_root_length(path: &str) -> i32 {
 
     // Untitled paths (e.g., "^/untitled/ts-nul-authority/Untitled-1")
     if ch0 == b'^' && ln > 1 && bytes[1] == b'/' {
-        if path.starts_with(DYNAMIC_URI_FILE_NAME_PREFIX) {
-            let scheme_end = path[DYNAMIC_URI_FILE_NAME_PREFIX.len()..].find('/');
+        if let Some(rest) = path.strip_prefix(DYNAMIC_URI_FILE_NAME_PREFIX) {
+            let scheme_end = rest.find('/');
             if let Some(scheme_end) = scheme_end {
                 let authority_start = DYNAMIC_URI_FILE_NAME_PREFIX.len() + scheme_end + 1;
                 match path[authority_start..].find('/') {
@@ -222,11 +224,14 @@ pub fn get_encoded_root_length(path: &str) -> i32 {
             let scheme = &path[..scheme_end];
             let authority = &path[authority_start..authority_end];
             if stringutil::equate_string_case_insensitive(scheme, "file")
-                && (authority.is_empty() || stringutil::equate_string_case_insensitive(authority, "localhost"))
+                && (authority.is_empty()
+                    || stringutil::equate_string_case_insensitive(authority, "localhost"))
                 && path.len() > authority_end + 2
                 && is_volume_character(bytes[authority_end + 1])
             {
-                if let Some(volume_separator_end) = get_file_url_volume_separator_end(path, authority_end + 2) {
+                if let Some(volume_separator_end) =
+                    get_file_url_volume_separator_end(path, authority_end + 2)
+                {
                     if volume_separator_end == path.len() {
                         // URL: "file:///c:", "file://localhost/c:", "file:///c$3a", "file://localhost/c%3a"
                         // but not "file:///c:d" or "file:///c%3ad"
@@ -272,7 +277,7 @@ pub(crate) fn get_directory_path_from_normalized(path: &str) -> &str {
     // return the leading portion of the path up to the last (non-terminal) directory separator
     // but not including any trailing directory separator.
     let path = remove_trailing_directory_separator(path);
-    &path[..root_length.max(path.rfind('/').map_or(0, |i| i as usize))]
+    &path[..root_length.max(path.rfind('/').unwrap_or(0))]
 }
 
 pub fn get_path_from_path_components(path_components: &[String]) -> String {
@@ -444,24 +449,22 @@ pub(crate) fn get_normalized_absolute_path_from_directory<'a>(
     }
 }
 
-pub(crate) fn get_normalized_absolute_path_from_normalized_slashes(file_name: &str) -> Cow<'_, str> {
+pub(crate) fn get_normalized_absolute_path_from_normalized_slashes(
+    file_name: &str,
+) -> Cow<'_, str> {
     let root_length = get_root_length(file_name);
     if let Some(simple_normalized) = simple_normalize_path(file_name) {
         let length = simple_normalized.len();
         if length > root_length {
             return match simple_normalized {
                 Cow::Borrowed(s) => Cow::Borrowed(remove_trailing_directory_separator(s)),
-                Cow::Owned(s) => {
-                    Cow::Owned(remove_trailing_directory_separator(&s).to_string())
-                }
+                Cow::Owned(s) => Cow::Owned(remove_trailing_directory_separator(&s).to_string()),
             };
         }
         if length == root_length && root_length != 0 {
             return match simple_normalized {
                 Cow::Borrowed(s) => ensure_trailing_directory_separator(s),
-                Cow::Owned(s) => {
-                    Cow::Owned(ensure_trailing_directory_separator(&s).into_owned())
-                }
+                Cow::Owned(s) => Cow::Owned(ensure_trailing_directory_separator(&s).into_owned()),
             };
         }
         return simple_normalized;
@@ -528,7 +531,7 @@ pub(crate) fn get_normalized_absolute_path_from_normalized_slashes(file_name: &s
                 if normalized_up_to >= 1 {
                     normalized = file_name[..root_length
                         .max(file_name[..normalized_up_to - 1].rfind('/').unwrap_or(0))]
-                    .to_string();
+                        .to_string();
                 } else {
                     normalized = file_name[..normalized_up_to].to_string();
                 }
@@ -790,7 +793,7 @@ pub fn ensure_trailing_directory_separator(path: &str) -> Cow<'_, str> {
     Cow::Borrowed(path)
 }
 
-//// Relative Paths
+// Relative Paths
 
 pub fn get_path_components_relative_to(
     from: &str,
@@ -811,7 +814,10 @@ pub(crate) fn resolve_path_components_relative_to(
     case_sensitivity: CaseSensitivity,
 ) -> Vec<String> {
     get_path_components_relative_to_worker(
-        &reduce_path_components(&resolve_path_components(from, current_directory.as_string())),
+        &reduce_path_components(&resolve_path_components(
+            from,
+            current_directory.as_string(),
+        )),
         &reduce_path_components(&resolve_path_components(to, current_directory.as_string())),
         case_sensitivity,
     )
@@ -884,12 +890,20 @@ pub fn resolve_relative_path_from_directory(
     if (get_root_length(from_directory) > 0) != (get_root_length(to) > 0) {
         panic!("paths must either both be absolute or both be relative");
     }
-    let path_components =
-        resolve_path_components_relative_to(from_directory, to, current_directory, case_sensitivity);
+    let path_components = resolve_path_components_relative_to(
+        from_directory,
+        to,
+        current_directory,
+        case_sensitivity,
+    );
     get_path_from_path_components(&path_components)
 }
 
-pub fn get_relative_path_from_file(from: &str, to: &str, case_sensitivity: CaseSensitivity) -> String {
+pub fn get_relative_path_from_file(
+    from: &str,
+    to: &str,
+    case_sensitivity: CaseSensitivity,
+) -> String {
     ensure_path_is_non_module_name(&get_relative_path_from_directory(
         &get_directory_path(from),
         to,
@@ -954,12 +968,11 @@ fn get_relative_path_to_directory_or_url_worker(
 ) -> String {
     let first_component = &path_components[0];
     if is_absolute_path_an_url && is_rooted_disk_path(first_component) {
-        let prefix;
-        if first_component.as_bytes()[0] == DIRECTORY_SEPARATOR as u8 {
-            prefix = "file://";
+        let prefix = if first_component.as_bytes()[0] == DIRECTORY_SEPARATOR as u8 {
+            "file://"
         } else {
-            prefix = "file:///";
-        }
+            "file:///"
+        };
         path_components[0] = format!("{prefix}{first_component}");
     }
 
@@ -1185,7 +1198,10 @@ impl CaseSensitivity {
             };
         }
         let canonical_prefix = self.canonicalize(prefix);
-        if !self.canonicalize(text).starts_with(canonical_prefix.as_ref()) {
+        if !self
+            .canonicalize(text)
+            .starts_with(canonical_prefix.as_ref())
+        {
             return (text, false);
         }
         (
@@ -1378,7 +1394,10 @@ pub(crate) fn get_common_parents(
         if reduce_path_components(&get_path_components_fn(paths[0])).len() < min_components {
             return (Vec::new(), FxHashSet::from_iter([paths[0].to_string()]));
         }
-        return (paths.iter().map(|s| s.to_string()).collect(), FxHashSet::default());
+        return (
+            paths.iter().map(|s| s.to_string()).collect(),
+            FxHashSet::default(),
+        );
     }
 
     let mut ignored: FxHashSet<String> = FxHashSet::default();
@@ -1426,15 +1445,17 @@ pub(crate) fn get_common_parents_worker(
                 // divergence
                 if last_common_index < min_components {
                     // Not enough components, we need to fan out
-                    let mut ordered_groups: Vec<String> = Vec::with_capacity(component_groups.len());
+                    let mut ordered_groups: Vec<String> =
+                        Vec::with_capacity(component_groups.len());
                     let mut new_groups: FxHashMap<String, (Vec<String>, Vec<Vec<String>>)> =
                         FxHashMap::default();
                     // PORT: `new_groups` is
                     // `FxHashMap<String, (Vec<String>, Vec<Vec<String>>)>`
                     // (Go: map[string]struct{head, tails}).
                     for g in component_groups {
-                        let key =
-                            case_sensitivity.canonicalize(&g[last_common_index]).into_owned();
+                        let key = case_sensitivity
+                            .canonicalize(&g[last_common_index])
+                            .into_owned();
                         if !new_groups.contains_key(&key) {
                             ordered_groups.push(key.clone());
                         }
@@ -1495,8 +1516,5 @@ pub fn starts_with_directory(
 }
 
 pub fn compare_number_of_directory_separators(path1: &str, path2: &str) -> i32 {
-    path1
-        .matches('/')
-        .count()
-        .cmp(&path2.matches('/').count()) as i32
+    path1.matches('/').count().cmp(&path2.matches('/').count()) as i32
 }

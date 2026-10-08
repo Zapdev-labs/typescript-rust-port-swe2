@@ -37,7 +37,9 @@ impl ModuleSpecifier {
     }
 
     pub fn resolve(&self, parts: &[&str]) -> ModuleSpecifier {
-        ModuleSpecifier(resolve_path_without_trailing_directory_separator(&self.0, parts))
+        ModuleSpecifier(resolve_path_without_trailing_directory_separator(
+            &self.0, parts,
+        ))
     }
 
     pub fn resolve_relative(&self, path: &RelativePath) -> ModuleSpecifier {

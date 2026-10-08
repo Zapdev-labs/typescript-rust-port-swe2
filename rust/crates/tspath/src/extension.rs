@@ -4,8 +4,8 @@ use std::borrow::Cow;
 use std::sync::LazyLock;
 
 use crate::path::{
-    CaseSensitivity, file_extension_is, get_any_extension_from_path, get_base_file_name_from_normalized,
-    normalize_slashes,
+    CaseSensitivity, file_extension_is, get_any_extension_from_path,
+    get_base_file_name_from_normalized, normalize_slashes,
 };
 
 pub const EXTENSION_TS: &str = ".ts";
@@ -60,8 +60,11 @@ pub static SUPPORTED_TS_EXTENSIONS_FLAT: &[&str] = &[
     EXTENSION_MTS,
     EXTENSION_DMTS,
 ];
-pub static SUPPORTED_JS_EXTENSIONS: &[&[&str]] =
-    &[&[EXTENSION_JS, EXTENSION_JSX], &[EXTENSION_MJS], &[EXTENSION_CJS]];
+pub static SUPPORTED_JS_EXTENSIONS: &[&[&str]] = &[
+    &[EXTENSION_JS, EXTENSION_JSX],
+    &[EXTENSION_MJS],
+    &[EXTENSION_CJS],
+];
 pub static SUPPORTED_JS_EXTENSIONS_FLAT: &[&str] =
     &[EXTENSION_JS, EXTENSION_JSX, EXTENSION_MJS, EXTENSION_CJS];
 // PORT: slices.Concat -> LazyLock-concatenated vectors (statics cannot be built
@@ -119,11 +122,11 @@ static EXTENSIONS_TO_REMOVE: &[&str] = &[
     EXTENSION_JSON,
 ];
 
-pub fn remove_file_extension<'a>(path: &'a str) -> &'a str {
+pub fn remove_file_extension(path: &str) -> &str {
     // Remove any known extension even if it has more than one dot
     for &ext in EXTENSIONS_TO_REMOVE {
-        if path.ends_with(ext) {
-            return &path[..path.len() - ext.len()];
+        if let Some(stripped) = path.strip_suffix(ext) {
+            return stripped;
         }
     }
 
@@ -203,9 +206,7 @@ pub fn get_declaration_file_extension(file_name: &str) -> Cow<'_, str> {
     // returns Cow rather than &str.
     match normalize_slashes(file_name) {
         Cow::Borrowed(s) => Cow::Borrowed(get_declaration_file_extension_from_normalized(s)),
-        Cow::Owned(s) => {
-            Cow::Owned(get_declaration_file_extension_from_normalized(&s).to_string())
-        }
+        Cow::Owned(s) => Cow::Owned(get_declaration_file_extension_from_normalized(&s).to_string()),
     }
 }
 
@@ -231,7 +232,10 @@ pub fn get_declaration_emit_extension_for_path(path: &str) -> Cow<'_, str> {
     if file_extension_is_one_of(path, &[EXTENSION_CJS, EXTENSION_CTS]) {
         return Cow::Borrowed(EXTENSION_DCTS);
     }
-    if file_extension_is_one_of(path, &[EXTENSION_TS, EXTENSION_TSX, EXTENSION_JS, EXTENSION_JSX]) {
+    if file_extension_is_one_of(
+        path,
+        &[EXTENSION_TS, EXTENSION_TSX, EXTENSION_JS, EXTENSION_JSX],
+    ) {
         return Cow::Borrowed(EXTENSION_DTS);
     }
     let ext = get_any_extension_from_path(path, &[], CaseSensitivity::CaseSensitive);
@@ -267,7 +271,12 @@ pub fn change_any_extension<'a>(
 }
 
 pub fn change_extension<'a>(path: &'a str, new_extension: &str) -> Cow<'a, str> {
-    change_any_extension(path, new_extension, EXTENSIONS_TO_REMOVE, CaseSensitivity::CaseSensitive)
+    change_any_extension(
+        path,
+        new_extension,
+        EXTENSIONS_TO_REMOVE,
+        CaseSensitivity::CaseSensitive,
+    )
 }
 
 // Like `changeAnyExtension`, but declaration file extensions are recognized

@@ -42,9 +42,7 @@ pub fn try_path_key_from_canonical(path: &str) -> Option<PathKey> {
     if path.is_empty() {
         return Some(PathKey::default());
     }
-    if try_rooted_path_from_normalized(path).is_none() {
-        return None;
-    }
+    try_rooted_path_from_normalized(path)?;
     Some(PathKey::from(path))
 }
 
@@ -170,9 +168,9 @@ impl PathKey {
         }
         let mut offset = root_length - 1;
         loop {
-            let index = match path[offset..].find(&needle) {
-                None => return None,
-                Some(i) => i + offset,
+            let index = {
+                let i = path[offset..].find(&needle)?;
+                i + offset
             };
             let end = index + needle.len();
             if end == path.len() || path.as_bytes()[end] == DIRECTORY_SEPARATOR as u8 {
@@ -204,7 +202,8 @@ impl PathKey {
         let child_root_length = get_root_length(child_text);
         let mut parent_root = &parent[..parent_root_length];
         let mut child_root = &child_text[..child_root_length];
-        let dynamic = is_encoded_dynamic_file_name(parent) || is_encoded_dynamic_file_name(child_text);
+        let dynamic =
+            is_encoded_dynamic_file_name(parent) || is_encoded_dynamic_file_name(child_text);
         if dynamic {
             parent_root = parent_root
                 .strip_suffix(DIRECTORY_SEPARATOR)
