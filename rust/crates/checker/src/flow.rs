@@ -323,7 +323,7 @@ impl Checker {
         f.shared_flow_start = self.shared_flows.len();
         self.set_flow_context(&mut f, reference);
         self.flow_invocation_count += 1;
-        let evolved_type = self.get_type_at_flow_node(&mut f, flow_node).type_();
+        let evolved_type = self.get_type_at_flow_node(&mut f, flow_node).ty();
         self.shared_flows.truncate(f.shared_flow_start);
         let is_evolving = self
             .types
@@ -514,7 +514,7 @@ impl Checker {
                 let flow_type = self.get_type_at_flow_node(f, antecedent);
                 return new_flow_type(
                     self,
-                    self.get_base_type_of_literal_type(flow_type.type_()),
+                    self.get_base_type_of_literal_type(flow_type.ty()),
                     flow_type.incomplete,
                 );
             }
@@ -603,7 +603,7 @@ impl Checker {
             ) {
                 let antecedent = f.flow_node(flow).antecedent.unwrap();
                 let t = self.finalize_evolving_array_type(
-                    self.get_type_at_flow_node(f, antecedent).type_(),
+                    self.get_type_at_flow_node(f, antecedent).ty(),
                 );
                 return FlowType {
                     t: Some(self.get_non_nullable_type_if_needed(t)),
@@ -663,7 +663,7 @@ impl Checker {
                 {
                     let antecedent = f.flow_node(flow).antecedent.unwrap();
                     let flow_type = self.get_type_at_flow_node(f, antecedent);
-                    let t = self.finalize_evolving_array_type(flow_type.type_());
+                    let t = self.finalize_evolving_array_type(flow_type.ty());
                     let narrowed_type;
                     if predicate.t.is_some() {
                         let predicate = predicate.clone();
@@ -800,7 +800,7 @@ impl Checker {
         let flow_type = self.get_type_at_flow_node(f, antecedent);
         if self
             .types
-            .get(flow_type.type_())
+            .get(flow_type.ty())
             .flags
             .intersects(TypeFlags::NEVER)
         {
@@ -817,7 +817,7 @@ impl Checker {
             .flow_node(flow)
             .flags
             .intersects(FlowFlags::TRUE_CONDITION);
-        let non_evolving_type = self.finalize_evolving_array_type(flow_type.type_());
+        let non_evolving_type = self.finalize_evolving_array_type(flow_type.ty());
         let node = f.flow_node(flow).node.expect("condition flow node");
         let narrowed_type = self.narrow_type(f, non_evolving_type, node, assume_true);
         if narrowed_type == non_evolving_type {
@@ -1017,13 +1017,14 @@ impl Checker {
             )
         {
             let call_access = f.nodes()[call_expression].expression().unwrap();
+            let candidate = self.get_reference_candidate(
+                f.nodes(),
+                f.nodes()[call_access].expression().unwrap(),
+            );
             if self.is_matching_reference(
                 f.nodes(),
                 f.nodes()[f.reference()].expression().unwrap(),
-                self.get_reference_candidate(
-                    f.nodes(),
-                    f.nodes()[call_access].expression().unwrap(),
-                ),
+                candidate,
             ) && ast::is_identifier(&f.nodes()[f.nodes()[call_access].name().unwrap()])
                 && f.nodes()[f.nodes()[call_access].name().unwrap()].text(f.nodes())
                     == "hasOwnProperty"
@@ -1201,16 +1202,14 @@ impl Checker {
                                     left_type,
                                 )
                         {
-                            return self
-                                .get_type_with_facts(
-                                    t,
-                                    tsc_core::core::if_else(
-                                        assume_true,
-                                        TypeFacts::NE_UNDEFINED,
-                                        TypeFacts::EQ_UNDEFINED,
-                                    ),
-                                )
-                                .unwrap_or(t);
+                            return self.get_type_with_facts(
+                                t,
+                                tsc_core::core::if_else(
+                                    assume_true,
+                                    TypeFacts::NE_UNDEFINED,
+                                    TypeFacts::EQ_UNDEFINED,
+                                ),
+                            );
                         }
                     }
                 }
@@ -1360,7 +1359,7 @@ impl Checker {
     pub(crate) fn narrow_type_by_typeof(
         &mut self,
         f: &mut FlowState,
-        t: TypeId,
+        mut t: TypeId,
         type_of_expr: NodeId,
         operator: Kind,
         literal: NodeId,
@@ -1472,7 +1471,7 @@ impl Checker {
     ) -> TypeId {
         self.map_type(
             t,
-            Rc::new(|c: &mut Checker, t: TypeId| {
+            Rc::new(move |c: &mut Checker, t: TypeId| {
                 let relation = c.strict_subtype_relation.clone();
                 if c.is_type_related_to(t, implied_type, &relation) {
                     if c.has_type_facts(t, facts) {
@@ -1845,7 +1844,7 @@ impl Checker {
         }
         let narrowed_type = self.map_type(
             candidate,
-            Rc::new(|c: &mut Checker, n: TypeId| {
+            Rc::new(move |c: &mut Checker, n: TypeId| {
                 // If a discriminant property is available, use that to reduce the type.
                 let mut matching = t;
                 if !key_property_name.is_empty() {
@@ -1863,7 +1862,7 @@ impl Checker {
                 // specific of the two. When t and c are related in both directions, we prefer c for type predicates
                 // because that is the asserted type, but t for `instanceof` because generics aren't reflected in
                 // prototype object types.
-                let map_fn = |c: &mut Checker, t: TypeId| -> TypeId {
+                let map_fn = move |c: &mut Checker, t: TypeId| -> TypeId {
                     if check_derived {
                         if c.is_type_derived_from(t, n) {
                             return t;
@@ -1900,7 +1899,7 @@ impl Checker {
                 // are related by constraint.
                 c.map_type(
                     t,
-                    Rc::new(|c: &mut Checker, t: TypeId| {
+                    Rc::new(move |c: &mut Checker, t: TypeId| {
                         if c.maybe_type_of_kind(t, TypeFlags::INSTANTIABLE) {
                             let constraint = c.get_base_constraint_of_type(t);
                             let related = match constraint {
@@ -2150,7 +2149,7 @@ impl Checker {
             f.nodes(),
         );
         let flow_type = self.get_type_at_flow_node(f, f.flow_node(flow).antecedent.unwrap());
-        let mut t = flow_type.type_();
+        let mut t = flow_type.ty();
         if self.is_matching_reference(f.nodes(), f.reference(), expr) {
             t = self.narrow_type_by_switch_on_discriminant(t, data);
         } else if f.nodes()[expr].kind == Kind::TypeOfExpression
@@ -2286,9 +2285,17 @@ impl Checker {
             if !c.types.get(t).flags.intersects(TypeFlags::UNDEFINED) {
                 u = c.get_regular_type_of_literal_type(c.extract_unit_type(t));
             }
-            !switch_types.iter().any(|&st| {
-                crate::checker_d::is_unit_type(&c.types, st) && c.are_types_comparable(st, u)
-            })
+            // PORT(borrowck): sequential borrows in a loop instead of a
+            // `any` closure that would capture `*c` both shared (`c.types`)
+            // and mutable (`are_types_comparable`).
+            let mut any_comparable = false;
+            for &st in switch_types.iter() {
+                if crate::checker_d::is_unit_type(&c.types, st) && c.are_types_comparable(st, u) {
+                    any_comparable = true;
+                    break;
+                }
+            }
+            !any_comparable
         });
         if self.types.get(case_type).flags.intersects(TypeFlags::NEVER) {
             return default_type;
@@ -2513,14 +2520,14 @@ impl Checker {
                     incomplete: false,
                 };
             }
-            if !self.antecedent_types[antecedent_start..].contains(&flow_type.type_()) {
-                self.antecedent_types.push(flow_type.type_());
+            if !self.antecedent_types[antecedent_start..].contains(&flow_type.ty()) {
+                self.antecedent_types.push(flow_type.ty());
             }
             // If an antecedent type is not a subset of the declared type, we
             // need to perform subtype reduction. This happens when a "foreign"
             // type is injected into the control flow using the instanceof
             // operator or a user defined type predicate.
-            if !self.is_type_subset_of(flow_type.type_(), f.initial_type()) {
+            if !self.is_type_subset_of(flow_type.ty(), f.initial_type()) {
                 subtype_reduction = true;
             }
             if flow_type.incomplete {
@@ -2537,10 +2544,10 @@ impl Checker {
             // difference.
             if !self
                 .types
-                .get(flow_type.type_())
+                .get(flow_type.ty())
                 .flags
                 .intersects(TypeFlags::NEVER)
-                && !self.antecedent_types[antecedent_start..].contains(&flow_type.type_())
+                && !self.antecedent_types[antecedent_start..].contains(&flow_type.ty())
                 && !self.is_exhaustive_switch_statement(
                     SwitchClauseData::of(
                         f.nodes(),
@@ -2557,8 +2564,8 @@ impl Checker {
                         incomplete: false,
                     };
                 }
-                self.antecedent_types.push(flow_type.type_());
-                if !self.is_type_subset_of(flow_type.type_(), f.initial_type()) {
+                self.antecedent_types.push(flow_type.ty());
+                if !self.is_type_subset_of(flow_type.ty(), f.initial_type()) {
                     subtype_reduction = true;
                 }
                 if flow_type.incomplete {
@@ -2706,14 +2713,14 @@ impl Checker {
                     };
                 }
             }
-            if !antecedent_types.contains(&flow_type.type_()) {
-                antecedent_types.push(flow_type.type_());
+            if !antecedent_types.contains(&flow_type.ty()) {
+                antecedent_types.push(flow_type.ty());
             }
             // If an antecedent type is not a subset of the declared type, we
             // need to perform subtype reduction. This happens when a "foreign"
             // type is injected into the control flow using the instanceof
             // operator or a user defined type predicate.
-            if !self.is_type_subset_of(flow_type.type_(), f.initial_type()) {
+            if !self.is_type_subset_of(flow_type.ty(), f.initial_type()) {
                 subtype_reduction = true;
             }
             // If the type at a particular antecedent path is the declared type
@@ -2767,11 +2774,11 @@ impl Checker {
                     self.get_type_at_flow_node(f, f.flow_node(flow).antecedent.unwrap());
                 if self
                     .types
-                    .get(flow_type.type_())
+                    .get(flow_type.ty())
                     .object_flags
                     .intersects(ObjectFlags::EVOLVING_ARRAY)
                 {
-                    let mut evolved_type = flow_type.type_();
+                    let mut evolved_type = flow_type.ty();
                     if ast::is_call_expression(&f.nodes()[node]) {
                         let args: Vec<NodeId> = f.nodes()[node]
                             .arguments()
@@ -2875,8 +2882,9 @@ impl Checker {
             // declared in the same parameter list is a candidate.
             if ast::is_identifier(&nodes[expr]) {
                 let symbol = self.get_resolved_symbol(expr);
-                let exported = self.get_export_symbol_of_value_symbol_if_exported(symbol);
-                let declaration = self.symbol_arena.borrow()[exported.index()].value_declaration;
+                let exported = self.get_export_symbol_of_value_symbol_if_exported(Some(symbol));
+                let declaration =
+                    exported.and_then(|e| self.symbol_arena.borrow()[e.index()].value_declaration);
                 if let Some(declaration) = declaration {
                     if (ast::is_binding_element(&nodes[declaration])
                         || ast::is_parameter_declaration(&nodes[declaration]))
@@ -3151,7 +3159,7 @@ impl Checker {
                 &tsc_diagnostics::The_containing_function_or_module_body_is_too_large_for_control_flow_analysis,
                 &[] as &[String],
             );
-            self.add_diagnostic(diagnostic);
+            self.add_diagnostic(&diagnostic);
         }
     }
 
@@ -3209,10 +3217,10 @@ impl Checker {
                 if ast::is_variable_declaration(&nodes[target])
                     || ast::is_binding_element(&nodes[target])
                 {
-                    let export = self.get_export_symbol_of_value_symbol_if_exported(
+                    let export = self.get_export_symbol_of_value_symbol_if_exported(Some(
                         self.get_resolved_symbol(source),
-                    );
-                    return Some(export) == self.get_symbol_of_declaration(target);
+                    ));
+                    return export == self.get_symbol_of_declaration(target);
                 }
                 return false;
             }
@@ -3493,7 +3501,7 @@ impl Checker {
         node: NodeId,
     ) -> (String, bool) {
         let Some(symbol) =
-            self.resolve_entity_name(node, ast::SymbolFlags::VALUE, true, false, None)
+            self.resolve_entity_name(Some(node), ast::SymbolFlags::VALUE, true, false, None)
         else {
             return (String::new(), false);
         };
@@ -3806,7 +3814,7 @@ impl Checker {
         ) {
             return self.map_type(
                 type_with_primitives,
-                Rc::new(|c: &mut Checker, t: TypeId| {
+                Rc::new(move |c: &mut Checker, t: TypeId| {
                     let flags = c.types.get(t).flags;
                     if flags.intersects(TypeFlags::STRING) {
                         return c.extract_types_of_kind(
@@ -3933,8 +3941,8 @@ impl Checker {
                 return false;
             };
             let operand = nodes[type_of_expr].expression().unwrap();
-            let operand_constraint =
-                self.get_base_constraint_or_type(self.check_expression_cached(operand));
+            let operand_type = self.check_expression_cached(operand);
+            let operand_constraint = self.get_base_constraint_or_type(operand_type);
             // Get the not-equal flags for all handled cases.
             let not_equal_facts = self.get_not_equal_facts_from_typeof_switch(0, 0, &witnesses);
             if self
@@ -3960,7 +3968,8 @@ impl Checker {
         let Some(expression) = expression else {
             return false;
         };
-        let t = self.get_base_constraint_or_type(self.check_expression_cached(expression));
+        let expression_type = self.check_expression_cached(expression);
+        let t = self.get_base_constraint_or_type(expression_type);
         if !crate::checker_d::is_literal_type(&self.types, t) {
             return false;
         }
@@ -4231,7 +4240,9 @@ impl Checker {
         match nodes[node].kind {
             Kind::Identifier => {
                 let resolved = self.get_resolved_symbol(node);
-                let symbol = self.get_export_symbol_of_value_symbol_if_exported(resolved);
+                let symbol = self
+                    .get_export_symbol_of_value_symbol_if_exported(Some(resolved))
+                    .expect("exported symbol");
                 self.get_explicit_type_of_symbol(symbol, diagnostic)
             }
             Kind::ThisKeyword => self.get_explicit_this_type(node),
@@ -4349,12 +4360,12 @@ impl Checker {
                         } else {
                             IterationUse::FOR_OF
                         };
-                        return self.check_iterated_type_or_element_type(
+                        return Some(self.check_iterated_type_or_element_type(
                             use_,
                             expression_type,
                             self.undefined_type,
                             None,
-                        );
+                        ));
                     }
                 }
                 if let Some(diagnostic) = diagnostic {
@@ -4479,9 +4490,7 @@ impl Checker {
             .is_some_and(|gp| ast::is_for_of_statement(&nodes[gp]))
         {
             let for_of = nodes[node].parent.and_then(|p| nodes[p].parent).unwrap();
-            if let Some(t) = self.check_right_hand_side_of_for_of(for_of) {
-                return t;
-            }
+            return self.check_right_hand_side_of_for_of(for_of);
         }
         self.error_type
     }
@@ -4529,9 +4538,7 @@ impl Checker {
         };
         match nodes[parent].kind {
             Kind::ForInStatement => self.string_type,
-            Kind::ForOfStatement => self
-                .check_right_hand_side_of_for_of(parent)
-                .unwrap_or(self.error_type),
+            Kind::ForOfStatement => self.check_right_hand_side_of_for_of(parent),
             Kind::BinaryExpression => self.get_assigned_type_of_binary_expression(parent),
             Kind::DeleteExpression => self.undefined_type,
             Kind::ArrayLiteralExpression => {
@@ -4594,17 +4601,15 @@ impl Checker {
                 return element_type;
             }
         }
-        if let Some(element_type) = self.check_iterated_type_or_element_type(
+        let element_type = self.check_iterated_type_or_element_type(
             IterationUse::DESTRUCTURING,
             t,
             self.undefined_type,
             None,
-        ) {
-            return self
-                .include_undefined_in_index_signature(Some(element_type))
-                .unwrap_or(element_type);
-        }
-        self.error_type
+        );
+        return self
+            .include_undefined_in_index_signature(Some(element_type))
+            .unwrap_or(element_type);
     }
 
     /// `(c *Checker) includeUndefinedInIndexSignature` (flow.go).
@@ -4630,14 +4635,12 @@ impl Checker {
 
     /// `(c *Checker) getTypeOfDestructuredSpreadExpression` (flow.go).
     pub(crate) fn get_type_of_destructured_spread_expression(&mut self, t: TypeId) -> TypeId {
-        let element_type = self
-            .check_iterated_type_or_element_type(
-                IterationUse::DESTRUCTURING,
-                t,
-                self.undefined_type,
-                None,
-            )
-            .unwrap_or(self.error_type);
+        let element_type = self.check_iterated_type_or_element_type(
+            IterationUse::DESTRUCTURING,
+            t,
+            self.undefined_type,
+            None,
+        );
         self.create_array_type(element_type)
     }
 
@@ -4852,8 +4855,12 @@ impl Checker {
             .starts_with(&format!("{}#", ast::symbol::INTERNAL_SYMBOL_NAME_PREFIX))
             .then(|| symbol_name[symbol_name.find('@').map(|i| i + 1).unwrap_or(0)..].to_string());
         let file_index = constructor.file_index();
+        // PORT(borrowck): clone the `Rc` program handle so the arena
+        // `RefMut` borrows the local, not `self` — `self.factory` needs
+        // `&mut` while the arena is alive.
+        let program = self.program.clone().expect("program");
         let access_name = {
-            let mut arena = self.program_nodes_mut(file_index);
+            let mut arena = program.nodes_mut(file_index);
             if let Some(private_name) = private_name {
                 self.factory
                     .new_private_identifier(&mut arena, &private_name)
@@ -4862,7 +4869,7 @@ impl Checker {
             }
         };
         let reference = {
-            let mut arena = self.program_nodes_mut(file_index);
+            let mut arena = program.nodes_mut(file_index);
             let this = self
                 .factory
                 .new_keyword_expression(&mut arena, Kind::ThisKeyword);
@@ -4925,8 +4932,11 @@ impl Checker {
             .then(|| symbol_name[symbol_name.find('@').map(|i| i + 1).unwrap_or(0)..].to_string());
         for &static_block in static_blocks {
             let file_index = static_block.file_index();
+            // PORT(borrowck): clone the `Rc` program handle so the arena
+            // `RefMut` borrows the local, not `self`.
+            let program = self.program.clone().expect("program");
             let access_name = {
-                let mut arena = self.program_nodes_mut(file_index);
+                let mut arena = program.nodes_mut(file_index);
                 if let Some(private_name) = private_name.clone() {
                     self.factory
                         .new_private_identifier(&mut arena, &private_name)
@@ -4935,7 +4945,7 @@ impl Checker {
                 }
             };
             let reference = {
-                let mut arena = self.program_nodes_mut(file_index);
+                let mut arena = program.nodes_mut(file_index);
                 let this = self
                     .factory
                     .new_keyword_expression(&mut arena, Kind::ThisKeyword);
@@ -5047,9 +5057,10 @@ impl Checker {
                             }
                         }
                     }
+                    let return_type = self.get_return_type_of_signature(signature);
                     if self
                         .types
-                        .get(self.get_return_type_of_signature(signature))
+                        .get(return_type)
                         .flags
                         .intersects(TypeFlags::NEVER)
                     {
@@ -5393,7 +5404,7 @@ impl Checker {
                         && !ast::is_string_literal(&nodes[name])
                     {
                         if let Some(symbol) = self.resolve_entity_name(
-                            name,
+                            Some(name),
                             ast::SymbolFlags::VALUE,
                             true,
                             true,

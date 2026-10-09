@@ -39,6 +39,110 @@ use crate::nodebuilderimpl::{NodeBuilderContext, NodeBuilderImpl};
 use crate::symboltracker::new_symbol_tracker_impl;
 use crate::types::{IndexInfoId, SignatureId, TypeId, TypePredicate};
 
+/// PORT: Go passes the same `tracker` interface value to multiple
+/// `enterContext`/serialize calls (e.g. `SerializeTypeParametersForSignature`
+/// enters a context, then forwards `tracker` to
+/// `SymbolToTypeParameterDeclarations`). `Box<dyn SymbolTracker>` cannot be
+/// cloned, so a shared `Rc<RefCell<dyn SymbolTracker>>` can be re-wrapped
+/// in this delegating shim for each `enter_context` call.
+pub(crate) struct SharedTracker(pub Rc<std::cell::RefCell<Box<dyn nodebuilder::SymbolTracker>>>);
+
+impl nodebuilder::SymbolTracker for SharedTracker {
+    fn track_symbol(
+        &mut self,
+        symbol: SymbolId,
+        enclosing_declaration: Option<NodeId>,
+        meaning: ast::SymbolFlags,
+        nodes: &[ast::Node],
+    ) -> bool {
+        self.0
+            .borrow_mut()
+            .track_symbol(symbol, enclosing_declaration, meaning, nodes)
+    }
+    fn report_inaccessible_this_error(&mut self, nodes: &[ast::Node]) {
+        self.0.borrow_mut().report_inaccessible_this_error(nodes)
+    }
+    fn report_private_in_base_of_class_expression(
+        &mut self,
+        property_name: &str,
+        nodes: &[ast::Node],
+    ) {
+        self.0
+            .borrow_mut()
+            .report_private_in_base_of_class_expression(property_name, nodes)
+    }
+    fn report_inaccessible_unique_symbol_error(&mut self, nodes: &[ast::Node]) {
+        self.0
+            .borrow_mut()
+            .report_inaccessible_unique_symbol_error(nodes)
+    }
+    fn report_cyclic_structure_error(&mut self, nodes: &[ast::Node]) {
+        self.0.borrow_mut().report_cyclic_structure_error(nodes)
+    }
+    fn report_likely_unsafe_import_required_error(
+        &mut self,
+        specifier: &str,
+        symbol_name: &str,
+        nodes: &[ast::Node],
+    ) {
+        self.0
+            .borrow_mut()
+            .report_likely_unsafe_import_required_error(specifier, symbol_name, nodes)
+    }
+    fn report_truncation_error(&mut self, nodes: &[ast::Node]) {
+        self.0.borrow_mut().report_truncation_error(nodes)
+    }
+    fn report_nonlocal_augmentation(
+        &mut self,
+        containing_file: NodeId,
+        parent_symbol: SymbolId,
+        augmenting_symbol: SymbolId,
+        nodes: &[ast::Node],
+    ) {
+        self.0.borrow_mut().report_nonlocal_augmentation(
+            containing_file,
+            parent_symbol,
+            augmenting_symbol,
+            nodes,
+        )
+    }
+    fn report_non_serializable_property(&mut self, property_name: &str, nodes: &[ast::Node]) {
+        self.0
+            .borrow_mut()
+            .report_non_serializable_property(property_name, nodes)
+    }
+    fn report_inference_fallback(&mut self, node: NodeId, nodes: &[ast::Node]) {
+        self.0.borrow_mut().report_inference_fallback(node, nodes)
+    }
+    fn push_error_fallback_node(&mut self, node: NodeId) {
+        self.0.borrow_mut().push_error_fallback_node(node)
+    }
+    fn pop_error_fallback_node(&mut self) {
+        self.0.borrow_mut().pop_error_fallback_node()
+    }
+}
+
+/// Re-box `tracker` as a shared handle so it can back several
+/// `enter_context` calls, mirroring Go's shared `tracker` interface value.
+pub(crate) fn share_tracker(
+    tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
+) -> Option<Rc<std::cell::RefCell<Box<dyn nodebuilder::SymbolTracker>>>> {
+    tracker.map(|t| {
+        let rc: Rc<std::cell::RefCell<Box<dyn nodebuilder::SymbolTracker>>> =
+            Rc::new(std::cell::RefCell::new(t));
+        rc
+    })
+}
+
+/// Wrap one clone of a shared tracker for an `enter_context` parameter.
+pub(crate) fn shared_tracker_box(
+    tracker: &Option<Rc<std::cell::RefCell<Box<dyn nodebuilder::SymbolTracker>>>>,
+) -> Option<Box<dyn nodebuilder::SymbolTracker>> {
+    tracker
+        .clone()
+        .map(|t| Box::new(SharedTracker(t)) as Box<dyn nodebuilder::SymbolTracker>)
+}
+
 /// `type NodeBuilder struct` (nodebuilder.go). `impl_` is the
 /// `NodeBuilderImpl<'static>` (its `ch *Checker` back-pointer is an
 /// explicit `&mut Checker` parameter on the methods; its `f`/`e`/`pc`
@@ -107,6 +211,10 @@ impl NodeBuilder {
             }
             None => None,
         };
+        // PORT(borrowck): `impl_mut()` borrows all of `*self` — clone the
+        // host before the borrow so the `NodeBuilderContext` initializer
+        // below does not overlap it.
+        let host = self.host.clone();
         let impl_ = self.impl_mut();
         // PORT: synthesized nodes are minted into the enclosing file's
         // arena, so the factory's `file_index` tracks it. With no enclosing
@@ -117,7 +225,7 @@ impl NodeBuilder {
         let old_ctx = std::mem::replace(
             &mut impl_.ctx,
             NodeBuilderContext {
-                host: self.host.clone(),
+                host,
                 tracker: None,
                 flags,
                 internal_flags,
@@ -135,12 +243,14 @@ impl NodeBuilder {
                 ..Default::default()
             },
         );
-        self.ctx_stack.push(old_ctx);
         // `tracker = NewSymbolTrackerImpl(b.impl.ctx, tracker)` —
         // the wrapper shares the new context's `tracked_symbols` /
         // `reported_diagnostic` cells (see symboltracker.rs).
         let tracker = new_symbol_tracker_impl(&impl_.ctx, tracker, c.symbol_arena.clone());
         impl_.ctx.tracker = Some(std::rc::Rc::new(std::cell::RefCell::new(tracker)));
+        // PORT(borrowck): push after `impl_`'s last use — `impl_` holds a
+        // `&mut *self` borrow that conflicts with `self.ctx_stack`.
+        self.ctx_stack.push(old_ctx);
     }
 
     /// `(b *NodeBuilder) propagateVerbosityOut` — copies expansion signals
@@ -269,7 +379,17 @@ impl NodeBuilder {
         internal_flags: nodebuilder::InternalFlags,
         tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
     ) -> Vec<NodeId> {
-        self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
+        // Go forwards the same `tracker` interface value to both
+        // `enterContext` and `SymbolToTypeParameterDeclarations`; share it
+        // through `SharedTracker` so both calls see one tracker.
+        let tracker = share_tracker(tracker);
+        self.enter_context(
+            c,
+            enclosing_declaration,
+            flags,
+            internal_flags,
+            shared_tracker_box(&tracker),
+        );
         let symbol = c.get_symbol_of_declaration(signature_declaration);
         let type_params = self.symbol_to_type_parameter_declarations(
             c,
@@ -278,7 +398,7 @@ impl NodeBuilder {
             enclosing_declaration,
             flags,
             internal_flags,
-            tracker,
+            shared_tracker_box(&tracker),
         );
         self.exit_context_slice(nodes, type_params)
     }
@@ -516,7 +636,7 @@ impl NodeBuilder {
         let result = self
             .impl_mut()
             .symbol_to_parameter_declaration(c, nodes, symbol, false);
-        self.exit_context(nodes, result)
+        self.exit_context(nodes, Some(result))
     }
 
     /// `SymbolToTypeParameterDeclarations` — implements
@@ -587,7 +707,7 @@ impl NodeBuilder {
     ) -> Option<NodeId> {
         self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
         let result = self.impl_mut().type_to_type_node(c, nodes, typ);
-        self.exit_context(nodes, result)
+        self.exit_context(nodes, Some(result))
     }
 
     /// `(b *NodeBuilder) TryJSTypeNodeToTypeNode`.

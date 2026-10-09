@@ -8292,7 +8292,7 @@ fn is_export_or_export_expression(nodes: &[ast::Node], location: NodeId) -> bool
 }
 
 /// `shouldMarkIdentifierAliasReferenced` (checker.go:28900). Free function in Go.
-fn should_mark_identifier_alias_referenced(nodes: &[ast::Node], node: NodeId) -> bool {
+pub(crate) fn should_mark_identifier_alias_referenced(nodes: &[ast::Node], node: NodeId) -> bool {
     if let Some(parent) = nodes[node].parent {
         // A property access expression LHS? checkPropertyAccessExpression will handle that.
         if ast::is_property_access_expression(&nodes[parent])
@@ -10981,7 +10981,7 @@ impl Checker {
 }
 
 /// `isSpreadArgument` (checker.go:30661). Free function in Go.
-fn is_spread_argument(nodes: &[ast::Node], arg: NodeId) -> bool {
+pub(crate) fn is_spread_argument(nodes: &[ast::Node], arg: NodeId) -> bool {
     ast::is_spread_element(&nodes[arg])
         || ast::is_synthetic_expression(&nodes[arg])
             && nodes[arg].as_synthetic_expression().is_spread
@@ -13849,4 +13849,12 @@ impl Checker {
     ) -> crate::emitresolver::EmitResolver {
         crate::emitresolver::new_emit_resolver(checker.clone(), emit_context)
     }
+}
+
+/// `getSpreadArgumentIndex` (checker.go:30657). Go returns `int` index or -1.
+pub(crate) fn get_spread_argument_index(args: &[NodeId], nodes: &[ast::Node]) -> i32 {
+    args.iter()
+        .position(|&a| is_spread_argument(nodes, a))
+        .map(|i| i as i32)
+        .unwrap_or(-1)
 }

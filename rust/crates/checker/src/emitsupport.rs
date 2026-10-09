@@ -63,7 +63,7 @@ fn contains_non_missing_undefined_type(c: &Checker, t: TypeId) -> bool {
 }
 
 /// `getMeaningOfEntityNameReference` (emitsupport.go).
-fn get_meaning_of_entity_name_reference(entity_name: NodeId, nodes: &[Node]) -> ast::SymbolFlags {
+pub(crate) fn get_meaning_of_entity_name_reference(entity_name: NodeId, nodes: &[Node]) -> ast::SymbolFlags {
     let parent = nodes[entity_name].parent;
     let parent_kind = parent.map(|p| nodes[p].kind);
     // get symbol of the first identifier of the entityName

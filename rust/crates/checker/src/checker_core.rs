@@ -4000,3 +4000,337 @@ impl Checker {
         t
     }
 }
+
+// ======== get_global_* thunk accessors ========
+
+// Go's `c.getGlobalX()` lazy getters are stored as `Option<Rc<*Thunk>>` fields
+// populated by `new_checker`; these methods invoke the stored thunk. Method and
+// field share a name deliberately — Rust resolves `self.f()` to the method and
+// `self.f` (no parens) to the field.
+
+impl Checker {
+    /// `(c *Checker) get_global_es_symbol_type` — invokes the `get_global_es_symbol_type` thunk field.
+    pub(crate) fn get_global_es_symbol_type(&mut self) -> TypeId {
+        let thunk = self
+            .get_global_es_symbol_type
+            .clone()
+            .expect("get_global_es_symbol_type");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_big_int_type` — invokes the `get_global_big_int_type` thunk field.
+    pub(crate) fn get_global_big_int_type(&mut self) -> TypeId {
+        let thunk = self
+            .get_global_big_int_type
+            .clone()
+            .expect("get_global_big_int_type");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_import_meta_type` — invokes the `get_global_import_meta_type` thunk field.
+    pub(crate) fn get_global_import_meta_type(&mut self) -> TypeId {
+        let thunk = self
+            .get_global_import_meta_type
+            .clone()
+            .expect("get_global_import_meta_type");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_import_attributes_type_checked` — invokes the `get_global_import_attributes_type_checked` thunk field.
+    pub(crate) fn get_global_import_attributes_type_checked(&mut self) -> TypeId {
+        let thunk = self
+            .get_global_import_attributes_type_checked
+            .clone()
+            .expect("get_global_import_attributes_type_checked");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_disposable_type` — invokes the `get_global_disposable_type` thunk field.
+    pub(crate) fn get_global_disposable_type(&mut self) -> TypeId {
+        let thunk = self
+            .get_global_disposable_type
+            .clone()
+            .expect("get_global_disposable_type");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_async_disposable_type` — invokes the `get_global_async_disposable_type` thunk field.
+    pub(crate) fn get_global_async_disposable_type(&mut self) -> TypeId {
+        let thunk = self
+            .get_global_async_disposable_type
+            .clone()
+            .expect("get_global_async_disposable_type");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_nan_symbol_or_nil` — invokes the `get_global_nan_symbol_or_nil` thunk field.
+    pub(crate) fn get_global_nan_symbol_or_nil(&mut self) -> Option<SymbolId> {
+        let thunk = self
+            .get_global_nan_symbol_or_nil
+            .clone()
+            .expect("get_global_nan_symbol_or_nil");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_record_symbol` — invokes the `get_global_record_symbol` thunk field.
+    pub(crate) fn get_global_record_symbol(&mut self) -> Option<SymbolId> {
+        let thunk = self
+            .get_global_record_symbol
+            .clone()
+            .expect("get_global_record_symbol");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_es_symbol_constructor_symbol_or_nil` — invokes the `get_global_es_symbol_constructor_symbol_or_nil` thunk field.
+    pub(crate) fn get_global_es_symbol_constructor_symbol_or_nil(&mut self) -> Option<SymbolId> {
+        let thunk = self
+            .get_global_es_symbol_constructor_symbol_or_nil
+            .clone()
+            .expect("get_global_es_symbol_constructor_symbol_or_nil");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_es_symbol_constructor_type_symbol_or_nil` — invokes the `get_global_es_symbol_constructor_type_symbol_or_nil` thunk field.
+    pub(crate) fn get_global_es_symbol_constructor_type_symbol_or_nil(&mut self) -> Option<SymbolId> {
+        let thunk = self
+            .get_global_es_symbol_constructor_type_symbol_or_nil
+            .clone()
+            .expect("get_global_es_symbol_constructor_type_symbol_or_nil");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_import_call_options_type_checked` — invokes the `get_global_import_call_options_type_checked` thunk field.
+    pub(crate) fn get_global_import_call_options_type_checked(&mut self) -> TypeId {
+        let thunk = self
+            .get_global_import_call_options_type_checked
+            .clone()
+            .expect("get_global_import_call_options_type_checked");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_promise_type` — invokes the `get_global_promise_type` thunk field.
+    pub(crate) fn get_global_promise_type(&mut self) -> TypeId {
+        let thunk = self
+            .get_global_promise_type
+            .clone()
+            .expect("get_global_promise_type");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_promise_type_checked` — invokes the `get_global_promise_type_checked` thunk field.
+    pub(crate) fn get_global_promise_type_checked(&mut self) -> TypeId {
+        let thunk = self
+            .get_global_promise_type_checked
+            .clone()
+            .expect("get_global_promise_type_checked");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_promise_like_type` — invokes the `get_global_promise_like_type` thunk field.
+    pub(crate) fn get_global_promise_like_type(&mut self) -> TypeId {
+        let thunk = self
+            .get_global_promise_like_type
+            .clone()
+            .expect("get_global_promise_like_type");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_abstract_module_source_type` — invokes the `get_global_abstract_module_source_type` thunk field.
+    pub(crate) fn get_global_abstract_module_source_type(&mut self) -> TypeId {
+        let thunk = self
+            .get_global_abstract_module_source_type
+            .clone()
+            .expect("get_global_abstract_module_source_type");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_promise_constructor_symbol` — invokes the `get_global_promise_constructor_symbol` thunk field.
+    pub(crate) fn get_global_promise_constructor_symbol(&mut self) -> Option<SymbolId> {
+        let thunk = self
+            .get_global_promise_constructor_symbol
+            .clone()
+            .expect("get_global_promise_constructor_symbol");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_promise_constructor_symbol_or_nil` — invokes the `get_global_promise_constructor_symbol_or_nil` thunk field.
+    pub(crate) fn get_global_promise_constructor_symbol_or_nil(&mut self) -> Option<SymbolId> {
+        let thunk = self
+            .get_global_promise_constructor_symbol_or_nil
+            .clone()
+            .expect("get_global_promise_constructor_symbol_or_nil");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_omit_symbol` — invokes the `get_global_omit_symbol` thunk field.
+    pub(crate) fn get_global_omit_symbol(&mut self) -> Option<SymbolId> {
+        let thunk = self
+            .get_global_omit_symbol
+            .clone()
+            .expect("get_global_omit_symbol");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_no_infer_symbol_or_nil` — invokes the `get_global_no_infer_symbol_or_nil` thunk field.
+    pub(crate) fn get_global_no_infer_symbol_or_nil(&mut self) -> Option<SymbolId> {
+        let thunk = self
+            .get_global_no_infer_symbol_or_nil
+            .clone()
+            .expect("get_global_no_infer_symbol_or_nil");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_iterator_type` — invokes the `get_global_iterator_type` thunk field.
+    pub(crate) fn get_global_iterator_type(&mut self) -> TypeId {
+        let thunk = self
+            .get_global_iterator_type
+            .clone()
+            .expect("get_global_iterator_type");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_iterable_type` — invokes the `get_global_iterable_type` thunk field.
+    pub(crate) fn get_global_iterable_type(&mut self) -> TypeId {
+        let thunk = self
+            .get_global_iterable_type
+            .clone()
+            .expect("get_global_iterable_type");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_iterable_type_checked` — invokes the `get_global_iterable_type_checked` thunk field.
+    pub(crate) fn get_global_iterable_type_checked(&mut self) -> TypeId {
+        let thunk = self
+            .get_global_iterable_type_checked
+            .clone()
+            .expect("get_global_iterable_type_checked");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_iterable_iterator_type` — invokes the `get_global_iterable_iterator_type` thunk field.
+    pub(crate) fn get_global_iterable_iterator_type(&mut self) -> TypeId {
+        let thunk = self
+            .get_global_iterable_iterator_type
+            .clone()
+            .expect("get_global_iterable_iterator_type");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_iterable_iterator_type_checked` — invokes the `get_global_iterable_iterator_type_checked` thunk field.
+    pub(crate) fn get_global_iterable_iterator_type_checked(&mut self) -> TypeId {
+        let thunk = self
+            .get_global_iterable_iterator_type_checked
+            .clone()
+            .expect("get_global_iterable_iterator_type_checked");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_iterator_object_type` — invokes the `get_global_iterator_object_type` thunk field.
+    pub(crate) fn get_global_iterator_object_type(&mut self) -> TypeId {
+        let thunk = self
+            .get_global_iterator_object_type
+            .clone()
+            .expect("get_global_iterator_object_type");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_generator_type` — invokes the `get_global_generator_type` thunk field.
+    pub(crate) fn get_global_generator_type(&mut self) -> TypeId {
+        let thunk = self
+            .get_global_generator_type
+            .clone()
+            .expect("get_global_generator_type");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_async_iterator_type` — invokes the `get_global_async_iterator_type` thunk field.
+    pub(crate) fn get_global_async_iterator_type(&mut self) -> TypeId {
+        let thunk = self
+            .get_global_async_iterator_type
+            .clone()
+            .expect("get_global_async_iterator_type");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_async_iterable_type` — invokes the `get_global_async_iterable_type` thunk field.
+    pub(crate) fn get_global_async_iterable_type(&mut self) -> TypeId {
+        let thunk = self
+            .get_global_async_iterable_type
+            .clone()
+            .expect("get_global_async_iterable_type");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_async_iterable_type_checked` — invokes the `get_global_async_iterable_type_checked` thunk field.
+    pub(crate) fn get_global_async_iterable_type_checked(&mut self) -> TypeId {
+        let thunk = self
+            .get_global_async_iterable_type_checked
+            .clone()
+            .expect("get_global_async_iterable_type_checked");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_async_iterable_iterator_type` — invokes the `get_global_async_iterable_iterator_type` thunk field.
+    pub(crate) fn get_global_async_iterable_iterator_type(&mut self) -> TypeId {
+        let thunk = self
+            .get_global_async_iterable_iterator_type
+            .clone()
+            .expect("get_global_async_iterable_iterator_type");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_async_iterable_iterator_type_checked` — invokes the `get_global_async_iterable_iterator_type_checked` thunk field.
+    pub(crate) fn get_global_async_iterable_iterator_type_checked(&mut self) -> TypeId {
+        let thunk = self
+            .get_global_async_iterable_iterator_type_checked
+            .clone()
+            .expect("get_global_async_iterable_iterator_type_checked");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_async_iterator_object_type` — invokes the `get_global_async_iterator_object_type` thunk field.
+    pub(crate) fn get_global_async_iterator_object_type(&mut self) -> TypeId {
+        let thunk = self
+            .get_global_async_iterator_object_type
+            .clone()
+            .expect("get_global_async_iterator_object_type");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_async_generator_type` — invokes the `get_global_async_generator_type` thunk field.
+    pub(crate) fn get_global_async_generator_type(&mut self) -> TypeId {
+        let thunk = self
+            .get_global_async_generator_type
+            .clone()
+            .expect("get_global_async_generator_type");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_iterator_yield_result_type` — invokes the `get_global_iterator_yield_result_type` thunk field.
+    pub(crate) fn get_global_iterator_yield_result_type(&mut self) -> TypeId {
+        let thunk = self
+            .get_global_iterator_yield_result_type
+            .clone()
+            .expect("get_global_iterator_yield_result_type");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_iterator_return_result_type` — invokes the `get_global_iterator_return_result_type` thunk field.
+    pub(crate) fn get_global_iterator_return_result_type(&mut self) -> TypeId {
+        let thunk = self
+            .get_global_iterator_return_result_type
+            .clone()
+            .expect("get_global_iterator_return_result_type");
+        thunk(self)
+    }
+
+    /// `(c *Checker) get_global_class_accessor_decorator_contxt_type` — invokes the `get_global_class_accessor_decorator_contxt_type` thunk field.
+    pub(crate) fn get_global_class_accessor_decorator_contxt_type(&mut self) -> TypeId {
+        let thunk = self
+            .get_global_class_accessor_decorator_contxt_type
+            .clone()
+            .expect("get_global_class_accessor_decorator_contxt_type");
+        thunk(self)
+    }
+
+}

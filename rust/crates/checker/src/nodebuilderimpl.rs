@@ -54,14 +54,14 @@ use tsc_pseudochecker::{self as pseudochecker, PseudoType, PseudoTypeKind, Pseud
 use tsc_scanner as scanner;
 use tsc_stringutil as stringutil;
 
-use crate::checker_core::{CacheHashKey, Checker};
+use crate::checker_core::{CacheHashKey, Checker, get_non_distributed_type_parameter, is_this_type_parameter};
 use crate::checker_types::{Host, MappedTypeModifiers, TypeFacts};
 use crate::mapper::TypeMapperId;
 use crate::nodebuilderscopes::collect_binding_pattern_symbols;
 use crate::types::{
     ConditionalType, ElementFlags, IndexInfo, IndexInfoId, ObjectFlags, Signature, SignatureFlags,
-    SignatureId, SignatureKind, TypeAlias, TypeFlags, TypeId, TypeParameter, TypePredicate,
-    TypePredicateKind,
+    SignatureId, SignatureKind, TypeAlias, TypeArena, TypeFlags, TypeId, TypeParameter,
+    TypePredicate, TypePredicateKind,
 };
 
 /// `type CompositeSymbolIdentity struct`.
@@ -270,7 +270,7 @@ pub struct NodeBuilderImpl<'a> {
 /// `set_original_ex`). Same construction as
 /// `transformers::new_transform_factory` (the visitor's `cx.factory` cannot
 /// alias the emit context's factory).
-fn new_nodebuilder_factory(e: &Rc<RefCell<EmitContext>>) -> ast::NodeFactory<'static> {
+pub(crate) fn new_nodebuilder_factory(e: &Rc<RefCell<EmitContext>>) -> ast::NodeFactory<'static> {
     // `Weak` avoids a reference cycle: impl -> factory -> hooks -> emit ctx.
     let update_weak = Rc::downgrade(e);
     let clone_weak = update_weak.clone();
@@ -528,7 +528,7 @@ impl<'a> NodeBuilderImpl<'a> {
     /// `(b *NodeBuilderImpl) checkTypeExpandability` — probes whether a type
     /// (or its type arguments) could be expanded, for use after type-node
     /// reuse where shouldExpandType was never called.
-    fn check_type_expandability(&mut self, c: &mut Checker, t: Option<TypeId>) {
+    pub(crate) fn check_type_expandability(&mut self, c: &mut Checker, t: Option<TypeId>) {
         let Some(t) = t else { return };
         if self.ctx.max_expansion_depth < 0 || self.ctx.can_increase_expansion_depth {
             return;
@@ -541,7 +541,7 @@ impl<'a> NodeBuilderImpl<'a> {
         let _ = result;
     }
 
-    fn check_type_expandability_inner(&mut self, c: &mut Checker, t: TypeId) {
+    pub(crate) fn check_type_expandability_inner(&mut self, c: &mut Checker, t: TypeId) {
         // If t is an ancestor in the current expansion, return early to
         // avoid unbounded recursion.
         if self.is_type_on_stack(t) {
@@ -793,7 +793,7 @@ impl<'a> NodeBuilderImpl<'a> {
     }
 
     /// `(b *NodeBuilderImpl) serializeTypeName`.
-    fn serialize_type_name(
+    pub(crate) fn serialize_type_name(
         &mut self,
         c: &mut Checker,
         nodes: &mut Vec<ast::Node>,
@@ -824,7 +824,7 @@ impl<'a> NodeBuilderImpl<'a> {
     }
 
     /// `(b *NodeBuilderImpl) setCommentRange`.
-    fn set_comment_range(
+    pub(crate) fn set_comment_range(
         &mut self,
         c: &mut Checker,
         nodes: &mut Vec<ast::Node>,
@@ -866,7 +866,7 @@ impl<'a> NodeBuilderImpl<'a> {
     }
 
     /// `(b *NodeBuilderImpl) canReuseExistingJSTypeNode`.
-    fn can_reuse_existing_js_type_node(
+    pub(crate) fn can_reuse_existing_js_type_node(
         &mut self,
         c: &mut Checker,
         nodes: &mut Vec<ast::Node>,
@@ -878,7 +878,7 @@ impl<'a> NodeBuilderImpl<'a> {
     }
 
     /// `(b *NodeBuilderImpl) tryGetResolvedSymbolFromTypeNode`.
-    fn try_get_resolved_symbol_from_type_node(
+    pub(crate) fn try_get_resolved_symbol_from_type_node(
         &mut self,
         c: &mut Checker,
         node: Option<NodeId>,
@@ -935,14 +935,14 @@ impl<'a> NodeBuilderImpl<'a> {
         if Some(existing_target) != target {
             return true;
         }
-        let min_args = c.get_min_type_argument_count(
-            c.types
-                .get(target.unwrap())
-                .data
-                .as_interface_type()
-                .map(|i| i.type_parameters())
-                .unwrap_or(&[]),
-        );
+        let target_type_params: Vec<TypeId> = c
+            .types
+            .get(target.unwrap())
+            .data
+            .as_interface_type()
+            .map(|i| i.type_parameters().to_vec())
+            .unwrap_or_default();
+        let min_args = c.get_min_type_argument_count(&target_type_params);
         existing_args_len >= min_args
     }
 
@@ -979,21 +979,29 @@ impl<'a> NodeBuilderImpl<'a> {
         c: &mut Checker,
         t: TypeId,
     ) -> TypeId {
-        let structured = c
-            .types
-            .get(t)
-            .data
-            .as_structured_type()
-            .cloned()
-            .unwrap_or_default();
-        if structured.construct_signatures().is_empty() {
+        // `StructuredType` isn't `Clone`; extract the needed fields under a
+        // single short borrow so `&mut Checker` calls below don't alias.
+        let (all_construct_sigs, members, index_info_list, call_sigs, cached) = {
+            let guard = c.types.get(t);
+            let st = guard.data.as_structured_type();
+            match st {
+                Some(st) => (
+                    st.construct_signatures().to_vec(),
+                    st.members.clone(),
+                    st.index_infos.clone(),
+                    st.call_signatures().to_vec(),
+                    st.object_type_without_abstract_construct_signatures,
+                ),
+                None => Default::default(),
+            }
+        };
+        if all_construct_sigs.is_empty() {
             return t;
         }
-        if let Some(t2) = structured.object_type_without_abstract_construct_signatures {
+        if let Some(t2) = cached {
             return t2;
         }
-        let construct_signatures: Vec<SignatureId> = structured
-            .construct_signatures()
+        let construct_signatures: Vec<SignatureId> = all_construct_sigs
             .iter()
             .copied()
             .filter(|&signature| {
@@ -1003,7 +1011,7 @@ impl<'a> NodeBuilderImpl<'a> {
                     .intersects(SignatureFlags::ABSTRACT)
             })
             .collect();
-        if construct_signatures.len() == structured.construct_signatures().len() {
+        if construct_signatures.len() == all_construct_sigs.len() {
             c.types
                 .get_mut(t)
                 .data
@@ -1012,15 +1020,15 @@ impl<'a> NodeBuilderImpl<'a> {
                 .object_type_without_abstract_construct_signatures = Some(t);
             return t;
         }
-        let index_infos: Vec<IndexInfoId> = structured
-            .index_infos
+        let index_infos: Vec<IndexInfoId> = index_info_list
             .iter()
             .map(|i| c.index_info_arena.alloc(i.clone()))
             .collect();
+        let type_symbol = c.types.get(t).symbol;
         let type_copy = c.new_anonymous_type(
-            c.types.get(t).symbol,
-            structured.members.clone(),
-            structured.call_signatures(),
+            type_symbol,
+            members,
+            &call_sigs,
             &construct_signatures,
             &index_infos,
         );
@@ -1310,10 +1318,8 @@ impl<'a> NodeBuilderImpl<'a> {
                 import_mode_override,
             );
             let specifier_string = specifier_result.specifier.as_string().to_owned();
-            let lit = self.f.new_literal_type_node(
-                nodes,
-                Some(self.new_string_literal(c, nodes, &specifier_string)),
-            );
+            let lit_expr = self.new_string_literal(c, nodes, &specifier_string);
+            let lit = self.f.new_literal_type_node(nodes, Some(lit_expr));
             self.ctx.approximate_length += specifier_string.len() as i32 + 10; // specifier + import("")
             if non_root_parts.is_none() || is_entity_name_opt(non_root_parts, nodes) {
                 if non_root_parts.is_some() {
@@ -1373,8 +1379,8 @@ impl<'a> NodeBuilderImpl<'a> {
                 let e = nodes[entity_name].as_expression_with_type_arguments();
                 (e.expression, e.type_arguments.clone())
             };
-            let cloned = self.f.deep_clone_node(nodes, expr);
-            return Some(self.f.new_type_query_node(nodes, Some(cloned), expr_args));
+            let cloned = self.f.deep_clone_node(nodes, expr?);
+            return Some(self.f.new_type_query_node(nodes, cloned, expr_args));
         }
         Some(entity_name)
     }
@@ -1469,23 +1475,17 @@ impl<'a> NodeBuilderImpl<'a> {
                         override_type_arguments.clone(),
                     )?;
                     if ast::is_entity_name(&nodes[lhs]) {
-                        let lhs = self.f.new_parenthesized_type_node(
-                            nodes,
-                            Some(self.f.new_type_query_node(nodes, Some(lhs), None)),
-                        );
+                        let query_inner =
+                            self.f.new_type_query_node(nodes, Some(lhs), None);
+                        let lhs = self.f.new_parenthesized_type_node(nodes, Some(query_inner));
+                        // `name.Expression()` may live in a different arena;
+                        // reuse the foreign-file id if arenas coincide.
+                        let rhs_expr = nn[name].expression();
+                        let rhs = self.f.new_type_query_node(nodes, rhs_expr, None);
                         return Some(self.f.new_indexed_access_type_node(
                             nodes,
                             Some(lhs),
-                            Some(self.f.new_type_query_node(
-                                nodes,
-                                nn[name].expression().map(|e| {
-                                    // `name.Expression()` may live in a
-                                    // different arena; reuse the
-                                    // foreign-file id if arenas coincide.
-                                    e
-                                }),
-                                None,
-                            )),
+                            Some(rhs),
                         ));
                     }
                     return Some(lhs);
@@ -1517,10 +1517,8 @@ impl<'a> NodeBuilderImpl<'a> {
                         stopper,
                         override_type_arguments.clone(),
                     )?;
-                    let literal = self.f.new_literal_type_node(
-                        nodes,
-                        Some(self.new_string_literal(c, nodes, &sym_name)),
-                    );
+                    let lit_expr = self.new_string_literal(c, nodes, &sym_name);
+                    let literal = self.f.new_literal_type_node(nodes, Some(lit_expr));
                     if ast::is_indexed_access_type_node(&nodes[lhs]) {
                         return Some(self.f.new_indexed_access_type_node(
                             nodes,
@@ -1942,7 +1940,7 @@ impl<'a> NodeBuilderImpl<'a> {
     /// `(b *NodeBuilderImpl) lookupSymbolChain`.
     // TODO: move `lookupSymbolChain` and co to `symbolaccessibility.go` (but
     // getSpecifierForModuleSymbol uses much context which makes that hard?)
-    fn lookup_symbol_chain(
+    pub(crate) fn lookup_symbol_chain(
         &mut self,
         c: &mut Checker,
         nodes: &mut Vec<ast::Node>,
@@ -2148,7 +2146,7 @@ impl<'a> NodeBuilderImpl<'a> {
     }
 
     /// `(b *NodeBuilderImpl) getSpecifierForModuleSymbol`.
-    fn get_specifier_for_module_symbol(
+    pub(crate) fn get_specifier_for_module_symbol(
         &mut self,
         c: &mut Checker,
         nodes: &mut Vec<ast::Node>,
@@ -2318,7 +2316,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 import_module_specifier_ending: ending_pref,
                 ..Default::default()
             },
-            tsc_modulespecifiers::ModuleSpecifierOptions {
+            &tsc_modulespecifiers::ModuleSpecifierOptions {
                 override_import_mode,
             },
             false, // forAutoImports
@@ -2503,7 +2501,7 @@ impl<'a> NodeBuilderImpl<'a> {
     ///
     /// It also calls `setOriginalNode` to set up an `.original` pointer,
     /// since you basically *always* want these in the node builder.
-    fn set_text_range(
+    pub(crate) fn set_text_range(
         &mut self,
         c: &mut Checker,
         nodes: &mut Vec<ast::Node>,
@@ -2718,7 +2716,8 @@ impl<'a> NodeBuilderImpl<'a> {
     ) -> NodeId {
         debug_assert!(type_flags(c, t).intersects(TypeFlags::OBJECT));
         let (declaration, readonly_kind, question_kind, name_type_present) = {
-            let mapped = c.types.get(t).as_mapped_type();
+            let t_guard = c.types.get(t);
+            let mapped = t_guard.as_mapped_type();
             let declaration = mapped.declaration;
             let (readonly_kind, question_kind, name_type_present) = declaration
                 .map(|d| {
@@ -2771,8 +2770,8 @@ impl<'a> NodeBuilderImpl<'a> {
                 .intersects(nodebuilder::Flags::GENERATE_NAMES_FOR_SHADOWED_TYPE_PARAMS)
                 && self.is_homomorphic_mapped_type_with_non_homomorphic_instantiation(c, t)
             {
-                let new_constraint_param =
-                    c.new_type_parameter(Some(c.new_symbol(ast::SymbolFlags::TYPE_PARAMETER, "T")));
+                let new_param_sym = c.new_symbol(ast::SymbolFlags::TYPE_PARAMETER, "T");
+                let new_constraint_param = c.new_type_parameter(Some(new_param_sym));
                 let name = self.type_parameter_to_name(c, nodes, new_constraint_param);
                 let target = c.types.get(t).target();
                 new_type_variable = Some(self.f.new_type_reference_node(nodes, Some(name), None));
@@ -2787,8 +2786,8 @@ impl<'a> NodeBuilderImpl<'a> {
                     ) {
                         let mapper = crate::mapper::new_type_mapper(
                             c,
-                            &[tp, mt],
-                            &[type_parameter.unwrap_or(TypeId::NONE), new_constraint_param],
+                            vec![tp, mt],
+                            vec![type_parameter.unwrap_or(TypeId::NONE), new_constraint_param],
                         );
                         template_type = Some(c.instantiate_type(tt, Some(mapper)));
                     }
@@ -2807,8 +2806,8 @@ impl<'a> NodeBuilderImpl<'a> {
             ));
         } else if needs_modifier_preserving_wrapper {
             // So, step 1: new type variable
-            let new_param =
-                c.new_type_parameter(Some(c.new_symbol(ast::SymbolFlags::TYPE_PARAMETER, "T")));
+            let new_param_sym = c.new_symbol(ast::SymbolFlags::TYPE_PARAMETER, "T");
+            let new_param = c.new_type_parameter(Some(new_param_sym));
             let name = self.type_parameter_to_name(c, nodes, new_param);
             new_type_variable = Some(self.f.new_type_reference_node(nodes, Some(name), None));
             // step 2: make that new type variable itself the constraint node,
@@ -2821,16 +2820,16 @@ impl<'a> NodeBuilderImpl<'a> {
         }
 
         // nameType and templateType nodes have to be in the new scope
+        let scope_type_params: Vec<TypeId> = c
+            .get_type_parameter_from_mapped_type(t)
+            .into_iter()
+            .collect();
         let cleanup = self.enter_new_scope(
             c,
             nodes,
             declaration,
             None,
-            Some(
-                c.get_type_parameter_from_mapped_type(t)
-                    .into_iter()
-                    .collect::<Vec<_>>(),
-            ),
+            Some(scope_type_params),
             None,
             None,
         );
@@ -2924,12 +2923,13 @@ impl<'a> NodeBuilderImpl<'a> {
                 None,
             );
             let infer_node = self.f.new_infer_type_node(nodes, Some(infer_param));
+            let never_node = self.f.new_keyword_type_node(nodes, Kind::NeverKeyword);
             return self.f.new_conditional_type_node(
                 nodes,
                 modifiers_node,
                 Some(infer_node),
                 Some(result),
-                Some(self.f.new_keyword_type_node(nodes, Kind::NeverKeyword)),
+                Some(never_node),
             );
         } else if needs_modifier_preserving_wrapper {
             // and step 3: once the mapped type is reconstructed, create a
@@ -2945,12 +2945,12 @@ impl<'a> NodeBuilderImpl<'a> {
             let cloned_name = new_type_variable
                 .and_then(|v| nodes[v].as_type_reference_node().type_name)
                 .map(|n| self.f.clone_node(nodes, n));
-            let keyof_node = self.f.new_type_operator_node(
-                nodes,
-                Kind::KeyOfKeyword,
-                c.get_modifiers_type_from_mapped_type(t)
-                    .map(|mt| self.type_to_type_node(c, nodes, mt)),
-            );
+            let keyof_operand = c
+                .get_modifiers_type_from_mapped_type(t)
+                .map(|mt| self.type_to_type_node(c, nodes, mt));
+            let keyof_node =
+                self.f
+                    .new_type_operator_node(nodes, Kind::KeyOfKeyword, keyof_operand);
             let infer_param = self.f.new_type_parameter_declaration(
                 nodes,
                 None,
@@ -2960,12 +2960,13 @@ impl<'a> NodeBuilderImpl<'a> {
                 None,
             );
             let infer_node = self.f.new_infer_type_node(nodes, Some(infer_param));
+            let never_node = self.f.new_keyword_type_node(nodes, Kind::NeverKeyword);
             return self.f.new_conditional_type_node(
                 nodes,
                 constraint_node,
                 Some(infer_node),
                 Some(result),
-                Some(self.f.new_keyword_type_node(nodes, Kind::NeverKeyword)),
+                Some(never_node),
             );
         }
 
@@ -3174,7 +3175,7 @@ impl<'a> NodeBuilderImpl<'a> {
     }
 
     /// `(b *NodeBuilderImpl) parameterToParameterDeclarationName`.
-    fn parameter_to_parameter_declaration_name(
+    pub(crate) fn parameter_to_parameter_declaration_name(
         &mut self,
         c: &mut Checker,
         nodes: &mut Vec<ast::Node>,
@@ -3236,12 +3237,18 @@ impl<'a> NodeBuilderImpl<'a> {
         node: NodeId,
     ) -> NodeId {
         if node.file_index() != self.f.file_index() {
-            let src_nodes = c.program_nodes(node);
-            let mut tmp = (*src_nodes).clone();
-            let tmp_base = tmp.len();
+            // `Node`/`NodeData` are not `Clone`, so the Go-style whole-arena
+            // scratch copy is impossible. Run the visit directly inside the
+            // foreign arena (`program.nodes_mut` — cloning the `Rc<dyn
+            // Program>` first so the `RefMut` borrows the local handle, not
+            // `c`), then move the appended clone tail into `nodes` with id
+            // remap (`relocate_cloned_tail` drains the tail back out).
+            let program = c.program.clone().expect("program");
+            let mut src = program.nodes_mut(node.file_index());
+            let tmp_base = src.len();
             let dest_base = nodes.len();
-            let root = self.clone_binding_name_in_arena(c, &mut tmp, node);
-            return self.relocate_cloned_tail(nodes, &mut tmp, tmp_base, dest_base, root);
+            let root = self.clone_binding_name_in_arena(c, &mut src, node);
+            return self.relocate_cloned_tail(nodes, &mut src, tmp_base, dest_base, root);
         }
         self.clone_binding_name_in_arena(c, nodes, node)
     }
@@ -3279,6 +3286,9 @@ impl<'a> NodeBuilderImpl<'a> {
             let mut cx = ast::visitor::VisitorCx::new(arena, &mut self.f);
             visitor.visit_each_child(&mut cx, node).unwrap_or(node)
         };
+        // `visitor` owns `shared`, which borrows `c_cell` — drop it before
+        // `into_inner`.
+        drop(visitor);
         let c = c_cell.into_inner();
         let _ = c;
 
@@ -3289,7 +3299,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 (
                     binding_element.dot_dot_dot_token,
                     binding_element.property_name,
-                    binding_element.name(),
+                    binding_element.name,
                 )
             };
             self.f
@@ -3370,9 +3380,11 @@ impl<'a> NodeBuilderImpl<'a> {
         };
         // Move the whole tail (both tails — pass-2 nodes are appended after
         // tmp.len() at pass-2 start) into `nodes`, fixing `id` fields.
+        // `Node` is not `Clone`, so `drain` moves the elements out by value;
+        // for the foreign-arena caller this also restores the source arena
+        // to its original length.
         let tail_len = tmp.len() - tmp_base;
-        for i in 0..tail_len {
-            let mut n = tmp[tmp_base + i].clone();
+        for (i, mut n) in tmp.drain(tmp_base..).enumerate() {
             n.id = NodeId::new(dest_file_index, (dest_base + i) as u64);
             nodes.push(n);
         }
@@ -3381,7 +3393,7 @@ impl<'a> NodeBuilderImpl<'a> {
             let tmp_id = NodeId::new(dest_file_index, (tmp_base + i) as u64);
             let dest_id = NodeId::new(dest_file_index, (dest_base + i) as u64);
             let flags = self.e.borrow().emit_flags(tmp_id);
-            if !flags.is_empty() {
+            if flags != printer::EmitFlags::NONE {
                 self.e.borrow().set_emit_flags(dest_id, flags);
             }
             if let Some(original) = self.e.borrow().original(tmp_id) {
@@ -3415,7 +3427,8 @@ impl<'a> NodeBuilderImpl<'a> {
         expr: NodeId,
     ) -> NodeId {
         // !!! TODO: shim, add node reuse
-        let widened = c.get_widened_type(get_regular_type_of_expression(c, expr));
+        let regular = get_regular_type_of_expression(c, expr);
+        let widened = c.get_widened_type(regular);
         let t = c.instantiate_type(widened, self.ctx.mapper);
         self.type_to_type_node(c, nodes, t)
     }
@@ -3433,7 +3446,7 @@ impl<'a> NodeBuilderImpl<'a> {
         let type_predicate = c.get_type_predicate_of_signature(signature);
         let return_type_node = if let Some(type_predicate) = type_predicate {
             let predicate = if let Some(mapper) = self.ctx.mapper {
-                c.instantiate_type_predicate(type_predicate, Some(mapper))
+                c.instantiate_type_predicate(&type_predicate, Some(mapper))
             } else {
                 type_predicate
             };
@@ -3770,7 +3783,7 @@ impl<'a> NodeBuilderImpl<'a> {
         }
         if let Some(declaration) = declaration {
             let decl_nodes = c.program_nodes(declaration);
-            if ast::is_in_js_file(Some(declaration), decl_nodes) {
+            if ast::is_in_js_file(Some(declaration), &decl_nodes) {
                 // !!! JSDoc Support — Go leaves this commented out as well.
             }
         }
@@ -3839,7 +3852,7 @@ impl<'a> NodeBuilderImpl<'a> {
                         let decl_nodes = c.program_nodes(declaration);
                         let symbols = c.symbol_arena.borrow();
                         self.pc
-                            .get_return_type_of_signature(declaration, decl_nodes, &symbols)
+                            .get_return_type_of_signature(declaration, &decl_nodes, &symbols)
                     };
                     if self.pseudo_type_equivalent_to_type(
                         c,
@@ -3914,7 +3927,7 @@ impl<'a> NodeBuilderImpl<'a> {
             ast::is_computed_property_name(&e_nodes[name])
                 && e_nodes[name]
                     .expression()
-                    .is_some_and(|expr| ast::is_entity_name_expression(&e_nodes[expr]))
+                    .is_some_and(|expr| ast::is_entity_name_expression(&e_nodes[expr], &e_nodes))
         });
         if !shape_good {
             return false;
@@ -4034,11 +4047,12 @@ impl<'a> NodeBuilderImpl<'a> {
         let key_type = index_info.key_type.unwrap_or(c.error_type);
         let indexer_type_node = self.type_to_type_node(c, nodes, key_type);
 
+        let index_name = self.new_identifier(nodes, &name, None);
         let indexing_parameter = self.f.new_parameter_declaration(
             nodes,
             None,
             None,
-            Some(self.new_identifier(nodes, &name, None)),
+            Some(index_name),
             None,
             Some(indexer_type_node),
             None,
@@ -4181,7 +4195,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 || symbol.is_some_and(|sym| {
                     symbol_declarations(c, sym).iter().any(|&d| {
                         let d_nodes = c.program_nodes(d);
-                        ast::get_source_file_of_node(Some(d), d_nodes) == self.ctx.enclosing_file
+                        ast::get_source_file_of_node(Some(d), &d_nodes) == self.ctx.enclosing_file
                     })
                 }))
         {
@@ -4197,11 +4211,10 @@ impl<'a> NodeBuilderImpl<'a> {
         {
             let declaration = declaration.unwrap();
             let decl_nodes = c.program_nodes(declaration);
-            let decl = decl_nodes[declaration].clone();
-            let is_accessor_decl = ast::is_accessor(&decl);
+            let is_accessor_decl = ast::is_accessor(&decl_nodes[declaration]);
             if is_accessor_decl
-                || (ast::has_inferred_type(&decl)
-                    && !ast::node_is_synthesized(&decl)
+                || (ast::has_inferred_type(&decl_nodes[declaration])
+                    && !ast::node_is_synthesized(&decl_nodes[declaration])
                     && !type_object_flags(c, t).intersects(ObjectFlags::REQUIRES_WIDENING))
             {
                 let remove = symbol.map(|s| self.add_symbol_type_to_context(s, t));
@@ -4209,21 +4222,21 @@ impl<'a> NodeBuilderImpl<'a> {
                 let symbols = c.symbol_arena.borrow();
                 let mut pt = if is_accessor_decl {
                     self.pc
-                        .get_type_of_accessor(declaration, decl_nodes, &symbols)
+                        .get_type_of_accessor(declaration, &decl_nodes, &symbols)
                 } else {
                     self.pc
-                        .get_type_of_declaration(declaration, decl_nodes, &symbols)
+                        .get_type_of_declaration(declaration, &decl_nodes, &symbols)
                 };
                 drop(symbols);
                 if pt.kind() == PseudoTypeKind::NoResult
-                    && ast::is_binary_expression(&decl)
+                    && ast::is_binary_expression(&decl_nodes[declaration])
                     && symbol.is_some()
                     && let Some(annotated_decl) = symbol_declarations(c, symbol.unwrap())
                         .iter()
                         .copied()
                         .find(|&d| {
                             let dn = c.program_nodes(d);
-                            has_type_annotation(d, dn)
+                            has_type_annotation(d, &dn)
                         })
                 {
                     // Binary expressions have a first-in-wins type annotation
@@ -4233,7 +4246,7 @@ impl<'a> NodeBuilderImpl<'a> {
                     let symbols = c.symbol_arena.borrow();
                     pt = self
                         .pc
-                        .get_type_of_declaration(annotated_decl, dn, &symbols);
+                        .get_type_of_declaration(annotated_decl, &dn, &symbols);
                 }
                 let report_errors = !self.ctx.suppress_report_inference_fallback;
                 let is_optional_annotated = !requires_adding_undefined && {
@@ -4283,7 +4296,10 @@ impl<'a> NodeBuilderImpl<'a> {
                             should_add_undefined = !contains_non_missing_undefined_type(c, ptt);
                         } else {
                             should_add_undefined =
-                                !pseudochecker::could_already_refer_to_undefined_type(&pt);
+                                !pseudochecker::could_already_refer_to_undefined_type(
+                                    &pt,
+                                    &decl_nodes,
+                                );
                         }
                     }
                     if should_add_undefined {
@@ -4432,8 +4448,8 @@ impl<'a> NodeBuilderImpl<'a> {
     ) {
         // get symbol of the first identifier of the entityName
         let expr_nodes = c.program_nodes(access_expression);
-        let first_identifier = ast::get_first_identifier(access_expression, expr_nodes);
-        let text = expr_nodes[first_identifier].text(expr_nodes).into_owned();
+        let first_identifier = ast::get_first_identifier(access_expression, &expr_nodes);
+        let text = expr_nodes[first_identifier].text(&expr_nodes).into_owned();
         let resolve = c.resolve_name.clone().expect("Checker::resolve_name");
         let name = resolve(
             c,
@@ -4504,7 +4520,7 @@ impl<'a> NodeBuilderImpl<'a> {
     /// `(b *NodeBuilderImpl) isStringNamed`.
     fn is_string_named(&mut self, c: &mut Checker, d: NodeId) -> bool {
         let d_nodes = c.program_nodes(d);
-        let Some(name) = ast::get_name_of_declaration(d, d_nodes) else {
+        let Some(name) = ast::get_name_of_declaration(Some(d), &d_nodes) else {
             return false;
         };
         if ast::is_computed_property_name(&d_nodes[name]) {
@@ -4527,12 +4543,14 @@ impl<'a> NodeBuilderImpl<'a> {
     /// `(b *NodeBuilderImpl) isSingleQuotedStringNamed`.
     fn is_single_quoted_string_named(&mut self, c: &mut Checker, d: NodeId) -> bool {
         let d_nodes = c.program_nodes(d);
-        let Some(name) = ast::get_name_of_declaration(d, d_nodes) else {
+        let Some(name) = ast::get_name_of_declaration(Some(d), &d_nodes) else {
             return false;
         };
         ast::is_string_literal(&d_nodes[name])
             && d_nodes[name]
-                .as_literal_like_node()
+                .as_string_literal()
+                .literal_expression_base
+                .literal_like_node_base
                 .token_flags
                 .intersects(ast::TokenFlags::SINGLE_QUOTE)
     }
@@ -4636,7 +4654,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 let expr =
                     self.symbol_to_expression(c, nodes, nt_symbol.unwrap(), SymbolFlags::VALUE);
                 self.ctx.enclosing_declaration = save_enclosing_declaration;
-                return Some(self.f.new_computed_property_name(nodes, Some(expr)));
+                return Some(self.f.new_computed_property_name(nodes, expr));
             }
         }
         if nt_flags.intersects(TypeFlags::STRING_OR_NUMBER_LITERAL) {
@@ -4685,9 +4703,14 @@ impl<'a> NodeBuilderImpl<'a> {
             // The reference was tracked in the destination scope by
             // `trackComputedName`. Reconstructing its spelling in the source
             // scope must not paint that scope's declarations visible.
-            let sym = c.types.get(name_type).as_unique_es_symbol_type().symbol;
-            let expr = self.symbol_to_expression_worker(c, nodes, sym, SymbolFlags::VALUE);
-            return Some(self.f.new_computed_property_name(nodes, Some(expr)));
+            let sym = c.types.get(name_type).symbol;
+            let expr = self.symbol_to_expression_worker(
+                c,
+                nodes,
+                sym.unwrap_or(SymbolId::NONE),
+                SymbolFlags::VALUE,
+            );
+            return Some(self.f.new_computed_property_name(nodes, expr));
         }
         None
     }
@@ -4717,7 +4740,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 if c.has_late_bindable_name(decl) {
                     let decl_nodes = c.program_nodes(decl);
                     if ast::is_binary_expression(&decl_nodes[decl]) {
-                        let name = ast::get_name_of_declaration(decl, decl_nodes);
+                        let name = ast::get_name_of_declaration(Some(decl), &decl_nodes);
                         if let Some(name) = name
                             && ast::is_element_access_expression(&decl_nodes[name])
                             && decl_nodes[name]
@@ -4727,6 +4750,7 @@ impl<'a> NodeBuilderImpl<'a> {
                                     ast::is_property_access_entity_name_expression(
                                         &decl_nodes[arg],
                                         false, // allowJs
+                                        &decl_nodes,
                                     )
                                 })
                         {
@@ -4793,7 +4817,8 @@ impl<'a> NodeBuilderImpl<'a> {
                         let mut getter_signature =
                             c.get_signature_from_declaration(getter_declaration);
                         if let Some(mapper) = symbol_mapper {
-                            getter_signature = c.instantiate_signature(getter_signature, mapper);
+                            getter_signature =
+                                c.instantiate_signature(getter_signature, Some(mapper));
                         }
                         let getter = self.signature_to_signature_declaration_helper(
                             c,
@@ -4814,7 +4839,8 @@ impl<'a> NodeBuilderImpl<'a> {
                         let mut setter_signature =
                             c.get_signature_from_declaration(setter_declaration);
                         if let Some(mapper) = symbol_mapper {
-                            setter_signature = c.instantiate_signature(setter_signature, mapper);
+                            setter_signature =
+                                c.instantiate_signature(setter_signature, Some(mapper));
                         }
                         let setter = self.signature_to_signature_declaration_helper(
                             c,
@@ -5072,7 +5098,7 @@ impl<'a> NodeBuilderImpl<'a> {
 
         let mut i = 0;
         for (idx, &property_symbol) in properties.iter().enumerate() {
-            if is_expanding(&self.ctx)
+            if crate::nodebuilder_hover::is_expanding(&self.ctx)
                 && symbol_flags(c, property_symbol).intersects(SymbolFlags::PROTOTYPE)
             {
                 continue;
@@ -5300,7 +5326,7 @@ impl<'a> NodeBuilderImpl<'a> {
             && symbol_declarations(c, symbol).iter().any(|&declaration| {
                 let decl_nodes = c.program_nodes(declaration);
                 ast::is_static(&decl_nodes[declaration])
-                    && !ast::get_name_of_declaration(declaration, decl_nodes)
+                    && !ast::get_name_of_declaration(Some(declaration), &decl_nodes)
                         .is_some_and(|n| c.is_late_bindable_index_signature(n))
             });
         let mut is_non_local_function_symbol = false;
@@ -5403,7 +5429,7 @@ impl<'a> NodeBuilderImpl<'a> {
             && c.get_base_type_variable_of_class(symbol).is_none()
             && !(symbol_value_declaration(c, symbol).is_some_and(|vd| {
                 let vd_nodes = c.program_nodes(vd);
-                ast::is_class_like(Some(vd), vd_nodes)
+                ast::is_class_like(Some(vd), &vd_nodes)
             }) && self
                 .ctx
                 .flags
@@ -5672,7 +5698,7 @@ impl<'a> NodeBuilderImpl<'a> {
         {
             let new_param_symbol =
                 c.new_symbol(SymbolFlags::TYPE_PARAMETER, "T" /* as __String */);
-            let new_param = c.new_type_parameter(new_param_symbol);
+            let new_param = c.new_type_parameter(Some(new_param_symbol));
             let name = self.type_parameter_to_name(c, nodes, new_param);
             let new_type_variable = self.f.new_type_reference_node(nodes, Some(name), None);
             self.ctx.approximate_length += 37;
@@ -6070,7 +6096,7 @@ impl<'a> NodeBuilderImpl<'a> {
                     let ref_node_type_arguments_len = ref_node.and_then(|n| {
                         let nn = c.program_nodes(n);
                         if ast::is_type_reference_node(&nn[n]) {
-                            nn[n].type_arguments().map(|l| l.nodes.len())
+                            nn[n].type_arguments().map(|l| l.len())
                         } else {
                             None
                         }
@@ -6114,6 +6140,7 @@ impl<'a> NodeBuilderImpl<'a> {
             }
             (Some(result), Some(final_ref)) => {
                 self.append_reference_to_type(c, nodes, result, final_ref)
+                    .unwrap_or(result)
             }
             (Some(result), None) => result,
         }
@@ -6131,15 +6158,15 @@ impl<'a> NodeBuilderImpl<'a> {
             return self.create_elided_information_placeholder(nodes);
         }
 
-        let mut type_id = type_id(c, t);
+        let mut t_id = type_id(c, t);
         let is_array_or_tuple = c.is_array_or_tuple_type(t);
         if is_array_or_tuple {
             // Deferred and regular references share a cycle identity.
             let target = c.types.get(t).target().unwrap_or(t);
             let args = c.get_type_arguments(t);
-            type_id = type_id(c, c.create_type_reference(target, args));
+            t_id = type_id(c, c.create_type_reference(target, &args));
         }
-        if self.ctx.visited_types.has(&type_id) {
+        if self.ctx.visited_types.has(&t_id) {
             return self.create_cyclic_structure_placeholder(c, nodes);
         }
 
@@ -6184,7 +6211,7 @@ impl<'a> NodeBuilderImpl<'a> {
         // circular references to instantiations of the same anonymous type.
 
         let mut key = CompositeTypeCacheIdentity {
-            type_id,
+            type_id: t_id,
             flags: self.ctx.flags,
             internal_flags: self.ctx.internal_flags,
             infer_type_parameters: CacheHashKey::default(),
@@ -6200,7 +6227,7 @@ impl<'a> NodeBuilderImpl<'a> {
             && let Some(enclosing) = self.ctx.enclosing_declaration
             && self.links.has(&enclosing)
         {
-            let links = self.links.get(&enclosing);
+            let links = self.links.get(enclosing);
             if let Some(cached_result) = links.serialized_types.get(&key) {
                 // TODO: check if we instead store late painted statements
                 // associated with this?
@@ -6266,7 +6293,7 @@ impl<'a> NodeBuilderImpl<'a> {
             }
             self.ctx.symbol_depth.insert(id, depth + 1);
         }
-        self.ctx.visited_types.add(type_id);
+        self.ctx.visited_types.add(t_id);
         let prev_tracked_symbols = std::mem::replace(
             &mut self.ctx.tracked_symbols,
             Rc::new(RefCell::new(Vec::new())),
@@ -6276,7 +6303,7 @@ impl<'a> NodeBuilderImpl<'a> {
         let added_length = self.ctx.approximate_length - start_length;
         if can_use_cache && !self.ctx.reported_diagnostic.get() && !self.ctx.encountered_error {
             if let Some(enclosing) = self.ctx.enclosing_declaration {
-                let links = self.links.get(&enclosing);
+                let links = self.links.get(enclosing);
                 links.serialized_types.insert(
                     key,
                     SerializedTypeEntry {
@@ -6288,7 +6315,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 );
             }
         }
-        self.ctx.visited_types.delete(&type_id);
+        self.ctx.visited_types.delete(&t_id);
         if let Some(id) = id {
             self.ctx.symbol_depth.insert(id, depth);
         }
@@ -6503,7 +6530,7 @@ impl<'a> NodeBuilderImpl<'a> {
             return Some(self.f.new_literal_type_node(nodes, Some(lit)));
         }
         if t_flags.intersects(TypeFlags::BIG_INT_LITERAL) {
-            let value = c.get_big_int_literal_value(t);
+            let value = crate::checker_d::get_big_int_literal_value(&c.types, t);
             let text = crate::utilities::pseudo_big_int_to_string(value);
             self.ctx.approximate_length += text.len() as i32 + 1;
             let lit = self
@@ -7042,7 +7069,7 @@ impl<'a> NodeBuilderImpl<'a> {
         expr: NodeId,
         type_arguments: Option<NodeList>,
     ) -> NodeId {
-        if type_arguments.is_none_or(|t| t.nodes.is_empty()) {
+        if type_arguments.as_ref().is_none_or(|t| t.nodes.is_empty()) {
             return expr;
         }
         self.f
@@ -7217,12 +7244,8 @@ fn types_are_same_reference(c: &Checker, a: TypeId, b: TypeId) -> bool {
     a_alias.is_some() && a_alias.and_then(|al| al.symbol) == b_alias.and_then(|al| al.symbol)
 }
 
-/// `isExpanding` (nodebuilder_hover.go) — declared here since
-/// `createTypeNodesFromResolvedType` uses it; hover-specific code lands in
-/// nodebuilder_hover.rs.
-fn is_expanding(ctx: &NodeBuilderContext) -> bool {
-    ctx.max_expansion_depth != -1
-}
+// `isExpanding` (nodebuilder_hover.go:16) lives in `nodebuilder_hover.rs` —
+// `crate::nodebuilder_hover::is_expanding`.
 
 /// `isReservedMemberName` (utilities.go:1677) — a reserved member name
 /// consists of the byte 0xFE (invalid UTF-8 start) followed by one or more
@@ -7327,13 +7350,8 @@ fn get_mapped_type_modifiers_local(c: &Checker, t: TypeId) -> MappedTypeModifier
 /// its flags are not copied from the 'target', so get the original target
 /// symbol to work with the correct set of flags. PORT: file-local until
 /// checker.go's copy lands.
-pub(crate) fn get_target_symbol(c: &Checker, s: SymbolId) -> SymbolId {
-    if symbol_check_flags(c, s).intersects(ast::checkflags::CheckFlags::INSTANTIATED) {
-        if let Some(target) = c.value_symbol_links.get(s).target {
-            return target;
-        }
-    }
-    s
+pub(crate) fn get_target_symbol(c: &mut Checker, s: SymbolId) -> SymbolId {
+    c.get_target_symbol(s)
 }
 
 /// `c.getRegularTypeOfExpression` (checker.go:32668). PORT: file-local until
@@ -7436,7 +7454,7 @@ fn clone_binding_name_visit(
             (
                 binding_element.dot_dot_dot_token,
                 binding_element.property_name,
-                binding_element.name(),
+                binding_element.name,
             )
         };
         cx.factory
@@ -7745,7 +7763,7 @@ pub struct SignatureToSignatureDeclarationOptions {
 
 /// `propertyNameNodeKind`.
 #[derive(Clone, Copy, PartialEq, Eq)]
-enum PropertyNameNodeKind {
+pub(crate) enum PropertyNameNodeKind {
     /// `propertyNameNodeKindIdentifier`.
     Identifier,
     /// `propertyNameNodeKindNumericLiteral`.
@@ -7755,7 +7773,7 @@ enum PropertyNameNodeKind {
 }
 
 /// `classifyPropertyName`.
-fn classify_property_name(name: &str, string_named: bool, is_method: bool) -> PropertyNameNodeKind {
+pub(crate) fn classify_property_name(name: &str, string_named: bool, is_method: bool) -> PropertyNameNodeKind {
     if is_method && name == "new" {
         return PropertyNameNodeKind::StringLiteral;
     }

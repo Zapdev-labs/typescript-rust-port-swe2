@@ -34,8 +34,6 @@ use crate::types::{
 };
 
 impl JsxFlags {
-    /// `JsxFlagsNone`.
-    pub const NONE: JsxFlags = JsxFlags(0);
     /// `JsxFlagsIntrinsicNamedElement` — an element from a named property of
     /// the JSX.IntrinsicElements interface.
     pub const INTRINSIC_NAMED_ELEMENT: JsxFlags = JsxFlags(1 << 0);

@@ -146,7 +146,7 @@ impl Checker {
         mut source: TypeId,
         mut target: TypeId,
     ) {
-        if !self.could_contain_type_variables(target) || self.is_no_infer_type(target) {
+        if !(self.could_contain_type_variables.clone().expect("could_contain_type_variables"))(self, target) || self.is_no_infer_type(target) {
             return;
         }
         if source == self.wildcard_type || source == self.blocked_string_type {
@@ -1891,7 +1891,7 @@ impl Checker {
             }
         }
         let target_return_type = self.get_return_type_of_signature(target);
-        if self.could_contain_type_variables(target_return_type) {
+        if (self.could_contain_type_variables.clone().expect("could_contain_type_variables"))(self, target_return_type) {
             let source_return_type = self.get_return_type_of_signature(source);
             callback(self, source_return_type, target_return_type);
         }
@@ -2839,7 +2839,7 @@ impl Checker {
             .priority
             .intersects(InferencePriority::PRIORITY_IMPLIES_COMBINATION)
         {
-            self.get_union_type_ex(&base_candidates, UnionReduction::SUBTYPE, None, None)
+            self.get_union_type_ex(&base_candidates, UnionReduction::Subtype, None, None)
         } else {
             self.get_common_supertype(&base_candidates)
         };
@@ -2867,7 +2867,7 @@ impl Checker {
                 .collect();
             if !object_literals.is_empty() {
                 let literals_type =
-                    self.get_union_type_ex(&object_literals, UnionReduction::SUBTYPE, None, None);
+                    self.get_union_type_ex(&object_literals, UnionReduction::Subtype, None, None);
                 let non_literal_types: Vec<TypeId> = candidates
                     .iter()
                     .copied()
@@ -2944,7 +2944,7 @@ impl Checker {
         if !inference.candidates.is_empty() {
             return Some(self.get_union_type_ex(
                 &inference.candidates,
-                UnionReduction::SUBTYPE,
+                UnionReduction::Subtype,
                 None,
                 None,
             ));

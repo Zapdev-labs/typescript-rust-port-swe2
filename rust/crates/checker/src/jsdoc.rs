@@ -161,3 +161,45 @@ pub fn get_all_jsdoc_tags(nodes: &mut Vec<ast::Node>, node: NodeId) -> Vec<NodeI
     }
     Vec::new()
 }
+
+/// `GetJSDocDeprecatedTag` (tsc/internal/ast/utilities.go:1223) — checker-local
+/// copy; the ast-level version is PORT(deferred) (needs `Node::JSDoc`/
+/// `file.jsdocCache`), reachable here via `ast::js_doc` with the mutable arena.
+pub fn get_jsdoc_deprecated_tag(nodes: &mut Vec<ast::Node>, node: NodeId) -> Option<NodeId> {
+    let jsdocs = ast::js_doc(nodes, node, None);
+    for jsdoc in jsdocs {
+        if let Some(tags) = &nodes[jsdoc].as_js_doc().tags {
+            for &tag in &tags.nodes {
+                if ast::is_js_doc_deprecated_tag(&nodes[tag]) {
+                    return Some(tag);
+                }
+            }
+        }
+    }
+    None
+}
+
+/// `IsDeprecatedDeclarationWithCachedFlags` (tsc/internal/ast/utilities.go:1246)
+/// — checker-local copy (see `get_jsdoc_deprecated_tag`).
+pub fn is_deprecated_declaration_with_cached_flags(
+    nodes: &mut Vec<ast::Node>,
+    declaration: NodeId,
+    combined_flags: ast::NodeFlags,
+) -> bool {
+    if !combined_flags.intersects(ast::NodeFlags::POSSIBLY_CONTAINS_DEPRECATED_TAG) {
+        return false;
+    }
+    // Walk up to find the node that directly has the flag, since JSDoc is
+    // attached to that node (e.g. VariableStatement, not VariableDeclaration).
+    let mut n = Some(declaration);
+    while let Some(cur) = n {
+        if nodes[cur]
+            .flags
+            .intersects(ast::NodeFlags::POSSIBLY_CONTAINS_DEPRECATED_TAG)
+        {
+            return get_jsdoc_deprecated_tag(nodes, cur).is_some();
+        }
+        n = nodes[cur].parent;
+    }
+    false
+}

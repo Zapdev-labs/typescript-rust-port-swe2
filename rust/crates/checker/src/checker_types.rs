@@ -1068,7 +1068,9 @@ pub type DeferredDiagnosticCallback<'a> = Box<dyn FnOnce(&mut Checker) + 'a>;
 
 /// `type IterationTypesResolver struct` (checker.go). Go function fields
 /// capture the checker; here they are `Rc` thunks taking `&mut Checker`
-/// (see file header).
+/// (see file header). `Clone` lets callers copy the resolver bag out of the
+/// checker so `&mut Checker` methods can run without aliasing it.
+#[derive(Clone)]
 pub struct IterationTypesResolver {
     /// `iteratorSymbolName`.
     pub iterator_symbol_name: String,

@@ -616,6 +616,118 @@ impl Checker {
         }
         false
     }
+
+    /// `(c *Checker) isUncheckedJSSuggestion` (checker/utilities.go).
+    pub(crate) fn is_unchecked_js_suggestion(
+        &mut self,
+        node: Option<NodeId>,
+        suggestion: Option<SymbolId>,
+        exclude_classes: bool,
+    ) -> bool {
+        let Some(node) = node else {
+            return false;
+        };
+        let nodes = self.program_nodes(node);
+        let file = ast::get_source_file_of_node(Some(node), &nodes);
+        if let Some(file) = file {
+            let sf = nodes[file].as_source_file();
+            if self.compiler_options.check_js.is_unknown()
+                && sf.check_js_directive.is_none()
+                && (sf.script_kind == tsc_core::scriptkind::ScriptKind::Js
+                    || sf.script_kind == tsc_core::scriptkind::ScriptKind::Jsx)
+            {
+                let mut declaration_file: Option<NodeId> = None;
+                if let Some(suggestion) = suggestion {
+                    let declarations = {
+                        self.symbol_arena.borrow()[suggestion.index()]
+                            .declarations
+                            .clone()
+                    };
+                    if let Some(&first_declaration) = declarations.first() {
+                        declaration_file = ast::get_source_file_of_node(
+                            Some(first_declaration),
+                            &self.program_nodes(first_declaration),
+                        );
+                    }
+                }
+                let suggestion_has_no_extends_or_decorators = suggestion.is_none_or(|s| {
+                    let value_declaration =
+                        self.symbol_arena.borrow()[s.index()].value_declaration;
+                    value_declaration.is_none_or(|vd| {
+                        let vd_nodes = self.program_nodes(vd);
+                        !ast::is_class_like(Some(vd), &vd_nodes)
+                            || ast::get_extends_heritage_clause_elements(&vd_nodes[vd], &vd_nodes)
+                                .map_or(0, |e| e.len())
+                                != 0
+                            || ast::class_or_constructor_parameter_is_decorated(
+                                false, vd, &vd_nodes,
+                            )
+                    })
+                });
+                return !(declaration_file.is_some_and(|df| {
+                    df != file && {
+                        let df_nodes = self.program_nodes(df);
+                        ast::is_global_source_file(&df_nodes[df], &df_nodes)
+                    }
+                })) && !(exclude_classes
+                    && suggestion.is_some_and(|s| {
+                        self.symbol_arena.borrow()[s.index()]
+                            .flags
+                            .intersects(ast::SymbolFlags::CLASS)
+                    })
+                    && suggestion_has_no_extends_or_decorators)
+                    && !(exclude_classes
+                        && ast::is_property_access_expression(&nodes[node])
+                        && nodes[node]
+                            .expression()
+                            .is_some_and(|e| nodes[e].kind == ast::Kind::ThisKeyword)
+                        && suggestion_has_no_extends_or_decorators);
+            }
+        }
+        false
+    }
+
+    /// `(c *Checker) isJSLiteralType` (checker/utilities.go).
+    /// Returns if a type is or consists of a JSLiteral object type:
+    /// directly literals, unions where every element is a jsliteral,
+    /// intersections where at least one element is a jsliteral, and
+    /// instantiable types constrained to a jsliteral.
+    pub(crate) fn is_js_literal_type(&mut self, t: TypeId) -> bool {
+        if self.no_implicit_any {
+            // Flag is meaningless under `noImplicitAny` mode
+            return false;
+        }
+        let flags;
+        let object_flags;
+        {
+            let g = self.types.get(t);
+            flags = g.flags();
+            object_flags = g.object_flags();
+        }
+        if object_flags.intersects(ObjectFlags::JS_LITERAL) {
+            return true;
+        }
+        if flags.intersects(TypeFlags::UNION) {
+            let types = { self.types.get(t).as_union_type().union_or_intersection.types.clone() };
+            return types.iter().all(|&m| self.is_js_literal_type(m));
+        }
+        if flags.intersects(TypeFlags::INTERSECTION) {
+            let types = {
+                self.types
+                    .get(t)
+                    .as_intersection_type()
+                    .union_or_intersection
+                    .types
+                    .clone()
+            };
+            return types.iter().any(|&m| self.is_js_literal_type(m));
+        }
+        if flags.intersects(TypeFlags::INSTANTIABLE) {
+            let constraint = self.get_resolved_base_constraint(t, &mut Vec::new());
+            return constraint != t && self.is_js_literal_type(constraint);
+        }
+        false
+    }
 }
 
 /// `isEmptyArrayLiteral`.
@@ -2837,5 +2949,65 @@ impl Checker {
         if self.was_canceled {
             panic!("Checker was previously cancelled")
         }
+    }
+}
+
+/// `walkUpOuterExpressions` (checker/utilities.go:1906) — climbs past all
+/// outer expressions and returns the first non-outer-expression ancestor
+/// (`None` mirrors Go's nil).
+pub fn walk_up_outer_expressions(node: NodeId, nodes: &[ast::Node]) -> Option<NodeId> {
+    let mut parent = nodes[node].parent;
+    while let Some(p) = parent {
+        if !ast::is_outer_expression(&nodes[p], ast::outer_expression_kinds::ALL, nodes) {
+            break;
+        }
+        parent = nodes[p].parent;
+    }
+    parent
+}
+
+impl Checker {
+    /// `(c *Checker) isConstantVariable` (utilities.go:1083).
+    pub(crate) fn is_constant_variable(&mut self, symbol: SymbolId) -> bool {
+        self.sym(symbol).flags.intersects(ast::SymbolFlags::VARIABLE)
+            && self
+                .get_declaration_node_flags_from_symbol(symbol)
+                .intersects(ast::NodeFlags::CONSTANT)
+    }
+
+    /// `(c *Checker) isParameterOrMutableLocalVariable` (utilities.go:1087).
+    /// Returns true if symbol is a parameter, a catch clause variable, or a
+    /// mutable local variable.
+    pub(crate) fn is_parameter_or_mutable_local_variable(&mut self, symbol: SymbolId) -> bool {
+        if let Some(value_declaration) = self.sym(symbol).value_declaration {
+            let nodes = self.program_nodes(value_declaration);
+            let declaration = ast::get_root_declaration(value_declaration, &nodes);
+            return ast::is_parameter_declaration(&nodes[declaration])
+                || (ast::is_variable_declaration(&nodes[declaration])
+                    && (nodes[declaration]
+                        .parent
+                        .is_some_and(|p| ast::is_catch_clause(&nodes[p]))
+                        || self.is_mutable_local_variable_declaration(declaration)));
+        }
+        false
+    }
+
+    /// `(c *Checker) isMutableLocalVariableDeclaration` (utilities.go:1099).
+    /// Returns true if symbol is a non-exported and non-global `let` variable.
+    pub(crate) fn is_mutable_local_variable_declaration(&mut self, declaration: NodeId) -> bool {
+        let nodes = self.program_nodes(declaration);
+        let Some(decl_list) = nodes[declaration].parent else {
+            return false;
+        };
+        nodes[decl_list].flags.intersects(ast::NodeFlags::LET)
+            && !(ast::get_combined_modifier_flags(declaration, &nodes)
+                .intersects(ast::ModifierFlags::EXPORT)
+                || (nodes[decl_list]
+                    .parent
+                    .is_some_and(|vs| ast::is_variable_statement(&nodes[vs]))
+                    && nodes[decl_list]
+                        .parent
+                        .and_then(|vs| nodes[vs].parent)
+                        .is_some_and(|sf| ast::is_global_source_file(&nodes[sf], &nodes))))
     }
 }

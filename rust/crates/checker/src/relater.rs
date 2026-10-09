@@ -1116,7 +1116,7 @@ impl Checker {
                         // Likely an incorrect import. Issue a helpful
                         // diagnostic to produce a quickfix to change the
                         // import.
-                        let info = self.create_diagnostic_for_node(
+                        let info = self.new_diagnostic_for_node(
                             originating_import,
                             &tsc_diagnostics::Type_originates_at_this_import_A_namespace_style_import_cannot_be_called_or_constructed_and_will_cause_a_failure_at_runtime_Consider_using_a_default_import_or_import_require_here_instead,
                             &[] as &[String],
@@ -1147,7 +1147,7 @@ impl Checker {
             if let Some(output) = diagnostic_output {
                 output.push(diagnostic);
             } else {
-                self.add_diagnostic(diagnostic);
+                self.add_diagnostic(&diagnostic);
             }
         }
     }
@@ -1364,7 +1364,7 @@ impl Checker {
                 } else {
                     &tsc_diagnostics::Did_you_mean_to_call_this_expression
                 };
-                let info = self.create_diagnostic_for_node(Some(node), message, &[] as &[String]);
+                let info = self.new_diagnostic_for_node(Some(node), message, &[] as &[String]);
                 ast::diagnostic::lock_diagnostic(&diagnostic).add_related_info(Some(info));
                 self.report_diagnostic(Some(diagnostic), diagnostic_output);
                 return true;
@@ -1638,7 +1638,7 @@ impl Checker {
         {
             let source_str = self.type_to_string(specific_source);
             let target_str = self.type_to_string(target_prop_type);
-            diags.push(self.create_diagnostic_for_node(
+            diags.push(self.new_diagnostic_for_node(
                 prop,
                 &tsc_diagnostics::Type_0_is_not_assignable_to_type_1_with_exactOptionalPropertyTypes_Colon_true_Consider_adding_undefined_to_the_type_of_the_target,
                 &[source_str, target_str],
@@ -1707,7 +1707,7 @@ impl Checker {
                     });
                     if !is_default_library {
                         issued_elaboration = true;
-                        let info = self.create_diagnostic_for_node(
+                        let info = self.new_diagnostic_for_node(
                             Some(declaration),
                             &tsc_diagnostics::The_expected_type_comes_from_this_index_signature,
                             &[] as &[String],
@@ -1757,7 +1757,7 @@ impl Checker {
             });
             if !is_default_library {
                 let target_str = self.type_to_string(target);
-                let info = self.create_diagnostic_for_node(
+                let info = self.new_diagnostic_for_node(
                     Some(target_node),
                     &tsc_diagnostics::The_expected_type_comes_from_property_0_which_is_declared_here_on_type_1,
                     &[property_name, target_str],
@@ -1887,7 +1887,7 @@ impl Checker {
                 .map(|s| self.sym(s).declarations.clone())
                 .unwrap_or_default();
             if !target_symbol_declarations.is_empty() {
-                let info = self.create_diagnostic_for_node(
+                let info = self.new_diagnostic_for_node(
                     Some(target_symbol_declarations[0]),
                     &tsc_diagnostics::The_expected_type_comes_from_the_return_type_of_this_signature,
                     &[] as &[String],
@@ -1903,7 +1903,7 @@ impl Checker {
                 .intersects(ast::functionflags::FunctionFlags::ASYNC)
                 && promise_related
             {
-                let info = self.create_diagnostic_for_node(
+                let info = self.new_diagnostic_for_node(
                     Some(node),
                     &tsc_diagnostics::Did_you_mean_to_mark_this_function_as_async,
                     &[] as &[String],
@@ -9469,7 +9469,7 @@ impl Relater {
             );
             let declarations = c.sym(unmatched_property).declarations.clone();
             if !declarations.is_empty() {
-                let info = c.create_diagnostic_for_node(
+                let info = c.new_diagnostic_for_node(
                     Some(declarations[0]),
                     &tsc_diagnostics::X_0_is_declared_here,
                     &[prop_name],
