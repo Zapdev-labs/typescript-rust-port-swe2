@@ -29,8 +29,8 @@ use tsc_ast::{self as ast, FlowNodeId, NodeId, SymbolId, SymbolTable};
 use tsc_collections::OrderedSet;
 use tsc_core::context::Context;
 use tsc_core::linkstore::LinkStore;
-use tsc_core::options_generated::{ModuleKind, ModuleResolutionKind, ScriptTarget};
 use tsc_core::options_generated::CompilerOptions;
+use tsc_core::options_generated::{ModuleKind, ModuleResolutionKind, ScriptTarget};
 use tsc_evaluator as evaluator;
 use tsc_jsnum::PseudoBigInt;
 use tsc_scanner::scanner::Scanner;
@@ -39,11 +39,12 @@ use tsc_tracing as tracing;
 use crate::checker_types::{
     AssignmentReducedKey, CachedSignatureKey, CachedTypeKey, ContextualInfo,
     DeferredDiagnosticCallback, DiscriminatedContextualTypeKey, EvaluatorThunk, FlowLoopInfo,
-    FlowLoopKey, InstantiationExpressionKey, IterationTypes, IterationTypesKey, IterationTypesResolver,
-    NameResolverThunk, NarrowedTypeKey, NodeBoolThunk, NonExistentPropertyKey, NumberLiteralKey,
-    PropertiesTypesKey, ReverseMappedTypeKey, StringMappingKey, SubstitutionTypeKey,
-    SymbolChainComparerThunk, SymbolComparerThunk, ThisAssignmentDeclarationKind, TypeBoolThunk,
-    TypeResolution, TypeThunk, UnionOfUnionKey, VarianceStackEntry,
+    FlowLoopKey, InstantiationExpressionKey, IterationTypes, IterationTypesKey,
+    IterationTypesResolver, NameResolverThunk, NarrowedTypeKey, NodeBoolThunk,
+    NonExistentPropertyKey, NumberLiteralKey, PropertiesTypesKey, ReverseMappedTypeKey,
+    StringMappingKey, SubstitutionTypeKey, SymbolChainComparerThunk, SymbolComparerThunk,
+    ThisAssignmentDeclarationKind, TypeBoolThunk, TypeResolution, TypeThunk, UnionOfUnionKey,
+    VarianceStackEntry,
 };
 use crate::emitresolver::EmitResolverLinks;
 use crate::flagdef::flag_type;
@@ -52,11 +53,11 @@ use crate::inference::InferenceState;
 use crate::links::{NodeLinkStore, SymbolArenaLinkStore};
 use crate::mapper::{TypeMapperArena, TypeMapperId};
 use crate::nodebuilder::NodeBuilder;
-use crate::relater::{ExpandingFlags, RelationComparisonResult, Relater, SharedRelation};
+use crate::relater::{ExpandingFlags, Relater, RelationComparisonResult, SharedRelation};
 use crate::symbolaccessibility::{ExternalModuleContainerIndex, SymbolTableId};
 use crate::tracer::Tracer;
 use crate::types::{
-    AliasSymbolLinks, AssertionLinks, ArrayLiteralLinks, ComputedNameNodeLinks,
+    AliasSymbolLinks, ArrayLiteralLinks, AssertionLinks, ComputedNameNodeLinks,
     ContainingSymbolLinks, DeclaredTypeLinks, DeferredSymbolLinks, EnumMemberLinks,
     ExportTypeLinks, IndexInfo, IndexInfoArena, IndexInfoId, LateBoundLinks, MappedSymbolLinks,
     MarkedAssignmentSymbolLinks, MembersAndExportsLinks, ModuleSymbolLinks, NodeLinks, ObjectFlags,
@@ -424,6 +425,11 @@ pub fn is_object_or_array_literal_type(t: &Type) -> bool {
         .intersects(ObjectFlags::OBJECT_LITERAL | ObjectFlags::ARRAY_LITERAL)
 }
 
+// `IsTypeAny` / `isTypeUsableAsPropertyName` — canonical definitions live in
+// `crate::types`; re-exported for `crate::checker_core::is_type_any` call
+// sites.
+pub use crate::types::{is_type_any, is_type_usable_as_property_name};
+
 /// `isTupleType` (checker.go:24013 — deferred file; mirrored for
 /// `get_recursion_identity_from_target` and `types.rs` docs).
 /// PORT(mirrored): `t.Target()` dereferences a sibling element, so the arena
@@ -436,7 +442,10 @@ pub fn is_tuple_type(types: &TypeArena, t: TypeId) -> bool {
     let Some(target) = ty.target() else {
         return false;
     };
-    types.get(target).object_flags.intersects(ObjectFlags::TUPLE)
+    types
+        .get(target)
+        .object_flags
+        .intersects(ObjectFlags::TUPLE)
 }
 
 /// `IsTupleType` — exported sibling (checker.go `IsTupleType` is in
@@ -468,7 +477,10 @@ pub fn get_non_distributed_type_parameter(types: &TypeArena, t: TypeId) -> TypeI
 pub fn value_to_string(value: Option<&evaluator::Value>) -> String {
     match value {
         Some(evaluator::Value::String(s)) => {
-            format!("\"{}\"", tsc_printer::escape_string(s, tsc_printer::QuoteChar::DoubleQuote))
+            format!(
+                "\"{}\"",
+                tsc_printer::escape_string(s, tsc_printer::QuoteChar::DoubleQuote)
+            )
         }
         Some(evaluator::Value::Number(n)) => n.to_string(),
         Some(evaluator::Value::Bool(b)) => {
@@ -511,10 +523,7 @@ fn get_recursion_identity_target(c: &mut Checker, t: TypeId) -> TypeId {
         drop(ty);
         return get_recursion_identity_target(c, object_type.unwrap());
     }
-    if ty
-        .object_flags
-        .contains(ObjectFlags::INSTANTIATED_MAPPED)
-    {
+    if ty.object_flags.contains(ObjectFlags::INSTANTIATED_MAPPED) {
         drop(ty);
         let target = c.get_modifiers_type_from_mapped_type(t);
         if let Some(target) = target {
@@ -523,12 +532,11 @@ fn get_recursion_identity_target(c: &mut Checker, t: TypeId) -> TypeId {
             let (has_symbol, constituents_have_symbol) = {
                 let tt = c.types.get(target);
                 let has_symbol = tt.symbol.is_some();
-                let constituents_have_symbol = tt.flags.intersects(TypeFlags::INTERSECTION)
-                    && {
-                        let types = tt.types().to_vec();
-                        drop(tt);
-                        types.iter().any(|&s| c.types.get(s).symbol.is_some())
-                    };
+                let constituents_have_symbol = tt.flags.intersects(TypeFlags::INTERSECTION) && {
+                    let types = tt.types().to_vec();
+                    drop(tt);
+                    types.iter().any(|&s| c.types.get(s).symbol.is_some())
+                };
                 (has_symbol, constituents_have_symbol)
             };
             if has_symbol || constituents_have_symbol {
@@ -1181,7 +1189,8 @@ pub struct Checker {
     /// `getGlobalImportAttributesTypeChecked`.
     pub get_global_import_attributes_type_checked: Option<Rc<TypeThunk<'static>>>,
     /// `getGlobalNonNullableTypeAliasOrNil`.
-    pub get_global_non_nullable_type_alias_or_nil: Option<Rc<crate::checker_types::SymbolThunk<'static>>>,
+    pub get_global_non_nullable_type_alias_or_nil:
+        Option<Rc<crate::checker_types::SymbolThunk<'static>>>,
     /// `getGlobalExtractSymbol`.
     pub get_global_extract_symbol: Option<Rc<crate::checker_types::SymbolThunk<'static>>>,
     /// `getGlobalDisposableType`.
@@ -1199,7 +1208,8 @@ pub struct Checker {
     /// `getGlobalTemplateStringsArrayType`.
     pub get_global_template_strings_array_type: Option<Rc<TypeThunk<'static>>>,
     /// `getGlobalESSymbolConstructorSymbolOrNil`.
-    pub get_global_es_symbol_constructor_symbol_or_nil: Option<Rc<crate::checker_types::SymbolThunk<'static>>>,
+    pub get_global_es_symbol_constructor_symbol_or_nil:
+        Option<Rc<crate::checker_types::SymbolThunk<'static>>>,
     /// `getGlobalESSymbolConstructorTypeSymbolOrNil`.
     pub get_global_es_symbol_constructor_type_symbol_or_nil:
         Option<Rc<crate::checker_types::SymbolThunk<'static>>>,
@@ -1216,7 +1226,8 @@ pub struct Checker {
     /// `getGlobalAbstractModuleSourceType`.
     pub get_global_abstract_module_source_type: Option<Rc<TypeThunk<'static>>>,
     /// `getGlobalPromiseConstructorSymbol`.
-    pub get_global_promise_constructor_symbol: Option<Rc<crate::checker_types::SymbolThunk<'static>>>,
+    pub get_global_promise_constructor_symbol:
+        Option<Rc<crate::checker_types::SymbolThunk<'static>>>,
     /// `getGlobalPromiseConstructorSymbolOrNil`.
     pub get_global_promise_constructor_symbol_or_nil:
         Option<Rc<crate::checker_types::SymbolThunk<'static>>>,
@@ -1701,16 +1712,17 @@ impl Checker {
         unimplemented!("PORT(deferred): Checker::instantiate_type lands with checker.go")
     }
 
-    /// `c.inferFromIntraExpressionSites` (inference.go).
+    /// `c.inferFromIntraExpressionSites` (inference.go). PORT: delegates to
+    /// the free function in `crate::inference` (that module can't define
+    /// another `impl Checker` method with this name).
     pub fn infer_from_intra_expression_sites(&mut self, n: InferenceContextId) {
-        let _ = n;
-        unimplemented!("PORT(deferred): inferFromIntraExpressionSites lands with inference.go")
+        crate::inference::infer_from_intra_expression_sites(self, n)
     }
 
-    /// `c.getInferredType` (inference.go).
+    /// `c.getInferredType` (inference.go). PORT: delegates to the free
+    /// function in `crate::inference`.
     pub fn get_inferred_type(&mut self, n: InferenceContextId, index: usize) -> TypeId {
-        let _ = (n, index);
-        unimplemented!("PORT(deferred): getInferredType lands with inference.go")
+        crate::inference::get_inferred_type(self, n, index)
     }
 
     /// `c.getModifiersTypeFromMappedType` (checker.go) — needed by
@@ -1720,14 +1732,8 @@ impl Checker {
         unimplemented!("PORT(deferred): getModifiersTypeFromMappedType lands with checker.go")
     }
 
-    /// `c.TypeToString` — needed by the tracing adapter's `Display`.
-    /// PORT(deferred): typeToString lands with nodebuilderimpl.go; the
-    /// tracer calls it through a hook (see TracedCheckerContext) because
-    /// `TracedType` must be `Send + Sync`.
-    pub fn type_to_string(&mut self, t: TypeId) -> String {
-        let _ = t;
-        unimplemented!("PORT(deferred): TypeToString lands with nodebuilderimpl.go")
-    }
+    // `c.TypeToString` / `typeToString` are implemented in
+    // `printer_util.rs` (checker/printer.go).
 
     /// `c.getExpandedParameters` — needed by `enter_signature_scope`.
     /// Go returns `[][]*ast.Symbol` and the caller takes `[0]`.
@@ -1746,12 +1752,8 @@ impl Checker {
         unimplemented!("PORT(deferred): getSymbolOfDeclaration lands with checker.go")
     }
 
-    /// `c.containsArgumentsReference` (checker.go) — needed by the deferred
-    /// `check_unmatched_js_doc_parameters`.
-    pub fn contains_arguments_reference(&self, node: NodeId) -> bool {
-        let _ = node;
-        unimplemented!("PORT(deferred): containsArgumentsReference lands with checker.go")
-    }
+    // `c.containsArgumentsReference` (checker.go:32675) is implemented in
+    // `checker_d.rs` (needs `&mut self` for `get_resolved_symbol`).
 
     /// `c.isArrayType` (checker.go).
     pub fn is_array_type(&self, t: TypeId) -> bool {
@@ -1793,9 +1795,8 @@ impl Checker {
         node: NodeId,
         f: impl FnOnce(&mut Self) -> T,
     ) -> T {
-        let mut callback = |n: &ast::Node, ns: &[ast::Node]| {
-            ast::is_call_like_or_function_like_expression(n, ns)
-        };
+        let mut callback =
+            |n: &ast::Node, ns: &[ast::Node]| ast::is_call_like_or_function_like_expression(n, ns);
         let mut ancestor_node = ast::find_ancestor(Some(node), nodes, &mut callback);
         if ancestor_node.is_none() {
             return f(self);
@@ -1809,9 +1810,9 @@ impl Checker {
             cached_resolved_signatures.push((ancestor, signature_links.resolved_signature));
             signature_links.resolved_signature = None;
             if ast::is_function_expression_or_arrow_function(&nodes[ancestor]) {
-                let symbol = self
-                    .get_symbol_of_declaration(ancestor)
-                    .expect("getSymbolOfDeclaration: nil symbol (Go would panic on GetSymbolId(nil))");
+                let symbol = self.get_symbol_of_declaration(ancestor).expect(
+                    "getSymbolOfDeclaration: nil symbol (Go would panic on GetSymbolId(nil))",
+                );
                 let symbol_links = self.value_symbol_links.get(symbol);
                 cached_types.push((symbol, symbol_links.resolved_type));
                 symbol_links.resolved_type = None;
@@ -1880,11 +1881,7 @@ impl Checker {
         unimplemented!("PORT(deferred): getTemplateTypeFromMappedType lands with checker.go")
     }
 
-    /// `c.getTypeOfSymbol` (checker.go).
-    pub fn get_type_of_symbol(&mut self, symbol: SymbolId) -> TypeId {
-        let _ = symbol;
-        unimplemented!("PORT(deferred): getTypeOfSymbol lands with checker.go")
-    }
+    /// `c.getTypeOfSymbol` (checker.go) — implemented in checker_c.rs.
 
     /// `c.tracer.RecordType(t)` — Go's `wrapType` reads `t.checker` fields
     /// (`patternForType`, recursion identity, `TypeToString`) lazily at dump
@@ -1921,17 +1918,11 @@ impl Checker {
         let type_parameter = self.get_type_parameter_from_mapped_type(t);
         self.types.get_mut(t).as_mapped_type_mut().type_parameter = type_parameter;
         let constraint_type = self.get_constraint_type_from_mapped_type(t);
-        self.types
-            .get_mut(t)
-            .as_mapped_type_mut()
-            .constraint_type = constraint_type;
+        self.types.get_mut(t).as_mapped_type_mut().constraint_type = constraint_type;
         let name_type = self.get_name_type_from_mapped_type(t);
         self.types.get_mut(t).as_mapped_type_mut().name_type = name_type;
         let template_type = self.get_template_type_from_mapped_type(t);
-        self.types
-            .get_mut(t)
-            .as_mapped_type_mut()
-            .template_type = template_type;
+        self.types.get_mut(t).as_mapped_type_mut().template_type = template_type;
     }
 }
 
@@ -1951,7 +1942,10 @@ fn create_file_index_map(files: &[NodeId]) -> FxHashMap<NodeId, usize> {
 
 /// `countGlobalSymbols` (checker.go). Needs each file's node arena for
 /// `IsExternalOrCommonJSModule`/`locals` — `program.nodes` supplies it.
-fn count_global_symbols(files: &[NodeId], program: &Rc<dyn crate::checker_types::Program>) -> usize {
+fn count_global_symbols(
+    files: &[NodeId],
+    program: &Rc<dyn crate::checker_types::Program>,
+) -> usize {
     let mut count = 0;
     for &file in files {
         let nodes = program.nodes(file.file_index());
@@ -2042,8 +2036,10 @@ impl Checker {
             .get_strict_option_value(c.compiler_options.use_unknown_in_catch_variables);
         c.exact_optional_property_types =
             c.compiler_options.exact_optional_property_types.is_true();
-        c.can_collect_symbol_alias_accessibility_data =
-            c.compiler_options.verbatim_module_syntax.is_false_or_unknown();
+        c.can_collect_symbol_alias_accessibility_data = c
+            .compiler_options
+            .verbatim_module_syntax
+            .is_false_or_unknown();
         c.array_variances = vec![VarianceFlags::COVARIANT];
         c.globals = SymbolTable::with_size_hint(count_global_symbols(&c.files, &program));
         // PORT: Go `evaluator.NewEvaluator(c.evaluateEntity,
@@ -2057,15 +2053,20 @@ impl Checker {
         c.arguments_symbol = c.new_symbol(ast::SymbolFlags::PROPERTY, "arguments");
         c.require_symbol = c.new_symbol(ast::SymbolFlags::PROPERTY, "require");
         c.unknown_symbol = c.new_symbol(ast::SymbolFlags::PROPERTY, "unknown");
-        c.global_this_symbol =
-            c.new_symbol_ex(ast::SymbolFlags::MODULE, "globalThis", ast::checkflags::CheckFlags::READONLY);
+        c.global_this_symbol = c.new_symbol_ex(
+            ast::SymbolFlags::MODULE,
+            "globalThis",
+            ast::checkflags::CheckFlags::READONLY,
+        );
         // `c.globalThisSymbol.Exports = c.globals` — Go shares the map header
         // (later `c.globals` inserts show through `exports`); the port's
         // `SymbolTable` is a value. PORT(divergence): wave-2 may need
         // `Rc<RefCell<SymbolTable>>` for full sharing semantics.
         let globals = c.globals.clone();
         c.symbol_arena.borrow_mut()[c.global_this_symbol.index()].exports = globals;
-        let name = c.symbol_arena.borrow()[c.global_this_symbol.index()].name.clone();
+        let name = c.symbol_arena.borrow()[c.global_this_symbol.index()]
+            .name
+            .clone();
         c.globals.set(name, c.global_this_symbol);
         c.resolve_name = Some(c.create_name_resolver());
         c.resolve_name_for_symbol_suggestion = Some(c.create_name_resolver_for_suggestion());
@@ -2156,23 +2157,22 @@ impl Checker {
         c.unique_literal_mapper = crate::mapper::new_function_type_mapper(&mut c, |c, t| {
             c.get_unique_literal_type_for_type_parameter(t)
         });
-        c.report_unreliable_mapper = crate::mapper::new_function_type_mapper(&mut c, |c, t| {
-            c.report_unreliable_worker(t)
-        });
-        c.report_unmeasurable_mapper = crate::mapper::new_function_type_mapper(&mut c, |c, t| {
-            c.report_unmeasurable_worker(t)
-        });
-        c.restrictive_mapper = crate::mapper::new_function_type_mapper(&mut c, |c, t| {
-            c.restrictive_mapper_worker(t)
-        });
-        c.permissive_mapper = crate::mapper::new_function_type_mapper(&mut c, |c, t| {
-            c.permissive_mapper_worker(t)
-        });
+        c.report_unreliable_mapper =
+            crate::mapper::new_function_type_mapper(&mut c, |c, t| c.report_unreliable_worker(t));
+        c.report_unmeasurable_mapper =
+            crate::mapper::new_function_type_mapper(&mut c, |c, t| c.report_unmeasurable_worker(t));
+        c.restrictive_mapper =
+            crate::mapper::new_function_type_mapper(&mut c, |c, t| c.restrictive_mapper_worker(t));
+        c.permissive_mapper =
+            crate::mapper::new_function_type_mapper(&mut c, |c, t| c.permissive_mapper_worker(t));
         c.empty_object_type = c.new_anonymous_type(None, SymbolTable::new(), &[], &[], &[]);
         c.empty_jsx_object_type = c.new_anonymous_type(None, SymbolTable::new(), &[], &[], &[]);
-        c.empty_fresh_jsx_object_type = c.new_anonymous_type(None, SymbolTable::new(), &[], &[], &[]);
-        let type_literal_symbol =
-            c.new_symbol(ast::SymbolFlags::TYPE_LITERAL, ast::symbol::INTERNAL_SYMBOL_NAME_TYPE);
+        c.empty_fresh_jsx_object_type =
+            c.new_anonymous_type(None, SymbolTable::new(), &[], &[], &[]);
+        let type_literal_symbol = c.new_symbol(
+            ast::SymbolFlags::TYPE_LITERAL,
+            ast::symbol::INTERNAL_SYMBOL_NAME_TYPE,
+        );
         c.empty_type_literal_type =
             c.new_anonymous_type(Some(type_literal_symbol), SymbolTable::new(), &[], &[], &[]);
         c.unknown_empty_object_type = c.new_anonymous_type(None, SymbolTable::new(), &[], &[], &[]);
@@ -2262,7 +2262,14 @@ impl Checker {
         c.zero_big_int_type = c.get_big_int_literal_type(PseudoBigInt::default());
         // `slices.Sorted(maps.Keys(typeofNEFacts))`.
         let mut typeof_names: Vec<&'static str> = vec![
-            "string", "number", "bigint", "boolean", "symbol", "undefined", "object", "function",
+            "string",
+            "number",
+            "bigint",
+            "boolean",
+            "symbol",
+            "undefined",
+            "object",
+            "function",
         ];
         typeof_names.sort();
         let typeof_types: Vec<TypeId> = typeof_names
@@ -2300,8 +2307,7 @@ impl Checker {
         c.get_global_import_call_options_type_checked =
             Some(c.get_global_type_resolver("ImportCallOptions", 0, true));
         c.get_global_promise_type = Some(c.get_global_type_resolver("Promise", 1, false));
-        c.get_global_promise_type_checked =
-            Some(c.get_global_type_resolver("Promise", 1, true));
+        c.get_global_promise_type_checked = Some(c.get_global_type_resolver("Promise", 1, true));
         c.get_global_promise_like_type = Some(c.get_global_type_resolver("PromiseLike", 1, true));
         c.get_global_abstract_module_source_type =
             Some(c.get_global_type_resolver("AbstractModuleSource", 0, true));
@@ -2314,8 +2320,7 @@ impl Checker {
             Some(c.get_global_type_alias_resolver("NoInfer", 1, false));
         c.get_global_iterator_type = Some(c.get_global_type_resolver("Iterator", 3, false));
         c.get_global_iterable_type = Some(c.get_global_type_resolver("Iterable", 3, false));
-        c.get_global_iterable_type_checked =
-            Some(c.get_global_type_resolver("Iterable", 3, true));
+        c.get_global_iterable_type_checked = Some(c.get_global_type_resolver("Iterable", 3, true));
         c.get_global_iterable_iterator_type =
             Some(c.get_global_type_resolver("IterableIterator", 3, false));
         c.get_global_iterable_iterator_type_checked =
@@ -2492,10 +2497,14 @@ impl Checker {
             if report_errors {
                 let decl = {
                     let arena = self.symbol_arena.borrow();
-                    arena[symbol.index()].declarations.iter().copied().find(|&d| {
-                        let nodes = self.program_nodes(d);
-                        ast::is_type_alias_declaration(&nodes[d])
-                    })
+                    arena[symbol.index()]
+                        .declarations
+                        .iter()
+                        .copied()
+                        .find(|&d| {
+                            let nodes = self.program_nodes(d);
+                            ast::is_type_alias_declaration(&nodes[d])
+                        })
                 };
                 let arg = self.symbol_display_name(symbol);
                 self.error(
@@ -2522,8 +2531,13 @@ impl Checker {
             let flags = self.symbol_arena.borrow()[symbol.index()].flags;
             if flags.intersects(ast::SymbolFlags::CLASS | ast::SymbolFlags::INTERFACE) {
                 let t = self.get_declared_type_of_symbol(symbol);
-                let type_parameter_count =
-                    self.types.get(t).as_interface_type().expect("interface type").all_type_parameters.len();
+                let type_parameter_count = self
+                    .types
+                    .get(t)
+                    .as_interface_type()
+                    .expect("interface type")
+                    .all_type_parameters
+                    .len();
                 if type_parameter_count == arity as usize {
                     return t;
                 }
@@ -2579,7 +2593,10 @@ impl Checker {
         meaning: ast::SymbolFlags,
         diagnostic: Option<&'static tsc_diagnostics::Message>,
     ) -> Option<SymbolId> {
-        let resolve = self.resolve_name.clone().expect("resolveName not initialized");
+        let resolve = self
+            .resolve_name
+            .clone()
+            .expect("resolveName not initialized");
         resolve(self, None, name, meaning, diagnostic, false, false)
     }
 
@@ -2602,10 +2619,9 @@ impl Checker {
         self.could_contain_type_variables = Some(Rc::new(|c: &mut Checker, t: TypeId| {
             c.could_contain_type_variables_worker(t)
         }));
-        self.is_string_index_signature_only_type =
-            Some(Rc::new(|c: &mut Checker, t: TypeId| {
-                c.is_string_index_signature_only_type_worker(t)
-            }));
+        self.is_string_index_signature_only_type = Some(Rc::new(|c: &mut Checker, t: TypeId| {
+            c.is_string_index_signature_only_type_worker(t)
+        }));
         self.mark_node_assignments = Some(Rc::new(|c: &mut Checker, node: NodeId| {
             c.mark_node_assignments_worker(node)
         }));
@@ -2669,7 +2685,9 @@ impl Checker {
                     Some(
                         &tsc_diagnostics::Type_of_await_operand_must_either_be_a_valid_promise_or_must_not_contain_a_callable_then_member,
                     ),
+                    &[],
                 )
+                .unwrap_or(c.error_type)
             })),
             must_have_a_next_method_diagnostic: Some(
                 &tsc_diagnostics::An_async_iterator_must_have_a_next_method,
@@ -2695,7 +2713,11 @@ impl Checker {
         let mut augmentations: Vec<Vec<NodeId>> = Vec::new();
         let files = self.files.clone();
         for file in &files {
-            let nodes = self.program.as_ref().expect("program").nodes(file.file_index());
+            let nodes = self
+                .program
+                .as_ref()
+                .expect("program")
+                .nodes(file.file_index());
             let file_node = &nodes[*file];
             if !ast::is_external_or_commonjs_module(file_node.as_source_file()) {
                 // It is an error for a non-external-module (i.e. script) to
@@ -2791,7 +2813,8 @@ impl Checker {
         self.global_array_type = self.get_global_type("Array", 1, true);
         self.global_object_type = self.get_global_type("Object", 0, true);
         self.global_function_type = self.get_global_type("Function", 0, true);
-        self.global_callable_function_type = self.get_global_strict_function_type("CallableFunction");
+        self.global_callable_function_type =
+            self.get_global_strict_function_type("CallableFunction");
         self.global_newable_function_type = self.get_global_strict_function_type("NewableFunction");
         self.global_string_type = self.get_global_type("String", 0, true);
         self.global_number_type = self.get_global_type("Number", 0, true);
@@ -2911,24 +2934,28 @@ impl Checker {
     /// the resolver. The returned thunk defers to `resolve_name_via_binder`
     /// at call time so `new_checker` completes.
     pub fn create_name_resolver(&self) -> Rc<NameResolverThunk<'static>> {
-        Rc::new(|c: &mut Checker, location, name, meaning, message, is_use, exclude_globals| {
-            c.resolve_name_via_binder(location, name, meaning, message, is_use, exclude_globals)
-        })
+        Rc::new(
+            |c: &mut Checker, location, name, meaning, message, is_use, exclude_globals| {
+                c.resolve_name_via_binder(location, name, meaning, message, is_use, exclude_globals)
+            },
+        )
     }
 
     /// `(c *Checker) createNameResolverForSuggestion` — PORT(deferred): same
     /// hook limitation as `create_name_resolver`.
     pub fn create_name_resolver_for_suggestion(&self) -> Rc<NameResolverThunk<'static>> {
-        Rc::new(|c: &mut Checker, location, name, meaning, message, is_use, exclude_globals| {
-            c.resolve_name_for_suggestion_via_binder(
-                location,
-                name,
-                meaning,
-                message,
-                is_use,
-                exclude_globals,
-            )
-        })
+        Rc::new(
+            |c: &mut Checker, location, name, meaning, message, is_use, exclude_globals| {
+                c.resolve_name_for_suggestion_via_binder(
+                    location,
+                    name,
+                    meaning,
+                    message,
+                    is_use,
+                    exclude_globals,
+                )
+            },
+        )
     }
 
     /// `binder::NameResolver::Resolve` wired for `resolve_name` —
@@ -2943,7 +2970,14 @@ impl Checker {
         is_use: bool,
         exclude_globals: bool,
     ) -> Option<SymbolId> {
-        let _ = (location, name, meaning, name_not_found_message, is_use, exclude_globals);
+        let _ = (
+            location,
+            name,
+            meaning,
+            name_not_found_message,
+            is_use,
+            exclude_globals,
+        );
         unimplemented!("PORT(deferred): resolve_name_via_binder lands with createNameResolver")
     }
 
@@ -2958,7 +2992,14 @@ impl Checker {
         is_use: bool,
         exclude_globals: bool,
     ) -> Option<SymbolId> {
-        let _ = (location, name, meaning, name_not_found_message, is_use, exclude_globals);
+        let _ = (
+            location,
+            name,
+            meaning,
+            name_not_found_message,
+            is_use,
+            exclude_globals,
+        );
         unimplemented!(
             "PORT(deferred): resolve_name_for_suggestion_via_binder lands with createNameResolverForSuggestion"
         )
@@ -2979,7 +3020,19 @@ impl Checker {
     /// `program.nodes(...)` — the per-file node arena for `NodeId` derefs
     /// (the `Program` trait's port-added accessor).
     pub fn program_nodes(&self, node: NodeId) -> Rc<Vec<ast::Node>> {
-        self.program.as_ref().expect("program").nodes(node.file_index())
+        self.program
+            .as_ref()
+            .expect("program")
+            .nodes(node.file_index())
+    }
+
+    /// `program.nodes_mut(...)` — mutable arena access for synthetic-node
+    /// creation (Go mutates the shared `*ast.Node` graph freely).
+    pub fn program_nodes_mut(&self, file_index: u32) -> std::cell::RefMut<'_, Vec<ast::Node>> {
+        self.program
+            .as_ref()
+            .expect("program")
+            .nodes_mut(file_index)
     }
 
     /// `NewDiagnosticForNode` (checker/utilities.go). Needs the per-file
@@ -2997,7 +3050,10 @@ impl Checker {
             if let Some(source_file) = ast::get_source_file_of_node(Some(node), &nodes) {
                 let sf = nodes[source_file].as_source_file();
                 loc = tsc_scanner::scanner::get_error_range_for_node(sf, node, &nodes);
-                file = Some(ast::diagnostic::DiagnosticFile::from_node(source_file, &nodes));
+                file = Some(ast::diagnostic::DiagnosticFile::from_node(
+                    source_file,
+                    &nodes,
+                ));
             }
         }
         ast::diagnostic::new_diagnostic(file, loc, message, args)
@@ -3082,8 +3138,12 @@ impl Checker {
         let nodes2 = self.program_nodes(n2);
         let s2 = ast::get_source_file_of_node(Some(n2), &nodes2);
         if s1 != s2 {
-            let f1 = s1.and_then(|s| self.file_index_map.get(&s).copied()).unwrap_or(0) as i32;
-            let f2 = s2.and_then(|s| self.file_index_map.get(&s).copied()).unwrap_or(0) as i32;
+            let f1 = s1
+                .and_then(|s| self.file_index_map.get(&s).copied())
+                .unwrap_or(0) as i32;
+            let f2 = s2
+                .and_then(|s| self.file_index_map.get(&s).copied())
+                .unwrap_or(0) as i32;
             // Order by index of file in the containing program
             return f1 - f2;
         }
@@ -3160,7 +3220,12 @@ impl Checker {
     }
 
     /// `(c *Checker) newType` (checker.go).
-    pub fn new_type(&mut self, flags: TypeFlags, object_flags: ObjectFlags, data: TypeData) -> TypeId {
+    pub fn new_type(
+        &mut self,
+        flags: TypeFlags,
+        object_flags: ObjectFlags,
+        data: TypeData,
+    ) -> TypeId {
         self.type_count += 1;
         let id = self.types.alloc(Type {
             flags,
@@ -3267,7 +3332,11 @@ impl Checker {
     }
 
     /// `(c *Checker) newObjectType` (checker.go).
-    pub fn new_object_type(&mut self, object_flags: ObjectFlags, symbol: Option<SymbolId>) -> TypeId {
+    pub fn new_object_type(
+        &mut self,
+        object_flags: ObjectFlags,
+        symbol: Option<SymbolId>,
+    ) -> TypeId {
         let data = if object_flags.intersects(ObjectFlags::CLASS_OR_INTERFACE) {
             TypeData::InterfaceType(crate::types::InterfaceType::default())
         } else if object_flags.intersects(ObjectFlags::TUPLE) {
@@ -3365,7 +3434,9 @@ impl Checker {
             return Vec::new();
         }
         let _ = container;
-        unimplemented!("PORT(deferred): getNamedMembers' class/interface ordering lands with checker.go")
+        unimplemented!(
+            "PORT(deferred): getNamedMembers' class/interface ordering lands with checker.go"
+        )
     }
 
     /// `(c *Checker) newTypeParameter` (checker.go).
@@ -3412,7 +3483,11 @@ impl Checker {
     }
 
     /// `(c *Checker) newIntersectionType` (checker.go).
-    pub fn new_intersection_type(&mut self, object_flags: ObjectFlags, types: Vec<TypeId>) -> TypeId {
+    pub fn new_intersection_type(
+        &mut self,
+        object_flags: ObjectFlags,
+        types: Vec<TypeId>,
+    ) -> TypeId {
         self.new_type(
             TypeFlags::INTERSECTION,
             object_flags,
@@ -3446,7 +3521,11 @@ impl Checker {
     }
 
     /// `(c *Checker) newIndexType` (checker.go).
-    pub fn new_index_type(&mut self, target: TypeId, index_flags: crate::types::IndexFlags) -> TypeId {
+    pub fn new_index_type(
+        &mut self,
+        target: TypeId,
+        index_flags: crate::types::IndexFlags,
+    ) -> TypeId {
         self.new_type(
             TypeFlags::INDEX,
             ObjectFlags::NONE,
@@ -3559,9 +3638,10 @@ impl Checker {
             if let Some(regular) = self.types.get(t).as_union_type().regular_type {
                 return regular;
             }
-            let mapped = self.map_type(t, Rc::new(|c: &mut Checker, s: TypeId| {
-                c.get_regular_type_of_literal_type(s)
-            }));
+            let mapped = self.map_type(
+                t,
+                Rc::new(|c: &mut Checker, s: TypeId| c.get_regular_type_of_literal_type(s)),
+            );
             if let TypeData::Union(d) = &mut self.types.get_mut(t).data {
                 d.regular_type = Some(mapped);
             }
@@ -3657,7 +3737,11 @@ impl Checker {
     }
 
     /// `(c *Checker) tryCreateTypeReference` (checker.go).
-    pub fn try_create_type_reference(&mut self, target: TypeId, type_arguments: &[TypeId]) -> TypeId {
+    pub fn try_create_type_reference(
+        &mut self,
+        target: TypeId,
+        type_arguments: &[TypeId],
+    ) -> TypeId {
         if !type_arguments.is_empty() && target == self.empty_generic_type {
             return self.unknown_type;
         }
@@ -3691,10 +3775,7 @@ impl Checker {
         }
         let symbol = self.types.get(target).symbol;
         let propagating = self.get_propagating_flags_of_types(type_arguments, TypeFlags::NONE);
-        let t = self.new_object_type(
-            ObjectFlags::REFERENCE | object_flags | propagating,
-            symbol,
-        );
+        let t = self.new_object_type(ObjectFlags::REFERENCE | object_flags | propagating, symbol);
         if let TypeData::TypeReference(d) = &mut self.types.get_mut(t).data {
             d.object_type.target = Some(target);
             d.resolved_type_arguments = type_arguments.to_vec();
@@ -3763,8 +3844,11 @@ impl Checker {
                 .clone()
                 .expect("getGlobalImportMetaType not initialized");
             let import_meta_type = thunk(self);
-            let meta_property_symbol =
-                self.new_symbol_ex(ast::SymbolFlags::PROPERTY, "meta", ast::checkflags::CheckFlags::READONLY);
+            let meta_property_symbol = self.new_symbol_ex(
+                ast::SymbolFlags::PROPERTY,
+                "meta",
+                ast::checkflags::CheckFlags::READONLY,
+            );
             self.symbol_arena.borrow_mut()[meta_property_symbol.index()].parent = Some(symbol);
             self.value_symbol_links
                 .get(meta_property_symbol)
@@ -3826,17 +3910,8 @@ impl Checker {
         unimplemented!("PORT(deferred): getDeclaredTypeOfSymbol lands with checker.go")
     }
 
-    /// `(c *Checker) getAwaitedTypeEx` (checker.go) — PORT(deferred): the
-    /// async `resolve_iteration_type` thunk routes here.
-    pub fn get_awaited_type_ex(
-        &mut self,
-        t: TypeId,
-        error_node: Option<NodeId>,
-        message: Option<&'static tsc_diagnostics::Message>,
-    ) -> TypeId {
-        let _ = (t, error_node, message);
-        unimplemented!("PORT(deferred): getAwaitedTypeEx lands with checker.go")
-    }
+    /// `(c *Checker) getAwaitedTypeEx` (checker.go:31806) — implemented in
+    /// `checker_d.rs`.
 
     /// `(c *Checker) IsEmptyAnonymousObjectType` (checker.go) —
     /// PORT(deferred).
@@ -3867,7 +3942,12 @@ impl Checker {
 
     /// `(c *Checker) getUniqueLiteralTypeForTypeParameter` (checker.go).
     pub fn get_unique_literal_type_for_type_parameter(&mut self, t: TypeId) -> TypeId {
-        if self.types.get(t).flags.intersects(TypeFlags::TYPE_PARAMETER) {
+        if self
+            .types
+            .get(t)
+            .flags
+            .intersects(TypeFlags::TYPE_PARAMETER)
+        {
             return self.unique_literal_type;
         }
         t
@@ -3891,7 +3971,12 @@ impl Checker {
 
     /// `(c *Checker) restrictiveMapperWorker` (checker.go).
     pub fn restrictive_mapper_worker(&mut self, t: TypeId) -> TypeId {
-        if self.types.get(t).flags.intersects(TypeFlags::TYPE_PARAMETER) {
+        if self
+            .types
+            .get(t)
+            .flags
+            .intersects(TypeFlags::TYPE_PARAMETER)
+        {
             return self.get_restrictive_type_parameter(t);
         }
         t
@@ -3906,7 +3991,12 @@ impl Checker {
 
     /// `(c *Checker) permissiveMapperWorker` (checker.go).
     pub fn permissive_mapper_worker(&mut self, t: TypeId) -> TypeId {
-        if self.types.get(t).flags.intersects(TypeFlags::TYPE_PARAMETER) {
+        if self
+            .types
+            .get(t)
+            .flags
+            .intersects(TypeFlags::TYPE_PARAMETER)
+        {
             return self.wildcard_type;
         }
         t

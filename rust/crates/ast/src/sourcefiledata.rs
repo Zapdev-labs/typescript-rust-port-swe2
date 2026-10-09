@@ -67,6 +67,19 @@ impl SourceFileData {
     pub fn insert<T: Send + Sync + 'static>(&mut self, key: &SourceFileDataKey<T>, value: T) {
         self.cells.insert(key.key, Box::new(value));
     }
+
+    /// Mutable access to a stored cell — used by `bind_result_mut` so the
+    /// checker can append synthetic `FlowNode`s (Go heap-allocates
+    /// `&ast.FlowNode{}` freely).
+    pub fn get_mut<T: Send + Sync + 'static>(
+        &mut self,
+        key: &SourceFileDataKey<T>,
+    ) -> Option<&mut T> {
+        self.cells.get_mut(&key.key).map(|cell| {
+            cell.downcast_mut::<T>()
+                .expect("SourceFileData cell type mismatch")
+        })
+    }
 }
 
 /// `(file *SourceFile) GetOrComputeData(key, compute)` — returns the cached

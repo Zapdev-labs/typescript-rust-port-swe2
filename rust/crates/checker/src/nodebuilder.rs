@@ -168,9 +168,13 @@ impl NodeBuilder {
     }
 
     /// `(b *NodeBuilder) exitContext`.
-    pub(crate) fn exit_context(&mut self, result: Option<NodeId>) -> Option<NodeId> {
+    pub(crate) fn exit_context(
+        &mut self,
+        nodes: &[ast::Node],
+        result: Option<NodeId>,
+    ) -> Option<NodeId> {
         self.propagate_verbosity_out();
-        self.exit_context_check();
+        self.exit_context_check(nodes);
         let encountered_error = self.impl_mut().ctx.encountered_error;
         self.pop_context();
         if encountered_error {
@@ -180,9 +184,13 @@ impl NodeBuilder {
     }
 
     /// `(b *NodeBuilder) exitContextSlice`.
-    pub(crate) fn exit_context_slice(&mut self, result: Vec<NodeId>) -> Vec<NodeId> {
+    pub(crate) fn exit_context_slice(
+        &mut self,
+        nodes: &[ast::Node],
+        result: Vec<NodeId>,
+    ) -> Vec<NodeId> {
         self.propagate_verbosity_out();
-        self.exit_context_check();
+        self.exit_context_check(nodes);
         let encountered_error = self.impl_mut().ctx.encountered_error;
         self.pop_context();
         if encountered_error {
@@ -192,13 +200,13 @@ impl NodeBuilder {
     }
 
     /// `(b *NodeBuilder) exitContextCheck`.
-    fn exit_context_check(&mut self) {
+    fn exit_context_check(&mut self, nodes: &[ast::Node]) {
         let impl_ = self.impl_mut();
         if impl_.ctx.truncating
             && impl_.ctx.flags.intersects(nodebuilder::Flags::NO_TRUNCATION)
             && let Some(tracker) = impl_.ctx.tracker.as_mut()
         {
-            tracker.report_truncation_error();
+            tracker.report_truncation_error(nodes);
         }
     }
 
@@ -218,7 +226,7 @@ impl NodeBuilder {
         let result = self
             .impl_mut()
             .index_info_to_index_signature_declaration_helper(c, nodes, info, None);
-        self.exit_context(result)
+        self.exit_context(nodes, result)
     }
 
     /// `SerializeReturnTypeForSignature` — implements
@@ -239,7 +247,7 @@ impl NodeBuilder {
         let (_expanded, cleanup) = impl_.enter_signature_scope(c, nodes, signature);
         let result = impl_.serialize_return_type_for_signature(c, nodes, signature, true);
         cleanup.restore(impl_, nodes);
-        self.exit_context(result)
+        self.exit_context(nodes, result)
     }
 
     /// `(b *NodeBuilder) SerializeTypeParametersForSignature`.
@@ -264,7 +272,7 @@ impl NodeBuilder {
             internal_flags,
             tracker,
         );
-        self.exit_context_slice(type_params)
+        self.exit_context_slice(nodes, type_params)
     }
 
     /// `SerializeTypeForDeclaration` — implements `NodeBuilderInterface`.
@@ -288,7 +296,7 @@ impl NodeBuilder {
             symbol,
             true,
         );
-        self.exit_context(result)
+        self.exit_context(nodes, result)
     }
 
     /// `SerializeTypeForExpression` — implements `NodeBuilderInterface`.
@@ -304,7 +312,7 @@ impl NodeBuilder {
     ) -> Option<NodeId> {
         self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
         let result = self.impl_mut().serialize_type_for_expression(c, nodes, expr);
-        self.exit_context(result)
+        self.exit_context(nodes, result)
     }
 
     /// `SignatureToSignatureDeclaration` — implements
@@ -324,7 +332,7 @@ impl NodeBuilder {
         let result = self.impl_mut().signature_to_signature_declaration_helper(
             c, nodes, signature, kind, None,
         );
-        self.exit_context(result)
+        self.exit_context(nodes, result)
     }
 
     /// `ExpandSymbolForHover` — produces declaration nodes for a symbol
@@ -417,7 +425,7 @@ impl NodeBuilder {
             }
         }
 
-        self.exit_context_slice(result)
+        self.exit_context_slice(nodes, result)
     }
 
     /// `SymbolToEntityName` — implements `NodeBuilderInterface`.
@@ -434,7 +442,7 @@ impl NodeBuilder {
     ) -> Option<NodeId> {
         self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
         let result = self.impl_mut().symbol_to_name(c, nodes, symbol, meaning, false);
-        self.exit_context(result)
+        self.exit_context(nodes, result)
     }
 
     /// `SymbolToExpression` — implements `NodeBuilderInterface`.
@@ -451,7 +459,7 @@ impl NodeBuilder {
     ) -> Option<NodeId> {
         self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
         let result = self.impl_mut().symbol_to_expression(c, nodes, symbol, meaning);
-        self.exit_context(result)
+        self.exit_context(nodes, result)
     }
 
     /// `SymbolToNode` — implements `NodeBuilderInterface`.
@@ -468,7 +476,7 @@ impl NodeBuilder {
     ) -> Option<NodeId> {
         self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
         let result = self.impl_mut().symbol_to_node(c, nodes, symbol, meaning);
-        self.exit_context(result)
+        self.exit_context(nodes, result)
     }
 
     /// `SymbolToParameterDeclaration` — implements `NodeBuilderInterface`.
@@ -488,7 +496,7 @@ impl NodeBuilder {
         let result = self
             .impl_mut()
             .symbol_to_parameter_declaration(c, nodes, symbol, false);
-        self.exit_context(result)
+        self.exit_context(nodes, result)
     }
 
     /// `SymbolToTypeParameterDeclarations` — implements
@@ -505,7 +513,7 @@ impl NodeBuilder {
     ) -> Vec<NodeId> {
         self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
         let result = self.impl_mut().symbol_to_type_parameter_declarations(c, nodes, symbol);
-        self.exit_context_slice(result)
+        self.exit_context_slice(nodes, result)
     }
 
     /// `TypeParameterToDeclaration` — implements `NodeBuilderInterface`.
@@ -521,7 +529,7 @@ impl NodeBuilder {
     ) -> Option<NodeId> {
         self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
         let result = self.impl_mut().type_parameter_to_declaration(c, nodes, parameter);
-        self.exit_context(result)
+        self.exit_context(nodes, result)
     }
 
     /// `TypePredicateToTypePredicateNode` — implements
@@ -540,7 +548,7 @@ impl NodeBuilder {
         let result = self
             .impl_mut()
             .type_predicate_to_type_predicate_node(c, nodes, predicate);
-        self.exit_context(result)
+        self.exit_context(nodes, result)
     }
 
     /// `TypeToTypeNode` — implements `NodeBuilderInterface`.
@@ -556,7 +564,7 @@ impl NodeBuilder {
     ) -> Option<NodeId> {
         self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
         let result = self.impl_mut().type_to_type_node(c, nodes, typ);
-        self.exit_context(result)
+        self.exit_context(nodes, result)
     }
 
     /// `(b *NodeBuilder) TryJSTypeNodeToTypeNode`.
@@ -572,7 +580,7 @@ impl NodeBuilder {
     ) -> Option<NodeId> {
         self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
         let result = self.impl_mut().try_js_type_node_to_type_node(c, nodes, node);
-        self.exit_context(result)
+        self.exit_context(nodes, result)
     }
 }
 

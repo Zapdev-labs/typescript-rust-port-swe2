@@ -37,15 +37,15 @@ use tsc_scanner::scanner as scanner;
 
 use crate::checker_core::{
     as_recursion_id_node, CacheHashKey, CheckMode, Checker, InferenceContextId, InferenceInfo,
-    InferencePriority, WideningKind,
+    InferenceContextInfo, InferencePriority, WideningKind,
 };
 use crate::checker_types::{
-    ContextualInfo, DeclarationSpaces, InferenceContextInfo, IterationTypeKind, IterationTypes,
-    IterationTypesKey, IterationTypesResolver, IterationUse, TypeFacts, UnusedKind,
+    ContextualInfo, DeclarationSpaces, IterationTypeKind, IterationTypes, IterationTypesKey,
+    IterationTypesResolver, IterationUse, MemberOverrideStatus, TypeFacts, UnusedKind,
 };
 use crate::types::{
-    ContextFlags, IndexInfo, IndexInfoId, MemberOverrideStatus, NodeCheckFlags, ObjectFlags,
-    SignatureId, SignatureKind, TypeData, TypeFlags, TypeId,
+    ContextFlags, IndexInfo, IndexInfoId, NodeCheckFlags, ObjectFlags, SignatureId, SignatureKind,
+    TypeData, TypeFlags, TypeId,
 };
 
 // ======== PORT helpers (module-private; arena accessors) ========
@@ -2297,7 +2297,8 @@ impl Checker {
         let is_variance_candidate = parent.is_some_and(|p| {
             ast::is_interface_declaration(&nodes[p])
                 || ast::is_class_like(Some(p), &nodes)
-                || ast::is_type_or_js_type_alias_declaration(&nodes[p])
+                || ast::is_type_alias_declaration(&nodes[p])
+                || ast::is_js_type_alias_declaration(&nodes[p])
         });
         if is_variance_candidate {
             let type_parameter =
@@ -2478,7 +2479,7 @@ impl Checker {
         }
         // Only check rest parameter type if it's not a binding pattern. Since binding patterns are
         // not allowed in a rest parameter, we already have an error from checkGrammarParameterList.
-        if crate::utilities::has_dot_dot_dot_token(&nodes[node])
+        if crate::utilities::has_dot_dot_dot_token(&nodes[node], &nodes)
             && !nodes[node]
                 .name()
                 .is_some_and(|n| ast::is_binding_pattern(&nodes[n]))
@@ -7263,7 +7264,6 @@ impl Checker {
         }
         if !crate::utilities::container_allows_block_scoped_variable(
             nodes[node].parent.expect("interface parent"),
-            self,
             &nodes,
         ) {
             self.grammar_error_on_node(
@@ -10261,13 +10261,12 @@ impl Checker {
             thunk(self);
         }
         }
-        let yield_type = iteration_types.yield_type.map(|t| {
-            let awaited = self.get_awaited_type_ex(t, error_node, None);
-            awaited
-        });
-        let return_type = iteration_types.return_type.map(|t| {
-            self.get_awaited_type_ex(t, error_node, None)
-        });
+        let yield_type = iteration_types
+            .yield_type
+            .and_then(|t| self.get_awaited_type_ex(t, error_node, None, &[]));
+        let return_type = iteration_types
+            .return_type
+            .and_then(|t| self.get_awaited_type_ex(t, error_node, None, &[]));
         IterationTypes {
             yield_type: Some(yield_type.unwrap_or(self.any_type)),
             return_type: Some(return_type.unwrap_or(self.any_type)),
@@ -11218,12 +11217,8 @@ impl Checker {
             | ast::ModifierFlags::ABSTRACT
             | ast::ModifierFlags::READONLY
             | ast::ModifierFlags::STATIC;
-        crate::utilities::get_selected_modifier_flags(&nodes[left], interesting_flags, &nodes)
-            == crate::utilities::get_selected_modifier_flags(
-                &nodes[right],
-                interesting_flags,
-                &nodes,
-            )
+        crate::utilities::get_selected_modifier_flags(&nodes[left], interesting_flags)
+            == crate::utilities::get_selected_modifier_flags(&nodes[right], interesting_flags)
     }
 
     /// `(c *Checker) checkTypeAliasDeclaration` (checker.go).
@@ -12217,7 +12212,7 @@ impl Checker {
             && !self.is_symbol_or_symbol_for_call(expr)
             && !ast::is_import_call(&nodes[expr], &nodes)
         {
-            if crate::utilities::is_call_chain(&nodes[expr], &nodes) {
+            if crate::utilities::is_call_chain(&nodes[expr]) {
                 return self.get_return_type_of_single_non_generic_signature_of_call_chain(expr);
             }
             let func_type =
@@ -12576,7 +12571,7 @@ impl Checker {
             uninstantiated_type,
             check_mode,
         );
-        if crate::utilities::is_const_enum_object_type(&self.types, t) {
+        if crate::utilities::is_const_enum_object_type(self, t) {
             self.check_const_enum_access(node, t);
         }
         self.current_node = save_current_node;

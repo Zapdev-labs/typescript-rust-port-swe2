@@ -49,6 +49,7 @@ pub use utilities::*;
 pub use flow::{FlowFlags, FlowList, FlowNode};
 pub use ids::{FlowListId, FlowNodeId, NodeId, SymbolId};
 pub use kind_generated::Kind;
+pub use functionflags::{get_function_flags, FunctionFlags};
 pub use modifierflags::ModifierFlags;
 pub use nodeflags::NodeFlags;
 pub use sourcefiledata::{

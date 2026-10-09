@@ -497,13 +497,11 @@ impl Checker {
             if property_name != ast::INTERNAL_SYMBOL_NAME_MISSING {
                 let property_symbol = self.get_constituent_property(object_type, &property_name);
                 if let Some(property_symbol) = property_symbol {
-                    let modifier_flags = {
-                        let arena = self.symbol_arena.borrow();
+                    let modifier_flags =
                         crate::utilities::get_declaration_modifier_flags_from_symbol(
-                            &arena[property_symbol.index()],
-                            &self.program_nodes_for_symbol(property_symbol),
-                        )
-                    };
+                            self,
+                            property_symbol,
+                        );
                     if modifier_flags
                         .intersects(ast::ModifierFlags::NON_PUBLIC_ACCESSIBILITY_MODIFIER)
                     {
@@ -1007,7 +1005,7 @@ impl Checker {
         }
         let mut func_type = self.check_expression(expression);
         let call_chain_flags;
-        if crate::utilities::is_call_chain(node, &nodes) {
+        if crate::utilities::is_call_chain(&nodes[node]) {
             let non_optional_type = self.get_optional_expression_type(func_type, expression);
             if non_optional_type == func_type {
                 call_chain_flags = SignatureFlags::NONE;
@@ -4712,7 +4710,7 @@ impl Checker {
             let param = parameters[target_parameter_count as usize];
             if nodes[param].initializer().is_some()
                 || nodes[param].question_token(&nodes).is_some()
-                || crate::utilities::has_dot_dot_dot_token(&nodes[param])
+                || crate::utilities::has_dot_dot_dot_token(&nodes[param], &nodes)
             {
                 break;
             }
@@ -5523,13 +5521,13 @@ impl Checker {
             let resolved_call_signatures = self
                 .types
                 .get(resolved)
-                .as_resolved_type()
+                .data.as_structured_type().expect("resolved structured type")
                 .call_signatures()
                 .to_vec();
             let resolved_construct_signatures = self
                 .types
                 .get(resolved)
-                .as_resolved_type()
+                .data.as_structured_type().expect("resolved structured type")
                 .construct_signatures()
                 .to_vec();
             let call_signatures =
@@ -5569,13 +5567,13 @@ impl Checker {
                 let members = self
                     .types
                     .get(resolved)
-                    .as_resolved_type()
+                    .data.as_structured_type().expect("resolved structured type")
                     .members
                     .clone();
                 let index_infos = self
                     .types
                     .get(resolved)
-                    .as_resolved_type()
+                    .data.as_structured_type().expect("resolved structured type")
                     .index_infos
                     .clone();
                 self.set_structured_type_members(
@@ -6259,12 +6257,14 @@ impl Checker {
         self.get_awaited_type_ex(
             yielded_type,
             error_node,
-            if is_yield_star {
-                tsc_diagnostics::Type_of_iterated_elements_of_a_yield_Asterisk_operand_must_either_be_a_valid_promise_or_must_not_contain_a_callable_then_member
+            Some(if is_yield_star {
+                &tsc_diagnostics::Type_of_iterated_elements_of_a_yield_Asterisk_operand_must_either_be_a_valid_promise_or_must_not_contain_a_callable_then_member
             } else {
-                tsc_diagnostics::Type_of_yield_operand_in_an_async_generator_must_either_be_a_valid_promise_or_must_not_contain_a_callable_then_member
-            },
+                &tsc_diagnostics::Type_of_yield_operand_in_an_async_generator_must_either_be_a_valid_promise_or_must_not_contain_a_callable_then_member
+            }),
+            &[],
         )
+        .unwrap_or(self.error_type)
     }
 
     /// `(c *Checker) checkSyntheticExpression` (checker.go:11270).
@@ -7863,7 +7863,7 @@ impl Checker {
                 ast::Kind::QualifiedName => nodes[node].as_qualified_name().right,
                 ast::Kind::ImportType => Some(node),
                 ast::Kind::BindingElement => {
-                    crate::utilities::get_binding_element_property_name(node, &nodes)
+                    crate::utilities::get_binding_element_property_name(&nodes[node])
                 }
                 _ => nodes[node].name(),
             };
@@ -7892,14 +7892,8 @@ impl Checker {
         error_node: Option<NodeId>,
     ) -> bool {
         let nodes = self.program_nodes(location);
-        let flags = {
-            let arena = self.symbol_arena.borrow();
-            crate::utilities::get_declaration_modifier_flags_from_symbol_ex(
-                &arena[prop.index()],
-                &self.program_nodes_for_symbol(prop),
-                writing,
-            )
-        };
+        let flags =
+            crate::utilities::get_declaration_modifier_flags_from_symbol_ex(self, prop, writing);
         let mut containing_type = containing_type;
         if is_super {
             // TS 1.0 spec (April 2014): 4.8.2 — a super property access must
@@ -8166,13 +8160,8 @@ impl Checker {
         target_prop: SymbolId,
     ) -> bool {
         !self.for_each_property(target_prop, |c: &mut Checker, tp: SymbolId| {
-            let modifier_flags = {
-                let arena = c.symbol_arena.borrow();
-                crate::utilities::get_declaration_modifier_flags_from_symbol(
-                    &arena[tp.index()],
-                    &c.program_nodes_for_symbol(tp),
-                )
-            };
+            let modifier_flags =
+                crate::utilities::get_declaration_modifier_flags_from_symbol(c, tp);
             if modifier_flags.intersects(ast::ModifierFlags::PROTECTED) {
                 return !c.is_property_in_class_derived_from(
                     source_prop,
@@ -8252,14 +8241,8 @@ impl Checker {
         writing: bool,
     ) -> bool {
         !self.for_each_property(prop, |c: &mut Checker, p: SymbolId| {
-            let modifier_flags = {
-                let arena = c.symbol_arena.borrow();
-                crate::utilities::get_declaration_modifier_flags_from_symbol_ex(
-                    &arena[p.index()],
-                    &c.program_nodes_for_symbol(p),
-                    writing,
-                )
-            };
+            let modifier_flags =
+                crate::utilities::get_declaration_modifier_flags_from_symbol_ex(c, p, writing);
             if modifier_flags.intersects(ast::ModifierFlags::PROTECTED) {
                 return !c.has_base_type(check_class, c.get_declaring_class(p));
             }
@@ -16435,7 +16418,7 @@ fn get_external_module_require_argument(node: NodeId, nodes: &[ast::Node]) -> Op
 }
 
 /// `getModuleSpecifierFromNode` (checker.go:14484).
-fn get_module_specifier_from_node(node: NodeId, nodes: &[ast::Node]) -> Option<NodeId> {
+pub(crate) fn get_module_specifier_from_node(node: NodeId, nodes: &[ast::Node]) -> Option<NodeId> {
     match nodes[node].kind {
         ast::Kind::ImportDeclaration | ast::Kind::ExportDeclaration => {
             nodes[node].module_specifier()

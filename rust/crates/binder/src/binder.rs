@@ -133,6 +133,13 @@ pub fn bind_result(nodes: &[Node], file: NodeId) -> Option<&BindResult> {
     nodes[file].as_source_file().data.get(&BIND_RESULT_KEY)
 }
 
+/// Mutable `bind_result` — the checker appends synthetic `FlowNode`s
+/// (`&ast.FlowNode{}` literals in Go become `FlowNodeId`s here) e.g. in
+/// `checkIfExpressionRefinesParameter`.
+pub fn bind_result_mut(nodes: &mut [Node], file: NodeId) -> Option<&mut BindResult> {
+    nodes[file].as_source_file_mut().data.get_mut(&BIND_RESULT_KEY)
+}
+
 /// `type Binder struct`
 pub struct Binder<'a> {
     nodes: &'a mut Vec<Node>,

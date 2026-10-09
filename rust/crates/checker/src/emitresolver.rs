@@ -241,7 +241,7 @@ impl nodebuilder::SymbolTracker for TrackerRef<'_> {
 /// `c.resolveName` — invokes the checker's `resolve_name` thunk (the same
 /// pattern `checker_b.rs`'s `call_resolve_name` uses; that helper is
 /// module-private so it's mirrored here).
-fn call_resolve_name(
+pub(crate) fn call_resolve_name(
     c: &mut Checker,
     location: Option<NodeId>,
     name: &str,
@@ -267,10 +267,12 @@ pub(crate) fn is_const_enum_or_const_enum_only_module(s: &Symbol) -> bool {
 /// PORT(mirrored): the canonical helper lives in the checker's utilities.go
 //  wave; this copy is removed when `utilities.rs` lands it.
 fn is_declaration_readonly(declaration: NodeId, nodes: &[Node]) -> bool {
+    // `!ast.IsParameterPropertyDeclaration(declaration, declaration.Parent)`
+    // — a nil parent means "not a parameter property" in Go.
     ast::get_combined_modifier_flags(declaration, nodes).intersects(ast::ModifierFlags::READONLY)
         && nodes[declaration]
             .parent
-            .is_some_and(|p| !ast::is_parameter_property_declaration(&nodes[declaration], &nodes[p]))
+            .is_none_or(|p| !ast::is_parameter_property_declaration(&nodes[declaration], &nodes[p]))
 }
 
 /// `isFreshLiteralType` (checker/utilities.go).
@@ -1428,7 +1430,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
         };
         c.symbol_arena.borrow()[symbol.index()]
             .check_flags
-            .intersects(ast::CheckFlags::LATE)
+            .intersects(ast::checkflags::CheckFlags::LATE)
     }
 
     /// `(r *EmitResolver) IsOptionalParameter`.

@@ -28,6 +28,11 @@ tsc-module = { path = "../module" }
 # `ModuleSpecifierGenerationHost` and references `*tsoptions.ParsedCommandLine`).
 tsc-modulespecifiers = { path = "../modulespecifiers" }
 tsc-nodebuilder = { path = "../nodebuilder" }
+# PORT: nodebuilderimpl.rs's `HostAdapter` implements
+# `modulespecifiers::ModuleSpecifierGenerationHost`, which embeds
+# `outputpaths::OutputPathsHost` and returns symlinks/packagejson types.
+tsc-outputpaths = { path = "../outputpaths" }
+tsc-packagejson = { path = "../packagejson" }
 tsc-parser = { path = "../parser" }
 # PORT: checker.go's utilities.go `ValueToString` uses
 # `printer.EscapeString`; tsc-printer does not depend on the checker, so no
@@ -37,6 +42,7 @@ tsc-pseudochecker = { path = "../pseudochecker" }
 tsc-repo = { path = "../repo" }
 tsc-scanner = { path = "../scanner" }
 tsc-stringutil = { path = "../stringutil" }
+tsc-symlinks = { path = "../symlinks" }
 tsc-tracing = { path = "../tracing" }
 tsc-tsoptions = { path = "../tsoptions" }
 tsc-tspath = { path = "../tspath" }

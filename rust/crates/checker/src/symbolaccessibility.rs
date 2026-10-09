@@ -113,3 +113,28 @@ pub fn symbol_table_id_from_members(sym: SymbolId) -> SymbolTableId {
 pub fn symbol_table_id_from_globals() -> SymbolTableId {
     ST_KIND_GLOBALS
 }
+
+/// `hasNonGlobalAugmentationExternalModuleSymbol` (symbolaccessibility.go:106).
+/// The declaration may live in another file's arena — read it through
+/// `Checker::program_nodes`.
+pub(crate) fn has_non_global_augmentation_external_module_symbol(
+    declaration: NodeId,
+    c: &crate::checker_core::Checker,
+) -> bool {
+    let nodes = c.program_nodes(declaration);
+    let d = &nodes[declaration];
+    tsc_ast::is_module_with_string_literal_name(d, &nodes)
+        || (d.kind == tsc_ast::Kind::SourceFile
+            && tsc_ast::is_external_or_commonjs_module(d.as_source_file()))
+}
+
+/// `getQualifiedLeftMeaning` (symbolaccessibility.go:110) — if we are
+/// looking in value space, the parent meaning is value, otherwise it is
+/// namespace.
+pub(crate) fn get_qualified_left_meaning(right_meaning: SymbolFlags) -> SymbolFlags {
+    if right_meaning == SymbolFlags::VALUE {
+        SymbolFlags::VALUE
+    } else {
+        SymbolFlags::NAMESPACE
+    }
+}

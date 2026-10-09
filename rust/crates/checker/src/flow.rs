@@ -1213,7 +1213,7 @@ impl Checker {
         }
         let optional_chain = ast::is_optional_chain(&nodes[access]);
         let remove_nullable = self.strict_null_checks
-            && (optional_chain || crate::utilities::is_non_null_access(&nodes[access]))
+            && (optional_chain || crate::utilities::is_non_null_access(access, &nodes))
             && self.maybe_type_of_kind(t, TypeFlags::NULLABLE);
         let non_null_type = if remove_nullable {
             self.get_type_with_facts(t, TypeFacts::NE_UNDEFINED_OR_NULL)
@@ -2299,7 +2299,7 @@ impl Checker {
                         || ast::is_parameter_declaration(&nodes[declaration]))
                         && nodes[declaration].parent == Some(reference)
                         && nodes[declaration].initializer().is_none()
-                        && !crate::utilities::has_dot_dot_dot_token(&nodes[declaration])
+                        && !crate::utilities::has_dot_dot_dot_token(&nodes[declaration], &nodes)
                     {
                         return Some(declaration);
                     }
@@ -3662,7 +3662,7 @@ impl Checker {
         let t = if ast::is_object_binding_pattern(&nodes[pattern]) {
             let name = crate::utilities::get_binding_element_property_name(&nodes[node]);
             self.get_type_of_destructured_property(parent_type, name)
-        } else if !crate::utilities::has_dot_dot_dot_token(&nodes[node]) {
+        } else if !crate::utilities::has_dot_dot_dot_token(&nodes[node], &nodes) {
             let index = nodes[pattern]
                 .elements()
                 .and_then(|es| es.iter().position(|&e| e == node))

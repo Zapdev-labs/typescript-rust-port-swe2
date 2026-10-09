@@ -51,6 +51,10 @@ use tsc_evaluator as evaluator;
 use crate::flagdef::flag_type;
 use crate::mapper::TypeMapperId;
 
+// Re-exported so `crate::types::UnionReduction` resolves (the enum is
+// defined in checker_types.rs alongside the other checker.go port types).
+pub use crate::checker_types::UnionReduction;
+
 // ParseFlags
 
 flag_type! {
@@ -138,8 +142,7 @@ impl TypeFormatFlags {
     /// `TypeFormatFlagsGenerateNamesForShadowedTypeParams` — when a type
     /// parameter T is shadowing another T, generate a name for it so it can
     /// still be referenced.
-    pub const GENERATE_NAMES_FOR_SHADOWED_TYPE_PARAMS: TypeFormatFlags =
-        TypeFormatFlags(1 << 2);
+    pub const GENERATE_NAMES_FOR_SHADOWED_TYPE_PARAMS: TypeFormatFlags = TypeFormatFlags(1 << 2);
     /// `TypeFormatFlagsUseStructuralFallback` — when an alias cannot be named
     /// by its symbol, rather than report an error, fallback to a structural
     /// printout if possible.
@@ -164,8 +167,7 @@ impl TypeFormatFlags {
     pub const MULTILINE_OBJECT_LITERALS: TypeFormatFlags = TypeFormatFlags(1 << 10);
     /// `TypeFormatFlagsWriteClassExpressionAsTypeLiteral` — write a type
     /// literal instead of `(Anonymous class)`.
-    pub const WRITE_CLASS_EXPRESSION_AS_TYPE_LITERAL: TypeFormatFlags =
-        TypeFormatFlags(1 << 11);
+    pub const WRITE_CLASS_EXPRESSION_AS_TYPE_LITERAL: TypeFormatFlags = TypeFormatFlags(1 << 11);
     /// `TypeFormatFlagsUseTypeOfFunction` — write `typeof` instead of function
     /// type literal.
     pub const USE_TYPE_OF_FUNCTION: TypeFormatFlags = TypeFormatFlags(1 << 12);
@@ -174,12 +176,10 @@ impl TypeFormatFlags {
     /// `TypeFormatFlagsUseAliasDefinedOutsideCurrentScope` — for a
     /// `type T = ...` defined in a different file, write `T` instead of its
     /// value, even though `T` can't be accessed in the current scope.
-    pub const USE_ALIAS_DEFINED_OUTSIDE_CURRENT_SCOPE: TypeFormatFlags =
-        TypeFormatFlags(1 << 14);
+    pub const USE_ALIAS_DEFINED_OUTSIDE_CURRENT_SCOPE: TypeFormatFlags = TypeFormatFlags(1 << 14);
     /// `TypeFormatFlagsUseSingleQuotesForStringLiteralType` — use single
     /// quotes for string literal type.
-    pub const USE_SINGLE_QUOTES_FOR_STRING_LITERAL_TYPE: TypeFormatFlags =
-        TypeFormatFlags(1 << 28);
+    pub const USE_SINGLE_QUOTES_FOR_STRING_LITERAL_TYPE: TypeFormatFlags = TypeFormatFlags(1 << 28);
     /// `TypeFormatFlagsNoTypeReduction` — don't call getReducedType.
     pub const NO_TYPE_REDUCTION: TypeFormatFlags = TypeFormatFlags(1 << 29);
     /// `TypeFormatFlagsUseInstantiationExpressions` — use instantiation
@@ -323,8 +323,7 @@ impl ExternalEmitHelpers {
         ExternalEmitHelpers(1 << 18);
     /// `ExternalEmitHelpersRewriteRelativeImportExtension` —
     /// `__rewriteRelativeImportExtension` (--rewriteRelativeImportExtensions).
-    pub const REWRITE_RELATIVE_IMPORT_EXTENSION: ExternalEmitHelpers =
-        ExternalEmitHelpers(1 << 19);
+    pub const REWRITE_RELATIVE_IMPORT_EXTENSION: ExternalEmitHelpers = ExternalEmitHelpers(1 << 19);
     /// `ExternalEmitHelpersESDecorateAndRunInitializers` — `__esDecorate` and
     /// `__runInitializers` (ECMAScript decorators).
     pub const ES_DECORATE_AND_RUN_INITIALIZERS: ExternalEmitHelpers = Self::DECORATE;
@@ -345,9 +344,8 @@ impl ExternalEmitHelpers {
 
     /// `ExternalEmitHelpersAsyncDelegatorIncludes` — helpers included by
     /// yield* in ES2017 async generators.
-    pub const ASYNC_DELEGATOR_INCLUDES: ExternalEmitHelpers = ExternalEmitHelpers(
-        Self::AWAIT.0 | Self::ASYNC_DELEGATOR.0 | Self::ASYNC_VALUES.0,
-    );
+    pub const ASYNC_DELEGATOR_INCLUDES: ExternalEmitHelpers =
+        ExternalEmitHelpers(Self::AWAIT.0 | Self::ASYNC_DELEGATOR.0 | Self::ASYNC_VALUES.0);
 }
 
 /// `externalHelpersModuleNameText`.
@@ -686,8 +684,7 @@ impl VarianceFlags {
     /// `VarianceFlagsContravariant` — contravariant.
     pub const CONTRAVARIANT: VarianceFlags = VarianceFlags(1 << 1);
     /// `VarianceFlagsBivariant` — both covariant and contravariant.
-    pub const BIVARIANT: VarianceFlags =
-        VarianceFlags(Self::COVARIANT.0 | Self::CONTRAVARIANT.0);
+    pub const BIVARIANT: VarianceFlags = VarianceFlags(Self::COVARIANT.0 | Self::CONTRAVARIANT.0);
     /// `VarianceFlagsIndependent` — unwitnessed type parameter.
     pub const INDEPENDENT: VarianceFlags = VarianceFlags(1 << 2);
     /// `VarianceFlagsVarianceMask` — mask containing all measured variances
@@ -786,8 +783,7 @@ impl NodeCheckFlags {
     pub const ASSIGNMENTS_MARKED: NodeCheckFlags = NodeCheckFlags(1 << 17);
     /// `NodeCheckFlagsContainsClassWithPrivateIdentifiers` — marked on all
     /// block-scoped containers containing a class with private identifiers.
-    pub const CONTAINS_CLASS_WITH_PRIVATE_IDENTIFIERS: NodeCheckFlags =
-        NodeCheckFlags(1 << 20);
+    pub const CONTAINS_CLASS_WITH_PRIVATE_IDENTIFIERS: NodeCheckFlags = NodeCheckFlags(1 << 20);
     /// `NodeCheckFlagsContainsSuperPropertyInStaticInitializer` — marked on
     /// all block-scoped containers containing a static initializer with
     /// `super.x` or `super[x]`.
@@ -999,18 +995,16 @@ impl TypeFlags {
             | Self::BOOLEAN_LITERAL.0,
     );
     /// `TypeFlagsUnit`.
-    pub const UNIT: TypeFlags = TypeFlags(
-        Self::ENUM.0 | Self::LITERAL.0 | Self::UNIQUE_ES_SYMBOL.0 | Self::NULLABLE.0,
-    );
+    pub const UNIT: TypeFlags =
+        TypeFlags(Self::ENUM.0 | Self::LITERAL.0 | Self::UNIQUE_ES_SYMBOL.0 | Self::NULLABLE.0);
     /// `TypeFlagsFreshable`.
     pub const FRESHABLE: TypeFlags = TypeFlags(Self::ENUM.0 | Self::LITERAL.0);
     /// `TypeFlagsStringOrNumberLiteral`.
     pub const STRING_OR_NUMBER_LITERAL: TypeFlags =
         TypeFlags(Self::STRING_LITERAL.0 | Self::NUMBER_LITERAL.0);
     /// `TypeFlagsStringOrNumberLiteralOrUnique`.
-    pub const STRING_OR_NUMBER_LITERAL_OR_UNIQUE: TypeFlags = TypeFlags(
-        Self::STRING_LITERAL.0 | Self::NUMBER_LITERAL.0 | Self::UNIQUE_ES_SYMBOL.0,
-    );
+    pub const STRING_OR_NUMBER_LITERAL_OR_UNIQUE: TypeFlags =
+        TypeFlags(Self::STRING_LITERAL.0 | Self::NUMBER_LITERAL.0 | Self::UNIQUE_ES_SYMBOL.0);
     /// `TypeFlagsDefinitelyFalsy`.
     pub const DEFINITELY_FALSY: TypeFlags = TypeFlags(
         Self::STRING_LITERAL.0
@@ -1094,25 +1088,21 @@ impl TypeFlags {
             | Self::NULL.0,
     );
     /// `TypeFlagsUnionOrIntersection`.
-    pub const UNION_OR_INTERSECTION: TypeFlags =
-        TypeFlags(Self::UNION.0 | Self::INTERSECTION.0);
+    pub const UNION_OR_INTERSECTION: TypeFlags = TypeFlags(Self::UNION.0 | Self::INTERSECTION.0);
     /// `TypeFlagsStructuredType`.
     pub const STRUCTURED_TYPE: TypeFlags =
         TypeFlags(Self::OBJECT.0 | Self::UNION.0 | Self::INTERSECTION.0);
     /// `TypeFlagsTypeVariable`.
     pub const TYPE_VARIABLE: TypeFlags = TypeFlags(Self::TYPE_PARAMETER.0 | Self::INDEXED_ACCESS.0);
     /// `TypeFlagsInstantiableNonPrimitive`.
-    pub const INSTANTIABLE_NON_PRIMITIVE: TypeFlags = TypeFlags(
-        Self::TYPE_VARIABLE.0 | Self::CONDITIONAL.0 | Self::SUBSTITUTION.0,
-    );
+    pub const INSTANTIABLE_NON_PRIMITIVE: TypeFlags =
+        TypeFlags(Self::TYPE_VARIABLE.0 | Self::CONDITIONAL.0 | Self::SUBSTITUTION.0);
     /// `TypeFlagsInstantiablePrimitive`.
-    pub const INSTANTIABLE_PRIMITIVE: TypeFlags = TypeFlags(
-        Self::INDEX.0 | Self::TEMPLATE_LITERAL.0 | Self::STRING_MAPPING.0,
-    );
+    pub const INSTANTIABLE_PRIMITIVE: TypeFlags =
+        TypeFlags(Self::INDEX.0 | Self::TEMPLATE_LITERAL.0 | Self::STRING_MAPPING.0);
     /// `TypeFlagsInstantiable`.
-    pub const INSTANTIABLE: TypeFlags = TypeFlags(
-        Self::INSTANTIABLE_NON_PRIMITIVE.0 | Self::INSTANTIABLE_PRIMITIVE.0,
-    );
+    pub const INSTANTIABLE: TypeFlags =
+        TypeFlags(Self::INSTANTIABLE_NON_PRIMITIVE.0 | Self::INSTANTIABLE_PRIMITIVE.0);
     /// `TypeFlagsStructuredOrInstantiable`.
     pub const STRUCTURED_OR_INSTANTIABLE: TypeFlags =
         TypeFlags(Self::STRUCTURED_TYPE.0 | Self::INSTANTIABLE.0);
@@ -1306,8 +1296,7 @@ impl ObjectFlags {
     pub const EVOLVING_ARRAY: ObjectFlags = ObjectFlags(1 << 8);
     /// `ObjectFlagsObjectLiteralPatternWithComputedProperties` — object
     /// literal pattern with computed properties.
-    pub const OBJECT_LITERAL_PATTERN_WITH_COMPUTED_PROPERTIES: ObjectFlags =
-        ObjectFlags(1 << 9);
+    pub const OBJECT_LITERAL_PATTERN_WITH_COMPUTED_PROPERTIES: ObjectFlags = ObjectFlags(1 << 9);
     /// `ObjectFlagsReverseMapped` — object contains a property from a
     /// reverse-mapped type.
     pub const REVERSE_MAPPED: ObjectFlags = ObjectFlags(1 << 10);
@@ -1341,12 +1330,10 @@ impl ObjectFlags {
     pub const MEMBERS_RESOLVED: ObjectFlags = ObjectFlags(1 << 21);
 
     /// `ObjectFlagsClassOrInterface`.
-    pub const CLASS_OR_INTERFACE: ObjectFlags =
-        ObjectFlags(Self::CLASS.0 | Self::INTERFACE.0);
+    pub const CLASS_OR_INTERFACE: ObjectFlags = ObjectFlags(Self::CLASS.0 | Self::INTERFACE.0);
     /// `ObjectFlagsRequiresWidening`.
-    pub const REQUIRES_WIDENING: ObjectFlags = ObjectFlags(
-        Self::CONTAINS_WIDENING_TYPE.0 | Self::CONTAINS_OBJECT_OR_ARRAY_LITERAL.0,
-    );
+    pub const REQUIRES_WIDENING: ObjectFlags =
+        ObjectFlags(Self::CONTAINS_WIDENING_TYPE.0 | Self::CONTAINS_OBJECT_OR_ARRAY_LITERAL.0);
     /// `ObjectFlagsPropagatingFlags`.
     pub const PROPAGATING_FLAGS: ObjectFlags = ObjectFlags(
         Self::CONTAINS_WIDENING_TYPE.0
@@ -1354,8 +1341,7 @@ impl ObjectFlags {
             | Self::NON_INFERRABLE_TYPE.0,
     );
     /// `ObjectFlagsInstantiatedMapped`.
-    pub const INSTANTIATED_MAPPED: ObjectFlags =
-        ObjectFlags(Self::MAPPED.0 | Self::INSTANTIATED.0);
+    pub const INSTANTIATED_MAPPED: ObjectFlags = ObjectFlags(Self::MAPPED.0 | Self::INSTANTIATED.0);
     /// `ObjectFlagsObjectTypeKindMask` — object flags that uniquely identify
     /// the kind of `ObjectType`.
     pub const OBJECT_TYPE_KIND_MASK: ObjectFlags = ObjectFlags(
@@ -1906,9 +1892,12 @@ impl TypeData {
         match self {
             TypeData::Object(d) => Some(&d.structured_type.constrained_type),
             TypeData::TypeReference(d) => Some(&d.object_type.structured_type.constrained_type),
-            TypeData::InterfaceType(d) => {
-                Some(&d.type_reference.object_type.structured_type.constrained_type)
-            }
+            TypeData::InterfaceType(d) => Some(
+                &d.type_reference
+                    .object_type
+                    .structured_type
+                    .constrained_type,
+            ),
             TypeData::Tuple(d) => Some(
                 &d.interface_type
                     .type_reference
@@ -1942,12 +1931,14 @@ impl TypeData {
     pub fn as_constrained_type_mut(&mut self) -> Option<&mut ConstrainedType> {
         match self {
             TypeData::Object(d) => Some(&mut d.structured_type.constrained_type),
-            TypeData::TypeReference(d) => {
-                Some(&mut d.object_type.structured_type.constrained_type)
-            }
-            TypeData::InterfaceType(d) => {
-                Some(&mut d.type_reference.object_type.structured_type.constrained_type)
-            }
+            TypeData::TypeReference(d) => Some(&mut d.object_type.structured_type.constrained_type),
+            TypeData::InterfaceType(d) => Some(
+                &mut d
+                    .type_reference
+                    .object_type
+                    .structured_type
+                    .constrained_type,
+            ),
             TypeData::Tuple(d) => Some(
                 &mut d
                     .interface_type
@@ -1960,12 +1951,8 @@ impl TypeData {
                 Some(&mut d.object_type.structured_type.constrained_type)
             }
             TypeData::Mapped(d) => Some(&mut d.object_type.structured_type.constrained_type),
-            TypeData::ReverseMapped(d) => {
-                Some(&mut d.object_type.structured_type.constrained_type)
-            }
-            TypeData::EvolvingArray(d) => {
-                Some(&mut d.object_type.structured_type.constrained_type)
-            }
+            TypeData::ReverseMapped(d) => Some(&mut d.object_type.structured_type.constrained_type),
+            TypeData::EvolvingArray(d) => Some(&mut d.object_type.structured_type.constrained_type),
             TypeData::Union(d) => {
                 Some(&mut d.union_or_intersection.structured_type.constrained_type)
             }
@@ -1989,7 +1976,9 @@ impl TypeData {
             TypeData::Object(d) => Some(&d.structured_type),
             TypeData::TypeReference(d) => Some(&d.object_type.structured_type),
             TypeData::InterfaceType(d) => Some(&d.type_reference.object_type.structured_type),
-            TypeData::Tuple(d) => Some(&d.interface_type.type_reference.object_type.structured_type),
+            TypeData::Tuple(d) => {
+                Some(&d.interface_type.type_reference.object_type.structured_type)
+            }
             TypeData::InstantiationExpression(d) => Some(&d.object_type.structured_type),
             TypeData::Mapped(d) => Some(&d.object_type.structured_type),
             TypeData::ReverseMapped(d) => Some(&d.object_type.structured_type),
@@ -2005,9 +1994,7 @@ impl TypeData {
         match self {
             TypeData::Object(d) => Some(&mut d.structured_type),
             TypeData::TypeReference(d) => Some(&mut d.object_type.structured_type),
-            TypeData::InterfaceType(d) => {
-                Some(&mut d.type_reference.object_type.structured_type)
-            }
+            TypeData::InterfaceType(d) => Some(&mut d.type_reference.object_type.structured_type),
             TypeData::Tuple(d) => {
                 Some(&mut d.interface_type.type_reference.object_type.structured_type)
             }
@@ -2016,9 +2003,7 @@ impl TypeData {
             TypeData::ReverseMapped(d) => Some(&mut d.object_type.structured_type),
             TypeData::EvolvingArray(d) => Some(&mut d.object_type.structured_type),
             TypeData::Union(d) => Some(&mut d.union_or_intersection.structured_type),
-            TypeData::Intersection(d) => {
-                Some(&mut d.union_or_intersection.structured_type)
-            }
+            TypeData::Intersection(d) => Some(&mut d.union_or_intersection.structured_type),
             _ => None,
         }
     }
@@ -2849,8 +2834,7 @@ impl SignatureFlags {
     /// non-inferrable type.
     pub const IS_NON_INFERRABLE: SignatureFlags = SignatureFlags(1 << 7);
     /// `SignatureFlagsIsSignatureCandidateForOverloadFailure`.
-    pub const IS_SIGNATURE_CANDIDATE_FOR_OVERLOAD_FAILURE: SignatureFlags =
-        SignatureFlags(1 << 8);
+    pub const IS_SIGNATURE_CANDIDATE_FOR_OVERLOAD_FAILURE: SignatureFlags = SignatureFlags(1 << 8);
     // We do not propagate `IsInnerCallChain` or `IsOuterCallChain` to
     // instantiated signatures, as that would result in us attempting to add
     // `| undefined` on each recursive call to `getReturnTypeOfSignature` when
@@ -3392,4 +3376,40 @@ impl SignatureArena {
             .enumerate()
             .map(|(i, s)| (SignatureId(i as u32), s))
     }
+}
+
+// ===========================================================================
+// Type predicates shared with the checker (utilities.go/checker.go free fns)
+// ===========================================================================
+
+/// `IsTypeAny` (checker/utilities.go:286).
+pub fn is_type_any(types: &TypeArena, t: TypeId) -> bool {
+    types.get(t).flags.intersects(TypeFlags::ANY)
+}
+
+/// `(c *Checker) isErrorType` (checker.go:27172). The `c` back-pointer only
+/// supplies `errorType`, which is the `TypeFlags::ANY` intrinsic named
+/// `"error"` — so the `&TypeArena`-only form tests `intrinsic_name` instead
+/// of pointer identity.
+pub fn is_error_type(types: &TypeArena, t: TypeId) -> bool {
+    let t = types.get(t);
+    t.flags.intersects(TypeFlags::ANY)
+        && (t.alias.is_some()
+            || matches!(&t.data, crate::types::TypeData::Intrinsic(i) if i.intrinsic_name == "error"))
+}
+
+/// `isTypeUsableAsPropertyName` (checker/utilities.go:922).
+pub fn is_type_usable_as_property_name(types: &TypeArena, t: TypeId) -> bool {
+    types
+        .get(t)
+        .flags
+        .intersects(TypeFlags::STRING_OR_NUMBER_LITERAL_OR_UNIQUE)
+}
+
+/// `isObjectLiteralType` (checker/utilities.go:867).
+pub fn is_object_literal_type(types: &TypeArena, t: TypeId) -> bool {
+    types
+        .get(t)
+        .object_flags
+        .intersects(ObjectFlags::OBJECT_LITERAL)
 }

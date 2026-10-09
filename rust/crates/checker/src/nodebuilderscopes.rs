@@ -485,7 +485,7 @@ fn apply_additions(
 /// binding pattern, adds each bound element's symbol to `additions` and
 /// returns true. (Go performs the adds inside the `Some` predicate via the
 /// `add` closure; the port passes `additions` explicitly.)
-fn collect_binding_pattern_symbols(
+pub(crate) fn collect_binding_pattern_symbols(
     c: &mut Checker,
     nodes: &mut Vec<ast::Node>,
     param: SymbolId,

@@ -79,10 +79,11 @@ impl SymbolTracker for SymbolTrackerImpl {
         symbol: SymbolId,
         enclosing_declaration: Option<NodeId>,
         meaning: SymbolFlags,
+        nodes: &[ast::Node],
     ) -> bool {
         if !self.disable_track_symbol {
             if let Some(inner) = self.inner.as_mut()
-                && inner.track_symbol(symbol, enclosing_declaration, meaning)
+                && inner.track_symbol(symbol, enclosing_declaration, meaning, nodes)
             {
                 self.on_diagnostic_reported();
                 return true;
@@ -104,34 +105,38 @@ impl SymbolTracker for SymbolTrackerImpl {
     }
 
     /// `(this *SymbolTrackerImpl) ReportInaccessibleThisError`.
-    fn report_inaccessible_this_error(&mut self) {
+    fn report_inaccessible_this_error(&mut self, nodes: &[ast::Node]) {
         self.on_diagnostic_reported();
         if let Some(inner) = self.inner.as_mut() {
-            inner.report_inaccessible_this_error();
+            inner.report_inaccessible_this_error(nodes);
         }
     }
 
     /// `(this *SymbolTrackerImpl) ReportPrivateInBaseOfClassExpression`.
-    fn report_private_in_base_of_class_expression(&mut self, property_name: &str) {
+    fn report_private_in_base_of_class_expression(
+        &mut self,
+        property_name: &str,
+        nodes: &[ast::Node],
+    ) {
         self.on_diagnostic_reported();
         if let Some(inner) = self.inner.as_mut() {
-            inner.report_private_in_base_of_class_expression(property_name);
+            inner.report_private_in_base_of_class_expression(property_name, nodes);
         }
     }
 
     /// `(this *SymbolTrackerImpl) ReportInaccessibleUniqueSymbolError`.
-    fn report_inaccessible_unique_symbol_error(&mut self) {
+    fn report_inaccessible_unique_symbol_error(&mut self, nodes: &[ast::Node]) {
         self.on_diagnostic_reported();
         if let Some(inner) = self.inner.as_mut() {
-            inner.report_inaccessible_unique_symbol_error();
+            inner.report_inaccessible_unique_symbol_error(nodes);
         }
     }
 
     /// `(this *SymbolTrackerImpl) ReportCyclicStructureError`.
-    fn report_cyclic_structure_error(&mut self) {
+    fn report_cyclic_structure_error(&mut self, nodes: &[ast::Node]) {
         self.on_diagnostic_reported();
         if let Some(inner) = self.inner.as_mut() {
-            inner.report_cyclic_structure_error();
+            inner.report_cyclic_structure_error(nodes);
         }
     }
 
@@ -140,18 +145,19 @@ impl SymbolTracker for SymbolTrackerImpl {
         &mut self,
         specifier: &str,
         symbol_name: &str,
+        nodes: &[ast::Node],
     ) {
         self.on_diagnostic_reported();
         if let Some(inner) = self.inner.as_mut() {
-            inner.report_likely_unsafe_import_required_error(specifier, symbol_name);
+            inner.report_likely_unsafe_import_required_error(specifier, symbol_name, nodes);
         }
     }
 
     /// `(this *SymbolTrackerImpl) ReportTruncationError`.
-    fn report_truncation_error(&mut self) {
+    fn report_truncation_error(&mut self, nodes: &[ast::Node]) {
         self.on_diagnostic_reported();
         if let Some(inner) = self.inner.as_mut() {
-            inner.report_truncation_error();
+            inner.report_truncation_error(nodes);
         }
     }
 
@@ -161,6 +167,7 @@ impl SymbolTracker for SymbolTrackerImpl {
         containing_file: NodeId,
         parent_symbol: SymbolId,
         augmenting_symbol: SymbolId,
+        nodes: &[ast::Node],
     ) {
         self.on_diagnostic_reported();
         if let Some(inner) = self.inner.as_mut() {
@@ -168,22 +175,23 @@ impl SymbolTracker for SymbolTrackerImpl {
                 containing_file,
                 parent_symbol,
                 augmenting_symbol,
+                nodes,
             );
         }
     }
 
     /// `(this *SymbolTrackerImpl) ReportNonSerializableProperty`.
-    fn report_non_serializable_property(&mut self, property_name: &str) {
+    fn report_non_serializable_property(&mut self, property_name: &str, nodes: &[ast::Node]) {
         self.on_diagnostic_reported();
         if let Some(inner) = self.inner.as_mut() {
-            inner.report_non_serializable_property(property_name);
+            inner.report_non_serializable_property(property_name, nodes);
         }
     }
 
     /// `(this *SymbolTrackerImpl) ReportInferenceFallback`.
-    fn report_inference_fallback(&mut self, node: NodeId) {
+    fn report_inference_fallback(&mut self, node: NodeId, nodes: &[ast::Node]) {
         if let Some(inner) = self.inner.as_mut() {
-            inner.report_inference_fallback(node);
+            inner.report_inference_fallback(node, nodes);
         }
     }
 

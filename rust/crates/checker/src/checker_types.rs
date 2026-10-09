@@ -157,7 +157,11 @@ impl Eq for NumberLiteralKey {}
 impl std::hash::Hash for NumberLiteralKey {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         // `-0` and `+0` must hash identically since `-0 == +0` in Go.
-        state.write_u64(if self.0.0 == 0.0 { 0 } else { self.0.0.to_bits() });
+        state.write_u64(if self.0.0 == 0.0 {
+            0
+        } else {
+            self.0.0.to_bits()
+        });
     }
 }
 
@@ -282,20 +286,15 @@ pub fn hash_string_128(s: &str) -> CacheHashKey {
 }
 
 /// `var SignatureKeyErased = CacheHashKey(xxh3.HashString128("-"))`.
-pub static SIGNATURE_KEY_ERASED: LazyLock<CacheHashKey> =
-    LazyLock::new(|| hash_string_128("-"));
+pub static SIGNATURE_KEY_ERASED: LazyLock<CacheHashKey> = LazyLock::new(|| hash_string_128("-"));
 /// `var SignatureKeyCanonical = CacheHashKey(xxh3.HashString128("*"))`.
-pub static SIGNATURE_KEY_CANONICAL: LazyLock<CacheHashKey> =
-    LazyLock::new(|| hash_string_128("*"));
+pub static SIGNATURE_KEY_CANONICAL: LazyLock<CacheHashKey> = LazyLock::new(|| hash_string_128("*"));
 /// `var SignatureKeyBase = CacheHashKey(xxh3.HashString128("#"))`.
-pub static SIGNATURE_KEY_BASE: LazyLock<CacheHashKey> =
-    LazyLock::new(|| hash_string_128("#"));
+pub static SIGNATURE_KEY_BASE: LazyLock<CacheHashKey> = LazyLock::new(|| hash_string_128("#"));
 /// `var SignatureKeyInner = CacheHashKey(xxh3.HashString128("<"))`.
-pub static SIGNATURE_KEY_INNER: LazyLock<CacheHashKey> =
-    LazyLock::new(|| hash_string_128("<"));
+pub static SIGNATURE_KEY_INNER: LazyLock<CacheHashKey> = LazyLock::new(|| hash_string_128("<"));
 /// `var SignatureKeyOuter = CacheHashKey(xxh3.HashString128(">"))`.
-pub static SIGNATURE_KEY_OUTER: LazyLock<CacheHashKey> =
-    LazyLock::new(|| hash_string_128(">"));
+pub static SIGNATURE_KEY_OUTER: LazyLock<CacheHashKey> = LazyLock::new(|| hash_string_128(">"));
 
 // StringMappingKey
 
@@ -619,8 +618,7 @@ impl TypeFacts {
     /// `TypeFactsIsNull`.
     pub const IS_NULL: TypeFacts = TypeFacts(1 << 25);
     /// `TypeFactsIsUndefinedOrNull`.
-    pub const IS_UNDEFINED_OR_NULL: TypeFacts =
-        TypeFacts(Self::IS_UNDEFINED.0 | Self::IS_NULL.0);
+    pub const IS_UNDEFINED_OR_NULL: TypeFacts = TypeFacts(Self::IS_UNDEFINED.0 | Self::IS_NULL.0);
     /// `TypeFactsAll`.
     pub const ALL: TypeFacts = TypeFacts((1 << 27) - 1);
 
@@ -654,8 +652,7 @@ impl TypeFacts {
     pub const STRING_STRICT_FACTS: TypeFacts =
         TypeFacts(Self::BASE_STRING_STRICT_FACTS.0 | Self::TRUTHY.0 | Self::FALSY.0);
     /// `TypeFactsStringFacts`.
-    pub const STRING_FACTS: TypeFacts =
-        TypeFacts(Self::BASE_STRING_FACTS.0 | Self::TRUTHY.0);
+    pub const STRING_FACTS: TypeFacts = TypeFacts(Self::BASE_STRING_FACTS.0 | Self::TRUTHY.0);
     /// `TypeFactsEmptyStringStrictFacts`.
     pub const EMPTY_STRING_STRICT_FACTS: TypeFacts =
         TypeFacts(Self::BASE_STRING_STRICT_FACTS.0 | Self::FALSY.0);
@@ -693,8 +690,7 @@ impl TypeFacts {
     pub const NUMBER_STRICT_FACTS: TypeFacts =
         TypeFacts(Self::BASE_NUMBER_STRICT_FACTS.0 | Self::TRUTHY.0 | Self::FALSY.0);
     /// `TypeFactsNumberFacts`.
-    pub const NUMBER_FACTS: TypeFacts =
-        TypeFacts(Self::BASE_NUMBER_FACTS.0 | Self::TRUTHY.0);
+    pub const NUMBER_FACTS: TypeFacts = TypeFacts(Self::BASE_NUMBER_FACTS.0 | Self::TRUTHY.0);
     /// `TypeFactsZeroNumberStrictFacts`.
     pub const ZERO_NUMBER_STRICT_FACTS: TypeFacts =
         TypeFacts(Self::BASE_NUMBER_STRICT_FACTS.0 | Self::FALSY.0);
@@ -732,8 +728,7 @@ impl TypeFacts {
     pub const BIG_INT_STRICT_FACTS: TypeFacts =
         TypeFacts(Self::BASE_BIG_INT_STRICT_FACTS.0 | Self::TRUTHY.0 | Self::FALSY.0);
     /// `TypeFactsBigIntFacts`.
-    pub const BIG_INT_FACTS: TypeFacts =
-        TypeFacts(Self::BASE_BIG_INT_FACTS.0 | Self::TRUTHY.0);
+    pub const BIG_INT_FACTS: TypeFacts = TypeFacts(Self::BASE_BIG_INT_FACTS.0 | Self::TRUTHY.0);
     /// `TypeFactsZeroBigIntStrictFacts`.
     pub const ZERO_BIG_INT_STRICT_FACTS: TypeFacts =
         TypeFacts(Self::BASE_BIG_INT_STRICT_FACTS.0 | Self::FALSY.0);
@@ -771,8 +766,7 @@ impl TypeFacts {
     pub const BOOLEAN_STRICT_FACTS: TypeFacts =
         TypeFacts(Self::BASE_BOOLEAN_STRICT_FACTS.0 | Self::TRUTHY.0 | Self::FALSY.0);
     /// `TypeFactsBooleanFacts`.
-    pub const BOOLEAN_FACTS: TypeFacts =
-        TypeFacts(Self::BASE_BOOLEAN_FACTS.0 | Self::TRUTHY.0);
+    pub const BOOLEAN_FACTS: TypeFacts = TypeFacts(Self::BASE_BOOLEAN_FACTS.0 | Self::TRUTHY.0);
     /// `TypeFactsFalseStrictFacts`.
     pub const FALSE_STRICT_FACTS: TypeFacts =
         TypeFacts(Self::BASE_BOOLEAN_STRICT_FACTS.0 | Self::FALSY.0);
@@ -782,8 +776,7 @@ impl TypeFacts {
     pub const TRUE_STRICT_FACTS: TypeFacts =
         TypeFacts(Self::BASE_BOOLEAN_STRICT_FACTS.0 | Self::TRUTHY.0);
     /// `TypeFactsTrueFacts`.
-    pub const TRUE_FACTS: TypeFacts =
-        TypeFacts(Self::BASE_BOOLEAN_FACTS.0 | Self::TRUTHY.0);
+    pub const TRUE_FACTS: TypeFacts = TypeFacts(Self::BASE_BOOLEAN_FACTS.0 | Self::TRUTHY.0);
     /// `TypeFactsSymbolStrictFacts`.
     pub const SYMBOL_STRICT_FACTS: TypeFacts = TypeFacts(
         Self::TYPEOF_EQ_SYMBOL.0
@@ -911,8 +904,7 @@ impl TypeFacts {
     pub const EMPTY_OBJECT_FACTS: TypeFacts =
         TypeFacts(Self::ALL.0 & !Self::IS_UNDEFINED_OR_NULL.0);
     /// `TypeFactsUnknownFacts`.
-    pub const UNKNOWN_FACTS: TypeFacts =
-        TypeFacts(Self::ALL.0 & !Self::IS_UNDEFINED_OR_NULL.0);
+    pub const UNKNOWN_FACTS: TypeFacts = TypeFacts(Self::ALL.0 & !Self::IS_UNDEFINED_OR_NULL.0);
     /// `TypeFactsAllTypeofNE`.
     pub const ALL_TYPEOF_NE: TypeFacts = TypeFacts(
         Self::TYPEOF_NE_STRING.0
@@ -965,14 +957,11 @@ impl IterationUse {
     pub const SPREAD: IterationUse =
         IterationUse(Self::ALLOWS_SYNC_ITERABLES_FLAG.0 | Self::SPREAD_FLAG.0);
     /// `IterationUseDestructuring`.
-    pub const DESTRUCTURING: IterationUse = IterationUse(
-        Self::ALLOWS_SYNC_ITERABLES_FLAG.0 | Self::DESTRUCTURING_FLAG.0,
-    );
+    pub const DESTRUCTURING: IterationUse =
+        IterationUse(Self::ALLOWS_SYNC_ITERABLES_FLAG.0 | Self::DESTRUCTURING_FLAG.0);
     /// `IterationUseForOf`.
     pub const FOR_OF: IterationUse = IterationUse(
-        Self::ALLOWS_SYNC_ITERABLES_FLAG.0
-            | Self::ALLOWS_STRING_INPUT_FLAG.0
-            | Self::FOR_OF_FLAG.0,
+        Self::ALLOWS_SYNC_ITERABLES_FLAG.0 | Self::ALLOWS_STRING_INPUT_FLAG.0 | Self::FOR_OF_FLAG.0,
     );
     /// `IterationUseForAwaitOf`.
     pub const FOR_AWAIT_OF: IterationUse = IterationUse(
@@ -1065,8 +1054,7 @@ pub type SymbolComparerThunk<'a> =
 /// `func([]*ast.Symbol, []*ast.Symbol) int` — `compareSymbolChains`.
 /// PORT: chain elements are `SymbolId` (non-nil in practice — Go chains are
 /// populated symbol lists; compare via `compareSymbols` handles nil anyway).
-pub type SymbolChainComparerThunk<'a> =
-    dyn Fn(&mut Checker, &[SymbolId], &[SymbolId]) -> i32 + 'a;
+pub type SymbolChainComparerThunk<'a> = dyn Fn(&mut Checker, &[SymbolId], &[SymbolId]) -> i32 + 'a;
 /// `func(*Type) bool` — `isPrimitiveOrObjectOrEmptyType`,
 /// `containsMissingType`, `couldContainTypeVariables`,
 /// `isStringIndexSignatureOnlyType`.
@@ -1157,6 +1145,15 @@ pub enum UnionReduction {
     Literal = 1,
     /// `UnionReductionSubtype`
     Subtype = 2,
+}
+
+impl UnionReduction {
+    /// `UnionReductionNone` — Go-style const alias used by ported call sites.
+    pub const NONE: UnionReduction = UnionReduction::None;
+    /// `UnionReductionLiteral` — Go-style const alias.
+    pub const LITERAL: UnionReduction = UnionReduction::Literal;
+    /// `UnionReductionSubtype` — Go-style const alias.
+    pub const SUBTYPE: UnionReduction = UnionReduction::Subtype;
 }
 
 // IntersectionFlags
@@ -1271,8 +1268,7 @@ impl PredicateSemantics {
     /// `PredicateSemanticsNever`.
     pub const NEVER: PredicateSemantics = PredicateSemantics(1 << 1);
     /// `PredicateSemanticsSometimes`.
-    pub const SOMETIMES: PredicateSemantics =
-        PredicateSemantics(Self::ALWAYS.0 | Self::NEVER.0);
+    pub const SOMETIMES: PredicateSemantics = PredicateSemantics(Self::ALWAYS.0 | Self::NEVER.0);
 }
 
 // ExportCollision / ExportCollisionTable
@@ -1655,8 +1651,7 @@ pub trait Program: Host {
     /// `FileExists(fileName)`.
     fn file_exists(&self, file_name: &RootedFilePath) -> bool;
     /// `GetSourceFileForResolvedModule(resolved)`.
-    fn get_source_file_for_resolved_module(&self, resolved: &ResolvedModule)
-        -> Option<NodeId>;
+    fn get_source_file_for_resolved_module(&self, resolved: &ResolvedModule) -> Option<NodeId>;
     /// `GetEmitModuleFormatOfFile(sourceFile)`.
     fn get_emit_module_format_of_file(
         &self,
@@ -1683,8 +1678,7 @@ pub trait Program: Host {
     ) -> Option<ResolvedModule>;
     /// `GetResolvedModules()` —
     /// `map[tspath.PathKey]module.ModeAwareCache[*module.ResolvedModule]`.
-    fn get_resolved_modules(&self)
-        -> &FxHashMap<PathKey, ModeAwareCache<Option<ResolvedModule>>>;
+    fn get_resolved_modules(&self) -> &FxHashMap<PathKey, ModeAwareCache<Option<ResolvedModule>>>;
     /// `GetPackagesMap()`.
     fn get_packages_map(&self) -> FxHashMap<String, bool>;
     /// `GetSourceFileMetaData(path)`.
@@ -1714,4 +1708,7 @@ pub trait Program: Host {
     /// `NodeId::file_index` — not part of Go's `Program` interface (Go
     /// derefs `*ast.Node` directly).
     fn nodes(&self, file_index: u32) -> Rc<Vec<ast::Node>>;
+    /// `nodes_mut` — mutable arena access for synthetic-node creation
+    /// (factory-created synthetic expressions, flow nodes).
+    fn nodes_mut(&self, file_index: u32) -> std::cell::RefMut<'_, Vec<ast::Node>>;
 }

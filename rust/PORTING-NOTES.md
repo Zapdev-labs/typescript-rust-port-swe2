@@ -1115,3 +1115,192 @@ Checker-facing API notes / deferred gaps:
   `moduletransforms`). `tsc-checker` still has ~450 pre-existing
   mid-port errors unrelated to this work; no `SymbolTracker`-related
   errors remain.
+
+## checker_c.rs batch: Go 21054–21806 (structured member resolution + signature combining)
+
+- Ported `resolveAnonymousTypeMembers`, `createInstantiatedSymbolTable`,
+  `instantiateSymbolTable`, `instantiateSymbol`, `isThisless` family (free fns),
+  `getDefaultConstructSignatures`, `resolveMappedTypeMembers`,
+  `getTypeOfMappedSymbol`, `getLowerBoundOfKeyType`, `resolveUnionTypeMembers`,
+  `getArrayMemberCallSignatures`, `isArrayOrTupleSymbol`,
+  `isReadonlyArraySymbol`, `getUnionSignatures`,
+  `combineUnionOrIntersection{MemberSignatures,Parameters,ThisParam}`,
+  `resolveIntersectionTypeMembers`, `appendSignatures`, `appendIndexInfo`
+  (both `Vec<IndexInfoId>` and inline `Vec<IndexInfo>` variants),
+  `findMixins`, `includeMixinType`, `createSymbolWithType`,
+  `instantiate{Types,Symbols,Signatures,IndexInfos,List}`,
+  `getMinTypeArgumentCount`, `hasTypeParameterDefault`,
+  `fillMissingTypeArguments`, `getDefaultTypeArgumentType`,
+  `cloneTypeParameter`, `isNamedMember`, `symbolIsValue(Ex)`,
+  `getDefaultFromTypeParameter`, `isMappedTypeWithKeyofConstraintDeclaration`,
+  `getConstraintDeclarationForMappedType`, and
+  `forEachMappedTypePropertyKeyTypeAndIndexSignatureKeyType`.
+- Adaptations: `IndexInfo` inline-value vs `IndexInfoId` duality via
+  `intern_index_info`; `instantiate_symbol` returns input `SymbolId` for the
+  Go nil early return; `getArrayMemberCallSignatures` uses `Rc<dyn Fn>` for
+  `map_type`; mapped-type member accumulation shares `members`/`index_infos`
+  across `for_each_type` callbacks via narrow raw pointers (documented in
+  code); relater helpers `try_get_type_at_position`,
+  `get_parameter_name_at_position`, `find_matching_signature`, and
+  `compare_type_parameters_identical` widened to `pub(crate)`.
+- Known gaps: `cargo check -p tsc-checker` still reports ~2000 errors
+  workspace-wide (deferred architecture), ~409 in `checker_c.rs`. New code
+  calls helpers that remain deferred/unported:
+  `get_resolved_type_parameter_default`, `get_literal_type_from_property`,
+  `get_conditional_type_instantiation`, `is_type_identical_to`.
+- Remaining in range: Go 21807–24557 (union/intersection property creation,
+  apparent/reduced types, `instantiateTypeWithAlias`, `instantiateTypeWorker`,
+  `getTypeFromTypeNode` family, tuple normalization, type aliases, enum member
+  values). Markers `__NEXT_METHODS__`/`__NEXT_FNS__` remain in checker_c.rs.
+
+## 2026-10-08 crates/checker/src/inference.rs — tsc/internal/checker/inference.go port shape
+- `InferenceState.inferences` is an owned `Vec<InferenceInfo>` that
+  `infer_types` swaps with the caller's `&mut Vec` (usually
+  `InferenceContext.inferences`). Go's `[]*InferenceInfo` aliases the owning
+  context slice; the swap preserves write-through mutation without shared
+  pointers.
+- Go `func` values used as inference actions/matchers become `fn` items:
+  `invoke_once` takes `fn(&mut Checker, &mut InferenceState, TypeId, TypeId)`,
+  `infer_from_matching_types`/`find_leftmost_type` take
+  `fn(&mut Checker, TypeId, TypeId) -> bool`, and
+  `apply_to_{parameter,return}_types` take `impl FnMut(&mut Checker, TypeId,
+  TypeId)` (closures re-borrow `n: &mut InferenceState` — equivalent to Go
+  closing over `n`).
+- `getInferenceInfoForType` returns the inference index (`Option<usize>`)
+  rather than `*InferenceInfo`; callers mutate via `n.inferences[i]`.
+- `get_inferred_type`/`infer_from_intra_expression_sites` are free functions
+  because checker_core.rs already declared the `Checker` method names; the
+  methods now delegate.
+- `InferenceContext.compare_types` is `Option<Box<TypeComparer>>`; Go shares
+  the comparer func value across cloned contexts — `share_compare_types`
+  wraps the box in `Rc` and installs forwarding closures in both contexts.
+  `new_inference_context` defaults `None` to `compare_types_assignable`.
+- Reverse-mapped caches store `TypeId::NONE` for Go's nil cache entries
+  (`infer_type_for_homomorphic_mapped_type` recomputes on nil, while
+  `infer_reverse_mapped_type` maps a present nil to `unknownType` — both
+  preserved).
+- Sibling-file changes needed by this port (documented in place):
+  `checker_d::apply_string_mapping`/`get_mapped_type_modifiers` and
+  `relater::type_predicate_kinds_match`/`get_effective_rest_type`/
+  `infer_types_from_template_literal_type` widened to `pub(crate)`;
+  `checker_core::infer_from_intra_expression_sites`/`get_inferred_type`
+  stubs now delegate; `UnionReduction` gained `NONE`/`LITERAL`/`SUBTYPE`
+  associated consts (callers were written Go-style) plus a
+  `crate::types::UnionReduction` re-export; `utilities.rs` gained
+  `is_valid_number_string`/`is_valid_big_int_string`/`pseudo_big_int_to_string`
+  (utilities.go) — already referenced by relater.rs.
+- `get_end_element_count` (checker.go) is inlined as a stopgap free fn while
+  checker.go is unported; `is_skip_direct_inference_node` uses
+  `OrderedSet::has`.
+
+## 2026-10-08 crates/checker/src/checker_d.rs — checker.go lines 24558-32722 (EOF) completed
+
+Finished the in-flight tail port of `tsc/internal/checker/checker.go`
+(lines 24558 through EOF at @ec47d33c) into `checker_d.rs`. The file grew
+from ~4,513 lines (ending mid `get_indexed_access_type`) to ~13,938 lines
+covering enum/entity evaluation, type-node resolution, conditional types,
+tuple construction/normalization, unions/intersections/literals,
+indexed-access distribution, mapped-type + substitution helpers, string
+mapping, promise/awaited-type machinery, optionality/falsy removal, the
+full contextual-typing family (expressions, calls, signatures, function
+args, properties, decorators, discriminated unions, contextual-type
+cache), `TypeFacts`/`getAdjustedTypeFacts`, alias/reference marking,
+JSX alias reference marking, symbol resolution, `getTypeOfNode`,
+`getSymbolAtLocation`, `GetTypeAtLocation`, `NewEmitResolver`,
+`GetAliasedSymbol`, and source-file `checkSourceFile*` orchestration
+through `containsArgumentsReference` at EOF.
+
+Architectural adaptations (same conventions as checker_a/b/c):
+`*Type` -> `TypeId`, `*Signature` -> `SignatureId`, `*ast.Node` ->
+`NodeId`, `*ast.Symbol` -> `SymbolId`, `*TypeMapper` -> `TypeMapperId`,
+Go nil -> `Option<..>` / `TypeId::NONE`. Go out-params become Rust
+`Option<&mut Option<T>>`; Go `...any` diagnostic args become `&[String]`
+built via `type_to_string` temps (never nest `self.f(self.g())` --
+receiver borrow precedes arg eval). Nested type-data is reached through
+embedded structs (`MappedType.object_type.*`,
+`TypeReference.object_type.*`,
+`ObjectType.structured_type.properties`,
+union/intersection members via `union_or_intersection.types`,
+`InterfaceType` behind `Option<&InterfaceType>`,
+`ConditionalType.check_type/extends_type` on the conditional root).
+Global lazy thunks are `Rc<dyn Fn(&mut Checker) -> ..>` fields on
+`Checker` and must be cloned before invocation
+(`self.get_global_*_type.clone().expect(..)(self)`); same for the
+`contains_missing_type`/`is_primitive_or_object_or_empty_type`
+`TypeBoolThunk` fields. `program_nodes(node)` returns `Rc<Vec<Node>>` --
+bind it once per function, never in a `for` scrutinee or a method-call
+argument (the guard outlives the statement). `signature_links`/
+`type_node_links`/`enum_member_links` are `LinkStore`s whose
+`get`/`get_mut` return guards that hold `&mut self`/`&self` -- never hold
+a guard across another `self.*` call; re-`get` or hoist the field into a
+local first.
+
+Borrow-checker idioms used throughout (apply to future ports):
+- Snapshot `self.types.get(t).types().to_vec()` before loops that call
+  `&mut self` methods.
+- `let g = self.types.get(t); let x = g.as_foo_type();` inside a block
+  whenever `as_*_type()` is needed across a statement boundary (E0716).
+- `self.types.get(t).alias.clone()` before `is_some_and` (Option<TypeAlias>
+  is not Copy -- E0507 through a `TypeReadGuard`).
+- `if let Some(x) = self.types.get(t).field` moves the scrutinee temp
+  into the if-let -- bind `let x = self.types.get(t).field;` first.
+- Closures passed to `map_type`/`some_type`/`for_each` capture
+  `&mut Checker`; any `self.*` read inside `.is_some_and`/`.filter`
+  closures over `nodes[..]` fields must hoist the `self.sym(..)` name or
+  the guard first.
+
+Cross-module additions needed by this port:
+- `ast::is_write_only_access` (utilities.rs) -- ported from
+  `ast.IsWriteOnlyAccess`/`accessKind`/`reverseAccessKind`; also referenced
+  by checker_b.rs.
+- `nodebuilderimpl::get_target_symbol` widened `fn` -> `pub(crate)`
+  (Go `getTargetSymbol`, checker.go:22087 -- canonical home is the
+  earlier checker.go range; file-local note updated).
+- `checker_core` stubs reconciled: `get_awaited_type_ex` thunk
+  call-site now passes `&[]` and unwraps `Option<TypeId>`;
+  `contains_arguments_reference`/`type_to_string`/`get_type_of_symbol`
+  stubs removed in favour of the real implementations in
+  checker_d.rs/printer_util.rs/checker_c.rs;
+  `program_nodes_mut`/`infer_from_intra_expression_sites`/`get_inferred_type`
+  delegation (inference.rs) landed with this port.
+- `relater::get_tuple_element_label`/`try_get_type_at_position`
+  visibility for cross-module tuple/element access.
+
+Verification: `cargo check -p tsc-checker` on the synced workspace.
+checker_d.rs now reports **only E0599** (63 call sites over 39 missing
+methods) -- every remaining name resolves to a sibling-file port that has
+not landed yet, verified against the Go source:
+- checker.go lines 21807-24446 (pre-24558 region, owned by other
+  workstreams): `get_property_of_object_type`,
+  `is_mapped_type_generic_indexed_access`, `get_apparent_type`,
+  `get_reduced_type`, `get_reduced_apparent_type`,
+  `is_type_parameter_possibly_referenced`,
+  `get_homomorphic_type_variable`, `instantiate_type_alias`,
+  `try_get_type_from_type_node`, `get_type_from_this_type_node`,
+  `get_unresolved_symbol_for_entity_name`, `get_type_reference_type`,
+  `is_deferred_type_reference_node`, `create_normalized_type_reference`,
+  `create_normalized_tuple_type{,_ex}`, `get_element_types`,
+  `get_type_reference_arity`, `is_array_or_tuple_type`,
+  `is_mutable_array_or_tuple`, `is_array_like_type`,
+  `is_mutable_array_like_type`, `get_type_alias_instantiation`,
+  `get_alias_for_type_node`, `get_outer_type_parameters`,
+  `get_infer_type_parameters`, `get_declared_type_of_type_parameter`,
+  `get_enum_member_value`.
+- `jsx.go` (unported file): `get_jsx_namespace`,
+  `get_jsx_namespace_container_for_implicit_import`,
+  `get_jsx_factory_entity`, `get_intrinsic_tag_symbol`,
+  `get_contextual_type_for_jsx_expression`,
+  `get_contextual_type_for_jsx_attribute`,
+  `get_contextual_jsx_element_attributes_type`,
+  `discriminate_contextual_type_by_jsx_attributes`,
+  `get_effective_first_argument_for_jsx_signature`.
+- `utilities.go`/`jsdoc.go` helpers: `is_js_literal_type`,
+  `resolve_jsdoc_member_name`.
+- The same missing names are also referenced by checker_a/b/c,
+  inference.rs and relater.rs, confirming they are shared cross-file
+  gaps, not checker_d defects.
+
+Remaining blockers: none inside checker_d.rs. The crate as a whole still
+fails `cargo check` (sibling files checker_a/b/c, inference.rs, relater.rs,
+nodebuilder*.rs carry ~1,500 errors from their own in-flight ports);
+checker_d unblocks automatically when those land.

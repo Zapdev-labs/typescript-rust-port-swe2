@@ -6739,3 +6739,117 @@ pub fn is_string_literal_like_type(node: &Node, nodes: &[Node]) -> bool {
 // - `GetEmitModuleFormatOfFile`/`GetEmitSyntaxForModuleSpecifierExpression`/
 //   `GetEmitResolution*`: emit- and resolution-host-dependent helpers are
 //   deferred to the transformer/resolver port (see their PORT notes inline).
+
+/// `type AccessKind int32` (ast.go:1503).
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum AccessKind {
+    /// `AccessKindRead` — only reads from a variable.
+    Read,
+    /// `AccessKindWrite` — only writes to a variable without ever reading it,
+    /// e.g. `x=1;`.
+    Write,
+    /// `AccessKindReadWrite` — reads from and writes to a variable, e.g.
+    /// `f(x++);`, `x/=1`.
+    ReadWrite,
+}
+
+/// `func reverseAccessKind` (ast.go:1491).
+fn reverse_access_kind(a: AccessKind) -> AccessKind {
+    match a {
+        AccessKind::Read => AccessKind::Write,
+        AccessKind::Write => AccessKind::Read,
+        AccessKind::ReadWrite => AccessKind::ReadWrite,
+    }
+}
+
+/// `func accessKind` (ast.go:1430).
+fn access_kind(node: NodeId, nodes: &[Node]) -> AccessKind {
+    let Some(parent) = nodes[node].parent else {
+        return AccessKind::Read;
+    };
+    let parent_node = &nodes[parent];
+    match parent_node.kind {
+        Kind::ParenthesizedExpression => access_kind(parent, nodes),
+        Kind::PrefixUnaryExpression => {
+            let operator = parent_node.as_prefix_unary_expression().operator;
+            if operator == Kind::PlusPlusToken || operator == Kind::MinusMinusToken {
+                return AccessKind::ReadWrite;
+            }
+            AccessKind::Read
+        }
+        Kind::PostfixUnaryExpression => {
+            let operator = parent_node.as_postfix_unary_expression().operator;
+            if operator == Kind::PlusPlusToken || operator == Kind::MinusMinusToken {
+                return AccessKind::ReadWrite;
+            }
+            AccessKind::Read
+        }
+        Kind::BinaryExpression => {
+            let bin = parent_node.as_binary_expression();
+            if bin.left == Some(node) {
+                let operator_kind = bin
+                    .operator_token
+                    .map(|t| nodes[t].kind)
+                    .unwrap_or(Kind::Unknown);
+                if operator_kind.is_assignment_operator() {
+                    if operator_kind == Kind::EqualsToken {
+                        return AccessKind::Write;
+                    }
+                    return AccessKind::ReadWrite;
+                }
+            }
+            AccessKind::Read
+        }
+        Kind::PropertyAccessExpression => {
+            if parent_node.name() != Some(node) {
+                return AccessKind::Read;
+            }
+            access_kind(parent, nodes)
+        }
+        Kind::PropertyAssignment => {
+            let parent_access = parent_node
+                .parent
+                .map(|p| access_kind(p, nodes))
+                .unwrap_or(AccessKind::Read);
+            // In `({ x: varname }) = { x: 1 }`, the left `x` is a read, the
+            // right `x` is a write.
+            if parent_node.name() == Some(node) {
+                return reverse_access_kind(parent_access);
+            }
+            parent_access
+        }
+        Kind::ShorthandPropertyAssignment => {
+            // Assume it's the local variable being accessed, since we don't
+            // check public properties for --noUnusedLocals.
+            if parent_node
+                .as_shorthand_property_assignment()
+                .object_assignment_initializer
+                == Some(node)
+            {
+                return AccessKind::Read;
+            }
+            parent_node
+                .parent
+                .map(|p| access_kind(p, nodes))
+                .unwrap_or(AccessKind::Read)
+        }
+        Kind::ArrayLiteralExpression => access_kind(parent, nodes),
+        Kind::ForInStatement | Kind::ForOfStatement => {
+            if parent_node.as_for_in_or_of_statement().initializer == Some(node) {
+                return AccessKind::Write;
+            }
+            AccessKind::Read
+        }
+        _ => AccessKind::Read,
+    }
+}
+
+/// `func IsWriteOnlyAccess` (ast.go:1268).
+pub fn is_write_only_access(node: NodeId, nodes: &[Node]) -> bool {
+    access_kind(node, nodes) == AccessKind::Write
+}
+
+/// `func IsWriteAccess` (ast.go:1272).
+pub fn is_write_access(node: NodeId, nodes: &[Node]) -> bool {
+    access_kind(node, nodes) != AccessKind::Read
+}
