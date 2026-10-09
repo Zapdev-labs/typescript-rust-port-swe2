@@ -14,6 +14,7 @@
 //!
 //! Baseline Go commit: `ec47d33c23e464a17cdf2475632cba629bee8763`.
 
+pub mod checker_a;
 pub mod checker_core;
 pub mod checker_types;
 pub mod emitresolver;

@@ -1470,8 +1470,11 @@ dependencies = [
  "tsc-collections",
  "tsc-core",
  "tsc-debug",
+ "tsc-outputpaths",
  "tsc-printer",
  "tsc-scanner",
+ "tsc-stringutil",
+ "tsc-tspath",
 ]
 
 [[package]]

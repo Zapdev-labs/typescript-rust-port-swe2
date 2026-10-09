@@ -11,6 +11,19 @@ workspace = true
 [dependencies]
 tsc-ast = { path = "../ast" }
 tsc-binder = { path = "../binder" }
+tsc-collections = { path = "../collections" }
 tsc-core = { path = "../core" }
+tsc-debug = { path = "../debug" }
+tsc-evaluator = { path = "../evaluator" }
+tsc-jsnum = { path = "../jsnum" }
+tsc-outputpaths = { path = "../outputpaths" }
 tsc-printer = { path = "../printer" }
 tsc-scanner = { path = "../scanner" }
+tsc-stringutil = { path = "../stringutil" }
+tsc-tspath = { path = "../tspath" }
+rustc-hash = { workspace = true }
+
+[dev-dependencies]
+tsc-nodebuilder = { path = "../nodebuilder" }
+tsc-parser = { path = "../parser" }
+tsc-testutil = { path = "../testutil" }

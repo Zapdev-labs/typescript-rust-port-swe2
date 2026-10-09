@@ -1169,7 +1169,7 @@ pub struct Checker {
     /// `identityRelation`.
     pub identity_relation: SharedRelation,
     /// `enumRelation`.
-    pub enum_relation: FxHashMap<EnumLiteralKey, RelationComparisonResult>,
+    pub enum_relation: FxHashMap<crate::checker_types::EnumRelationKey, RelationComparisonResult>,
     /// `getGlobalESSymbolType`.
     pub get_global_es_symbol_type: Option<Rc<TypeThunk<'static>>>,
     /// `getGlobalBigIntType`.
@@ -3859,23 +3859,11 @@ impl Checker {
         unimplemented!("PORT(deferred): isStringIndexSignatureOnlyTypeWorker lands with checker.go")
     }
 
-    /// `(c *Checker) markNodeAssignmentsWorker` (flow.go) — PORT(deferred).
-    pub fn mark_node_assignments_worker(&mut self, node: NodeId) -> bool {
-        let _ = node;
-        unimplemented!("PORT(deferred): markNodeAssignmentsWorker lands with flow.go")
-    }
+    /// `(c *Checker) markNodeAssignmentsWorker` (flow.go) — implemented in
+    /// `crate::flow`.
 
     /// `(c *Checker) compareTypesAssignableWorker` (relater.go) —
-    /// PORT(deferred).
-    pub fn compare_types_assignable_worker(
-        &mut self,
-        source: TypeId,
-        target: TypeId,
-        report_errors: bool,
-    ) -> crate::types::Ternary {
-        let _ = (source, target, report_errors);
-        unimplemented!("PORT(deferred): compareTypesAssignableWorker lands with relater.go")
-    }
+    /// implemented in `crate::relater`.
 
     /// `(c *Checker) getUniqueLiteralTypeForTypeParameter` (checker.go).
     pub fn get_unique_literal_type_for_type_parameter(&mut self, t: TypeId) -> TypeId {

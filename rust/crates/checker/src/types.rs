@@ -618,8 +618,10 @@ pub struct SwitchStatementLinks {
     pub witnesses_computed: bool,
     /// `switchTypes`.
     pub switch_types: Vec<TypeId>,
-    /// `witnesses`.
-    pub witnesses: Vec<String>,
+    /// `witnesses` — `Option` mirrors Go's nil `[]string` (a computed-but-
+    /// invalid switch stores nil, distinct from "not computed" which is
+    /// tracked by `witnesses_computed`).
+    pub witnesses: Option<Vec<String>>,
 }
 
 /// `type ArrayLiteralLinks struct`.
@@ -1434,7 +1436,7 @@ impl ObjectFlags {
 
 /// `type TypeAlias struct`. Stored inline on `Type` (`Option<TypeAlias>`)
 /// rather than behind a `*TypeAlias` pointer — two small fields.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TypeAlias {
     /// `symbol`.
     pub symbol: Option<SymbolId>,
@@ -1575,6 +1577,15 @@ impl Type {
     /// `AsTypeParameter`.
     pub fn as_type_parameter(&self) -> &TypeParameter {
         match &self.data {
+            TypeData::TypeParameter(d) => d,
+            _ => panic!("AsTypeParameter on {:?}", self.flags),
+        }
+    }
+
+    /// `AsTypeParameter` — mutable (Go writes `t.AsTypeParameter().constraint`
+    /// when cloning type parameters for elaboration).
+    pub fn as_type_parameter_mut(&mut self) -> &mut TypeParameter {
+        match &mut self.data {
             TypeData::TypeParameter(d) => d,
             _ => panic!("AsTypeParameter on {:?}", self.flags),
         }
@@ -2170,7 +2181,7 @@ pub struct UniqueESSymbolType {
 // ConstrainedType (type with computed base constraint)
 
 /// `type ConstrainedType struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ConstrainedType {
     /// `resolvedBaseConstraint`.
     pub resolved_base_constraint: Option<TypeId>,
@@ -2376,7 +2387,7 @@ impl ElementFlags {
 }
 
 /// `type TupleElementInfo struct`.
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct TupleElementInfo {
     /// `flags`.
     pub flags: ElementFlags,
@@ -2681,7 +2692,7 @@ impl IndexedAccessType {
 }
 
 /// `type TemplateLiteralType struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TemplateLiteralType {
     /// embedded `ConstrainedType`.
     pub constrained_type: ConstrainedType,
@@ -2941,7 +2952,7 @@ impl Signature {
 }
 
 /// `type CompositeSignature struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct CompositeSignature {
     /// `isUnion` — true for union, false for intersection.
     pub is_union: bool,
@@ -2965,7 +2976,7 @@ pub enum TypePredicateKind {
 }
 
 /// `type TypePredicate struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TypePredicate {
     /// `kind`.
     pub kind: TypePredicateKind,
@@ -3111,6 +3122,17 @@ impl Ternary {
     /// `TernaryTrue` — `-1`, all-ones so `&`/`|` pick the ordering Go
     /// documents.
     pub const TRUE: Ternary = Ternary(-1);
+
+    /// Go `a && b` on `Ternary` (three-valued `min`) — same as `a & b` given
+    /// the FALSE=0/MAYBE=3/TRUE=-1 encoding.
+    pub fn and(self, rhs: Ternary) -> Ternary {
+        self & rhs
+    }
+
+    /// Go `a || b` on `Ternary` — same as `a | b`.
+    pub fn or(self, rhs: Ternary) -> Ternary {
+        self | rhs
+    }
 }
 
 impl core::ops::BitAnd for Ternary {

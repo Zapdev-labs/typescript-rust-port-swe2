@@ -819,3 +819,138 @@ Key mapping decisions:
   helpers land. Verified with `cargo check -p tsc-checker`.
 - `IndexInfo` gained `Clone` because `set_structured_type_members`
   copies arena'd `*IndexInfo` values into `StructuredType.index_infos`.
+
+## 2026-10-08 crates/checker — `relater.go` + `flow.go` completion
+`relater.rs` (10,850 lines, all 189 Go funcs) and `flow.rs` (4,459 lines,
+all 130 Go funcs) are fully ported against the authority commit
+`ec47d33c`. Go top-level `func` inventory matches 1:1 modulo naming
+(`asRecursionId[T]` → `as_recursion_id_{node,symbol,type}` generics split;
+`narrowTypeBySwitchOnTypeOf` → `narrow_type_by_switch_on_typeof`).
+Key decisions beyond the module-header notes:
+- Diagnostics aren't `PartialEq`: message identity uses `std::ptr::eq` on
+  the shared `pub static` `Message` values (assignability, excess-property,
+  signature-mismatch branches).
+- `Ternary` gained `and`/`or` wrappers over its `&`/`|` impls (Go calls
+  `t.And(u)`/`t.Or(u)`; `FALSE=0`, `UNKNOWN=1`, `MAYBE=3`, `TRUE=-1`).
+- `ConstrainedType` and `TupleElementInfo` gained `Clone` (mirroring
+  `IndexInfo`): relation code clones arena'd template-constraint and
+  tuple-element slices.
+- `Checker::enum_relation` is `FxHashMap<EnumRelationKey,
+  RelationComparisonResult>` — corrected from the earlier
+  `EnumLiteralKey` field type to match Go's `EnumRelationKey` key.
+- `is_object_type_with_inferable_index` lives on `Checker`, not `Relater`
+  (Go receiver); `compare_signatures_identical` likewise is a `Checker`
+  method called from relater code without an extra relater arg.
+- `map_type` takes `Rc<dyn Fn(&mut Checker, TypeId) -> TypeId>`; all flow
+  narrowing call sites wrap closures in `Rc::new`.
+- `has_parent_with_assignments_marked` requires the *same* ancestor to be
+  function-or-source-file AND `ASSIGNMENTS_MARKED` (the callback tests
+  both together — a two-step find would diverge).
+- AST helpers that read siblings take `nodes: &[ast::Node]` explicitly
+  (`Node::text`, `ast::is_expression`, `find_ancestor` is node-inclusive).
+Verification: remote-only (`rsync` + `cargo check -p tsc-checker` on the
+remote workspace — no local build). Remaining errors are all
+cross-module: 110 `E0433` for undeclared sibling modules
+(`crate::utilities`, `crate::checker_c`, `crate::checker_d`) and 603
+`E0599` "no method named" for ~184 methods owned by concurrent sibling
+ports (`checker_{a..d}`, `utilities`, `inference.rs`'s unported
+`infer_types`/`new_inference_context`, `sym`/`sym_mut` in checker_c).
+Zero errors originate from relater.rs/flow.rs implementation defects.
+
+## 2026-10-08 crates/transformers — `estransforms` crash-recovery completion
+Resumed the in-flight `estransforms` port after a mid-flight crash. All 17
+files existed but `classfields.rs` (61 errors) and `esdecorator.rs` (35
+errors) did not compile. Now `cargo check -p tsc-transformers` is clean
+(0 errors; only dead-code warnings).
+Key fixes/decisions:
+- `get_private_identifier` was truncated (returned `None` for the
+  `members` map path): added the `nodes: &[Node]` param all callers
+  already had in scope and implemented the real `env.members[name.Text()]`
+  lookup plus `get_node_for_generated_name(nodes, name)` (was `&[]`).
+- Removed three stub helpers planted around `is_anonymous_class_needing_assigned_name`
+  (`nodes_check::emit_ref` — would have panicked; `emit_flags_pred` —
+  hardcoded `false`; `node_has_transform_private_static_elements_flag_from_pred`)
+  and routed the predicate through `ec.borrow()` (safe: the enclosing
+  `is_named_evaluation_and` holds a shared borrow).
+- `PrivateIdentifierKind` lives in `tsc_printer`, so the orphan
+  `impl Default` was replaced by a manual `impl Default for
+  PrivateIdentifierInfo` (kind == Field).
+- `visit_modifier` gained an unused `_ec` param so the `install!` macro's
+  uniform `s.$method(&ec2, cx, node)` call applies;
+  `visit_for_substitution_opt` wraps the `NodeId`-returning
+  `visit_for_substitution` for the `VisitFn`-shaped `substitution_visitor`.
+- `class_has_class_this_assignment` moved from `esdecorator.rs` to
+  `classfields.rs` (its Go home); esdecorator imports it.
+- `create_get/set_accessor_descriptor_forwarder` gained `ec: &Ec` params —
+  `new_this_expression`/`new_function_call_call` live on the printer
+  `EmitFactory`, not `cx.factory` (tsc_ast::NodeFactory).
+- Nested `check` fn in `member_contains_constructor_reference` is generic
+  over the resolver lifetime (`dyn ReferenceResolver + 'r`) because
+  `RefCell` invariance rejected `ReferenceResolver<'_>` (defaults 'static).
+- `child_is_decorated(false, node, nil)` in Go became
+  `child_is_decorated(false, node, node, nodes)` — the Rust signature
+  takes a non-Option `NodeId` parent and the parent is never consulted
+  when `useLegacyDecorators` is false.
+- `is_non_static_method_or_accessor_with_private_name` re-signalled to
+  `(nodes, member: NodeId)` (was an `unsafe { transmute }` hack, now gone).
+- `Node.statements_mut()` doesn't exist; the IIFE statement-list loc is
+  set via `as_block_mut().statements` (IIAF body is always `Block`).
+- `Node.flags`/`Node.parent` are fields on the arena header, not on the
+  per-kind payloads; `StringLiteral.text` is at
+  `literal_expression_base.literal_like_node_base.text`;
+  `PropertyAssignment.name` is at `named_member_base.name`;
+  accessor payloads use `as_get/set_accessor_declaration()` +
+  `accessor_declaration_base.function_like_with_body_base`.
+- Option-valued factory results assigned back to `Option<NodeId>` locals
+  (`inject_pending_initializers`, `inline_expressions`,
+  `update_computed_property_name`) now drop the extra `Some(..)`/rename
+  shadowed bindings; `new_reflect_{get,set}_call` and
+  `new_function_bind_call` take plain `NodeId` receivers (no `Some(..)`).
+Deferrals: none inside estransforms. `ClassInfo.class` and
+`EsDecoratorTransformer.compiler_options` are write-only, matching Go's
+dead fields. `ec_visit_variable_environment`/`node_flags` helpers in
+mod.rs are unused until their consumers land.
+
+## 2026-10-08 crates/transformers — `tstransforms` completion
+Finished the in-flight port of `tsc/internal/transformers/tstransforms`:
+`importelision.rs`, `legacydecorators.rs` (new, full 1038-LOC Go file),
+`metadata.rs`, `runtimesyntax.rs`, `typeeraser.rs`, `typeserializer.rs`,
+`utilities.rs`. `cargo check`/`test -p tsc-transformers` are clean (only
+pre-existing dead-code warnings in `estransforms`/`moduletransforms`).
+Key decisions beyond the module-header notes in `tstransforms/mod.rs`:
+- `Symbol` is not `Clone`, so `RuntimeSyntaxTransformer` cannot lazily clone
+  the bound symbol arena for `ReferenceResolver` calls; it threads
+  `TransformOptions::symbols` (`Option<&'a RefCell<Vec<Symbol>>>`) through
+  instead, matching `legacydecorators.rs`.
+- Go `childIsDecorated(false, node, nil)` (nil parent) became
+  `child_is_decorated_no_parent` in `legacydecorators.rs` — the Rust
+  `ast::child_is_decorated` requires a non-Option parent.
+- `MetadataTransformer`'s `serializingConditionalTypeBranch` and the lexical
+  scope cells are `Cell`-based snapshots (`get`/`set` around a copied
+  context value) since the methods take `&self`.
+- `typeserializer.rs` relies on the emit resolver for
+  `get_type_reference_serialization_kind`; untouched.
+- Tests: `typeeraser_test.rs` ports `TestTypeEraser` (73-case table) 1:1 via
+  `tsc_testutil::parsetestutil` + `Printer::emit_source_file`.
+  `importelision_test.rs` ports `TestImportElision` (18-case table). Go's
+  `checker.NewChecker(&fakeProgram)` + `NewEmitResolver` have no Rust
+  counterpart (checker's `EmitResolver` is a `PORT(deferred)` shell and
+  `new_checker` panics on deferred state), so the test carries
+  `FakeEmitResolver`, a binder-level stand-in implementing only the four
+  resolver members the transform calls — `mark_linked_references_recursively`
+  (a faithful `markLinkedReferences` port incl. the import-declaration skip
+  and identifier exclusion rules), `is_referenced_alias_declaration`,
+  `is_value_alias_declaration`, and
+  `is_top_level_value_import_equals_with_entity_name`. It resolves names
+  with `binder::NameResolver` over a field-wise scratch copy of
+  `bind_result.symbols` (its `resolve` needs `&mut Vec<Symbol>` only to
+  append transient `arguments`/`require` symbols) and follows alias chains
+  into a bound `other.ts` arena keyed by module specifier — the role of
+  `fakeProgram.getResolvedModule`/`getSourceFileForResolvedModule`. All
+  remaining `EmitResolver`/`ReferenceResolver` methods are
+  `unimplemented!()` and unreachable.
+- Dev-deps gained `tsc-nodebuilder` (EmitResolver stub signatures) on top of
+  `tsc-parser`/`tsc-testutil`; `tsc-jsnum` joined `[dependencies]` for
+  `utilities.rs`.
+- Test fns are named `tstransforms_*` so `cargo test -p tsc-transformers
+  tstransforms` selects them.

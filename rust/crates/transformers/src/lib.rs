@@ -14,8 +14,14 @@
 // machinery.
 
 mod chain;
+pub mod declarations;
 mod destructuring;
+pub mod estransforms;
+pub mod inliners;
+pub mod jsxtransforms;
 mod modifier_visitor;
+pub mod moduletransforms;
+pub mod tstransforms;
 mod transformer;
 mod utilities;
 

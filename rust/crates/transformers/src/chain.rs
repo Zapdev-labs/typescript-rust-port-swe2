@@ -7,7 +7,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use tsc_ast::visitor::{NodeVisitor, VisitFn, VisitorCx};
-use tsc_ast::{self as ast, HasFileName, NodeId};
+use tsc_ast::{self as ast, HasFileName, NodeId, Symbol};
 use tsc_binder::referenceresolver::ReferenceResolver;
 use tsc_core::options_generated::{CompilerOptions, ModuleKind};
 use tsc_printer::{EmitContext, EmitResolver};
@@ -30,6 +30,12 @@ pub struct TransformOptions<'a> {
     pub emit_resolver: Option<Rc<RefCell<dyn EmitResolver + 'a>>>,
     /// `GetEmitModuleFormatOfFile func(file ast.HasFileName) core.ModuleKind`
     pub get_emit_module_format_of_file: Option<&'a GetEmitModuleFormatOfFile<'a>>,
+    /// The binder-owned symbol arena the `ReferenceResolver` methods index
+    /// into — Go resolvers read through `*ast.Symbol` pointers while the
+    /// Rust trait surfaces `&mut Vec<Symbol>` parameters. Carried on the
+    /// options struct (rather than inside the resolver) so the transform
+    /// can pass it to every resolver call.
+    pub symbols: Option<&'a RefCell<Vec<Symbol>>>,
 }
 
 /// `GetEmitModuleFormatOfFile` — the module-format callback stored on
