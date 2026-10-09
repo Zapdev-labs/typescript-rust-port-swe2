@@ -12606,7 +12606,7 @@ impl Checker {
                 ast::is_type_query_node(&nodes[p])
                     && nodes[p].as_type_query_node().expr_name == Some(node)
             }))
-            || parent.is_some_and(|p| ast::is_export_specifier(&nodes[p])); // We allow reexporting const enums
+            || parent.is_some_and(|p| ast::is_export_specifier(&nodes[p]))); // We allow reexporting const enums
         if !ok {
             self.error(
                 Some(node),

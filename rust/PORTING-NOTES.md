@@ -954,3 +954,90 @@ Key decisions beyond the module-header notes in `tstransforms/mod.rs`:
   `utilities.rs`.
 - Test fns are named `tstransforms_*` so `cargo test -p tsc-transformers
   tstransforms` selects them.
+
+## crates/checker — `checker.go` 8205-16294 module/alias resolution → `checker_b.rs`
+`checker_b.rs` (~16.6k lines) now carries the module and alias resolution
+cluster from Go `checker.go` ~14708-16277 (authority `ec47d33c`), appended
+in a new `impl Checker` block starting ~line 13080. `lib.rs` declares
+`pub mod checker_b;`. Ported functions (Go name → Rust name, all snake_case
+in `checker_b.rs`):
+- Alias-target resolution: `get_target_of_alias_declaration`,
+  `get_target_of_import_equals_declaration`,
+  `get_symbol_of_part_of_right_hand_side_of_import_equals`,
+  `get_target_of_import_clause`, `get_target_of_module_default`,
+  `get_target_of_namespace_import`, `get_target_of_namespace_export`,
+  `get_target_of_import_specifier`, `get_target_of_export_specifier`,
+  `get_target_of_export_assignment`, `get_target_of_binary_expression`,
+  `get_target_of_alias_like_expression`,
+  `get_target_of_namespace_export_declaration`,
+  `get_target_of_access_expression`,
+  `check_and_report_error_for_resolving_import_alias_to_type_only_symbol`,
+  `mark_symbol_of_alias_declaration_if_type_only`,
+  `get_type_only_declaration_of_entity_name`.
+- Entity/qualified name resolution: `resolve_entity_name`,
+  `resolve_qualified_name`, `try_get_qualified_name_as_value`.
+- External module resolution: `resolve_external_module_name`,
+  `resolve_external_module_name_worker`, `resolve_external_module`,
+  `resolve_external_module_symbol`, `resolve_es_module_symbol`,
+  `resolve_external_module_type_by_literal`,
+  `get_external_module_file_from_declaration`,
+  `try_resolve_pattern_ambient_module`, `try_find_ambient_module`,
+  `get_ambient_modules`,
+  `get_cannot_resolve_module_name_error_for_specific_module`,
+  `error_on_implicit_any_module`, `create_module_not_found_chain`,
+  `create_mode_mismatch_details`.
+- Export/member lookup and interop: `resolve_export_by_name`,
+  `get_export_of_module`, `get_external_module_member`,
+  `get_property_of_variable`, `combine_value_and_type_symbols`,
+  `is_only_importable_as_default`, `can_have_synthetic_default`,
+  `get_emit_syntax_for_module_specifier_expression`,
+  `error_no_module_member_symbol`, `report_non_default_export`,
+  `report_non_exported_member`,
+  `report_invalid_import_equals_export_member`,
+  `get_module_specifier_for_import_or_export`,
+  `get_suggested_import_source`, `get_suggested_import_extension`,
+  `has_signatures`, `get_type_with_synthetic_default_only`,
+  `get_type_with_synthetic_default_import_type`, `is_common_js_require`,
+  `create_default_property_wrapper_for_module`,
+  `clone_type_as_module_type`.
+- Free helpers at file tail: `create_diagnostic_for_node`,
+  `get_adjusted_node_for_error`, `get_first_declaration`,
+  `get_excluded_symbol_flags`, plus earlier helpers
+  (`is_contained_by_namespace`, `get_external_module_require_argument`,
+  `get_module_specifier_from_node`, `is_side_effect_import`,
+  `resolution_extension_is_ts_or_json`,
+  `is_shorthand_ambient_module_symbol`, `is_syntactic_default`,
+  `has_export_assignment_symbol`,
+  `is_esm_format_import_importing_commonjs_format_file`,
+  `get_alias_declaration_from_name`,
+  `get_containing_qualified_name_node`, `find_in_map`).
+Already present elsewhere (not duplicated): `get_merged_symbol` and the
+constructor/diagnostic helpers (`new_symbol`, `merge_symbol`, `error`,
+`error_or_suggestion`, `get_symbol_of_declaration`) in `checker_core.rs`;
+`get_exports_of_symbol`, `get_exports_of_module`, `resolve_alias`,
+`resolve_indirection_alias` in `checker_c.rs`;
+`check_for_disallowed_es_symbol_operand`, `check_nan_equality`,
+`is_global_nan` earlier in `checker_b.rs` (~lines 10034-10120).
+Signatures adapted to existing partial-port call sites:
+`resolve_entity_name`, `resolve_external_module_name`, and
+`resolve_external_module_symbol` take `Option<..>` name/module parameters.
+API adaptations: `tsc_scanner::utilities::declaration_name_to_string`,
+`tsc_scanner::scanner::token_to_string` (no root re-export),
+`ast::is_right_side_of_qualified_name_or_property_access(NodeId, &[Node])`,
+`OrderedMap::set`/`entries`/`iter_mut` (no `insert`/`iter`),
+`TypeReadGuard::as_structured_type`, `ShorthandPropertyAssignment`
+`.named_member_base.name`, disambiguated `Program` vs
+`ModuleSpecifierGenerationHost` `file_exists`/`common_source_directory`,
+diagnostics compared by `std::ptr::eq` (`Message` isn't `PartialEq`).
+Sibling fix required to parse: `checker_a.rs` `check_const_enum_access`
+(~line 12597) was missing a `)` on its type-query branch — fixed.
+Remote `cargo check -p tsc-checker` leaves only expected cross-file
+`E0599`/`E0433` errors in the new range: `sym`, `sym_mut`, `resolve_alias`,
+`resolve_indirection_alias`, `get_exports_of_symbol`,
+`get_property_of_type{,_ex}`, `get_signatures_of_structured_type`,
+`resolve_structured_type_members` (checker_c wave); `is_error_type`,
+`is_empty_object_type` (checker_d wave); `symbol_to_string`,
+`get_fully_qualified_name`,
+`get_suggested_symbol_for_nonexistent_module` (printer/other waves); and
+three `crate::utilities::new_diagnostic_for_node` references pending a
+checker-crate utilities module.

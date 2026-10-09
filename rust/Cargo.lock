@@ -1465,15 +1465,21 @@ dependencies = [
 name = "tsc-transformers"
 version = "0.0.0"
 dependencies = [
+ "rustc-hash",
  "tsc-ast",
  "tsc-binder",
  "tsc-collections",
  "tsc-core",
  "tsc-debug",
+ "tsc-evaluator",
+ "tsc-jsnum",
+ "tsc-nodebuilder",
  "tsc-outputpaths",
+ "tsc-parser",
  "tsc-printer",
  "tsc-scanner",
  "tsc-stringutil",
+ "tsc-testutil",
  "tsc-tspath",
 ]
 
