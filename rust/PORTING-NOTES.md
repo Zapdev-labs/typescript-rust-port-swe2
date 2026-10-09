@@ -1041,3 +1041,77 @@ Remote `cargo check -p tsc-checker` leaves only expected cross-file
 `get_suggested_symbol_for_nonexistent_module` (printer/other waves); and
 three `crate::utilities::new_diagnostic_for_node` references pending a
 checker-crate utilities module.
+
+## Declarations transformer (`tsc/internal/transformers/declarations` @ ec47d33)
+
+`crates/transformers/src/declarations/` now contains a complete port of the
+declaration emit subsystem (~8.4k LOC across `transform.rs` ~6.3k,
+`diagnostics.rs` ~1.1k, `tracker.rs` ~0.5k, `util.rs`, `host.rs`,
+`supplementalreferences.rs`, `mod.rs` wiring). All Go functions in
+`transform.go` (~3k LOC) have Rust counterparts, including the
+late-binding visitor (`transformAndReplaceLatePaintedStatements`),
+`visitDeclarationSubtree`, every `transform*`/`ensure*`/`update*` helper,
+CommonJS export handling (`transformCommonJSExport`,
+`transformCommonJSExportWorker`, `appendCjsExports`), expando hosts and
+expando assignments, `transformClassExpressionToDeclaration` with the
+namespace-isolation branch for class self-references, import/JSDoc
+transforms, and supplemental reference collection.
+
+Rust-specific architecture:
+
+- `DeclarationTransformerState<'a>` holds the Go transformer struct's
+  fields; `tx.ec` → `Rc<RefCell<EmitContext>>` (`self.ec`),
+  `tx.state` → `Rc<RefCell<SymbolTrackerSharedState>>` (`self.shared`),
+  `tx.tracker` → `RefCell<SymbolTrackerImpl>` (`self.tracker`).
+  Go `*ast.Node` → `NodeId`, `*ast.Symbol` → `SymbolId`, node lists →
+  `Option<NodeList>`; nil source-file/current-file state →
+  `Option<NodeId>`.
+- `tsc-nodebuilder`'s `SymbolTracker` trait was extended: every method
+  that Go would satisfy by dereferencing `*ast.Node` pointers now takes
+  `nodes: &[Node]` (`track_symbol`, all `report_*` methods). The
+  checker's `SymbolTrackerImpl`/`TrackerRef` forwarding wrappers and
+  `nodebuilder` call sites were updated to match; an earlier arena
+  snapshot/pointer design was abandoned (`Node: !Clone`, workspace
+  `unsafe_code = "forbid"`).
+- Factory `update_*` methods return `Option<NodeId>` (`None` = unchanged);
+  call sites use `.unwrap_or(input)` / `.or(Some(input))`. Modifier
+  tokens are minted with `NodeFactory::new_token(nodes, Kind::...)` —
+  there is no `new_modifier`.
+- Generated AST payloads are deeply nested: `type_parameters`/
+  `parameters`/`type_` on signatures live under `function_like_base`
+  (itself under `function_or_constructor_type_node_base` on
+  function/constructor type nodes, under `accessor_declaration_base.
+  function_like_with_body_base` on accessors); `ImportTypeNode.
+  type_arguments` lives under `node_with_type_arguments_base`.
+- Borrow-checker accommodations: arguments that call `self.*`/visitor
+  methods are hoisted into locals before `self.ec.borrow_mut().factory.*`
+  calls that take `&mut cx.nodes`; `OrderedMap::set` (not `insert`) for
+  synthesized locals; `data.declaration_data_mut()` /
+  `data.locals_container_data_mut()` mutate symbol/locals on
+  synthesized namespace nodes.
+- `GetDiagnostics`/`getDiagnostics` clone the shared state's diagnostic
+  list; diagnostics are `Mutex`-wrapped `Diagnostic` handles shared with
+  the checker-facing `create_diagnostic_for_node` helpers.
+
+Checker-facing API notes / deferred gaps:
+
+- `emitresolver.rs` imports `tsc_nodebuilder::SymbolTracker` directly
+  now (it was previously unresolved after the trait moved). The checker's
+  own `SymbolTrackerImpl` ignores the threaded `nodes` parameter — it
+  reads its captured context instead, matching Go.
+- `SymbolTrackerImpl` in `declarations/tracker.rs` needs
+  `TransformOptions::symbols` (live `&RefCell<Vec<Symbol>>`); without it
+  it panics on symbol reads, matching the Go tracker's requirements.
+- Deferred checker calls are stubbed through the existing `EmitResolver`
+  trait surface (`is_expando_function_declaration_unsafe`,
+  `try_js_type_node_to_type_node`, `create_type_of_declaration`,
+  `create_return_type_of_signature_declaration`,
+  `is_symbol_accessible`, `get_enum_member_value`,
+  `get_effective_declaration_flags`, `requires_adding_implicit_undefined`)
+  — no new checker methods were invented; missing behavior is confined
+  to whatever those traits still lack.
+- `cargo check -p tsc-transformers` is clean for the declarations
+  module (remaining warnings are pre-existing in `estransforms`/
+  `moduletransforms`). `tsc-checker` still has ~450 pre-existing
+  mid-port errors unrelated to this work; no `SymbolTracker`-related
+  errors remain.

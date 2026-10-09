@@ -4,6 +4,7 @@
 
 use tsc_ast::ids::{NodeId, SymbolId};
 use tsc_ast::symbolflags::SymbolFlags;
+use tsc_ast::Node;
 
 /// `type SymbolTracker interface`.
 ///
@@ -12,10 +13,11 @@ use tsc_ast::symbolflags::SymbolFlags;
 /// PORT: `*ast.Symbol` → `SymbolId`, `*ast.Node` → `NodeId` (`Option<NodeId>`
 /// for `enclosingDeclaration`, which Go passes as nil), and
 /// `*ast.SourceFile` → the `NodeId` of the SourceFile-kind node (the same
-/// shape `get_source_file_of_node` returns). Go's implicit access to the
-/// node/symbol arenas via pointers is left to implementors — the checker-side
-/// trackers own that context — so no `nodes`/`symbols` arena parameters are
-/// threaded through here.
+/// shape `get_source_file_of_node` returns). Go tracker implementations
+/// read the node arena through `*ast.Node` pointers; here `nodes: &[Node]`
+/// is threaded through the methods that need arena access because the
+/// declarations transformer's tracker does not own the arena (the checker's
+/// own `SymbolTrackerImpl` ignores it and uses its captured context instead).
 pub trait SymbolTracker {
     /// `TrackSymbol(symbol *ast.Symbol, enclosingDeclaration *ast.Node, meaning ast.SymbolFlags) bool`
     fn track_symbol(
@@ -23,31 +25,42 @@ pub trait SymbolTracker {
         symbol: SymbolId,
         enclosing_declaration: Option<NodeId>,
         meaning: SymbolFlags,
+        nodes: &[Node],
     ) -> bool;
     /// `ReportInaccessibleThisError()`
-    fn report_inaccessible_this_error(&mut self);
+    fn report_inaccessible_this_error(&mut self, nodes: &[Node]);
     /// `ReportPrivateInBaseOfClassExpression(propertyName string)`
-    fn report_private_in_base_of_class_expression(&mut self, property_name: &str);
+    fn report_private_in_base_of_class_expression(
+        &mut self,
+        property_name: &str,
+        nodes: &[Node],
+    );
     /// `ReportInaccessibleUniqueSymbolError()`
-    fn report_inaccessible_unique_symbol_error(&mut self);
+    fn report_inaccessible_unique_symbol_error(&mut self, nodes: &[Node]);
     /// `ReportCyclicStructureError()`
-    fn report_cyclic_structure_error(&mut self);
+    fn report_cyclic_structure_error(&mut self, nodes: &[Node]);
     /// `ReportLikelyUnsafeImportRequiredError(specifier string, symbolName string)`
-    fn report_likely_unsafe_import_required_error(&mut self, specifier: &str, symbol_name: &str);
+    fn report_likely_unsafe_import_required_error(
+        &mut self,
+        specifier: &str,
+        symbol_name: &str,
+        nodes: &[Node],
+    );
     /// `ReportTruncationError()`
-    fn report_truncation_error(&mut self);
+    fn report_truncation_error(&mut self, nodes: &[Node]);
     /// `ReportNonlocalAugmentation(containingFile *ast.SourceFile, parentSymbol *ast.Symbol, augmentingSymbol *ast.Symbol)`
     fn report_nonlocal_augmentation(
         &mut self,
         containing_file: NodeId,
         parent_symbol: SymbolId,
         augmenting_symbol: SymbolId,
+        nodes: &[Node],
     );
     /// `ReportNonSerializableProperty(propertyName string)`
-    fn report_non_serializable_property(&mut self, property_name: &str);
+    fn report_non_serializable_property(&mut self, property_name: &str, nodes: &[Node]);
 
     /// `ReportInferenceFallback(node *ast.Node)`
-    fn report_inference_fallback(&mut self, node: NodeId);
+    fn report_inference_fallback(&mut self, node: NodeId, nodes: &[Node]);
     /// `PushErrorFallbackNode(node *ast.Node)`
     fn push_error_fallback_node(&mut self, node: NodeId);
     /// `PopErrorFallbackNode()`

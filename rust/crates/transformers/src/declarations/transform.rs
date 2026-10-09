@@ -33,10 +33,9 @@
 //     tables are behind `Rc<RefCell>`.
 //   - `tx.state` → `self.shared` (`Rc<RefCell<SymbolTrackerSharedState>>`);
 //     `tx.tracker` → `self.tracker` (`RefCell<SymbolTrackerImpl>`). The
-//     tracker keeps a snapshot of the node arena (see tracker.rs); this
-//     file calls `sync_tracker` before handing the tracker to a resolver
-//     call that may report through it — Go sees the live arena through
-//     pointers instead.
+//     tracker reads the node arena through the `nodes: &[Node]` parameter
+//     the `SymbolTracker` trait methods now carry (Go sees the live arena
+//     through pointers instead).
 //   - Go `defer` blocks become either RAII guards
 //     (`DiagnosticContextGuard`, `EnclosingDeclarationGuard`) or explicit
 //     save/restore pairs.
@@ -56,14 +55,14 @@ use tsc_ast::{
     self as ast, FileReference, Kind, ModifierFlags, Node, NodeFlags, NodeId, NodeList, Symbol,
     SymbolFlags, TokenFlags,
 };
-use tsc_core::compileroptions::CompilerOptions;
-use tsc_core::core::{self as core, if_else};
+use tsc_core::options_generated::CompilerOptions;
+use tsc_core::core;
 use tsc_core::languagevariant::LanguageVariant;
 use tsc_core::text::TextRange;
 use tsc_nodebuilder::{self as nodebuilder, SymbolTracker};
-use tsc_printer::emit_context::{AutoGenerateOptions, EmitContext};
-use tsc_printer::emit_flags::{EmitFlags, GeneratedIdentifierFlags};
-use tsc_printer::emit_resolver::{EmitResolver, SymbolAccessibilityResult};
+use tsc_printer::{AutoGenerateOptions, EmitContext};
+use tsc_printer::{EmitFlags, GeneratedIdentifierFlags};
+use tsc_printer::{EmitResolver, SymbolAccessibilityResult};
 use tsc_scanner::{self as scanner, scanner::SkipTriviaOptions};
 use tsc_tspath::{self as tspath, RootedFilePath};
 
@@ -80,7 +79,7 @@ use crate::declarations::util::{
     can_have_literal_initializer, can_produce_diagnostics, can_reuse_modifier_nodes,
     get_binding_name_visible, get_effective_base_type_node, has_scope_marker, is_always_type,
     is_declaration_and_not_visible, is_enclosing_declaration, is_private_method_type_parameter,
-    is_scope_marker, mask_modifier_flags, needs_scope_marker, should_emit_function_properties,
+    mask_modifier_flags, needs_scope_marker, should_emit_function_properties,
     unwrap_parenthesized_expression,
 };
 use crate::transformer::Transformer;
@@ -134,15 +133,17 @@ fn get_this_property_assignment_key(
     }
 }
 
-/// `declarationEmitNodeBuilderFlags`.
-const DECLARATION_EMIT_NODE_BUILDER_FLAGS: nodebuilder::Flags =
-    nodebuilder::Flags::MULTILINE_OBJECT_LITERALS
-        | nodebuilder::Flags::WRITE_CLASS_EXPRESSION_AS_TYPE_LITERAL
-        | nodebuilder::Flags::USE_TYPE_OF_FUNCTION
-        | nodebuilder::Flags::USE_STRUCTURAL_FALLBACK
-        | nodebuilder::Flags::ALLOW_EMPTY_TUPLE
-        | nodebuilder::Flags::GENERATE_NAMES_FOR_SHADOWED_TYPE_PARAMS
-        | nodebuilder::Flags::NO_TRUNCATION;
+/// `declarationEmitNodeBuilderFlags` — `Flags` is a `pub u32` newtype
+/// whose `BitOr` isn't `const`, so the constant is built on `.0` bits.
+const DECLARATION_EMIT_NODE_BUILDER_FLAGS: nodebuilder::Flags = nodebuilder::Flags(
+    nodebuilder::Flags::MULTILINE_OBJECT_LITERALS.0
+        | nodebuilder::Flags::WRITE_CLASS_EXPRESSION_AS_TYPE_LITERAL.0
+        | nodebuilder::Flags::USE_TYPE_OF_FUNCTION.0
+        | nodebuilder::Flags::USE_STRUCTURAL_FALLBACK.0
+        | nodebuilder::Flags::ALLOW_EMPTY_TUPLE.0
+        | nodebuilder::Flags::GENERATE_NAMES_FOR_SHADOWED_TYPE_PARAMS.0
+        | nodebuilder::Flags::NO_TRUNCATION.0,
+);
 
 /// `declarationEmitInternalNodeBuilderFlags`.
 const DECLARATION_EMIT_INTERNAL_NODE_BUILDER_FLAGS: nodebuilder::InternalFlags =
@@ -151,9 +152,11 @@ const DECLARATION_EMIT_INTERNAL_NODE_BUILDER_FLAGS: nodebuilder::InternalFlags =
 /// `ast.OEKExpressionTypePassthrough` — `OEKParentheses | OEKAssignments |
 /// OEKComma` (the constant doesn't exist in the Rust module yet).
 const OEK_EXPRESSION_TYPE_PASSTHROUGH: ast::OuterExpressionKinds =
-    ast::outer_expression_kinds::PARENTHESES
-        | ast::outer_expression_kinds::ASSIGNMENTS
-        | ast::outer_expression_kinds::COMMA;
+    ast::OuterExpressionKinds(
+        ast::outer_expression_kinds::PARENTHESES.0
+            | ast::outer_expression_kinds::ASSIGNMENTS.0
+            | ast::outer_expression_kinds::COMMA.0,
+    );
 
 /// `type DeclarationTransformer struct` — split into the `Transformer`
 /// machinery (visitor + emit context) and the shared `state` the closures
@@ -455,12 +458,6 @@ impl<'a> DeclarationTransformerState<'a> {
         self.ec.borrow()
     }
 
-    /// Refresh the tracker's node-arena snapshot before a resolver call that
-    /// may invoke `SymbolTracker` methods (Go's live arena pointer).
-    fn sync_tracker(&self, nodes: &[Node]) {
-        self.tracker.borrow().sync_nodes(nodes);
-    }
-
     /// `(tx *DeclarationTransformer) shouldStripInternal`.
     fn should_strip_internal(&self, node: Option<NodeId>, nodes: &[Node]) -> bool {
         self.shared.borrow().strip_internal
@@ -503,14 +500,14 @@ impl<'a> DeclarationTransformerState<'a> {
                 // public param: string
                 let trailing_pos = scanner::scanner::skip_trivia_ex(
                     text,
-                    (nodes[previous_sibling].end() + 1) as usize,
+                    nodes[previous_sibling].end() + 1,
                     Some(&SkipTriviaOptions {
                         stop_at_comments: true,
                         ..Default::default()
                     }),
                 );
                 comment_ranges.extend(
-                    scanner::scanner::get_trailing_comment_ranges(&f, text, trailing_pos as i32),
+                    scanner::scanner::get_trailing_comment_ranges(&f, text, trailing_pos),
                 );
                 comment_ranges.extend(scanner::scanner::get_leading_comment_ranges(
                     &f,
@@ -520,14 +517,14 @@ impl<'a> DeclarationTransformerState<'a> {
             } else {
                 let trailing_pos = scanner::scanner::skip_trivia_ex(
                     text,
-                    nodes[node].pos() as usize,
+                    nodes[node].pos(),
                     Some(&SkipTriviaOptions {
                         stop_at_comments: true,
                         ..Default::default()
                     }),
                 );
                 comment_ranges.extend(
-                    scanner::scanner::get_trailing_comment_ranges(&f, text, trailing_pos as i32),
+                    scanner::scanner::get_trailing_comment_ranges(&f, text, trailing_pos),
                 );
             }
 
@@ -647,7 +644,6 @@ impl<'a> DeclarationTransformerState<'a> {
         self.shared.borrow_mut().current_source_file = Some(node);
         self.collect_file_references(node, cx.nodes);
         let original = self.ec().most_original(Some(node)).unwrap_or(node);
-        self.sync_tracker(cx.nodes);
         self.resolver
             .borrow_mut()
             .precalculate_declaration_emit_visibility(original, cx.nodes);
@@ -714,20 +710,21 @@ impl<'a> DeclarationTransformerState<'a> {
             .visit_node(cx, Some(node)); // collect expando members (requires any export assignment be located in advance)
         let source_statements = cx.nodes[node].as_source_file().statements.clone();
         let statements = v
-            .visit_nodes(cx, source_statements)
+            .visit_nodes(cx, source_statements.clone())
             .or(source_statements)
             .expect("SourceFile.statements");
+        let statements_loc = statements.loc;
         let mut combined_statements =
             self.transform_and_replace_late_painted_statements(v, cx, statements);
         combined_statements = self.append_cjs_exports(combined_statements, cx);
-        combined_statements.loc = statements.loc; // setTextRange
+        combined_statements.loc = statements_loc; // setTextRange
 
         if ast::is_external_or_commonjs_module(cx.nodes[node].as_source_file()) {
             if ast::is_in_js_file(Some(node), cx.nodes) {
                 if let Some((symbol, symbols)) = cx.nodes[node].symbol().zip(self.symbols) {
                     if let Some(export_equals) = symbols.borrow()[symbol.index()]
                         .exports
-                        .get(ast::INTERNAL_SYMBOL_NAME_EXPORT_EQUALS)
+                        .get(ast::symbol::INTERNAL_SYMBOL_NAME_EXPORT_EQUALS)
                     {
                         let declarations = symbols.borrow()[export_equals.index()].declarations.clone();
                         if declarations.len() > 1 {
@@ -918,8 +915,10 @@ impl<'a> DeclarationTransformerState<'a> {
             if nodes[file].as_source_file().is_declaration_file {
                 decl_file_name = nodes[file].as_source_file().file_name().clone();
             } else {
-                let paths = self.host.get_output_paths_for(file, true, nodes);
                 // Try to use output path for referenced file, or output js path if that doesn't exist, or the input path if all else fails
+                let Some(paths) = self.host.get_output_paths_for(file, true, nodes) else {
+                    continue;
+                };
                 let mut decl = paths.declaration_file_path().clone();
                 if decl.as_string().is_empty() {
                     decl = paths.js_file_path().clone();
@@ -997,7 +996,7 @@ impl<'a> DeclarationTransformerState<'a> {
         &'s self,
         input: NodeId,
         nodes: &[Node],
-    ) -> (bool, DiagnosticContextGuard<'s>) {
+    ) -> (bool, DiagnosticContextGuard<'s, 'a>) {
         let can_produce_diagnostic = can_produce_diagnostics(&nodes[input]);
         let old_within_object_literal_type = self.suppress_new_diagnostic_contexts.get();
         let should_enter_suppress_new_diagnostics_context = (nodes[input].kind
@@ -1043,8 +1042,8 @@ impl<'a> DeclarationTransformerState<'a> {
 /// `setupDiagnosticContext`. Dropping restores
 /// `getSymbolAccessibilityDiagnostic`, `errorNameNode`, and
 /// `suppressNewDiagnosticContexts`.
-struct DiagnosticContextGuard<'s> {
-    state: &'s DeclarationTransformerState<'s>,
+struct DiagnosticContextGuard<'s, 'a> {
+    state: &'s DeclarationTransformerState<'a>,
     old_diag: Option<GetSymbolAccessibilityDiagnostic>,
     /// `getSymbolAccessibilityDiagnostic` is only swapped when the context
     /// was actually installed; otherwise Go's restore would clobber the
@@ -1054,7 +1053,7 @@ struct DiagnosticContextGuard<'s> {
     old_suppress: bool,
 }
 
-impl<'s> Drop for DiagnosticContextGuard<'s> {
+impl<'s, 'a> Drop for DiagnosticContextGuard<'s, 'a> {
     fn drop(&mut self) {
         let mut shared = self.state.shared.borrow_mut();
         if self.diag_replaced {
@@ -1158,7 +1157,7 @@ impl<'a> DeclarationTransformerState<'a> {
                             ast::is_interface_declaration(&cx.nodes[p])
                                 || ast::is_type_literal_node(&cx.nodes[p])
                         }) && !name_expression
-                            .is_some_and(|e| ast::is_entity_name_expression(&cx.nodes[e]))
+                            .is_some_and(|e| ast::is_entity_name_expression(&cx.nodes[e], cx.nodes))
                         {
                             // Type declarations just need to double-check that the input computed name is an entity name expression
                             self.shared.borrow_mut().add_diagnostic(
@@ -1176,7 +1175,7 @@ impl<'a> DeclarationTransformerState<'a> {
                     self.ec().parse_node(cx.nodes, input).unwrap_or(input),
                     cx.nodes,
                 ) || !name_expression
-                    .is_some_and(|e| ast::is_entity_name_expression(&cx.nodes[e]))
+                    .is_some_and(|e| ast::is_entity_name_expression(&cx.nodes[e], cx.nodes))
                 {
                     return None;
                 }
@@ -1214,7 +1213,7 @@ impl<'a> DeclarationTransformerState<'a> {
 
         let (can_produce_diagnostic, cleanup) = self.setup_diagnostic_context(input, cx.nodes);
 
-        let mut result: Option<NodeId> = None;
+        let result: Option<NodeId>;
         match cx.nodes[input].kind {
             Kind::MappedType => {
                 result = Some(self.transform_mapped_type_node(v, cx, input));
@@ -1388,6 +1387,8 @@ impl<'a> DeclarationTransformerState<'a> {
         } else {
             v.visit_node(cx, input_type)
         };
+        let type_parameter = v.visit_node(cx, type_parameter);
+        let name_type = v.visit_node(cx, name_type);
         self.ec
             .borrow_mut()
             .factory
@@ -1395,8 +1396,8 @@ impl<'a> DeclarationTransformerState<'a> {
                 cx.nodes,
                 input,
                 readonly_token,
-                v.visit_node(cx, type_parameter),
-                v.visit_node(cx, name_type),
+                type_parameter,
+                name_type,
                 question_token,
                 type_node,
                 None,
@@ -1421,7 +1422,7 @@ impl<'a> DeclarationTransformerState<'a> {
             let t = *t;
             let name = ast::get_heritage_clause_element_name(&cx.nodes[t], cx.nodes);
             name.is_some_and(|name| {
-                ast::is_entity_name(&cx.nodes[name]) || ast::is_entity_name_expression(&cx.nodes[name])
+                ast::is_entity_name(&cx.nodes[name]) || ast::is_entity_name_expression(&cx.nodes[name], cx.nodes)
             }) || (token == Kind::ExtendsKeyword
                 && ast::is_expression_with_type_arguments(&cx.nodes[t])
                 && cx.nodes[t]
@@ -1456,7 +1457,7 @@ impl<'a> DeclarationTransformerState<'a> {
         }
         let (is_type_of, argument, attributes, qualifier, type_arguments) = {
             let d = cx.nodes[input].as_import_type_node();
-            (d.is_type_of, d.argument, d.attributes, d.qualifier, d.type_arguments.clone())
+            (d.is_type_of, d.argument, d.attributes, d.qualifier, d.node_with_type_arguments_base.type_arguments.clone())
         };
         let literal_type = argument.expect("literal import type argument");
         let literal = cx.nodes[literal_type].as_literal_type_node().literal;
@@ -1469,6 +1470,7 @@ impl<'a> DeclarationTransformerState<'a> {
                 .update_literal_type_node(cx.nodes, literal_type, specifier)
                 .unwrap_or(literal_type)
         };
+        let type_arguments = v.visit_nodes(cx, type_arguments);
         self.ec
             .borrow_mut()
             .factory
@@ -1479,7 +1481,7 @@ impl<'a> DeclarationTransformerState<'a> {
                 Some(rewritten_literal),
                 attributes,
                 qualifier,
-                v.visit_nodes(cx, type_arguments),
+                type_arguments,
             )
             .unwrap_or(input)
     }
@@ -1491,19 +1493,23 @@ impl<'a> DeclarationTransformerState<'a> {
         cx: &mut VisitorCx<'_, '_>,
         input: NodeId,
     ) -> NodeId {
-        let type_parameters = cx.nodes[input].as_constructor_type_node().type_parameters.clone();
-        let parameters = cx.nodes[input].as_constructor_type_node().parameters.clone();
-        let type_node = cx.nodes[input].as_constructor_type_node().type_;
+        let type_parameters = cx.nodes[input].as_constructor_type_node().function_or_constructor_type_node_base.function_like_base.type_parameters.clone();
+        let parameters = cx.nodes[input].as_constructor_type_node().function_or_constructor_type_node_base.function_like_base.parameters.clone();
+        let type_node = cx.nodes[input].as_constructor_type_node().function_or_constructor_type_node_base.function_like_base.type_;
+        let modifiers = self.ensure_modifiers(input, cx);
+        let type_parameters = v.visit_nodes(cx, type_parameters);
+        let parameters = self.update_param_list(input, parameters, cx);
+        let type_node = v.visit_node(cx, type_node);
         self.ec
             .borrow_mut()
             .factory
             .update_constructor_type_node(
                 cx.nodes,
                 input,
-                self.ensure_modifiers(input, cx),
-                v.visit_nodes(cx, type_parameters),
-                Some(self.update_param_list(input, parameters, cx)),
-                v.visit_node(cx, type_node),
+                modifiers,
+                type_parameters,
+                Some(parameters),
+                type_node,
             )
             .unwrap_or(input)
     }
@@ -1517,17 +1523,24 @@ impl<'a> DeclarationTransformerState<'a> {
     ) -> NodeId {
         let (type_parameters, parameters, type_node) = {
             let d = cx.nodes[input].as_function_type_node();
-            (d.type_parameters.clone(), d.parameters.clone(), d.type_)
+            (
+                d.function_or_constructor_type_node_base.function_like_base.type_parameters.clone(),
+                d.function_or_constructor_type_node_base.function_like_base.parameters.clone(),
+                d.function_or_constructor_type_node_base.function_like_base.type_,
+            )
         };
+        let type_parameters = v.visit_nodes(cx, type_parameters);
+        let parameters = self.update_param_list(input, parameters, cx);
+        let type_node = v.visit_node(cx, type_node);
         self.ec
             .borrow_mut()
             .factory
             .update_function_type_node(
                 cx.nodes,
                 input,
-                v.visit_nodes(cx, type_parameters),
-                Some(self.update_param_list(input, parameters, cx)),
-                v.visit_node(cx, type_node),
+                type_parameters,
+                Some(parameters),
+                type_node,
             )
             .unwrap_or(input)
     }
@@ -1588,7 +1601,7 @@ impl<'a> DeclarationTransformerState<'a> {
             .as_expression_with_type_arguments()
             .expression;
         if expression.is_some_and(|e| {
-            ast::is_entity_name(&cx.nodes[e]) || ast::is_entity_name_expression(&cx.nodes[e])
+            ast::is_entity_name(&cx.nodes[e]) || ast::is_entity_name_expression(&cx.nodes[e], cx.nodes)
         }) {
             self.check_entity_name_visibility(
                 expression,
@@ -1608,9 +1621,9 @@ impl<'a> DeclarationTransformerState<'a> {
     ) -> Option<NodeId> {
         let (modifiers, name, constraint, expression, default_type) = {
             let d = cx.nodes[input].as_type_parameter_declaration();
-            (d.modifiers_base.modifiers, d.name, d.constraint, d.expression, d.default_type)
+            (d.modifiers_base.modifiers.clone(), d.name, d.constraint, d.expression, d.default_type)
         };
-        if is_private_method_type_parameter(&self.resolver, input, cx.nodes)
+        if is_private_method_type_parameter(&*self.resolver.borrow(), input, cx.nodes)
             && (default_type.is_some() || constraint.is_some())
         {
             return self
@@ -1700,11 +1713,11 @@ impl<'a> DeclarationTransformerState<'a> {
         } else {
             // object binding pattern
             // `const {x, y: z} = require("something")` -> `import {x, y as z} from "something"`
-            let elements = name
-                .map(|n| cx.nodes[n].as_binding_pattern().elements.clone())
+            let elements: Vec<NodeId> = name
+                .and_then(|n| cx.nodes[n].elements().map(|e| e.to_vec()))
                 .unwrap_or_default();
             let mut import_specifiers: Vec<NodeId> = Vec::new();
-            for elem in elements.nodes.iter() {
+            for elem in elements.iter() {
                 let (elem_name, property_name) = {
                     let e = cx.nodes[*elem].as_binding_element();
                     (e.name, e.property_name)
@@ -1746,8 +1759,11 @@ impl<'a> DeclarationTransformerState<'a> {
         input: NodeId,
     ) -> Option<NodeId> {
         let mut results: Vec<NodeId> = Vec::new();
-        let elements = cx.nodes[input].as_binding_pattern().elements.clone();
-        for elem in elements.nodes.iter() {
+        let elements: Vec<NodeId> = cx.nodes[input]
+            .elements()
+            .map(|e| e.to_vec())
+            .unwrap_or_default();
+        for elem in elements.iter() {
             let Some(result) = self.recreate_binding_element(cx, *elem) else {
                 continue;
             };
@@ -1775,7 +1791,7 @@ impl<'a> DeclarationTransformerState<'a> {
     fn recreate_binding_element(&self, cx: &mut VisitorCx<'_, '_>, e: NodeId) -> Option<NodeId> {
         let name = cx.nodes[e].as_binding_element().name;
         let name = name?;
-        if !get_binding_name_visible(&self.resolver, e, cx.nodes) {
+        if !get_binding_name_visible(&*self.resolver.borrow(), e, cx.nodes) {
             return None;
         }
         if ast::is_binding_pattern(&cx.nodes[name]) {
@@ -1801,7 +1817,11 @@ impl<'a> DeclarationTransformerState<'a> {
 
 /// `hasAnyBindingInitializers(bindingPattern)`.
 fn has_any_binding_initializers(binding_pattern: NodeId, nodes: &[Node]) -> bool {
-    for elem in nodes[binding_pattern].as_binding_pattern().elements.nodes.iter() {
+    for elem in nodes[binding_pattern]
+        .elements()
+        .unwrap_or(&[])
+        .iter()
+    {
         if !ast::is_binding_element(&nodes[*elem]) {
             continue;
         }
@@ -1828,7 +1848,7 @@ impl<'a> DeclarationTransformerState<'a> {
     ) -> NodeId {
         let (parameters, input_type) = {
             let d = cx.nodes[input].as_index_signature_declaration();
-            (d.parameters.clone(), d.type_)
+            (d.function_like_base.parameters.clone(), d.function_like_base.type_)
         };
         let mut t = _v.visit_node(cx, input_type);
         if t.is_none() {
@@ -1839,14 +1859,16 @@ impl<'a> DeclarationTransformerState<'a> {
                     .new_keyword_type_node(cx.nodes, Kind::AnyKeyword),
             );
         }
+        let modifiers = self.ensure_modifiers(input, cx);
+        let parameters = self.update_param_list(input, parameters, cx);
         self.ec
             .borrow_mut()
             .factory
             .update_index_signature_declaration(
                 cx.nodes,
                 input,
-                self.ensure_modifiers(input, cx),
-                Some(self.update_param_list(input, parameters, cx)),
+                modifiers,
+                Some(parameters),
                 t,
             )
             .unwrap_or(input)
@@ -1861,17 +1883,23 @@ impl<'a> DeclarationTransformerState<'a> {
     ) -> NodeId {
         let (type_parameters, parameters) = {
             let d = cx.nodes[input].as_call_signature_declaration();
-            (d.type_parameters.clone(), d.parameters.clone())
+            (
+                d.function_like_base.type_parameters.clone(),
+                d.function_like_base.parameters.clone(),
+            )
         };
+        let type_parameters = self.ensure_type_params(input, type_parameters, cx);
+        let parameters = self.update_param_list(input, parameters, cx);
+        let return_type = self.ensure_type(input, false, cx);
         self.ec
             .borrow_mut()
             .factory
             .update_call_signature_declaration(
                 cx.nodes,
                 input,
-                self.ensure_type_params(input, type_parameters, cx),
-                Some(self.update_param_list(input, parameters, cx)),
-                self.ensure_type(input, false, cx),
+                type_parameters,
+                Some(parameters),
+                return_type,
             )
             .unwrap_or(input)
     }
@@ -1890,6 +1918,9 @@ impl<'a> DeclarationTransformerState<'a> {
         if name.is_some_and(|n| ast::is_private_identifier(&cx.nodes[n])) {
             return None;
         }
+        let modifiers = self.ensure_modifiers(input, cx);
+        let type_node = self.ensure_type(input, false, cx);
+        let initializer = self.ensure_no_initializer(input, cx);
         let result = self
             .ec
             .borrow_mut()
@@ -1897,11 +1928,11 @@ impl<'a> DeclarationTransformerState<'a> {
             .update_property_signature_declaration(
                 cx.nodes,
                 input,
-                self.ensure_modifiers(input, cx),
+                modifiers,
                 name,
                 postfix_token,
-                self.ensure_type(input, false, cx),
-                self.ensure_no_initializer(input, cx), // TODO: possible strada bug (fixed here) - const property signatures never initialized
+                type_node,
+                initializer, // TODO: possible strada bug (fixed here) - const property signatures never initialized
             )
             .unwrap_or(input);
         self.preserve_partial_js_doc(result, input, cx);
@@ -1926,17 +1957,20 @@ impl<'a> DeclarationTransformerState<'a> {
         if postfix_token.is_some_and(|t| cx.nodes[t].kind == Kind::ExclamationToken) {
             postfix_token = None;
         }
+        let modifiers = self.ensure_modifiers(input, cx);
+        let type_node = self.ensure_type(input, false, cx);
+        let initializer = self.ensure_no_initializer(input, cx);
         self.ec
             .borrow_mut()
             .factory
             .update_property_declaration(
                 cx.nodes,
                 input,
-                self.ensure_modifiers(input, cx),
+                modifiers,
                 name,
                 postfix_token,
-                self.ensure_type(input, false, cx),
-                self.ensure_no_initializer(input, cx),
+                type_node,
+                initializer,
             )
             .or(Some(input))
     }
@@ -1948,7 +1982,7 @@ impl<'a> DeclarationTransformerState<'a> {
         cx: &mut VisitorCx<'_, '_>,
         input: NodeId,
     ) -> Option<NodeId> {
-        let name = cx.nodes[input].as_set_accessor_declaration().named_member_base.name;
+        let name = cx.nodes[input].as_set_accessor_declaration().accessor_declaration_base.named_member_base.name;
         if name.is_some_and(|n| ast::is_private_identifier(&cx.nodes[n])) {
             return None;
         }
@@ -1961,16 +1995,18 @@ impl<'a> DeclarationTransformerState<'a> {
                 cx.nodes,
             )
             .is_empty();
+        let modifiers = self.ensure_modifiers(input, cx);
+        let parameters = self.update_accessor_param_list(input, is_private, cx);
         self.ec
             .borrow_mut()
             .factory
             .update_set_accessor_declaration(
                 cx.nodes,
                 input,
-                self.ensure_modifiers(input, cx),
+                modifiers,
                 name,
                 None, // accessors shouldn't have type params
-                Some(self.update_accessor_param_list(input, is_private, cx)),
+                Some(parameters),
                 None,
                 None,
                 None,
@@ -1985,7 +2021,7 @@ impl<'a> DeclarationTransformerState<'a> {
         cx: &mut VisitorCx<'_, '_>,
         input: NodeId,
     ) -> Option<NodeId> {
-        let name = cx.nodes[input].as_get_accessor_declaration().named_member_base.name;
+        let name = cx.nodes[input].as_get_accessor_declaration().accessor_declaration_base.named_member_base.name;
         if name.is_some_and(|n| ast::is_private_identifier(&cx.nodes[n])) {
             return None;
         }
@@ -1998,17 +2034,20 @@ impl<'a> DeclarationTransformerState<'a> {
                 cx.nodes,
             )
             .is_empty();
+        let modifiers_for_get = self.ensure_modifiers(input, cx);
+        let accessor_params = self.update_accessor_param_list(input, is_private, cx);
+        let return_type = self.ensure_type(input, false, cx);
         self.ec
             .borrow_mut()
             .factory
             .update_get_accessor_declaration(
                 cx.nodes,
                 input,
-                self.ensure_modifiers(input, cx),
+                modifiers_for_get,
                 name,
                 None, // accessors shouldn't have type params
-                Some(self.update_accessor_param_list(input, is_private, cx)),
-                self.ensure_type(input, false, cx),
+                Some(accessor_params),
+                return_type,
                 None,
                 None,
             )
@@ -2032,6 +2071,7 @@ impl<'a> DeclarationTransformerState<'a> {
             let mut value_param: Option<NodeId> = None;
             let set_params = cx.nodes[input]
                 .as_set_accessor_declaration()
+                .accessor_declaration_base
                 .function_like_with_body_base
                 .function_like_base
                 .parameters
@@ -2092,15 +2132,17 @@ impl<'a> DeclarationTransformerState<'a> {
             .parameters
             .clone();
         // A constructor declaration may not have a type annotation
+        let modifiers = self.ensure_modifiers(input, cx);
+        let parameters = self.update_param_list(input, parameters, cx);
         self.ec
             .borrow_mut()
             .factory
             .update_constructor_declaration(
                 cx.nodes,
                 input,
-                self.ensure_modifiers(input, cx),
+                modifiers,
                 None, // no type params
-                Some(self.update_param_list(input, parameters, cx)),
+                Some(parameters),
                 None, // no return type
                 None,
                 None,
@@ -2117,17 +2159,23 @@ impl<'a> DeclarationTransformerState<'a> {
     ) -> NodeId {
         let (type_parameters, parameters) = {
             let d = cx.nodes[input].as_construct_signature_declaration();
-            (d.type_parameters.clone(), d.parameters.clone())
+            (
+                d.function_like_base.type_parameters.clone(),
+                d.function_like_base.parameters.clone(),
+            )
         };
+        let type_parameters = self.ensure_type_params(input, type_parameters, cx);
+        let parameters = self.update_param_list(input, parameters, cx);
+        let return_type = self.ensure_type(input, false, cx);
         self.ec
             .borrow_mut()
             .factory
             .update_construct_signature_declaration(
                 cx.nodes,
                 input,
-                self.ensure_type_params(input, type_parameters, cx),
-                Some(self.update_param_list(input, parameters, cx)),
-                self.ensure_type(input, false, cx),
+                type_parameters,
+                Some(parameters),
+                return_type,
             )
             .unwrap_or(input)
     }
@@ -2144,11 +2192,13 @@ impl<'a> DeclarationTransformerState<'a> {
                 return None;
             }
         }
+        let modifiers = self.ensure_modifiers(input, cx);
+        let name = cx.nodes[input].name();
         let result = if ast::is_method_signature_declaration(&cx.nodes[input]) {
             self.ec.borrow_mut().factory.new_property_signature_declaration(
                 cx.nodes,
-                self.ensure_modifiers(input, cx),
-                cx.nodes[input].name(),
+                modifiers,
+                name,
                 None, /*postfixToken*/
                 None, /*typeNode*/
                 None, /*initializer*/
@@ -2156,8 +2206,8 @@ impl<'a> DeclarationTransformerState<'a> {
         } else {
             self.ec.borrow_mut().factory.new_property_declaration(
                 cx.nodes,
-                self.ensure_modifiers(input, cx),
-                cx.nodes[input].name(),
+                modifiers,
+                name,
                 None, /*postfixToken*/
                 None, /*typeNode*/
                 None, /*initializer*/
@@ -2191,25 +2241,29 @@ impl<'a> DeclarationTransformerState<'a> {
             (
                 d.named_member_base.name,
                 d.named_member_base.postfix_token,
-                d.type_parameters.clone(),
-                d.parameters.clone(),
+                d.function_like_base.type_parameters.clone(),
+                d.function_like_base.parameters.clone(),
             )
         };
         if name.is_some_and(|n| ast::is_private_identifier(&cx.nodes[n])) {
             return None;
         }
+        let modifiers = self.ensure_modifiers(input, cx);
+        let type_parameters = self.ensure_type_params(input, type_parameters, cx);
+        let parameters = self.update_param_list(input, parameters, cx);
+        let return_type = self.ensure_type(input, false, cx);
         self.ec
             .borrow_mut()
             .factory
             .update_method_signature_declaration(
                 cx.nodes,
                 input,
-                self.ensure_modifiers(input, cx),
+                modifiers,
                 name,
                 postfix_token,
-                self.ensure_type_params(input, type_parameters, cx),
-                Some(self.update_param_list(input, parameters, cx)),
-                self.ensure_type(input, false, cx),
+                type_parameters,
+                Some(parameters),
+                return_type,
             )
             .or(Some(input))
     }
@@ -2245,19 +2299,23 @@ impl<'a> DeclarationTransformerState<'a> {
         if name.is_some_and(|n| ast::is_private_identifier(&cx.nodes[n])) {
             return None;
         }
+        let modifiers = self.ensure_modifiers(input, cx);
+        let type_parameters = self.ensure_type_params(input, type_parameters, cx);
+        let parameters = self.update_param_list(input, parameters, cx);
+        let return_type = self.ensure_type(input, false, cx);
         self.ec
             .borrow_mut()
             .factory
             .update_method_declaration(
                 cx.nodes,
                 input,
-                self.ensure_modifiers(input, cx),
+                modifiers,
                 None,
                 name,
                 postfix_token,
-                self.ensure_type_params(input, type_parameters, cx),
-                Some(self.update_param_list(input, parameters, cx)),
-                self.ensure_type(input, false, cx),
+                type_parameters,
+                Some(parameters),
+                return_type,
                 None,
                 None,
             )
@@ -2287,7 +2345,7 @@ impl<'a> DeclarationTransformerState<'a> {
                 let (modifiers, is_type_only, export_clause, module_specifier, attributes) = {
                     let d = cx.nodes[input].as_export_declaration();
                     (
-                        d.modifiers_base.modifiers,
+                        d.modifiers_base.modifiers.clone(),
                         d.is_type_only,
                         d.export_clause,
                         d.module_specifier,
@@ -2478,7 +2536,7 @@ impl<'a> DeclarationTransformerState<'a> {
                 let mut mods: Vec<NodeId> = Vec::new();
                 let mut ec = self.ec.borrow_mut();
                 if self.needs_declare.get() {
-                    mods.push(ec.factory.new_modifier(cx.nodes, Kind::DeclareKeyword));
+                    mods.push(ec.factory.new_token(cx.nodes, Kind::DeclareKeyword));
                 }
                 ec.factory.new_modifier_list(cx.nodes, mods)
             };
@@ -2512,7 +2570,7 @@ impl<'a> DeclarationTransformerState<'a> {
                 let mut mods: Vec<NodeId> = Vec::new();
                 let mut ec = self.ec.borrow_mut();
                 if self.needs_declare.get() {
-                    mods.push(ec.factory.new_modifier(cx.nodes, Kind::DeclareKeyword));
+                    mods.push(ec.factory.new_token(cx.nodes, Kind::DeclareKeyword));
                 }
                 ec.factory.new_modifier_list(cx.nodes, mods)
             };
@@ -2553,12 +2611,11 @@ impl<'a> DeclarationTransformerState<'a> {
             if expression.is_some_and(|e| {
                 ast::is_primitive_literal_value(
                     &cx.nodes[unwrap_parenthesized_expression(e, cx.nodes)],
-                    cx.nodes,
                     true,
+                    cx.nodes,
                 )
             }) {
-                self.sync_tracker(cx.nodes);
-                let tracker = self.tracker.borrow();
+                        let tracker = self.tracker.borrow();
                 let parse_node = self.ec().parse_node(cx.nodes, assignment).unwrap_or(assignment);
                 initializer = self.resolver.borrow().create_literal_const_value(
                     parse_node,
@@ -2584,7 +2641,7 @@ impl<'a> DeclarationTransformerState<'a> {
         let mod_list = {
             let mut ec = self.ec.borrow_mut();
             let mods = if self.needs_declare.get() {
-                vec![ec.factory.new_modifier(cx.nodes, Kind::DeclareKeyword)]
+                vec![ec.factory.new_token(cx.nodes, Kind::DeclareKeyword)]
             } else {
                 Vec::new()
             };
@@ -2642,15 +2699,19 @@ impl<'a> DeclarationTransformerState<'a> {
             sig = full_signature_type;
         }
         if sig.is_none() {
+            let type_parameters = self.ensure_type_params(unwrapped, type_parameters, cx);
+            let parameters = self.update_param_list(unwrapped, parameters, cx);
+            let return_type = self.ensure_type(unwrapped, false, cx);
+            let sig = v.visit_node(cx, sig);
             self.ec.borrow_mut().factory.new_function_declaration(
                 cx.nodes,
                 mods,
                 None,
                 func_name,
-                self.ensure_type_params(unwrapped, type_parameters, cx),
-                Some(self.update_param_list(unwrapped, parameters, cx)),
-                self.ensure_type(unwrapped, false, cx),
-                v.visit_node(cx, sig),
+                type_parameters,
+                Some(parameters),
+                return_type,
+                sig,
                 None,
             )
         } else {
@@ -2691,8 +2752,7 @@ impl<'a> DeclarationTransformerState<'a> {
                 self.enclosing_declaration.get(),
                 cx.nodes,
             );
-            self.sync_tracker(cx.nodes);
-            self.tracker
+                self.tracker
                 .borrow_mut()
                 .handle_symbol_accessibility_error(visibility_result, cx.nodes);
         }
@@ -2809,13 +2869,15 @@ impl<'a> DeclarationTransformerState<'a> {
 
                     // Serialize class members using the class expression name, which
                     // triggers TrackSymbol for any self-referential member types.
-                    let class_name = self.ec.borrow_mut().factory.new_identifier(
-                        cx.nodes,
-                        &cx.nodes[class_expr_name].text(cx.nodes),
-                    );
+                    let class_name_text = cx.nodes[class_expr_name].text(cx.nodes).into_owned();
+                    let class_name = self
+                        .ec
+                        .borrow_mut()
+                        .factory
+                        .new_identifier(cx.nodes, &class_name_text);
                     let class_mods = {
                         let mut ec = self.ec.borrow_mut();
-                        let m = ec.factory.new_modifier(cx.nodes, Kind::ExportKeyword);
+                        let m = ec.factory.new_token(cx.nodes, Kind::ExportKeyword);
                         ec.factory.new_modifier_list(cx.nodes, vec![m])
                     };
                     let class_decl = self.transform_class_expression_to_declaration(
@@ -2850,7 +2912,7 @@ impl<'a> DeclarationTransformerState<'a> {
                         );
                         let mut ns_mods: Vec<NodeId> = Vec::new();
                         if self.needs_declare.get() {
-                            ns_mods.push(ec.factory.new_modifier(cx.nodes, Kind::DeclareKeyword));
+                            ns_mods.push(ec.factory.new_token(cx.nodes, Kind::DeclareKeyword));
                         }
                         let ns_mods = ec.factory.new_modifier_list(cx.nodes, ns_mods);
                         let block_list = ec.factory.new_node_list(vec![class_decl]);
@@ -2920,6 +2982,11 @@ impl<'a> DeclarationTransformerState<'a> {
                         };
                         self.remove_all_comments(export_specifier);
 
+                        {
+                            let mut tracker = self.tracker.borrow_mut();
+                            tracker.watched_class_symbol = None;
+                            tracker.class_symbol_tracked = false;
+                        }
                         return Some(
                             self.ec.borrow_mut().factory.new_syntax_list(
                                 cx.nodes,
@@ -2938,9 +3005,9 @@ impl<'a> DeclarationTransformerState<'a> {
                     let mut mods: Vec<NodeId> = Vec::new();
                     {
                         let mut ec = self.ec.borrow_mut();
-                        mods.push(ec.factory.new_modifier(cx.nodes, Kind::ExportKeyword));
+                        mods.push(ec.factory.new_token(cx.nodes, Kind::ExportKeyword));
                         if self.needs_declare.get() {
-                            mods.push(ec.factory.new_modifier(cx.nodes, Kind::DeclareKeyword));
+                            mods.push(ec.factory.new_token(cx.nodes, Kind::DeclareKeyword));
                         }
                         let mod_list = ec.factory.new_modifier_list(cx.nodes, mods);
                         drop(ec);
@@ -2973,9 +3040,9 @@ impl<'a> DeclarationTransformerState<'a> {
                 let mods = {
                     let mut ec = self.ec.borrow_mut();
                     let mut mods: Vec<NodeId> = Vec::new();
-                    mods.push(ec.factory.new_modifier(cx.nodes, Kind::ExportKeyword));
+                    mods.push(ec.factory.new_token(cx.nodes, Kind::ExportKeyword));
                     if self.needs_declare.get() {
-                        mods.push(ec.factory.new_modifier(cx.nodes, Kind::DeclareKeyword));
+                        mods.push(ec.factory.new_token(cx.nodes, Kind::DeclareKeyword));
                     }
                     ec.factory.new_modifier_list(cx.nodes, mods)
                 };
@@ -3068,7 +3135,7 @@ impl<'a> DeclarationTransformerState<'a> {
                 let mod_list = {
                     let mut ec = self.ec.borrow_mut();
                     let mods = if self.needs_declare.get() {
-                        vec![ec.factory.new_modifier(cx.nodes, Kind::DeclareKeyword)]
+                        vec![ec.factory.new_token(cx.nodes, Kind::DeclareKeyword)]
                     } else {
                         Vec::new()
                     };
@@ -3091,7 +3158,7 @@ impl<'a> DeclarationTransformerState<'a> {
 
                 let assignment = self.ec.borrow_mut().factory.new_export_assignment(
                     cx.nodes,
-                    cx.nodes[input].modifiers(),
+                    cx.nodes[input].modifiers().cloned(),
                     false,
                     None,
                     Some(new_id),
@@ -3137,11 +3204,11 @@ impl<'a> DeclarationTransformerState<'a> {
                         let mut ec = self.ec.borrow_mut();
                         let mods = if self.needs_declare.get() {
                             vec![
-                                ec.factory.new_modifier(cx.nodes, Kind::ExportKeyword),
-                                ec.factory.new_modifier(cx.nodes, Kind::DeclareKeyword),
+                                ec.factory.new_token(cx.nodes, Kind::ExportKeyword),
+                                ec.factory.new_token(cx.nodes, Kind::DeclareKeyword),
                             ]
                         } else {
-                            vec![ec.factory.new_modifier(cx.nodes, Kind::ExportKeyword)]
+                            vec![ec.factory.new_token(cx.nodes, Kind::ExportKeyword)]
                         };
                         ec.factory.new_modifier_list(cx.nodes, mods)
                     };
@@ -3198,7 +3265,7 @@ impl<'a> DeclarationTransformerState<'a> {
         let mod_list = {
             let mut ec = self.ec.borrow_mut();
             let mods = if self.needs_declare.get() {
-                vec![ec.factory.new_modifier(cx.nodes, Kind::DeclareKeyword)]
+                vec![ec.factory.new_token(cx.nodes, Kind::DeclareKeyword)]
             } else {
                 Vec::new()
             };
@@ -3248,7 +3315,7 @@ impl<'a> DeclarationTransformerState<'a> {
         };
         // Reuse the same name node so unique names resolve consistently with the class/export
         let members: Vec<NodeId> = if cx.nodes[content].kind == Kind::SyntaxList {
-            cx.nodes[content].as_syntax_list().children.clone()
+            cx.nodes[content].as_syntax_list().children.to_vec()
         } else {
             vec![content]
         };
@@ -3262,7 +3329,7 @@ impl<'a> DeclarationTransformerState<'a> {
         let mut ec = self.ec.borrow_mut();
         let mut ns_mods: Vec<NodeId> = Vec::new();
         if self.needs_declare.get() {
-            ns_mods.push(ec.factory.new_modifier(cx.nodes, Kind::DeclareKeyword));
+            ns_mods.push(ec.factory.new_token(cx.nodes, Kind::DeclareKeyword));
         }
         let ns_mods = ec.factory.new_modifier_list(cx.nodes, ns_mods);
         let members_list = ec.factory.new_node_list(members);
@@ -3429,12 +3496,16 @@ impl<'a> DeclarationTransformerState<'a> {
             && !ast::is_binding_element(&cx.nodes[node])
             && type_annotation.is_some()
             && (!ast::is_parameter_declaration(&cx.nodes[node])
-                || !self.resolver.borrow().requires_adding_implicit_undefined(
-                    node,
-                    None,
-                    self.enclosing_declaration.get(),
-                    cx.nodes,
-                ))
+                || {
+                    let symbols = self.symbols.map(|s| s.borrow());
+                    !self.resolver.borrow().requires_adding_implicit_undefined(
+                        node,
+                        None,
+                        self.enclosing_declaration.get(),
+                        cx.nodes,
+                        symbols.as_deref().map(|v| v.as_slice()).unwrap_or(&[]),
+                    )
+                })
         {
             if self.shared.borrow().current_source_file.is_some_and(|f| {
                 ast::is_source_file_js(cx.nodes[f].as_source_file())
@@ -3445,8 +3516,7 @@ impl<'a> DeclarationTransformerState<'a> {
                 if self.in_class_expression_declaration.get() {
                     js_flags &= !nodebuilder::Flags::WRITE_CLASS_EXPRESSION_AS_TYPE_LITERAL;
                 }
-                self.sync_tracker(cx.nodes);
-                let res = {
+                        let res = {
                     let tracker = self.tracker.borrow();
                     self.resolver.borrow().try_js_type_node_to_type_node(
                         type_annotation.unwrap(),
@@ -3473,24 +3543,26 @@ impl<'a> DeclarationTransformerState<'a> {
 
         let old_error_name_node = self.shared.borrow().error_name_node;
         self.shared.borrow_mut().error_name_node = cx.nodes[node].name();
+        // PORT: the selector is only swapped out when this node can produce
+        // diagnostics; otherwise the enclosing context's selector stays put.
         let mut old_diag: Option<GetSymbolAccessibilityDiagnostic> = None;
-        if !self.suppress_new_diagnostic_contexts.get() {
+        let diag_swapped = !self.suppress_new_diagnostic_contexts.get()
+            && can_produce_diagnostics(&cx.nodes[node]);
+        if diag_swapped {
             let mut shared = self.shared.borrow_mut();
-            old_diag = shared.get_symbol_accessibility_diagnostic.take();
-            if can_produce_diagnostics(&cx.nodes[node]) {
-                shared.get_symbol_accessibility_diagnostic =
-                    Some(create_get_symbol_accessibility_diagnostic_for_node(node, cx.nodes));
-            }
+            old_diag = std::mem::replace(
+                &mut shared.get_symbol_accessibility_diagnostic,
+                Some(create_get_symbol_accessibility_diagnostic_for_node(node, cx.nodes)),
+            );
         }
-        let mut type_node: Option<NodeId> = None;
+        let type_node: Option<NodeId>;
 
         let mut flags = DECLARATION_EMIT_NODE_BUILDER_FLAGS;
         if self.in_class_expression_declaration.get() {
             flags &= !nodebuilder::Flags::WRITE_CLASS_EXPRESSION_AS_TYPE_LITERAL;
         }
-        if ast::has_inferred_type(&cx.nodes[node], cx.nodes) {
-            self.sync_tracker(cx.nodes);
-            let tracker = self.tracker.borrow();
+        if ast::has_inferred_type(&cx.nodes[node]) {
+                let tracker = self.tracker.borrow();
             type_node = self.resolver.borrow().create_type_of_declaration(
                 node,
                 self.enclosing_declaration.get(),
@@ -3500,8 +3572,7 @@ impl<'a> DeclarationTransformerState<'a> {
                 cx.nodes,
             );
         } else if ast::is_function_like(Some(node), cx.nodes) {
-            self.sync_tracker(cx.nodes);
-            let tracker = self.tracker.borrow();
+                let tracker = self.tracker.borrow();
             type_node = self.resolver.borrow().create_return_type_of_signature_declaration(
                 node,
                 self.enclosing_declaration.get(),
@@ -3515,7 +3586,7 @@ impl<'a> DeclarationTransformerState<'a> {
         }
 
         self.shared.borrow_mut().error_name_node = old_error_name_node;
-        if !self.suppress_new_diagnostic_contexts.get() {
+        if diag_swapped {
             self.shared.borrow_mut().get_symbol_accessibility_diagnostic = old_diag;
         }
         type_node.or_else(|| {
@@ -3553,11 +3624,2705 @@ impl<'a> DeclarationTransformerState<'a> {
             enclosing_declaration,
             nodes,
         );
-        self.sync_tracker(nodes);
         self.tracker
             .borrow_mut()
             .handle_symbol_accessibility_error(visibility_result, nodes);
     }
 }
 
-// __NEXT_PART__
+impl<'a> DeclarationTransformerState<'a> {
+    /// `(tx *DeclarationTransformer) transformTopLevelDeclaration` —
+    /// transforms the direct child of a source file into zero or more
+    /// replacement statements.
+    fn transform_top_level_declaration<'v>(
+        &self,
+        v: &NodeVisitor<'v>,
+        cx: &mut VisitorCx<'_, '_>,
+        input: NodeId,
+    ) -> Option<NodeId> {
+        if !self.shared.borrow().late_marked_statements.is_empty() {
+            // Remove duplicates of the current statement from the deferred work queue (this was done via orderedRemoveItem in strada - why? to ensure the same backing array? microop?)
+            let filtered = core::filter(
+                self.shared.borrow().late_marked_statements.as_slice(),
+                |n| *n != input,
+            )
+            .into_owned();
+            self.shared.borrow_mut().late_marked_statements = filtered;
+        }
+        if self.should_strip_internal(Some(input), cx.nodes) {
+            return None;
+        }
+        if cx.nodes[input].kind == Kind::ImportEqualsDeclaration {
+            return self.transform_import_equals_declaration(cx, input);
+        }
+        if cx.nodes[input].kind == Kind::ImportDeclaration
+            || cx.nodes[input].kind == Kind::JSImportDeclaration
+        {
+            let res = self.transform_import_declaration(cx, input);
+            if let Some(res) = res
+                && cx.nodes[res].kind != Kind::ImportDeclaration
+            {
+                let res = self.ec.borrow_mut().factory.clone_node(cx.nodes, res);
+                cx.nodes[res].kind = Kind::ImportDeclaration;
+                return Some(res);
+            }
+            return res;
+        }
+        if ast::is_declaration(&cx.nodes[input])
+            && is_declaration_and_not_visible(&self.ec(), &*self.resolver.borrow(), input, cx.nodes)
+        {
+            return None;
+        }
+
+        // !!! TODO: JSDoc support
+        // if (isJSDocImportTag(input)) return;
+
+        // Elide implementation signatures from overload sets
+        if ast::is_function_like(Some(input), cx.nodes)
+            && self
+                .resolver
+                .borrow()
+                .is_implementation_of_overload(input, cx.nodes)
+        {
+            return None;
+        }
+        let original = self.ec().most_original(Some(input)).unwrap_or(input);
+        let id = ast::get_node_id(&cx.nodes[original]);
+        let is_expando_host = self.expando_hosts.borrow().contains_key(&id);
+        let has_deferred_expando_assignments =
+            self.deferred_expando_assignments.borrow().contains_key(&id);
+        if is_expando_host || has_deferred_expando_assignments {
+            return self.create_full_expando_block(v, cx, id);
+        }
+
+        let previous_enclosing_declaration = self.enclosing_declaration.get();
+        if is_enclosing_declaration(&cx.nodes[input], cx.nodes) {
+            self.enclosing_declaration.set(Some(input));
+        }
+
+        let can_produce_diagnostic = can_produce_diagnostics(&cx.nodes[input]);
+        let (old_diag, old_name) = {
+            let mut shared = self.shared.borrow_mut();
+            let old_name = shared.error_name_node;
+            let old_diag = if can_produce_diagnostic {
+                std::mem::replace(
+                    &mut shared.get_symbol_accessibility_diagnostic,
+                    Some(create_get_symbol_accessibility_diagnostic_for_node(input, cx.nodes)),
+                )
+            } else {
+                None
+            };
+            (old_diag, old_name)
+        };
+        let save_needs_declare = self.needs_declare.get();
+
+        let result: Option<NodeId> = match cx.nodes[input].kind {
+            Kind::TypeAliasDeclaration | Kind::JSTypeAliasDeclaration => {
+                Some(self.transform_type_alias_declaration(v, cx, input))
+            }
+            Kind::InterfaceDeclaration => {
+                Some(self.transform_interface_declaration(v, cx, input))
+            }
+            Kind::FunctionDeclaration => {
+                Some(self.transform_function_declaration(v, cx, input))
+            }
+            Kind::ModuleDeclaration => self.transform_module_declaration(v, cx, input),
+            Kind::ClassDeclaration => self.transform_class_declaration(v, cx, input),
+            Kind::VariableStatement => self.transform_variable_statement(v, cx, input),
+            Kind::EnumDeclaration => Some(self.transform_enum_declaration(cx, input)),
+            kind => {
+                // Anything left unhandled is an error, so this should be unreachable
+                panic!("Unhandled top-level node in declaration emit: {:?}", kind)
+            }
+        };
+
+        self.enclosing_declaration.set(previous_enclosing_declaration);
+        {
+            let mut shared = self.shared.borrow_mut();
+            if can_produce_diagnostic {
+                shared.get_symbol_accessibility_diagnostic = old_diag;
+            }
+            shared.error_name_node = old_name;
+        }
+        self.needs_declare.set(save_needs_declare);
+        result
+    }
+
+    /// `(tx *DeclarationTransformer) transformTypeAliasDeclaration`.
+    fn transform_type_alias_declaration<'v>(
+        &self,
+        v: &NodeVisitor<'v>,
+        cx: &mut VisitorCx<'_, '_>,
+        input: NodeId,
+    ) -> NodeId {
+        self.needs_declare.set(false);
+        let (name, type_parameters, type_node) = {
+            let d = cx.nodes[input].as_type_alias_declaration();
+            (d.name, d.type_parameters.clone(), d.type_)
+        };
+        let modifiers = self.ensure_modifiers(input, cx);
+        let type_parameters = v.visit_nodes(cx, type_parameters);
+        let type_node = v.visit_node(cx, type_node);
+        self.ec
+            .borrow_mut()
+            .factory
+            .update_type_alias_declaration(
+                cx.nodes,
+                input,
+                modifiers,
+                name,
+                type_parameters,
+                type_node,
+            )
+            .unwrap_or(input)
+    }
+
+    /// `(tx *DeclarationTransformer) transformInterfaceDeclaration`.
+    fn transform_interface_declaration<'v>(
+        &self,
+        v: &NodeVisitor<'v>,
+        cx: &mut VisitorCx<'_, '_>,
+        input: NodeId,
+    ) -> NodeId {
+        let (name, type_parameters, heritage_clauses, members) = {
+            let d = cx.nodes[input].as_interface_declaration();
+            (
+                d.name,
+                d.type_parameters.clone(),
+                d.heritage_clauses.clone(),
+                d.members.clone(),
+            )
+        };
+        let modifiers = self.ensure_modifiers(input, cx);
+        let type_parameters = v.visit_nodes(cx, type_parameters);
+        let heritage_clauses = v.visit_nodes(cx, heritage_clauses);
+        let members = v.visit_nodes(cx, members);
+        self.ec
+            .borrow_mut()
+            .factory
+            .update_interface_declaration(
+                cx.nodes,
+                input,
+                modifiers,
+                name,
+                type_parameters,
+                heritage_clauses,
+                members,
+            )
+            .unwrap_or(input)
+    }
+
+    /// `(tx *DeclarationTransformer) transformFunctionDeclaration`.
+    fn transform_function_declaration<'v>(
+        &self,
+        _v: &NodeVisitor<'v>,
+        cx: &mut VisitorCx<'_, '_>,
+        input: NodeId,
+    ) -> NodeId {
+        if self
+            .resolver
+            .borrow()
+            .is_expando_function_declaration(input, cx.nodes)
+        {
+            self.report_expando_function_errors(input, cx.nodes);
+        }
+        let (name, type_parameters, parameters) = {
+            let d = cx.nodes[input].as_function_declaration();
+            (
+                d.name,
+                d.function_like_with_body_base
+                    .function_like_base
+                    .type_parameters
+                    .clone(),
+                d.function_like_with_body_base
+                    .function_like_base
+                    .parameters
+                    .clone(),
+            )
+        };
+        let modifiers = self.ensure_modifiers(input, cx);
+        let type_parameters = self.ensure_type_params(input, type_parameters, cx);
+        let parameters = self.update_param_list(input, parameters, cx);
+        let return_type = self.ensure_type(input, false, cx);
+        self.ec
+            .borrow_mut()
+            .factory
+            .update_function_declaration(
+                cx.nodes,
+                input,
+                modifiers,
+                None,
+                name,
+                type_parameters,
+                Some(parameters),
+                return_type,
+                None, /*fullSignature*/
+                None,
+            )
+            .unwrap_or(input)
+    }
+
+    /// `(tx *DeclarationTransformer) transformModuleDeclaration`.
+    fn transform_module_declaration<'v>(
+        &self,
+        v: &NodeVisitor<'v>,
+        cx: &mut VisitorCx<'_, '_>,
+        input: NodeId,
+    ) -> Option<NodeId> {
+        // !!! TODO: module declarations are now parsed into nested module objects with export modifiers
+        // It'd be good to collapse those back in the declaration output, but the AST can't represent the
+        // `namespace a.b.c` shape for the printer (without using invalid identifier names).
+        let mods = self.ensure_modifiers(input, cx);
+        let save_needs_declare = self.needs_declare.get();
+        self.needs_declare.set(false);
+        let (name, mut keyword, body, attributes) = {
+            let d = cx.nodes[input].as_module_declaration();
+            (d.name, d.keyword, d.body_base.body, d.attributes)
+        };
+        if keyword != Kind::GlobalKeyword
+            && !name.is_some_and(|n| ast::is_string_literal(&cx.nodes[n]))
+        {
+            keyword = Kind::NamespaceKeyword;
+        }
+        let attributes = v.visit_node(cx, attributes);
+
+        if let Some(inner) = body
+            && cx.nodes[inner].kind == Kind::ModuleBlock
+        {
+            let old_needs_scope_fix = self.needs_scope_fix_marker.get();
+            let old_has_scope_fix = self.result_has_scope_marker.get();
+            self.result_has_scope_marker.set(false);
+            self.needs_scope_fix_marker.set(false);
+            let statement_list = cx.nodes[inner].statement_list().cloned();
+            let statements = v.visit_nodes(cx, statement_list);
+            let mut late_statements =
+                self.transform_and_replace_late_painted_statements(v, cx, statements.unwrap());
+            if cx.nodes[input].flags.intersects(NodeFlags::AMBIENT) {
+                self.needs_scope_fix_marker.set(false); // If it was `declare`'d everything is implicitly exported already, ignore late printed "privates"
+            }
+            // With the final list of statements, there are 3 possibilities:
+            // 1. There's an export assignment or export declaration in the namespace - do nothing
+            // 2. Everything is exported and there are no export assignments or export declarations - strip all export modifiers
+            // 3. Some things are exported, some are not, and there's no marker - add an empty marker
+            if !ast::is_global_scope_augmentation(&cx.nodes[input])
+                && !self.result_has_scope_marker.get()
+                && !has_scope_marker(Some(&late_statements), cx.nodes)
+            {
+                if self.needs_scope_fix_marker.get() {
+                    let marker = create_empty_exports(&mut self.ec.borrow_mut().factory, cx.nodes);
+                    let mut list = late_statements.nodes.to_vec();
+                    list.push(marker);
+                    late_statements = self.ec().factory.new_node_list(list);
+                } else {
+                    late_statements = self
+                        .export_stripping_visitor
+                        .borrow()
+                        .as_ref()
+                        .expect("exportStrippingVisitor")
+                        .visit_nodes(cx, Some(late_statements.clone()))
+                        .unwrap_or(late_statements);
+                }
+            }
+
+            let body = self
+                .ec
+                .borrow_mut()
+                .factory
+                .update_module_block(cx.nodes, inner, Some(late_statements))
+                .unwrap_or(inner);
+            self.needs_declare.set(save_needs_declare);
+            self.needs_scope_fix_marker.set(old_needs_scope_fix);
+            self.result_has_scope_marker.set(old_has_scope_fix);
+
+            return self
+                .ec
+                .borrow_mut()
+                .factory
+                .update_module_declaration(
+                    cx.nodes,
+                    input,
+                    mods,
+                    keyword,
+                    name,
+                    attributes,
+                    Some(body),
+                )
+                .or(Some(input));
+        }
+        if let Some(inner) = body {
+            // trigger visit. ignore result (is deferred, so is just inner unless elided)
+            v.visit_node(cx, Some(inner));
+            // eagerly transform nested namespaces (the nesting doesn't need any elision or painting done)
+            let original = self.ec().most_original(Some(inner)).unwrap_or(inner);
+            let id = ast::get_node_id(&cx.nodes[original]);
+            let body = self
+                .late_statement_replacement_map
+                .borrow_mut()
+                .remove(&id)
+                .flatten();
+            return self
+                .ec
+                .borrow_mut()
+                .factory
+                .update_module_declaration(
+                    cx.nodes,
+                    input,
+                    mods,
+                    keyword,
+                    name,
+                    attributes,
+                    body,
+                )
+                .or(Some(input));
+        }
+        self.ec
+            .borrow_mut()
+            .factory
+            .update_module_declaration(cx.nodes, input, mods, keyword, name, attributes, None)
+            .or(Some(input))
+    }
+
+    /// `(tx *DeclarationTransformer) stripExportModifiers`.
+    fn strip_export_modifiers(
+        &self,
+        cx: &mut VisitorCx<'_, '_>,
+        statement: NodeId,
+    ) -> NodeId {
+        let parse_node = self.ec().parse_node(cx.nodes, statement).unwrap_or(statement);
+        if ast::is_import_equals_declaration(&cx.nodes[statement])
+            || !self
+                .resolver
+                .borrow()
+                .get_effective_declaration_flags(parse_node, ModifierFlags::DEFAULT, cx.nodes)
+                .is_empty()
+            || !ast::can_have_modifiers(&cx.nodes[statement])
+        {
+            // `export import` statements should remain as-is, as imports are _not_ implicitly exported in an ambient namespace
+            // Likewise, `export default` classes and the like and just be `default`, so we preserve their `export` modifiers, too
+            return statement;
+        }
+
+        let old_flags = ast::get_combined_modifier_flags(statement, cx.nodes);
+        if !old_flags.intersects(ModifierFlags::EXPORT) {
+            return statement;
+        }
+        let new_flags = ModifierFlags(
+            old_flags.0 & (ModifierFlags::ALL.0 ^ ModifierFlags::EXPORT.0),
+        );
+        let modifiers = {
+            let mut ec = self.ec.borrow_mut();
+            ast::create_modifiers_from_modifier_flags(new_flags, &mut |kind| {
+                ec.factory.new_token(cx.nodes, kind)
+            })
+        };
+        let list = self.ec().factory.new_modifier_list(cx.nodes, modifiers);
+        ast::replace_modifiers(&mut self.ec.borrow_mut().factory, cx.nodes, statement, Some(list))
+            .unwrap_or(statement)
+    }
+
+    /// `(tx *DeclarationTransformer) buildClassMembers` — builds the member
+    /// list for a class-like node (ClassDeclaration or ClassExpression);
+    /// handles parameter properties, private identifiers, late-bound index
+    /// signatures, and visited members. `extra_members` carries, e.g.,
+    /// this-property assignments from JS files.
+    fn build_class_members<'v>(
+        &self,
+        v: &NodeVisitor<'v>,
+        cx: &mut VisitorCx<'_, '_>,
+        class_node: NodeId,
+        extra_members: Vec<NodeId>,
+    ) -> NodeList {
+        let ctor = ast::get_first_constructor_with_body(&cx.nodes[class_node], cx.nodes);
+        let mut parameter_properties: Vec<NodeId> = Vec::new();
+        if let Some(ctor) = ctor {
+            let old_diag = self
+                .shared
+                .borrow_mut()
+                .get_symbol_accessibility_diagnostic
+                .take();
+            let params = cx.nodes[ctor]
+                .as_constructor_declaration()
+                .function_like_with_body_base
+                .function_like_base
+                .parameters
+                .clone();
+            if let Some(params) = params {
+                for &param in params.nodes.iter() {
+                    if !ast::has_syntactic_modifier(
+                        &cx.nodes[param],
+                        ModifierFlags::PARAMETER_PROPERTY_MODIFIER,
+                    ) || self.should_strip_internal(Some(param), cx.nodes)
+                    {
+                        continue;
+                    }
+                    self.shared
+                        .borrow_mut()
+                        .get_symbol_accessibility_diagnostic = Some(
+                        create_get_symbol_accessibility_diagnostic_for_node(param, cx.nodes),
+                    );
+                    if cx.nodes[param].name().is_some_and(|n| {
+                        cx.nodes[n].kind == Kind::Identifier
+                    }) {
+                        let modifiers = self.ensure_modifiers(param, cx);
+                        let name = cx.nodes[param].name();
+                        let question_token = cx.nodes[param].question_token(cx.nodes);
+                        let type_node = self.ensure_type(param, false, cx);
+                        let initializer = self.ensure_no_initializer(param, cx);
+                        let updated = self.ec.borrow_mut().factory.new_property_declaration(
+                            cx.nodes,
+                            modifiers,
+                            name,
+                            question_token,
+                            type_node,
+                            initializer,
+                        );
+                        self.preserve_js_doc(updated, param, cx.nodes);
+                        parameter_properties.push(updated);
+                    } else {
+                        // Pattern - this is currently an error, but we emit declarations for it somewhat correctly
+                        let name = cx.nodes[param].name();
+                        parameter_properties.extend(self.walk_binding_pattern(
+                            name.unwrap(),
+                            param,
+                            cx,
+                        ));
+                    }
+                }
+            }
+            self.shared
+                .borrow_mut()
+                .get_symbol_accessibility_diagnostic = old_diag;
+        }
+
+        // When the class has at least one private identifier, create a unique constant identifier to retain the nominal typing behavior
+        // Prevents other classes with the same public members from being used in place of the current class
+        let mut private_identifier: Option<NodeId> = None;
+        let members_list = cx.nodes[class_node]
+            .class_like_data()
+            .map(|d| d.members.clone())
+            .flatten();
+        if core::some(
+            members_list.as_ref().map(|m| m.nodes.as_ref()).unwrap_or(&[]),
+            |member| {
+                cx.nodes[*member]
+                    .name()
+                    .is_some_and(|n| ast::is_private_identifier(&cx.nodes[n]))
+            },
+        ) {
+            private_identifier = Some({
+                let mut ec = self.ec.borrow_mut();
+                let name = ec.factory.new_private_identifier(cx.nodes, "#private");
+                ec.factory
+                    .new_property_declaration(cx.nodes, None, Some(name), None, None, None)
+            });
+        }
+
+        let late_indexes = {
+            let tracker = self.tracker.borrow();
+            self.resolver.borrow().create_late_bound_index_signatures(
+                class_node,
+                self.enclosing_declaration.get(),
+                DECLARATION_EMIT_NODE_BUILDER_FLAGS,
+                DECLARATION_EMIT_INTERNAL_NODE_BUILDER_FLAGS,
+                &*tracker,
+                cx.nodes,
+            )
+        };
+
+        let mut member_nodes: Vec<NodeId> =
+            Vec::with_capacity(members_list.as_ref().map(|m| m.nodes.len()).unwrap_or(0));
+        if let Some(p) = private_identifier {
+            member_nodes.push(p);
+        }
+        member_nodes.extend(late_indexes);
+        member_nodes.extend(parameter_properties);
+        member_nodes.extend(extra_members);
+        if let Some(visit_result) = v.visit_nodes(cx, members_list)
+            && !visit_result.nodes.is_empty()
+        {
+            member_nodes.extend_from_slice(&visit_result.nodes);
+        }
+        self.ec().factory.new_node_list(member_nodes)
+    }
+
+    /// `(tx *DeclarationTransformer) transformClassDeclaration`.
+    fn transform_class_declaration<'v>(
+        &self,
+        v: &NodeVisitor<'v>,
+        cx: &mut VisitorCx<'_, '_>,
+        input: NodeId,
+    ) -> Option<NodeId> {
+        let previous_enclosing_declaration = self.enclosing_declaration.get();
+        self.enclosing_declaration.set(Some(input));
+        // Go `defer`: restored explicitly before every return below.
+        {
+            let mut shared = self.shared.borrow_mut();
+            shared.error_name_node = cx.nodes[input].name();
+        }
+        self.tracker.borrow_mut().push_error_fallback_node(input);
+
+        let modifiers = self.ensure_modifiers(input, cx);
+        let type_parameters = self.ensure_type_params(
+            input,
+            cx.nodes[input]
+                .as_class_declaration()
+                .class_like_base
+                .type_parameters
+                .clone(),
+            cx,
+        );
+
+        // Collect this.x property assignments from constructors and static blocks in JS files
+        let mut extra_members: Vec<NodeId> = Vec::new();
+        if ast::is_in_js_file(Some(input), cx.nodes) {
+            extra_members = self.collect_this_property_assignments(v, cx, input);
+        }
+
+        let members = self.build_class_members(v, cx, input, extra_members);
+
+        let extends_clause = get_effective_base_type_node(input, cx.nodes);
+
+        if let Some(extends_clause) = extends_clause {
+            let expression = cx.nodes[extends_clause]
+                .as_expression_with_type_arguments()
+                .expression;
+            let expression_is_name = expression.is_some_and(|e| {
+                ast::is_entity_name_expression(&cx.nodes[e], cx.nodes)
+                    || cx.nodes[e].kind == Kind::NullKeyword
+            });
+            if !expression_is_name {
+                let extends_expr = expression.unwrap_or(extends_clause);
+                // Add an isolated declarations error on this extends clause
+                self.tracker
+                    .borrow_mut()
+                    .report_inference_fallback(extends_expr, cx.nodes);
+                let mut old_id = "default".to_string();
+                let input_name = cx.nodes[input].name();
+                if ast::node_is_present(input_name, cx.nodes)
+                    && input_name.is_some_and(|n| {
+                        ast::is_identifier(&cx.nodes[n])
+                            && !cx.nodes[n].text(cx.nodes).is_empty()
+                    })
+                {
+                    old_id = input_name
+                        .map(|n| cx.nodes[n].text(cx.nodes).into_owned())
+                        .unwrap_or_default();
+                }
+                let new_id = self.ec.borrow_mut().factory.new_unique_name_ex(
+                    cx.nodes,
+                    &format!("{}_base", old_id),
+                    &AutoGenerateOptions {
+                        flags: GeneratedIdentifierFlags::OPTIMISTIC,
+                        ..Default::default()
+                    },
+                );
+                {
+                    let mut shared = self.shared.borrow_mut();
+                    shared.get_symbol_accessibility_diagnostic = Some(Box::new(
+                        move |_res: &SymbolAccessibilityResult, _nodes: &[Node]| {
+                            Some(SymbolAccessibilityDiagnostic {
+                                diagnostic_message:
+                                    &tsc_diagnostics::X_extends_clause_of_exported_class_0_has_or_is_using_private_name_1,
+                                error_node: Some(extends_clause),
+                                type_name: input_name,
+                            })
+                        },
+                    ));
+                }
+
+                        let type_of_expression = {
+                    let tracker = self.tracker.borrow();
+                    self.resolver.borrow().create_type_of_expression(
+                        extends_expr,
+                        Some(input),
+                        DECLARATION_EMIT_NODE_BUILDER_FLAGS,
+                        DECLARATION_EMIT_INTERNAL_NODE_BUILDER_FLAGS,
+                        &*tracker,
+                        cx.nodes,
+                    )
+                };
+                let var_decl = self.ec.borrow_mut().factory.new_variable_declaration(
+                    cx.nodes,
+                    Some(new_id),
+                    None,
+                    type_of_expression,
+                    None,
+                );
+                let mods = if self.needs_declare.get() {
+                    let mut ec = self.ec.borrow_mut();
+                    let m = ec.factory.new_token(cx.nodes, Kind::DeclareKeyword);
+                    Some(ec.factory.new_modifier_list(cx.nodes, vec![m]))
+                } else {
+                    None
+                };
+                let statement = {
+                    let mut ec = self.ec.borrow_mut();
+                    let decl_list = ec.factory.new_node_list(vec![var_decl]);
+                    let decl_list = ec.factory.new_variable_declaration_list(
+                        cx.nodes,
+                        Some(decl_list),
+                        NodeFlags::CONST,
+                    );
+                    ec.factory
+                        .new_variable_statement(cx.nodes, mods, Some(decl_list))
+                };
+                let new_heritage_clause = {
+                    let parent = cx.nodes[extends_clause]
+                        .parent
+                        .expect("heritage clause parent");
+                    let token = cx.nodes[parent].as_heritage_clause().token;
+                    let type_arguments = cx.nodes[extends_clause]
+                        .as_expression_with_type_arguments()
+                        .type_arguments
+                        .clone();
+                    let type_arguments = v.visit_nodes(cx, type_arguments);
+                    let mut ec = self.ec.borrow_mut();
+                    let updated_element = ec
+                        .factory
+                        .update_expression_with_type_arguments(
+                            cx.nodes,
+                            extends_clause,
+                            Some(new_id),
+                            type_arguments,
+                        )
+                        .unwrap_or(extends_clause);
+                    let list = ec.factory.new_node_list(vec![updated_element]);
+                    ec.factory
+                        .update_heritage_clause(cx.nodes, parent, token, Some(list))
+                        .unwrap_or(parent)
+                };
+                // should just be `implements`
+                let retained_heritage_clauses = v.visit_nodes(
+                    cx,
+                    cx.nodes[input]
+                        .as_class_declaration()
+                        .class_like_base
+                        .heritage_clauses
+                        .clone(),
+                );
+                let mut heritage_list = vec![new_heritage_clause];
+                if let Some(retained) = retained_heritage_clauses
+                    && !retained.nodes.is_empty()
+                {
+                    heritage_list.extend_from_slice(&retained.nodes);
+                }
+                let heritage_clauses = self.ec().factory.new_node_list(heritage_list);
+
+                let updated_class = self
+                    .ec
+                    .borrow_mut()
+                    .factory
+                    .update_class_declaration(
+                        cx.nodes,
+                        input,
+                        modifiers,
+                        cx.nodes[input].name(),
+                        type_parameters,
+                        Some(heritage_clauses),
+                        Some(members),
+                    )
+                    .unwrap_or(input);
+
+                self.tracker.borrow_mut().pop_error_fallback_node();
+                self.enclosing_declaration.set(previous_enclosing_declaration);
+                return Some(
+                    self.ec
+                        .borrow_mut()
+                        .factory
+                        .new_syntax_list(cx.nodes, &[statement, updated_class]),
+                );
+            }
+        }
+
+        let heritage_clauses = v.visit_nodes(
+            cx,
+            cx.nodes[input]
+                .as_class_declaration()
+                .class_like_base
+                .heritage_clauses
+                .clone(),
+        );
+        let result = self
+            .ec
+            .borrow_mut()
+            .factory
+            .update_class_declaration(
+                cx.nodes,
+                input,
+                modifiers,
+                cx.nodes[input].name(),
+                type_parameters,
+                heritage_clauses,
+                Some(members),
+            )
+            .unwrap_or(input);
+        self.tracker.borrow_mut().pop_error_fallback_node();
+        self.enclosing_declaration.set(previous_enclosing_declaration);
+        Some(result)
+    }
+
+    /// `(tx *DeclarationTransformer) visitThisPropertyAssignments`.
+    fn visit_this_property_assignments<'v>(
+        &self,
+        v: &NodeVisitor<'v>,
+        cx: &mut VisitorCx<'_, '_>,
+        node: NodeId,
+    ) -> Option<NodeId> {
+        let mut is_static = false;
+        let this_container = ast::get_this_container(node, cx.nodes, false, false);
+        let Some(this_target) = cx.nodes[this_container].parent else {
+            return None; // thisContainer was source file, can't have expando-this
+        };
+        if ast::has_static_modifier(&cx.nodes[this_container])
+            || ast::is_class_static_block_declaration(&cx.nodes[this_container])
+        {
+            is_static = true;
+        }
+        if Some(this_target) != self.enclosing_declaration.get() {
+            return None; // stop searching within new `this` contexts
+        }
+        // `caseBlock:` — Go uses a labeled break for the early-exits below.
+        'case_block: {
+            if ast::get_assignment_declaration_kind(node, cx.nodes)
+                == ast::JsDeclarationKind::ThisProperty
+            {
+                let mut name = ast::get_name_of_declaration(Some(node), cx.nodes);
+                let base = self.symbols.and_then(|symbols| {
+                    self.resolver
+                        .borrow_mut()
+                        .get_referenced_member_value_declaration(
+                            node,
+                            cx.nodes,
+                            &mut symbols.borrow_mut(),
+                        )
+                });
+                let key = get_this_property_assignment_key(name, node, is_static, cx.nodes);
+                if base.is_none() || self.seen_properties.borrow().contains(&key) {
+                    break 'case_block;
+                }
+                self.seen_properties.borrow_mut().insert(key);
+
+                // problem: this prop might be overriding a prop from a base type. The checker has special bails for override compat comparisons for binary expression properties,
+                // but what we transform to won't - so we either need to match the base type (for example, if it's a getter/setter) or emit nothing
+                // See `checkKindsOfPropertyMemberOverrides` in the checker for what we're trying to satisfy here
+                let heritage = cx.nodes[this_target]
+                    .class_like_data()
+                    .and_then(|d| d.heritage_clauses.clone());
+                if heritage.as_ref().is_some_and(|h| !h.nodes.is_empty())
+                    && !is_class_extending_null(this_target, cx.nodes)
+                {
+                    // there is a base type any assignments might be "from"
+                    self.tracker.borrow_mut().report_inference_fallback(this_target, cx.nodes); // Add an isolated declarations error on this class - we can't know how to transform this prop into an assignment without referring to type information
+                    if self
+                        .resolver
+                        .borrow()
+                        .is_this_property_assignment_declaration_redundant(node, cx.nodes)
+                    {
+                        break 'case_block; // skip assignments whose member is already provided by an `extends` base type (an inherited accessor/method, or an identical inherited property)
+                        // TODO: If the property has an explicit `@type` annotation, we should probably emit it (maybe with an `override` modifier) instead of skipping it
+                    }
+                }
+
+                let mods = if is_static {
+                    let mut ec = self.ec.borrow_mut();
+                    let m = ec.factory.new_token(cx.nodes, Kind::StaticKeyword);
+                    Some(ec.factory.new_modifier_list(cx.nodes, vec![m]))
+                } else {
+                    None
+                };
+                if ast::has_dynamic_name(node, cx.nodes) {
+                    let name_id = match name {
+                        Some(n) => n,
+                        None => break 'case_block,
+                    };
+                    if !is_simple_inlineable_expression(&cx.nodes[name_id]) {
+                        break 'case_block; // Member either becomes an index signature or is a reassignment
+                    }
+                    self.check_name(node, cx.nodes);
+                    name = Some(
+                        self.ec
+                            .borrow_mut()
+                            .factory
+                            .new_computed_property_name(cx.nodes, name),
+                    ); // Convert `this[foo] = expr` to `[foo]: Type`
+                }
+                if let Some(n) = name {
+                    if ast::get_text_of_property_name(n, cx.nodes) == "constructor" {
+                        break 'case_block; // `constructor` is a builtin class member, not allowed to redeclare it
+                    }
+                }
+                if name.is_some_and(|n| {
+                    ast::is_identifier(&cx.nodes[n])
+                        && !scanner::utilities::is_identifier_text(
+                            &cx.nodes[n].text(cx.nodes),
+                            LanguageVariant::Standard,
+                        )
+                }) {
+                    name = Some(
+                        self.ec
+                            .borrow_mut()
+                            .factory
+                            .new_string_literal_from_node(cx.nodes, name.unwrap()),
+                    );
+                }
+                let type_ = self.ensure_type(node, false, cx);
+                let prop = self.ec.borrow_mut().factory.new_property_declaration(
+                    cx.nodes,
+                    mods,
+                    name,
+                    None,
+                    type_,
+                    None,
+                );
+                if cx.nodes[node]
+                    .parent
+                    .is_some_and(|p| ast::is_expression_statement(&cx.nodes[p]))
+                {
+                    self.preserve_js_doc(
+                        prop,
+                        cx.nodes[node].parent.unwrap(),
+                        cx.nodes,
+                    );
+                }
+                self.this_property_assignments_collected
+                    .borrow_mut()
+                    .push(prop);
+            }
+        }
+        v.visit_each_child(cx, node).or(Some(node))
+    }
+
+    /// `(tx *DeclarationTransformer) collectThisPropertyAssignments` — finds
+    /// `this.x = expr` assignments in constructors, methods, and static
+    /// blocks of JS classes and synthesizes PropertyDeclaration nodes for
+    /// each unique property name.
+    fn collect_this_property_assignments<'v>(
+        &self,
+        _v: &NodeVisitor<'v>,
+        cx: &mut VisitorCx<'_, '_>,
+        class_node: NodeId,
+    ) -> Vec<NodeId> {
+        let members = cx.nodes[class_node]
+            .class_like_data()
+            .map(|d| d.members.clone())
+            .flatten()
+            .unwrap_or_default();
+        // Pre-populate seen with existing direct member nodes to avoid duplicates
+        let mut seen: HashSet<ThisPropertyAssignmentKey> = HashSet::new();
+        for &member in members.nodes.iter() {
+            if let Some(name) = cx.nodes[member].name() {
+                let is_static = ast::is_static(&cx.nodes[member]);
+                seen.insert(get_this_property_assignment_key(
+                    Some(name),
+                    member,
+                    is_static,
+                    cx.nodes,
+                ));
+            }
+        }
+        *self.seen_properties.borrow_mut() = seen;
+        self.this_property_assignments_collected.borrow_mut().clear();
+
+        {
+            let visitor = self.this_property_visitor.borrow();
+            let visitor = visitor.as_ref().expect("thisPropertyVisitor");
+            for &n in members.nodes.iter() {
+                visitor.visit_each_child(cx, n);
+            }
+        }
+
+        let collected = self.this_property_assignments_collected.borrow().clone();
+        self.seen_properties.borrow_mut().clear();
+        collected
+    }
+
+    /// `(tx *DeclarationTransformer) walkBindingPattern`.
+    fn walk_binding_pattern(
+        &self,
+        pattern: NodeId,
+        param: NodeId,
+        cx: &mut VisitorCx<'_, '_>,
+    ) -> Vec<NodeId> {
+        let mut elems: Vec<NodeId> = Vec::new();
+        let elements: Vec<NodeId> = cx.nodes[pattern]
+            .elements()
+            .map(|e| e.to_vec())
+            .unwrap_or_default();
+        for &elem in elements.iter() {
+            if ast::is_omitted_expression(&cx.nodes[elem]) {
+                continue;
+            }
+            let name = cx.nodes[elem].name();
+            if name.is_some_and(|n| ast::is_binding_pattern(&cx.nodes[n])) {
+                elems.extend(self.walk_binding_pattern(name.unwrap(), param, cx));
+                continue;
+            }
+            let modifiers = self.ensure_modifiers(param, cx);
+            let type_node = self.ensure_type(elem, false, cx);
+            elems.push(self.ec.borrow_mut().factory.new_property_declaration(
+                cx.nodes,
+                modifiers,
+                name,
+                None, /*questionOrExclamationToken*/
+                type_node,
+                None, /*initializer*/
+            ));
+        }
+        elems
+    }
+
+    /// `(tx *DeclarationTransformer) transformVariableStatement`.
+    fn transform_variable_statement<'v>(
+        &self,
+        v: &NodeVisitor<'v>,
+        cx: &mut VisitorCx<'_, '_>,
+        input: NodeId,
+    ) -> Option<NodeId> {
+        let declaration_list = cx.nodes[input].as_variable_statement().declaration_list;
+        let input_nodes = declaration_list
+            .map(|l| cx.nodes[l].as_variable_declaration_list().declarations.clone())
+            .flatten()
+            .unwrap_or_default();
+        let mut visible = false;
+        for &decl in input_nodes.nodes.iter() {
+            visible = get_binding_name_visible(&*self.resolver.borrow(), decl, cx.nodes);
+            if visible {
+                break;
+            }
+        }
+        if !visible {
+            return None;
+        }
+
+        let mut input_nodes_vec: Vec<NodeId> = input_nodes.nodes.to_vec();
+        let mut extra_imports: Vec<NodeId> = Vec::new();
+        let is_commonjs = self
+            .shared
+            .borrow()
+            .current_source_file
+            .is_some_and(|f| cx.nodes[f].as_source_file().common_js_module_indicator.is_some());
+        if is_commonjs {
+            let mut normal_declarations: Vec<NodeId> = Vec::new();
+            let mut imports: Vec<NodeId> = Vec::new();
+            for n in input_nodes_vec {
+                if ast::is_variable_declaration_initialized_to_require(n, cx.nodes) {
+                    imports.push(n);
+                } else {
+                    normal_declarations.push(n);
+                }
+            }
+            input_nodes_vec = normal_declarations;
+            extra_imports = v.visit_slice(cx, &imports).unwrap_or(imports);
+        }
+
+        let nodes = v.visit_slice(cx, &input_nodes_vec).unwrap_or_default();
+        if nodes.is_empty() {
+            if !extra_imports.is_empty() {
+                return Some(
+                    self.ec
+                        .borrow_mut()
+                        .factory
+                        .new_syntax_list(cx.nodes, &extra_imports),
+                );
+            }
+            return None;
+        }
+        let node_list = self.ec().factory.new_node_list(nodes);
+
+        let modifiers = self.ensure_modifiers(input, cx);
+
+        let decl_list = if ast::is_var_using(declaration_list.unwrap_or(input), cx.nodes)
+            || ast::is_var_await_using(declaration_list.unwrap_or(input), cx.nodes)
+        {
+            let decl_list = self.ec.borrow_mut().factory.new_variable_declaration_list(
+                cx.nodes,
+                Some(node_list),
+                NodeFlags::CONST,
+            );
+            let decl_list_source = declaration_list.unwrap_or(input);
+            self.ec().set_original(decl_list, decl_list_source);
+            self.ec()
+                .set_comment_range(decl_list, cx.nodes[decl_list_source].loc);
+            cx.nodes[decl_list].loc = cx.nodes[decl_list_source].loc;
+            decl_list
+        } else {
+            self.ec
+                .borrow_mut()
+                .factory
+                .update_variable_declaration_list(
+                    cx.nodes,
+                    declaration_list.unwrap_or(input),
+                    Some(node_list),
+                    declaration_list.map(|l| cx.nodes[l].flags).unwrap_or_default(),
+                )
+                .unwrap_or(input)
+        };
+        let res = self
+            .ec
+            .borrow_mut()
+            .factory
+            .update_variable_statement(cx.nodes, input, modifiers, Some(decl_list))
+            .unwrap_or(input);
+        if !extra_imports.is_empty() {
+            extra_imports.push(res);
+            return Some(
+                self.ec
+                    .borrow_mut()
+                    .factory
+                    .new_syntax_list(cx.nodes, &extra_imports),
+            );
+        }
+        Some(res)
+    }
+
+    /// `(tx *DeclarationTransformer) transformEnumDeclaration`.
+    fn transform_enum_declaration(
+        &self,
+        cx: &mut VisitorCx<'_, '_>,
+        input: NodeId,
+    ) -> NodeId {
+        let (name, members) = {
+            let d = cx.nodes[input].as_enum_declaration();
+            (d.name, d.members.clone())
+        };
+        let member_vec: Vec<NodeId> = members
+            .map(|m| m.nodes.to_vec())
+            .unwrap_or_default();
+        let mut new_members: Vec<NodeId> = Vec::new();
+        for &m in member_vec.iter() {
+            if self.should_strip_internal(Some(m), cx.nodes) {
+                continue;
+            }
+
+            // Rewrite enum values to their constants, if available
+            let enum_value = self.resolver.borrow().get_enum_member_value(m, cx.nodes);
+
+            if self.shared.borrow().isolated_declarations
+                && cx.nodes[m].initializer().is_some()
+                && enum_value.has_external_references
+                // This will be its own compiler error instead, so don't report.
+                && !cx.nodes[m]
+                    .name()
+                    .is_some_and(|n| ast::is_computed_property_name(&cx.nodes[n]))
+            {
+                self.shared.borrow_mut().add_diagnostic(create_diagnostic_for_node(
+                    cx.nodes,
+                    Some(m),
+                    &tsc_diagnostics::Enum_member_initializers_must_be_computable_without_references_to_external_symbols_with_isolatedDeclarations,
+                    &[] as &[String],
+                ));
+            }
+
+            let new_initializer: Option<NodeId> = match enum_value.value {
+                Some(tsc_evaluator::Value::Number(value)) => {
+                    let mut ec = self.ec.borrow_mut();
+                    if value.is_inf() {
+                        if value > 0.0 {
+                            Some(ec.factory.new_identifier(cx.nodes, "Infinity"))
+                        } else {
+                            let inner = ec.factory.new_identifier(cx.nodes, "Infinity");
+                            Some(ec.factory.new_prefix_unary_expression(
+                                cx.nodes,
+                                Kind::MinusToken,
+                                Some(inner),
+                            ))
+                        }
+                    } else if value.is_nan() {
+                        Some(ec.factory.new_identifier(cx.nodes, "NaN"))
+                    } else if value >= 0.0 {
+                        Some(ec.factory.new_numeric_literal(
+                            cx.nodes,
+                            &value.to_string(),
+                            TokenFlags::NONE,
+                        ))
+                    } else {
+                        let lit = ec.factory.new_numeric_literal(
+                            cx.nodes,
+                            &(-value).to_string(),
+                            TokenFlags::NONE,
+                        );
+                        Some(ec.factory.new_prefix_unary_expression(
+                            cx.nodes,
+                            Kind::MinusToken,
+                            Some(lit),
+                        ))
+                    }
+                }
+                Some(tsc_evaluator::Value::String(value)) => Some(
+                    self.ec
+                        .borrow_mut()
+                        .factory
+                        .new_string_literal(cx.nodes, &value, TokenFlags::NONE),
+                ),
+                _ => None,
+            };
+            let result = self
+                .ec
+                .borrow_mut()
+                .factory
+                .update_enum_member(cx.nodes, m, cx.nodes[m].name(), new_initializer)
+                .unwrap_or(m);
+            self.preserve_js_doc(result, m, cx.nodes);
+            new_members.push(result);
+        }
+        let member_list = self.ec().factory.new_node_list(new_members);
+        let modifiers = self.ensure_modifiers(input, cx);
+        self.ec
+            .borrow_mut()
+            .factory
+            .update_enum_declaration(
+                cx.nodes,
+                input,
+                modifiers,
+                name,
+                Some(member_list),
+            )
+            .unwrap_or(input)
+    }
+
+    /// `(tx *DeclarationTransformer) ensureModifiers`.
+    fn ensure_modifiers(
+        &self,
+        node: NodeId,
+        cx: &mut VisitorCx<'_, '_>,
+    ) -> Option<tsc_ast::ModifierList> {
+        let parse_node = self.ec().parse_node(cx.nodes, node).unwrap_or(node);
+        let current_flags =
+            ast::get_combined_modifier_flags(parse_node, cx.nodes) & ModifierFlags::ALL;
+        let new_flags = self.ensure_modifier_flags(node, cx.nodes);
+        if current_flags == new_flags {
+            // Elide decorators
+            let mods = cx.nodes[node].modifiers();
+            let Some(mods) = mods else {
+                return None;
+            };
+            if can_reuse_modifier_nodes(&mods.nodes, cx.nodes) {
+                let retained: Vec<NodeId> =
+                    core::filter(mods.nodes.as_ref(), |n| ast::is_modifier(&cx.nodes[*n]))
+                        .into_owned();
+                return Some(self.ec().factory.new_modifier_list(cx.nodes, retained));
+            }
+        }
+        let result = {
+            let mut ec = self.ec.borrow_mut();
+            ast::create_modifiers_from_modifier_flags(new_flags, &mut |kind| {
+                ec.factory.new_token(cx.nodes, kind)
+            })
+        };
+        if result.is_empty() {
+            return None;
+        }
+        Some(self.ec().factory.new_modifier_list(cx.nodes, result))
+    }
+
+    /// `(tx *DeclarationTransformer) ensureModifierFlags`.
+    fn ensure_modifier_flags(&self, node: NodeId, nodes: &[Node]) -> ModifierFlags {
+        let mut mask = ModifierFlags(
+            ModifierFlags::ALL.0
+                ^ (ModifierFlags::PUBLIC | ModifierFlags::ASYNC | ModifierFlags::OVERRIDE).0,
+        ); // No async and override modifiers in declaration files
+        let mut additions = ModifierFlags::NONE;
+        if self.needs_declare.get() && !is_always_type(&nodes[node]) {
+            additions = ModifierFlags::AMBIENT;
+        }
+        let parent_is_file = nodes[node]
+            .parent
+            .is_some_and(|p| nodes[p].kind == Kind::SourceFile);
+        if !parent_is_file {
+            mask = ModifierFlags(mask.0 ^ ModifierFlags::AMBIENT.0);
+            additions = ModifierFlags::NONE;
+        }
+        if ast::is_implicitly_exported_js_doc_declaration(&nodes[node], nodes) {
+            additions = additions | ModifierFlags::EXPORT;
+        }
+        mask_modifier_flags(node, mask, additions, nodes)
+    }
+
+    /// `(tx *DeclarationTransformer) ensureTypeParams`.
+    fn ensure_type_params(
+        &self,
+        node: NodeId,
+        params: Option<NodeList>,
+        cx: &mut VisitorCx<'_, '_>,
+    ) -> Option<NodeList> {
+        if !self
+            .resolver
+            .borrow()
+            .get_effective_declaration_flags(
+                self.ec().parse_node(cx.nodes, node).unwrap_or(node),
+                ModifierFlags::PRIVATE,
+                cx.nodes,
+            )
+            .is_empty()
+        {
+            return None;
+        }
+        let mut type_parameters = self
+            .root_visitor
+            .borrow()
+            .as_ref()
+            .expect("rootVisitor")
+            .visit_nodes(cx, params);
+        if type_parameters.is_some() {
+            return type_parameters;
+        }
+        let old_error_name_node = self.shared.borrow().error_name_node;
+        self.shared.borrow_mut().error_name_node = cx.nodes[node].name();
+        // PORT: same swap-only-when-canProduce rule as `ensureType`.
+        let mut old_diag: Option<GetSymbolAccessibilityDiagnostic> = None;
+        let diag_swapped = !self.suppress_new_diagnostic_contexts.get()
+            && can_produce_diagnostics(&cx.nodes[node]);
+        if diag_swapped {
+            let mut shared = self.shared.borrow_mut();
+            old_diag = std::mem::replace(
+                &mut shared.get_symbol_accessibility_diagnostic,
+                Some(create_get_symbol_accessibility_diagnostic_for_node(node, cx.nodes)),
+            );
+        }
+
+        let full_signature = cx.nodes[node]
+            .function_like_data()
+            .and_then(|d| d.full_signature);
+        if full_signature.is_some() {
+                let nodes_result = {
+                let tracker = self.tracker.borrow();
+                self.resolver
+                    .borrow()
+                    .create_type_parameters_of_signature_declaration(
+                        node,
+                        self.enclosing_declaration.get(),
+                        DECLARATION_EMIT_NODE_BUILDER_FLAGS,
+                        DECLARATION_EMIT_INTERNAL_NODE_BUILDER_FLAGS,
+                        &*tracker,
+                        cx.nodes,
+                    )
+            };
+            type_parameters = Some(NodeList {
+                loc: cx.nodes[node].loc,
+                nodes: nodes_result.into(),
+                is_missing: false,
+            });
+        }
+
+        self.shared.borrow_mut().error_name_node = old_error_name_node;
+        if diag_swapped {
+            self.shared.borrow_mut().get_symbol_accessibility_diagnostic = old_diag;
+        }
+        type_parameters
+    }
+
+    /// `(tx *DeclarationTransformer) updateParamList`.
+    fn update_param_list(
+        &self,
+        node: NodeId,
+        params: Option<NodeList>,
+        cx: &mut VisitorCx<'_, '_>,
+    ) -> NodeList {
+        let param_vec: Vec<NodeId> = params.map(|p| p.nodes.to_vec()).unwrap_or_default();
+        if !self
+            .resolver
+            .borrow()
+            .get_effective_declaration_flags(
+                self.ec().parse_node(cx.nodes, node).unwrap_or(node),
+                ModifierFlags::PRIVATE,
+                cx.nodes,
+            )
+            .is_empty()
+            || param_vec.is_empty()
+        {
+            return self.ec().factory.new_node_list(Vec::new());
+        }
+        let results: Vec<NodeId> = param_vec
+            .iter()
+            .map(|&p| self.ensure_parameter(p, cx))
+            .collect();
+        self.ec().factory.new_node_list(results)
+    }
+
+    /// `(tx *DeclarationTransformer) ensureParameter`.
+    fn ensure_parameter(&self, p: NodeId, cx: &mut VisitorCx<'_, '_>) -> NodeId {
+        // PORT: when `suppressNewDiagnosticContexts` is set, Go neither saves
+        // nor replaces the selector — so the take/restore below is skipped
+        // entirely, leaving the outer selector in place.
+        let old_diag = if !self.suppress_new_diagnostic_contexts.get() {
+            let mut shared = self.shared.borrow_mut();
+            std::mem::replace(
+                &mut shared.get_symbol_accessibility_diagnostic,
+                Some(create_get_symbol_accessibility_diagnostic_for_node(p, cx.nodes)),
+            )
+        } else {
+            None
+        };
+        let mut question_token: Option<NodeId> = None;
+        if self.resolver.borrow().is_optional_parameter(p, cx.nodes) {
+            let existing = cx.nodes[p].question_token(cx.nodes);
+            if let Some(existing) = existing {
+                question_token = Some(existing);
+            } else {
+                question_token = Some(
+                    self.ec
+                        .borrow_mut()
+                        .factory
+                        .new_token(cx.nodes, Kind::QuestionToken),
+                );
+            }
+        }
+        let (dot_dot_dot_token, name) = {
+            let d = cx.nodes[p].as_parameter_declaration();
+            (d.dot_dot_dot_token, d.name)
+        };
+        let result = {
+            let name = self
+                .binding_name_visitor
+                .borrow()
+                .as_ref()
+                .expect("bindingNameVisitor")
+                .visit_node(cx, name);
+            let type_node = self.ensure_type(p, true, cx);
+            let initializer = self.ensure_no_initializer(p, cx);
+            self.ec
+                .borrow_mut()
+                .factory
+                .update_parameter_declaration(
+                    cx.nodes,
+                    p,
+                    None,
+                    dot_dot_dot_token,
+                    name,
+                    question_token,
+                    type_node,
+                    initializer,
+                )
+                .unwrap_or(p)
+        };
+        if !self.suppress_new_diagnostic_contexts.get() {
+            self.shared
+                .borrow_mut()
+                .get_symbol_accessibility_diagnostic = old_diag;
+        }
+        result
+    }
+
+    /// `(tx *DeclarationTransformer) ensureNoInitializer`.
+    fn ensure_no_initializer(
+        &self,
+        node: NodeId,
+        cx: &mut VisitorCx<'_, '_>,
+    ) -> Option<NodeId> {
+        if self.should_print_with_initializer(node, cx.nodes) {
+            let initializer = cx.nodes[node].initializer();
+            let unwrapped_initializer =
+                initializer.map(|i| unwrap_parenthesized_expression(i, cx.nodes));
+            if !unwrapped_initializer.is_some_and(|i| {
+                ast::is_primitive_literal_value(&cx.nodes[i], true, cx.nodes)
+            }) {
+                self.tracker.borrow_mut().report_inference_fallback(node, cx.nodes);
+            }
+                let tracker = self.tracker.borrow();
+            let parse_node = self.ec().parse_node(cx.nodes, node).unwrap_or(node);
+            return self.resolver.borrow().create_literal_const_value(
+                parse_node,
+                &*tracker,
+                cx.nodes,
+            );
+        }
+        None
+    }
+
+    /// `(tx *DeclarationTransformer) visitBindingName`.
+    fn visit_binding_name<'v>(
+        &self,
+        v: &NodeVisitor<'v>,
+        cx: &mut VisitorCx<'_, '_>,
+        node: NodeId,
+    ) -> Option<NodeId> {
+        match cx.nodes[node].kind {
+            Kind::Identifier | Kind::OmittedExpression => Some(node),
+            Kind::ArrayBindingPattern | Kind::ObjectBindingPattern => {
+                v.visit_each_child(cx, node).or(Some(node))
+            }
+            Kind::BindingElement => {
+                let (dot_dot_dot_token, property_name, name) = {
+                    let d = cx.nodes[node].as_binding_element();
+                    (d.dot_dot_dot_token, d.property_name, d.name)
+                };
+                if property_name.is_some_and(|p| {
+                    ast::is_computed_property_name(&cx.nodes[p])
+                        && cx.nodes[p]
+                            .expression()
+                            .is_some_and(|e| ast::is_entity_name_expression(&cx.nodes[e], cx.nodes))
+                }) {
+                    let expr = property_name.and_then(|p| cx.nodes[p].expression());
+                    self.check_entity_name_visibility(
+                        expr,
+                        self.enclosing_declaration.get(),
+                        cx.nodes,
+                    );
+                }
+                let name = self
+                    .binding_name_visitor
+                    .borrow()
+                    .as_ref()
+                    .expect("bindingNameVisitor")
+                    .visit_node(cx, name);
+                self.ec
+                    .borrow_mut()
+                    .factory
+                    .update_binding_element(
+                        cx.nodes,
+                        node,
+                        dot_dot_dot_token,
+                        property_name,
+                        name,
+                        None, /*initializer*/
+                    )
+                    .or(Some(node))
+            }
+            _ => Some(node),
+        }
+    }
+}
+
+/// `isClassExtendingNull(node)`.
+fn is_class_extending_null(node: NodeId, nodes: &[Node]) -> bool {
+    let Some(extends_clause) = ast::get_heritage_clause(&nodes[node], Kind::ExtendsKeyword, nodes)
+    else {
+        return false;
+    };
+    let types = nodes[extends_clause].as_heritage_clause().types.clone();
+    let Some(types) = types else {
+        return false;
+    };
+    if types.nodes.len() != 1 {
+        return false;
+    }
+    let expr = nodes[types.nodes[0]]
+        .as_expression_with_type_arguments()
+        .expression;
+    expr.is_some_and(|e| nodes[e].kind == Kind::NullKeyword)
+}
+
+impl<'a> DeclarationTransformerState<'a> {
+    /// `(tx *DeclarationTransformer) transformImportEqualsDeclaration`.
+    fn transform_import_equals_declaration(
+        &self,
+        cx: &mut VisitorCx<'_, '_>,
+        decl: NodeId,
+    ) -> Option<NodeId> {
+        if !self
+            .resolver
+            .borrow()
+            .is_declaration_visible(decl, cx.nodes)
+        {
+            return None;
+        }
+        let (modifiers, is_type_only, name, module_reference) = {
+            let d = cx.nodes[decl].as_import_equals_declaration();
+            (
+                d.modifiers_base.modifiers.clone(),
+                d.is_type_only,
+                d.name,
+                d.module_reference,
+            )
+        };
+        if module_reference.is_some_and(|m| cx.nodes[m].kind == Kind::ExternalModuleReference) {
+            // Rewrite external module names if necessary
+            let specifier = ast::get_external_module_import_equals_declaration_expression(
+                &cx.nodes[decl],
+                cx.nodes,
+            );
+            let updated = {
+                let mut ec = self.ec.borrow_mut();
+                ec.factory
+                    .update_external_module_reference(
+                        cx.nodes,
+                        module_reference.unwrap(),
+                        self.rewrite_module_specifier(decl, specifier, cx.nodes),
+                    )
+                    .unwrap_or(module_reference.unwrap())
+            };
+            return self
+                .ec
+                .borrow_mut()
+                .factory
+                .update_import_equals_declaration(
+                    cx.nodes,
+                    decl,
+                    modifiers,
+                    is_type_only,
+                    name,
+                    Some(updated),
+                )
+                .or(Some(decl));
+        }
+        let old_diag = {
+            let mut shared = self.shared.borrow_mut();
+            std::mem::replace(
+                &mut shared.get_symbol_accessibility_diagnostic,
+                Some(create_get_symbol_accessibility_diagnostic_for_node(decl, cx.nodes)),
+            )
+        };
+        self.check_entity_name_visibility(
+            module_reference,
+            self.enclosing_declaration.get(),
+            cx.nodes,
+        );
+        self.shared
+            .borrow_mut()
+            .get_symbol_accessibility_diagnostic = old_diag;
+        Some(decl)
+    }
+
+    /// `(tx *DeclarationTransformer) transformImportDeclaration`.
+    fn transform_import_declaration(
+        &self,
+        cx: &mut VisitorCx<'_, '_>,
+        decl: NodeId,
+    ) -> Option<NodeId> {
+        let (modifiers, import_clause, module_specifier, attributes) = {
+            let d = cx.nodes[decl].as_import_declaration();
+            (
+                d.modifiers_base.modifiers.clone(),
+                d.import_clause,
+                d.module_specifier,
+                d.attributes,
+            )
+        };
+        let Some(import_clause) = import_clause else {
+            // import "mod" - possibly needed for side effects? (global interface patches, module augmentations, etc)
+            return self
+                .ec
+                .borrow_mut()
+                .factory
+                .update_import_declaration(
+                    cx.nodes,
+                    decl,
+                    modifiers,
+                    None,
+                    self.rewrite_module_specifier(decl, module_specifier, cx.nodes),
+                    attributes,
+                )
+                .or(Some(decl));
+        };
+        let mut phase_modifier = cx.nodes[import_clause].as_import_clause().phase_modifier;
+        if phase_modifier == Kind::DeferKeyword {
+            phase_modifier = Kind::Unknown;
+        }
+        // The `importClause` visibility corresponds to the default's visibility.
+        let mut visible_default_binding: Option<NodeId> = None;
+        if cx.nodes[import_clause].name().is_some()
+            && self
+                .resolver
+                .borrow()
+                .is_declaration_visible(import_clause, cx.nodes)
+        {
+            visible_default_binding = cx.nodes[import_clause].name();
+        }
+        let named_bindings = cx.nodes[import_clause].as_import_clause().named_bindings;
+        let Some(named_bindings) = named_bindings else {
+            // No named bindings (either namespace or list), meaning the import is just default or should be elided
+            if visible_default_binding.is_none() {
+                return None;
+            }
+            let updated_clause = self
+                .ec
+                .borrow_mut()
+                .factory
+                .update_import_clause(
+                    cx.nodes,
+                    import_clause,
+                    phase_modifier,
+                    visible_default_binding,
+                    /*namedBindings*/ None,
+                )
+                .unwrap_or(import_clause);
+            return self
+                .ec
+                .borrow_mut()
+                .factory
+                .update_import_declaration(
+                    cx.nodes,
+                    decl,
+                    modifiers,
+                    Some(updated_clause),
+                    self.rewrite_module_specifier(decl, module_specifier, cx.nodes),
+                    attributes,
+                )
+                .or(Some(decl));
+        };
+        if cx.nodes[named_bindings].kind == Kind::NamespaceImport {
+            // Namespace import (optionally with visible default)
+            let retained_named_bindings = if self
+                .resolver
+                .borrow()
+                .is_declaration_visible(named_bindings, cx.nodes)
+            {
+                Some(named_bindings)
+            } else {
+                None
+            };
+            if visible_default_binding.is_none() && retained_named_bindings.is_none() {
+                return None;
+            }
+            let updated_clause = self
+                .ec
+                .borrow_mut()
+                .factory
+                .update_import_clause(
+                    cx.nodes,
+                    import_clause,
+                    phase_modifier,
+                    visible_default_binding,
+                    retained_named_bindings,
+                )
+                .unwrap_or(import_clause);
+            return self
+                .ec
+                .borrow_mut()
+                .factory
+                .update_import_declaration(
+                    cx.nodes,
+                    decl,
+                    modifiers,
+                    Some(updated_clause),
+                    self.rewrite_module_specifier(decl, module_specifier, cx.nodes),
+                    attributes,
+                )
+                .or(Some(decl));
+        }
+        // Named imports (optionally with visible default)
+        let elements: Vec<NodeId> = cx.nodes[named_bindings]
+            .elements()
+            .map(|e| e.to_vec())
+            .unwrap_or_default();
+        let binding_list: Vec<NodeId> = core::filter(&elements, |b| {
+            self.resolver
+                .borrow()
+                .is_declaration_visible(*b, cx.nodes)
+        })
+        .into_owned();
+        if !binding_list.is_empty() || visible_default_binding.is_some() {
+            let named_imports = if !binding_list.is_empty() {
+                let mut ec = self.ec.borrow_mut();
+                let list = ec.factory.new_node_list(binding_list);
+                Some(
+                    ec.factory
+                        .update_named_imports(cx.nodes, named_bindings, Some(list))
+                        .unwrap_or(named_bindings),
+                )
+            } else {
+                None
+            };
+            let updated_clause = self
+                .ec
+                .borrow_mut()
+                .factory
+                .update_import_clause(
+                    cx.nodes,
+                    import_clause,
+                    phase_modifier,
+                    visible_default_binding,
+                    named_imports,
+                )
+                .unwrap_or(import_clause);
+            return self
+                .ec
+                .borrow_mut()
+                .factory
+                .update_import_declaration(
+                    cx.nodes,
+                    decl,
+                    modifiers,
+                    Some(updated_clause),
+                    self.rewrite_module_specifier(decl, module_specifier, cx.nodes),
+                    attributes,
+                )
+                .or(Some(decl));
+        }
+        // Augmentation of export depends on import
+        if self
+            .resolver
+            .borrow()
+            .is_import_required_by_augmentation(decl, cx.nodes)
+        {
+            if self.shared.borrow().isolated_declarations {
+                self.shared.borrow_mut().add_diagnostic(create_diagnostic_for_node(
+                    cx.nodes,
+                    Some(decl),
+                    &tsc_diagnostics::Declaration_emit_for_this_file_requires_preserving_this_import_for_augmentations_This_is_not_supported_with_isolatedDeclarations,
+                    &[] as &[String],
+                ));
+            }
+            return self
+                .ec
+                .borrow_mut()
+                .factory
+                .update_import_declaration(
+                    cx.nodes,
+                    decl,
+                    modifiers,
+                    /*importClause*/ None,
+                    self.rewrite_module_specifier(decl, module_specifier, cx.nodes),
+                    attributes,
+                )
+                .or(Some(decl));
+        }
+        // Nothing visible
+        None
+    }
+
+    /// `(tx *DeclarationTransformer) transformJSDocTypeExpression`.
+    fn transform_js_doc_type_expression<'v>(
+        &self,
+        v: &NodeVisitor<'v>,
+        cx: &mut VisitorCx<'_, '_>,
+        input: NodeId,
+    ) -> NodeId {
+        v.visit_node(cx, cx.nodes[input].as_js_doc_type_expression().type_)
+            .unwrap_or(input)
+    }
+
+    /// `(tx *DeclarationTransformer) transformJSDocTypeLiteral`.
+    fn transform_js_doc_type_literal<'v>(
+        &self,
+        v: &NodeVisitor<'v>,
+        cx: &mut VisitorCx<'_, '_>,
+        input: NodeId,
+    ) -> NodeId {
+        let tags = cx.nodes[input]
+            .as_js_doc_type_literal()
+            .js_doc_property_tags
+            .clone();
+        let members = v.visit_slice(cx, &tags).unwrap_or_default();
+        let replacement = {
+            let mut ec = self.ec.borrow_mut();
+            let list = ec.factory.new_node_list(members);
+            ec.factory.new_type_literal_node(cx.nodes, Some(list))
+        };
+        self.ec().set_original(replacement, input);
+        replacement
+    }
+
+    /// `(tx *DeclarationTransformer) transformJSDocPropertyTag`.
+    fn transform_js_doc_property_tag<'v>(
+        &self,
+        v: &NodeVisitor<'v>,
+        cx: &mut VisitorCx<'_, '_>,
+        input: NodeId,
+    ) -> NodeId {
+        let (name, type_expression) = {
+            let d = cx.nodes[input].as_js_doc_parameter_or_property_tag();
+            (d.name, d.type_expression)
+        };
+        let name = v.visit_node(cx, name);
+        let type_expression = v.visit_node(cx, type_expression);
+        let replacement = self
+            .ec
+            .borrow_mut()
+            .factory
+            .new_property_signature_declaration(
+                cx.nodes,
+                None,
+                name,
+                None,
+                type_expression,
+                None,
+            );
+        self.ec().set_original(replacement, input);
+        replacement
+    }
+
+    /// `(tx *DeclarationTransformer) transformJSDocAllType`.
+    fn transform_js_doc_all_type<'v>(
+        &self,
+        _v: &NodeVisitor<'v>,
+        cx: &mut VisitorCx<'_, '_>,
+        input: NodeId,
+    ) -> NodeId {
+        let replacement = self
+            .ec
+            .borrow_mut()
+            .factory
+            .new_keyword_type_node(cx.nodes, Kind::AnyKeyword);
+        self.ec().set_original(replacement, input);
+        replacement
+    }
+
+    /// `(tx *DeclarationTransformer) transformJSDocNullableType`.
+    fn transform_js_doc_nullable_type<'v>(
+        &self,
+        v: &NodeVisitor<'v>,
+        cx: &mut VisitorCx<'_, '_>,
+        input: NodeId,
+    ) -> NodeId {
+        let type_node = cx.nodes[input].as_js_doc_nullable_type().type_;
+        let replacement = {
+            let mut ec = self.ec.borrow_mut();
+            let inner = v.visit_node(cx, type_node);
+            let null_lit = ec.factory.new_keyword_expression(cx.nodes, Kind::NullKeyword);
+            let lit_type = ec.factory.new_literal_type_node(cx.nodes, Some(null_lit));
+            let list = ec.factory.new_node_list(vec![inner.unwrap_or(input), lit_type]);
+            ec.factory.new_union_type_node(cx.nodes, Some(list))
+        };
+        self.ec().set_original(replacement, input);
+        replacement
+    }
+
+    /// `(tx *DeclarationTransformer) transformJSDocNonNullableType`.
+    fn transform_js_doc_non_nullable_type<'v>(
+        &self,
+        v: &NodeVisitor<'v>,
+        cx: &mut VisitorCx<'_, '_>,
+        input: NodeId,
+    ) -> NodeId {
+        v.visit_node(cx, cx.nodes[input].as_js_doc_non_nullable_type().type_)
+            .unwrap_or(input)
+    }
+
+    /// `(tx *DeclarationTransformer) transformJSDocVariadicType`.
+    fn transform_js_doc_variadic_type<'v>(
+        &self,
+        v: &NodeVisitor<'v>,
+        cx: &mut VisitorCx<'_, '_>,
+        input: NodeId,
+    ) -> NodeId {
+        let type_node = cx.nodes[input].as_js_doc_variadic_type().type_;
+        let element = v.visit_node(cx, type_node);
+        let replacement = self
+            .ec
+            .borrow_mut()
+            .factory
+            .new_array_type_node(cx.nodes, element);
+        self.ec().set_original(replacement, input);
+        replacement
+    }
+
+    /// `(tx *DeclarationTransformer) transformJSDocOptionalType`.
+    fn transform_js_doc_optional_type<'v>(
+        &self,
+        v: &NodeVisitor<'v>,
+        cx: &mut VisitorCx<'_, '_>,
+        input: NodeId,
+    ) -> NodeId {
+        let type_node = cx.nodes[input].as_js_doc_optional_type().type_;
+        let replacement = {
+            let mut ec = self.ec.borrow_mut();
+            let inner = v.visit_node(cx, type_node);
+            let undefined = ec.factory.new_keyword_type_node(cx.nodes, Kind::UndefinedKeyword);
+            let list = ec.factory.new_node_list(vec![inner.unwrap_or(input), undefined]);
+            ec.factory.new_union_type_node(cx.nodes, Some(list))
+        };
+        self.ec().set_original(replacement, input);
+        replacement
+    }
+
+    /// `(tx *DeclarationTransformer) getNameExpressionPreferringIdentifier`.
+    fn get_name_expression_preferring_identifier(
+        &self,
+        name_expr: Option<NodeId>,
+        cx: &mut VisitorCx<'_, '_>,
+    ) -> Option<NodeId> {
+        let mut name_expr = name_expr?;
+        if ast::is_numeric_literal(&cx.nodes[name_expr]) {
+            // Numeric property names are string properties in JS; convert to string literal
+            let text = cx.nodes[name_expr].text(cx.nodes).into_owned();
+            name_expr = self.ec.borrow_mut().factory.new_string_literal(
+                cx.nodes,
+                &text,
+                TokenFlags::NONE,
+            );
+        }
+        if ast::is_string_literal_like(&cx.nodes[name_expr])
+            && scanner::utilities::is_identifier_text(
+                &cx.nodes[name_expr].text(cx.nodes),
+                LanguageVariant::Standard,
+            )
+        {
+            let text = cx.nodes[name_expr].text(cx.nodes).into_owned();
+            let result = self
+                .ec
+                .borrow_mut()
+                .factory
+                .new_identifier(cx.nodes, &text); // prefer non-string literal names where possible
+            let kw_kind =
+                scanner::utilities::identifier_to_keyword_kind(cx.nodes[result].as_identifier());
+            // keep keywords as strings, except `default`, which has special reformulations in the transformer
+            if kw_kind == Kind::Unknown || kw_kind == Kind::DefaultKeyword {
+                // fake this into a parse tree node so the reference resolver resolves the node via `resolveName`
+                cx.nodes[result].parent = cx.nodes[name_expr].parent;
+                cx.nodes[result].flags =
+                    NodeFlags(cx.nodes[result].flags.0 & !NodeFlags::SYNTHESIZED.0);
+                // intentionally leave Loc unset so the string isn't used as the text source of the identifier
+                return Some(result);
+            }
+        }
+        Some(name_expr)
+    }
+
+    /// `(tx *DeclarationTransformer) stripDeclareModifiers`.
+    fn strip_declare_modifiers(&self, cx: &mut VisitorCx<'_, '_>, node: NodeId) -> NodeId {
+        let mods = cx.nodes[node].modifiers();
+        if let Some(mods) = mods {
+            let flags = cx.nodes[node].modifier_flags();
+            if flags.intersects(ModifierFlags::AMBIENT) {
+                let filtered: Vec<NodeId> =
+                    core::filter(mods.nodes.as_ref(), |m| {
+                        cx.nodes[*m].kind != Kind::DeclareKeyword
+                    })
+                    .into_owned();
+                let list = self.ec().factory.new_modifier_list(cx.nodes, filtered);
+                cx.nodes[node].set_modifiers(Some(list));
+            }
+        }
+        node // no need to recur into children, only strip at top-level
+    }
+
+    /// `(tx *DeclarationTransformer) visitCJSExportAssignments`.
+    fn visit_cjs_export_assignments<'v>(
+        &self,
+        v: &NodeVisitor<'v>,
+        cx: &mut VisitorCx<'_, '_>,
+        expression: NodeId,
+    ) -> Option<NodeId> {
+        let (_can, _cleanup) = self.setup_diagnostic_context(expression, cx.nodes);
+        if ast::get_assignment_declaration_kind(expression, cx.nodes)
+            == ast::JsDeclarationKind::ModuleExports
+            && self
+                .shared
+                .borrow()
+                .current_source_file
+                .is_some_and(|f| cx.nodes[f].as_source_file().common_js_module_indicator.is_some())
+        {
+            let right = cx.nodes[expression].as_binary_expression().right;
+            let parent = cx.nodes[expression].parent.unwrap_or(expression);
+            let result = self.transform_export_assignment(
+                self.root_visitor.borrow().as_ref().expect("rootVisitor"),
+                cx,
+                parent,
+                expression,
+                right,
+                true, /*isExportEquals*/
+            );
+            self.cjs_export_assignment.set(Some(result));
+            self.result_has_scope_marker.set(true);
+            self.result_has_external_module_indicator.set(true);
+        }
+        v.visit_each_child(cx, expression).or(Some(expression)) // recur through the whole tree, looking for module.exports=
+    }
+
+    /// `(tx *DeclarationTransformer) visitNestedExpression`.
+    fn visit_nested_expression<'v>(
+        &self,
+        v: &NodeVisitor<'v>,
+        cx: &mut VisitorCx<'_, '_>,
+        expression: NodeId,
+    ) -> Option<NodeId> {
+        let (_can, _cleanup) = self.setup_diagnostic_context(expression, cx.nodes);
+        match ast::get_assignment_declaration_kind(expression, cx.nodes) {
+            ast::JsDeclarationKind::Property => {
+                self.transform_expando_assignment(cx, expression);
+            }
+            ast::JsDeclarationKind::ExportsProperty => {
+                if self
+                    .shared
+                    .borrow()
+                    .current_source_file
+                    .is_some_and(|f| {
+                        cx.nodes[f]
+                            .as_source_file()
+                            .common_js_module_indicator
+                            .is_some()
+                    })
+                {
+                    let left = cx.nodes[expression].as_binary_expression().left;
+                    let name = left.and_then(|l| {
+                        ast::get_element_or_property_access_name(&cx.nodes[l], cx.nodes)
+                    });
+                    let name = self.get_name_expression_preferring_identifier(name, cx);
+                    let result = self.transform_commonjs_export(
+                        self.root_visitor.borrow().as_ref().expect("rootVisitor"),
+                        cx,
+                        expression,
+                        name,
+                    );
+                    if let Some(result) = result {
+                        self.cjs_export_members.borrow_mut().push(result);
+                    }
+                }
+            }
+            ast::JsDeclarationKind::ObjectDefinePropertyExports => {
+                if self
+                    .shared
+                    .borrow()
+                    .current_source_file
+                    .is_some_and(|f| {
+                        cx.nodes[f]
+                            .as_source_file()
+                            .common_js_module_indicator
+                            .is_some()
+                    })
+                {
+                    let name = cx.nodes[expression]
+                        .arguments()
+                        .and_then(|a| a.get(1).copied());
+                    let name = self.get_name_expression_preferring_identifier(name, cx);
+                    let result = self.transform_commonjs_export(
+                        self.root_visitor.borrow().as_ref().expect("rootVisitor"),
+                        cx,
+                        expression,
+                        name,
+                    );
+                    if let Some(result) = result {
+                        self.cjs_export_members.borrow_mut().push(result);
+                    }
+                }
+            }
+            _ => {}
+        }
+        v.visit_each_child(cx, expression).or(Some(expression)) // recur through the whole tree, looking for special assignments
+    }
+
+    /// `(tx *DeclarationTransformer) transformExpandoAssignment`.
+    fn transform_expando_assignment(
+        &self,
+        cx: &mut VisitorCx<'_, '_>,
+        node: NodeId,
+    ) {
+        let left = cx.nodes[node].as_binary_expression().left;
+
+        let Some(symbol) = cx.nodes[node].symbol() else {
+            return;
+        };
+        let symbol_has_assignment_flag = self.symbols.is_some_and(|symbols| {
+            symbols.borrow()[symbol.index()]
+                .flags
+                .intersects(SymbolFlags::ASSIGNMENT)
+        });
+        if !symbol_has_assignment_flag {
+            return;
+        }
+
+        let Some(ns) = left.map(|l| ast::get_leftmost_access_expression(l, cx.nodes))
+        else {
+            return;
+        };
+        if cx.nodes[ns].kind != Kind::Identifier {
+            return;
+        }
+
+        let Some(symbols) = self.symbols else {
+            return;
+        };
+        let declaration = self
+            .resolver
+            .borrow_mut()
+            .get_referenced_value_declaration(ns, cx.nodes, &mut symbols.borrow_mut());
+        let Some(declaration) = declaration else {
+            return;
+        };
+
+        if self.should_strip_internal(Some(declaration), cx.nodes) {
+            return;
+        }
+
+        if ast::is_variable_declaration(&cx.nodes[declaration])
+            && cx.nodes[declaration].type_().is_some()
+        {
+            return;
+        }
+
+        if ast::is_function_declaration(&cx.nodes[declaration])
+            && cx.nodes[declaration]
+                .function_like_data()
+                .and_then(|d| d.full_signature)
+                .is_some()
+        {
+            return;
+        }
+
+        if ast::is_variable_declaration(&cx.nodes[declaration])
+            && !ast::is_function_like(cx.nodes[declaration].initializer(), cx.nodes)
+        {
+            return; // We're going to add a type, no need to dupe members with a namespace
+        }
+
+        let Some(host) = cx.nodes[declaration].symbol() else {
+            return;
+        };
+
+        let name_text = cx.nodes[ns].text(cx.nodes).into_owned();
+        let name = self
+            .ec
+            .borrow_mut()
+            .factory
+            .new_identifier(cx.nodes, &name_text);
+        let property = left
+            .map(|l| self.try_get_property_name(l, cx.nodes))
+            .unwrap_or_default();
+        if property.is_empty()
+            || !scanner::utilities::is_identifier_text(&property, LanguageVariant::Standard)
+        {
+            return;
+        }
+
+        let host_id = self.get_expando_host_id(declaration, cx.nodes);
+
+        if ast::is_declaration(&cx.nodes[declaration])
+            && is_declaration_and_not_visible(
+                &self.ec(),
+                &*self.resolver.borrow(),
+                declaration,
+                cx.nodes,
+            )
+        {
+            // The host isn't visible (yet) - printing the type of a visible declaration may still
+            // late-mark it as visible (e.g. an exported variable whose type prints as `typeof host`),
+            // so defer the assignment to be processed if and when that happens.
+            self.deferred_expando_assignments
+                .borrow_mut()
+                .entry(host_id)
+                .or_default()
+                .push(node);
+            return;
+        }
+
+        if ast::is_function_declaration(&cx.nodes[declaration])
+            && !should_emit_function_properties(declaration, cx.nodes, &symbols.borrow())
+        {
+            return;
+        }
+
+        self.transform_expando_host(name, declaration, cx);
+
+        let export_name = self
+            .ec
+            .borrow_mut()
+            .factory
+            .new_identifier(cx.nodes, &property);
+        let mut local_name = self.try_get_name_of_assigned_expression(node, cx);
+        if local_name.is_none()
+            && !self.resolver.borrow().is_name_resolvable(
+                self.enclosing_declaration.get(),
+                &property,
+                cx.nodes,
+            )
+            && !ast::is_non_contextual_keyword(scanner::scanner::string_to_token(
+                &cx.nodes[export_name].text(cx.nodes),
+            ))
+        {
+            // use exportName as localName if there won't be any conflicts or keyword issues
+            local_name = Some(export_name);
+        }
+        if local_name.is_none()
+            || ast::is_non_contextual_keyword(scanner::scanner::string_to_token(
+                &cx.nodes[local_name.unwrap()].text(cx.nodes),
+            ))
+        {
+            // fallback to a generated name if the localName doesn't exist or is a keyword
+            local_name = Some(
+                self.ec
+                    .borrow_mut()
+                    .factory
+                    .new_generated_name_for_node(cx.nodes, node),
+            );
+        }
+        let local_name = local_name.unwrap();
+
+        let (_can, _cleanup) = self.setup_diagnostic_context(node, cx.nodes);
+
+        let preexisting_expando_has_export = core::some(
+            self.expando_members
+                .borrow()
+                .get(&host_id)
+                .map(|m| m.as_slice())
+                .unwrap_or(&[]),
+            |d| ast::is_export_declaration(&cx.nodes[*d]),
+        );
+
+        let right = cx.nodes[node].as_binary_expression().right;
+        if right.is_some_and(|r| ast::is_identifier(&cx.nodes[r])) {
+            if !preexisting_expando_has_export {
+                self.add_export_modifier_to_expando_members(host_id, cx);
+            }
+            // alias-like, emit an `export {name}` or `export {name as alias}`
+            let result =
+                self.transform_binary_expression_to_export_declaration(cx, node, Some(export_name));
+            self.expando_members
+                .borrow_mut()
+                .entry(host_id)
+                .or_default()
+                .push(result);
+            return;
+        }
+
+        let var_modifiers = if preexisting_expando_has_export {
+            let mut ec = self.ec.borrow_mut();
+            let mods = ast::create_modifiers_from_modifier_flags(
+                ModifierFlags::EXPORT,
+                &mut |kind| ec.factory.new_token(cx.nodes, kind),
+            );
+            Some(ec.factory.new_modifier_list(cx.nodes, mods))
+        } else {
+            None
+        };
+
+        let synthesized_namespace = {
+            let mut ec = self.ec.borrow_mut();
+            let empty_list = ec.factory.new_node_list(Vec::new());
+            let block = ec.factory.new_module_block(cx.nodes, Some(empty_list));
+            ec.factory.new_module_declaration(
+                cx.nodes,
+                None, /*modifiers*/
+                Kind::NamespaceKeyword,
+                Some(name),
+                None,
+                Some(block),
+            )
+        };
+        cx.nodes[synthesized_namespace].parent = self.enclosing_declaration.get();
+        if let Some(declaration_data) = cx.nodes[synthesized_namespace].data.declaration_data_mut() {
+            declaration_data.symbol = Some(host);
+        }
+        let local_name_text = cx.nodes[local_name].text(cx.nodes).into_owned();
+        if let Some(container_data) = cx.nodes[synthesized_namespace]
+            .data
+            .locals_container_data_mut()
+        {
+            container_data.locals.set(local_name_text, symbol);
+        }
+
+        let old_enclosing = self.enclosing_declaration.get();
+        self.enclosing_declaration.set(Some(synthesized_namespace));
+
+        let type_ = self.ensure_type(node, false, cx);
+        let mut statements: Vec<NodeId> = Vec::new();
+        {
+            let mut ec = self.ec.borrow_mut();
+            let var_decl = ec.factory.new_variable_declaration(
+                cx.nodes,
+                Some(local_name),
+                None, /*exclamationToken*/
+                type_,
+                None, /*initializer*/
+            );
+            let decl_list = ec.factory.new_node_list(vec![var_decl]);
+            let decl_list = ec.factory.new_variable_declaration_list(
+                cx.nodes,
+                Some(decl_list),
+                NodeFlags::NONE,
+            );
+            statements.push(ec.factory.new_variable_statement(
+                cx.nodes,
+                var_modifiers,
+                Some(decl_list),
+            ));
+        }
+
+        if cx.nodes[local_name].text(cx.nodes) != cx.nodes[export_name].text(cx.nodes) {
+            let export_decl = {
+                let mut ec = self.ec.borrow_mut();
+                let specifier = ec.factory.new_export_specifier(
+                    cx.nodes,
+                    false, /*isTypeOnly*/
+                    Some(local_name),
+                    Some(export_name),
+                );
+                let list = ec.factory.new_node_list(vec![specifier]);
+                let named_exports = ec.factory.new_named_exports(cx.nodes, Some(list));
+                ec.factory.new_export_declaration(
+                    cx.nodes,
+                    None, /*modifiers*/
+                    false, /*isTypeOnly*/
+                    Some(named_exports),
+                    None, /*moduleSpecifier*/
+                    None, /*attributes*/
+                )
+            };
+            statements.push(export_decl);
+            if !preexisting_expando_has_export {
+                // Done before adding statements to expando members to keep the initial variable statement, before we rename anything, private
+                self.add_export_modifier_to_expando_members(host_id, cx);
+            }
+        }
+
+        self.expando_members
+            .borrow_mut()
+            .entry(host_id)
+            .or_default()
+            .extend(statements);
+
+        // `defer`: enclosing declaration restore
+        self.enclosing_declaration.set(old_enclosing);
+    }
+
+    /// `(tx *DeclarationTransformer) addExportModifierToExpandoMembers` —
+    /// adds an `export` modifier to all existing expando members so they
+    /// remain exported after the `export {}` is added.
+    fn add_export_modifier_to_expando_members(
+        &self,
+        host_id: NodeId,
+        cx: &mut VisitorCx<'_, '_>,
+    ) {
+        // only invoked when `tx.expandoMembers` does not *yet* contain an `export` declaration, so no need to skip one here to prevent `export export {}`
+        let decls = self
+            .expando_members
+            .borrow()
+            .get(&host_id)
+            .cloned()
+            .unwrap_or_default();
+        for decl in decls {
+            let modifier_flags =
+                ModifierFlags::EXPORT | ast::get_combined_modifier_flags(decl, cx.nodes);
+            let mods = {
+                let mut ec = self.ec.borrow_mut();
+                let mods = ast::create_modifiers_from_modifier_flags(
+                    modifier_flags,
+                    &mut |kind| ec.factory.new_token(cx.nodes, kind),
+                );
+                ec.factory.new_modifier_list(cx.nodes, mods)
+            };
+            cx.nodes[decl].set_modifiers(Some(mods));
+        }
+    }
+
+    /// `(tx *DeclarationTransformer) getExpandoHostId`.
+    fn get_expando_host_id(&self, declaration: NodeId, nodes: &[Node]) -> NodeId {
+        let root = if ast::is_variable_declaration(&nodes[declaration]) {
+            nodes[declaration]
+                .parent
+                .and_then(|p| nodes[p].parent)
+                .unwrap_or(declaration)
+        } else {
+            declaration
+        };
+        let original = self.ec().most_original(Some(root)).unwrap_or(root);
+        ast::get_node_id(&nodes[original])
+    }
+
+    /// `(tx *DeclarationTransformer) transformExpandoHost`.
+    fn transform_expando_host(
+        &self,
+        name: NodeId,
+        declaration: NodeId,
+        cx: &mut VisitorCx<'_, '_>,
+    ) {
+        let root = if ast::is_variable_declaration(&cx.nodes[declaration]) {
+            cx.nodes[declaration]
+                .parent
+                .and_then(|p| cx.nodes[p].parent)
+                .unwrap_or(declaration)
+        } else {
+            declaration
+        };
+        let id = self.get_expando_host_id(declaration, cx.nodes);
+
+        if self.expando_hosts.borrow().contains_key(&id) {
+            return;
+        }
+
+        let save_needs_declare = self.needs_declare.get();
+        self.needs_declare.set(true);
+
+        let mut modifier_flags = self.ensure_modifier_flags(root, cx.nodes);
+        let default_export = modifier_flags.intersects(ModifierFlags::EXPORT)
+            && modifier_flags.intersects(ModifierFlags::DEFAULT);
+
+        self.needs_declare.set(save_needs_declare);
+
+        if default_export {
+            modifier_flags = modifier_flags | ModifierFlags::AMBIENT;
+            modifier_flags = ModifierFlags(modifier_flags.0 ^ ModifierFlags::DEFAULT.0);
+            modifier_flags = ModifierFlags(modifier_flags.0 ^ ModifierFlags::EXPORT.0);
+        }
+
+        let (_can, _cleanup) = self.setup_diagnostic_context(declaration, cx.nodes);
+
+        let modifiers = {
+            let mut ec = self.ec.borrow_mut();
+            let mods = ast::create_modifiers_from_modifier_flags(modifier_flags, &mut |kind| {
+                ec.factory.new_token(cx.nodes, kind)
+            });
+            ec.factory.new_modifier_list(cx.nodes, mods)
+        };
+        let mut replacement: Vec<NodeId> = Vec::new();
+
+        if ast::is_function_declaration(&cx.nodes[declaration]) {
+            let (type_parameters, parameters, asterisk_token) =
+                extract_expando_host_params(declaration, cx.nodes);
+            let fn_name = cx.nodes[declaration].name();
+            let type_parameters = self.ensure_type_params(declaration, type_parameters, cx);
+            let parameters = self.update_param_list(declaration, parameters, cx);
+            let return_type = self.ensure_type(declaration, false, cx);
+            replacement.push(
+                self.ec
+                    .borrow_mut()
+                    .factory
+                    .update_function_declaration(
+                        cx.nodes,
+                        declaration,
+                        Some(modifiers),
+                        asterisk_token,
+                        fn_name,
+                        type_parameters,
+                        Some(parameters),
+                        return_type,
+                        None, /*fullSignature*/
+                        None, /*body*/
+                    )
+                    .unwrap_or(declaration),
+            );
+        } else if ast::is_variable_declaration(&cx.nodes[declaration])
+            && cx.nodes[declaration]
+                .initializer()
+                .is_some_and(|i| ast::is_function_expression_or_arrow_function(&cx.nodes[i]))
+        {
+            let fn_ = cx.nodes[declaration].initializer().unwrap();
+            let (type_parameters, parameters, asterisk_token) =
+                extract_expando_host_params(fn_, cx.nodes);
+            let fn_name_text = cx.nodes[name].text(cx.nodes).into_owned();
+            let fn_name = self
+                .ec
+                .borrow_mut()
+                .factory
+                .new_identifier(cx.nodes, &fn_name_text);
+            let type_parameters = self.ensure_type_params(fn_, type_parameters, cx);
+            let parameters = self.update_param_list(fn_, parameters, cx);
+            let return_type = self.ensure_type(fn_, false, cx);
+            replacement.push(self.ec.borrow_mut().factory.new_function_declaration(
+                cx.nodes,
+                Some(modifiers),
+                asterisk_token,
+                Some(fn_name),
+                type_parameters,
+                Some(parameters),
+                return_type,
+                None, /*fullSignature*/
+                None, /*body*/
+            ));
+        } else {
+            let result = self.transform_top_level_declaration(
+                self.root_visitor.borrow().as_ref().expect("rootVisitor"),
+                cx,
+                declaration,
+            );
+            drop(_cleanup);
+            self.expando_hosts.borrow_mut().insert(id, result.unwrap_or(declaration));
+            return;
+        }
+
+        self.report_expando_function_errors(declaration, cx.nodes);
+
+        if default_export {
+            if cx.nodes[declaration]
+                .parent
+                .is_some_and(|p| ast::is_source_file(&cx.nodes[p]))
+            {
+                self.result_has_external_module_indicator.set(true);
+            }
+            self.result_has_scope_marker.set(true);
+            replacement.push(self.ec.borrow_mut().factory.new_export_assignment(
+                cx.nodes,
+                None, /*modifiers*/
+                false, /*isExportEquals*/
+                None, /*typeNode*/
+                Some(name),
+            ));
+        }
+
+        // store host result to be added to the output when it's actually visited
+        {
+            let block = self
+                .ec
+                .borrow_mut()
+                .factory
+                .new_syntax_list(cx.nodes, &replacement);
+            self.expando_hosts.borrow_mut().insert(id, block);
+        }
+        drop(_cleanup);
+        if self
+            .late_statement_replacement_map
+            .borrow()
+            .contains_key(&id)
+        {
+            let result = self.create_full_expando_block(
+                self.root_visitor.borrow().as_ref().expect("rootVisitor"),
+                cx,
+                id,
+            );
+            self.late_statement_replacement_map
+                .borrow_mut()
+                .insert(id, result);
+        }
+    }
+
+    /// `(tx *DeclarationTransformer) createFullExpandoBlock`.
+    fn create_full_expando_block<'v>(
+        &self,
+        _v: &NodeVisitor<'v>,
+        cx: &mut VisitorCx<'_, '_>,
+        id: NodeId,
+    ) -> Option<NodeId> {
+        // Process any expando assignments on this host that were skipped because it wasn't
+        // visible when they were collected - if it's still not visible, they simply get
+        // re-deferred, and are dropped if the host is never late-marked visible.
+        let deferred = self.deferred_expando_assignments.borrow_mut().remove(&id);
+        if let Some(deferred) = deferred {
+            for assignment in deferred {
+                self.transform_expando_assignment(cx, assignment);
+            }
+        }
+        let n = self.expando_hosts.borrow().get(&id).copied();
+        let add_ons = self
+            .expando_members
+            .borrow()
+            .get(&id)
+            .cloned()
+            .unwrap_or_default();
+        if !add_ons.is_empty() {
+            let mut modifiers: Option<tsc_ast::ModifierList> = None;
+            let mut name: Option<NodeId> = None;
+            let mut host: Vec<NodeId> = Vec::new();
+            if let Some(n) = n
+                && cx.nodes[n].kind == Kind::SyntaxList
+            {
+                // find the first named syntax list element and use its' name & modifiers
+                for &c in cx.nodes[n].as_syntax_list().children.iter() {
+                    if cx.nodes[c].name().is_some() {
+                        name = cx.nodes[c]
+                            .name()
+                            .map(|nm| self.ec.borrow_mut().factory.clone_node(cx.nodes, nm));
+                        if let Some(mods) = cx.nodes[c].modifiers() {
+                            let mod_ids: Vec<NodeId> = mods.nodes.iter().copied().collect();
+                            let cloned: Vec<NodeId> = {
+                                let mut ec = self.ec.borrow_mut();
+                                mod_ids
+                                    .iter()
+                                    .map(|&m| ec.factory.clone_node(cx.nodes, m))
+                                    .collect()
+                            };
+                            modifiers = Some(
+                                self.ec
+                                    .borrow_mut()
+                                    .factory
+                                    .new_modifier_list(cx.nodes, cloned),
+                            );
+                        }
+                        break;
+                    }
+                }
+                host = cx.nodes[n].as_syntax_list().children.to_vec();
+            } else if let Some(n) = n {
+                name = cx.nodes[n]
+                    .name()
+                    .map(|nm| self.ec.borrow_mut().factory.clone_node(cx.nodes, nm));
+                if let Some(mods) = cx.nodes[n].modifiers() {
+                    let mod_ids: Vec<NodeId> = mods.nodes.iter().copied().collect();
+                    let cloned: Vec<NodeId> = {
+                        let mut ec = self.ec.borrow_mut();
+                        mod_ids
+                            .iter()
+                            .map(|&m| ec.factory.clone_node(cx.nodes, m))
+                            .collect()
+                    };
+                    modifiers = Some(
+                        self.ec
+                            .borrow_mut()
+                            .factory
+                            .new_modifier_list(cx.nodes, cloned),
+                    );
+                }
+                host = vec![n];
+            }
+            if let Some(name) = name {
+                let module_decl = {
+                    let mut ec = self.ec.borrow_mut();
+                    let members = ec.factory.new_node_list(add_ons);
+                    let block = ec.factory.new_module_block(cx.nodes, Some(members));
+                    ec.factory.new_module_declaration(
+                        cx.nodes,
+                        modifiers,
+                        Kind::NamespaceKeyword,
+                        Some(name),
+                        None,
+                        Some(block),
+                    )
+                };
+                host.push(module_decl);
+                return Some(
+                    self.ec
+                        .borrow_mut()
+                        .factory
+                        .new_syntax_list(cx.nodes, &host),
+                );
+            }
+        }
+        n
+    }
+
+    /// `(tx *DeclarationTransformer) tryGetPropertyName`.
+    fn try_get_property_name(&self, node: NodeId, nodes: &[Node]) -> String {
+        if ast::is_element_access_expression(&nodes[node]) {
+            return self
+                .resolver
+                .borrow_mut()
+                .get_element_access_expression_name(Some(node));
+        }
+        if ast::is_property_access_expression(&nodes[node]) {
+            return nodes[node]
+                .name()
+                .map(|n| nodes[n].text(nodes).into_owned())
+                .unwrap_or_default();
+        }
+        String::new()
+    }
+
+    /// The `reportExpandoFunctionErrors` hook installed on the shared state —
+    /// `tx.state.reportExpandoFunctionErrors(declaration)`.
+    fn report_expando_function_errors(&self, node: NodeId, nodes: &[Node]) {
+        if let Some(f) = &self.shared.borrow().report_expando_function_errors {
+            f(node, nodes);
+        }
+    }
+}
+
+/// `isNotDeclareModifier`.
+#[allow(dead_code)]
+fn is_not_declare_modifier(node: &Node) -> bool {
+    node.kind != Kind::DeclareKeyword
+}
+
+/// `extractExpandoHostParams`.
+fn extract_expando_host_params(
+    node: NodeId,
+    nodes: &[Node],
+) -> (Option<NodeList>, Option<NodeList>, Option<NodeId>) {
+    match nodes[node].kind {
+        Kind::FunctionExpression => {
+            let fn_ = &nodes[node]
+                .as_function_expression()
+                .function_like_with_body_base;
+            (
+                fn_.function_like_base.type_parameters.clone(),
+                fn_.function_like_base.parameters.clone(),
+                fn_.body_base.asterisk_token,
+            )
+        }
+        Kind::ArrowFunction => {
+            let fn_ = &nodes[node]
+                .as_arrow_function()
+                .function_like_with_body_base
+                .function_like_base;
+            (fn_.type_parameters.clone(), fn_.parameters.clone(), None)
+        }
+        _ => {
+            let fn_ = &nodes[node]
+                .as_function_declaration()
+                .function_like_with_body_base;
+            (
+                fn_.function_like_base.type_parameters.clone(),
+                fn_.function_like_base.parameters.clone(),
+                fn_.body_base.asterisk_token,
+            )
+        }
+    }
+}

@@ -7,8 +7,8 @@
 // checker-side emit resolver implements.
 
 use tsc_ast::{self as ast, Kind, ModifierFlags, Node, NodeId};
-use tsc_printer::emit_context::EmitContext;
-use tsc_printer::emit_resolver::EmitResolver;
+use tsc_printer::EmitContext;
+use tsc_printer::EmitResolver;
 
 /// `needsScopeMarker(result)` — a statement that does not make a scope
 /// `export {}` marker unnecessary.
@@ -209,7 +209,7 @@ pub(crate) fn should_emit_function_properties(
     nodes: &[Node],
     symbols: &[ast::Symbol],
 ) -> bool {
-    if nodes[input].as_function_declaration().body_base.body.is_some() {
+    if nodes[input].as_function_declaration().function_like_with_body_base.body_base.body.is_some() {
         return true;
     }
     let Some(symbol) = nodes[input].symbol() else {
@@ -221,7 +221,7 @@ pub(crate) fn should_emit_function_properties(
         !ast::is_function_declaration(&nodes[*decl])
             || nodes[*decl]
                 .as_function_declaration()
-                .body_base
+                .function_like_with_body_base.body_base
                 .body
                 .is_none()
     })

@@ -7,16 +7,16 @@
 // PORT notes:
 //   - `*ast.Symbol` → `SymbolId`, `*ast.Node` → `NodeId`,
 //     `*ast.SourceFile` → the SourceFile node's `NodeId`.
-//   - `nodebuilder::SymbolTracker` trait methods carry no arena parameters
-//     (Go trackers dereference `*ast.Symbol`/`*ast.Node` directly). The
-//     tracker therefore holds arena handles: `symbols` is the live arena
-//     borrowed from `TransformOptions::symbols` (shared with the transform),
-//     and `nodes` is a snapshot (`RefCell<Vec<Node>>`) refreshed by the
-//     transformer at each resolver call via `sync_nodes`. Reads tolerate
-//     NodeIds minted after the last sync (synthesized nodes) by
-//     bounds-checking — Go would see the same nodes as live pointers, but
-//     every such read path (`get_source_file_of_node`, name lookups,
-//     diagnostics locations) is only meaningful for bound parse-tree nodes.
+//   - `nodebuilder::SymbolTracker` trait methods thread `nodes: &[Node]`
+//     (the trait was extended for this port — Go trackers dereference
+//     `*ast.Node` pointers directly, and this tracker does not own the
+//     arena). `symbols` is the live arena borrowed from
+//     `TransformOptions::symbols` (shared with the transform). Reads
+//     tolerate NodeIds minted inside the current resolver call
+//     (synthesized nodes) by bounds-checking — Go would see the same
+//     nodes as live pointers, but every such read path
+//     (`get_source_file_of_node`, name lookups, diagnostics locations)
+//     is only meaningful for bound parse-tree nodes.
 //   - `checker.NewDiagnosticForNode` is reimplemented as the free function
 //     `create_diagnostic_for_node` — identical logic to
 //     `Checker::new_diagnostic_for_node` but taking the `&[Node]` arena
@@ -30,7 +30,7 @@ use std::rc::Rc;
 use tsc_ast::diagnostic::{self, DiagnosticFile, DiagnosticRef};
 use tsc_ast::{self as ast, FindAncestorResult, Node, NodeId, Symbol, SymbolFlags, SymbolId};
 use tsc_nodebuilder::SymbolTracker;
-use tsc_printer::emit_resolver::{
+use tsc_printer::{
     EmitResolver, SymbolAccessibility, SymbolAccessibilityResult,
 };
 
@@ -117,9 +117,9 @@ pub struct SymbolTrackerImpl<'a> {
     pub class_symbol_tracked: bool,
     /// `getIsolatedDeclarationError`.
     get_isolated_declaration_error: GetIsolatedDeclarationError<'a>,
-    /// Snapshot of the node arena — see the module PORT note. Synced via
-    /// `sync_nodes` before resolver calls that can invoke tracker methods.
-    nodes: RefCell<Vec<Node>>,
+    // The node arena the Go implementation reaches through `*ast.Node`
+    // pointers arrives as the `nodes: &[Node]` parameter on the
+    // `SymbolTracker` trait methods — see `tsc-nodebuilder::SymbolTracker`.
     /// The live bound symbol arena (`TransformOptions::symbols`).
     symbols: Option<&'a RefCell<Vec<Symbol>>>,
 }
@@ -142,29 +142,16 @@ impl<'a> SymbolTrackerImpl<'a> {
             fallback_stack: Vec::new(),
             watched_class_symbol: None,
             class_symbol_tracked: false,
-            nodes: RefCell::new(Vec::new()),
-            symbols,
-        }
-    }
-
-    /// Refreshes the node-arena snapshot the tracker reads through — call
-    /// before every resolver call that can invoke `SymbolTracker` methods.
-    /// (See the module PORT note; `RefCell` because most call sites only
-    /// have `&self` access to the transformer/tracker.)
-    pub fn sync_nodes(&self, nodes: &[Node]) {
-        let mut guard = self.nodes.borrow_mut();
-        if guard.len() != nodes.len() {
-            guard.clone_from_slice(nodes);
+                        symbols,
         }
     }
 
     /// `(s *SymbolTrackerImpl) isBoundExpando`.
-    fn is_bound_expando(&self, node: NodeId) -> bool {
-        let nodes = self.nodes.borrow();
-        let Some(n) = nodes.as_slice().get(node.local_index() as usize) else {
+    fn is_bound_expando(&self, node: NodeId, nodes: &[Node]) -> bool {
+        let Some(n) = nodes.get(node.local_index() as usize) else {
             return false;
         };
-        if !(ast::is_expando_property_declaration(Some(node), &nodes)
+        if !(ast::is_expando_property_declaration(Some(node), nodes)
             && ast::is_property_access_expression(&nodes[n
                 .as_binary_expression()
                 .left
@@ -176,7 +163,7 @@ impl<'a> SymbolTrackerImpl<'a> {
         // property; `this.x = ...`, `super.x = ...`, `f().x = ...` and the like have no referenced declaration.
         let ns = ast::get_leftmost_access_expression(
             nodes[node].as_binary_expression().left.unwrap(),
-            &nodes,
+            nodes,
         );
         if !ast::is_identifier(&nodes[ns]) {
             return false;
@@ -184,26 +171,22 @@ impl<'a> SymbolTrackerImpl<'a> {
         let Some(ref_decl) = self
             .resolver
             .borrow()
-            .get_referenced_value_declaration_unsafe(ns, &nodes)
+            .get_referenced_value_declaration_unsafe(ns, nodes)
         else {
             return false;
         };
         self.resolver
             .borrow()
-            .is_expando_function_declaration_unsafe(ref_decl, &nodes)
+            .is_expando_function_declaration_unsafe(ref_decl, nodes)
     }
 
     /// `(s *SymbolTrackerImpl) isChildOfBoundExpando`.
-    fn is_child_of_bound_expando(&self, node: NodeId) -> bool {
-        let nodes = self.nodes.borrow();
-        ast::find_ancestor_or_quit(Some(node), &nodes, &mut |n, nodes| {
+    fn is_child_of_bound_expando(&self, node: NodeId, nodes: &[Node]) -> bool {
+        ast::find_ancestor_or_quit(Some(node), nodes, &mut |n, nodes| {
             if ast::is_source_file(n) || ast::is_block(n) {
                 return FindAncestorResult::Quit;
             }
-            ast::to_find_ancestor_result({
-                let _ = nodes;
-                self.is_bound_expando(n.id)
-            })
+            ast::to_find_ancestor_result(self.is_bound_expando(n.id, nodes))
         })
         .is_some()
     }
@@ -222,17 +205,16 @@ impl<'a> SymbolTrackerImpl<'a> {
     }
 
     /// `(s *SymbolTrackerImpl) errorDeclarationNameWithFallback`.
-    fn error_declaration_name_with_fallback(&self) -> String {
-        let nodes = self.nodes.borrow();
+    fn error_declaration_name_with_fallback(&self, nodes: &[Node]) -> String {
         if let Some(error_name_node) = self.state.borrow().error_name_node {
             return tsc_scanner::utilities::declaration_name_to_string(
                 Some(error_name_node),
-                &nodes,
+                nodes,
             );
         }
         if let Some(fallback) = self.error_fallback_node() {
-            if let Some(name) = ast::get_name_of_declaration(Some(fallback), &nodes) {
-                return tsc_scanner::utilities::declaration_name_to_string(Some(name), &nodes);
+            if let Some(name) = ast::get_name_of_declaration(Some(fallback), nodes) {
+                return tsc_scanner::utilities::declaration_name_to_string(Some(name), nodes);
             }
             if ast::is_export_assignment(&nodes[fallback]) {
                 if nodes[fallback].as_export_assignment().is_export_equals {
@@ -323,12 +305,11 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
     }
 
     /// `(s *SymbolTrackerImpl) ReportCyclicStructureError`.
-    fn report_cyclic_structure_error(&mut self) {
-        let nodes = self.nodes.borrow();
+    fn report_cyclic_structure_error(&mut self, nodes: &[Node]) {
         if let Some(location) = self.error_location() {
-            let name = self.error_declaration_name_with_fallback();
+            let name = self.error_declaration_name_with_fallback(nodes);
             self.state.borrow_mut().add_diagnostic(create_diagnostic_for_node(
-                &nodes,
+                nodes,
                 Some(location),
                 &tsc_diagnostics::The_inferred_type_of_0_references_a_type_with_a_cyclic_structure_which_cannot_be_trivially_serialized_A_type_annotation_is_necessary,
                 &[name],
@@ -337,12 +318,11 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
     }
 
     /// `(s *SymbolTrackerImpl) ReportInaccessibleThisError`.
-    fn report_inaccessible_this_error(&mut self) {
-        let nodes = self.nodes.borrow();
+    fn report_inaccessible_this_error(&mut self, nodes: &[Node]) {
         if let Some(location) = self.error_location() {
-            let name = self.error_declaration_name_with_fallback();
+            let name = self.error_declaration_name_with_fallback(nodes);
             self.state.borrow_mut().add_diagnostic(create_diagnostic_for_node(
-                &nodes,
+                nodes,
                 Some(location),
                 &tsc_diagnostics::The_inferred_type_of_0_references_an_inaccessible_1_type_A_type_annotation_is_necessary,
                 &[name, "this".to_string()],
@@ -351,12 +331,11 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
     }
 
     /// `(s *SymbolTrackerImpl) ReportInaccessibleUniqueSymbolError`.
-    fn report_inaccessible_unique_symbol_error(&mut self) {
-        let nodes = self.nodes.borrow();
+    fn report_inaccessible_unique_symbol_error(&mut self, nodes: &[Node]) {
         if let Some(location) = self.error_location() {
-            let name = self.error_declaration_name_with_fallback();
+            let name = self.error_declaration_name_with_fallback(nodes);
             self.state.borrow_mut().add_diagnostic(create_diagnostic_for_node(
-                &nodes,
+                nodes,
                 Some(location),
                 &tsc_diagnostics::The_inferred_type_of_0_references_an_inaccessible_1_type_A_type_annotation_is_necessary,
                 &[name, "unique symbol".to_string()],
@@ -365,13 +344,12 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
     }
 
     /// `(s *SymbolTrackerImpl) ReportInferenceFallback`.
-    fn report_inference_fallback(&mut self, node: NodeId) {
+    fn report_inference_fallback(&mut self, node: NodeId, nodes: &[Node]) {
         if !self.state.borrow().isolated_declarations {
             return;
         }
         {
-            let nodes = self.nodes.borrow();
-            if ast::get_source_file_of_node(Some(node), &nodes)
+            if ast::get_source_file_of_node(Some(node), nodes)
                 != self.state.borrow().current_source_file
             {
                 return; // Nested error on a declaration in another file - ignore, will be reemitted if file is in the output file set
@@ -379,20 +357,20 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
             if self
                 .resolver
                 .borrow()
-                .is_expando_function_declaration_unsafe(node, &nodes)
+                .is_expando_function_declaration_unsafe(node, nodes)
             {
                 // within a node builder call that should already lock the checker, use the unsafe call
                 if let Some(report) = self.state.borrow().report_expando_function_errors.as_ref() {
-                    report(node, &nodes);
+                    report(node, nodes);
                 }
             }
-            if !self.is_child_of_bound_expando(node) {
+            if !self.is_child_of_bound_expando(node, nodes) {
                 // expando props get an error when their host is visited by the above, this prevents a follow-on error on a non-inferrable expression
                 let symbols = self
                     .symbols
                     .expect("SymbolTrackerImpl requires TransformOptions::symbols")
                     .borrow();
-                let diag = (self.get_isolated_declaration_error)(node, &nodes, &symbols);
+                let diag = (self.get_isolated_declaration_error)(node, nodes, &symbols);
                 self.state.borrow_mut().add_diagnostic(diag);
             }
         }
@@ -403,20 +381,20 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
         &mut self,
         specifier: &str,
         symbol_name: &str,
+        nodes: &[Node],
     ) {
-        let nodes = self.nodes.borrow();
         if let Some(location) = self.error_location() {
-            let name = self.error_declaration_name_with_fallback();
+            let name = self.error_declaration_name_with_fallback(nodes);
             let diag = if !symbol_name.is_empty() {
                 create_diagnostic_for_node(
-                    &nodes,
+                    nodes,
                     Some(location),
                     &tsc_diagnostics::The_inferred_type_of_0_cannot_be_named_without_a_reference_to_2_from_1_This_is_likely_not_portable_A_type_annotation_is_necessary,
                     &[name, specifier.to_string(), symbol_name.to_string()],
                 )
             } else {
                 create_diagnostic_for_node(
-                    &nodes,
+                    nodes,
                     Some(location),
                     &tsc_diagnostics::The_inferred_type_of_0_cannot_be_named_without_a_reference_to_1_This_is_likely_not_portable_A_type_annotation_is_necessary,
                     &[name, specifier.to_string()],
@@ -427,11 +405,10 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
     }
 
     /// `(s *SymbolTrackerImpl) ReportNonSerializableProperty`.
-    fn report_non_serializable_property(&mut self, property_name: &str) {
-        let nodes = self.nodes.borrow();
+    fn report_non_serializable_property(&mut self, property_name: &str, nodes: &[Node]) {
         if let Some(location) = self.error_location() {
             self.state.borrow_mut().add_diagnostic(create_diagnostic_for_node(
-                &nodes,
+                nodes,
                 Some(location),
                 &tsc_diagnostics::The_type_of_this_node_cannot_be_serialized_because_its_property_0_cannot_be_serialized,
                 &[property_name],
@@ -445,8 +422,8 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
         containing_file: NodeId,
         parent_symbol: SymbolId,
         augmenting_symbol: SymbolId,
+        nodes: &[Node],
     ) {
-        let nodes = self.nodes.borrow();
         let symbols = self
             .symbols
             .expect("SymbolTrackerImpl requires TransformOptions::symbols")
@@ -454,27 +431,27 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
         let primary_declaration = tsc_core::core::find(
             &symbols[parent_symbol.index()].declarations,
             |&d| {
-                ast::get_source_file_of_node(Some(d), &nodes) == Some(containing_file)
+                ast::get_source_file_of_node(Some(d), nodes) == Some(containing_file)
             },
         );
         let augmenting_declarations = tsc_core::core::filter(
             &symbols[augmenting_symbol.index()].declarations,
             |&d| {
-                ast::get_source_file_of_node(Some(d), &nodes) != Some(containing_file)
+                ast::get_source_file_of_node(Some(d), nodes) != Some(containing_file)
             },
         );
         if let Some(primary_declaration) = primary_declaration {
             if !augmenting_declarations.is_empty() {
                 for &augmentation in augmenting_declarations.iter() {
                     let diag = create_diagnostic_for_node(
-                        &nodes,
+                        nodes,
                         Some(augmentation),
                         &tsc_diagnostics::Declaration_augments_declaration_in_another_file_This_cannot_be_serialized,
                         &[] as &[String],
                     );
                     let related = create_diagnostic_for_node(
-                        &nodes,
-                        Some(*primary_declaration),
+                        nodes,
+                        Some(primary_declaration),
                         &tsc_diagnostics::This_is_the_declaration_being_augmented_Consider_moving_the_augmenting_declaration_into_the_same_file,
                         &[] as &[String],
                     );
@@ -486,29 +463,31 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
     }
 
     /// `(s *SymbolTrackerImpl) ReportPrivateInBaseOfClassExpression`.
-    fn report_private_in_base_of_class_expression(&mut self, property_name: &str) {
-        let nodes = self.nodes.borrow();
+    fn report_private_in_base_of_class_expression(
+        &mut self,
+        property_name: &str,
+        nodes: &[Node],
+    ) {
         if let Some(location) = self.error_location() {
             let diag = create_diagnostic_for_node(
-                &nodes,
+                nodes,
                 Some(location),
                 &tsc_diagnostics::Property_0_of_exported_anonymous_class_type_may_not_be_private_or_protected,
                 &[property_name],
             );
             // Bounds-tolerant reads: `location` may be a synthesized node
-            // minted after the last `sync_nodes` (module PORT note).
+            // minted after the arena view was captured (module PORT note).
             let parent_is_variable_declaration = nodes
-                .as_slice()
                 .get(location.local_index() as usize)
                 .and_then(|n| n.parent)
-                .and_then(|p| nodes.as_slice().get(p.local_index() as usize))
+                .and_then(|p| nodes.get(p.local_index() as usize))
                 .is_some_and(ast::is_variable_declaration);
             if parent_is_variable_declaration {
                 let related = create_diagnostic_for_node(
-                    &nodes,
+                    nodes,
                     Some(location),
                     &tsc_diagnostics::Add_a_type_annotation_to_the_variable_0,
-                    &[self.error_declaration_name_with_fallback()],
+                    &[self.error_declaration_name_with_fallback(nodes)],
                 );
                 diag.lock().unwrap().add_related_info(Some(related));
             }
@@ -517,11 +496,10 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
     }
 
     /// `(s *SymbolTrackerImpl) ReportTruncationError`.
-    fn report_truncation_error(&mut self) {
-        let nodes = self.nodes.borrow();
+    fn report_truncation_error(&mut self, nodes: &[Node]) {
         if let Some(location) = self.error_location() {
             self.state.borrow_mut().add_diagnostic(create_diagnostic_for_node(
-                &nodes,
+                nodes,
                 Some(location),
                 &tsc_diagnostics::The_inferred_type_of_this_node_exceeds_the_maximum_length_the_compiler_will_serialize_An_explicit_type_annotation_is_needed,
                 &[] as &[String],
@@ -535,6 +513,7 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
         symbol: SymbolId,
         enclosing_declaration: Option<NodeId>,
         meaning: SymbolFlags,
+        nodes: &[Node],
     ) -> bool {
         {
             let symbols = self
@@ -552,7 +531,6 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
             self.class_symbol_tracked = true;
             return false;
         }
-        let nodes = self.nodes.borrow();
         let symbols = self
             .symbols
             .expect("SymbolTrackerImpl requires TransformOptions::symbols")
@@ -562,12 +540,9 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
             enclosing_declaration,
             meaning,
             /*should_compute_alias_to_mark_visible*/ true,
-            &nodes,
+            nodes,
             &symbols,
         );
-        drop(symbols);
-        drop(nodes);
-        let nodes = self.nodes.borrow();
-        self.handle_symbol_accessibility_error(result, &nodes)
+        self.handle_symbol_accessibility_error(result, nodes)
     }
 }

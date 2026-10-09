@@ -14,8 +14,10 @@ tsc-binder = { path = "../binder" }
 tsc-collections = { path = "../collections" }
 tsc-core = { path = "../core" }
 tsc-debug = { path = "../debug" }
+tsc-diagnostics = { path = "../diagnostics" }
 tsc-evaluator = { path = "../evaluator" }
 tsc-jsnum = { path = "../jsnum" }
+tsc-nodebuilder = { path = "../nodebuilder" }
 tsc-outputpaths = { path = "../outputpaths" }
 tsc-printer = { path = "../printer" }
 tsc-scanner = { path = "../scanner" }
@@ -24,6 +26,5 @@ tsc-tspath = { path = "../tspath" }
 rustc-hash = { workspace = true }
 
 [dev-dependencies]
-tsc-nodebuilder = { path = "../nodebuilder" }
 tsc-parser = { path = "../parser" }
 tsc-testutil = { path = "../testutil" }

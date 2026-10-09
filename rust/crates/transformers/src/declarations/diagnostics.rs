@@ -18,7 +18,7 @@ use std::rc::Rc;
 use tsc_ast::diagnostic::DiagnosticRef;
 use tsc_ast::{self as ast, Kind, Node, NodeId, Symbol};
 use tsc_diagnostics::Message;
-use tsc_printer::emit_resolver::{EmitResolver, SymbolAccessibility, SymbolAccessibilityResult};
+use tsc_printer::{EmitResolver, SymbolAccessibility, SymbolAccessibilityResult};
 
 use crate::declarations::tracker::create_diagnostic_for_node;
 
@@ -246,7 +246,7 @@ pub(crate) fn create_get_symbol_accessibility_diagnostic_for_node(
         )
     } else if ast::is_expression_with_type_arguments(n) {
         // unique node selection behavior, inline closure
-        Box::new(move |result: &SymbolAccessibilityResult, nodes: &[Node]| {
+        Box::new(move |_result: &SymbolAccessibilityResult, nodes: &[Node]| {
             let diagnostic_message;
             // Heritage clause is written by user so it can always be named
             let grandparent = nodes[node].parent.and_then(|p| nodes[p].parent);
