@@ -4,7 +4,7 @@ go 1.27
 
 require (
 	github.com/anchore/quill v0.7.1
-	github.com/blacktop/go-macho v1.1.283
+	github.com/blacktop/go-macho v1.1.292
 	github.com/golangci/plugin-module-register v0.1.2
 	golang.org/x/mod v0.41.0
 	golang.org/x/tools v0.50.0
