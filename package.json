@@ -24,7 +24,7 @@
         "setup-hooks": "node tools/scripts/link-hooks.mjs"
     },
     "devDependencies": {
-        "@dprint/json": "^0.23.0",
+        "@dprint/json": "^0.25.2",
         "@dprint/typescript": "^0.96.1",
         "@jakebailey/dprint-plugin-gofumpt": "^0.0.18",
         "@types/node": "^22.20.1",
