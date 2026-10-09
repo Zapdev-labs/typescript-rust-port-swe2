@@ -31,7 +31,7 @@
         "@unicode/unicode-15.1.0": "^1.6.17",
         "adm-zip": "^0.6.1",
         "chokidar": "^5.0.0",
-        "dprint": "^0.57.4",
+        "dprint": "^0.60.1",
         "dprint-plugin-yaml": "^0.6.0",
         "hereby": "^1.15.2",
         "tar": "^7.5.22",
