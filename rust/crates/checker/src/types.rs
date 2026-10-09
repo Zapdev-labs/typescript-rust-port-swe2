@@ -110,6 +110,15 @@ pub enum MemberOverrideStatus {
     HasInvalidOverride = 2,
 }
 
+impl MemberOverrideStatus {
+    /// `MemberOverrideStatusNone`.
+    pub const NONE: MemberOverrideStatus = MemberOverrideStatus::None;
+    /// `MemberOverrideStatusNeedsOverride`.
+    pub const NEEDS_OVERRIDE: MemberOverrideStatus = MemberOverrideStatus::NeedsOverride;
+    /// `MemberOverrideStatusHasInvalidOverride`.
+    pub const HAS_INVALID_OVERRIDE: MemberOverrideStatus = MemberOverrideStatus::HasInvalidOverride;
+}
+
 flag_type! {
     /// `type ContextFlags uint32`.
     pub struct ContextFlags(pub u32);
@@ -1544,6 +1553,62 @@ impl Type {
         }
     }
 
+    /// Mutable `AsUnionType`.
+    pub fn as_union_type_mut(&mut self) -> &mut UnionType {
+        match &mut self.data {
+            TypeData::Union(d) => d,
+            _ => panic!("AsUnionType on non-union TypeData"),
+        }
+    }
+
+    /// Mutable `AsIntersectionType`.
+    pub fn as_intersection_type_mut(&mut self) -> &mut IntersectionType {
+        match &mut self.data {
+            TypeData::Intersection(d) => d,
+            _ => panic!("AsIntersectionType on non-intersection TypeData"),
+        }
+    }
+
+    /// Mutable `AsLiteralType`.
+    pub fn as_literal_type_mut(&mut self) -> &mut LiteralType {
+        match &mut self.data {
+            TypeData::Literal(d) => d,
+            _ => panic!("AsLiteralType on non-literal TypeData"),
+        }
+    }
+
+    /// Mutable `AsConditionalType`.
+    pub fn as_conditional_type_mut(&mut self) -> &mut ConditionalType {
+        match &mut self.data {
+            TypeData::Conditional(d) => d,
+            _ => panic!("AsConditionalType on non-conditional TypeData"),
+        }
+    }
+
+    /// Mutable `AsInstantiationExpressionType`.
+    pub fn as_instantiation_expression_type_mut(&mut self) -> &mut InstantiationExpressionType {
+        match &mut self.data {
+            TypeData::InstantiationExpression(d) => d,
+            _ => panic!("AsInstantiationExpressionType on wrong TypeData"),
+        }
+    }
+
+    /// Mutable `AsObjectType` — delegates to `TypeData::as_object_type_mut`.
+    pub fn as_object_type_mut(&mut self) -> Option<&mut ObjectType> {
+        self.data.as_object_type_mut()
+    }
+
+    /// Mutable `AsInterfaceType` — delegates to `TypeData::as_interface_type_mut`.
+    pub fn as_interface_type_mut(&mut self) -> Option<&mut InterfaceType> {
+        self.data.as_interface_type_mut()
+    }
+
+    /// Mutable `AsUnionOrIntersectionType` — delegates to
+    /// `TypeData::as_union_or_intersection_type_mut`.
+    pub fn as_union_or_intersection_type_mut(&mut self) -> Option<&mut UnionOrIntersectionType> {
+        self.data.as_union_or_intersection_type_mut()
+    }
+
     /// `AsReverseMappedType`.
     pub fn as_reverse_mapped_type(&self) -> &ReverseMappedType {
         match &self.data {
@@ -2093,6 +2158,30 @@ impl TypeData {
             _ => None,
         }
     }
+
+    /// Mutable `AsConditionalType`.
+    pub fn as_conditional_type_mut(&mut self) -> &mut ConditionalType {
+        match self {
+            TypeData::Conditional(d) => d,
+            _ => panic!("AsConditionalType on non-conditional TypeData"),
+        }
+    }
+
+    /// Mutable `AsInstantiationExpressionType`.
+    pub fn as_instantiation_expression_type_mut(&mut self) -> &mut InstantiationExpressionType {
+        match self {
+            TypeData::InstantiationExpression(d) => d,
+            _ => panic!("AsInstantiationExpressionType on wrong TypeData"),
+        }
+    }
+
+    /// Mutable `AsLiteralType`.
+    pub fn as_literal_type_mut(&mut self) -> &mut LiteralType {
+        match self {
+            TypeData::Literal(d) => d,
+            _ => panic!("AsLiteralType on non-literal TypeData"),
+        }
+    }
 }
 
 // TypeBase — Go's embedded `Type` is the arena element itself, so there is no
@@ -2372,7 +2461,7 @@ impl ElementFlags {
 }
 
 /// `type TupleElementInfo struct`.
-#[derive(Default, Clone)]
+#[derive(Default, Clone, PartialEq)]
 pub struct TupleElementInfo {
     /// `flags`.
     pub flags: ElementFlags,

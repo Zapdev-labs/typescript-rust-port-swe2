@@ -185,24 +185,27 @@ fn release_node_builder(c: &mut Checker, node_builder: NodeBuilder) {
 /// arena serves the builder calls and the `Printer`'s `nodes` borrow. With
 /// no enclosing declaration the factory's current index is used (the
 /// builder is pooled across calls).
-fn builder_arena_index(
-    node_builder: &NodeBuilder,
-    enclosing_declaration: Option<NodeId>,
-) -> u32 {
-    enclosing_declaration.map(|d| d.file_index()).unwrap_or_else(|| {
-        node_builder
-            .impl_
-            .as_ref()
-            .expect("NodeBuilder without impl")
-            .f
-            .file_index()
-    })
+fn builder_arena_index(node_builder: &NodeBuilder, enclosing_declaration: Option<NodeId>) -> u32 {
+    enclosing_declaration
+        .map(|d| d.file_index())
+        .unwrap_or_else(|| {
+            node_builder
+                .impl_
+                .as_ref()
+                .expect("NodeBuilder without impl")
+                .f
+                .file_index()
+        })
 }
 
 impl Checker {
     /// `(c *Checker) TypeToString`.
-    pub fn type_to_string(&mut self, t: TypeId) -> String {
-        self.type_to_string_private(t, None)
+    ///
+    /// PORT: `impl Into<Option<TypeId>>` accepts both `TypeId` and
+    /// `Option<TypeId>` callers (Go's `*Type` is nilable); `None` panics
+    /// like Go's nil deref.
+    pub fn type_to_string(&mut self, t: impl Into<Option<TypeId>>) -> String {
+        self.type_to_string_private(t.into().expect("TypeToString: nil type"), None)
     }
 
     /// `(c *Checker) typeToString`.
@@ -281,6 +284,8 @@ impl Checker {
         let mut emit_context = emit_context_cell.borrow_mut();
         let symbol_arena = self.symbol_arena.clone();
         let symbols = symbol_arena.borrow();
+        let source_file =
+            enclosing_declaration.and_then(|d| ast::get_source_file_of_node(Some(d), &nodes));
         // The unresolved type gets a synthesized comment on `any` to hint to
         // users that it's not a plain `any`. Otherwise, we always strip
         // comments out.
@@ -289,8 +294,6 @@ impl Checker {
         } else {
             create_printer_with_remove_comments(&mut emit_context, &mut nodes, &symbols)
         };
-        let source_file = enclosing_declaration
-            .and_then(|d| ast::get_source_file_of_node(Some(d), &nodes));
         p.write(Some(type_node), source_file, &mut writer, None);
         drop(p);
         drop(symbols);
@@ -309,7 +312,9 @@ impl Checker {
             max_length = vc.max_truncation_length * 10; // hard cutoff matching Strada's absoluteMaximumLength
         }
         if no_truncation {
-            max_length = crate::nodebuilderimpl::NodeBuilderImpl::NO_TRUNCATION_MAXIMUM_TRUNCATION_LENGTH * 2;
+            max_length =
+                crate::nodebuilderimpl::NodeBuilderImpl::NO_TRUNCATION_MAXIMUM_TRUNCATION_LENGTH
+                    * 2;
         }
         if max_length > 0 && !result.is_empty() && result.len() as i32 >= max_length {
             if let Some(vc) = vc {
@@ -330,8 +335,12 @@ impl Checker {
     }
 
     /// `(c *Checker) SymbolToString`.
-    pub fn symbol_to_string(&mut self, s: SymbolId) -> String {
-        self.symbol_to_string_private(s)
+    ///
+    /// PORT: `impl Into<Option<SymbolId>>` accepts both `SymbolId` and
+    /// `Option<SymbolId>` callers (Go's `*ast.Symbol` is nilable); `None`
+    /// panics like Go's nil deref.
+    pub fn symbol_to_string(&mut self, s: impl Into<Option<SymbolId>>) -> String {
+        self.symbol_to_string_private(s.into().expect("SymbolToString: nil symbol"))
     }
 
     /// `(c *Checker) symbolToString`.
@@ -376,35 +385,11 @@ impl Checker {
         let file_index = builder_arena_index(&node_builder, enclosing_declaration);
         let program = self.program.clone().expect("program");
         let mut nodes = program.nodes_mut(file_index);
-        let source_file = enclosing_declaration
-            .and_then(|d| ast::get_source_file_of_node(Some(d), &nodes));
-        let emit_context_cell = node_builder
-            .impl_
-            .as_ref()
-            .expect("NodeBuilder without impl")
-            .e
-            .clone();
-        let mut emit_context = emit_context_cell.borrow_mut();
-        let symbol_arena = self.symbol_arena.clone();
-        let symbols = symbol_arena.borrow();
-        // add neverAsciiEscape for GH#39027
-        let enclosing_is_source_file = enclosing_declaration
-            .is_some_and(|d| nodes[d].kind == ast::Kind::SourceFile);
-        let mut p =
-            if enclosing_is_source_file {
-                create_printer_with_remove_comments_omit_trailing_semicolon_never_ascii_escape(
-                    &mut emit_context,
-                    &mut nodes,
-                    &symbols,
-                )
-            } else {
-                create_printer_with_remove_comments_omit_trailing_semicolon(
-                    &mut emit_context,
-                    &mut nodes,
-                    &symbols,
-                )
-            };
-        // `builder = nodeBuilder.SymbolToNode` / `SymbolToEntityName`.
+        let source_file =
+            enclosing_declaration.and_then(|d| ast::get_source_file_of_node(Some(d), &nodes));
+        // `builder = nodeBuilder.SymbolToNode` / `SymbolToEntityName` —
+        // runs before the printer is created because the printer holds
+        // `&mut nodes` while `symbol_to_*` needs it mutably too.
         let entity = if flags.intersects(SymbolFormatFlags::ALLOW_ANY_NODE_KIND) {
             node_builder.symbol_to_node(
                 self,
@@ -426,6 +411,31 @@ impl Checker {
                 node_flags,
                 internal_node_flags,
                 None,
+            )
+        };
+        let emit_context_cell = node_builder
+            .impl_
+            .as_ref()
+            .expect("NodeBuilder without impl")
+            .e
+            .clone();
+        let mut emit_context = emit_context_cell.borrow_mut();
+        let symbol_arena = self.symbol_arena.clone();
+        let symbols = symbol_arena.borrow();
+        // add neverAsciiEscape for GH#39027
+        let enclosing_is_source_file =
+            enclosing_declaration.is_some_and(|d| nodes[d].kind == ast::Kind::SourceFile);
+        let mut p = if enclosing_is_source_file {
+            create_printer_with_remove_comments_omit_trailing_semicolon_never_ascii_escape(
+                &mut emit_context,
+                &mut nodes,
+                &symbols,
+            )
+        } else {
+            create_printer_with_remove_comments_omit_trailing_semicolon(
+                &mut emit_context,
+                &mut nodes,
+                &symbols,
             )
         };
         p.write(entity, source_file, &mut writer, None); // TODO: GH#18217
@@ -497,13 +507,13 @@ impl Checker {
         let mut emit_context = emit_context_cell.borrow_mut();
         let symbol_arena = self.symbol_arena.clone();
         let symbols = symbol_arena.borrow();
+        let source_file =
+            enclosing_declaration.and_then(|d| ast::get_source_file_of_node(Some(d), &nodes));
         let mut p = create_printer_with_remove_comments_omit_trailing_semicolon_never_ascii_escape(
             &mut emit_context,
             &mut nodes,
             &symbols,
         );
-        let source_file = enclosing_declaration
-            .and_then(|d| ast::get_source_file_of_node(Some(d), &nodes));
         let result = if flags.intersects(TypeFormatFlags::MULTILINE_OBJECT_LITERALS) {
             let mut writer = TextWriter::new("\n", 0);
             p.write(sig, source_file, &mut writer, None);
@@ -524,10 +534,7 @@ impl Checker {
     }
 
     /// `(c *Checker) typePredicateToString`.
-    pub(crate) fn type_predicate_to_string(
-        &mut self,
-        type_predicate: Option<&TypePredicate>,
-    ) -> String {
+    pub fn type_predicate_to_string(&mut self, type_predicate: Option<&TypePredicate>) -> String {
         self.type_predicate_to_string_ex(
             type_predicate,
             None,
@@ -568,9 +575,9 @@ impl Checker {
         let mut emit_context = emit_context_cell.borrow_mut();
         let symbol_arena = self.symbol_arena.clone();
         let symbols = symbol_arena.borrow();
+        let source_file =
+            enclosing_declaration.and_then(|d| ast::get_source_file_of_node(Some(d), &nodes));
         let mut p = create_printer_with_remove_comments(&mut emit_context, &mut nodes, &symbols);
-        let source_file = enclosing_declaration
-            .and_then(|d| ast::get_source_file_of_node(Some(d), &nodes));
         p.write(predicate, source_file, &mut writer, None);
         drop(p);
         drop(symbols);
@@ -599,9 +606,12 @@ impl Checker {
             let t = types[i];
             flags |= self.types.get(t).flags;
             if !self.types.get(t).flags.intersects(TypeFlags::NULLABLE) {
-                if self.types.get(t).flags.intersects(TypeFlags::BOOLEAN_LITERAL)
-                    || (!expanding_enum
-                        && self.types.get(t).flags.intersects(TypeFlags::ENUM_LIKE))
+                if self
+                    .types
+                    .get(t)
+                    .flags
+                    .intersects(TypeFlags::BOOLEAN_LITERAL)
+                    || (!expanding_enum && self.types.get(t).flags.intersects(TypeFlags::ENUM_LIKE))
                 {
                     let base_type = if self
                         .types
@@ -614,8 +624,13 @@ impl Checker {
                         self.get_base_type_of_enum_like_type(t)
                     };
                     if self.types.get(base_type).flags.intersects(TypeFlags::UNION) {
-                        let union_types =
-                            self.types.get(base_type).as_union_type().types.clone();
+                        let union_types = self
+                            .types
+                            .get(base_type)
+                            .as_union_type()
+                            .union_or_intersection
+                            .types
+                            .clone();
                         let count = union_types.len();
                         if i + count <= types.len()
                             && self.get_regular_type_of_literal_type(types[i + count - 1])
@@ -719,8 +734,7 @@ impl Checker {
             });
         let program = self.program.clone().expect("program");
         let mut nodes = program.nodes_mut(file_index);
-        let nodes_out =
-            node_builder.expand_symbol_for_hover(self, &mut nodes, symbol, meaning);
+        let nodes_out = node_builder.expand_symbol_for_hover(self, &mut nodes, symbol, meaning);
         if nodes_out.is_empty() {
             drop(nodes);
             drop(program);
@@ -737,11 +751,11 @@ impl Checker {
         let mut emit_context = emit_context_cell.borrow_mut();
         let symbol_arena = self.symbol_arena.clone();
         let symbols = symbol_arena.borrow();
-        let mut p = create_printer_with_remove_comments(&mut emit_context, &mut nodes, &symbols);
         let source_file = self
             .sym(symbol)
             .value_declaration
             .and_then(|d| ast::get_source_file_of_node(Some(d), &nodes));
+        let mut p = create_printer_with_remove_comments(&mut emit_context, &mut nodes, &symbols);
         let mut b = String::new();
         for (i, node) in nodes_out.iter().enumerate() {
             if i > 0 {
@@ -798,9 +812,9 @@ impl Checker {
         let mut emit_context = emit_context_cell.borrow_mut();
         let symbol_arena = self.symbol_arena.clone();
         let symbols = symbol_arena.borrow();
+        let source_file =
+            enclosing_declaration.and_then(|d| ast::get_source_file_of_node(Some(d), &nodes));
         let mut p = create_printer_with_remove_comments(&mut emit_context, &mut nodes, &symbols);
-        let source_file = enclosing_declaration
-            .and_then(|d| ast::get_source_file_of_node(Some(d), &nodes));
         let result = p.emit(Some(type_param_node), source_file);
         drop(p);
         drop(symbols);

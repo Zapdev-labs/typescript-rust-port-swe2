@@ -2615,11 +2615,11 @@ impl<'a> DeclarationTransformerState<'a> {
                     cx.nodes,
                 )
             }) {
-                        let tracker = self.tracker.borrow();
+                        let mut tracker = self.tracker.borrow_mut();
                 let parse_node = self.ec().parse_node(cx.nodes, assignment).unwrap_or(assignment);
                 initializer = self.resolver.borrow().create_literal_const_value(
                     parse_node,
-                    &*tracker,
+                    &mut *tracker,
                     cx.nodes,
                 );
             }
@@ -3517,13 +3517,13 @@ impl<'a> DeclarationTransformerState<'a> {
                     js_flags &= !nodebuilder::Flags::WRITE_CLASS_EXPRESSION_AS_TYPE_LITERAL;
                 }
                         let res = {
-                    let tracker = self.tracker.borrow();
+                    let mut tracker = self.tracker.borrow_mut();
                     self.resolver.borrow().try_js_type_node_to_type_node(
                         type_annotation.unwrap(),
                         self.enclosing_declaration.get(),
                         js_flags,
                         DECLARATION_EMIT_INTERNAL_NODE_BUILDER_FLAGS,
-                        &*tracker,
+                        &mut *tracker,
                         cx.nodes,
                     )
                 };
@@ -3562,23 +3562,23 @@ impl<'a> DeclarationTransformerState<'a> {
             flags &= !nodebuilder::Flags::WRITE_CLASS_EXPRESSION_AS_TYPE_LITERAL;
         }
         if ast::has_inferred_type(&cx.nodes[node]) {
-                let tracker = self.tracker.borrow();
+                let mut tracker = self.tracker.borrow_mut();
             type_node = self.resolver.borrow().create_type_of_declaration(
                 node,
                 self.enclosing_declaration.get(),
                 flags,
                 DECLARATION_EMIT_INTERNAL_NODE_BUILDER_FLAGS,
-                &*tracker,
+                &mut *tracker,
                 cx.nodes,
             );
         } else if ast::is_function_like(Some(node), cx.nodes) {
-                let tracker = self.tracker.borrow();
+                let mut tracker = self.tracker.borrow_mut();
             type_node = self.resolver.borrow().create_return_type_of_signature_declaration(
                 node,
                 self.enclosing_declaration.get(),
                 flags,
                 DECLARATION_EMIT_INTERNAL_NODE_BUILDER_FLAGS,
-                &*tracker,
+                &mut *tracker,
                 cx.nodes,
             );
         } else {
@@ -4118,13 +4118,13 @@ impl<'a> DeclarationTransformerState<'a> {
         }
 
         let late_indexes = {
-            let tracker = self.tracker.borrow();
+            let mut tracker = self.tracker.borrow_mut();
             self.resolver.borrow().create_late_bound_index_signatures(
                 class_node,
                 self.enclosing_declaration.get(),
                 DECLARATION_EMIT_NODE_BUILDER_FLAGS,
                 DECLARATION_EMIT_INTERNAL_NODE_BUILDER_FLAGS,
-                &*tracker,
+                &mut *tracker,
                 cx.nodes,
             )
         };
@@ -4231,13 +4231,13 @@ impl<'a> DeclarationTransformerState<'a> {
                 }
 
                         let type_of_expression = {
-                    let tracker = self.tracker.borrow();
+                    let mut tracker = self.tracker.borrow_mut();
                     self.resolver.borrow().create_type_of_expression(
                         extends_expr,
                         Some(input),
                         DECLARATION_EMIT_NODE_BUILDER_FLAGS,
                         DECLARATION_EMIT_INTERNAL_NODE_BUILDER_FLAGS,
-                        &*tracker,
+                        &mut *tracker,
                         cx.nodes,
                     )
                 };
@@ -4885,7 +4885,7 @@ impl<'a> DeclarationTransformerState<'a> {
             .and_then(|d| d.full_signature);
         if full_signature.is_some() {
                 let nodes_result = {
-                let tracker = self.tracker.borrow();
+                let mut tracker = self.tracker.borrow_mut();
                 self.resolver
                     .borrow()
                     .create_type_parameters_of_signature_declaration(
@@ -4893,7 +4893,7 @@ impl<'a> DeclarationTransformerState<'a> {
                         self.enclosing_declaration.get(),
                         DECLARATION_EMIT_NODE_BUILDER_FLAGS,
                         DECLARATION_EMIT_INTERNAL_NODE_BUILDER_FLAGS,
-                        &*tracker,
+                        &mut *tracker,
                         cx.nodes,
                     )
             };
@@ -5018,11 +5018,11 @@ impl<'a> DeclarationTransformerState<'a> {
             }) {
                 self.tracker.borrow_mut().report_inference_fallback(node, cx.nodes);
             }
-                let tracker = self.tracker.borrow();
+                let mut tracker = self.tracker.borrow_mut();
             let parse_node = self.ec().parse_node(cx.nodes, node).unwrap_or(node);
             return self.resolver.borrow().create_literal_const_value(
                 parse_node,
-                &*tracker,
+                &mut *tracker,
                 cx.nodes,
             );
         }

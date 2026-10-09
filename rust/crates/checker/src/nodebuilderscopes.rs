@@ -109,15 +109,14 @@ impl ScopeUndo {
     /// `undo()`.
     fn restore(mut self, nodes: &mut Vec<ast::Node>) {
         let detached_fallback;
-        let locals: &mut ast::SymbolTable = match nodes[self.fake_scope]
-            .data.locals_container_data_mut()
-        {
-            Some(d) => &mut d.locals,
-            None => {
-                detached_fallback = self.detached.get_or_insert_with(Default::default);
-                detached_fallback
-            }
-        };
+        let locals: &mut ast::SymbolTable =
+            match nodes[self.fake_scope].data.locals_container_data_mut() {
+                Some(d) => &mut d.locals,
+                None => {
+                    detached_fallback = self.detached.get_or_insert_with(Default::default);
+                    detached_fallback
+                }
+            };
         for s in &self.new_locals {
             locals.delete(s.as_str());
         }
@@ -183,8 +182,7 @@ impl<'a> NodeBuilderImpl<'a> {
         self.ctx.enclosing_symbol_types.insert(symbol, t);
         move |ctx: &mut NodeBuilderContext| {
             if old_type_exists {
-                ctx.enclosing_symbol_types
-                    .insert(symbol, old_type.unwrap());
+                ctx.enclosing_symbol_types.insert(symbol, old_type.unwrap());
             } else {
                 ctx.enclosing_symbol_types.remove(&symbol);
             }
@@ -302,10 +300,10 @@ impl<'a> NodeBuilderImpl<'a> {
                                     original_param,
                                 ));
                             }
-                        } else if !collect_binding_pattern_symbols(
-                            c, nodes, param, &mut additions,
-                        ) {
-                            additions.push((c.symbol_arena.borrow()[param.index()].name.clone(), param));
+                        } else if !collect_binding_pattern_symbols(c, nodes, param, &mut additions)
+                        {
+                            additions
+                                .push((c.symbol_arena.borrow()[param.index()].name.clone(), param));
                         }
                     }
                 }
@@ -322,14 +320,10 @@ impl<'a> NodeBuilderImpl<'a> {
                 if let Some(type_parameters) = &type_parameters {
                     for &type_param in type_parameters {
                         // `b.typeParameterToName(typeParam).Text`
-                        let name_node = self.type_parameter_to_name(c, type_param);
+                        let name_node = self.type_parameter_to_name(c, nodes, type_param);
                         let name = nodes[name_node].text(nodes).into_owned();
                         // `typeParam.symbol` may be nil → `SymbolId::NONE`.
-                        let symbol = c
-                            .types
-                            .get(type_param)
-                            .symbol
-                            .unwrap_or(SymbolId::NONE);
+                        let symbol = c.types.get(type_param).symbol.unwrap_or(SymbolId::NONE);
                         additions.push((name, symbol));
                     }
                 }
@@ -390,7 +384,13 @@ impl<'a> NodeBuilderImpl<'a> {
         if let Some(scope) = existing_fake_scope {
             match nodes[scope].data.locals_container_data_mut() {
                 Some(d) => {
-                    apply_additions(&mut d.locals, &additions, &mut new_locals, &mut old_locals, true);
+                    apply_additions(
+                        &mut d.locals,
+                        &additions,
+                        &mut new_locals,
+                        &mut old_locals,
+                        true,
+                    );
                     Some(ScopeUndo {
                         fake_scope: scope,
                         new_locals,
@@ -422,7 +422,13 @@ impl<'a> NodeBuilderImpl<'a> {
             // No existing scope — apply additions to a fresh locals table,
             // then attach it to a new Block node.
             let mut locals = ast::SymbolTable::default();
-            apply_additions(&mut locals, &additions, &mut new_locals, &mut old_locals, false);
+            apply_additions(
+                &mut locals,
+                &additions,
+                &mut new_locals,
+                &mut old_locals,
+                false,
+            );
             // Use a Block for this; the type of the node doesn't matter so
             // long as it has locals, and this is cheaper/easier than using a
             // function-ish Node.
@@ -440,15 +446,6 @@ impl<'a> NodeBuilderImpl<'a> {
         }
     }
 
-    /// `b.typeParameterToName` — PORT(deferred): lands with
-    /// nodebuilderimpl.go (resolves the generated identifier for a type
-    /// parameter); declared so `enter_new_scope` compiles.
-    pub fn type_parameter_to_name(&mut self, c: &mut Checker, type_param: TypeId) -> NodeId {
-        let _ = (c, type_param);
-        unimplemented!(
-            "PORT(deferred): NodeBuilderImpl::type_parameter_to_name lands with nodebuilderimpl.go"
-        )
-    }
 }
 
 /// `apply_additions` — the `add` callback inside `pushFakeScope`,

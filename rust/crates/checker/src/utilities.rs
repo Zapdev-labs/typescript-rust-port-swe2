@@ -35,7 +35,7 @@ use rustc_hash::FxHashMap;
 use std::rc::Rc;
 use std::sync::OnceLock;
 
-use tsc_ast::{self as ast, NodeId, SymbolId};
+use tsc_ast::{self as ast, NodeId, SymbolId, SymbolTable};
 use tsc_collections::OrderedMap;
 use tsc_core::core as core_helpers;
 use tsc_core::text::TextRange;
@@ -48,7 +48,7 @@ use crate::types::{ElementFlags, ObjectFlags, Signature, TupleType, TypeArena, T
 
 // Re-exports so `crate::utilities::<name>` resolves for helpers committed to
 // checker_core.rs / checker_c.rs / types.rs before this file landed.
-pub(crate) use crate::checker_c::{get_end_element_count, get_total_fixed_element_count};
+pub(crate) use crate::checker_c::get_end_element_count;
 pub use crate::checker_core::{
     create_symbol_table, is_object_or_array_literal_type, is_this_type_parameter, is_tuple_type,
     value_to_string,
@@ -541,11 +541,9 @@ pub(crate) fn has_only_expression_initializer(node: &ast::Node) -> bool {
     )
 }
 
-/// `hasDotDotDotToken`. Committed call sites pass both `(&Node)` and
-/// `(&Node, &[Node])`; the body only reads the node's own fields, matching
-/// Go, so the canonical signature is `(&Node)` — 2-arg sites must drop the
-/// second argument (PORT: documented divergence).
-pub(crate) fn has_dot_dot_dot_token(node: &ast::Node) -> bool {
+/// `hasDotDotDotToken`. The `nodes` arena is unused (the body only reads the
+/// node's own fields, matching Go) but committed call sites pass it.
+pub(crate) fn has_dot_dot_dot_token(node: &ast::Node, _nodes: &[ast::Node]) -> bool {
     match node.kind {
         ast::Kind::Parameter => node.as_parameter_declaration().dot_dot_dot_token.is_some(),
         ast::Kind::BindingElement => node.as_binding_element().dot_dot_dot_token.is_some(),
@@ -921,8 +919,10 @@ fn compare_types_opt(types: &TypeArena, t1: Option<TypeId>, t2: Option<TypeId>) 
         }
         _ if flags.intersects(TypeFlags::STRING_LITERAL) => {
             // String literal types are ordered by their values.
-            let v1 = literal_string(types.get(t1).as_literal_type().value.as_ref());
-            let v2 = literal_string(types.get(t2).as_literal_type().value.as_ref());
+            let g1 = types.get(t1);
+            let g2 = types.get(t2);
+            let v1 = literal_string(g1.as_literal_type().value.as_ref());
+            let v2 = literal_string(g2.as_literal_type().value.as_ref());
             let c = v1.cmp(v2);
             if c != std::cmp::Ordering::Equal {
                 return c as i32;
@@ -1515,7 +1515,7 @@ pub(crate) fn get_base_type_node_of_class(c: &Checker, t: TypeId) -> Option<Node
 // `&Symbol` were reconciled to this form.
 
 /// `getDeclarationModifierFlagsFromSymbol` (utilities.go:757).
-pub(crate) fn get_declaration_modifier_flags_from_symbol(
+pub fn get_declaration_modifier_flags_from_symbol(
     c: &Checker,
     s: SymbolId,
 ) -> ast::ModifierFlags {
@@ -2779,6 +2779,63 @@ impl Checker {
         match declaration {
             Some(d) => self.program_nodes(d),
             None => Rc::new(Vec::new()),
+        }
+    }
+}
+
+/// `isReservedMemberName` (utilities.go:1677) — canonical definition is in
+/// `crate::checker_c` (re-exported for `crate::utilities::` call sites).
+pub(crate) use crate::checker_c::is_reserved_member_name;
+
+/// `introducesArgumentsExoticObject` (utilities.go:1681).
+pub(crate) fn introduces_arguments_exotic_object(node: &ast::Node) -> bool {
+    matches!(
+        node.kind,
+        ast::Kind::MethodDeclaration
+            | ast::Kind::MethodSignature
+            | ast::Kind::Constructor
+            | ast::Kind::GetAccessor
+            | ast::Kind::SetAccessor
+            | ast::Kind::FunctionDeclaration
+            | ast::Kind::FunctionExpression
+    )
+}
+
+/// `symbolsToArray` (utilities.go:1690).
+pub(crate) fn symbols_to_array(symbols: &SymbolTable) -> Vec<SymbolId> {
+    symbols
+        .entries()
+        .filter(|(name, _)| !is_reserved_member_name(name))
+        .map(|(_, &s)| s)
+        .collect()
+}
+
+/// `SkipAlias` (utilities.go:1697) — free-function form.
+pub fn skip_alias(c: &mut Checker, symbol: SymbolId) -> Option<SymbolId> {
+    if c.sym(symbol).flags.intersects(ast::SymbolFlags::ALIAS) {
+        return c.get_aliased_symbol(symbol);
+    }
+    Some(symbol)
+}
+
+/// `IsExternalModuleSymbol` (utilities.go:1703) — true if the symbol is for
+/// an external module, as opposed to a namespace.
+pub fn is_external_module_symbol(module_symbol: SymbolId, c: &Checker) -> bool {
+    let sym = c.sym(module_symbol);
+    sym.flags.intersects(ast::SymbolFlags::MODULE)
+        && ast::symbol::is_ambient_module_symbol_name(&sym.name)
+}
+
+impl Checker {
+    /// `(c *Checker) isCanceled` (utilities.go:1708).
+    pub(crate) fn is_canceled(&self) -> bool {
+        self.ctx.is_cancelled()
+    }
+
+    /// `(c *Checker) checkNotCanceled` (utilities.go:1714).
+    pub(crate) fn check_not_canceled(&self) {
+        if self.was_canceled {
+            panic!("Checker was previously cancelled")
         }
     }
 }

@@ -81,8 +81,8 @@ impl NodeBuilder {
 
     /// `EmitContext() *printer.EmitContext` — implements
     /// `NodeBuilderInterface`.
-    pub fn emit_context(&self) -> &EmitContext {
-        &self.impl_.as_ref().expect("NodeBuilder without impl").e
+    pub fn emit_context(&self) -> std::rc::Rc<std::cell::RefCell<EmitContext>> {
+        self.impl_.as_ref().expect("NodeBuilder without impl").e.clone()
     }
 
     /// `(b *NodeBuilder) enterContext`.
@@ -140,19 +140,23 @@ impl NodeBuilder {
         // the wrapper shares the new context's `tracked_symbols` /
         // `reported_diagnostic` cells (see symboltracker.rs).
         let tracker = new_symbol_tracker_impl(&impl_.ctx, tracker, c.symbol_arena.clone());
-        impl_.ctx.tracker = Some(Box::new(tracker));
+        impl_.ctx.tracker = Some(std::rc::Rc::new(std::cell::RefCell::new(tracker)));
     }
 
     /// `(b *NodeBuilder) propagateVerbosityOut` — copies expansion signals
     /// from the context to the VerbosityContext output.
     fn propagate_verbosity_out(&mut self) {
+        // Only set to true, never clear — multiple calls share the
+        // same VerbosityContext.
+        let (can_increase, truncated) = {
+            let ctx = &self.impl_mut().ctx;
+            (ctx.can_increase_expansion_depth, ctx.expansion_truncated)
+        };
         if let Some(verbosity) = self.verbosity.as_mut() {
-            // Only set to true, never clear — multiple calls share the
-            // same VerbosityContext.
-            if self.impl_mut().ctx.can_increase_expansion_depth {
+            if can_increase {
                 verbosity.can_increase_verbosity = true;
             }
-            if self.impl_mut().ctx.expansion_truncated {
+            if truncated {
                 verbosity.truncated = true;
             }
         }
@@ -203,10 +207,13 @@ impl NodeBuilder {
     fn exit_context_check(&mut self, nodes: &[ast::Node]) {
         let impl_ = self.impl_mut();
         if impl_.ctx.truncating
-            && impl_.ctx.flags.intersects(nodebuilder::Flags::NO_TRUNCATION)
+            && impl_
+                .ctx
+                .flags
+                .intersects(nodebuilder::Flags::NO_TRUNCATION)
             && let Some(tracker) = impl_.ctx.tracker.as_mut()
         {
-            tracker.report_truncation_error(nodes);
+            tracker.borrow_mut().report_truncation_error(nodes);
         }
     }
 
@@ -223,10 +230,11 @@ impl NodeBuilder {
         tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
     ) -> Option<NodeId> {
         self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
+        let info = c.index_info_arena.get(info).clone();
         let result = self
             .impl_mut()
-            .index_info_to_index_signature_declaration_helper(c, nodes, info, None);
-        self.exit_context(nodes, result)
+            .index_info_to_index_signature_declaration_helper(c, nodes, &info, None);
+        self.exit_context(nodes, Some(result))
     }
 
     /// `SerializeReturnTypeForSignature` — implements
@@ -266,7 +274,7 @@ impl NodeBuilder {
         let type_params = self.symbol_to_type_parameter_declarations(
             c,
             nodes,
-            symbol,
+            symbol.unwrap_or(SymbolId::NONE),
             enclosing_declaration,
             flags,
             internal_flags,
@@ -291,12 +299,12 @@ impl NodeBuilder {
         let result = self.impl_mut().serialize_type_for_declaration(
             c,
             nodes,
-            declaration,
+            Some(declaration),
             None,
-            symbol,
+            Some(symbol),
             true,
         );
-        self.exit_context(nodes, result)
+        self.exit_context(nodes, Some(result))
     }
 
     /// `SerializeTypeForExpression` — implements `NodeBuilderInterface`.
@@ -311,8 +319,10 @@ impl NodeBuilder {
         tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
     ) -> Option<NodeId> {
         self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
-        let result = self.impl_mut().serialize_type_for_expression(c, nodes, expr);
-        self.exit_context(nodes, result)
+        let result = self
+            .impl_mut()
+            .serialize_type_for_expression(c, nodes, expr);
+        self.exit_context(nodes, Some(result))
     }
 
     /// `SignatureToSignatureDeclaration` — implements
@@ -329,10 +339,16 @@ impl NodeBuilder {
         tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
     ) -> Option<NodeId> {
         self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
-        let result = self.impl_mut().signature_to_signature_declaration_helper(
-            c, nodes, signature, kind, None,
-        );
-        self.exit_context(nodes, result)
+        let result = self
+            .impl_mut()
+            .signature_to_signature_declaration_helper(
+                c,
+                nodes,
+                signature,
+                kind,
+                Default::default(),
+            );
+        self.exit_context(nodes, Some(result))
     }
 
     /// `ExpandSymbolForHover` — produces declaration nodes for a symbol
@@ -441,7 +457,9 @@ impl NodeBuilder {
         tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
     ) -> Option<NodeId> {
         self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
-        let result = self.impl_mut().symbol_to_name(c, nodes, symbol, meaning, false);
+        let result = self
+            .impl_mut()
+            .symbol_to_name(c, nodes, symbol, meaning, false);
         self.exit_context(nodes, result)
     }
 
@@ -458,7 +476,9 @@ impl NodeBuilder {
         tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
     ) -> Option<NodeId> {
         self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
-        let result = self.impl_mut().symbol_to_expression(c, nodes, symbol, meaning);
+        let result = self
+            .impl_mut()
+            .symbol_to_expression(c, nodes, symbol, meaning);
         self.exit_context(nodes, result)
     }
 
@@ -512,7 +532,9 @@ impl NodeBuilder {
         tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
     ) -> Vec<NodeId> {
         self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
-        let result = self.impl_mut().symbol_to_type_parameter_declarations(c, nodes, symbol);
+        let result = self
+            .impl_mut()
+            .symbol_to_type_parameter_declarations(c, nodes, symbol);
         self.exit_context_slice(nodes, result)
     }
 
@@ -528,8 +550,10 @@ impl NodeBuilder {
         tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
     ) -> Option<NodeId> {
         self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
-        let result = self.impl_mut().type_parameter_to_declaration(c, nodes, parameter);
-        self.exit_context(nodes, result)
+        let result = self
+            .impl_mut()
+            .type_parameter_to_declaration(c, nodes, parameter);
+        self.exit_context(nodes, Some(result))
     }
 
     /// `TypePredicateToTypePredicateNode` — implements
@@ -545,9 +569,8 @@ impl NodeBuilder {
         tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
     ) -> Option<NodeId> {
         self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
-        let result = self
-            .impl_mut()
-            .type_predicate_to_type_predicate_node(c, nodes, predicate);
+        let result = predicate
+            .map(|p| self.impl_mut().type_predicate_to_type_predicate_node(c, nodes, p));
         self.exit_context(nodes, result)
     }
 
@@ -579,7 +602,9 @@ impl NodeBuilder {
         tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
     ) -> Option<NodeId> {
         self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
-        let result = self.impl_mut().try_js_type_node_to_type_node(c, nodes, node);
+        let result = self
+            .impl_mut()
+            .try_js_type_node_to_type_node(c, nodes, node);
         self.exit_context(nodes, result)
     }
 }
@@ -624,9 +649,9 @@ fn simplify_class_declaration(
         let (type_parameters, heritage_clauses, members, modifier_list) = {
             let cd = nodes[class_decl].as_class_declaration();
             (
-                cd.type_parameters.clone(),
-                cd.heritage_clauses.clone(),
-                cd.members.clone(),
+                cd.class_like_base.type_parameters.clone(),
+                cd.class_like_base.heritage_clauses.clone(),
+                cd.class_like_base.members.clone(),
                 nodes[class_decl].modifiers().cloned(),
             )
         };
@@ -643,7 +668,7 @@ fn simplify_class_declaration(
             .unwrap_or(class_decl);
     }
     let modifier_nodes = {
-        let mut create_modifier = |kind: ast::Kind| -> NodeId { f.new_modifier(nodes, kind) };
+        let mut create_modifier = |kind: ast::Kind| -> NodeId { f.new_token(nodes, kind) };
         ast::create_modifiers_from_modifier_flags(modifiers, &mut create_modifier)
     };
     let modifier_list = f.new_modifier_list(nodes, modifier_nodes);
@@ -676,7 +701,7 @@ fn simplify_modifiers(
             & !(ast::ModifierFlags::EXPORT | ast::ModifierFlags::AMBIENT)
     };
     let modifier_nodes = {
-        let mut create_modifier = |kind: ast::Kind| -> NodeId { f.new_modifier(nodes, kind) };
+        let mut create_modifier = |kind: ast::Kind| -> NodeId { f.new_token(nodes, kind) };
         ast::create_modifiers_from_modifier_flags(modifiers, &mut create_modifier)
     };
     let modifier_list = f.new_modifier_list(nodes, modifier_nodes);

@@ -233,7 +233,7 @@ impl InferenceContextId {
 }
 
 /// `type InferenceInfo struct` (checker.go).
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct InferenceInfo {
     /// `typeParameter` — type parameter for which inferences are being made.
     pub type_parameter: Option<TypeId>,
@@ -379,7 +379,7 @@ pub struct RecursionId {
 }
 
 /// `asRecursionId` for `*ast.Node` (relater.go).
-fn as_recursion_id_node(node: NodeId) -> RecursionId {
+pub(crate) fn as_recursion_id_node(node: NodeId) -> RecursionId {
     RecursionId {
         value: tracing::RecursionIdentity::Object(node.0),
     }
@@ -1705,11 +1705,10 @@ impl Checker {
     // and the deferred Go files they live in. Each panics like an unwritten
     // port should.
 
-    /// `c.instantiateType` (checker.go). PORT(deferred): instantiation
-    /// machinery.
+    /// `c.instantiateType` (checker.go) — delegates to
+    /// `instantiate_type_with_alias` (ported in `checker_c.rs`).
     pub fn instantiate_type(&mut self, t: TypeId, m: Option<TypeMapperId>) -> TypeId {
-        let _ = (t, m);
-        unimplemented!("PORT(deferred): Checker::instantiate_type lands with checker.go")
+        self.instantiate_type_with_alias(t, m, None)
     }
 
     /// `c.inferFromIntraExpressionSites` (inference.go). PORT: delegates to
@@ -1755,16 +1754,16 @@ impl Checker {
     // `c.containsArgumentsReference` (checker.go:32675) is implemented in
     // `checker_d.rs` (needs `&mut self` for `get_resolved_symbol`).
 
-    /// `c.isArrayType` (checker.go).
+    /// `c.isArrayType` (checker.go) — delegates to the free function in
+    /// `checker_c.rs`.
     pub fn is_array_type(&self, t: TypeId) -> bool {
-        let _ = t;
-        unimplemented!("PORT(deferred): isArrayType lands with checker.go")
+        crate::checker_c::is_array_type(self, t)
     }
 
-    /// `c.getTypeFromTypeNode` (checker.go).
+    /// `c.getTypeFromTypeNode` (checker.go) — delegates to the free function
+    /// in `checker_c.rs`.
     pub fn get_type_from_type_node(&mut self, node: NodeId) -> TypeId {
-        let _ = node;
-        unimplemented!("PORT(deferred): getTypeFromTypeNode lands with checker.go")
+        crate::checker_c::get_type_from_type_node(self, node)
     }
 
     /// `c.getResolvedSignatureWorker` (checker.go) — needed by
@@ -1857,28 +1856,27 @@ impl Checker {
     }
 
     /// `c.getTypeParameterFromMappedType` (checker.go) — for
-    /// `MappedType::resolve_components`.
+    /// `MappedType::resolve_components`. Delegates to `checker_c.rs`.
     pub fn get_type_parameter_from_mapped_type(&mut self, t: TypeId) -> Option<TypeId> {
-        let _ = t;
-        unimplemented!("PORT(deferred): getTypeParameterFromMappedType lands with checker.go")
+        crate::checker_c::get_type_parameter_from_mapped_type(self, t)
     }
 
-    /// `c.getConstraintTypeFromMappedType` (checker.go).
+    /// `c.getConstraintTypeFromMappedType` (checker.go) — delegates to
+    /// `checker_c.rs`.
     pub fn get_constraint_type_from_mapped_type(&mut self, t: TypeId) -> Option<TypeId> {
-        let _ = t;
-        unimplemented!("PORT(deferred): getConstraintTypeFromMappedType lands with checker.go")
+        crate::checker_c::get_constraint_type_from_mapped_type(self, t)
     }
 
-    /// `c.getNameTypeFromMappedType` (checker.go).
+    /// `c.getNameTypeFromMappedType` (checker.go) — delegates to
+    /// `checker_c.rs`.
     pub fn get_name_type_from_mapped_type(&mut self, t: TypeId) -> Option<TypeId> {
-        let _ = t;
-        unimplemented!("PORT(deferred): getNameTypeFromMappedType lands with checker.go")
+        crate::checker_c::get_name_type_from_mapped_type(self, t)
     }
 
-    /// `c.getTemplateTypeFromMappedType` (checker.go).
+    /// `c.getTemplateTypeFromMappedType` (checker.go) — delegates to
+    /// `checker_c.rs`.
     pub fn get_template_type_from_mapped_type(&mut self, t: TypeId) -> Option<TypeId> {
-        let _ = t;
-        unimplemented!("PORT(deferred): getTemplateTypeFromMappedType lands with checker.go")
+        crate::checker_c::get_template_type_from_mapped_type(self, t)
     }
 
     /// `c.getTypeOfSymbol` (checker.go) — implemented in checker_c.rs.
@@ -2882,10 +2880,18 @@ impl Checker {
         unimplemented!("PORT(deferred): mergeSymbol lands with checker.go")
     }
 
-    /// `(c *Checker) getMergedSymbol` — PORT(deferred).
+    /// `(c *Checker) getMergedSymbol` (checker.go).
+    ///
+    /// PORT: `merged_symbols` maps a source `SymbolId` to its merged target
+    /// (`recordMergedSymbol` inserts `source -> target`), folding Go's
+    /// `MergeId` indirection into a direct lookup.
     pub fn get_merged_symbol(&mut self, symbol: SymbolId) -> SymbolId {
-        let _ = symbol;
-        unimplemented!("PORT(deferred): getMergedSymbol lands with checker.go")
+        if symbol != SymbolId::NONE
+            && let Some(&merged) = self.merged_symbols.get(&symbol)
+        {
+            return merged;
+        }
+        symbol
     }
 
     /// `(c *Checker) mergeModuleAugmentation` — PORT(deferred).
@@ -3426,17 +3432,11 @@ impl Checker {
     /// empty-table fast path is faithful; the class/interface member
     /// ordering logic lands with checker.go.
     pub fn get_named_members(
-        &self,
+        &mut self,
         members: &SymbolTable,
         container: Option<SymbolId>,
     ) -> Vec<SymbolId> {
-        if members.is_empty() {
-            return Vec::new();
-        }
-        let _ = container;
-        unimplemented!(
-            "PORT(deferred): getNamedMembers' class/interface ordering lands with checker.go"
-        )
+        crate::checker_c::get_named_members(self, members, container)
     }
 
     /// `(c *Checker) newTypeParameter` (checker.go).
@@ -3891,11 +3891,10 @@ impl Checker {
         unimplemented!("PORT(deferred): getTemplateLiteralType lands with checker.go")
     }
 
-    /// `(c *Checker) getTypeArguments` (checker.go) — PORT(deferred): needed
-    /// by `checker_types::is_type_reference_with_generic_arguments`.
+    /// `(c *Checker) getTypeArguments` (checker.go) — delegates to the free
+    /// function in `checker_c.rs`.
     pub fn get_type_arguments(&mut self, t: TypeId) -> Vec<TypeId> {
-        let _ = t;
-        unimplemented!("PORT(deferred): getTypeArguments lands with checker.go")
+        crate::checker_c::get_type_arguments(self, t)
     }
 
     /// `(c *Checker) mapType` (checker.go) — PORT(deferred).
@@ -3904,10 +3903,10 @@ impl Checker {
         unimplemented!("PORT(deferred): mapType lands with checker.go")
     }
 
-    /// `(c *Checker) getDeclaredTypeOfSymbol` (checker.go) — PORT(deferred).
+    /// `(c *Checker) getDeclaredTypeOfSymbol` (checker.go) — delegates to the
+    /// free function in `checker_c.rs`.
     pub fn get_declared_type_of_symbol(&mut self, symbol: SymbolId) -> TypeId {
-        let _ = symbol;
-        unimplemented!("PORT(deferred): getDeclaredTypeOfSymbol lands with checker.go")
+        crate::checker_c::get_declared_type_of_symbol(self, symbol)
     }
 
     /// `(c *Checker) getAwaitedTypeEx` (checker.go:31806) — implemented in
@@ -3921,10 +3920,9 @@ impl Checker {
     }
 
     /// `(c *Checker) couldContainTypeVariablesWorker` (checker.go) —
-    /// PORT(deferred).
+    /// delegates to the free function in `checker_c.rs`.
     pub fn could_contain_type_variables_worker(&mut self, t: TypeId) -> bool {
-        let _ = t;
-        unimplemented!("PORT(deferred): couldContainTypeVariablesWorker lands with checker.go")
+        crate::checker_c::could_contain_type_variables_worker(self, t)
     }
 
     /// `(c *Checker) isStringIndexSignatureOnlyTypeWorker` (checker.go) —

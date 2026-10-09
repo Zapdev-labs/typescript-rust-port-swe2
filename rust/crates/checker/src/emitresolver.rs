@@ -8,30 +8,41 @@
 // PORT notes:
 //
 // - `checker *Checker` + `checkerMu *sync.Mutex` → `Rc<RefCell<Checker>>`.
-//   Go methods that take the lock become `self.checker.borrow_mut()`; Go's
-//   `*Unsafe` / explicitly-unlocked methods (which run while the caller
-//   already holds `checkerMu`) reacquire the checker through
-//   `RefCell::as_ptr` so they also work when a `borrow_mut` is already live
-//   on the stack — the unsafe deref is documented at each site. This mirrors
-//   the aliasing Go relies on: one ambient exclusive access, no data races
-//   (the pipeline is single-threaded; `Checker` is `!Send` anyway).
+//   Go methods that take the lock become `self.checker.borrow_mut()`.
+//   `unsafe` is forbidden in this workspace, so Go's `*Unsafe` /
+//   explicitly-unlocked methods (which run while the caller already holds
+//   `checkerMu`) use `try_borrow_mut` instead of aliasing `&mut Checker`.
+//   When the checker cell is already mutably borrowed they take the
+//   documented fallback for that context (`PORT(deviation)` at each site) —
+//   e.g. `is_symbol_accessible` reports `Accessible`, `is_expando_*`/
+//   `requires_adding_implicit_undefined` report `false`, and the
+//   `ReferenceResolver` hooks return `None` so the binder resolver falls
+//   back to its unhooked paths.
 // - `emitContext *printer.EmitContext` → `Rc<RefCell<EmitContext>>`, the
 //   same handle shape `TransformOptions::context` and the declaration
-//   transformer use. `emit_context()` can only hand out `&EmitContext`, so
-//   it goes through `as_ptr` (see `emit_context` SAFETY note).
+//   transformer use. The trait's `emit_context()` hands out
+//   `&RefCell<EmitContext>` (see the `tsc_printer::EmitResolver` PORT note);
+//   the lazily-created `NodeBuilder`'s `impl_.e` is pointed at the same
+//   cell so `parse_node` recognizes builder-synthesized files, matching
+//   Go's shared `r.emitContext`.
 // - `isValueAliasDeclaration`/`aliasMarkingVisitor` Go method-value fields
 //   become plain methods (Rust has no method values).
-// - `tracker nodebuilder.SymbolTracker` arrives as `&dyn SymbolTracker` per
-//   the `tsc_printer::EmitResolver` trait, but `track_symbol` is `&mut` and
-//   the `NodeBuilder` serialize APIs take `Option<Box<dyn SymbolTracker>>`.
-//   `tracker_ref` reacquires `&mut` behind a SAFETY-documented cast and
-//   `TrackerRef` reboxes it — Go passes the same interface value through.
+// - `tracker nodebuilder.SymbolTracker` arrives as `&mut dyn SymbolTracker`
+//   per the `tsc_printer::EmitResolver` trait (changed from `&dyn` because
+//   `track_symbol` is `&mut` and `unsafe` is forbidden). PORT(deviation):
+//   `NodeBuilder`'s serialize APIs take `Option<Box<dyn SymbolTracker>>` —
+//   an owned `'static` trait object — which cannot express a borrowed
+//   tracker without parameterizing `SymbolTrackerImpl`/`NodeBuilderContext`
+//   over a lifetime (cross-agent nodebuilder work). `create_*` therefore
+//   pass `None` for now, dropping inner-tracker forwarding (isolated-
+//   declaration diagnostics, expando reports, alias marking during
+//   serialization); `get_late_bound_index_signatures` still calls
+//   `tracker.track_symbol` directly where Go does.
 // - `nodes: &[Node]`/`nodes: &mut Vec<Node>` arena parameters come from the
 //   trait surface; checker-internal reads go through `c.program_nodes`.
-// - `NodeBuilder` gets a fresh `EmitContext` (`EmitContext::new`) — Go
-//   shares `r.emitContext`, but `EmitContext` is not `Clone`/`Copy` and
-//   `new_node_builder` consumes one; the builder only needs its own shared
-//   tables (`PORT(deviation)`).
+// - `getReferenceResolver` is built per call (the `SymbolTable` caching Go
+//   performs is recreated each time) so its hooks can borrow
+//   `&self.options` without `'static` tricks.
 
 use std::cell::{RefCell, RefMut};
 use std::rc::Rc;
@@ -46,13 +57,13 @@ use tsc_core::tristate::Tristate;
 use tsc_core::{core as core_helpers, linkstore::LinkStore};
 use tsc_evaluator as evaluator;
 use tsc_jsnum::PseudoBigInt;
-use tsc_nodebuilder::{self as nodebuilder, SymbolTracker};
+use tsc_nodebuilder::{self as nodebuilder};
 use tsc_printer::{EmitContext, SymbolAccessibility, SymbolAccessibilityResult};
 
 use crate::checker_core::{Checker, is_tuple_type};
 use crate::nodebuilder::NodeBuilder;
 use crate::nodebuilder::new_node_builder;
-use crate::types::TypeFlags;
+use crate::types::{IndexInfoId, TypeFlags};
 
 /// `type JSXLinks struct` (emitresolver.go) — links for jsx.
 #[derive(Default)]
@@ -96,13 +107,11 @@ pub struct EmitResolver {
     /// `emitContext`.
     emit_context: Rc<RefCell<EmitContext>>,
     /// `r.checker.compilerOptions`, snapshotted so the lazily-built
-    /// `referenceResolver` can borrow it (`&'static` via `Rc` pin — see
-    /// `reference_resolver`).
+    /// `referenceResolver` can borrow it.
     options: Rc<CompilerOptions>,
     /// `requestNodeBuilder`.
     request_node_builder: RefCell<Option<NodeBuilder>>,
-    /// `referenceResolver`.
-    reference_resolver: RefCell<Option<ReferenceResolverImpl<'static>>>,
+    // `referenceResolver` is built per call — see `reference_resolver`.
     // `isValueAliasDeclaration`/`aliasMarkingVisitor` are plain methods —
     // see the header note.
 }
@@ -124,7 +133,6 @@ pub fn new_emit_resolver(
         emit_context,
         options,
         request_node_builder: RefCell::new(None),
-        reference_resolver: RefCell::new(None),
     }
 }
 
@@ -133,109 +141,20 @@ fn checker_lock<'a>(checker: &'a Rc<RefCell<Checker>>) -> RefMut<'a, Checker> {
     checker.borrow_mut()
 }
 
-/// `(r *EmitResolver) checker` access where Go deliberately does NOT lock —
-/// `*Unsafe` variants and tracker-reentrant paths run while the caller's
-/// lock is already held.
-///
-/// SAFETY: `RefCell::as_ptr` reacquires `&mut Checker` while an outer
-/// `borrow_mut` may be live — that is exactly what Go's unlocked `r.checker`
-/// dereference does under a held `checkerMu`. The emit pipeline is
-/// single-threaded and the checker is never touched through two live
-/// `&mut`s at the same instant (the outer `RefMut` is inert while the inner
-/// call runs), matching Go's semantics.
-#[allow(clippy::mut_from_ref)]
-fn checker_unchecked<'a>(checker: &'a Rc<RefCell<Checker>>) -> &'a mut Checker {
-    unsafe { &mut *checker.as_ptr() }
+/// Checker access where Go deliberately does NOT lock — `*Unsafe` variants
+/// and tracker-reentrant paths run while the caller's lock is already held.
+/// `unsafe` is forbidden in this workspace, so this uses `try_borrow_mut`
+/// and callers take their documented fallback on `Err` (see the header
+/// PORT note) rather than aliasing `&mut Checker` the way Go does under a
+/// held `checkerMu`.
+fn checker_try_lock<'a>(checker: &'a Rc<RefCell<Checker>>) -> Option<RefMut<'a, Checker>> {
+    checker.try_borrow_mut().ok()
 }
 
-/// `tracker.TrackSymbol` — the trait hands us `&dyn SymbolTracker` while
-/// `track_symbol` is `&mut`; Go passes the interface value (the same object)
-/// straight through.
-///
-/// SAFETY: callers pass a borrow of a tracker they own; the tracker is only
-/// mutated during this call and no other `&mut` to it is live — identical
-/// aliasing to Go's interface value.
-pub(crate) fn tracker_mut<'t>(tracker: &dyn SymbolTracker) -> &'t mut dyn SymbolTracker
-where
-    dyn SymbolTracker: 't,
-{
-    unsafe { &mut *(tracker as *const dyn SymbolTracker as *mut dyn SymbolTracker) }
-}
-
-/// Wraps the reacquired `&mut dyn SymbolTracker` so it can be handed to the
-/// `NodeBuilder` serialize APIs, which take `Option<Box<dyn SymbolTracker>>`.
-struct TrackerRef<'a>(&'a mut dyn SymbolTracker);
-
-impl nodebuilder::SymbolTracker for TrackerRef<'_> {
-    fn track_symbol(
-        &mut self,
-        symbol: SymbolId,
-        enclosing_declaration: Option<NodeId>,
-        meaning: ast::SymbolFlags,
-        nodes: &[Node],
-    ) -> bool {
-        self.0.track_symbol(symbol, enclosing_declaration, meaning, nodes)
-    }
-    fn report_inaccessible_this_error(&mut self, nodes: &[Node]) {
-        self.0.report_inaccessible_this_error(nodes)
-    }
-    fn report_private_in_base_of_class_expression(
-        &mut self,
-        property_name: &str,
-        nodes: &[Node],
-    ) {
-        self.0
-            .report_private_in_base_of_class_expression(property_name, nodes)
-    }
-    fn report_inaccessible_unique_symbol_error(&mut self, nodes: &[Node]) {
-        self.0.report_inaccessible_unique_symbol_error(nodes)
-    }
-    fn report_cyclic_structure_error(&mut self, nodes: &[Node]) {
-        self.0.report_cyclic_structure_error(nodes)
-    }
-    fn report_likely_unsafe_import_required_error(
-        &mut self,
-        specifier: &str,
-        symbol_name: &str,
-        nodes: &[Node],
-    ) {
-        self.0
-            .report_likely_unsafe_import_required_error(specifier, symbol_name, nodes)
-    }
-    fn report_truncation_error(&mut self, nodes: &[Node]) {
-        self.0.report_truncation_error(nodes)
-    }
-    fn report_nonlocal_augmentation(
-        &mut self,
-        containing_file: NodeId,
-        parent_symbol: SymbolId,
-        augmenting_symbol: SymbolId,
-        nodes: &[Node],
-    ) {
-        self.0.report_nonlocal_augmentation(
-            containing_file,
-            parent_symbol,
-            augmenting_symbol,
-            nodes,
-        )
-    }
-    fn report_non_serializable_property(&mut self, property_name: &str, nodes: &[Node]) {
-        self.0.report_non_serializable_property(property_name, nodes)
-    }
-    fn report_inference_fallback(&mut self, node: NodeId, nodes: &[Node]) {
-        self.0.report_inference_fallback(node, nodes)
-    }
-    fn push_error_fallback_node(&mut self, node: NodeId) {
-        self.0.push_error_fallback_node(node)
-    }
-    fn pop_error_fallback_node(&mut self) {
-        self.0.pop_error_fallback_node()
-    }
-    fn take_symbol_tracker_impl_inner(
-        &mut self,
-    ) -> Option<Option<Box<dyn nodebuilder::SymbolTracker>>> {
-        self.0.take_symbol_tracker_impl_inner()
-    }
+/// Read-only checker access for Go's unlocked reads — `try_borrow` so
+/// nested call sites (a live `borrow_mut`) degrade instead of panicking.
+fn checker_try_read<'a>(checker: &'a Rc<RefCell<Checker>>) -> Option<std::cell::Ref<'a, Checker>> {
+    checker.try_borrow().ok()
 }
 
 /// `c.resolveName` — invokes the checker's `resolve_name` thunk (the same
@@ -251,7 +170,15 @@ pub(crate) fn call_resolve_name(
     exclude_globals: bool,
 ) -> Option<SymbolId> {
     let f = c.resolve_name.clone().expect("Checker::resolve_name");
-    f(c, location, name, meaning, name_not_found_message, is_use, exclude_globals)
+    f(
+        c,
+        location,
+        name,
+        meaning,
+        name_not_found_message,
+        is_use,
+        exclude_globals,
+    )
 }
 
 /// `isConstEnumOrConstEnumOnlyModule` (emitresolver.go).
@@ -260,6 +187,38 @@ pub(crate) fn is_const_enum_or_const_enum_only_module(s: &Symbol) -> bool {
     // non-nil here, so the flag test is the whole predicate.
     s.flags.intersects(ast::SymbolFlags::CONST_ENUM)
         || s.flags.intersects(ast::SymbolFlags::CONST_ENUM_ONLY_MODULE)
+}
+
+/// Field-by-field clone of the symbol arena — `Symbol` is not `Clone` but
+/// every field is (same spelling as `importelision_test::clone_symbols`).
+/// Used by `get_referenced_value_declaration_unsafe`, which must hand the
+/// binder resolver a `&mut Vec<Symbol>` while leaving the live arena's
+/// `RefCell` unborrowed for the resolver hooks.
+fn clone_symbols(symbols: &[Symbol]) -> Vec<Symbol> {
+    symbols
+        .iter()
+        .map(|s| Symbol {
+            flags: s.flags,
+            check_flags: s.check_flags,
+            name: s.name.clone(),
+            declarations: s.declarations.clone(),
+            value_declaration: s.value_declaration,
+            members: s.members.clone(),
+            exports: s.exports.clone(),
+            parent: s.parent,
+            export_symbol: s.export_symbol,
+        })
+        .collect()
+}
+
+/// The checker-body of `GetPropertiesOfContainerFunction` — takes the
+/// checker by `&mut` so callers can pass a guard they already hold.
+fn get_properties_of_container_function_c(c: &mut Checker, node: NodeId) -> Vec<SymbolId> {
+    let Some(s) = c.get_symbol_of_declaration(node) else {
+        return Vec::new();
+    };
+    let t = c.get_type_of_symbol(s);
+    c.get_properties_of_type(t)
 }
 
 /// `isDeclarationReadonly` (checker/utilities.go).
@@ -319,14 +278,18 @@ fn is_commonjs_module_exports(node: NodeId, nodes: &[Node]) -> bool {
 
 impl EmitResolver {
     /// `(r *EmitResolver) nodeBuilder` — lazily creates the request node
-    /// builder. PORT(deviation): `new_node_builder` consumes an owned
-    /// `EmitContext`, so the builder gets a fresh one rather than sharing
-    /// `r.emitContext` (see header).
+    /// builder. The builder's `EmitContext` (`impl_.e`) is pointed at this
+    /// resolver's `emit_context` cell so builder-synthesized files are
+    /// visible to `parse_node`, matching Go's shared `r.emitContext`.
     fn node_builder(&self, c: &Checker) -> RefMut<'_, NodeBuilder> {
         {
             let mut nb = self.request_node_builder.borrow_mut();
             if nb.is_none() {
-                *nb = Some(new_node_builder(c, EmitContext::new()));
+                let mut builder = new_node_builder(c, EmitContext::new());
+                if let Some(impl_) = builder.impl_.as_mut() {
+                    impl_.e = self.emit_context.clone();
+                }
+                *nb = Some(builder);
             }
         }
         RefMut::map(self.request_node_builder.borrow_mut(), |o| {
@@ -334,44 +297,41 @@ impl EmitResolver {
         })
     }
 
-    /// `(r *EmitResolver) getReferenceResolver` — lazily creates the binder
+    /// `(r *EmitResolver) getReferenceResolver` — builds the binder
     /// `ReferenceResolver`, wiring its hooks to the checker.
     ///
-    /// PORT: the hooks capture the `Rc<RefCell<Checker>>` and reacquire it
-    /// via `checker_unchecked` — Go's hooks are plain method values that run
-    /// under the ambient `checkerMu`, so they must work both when the caller
-    /// locked (a live `borrow_mut`) and when it didn't.
-    fn reference_resolver(&self) -> RefMut<'_, ReferenceResolverImpl<'static>> {
-        {
-            let mut resolver = self.reference_resolver.borrow_mut();
-            if resolver.is_none() {
-                // SAFETY: `self.options` is an `Rc` clone held for the life
-                // of the resolver, so the pointee stays pinned and never
-                // moves or drops early — same as Go's shared `*CompilerOptions`.
-                let options: &'static CompilerOptions =
-                    unsafe { &*Rc::as_ptr(&self.options) };
-                *resolver = Some(self.new_reference_resolver(options));
-            }
-        }
-        RefMut::map(self.reference_resolver.borrow_mut(), |o| {
-            o.as_mut().expect("reference resolver")
-        })
+    /// PORT: built per call rather than cached — `ReferenceResolverImpl`
+    /// borrows `options`, and the cached-`'static` spelling would require
+    /// `unsafe` (forbidden here). The hooks capture the
+    /// `Rc<RefCell<Checker>>` and use `try_borrow_mut`: Go's hooks are plain
+    /// method values that run under the ambient `checkerMu`; when a Rust
+    /// caller already holds `borrow_mut` the hooks degrade to the
+    /// resolver's unhooked fallbacks (`None` / identity results).
+    fn reference_resolver(&self) -> ReferenceResolverImpl<'_> {
+        self.new_reference_resolver(&self.options)
     }
 
     /// The `binder.NewReferenceResolver` call inside `getReferenceResolver`.
-    fn new_reference_resolver(
+    fn new_reference_resolver<'a>(
         &self,
-        options: &'static CompilerOptions,
-    ) -> ReferenceResolverImpl<'static> {
+        options: &'a CompilerOptions,
+    ) -> ReferenceResolverImpl<'a> {
         let c = self.checker.clone();
+        // Captured for the `get_parent_of_symbol` fallback: when the
+        // checker cell is already borrowed the hook reads `symbol.parent`
+        // straight from the arena, mirroring the resolver's unhooked path
+        // (the merged-symbol refinement `c.get_parent_of_symbol` applies is
+        // skipped).
+        let symbol_arena = self.checker.borrow().symbol_arena.clone();
         new_reference_resolver(
             options,
             ReferenceResolverHooks {
                 resolve_name: Some(Box::new({
                     let c = c.clone();
                     move |location, name, meaning, msg, is_use, exclude_globals| {
+                        let mut c = c.try_borrow_mut().ok()?;
                         call_resolve_name(
-                            checker_unchecked(&c),
+                            &mut c,
                             location,
                             name,
                             meaning,
@@ -383,37 +343,59 @@ impl EmitResolver {
                 })),
                 get_resolved_symbol: Some(Box::new({
                     let c = c.clone();
-                    move |node| checker_unchecked(&c).get_resolved_symbol_or_nil(node)
+                    move |node| c.try_borrow_mut().ok()?.get_resolved_symbol_or_nil(node)
                 })),
                 get_merged_symbol: Some(Box::new({
                     let c = c.clone();
-                    move |symbol| Some(checker_unchecked(&c).get_merged_symbol(symbol))
+                    move |symbol| {
+                        // `Err` (checker already borrowed) matches the
+                        // resolver's unhooked fallback `Some(symbol)`.
+                        Some(
+                            c.try_borrow_mut()
+                                .ok()
+                                .map(|mut c| c.get_merged_symbol(symbol))
+                                .unwrap_or(symbol),
+                        )
+                    }
                 })),
                 get_parent_of_symbol: Some(Box::new({
                     let c = c.clone();
-                    move |symbol| checker_unchecked(&c).get_parent_of_symbol(symbol)
+                    move |symbol| {
+                        c.try_borrow_mut()
+                            .ok()
+                            .and_then(|mut c| c.get_parent_of_symbol(symbol))
+                            .or_else(|| {
+                                symbol_arena
+                                    .try_borrow()
+                                    .ok()
+                                    .and_then(|s| s.get(symbol.index()).and_then(|s| s.parent))
+                            })
+                    }
                 })),
                 get_symbol_of_declaration: Some(Box::new({
                     let c = c.clone();
-                    move |node| checker_unchecked(&c).get_symbol_of_declaration(node)
+                    move |node| c.try_borrow_mut().ok()?.get_symbol_of_declaration(node)
                 })),
                 get_type_only_alias_declaration: Some(Box::new({
                     let c = c.clone();
                     move |symbol, meaning| {
-                        checker_unchecked(&c).get_type_only_alias_declaration_ex(symbol, meaning)
+                        c.try_borrow_mut()
+                            .ok()?
+                            .get_type_only_alias_declaration_ex(symbol, meaning)
                     }
                 })),
                 get_export_symbol_of_value_symbol_if_exported: Some(Box::new({
                     let c = c.clone();
                     move |symbol| {
-                        checker_unchecked(&c)
+                        c.try_borrow_mut()
+                            .ok()?
                             .get_export_symbol_of_value_symbol_if_exported(Some(symbol))
                     }
                 })),
                 get_element_access_expression_name: Some(Box::new({
                     let c = c.clone();
                     move |node| {
-                        let c = checker_unchecked(&c);
+                        let mut c = c.try_borrow_mut().ok()?;
                         let nodes = c.program_nodes(node);
                         let (name, ok) = c.try_get_element_access_expression_name(&nodes, node);
                         ok.then_some(name)
@@ -429,9 +411,7 @@ impl EmitResolver {
         match nodes[node].kind {
             ast::Kind::BinaryExpression => {
                 if is_commonjs_module_exports(node, nodes)
-                    && ast::is_identifier(
-                        &nodes[nodes[node].as_binary_expression().right.unwrap()],
-                    )
+                    && ast::is_identifier(&nodes[nodes[node].as_binary_expression().right.unwrap()])
                 {
                     self.mark_linked_aliases(
                         c,
@@ -479,7 +459,7 @@ impl EmitResolver {
                     | ast::SymbolFlags::TYPE
                     | ast::SymbolFlags::NAMESPACE
                     | ast::SymbolFlags::ALIAS,
-                None, /*nameNotFoundMessage*/
+                None,  /*nameNotFoundMessage*/
                 false, /*isUse*/
                 false, /*excludeGlobals*/
             );
@@ -533,7 +513,7 @@ impl EmitResolver {
                             | ast::SymbolFlags::TYPE
                             | ast::SymbolFlags::NAMESPACE
                             | ast::SymbolFlags::ALIAS,
-                        None, /*nameNotFoundMessage*/
+                        None,  /*nameNotFoundMessage*/
                         false, /*isUse*/
                         false, /*excludeGlobals*/
                     );
@@ -566,6 +546,28 @@ impl EmitResolver {
         )
     }
 
+    /// Shared body of `is_expando_function_declaration` /
+    /// `is_expando_function_declaration_unsafe` — Go's
+    /// `IsExpandoFunctionDeclaration` locks then calls the unsafe worker.
+    fn is_expando_function_declaration_impl(
+        &self,
+        c: &mut Checker,
+        node: NodeId,
+        nodes: &[Node],
+    ) -> bool {
+        // node = r.emitContext.ParseNode(node)
+        if !ast::is_parse_tree_node(&nodes[node]) {
+            return false;
+        }
+        // this is substantially different from strada, but so is expando
+        // property checking
+        let props = get_properties_of_container_function_c(c, node);
+        props.iter().any(|&p| {
+            let value_declaration = c.symbol_arena.borrow()[p.index()].value_declaration;
+            ast::is_expando_property_declaration(value_declaration, nodes)
+        })
+    }
+
     /// `(r *EmitResolver) isValueAliasDeclarationWorker` —
     /// `r.isValueAliasDeclaration` in Go (the field is initialized to this
     /// worker).
@@ -576,22 +578,18 @@ impl EmitResolver {
         nodes: &[Node],
     ) -> bool {
         match nodes[node].kind {
-            ast::Kind::ImportEqualsDeclaration => self.is_alias_resolved_to_value(
-                c,
-                c.get_symbol_of_declaration(node),
-                false, /*excludeTypeOnlyValues*/
-            ),
+            ast::Kind::ImportEqualsDeclaration => {
+                let symbol = c.get_symbol_of_declaration(node);
+                self.is_alias_resolved_to_value(c, symbol, false /*excludeTypeOnlyValues*/)
+            }
             ast::Kind::ImportClause
             | ast::Kind::NamespaceImport
             | ast::Kind::ImportSpecifier
             | ast::Kind::ExportSpecifier => {
                 let symbol = c.get_symbol_of_declaration(node);
                 symbol.is_some()
-                    && self.is_alias_resolved_to_value(
-                        c,
-                        symbol,
-                        true, /*excludeTypeOnlyValues*/
-                    )
+                    && self
+                        .is_alias_resolved_to_value(c, symbol, true /*excludeTypeOnlyValues*/)
             }
             ast::Kind::ExportDeclaration => {
                 let export_clause = nodes[node].as_export_declaration().export_clause;
@@ -608,9 +606,10 @@ impl EmitResolver {
                 if let Some(expression) = nodes[node].expression()
                     && nodes[expression].kind == ast::Kind::Identifier
                 {
+                    let symbol = c.get_symbol_of_declaration(node);
                     return self.is_alias_resolved_to_value(
                         c,
-                        c.get_symbol_of_declaration(node),
+                        symbol,
                         true, /*excludeTypeOnlyValues*/
                     );
                 }
@@ -618,13 +617,12 @@ impl EmitResolver {
             }
             ast::Kind::BinaryExpression => {
                 if is_commonjs_module_exports(node, nodes)
-                    && ast::is_identifier(
-                        &nodes[nodes[node].as_binary_expression().right.unwrap()],
-                    )
+                    && ast::is_identifier(&nodes[nodes[node].as_binary_expression().right.unwrap()])
                 {
+                    let symbol = c.get_symbol_of_declaration(node);
                     return self.is_alias_resolved_to_value(
                         c,
-                        c.get_symbol_of_declaration(node),
+                        symbol,
                         true, /*excludeTypeOnlyValues*/
                     );
                 }
@@ -644,7 +642,8 @@ impl EmitResolver {
         let Some(symbol) = symbol else {
             return false;
         };
-        if let Some(value_declaration) = c.symbol_arena.borrow()[symbol.index()].value_declaration {
+        let value_declaration = c.symbol_arena.borrow()[symbol.index()].value_declaration;
+        if let Some(value_declaration) = value_declaration {
             // Ensures cjs export assignment is setup, since this symbol may
             // point at, and merge with, the file itself. If we don't, the
             // merge may not have yet occurred, and the flags check below will
@@ -657,8 +656,8 @@ impl EmitResolver {
                 c.resolve_external_module_symbol(file_symbol, false /*dontResolveAlias*/);
             }
         }
-        let target =
-            c.get_export_symbol_of_value_symbol_if_exported(Some(c.resolve_alias(symbol)));
+        let resolved_alias = c.resolve_alias(symbol);
+        let target = c.get_export_symbol_of_value_symbol_if_exported(Some(resolved_alias));
         if target == Some(c.unknown_symbol) {
             return !exclude_type_only_values
                 || c.get_type_only_alias_declaration(symbol).is_none();
@@ -666,11 +665,16 @@ impl EmitResolver {
         // const enums and modules that contain only const enums are not
         // considered values from the emit perspective unless
         // 'preserveConstEnums' option is set to true
-        c.get_symbol_flags_ex(symbol, exclude_type_only_values, true /*excludeLocalMeanings*/)
-            .intersects(ast::SymbolFlags::VALUE)
+        c.get_symbol_flags_ex(
+            symbol,
+            exclude_type_only_values,
+            true, /*excludeLocalMeanings*/
+        )
+        .intersects(ast::SymbolFlags::VALUE)
             && (c.compiler_options.should_preserve_const_enums()
                 || !target.is_some_and(|t| {
-                    is_const_enum_or_const_enum_only_module(&c.symbol_arena.borrow()[t.index()])
+                    let arena = c.symbol_arena.borrow();
+                    is_const_enum_or_const_enum_only_module(&arena[t.index()])
                 }))
     }
 }
@@ -690,8 +694,12 @@ impl ReferenceResolver for EmitResolver {
         }
         // Go: lock; the resolver's hooks reacquire the checker themselves, so
         // no `borrow_mut` is held across this call.
-        self.reference_resolver()
-            .get_referenced_export_container(node, prefix_locals, nodes, symbols)
+        self.reference_resolver().get_referenced_export_container(
+            node,
+            prefix_locals,
+            nodes,
+            symbols,
+        )
     }
 
     /// `(r *EmitResolver) GetReferencedImportDeclaration`.
@@ -710,10 +718,7 @@ impl ReferenceResolver for EmitResolver {
         let symbol = c.get_referenced_value_or_alias_symbol(node);
         let is_non_local_alias = {
             let arena = c.symbol_arena.borrow();
-            ast::is_non_local_alias(
-                symbol.map(|s| &arena[s.index()]),
-                ast::SymbolFlags::VALUE,
-            )
+            ast::is_non_local_alias(symbol.map(|s| &arena[s.index()]), ast::SymbolFlags::VALUE)
         };
         if is_non_local_alias
             && c.get_type_only_alias_declaration_ex(
@@ -722,8 +727,9 @@ impl ReferenceResolver for EmitResolver {
             )
             .is_none()
         {
-            return c
-                .get_declaration_of_alias_symbol(symbol.expect("is_non_local_alias implies a symbol"));
+            return c.get_declaration_of_alias_symbol(
+                symbol.expect("is_non_local_alias implies a symbol"),
+            );
         }
         None
     }
@@ -786,19 +792,17 @@ impl ReferenceResolver for EmitResolver {
 
 impl tsc_printer::EmitResolver for EmitResolver {
     /// `(r *EmitResolver) EmitContext`.
-    fn emit_context(&self) -> &EmitContext {
-        // SAFETY: callers use the returned `&EmitContext` for `&self` APIs
-        // (`parse_node`, `original`) — Go returns the shared `*EmitContext`
-        // directly. The underlying `Rc` keeps it alive; mutable access goes
-        // through `borrow_mut` elsewhere without a live `&` escaping into
-        // mutation (the trait cannot express `&EmitContext` through
-        // `RefCell::borrow` otherwise).
-        unsafe { &*self.emit_context.as_ptr() }
+    fn emit_context(&self) -> &Rc<RefCell<EmitContext>> {
+        // The shared cell — callers `.borrow()`/`.borrow_mut()` per use or
+        // clone the `Rc` to share the context (Go hands out the same
+        // `*EmitContext` pointer).
+        &self.emit_context
     }
 
     /// `(r *EmitResolver) IsReferencedAliasDeclaration`.
     fn is_referenced_alias_declaration(&self, node: NodeId, nodes: &[Node]) -> bool {
-        if !checker_unchecked(&self.checker).can_collect_symbol_alias_accessibility_data
+        if !checker_try_read(&self.checker)
+            .is_some_and(|c| c.can_collect_symbol_alias_accessibility_data)
             || !ast::is_parse_tree_node(&nodes[node])
         {
             return true;
@@ -808,15 +812,17 @@ impl tsc_printer::EmitResolver for EmitResolver {
         if ast::is_alias_symbol_declaration(node, nodes)
             && let Some(symbol) = c.get_symbol_of_declaration(node)
         {
-            let alias_links_referenced =
-                c.alias_symbol_links.get(symbol).referenced;
+            let alias_links_referenced = c.alias_symbol_links.get(symbol).referenced;
             if alias_links_referenced {
                 return true;
             }
             let target = c.alias_symbol_links.get(symbol).alias_target;
             if let Some(target) = target
-                && nodes[node].modifier_flags().intersects(ast::ModifierFlags::EXPORT)
-                && c.get_symbol_flags(target).intersects(ast::SymbolFlags::VALUE)
+                && nodes[node]
+                    .modifier_flags()
+                    .intersects(ast::ModifierFlags::EXPORT)
+                && c.get_symbol_flags(target)
+                    .intersects(ast::SymbolFlags::VALUE)
                 && (c.compiler_options.should_preserve_const_enums()
                     || !is_const_enum_or_const_enum_only_module(
                         &c.symbol_arena.borrow()[target.index()],
@@ -830,7 +836,8 @@ impl tsc_printer::EmitResolver for EmitResolver {
 
     /// `(r *EmitResolver) IsValueAliasDeclaration`.
     fn is_value_alias_declaration(&self, node: NodeId, nodes: &[Node]) -> bool {
-        if !checker_unchecked(&self.checker).can_collect_symbol_alias_accessibility_data
+        if !checker_try_read(&self.checker)
+            .is_some_and(|c| c.can_collect_symbol_alias_accessibility_data)
             || !ast::is_parse_tree_node(&nodes[node])
         {
             return true;
@@ -845,7 +852,9 @@ impl tsc_printer::EmitResolver for EmitResolver {
         node: NodeId,
         nodes: &[Node],
     ) -> bool {
-        if !checker_unchecked(&self.checker).can_collect_symbol_alias_accessibility_data {
+        if !checker_try_read(&self.checker)
+            .is_some_and(|c| c.can_collect_symbol_alias_accessibility_data)
+        {
             return true;
         }
         if !ast::is_parse_tree_node(&nodes[node])
@@ -869,11 +878,8 @@ impl tsc_printer::EmitResolver for EmitResolver {
         }
 
         let mut c = checker_lock(&self.checker);
-        self.is_alias_resolved_to_value(
-            &mut c,
-            c.get_symbol_of_declaration(node),
-            false, /*excludeTypeOnlyValues*/
-        )
+        let symbol = c.get_symbol_of_declaration(node);
+        self.is_alias_resolved_to_value(&mut c, symbol, false /*excludeTypeOnlyValues*/)
     }
 
     /// `(r *EmitResolver) MarkLinkedReferencesRecursively`.
@@ -884,13 +890,11 @@ impl tsc_printer::EmitResolver for EmitResolver {
         let mut c = checker_lock(&self.checker);
         let c = &mut *c;
         // `visit` — recursive closure spelling of Go's self-calling Visitor.
-        fn visit(
-            c: &mut Checker,
-            nodes: &[Node],
-            n: NodeId,
-        ) {
+        fn visit(c: &mut Checker, nodes: &[Node], n: NodeId) {
             if ast::is_import_equals_declaration(&nodes[n])
-                && !nodes[n].modifier_flags().intersects(ast::ModifierFlags::EXPORT)
+                && !nodes[n]
+                    .modifier_flags()
+                    .intersects(ast::ModifierFlags::EXPORT)
             {
                 return; // These are deferred and marked in a chain when referenced
             }
@@ -970,8 +974,9 @@ impl tsc_printer::EmitResolver for EmitResolver {
             );
 
             if let Some(root_value_symbol) = root_value_symbol {
-                let declarations =
-                    c.symbol_arena.borrow()[root_value_symbol.index()].declarations.clone();
+                let declarations = c.symbol_arena.borrow()[root_value_symbol.index()]
+                    .declarations
+                    .clone();
                 if !declarations.is_empty() {
                     is_type_only = core_helpers::every(&declarations, |&d| {
                         ast::is_type_only_import_or_export_declaration(d, &c.program_nodes(d))
@@ -1060,7 +1065,11 @@ impl tsc_printer::EmitResolver for EmitResolver {
             return Kind0::Unknown;
         }
 
-        if c.types.get(type_).flags.intersects(TypeFlags::ANY_OR_UNKNOWN) {
+        if c.types
+            .get(type_)
+            .flags
+            .intersects(TypeFlags::ANY_OR_UNKNOWN)
+        {
             Kind0::ObjectType
         } else if c.is_type_assignable_to_kind(
             type_,
@@ -1071,13 +1080,13 @@ impl tsc_printer::EmitResolver for EmitResolver {
             Kind0::BooleanType
         } else if c.is_type_assignable_to_kind(type_, TypeFlags::NUMBER_LIKE) {
             Kind0::NumberLikeType
-        } else if c.is_type_assignable_to_kind(type_, TypeFlags::BIGINT_LIKE) {
+        } else if c.is_type_assignable_to_kind(type_, TypeFlags::BIG_INT_LIKE) {
             Kind0::BigIntLikeType
         } else if c.is_type_assignable_to_kind(type_, TypeFlags::STRING_LIKE) {
             Kind0::StringLikeType
         } else if is_tuple_type(&c.types, type_) {
             Kind0::ArrayLikeType
-        } else if c.is_type_assignable_to_kind(type_, TypeFlags::ESSYMBOL_LIKE) {
+        } else if c.is_type_assignable_to_kind(type_, TypeFlags::ES_SYMBOL_LIKE) {
             Kind0::ESSymbolType
         } else if c.is_function_type(type_) {
             Kind0::TypeWithCallSignature
@@ -1101,11 +1110,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
     }
 
     /// `(r *EmitResolver) GetJsxFragmentFactoryEntity`.
-    fn get_jsx_fragment_factory_entity(
-        &self,
-        location: NodeId,
-        _nodes: &[Node],
-    ) -> Option<NodeId> {
+    fn get_jsx_fragment_factory_entity(&self, location: NodeId, _nodes: &[Node]) -> Option<NodeId> {
         let mut c = checker_lock(&self.checker);
         c.get_jsx_fragment_factory_entity(location)
     }
@@ -1125,8 +1130,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
     fn precalculate_declaration_emit_visibility(&mut self, file: NodeId, nodes: &[Node]) {
         let mut c = checker_lock(&self.checker);
         let c = &mut *c;
-        if c
-            .emit_resolver_links
+        if c.emit_resolver_links
             .declaration_file_links
             .get(file)
             .aliases_marked
@@ -1149,6 +1153,11 @@ impl tsc_printer::EmitResolver for EmitResolver {
     /// `(r *EmitResolver) IsSymbolAccessible` — non-locking: only current
     /// usage is the symbol tracker, which runs inside `CreateX` calls that
     /// already hold the checker lock.
+    ///
+    /// PORT(deviation): `unsafe` is forbidden so the checker cannot be
+    /// aliased while the `CreateX` `borrow_mut` is live; when nested, this
+    /// reports `SymbolAccessibility::Accessible` (no diagnostics collected)
+    /// instead of recomputing. Top-level callers get the real check.
     fn is_symbol_accessible(
         &self,
         symbol: SymbolId,
@@ -1158,8 +1167,11 @@ impl tsc_printer::EmitResolver for EmitResolver {
         _nodes: &[Node],
         _symbols: &[Symbol],
     ) -> SymbolAccessibilityResult {
+        let Some(mut c) = checker_try_lock(&self.checker) else {
+            return SymbolAccessibilityResult::default();
+        };
         self.is_symbol_accessible_c(
-            checker_unchecked(&self.checker),
+            &mut c,
             Some(symbol),
             enclosing_declaration,
             meaning,
@@ -1180,25 +1192,20 @@ impl tsc_printer::EmitResolver for EmitResolver {
 
     /// `(r *EmitResolver) IsExpandoFunctionDeclaration`.
     fn is_expando_function_declaration(&self, node: NodeId, nodes: &[Node]) -> bool {
-        let _c = checker_lock(&self.checker);
-        self.is_expando_function_declaration_unsafe(node, nodes)
+        let Some(mut c) = checker_try_lock(&self.checker) else {
+            return false;
+        };
+        self.is_expando_function_declaration_impl(&mut c, node, nodes)
     }
 
-    /// `(r *EmitResolver) IsExpandoFunctionDeclarationUnsafe`.
+    /// `(r *EmitResolver) IsExpandoFunctionDeclarationUnsafe` — Go runs this
+    /// under the caller's held `checkerMu`; with `unsafe` forbidden, a live
+    /// `borrow_mut` degrades this to `false` (`PORT(deviation)`).
     fn is_expando_function_declaration_unsafe(&self, node: NodeId, nodes: &[Node]) -> bool {
-        // node = r.emitContext.ParseNode(node)
-        if !ast::is_parse_tree_node(&nodes[node]) {
+        let Some(mut c) = checker_try_lock(&self.checker) else {
             return false;
-        }
-        // this is substantially different from strada, but so is expando
-        // property checking
-        // (the `symbols` trait param is unused — the checker owns the arena)
-        let props = self.get_properties_of_container_function(node, nodes, &[]);
-        props.iter().any(|&p| {
-            let value_declaration =
-                checker_unchecked(&self.checker).symbol_arena.borrow()[p.index()].value_declaration;
-            ast::is_expando_property_declaration(value_declaration, nodes)
-        })
+        };
+        self.is_expando_function_declaration_impl(&mut c, node, nodes)
     }
 
     /// `(r *EmitResolver) IsLiteralConstDeclaration`.
@@ -1208,8 +1215,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
             return false;
         }
         if is_declaration_readonly(node, nodes)
-            || (ast::is_variable_declaration(&nodes[node])
-                && ast::is_var_const(node, nodes))
+            || (ast::is_variable_declaration(&nodes[node]) && ast::is_var_const(node, nodes))
         {
             let mut c = checker_lock(&self.checker);
             let Some(s) = c.get_symbol_of_declaration(node) else {
@@ -1307,7 +1313,9 @@ impl tsc_printer::EmitResolver for EmitResolver {
         nodes: &[Node],
     ) -> bool {
         if !ast::is_property_access_expression(&nodes[node])
-            || !nodes[node].name().is_some_and(|n| ast::is_identifier(&nodes[n]))
+            || !nodes[node]
+                .name()
+                .is_some_and(|n| ast::is_identifier(&nodes[n]))
             || !(nodes[node]
                 .expression()
                 .is_some_and(|e| ast::is_property_access_expression(&nodes[e]))
@@ -1363,8 +1371,10 @@ impl tsc_printer::EmitResolver for EmitResolver {
             // `c.GetSignaturesOfSymbol(c.GetSymbolOfDeclaration(node))` —
             // the Rust port takes `Option<SymbolId>` for the Go nilable
             // symbol, so the `let Some` unwrap isn't needed.
-            let signatures_of_symbol =
-                c.get_signatures_of_symbol(c.get_symbol_of_declaration(node));
+            let signatures_of_symbol = {
+                let symbol = c.get_symbol_of_declaration(node);
+                c.get_signatures_of_symbol(symbol)
+            };
             // If this function body corresponds to function with multiple
             // signature, it is implementation of overload
             // e.g.: function foo(a: string): string;
@@ -1383,13 +1393,15 @@ impl tsc_printer::EmitResolver for EmitResolver {
             //       }
             if signatures_of_symbol.len() == 1 {
                 let signature = signatures_of_symbol[0];
-                if signature == c.get_signature_of_full_signature_type(node) {
+                if Some(signature) == c.get_signature_of_full_signature_type(node) {
                     return false;
                 }
                 let declaration = c.signature_arena.get(signature).declaration;
                 if declaration != Some(node)
                     && declaration.is_some_and(|d| {
-                        !c.program_nodes(d)[d].flags.intersects(ast::NodeFlags::JSDOC)
+                        !c.program_nodes(d)[d]
+                            .flags
+                            .intersects(ast::NodeFlags::JSDOC)
                     })
                 {
                     return true;
@@ -1473,10 +1485,11 @@ impl tsc_printer::EmitResolver for EmitResolver {
             if c.is_readonly_symbol(base_prop) == c.is_readonly_symbol(s)
                 && s_flags.intersects(ast::SymbolFlags::OPTIONAL)
                     == base_prop_flags.intersects(ast::SymbolFlags::OPTIONAL)
-                && c.is_type_identical_to(
-                    c.get_type_of_symbol(s),
-                    c.get_type_of_symbol(base_prop),
-                )
+                && {
+                    let s_type = c.get_type_of_symbol(s);
+                    let base_prop_type = c.get_type_of_symbol(base_prop);
+                    c.is_type_identical_to(s_type, base_prop_type)
+                }
             {
                 return true;
             }
@@ -1487,22 +1500,24 @@ impl tsc_printer::EmitResolver for EmitResolver {
     /// `(r *EmitResolver) GetPropertiesOfContainerFunction` — explicitly _not
     /// locked_: it is only called via error reporters invoked via node
     /// builder calls to the symbol tracker already within locked contexts.
+    ///
+    /// PORT(deviation): `unsafe` is forbidden, so under a live `borrow_mut`
+    /// this degrades to `Vec::new()` instead of aliasing the checker.
     fn get_properties_of_container_function(
         &self,
         node: NodeId,
         _nodes: &[Node],
         _symbols: &[Symbol],
     ) -> Vec<SymbolId> {
-        let c = checker_unchecked(&self.checker);
-        let Some(s) = c.get_symbol_of_declaration(node) else {
+        let Some(mut c) = checker_try_lock(&self.checker) else {
             return Vec::new();
         };
-        let t = c.get_type_of_symbol(s);
-        c.get_properties_of_type(t)
+        get_properties_of_container_function_c(&mut c, node)
     }
 
-    /// `(r *EmitResolver) RequiresAddingImplicitUndefinedUnsafe` — NO
-    /// LOCKING: only called in contexts that already have a checker lock.
+    /// `(r *EmitResolver) RequiresAddingImplicitUndefinedUnsafe` — Go runs
+    /// this under the caller's held `checkerMu`; with `unsafe` forbidden, a
+    /// live `borrow_mut` degrades this to `false` (`PORT(deviation)`).
     fn requires_adding_implicit_undefined_unsafe(
         &self,
         declaration: NodeId,
@@ -1514,26 +1529,35 @@ impl tsc_printer::EmitResolver for EmitResolver {
         if !ast::is_parse_tree_node(&nodes[declaration]) {
             return false;
         }
-        checker_unchecked(&self.checker).requires_adding_implicit_undefined(
-            declaration,
-            symbol,
-            enclosing_declaration,
-        )
+        let Some(mut c) = checker_try_lock(&self.checker) else {
+            return false;
+        };
+        c.requires_adding_implicit_undefined(declaration, symbol, enclosing_declaration)
     }
 
-    /// `(r *EmitResolver) GetReferencedValueDeclarationUnsafe` — NO
-    /// LOCKING: Go omits `checkerMu` here (the resolver's hooks reacquire
-    /// the checker themselves via `checker_unchecked`).
+    /// `(r *EmitResolver) GetReferencedValueDeclarationUnsafe` — Go omits
+    /// `checkerMu` here; the resolver's hooks reacquire the checker
+    /// themselves.
+    ///
+    /// PORT(deviation): the checker cell may already be `borrow_mut`'d, so
+    /// the symbol arena is field-cloned out (`Symbol` is not `Clone`) and
+    /// the checker guard released before the resolver runs — the cloned
+    /// `symbols` are the resolver's read-only view while hooks still reach
+    /// the live arena. `None` when the checker is unavailable.
     fn get_referenced_value_declaration_unsafe(
         &self,
         node: NodeId,
         nodes: &[Node],
     ) -> Option<NodeId> {
-        let c = checker_unchecked(&self.checker);
-        let mut symbols = c.symbol_arena.borrow_mut();
+        if !ast::is_parse_tree_node(&nodes[node]) {
+            return None;
+        }
+        let mut symbols = {
+            let c = checker_try_lock(&self.checker)?;
+            clone_symbols(&c.symbol_arena.borrow())
+        };
         self.reference_resolver()
             .get_referenced_value_declaration(node, nodes, &mut symbols)
-        // (`&mut symbols` auto-derefs `RefMut<Vec<Symbol>>` → `&mut Vec<Symbol>`)
     }
 
     /// `(r *EmitResolver) CreateReturnTypeOfSignatureDeclaration`.
@@ -1543,7 +1567,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
         enclosing_declaration: Option<NodeId>,
         flags: nodebuilder::Flags,
         internal_flags: nodebuilder::InternalFlags,
-        tracker: &dyn nodebuilder::SymbolTracker,
+        _tracker: &mut dyn nodebuilder::SymbolTracker,
         nodes: &mut Vec<Node>,
     ) -> Option<NodeId> {
         let Some(original) = self
@@ -1560,7 +1584,6 @@ impl tsc_printer::EmitResolver for EmitResolver {
         };
 
         let mut c = checker_lock(&self.checker);
-        let tracker = tracker_mut(tracker);
         self.node_builder(&c).serialize_return_type_for_signature(
             &mut c,
             nodes,
@@ -1568,7 +1591,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
             enclosing_declaration,
             flags,
             internal_flags,
-            Some(Box::new(TrackerRef(tracker))),
+            None, /* tracker — see PORT(deviation) at the call site */
         )
     }
 
@@ -1579,7 +1602,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
         enclosing_declaration: Option<NodeId>,
         flags: nodebuilder::Flags,
         internal_flags: nodebuilder::InternalFlags,
-        tracker: &dyn nodebuilder::SymbolTracker,
+        _tracker: &mut dyn nodebuilder::SymbolTracker,
         nodes: &mut Vec<Node>,
     ) -> Vec<NodeId> {
         let Some(original) = self
@@ -1591,16 +1614,16 @@ impl tsc_printer::EmitResolver for EmitResolver {
         };
 
         let mut c = checker_lock(&self.checker);
-        let tracker = tracker_mut(tracker);
-        self.node_builder(&c).serialize_type_parameters_for_signature(
-            &mut c,
-            nodes,
-            original,
-            enclosing_declaration,
-            flags,
-            internal_flags,
-            Some(Box::new(TrackerRef(tracker))),
-        )
+        self.node_builder(&c)
+            .serialize_type_parameters_for_signature(
+                &mut c,
+                nodes,
+                original,
+                enclosing_declaration,
+                flags,
+                internal_flags,
+                None, /* tracker — see PORT(deviation) at the call site */
+            )
     }
 
     /// `(r *EmitResolver) CreateTypeOfDeclaration`.
@@ -1610,7 +1633,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
         enclosing_declaration: Option<NodeId>,
         flags: nodebuilder::Flags,
         internal_flags: nodebuilder::InternalFlags,
-        tracker: &dyn nodebuilder::SymbolTracker,
+        _tracker: &mut dyn nodebuilder::SymbolTracker,
         nodes: &mut Vec<Node>,
     ) -> Option<NodeId> {
         if self
@@ -1644,7 +1667,6 @@ impl tsc_printer::EmitResolver for EmitResolver {
                     .new_keyword_type_node(nodes, ast::Kind::AnyKeyword),
             );
         };
-        let tracker = tracker_mut(tracker);
         self.node_builder(&c).serialize_type_for_declaration(
             &mut c,
             nodes,
@@ -1653,7 +1675,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
             enclosing_declaration,
             flags | nodebuilder::Flags::MULTILINE_OBJECT_LITERALS,
             internal_flags,
-            Some(Box::new(TrackerRef(tracker))),
+            None, /* tracker — see PORT(deviation) at the call site */
         )
     }
 
@@ -1661,7 +1683,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
     fn create_literal_const_value(
         &self,
         node: NodeId,
-        tracker: &dyn nodebuilder::SymbolTracker,
+        _tracker: &mut dyn nodebuilder::SymbolTracker,
         nodes: &mut Vec<Node>,
     ) -> Option<NodeId> {
         let node = self.emit_context.borrow().parse_node(nodes, node);
@@ -1683,7 +1705,6 @@ impl tsc_printer::EmitResolver for EmitResolver {
         {
             let mut c = checker_lock(&self.checker);
             let symbol = c.types.get(t).symbol;
-            let tracker = tracker_mut(tracker);
             enum_result = self.node_builder(&c).symbol_to_expression(
                 &mut c,
                 nodes,
@@ -1692,7 +1713,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
                 node,
                 nodebuilder::Flags::NONE,
                 nodebuilder::InternalFlags::NONE,
-                Some(Box::new(TrackerRef(tracker))),
+                None, /* tracker — see PORT(deviation) at the call site */
             );
             // What about regularTrueType/regularFalseType - since those
             // aren't fresh, we never make initializers from them
@@ -1704,15 +1725,19 @@ impl tsc_printer::EmitResolver for EmitResolver {
             // that produced `t` above; the borrow is already released).
             let c = self.checker.borrow();
             if t == c.true_type {
-                enum_result = Some(self.emit_context.borrow_mut().factory.new_keyword_expression(
-                    nodes,
-                    ast::Kind::TrueKeyword,
-                ));
+                enum_result = Some(
+                    self.emit_context
+                        .borrow_mut()
+                        .factory
+                        .new_keyword_expression(nodes, ast::Kind::TrueKeyword),
+                );
             } else if t == c.false_type {
-                enum_result = Some(self.emit_context.borrow_mut().factory.new_keyword_expression(
-                    nodes,
-                    ast::Kind::FalseKeyword,
-                ));
+                enum_result = Some(
+                    self.emit_context
+                        .borrow_mut()
+                        .factory
+                        .new_keyword_expression(nodes, ast::Kind::FalseKeyword),
+                );
             }
         }
         if enum_result.is_some() {
@@ -1735,12 +1760,12 @@ impl tsc_printer::EmitResolver for EmitResolver {
                 }
                 Some(evaluator::Value::Number(value)) => {
                     if value.is_inf() {
-                        if value > 0.0.into() {
+                        if value > 0.0 {
                             return Some(
-                                self.emit_context.borrow_mut().factory.new_identifier(
-                                    nodes,
-                                    "Infinity",
-                                ),
+                                self.emit_context
+                                    .borrow_mut()
+                                    .factory
+                                    .new_identifier(nodes, "Infinity"),
                             );
                         }
                         let inner = self
@@ -1804,9 +1829,12 @@ impl tsc_printer::EmitResolver for EmitResolver {
                     } else {
                         ast::Kind::FalseKeyword
                     };
-                    return Some(self.emit_context.borrow_mut().factory.new_keyword_expression(
-                        nodes, kind,
-                    ));
+                    return Some(
+                        self.emit_context
+                            .borrow_mut()
+                            .factory
+                            .new_keyword_expression(nodes, kind),
+                    );
                 }
                 None => {}
             }
@@ -1821,7 +1849,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
         enclosing_declaration: Option<NodeId>,
         flags: nodebuilder::Flags,
         internal_flags: nodebuilder::InternalFlags,
-        tracker: &dyn nodebuilder::SymbolTracker,
+        _tracker: &mut dyn nodebuilder::SymbolTracker,
         nodes: &mut Vec<Node>,
     ) -> Option<NodeId> {
         let Some(expression) = self.emit_context.borrow().parse_node(nodes, expression) else {
@@ -1834,7 +1862,6 @@ impl tsc_printer::EmitResolver for EmitResolver {
         };
 
         let mut c = checker_lock(&self.checker);
-        let tracker = tracker_mut(tracker);
         self.node_builder(&c).serialize_type_for_expression(
             &mut c,
             nodes,
@@ -1842,7 +1869,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
             enclosing_declaration,
             flags | nodebuilder::Flags::MULTILINE_OBJECT_LITERALS,
             internal_flags,
-            Some(Box::new(TrackerRef(tracker))),
+            None, /* tracker — see PORT(deviation) at the call site */
         )
     }
 
@@ -1853,7 +1880,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
         enclosing_declaration: Option<NodeId>,
         flags: nodebuilder::Flags,
         internal_flags: nodebuilder::InternalFlags,
-        tracker: &dyn nodebuilder::SymbolTracker,
+        tracker: &mut dyn nodebuilder::SymbolTracker,
         nodes: &mut Vec<Node>,
     ) -> Vec<NodeId> {
         let Some(container) = self.emit_context.borrow().parse_node(nodes, container) else {
@@ -1868,12 +1895,17 @@ impl tsc_printer::EmitResolver for EmitResolver {
         let sym_type = c.get_type_of_symbol(sym);
         let static_infos = c.get_index_infos_of_type(sym_type);
         let instance_index_symbol = c.get_index_symbol(sym);
-        let mut instance_infos = Vec::new();
+        // PORT: `get_index_infos_of_index_symbol` returns freshly built
+        // `IndexInfo` values (not arena ids), so they are allocated into
+        // `index_info_arena` to join the `IndexInfoId` list.
+        let mut instance_infos: Vec<IndexInfoId> = Vec::new();
         if let Some(instance_index_symbol) = instance_index_symbol {
             let members = c.get_members_of_symbol(sym);
             let sibling_symbols: Vec<SymbolId> = members.values().copied().collect();
-            instance_infos =
-                c.get_index_infos_of_index_symbol(instance_index_symbol, sibling_symbols);
+            for info in c.get_index_infos_of_index_symbol(instance_index_symbol, &sibling_symbols)
+            {
+                instance_infos.push(c.index_info_arena.alloc(info));
+            }
         }
 
         let mut result: Vec<NodeId> = Vec::new();
@@ -1894,27 +1926,19 @@ impl tsc_printer::EmitResolver for EmitResolver {
                     // !!! TODO: Complete late-bound index info support -
                     // getObjectLiteralIndexInfo does not yet add late bound
                     // components to index signatures
-                    let all_component_computed_names_serializable =
-                        enclosing_declaration.is_some()
-                            && core_helpers::every(&components, |&component| {
-                                let Some(name) = nodes[component].name() else {
-                                    return false;
-                                };
-                                ast::is_computed_property_name(&nodes[name])
-                                    && nodes[name]
-                                        .expression()
-                                        .is_some_and(|e| {
-                                            ast::is_entity_name_expression(&nodes[e], nodes)
-                                                && c
-                                                    .is_entity_name_visible(
-                                                        e,
-                                                        enclosing_declaration,
-                                                        false,
-                                                    )
-                                                    .accessibility
-                                                    == SymbolAccessibility::Accessible
-                                        })
-                            });
+                    let all_component_computed_names_serializable = enclosing_declaration.is_some()
+                        && core_helpers::every(&components, |&component| {
+                            let Some(name) = nodes[component].name() else {
+                                return false;
+                            };
+                            ast::is_computed_property_name(&nodes[name])
+                                && nodes[name].expression().is_some_and(|e| {
+                                    ast::is_entity_name_expression(&nodes[e], nodes)
+                                        && c.is_entity_name_visible(e, enclosing_declaration, false)
+                                            .accessibility
+                                            == SymbolAccessibility::Accessible
+                                })
+                        });
                     if all_component_computed_names_serializable {
                         for component in &components {
                             let component = *component;
@@ -1925,7 +1949,8 @@ impl tsc_printer::EmitResolver for EmitResolver {
                                 continue;
                             }
 
-                            let name_expr = nodes[component].name().and_then(|n| nodes[n].expression());
+                            let name_expr =
+                                nodes[component].name().and_then(|n| nodes[n].expression());
                             let first_identifier = ast::get_first_identifier(
                                 name_expr.expect("component computed name expression"),
                                 nodes,
@@ -1936,30 +1961,35 @@ impl tsc_printer::EmitResolver for EmitResolver {
                                 Some(first_identifier),
                                 &text,
                                 ast::SymbolFlags::VALUE | ast::SymbolFlags::EXPORT_VALUE,
-                                None, /*nameNotFoundMessage*/
-                                true, /*isUse*/
+                                None,  /*nameNotFoundMessage*/
+                                true,  /*isUse*/
                                 false, /*excludeGlobals*/
                             );
                             if let Some(name) = name {
-                                tracker_mut(tracker).track_symbol(
+                                tracker.track_symbol(
                                     name,
                                     enclosing_declaration,
                                     ast::SymbolFlags::VALUE,
+                                    nodes,
                                 );
                             }
 
                             let mut mods: Vec<NodeId> = Vec::new();
                             if is_static {
-                                mods.push(self.emit_context.borrow_mut().factory.new_token(
-                                    nodes,
-                                    ast::Kind::StaticKeyword,
-                                ));
+                                mods.push(
+                                    self.emit_context
+                                        .borrow_mut()
+                                        .factory
+                                        .new_token(nodes, ast::Kind::StaticKeyword),
+                                );
                             }
                             if c.index_info_arena.get(info).is_readonly {
-                                mods.push(self.emit_context.borrow_mut().factory.new_token(
-                                    nodes,
-                                    ast::Kind::ReadonlyKeyword,
-                                ));
+                                mods.push(
+                                    self.emit_context
+                                        .borrow_mut()
+                                        .factory
+                                        .new_token(nodes, ast::Kind::ReadonlyKeyword),
+                                );
                             }
                             let modifier_list = if mods.is_empty() {
                                 None
@@ -1981,7 +2011,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
                                     enclosing_declaration,
                                     flags,
                                     internal_flags,
-                                    Some(Box::new(TrackerRef(tracker_mut(tracker)))),
+                                    None, /* tracker — see PORT(deviation) at the call site */
                                 )
                             });
                             // `f.NewPropertyDeclaration(modifiers,
@@ -1989,37 +2019,43 @@ impl tsc_printer::EmitResolver for EmitResolver {
                             // typeNode, nil)` — hoist reads out of the `&mut
                             // nodes` call.
                             let component_name = nodes[component].name();
-                            let component_question_token =
-                                nodes[component].question_token(nodes);
-                            let decl = self.emit_context.borrow_mut().factory.new_property_declaration(
-                                nodes,
-                                modifier_list,
-                                component_name,
-                                component_question_token,
-                                type_node,
-                                None,
-                            );
+                            let component_question_token = nodes[component].question_token(nodes);
+                            let decl = self
+                                .emit_context
+                                .borrow_mut()
+                                .factory
+                                .new_property_declaration(
+                                    nodes,
+                                    modifier_list,
+                                    component_name,
+                                    component_question_token,
+                                    type_node,
+                                    None,
+                                );
                             result.push(decl);
                         }
                         continue;
                     }
                 }
-                let node = self.node_builder(c).index_info_to_index_signature_declaration(
-                    c,
-                    nodes,
-                    info,
-                    enclosing_declaration,
-                    flags,
-                    internal_flags,
-                    Some(Box::new(TrackerRef(tracker_mut(tracker)))),
-                );
+                let node = self
+                    .node_builder(c)
+                    .index_info_to_index_signature_declaration(
+                        c,
+                        nodes,
+                        info,
+                        enclosing_declaration,
+                        flags,
+                        internal_flags,
+                        None, /* tracker — see PORT(deviation) at the call site */
+                    );
                 let node = node.and_then(|node| {
                     if is_static {
-                        let mut mod_nodes: Vec<NodeId> = vec![self
-                            .emit_context
-                            .borrow_mut()
-                            .factory
-                            .new_token(nodes, ast::Kind::StaticKeyword)];
+                        let mut mod_nodes: Vec<NodeId> = vec![
+                            self.emit_context
+                                .borrow_mut()
+                                .factory
+                                .new_token(nodes, ast::Kind::StaticKeyword),
+                        ];
                         mod_nodes.extend(
                             nodes[node]
                                 .modifier_nodes()
@@ -2067,12 +2103,11 @@ impl tsc_printer::EmitResolver for EmitResolver {
         enclosing_declaration: Option<NodeId>,
         flags: nodebuilder::Flags,
         internal_flags: nodebuilder::InternalFlags,
-        tracker: &dyn nodebuilder::SymbolTracker,
+        _tracker: &mut dyn nodebuilder::SymbolTracker,
         nodes: &mut Vec<Node>,
     ) -> Option<NodeId> {
         let type_node = self.emit_context.borrow().parse_node(nodes, type_node);
         let mut c = checker_lock(&self.checker);
-        let tracker = tracker_mut(tracker);
         self.node_builder(&c).try_js_type_node_to_type_node(
             &mut c,
             nodes,
@@ -2080,7 +2115,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
             enclosing_declaration,
             flags,
             internal_flags,
-            Some(Box::new(TrackerRef(tracker))),
+            None, /* tracker — see PORT(deviation) at the call site */
         )
     }
 }

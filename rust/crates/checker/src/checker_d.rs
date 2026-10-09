@@ -1090,7 +1090,7 @@ impl Checker {
     // `permissiveMapperWorker` (checker.go:25066) — checker_core.rs.
 
     /// `(c *Checker) getTrueTypeFromConditionalType` (checker.go:25073).
-    pub(crate) fn get_true_type_from_conditional_type(&mut self, t: TypeId) -> TypeId {
+    pub fn get_true_type_from_conditional_type(&mut self, t: TypeId) -> TypeId {
         let (root_node, mapper) = {
             let g = self.types.get(t);
             let d = g.as_conditional_type();
@@ -1114,7 +1114,7 @@ impl Checker {
     }
 
     /// `(c *Checker) getFalseTypeFromConditionalType` (checker.go:25081).
-    pub(crate) fn get_false_type_from_conditional_type(&mut self, t: TypeId) -> TypeId {
+    pub fn get_false_type_from_conditional_type(&mut self, t: TypeId) -> TypeId {
         let (root_node, mapper) = {
             let g = self.types.get(t);
             let d = g.as_conditional_type();
@@ -1670,7 +1670,7 @@ impl Checker {
     }
 
     /// `(c *Checker) isGenericType` (checker.go:25402).
-    pub(crate) fn is_generic_type(&mut self, t: TypeId) -> bool {
+    pub fn is_generic_type(&mut self, t: TypeId) -> bool {
         !self.get_generic_object_flags(t).is_empty()
     }
 
@@ -2036,7 +2036,7 @@ impl Checker {
     }
 
     /// `(c *Checker) getBaseTypeOfLiteralType` (checker.go:25968).
-    pub(crate) fn get_base_type_of_literal_type(&mut self, t: TypeId) -> TypeId {
+    pub fn get_base_type_of_literal_type(&mut self, t: TypeId) -> TypeId {
         let flags = self.types.get(t).flags;
         if flags.intersects(TypeFlags::ENUM_LIKE) {
             return self.get_base_type_of_enum_like_type(t);
@@ -2187,7 +2187,7 @@ pub(crate) fn get_boolean_literal_value(types: &TypeArena, t: TypeId) -> bool {
 }
 
 /// `isLiteralType` (checker.go:25927) — package-level.
-pub(crate) fn is_literal_type(types: &TypeArena, t: TypeId) -> bool {
+pub fn is_literal_type(types: &TypeArena, t: TypeId) -> bool {
     let ty = types.get(t);
     if ty.flags.intersects(TypeFlags::BOOLEAN) {
         return true;
@@ -2219,7 +2219,7 @@ pub(crate) fn is_unit_type(types: &TypeArena, t: TypeId) -> bool {
 
 impl Checker {
     /// `(c *Checker) getWidenedLiteralType` (checker.go:26021).
-    pub(crate) fn get_widened_literal_type(&mut self, t: TypeId) -> TypeId {
+    pub fn get_widened_literal_type(&mut self, t: TypeId) -> TypeId {
         let flags = self.types.get(t).flags;
         if flags.intersects(TypeFlags::ENUM_LIKE) && is_fresh_literal_type(&self.types, t) {
             return self.get_base_type_of_enum_like_type(t);
@@ -2443,7 +2443,7 @@ impl Checker {
 
     /// `(c *Checker) getUnionTypeEx` (checker.go:26162). `alias`/`origin` are
     /// `*TypeAlias`/`*Type` → `Option`.
-    pub(crate) fn get_union_type_ex(
+    pub fn get_union_type_ex(
         &mut self,
         types: &[TypeId],
         union_reduction: UnionReduction,
@@ -5730,7 +5730,7 @@ impl Checker {
     }
 
     /// `(c *Checker) getBaseConstraintOfType` (checker.go:27970).
-    pub(crate) fn get_base_constraint_of_type(&mut self, t: TypeId) -> Option<TypeId> {
+    pub fn get_base_constraint_of_type(&mut self, t: TypeId) -> Option<TypeId> {
         if self.types.get(t).flags.intersects(
             TypeFlags::INSTANTIABLE_NON_PRIMITIVE
                 | TypeFlags::UNION_OR_INTERSECTION
@@ -6535,7 +6535,7 @@ impl Checker {
     }
 
     /// `(c *Checker) typeHasCallOrConstructSignatures` (checker.go:28395).
-    pub(crate) fn type_has_call_or_construct_signatures(&mut self, t: TypeId) -> bool {
+    pub fn type_has_call_or_construct_signatures(&mut self, t: TypeId) -> bool {
         if !self
             .types
             .get(t)
@@ -7099,7 +7099,7 @@ impl Checker {
             let original = self.get_type_of_symbol(property);
             let updated = f(self, original);
             let property = if updated != original {
-                self.create_symbol_with_type(property, updated)
+                self.create_symbol_with_type(Some(property), Some(updated))
             } else {
                 property
             };
@@ -8593,7 +8593,7 @@ impl Checker {
     }
 
     /// `(c *Checker) removeMissingOrUndefinedType` (checker.go:29628).
-    pub(crate) fn remove_missing_or_undefined_type(&mut self, t: TypeId) -> TypeId {
+    pub fn remove_missing_or_undefined_type(&mut self, t: TypeId) -> TypeId {
         if self.exact_optional_property_types {
             return self.remove_type(t, self.missing_type);
         }
@@ -9152,7 +9152,7 @@ impl Checker {
             let parameters = nodes[fn_].parameters().unwrap_or(&[]).to_vec();
             let index_of_parameter =
                 parameters.iter().position(|&p| p == parameter).unwrap_or(0) as i32;
-            if crate::utilities::has_dot_dot_dot_token(&nodes[parameter]) {
+            if crate::utilities::has_dot_dot_dot_token(&nodes[parameter], &nodes) {
                 return Some(self.get_spread_argument_type(
                     &args,
                     index_of_parameter,
@@ -9183,7 +9183,7 @@ impl Checker {
             if ast::get_this_parameter(&nodes[fn_], &nodes).is_some() {
                 index -= 1;
             }
-            if crate::utilities::has_dot_dot_dot_token(&nodes[parameter])
+            if crate::utilities::has_dot_dot_dot_token(&nodes[parameter], &nodes)
                 && parameters.last() == Some(&parameter)
             {
                 return self.get_rest_type_at_position(contextual_signature, index as usize, false);
@@ -9396,7 +9396,7 @@ impl Checker {
             if !ast::is_binding_element(&nodes[parent]) && nodes[parent].initializer().is_some() {
                 parent_type = Some(self.check_declaration_initializer(
                     parent,
-                    if crate::utilities::has_dot_dot_dot_token(&nodes[declaration]) {
+                    if crate::utilities::has_dot_dot_dot_token(&nodes[declaration], &nodes) {
                         CheckMode::REST_BINDING_ELEMENT
                     } else {
                         CheckMode::NORMAL
@@ -9740,7 +9740,7 @@ impl Checker {
     }
 
     /// `(c *Checker) getContextualTypeForArgumentAtIndex` (checker.go:30321).
-    pub(crate) fn get_contextual_type_for_argument_at_index(
+    pub fn get_contextual_type_for_argument_at_index(
         &mut self,
         call_target: NodeId,
         arg_index: i32,
@@ -10017,7 +10017,7 @@ impl Checker {
 
 impl Checker {
     /// `(c *Checker) getContextualTypeForObjectLiteralElement` (checker.go:30469).
-    pub(crate) fn get_contextual_type_for_object_literal_element(
+    pub fn get_contextual_type_for_object_literal_element(
         &mut self,
         element: NodeId,
         context_flags: ContextFlags,
@@ -10989,7 +10989,7 @@ fn is_spread_argument(nodes: &[ast::Node], arg: NodeId) -> bool {
 
 impl Checker {
     /// `(c *Checker) getTypeOfPropertyOfContextualType` (checker.go:31100).
-    pub(crate) fn get_type_of_property_of_contextual_type(
+    pub fn get_type_of_property_of_contextual_type(
         &mut self,
         t: TypeId,
         name: &str,
@@ -11551,7 +11551,7 @@ impl Checker {
     /// `(c *Checker) isContextSensitive` (checker.go:31446).
     /// Returns true if the given expression contains (at any level of nesting) a function or arrow expression
     /// that is subject to contextual typing.
-    pub(crate) fn is_context_sensitive(&mut self, node: NodeId) -> bool {
+    pub fn is_context_sensitive(&mut self, node: NodeId) -> bool {
         let nodes = self.program_nodes(node);
         match nodes[node].kind {
             ast::Kind::FunctionExpression
@@ -12147,7 +12147,7 @@ impl Checker {
 
     /// `(c *Checker) getAwaitedType` (checker.go:31802).
     /// Gets the "awaited type" of a type.
-    pub(crate) fn get_awaited_type(&mut self, t: TypeId) -> Option<TypeId> {
+    pub fn get_awaited_type(&mut self, t: TypeId) -> Option<TypeId> {
         self.get_awaited_type_ex(t, None, None, &[])
     }
 
@@ -13040,7 +13040,7 @@ impl Checker {
     }
 
     /// `(c *Checker) getIndexSignaturesAtLocation` (checker.go:32317).
-    pub(crate) fn get_index_signatures_at_location(&mut self, node: NodeId) -> Vec<NodeId> {
+    pub fn get_index_signatures_at_location(&mut self, node: NodeId) -> Vec<NodeId> {
         let mut signatures: Vec<NodeId> = Vec::new();
         let nodes = self.program_nodes(node);
         if !(ast::is_identifier(&nodes[node])
@@ -13321,7 +13321,7 @@ impl Checker {
     }
 
     /// `(c *Checker) getTypeOfNode` (checker.go:32483).
-    pub(crate) fn get_type_of_node(&mut self, node: NodeId) -> TypeId {
+    pub fn get_type_of_node(&mut self, node: NodeId) -> TypeId {
         let nodes = self.program_nodes(node);
         if ast::is_source_file(&nodes[node])
             && !ast::is_external_or_commonjs_module(nodes[node].as_source_file())

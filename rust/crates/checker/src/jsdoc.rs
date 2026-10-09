@@ -22,11 +22,7 @@ use crate::checker_core::Checker;
 impl Checker {
     /// `(c *Checker) checkUnmatchedJSDocParameters`. PORT(deferred):
     /// depends on deferred checker diagnostics/type methods (see header).
-    pub fn check_unmatched_js_doc_parameters(
-        &mut self,
-        nodes: &mut Vec<ast::Node>,
-        node: NodeId,
-    ) {
+    pub fn check_unmatched_js_doc_parameters(&mut self, nodes: &mut Vec<ast::Node>, node: NodeId) {
         let mut jsdoc_parameters: Vec<NodeId> = Vec::new();
         for tag in get_all_jsdoc_tags(nodes, node) {
             if nodes[tag].kind == ast::Kind::JSDocParameterTag {
@@ -87,9 +83,7 @@ impl Checker {
                 let Some(type_expression) = last_jsdoc_param.type_expression else {
                     return;
                 };
-                let Some(type_node) = nodes[type_expression]
-                    .as_js_doc_type_expression()
-                    .type_
+                let Some(type_node) = nodes[type_expression].as_js_doc_type_expression().type_
                 else {
                     return;
                 };

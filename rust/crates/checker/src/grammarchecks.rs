@@ -14,8 +14,6 @@
 // `utilities.rs`) by snake_case name — unresolved symbols are expected until
 // those land.
 
-use std::rc::Rc;
-
 use rustc_hash::FxHashMap;
 use tsc_ast::{self as ast, NodeId};
 use tsc_core::options_generated::{ModuleKind, ScriptTarget};
@@ -144,10 +142,13 @@ impl Checker {
         let mut pending: Vec<ast::diagnostic::DiagnosticRef> = Vec::new();
         {
             let sf = nodes[source_file].as_source_file();
+            // `file` is declared before `s` so it outlives the scanner —
+            // the error callback stored in `s` borrows `file`, and drop
+            // order is reverse declaration order.
+            let file = ast::diagnostic::DiagnosticFile::from_node(source_file, &nodes);
             let mut s = scanner::Scanner::new();
             s.set_script_target(self.language_version);
             s.set_language_variant(sf.language_variant);
-            let file = ast::diagnostic::DiagnosticFile::from_node(source_file, &nodes);
             s.set_on_error(Some(
                 |message: &'static diagnostics::Message,
                  start: usize,
@@ -226,7 +227,10 @@ impl Checker {
 
             let parent = nodes[priv_id].parent.expect("parent");
             let is_in_operation = ast::is_binary_expression(&nodes[parent])
-                && nodes[parent].as_binary_expression().operator_token == ast::Kind::InKeyword;
+                && nodes[parent]
+                    .as_binary_expression()
+                    .operator_token
+                    .is_some_and(|t| nodes[t].kind == ast::Kind::InKeyword);
             if self
                 .get_symbol_for_private_identifier_expression(priv_id)
                 .is_none()
@@ -573,7 +577,7 @@ impl Checker {
                         let parent = nodes[node].parent;
                         if nodes[node].kind == ast::Kind::TypeParameter
                             && !(parent.is_some_and(|p| {
-                                ast::is_function_like_declaration(&nodes[p])
+                                ast::is_function_like_declaration(Some(p), &nodes)
                                     || ast::is_class_like(Some(p), &nodes)
                                     || ast::is_function_type_node(&nodes[p])
                                     || ast::is_constructor_type_node(&nodes[p])
@@ -1194,7 +1198,8 @@ impl Checker {
                             || parent.is_some_and(|p| {
                                 !(ast::is_interface_declaration(&nodes[p])
                                     || ast::is_class_like(Some(p), &nodes)
-                                    || ast::is_type_or_js_type_alias_declaration(&nodes[p]))
+                                    || ast::is_type_alias_declaration(&nodes[p])
+                                    || ast::is_js_type_alias_declaration(&nodes[p]))
                             })
                         {
                             return self.grammar_error_on_node(
@@ -1662,7 +1667,7 @@ impl Checker {
             || self.check_grammar_type_parameter_list(type_parameters.as_ref(), file.expect("file"))
             || self.check_grammar_parameter_list(parameters.as_ref().expect("parameters"))
             || self.check_grammar_arrow_function(node, file.expect("file"))
-            || (ast::is_function_like_declaration(&nodes[node])
+            || (ast::is_function_like_declaration(Some(node), &nodes)
                 && self.check_grammar_for_use_strict_simple_parameter_list(node))
     }
 
@@ -1734,8 +1739,7 @@ impl Checker {
     /// `func (c *Checker) checkGrammarIndexSignatureParameters` (grammarchecks.go:796).
     pub(crate) fn check_grammar_index_signature_parameters(&mut self, node: NodeId) -> bool {
         let nodes = self.program_nodes(node);
-        let sig = nodes[node].as_index_signature_declaration();
-        let param_nodes: Vec<NodeId> = sig
+        let param_nodes: Vec<NodeId> = nodes[node]
             .parameter_list()
             .map(|p| p.nodes().to_vec())
             .unwrap_or_default();
@@ -1758,10 +1762,7 @@ impl Checker {
             );
         }
 
-        let parameter_list = nodes[node]
-            .as_index_signature_declaration()
-            .parameter_list()
-            .cloned();
+        let parameter_list = nodes[node].parameter_list().cloned();
         self.check_grammar_for_disallowed_trailing_comma(
             parameter_list.as_ref(),
             &diagnostics::An_index_signature_cannot_have_a_trailing_comma,
@@ -2092,7 +2093,10 @@ impl Checker {
             .expression
             .expect("computed property name expression");
         if nodes[expression].kind == ast::Kind::BinaryExpression
-            && nodes[expression].as_binary_expression().operator_token == ast::Kind::CommaToken
+            && nodes[expression]
+                .as_binary_expression()
+                .operator_token
+                .is_some_and(|t| nodes[t].kind == ast::Kind::CommaToken)
         {
             return self.grammar_error_on_node(
                 expression,
@@ -2254,7 +2258,7 @@ impl Checker {
                             && (nodes[m].kind != ast::Kind::AsyncKeyword
                                 || nodes[prop].kind != ast::Kind::MethodDeclaration)
                         {
-                            let text = scanner::get_text_of_node(m, &nodes);
+                            let text = tsc_scanner::utilities::get_text_of_node(m, &nodes);
                             self.grammar_error_on_node(
                                 m,
                                 &diagnostics::X_0_modifier_cannot_be_used_here,
@@ -2265,7 +2269,7 @@ impl Checker {
                 } else if ast::can_have_illegal_modifiers(&nodes[prop]) {
                     for m in modifiers {
                         if ast::is_modifier(&nodes[m]) {
-                            let text = scanner::get_text_of_node(m, &nodes);
+                            let text = tsc_scanner::utilities::get_text_of_node(m, &nodes);
                             self.grammar_error_on_node(
                                 m,
                                 &diagnostics::X_0_modifier_cannot_be_used_here,
@@ -2354,7 +2358,7 @@ impl Checker {
                     if current_kind.intersects(DeclarationMeaning::METHOD)
                         && existing_kind.intersects(DeclarationMeaning::METHOD)
                     {
-                        let text = scanner::get_text_of_node(name, &nodes);
+                        let text = tsc_scanner::utilities::get_text_of_node(name, &nodes);
                         self.grammar_error_on_node(
                             name,
                             &diagnostics::Duplicate_identifier_0,
@@ -2363,7 +2367,7 @@ impl Checker {
                     } else if current_kind.intersects(DeclarationMeaning::PROPERTY_ASSIGNMENT)
                         && existing_kind.intersects(DeclarationMeaning::PROPERTY_ASSIGNMENT)
                     {
-                        let text = scanner::get_text_of_node(name, &nodes);
+                        let text = tsc_scanner::utilities::get_text_of_node(name, &nodes);
                         self.grammar_error_on_node(
                             name,
                             &diagnostics::An_object_literal_cannot_have_multiple_properties_with_the_same_name,
@@ -2419,8 +2423,8 @@ impl Checker {
             let name = attr.name.expect("jsx attribute name");
             let initializer = attr.initializer;
             let text_of_name = nodes[name].text(&nodes).to_string();
-            if !seen.contains(&text_of_name) {
-                seen.insert(text_of_name);
+            if !seen.has(&text_of_name) {
+                seen.add(text_of_name);
             } else {
                 return self.grammar_error_on_node(
                     name,
@@ -3065,7 +3069,7 @@ impl Checker {
         let target_label = nodes[node].label();
         let mut current = Some(node);
         while let Some(cur) = current {
-            if ast::is_function_like_or_class_static_block_declaration(&nodes[cur], &nodes) {
+            if ast::is_function_like_or_class_static_block_declaration(Some(cur), &nodes) {
                 return self.grammar_error_on_node(
                     node,
                     &diagnostics::Jump_target_cannot_cross_function_boundary,
@@ -3648,7 +3652,7 @@ impl Checker {
                         && !crate::utilities::has_async_modifier(&nodes[container])
                     {
                         let nodes = self.program_nodes(node);
-                        let related_info = crate::utilities::new_diagnostic_for_node(
+                        let related_info = crate::utilities::new_diagnostic_for_node::<String>(
                             Some(container),
                             &nodes,
                             &diagnostics::Did_you_mean_to_mark_this_function_as_async,
@@ -3865,7 +3869,10 @@ impl Checker {
         if ast::is_computed_property_name(&nodes[property_name])
             && nodes[property_name].expression().is_some_and(|e| {
                 ast::is_binary_expression(&nodes[e])
-                    && nodes[e].as_binary_expression().operator_token == ast::Kind::InKeyword
+                    && nodes[e]
+                        .as_binary_expression()
+                        .operator_token
+                        .is_some_and(|t| nodes[t].kind == ast::Kind::InKeyword)
             })
         {
             let first_member = nodes[node]
@@ -4205,7 +4212,7 @@ impl Checker {
     /// `func (c *Checker) checkGrammarNumericLiteral` (grammarchecks.go:2059).
     pub(crate) fn check_grammar_numeric_literal(&mut self, node: NodeId) {
         let nodes = self.program_nodes(node);
-        let node_text = scanner::get_text_of_node(node, &nodes);
+        let node_text = tsc_scanner::utilities::get_text_of_node(node, &nodes);
 
         // Realism (size) checking
         // We should test against `getTextOfNode(node)` rather than `node.text`, because `node.text` for large numeric literals can contain "."
@@ -4590,10 +4597,10 @@ impl Checker {
             let type_node = property_signature.type_.expect("type");
             if !ast::is_literal_type_node(&nodes[type_node])
                 || !ast::is_string_literal(
-                    &nodes[type_node]
+                    &nodes[nodes[type_node]
                         .as_literal_type_node()
                         .literal
-                        .expect("literal"),
+                        .expect("literal")],
                 )
             {
                 return self.grammar_error_on_node(

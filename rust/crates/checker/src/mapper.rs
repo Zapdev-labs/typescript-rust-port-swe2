@@ -31,8 +31,7 @@ use std::sync::{Arc, RwLock};
 use tsc_core::core::map as core_map;
 
 use crate::checker_core::{
-    self, Checker, InferenceContextId, get_non_distributed_type_parameter,
-    is_this_type_parameter,
+    self, Checker, InferenceContextId, get_non_distributed_type_parameter, is_this_type_parameter,
 };
 use crate::types::{TypeArena, TypeId};
 
@@ -179,12 +178,10 @@ impl TypeMapperArena {
                         Action::Passthrough
                     }
                 }
-                TypeMapperData::Array(s) => {
-                    match s.sources.iter().position(|&src| src == t) {
-                        Some(i) => Action::Result(s.targets[i]),
-                        None => Action::Passthrough,
-                    }
-                }
+                TypeMapperData::Array(s) => match s.sources.iter().position(|&src| src == t) {
+                    Some(i) => Action::Result(s.targets[i]),
+                    None => Action::Passthrough,
+                },
                 TypeMapperData::ArrayToSingle(s) => {
                     if s.sources.contains(&t) {
                         Action::Result(s.target)
@@ -192,12 +189,10 @@ impl TypeMapperArena {
                         Action::Passthrough
                     }
                 }
-                TypeMapperData::Deferred(s) => {
-                    match s.sources.iter().position(|&src| src == t) {
-                        Some(i) => Action::DeferredTarget(i),
-                        None => Action::Passthrough,
-                    }
-                }
+                TypeMapperData::Deferred(s) => match s.sources.iter().position(|&src| src == t) {
+                    Some(i) => Action::DeferredTarget(i),
+                    None => Action::Passthrough,
+                },
                 TypeMapperData::Function(_) => Action::Fn,
                 TypeMapperData::Merged(s) => Action::Merged(s.m1, s.m2),
                 TypeMapperData::Composite(s) => Action::Composite(s.m1, s.m2),
@@ -251,7 +246,8 @@ impl TypeMapperArena {
                         .position(|inference| inference.type_parameter == Some(t))
                 };
                 if let Some(i) = found {
-                    let needs_fix = fixing && !c.inference_contexts[n.index()].inferences[i].is_fixed;
+                    let needs_fix =
+                        fixing && !c.inference_contexts[n.index()].inferences[i].is_fixed;
                     if needs_fix {
                         // Before we commit to a particular inference (and
                         // thus lock out any further inferences), we infer
@@ -313,7 +309,11 @@ pub fn get_mapped_type(c: &mut Checker, t: TypeId, mapper: TypeMapperId) -> Type
 }
 
 /// `newTypeMapper`.
-pub fn new_type_mapper(c: &mut Checker, sources: Vec<TypeId>, targets: Vec<TypeId>) -> TypeMapperId {
+pub fn new_type_mapper(
+    c: &mut Checker,
+    sources: Vec<TypeId>,
+    targets: Vec<TypeId>,
+) -> TypeMapperId {
     if sources.len() == 1 {
         return new_simple_type_mapper(c, sources[0], targets[0]);
     }
@@ -534,11 +534,7 @@ pub struct MergedTypeMapper {
 }
 
 /// `newMergedTypeMapper`.
-pub fn new_merged_type_mapper(
-    c: &mut Checker,
-    m1: TypeMapperId,
-    m2: TypeMapperId,
-) -> TypeMapperId {
+pub fn new_merged_type_mapper(c: &mut Checker, m1: TypeMapperId, m2: TypeMapperId) -> TypeMapperId {
     c.type_mappers.alloc(TypeMapper {
         data: TypeMapperData::Merged(MergedTypeMapper { m1, m2 }),
     })

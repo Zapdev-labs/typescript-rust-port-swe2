@@ -31,7 +31,7 @@ use crate::checker_core::{
     get_non_distributed_type_parameter, is_object_or_array_literal_type, is_tuple_type,
 };
 use crate::checker_types::{MappedTypeModifiers, ReverseMappedTypeKey, UnionReduction};
-use crate::mapper;
+use crate::mapper::{self, TypeMapperId};
 use crate::relater::{Comparer, ExpandingFlags};
 use crate::types::{
     ElementFlags, IndexFlags, IndexInfoId, ObjectFlags, SignatureFlags, SignatureId, SignatureKind,
@@ -654,6 +654,7 @@ impl Checker {
             .types
             .get(target)
             .as_type_reference()
+            .object_type
             .target
             .expect("reference target");
         let variances = self.get_variances(target_target);
@@ -993,11 +994,13 @@ impl Checker {
             .intersects(TypeFlags::CONDITIONAL)
         {
             let (source_check_type, source_extends_type) = {
-                let c = self.types.get(source).as_conditional_type();
+                let guard = self.types.get(source);
+                let c = guard.as_conditional_type();
                 (c.check_type, c.extends_type)
             };
             let (target_check_type, target_extends_type) = {
-                let c = self.types.get(target).as_conditional_type();
+                let guard = self.types.get(target);
+                let c = guard.as_conditional_type();
                 (c.check_type, c.extends_type)
             };
             self.infer_from_types(
@@ -1034,11 +1037,12 @@ impl Checker {
             let true_type = self.get_true_type_from_conditional_type(target);
             let false_type = self.get_false_type_from_conditional_type(target);
             let target_types = vec![true_type, false_type];
+            let target_flags = self.types.get(target).flags;
             self.infer_to_multiple_types_with_priority(
                 n,
                 source,
                 &target_types,
-                self.types.get(target).flags,
+                target_flags,
                 core::if_else(
                     n.contravariant,
                     InferencePriority::CONTRAVARIANT_CONDITIONAL,
@@ -1706,8 +1710,8 @@ impl Checker {
             }
         }
         self.infer_from_properties(n, source, target);
-        self.infer_from_signatures(n, source, target, SignatureKind::CALL);
-        self.infer_from_signatures(n, source, target, SignatureKind::CONSTRUCT);
+        self.infer_from_signatures(n, source, target, SignatureKind::Call);
+        self.infer_from_signatures(n, source, target, SignatureKind::Construct);
         self.infer_from_index_types(n, source, target);
     }
 
@@ -2089,7 +2093,7 @@ impl Checker {
     /// inferring from the source property type to X for the type variable
     /// `T[P]` (i.e. we treat the type `T[P]` as the type variable we're
     /// inferring for).
-    fn infer_type_for_homomorphic_mapped_type(
+    pub(crate) fn infer_type_for_homomorphic_mapped_type(
         &mut self,
         source: TypeId,
         target: TypeId,
@@ -2293,7 +2297,7 @@ impl Checker {
             false,
         );
         let inferred = self
-            .get_type_from_inference(inferences.first())
+            .get_type_from_inference(inferences.first().expect("inferences"))
             .unwrap_or(self.unknown_type);
         Some(self.get_widened_type(inferred))
     }
@@ -2301,7 +2305,8 @@ impl Checker {
     /// `(c *Checker) resolveReverseMappedTypeMembers` (inference.go).
     pub(crate) fn resolve_reverse_mapped_type_members(&mut self, t: TypeId) {
         let (r_source, r_mapped_type, r_constraint_type) = {
-            let r = self.types.get(t).as_reverse_mapped_type();
+            let guard = self.types.get(t);
+            let r = guard.as_reverse_mapped_type();
             (
                 r.source.expect("reverse mapped source"),
                 r.mapped_type.expect("reverse mapped mappedType"),
@@ -2425,7 +2430,7 @@ impl Checker {
                 links.mapped_type = Some(mapped_type);
                 links.constraint_type = Some(links_constraint_type);
             }
-            members.insert(prop_name, inferred_prop);
+            members.set(prop_name, inferred_prop);
         }
         self.set_structured_type_members(t, members, &[], &[], &index_infos);
     }
@@ -2509,7 +2514,8 @@ impl Checker {
         replacement: TypeId,
     ) -> TypeId {
         let (index_type, object_type) = {
-            let ia = self.types.get(t).as_indexed_access_type();
+            let guard = self.types.get(t);
+            let ia = guard.as_indexed_access_type();
             (
                 ia.index_type.expect("indexType"),
                 ia.object_type.expect("objectType"),
@@ -2609,7 +2615,8 @@ impl Checker {
     /// Every property has type `any`.
     fn create_empty_object_type_from_string_literal(&mut self, t: TypeId) -> TypeId {
         let mut members = ast::SymbolTable::new();
-        for constituent in self.types.get(t).distributed(t) {
+        let constituents = self.types.get(t).distributed(t);
+        for constituent in constituents {
             if !self
                 .types
                 .get(constituent)
@@ -2630,7 +2637,7 @@ impl Checker {
                 arena[literal_prop.index()].declarations = declarations;
                 arena[literal_prop.index()].value_declaration = value_declaration;
             }
-            members.insert(name, literal_prop);
+            members.set(name, literal_prop);
         }
         let mut index_infos: Vec<IndexInfoId> = Vec::new();
         if self.types.get(t).flags.intersects(TypeFlags::STRING) {
@@ -2650,9 +2657,11 @@ impl Checker {
     /// nil-able) via `Into<Option<SignatureId>>`; `compareTypes` is
     /// `Option<Box<TypeComparer>>` — `None` defaults to the checker's
     /// `compare_types_assignable`, re-boxed around its `Rc`.
+    /// PORT: `type_parameters` is `impl AsRef<[TypeId]>` so callers can pass
+    /// either an owned `Vec<TypeId>` or a borrow (Go passes a slice).
     pub fn new_inference_context(
         &mut self,
-        type_parameters: Vec<TypeId>,
+        type_parameters: impl AsRef<[TypeId]>,
         signature: impl Into<Option<SignatureId>>,
         flags: InferenceFlags,
         compare_types: Option<Box<TypeComparer<'static>>>,
@@ -2666,7 +2675,7 @@ impl Checker {
                 ) as Box<TypeComparer<'static>>
             })
         });
-        let inferences = core::map(&type_parameters, |&tp| new_inference_info(Some(tp)));
+        let inferences = core::map(type_parameters.as_ref(), |&tp| new_inference_info(Some(tp)));
         self.new_inference_context_worker(inferences, signature.into(), flags, compare_types)
     }
 
@@ -2691,13 +2700,12 @@ impl Checker {
         &mut self,
         n: InferenceContextId,
     ) -> Option<InferenceContextId> {
-        let inferences: Vec<InferenceInfo> = core::filter(
-            &self.inference_contexts[n.index()].inferences,
-            has_inference_candidates,
-        )
-        .iter()
-        .map(|i| clone_inference_info(i))
-        .collect();
+        let inferences: Vec<InferenceInfo> = self.inference_contexts[n.index()]
+            .inferences
+            .iter()
+            .filter(|i| has_inference_candidates(i))
+            .map(|i| clone_inference_info(i))
+            .collect();
         if inferences.is_empty() {
             return None;
         }
@@ -2905,17 +2913,15 @@ impl Checker {
                 self.is_type_parameter_at_top_level(*t, tp, depth)
             });
         }
-        depth < 3
-            && flags.intersects(TypeFlags::CONDITIONAL)
-            && (self.is_type_parameter_at_top_level(
-                self.get_true_type_from_conditional_type(t),
-                tp,
-                depth + 1,
-            ) || self.is_type_parameter_at_top_level(
-                self.get_false_type_from_conditional_type(t),
-                tp,
-                depth + 1,
-            ))
+        if depth < 3 && flags.intersects(TypeFlags::CONDITIONAL) {
+            let true_t = self.get_true_type_from_conditional_type(t);
+            if self.is_type_parameter_at_top_level(true_t, tp, depth + 1) {
+                return true;
+            }
+            let false_t = self.get_false_type_from_conditional_type(t);
+            return self.is_type_parameter_at_top_level(false_t, tp, depth + 1);
+        }
+        false
     }
 
     /// `(c *Checker) isTypeParameterAtTopLevelInReturnType` (inference.go).
@@ -3057,7 +3063,8 @@ impl Checker {
 
     /// `(c *Checker) isFromInferenceBlockedSource` (inference.go).
     fn is_from_inference_blocked_source(&mut self, t: TypeId) -> bool {
-        if let Some(symbol) = self.types.get(t).symbol {
+        let symbol = self.types.get(t).symbol;
+        if let Some(symbol) = symbol {
             let declarations = self.sym(symbol).declarations.clone();
             return core::some(&declarations, |&d| self.is_skip_direct_inference_node(d));
         }
@@ -3065,7 +3072,7 @@ impl Checker {
     }
 
     /// `(c *Checker) isSkipDirectInferenceNode` (inference.go).
-    fn is_skip_direct_inference_node(&mut self, node: NodeId) -> bool {
+    pub(crate) fn is_skip_direct_inference_node(&mut self, node: NodeId) -> bool {
         self.skip_direct_inference_nodes.has(&node)
     }
 

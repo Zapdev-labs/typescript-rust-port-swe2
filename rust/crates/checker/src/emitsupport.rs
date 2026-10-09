@@ -37,9 +37,7 @@ fn get_any_import_syntax(node: NodeId, nodes: &[Node]) -> Option<NodeId> {
     match nodes[node].kind {
         ast::Kind::ImportEqualsDeclaration => Some(node),
         ast::Kind::ImportClause => nodes[node].parent,
-        ast::Kind::NamespaceImport => nodes[node]
-            .parent
-            .and_then(|p| nodes[p].parent),
+        ast::Kind::NamespaceImport => nodes[node].parent.and_then(|p| nodes[p].parent),
         ast::Kind::ImportSpecifier => nodes[node]
             .parent
             .and_then(|p| nodes[p].parent)
@@ -53,7 +51,7 @@ fn get_any_import_syntax(node: NodeId, nodes: &[Node]) -> Option<NodeId> {
 /// PORT(mirrored): as above.
 fn contains_non_missing_undefined_type(c: &Checker, t: TypeId) -> bool {
     let candidate = if c.types.get(t).flags.intersects(TypeFlags::UNION) {
-        c.types.get(t).as_union_type().types[0]
+        c.types.get(t).as_union_type().union_or_intersection.types[0]
     } else {
         t
     };
@@ -111,7 +109,11 @@ impl Checker {
             }
         }
 
-        let is_visible = self.emit_resolver_links.declaration_links.get(node).is_visible;
+        let is_visible = self
+            .emit_resolver_links
+            .declaration_links
+            .get(node)
+            .is_visible;
         if is_visible == Tristate::Unknown {
             let visible = self.determine_if_declaration_is_visible(node);
             self.emit_resolver_links
@@ -123,7 +125,11 @@ impl Checker {
                 Tristate::False
             };
         }
-        self.emit_resolver_links.declaration_links.get(node).is_visible == Tristate::True
+        self.emit_resolver_links
+            .declaration_links
+            .get(node)
+            .is_visible
+            == Tristate::True
     }
 
     /// `(c *Checker) determineIfDeclarationIsVisible`.
@@ -179,8 +185,8 @@ impl Checker {
                 {
                     return true;
                 }
-                let parent = ast::get_declaration_container(node, &nodes)
-                    .expect("declaration container");
+                let parent =
+                    ast::get_declaration_container(node, &nodes).expect("declaration container");
                 // If the node is not exported or it is not ambient module
                 // element (except import declaration)
                 if !self
@@ -202,12 +208,10 @@ impl Checker {
             | ast::Kind::SetAccessor
             | ast::Kind::MethodDeclaration
             | ast::Kind::MethodSignature => {
-                if self
-                    .get_effective_declaration_flags(
-                        node,
-                        ast::ModifierFlags::PRIVATE | ast::ModifierFlags::PROTECTED,
-                    )
-                    != ast::ModifierFlags::NONE
+                if self.get_effective_declaration_flags(
+                    node,
+                    ast::ModifierFlags::PRIVATE | ast::ModifierFlags::PROTECTED,
+                ) != ast::ModifierFlags::NONE
                 {
                     // Private/protected properties/methods are not visible
                     return false;
@@ -242,9 +246,9 @@ impl Checker {
             }
             // Default binding, import specifier and namespace import is
             // visible only on demand so by default it is not visible
-            ast::Kind::ImportClause
-            | ast::Kind::NamespaceImport
-            | ast::Kind::ImportSpecifier => false,
+            ast::Kind::ImportClause | ast::Kind::NamespaceImport | ast::Kind::ImportSpecifier => {
+                false
+            }
             // Type parameters are always visible
             ast::Kind::TypeParameter => true,
             // Source file and namespace export are always visible
@@ -256,9 +260,7 @@ impl Checker {
             // visible re-export of the named binding; it contributes to the
             // symbol's external visibility.
             ast::Kind::ExportSpecifier => {
-                let export_decl = nodes[node]
-                    .parent
-                    .and_then(|p| nodes[p].parent);
+                let export_decl = nodes[node].parent.and_then(|p| nodes[p].parent);
                 if let Some(export_decl) = export_decl
                     && ast::is_export_declaration(&nodes[export_decl])
                     && nodes[export_decl]
@@ -307,7 +309,10 @@ impl Checker {
         );
 
         if let Some(symbol) = symbol
-            && self.sym(symbol).flags.intersects(ast::SymbolFlags::TYPE_PARAMETER)
+            && self
+                .sym(symbol)
+                .flags
+                .intersects(ast::SymbolFlags::TYPE_PARAMETER)
             && meaning.intersects(ast::SymbolFlags::TYPE)
         {
             return SymbolAccessibilityResult {
@@ -317,8 +322,8 @@ impl Checker {
         }
 
         if symbol.is_none() && ast::is_this_identifier(&nodes[first_identifier]) {
-            let sym = self
-                .get_symbol_of_declaration(self.get_this_container(first_identifier, false, false));
+            let this_container = self.get_this_container(first_identifier, false, false);
+            let sym = self.get_symbol_of_declaration(this_container);
             if self
                 .is_symbol_accessible(sym, enclosing_declaration, meaning, false)
                 .accessibility
@@ -497,9 +502,8 @@ impl Checker {
                         let Some(root_declaration) = root_declaration else {
                             return None;
                         };
-                        let variable_statement = nodes[root_declaration]
-                            .parent
-                            .and_then(|p| nodes[p].parent);
+                        let variable_statement =
+                            nodes[root_declaration].parent.and_then(|p| nodes[p].parent);
                         let Some(variable_statement) = variable_statement else {
                             return None;
                         };
@@ -569,10 +573,7 @@ impl Checker {
                     let flags = self.sym(symbol).flags;
                     return flags.intersects(ast::SymbolFlags::PROPERTY)
                         && flags.intersects(ast::SymbolFlags::OPTIONAL)
-                        && crate::utilities::is_optional_declaration(
-                            &nodes[declaration],
-                            &nodes,
-                        )
+                        && crate::utilities::is_optional_declaration(&nodes[declaration], &nodes)
                         && self.reverse_mapped_symbol_links.has(&symbol)
                         && self
                             .reverse_mapped_symbol_links
@@ -602,10 +603,7 @@ impl Checker {
     }
 
     /// `(c *Checker) declaredParameterTypeContainsUndefined`.
-    pub(crate) fn declared_parameter_type_contains_undefined(
-        &mut self,
-        parameter: NodeId,
-    ) -> bool {
+    pub(crate) fn declared_parameter_type_contains_undefined(&mut self, parameter: NodeId) -> bool {
         // typeNode := getNonlocalEffectiveTypeAnnotationNode(parameter); // !!! JSDoc Support
         let nodes = self.program_nodes(parameter);
         let Some(type_node) = nodes[parameter].type_() else {

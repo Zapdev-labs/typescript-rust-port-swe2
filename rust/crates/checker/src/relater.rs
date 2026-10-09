@@ -485,7 +485,7 @@ impl Checker {
     }
 
     /// `(c *Checker) isTypeAssignableTo`.
-    pub(crate) fn is_type_assignable_to(&mut self, source: TypeId, target: TypeId) -> bool {
+    pub fn is_type_assignable_to(&mut self, source: TypeId, target: TypeId) -> bool {
         let relation = self.assignable_relation.clone();
         self.is_type_related_to(source, target, &relation)
     }
@@ -1567,7 +1567,10 @@ impl Checker {
         name_type: TypeId,
         error_message: Option<&'static tsc_diagnostics::Message>,
         mut diagnostic_factory: Option<
-            &mut dyn FnMut(&mut Checker, Option<NodeId>) -> ast::diagnostic::DiagnosticRef,
+            &mut (
+                     dyn FnMut(&mut Checker, Option<NodeId>) -> ast::diagnostic::DiagnosticRef
+                         + 'static
+                 ),
         >,
         mut diagnostic_output: Option<&mut Vec<ast::diagnostic::DiagnosticRef>>,
     ) -> bool {
@@ -2514,7 +2517,7 @@ impl Checker {
             // TODO: remove this when we support static private identifier
             // fields and find other solutions to get
             // privateNamesAndStaticFields test to pass.
-            if crate::utilities::is_static_private_identifier_property(&self.sym(target_prop)) {
+            if crate::utilities::is_static_private_identifier_property(self, target_prop) {
                 continue;
             }
             let (target_flags, target_check_flags, target_name) = {
@@ -3365,7 +3368,7 @@ impl Checker {
     }
 
     /// `(c *Checker) getTypeParameterModifiers`.
-    fn get_type_parameter_modifiers(&mut self, tp: TypeId) -> ast::ModifierFlags {
+    pub(crate) fn get_type_parameter_modifiers(&mut self, tp: TypeId) -> ast::ModifierFlags {
         let mut flags = ast::ModifierFlags::default();
         if let Some(symbol) = self.types.get(tp).symbol {
             let declarations = self.sym(symbol).declarations.clone();
@@ -4058,7 +4061,7 @@ impl Checker {
     }
 
     /// `(c *Checker) hasEffectiveRestParameter`.
-    pub(crate) fn has_effective_rest_parameter(&mut self, signature: SignatureId) -> bool {
+    pub fn has_effective_rest_parameter(&mut self, signature: SignatureId) -> bool {
         if crate::checker_c::signature_has_rest_parameter(self.signature_arena.get(signature)) {
             let last = *self
                 .signature_arena
@@ -4080,7 +4083,7 @@ impl Checker {
     }
 
     /// `(c *Checker) getTypeAtPosition`.
-    pub(crate) fn get_type_at_position(&mut self, signature: SignatureId, pos: usize) -> TypeId {
+    pub fn get_type_at_position(&mut self, signature: SignatureId, pos: usize) -> TypeId {
         if let Some(t) = self.try_get_type_at_position(signature, pos) {
             return t;
         }
@@ -4505,10 +4508,7 @@ impl Checker {
     }
 
     /// `(c *Checker) getTypePredicateOfSignature`.
-    pub(crate) fn get_type_predicate_of_signature(
-        &mut self,
-        sig: SignatureId,
-    ) -> Option<TypePredicate> {
+    pub fn get_type_predicate_of_signature(&mut self, sig: SignatureId) -> Option<TypePredicate> {
         if self
             .signature_arena
             .get(sig)
@@ -4700,7 +4700,7 @@ impl Checker {
     }
 
     /// `(c *Checker) instantiateTypePredicate`.
-    fn instantiate_type_predicate(
+    pub(crate) fn instantiate_type_predicate(
         &mut self,
         predicate: &TypePredicate,
         mapper: Option<TypeMapperId>,

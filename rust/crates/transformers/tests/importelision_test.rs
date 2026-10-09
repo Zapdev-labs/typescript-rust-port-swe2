@@ -75,7 +75,7 @@ type Resolved<'a> = Option<(&'a [Node], &'a [Symbol], SymbolId)>;
 struct FakeEmitResolver {
     /// Owned separately from the `EmitContext` handed to the transforms;
     /// `emit_context()` is never invoked by `ImportElisionTransformer`.
-    emit_context: EmitContext,
+    emit_context: Rc<RefCell<EmitContext>>,
     compiler_options: CompilerOptions,
     /// Module specifier text → bound external module file.
     modules: FxHashMap<String, BoundFile>,
@@ -949,7 +949,7 @@ impl ReferenceResolver for FakeEmitResolver {
 }
 
 impl EmitResolver for FakeEmitResolver {
-    fn emit_context(&self) -> &EmitContext {
+    fn emit_context(&self) -> &Rc<RefCell<EmitContext>> {
         &self.emit_context
     }
 
@@ -1259,7 +1259,7 @@ impl EmitResolver for FakeEmitResolver {
         _enclosing_declaration: Option<NodeId>,
         _flags: Flags,
         _internal_flags: InternalFlags,
-        _tracker: &dyn SymbolTracker,
+        _tracker: &mut dyn SymbolTracker,
         _nodes: &mut Vec<Node>,
     ) -> Option<NodeId> {
         unimplemented!("unused by ImportElisionTransformer")
@@ -1271,7 +1271,7 @@ impl EmitResolver for FakeEmitResolver {
         _enclosing_declaration: Option<NodeId>,
         _flags: Flags,
         _internal_flags: InternalFlags,
-        _tracker: &dyn SymbolTracker,
+        _tracker: &mut dyn SymbolTracker,
         _nodes: &mut Vec<Node>,
     ) -> Option<NodeId> {
         unimplemented!("unused by ImportElisionTransformer")
@@ -1283,7 +1283,7 @@ impl EmitResolver for FakeEmitResolver {
         _enclosing_declaration: Option<NodeId>,
         _flags: Flags,
         _internal_flags: InternalFlags,
-        _tracker: &dyn SymbolTracker,
+        _tracker: &mut dyn SymbolTracker,
         _nodes: &mut Vec<Node>,
     ) -> Vec<NodeId> {
         unimplemented!("unused by ImportElisionTransformer")
@@ -1292,7 +1292,7 @@ impl EmitResolver for FakeEmitResolver {
     fn create_literal_const_value(
         &self,
         _node: NodeId,
-        _tracker: &dyn SymbolTracker,
+        _tracker: &mut dyn SymbolTracker,
         _nodes: &mut Vec<Node>,
     ) -> Option<NodeId> {
         unimplemented!("unused by ImportElisionTransformer")
@@ -1304,7 +1304,7 @@ impl EmitResolver for FakeEmitResolver {
         _enclosing_declaration: Option<NodeId>,
         _flags: Flags,
         _internal_flags: InternalFlags,
-        _tracker: &dyn SymbolTracker,
+        _tracker: &mut dyn SymbolTracker,
         _nodes: &mut Vec<Node>,
     ) -> Option<NodeId> {
         unimplemented!("unused by ImportElisionTransformer")
@@ -1316,7 +1316,7 @@ impl EmitResolver for FakeEmitResolver {
         _enclosing_declaration: Option<NodeId>,
         _flags: Flags,
         _internal_flags: InternalFlags,
-        _tracker: &dyn SymbolTracker,
+        _tracker: &mut dyn SymbolTracker,
         _nodes: &mut Vec<Node>,
     ) -> Vec<NodeId> {
         unimplemented!("unused by ImportElisionTransformer")
@@ -1328,7 +1328,7 @@ impl EmitResolver for FakeEmitResolver {
         _enclosing_declaration: Option<NodeId>,
         _flags: Flags,
         _internal_flags: InternalFlags,
-        _tracker: &dyn SymbolTracker,
+        _tracker: &mut dyn SymbolTracker,
         _nodes: &mut Vec<Node>,
     ) -> Option<NodeId> {
         unimplemented!("unused by ImportElisionTransformer")
@@ -1368,7 +1368,7 @@ fn check_emit(
     let compiler_options = CompilerOptions::default();
     let emit_context = Rc::new(RefCell::new(EmitContext::new()));
     let resolver: Rc<RefCell<FakeEmitResolver>> = Rc::new(RefCell::new(FakeEmitResolver {
-        emit_context: EmitContext::new(),
+        emit_context: Rc::new(RefCell::new(EmitContext::new())),
         compiler_options: CompilerOptions::default(),
         modules,
         referenced: RefCell::new(FxHashSet::default()),

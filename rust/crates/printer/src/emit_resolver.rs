@@ -8,6 +8,9 @@
 // convention used by `binder::ReferenceResolver` in this workspace.
 // `GetConstantValue(node) any` becomes `Option<tsc_evaluator::Value>`.
 
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use tsc_ast::{self as ast, Node, NodeId, Symbol};
 use tsc_binder::referenceresolver::ReferenceResolver;
 use tsc_evaluator::Value;
@@ -83,7 +86,14 @@ pub enum TypeReferenceSerializationKind {
 /// `type EmitResolver interface`
 pub trait EmitResolver: ReferenceResolver {
     /// `EmitContext() *EmitContext`
-    fn emit_context(&self) -> &EmitContext;
+    /// PORT(deviation): Go returns `*printer.EmitContext`; the workspace
+    /// forbids `unsafe`, so a `&EmitContext` cannot be produced from the
+    /// shared `Rc<RefCell<EmitContext>>` the checker-side resolver holds.
+    /// The `&Rc<RefCell<EmitContext>>` handle preserves the shared-cell
+    /// semantics — callers `.borrow()`/`.borrow_mut()` it per use, or clone
+    /// the `Rc` to share the same `EmitContext` (the way Go shares
+    /// `resolver.EmitContext()` with the transformer).
+    fn emit_context(&self) -> &Rc<RefCell<EmitContext>>;
     /// `IsReferencedAliasDeclaration(node *ast.Node) bool`
     fn is_referenced_alias_declaration(&self, node: NodeId, nodes: &[Node]) -> bool;
     /// `IsValueAliasDeclaration(node *ast.Node) bool`
@@ -230,7 +240,7 @@ pub trait EmitResolver: ReferenceResolver {
         enclosing_declaration: Option<NodeId>,
         flags: Flags,
         internal_flags: InternalFlags,
-        tracker: &dyn SymbolTracker,
+        tracker: &mut dyn SymbolTracker,
         nodes: &mut Vec<Node>,
     ) -> Option<NodeId>;
     /// `CreateReturnTypeOfSignatureDeclaration(...)`
@@ -240,7 +250,7 @@ pub trait EmitResolver: ReferenceResolver {
         enclosing_declaration: Option<NodeId>,
         flags: Flags,
         internal_flags: InternalFlags,
-        tracker: &dyn SymbolTracker,
+        tracker: &mut dyn SymbolTracker,
         nodes: &mut Vec<Node>,
     ) -> Option<NodeId>;
     /// `CreateTypeParametersOfSignatureDeclaration(...)`
@@ -250,14 +260,14 @@ pub trait EmitResolver: ReferenceResolver {
         enclosing_declaration: Option<NodeId>,
         flags: Flags,
         internal_flags: InternalFlags,
-        tracker: &dyn SymbolTracker,
+        tracker: &mut dyn SymbolTracker,
         nodes: &mut Vec<Node>,
     ) -> Vec<NodeId>;
     /// `CreateLiteralConstValue(node *ast.Node, tracker nodebuilder.SymbolTracker) *ast.Node`
     fn create_literal_const_value(
         &self,
         node: NodeId,
-        tracker: &dyn SymbolTracker,
+        tracker: &mut dyn SymbolTracker,
         nodes: &mut Vec<Node>,
     ) -> Option<NodeId>;
     /// `CreateTypeOfExpression(...)`
@@ -267,7 +277,7 @@ pub trait EmitResolver: ReferenceResolver {
         enclosing_declaration: Option<NodeId>,
         flags: Flags,
         internal_flags: InternalFlags,
-        tracker: &dyn SymbolTracker,
+        tracker: &mut dyn SymbolTracker,
         nodes: &mut Vec<Node>,
     ) -> Option<NodeId>;
     /// `CreateLateBoundIndexSignatures(...)`
@@ -277,7 +287,7 @@ pub trait EmitResolver: ReferenceResolver {
         enclosing_declaration: Option<NodeId>,
         flags: Flags,
         internal_flags: InternalFlags,
-        tracker: &dyn SymbolTracker,
+        tracker: &mut dyn SymbolTracker,
         nodes: &mut Vec<Node>,
     ) -> Vec<NodeId>;
     /// `TryJSTypeNodeToTypeNode(...)`
@@ -287,7 +297,7 @@ pub trait EmitResolver: ReferenceResolver {
         enclosing_declaration: Option<NodeId>,
         flags: Flags,
         internal_flags: InternalFlags,
-        tracker: &dyn SymbolTracker,
+        tracker: &mut dyn SymbolTracker,
         nodes: &mut Vec<Node>,
     ) -> Option<NodeId>;
 }

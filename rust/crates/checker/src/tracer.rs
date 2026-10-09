@@ -33,9 +33,7 @@ use std::sync::{Arc, RwLock};
 
 use rustc_hash::FxHashMap;
 use tsc_ast::{NodeId, SymbolId};
-use tsc_tracing::{
-    self as tracing, Phase, RecursionIdentity, TraceArgs, TracedType, TypeTracer,
-};
+use tsc_tracing::{self as tracing, Phase, RecursionIdentity, TraceArgs, TracedType, TypeTracer};
 // `record_type` is a `tracing::Tracer` trait method on `TypeTracer`.
 use tsc_tracing::Tracer as _;
 
@@ -191,7 +189,10 @@ impl TracedType for TracedTypeAdapter {
 
     /// `IsConditional`.
     fn is_conditional(&self) -> bool {
-        self.types.get(self.t).flags.intersects(TypeFlags::CONDITIONAL)
+        self.types
+            .get(self.t)
+            .flags
+            .intersects(TypeFlags::CONDITIONAL)
     }
 
     /// `Symbol`.

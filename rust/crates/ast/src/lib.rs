@@ -56,7 +56,7 @@ pub use sourcefiledata::{
     SourceFileData, SourceFileDataKey, get_or_compute_data, new_source_file_data_key,
 };
 pub use subtreefacts::SubtreeFacts;
-pub use symbol::{Symbol, SymbolTable};
+pub use symbol::*;
 pub use symbolflags::SymbolFlags;
 pub use tokenflags::TokenFlags;
 pub use utilities::is_private_identifier_class_element_declaration;

@@ -1191,7 +1191,16 @@ Checker-facing API notes / deferred gaps:
   (utilities.go) — already referenced by relater.rs.
 - `get_end_element_count` (checker.go) is inlined as a stopgap free fn while
   checker.go is unported; `is_skip_direct_inference_node` uses
-  `OrderedSet::has`.
+  `OrderedSet::has` and is `pub(crate)` (called from checker_a.rs).
+- `new_inference_context` takes `type_parameters: impl AsRef<[TypeId]>` —
+  callers pass both owned `Vec<TypeId>` and `&Vec<TypeId>` (Go passes a
+  slice). `InferenceInfo` derives `Clone` and `TupleElementInfo` derives
+  `PartialEq` (for `core::same_map`). `has_type_parameter_default` lives
+  here; checker_c.rs call sites delegate to it. Arena read-guard
+  temporaries (`self.types.get(t).as_*()`) must be bound to a local before
+  borrowing their fields — several sites bind `guard`/`constituents` for
+  this reason, and `utilities::compare_types` binds `g1`/`g2` for the same
+  reason on string-literal values.
 
 ## 2026-10-08 crates/checker/src/checker_d.rs — checker.go lines 24558-32722 (EOF) completed
 
@@ -1304,3 +1313,76 @@ Remaining blockers: none inside checker_d.rs. The crate as a whole still
 fails `cargo check` (sibling files checker_a/b/c, inference.rs, relater.rs,
 nodebuilder*.rs carry ~1,500 errors from their own in-flight ports);
 checker_d unblocks automatically when those land.
+
+## 2025-10-08 checker.go 21807-24557 -> checker_c.rs (appended impl + free fns)
+
+Ported the remaining ~153-function checker.go range (21807-24557) into
+`rust/crates/checker/src/checker_c.rs`: property lookup/synthesis,
+apparent/reduced types, type-argument helpers, the instantiate_type
+machinery (anonymous/mapped/conditional/reverse-mapped/substitution
+instantiation), `getTypeFromTypeNode` and the whole type-node dispatch,
+type references, tuple normalization, type-alias resolution, declared
+types, and enum member values.
+
+Cross-file wiring done as part of the port:
+- `checker_core.rs` stubs now delegate to `checker_c.rs` free fns:
+  `is_array_type`, `get_type_from_type_node`, `get_type_arguments`,
+  `get_named_members`, `get_declared_type_of_symbol`,
+  `could_contain_type_variables_worker`, `instantiate_type` (via
+  `instantiate_type_with_alias`), and the mapped-type accessors
+  (`get_{type_parameter,constraint_type,name_type,template_type}_from_mapped_type`).
+- `types.rs` grew the missing mutable arena accessors used throughout
+  the port: `as_{union,intersection,literal,conditional,
+  instantiation_expression}_type_mut` on `Type` and
+  `as_{conditional,instantiation_expression,literal}_type_mut` on
+  `TypeData`, plus `as_{object_type,interface_type,
+  union_or_intersection_type}_mut` delegates on `Type` (the
+  `TypeWriteGuard` deref target).
+- `ast/src/lib.rs`: `pub use symbol::*` so the
+  `INTERNAL_SYMBOL_NAME_*` constants resolve at `ast::`.
+- `create_symbol_with_type` signature changed to
+  `(Option<SymbolId>, Option<TypeId>)` to match the nil-able Go
+  `(source *Symbol, type_ *Type)`; all callers updated.
+- `inference.rs`: `infer_type_for_homomorphic_mapped_type` made
+  `pub(crate)` (called from `instantiate_reverse_mapped_type`).
+- Removed duplicate method copies in `checker_c.rs` for
+  `get_element_type_of_array_type` (kept `services.rs`),
+  `is_mapped_type_with_keyof_constraint_declaration`,
+  `get_constraint_declaration_for_mapped_type`,
+  `for_each_mapped_type_property_key_type_and_index_signature_key_type`,
+  and the node-builder family (`get_type_reference_arity`,
+  `is_array_or_tuple_type`, `get_outer_type_parameters{,_of_class_or_interface}`,
+  `get_class_or_interface_like_declaration`,
+  `can_get_type_parameters_of_class_or_interface`,
+  `get_infer_type_parameters`,
+  `get_local_type_parameters_of_class_or_interface_or_type_alias`,
+  `append_local_type_parameters_of_class_or_interface_or_type_alias`,
+  `append_type_parameters`) already owned by `nodebuilderimpl.rs`.
+- Added free-fn helpers the Go closure shapes need:
+  `instantiate_type` (thin `c.instantiate_type` wrapper for the
+  `crate::checker_c::instantiate_type` call idiom) and
+  `type_parameter_contains_reference` (the `containsReference` inner
+  closure of `isTypeParameterPossiblyReferenced`, checker.go:22892).
+- Fixed Go-name artifacts in the appended sections: `ast::Kind`/
+  `SignatureKind`/`IterationTypeKind`/`MappedTypeNameTypeKind`/
+  `CachedTypeKind` SCREAMING_SNAKE constants -> PascalCase variants;
+  `OrderedMap` `insert`/`contains_key`/`iter`/`len` ->
+  `set`/`has`/`entries`/`size`; `as_mapped_type().{target,mapper}` ->
+  `object_type.{target,mapper}`; `get_global_*` thunk fields invoked
+  via `.clone().expect()(self)`; `tsc_binder::binder::set_value_declaration`.
+
+Verification: remote rsync + `cargo check -p tsc-checker` on
+dih@192.168.1.15. Crate went from 1592 to 1178 errors. `checker_c.rs`
+reports 152 errors, every one of them in the earlier-range portion of
+the file (functions below checker.go:21807, i.e. the prior port's
+territory); the 21807-24557 range itself compiles with zero errors.
+
+Known deferred dependencies used by this range but owned elsewhere:
+`get_modifiers_type_from_mapped_type` (checker.go:28661, later range)
+remains an `unimplemented!` stub in `checker_core.rs`; `map_type`
+likewise stubs in `checker_core.rs` while `map_type_with_alias` lives
+in `checker_d.rs`. The other ~1,000 errors sit in sibling in-flight
+ports (checker_b 396, checker_a 278, nodebuilderimpl 91, relater 71,
+flow 69, checker_d 25, symbolaccessibility 22, services 22,
+emitresolver 21, plus small counts elsewhere) -- unchanged
+pre-existing cross-file gaps, not defects of this range.
