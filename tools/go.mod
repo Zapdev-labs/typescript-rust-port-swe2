@@ -7,7 +7,7 @@ require (
 	github.com/blacktop/go-macho v1.1.283
 	github.com/golangci/plugin-module-register v0.1.2
 	golang.org/x/mod v0.41.0
-	golang.org/x/tools v0.50.0
+	golang.org/x/tools v0.51.0
 	gotest.tools/v3 v3.5.2
 )
 
