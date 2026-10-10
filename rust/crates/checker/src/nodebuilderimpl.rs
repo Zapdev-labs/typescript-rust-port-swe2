@@ -50,18 +50,16 @@ use tsc_core::options_generated::{ModuleKind, ModuleResolutionKind};
 use tsc_jsnum as jsnum;
 use tsc_nodebuilder as nodebuilder;
 use tsc_printer::{self as printer, EmitContext};
-use tsc_pseudochecker::{self as pseudochecker, PseudoType, PseudoTypeKind, PseudoTypeRef};
+use tsc_pseudochecker::{self as pseudochecker, PseudoTypeKind};
 use tsc_scanner as scanner;
 use tsc_stringutil as stringutil;
 
 use crate::checker_core::{CacheHashKey, Checker, get_non_distributed_type_parameter, is_this_type_parameter};
 use crate::checker_types::{Host, MappedTypeModifiers, TypeFacts};
 use crate::mapper::TypeMapperId;
-use crate::nodebuilderscopes::collect_binding_pattern_symbols;
 use crate::types::{
-    ConditionalType, ElementFlags, IndexInfo, IndexInfoId, ObjectFlags, Signature, SignatureFlags,
-    SignatureId, SignatureKind, TypeAlias, TypeArena, TypeFlags, TypeId, TypeParameter,
-    TypePredicate, TypePredicateKind,
+    ElementFlags, IndexInfo, IndexInfoId, ObjectFlags, SignatureFlags, SignatureId, SignatureKind,
+    TypeAlias, TypeArena, TypeFlags, TypeId, TypePredicate, TypePredicateKind,
 };
 
 /// `type CompositeSymbolIdentity struct`.
@@ -389,19 +387,19 @@ fn ast_symbol_name(c: &Checker, s: SymbolId) -> String {
 
 /// `t.flags` / `t.objectFlags` / `t.symbol` / `t.alias` reads.
 fn type_flags(c: &Checker, t: TypeId) -> TypeFlags {
-    c.types.get(t).flags
+    c.types_handle().get(t).flags
 }
 fn type_object_flags(c: &Checker, t: TypeId) -> ObjectFlags {
-    c.types.get(t).object_flags
+    c.types_handle().get(t).object_flags
 }
 fn type_symbol(c: &Checker, t: TypeId) -> Option<SymbolId> {
-    c.types.get(t).symbol
+    c.types_handle().get(t).symbol
 }
 fn type_alias(c: &Checker, t: TypeId) -> Option<TypeAlias> {
-    c.types.get(t).alias.clone()
+    c.types_handle().get(t).alias.clone()
 }
 fn type_id(c: &Checker, t: TypeId) -> TypeId {
-    c.types.get(t).id
+    c.types_handle().get(t).id
 }
 
 /// `Option<NodeId>`-in-same-arena-or-none helper for `is_entity_name`.
@@ -570,7 +568,7 @@ impl<'a> NodeBuilderImpl<'a> {
     /// `(b *NodeBuilderImpl) appendReferenceToType`.
     fn append_reference_to_type(
         &mut self,
-        c: &mut Checker,
+        _c: &mut Checker,
         nodes: &mut Vec<ast::Node>,
         root: NodeId,
         ref_: NodeId,
@@ -898,7 +896,7 @@ impl<'a> NodeBuilderImpl<'a> {
     fn existing_type_node_is_not_reference_or_is_reference_with_compatible_type_argument_count(
         &mut self,
         c: &mut Checker,
-        nodes: &mut Vec<ast::Node>,
+        _nodes: &mut Vec<ast::Node>,
         existing: NodeId,
         t: TypeId,
     ) -> bool {
@@ -926,18 +924,14 @@ impl<'a> NodeBuilderImpl<'a> {
         // target type before we go comparing their type argument counts.
 
         let existing_target = c.get_declared_type_of_symbol(symbol);
-        let target = c
-            .types
-            .get(t)
+        let __arena_target = c.types.clone(); let target = __arena_target.get(t)
             .data
             .as_type_reference()
             .and_then(|r| r.object_type.target);
         if Some(existing_target) != target {
             return true;
         }
-        let target_type_params: Vec<TypeId> = c
-            .types
-            .get(target.unwrap())
+        let target_type_params: Vec<TypeId> = c.types_handle().get(target.unwrap())
             .data
             .as_interface_type()
             .map(|i| i.type_parameters().to_vec())
@@ -982,7 +976,7 @@ impl<'a> NodeBuilderImpl<'a> {
         // `StructuredType` isn't `Clone`; extract the needed fields under a
         // single short borrow so `&mut Checker` calls below don't alias.
         let (all_construct_sigs, members, index_info_list, call_sigs, cached) = {
-            let guard = c.types.get(t);
+            let __arena_guard = c.types.clone(); let guard = __arena_guard.get(t);
             let st = guard.data.as_structured_type();
             match st {
                 Some(st) => (
@@ -1012,8 +1006,7 @@ impl<'a> NodeBuilderImpl<'a> {
             })
             .collect();
         if construct_signatures.len() == all_construct_sigs.len() {
-            c.types
-                .get_mut(t)
+            c.types_handle().get_mut(t)
                 .data
                 .as_structured_type_mut()
                 .unwrap()
@@ -1024,7 +1017,7 @@ impl<'a> NodeBuilderImpl<'a> {
             .iter()
             .map(|i| c.index_info_arena.alloc(i.clone()))
             .collect();
-        let type_symbol = c.types.get(t).symbol;
+        let __arena_type_symbol = c.types.clone(); let type_symbol = __arena_type_symbol.get(t).symbol;
         let type_copy = c.new_anonymous_type(
             type_symbol,
             members,
@@ -1032,14 +1025,12 @@ impl<'a> NodeBuilderImpl<'a> {
             &construct_signatures,
             &index_infos,
         );
-        c.types
-            .get_mut(t)
+        c.types_handle().get_mut(t)
             .data
             .as_structured_type_mut()
             .unwrap()
             .object_type_without_abstract_construct_signatures = Some(type_copy);
-        c.types
-            .get_mut(type_copy)
+        c.types_handle().get_mut(type_copy)
             .data
             .as_structured_type_mut()
             .unwrap()
@@ -1734,7 +1725,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 return String::new();
             };
             if type_flags(c, name_type).intersects(TypeFlags::STRING_OR_NUMBER_LITERAL) {
-                let name = match c.types.get(name_type).as_literal_type().value.as_ref() {
+                let name = match c.types_handle().get(name_type).as_literal_type().value.as_ref() {
                     Some(tsc_evaluator::Value::String(s)) => s.clone(),
                     Some(tsc_evaluator::Value::Number(n)) => n.string(),
                     _ => String::new(),
@@ -1743,7 +1734,7 @@ impl<'a> NodeBuilderImpl<'a> {
                     && !crate::utilities::is_numeric_literal_name(&name)
                 {
                     return crate::checker_core::value_to_string(
-                        c.types.get(name_type).as_literal_type().value.as_ref(),
+                        c.types_handle().get(name_type).as_literal_type().value.as_ref(),
                     );
                 }
                 if crate::utilities::is_numeric_literal_name(&name) && name.starts_with('-') {
@@ -2701,7 +2692,7 @@ impl<'a> NodeBuilderImpl<'a> {
         c: &mut Checker,
         mapped: TypeId,
     ) -> bool {
-        let target = c.types.get(mapped).as_mapped_type().object_type.target;
+        let __arena_target = c.types.clone(); let target = __arena_target.get(mapped).as_mapped_type().object_type.target;
         target.is_some()
             && !self.is_mapped_type_homomorphic(c, mapped)
             && self.is_mapped_type_homomorphic(c, target.unwrap())
@@ -2716,7 +2707,7 @@ impl<'a> NodeBuilderImpl<'a> {
     ) -> NodeId {
         debug_assert!(type_flags(c, t).intersects(TypeFlags::OBJECT));
         let (declaration, readonly_kind, question_kind, name_type_present) = {
-            let t_guard = c.types.get(t);
+            let __arena_t_guard = c.types.clone(); let t_guard = __arena_t_guard.get(t);
             let mapped = t_guard.as_mapped_type();
             let declaration = mapped.declaration;
             let (readonly_kind, question_kind, name_type_present) = declaration
@@ -2734,7 +2725,9 @@ impl<'a> NodeBuilderImpl<'a> {
         };
         let readonly_token = readonly_kind.map(|k| self.f.new_token(nodes, k));
         let question_token = question_kind.map(|k| self.f.new_token(nodes, k));
-        let mut appropriate_constraint_type_node: Option<NodeId> = None;
+        // Every arm of the mapped-type constraint selection below assigns
+        // this exactly once — deferred init.
+        let appropriate_constraint_type_node: Option<NodeId>;
         let mut new_type_variable: Option<NodeId> = None;
         let mut template_type = c.get_template_type_from_mapped_type(t);
         let type_parameter = c.get_type_parameter_from_mapped_type(t);
@@ -2773,7 +2766,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 let new_param_sym = c.new_symbol(ast::SymbolFlags::TYPE_PARAMETER, "T");
                 let new_constraint_param = c.new_type_parameter(Some(new_param_sym));
                 let name = self.type_parameter_to_name(c, nodes, new_constraint_param);
-                let target = c.types.get(t).target();
+                let __arena_target = c.types.clone(); let target = __arena_target.get(t).target();
                 new_type_variable = Some(self.f.new_type_reference_node(nodes, Some(name), None));
                 if let Some(target) = target {
                     let target_type_parameter = c.get_type_parameter_from_mapped_type(target);
@@ -2891,7 +2884,7 @@ impl<'a> NodeBuilderImpl<'a> {
             }
             let raw_constraint_type_from_declaration =
                 raw_constraint_type_from_declaration.unwrap_or(c.unknown_type);
-            let mapped_mapper = c.types.get(t).as_mapped_type().object_type.mapper;
+            let __arena_mapped_mapper = c.types.clone(); let mapped_mapper = __arena_mapped_mapper.get(t).as_mapped_type().object_type.mapper;
             let original_constraint =
                 c.instantiate_type(raw_constraint_type_from_declaration, mapped_mapper);
 
@@ -4133,11 +4126,11 @@ impl<'a> NodeBuilderImpl<'a> {
                 if let Some(declaration) = declaration {
                     let decl_nodes = c.program_nodes(declaration);
                     if ast::is_variable_like(&decl_nodes[declaration]) {
-                        t = Some(c.get_type_for_variable_like_declaration(
+                        t = c.get_type_for_variable_like_declaration(
                             declaration,
                             false,
                             crate::checker_core::CheckMode::NORMAL,
-                        ));
+                        );
                     } else {
                         t = Some(c.error_type);
                     }
@@ -4659,7 +4652,7 @@ impl<'a> NodeBuilderImpl<'a> {
         }
         if nt_flags.intersects(TypeFlags::STRING_OR_NUMBER_LITERAL) {
             let name = {
-                let lit = c.types.get(name_type).as_literal_type().value.clone();
+                let __arena_lit = c.types.clone(); let lit = __arena_lit.get(name_type).as_literal_type().value.clone();
                 match lit {
                     Some(tsc_evaluator::Value::Number(n)) => n.to_string(),
                     Some(tsc_evaluator::Value::String(s)) => s,
@@ -4703,7 +4696,7 @@ impl<'a> NodeBuilderImpl<'a> {
             // The reference was tracked in the destination scope by
             // `trackComputedName`. Reconstructing its spelling in the source
             // scope must not paint that scope's declarations visible.
-            let sym = c.types.get(name_type).symbol;
+            let __arena_sym = c.types.clone(); let sym = __arena_sym.get(name_type).symbol;
             let expr = self.symbol_to_expression_worker(
                 c,
                 nodes,
@@ -5037,7 +5030,7 @@ impl<'a> NodeBuilderImpl<'a> {
         }
         let mut type_elements: Vec<NodeId> = Vec::new();
         let (call_sigs, ctor_sigs, index_infos, properties, object_flags) = {
-            let g = c.types.get(resolved_type);
+            let __arena_g = c.types.clone(); let g = __arena_g.get(resolved_type);
             let st = g.as_structured_type().expect("structured type");
             (
                 st.call_signatures().to_vec(),
@@ -5187,14 +5180,14 @@ impl<'a> NodeBuilderImpl<'a> {
     ) -> NodeId {
         if c.is_generic_mapped_type(t)
             || (type_object_flags(c, t).intersects(ObjectFlags::MAPPED)
-                && c.types.get(t).as_mapped_type().contains_error)
+                && c.types_handle().get(t).as_mapped_type().contains_error)
         {
             return self.create_mapped_type_node_from_type(c, nodes, t);
         }
 
         let resolved = c.resolve_structured_type_members(t);
         let (call_sigs, ctor_sigs, has_props_or_indexes) = {
-            let g = c.types.get(resolved);
+            let __arena_g = c.types.clone(); let g = __arena_g.get(resolved);
             let st = g.as_structured_type().expect("structured type");
             (
                 st.call_signatures().to_vec(),
@@ -5253,7 +5246,7 @@ impl<'a> NodeBuilderImpl<'a> {
             // count the number of type elements excluding abstract
             // constructors
             let (index_info_count, property_count) = {
-                let g = c.types.get(resolved);
+                let __arena_g = c.types.clone(); let g = __arena_g.get(resolved);
                 let st = g.as_structured_type().expect("structured type");
                 let property_count = if self
                     .ctx
@@ -5468,7 +5461,7 @@ impl<'a> NodeBuilderImpl<'a> {
             let is_instantiation_expression_type =
                 type_object_flags(c, t).intersects(ObjectFlags::INSTANTIATION_EXPRESSION_TYPE);
             if is_instantiation_expression_type {
-                let existing = c.types.get(t).as_instantiation_expression_type().node;
+                let __arena_existing = c.types.clone(); let existing = __arena_existing.get(t).as_instantiation_expression_type().node;
                 // instantiationExpressionType.node is unreliable for
                 // constituents of unions and intersections — see the Go
                 // comment for the `ErrAlias` example.
@@ -5673,7 +5666,8 @@ impl<'a> NodeBuilderImpl<'a> {
             extends_type,
             mapper,
         ) = {
-            let ct = c.types.get(t).as_conditional_type();
+            let __arena_t_guard = c.types.clone(); let t_guard = __arena_t_guard.get(t);
+            let ct = t_guard.as_conditional_type();
             let root = ct.root.as_ref().expect("conditional type root");
             (
                 root.node,
@@ -5837,7 +5831,7 @@ impl<'a> NodeBuilderImpl<'a> {
         t: TypeId,
     ) -> NodeId {
         let mut type_arguments = c.get_type_arguments(t);
-        let target = c.types.get(t).target();
+        let __arena_target = c.types.clone(); let target = __arena_target.get(t).target();
         if target == Some(c.global_array_type) || target == Some(c.global_readonly_array_type) {
             if self
                 .ctx
@@ -5867,10 +5861,10 @@ impl<'a> NodeBuilderImpl<'a> {
 
         // debug.Assert(t.Target().objectFlags & ObjectFlagsTuple != 0)
         let element_infos = target
-            .map(|tt| c.types.get(tt).as_tuple_type().element_infos.clone())
+            .map(|tt| c.types_handle().get(tt).as_tuple_type().element_infos.clone())
             .unwrap_or_default();
         let readonly = target
-            .map(|tt| c.types.get(tt).as_tuple_type().readonly)
+            .map(|tt| c.types_handle().get(tt).as_tuple_type().readonly)
             .unwrap_or(false);
         type_arguments = type_arguments
             .iter()
@@ -5891,7 +5885,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 false, /*isBareList*/
             ) {
                 for i in 0..tuple_constituent_nodes.nodes.len() {
-                    let info = element_infos.get(i).copied().unwrap_or_default();
+                    let info = element_infos.get(i).cloned().unwrap_or_default();
                     let flags = info.flags;
                     let labeled_element_declaration = info.labeled_declaration;
 
@@ -5995,7 +5989,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 .and_then(|s| symbol_value_declaration(c, s))
                 .is_some_and(|vd| {
                     let vd_nodes = c.program_nodes(vd);
-                    ast::is_class_like(Some(vd), vd_nodes)
+                    ast::is_class_like(Some(vd), &vd_nodes)
                 })
             && t_symbol
                 .is_some_and(|s| !c.is_value_symbol_accessible(Some(s), self.ctx.enclosing_declaration))
@@ -6003,10 +5997,8 @@ impl<'a> NodeBuilderImpl<'a> {
             return self.create_anonymous_type_node(c, nodes, t);
         }
 
-        let target = c.types.get(t).target().unwrap_or(t);
-        let outer_type_parameters = c
-            .types
-            .get(target)
+        let __arena_target = c.types.clone(); let target = __arena_target.get(t).target().unwrap_or(t);
+        let __arena_outer_type_parameters = c.types.clone(); let outer_type_parameters = __arena_outer_type_parameters.get(target)
             .as_interface_type()
             .map(|it| it.outer_type_parameters().to_vec())
             .unwrap_or_default();
@@ -6064,9 +6056,7 @@ impl<'a> NodeBuilderImpl<'a> {
         let mut type_argument_nodes: Option<NodeList> = None;
         if !type_arguments.is_empty() {
             let mut type_parameter_count = 0usize;
-            let type_params = c
-                .types
-                .get(target)
+            let __arena_type_params = c.types.clone(); let type_params = __arena_type_params.get(target)
                 .as_interface_type()
                 .map(|it| it.type_parameters().to_vec());
             if let Some(type_params) = &type_params {
@@ -6092,7 +6082,7 @@ impl<'a> NodeBuilderImpl<'a> {
                     || c.is_reference_to_type(t, global_async_iterable)
                     || c.is_reference_to_type(t, global_async_iterable_iterator)
                 {
-                    let ref_node = c.types.get(t).as_type_reference().node;
+                    let __arena_ref_node = c.types.clone(); let ref_node = __arena_ref_node.get(t).as_type_reference().node;
                     let ref_node_type_arguments_len = ref_node.and_then(|n| {
                         let nn = c.program_nodes(n);
                         if ast::is_type_reference_node(&nn[n]) {
@@ -6162,9 +6152,10 @@ impl<'a> NodeBuilderImpl<'a> {
         let is_array_or_tuple = c.is_array_or_tuple_type(t);
         if is_array_or_tuple {
             // Deferred and regular references share a cycle identity.
-            let target = c.types.get(t).target().unwrap_or(t);
+            let __arena_target = c.types.clone(); let target = __arena_target.get(t).target().unwrap_or(t);
             let args = c.get_type_arguments(t);
-            t_id = type_id(c, c.create_type_reference(target, &args));
+            let new_ref = c.create_type_reference(target, &args);
+            t_id = type_id(c, new_ref);
         }
         if self.ctx.visited_types.has(&t_id) {
             return self.create_cyclic_structure_placeholder(c, nodes);
@@ -6177,20 +6168,18 @@ impl<'a> NodeBuilderImpl<'a> {
             // symbol or tuple origin.
             None
         } else if type_object_flags(c, t).intersects(ObjectFlags::REFERENCE)
-            && c.types.get(t).as_type_reference().node.is_some()
+            && c.types_handle().get(t).as_type_reference().node.is_some()
         {
             Some(CompositeSymbolIdentity {
                 is_constructor_node: false,
                 symbol_id: SymbolId::NONE,
-                node_id: c.types.get(t).as_type_reference().node.unwrap(),
+                node_id: c.types_handle().get(t).as_type_reference().node.unwrap(),
             })
         } else if type_flags(c, t).intersects(TypeFlags::CONDITIONAL) {
             Some(CompositeSymbolIdentity {
                 is_constructor_node: false,
                 symbol_id: SymbolId::NONE,
-                node_id: c
-                    .types
-                    .get(t)
+                node_id: c.types_handle().get(t)
                     .as_conditional_type()
                     .root
                     .as_ref()
@@ -6260,12 +6249,10 @@ impl<'a> NodeBuilderImpl<'a> {
             // Growing type arguments can prevent a reverse mapped type from
             // repeating. Bound expansion by its mapped declaration as well as
             // its type identity.
-            let origin_node = c
-                .types
-                .get(t)
+            let __arena_origin_node = c.types.clone(); let origin_node = __arena_origin_node.get(t)
                 .as_reverse_mapped_type()
                 .mapped_type
-                .and_then(|mt| c.types.get(mt).as_mapped_type().declaration);
+                .and_then(|mt| c.types_handle().get(mt).as_mapped_type().declaration);
             let origin = CompositeSymbolIdentity {
                 is_constructor_node: false,
                 symbol_id: SymbolId::NONE,
@@ -6391,7 +6378,7 @@ impl<'a> NodeBuilderImpl<'a> {
             t = c.get_reduced_type(t);
         }
 
-        let mut t_flags = type_flags(c, t);
+        let t_flags = type_flags(c, t);
         if t_flags.intersects(TypeFlags::ANY) {
             if let Some(alias) = type_alias(c, t) {
                 return Some(alias_to_type_reference_node(self, c, nodes, &alias));
@@ -6459,10 +6446,8 @@ impl<'a> NodeBuilderImpl<'a> {
                     if ast::is_import_type_node(&nodes[parent_name]) {
                         nodes[parent_name].as_import_type_node_mut().is_type_of = true;
                         // mutably update, node is freshly manufactured anyhow
-                        let lit = self.f.new_literal_type_node(
-                            nodes,
-                            Some(self.new_string_literal(c, nodes, &member_name)),
-                        );
+                        let member_lit = self.new_string_literal(c, nodes, &member_name);
+                        let lit = self.f.new_literal_type_node(nodes, Some(member_lit));
                         return Some(self.f.new_indexed_access_type_node(
                             nodes,
                             Some(parent_name),
@@ -6471,10 +6456,8 @@ impl<'a> NodeBuilderImpl<'a> {
                     } else if ast::is_type_reference_node(&nodes[parent_name]) {
                         let type_name = nodes[parent_name].as_type_reference_node().type_name;
                         let query = self.f.new_type_query_node(nodes, type_name, None);
-                        let lit = self.f.new_literal_type_node(
-                            nodes,
-                            Some(self.new_string_literal(c, nodes, &member_name)),
-                        );
+                        let member_lit = self.new_string_literal(c, nodes, &member_name);
+                        let lit = self.f.new_literal_type_node(nodes, Some(member_lit));
                         return Some(self.f.new_indexed_access_type_node(
                             nodes,
                             Some(query),
@@ -6496,7 +6479,7 @@ impl<'a> NodeBuilderImpl<'a> {
             }
         }
         if t_flags.intersects(TypeFlags::STRING_LITERAL) {
-            let value = match c.types.get(t).as_literal_type().value.clone() {
+            let value = match c.types_handle().get(t).as_literal_type().value.clone() {
                 Some(tsc_evaluator::Value::String(s)) => s,
                 _ => String::new(),
             };
@@ -6508,7 +6491,7 @@ impl<'a> NodeBuilderImpl<'a> {
             return Some(self.f.new_literal_type_node(nodes, Some(lit)));
         }
         if t_flags.intersects(TypeFlags::NUMBER_LITERAL) {
-            let value = match c.types.get(t).as_literal_type().value.clone() {
+            let value = match c.types_handle().get(t).as_literal_type().value.clone() {
                 Some(tsc_evaluator::Value::Number(n)) => n,
                 _ => jsnum::Number(0.0),
             };
@@ -6540,7 +6523,7 @@ impl<'a> NodeBuilderImpl<'a> {
         }
         if t_flags.intersects(TypeFlags::BOOLEAN_LITERAL) {
             let value = matches!(
-                c.types.get(t).as_literal_type().value,
+                c.types_handle().get(t).as_literal_type().value,
                 Some(tsc_evaluator::Value::Bool(true))
             );
             if value {
@@ -6665,7 +6648,7 @@ impl<'a> NodeBuilderImpl<'a> {
                     }
                     if let Some(type_argument_nodes) = &type_argument_nodes
                         && type_argument_nodes.nodes.len() == 1
-                        && Some(sym) == c.types.get(c.global_array_type).symbol
+                        && Some(sym) == c.types_handle().get(c.global_array_type).symbol
                     {
                         return Some(
                             self.f
@@ -6706,7 +6689,7 @@ impl<'a> NodeBuilderImpl<'a> {
         &mut self,
         c: &mut Checker,
         nodes: &mut Vec<ast::Node>,
-        t: TypeId,
+        mut t: TypeId,
         t_flags: TypeFlags,
         object_flags: ObjectFlags,
         expanding_enum: bool,
@@ -6730,7 +6713,7 @@ impl<'a> NodeBuilderImpl<'a> {
                     t,
                     NodeBuilderImpl::array_or_tuple_type_to_node,
                 ));
-            } else if c.types.get(t).as_type_reference().node.is_some() {
+            } else if c.types_handle().get(t).as_type_reference().node.is_some() {
                 return Some(self.visit_and_transform_type(
                     c,
                     nodes,
@@ -6828,7 +6811,7 @@ impl<'a> NodeBuilderImpl<'a> {
             return Some(self.f.new_type_reference_node(nodes, Some(id), None));
         }
         if t_flags.intersects(TypeFlags::UNION)
-            && let Some(origin) = c.types.get(t).as_union_type().union_or_intersection.origin
+            && let Some(origin) = c.types_handle().get(t).as_union_type().origin
         {
             t = origin;
         }
@@ -6836,17 +6819,14 @@ impl<'a> NodeBuilderImpl<'a> {
         let _ = &mut t_flags;
         if t_flags.intersects(TypeFlags::UNION | TypeFlags::INTERSECTION) {
             let types: Vec<TypeId> = if t_flags.intersects(TypeFlags::UNION) {
-                let union_types = c
-                    .types
-                    .get(t)
+                let __arena_union_types = c.types.clone(); let union_types = __arena_union_types.get(t)
                     .as_union_type()
                     .union_or_intersection
                     .types
                     .clone();
                 c.format_union_types(&union_types, expanding_enum)
             } else {
-                c.types
-                    .get(t)
+                c.types_handle().get(t)
                     .as_intersection_type()
                     .union_or_intersection
                     .types
@@ -6885,7 +6865,7 @@ impl<'a> NodeBuilderImpl<'a> {
             return Some(self.create_anonymous_type_node(c, nodes, t));
         }
         if t_flags.intersects(TypeFlags::INDEX) {
-            let indexed_type = c.types.get(t).as_index_type().target;
+            let __arena_indexed_type = c.types.clone(); let indexed_type = __arena_indexed_type.get(t).as_index_type().target;
             self.ctx.approximate_length += 6;
             let index_type_node =
                 self.type_to_type_node(c, nodes, indexed_type.unwrap_or(c.error_type));
@@ -6897,7 +6877,8 @@ impl<'a> NodeBuilderImpl<'a> {
         }
         if t_flags.intersects(TypeFlags::TEMPLATE_LITERAL) {
             let (texts, types_) = {
-                let tlt = c.types.get(t).as_template_literal_type();
+                let __arena_t_guard = c.types.clone(); let t_guard = __arena_t_guard.get(t);
+                let tlt = t_guard.as_template_literal_type();
                 (tlt.texts.clone(), tlt.types.clone())
             };
             let template_head =
@@ -6934,9 +6915,9 @@ impl<'a> NodeBuilderImpl<'a> {
             ));
         }
         if t_flags.intersects(TypeFlags::STRING_MAPPING) {
-            let target = c.types.get(t).as_string_mapping_type().target;
+            let __arena_target = c.types.clone(); let target = __arena_target.get(t).as_string_mapping_type().target;
             let type_node = self.type_to_type_node(c, nodes, target.unwrap_or(c.error_type));
-            let symbol = c.types.get(t).as_string_mapping_type().symbol;
+            let __arena_symbol = c.types.clone(); let symbol = __arena_symbol.get(t).symbol;
             let args = self.f.new_node_list([type_node]);
             return symbol.and_then(|s| {
                 self.symbol_to_type_node(c, nodes, s, SymbolFlags::TYPE, Some(args))
@@ -6944,7 +6925,8 @@ impl<'a> NodeBuilderImpl<'a> {
         }
         if t_flags.intersects(TypeFlags::INDEXED_ACCESS) {
             let (object_type, index_type) = {
-                let iat = c.types.get(t).as_indexed_access_type();
+                let __arena_t_guard = c.types.clone(); let t_guard = __arena_t_guard.get(t);
+                let iat = t_guard.as_indexed_access_type();
                 (iat.object_type, iat.index_type)
             };
             let object_type_node =
@@ -6967,7 +6949,7 @@ impl<'a> NodeBuilderImpl<'a> {
             ));
         }
         if t_flags.intersects(TypeFlags::SUBSTITUTION) {
-            let base_type = c.types.get(t).as_substitution_type().base_type;
+            let __arena_base_type = c.types.clone(); let base_type = __arena_base_type.get(t).as_substitution_type().base_type;
             let type_node = self.type_to_type_node(c, nodes, base_type.unwrap_or(c.error_type));
             if !c.is_no_infer_type(t) {
                 return Some(type_node);
@@ -7271,9 +7253,9 @@ fn is_private_identifier_symbol(c: &Checker, symbol: SymbolId) -> bool {
 /// until utilities.go's copy lands.
 fn contains_non_missing_undefined_type(c: &Checker, t: TypeId) -> bool {
     let candidate = if type_flags(c, t).intersects(TypeFlags::UNION) {
-        c.types
-            .get(t)
+        c.types_handle().get(t)
             .as_union_type()
+            .union_or_intersection
             .types
             .first()
             .copied()
@@ -7306,10 +7288,8 @@ fn get_name_from_index_info(c: &Checker, info: IndexInfoId) -> String {
     if let Some(declaration) = c.index_info_arena.get(info).declaration {
         let nodes = c.program_nodes(declaration);
         if let Some(first_param) = nodes[declaration]
-            .as_index_signature_declaration()
-            .parameters
-            .as_ref()
-            .and_then(|l| l.nodes.first())
+            .parameters()
+            .and_then(|l| l.first())
         {
             return scanner::utilities::declaration_name_to_string(
                 nodes[*first_param].name(),
@@ -7323,7 +7303,7 @@ fn get_name_from_index_info(c: &Checker, info: IndexInfoId) -> String {
 /// `getMappedTypeModifiers` (checker.go:29541) — PORT: file-local copy;
 /// checker_d.rs's copy is module-private.
 fn get_mapped_type_modifiers_local(c: &Checker, t: TypeId) -> MappedTypeModifiers {
-    let Some(declaration) = c.types.get(t).as_mapped_type().declaration else {
+    let Some(declaration) = c.types_handle().get(t).as_mapped_type().declaration else {
         return MappedTypeModifiers::NONE;
     };
     let nodes = c.program_nodes(declaration);
@@ -7359,12 +7339,13 @@ pub(crate) fn get_target_symbol(c: &mut Checker, s: SymbolId) -> SymbolId {
 fn get_regular_type_of_expression(c: &mut Checker, expr: NodeId) -> TypeId {
     let mut expr = expr;
     let nodes = c.program_nodes(expr);
-    if ast::is_right_side_of_qualified_name_or_property_access(&nodes[expr]) {
+    if ast::is_right_side_of_qualified_name_or_property_access(expr, &nodes) {
         if let Some(parent) = nodes[expr].parent {
             expr = parent;
         }
     }
-    c.get_regular_type_of_literal_type(c.get_type_of_expression(expr))
+    let t = c.get_type_of_expression(expr);
+    c.get_regular_type_of_literal_type(t)
 }
 
 /// Shared state for the `cloneBindingName` visitor — the `b`/`c` pieces the
@@ -7563,7 +7544,9 @@ fn try_get_module_specifier_from_declaration_worker(
                 ast::find_ancestor(nodes[node].initializer(), nodes, &mut |n, nodes| {
                     ast::is_require_call(n, true, nodes) || ast::is_import_call(n, nodes)
                 })?;
-            nodes[module_call].arguments().first().copied()
+            nodes[module_call]
+                .arguments()
+                .and_then(|args| args.first().copied())
         }
         Kind::ImportDeclaration | Kind::ExportDeclaration | Kind::JSDocImportTag => {
             nodes[node].module_specifier()
@@ -7738,11 +7721,10 @@ impl<'a> CheckerShapeAdapter<'a> {
 
 impl tsc_modulespecifiers::CheckerShape for CheckerShapeAdapter<'_> {
     fn get_symbol_at_location(&self, node: NodeId) -> Option<SymbolId> {
-        // PORT(deferred): `Checker::GetSymbolAtLocation` (checker.go:32134)
-        // is not yet ported — the trait requires `&self` anyway, so it must
-        // be routed through a RefCell once it lands.
-        let _ = (&self.c, node);
-        unimplemented!("PORT(deferred): Checker::get_symbol_at_location")
+        // `Checker::get_symbol_at_location` (checker_d.rs) takes `&mut self`;
+        // the trait requires `&self`, so route through the RefCell.
+        // Go `getSymbolAtLocation(node)` in this context uses `ignoreErrors=true`.
+        self.c.borrow_mut().get_symbol_at_location(node, true)
     }
     fn get_aliased_symbol(&self, symbol: SymbolId) -> SymbolId {
         self.c.borrow_mut().resolve_alias(symbol)
@@ -7782,7 +7764,7 @@ pub(crate) fn classify_property_name(name: &str, string_named: bool, is_method: 
     }
     if !string_named
         && crate::utilities::is_numeric_literal_name(name)
-        && jsnum::Number::from_string(name).0 >= 0.0
+        && jsnum::from_string(name).0 >= 0.0
     {
         PropertyNameNodeKind::NumericLiteral
     } else {
@@ -7817,7 +7799,7 @@ fn get_type_alias_for_type_literal(c: &mut Checker, t: TypeId) -> Option<SymbolI
             let decl_nodes = c.program_nodes(decl);
             let node = decl_nodes[decl]
                 .parent
-                .and_then(|p| ast::walk_up_parenthesized_types(p, decl_nodes));
+                .and_then(|p| ast::walk_up_parenthesized_types(p, &decl_nodes));
             if node.is_some_and(|n| ast::is_type_alias_declaration(&decl_nodes[n])) {
                 return c.get_symbol_of_declaration(node.unwrap());
             }
@@ -7858,14 +7840,12 @@ fn get_name_from_index_info_data(c: &Checker, index_info: &IndexInfo) -> String 
     if let Some(declaration) = index_info.declaration {
         let decl_nodes = c.program_nodes(declaration);
         if let Some(first_param) = decl_nodes[declaration]
-            .as_index_signature_declaration()
-            .parameters
-            .as_ref()
-            .and_then(|l| l.nodes.first())
+            .parameters()
+            .and_then(|l| l.first())
         {
             return scanner::utilities::declaration_name_to_string(
                 decl_nodes[*first_param].name(),
-                decl_nodes,
+                &decl_nodes,
             );
         }
     }
@@ -7906,8 +7886,7 @@ impl Checker {
         let Some(target) = c_ref_target(&self.types, t) else {
             return 0;
         };
-        self.types
-            .get(target)
+        self.types_handle().get(target)
             .as_interface_type()
             .map(|i| i.type_parameters().len())
             .unwrap_or(0)
@@ -8043,9 +8022,7 @@ impl Checker {
             {
                 if let Some(sym) = self.get_symbol_of_declaration(node) {
                     let declared = self.get_declared_type_of_class_or_interface(sym);
-                    this_type = self
-                        .types
-                        .get(declared)
+                    this_type = self.types_handle().get(declared)
                         .as_interface_type()
                         .and_then(|i| i.this_type());
                 }

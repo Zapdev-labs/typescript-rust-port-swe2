@@ -511,7 +511,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 self.ctx.flags |= nodebuilder::Flags::IN_OBJECT_TYPE_LITERAL;
 
                 for i in 0..element_count {
-                    let (e_kind, e_name, e_optional, e_signature) = {
+                    let (e_kind, e_name, _e_optional, e_signature) = {
                         let e = &t.as_pseudo_type_object_literal().elements[i];
                         (e.kind(), e.name, e.optional, e.signature())
                     };
@@ -728,14 +728,6 @@ impl<'a> NodeBuilderImpl<'a> {
                 let literal = self.reuse_node(c, nodes, source);
                 Some(self.f.new_literal_type_node(nodes, literal))
             }
-            _ => {
-                tsc_debug::assert_never(
-                    format!("{:?}", t.kind()),
-                    Some(
-                        "Unhandled pseudotype kind in pseudotype node construction".to_string(),
-                    ),
-                )
-            }
         }
     }
 
@@ -843,9 +835,8 @@ impl<'a> NodeBuilderImpl<'a> {
                 if undefined_stripped == tfp {
                     return true;
                 }
-                if c.types.get(tfp).flags.intersects(TypeFlags::UNION)
-                    && c.types
-                        .get(undefined_stripped)
+                if c.types_handle().get(tfp).flags.intersects(TypeFlags::UNION)
+                    && c.types_handle().get(undefined_stripped)
                         .flags
                         .intersects(TypeFlags::UNION)
                 {
@@ -863,8 +854,8 @@ impl<'a> NodeBuilderImpl<'a> {
             {
                 return true;
             }
-            if c.types.get(tfp).flags.intersects(TypeFlags::UNION)
-                && c.types.get(type_).flags.intersects(TypeFlags::UNION)
+            if c.types_handle().get(tfp).flags.intersects(TypeFlags::UNION)
+                && c.types_handle().get(type_).flags.intersects(TypeFlags::UNION)
             {
                 // handles union comparison in general, since unions may not
                 // be `==` identical due to aliasing
@@ -1118,7 +1109,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 if !crate::checker_core::is_tuple_type(&c.types, undefined_stripped) {
                     return false;
                 }
-                let tuple_target = c.types.target_tuple_type(undefined_stripped);
+                let __arena_tuple_target = c.types.clone(); let tuple_target = __arena_tuple_target.target_tuple_type(undefined_stripped);
                 let Some(tuple_target) = tuple_target else {
                     return false;
                 };
@@ -1126,8 +1117,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 // only ever have required elements. If the target tuple has
                 // optional, rest, or variadic elements, the structures can't
                 // match.
-                if c.types
-                    .get(tuple_target)
+                if c.types_handle().get(tuple_target)
                     .as_tuple_type()
                     .combined_flags
                     .intersects(ElementFlags::NON_REQUIRED)
@@ -1470,9 +1460,6 @@ impl<'a> NodeBuilderImpl<'a> {
             PseudoTypeKind::ObjectLiteral
             | PseudoTypeKind::SingleCallSignature
             | PseudoTypeKind::Tuple => None,
-            _ => {
-                tsc_debug::fail("Unhandled pseudochecker.PseudoTypeKind in pseudoTypeToType")
-            }
         }
     }
 }

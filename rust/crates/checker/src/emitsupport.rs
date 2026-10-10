@@ -50,13 +50,12 @@ fn get_any_import_syntax(node: NodeId, nodes: &[Node]) -> Option<NodeId> {
 ///
 /// PORT(mirrored): as above.
 fn contains_non_missing_undefined_type(c: &Checker, t: TypeId) -> bool {
-    let candidate = if c.types.get(t).flags.intersects(TypeFlags::UNION) {
-        c.types.get(t).as_union_type().union_or_intersection.types[0]
+    let candidate = if c.types_handle().get(t).flags.intersects(TypeFlags::UNION) {
+        c.types_handle().get(t).as_union_type().union_or_intersection.types[0]
     } else {
         t
     };
-    c.types
-        .get(candidate)
+    c.types_handle().get(candidate)
         .flags
         .intersects(TypeFlags::UNDEFINED)
         && candidate != c.missing_type

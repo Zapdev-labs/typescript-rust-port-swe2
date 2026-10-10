@@ -1624,7 +1624,7 @@ pub fn is_non_deferred_type_reference(types: &TypeArena, t: TypeId) -> bool {
 pub fn is_type_reference_with_generic_arguments(c: &mut Checker, t: TypeId) -> bool {
     is_non_deferred_type_reference(&c.types, t)
         && c.get_type_arguments(t).iter().any(|&u| {
-            let is_type_parameter = c.types.get(u).flags.intersects(TypeFlags::TYPE_PARAMETER);
+            let __arena_is_type_parameter = c.types.clone(); let is_type_parameter = __arena_is_type_parameter.get(u).flags.intersects(TypeFlags::TYPE_PARAMETER);
             is_type_parameter || is_type_reference_with_generic_arguments(c, u)
         })
 }

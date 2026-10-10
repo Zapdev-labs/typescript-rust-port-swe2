@@ -1065,8 +1065,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
             return Kind0::Unknown;
         }
 
-        if c.types
-            .get(type_)
+        if c.types_handle().get(type_)
             .flags
             .intersects(TypeFlags::ANY_OR_UNKNOWN)
         {
@@ -1704,7 +1703,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
             .intersects(TypeFlags::ENUM_LIKE)
         {
             let mut c = checker_lock(&self.checker);
-            let symbol = c.types.get(t).symbol;
+            let __arena_symbol = c.types.clone(); let symbol = __arena_symbol.get(t).symbol;
             enum_result = self.node_builder(&c).symbol_to_expression(
                 &mut c,
                 nodes,
@@ -1745,10 +1744,10 @@ impl tsc_printer::EmitResolver for EmitResolver {
         }
         {
             let c = checker_lock(&self.checker);
-            if !c.types.get(t).flags.intersects(TypeFlags::LITERAL) {
+            if !c.types_handle().get(t).flags.intersects(TypeFlags::LITERAL) {
                 return None; // non-literal type
             }
-            let value = c.types.get(t).as_literal_type().value.clone();
+            let __arena_value = c.types.clone(); let value = __arena_value.get(t).as_literal_type().value.clone();
             drop(c);
             match value {
                 Some(evaluator::Value::String(value)) => {

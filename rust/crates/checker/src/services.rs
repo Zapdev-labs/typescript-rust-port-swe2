@@ -478,9 +478,7 @@ impl Checker {
 
         // forEachPropertyOfType
         let reduced_type = self.get_reduced_apparent_type(type_of_symbol);
-        if !self
-            .types
-            .get(reduced_type)
+        if !self.types_handle().get(reduced_type)
             .flags
             .intersects(TypeFlags::STRUCTURED_TYPE)
         {
@@ -488,7 +486,7 @@ impl Checker {
         }
         let members = {
             let t = self.resolve_structured_type_members(reduced_type);
-            let guard = self.types.get(t);
+            let __arena_guard = self.types.clone(); let guard = __arena_guard.get(t);
             guard
                 .data
                 .as_structured_type()
@@ -558,9 +556,7 @@ impl Checker {
     /// `(c *Checker) GetAllPossiblePropertiesOfTypes` (services.go:209).
     pub fn get_all_possible_properties_of_types(&mut self, types: &[TypeId]) -> Vec<SymbolId> {
         let union_type = self.get_union_type(types);
-        if !self
-            .types
-            .get(union_type)
+        if !self.types_handle().get(union_type)
             .flags
             .intersects(TypeFlags::UNION)
         {
@@ -706,14 +702,10 @@ impl Checker {
         &mut self,
         resolved_external_module_type: TypeId,
     ) -> bool {
-        !self
-            .types
-            .get(resolved_external_module_type)
+        !self.types_handle().get(resolved_external_module_type)
             .flags
             .intersects(TypeFlags::PRIMITIVE)
-            || self
-                .types
-                .get(resolved_external_module_type)
+            || self.types_handle().get(resolved_external_module_type)
                 .object_flags
                 .intersects(crate::types::ObjectFlags::CLASS)
             // `isArrayOrTupleLikeType` is too expensive to use in this
@@ -795,7 +787,7 @@ impl Checker {
     pub fn get_mapped_type_symbol_of_property(&mut self, symbol: SymbolId) -> Option<SymbolId> {
         if let Some(value_links) = self.value_symbol_links.try_get(symbol) {
             let containing_type = value_links.containing_type?;
-            return self.types.get(containing_type).symbol;
+            return self.types_handle().get(containing_type).symbol;
         }
         None
     }
@@ -810,7 +802,7 @@ impl Checker {
             let name = self.sym(symbol).name.clone();
             let containing_type = self.value_symbol_links.get(symbol).containing_type;
             let types = containing_type
-                .map(|t| self.types.get(t).types().to_vec())
+                .map(|t| self.types_handle().get(t).types().to_vec())
                 .unwrap_or_default();
             return types
                 .iter()
@@ -1268,17 +1260,13 @@ impl Checker {
                 // An instantiation expression instantiates both call and
                 // construct signatures, so if both exist type arguments must
                 // be assignable to both constraints.
-                if self
-                    .types
-                    .get(construct_constraint)
+                if self.types_handle().get(construct_constraint)
                     .flags
                     .intersects(TypeFlags::NEVER)
                 {
                     return Some(call_constraint);
                 }
-                if self
-                    .types
-                    .get(call_constraint)
+                if self.types_handle().get(call_constraint)
                     .flags
                     .intersects(TypeFlags::NEVER)
                 {
@@ -1466,7 +1454,7 @@ impl Checker {
     pub fn get_type_parameter_at_position(&mut self, s: SignatureId, pos: usize) -> TypeId {
         let t = self.get_type_at_position(s, pos);
         let target = {
-            let guard = self.types.get(t);
+            let __arena_guard = self.types.clone(); let guard = __arena_guard.get(t);
             if guard.is_index() {
                 guard.as_index_type().target
             } else {
@@ -1522,7 +1510,7 @@ impl Checker {
     /// `(c *Checker) GetFirstTypeArgumentFromKnownType` (services.go:1007).
     pub fn get_first_type_argument_from_known_type(&mut self, t: TypeId) -> Option<TypeId> {
         let (is_reference, symbol) = {
-            let guard = self.types.get(t);
+            let __arena_guard = self.types.clone(); let guard = __arena_guard.get(t);
             (
                 guard
                     .object_flags
@@ -1537,11 +1525,9 @@ impl Checker {
                     if let Some(global_symbol) =
                         self.get_global_symbol(&name, SymbolFlags::TYPE, None)
                     {
-                        let target_symbol = self
-                            .types
-                            .get(t)
+                        let __arena_target_symbol = self.types.clone(); let target_symbol = __arena_target_symbol.get(t)
                             .target()
-                            .and_then(|tt| self.types.get(tt).symbol);
+                            .and_then(|tt| self.types_handle().get(tt).symbol);
                         if target_symbol == Some(global_symbol) {
                             return self.get_type_arguments(t).first().copied();
                         }
@@ -1549,7 +1535,7 @@ impl Checker {
                 }
             }
         }
-        let alias = self.types.get(t).alias.clone();
+        let __arena_alias = self.types.clone(); let alias = __arena_alias.get(t).alias.clone();
         if let Some(alias) = alias {
             let alias_name = alias
                 .symbol
@@ -1582,9 +1568,7 @@ impl Checker {
         if name.is_empty() {
             return Vec::new();
         }
-        if !self
-            .types
-            .get(contextual_type)
+        if !self.types_handle().get(contextual_type)
             .flags
             .intersects(TypeFlags::UNION)
         {
@@ -1593,7 +1577,7 @@ impl Checker {
             }
             return Vec::new();
         }
-        let all_types: Vec<TypeId> = self.types.get(contextual_type).types().to_vec();
+        let all_types: Vec<TypeId> = self.types_handle().get(contextual_type).types().to_vec();
         let parent = nodes[node].parent;
         let mut filtered_types = all_types.clone();
         if parent.is_some_and(|p| {
@@ -1749,12 +1733,12 @@ impl Checker {
     /// treated as opaque.
     pub fn is_lib_type_for_hover_verbosity(&mut self, t: TypeId) -> bool {
         let symbol = {
-            let guard = self.types.get(t);
+            let __arena_guard = self.types.clone(); let guard = __arena_guard.get(t);
             if guard
                 .object_flags
                 .intersects(crate::types::ObjectFlags::REFERENCE)
             {
-                guard.target().and_then(|tt| self.types.get(tt).symbol)
+                guard.target().and_then(|tt| self.types_handle().get(tt).symbol)
             } else {
                 guard.symbol
             }

@@ -1386,3 +1386,143 @@ ports (checker_b 396, checker_a 278, nodebuilderimpl 91, relater 71,
 flow 69, checker_d 25, symbolaccessibility 22, services 22,
 emitresolver 21, plus small counts elsewhere) -- unchanged
 pre-existing cross-file gaps, not defects of this range.
+
+================================================================================
+Nodebuilder cluster (nodebuilder, nodebuilderimpl, nodebuilder_hover,
+nodebuilderscopes, nodecopy, pseudotypenodebuilder, symbolaccessibility)
+================================================================================
+
+Full cluster port complete against Go authority
+ec47d33c23e464a17cdf2475632cba629bee8763. All 249 Go funcs across the
+seven files are covered (verified by name-mapping audit; the four
+"apparent gaps" resolve to different ownership/naming:
+`getExpandedParameters` -> `Checker::get_expanded_parameters`
+(checker_core.rs), `TypeAlias.ToTypeReferenceNode` -> free fn
+`alias_to_type_reference_node` (nodebuilderimpl.rs), `newWrappingTracker`
+-> inlined `WrappingTracker{..}` literal in `create_recovery_boundary`
+(nodecopy.rs), `compareSymbolChainsWorker` ->
+`Checker::compare_symbol_chains_worker` (checker_core.rs)).
+
+Files and notes:
+
+- `nodebuilder.rs` (~874 lines): `NodeBuilder` public surface,
+  `NodeBuilderContext`, `SymbolTracker` trait (explicit `&[Node]`
+  arena params), `SymbolTrackerImpl` facade, `MappedType` enum
+  (`Type`/`Node`), `SymbolVisibilityResult`. Box<dyn SymbolTracker> is
+  not cloneable, so nested Go-style context entry shares one tracker
+  via `Rc<RefCell<Box<dyn SymbolTracker>>>` wrapped in delegating
+  `SharedTracker` re-boxes (`share_tracker`/`shared_tracker_box`).
+- `nodebuilderimpl.rs` (~8230 lines): the main builder —
+  `NodeBuilderImpl` owns context/factory/emit-context/pseudo-checker
+  and node/symbol caches; type->node serialization for every type
+  variant, signatures, index signatures, object literal symbol
+  members, binding-name cloning, entity-name/tracker integration,
+  `CheckerShapeAdapter` (RefCell-backed so the `&self`
+  `modulespecifiers::CheckerShape` trait can call `&mut` checker
+  methods `get_symbol_at_location`/`resolve_alias`),
+  `signature_to_signature_declaration_helper`, reference-error
+  handling, `DisplayKind`/`EncapsulationKind` enums.
+- `nodebuilder_hover.rs` (~1286 lines, new): hover-info serialization
+  — symbol/method/property/parameter/etc. quick-info paths, type
+  parameter and return-type serialization used by hover.
+- `pseudotypenodebuilder.rs` (~1470 lines, new): `PseudoType`/`PseudoTypeKind`,
+  `pseudo_type_to_node`, `pseudo_type_to_type`, unique-symbol-type and
+  `get_variable_declaration_type_visibilities` port (expanded
+  parameter iteration via `Checker::get_expanded_parameters`).
+- `nodecopy.rs` (~copy visitor): `NodeCopier`/visitor-fn table,
+  `VisitEachChild` equivalents, `recoveryBoundary` +
+  `WrappingTracker`, `create_recovery_boundary`/`recover`/`pop`,
+  `get_existing_node_tree_visitor`, foreign-arena relocation.
+- `symbolaccessibility.rs`: symbol visibility chain analysis,
+  `SymbolAccessibilityResult`, `is_symbol_accessible*`,
+  module-specifier resolution via `tsc_modulespecifiers`,
+  `compare_symbol_chains` delegation to
+  `Checker::compare_symbol_chains_worker` (checker_core thunk).
+- `nodebuilderscopes.rs`: `enter_new_scope`/`ScopeGuard`
+  (restores `enclosing_declaration`, `mapper`, `tracker`,
+  tracked-symbol state on drop — Go's `defer` pattern).
+
+Key port decisions:
+
+- Arena model: `Node`/`NodeData` are not Clone; factory-produced nodes
+  are appended to a per-file arena (`program.nodes_mut(file)`), so
+  cross-file cloning borrows the *source* arena mutably, appends
+  clones there, then `relocate_cloned_tail` `Vec::drain`s the appended
+  tail into the destination arena and remaps `NodeId`s/parents/
+  originals/symbol links — no clone of the whole arena required.
+- Nested factory calls were hoisted to locals everywhere to avoid
+  double `&mut` borrows of `self`/`nodes` (Go shares pointers freely).
+- Go `defer` restores -> guard structs (`ScopeGuard`,
+  `EnclosingDeclarationGuard`) or explicit save/restore.
+- Tracker ownership: `SharedTracker` (above) because interface values
+  are copyable in Go but `Box<dyn>` is not.
+- `Checker::get_symbol_at_location` landed in `checker_d.rs` — the
+  `CheckerShapeAdapter` is now fully wired (no `unimplemented!`).
+  `ignore_errors=true` per Go's modulespecifiers usage.
+
+Verification: local + remote (dih@192.168.1.15) `cargo check
+-p tsc-checker`. Zero errors and zero warnings in all seven
+nodebuilder-cluster files on both hosts. The crate still fails
+overall with ~604 errors, all in sibling in-flight ports: checker_b
+(201), checker_a (174), checker_c (106), relater (62), checker_d (39),
+flow (13), inference (2), utilities (1), types (1) — expected
+cross-file gaps, not nodebuilder defects.
+
+Expected/deferred dependencies (owned by sibling ports):
+`Checker::get_symbol_at_location` was the last deferred call in this
+cluster and is now wired; remaining gaps surfaced are E0599-style
+missing methods *inside* the sibling files themselves, which their
+owners must resolve. No `unsafe`, no `unimplemented!`/`todo!` remain
+in the nodebuilder cluster.
+
+## Checker crate reaches zero errors
+
+`cargo check -p tsc-checker` now completes with **zero errors** (232
+warnings remain — unused vars, snake-case names, dead code — deferred
+cleanup). `tsc-transformers` and `tsc-printer` also check clean.
+Verified locally and on dih@192.168.1.15 (`rsync` +
+`CARGO_TARGET_DIR=/tmp/tsc-target`).
+
+Final error tail and how it was cleared:
+
+- **Arena-guard holds across `&mut self` calls.** `self.types.get(..)`,
+  `self.sym(..)`, `self.index_info_arena`, `symbol_node_links` etc.
+  return `Ref`/`TypeReadGuard`s tied to `*self`. Where a guard must
+  outlive a mutable call, the arena handle is cloned first
+  (`let __arena_x = self.types.clone(); __arena_x.get(..)`,
+  `self.types_handle().get(..)`) so the guard borrows the local clone.
+  Where only a field value is needed it is copied out in a scoped
+  block (`let vd = { self.sym(s).value_declaration };`) or the
+  `if let` scrutinee is pre-evaluated so the `Ref` drops before the
+  body runs.
+- **`program_nodes_mut` across `self.factory`.** `nodes_mut` returns
+  `RefMut` borrowed from `&self`; cloning the
+  `Rc<dyn Program>` into a local first
+  (`let program = self.program.as_ref().expect("program").clone();
+    let mut arena = program.nodes_mut(file_index);`) unties the guard
+  from `*self`.
+- **`extend(iter.filter(|..| use index_infos))`.** Collect to a Vec
+  before `extend` when the predicate also reads the extended
+  collection.
+- **Nested `self.m(self.n(..))` with both `&mut`.** Inner calls hoisted
+  to `let` temps before the outer call (diagnostic args, comparer
+  args, `type_to_string`/`symbol_to_string` format args).
+- **`Option<TypeId>`/`Option<SymbolId>` vs `TypeId`/`SymbolId`.**
+  `IndexInfo.key_type`/`value_type` are `Option<TypeId>`; call sites
+  use `.unwrap_or(self.error_type)` (matching existing `error_type`
+  defaults elsewhere). `get_unresolved_symbol_for_entity_name`
+  returns `SymbolId` -> wrapped in `Some(..)` at Option-returning
+  call sites.
+- **`index_info_arena.borrow()`** — `IndexInfoArena` is a plain arena;
+  use `.get(id)`/`.get_mut(id)`/`.alloc(..)`, not `borrow()`.
+
+A large automated "hoist nested `self` calls to `let __hNNNN_C`
+temporaries" pass corrupted source (lets injected into comments,
+match arms, struct literals, format strings, after `return`/`break`,
+inside `&[...]` arg lists). Recovery was: strip/re-anchor every
+`__h` binding to the statement boundary enclosing its *use* via a
+forward-scan brace/comment/string-aware anchor, plus manual repair of
+~15 multi-def arg-list sites and Go-source spot-checks (e.g. the
+`&&`/`||`/`??` union-type arms in `getTypeOfBinaryExpression`,
+checker.go:12735-12763). No remaining `__h` names are out of scope
+and surviving ones are ordinary statement temps.

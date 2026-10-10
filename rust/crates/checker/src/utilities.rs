@@ -700,7 +700,7 @@ impl Checker {
         let flags;
         let object_flags;
         {
-            let g = self.types.get(t);
+            let __arena_g = self.types.clone(); let g = __arena_g.get(t);
             flags = g.flags();
             object_flags = g.object_flags();
         }
@@ -708,13 +708,12 @@ impl Checker {
             return true;
         }
         if flags.intersects(TypeFlags::UNION) {
-            let types = { self.types.get(t).as_union_type().union_or_intersection.types.clone() };
+            let types = { self.types_handle().get(t).as_union_type().union_or_intersection.types.clone() };
             return types.iter().all(|&m| self.is_js_literal_type(m));
         }
         if flags.intersects(TypeFlags::INTERSECTION) {
             let types = {
-                self.types
-                    .get(t)
+                self.types_handle().get(t)
                     .as_intersection_type()
                     .union_or_intersection
                     .types
@@ -1608,7 +1607,7 @@ pub(crate) fn try_get_property_access_or_identifier_to_string(
 
 /// `getBaseTypeNodeOfClass` (checker.go:19671).
 pub(crate) fn get_base_type_node_of_class(c: &Checker, t: TypeId) -> Option<NodeId> {
-    let symbol = c.types.get(t).symbol?;
+    let __arena_symbol = c.types.clone(); let symbol = __arena_symbol.get(t).symbol?;
     let first_decl = *c.sym(symbol).declarations.first()?;
     let nodes = c.program_nodes(first_decl);
     let decl = ast::get_class_like_declaration_of_symbol(&*c.sym(symbol), &nodes)?;
@@ -2979,15 +2978,21 @@ impl Checker {
     /// Returns true if symbol is a parameter, a catch clause variable, or a
     /// mutable local variable.
     pub(crate) fn is_parameter_or_mutable_local_variable(&mut self, symbol: SymbolId) -> bool {
-        if let Some(value_declaration) = self.sym(symbol).value_declaration {
+        let value_declaration = self.sym(symbol).value_declaration;
+        if let Some(value_declaration) = value_declaration {
             let nodes = self.program_nodes(value_declaration);
             let declaration = ast::get_root_declaration(value_declaration, &nodes);
-            return ast::is_parameter_declaration(&nodes[declaration])
+            let is_param_or_catch = ast::is_parameter_declaration(&nodes[declaration])
                 || (ast::is_variable_declaration(&nodes[declaration])
-                    && (nodes[declaration]
+                    && nodes[declaration]
                         .parent
-                        .is_some_and(|p| ast::is_catch_clause(&nodes[p]))
-                        || self.is_mutable_local_variable_declaration(declaration)));
+                        .is_some_and(|p| ast::is_catch_clause(&nodes[p])));
+            if is_param_or_catch {
+                return true;
+            }
+            drop(nodes);
+            return ast::is_variable_declaration(&self.program_nodes(declaration)[declaration])
+                && self.is_mutable_local_variable_declaration(declaration);
         }
         false
     }

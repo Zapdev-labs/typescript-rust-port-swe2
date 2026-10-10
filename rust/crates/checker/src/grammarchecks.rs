@@ -1813,8 +1813,7 @@ impl Checker {
         };
         let t = self.get_type_from_type_node(type_node);
         if crate::checker_d::some_type(self, t, |c, t| {
-            c.types
-                .get(t)
+            c.types_handle().get(t)
                 .flags
                 .intersects(crate::types::TypeFlags::STRING_OR_NUMBER_LITERAL_OR_UNIQUE)
         }) || self.is_generic_type(t)
@@ -4044,9 +4043,7 @@ impl Checker {
         let nodes = self.program_nodes(expr);
         if ast::is_property_access_expression(&nodes[expr]) {
             let t = self.check_expression_cached(expr);
-            return self
-                .types
-                .get(t)
+            return self.types_handle().get(t)
                 .flags
                 .intersects(crate::types::TypeFlags::ENUM_LIKE);
         }
@@ -4062,9 +4059,7 @@ impl Checker {
                 && ast::is_entity_name_expression(&nodes[expression], &nodes)
             {
                 let t = self.check_expression_cached(expr);
-                return self
-                    .types
-                    .get(t)
+                return self.types_handle().get(t)
                     .flags
                     .intersects(crate::types::TypeFlags::ENUM_LIKE);
             }

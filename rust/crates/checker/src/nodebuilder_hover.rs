@@ -84,7 +84,7 @@ fn ast_symbol_name(c: &Checker, s: SymbolId) -> String {
 
 /// `t.symbol` read through the type arena.
 fn type_symbol(c: &Checker, t: TypeId) -> Option<SymbolId> {
-    c.types.get(t).symbol
+    c.types_handle().get(t).symbol
 }
 
 /// `isExpanding` — whether the node builder context is operating in
@@ -547,7 +547,7 @@ impl<'a> NodeBuilderImpl<'a> {
         // Members: reuse existing serialization functions
         let resolved = c.resolve_structured_type_members(interface_type);
         let (construct_signatures, call_signatures, resolved_properties) = {
-            let guard = c.types.get(resolved);
+            let __arena_guard = c.types.clone(); let guard = __arena_guard.get(resolved);
             let st = guard.as_structured_type().expect("structured type");
             (
                 st.construct_signatures().to_vec(),
@@ -1237,8 +1237,7 @@ impl<'a> NodeBuilderImpl<'a> {
         for &base in base_types {
             let this_type = {
                 let target = c.get_target_type(t);
-                c.types
-                    .get(target)
+                c.types_handle().get(target)
                     .as_interface_type()
                     .and_then(|i| i.this_type())
             };

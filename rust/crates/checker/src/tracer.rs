@@ -189,8 +189,7 @@ impl TracedType for TracedTypeAdapter {
 
     /// `IsConditional`.
     fn is_conditional(&self) -> bool {
-        self.types
-            .get(self.t)
+        self.types.get(self.t)
             .flags
             .intersects(TypeFlags::CONDITIONAL)
     }
@@ -202,8 +201,7 @@ impl TracedType for TracedTypeAdapter {
 
     /// `AliasSymbol`.
     fn alias_symbol(&self) -> Option<SymbolId> {
-        self.types
-            .get(self.t)
+        self.types.get(self.t)
             .alias
             .as_ref()
             .and_then(|a| a.symbol())
@@ -212,7 +210,7 @@ impl TracedType for TracedTypeAdapter {
     /// `AliasTypeArguments`.
     fn alias_type_arguments(&self) -> Vec<Option<Arc<dyn TracedType>>> {
         let args = {
-            let ty = self.types.get(self.t);
+            let __arena_ty = self.types.clone(); let ty = __arena_ty.get(self.t);
             match &ty.alias {
                 Some(alias) => alias.type_arguments().to_vec(),
                 None => Vec::new(),
@@ -223,7 +221,7 @@ impl TracedType for TracedTypeAdapter {
 
     /// `IntrinsicName`.
     fn intrinsic_name(&self) -> String {
-        let ty = self.types.get(self.t);
+        let __arena_ty = self.types.clone(); let ty = __arena_ty.get(self.t);
         if !ty.flags.intersects(TypeFlags::INTRINSIC) {
             return String::new();
         }
@@ -236,7 +234,7 @@ impl TracedType for TracedTypeAdapter {
     /// `UnionTypes`.
     fn union_types(&self) -> Vec<Option<Arc<dyn TracedType>>> {
         let types = {
-            let ty = self.types.get(self.t);
+            let __arena_ty = self.types.clone(); let ty = __arena_ty.get(self.t);
             if !ty.flags.intersects(TypeFlags::UNION) {
                 Vec::new()
             } else {
@@ -249,7 +247,7 @@ impl TracedType for TracedTypeAdapter {
     /// `IntersectionTypes`.
     fn intersection_types(&self) -> Vec<Option<Arc<dyn TracedType>>> {
         let types = {
-            let ty = self.types.get(self.t);
+            let __arena_ty = self.types.clone(); let ty = __arena_ty.get(self.t);
             if !ty.flags.intersects(TypeFlags::INTERSECTION) {
                 Vec::new()
             } else {
@@ -265,7 +263,7 @@ impl TracedType for TracedTypeAdapter {
     /// `IndexType`.
     fn index_type(&self) -> Option<Arc<dyn TracedType>> {
         let target = {
-            let ty = self.types.get(self.t);
+            let __arena_ty = self.types.clone(); let ty = __arena_ty.get(self.t);
             if !ty.flags.intersects(TypeFlags::INDEX) {
                 None
             } else {
@@ -278,7 +276,7 @@ impl TracedType for TracedTypeAdapter {
     /// `IndexedAccessObjectType`.
     fn indexed_access_object_type(&self) -> Option<Arc<dyn TracedType>> {
         let t = {
-            let ty = self.types.get(self.t);
+            let __arena_ty = self.types.clone(); let ty = __arena_ty.get(self.t);
             if !ty.flags.intersects(TypeFlags::INDEXED_ACCESS) {
                 None
             } else {
@@ -291,7 +289,7 @@ impl TracedType for TracedTypeAdapter {
     /// `IndexedAccessIndexType`.
     fn indexed_access_index_type(&self) -> Option<Arc<dyn TracedType>> {
         let t = {
-            let ty = self.types.get(self.t);
+            let __arena_ty = self.types.clone(); let ty = __arena_ty.get(self.t);
             if !ty.flags.intersects(TypeFlags::INDEXED_ACCESS) {
                 None
             } else {
@@ -304,7 +302,7 @@ impl TracedType for TracedTypeAdapter {
     /// `ConditionalCheckType`.
     fn conditional_check_type(&self) -> Option<Arc<dyn TracedType>> {
         let t = {
-            let ty = self.types.get(self.t);
+            let __arena_ty = self.types.clone(); let ty = __arena_ty.get(self.t);
             if !ty.flags.intersects(TypeFlags::CONDITIONAL) {
                 None
             } else {
@@ -317,7 +315,7 @@ impl TracedType for TracedTypeAdapter {
     /// `ConditionalExtendsType`.
     fn conditional_extends_type(&self) -> Option<Arc<dyn TracedType>> {
         let t = {
-            let ty = self.types.get(self.t);
+            let __arena_ty = self.types.clone(); let ty = __arena_ty.get(self.t);
             if !ty.flags.intersects(TypeFlags::CONDITIONAL) {
                 None
             } else {
@@ -330,7 +328,7 @@ impl TracedType for TracedTypeAdapter {
     /// `ConditionalTrueType`.
     fn conditional_true_type(&self) -> Option<Arc<dyn TracedType>> {
         let t = {
-            let ty = self.types.get(self.t);
+            let __arena_ty = self.types.clone(); let ty = __arena_ty.get(self.t);
             if !ty.flags.intersects(TypeFlags::CONDITIONAL) {
                 None
             } else {
@@ -343,7 +341,7 @@ impl TracedType for TracedTypeAdapter {
     /// `ConditionalFalseType`.
     fn conditional_false_type(&self) -> Option<Arc<dyn TracedType>> {
         let t = {
-            let ty = self.types.get(self.t);
+            let __arena_ty = self.types.clone(); let ty = __arena_ty.get(self.t);
             if !ty.flags.intersects(TypeFlags::CONDITIONAL) {
                 None
             } else {
@@ -356,7 +354,7 @@ impl TracedType for TracedTypeAdapter {
     /// `SubstitutionBaseType`.
     fn substitution_base_type(&self) -> Option<Arc<dyn TracedType>> {
         let t = {
-            let ty = self.types.get(self.t);
+            let __arena_ty = self.types.clone(); let ty = __arena_ty.get(self.t);
             if !ty.flags.intersects(TypeFlags::SUBSTITUTION) {
                 None
             } else {
@@ -369,7 +367,7 @@ impl TracedType for TracedTypeAdapter {
     /// `SubstitutionConstraintType`.
     fn substitution_constraint_type(&self) -> Option<Arc<dyn TracedType>> {
         let t = {
-            let ty = self.types.get(self.t);
+            let __arena_ty = self.types.clone(); let ty = __arena_ty.get(self.t);
             if !ty.flags.intersects(TypeFlags::SUBSTITUTION) {
                 None
             } else {
@@ -382,7 +380,7 @@ impl TracedType for TracedTypeAdapter {
     /// `ReferenceTarget`.
     fn reference_target(&self) -> Option<Arc<dyn TracedType>> {
         let t = {
-            let ty = self.types.get(self.t);
+            let __arena_ty = self.types.clone(); let ty = __arena_ty.get(self.t);
             if !ty.flags.intersects(TypeFlags::OBJECT)
                 || !ty.object_flags.intersects(ObjectFlags::REFERENCE)
             {
@@ -397,7 +395,7 @@ impl TracedType for TracedTypeAdapter {
     /// `ReferenceTypeArguments`.
     fn reference_type_arguments(&self) -> Vec<Option<Arc<dyn TracedType>>> {
         let args = {
-            let ty = self.types.get(self.t);
+            let __arena_ty = self.types.clone(); let ty = __arena_ty.get(self.t);
             if !ty.flags.intersects(TypeFlags::OBJECT)
                 || !ty.object_flags.intersects(ObjectFlags::REFERENCE)
             {
@@ -411,7 +409,7 @@ impl TracedType for TracedTypeAdapter {
 
     /// `ReferenceNode`.
     fn reference_node(&self) -> Option<NodeId> {
-        let ty = self.types.get(self.t);
+        let __arena_ty = self.types.clone(); let ty = __arena_ty.get(self.t);
         if !ty.flags.intersects(TypeFlags::OBJECT)
             || !ty.object_flags.intersects(ObjectFlags::REFERENCE)
         {
@@ -423,7 +421,7 @@ impl TracedType for TracedTypeAdapter {
     /// `ReverseMappedSourceType`.
     fn reverse_mapped_source_type(&self) -> Option<Arc<dyn TracedType>> {
         let t = {
-            let ty = self.types.get(self.t);
+            let __arena_ty = self.types.clone(); let ty = __arena_ty.get(self.t);
             if !ty.flags.intersects(TypeFlags::OBJECT)
                 || !ty.object_flags.intersects(ObjectFlags::REVERSE_MAPPED)
             {
@@ -438,7 +436,7 @@ impl TracedType for TracedTypeAdapter {
     /// `ReverseMappedMappedType`.
     fn reverse_mapped_mapped_type(&self) -> Option<Arc<dyn TracedType>> {
         let t = {
-            let ty = self.types.get(self.t);
+            let __arena_ty = self.types.clone(); let ty = __arena_ty.get(self.t);
             if !ty.flags.intersects(TypeFlags::OBJECT)
                 || !ty.object_flags.intersects(ObjectFlags::REVERSE_MAPPED)
             {
@@ -453,7 +451,7 @@ impl TracedType for TracedTypeAdapter {
     /// `ReverseMappedConstraintType`.
     fn reverse_mapped_constraint_type(&self) -> Option<Arc<dyn TracedType>> {
         let t = {
-            let ty = self.types.get(self.t);
+            let __arena_ty = self.types.clone(); let ty = __arena_ty.get(self.t);
             if !ty.flags.intersects(TypeFlags::OBJECT)
                 || !ty.object_flags.intersects(ObjectFlags::REVERSE_MAPPED)
             {
@@ -468,7 +466,7 @@ impl TracedType for TracedTypeAdapter {
     /// `EvolvingArrayElementType`.
     fn evolving_array_element_type(&self) -> Option<Arc<dyn TracedType>> {
         let t = {
-            let ty = self.types.get(self.t);
+            let __arena_ty = self.types.clone(); let ty = __arena_ty.get(self.t);
             if !ty.flags.intersects(TypeFlags::OBJECT)
                 || !ty.object_flags.intersects(ObjectFlags::EVOLVING_ARRAY)
             {
@@ -483,7 +481,7 @@ impl TracedType for TracedTypeAdapter {
     /// `EvolvingArrayFinalType`.
     fn evolving_array_final_type(&self) -> Option<Arc<dyn TracedType>> {
         let t = {
-            let ty = self.types.get(self.t);
+            let __arena_ty = self.types.clone(); let ty = __arena_ty.get(self.t);
             if !ty.flags.intersects(TypeFlags::OBJECT)
                 || !ty.object_flags.intersects(ObjectFlags::EVOLVING_ARRAY)
             {
@@ -497,8 +495,7 @@ impl TracedType for TracedTypeAdapter {
 
     /// `IsTuple`.
     fn is_tuple(&self) -> bool {
-        self.types
-            .get(self.t)
+        self.types.get(self.t)
             .object_flags
             .intersects(ObjectFlags::TUPLE)
     }

@@ -323,7 +323,7 @@ impl<'a> NodeBuilderImpl<'a> {
                         let name_node = self.type_parameter_to_name(c, nodes, type_param);
                         let name = nodes[name_node].text(nodes).into_owned();
                         // `typeParam.symbol` may be nil → `SymbolId::NONE`.
-                        let symbol = c.types.get(type_param).symbol.unwrap_or(SymbolId::NONE);
+                        let __arena_symbol = c.types.clone(); let symbol = __arena_symbol.get(type_param).symbol.unwrap_or(SymbolId::NONE);
                         additions.push((name, symbol));
                     }
                 }

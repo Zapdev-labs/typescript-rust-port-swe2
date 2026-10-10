@@ -651,7 +651,7 @@ impl Checker {
                 let prop_name_text = nodes[prop_name].text(&nodes).into_owned();
                 if !is_hyphenated_jsx_name(&prop_name_text) {
                     let name_type = self.get_string_literal_type(&prop_name_text);
-                    if !self.types.get(name_type).flags.intersects(TypeFlags::NEVER) {
+                    if !self.types_handle().get(name_type).flags.intersects(TypeFlags::NEVER) {
                         let initializer = nodes[prop].initializer();
                         let relation = relation.clone();
                         reported_error = self.elaborate_element(
@@ -982,9 +982,7 @@ impl Checker {
                 );
             }
             if let Some(t) = target_indexed_prop_type {
-                if !self
-                    .types
-                    .get(t)
+                if !self.types_handle().get(t)
                     .flags
                     .intersects(TypeFlags::INDEXED_ACCESS)
                 {
@@ -1563,7 +1561,7 @@ impl Checker {
                 if ast::is_jsx_attribute(&nodes[attribute_decl]) {
                     let expr_type = self.check_jsx_attribute(attribute_decl, check_mode);
                     object_flags |=
-                        self.types.get(expr_type).object_flags & ObjectFlags::PROPAGATING_FLAGS;
+                        self.types_handle().get(expr_type).object_flags & ObjectFlags::PROPAGATING_FLAGS;
                     let member_flags = self.sym(member).flags;
                     let member_name = self.sym(member).name.clone();
                     let attribute_symbol =
@@ -1825,7 +1823,7 @@ impl Checker {
             &[],
             &[],
         );
-        self.types.get_mut(result).object_flags |= *object_flags
+        self.types_handle().get_mut(result).object_flags |= *object_flags
             | ObjectFlags::OBJECT_LITERAL
             | ObjectFlags::CONTAINS_OBJECT_OR_ARRAY_LITERAL;
         result
@@ -1914,17 +1912,13 @@ impl Checker {
         element_type: TypeId,
         caller: NodeId,
     ) -> Vec<SignatureId> {
-        if self
-            .types
-            .get(element_type)
+        if self.types_handle().get(element_type)
             .flags
             .intersects(TypeFlags::STRING)
         {
             return vec![self.any_signature];
         }
-        if self
-            .types
-            .get(element_type)
+        if self.types_handle().get(element_type)
             .flags
             .intersects(TypeFlags::STRING_LITERAL)
         {
@@ -1953,15 +1947,13 @@ impl Checker {
             signatures = self.get_signatures_of_type(apparent_elem_type, SignatureKind::Call);
         }
         if signatures.is_empty()
-            && self
-                .types
-                .get(apparent_elem_type)
+            && self.types_handle().get(apparent_elem_type)
                 .flags
                 .intersects(TypeFlags::UNION)
         {
             // If each member has some combination of new/call signatures;
             // make a union signature list for those
-            let types = self.types.get(apparent_elem_type).types().to_vec();
+            let __arena_types = self.types.clone(); let types = __arena_types.get(apparent_elem_type).types().to_vec();
             let signature_lists: Vec<Vec<SignatureId>> = types
                 .iter()
                 .map(|&t| self.get_uninstantiated_jsx_signatures_of_type(t, caller))
@@ -2015,7 +2007,7 @@ impl Checker {
     ) -> TypeId {
         let ns = self.get_jsx_namespace_at(Some(context));
         let forced_lookup_location = self.get_jsx_element_properties_name(ns);
-        let mut attributes_type: Option<TypeId>;
+        let attributes_type: Option<TypeId>;
         if forced_lookup_location == ast::symbol::INTERNAL_SYMBOL_NAME_MISSING {
             attributes_type = Some(
                 self.get_type_of_first_parameter_of_signature_with_fallback(sig, self.unknown_type),
@@ -2057,7 +2049,7 @@ impl Checker {
             // `intrinsicClassAttribs.symbol` may be absent; Go's
             // `getLocalTypeParametersOfClassOrInterfaceOrTypeAlias` returns
             // `nil` both for a nil symbol and for no appended parameters.
-            let intrinsic_symbol = self.types.get(intrinsic_class_attribs).symbol;
+            let __arena_intrinsic_symbol = self.types.clone(); let intrinsic_symbol = __arena_intrinsic_symbol.get(intrinsic_class_attribs).symbol;
             let type_params = intrinsic_symbol
                 .map(|s| self.get_local_type_parameters_of_class_or_interface_or_type_alias(s))
                 .filter(|t| !t.is_empty());
@@ -2192,15 +2184,11 @@ impl Checker {
                 return Some(self.get_type_alias_instantiation(managed_sym, &args, None));
             }
         }
-        if self
-            .types
-            .get(declared_managed_type)
+        if self.types_handle().get(declared_managed_type)
             .object_flags
             .intersects(ObjectFlags::CLASS_OR_INTERFACE)
         {
-            let type_parameters = self
-                .types
-                .get(declared_managed_type)
+            let __arena_type_parameters = self.types.clone(); let type_parameters = __arena_type_parameters.get(declared_managed_type)
                 .as_interface_type()
                 .map(|i| i.type_parameters().to_vec())
                 .unwrap_or_default();
@@ -2351,9 +2339,7 @@ impl Checker {
             return self.get_or_create_type_from_signature(fake_signature);
         }
         let tag_type = self.check_expression_cached(tag_name);
-        if self
-            .types
-            .get(tag_type)
+        if self.types_handle().get(tag_type)
             .flags
             .intersects(TypeFlags::STRING_LITERAL)
         {
@@ -2572,7 +2558,7 @@ impl Checker {
                 .is_some()
             {
                 self.jsx_element_links.get(node).jsx_flags |= JsxFlags::INTRINSIC_INDEXED_ELEMENT;
-                let symbol = self.types.get(intrinsic_elements_type).symbol;
+                let __arena_symbol = self.types.clone(); let symbol = __arena_symbol.get(intrinsic_elements_type).symbol;
                 self.symbol_node_links.get(node).resolved_symbol = symbol;
                 return symbol.unwrap_or(self.unknown_symbol);
             }

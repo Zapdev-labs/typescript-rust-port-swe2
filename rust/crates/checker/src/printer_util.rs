@@ -604,18 +604,14 @@ impl Checker {
         let mut i = 0;
         while i < types.len() {
             let t = types[i];
-            flags |= self.types.get(t).flags;
-            if !self.types.get(t).flags.intersects(TypeFlags::NULLABLE) {
-                if self
-                    .types
-                    .get(t)
+            flags |= self.types_handle().get(t).flags;
+            if !self.types_handle().get(t).flags.intersects(TypeFlags::NULLABLE) {
+                if self.types_handle().get(t)
                     .flags
                     .intersects(TypeFlags::BOOLEAN_LITERAL)
-                    || (!expanding_enum && self.types.get(t).flags.intersects(TypeFlags::ENUM_LIKE))
+                    || (!expanding_enum && self.types_handle().get(t).flags.intersects(TypeFlags::ENUM_LIKE))
                 {
-                    let base_type = if self
-                        .types
-                        .get(t)
+                    let base_type = if self.types_handle().get(t)
                         .flags
                         .intersects(TypeFlags::BOOLEAN_LITERAL)
                     {
@@ -623,10 +619,8 @@ impl Checker {
                     } else {
                         self.get_base_type_of_enum_like_type(t)
                     };
-                    if self.types.get(base_type).flags.intersects(TypeFlags::UNION) {
-                        let union_types = self
-                            .types
-                            .get(base_type)
+                    if self.types_handle().get(base_type).flags.intersects(TypeFlags::UNION) {
+                        let __arena_union_types = self.types.clone(); let union_types = __arena_union_types.get(base_type)
                             .as_union_type()
                             .union_or_intersection
                             .types

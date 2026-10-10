@@ -517,7 +517,7 @@ pub fn get_recursion_identity(c: &mut Checker, t: TypeId) -> RecursionId {
 
 /// `getRecursionIdentityTarget` (relater.go). PORT(mirrored): see above.
 fn get_recursion_identity_target(c: &mut Checker, t: TypeId) -> TypeId {
-    let ty = c.types.get(t);
+    let __arena_ty = c.types.clone(); let ty = __arena_ty.get(t);
     if ty.flags.intersects(TypeFlags::INDEXED_ACCESS) {
         let object_type = ty.as_indexed_access_type().object_type;
         drop(ty);
@@ -530,12 +530,12 @@ fn get_recursion_identity_target(c: &mut Checker, t: TypeId) -> TypeId {
             // Stage `target`'s symbol/types before the nested `types.get` —
             // no read guard may be held across another arena read.
             let (has_symbol, constituents_have_symbol) = {
-                let tt = c.types.get(target);
+                let __arena_tt = c.types.clone(); let tt = __arena_tt.get(target);
                 let has_symbol = tt.symbol.is_some();
                 let constituents_have_symbol = tt.flags.intersects(TypeFlags::INTERSECTION) && {
                     let types = tt.types().to_vec();
                     drop(tt);
-                    types.iter().any(|&s| c.types.get(s).symbol.is_some())
+                    types.iter().any(|&s| c.types_handle().get(s).symbol.is_some())
                 };
                 (has_symbol, constituents_have_symbol)
             };
@@ -554,7 +554,7 @@ fn get_recursion_identity_target(c: &mut Checker, t: TypeId) -> TypeId {
 fn get_recursion_identity_from_target(c: &mut Checker, t: TypeId) -> RecursionId {
     // Stage the fields Go reads off `t` before nested arena lookups.
     let (flags, object_flags, symbol, ref_node, cond_root_node) = {
-        let ty = c.types.get(t);
+        let __arena_ty = c.types.clone(); let ty = __arena_ty.get(t);
         let ref_node = if ty.object_flags.intersects(ObjectFlags::REFERENCE) {
             ty.data.as_type_reference().and_then(|r| r.node)
         } else {
@@ -578,7 +578,7 @@ fn get_recursion_identity_from_target(c: &mut Checker, t: TypeId) -> RecursionId
     };
     // Object and array literals are known not to contain recursive
     // references and don't need a recursion identity.
-    if flags.intersects(TypeFlags::OBJECT) && !is_object_or_array_literal_type(&c.types.get(t)) {
+    if flags.intersects(TypeFlags::OBJECT) && !is_object_or_array_literal_type(&c.types_handle().get(t)) {
         if let Some(node) = ref_node {
             // Deferred type references are tracked through their associated
             // AST node. This gives us finer granularity than using their
@@ -604,7 +604,7 @@ fn get_recursion_identity_from_target(c: &mut Checker, t: TypeId) -> RecursionId
             }
         }
         if is_tuple_type(&c.types, t) && !object_flags.intersects(ObjectFlags::FROM_TYPE_NODE) {
-            if let Some(target) = c.types.get(t).target() {
+            if let Some(target) = c.types_handle().get(t).target() {
                 return as_recursion_id_type(target);
             }
         }
@@ -1895,7 +1895,7 @@ impl Checker {
             return;
         };
         // Clone the arena handle before the `&mut self` identity call.
-        let types = self.types.clone();
+        let __arena_types = self.types.clone(); let types = __arena_types.clone();
         let pattern_for_type = self.pattern_for_type.clone();
         let _ = tracer;
         let recursion_identity = Some(get_recursion_identity(self, t).value);
@@ -1914,13 +1914,13 @@ impl Checker {
     /// PORT(mirrored from types.go MappedType.ResolveComponents).
     pub fn resolve_mapped_type_components(&mut self, t: TypeId) {
         let type_parameter = self.get_type_parameter_from_mapped_type(t);
-        self.types.get_mut(t).as_mapped_type_mut().type_parameter = type_parameter;
+        self.types_handle().get_mut(t).as_mapped_type_mut().type_parameter = type_parameter;
         let constraint_type = self.get_constraint_type_from_mapped_type(t);
-        self.types.get_mut(t).as_mapped_type_mut().constraint_type = constraint_type;
+        self.types_handle().get_mut(t).as_mapped_type_mut().constraint_type = constraint_type;
         let name_type = self.get_name_type_from_mapped_type(t);
-        self.types.get_mut(t).as_mapped_type_mut().name_type = name_type;
+        self.types_handle().get_mut(t).as_mapped_type_mut().name_type = name_type;
         let template_type = self.get_template_type_from_mapped_type(t);
-        self.types.get_mut(t).as_mapped_type_mut().template_type = template_type;
+        self.types_handle().get_mut(t).as_mapped_type_mut().template_type = template_type;
     }
 }
 
@@ -2104,10 +2104,10 @@ impl Checker {
             Some(evaluator::Value::Bool(false)),
             Some(c.regular_false_type),
         );
-        if let TypeData::Literal(d) = &mut c.types.get_mut(c.regular_false_type).data {
+        if let TypeData::Literal(d) = &mut c.types_handle().get_mut(c.regular_false_type).data {
             d.fresh_type = Some(c.false_type);
         }
-        if let TypeData::Literal(d) = &mut c.types.get_mut(c.false_type).data {
+        if let TypeData::Literal(d) = &mut c.types_handle().get_mut(c.false_type).data {
             d.fresh_type = Some(c.false_type);
         }
         c.regular_true_type = c.new_literal_type(
@@ -2120,10 +2120,10 @@ impl Checker {
             Some(evaluator::Value::Bool(true)),
             Some(c.regular_true_type),
         );
-        if let TypeData::Literal(d) = &mut c.types.get_mut(c.regular_true_type).data {
+        if let TypeData::Literal(d) = &mut c.types_handle().get_mut(c.regular_true_type).data {
             d.fresh_type = Some(c.true_type);
         }
-        if let TypeData::Literal(d) = &mut c.types.get_mut(c.true_type).data {
+        if let TypeData::Literal(d) = &mut c.types_handle().get_mut(c.true_type).data {
             d.fresh_type = Some(c.true_type);
         }
         c.boolean_type = c.get_union_type(&[c.regular_false_type, c.regular_true_type]);
@@ -2179,8 +2179,7 @@ impl Checker {
         // `c.emptyGenericType.AsObjectType().instantiations = make(map)` — the
         // port's field is already an empty map.
         c.any_function_type = c.new_anonymous_type(None, SymbolTable::new(), &[], &[], &[]);
-        c.types
-            .get_mut(c.any_function_type)
+        c.types_handle().get_mut(c.any_function_type)
             .object_flags
             .insert(ObjectFlags::NON_INFERRABLE_TYPE);
         c.no_constraint_type = c.new_anonymous_type(None, SymbolTable::new(), &[], &[], &[]);
@@ -2188,13 +2187,13 @@ impl Checker {
         c.resolving_default_type = c.new_anonymous_type(None, SymbolTable::new(), &[], &[], &[]);
         c.marker_super_type = c.new_type_parameter(None);
         c.marker_sub_type = c.new_type_parameter(None);
-        if let TypeData::TypeParameter(d) = &mut c.types.get_mut(c.marker_sub_type).data {
+        if let TypeData::TypeParameter(d) = &mut c.types_handle().get_mut(c.marker_sub_type).data {
             d.constraint = Some(c.marker_super_type);
         }
         c.marker_other_type = c.new_type_parameter(None);
         c.marker_super_type_for_check = c.new_type_parameter(None);
         c.marker_sub_type_for_check = c.new_type_parameter(None);
-        if let TypeData::TypeParameter(d) = &mut c.types.get_mut(c.marker_sub_type_for_check).data {
+        if let TypeData::TypeParameter(d) = &mut c.types_handle().get_mut(c.marker_sub_type_for_check).data {
             d.constraint = Some(c.marker_super_type_for_check);
         }
         c.no_type_predicate = Some(Rc::new(TypePredicate {
@@ -2529,9 +2528,7 @@ impl Checker {
             let flags = self.symbol_arena.borrow()[symbol.index()].flags;
             if flags.intersects(ast::SymbolFlags::CLASS | ast::SymbolFlags::INTERFACE) {
                 let t = self.get_declared_type_of_symbol(symbol);
-                let type_parameter_count = self
-                    .types
-                    .get(t)
+                let __arena_type_parameter_count = self.types.clone(); let type_parameter_count = __arena_type_parameter_count.get(t)
                     .as_interface_type()
                     .expect("interface type")
                     .all_type_parameters
@@ -2601,8 +2598,7 @@ impl Checker {
     /// `(c *Checker) initializeClosures` (checker.go).
     pub fn initialize_closures(&mut self) {
         self.is_primitive_or_object_or_empty_type = Some(Rc::new(|c: &mut Checker, t: TypeId| {
-            c.types
-                .get(t)
+            c.types_handle().get(t)
                 .flags
                 .intersects(TypeFlags::PRIMITIVE | TypeFlags::NON_PRIMITIVE)
                 || c.is_empty_anonymous_object_type(t)
@@ -2611,7 +2607,7 @@ impl Checker {
             if t == c.missing_type {
                 return true;
             }
-            let ty = c.types.get(t);
+            let __arena_ty = c.types.clone(); let ty = __arena_ty.get(t);
             ty.flags.intersects(TypeFlags::UNION) && ty.types().first() == Some(&c.missing_type)
         }));
         self.could_contain_type_variables = Some(Rc::new(|c: &mut Checker, t: TypeId| {
@@ -3041,6 +3037,30 @@ impl Checker {
             .nodes_mut(file_index)
     }
 
+    /// `self.types.clone()` — clones the `Arc`-backed arena handle. The
+    /// returned arena owns its `Arc`, so `get`/`get_mut` guards borrow the
+    /// clone (a temporary or local) rather than `*self`. This breaks the
+    /// `self.types_handle().get(..)`-across-`&mut self`-call borrow conflict; Go has
+    /// no such constraint. Guards still share the underlying `RwLock` —
+    /// do not hold a read guard across `get_mut`/`alloc` on the same arena.
+    pub(crate) fn types_handle(&self) -> crate::types::TypeArena {
+        self.types.clone()
+    }
+
+    /// Writes `node` back into the file arena that owns `id`.
+    pub fn set_program_node(&self, id: NodeId, node: ast::Node) {
+        self.program_nodes_mut(id.file_index())[id] = node;
+    }
+
+    /// `(c *Checker) callLikeExpressionMayHaveTypeArguments`
+    /// (utilities.go:1132).
+    pub fn call_like_expression_may_have_type_arguments(&self, node: NodeId) -> bool {
+        let nodes = self.program_nodes(node);
+        ast::is_call_or_new_expression(&nodes[node])
+            || ast::is_tagged_template_expression(&nodes[node])
+            || ast::is_jsx_opening_like_element(&nodes[node])
+    }
+
     /// `NewDiagnosticForNode` (checker/utilities.go). Needs the per-file
     /// node arena, so it's a `Checker` method in the port.
     pub fn new_diagnostic_for_node<T: std::fmt::Display>(
@@ -3233,7 +3253,7 @@ impl Checker {
         data: TypeData,
     ) -> TypeId {
         self.type_count += 1;
-        let id = self.types.alloc(Type {
+        let __arena_id = self.types.clone(); let id = __arena_id.alloc(Type {
             flags,
             object_flags: object_flags
                 & !(ObjectFlags::COULD_CONTAIN_TYPE_VARIABLES_COMPUTED
@@ -3246,7 +3266,7 @@ impl Checker {
             data,
             ..Default::default()
         });
-        self.types.get_mut(id).id = id;
+        self.types_handle().get_mut(id).id = id;
         self.trace_record_type(id);
         id
     }
@@ -3278,12 +3298,11 @@ impl Checker {
             return non_widening_type;
         }
         let (flags, intrinsic_name) = {
-            let ty = self.types.get(non_widening_type);
+            let __arena_ty = self.types.clone(); let ty = __arena_ty.get(non_widening_type);
             (ty.flags, ty.as_intrinsic_type().intrinsic_name.clone())
         };
         let t = self.new_intrinsic_type(flags, &intrinsic_name);
-        self.types
-            .get_mut(t)
+        self.types_handle().get_mut(t)
             .object_flags
             .insert(ObjectFlags::CONTAINS_WIDENING_TYPE);
         t
@@ -3318,7 +3337,7 @@ impl Checker {
             }),
         );
         let regular = regular_type.unwrap_or(t);
-        if let TypeData::Literal(d) = &mut self.types.get_mut(t).data {
+        if let TypeData::Literal(d) = &mut self.types_handle().get_mut(t).data {
             d.regular_type = Some(regular);
         }
         t
@@ -3333,7 +3352,7 @@ impl Checker {
                 name: name.to_string(),
             }),
         );
-        self.types.get_mut(t).symbol = symbol;
+        self.types_handle().get_mut(t).symbol = symbol;
         t
     }
 
@@ -3363,7 +3382,7 @@ impl Checker {
             panic!("Unhandled case in newObjectType")
         };
         let t = self.new_type(TypeFlags::OBJECT, object_flags, data);
-        self.types.get_mut(t).symbol = symbol;
+        self.types_handle().get_mut(t).symbol = symbol;
         t
     }
 
@@ -3400,11 +3419,10 @@ impl Checker {
         construct_signatures: &[SignatureId],
         index_infos: &[IndexInfoId],
     ) {
-        self.types
-            .get_mut(t)
+        self.types_handle().get_mut(t)
             .object_flags
             .insert(ObjectFlags::MEMBERS_RESOLVED);
-        let symbol = self.types.get(t).symbol;
+        let __arena_symbol = self.types.clone(); let symbol = __arena_symbol.get(t).symbol;
         let properties = self.get_named_members(&members, symbol);
         let (signatures, call_signature_count) = if !call_signatures.is_empty() {
             let mut sigs = call_signatures.to_vec();
@@ -3419,7 +3437,7 @@ impl Checker {
             .iter()
             .map(|&id| self.index_info_arena.get(id).clone())
             .collect();
-        if let Some(data) = self.types.get_mut(t).data.as_structured_type_mut() {
+        if let Some(data) = self.types_handle().get_mut(t).data.as_structured_type_mut() {
             data.members = members;
             data.properties = properties;
             data.signatures = signatures;
@@ -3446,7 +3464,7 @@ impl Checker {
             ObjectFlags::NONE,
             TypeData::TypeParameter(TypeParameter::default()),
         );
-        self.types.get_mut(t).symbol = symbol;
+        self.types_handle().get_mut(t).symbol = symbol;
         t
     }
 
@@ -3458,7 +3476,7 @@ impl Checker {
     ) -> ObjectFlags {
         let mut result = ObjectFlags::NONE;
         for &t in types {
-            let ty = self.types.get(t);
+            let __arena_ty = self.types.clone(); let ty = __arena_ty.get(t);
             if !ty.flags.intersects(exclude_kinds) {
                 result |= ty.object_flags;
             }
@@ -3560,7 +3578,7 @@ impl Checker {
                 ..Default::default()
             }),
         );
-        self.types.get_mut(t).symbol = symbol;
+        self.types_handle().get_mut(t).symbol = symbol;
         t
     }
 
@@ -3629,20 +3647,20 @@ impl Checker {
 
     /// `(c *Checker) getRegularTypeOfLiteralType` (checker.go).
     pub fn get_regular_type_of_literal_type(&mut self, t: TypeId) -> TypeId {
-        let flags = self.types.get(t).flags;
+        let __arena_flags = self.types.clone(); let flags = __arena_flags.get(t).flags;
         if flags.intersects(TypeFlags::FRESHABLE) {
-            let ty = self.types.get(t);
+            let __arena_ty = self.types.clone(); let ty = __arena_ty.get(t);
             return ty.as_literal_type().regular_type.unwrap_or(t);
         }
         if flags.intersects(TypeFlags::UNION) {
-            if let Some(regular) = self.types.get(t).as_union_type().regular_type {
+            if let Some(regular) = self.types_handle().get(t).as_union_type().regular_type {
                 return regular;
             }
             let mapped = self.map_type(
                 t,
                 Rc::new(|c: &mut Checker, s: TypeId| c.get_regular_type_of_literal_type(s)),
             );
-            if let TypeData::Union(d) = &mut self.types.get_mut(t).data {
+            if let TypeData::Union(d) = &mut self.types_handle().get_mut(t).data {
                 d.regular_type = Some(mapped);
             }
             return mapped;
@@ -3652,9 +3670,9 @@ impl Checker {
 
     /// `(c *Checker) getFreshTypeOfLiteralType` (checker.go).
     pub fn get_fresh_type_of_literal_type(&mut self, t: TypeId) -> TypeId {
-        if self.types.get(t).flags.intersects(TypeFlags::FRESHABLE) {
+        if self.types_handle().get(t).flags.intersects(TypeFlags::FRESHABLE) {
             let (flags, value, fresh_type) = {
-                let ty = self.types.get(t);
+                let __arena_ty = self.types.clone(); let ty = __arena_ty.get(t);
                 let d = ty.as_literal_type();
                 (ty.flags, d.value.clone(), d.fresh_type)
             };
@@ -3662,12 +3680,12 @@ impl Checker {
                 return fresh;
             }
             let f = self.new_literal_type(flags, value, Some(t));
-            let sym = self.types.get(t).symbol;
-            self.types.get_mut(f).symbol = sym;
-            if let TypeData::Literal(fd) = &mut self.types.get_mut(f).data {
+            let __arena_sym = self.types.clone(); let sym = __arena_sym.get(t).symbol;
+            self.types_handle().get_mut(f).symbol = sym;
+            if let TypeData::Literal(fd) = &mut self.types_handle().get_mut(f).data {
                 fd.fresh_type = Some(f);
             }
-            if let TypeData::Literal(d) = &mut self.types.get_mut(t).data {
+            if let TypeData::Literal(d) = &mut self.types_handle().get_mut(t).data {
                 d.fresh_type = Some(f);
             }
             return f;
@@ -3761,9 +3779,7 @@ impl Checker {
         object_flags: ObjectFlags,
     ) -> TypeId {
         let id = crate::checker_types::get_type_list_key(type_arguments);
-        if let Some(&t) = self
-            .types
-            .get(target)
+        if let Some(&t) = self.types_handle().get(target)
             .as_interface_type()
             .expect("createTypeReferenceEx: target is not an interface type")
             .type_reference
@@ -3773,15 +3789,14 @@ impl Checker {
         {
             return t;
         }
-        let symbol = self.types.get(target).symbol;
+        let __arena_symbol = self.types.clone(); let symbol = __arena_symbol.get(target).symbol;
         let propagating = self.get_propagating_flags_of_types(type_arguments, TypeFlags::NONE);
         let t = self.new_object_type(ObjectFlags::REFERENCE | object_flags | propagating, symbol);
-        if let TypeData::TypeReference(d) = &mut self.types.get_mut(t).data {
+        if let TypeData::TypeReference(d) = &mut self.types_handle().get_mut(t).data {
             d.object_type.target = Some(target);
             d.resolved_type_arguments = type_arguments.to_vec();
         }
-        self.types
-            .get_mut(target)
+        self.types_handle().get_mut(target)
             .data
             .as_interface_type_mut()
             .expect("createTypeReferenceEx: target is not an interface type")
@@ -3795,7 +3810,7 @@ impl Checker {
     /// `(c *Checker) cloneTypeReference` (checker.go).
     pub fn clone_type_reference(&mut self, source: TypeId) -> TypeId {
         let (symbol, object_flags, target, resolved_type_arguments) = {
-            let ty = self.types.get(source);
+            let __arena_ty = self.types.clone(); let ty = __arena_ty.get(source);
             let r = ty.as_type_reference();
             (
                 ty.symbol,
@@ -3805,8 +3820,8 @@ impl Checker {
             )
         };
         let t = self.new_object_type(ObjectFlags::REFERENCE, symbol);
-        self.types.get_mut(t).object_flags = object_flags & !ObjectFlags::MEMBERS_RESOLVED;
-        if let TypeData::TypeReference(d) = &mut self.types.get_mut(t).data {
+        self.types_handle().get_mut(t).object_flags = object_flags & !ObjectFlags::MEMBERS_RESOLVED;
+        if let TypeData::TypeReference(d) = &mut self.types_handle().get_mut(t).data {
             d.object_type.target = target;
             d.resolved_type_arguments = resolved_type_arguments;
         }
@@ -3940,9 +3955,7 @@ impl Checker {
 
     /// `(c *Checker) getUniqueLiteralTypeForTypeParameter` (checker.go).
     pub fn get_unique_literal_type_for_type_parameter(&mut self, t: TypeId) -> TypeId {
-        if self
-            .types
-            .get(t)
+        if self.types_handle().get(t)
             .flags
             .intersects(TypeFlags::TYPE_PARAMETER)
         {
@@ -3969,9 +3982,7 @@ impl Checker {
 
     /// `(c *Checker) restrictiveMapperWorker` (checker.go).
     pub fn restrictive_mapper_worker(&mut self, t: TypeId) -> TypeId {
-        if self
-            .types
-            .get(t)
+        if self.types_handle().get(t)
             .flags
             .intersects(TypeFlags::TYPE_PARAMETER)
         {
@@ -3989,9 +4000,7 @@ impl Checker {
 
     /// `(c *Checker) permissiveMapperWorker` (checker.go).
     pub fn permissive_mapper_worker(&mut self, t: TypeId) -> TypeId {
-        if self
-            .types
-            .get(t)
+        if self.types_handle().get(t)
             .flags
             .intersects(TypeFlags::TYPE_PARAMETER)
         {
