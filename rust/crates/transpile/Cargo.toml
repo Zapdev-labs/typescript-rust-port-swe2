@@ -1,0 +1,18 @@
+[package]
+name = "tsc-transpile"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+tsc-ast = { path = "../ast" }
+tsc-compiler = { path = "../compiler" }
+tsc-core = { path = "../core" }
+tsc-tsoptions = { path = "../tsoptions" }
+tsc-tspath = { path = "../tspath" }
+tsc-vfs = { path = "../vfs" }
+rustc-hash = { workspace = true }
