@@ -1,0 +1,37 @@
+[package]
+name = "tsc-testrunner"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+# `harness` gates the baseline-driving code in `compiler_runner` /
+# `transpile_runner` that depends on `tsc_testutil::harnessutil` +
+# `tsc_testutil::tsbaseline`, which are still being ported (see the
+# PORT(deferred) notes in those modules). Off by default so the crate
+# compiles today; enable it once those modules land.
+default = []
+harness = []
+
+[dependencies]
+rustc-hash = { workspace = true }
+tsc-ast = { path = "../ast" }
+tsc-bundled = { path = "../bundled" }
+tsc-checker = { path = "../checker" }
+tsc-collections = { path = "../collections" }
+tsc-compiler = { path = "../compiler" }
+tsc-core = { path = "../core" }
+tsc-diagnosticwriter = { path = "../diagnosticwriter" }
+tsc-outputpaths = { path = "../outputpaths" }
+tsc-parser = { path = "../parser" }
+tsc-repo = { path = "../repo" }
+tsc-scanner = { path = "../scanner" }
+tsc-testutil = { path = "../testutil" }
+tsc-transpile = { path = "../transpile" }
+tsc-tsoptions = { path = "../tsoptions" }
+tsc-tspath = { path = "../tspath" }
+tsc-vfs = { path = "../vfs" }
