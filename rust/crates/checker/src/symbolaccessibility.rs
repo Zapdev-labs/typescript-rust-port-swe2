@@ -1454,9 +1454,10 @@ impl Checker {
             location = self.program_nodes(loc)[loc].parent;
         }
 
+        let globals = self.globals.borrow().clone();
         callback(
             self,
-            &self.globals.clone(),
+            &globals,
             symbol_table_id_from_globals(),
             false,
             true,

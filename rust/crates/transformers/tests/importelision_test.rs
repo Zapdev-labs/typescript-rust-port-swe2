@@ -237,10 +237,12 @@ impl FakeEmitResolver {
         nodes: &[Node],
         symbols: &[Symbol],
     ) -> Option<SymbolId> {
-        let mut scratch = clone_symbols(symbols);
+        let scratch = std::cell::RefCell::new(clone_symbols(symbols));
         let mut resolver = NameResolver {
-            compiler_options: &self.compiler_options,
-            globals: SymbolTable::default(),
+            host: None,
+            for_suggestion: false,
+            compiler_options: std::rc::Rc::new(self.compiler_options.clone()),
+            globals: std::rc::Rc::new(std::cell::RefCell::new(SymbolTable::default())),
             arguments_symbol: None,
             require_symbol: None,
             get_symbol_of_declaration_hook: None,
@@ -257,7 +259,7 @@ impl FakeEmitResolver {
             location, name, meaning, None, // nameNotFoundMessage
             true,    // isUse
             false,   // excludeGlobals
-            nodes, &mut scratch,
+            nodes, &scratch,
         )
     }
 

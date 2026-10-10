@@ -15384,7 +15384,7 @@ impl Checker {
         if tsc_tspath::is_external_module_name_relative(module_name) {
             return None;
         }
-        let globals = self.globals.clone();
+        let globals = self.globals.borrow().clone();
         let symbol = self.get_symbol(
             &globals,
             &format!("\"{module_name}\""),
@@ -15405,7 +15405,7 @@ impl Checker {
             // `Once::call_once`'s closure.
             let mut ambient_modules = Vec::new();
             let mut seen: FxHashSet<SymbolId> = FxHashSet::default();
-            let globals = self.globals.clone();
+            let globals = self.globals.borrow().clone();
             for (name, &global) in globals.entries() {
                 if ast::symbol::is_ambient_module_symbol_name(name) {
                     ambient_modules.push(global);

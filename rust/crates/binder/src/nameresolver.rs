@@ -3,14 +3,24 @@
 // The callback-driven name resolution loop shared by the checker. In Go the
 // resolver fields hold `func` values that may be nil; here each hook is an
 // `Option<Box<dyn FnMut>>` and the private helpers fall back to the same
-// default implementations as Go when the hook is `None`.
+// default implementations as Go when the hook is `None`. Checkers that need
+// the hooks to call back into `&mut Checker` install a `NameResolverHost`
+// instead: the host methods take precedence over the `Option` hooks, so the
+// same resolution loop serves both the standalone hook-based callers
+// (reference resolution, tests) and the checker (which owns the arenas the
+// hooks mutate — passing `&mut Checker` as `host` avoids Rust's
+// self-referential-closure problem).
 //
 // Pointer model: `*ast.Node` -> `NodeId`/`Option<NodeId>`; `*ast.Symbol` ->
-// `SymbolId`/`Option<SymbolId>`; `ast.SymbolTable` -> `&SymbolTable` or an
-// owned `SymbolTable` for `globals`. Because the node and symbol arenas are
-// needed by nearly every helper, `resolve` takes them as parameters
-// (`nodes: &[Node]`, `symbols: &mut Vec<Symbol>` — mutable so the transient
-// `arguments` symbol can be lazily allocated).
+// `SymbolId`/`Option<SymbolId>`; `ast.SymbolTable` -> `&SymbolTable` for
+// lookups or `Rc<RefCell<SymbolTable>>` for `globals` so the checker's live
+// global table is shared (Go shares the map header). Because the node and
+// symbol arenas are needed by nearly every helper, `resolve` takes them as
+// parameters (`nodes: &[Node]`, `symbols: &RefCell<Vec<Symbol>>` — interior
+// mutable so host callbacks may consult the same arena transiently).
+
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use tsc_ast::ast::Node;
 use tsc_ast::ast_generated::*;
@@ -44,9 +54,77 @@ type OnSuccessfullyResolvedSymbolHook<'a> = Box<
     dyn FnMut(Option<NodeId>, SymbolId, SymbolFlags, Option<NodeId>, Option<NodeId>, bool) + 'a,
 >;
 
+/// The `&mut Checker`-owning side of Go's `NameResolver` hooks. When
+/// `NameResolver::host` is `Some`, each Go hook site routes to these methods
+/// instead of the `Option` closures. `nodes` is the arena for the file whose
+/// symbols are being resolved; the host reaches its own symbol arena
+/// interiorly (the resolver only hands it `&RefCell` access via `resolve`).
+pub trait NameResolverHost {
+    /// `GetSymbolOfDeclaration func(node *ast.Node) *ast.Symbol`
+    fn nr_get_symbol_of_declaration(&mut self, node: NodeId, nodes: &[Node]) -> Option<SymbolId>;
+    /// `Error func(location *ast.Node, message *diagnostics.Message, args ...any)`
+    fn nr_error(
+        &mut self,
+        location: Option<NodeId>,
+        message: &'static diagnostics::Message,
+        args: Vec<String>,
+    );
+    /// `Lookup func(symbols ast.SymbolTable, name string, meaning ast.SymbolFlags) *ast.Symbol`;
+    /// `suggestion` selects Go's `getSuggestionForSymbolNameLookup` variant.
+    fn nr_lookup(
+        &mut self,
+        symbols: &SymbolTable,
+        name: &str,
+        meaning: SymbolFlags,
+        suggestion: bool,
+    ) -> Option<SymbolId>;
+    /// `SymbolReferenced func(symbol *ast.Symbol, meaning ast.SymbolFlags)`
+    fn nr_symbol_referenced(&mut self, symbol: SymbolId, meaning: SymbolFlags);
+    /// `SetRequiresScopeChangeCache func(node *ast.Node, value core.Tristate)`
+    fn nr_set_requires_scope_change_cache(&mut self, node: NodeId, value: Tristate);
+    /// `GetRequiresScopeChangeCache func(node *ast.Node) core.Tristate`
+    fn nr_get_requires_scope_change_cache(&mut self, node: NodeId) -> Tristate;
+    /// `OnPropertyWithInvalidInitializer func(...) bool`
+    fn nr_on_property_with_invalid_initializer(
+        &mut self,
+        error_location: Option<NodeId>,
+        name: &str,
+        property_with_invalid_initializer: NodeId,
+        result: Option<SymbolId>,
+    ) -> bool;
+    /// `OnFailedToResolveSymbol func(...)`
+    fn nr_on_failed_to_resolve_symbol(
+        &mut self,
+        error_location: Option<NodeId>,
+        name: &str,
+        meaning: SymbolFlags,
+        name_not_found_message: &'static diagnostics::Message,
+    );
+    /// `OnSuccessfullyResolvedSymbol func(...)`
+    #[allow(clippy::too_many_arguments)]
+    fn nr_on_successfully_resolved_symbol(
+        &mut self,
+        error_location: Option<NodeId>,
+        result: SymbolId,
+        meaning: SymbolFlags,
+        last_location: Option<NodeId>,
+        associated_declaration_for_containing_initializer_or_binding_name: Option<NodeId>,
+        within_deferred_context: bool,
+    );
+}
+
 pub struct NameResolver<'a> {
-    pub compiler_options: &'a CompilerOptions,
-    pub globals: SymbolTable,
+    /// When set, all Go hook sites route through this host (the checker).
+    /// Mutually exclusive with the `Option` hooks below.
+    pub host: Option<&'a mut dyn NameResolverHost>,
+    /// `true` for Go's `createNameResolverForSuggestion` shape (`Lookup`
+    /// becomes `getSuggestionForSymbolNameLookup`; the three `On*` hooks are
+    /// absent).
+    pub for_suggestion: bool,
+    pub compiler_options: Rc<CompilerOptions>,
+    /// `Globals` — shared live table (`Rc<RefCell>`) so host-installed
+    /// resolvers see post-construction merges like Go's shared map header.
+    pub globals: Rc<RefCell<SymbolTable>>,
     pub arguments_symbol: Option<SymbolId>,
     pub require_symbol: Option<SymbolId>,
     /// `GetSymbolOfDeclaration func(node *ast.Node) *ast.Symbol`
@@ -81,7 +159,7 @@ impl<'a> NameResolver<'a> {
         is_use: bool,
         exclude_globals: bool,
         nodes: &[Node],
-        symbols: &mut Vec<Symbol>,
+        symbols: &RefCell<Vec<Symbol>>,
     ) -> Option<SymbolId> {
         let mut result: Option<SymbolId> = None;
         let mut location = location;
@@ -131,12 +209,13 @@ impl<'a> NameResolver<'a> {
                             // This restriction does not apply to JSDoc comment types because they are parented
                             // at a higher level than type parameters would normally be
                             let last = last_location.unwrap();
-                            if meaning.intersects(symbols[res.index()].flags & SymbolFlags::TYPE)
+                            if meaning
+                                .intersects(symbols.borrow()[res.index()].flags & SymbolFlags::TYPE)
                                 && nodes[last].kind != Kind::JSDoc
                             {
                                 // type parameters are visible in parameter list, return type and type parameter list.
                                 // Synthetic fake scopes are added for signatures so type parameters are accessible from them.
-                                use_result = symbols[res.index()]
+                                use_result = symbols.borrow()[res.index()]
                                     .flags
                                     .intersects(SymbolFlags::TYPE_PARAMETER)
                                     && (nodes[last].flags.intersects(NodeFlags::SYNTHESIZED)
@@ -147,14 +226,16 @@ impl<'a> NameResolver<'a> {
                                         || nodes[last].kind == Kind::TypeParameter);
                             }
                             if meaning
-                                .intersects(symbols[res.index()].flags & SymbolFlags::VARIABLE)
+                                .intersects(
+                                    symbols.borrow()[res.index()].flags & SymbolFlags::VARIABLE,
+                                )
                             {
                                 // expression inside parameter will lookup as normal variable scope when targeting es2015+
                                 if self.use_outer_variable_scope_in_parameter(
                                     res, loc, last, nodes, symbols,
                                 ) {
                                     use_result = false;
-                                } else if symbols[res.index()]
+                                } else if symbols.borrow()[res.index()]
                                     .flags
                                     .intersects(SymbolFlags::FUNCTION_SCOPED_VARIABLE)
                                 {
@@ -165,7 +246,7 @@ impl<'a> NameResolver<'a> {
                                     use_result = nodes[last].kind == Kind::Parameter
                                         || nodes[last].flags.intersects(NodeFlags::SYNTHESIZED)
                                         || Some(last) == nodes[loc].type_()
-                                            && symbols[res.index()].value_declaration.is_some_and(
+                                            && symbols.borrow()[res.index()].value_declaration.is_some_and(
                                                 |vd| {
                                                     find_ancestor(
                                                         Some(vd),
@@ -199,7 +280,8 @@ impl<'a> NameResolver<'a> {
                     if is_module_attributes {
                         // fallthrough to bottom
                     } else if let Some(module_symbol) = self.get_symbol_of_declaration(loc, nodes) {
-                        let module_exports = symbols[module_symbol.index()].exports.clone();
+                        let module_exports =
+                            symbols.borrow()[module_symbol.index()].exports.clone();
                         if is_source_file(&nodes[loc])
                             || is_module_declaration(&nodes[loc])
                                 && nodes[loc].flags.intersects(NodeFlags::AMBIENT)
@@ -209,11 +291,14 @@ impl<'a> NameResolver<'a> {
                             // name of that export default matches.
                             result = module_exports.get(INTERNAL_SYMBOL_NAME_DEFAULT).copied();
                             if let Some(res) = result {
-                                let local_symbol =
-                                    get_local_symbol_for_export_default(res, nodes, symbols);
+                                let local_symbol = get_local_symbol_for_export_default(
+                                    res,
+                                    nodes,
+                                    &symbols.borrow()[..],
+                                );
                                 if local_symbol.is_some()
-                                    && symbols[res.index()].flags.intersects(meaning)
-                                    && symbols[local_symbol.unwrap().index()].name == name
+                                    && symbols.borrow()[res.index()].flags.intersects(meaning)
+                                    && symbols.borrow()[local_symbol.unwrap().index()].name == name
                                 {
                                     break 'loop_;
                                 }
@@ -231,15 +316,16 @@ impl<'a> NameResolver<'a> {
                             //        an alias. If we used &, we'd be throwing out symbols that have non alias aspects,
                             //        which is not the desired behavior.
                             if let Some(module_export) = module_exports.get(name).copied() {
-                                if symbols[module_export.index()].flags == SymbolFlags::ALIAS
+                                if symbols.borrow()[module_export.index()].flags
+                                    == SymbolFlags::ALIAS
                                     && (get_declaration_of_kind(
-                                        &symbols[module_export.index()],
+                                        &symbols.borrow()[module_export.index()],
                                         Kind::ExportSpecifier,
                                         nodes,
                                     )
                                     .is_some()
                                         || get_declaration_of_kind(
-                                            &symbols[module_export.index()],
+                                            &symbols.borrow()[module_export.index()],
                                             Kind::NamespaceExport,
                                             nodes,
                                         )
@@ -297,7 +383,7 @@ impl<'a> NameResolver<'a> {
                 Kind::EnumDeclaration => {
                     if let Some(enum_symbol) = self.get_symbol_of_declaration(loc, nodes) {
                         result = self.lookup(
-                            &symbols[enum_symbol.index()].exports.clone(),
+                            &symbols.borrow()[enum_symbol.index()].exports.clone(),
                             name,
                             meaning & SymbolFlags::ENUM_MEMBER,
                             symbols,
@@ -306,7 +392,7 @@ impl<'a> NameResolver<'a> {
                             if name_not_found_message.is_some()
                                 && self.compiler_options.get_isolated_modules()
                                 && !nodes[loc].flags.intersects(NodeFlags::AMBIENT)
-                                && symbols[res.index()].value_declaration.is_some_and(|vd| {
+                                && symbols.borrow()[res.index()].value_declaration.is_some_and(|vd| {
                                     get_source_file_of_node(Some(loc), nodes)
                                         != get_source_file_of_node(Some(vd), nodes)
                                 })
@@ -317,8 +403,11 @@ impl<'a> NameResolver<'a> {
                                     } else {
                                         "isolatedModules"
                                     };
-                                let qualified =
-                                    format!("{}.{}", symbols[enum_symbol.index()].name, name);
+                                let qualified = format!(
+                                    "{}.{}",
+                                    symbols.borrow()[enum_symbol.index()].name,
+                                    name
+                                );
                                 self.error(
                                     original_location,
                                     &diagnostics::Cannot_access_0_from_another_file_without_qualification_when_1_is_enabled_Use_2_instead,
@@ -363,14 +452,17 @@ impl<'a> NameResolver<'a> {
                     let mut skip_class_expression_name_check = false;
                     if let Some(location_symbol) = self.get_symbol_of_declaration(loc, nodes) {
                         result = self.lookup(
-                            &symbols[location_symbol.index()].members.clone(),
+                            &symbols.borrow()[location_symbol.index()].members.clone(),
                             name,
                             meaning & SymbolFlags::TYPE,
                             symbols,
                         );
                         if let Some(res) = result {
                             if !is_type_parameter_symbol_declared_in_container(
-                                res, loc, nodes, symbols,
+                                res,
+                                loc,
+                                nodes,
+                                &symbols.borrow()[..],
                             ) {
                                 // ignore type parameters not declared in this container
                                 result = None;
@@ -419,7 +511,9 @@ impl<'a> NameResolver<'a> {
                                     self.get_symbol_of_declaration(container, nodes)
                                 {
                                     result = self.lookup(
-                                        &symbols[container_symbol.index()].members.clone(),
+                                        &symbols.borrow()[container_symbol.index()]
+                                            .members
+                                            .clone(),
                                         name,
                                         meaning & SymbolFlags::TYPE,
                                         symbols,
@@ -453,7 +547,7 @@ impl<'a> NameResolver<'a> {
                             // A reference to this grandparent's type parameters would be an error
                             if let Some(gp_symbol) = self.get_symbol_of_declaration(gp, nodes) {
                                 result = self.lookup(
-                                    &symbols[gp_symbol.index()].members.clone(),
+                                    &symbols.borrow()[gp_symbol.index()].members.clone(),
                                     name,
                                     meaning & SymbolFlags::TYPE,
                                     symbols,
@@ -604,14 +698,12 @@ impl<'a> NameResolver<'a> {
             && (last_self_reference_location.is_none()
                 || result != last_self_reference_location.and_then(|l| nodes[l].symbol()));
         if referenced {
-            if let Some(hook) = self.symbol_referenced.as_mut() {
-                hook(result.unwrap(), meaning);
-            }
+            self.dispatch_symbol_referenced(result.unwrap(), meaning);
         }
         if result.is_none() && !exclude_globals {
             let globals = self.globals.clone();
             result = self.lookup(
-                &globals,
+                &globals.borrow(),
                 name,
                 meaning | SymbolFlags::GLOBAL_LOOKUP,
                 symbols,
@@ -634,31 +726,34 @@ impl<'a> NameResolver<'a> {
             }
         }
         if let Some(name_not_found_message) = name_not_found_message {
-            if let (Some(property), Some(hook)) = (
-                property_with_invalid_initializer,
-                self.on_property_with_invalid_initializer.as_mut(),
-            ) {
-                if hook(original_location, name, property, result) {
+            if let Some(property) = property_with_invalid_initializer {
+                if self.dispatch_on_property_with_invalid_initializer(
+                    original_location,
+                    name,
+                    property,
+                    result,
+                ) {
                     return None;
                 }
             }
             match result {
                 None => {
-                    if let Some(hook) = self.on_failed_to_resolve_symbol.as_mut() {
-                        hook(original_location, name, meaning, name_not_found_message);
-                    }
+                    self.dispatch_on_failed_to_resolve_symbol(
+                        original_location,
+                        name,
+                        meaning,
+                        name_not_found_message,
+                    );
                 }
                 Some(result) => {
-                    if let Some(hook) = self.on_successfully_resolved_symbol.as_mut() {
-                        hook(
-                            original_location,
-                            result,
-                            meaning,
-                            last_location,
-                            associated_declaration_for_containing_initializer_or_binding_name,
-                            within_deferred_context,
-                        );
-                    }
+                    self.dispatch_on_successfully_resolved_symbol(
+                        original_location,
+                        result,
+                        meaning,
+                        last_location,
+                        associated_declaration_for_containing_initializer_or_binding_name,
+                        within_deferred_context,
+                    );
                 }
             }
         }
@@ -676,7 +771,7 @@ impl<'a> NameResolver<'a> {
         name: &str,
         meaning: SymbolFlags,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &RefCell<Vec<Symbol>>,
         result: &mut Option<SymbolId>,
     ) {
         if name == INTERNAL_SYMBOL_NAME_DEFAULT {
@@ -694,7 +789,9 @@ impl<'a> NameResolver<'a> {
                     .as_source_file()
                     .common_js_module_indicator
                     .is_some()
-                && !symbols[res.index()].flags.intersects(SymbolFlags::TYPE)
+                && !symbols.borrow()[res.index()]
+                    .flags
+                    .intersects(SymbolFlags::TYPE)
             {
                 *result = None;
             } else {
@@ -710,11 +807,13 @@ impl<'a> NameResolver<'a> {
         location: NodeId,
         last_location: NodeId,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &RefCell<Vec<Symbol>>,
     ) -> bool {
         if is_parameter_declaration(&nodes[last_location]) {
             if let Some(body) = nodes[location].body() {
-                if let Some(value_declaration) = symbols[result.index()].value_declaration {
+                if let Some(value_declaration) =
+                    symbols.borrow()[result.index()].value_declaration
+                {
                     if nodes[value_declaration].pos() >= nodes[body].pos()
                         && nodes[value_declaration].end() <= nodes[body].end()
                     {
@@ -724,10 +823,8 @@ impl<'a> NameResolver<'a> {
                         // - nullish coalesce pre-es2020
                         // - spread assignment in binding pattern pre-es2017
                         let function_location = location;
-                        let mut declaration_requires_scope_change = self
-                            .get_requires_scope_change_cache
-                            .as_mut()
-                            .map_or(TS_UNKNOWN, |hook| hook(function_location));
+                        let mut declaration_requires_scope_change =
+                            self.dispatch_get_requires_scope_change_cache(function_location);
                         if declaration_requires_scope_change == TS_UNKNOWN {
                             declaration_requires_scope_change = if nodes[function_location]
                                 .parameters()
@@ -739,9 +836,10 @@ impl<'a> NameResolver<'a> {
                             } else {
                                 TS_FALSE
                             };
-                            if let Some(hook) = self.set_requires_scope_change_cache.as_mut() {
-                                hook(function_location, declaration_requires_scope_change);
-                            }
+                            self.dispatch_set_requires_scope_change_cache(
+                                function_location,
+                                declaration_requires_scope_change,
+                            );
                         }
                         return declaration_requires_scope_change != TS_TRUE;
                     }
@@ -811,6 +909,10 @@ impl<'a> NameResolver<'a> {
         message: &'static diagnostics::Message,
         args: Vec<String>,
     ) {
+        if let Some(host) = self.host.as_deref_mut() {
+            host.nr_error(location, message, args);
+            return;
+        }
         if let Some(hook) = self.error_hook.as_mut() {
             hook(location, message, args);
         }
@@ -819,6 +921,9 @@ impl<'a> NameResolver<'a> {
 
     /// `func (r *NameResolver) getSymbolOfDeclaration`.
     fn get_symbol_of_declaration(&mut self, node: NodeId, nodes: &[Node]) -> Option<SymbolId> {
+        if let Some(host) = self.host.as_deref_mut() {
+            return host.nr_get_symbol_of_declaration(node, nodes);
+        }
         if let Some(hook) = self.get_symbol_of_declaration_hook.as_mut() {
             return hook(node, nodes);
         }
@@ -828,21 +933,29 @@ impl<'a> NameResolver<'a> {
 
     /// `func (r *NameResolver) lookup`. The `symbol_arena` parameter feeds
     /// only the default implementation's `symbol.Flags` check — the
-    /// `Lookup` hook, when installed, decides validity itself (as in Go).
+    /// `Lookup` hook or the host's `nr_lookup`, when installed, decides
+    /// validity itself (as in Go).
     fn lookup(
         &mut self,
         symbols_table: &SymbolTable,
         name: &str,
         meaning: SymbolFlags,
-        symbol_arena: &[Symbol],
+        symbol_arena: &RefCell<Vec<Symbol>>,
     ) -> Option<SymbolId> {
+        if let Some(host) = self.host.as_deref_mut() {
+            let suggestion = self.for_suggestion;
+            return host.nr_lookup(symbols_table, name, meaning, suggestion);
+        }
         if let Some(hook) = self.lookup_hook.as_mut() {
             return hook(symbols_table, name, meaning);
         }
         // Default implementation does not support following aliases or merged symbols
         if meaning != SymbolFlags::NONE {
             if let Some(symbol) = symbols_table.get(name) {
-                if symbol_arena[symbol.index()].flags.intersects(meaning) {
+                if symbol_arena.borrow()[symbol.index()]
+                    .flags
+                    .intersects(meaning)
+                {
                     return Some(*symbol);
                 }
             }
@@ -850,17 +963,129 @@ impl<'a> NameResolver<'a> {
         None
     }
 
+    /// `SymbolReferenced` hook site — host first, then the `Option` hook.
+    fn dispatch_symbol_referenced(&mut self, symbol: SymbolId, meaning: SymbolFlags) {
+        if let Some(host) = self.host.as_deref_mut() {
+            host.nr_symbol_referenced(symbol, meaning);
+        } else if let Some(hook) = self.symbol_referenced.as_mut() {
+            hook(symbol, meaning);
+        }
+    }
+
+    /// `GetRequiresScopeChangeCache` hook site.
+    fn dispatch_get_requires_scope_change_cache(&mut self, node: NodeId) -> Tristate {
+        if let Some(host) = self.host.as_deref_mut() {
+            return host.nr_get_requires_scope_change_cache(node);
+        }
+        self.get_requires_scope_change_cache
+            .as_mut()
+            .map_or(TS_UNKNOWN, |hook| hook(node))
+    }
+
+    /// `SetRequiresScopeChangeCache` hook site.
+    fn dispatch_set_requires_scope_change_cache(&mut self, node: NodeId, value: Tristate) {
+        if let Some(host) = self.host.as_deref_mut() {
+            host.nr_set_requires_scope_change_cache(node, value);
+        } else if let Some(hook) = self.set_requires_scope_change_cache.as_mut() {
+            hook(node, value);
+        }
+    }
+
+    /// `OnPropertyWithInvalidInitializer` hook site — absent for the
+    /// suggestion resolver (Go leaves the hook nil there).
+    fn dispatch_on_property_with_invalid_initializer(
+        &mut self,
+        error_location: Option<NodeId>,
+        name: &str,
+        property_with_invalid_initializer: NodeId,
+        result: Option<SymbolId>,
+    ) -> bool {
+        if let Some(host) = self.host.as_deref_mut() {
+            if self.for_suggestion {
+                return false;
+            }
+            return host.nr_on_property_with_invalid_initializer(
+                error_location,
+                name,
+                property_with_invalid_initializer,
+                result,
+            );
+        }
+        if let Some(hook) = self.on_property_with_invalid_initializer.as_mut() {
+            return hook(error_location, name, property_with_invalid_initializer, result);
+        }
+        false
+    }
+
+    /// `OnFailedToResolveSymbol` hook site — absent for the suggestion
+    /// resolver.
+    fn dispatch_on_failed_to_resolve_symbol(
+        &mut self,
+        error_location: Option<NodeId>,
+        name: &str,
+        meaning: SymbolFlags,
+        name_not_found_message: &'static diagnostics::Message,
+    ) {
+        if let Some(host) = self.host.as_deref_mut() {
+            if !self.for_suggestion {
+                host.nr_on_failed_to_resolve_symbol(
+                    error_location,
+                    name,
+                    meaning,
+                    name_not_found_message,
+                );
+            }
+        } else if let Some(hook) = self.on_failed_to_resolve_symbol.as_mut() {
+            hook(error_location, name, meaning, name_not_found_message);
+        }
+    }
+
+    /// `OnSuccessfullyResolvedSymbol` hook site — absent for the suggestion
+    /// resolver.
+    fn dispatch_on_successfully_resolved_symbol(
+        &mut self,
+        error_location: Option<NodeId>,
+        result: SymbolId,
+        meaning: SymbolFlags,
+        last_location: Option<NodeId>,
+        associated_declaration_for_containing_initializer_or_binding_name: Option<NodeId>,
+        within_deferred_context: bool,
+    ) {
+        if let Some(host) = self.host.as_deref_mut() {
+            if !self.for_suggestion {
+                host.nr_on_successfully_resolved_symbol(
+                    error_location,
+                    result,
+                    meaning,
+                    last_location,
+                    associated_declaration_for_containing_initializer_or_binding_name,
+                    within_deferred_context,
+                );
+            }
+        } else if let Some(hook) = self.on_successfully_resolved_symbol.as_mut() {
+            hook(
+                error_location,
+                result,
+                meaning,
+                last_location,
+                associated_declaration_for_containing_initializer_or_binding_name,
+                within_deferred_context,
+            );
+        }
+    }
+
     /// `func (r *NameResolver) argumentsSymbol` — synthesizes the transient
-    /// `arguments` symbol. PORT: needs `&mut Vec<Symbol>` because symbol
+    /// `arguments` symbol. PORT: needs `&RefCell<Vec<Symbol>>` because symbol
     /// identity is `SymbolId` into the arena.
-    fn arguments_symbol(&mut self, symbols: &mut Vec<Symbol>) -> SymbolId {
+    fn arguments_symbol(&mut self, symbols: &RefCell<Vec<Symbol>>) -> SymbolId {
         if self.arguments_symbol.is_none() {
-            symbols.push(Symbol {
+            let mut arena = symbols.borrow_mut();
+            arena.push(Symbol {
                 name: "arguments".to_string(),
                 flags: SymbolFlags::PROPERTY | SymbolFlags::TRANSIENT,
                 ..Default::default()
             });
-            self.arguments_symbol = Some(SymbolId((symbols.len() - 1) as u32));
+            self.arguments_symbol = Some(SymbolId((arena.len() - 1) as u32));
         }
         self.arguments_symbol.unwrap()
     }

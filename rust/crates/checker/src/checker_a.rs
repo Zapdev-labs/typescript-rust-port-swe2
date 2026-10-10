@@ -942,7 +942,7 @@ impl Checker {
             && is_in_external_module
             && meaning.contains(ast::SymbolFlags::VALUE)
         {
-            let globals = self.globals.clone();
+            let globals = self.globals.borrow().clone();
             let is_global = self.get_symbol(&globals, &name, meaning) == Some(result);
             let mut non_value_symbol = None;
             if is_global

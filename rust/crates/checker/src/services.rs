@@ -399,7 +399,7 @@ impl Checker {
             location_opt = nodes[location].parent;
         }
 
-        let globals = self.globals.clone();
+        let globals = self.globals.borrow().clone();
         copy_symbols_to_table(self, &mut symbols, &globals, meaning);
 
         // Not a symbol, a keyword

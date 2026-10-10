@@ -121,8 +121,10 @@ pub fn new_reference_resolver<'a>(
 ) -> ReferenceResolverImpl<'a> {
     ReferenceResolverImpl {
         resolver: NameResolver {
-            compiler_options: options,
-            globals: SymbolTable::default(),
+            host: None,
+            for_suggestion: false,
+            compiler_options: std::rc::Rc::new(options.clone()),
+            globals: std::rc::Rc::new(std::cell::RefCell::new(SymbolTable::default())),
             arguments_symbol: None,
             require_symbol: None,
             get_symbol_of_declaration_hook: None,
@@ -225,12 +227,18 @@ impl<'a> ReferenceResolverImpl<'a> {
             );
         }
 
-        self.resolver.resolve(
+        // `resolve` wants `&RefCell<Vec<Symbol>>` (the checker shares its arena
+        // through one); this caller owns a `&mut Vec` — move it into a cell and
+        // copy back so a lazily-created `arguments` symbol survives.
+        let cell = std::cell::RefCell::new(std::mem::take(symbols));
+        let result = self.resolver.resolve(
             location, &text, meaning, None,  /*nameNotFoundMessage*/
             false, /*isUse*/
             false, /*excludeGlobals*/
-            nodes, symbols,
-        )
+            nodes, &cell,
+        );
+        *symbols = cell.into_inner();
+        result
     }
 
     /// `func (r *referenceResolver) isTypeOnlyAliasDeclaration`.
