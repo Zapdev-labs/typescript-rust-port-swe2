@@ -1,0 +1,43 @@
+[package]
+name = "tsc-execute"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+tsc-ast = { path = "../ast" }
+tsc-binder = { path = "../binder" }
+tsc-bundled = { path = "../bundled" }
+tsc-checker = { path = "../checker" }
+tsc-collections = { path = "../collections" }
+tsc-compiler = { path = "../compiler" }
+tsc-contentmapper = { path = "../contentmapper" }
+tsc-core = { path = "../core" }
+tsc-diagnostics = { path = "../diagnostics" }
+tsc-diagnosticwriter = { path = "../diagnosticwriter" }
+tsc-format = { path = "../format" }
+tsc-fswatch = { path = "../fswatch" }
+tsc-json = { path = "../json" }
+tsc-locale = { path = "../locale" }
+tsc-lsutil = { path = "../lsutil" }
+tsc-module = { path = "../module" }
+tsc-outputpaths = { path = "../outputpaths" }
+tsc-packagejson = { path = "../packagejson" }
+tsc-parser = { path = "../parser" }
+tsc-pprof = { path = "../pprof" }
+tsc-scanner = { path = "../scanner" }
+tsc-spanmap = { path = "../spanmap" }
+tsc-tracing = { path = "../tracing" }
+tsc-tsoptions = { path = "../tsoptions" }
+tsc-tspath = { path = "../tspath" }
+tsc-vfs = { path = "../vfs" }
+tsc-watchmanager = { path = "../watchmanager" }
+rustc-hash = { workspace = true }
+indexmap = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+xxhash-rust = { workspace = true }
