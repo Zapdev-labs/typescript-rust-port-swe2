@@ -1,0 +1,30 @@
+[package]
+name = "tsc-lsutil"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+unicode-normalization.workspace = true
+tsc-ast = { path = "../ast" }
+tsc-astnav = { path = "../astnav" }
+tsc-checker = { path = "../checker" }
+tsc-collections = { path = "../collections" }
+tsc-core = { path = "../core" }
+tsc-json = { path = "../json" }
+tsc-lsproto = { path = "../lsproto" }
+tsc-modulespecifiers = { path = "../modulespecifiers" }
+tsc-printer = { path = "../printer" }
+tsc-scanner = { path = "../scanner" }
+tsc-stringutil = { path = "../stringutil" }
+tsc-tspath = { path = "../tspath" }
+tsc-vfs = { path = "../vfs" }
+
+[dev-dependencies]
+tsc-parser = { path = "../parser" }

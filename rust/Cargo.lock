@@ -954,6 +954,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "tinyvec"
+version = "1.13.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fd3ca314f692efd6c868f8408f53fe444634a845f96c028b97d35f6a1f79f0ee"
+
+[[package]]
 name = "tsc-apiencoder"
 version = "0.0.0"
 dependencies = [
@@ -1058,6 +1064,39 @@ dependencies = [
  "rustc-hash",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "tsc-compiler"
+version = "0.0.0"
+dependencies = [
+ "rustc-hash",
+ "serde_json",
+ "tsc-ast",
+ "tsc-binder",
+ "tsc-checker",
+ "tsc-collections",
+ "tsc-contentmapper",
+ "tsc-core",
+ "tsc-diagnostics",
+ "tsc-json",
+ "tsc-locale",
+ "tsc-module",
+ "tsc-modulespecifiers",
+ "tsc-outputpaths",
+ "tsc-packagejson",
+ "tsc-parser",
+ "tsc-printer",
+ "tsc-scanner",
+ "tsc-sourcemap",
+ "tsc-spanmap",
+ "tsc-stringutil",
+ "tsc-symlinks",
+ "tsc-tracing",
+ "tsc-transformers",
+ "tsc-tsoptions",
+ "tsc-tspath",
+ "tsc-vfs",
 ]
 
 [[package]]
@@ -1226,6 +1265,29 @@ dependencies = [
  "tsc-json",
  "tsc-jsonrpc",
  "tsc-tspath",
+]
+
+[[package]]
+name = "tsc-lsutil"
+version = "0.0.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "tsc-ast",
+ "tsc-astnav",
+ "tsc-checker",
+ "tsc-collections",
+ "tsc-core",
+ "tsc-json",
+ "tsc-lsproto",
+ "tsc-modulespecifiers",
+ "tsc-parser",
+ "tsc-printer",
+ "tsc-scanner",
+ "tsc-stringutil",
+ "tsc-tspath",
+ "tsc-vfs",
+ "unicode-normalization",
 ]
 
 [[package]]
@@ -1563,6 +1625,15 @@ name = "unicode-ident"
 version = "1.0.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d245f478577f809a851594d02313b640fb437e0bb33866753cff937863096954"
+
+[[package]]
+name = "unicode-normalization"
+version = "0.1.25"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5fd4f6878c9cb28d874b009da9e8d183b5abc80117c40bbd187a1fde336be6e8"
+dependencies = [
+ "tinyvec",
+]
 
 [[package]]
 name = "uuid"

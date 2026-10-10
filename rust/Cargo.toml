@@ -39,6 +39,10 @@ notify = "8"
 pprof = { version = "0.15", features = ["prost-codec"] }
 flate2 = "1"
 prost = "0.12"
+# Spec deviation (SPEC §5.11 conditional use): lsutil/organizeimports.go uses
+# golang.org/x/text/unicode/norm (NFD in removeDiacritics) — the spec
+# anticipates unicode-normalization exactly for this.
+unicode-normalization = "0.1"
 
 [profile.release]
 lto = "fat"

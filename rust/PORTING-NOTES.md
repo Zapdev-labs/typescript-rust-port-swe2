@@ -1526,3 +1526,35 @@ forward-scan brace/comment/string-aware anchor, plus manual repair of
 `&&`/`||`/`??` union-type arms in `getTypeOfBinaryExpression`,
 checker.go:12735-12763). No remaining `__h` names are out of scope
 and surviving ones are ordinary statement temps.
+
+## 2026-10-10 crates/lsutil — tsc/internal/ls/lsutil port shape
+- `*ast.Node`/`*ast.SourceFile` are `NodeId`s into `nodes: &[Node]` (or
+  `&mut Vec<Node>` where lazy `get_or_create_token` may allocate into
+  `SourceFile::token_cache`). `Scanner<'a>` borrows `&'a str`, so entry
+  points that rescan clone `SourceFile::text` once — same compromise as
+  tsc-astnav's `nav_scanner` (`children.rs`, `asi.rs`).
+- Go `func(a,b string) int` / `func(s1,s2 *ast.Node) int` comparers are
+  `Rc<dyn Fn>` (`StringComparer`/`SpecifierComparer`); a nil Go func is
+  `Option<Rc<..>>` (`detect_case_sensitivity_by_sort` may surface `None`
+  only when `comparersToTest` is empty — Go would return nil).
+- `compiler.Program` is not ported: `ShouldUseUriStyleNodeCoreModules`
+  takes `&dyn UsesUriStyleNodeCoreModules` (`Tristate` itself implements
+  it). `PORT(deferred)` at `utilities.rs`.
+- `ast.IsDeprecatedDeclaration` is deferred in tsc-ast (jsdocCache), so
+  `symbol_display.rs`'s nil-checker fallback calls
+  `tsc_checker::jsdoc::is_deprecated_declaration_with_cached_flags`, a
+  line-for-line port of `IsDeprecatedDeclarationWithCachedFlags` with
+  `get_combined_node_flags` supplied.
+- `userpreferences`: `Vec<String>` can't express Go's nil-vs-empty
+  `[]string` (`MarshalJSONTo` writes `[]` only for non-nil); invisible to
+  `PartialEq` round-trips. `value_as_int` uses Rust `as` (saturating) for
+  float→int where Go's conversion is UB out of range — equal for every
+  in-range value. `caseSensitivity` keeps Go's no-nil-check quirk.
+- `organizeimports`: `unicode.Is(unicode.Mn)`/`IsUpper`/`ToLower`/`ToUpper`
+  go through `unicode.rs` (generated Go-compatible case/category tables);
+  NFD via `unicode-normalization` (sanctioned by SPEC §5.11 for
+  `x/text/unicode/norm`).
+- Checker fix required by this crate's test build: `Checker::
+  for_each_property` took `impl FnMut` and recursed on `&mut callback`,
+  causing infinite monomorphization ("reached the recursion limit"); it
+  now takes `&mut dyn FnMut(&mut Checker, SymbolId) -> bool`.
