@@ -38,7 +38,7 @@ fn test_file_names(file_names: &[&str]) -> Vec<tsc_tspath::RootedFilePath> {
         .collect()
 }
 
-/// `esnextLibs` from program_test.go.
+/// `esnextLibs` from program_test.go @ ec47d33c.
 const ESNEXT_LIBS: &[&str] = &[
     "lib.es5.d.ts",
     "lib.es2015.d.ts",
@@ -85,23 +85,26 @@ const ESNEXT_LIBS: &[&str] = &[
     "lib.es2019.array.d.ts",
     "lib.es2019.object.d.ts",
     "lib.es2019.string.d.ts",
+    "lib.es2019.symbol.d.ts",
+    "lib.es2019.intl.d.ts",
     "lib.es2020.bigint.d.ts",
     "lib.es2020.date.d.ts",
     "lib.es2020.promise.d.ts",
     "lib.es2020.sharedmemory.d.ts",
     "lib.es2020.string.d.ts",
     "lib.es2020.symbol.wellknown.d.ts",
+    "lib.es2020.intl.d.ts",
     "lib.es2020.number.d.ts",
     "lib.es2021.promise.d.ts",
     "lib.es2021.string.d.ts",
     "lib.es2021.weakref.d.ts",
+    "lib.es2021.intl.d.ts",
     "lib.es2022.array.d.ts",
     "lib.es2022.error.d.ts",
     "lib.es2022.intl.d.ts",
     "lib.es2022.object.d.ts",
-    "lib.es2022.regexp.d.ts",
-    "lib.es2022.sharedarraybuffer.d.ts",
     "lib.es2022.string.d.ts",
+    "lib.es2022.regexp.d.ts",
     "lib.es2023.array.d.ts",
     "lib.es2023.collection.d.ts",
     "lib.es2023.intl.d.ts",
@@ -174,13 +177,19 @@ fn program_test_cases() -> Vec<ProgramTestCase> {
                 ("c:/dev/src2/a/b/2.ts", "/// <reference path='c/1.ts' />"),
                 ("c:/dev/src2/a/b/c/1.ts", "console.log('hello');"),
                 ("c:/dev/src2/a/10.ts", "/// <reference path='b/c/d/9.ts' />"),
-                ("c:/dev/src2/a/b/c/d/9.ts", "/// <reference path='e/8.ts' />"),
-                ("c:/dev/src2/a/b/c/d/e/8.ts", "/// <reference path='7.ts' />"),
-                ("c:/dev/src2/a/b/c/d/e/7.ts", "/// <reference path='f/6.ts' />"),
                 (
-                    "c:/dev/src2/a/b/c/d/e/f/6.ts",
-                    "console.log('world!');",
+                    "c:/dev/src2/a/b/c/d/9.ts",
+                    "/// <reference path='e/8.ts' />",
                 ),
+                (
+                    "c:/dev/src2/a/b/c/d/e/8.ts",
+                    "/// <reference path='7.ts' />",
+                ),
+                (
+                    "c:/dev/src2/a/b/c/d/e/7.ts",
+                    "/// <reference path='f/6.ts' />",
+                ),
+                ("c:/dev/src2/a/b/c/d/e/f/6.ts", "console.log('world!');"),
             ],
             expected_files: expected.clone(),
         },
@@ -196,7 +205,10 @@ fn program_test_cases() -> Vec<ProgramTestCase> {
                 ("c:/dev/src2/a/b/3.ts", "import * as two from './2.ts';"),
                 ("c:/dev/src2/a/b/2.ts", "import * as one from './c/1.ts';"),
                 ("c:/dev/src2/a/b/c/1.ts", "console.log('hello');"),
-                ("c:/dev/src2/a/10.ts", "import * as nine from './b/c/d/9.ts';"),
+                (
+                    "c:/dev/src2/a/10.ts",
+                    "import * as nine from './b/c/d/9.ts';",
+                ),
                 (
                     "c:/dev/src2/a/b/c/d/9.ts",
                     "import * as eight from './e/8.ts';",
@@ -209,10 +221,7 @@ fn program_test_cases() -> Vec<ProgramTestCase> {
                     "c:/dev/src2/a/b/c/d/e/7.ts",
                     "import * as six from './f/6.ts';",
                 ),
-                (
-                    "c:/dev/src2/a/b/c/d/e/f/6.ts",
-                    "console.log('world!');",
-                ),
+                ("c:/dev/src2/a/b/c/d/e/f/6.ts", "console.log('world!');"),
             ],
             expected_files: expected.clone(),
         },
@@ -231,7 +240,10 @@ fn program_test_cases() -> Vec<ProgramTestCase> {
                 ),
                 ("c:/dev/src2/a/b/2.ts", "import * as one from './c/1.ts';"),
                 ("c:/dev/src2/a/b/c/1.ts", "console.log('hello');"),
-                ("c:/dev/src2/a/10.ts", "import * as nine from './b/c/d/9.ts';"),
+                (
+                    "c:/dev/src2/a/10.ts",
+                    "import * as nine from './b/c/d/9.ts';",
+                ),
                 (
                     "c:/dev/src2/a/b/c/d/9.ts",
                     "import * as eight from './e/8.ts';\nimport * as cycle from 'c:/dev/src/index.ts';",
@@ -244,10 +256,7 @@ fn program_test_cases() -> Vec<ProgramTestCase> {
                     "c:/dev/src2/a/b/c/d/e/7.ts",
                     "import * as six from './f/6.ts';",
                 ),
-                (
-                    "c:/dev/src2/a/b/c/d/e/f/6.ts",
-                    "console.log('world!');",
-                ),
+                ("c:/dev/src2/a/b/c/d/e/f/6.ts", "console.log('world!');"),
             ],
             expected_files: expected,
         },
@@ -299,10 +308,12 @@ fn test_program() {
         let mut actual_files: Vec<String> = Vec::new();
         for file in program.source_files() {
             let nodes = program.arena_of(file);
-            let name = nodes[file].as_source_file().file_name().as_string().to_string();
-            actual_files.push(
-                name.strip_prefix(&lib_prefix).unwrap_or(&name).to_string(),
-            );
+            let name = nodes[file]
+                .as_source_file()
+                .file_name()
+                .as_string()
+                .to_string();
+            actual_files.push(name.strip_prefix(&lib_prefix).unwrap_or(&name).to_string());
         }
         assert_eq!(
             test_case.expected_files, actual_files,
@@ -388,11 +399,7 @@ fn test_import_source_program() {
         );
         let index_key = fs.case_sensitivity().path_key(&index_name.as_path());
         let resolutions = program.resolved_modules.get(&index_key);
-        assert!(
-            resolutions.is_none_or(|r| r.is_empty()),
-            "{}",
-            test.name
-        );
+        assert!(resolutions.is_none_or(|r| r.is_empty()), "{}", test.name);
         assert!(program.get_unresolved_imports().is_empty(), "{}", test.name);
         assert!(
             program.collect_package_names().unresolved.is_empty(),
@@ -459,8 +466,7 @@ fn test_import_source_program() {
             None,
             None,
         ));
-        let (next_program, _f, reused) =
-            update_program(&program, &index_key, host3, None, None);
+        let (next_program, _f, reused) = update_program(&program, &index_key, host3, None, None);
         program = next_program;
         assert!(!reused, "{}", test.name);
         assert!(
@@ -682,10 +688,7 @@ fn test_program_hosts_and_factories() {
     assert!(resolved.is_resolved());
     let type_ref = {
         let nodes = p.arena_of(old_file);
-        nodes[old_file]
-            .as_source_file()
-            .type_reference_directives[0]
-            .clone()
+        nodes[old_file].as_source_file().type_reference_directives[0].clone()
     };
     let resolved_type_ref = p
         .get_resolved_type_reference_directive_from_type_reference_directive(&type_ref, old_file)
@@ -718,7 +721,10 @@ fn test_program_hosts_and_factories() {
         new_host.clone(),
         Some(Arc::new(move |p: &Rc<Program>| {
             pools_c2.set(pools_c2.get() + 1);
-            assert!(std::ptr::eq(Arc::as_ptr(&p.hosts.host), Arc::as_ptr(&new_host_c)));
+            assert!(std::ptr::eq(
+                Arc::as_ptr(&p.hosts.host),
+                Arc::as_ptr(&new_host_c)
+            ));
             assert!(p.tracing().is_none());
             let f = p
                 .get_source_file(&rooted_file_path_from_normalized("/src/index.ts"))
@@ -751,17 +757,20 @@ fn test_program_hosts_and_factories() {
     assert_eq!(resolved2.resolved_file_name, resolved.resolved_file_name);
     let type_ref2 = {
         let nodes = cloned.arena_of(changed_id);
-        nodes[changed_id]
-            .as_source_file()
-            .type_reference_directives[0]
-            .clone()
+        nodes[changed_id].as_source_file().type_reference_directives[0].clone()
     };
     let resolved_type_ref2 = cloned
         .get_resolved_type_reference_directive_from_type_reference_directive(&type_ref2, changed_id)
         .expect("resolved dep types");
-    assert_eq!(resolved_type_ref2.resolved_path, resolved_type_ref.resolved_path);
+    assert_eq!(
+        resolved_type_ref2.resolved_path,
+        resolved_type_ref.resolved_path
+    );
     assert!(!Rc::ptr_eq(&cloned.resolution_data, &p.resolution_data));
-    assert!(!Rc::ptr_eq(&cloned.get_checker_pool(), &p.get_checker_pool()));
+    assert!(!Rc::ptr_eq(
+        &cloned.get_checker_pool(),
+        &p.get_checker_pool()
+    ));
     assert!(
         cloned
             .get_package_json_info(&rooted_file_path_from_normalized("/probe/package.json"))
@@ -775,12 +784,8 @@ fn test_program_hosts_and_factories() {
     assert_eq!(pools.get(), 2);
     assert_eq!(resolvers.get(), 1);
 
-    let (defaults, _f, reused) = crate::program::reuse_program(
-        &cloned,
-        &index_key,
-        new_host.clone(),
-        None,
-    );
+    let (defaults, _f, reused) =
+        crate::program::reuse_program(&cloned, &index_key, new_host.clone(), None);
     assert!(reused);
     let defaults = defaults.expect("defaults program");
     assert!(defaults.compiler_checker_pool.borrow().is_some());
@@ -814,7 +819,10 @@ fn test_program_hosts_and_factories() {
     let (rebuilt, _f, reused) = update_program(&p, &index_key, rebuild_host.clone(), None, None);
     assert!(!reused);
     assert!(rebuilt.compiler_checker_pool.borrow().is_some());
-    assert!(std::ptr::eq(Arc::as_ptr(&rebuilt.hosts.host), Arc::as_ptr(&rebuild_host)));
+    assert!(std::ptr::eq(
+        Arc::as_ptr(&rebuilt.hosts.host),
+        Arc::as_ptr(&rebuild_host)
+    ));
     assert!(rebuilt.tracing().is_none());
     assert!(
         rebuilt
@@ -894,11 +902,9 @@ fn test_cloned_program_project_reference_resolution() {
             preserve_symlinks
         );
         assert!(
-            !host
-                .fs()
-                .file_exists(&rooted_file_path_from_normalized(
-                    "/reference/dist/index.d.ts"
-                )),
+            !host.fs().file_exists(&rooted_file_path_from_normalized(
+                "/reference/dist/index.d.ts"
+            )),
             "preserveSymlinks={}",
             preserve_symlinks
         );
@@ -921,12 +927,8 @@ fn test_cloned_program_project_reference_resolution() {
             let f = rooted_file_path_from_normalized("/src/index.ts");
             fs.case_sensitivity().path_key(&f.as_path())
         };
-        let (cloned, _f, reused) = crate::program::reuse_program(
-            &p,
-            &index_key,
-            new_host.clone(),
-            None,
-        );
+        let (cloned, _f, reused) =
+            crate::program::reuse_program(&p, &index_key, new_host.clone(), None);
         assert!(reused, "preserveSymlinks={}", preserve_symlinks);
         let cloned = cloned.expect("cloned program");
         assert!(
@@ -949,9 +951,7 @@ fn test_cloned_program_project_reference_resolution() {
         );
         assert!(
             cloned
-                .get_package_json_info(&rooted_file_path_from_normalized(
-                    "/probe/package.json"
-                ))
+                .get_package_json_info(&rooted_file_path_from_normalized("/probe/package.json"))
                 .is_some(),
             "preserveSymlinks={}",
             preserve_symlinks
@@ -964,7 +964,11 @@ fn test_cloned_program_project_reference_resolution() {
             None,
         );
         let resolved = resolved.expect("resolved reference");
-        assert!(resolved.is_resolved(), "preserveSymlinks={}", preserve_symlinks);
+        assert!(
+            resolved.is_resolved(),
+            "preserveSymlinks={}",
+            preserve_symlinks
+        );
         assert!(
             resolved
                 .resolved_file_name

@@ -20,7 +20,7 @@ use tsc_core::tristate::TS_TRUE;
 
 use super::runtimesyntax::get_innermost_module_declaration_from_dotted_module;
 use crate::chain::TransformOptions;
-use crate::estransforms::{make_transformer, visit_each_child, Ec};
+use crate::estransforms::{Ec, make_transformer, visit_each_child};
 use crate::modifier_visitor::extract_modifiers;
 use crate::transformer::Transformer;
 
@@ -169,9 +169,10 @@ impl<'a> TypeEraserTransformer<'a> {
                 let name = cx.nodes[node].name();
                 let name_is_identifier =
                     name.is_some_and(|name| ast::is_identifier(&cx.nodes[name]));
-                let body_missing = get_innermost_module_declaration_from_dotted_module(node, cx.nodes)
-                    .and_then(|d| cx.nodes[d].as_module_declaration().body_base.body)
-                    .is_none();
+                let body_missing =
+                    get_innermost_module_declaration_from_dotted_module(node, cx.nodes)
+                        .and_then(|d| cx.nodes[d].as_module_declaration().body_base.body)
+                        .is_none();
                 if !name_is_identifier
                     || !ast::is_instantiated_module(
                         node,
@@ -223,7 +224,10 @@ impl<'a> TypeEraserTransformer<'a> {
             Kind::Constructor => {
                 let d = cx.nodes[node].as_constructor_declaration();
                 let (parameters, body) = (
-                    d.function_like_with_body_base.function_like_base.parameters.clone(),
+                    d.function_like_with_body_base
+                        .function_like_base
+                        .parameters
+                        .clone(),
                     d.function_like_with_body_base.body_base.body,
                 );
                 if ast::node_is_missing(body, cx.nodes) {
@@ -247,7 +251,10 @@ impl<'a> TypeEraserTransformer<'a> {
                     d.named_member_base.modifiers_base.modifiers.clone(),
                     d.function_like_with_body_base.body_base.asterisk_token,
                     d.named_member_base.name,
-                    d.function_like_with_body_base.function_like_base.parameters.clone(),
+                    d.function_like_with_body_base
+                        .function_like_base
+                        .parameters
+                        .clone(),
                     d.function_like_with_body_base.body_base.body,
                 );
                 if ast::node_is_missing(body, cx.nodes) {
@@ -261,8 +268,17 @@ impl<'a> TypeEraserTransformer<'a> {
                 ec.borrow_mut()
                     .factory
                     .update_method_declaration(
-                        cx.nodes, node, modifiers, asterisk_token, name, None, None, parameters,
-                        None, None, body,
+                        cx.nodes,
+                        node,
+                        modifiers,
+                        asterisk_token,
+                        name,
+                        None,
+                        None,
+                        parameters,
+                        None,
+                        None,
+                        body,
                     )
                     .unwrap_or(node)
                     .into()
@@ -280,7 +296,8 @@ impl<'a> TypeEraserTransformer<'a> {
                     d.accessor_declaration_base
                         .function_like_with_body_base
                         .function_like_base
-                        .parameters.clone(),
+                        .parameters
+                        .clone(),
                     d.accessor_declaration_base
                         .function_like_with_body_base
                         .body_base
@@ -325,7 +342,8 @@ impl<'a> TypeEraserTransformer<'a> {
                     d.accessor_declaration_base
                         .function_like_with_body_base
                         .function_like_base
-                        .parameters.clone(),
+                        .parameters
+                        .clone(),
                     d.accessor_declaration_base
                         .function_like_with_body_base
                         .body_base
@@ -369,9 +387,7 @@ impl<'a> TypeEraserTransformer<'a> {
                     .update_variable_declaration(cx.nodes, node, name, None, None, initializer)
                     .unwrap_or(node);
                 if let Some(type_node) = type_node_in {
-                    if let Some(updated_name) =
-                        cx.nodes[updated].as_variable_declaration().name
-                    {
+                    if let Some(updated_name) = cx.nodes[updated].as_variable_declaration().name {
                         ec.borrow().set_type_node(updated_name, type_node);
                     }
                 }
@@ -453,7 +469,10 @@ impl<'a> TypeEraserTransformer<'a> {
                     d.modifiers_base.modifiers.clone(),
                     d.function_like_with_body_base.body_base.asterisk_token,
                     d.name,
-                    d.function_like_with_body_base.function_like_base.parameters.clone(),
+                    d.function_like_with_body_base
+                        .function_like_base
+                        .parameters
+                        .clone(),
                     d.function_like_with_body_base.body_base.body,
                 );
                 if ast::node_is_missing(body, cx.nodes) {
@@ -467,8 +486,16 @@ impl<'a> TypeEraserTransformer<'a> {
                 ec.borrow_mut()
                     .factory
                     .update_function_declaration(
-                        cx.nodes, node, modifiers, asterisk_token, name, None, parameters, None,
-                        None, body,
+                        cx.nodes,
+                        node,
+                        modifiers,
+                        asterisk_token,
+                        name,
+                        None,
+                        parameters,
+                        None,
+                        None,
+                        body,
                     )
                     .unwrap_or(node)
                     .into()
@@ -480,7 +507,10 @@ impl<'a> TypeEraserTransformer<'a> {
                     d.modifiers_base.modifiers.clone(),
                     d.function_like_with_body_base.body_base.asterisk_token,
                     d.name,
-                    d.function_like_with_body_base.function_like_base.parameters.clone(),
+                    d.function_like_with_body_base
+                        .function_like_base
+                        .parameters
+                        .clone(),
                     d.function_like_with_body_base.body_base.body,
                 );
                 let modifiers = v.visit_modifiers(cx, modifiers);
@@ -490,8 +520,16 @@ impl<'a> TypeEraserTransformer<'a> {
                 ec.borrow_mut()
                     .factory
                     .update_function_expression(
-                        cx.nodes, node, modifiers, asterisk_token, name, None, parameters, None,
-                        None, body,
+                        cx.nodes,
+                        node,
+                        modifiers,
+                        asterisk_token,
+                        name,
+                        None,
+                        parameters,
+                        None,
+                        None,
+                        body,
                     )
                     .unwrap_or(node)
                     .into()
@@ -501,7 +539,10 @@ impl<'a> TypeEraserTransformer<'a> {
                 let d = cx.nodes[node].as_arrow_function();
                 let (modifiers, parameters, equals_greater_than_token, body) = (
                     d.modifiers_base.modifiers.clone(),
-                    d.function_like_with_body_base.function_like_base.parameters.clone(),
+                    d.function_like_with_body_base
+                        .function_like_base
+                        .parameters
+                        .clone(),
                     d.equals_greater_than_token,
                     d.function_like_with_body_base.body_base.body,
                 );
@@ -540,13 +581,9 @@ impl<'a> TypeEraserTransformer<'a> {
                 // preserve parameter property modifiers to be handled by the
                 // runtime transformer.
                 let mut modifiers: Option<ModifierList> = None;
-                if self
-                    .parent_node
-                    .get()
-                    .is_some_and(|p| {
-                        ast::is_parameter_property_declaration(&cx.nodes[node], &cx.nodes[p])
-                    })
-                {
+                if self.parent_node.get().is_some_and(|p| {
+                    ast::is_parameter_property_declaration(&cx.nodes[node], &cx.nodes[p])
+                }) {
                     modifiers = extract_modifiers(
                         Some(ec),
                         cx.nodes,
@@ -600,7 +637,13 @@ impl<'a> TypeEraserTransformer<'a> {
                 ec.borrow_mut()
                     .factory
                     .update_call_expression(
-                        cx.nodes, node, expression, question_dot_token, None, arguments, flags,
+                        cx.nodes,
+                        node,
+                        expression,
+                        question_dot_token,
+                        None,
+                        arguments,
+                        flags,
                     )
                     .unwrap_or(node)
                     .into()
@@ -620,15 +663,20 @@ impl<'a> TypeEraserTransformer<'a> {
 
             Kind::TaggedTemplateExpression => {
                 let d = cx.nodes[node].as_tagged_template_expression();
-                let (tag, question_dot_token, template) =
-                    (d.tag, d.question_dot_token, d.template);
+                let (tag, question_dot_token, template) = (d.tag, d.question_dot_token, d.template);
                 let flags = cx.nodes[node].flags;
                 let tag = v.visit_node(cx, tag);
                 let template = v.visit_node(cx, template);
                 ec.borrow_mut()
                     .factory
                     .update_tagged_template_expression(
-                        cx.nodes, node, tag, question_dot_token, None, template, flags,
+                        cx.nodes,
+                        node,
+                        tag,
+                        question_dot_token,
+                        None,
+                        template,
+                        flags,
                     )
                     .unwrap_or(node)
                     .into()
@@ -651,8 +699,7 @@ impl<'a> TypeEraserTransformer<'a> {
 
             Kind::ParenthesizedExpression => {
                 if !ast::is_js_doc_type_assertion(Some(node), cx.nodes) {
-                    let expression_in =
-                        cx.nodes[node].as_parenthesized_expression().expression;
+                    let expression_in = cx.nodes[node].as_parenthesized_expression().expression;
                     if let Some(expression_in) = expression_in {
                         // Go's
                         // `OEKAllExceptAssertionsOrExpressionsWithTypeArguments`
@@ -918,9 +965,7 @@ impl<'a> TypeEraserTransformer<'a> {
 }
 
 /// `NewTypeEraserTransformer`.
-pub fn new_type_eraser_transformer<'a>(
-    opts: &TransformOptions<'a>,
-) -> Option<Transformer<'a>> {
+pub fn new_type_eraser_transformer<'a>(opts: &TransformOptions<'a>) -> Option<Transformer<'a>> {
     make_transformer(opts, |ec| {
         let state = Rc::new(TypeEraserTransformer {
             compiler_options: opts.compiler_options.unwrap_or(&EMPTY_COMPILER_OPTIONS),

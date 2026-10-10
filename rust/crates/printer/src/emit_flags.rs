@@ -132,7 +132,8 @@ impl GeneratedIdentifierFlags {
     // Flags
 
     /// `GeneratedIdentifierFlagsReservedInNestedScopes` — Reserve the generated name in nested scopes
-    pub const RESERVED_IN_NESTED_SCOPES: GeneratedIdentifierFlags = GeneratedIdentifierFlags(1 << 3);
+    pub const RESERVED_IN_NESTED_SCOPES: GeneratedIdentifierFlags =
+        GeneratedIdentifierFlags(1 << 3);
     /// `GeneratedIdentifierFlagsOptimistic` — First instance won't use '_#' if there's no conflict
     pub const OPTIMISTIC: GeneratedIdentifierFlags = GeneratedIdentifierFlags(1 << 4);
     /// `GeneratedIdentifierFlagsFileLevel` — Use only the file identifiers list and not generated names to search for conflicts

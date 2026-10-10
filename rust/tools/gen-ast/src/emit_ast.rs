@@ -226,9 +226,17 @@ impl<'a> Emitter<'a> {
     // ── structs ─────────────────────────────────────────────────────────
 
     fn emit_struct(&self, out: &mut String, name: &str, fields: &[Field]) {
-        out.push_str(&format!(
-            "/// `type {name} struct`.\n#[derive(Default)]\npub struct {name} {{\n"
-        ));
+        // `SourceFile` carries non-`Clone` fields (`OnceLock` lazies, atomics,
+        // `NodeFactory` hooks) — its `Clone` impl is hand-written in `ast.rs`.
+        if name == "SourceFile" {
+            out.push_str(&format!(
+                "/// `type {name} struct`.\n///\n/// `Clone` is hand-implemented in `ast.rs` — several fields\n/// (`OnceLock` lazies, atomics, `NodeFactory` hooks) are not `Clone`.\n#[derive(Default)]\npub struct {name} {{\n"
+            ));
+        } else {
+            out.push_str(&format!(
+                "/// `type {name} struct`.\n#[derive(Clone, Default)]\npub struct {name} {{\n"
+            ));
+        }
         for f in fields {
             if f.ty == FieldType::Embed {
                 let base = f.embed.as_deref().unwrap_or("");
@@ -291,7 +299,7 @@ impl<'a> Emitter<'a> {
         // NodeData enum.
         out.push_str("/// `nodeData` — the payload enum; every variant is a\n");
         out.push_str("/// generated or hand-authored node data struct.\n");
-        out.push_str("pub enum NodeData {\n");
+        out.push_str("#[derive(Clone)]\npub enum NodeData {\n");
         for n in &self.schema.nodes {
             let v = self.variant_name(n);
             out.push_str(&format!("    {v}({v}),\n"));

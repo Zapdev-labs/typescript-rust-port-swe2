@@ -33,8 +33,8 @@ impl Checker {
         message: &'static diagnostics::Message,
         args: &[String],
     ) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let Some(source_file) = ast::get_source_file_of_node(Some(node), &nodes) else {
             return false;
         };
@@ -65,8 +65,8 @@ impl Checker {
         message: &'static diagnostics::Message,
         args: &[String],
     ) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node_for_source_file).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node_for_source_file).file_index());
         let Some(source_file) = ast::get_source_file_of_node(Some(node_for_source_file), &nodes)
         else {
             return false;
@@ -94,8 +94,8 @@ impl Checker {
         message: &'static diagnostics::Message,
         args: &[String],
     ) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let Some(source_file) = ast::get_source_file_of_node(Some(node), &nodes) else {
             return false;
         };
@@ -113,8 +113,8 @@ impl Checker {
         message: &'static diagnostics::Message,
         args: &[String],
     ) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let Some(source_file) = ast::get_source_file_of_node(Some(node), &nodes) else {
             return false;
         };
@@ -135,8 +135,8 @@ impl Checker {
     /// the callback and flushed via `add_diagnostic` afterwards — preserving
     /// Go's emission order (`addDiagnostic` just appends).
     pub(crate) fn check_grammar_regular_expression_literal(&mut self, node: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let Some(source_file) = ast::get_source_file_of_node(Some(node), &nodes) else {
             return false;
         };
@@ -212,8 +212,8 @@ impl Checker {
 
     /// `func (c *Checker) checkGrammarPrivateIdentifierExpression` (grammarchecks.go:96).
     pub(crate) fn check_grammar_private_identifier_expression(&mut self, priv_id: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((priv_id).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((priv_id).file_index());
         if ast::get_containing_class(priv_id, &nodes).is_none() {
             return self.grammar_error_on_node(
                 priv_id,
@@ -255,8 +255,8 @@ impl Checker {
 
     /// `func (c *Checker) checkGrammarMappedType` (grammarchecks.go:120).
     pub(crate) fn check_grammar_mapped_type(&mut self, node: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         if let Some(members) = nodes[node].member_list()
             && !members.nodes().is_empty()
         {
@@ -272,8 +272,8 @@ impl Checker {
 
     /// `func (c *Checker) checkGrammarDecorator` (grammarchecks.go:127).
     pub(crate) fn check_grammar_decorator(&mut self, decorator: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((decorator).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((decorator).file_index());
         let Some(source_file) = ast::get_source_file_of_node(Some(decorator), &nodes) else {
             return false;
         };
@@ -366,8 +366,8 @@ impl Checker {
 
     /// `func (c *Checker) checkGrammarExportDeclaration` (grammarchecks.go:199).
     pub(crate) fn check_grammar_export_declaration(&mut self, node: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let data = nodes[node].as_export_declaration();
         if data.is_type_only
             && let Some(export_clause) = data.export_clause
@@ -384,8 +384,8 @@ impl Checker {
         node: NodeId,
         error_message: &'static diagnostics::Message,
     ) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let is_in_appropriate_context = nodes[node].parent.is_some_and(|p| {
             matches!(
                 nodes[p].kind,
@@ -400,16 +400,16 @@ impl Checker {
 
     /// `func (c *Checker) checkGrammarModifiers` (grammarchecks.go:214).
     pub(crate) fn check_grammar_modifiers(&mut self, node: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         if nodes[node].modifiers().is_none() {
             return false;
         }
         if self.report_obvious_decorator_errors(node) || self.report_obvious_modifier_errors(node) {
             return true;
         }
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         if ast::is_this_parameter(&nodes[node], &nodes) {
             return self.grammar_error_on_first_token(
                 node,
@@ -1322,8 +1322,8 @@ impl Checker {
         node: NodeId,
         allowed_modifier: ast::Kind,
     ) -> Option<NodeId> {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let modifier = nodes[node]
             .modifier_nodes()
             .and_then(|mods| mods.iter().copied().find(|&m| ast::is_modifier(&nodes[m])));
@@ -1337,8 +1337,8 @@ impl Checker {
 
     /// `func (c *Checker) findFirstIllegalModifier` (grammarchecks.go:587).
     pub(crate) fn find_first_illegal_modifier(&mut self, node: NodeId) -> Option<NodeId> {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         match nodes[node].kind {
             ast::Kind::GetAccessor
             | ast::Kind::SetAccessor
@@ -1424,8 +1424,8 @@ impl Checker {
 
     /// `func (c *Checker) findFirstIllegalDecorator` (grammarchecks.go:650).
     pub(crate) fn find_first_illegal_decorator(&mut self, node: NodeId) -> Option<NodeId> {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         if ast::can_have_illegal_decorators(&nodes[node]) {
             return nodes[node]
                 .modifier_nodes()
@@ -1440,8 +1440,8 @@ impl Checker {
         node: NodeId,
         async_modifier: Option<NodeId>,
     ) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         match nodes[node].kind {
             ast::Kind::MethodDeclaration
             | ast::Kind::FunctionDeclaration
@@ -1488,8 +1488,8 @@ impl Checker {
         if let Some(type_parameters) = type_parameters
             && type_parameters.nodes().is_empty()
         {
-                        let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((file).file_index());;
+            let __program = self.program.clone().expect("program");
+            let nodes = __program.nodes((file).file_index());
             let sf = nodes[file].as_source_file();
             let start = type_parameters.pos() - "<".len() as i32;
             let end = scanner::skip_trivia(&sf.text, type_parameters.end()) + ">".len() as i32;
@@ -1509,8 +1509,8 @@ impl Checker {
         if parameters.nodes().is_empty() {
             return false;
         }
-                let __program = self.program.clone().expect("program");
-        let nodes_rc = __program.nodes((parameters.nodes()[0]).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes_rc = __program.nodes((parameters.nodes()[0]).file_index());
         let nodes: &[ast::Node] = &nodes_rc;
         let mut seen_optional_parameter = false;
         let parameter_count = parameters.nodes().len();
@@ -1589,8 +1589,8 @@ impl Checker {
         node: NodeId,
     ) -> bool {
         if self.language_version >= ScriptTarget::ES2016 {
-                        let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((node).file_index());;
+            let __program = self.program.clone().expect("program");
+            let nodes = __program.nodes((node).file_index());
             let body = nodes[node].body();
             let mut use_strict_directive: Option<NodeId> = None;
             if let Some(body) = body
@@ -1676,8 +1676,8 @@ impl Checker {
     /// `func (c *Checker) checkGrammarFunctionLikeDeclaration` (grammarchecks.go:758).
     pub(crate) fn check_grammar_function_like_declaration(&mut self, node: NodeId) -> bool {
         // Prevent cascading error by short-circuit
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let file = ast::get_source_file_of_node(Some(node), &nodes);
         let (type_parameters, parameters) = nodes[node]
             .function_like_data()
@@ -1693,8 +1693,8 @@ impl Checker {
 
     /// `func (c *Checker) checkGrammarClassLikeDeclaration` (grammarchecks.go:767).
     pub(crate) fn check_grammar_class_like_declaration(&mut self, node: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let file = ast::get_source_file_of_node(Some(node), &nodes);
         let type_parameter_list = nodes[node].type_parameter_list().cloned();
         self.check_grammar_class_declaration_heritage_clauses(node, file.expect("file"))
@@ -1707,8 +1707,8 @@ impl Checker {
     /// `func (c *Checker) checkGrammarArrowFunction` (grammarchecks.go:772).
     /// `file` is the source file node (`*ast.SourceFile` → `NodeId`).
     pub(crate) fn check_grammar_arrow_function(&mut self, node: NodeId, file: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         if !ast::is_arrow_function(&nodes[node]) {
             return false;
         }
@@ -1760,8 +1760,8 @@ impl Checker {
 
     /// `func (c *Checker) checkGrammarIndexSignatureParameters` (grammarchecks.go:796).
     pub(crate) fn check_grammar_index_signature_parameters(&mut self, node: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let param_nodes: Vec<NodeId> = nodes[node]
             .parameter_list()
             .map(|p| p.nodes().to_vec())
@@ -1836,7 +1836,8 @@ impl Checker {
         };
         let t = self.get_type_from_type_node(type_node);
         if crate::checker_d::some_type(self, t, |c, t| {
-            c.types_handle().get(t)
+            c.types_handle()
+                .get(t)
                 .flags
                 .intersects(crate::types::TypeFlags::STRING_OR_NUMBER_LITERAL_OR_UNIQUE)
         }) || self.is_generic_type(t)
@@ -1884,8 +1885,8 @@ impl Checker {
         if let Some(type_arguments) = type_arguments
             && type_arguments.nodes().is_empty()
         {
-                        let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((node).file_index());;
+            let __program = self.program.clone().expect("program");
+            let nodes = __program.nodes((node).file_index());
             let source_file =
                 ast::get_source_file_of_node(Some(node), &nodes).expect("source file");
             let sf = nodes[source_file].as_source_file();
@@ -1908,8 +1909,8 @@ impl Checker {
         node: NodeId,
         type_arguments: Option<&ast::NodeList>,
     ) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         self.check_grammar_for_disallowed_trailing_comma(
             type_arguments,
             &diagnostics::Trailing_comma_not_allowed,
@@ -1919,8 +1920,8 @@ impl Checker {
 
     /// `func (c *Checker) checkGrammarTaggedTemplateChain` (grammarchecks.go:859).
     pub(crate) fn check_grammar_tagged_template_chain(&mut self, node: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let data = nodes[node].as_tagged_template_expression();
         if data.question_dot_token.is_some()
             || nodes[node].flags.intersects(ast::NodeFlags::OPTIONAL_CHAIN)
@@ -1937,8 +1938,8 @@ impl Checker {
 
     /// `func (c *Checker) checkGrammarHeritageClause` (grammarchecks.go:866).
     pub(crate) fn check_grammar_heritage_clause(&mut self, node: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let types = nodes[node].as_heritage_clause().types.clone();
         if self.check_grammar_for_disallowed_trailing_comma(
             types.as_ref(),
@@ -1973,8 +1974,8 @@ impl Checker {
 
     /// `func (c *Checker) checkGrammarExpressionWithTypeArguments` (grammarchecks.go:885).
     pub(crate) fn check_grammar_expression_with_type_arguments(&mut self, node: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         if ast::is_expression_with_type_arguments(&nodes[node])
             && nodes[node]
                 .expression()
@@ -2001,8 +2002,8 @@ impl Checker {
         let mut seen_extends_clause = false;
         let mut seen_implements_clause = false;
 
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let heritage_clauses = nodes[node]
             .class_like_data()
             .and_then(|d| d.heritage_clauses.clone());
@@ -2010,8 +2011,8 @@ impl Checker {
         if !self.check_grammar_modifiers(node)
             && let Some(heritage_clauses) = heritage_clauses
         {
-                        let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((node).file_index());;
+            let __program = self.program.clone().expect("program");
+            let nodes = __program.nodes((node).file_index());
             for heritage_clause_node in heritage_clauses.nodes().to_vec() {
                 let token = nodes[heritage_clause_node].as_heritage_clause().token;
                 if token == ast::Kind::ExtendsKeyword {
@@ -2071,8 +2072,8 @@ impl Checker {
 
     /// `func (c *Checker) checkGrammarInterfaceDeclaration` (grammarchecks.go:935).
     pub(crate) fn check_grammar_interface_declaration(&mut self, node: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let heritage_clauses = nodes[node]
             .class_like_data()
             .and_then(|d| d.heritage_clauses.clone());
@@ -2113,8 +2114,8 @@ impl Checker {
     /// `func (c *Checker) checkGrammarComputedPropertyName` (grammarchecks.go:961).
     pub(crate) fn check_grammar_computed_property_name(&mut self, node: NodeId) -> bool {
         // If node is not a computedPropertyName, just skip the grammar checking
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         if nodes[node].kind != ast::Kind::ComputedPropertyName {
             return false;
         }
@@ -2140,8 +2141,8 @@ impl Checker {
 
     /// `func (c *Checker) checkGrammarForGenerator` (grammarchecks.go:974).
     pub(crate) fn check_grammar_for_generator(&mut self, node: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         if let Some(body_data) = nodes[node].body_data()
             && let Some(asterisk_token) = body_data.asterisk_token
         {
@@ -2213,8 +2214,8 @@ impl Checker {
     ) -> bool {
         let mut seen: FxHashMap<String, DeclarationMeaning> = FxHashMap::default();
 
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let properties: Vec<NodeId> = nodes[node]
             .properties()
             .map(|p| p.to_vec())
@@ -2439,16 +2440,16 @@ impl Checker {
 
     /// `func (c *Checker) checkGrammarJsxElement` (grammarchecks.go:1138).
     pub(crate) fn check_grammar_jsx_element(&mut self, node: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         if let Some(tag_name) = nodes[node].tag_name() {
             self.check_grammar_jsx_name(tag_name);
         }
         let type_argument_list = nodes[node].type_argument_list().cloned();
         self.check_grammar_type_arguments(node, type_argument_list.as_ref());
         let mut seen = tsc_collections::Set::<String>::new();
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let attributes = nodes[node].attributes();
         let properties: Vec<NodeId> = attributes
             .and_then(|a| nodes[a].properties().map(|p| p.to_vec()))
@@ -2486,8 +2487,8 @@ impl Checker {
 
     /// `func (c *Checker) checkGrammarJsxName` (grammarchecks.go:1162).
     pub(crate) fn check_grammar_jsx_name(&mut self, node: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         if ast::is_property_access_expression(&nodes[node])
             && nodes[node]
                 .expression()
@@ -2523,8 +2524,8 @@ impl Checker {
 
     /// `func (c *Checker) checkGrammarJsxExpression` (grammarchecks.go:1174).
     pub(crate) fn check_grammar_jsx_expression(&mut self, node: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         if let Some(expression) = nodes[node].as_jsx_expression().expression
             && ast::is_comma_sequence(&nodes[expression], &nodes)
         {
@@ -2548,8 +2549,8 @@ impl Checker {
             return true;
         }
 
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((as_node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((as_node).file_index());
         let data = nodes[as_node].as_for_in_or_of_statement();
         let (await_modifier, initializer, kind, flags) = (
             data.await_modifier,
@@ -2679,8 +2680,8 @@ impl Checker {
         if initializer.is_some_and(|i| nodes[i].kind == ast::Kind::VariableDeclarationList) {
             let variable_list = initializer.expect("initializer");
             if !self.check_grammar_variable_declaration_list(variable_list) {
-                                let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((as_node).file_index());;
+                let __program = self.program.clone().expect("program");
+                let nodes = __program.nodes((as_node).file_index());
                 let declarations = nodes[variable_list]
                     .as_variable_declaration_list()
                     .declarations
@@ -2743,8 +2744,8 @@ impl Checker {
 
     /// `func (c *Checker) checkGrammarAccessor` (grammarchecks.go:1289).
     pub(crate) fn check_grammar_accessor(&mut self, accessor: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((accessor).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((accessor).file_index());
         let body = nodes[accessor].body();
         let parent_kind = nodes[accessor].parent.map(|p| nodes[p].kind);
         if !nodes[accessor].flags.intersects(ast::NodeFlags::AMBIENT)
@@ -2794,8 +2795,8 @@ impl Checker {
             );
         }
         if !self.does_accessor_have_correct_parameter_count(accessor) {
-                        let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((accessor).file_index());;
+            let __program = self.program.clone().expect("program");
+            let nodes = __program.nodes((accessor).file_index());
             let name = nodes[accessor].name().expect("name");
             let message = if nodes[accessor].kind == ast::Kind::GetAccessor {
                 &diagnostics::A_get_accessor_cannot_have_parameters
@@ -2804,8 +2805,8 @@ impl Checker {
             };
             return self.grammar_error_on_node(name, message, &[]);
         }
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((accessor).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((accessor).file_index());
         if nodes[accessor].kind == ast::Kind::SetAccessor {
             if nodes[accessor]
                 .function_like_data()
@@ -2873,8 +2874,8 @@ impl Checker {
     pub(crate) fn does_accessor_have_correct_parameter_count(&mut self, accessor: NodeId) -> bool {
         // `getAccessorThisParameter` returns `nil` if the accessor's arity is incorrect,
         // even if there is a `this` parameter declared.
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((accessor).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((accessor).file_index());
         let param_count = nodes[accessor].parameters().map(|p| p.len()).unwrap_or(0);
         let expected = if nodes[accessor].kind == ast::Kind::GetAccessor {
             0
@@ -2886,8 +2887,8 @@ impl Checker {
 
     /// `func (c *Checker) checkGrammarTypeOperatorNode` (grammarchecks.go:1351).
     pub(crate) fn check_grammar_type_operator_node(&mut self, node: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let data = nodes[node].as_type_operator_node();
         if data.operator == ast::Kind::UniqueKeyword {
             let inner_type = data.type_.expect("type");
@@ -2996,8 +2997,8 @@ impl Checker {
         if !self.is_non_bindable_dynamic_name(node) {
             return false;
         }
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let expression = if ast::is_element_access_expression(&nodes[node]) {
             let arg = nodes[node]
                 .as_element_access_expression()
@@ -3019,8 +3020,8 @@ impl Checker {
     ///
     /// Indicates whether a declaration name is a dynamic name that cannot be late-bound.
     pub(crate) fn is_non_bindable_dynamic_name(&mut self, node: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         ast::is_dynamic_name(node, &nodes) && !self.is_late_bindable_name(node)
     }
 
@@ -3030,8 +3031,8 @@ impl Checker {
             return true;
         }
 
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         if nodes[node].kind == ast::Kind::MethodDeclaration {
             let parent_kind = nodes[node].parent.map(|p| nodes[p].kind);
             if parent_kind == Some(ast::Kind::ObjectLiteralExpression) {
@@ -3074,8 +3075,8 @@ impl Checker {
             }
         }
 
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let parent = nodes[node].parent;
         if parent.is_some_and(|p| ast::is_class_like(Some(p), &nodes)) {
             // Technically, computed properties in ambient contexts is disallowed
@@ -3116,8 +3117,8 @@ impl Checker {
 
     /// `func (c *Checker) checkGrammarBreakOrContinueStatement` (grammarchecks.go:1462).
     pub(crate) fn check_grammar_break_or_continue_statement(&mut self, node: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let target_label = nodes[node].label();
         let mut current = Some(node);
         while let Some(cur) = current {
@@ -3199,8 +3200,8 @@ impl Checker {
 
     /// `func (c *Checker) checkGrammarBindingElement` (grammarchecks.go:1518).
     pub(crate) fn check_grammar_binding_element(&mut self, node: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let data = nodes[node].as_binding_element();
         if data.dot_dot_dot_token.is_some() {
             let elements = nodes[node]
@@ -3250,8 +3251,8 @@ impl Checker {
     pub(crate) fn check_grammar_variable_declaration(&mut self, node: NodeId) -> bool {
         let node_flags = self.get_combined_node_flags_cached(node);
         let block_scope_kind = node_flags & ast::NodeFlags::BLOCK_SCOPED;
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let data = nodes[node].as_variable_declaration();
         let (name, initializer, type_, exclamation_token) = (
             data.name,
@@ -3383,8 +3384,8 @@ impl Checker {
         &mut self,
         name: NodeId,
     ) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((name).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((name).file_index());
         if ast::is_identifier(&nodes[name]) {
             if nodes[name].text(&nodes) == "__esModule" {
                 return self.grammar_error_on_node_skipped_on_no_emit(
@@ -3411,8 +3412,8 @@ impl Checker {
 
     /// `func (c *Checker) checkGrammarNameInLetOrConstDeclarations` (grammarchecks.go:1611).
     pub(crate) fn check_grammar_name_in_let_or_const_declarations(&mut self, name: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((name).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((name).file_index());
         if nodes[name].kind == ast::Kind::Identifier {
             if nodes[name].text(&nodes) == "let" {
                 return self.grammar_error_on_node(
@@ -3440,8 +3441,8 @@ impl Checker {
         &mut self,
         declaration_list: NodeId,
     ) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((declaration_list).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((declaration_list).file_index());
         let declarations = nodes[declaration_list]
             .as_variable_declaration_list()
             .declarations
@@ -3517,8 +3518,8 @@ impl Checker {
     pub(crate) fn check_grammar_await_or_await_using(&mut self, node: NodeId) -> bool {
         // Grammar checking
         let mut has_error = false;
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let container =
             crate::utilities::get_containing_function_or_class_static_block(node, &nodes);
         if let Some(container) = container
@@ -3709,8 +3710,8 @@ impl Checker {
                         && nodes[container].kind != ast::Kind::Constructor
                         && !crate::utilities::has_async_modifier(&nodes[container])
                     {
-                                                let __program = self.program.clone().expect("program");
-                        let nodes = __program.nodes((node).file_index());;
+                        let __program = self.program.clone().expect("program");
+                        let nodes = __program.nodes((node).file_index());
                         let related_info = crate::utilities::new_diagnostic_for_node::<String>(
                             Some(container),
                             &nodes,
@@ -3744,8 +3745,8 @@ impl Checker {
     /// `func (c *Checker) checkGrammarYieldExpression` (grammarchecks.go:1759).
     pub(crate) fn check_grammar_yield_expression(&mut self, node: NodeId) -> bool {
         let mut has_error = false;
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         if !nodes[node].flags.intersects(ast::NodeFlags::YIELD_CONTEXT) {
             self.grammar_error_on_first_token(
                 node,
@@ -3770,8 +3771,8 @@ impl Checker {
         &mut self,
         node: NodeId,
     ) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let parent = nodes[node].parent;
         let declaration_list = nodes[node].as_variable_statement().declaration_list;
         if !self.container_allows_block_scoped_variable(parent) {
@@ -3806,8 +3807,8 @@ impl Checker {
         let Some(parent) = parent else {
             return true;
         };
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((parent).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((parent).file_index());
         match nodes[parent].kind {
             ast::Kind::IfStatement
             | ast::Kind::DoStatement
@@ -3825,8 +3826,8 @@ impl Checker {
 
     /// `func (c *Checker) checkGrammarMetaProperty` (grammarchecks.go:1813).
     pub(crate) fn check_grammar_meta_property(&mut self, node: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let data = nodes[node].as_meta_property();
         let node_name = data.name.expect("meta property name");
         let name_text = nodes[node_name].text(&nodes).to_string();
@@ -3888,8 +3889,8 @@ impl Checker {
 
     /// `func (c *Checker) checkGrammarConstructorTypeParameters` (grammarchecks.go:1841).
     pub(crate) fn check_grammar_constructor_type_parameters(&mut self, node: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let range = nodes[node]
             .function_like_data()
             .and_then(|d| d.type_parameters.clone());
@@ -3915,8 +3916,8 @@ impl Checker {
 
     /// `func (c *Checker) checkGrammarConstructorTypeAnnotation` (grammarchecks.go:1856).
     pub(crate) fn check_grammar_constructor_type_annotation(&mut self, node: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         if let Some(t) = nodes[node].function_like_data().and_then(|d| d.type_) {
             return self.grammar_error_on_node(
                 t,
@@ -3929,8 +3930,8 @@ impl Checker {
 
     /// `func (c *Checker) checkGrammarProperty` (grammarchecks.go:1864).
     pub(crate) fn check_grammar_property(&mut self, node: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let property_name = nodes[node].name().expect("property name");
         if ast::is_computed_property_name(&nodes[property_name])
             && nodes[property_name].expression().is_some_and(|e| {
@@ -4014,14 +4015,14 @@ impl Checker {
             }
         }
 
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         if nodes[node].flags.intersects(ast::NodeFlags::AMBIENT) {
             self.check_ambient_initializer(node);
         }
 
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         if ast::is_property_declaration(&nodes[node]) {
             let prop_decl = nodes[node].as_property_declaration();
             let postfix_token = prop_decl.named_member_base.postfix_token;
@@ -4061,8 +4062,8 @@ impl Checker {
 
     /// `func (c *Checker) checkAmbientInitializer` (grammarchecks.go:1925).
     pub(crate) fn check_ambient_initializer(&mut self, node: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let (initializer, type_node) = match nodes[node].kind {
             ast::Kind::VariableDeclaration => {
                 let var_decl = nodes[node].as_variable_declaration();
@@ -4110,11 +4111,13 @@ impl Checker {
 
     /// `func (c *Checker) isInitializerSimpleLiteralEnumReference` (grammarchecks.go:1978).
     pub(crate) fn is_initializer_simple_literal_enum_reference(&mut self, expr: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((expr).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((expr).file_index());
         if ast::is_property_access_expression(&nodes[expr]) {
             let t = self.check_expression_cached(expr);
-            return self.types_handle().get(t)
+            return self
+                .types_handle()
+                .get(t)
                 .flags
                 .intersects(crate::types::TypeFlags::ENUM_LIKE);
         }
@@ -4130,7 +4133,9 @@ impl Checker {
                 && ast::is_entity_name_expression(&nodes[expression], &nodes)
             {
                 let t = self.check_expression_cached(expr);
-                return self.types_handle().get(t)
+                return self
+                    .types_handle()
+                    .get(t)
                     .flags
                     .intersects(crate::types::TypeFlags::ENUM_LIKE);
             }
@@ -4157,8 +4162,8 @@ impl Checker {
         //     export_opt   AmbientDeclaration
         //
         // TODO: The spec needs to be amended to reflect this grammar.
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         if nodes[node].kind == ast::Kind::InterfaceDeclaration
             || nodes[node].kind == ast::Kind::TypeAliasDeclaration
             || nodes[node].kind == ast::Kind::ImportDeclaration
@@ -4190,8 +4195,8 @@ impl Checker {
         &mut self,
         file: NodeId,
     ) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((file).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((file).file_index());
         let statements: Vec<NodeId> = nodes[file]
             .statements()
             .map(|s| s.to_vec())
@@ -4211,16 +4216,16 @@ impl Checker {
     /// `func (c *Checker) checkGrammarSourceFile` (grammarchecks.go:2025).
     /// `node` is the source file node (`*ast.SourceFile` → `NodeId`).
     pub(crate) fn check_grammar_source_file(&mut self, node: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         nodes[node].flags.intersects(ast::NodeFlags::AMBIENT)
             && self.check_grammar_top_level_elements_for_required_declare_modifier(node)
     }
 
     /// `func (c *Checker) checkGrammarStatementInAmbientContext` (grammarchecks.go:2029).
     pub(crate) fn check_grammar_statement_in_ambient_context(&mut self, node: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         if nodes[node].flags.intersects(ast::NodeFlags::AMBIENT) {
             let parent = nodes[node].parent;
             // Find containing block which is either Block, ModuleBlock, SourceFile
@@ -4281,8 +4286,8 @@ impl Checker {
 
     /// `func (c *Checker) checkGrammarNumericLiteral` (grammarchecks.go:2059).
     pub(crate) fn check_grammar_numeric_literal(&mut self, node: NodeId) {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let node_text = tsc_scanner::utilities::get_text_of_node(node, &nodes);
 
         // Realism (size) checking
@@ -4320,8 +4325,8 @@ impl Checker {
 
     /// `func (c *Checker) checkGrammarBigIntLiteral` (grammarchecks.go:2087).
     pub(crate) fn check_grammar_big_int_literal(&mut self, node: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let literal_type = nodes[node]
             .parent
             .is_some_and(|p| ast::is_literal_type_node(&nodes[p]))
@@ -4351,8 +4356,8 @@ impl Checker {
 
     /// `func (c *Checker) checkGrammarImportClause` (grammarchecks.go:2100).
     pub(crate) fn check_grammar_import_clause(&mut self, node: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let data = nodes[node].as_import_clause();
         match data.phase_modifier {
             ast::Kind::TypeKeyword => {
@@ -4448,8 +4453,8 @@ impl Checker {
     /// `func (c *Checker) checkGrammarImportAttributeValues` (grammarchecks.go:2142).
     pub(crate) fn check_grammar_import_attribute_values(&mut self, node: NodeId) -> bool {
         let mut has_error = false;
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let attributes: Vec<NodeId> = nodes[node]
             .as_import_attributes()
             .attributes
@@ -4476,8 +4481,8 @@ impl Checker {
         &mut self,
         named_bindings: NodeId,
     ) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((named_bindings).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((named_bindings).file_index());
         let elements: Vec<NodeId> = nodes[named_bindings]
             .element_list()
             .map(|l| l.nodes().to_vec())
@@ -4500,8 +4505,8 @@ impl Checker {
 
     /// `func (c *Checker) checkGrammarImportCallExpression` (grammarchecks.go:2176).
     pub(crate) fn check_grammar_import_call_expression(&mut self, node: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         if self.compiler_options.verbatim_module_syntax.is_true()
             && self.module_kind == ModuleKind::CommonJS
         {
@@ -4614,8 +4619,8 @@ impl Checker {
 
     /// `func (c *Checker) checkGrammarImportAttributesType` (grammarchecks.go:2229).
     pub(crate) fn check_grammar_import_attributes_type(&mut self, attributes: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((attributes).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((attributes).file_index());
         let members = nodes[attributes].member_list().map(|m| m.nodes().to_vec());
         let Some(members) = members else {
             return false;

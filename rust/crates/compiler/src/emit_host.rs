@@ -26,8 +26,8 @@ use tsc_packagejson::InfoCacheEntry;
 use tsc_printer::{EmitContext, EmitHost as PrinterEmitHost, EmitResolver};
 use tsc_symlinks::KnownSymlinks;
 use tsc_transformers::declarations::host::DeclarationEmitHost;
-use tsc_tspath::{CaseSensitivity, PathKey, RootedDirectoryPath, RootedFilePath};
 use tsc_tsoptions::parsedcommandline::SourceOutputAndProjectReference;
+use tsc_tspath::{CaseSensitivity, PathKey, RootedDirectoryPath, RootedFilePath};
 
 use crate::program::Program;
 
@@ -142,10 +142,7 @@ pub trait EmitHost: PrinterEmitHost + DeclarationEmitHost {
         dirname: &RootedDirectoryPath,
     ) -> RootedDirectoryPath;
     /// `GetPackageJsonInfo(pkgJsonPath)`.
-    fn get_package_json_info(
-        &self,
-        pkg_json_path: &RootedFilePath,
-    ) -> Option<Arc<InfoCacheEntry>>;
+    fn get_package_json_info(&self, pkg_json_path: &RootedFilePath) -> Option<Arc<InfoCacheEntry>>;
     /// `GetSourceOfProjectReferenceIfOutputIncluded(file)`.
     fn get_source_of_project_reference_if_output_included(
         &self,
@@ -169,8 +166,10 @@ pub trait EmitHost: PrinterEmitHost + DeclarationEmitHost {
 
     /// Arena access for `NodeId`s owned by the program's files.
     fn emit_nodes(&self, file_index: u32) -> Ref<'_, Vec<Node>>;
-    /// Mutable arena access (transforms, synthetic imports).
-    fn emit_nodes_mut(&self, file_index: u32) -> std::cell::RefMut<'_, Vec<Node>>;
+    /// Mutable arena access (transforms, synthetic imports). Returns an
+    /// [`crate::program::ArenaCheckout`] guard — the arena is checked out so
+    /// checker callbacks can keep reading during the visit.
+    fn emit_nodes_mut(&self, file_index: u32) -> crate::program::ArenaCheckout;
 }
 
 /// `type emitHost struct` — the `Program`-backed `EmitHost`.
@@ -259,9 +258,7 @@ pub fn source_file_may_be_emitted(
     let nodes = host.smbe_nodes(source_file.file_index());
     let file = nodes[source_file].as_source_file();
     // Js files are emitted only if option is enabled
-    if !force_js_emit
-        && options.no_emit_for_js_files.is_true()
-        && tsc_ast::is_source_file_js(file)
+    if !force_js_emit && options.no_emit_for_js_files.is_true() && tsc_ast::is_source_file_js(file)
     {
         return false;
     }
@@ -513,7 +510,8 @@ impl<'p> EmitHost for BasicEmitHost<'p> {
         file: &dyn HasFileName,
         module_specifier: NodeId,
     ) -> ResolutionMode {
-        self.program.get_mode_for_usage_location(file, module_specifier)
+        self.program
+            .get_mode_for_usage_location(file, module_specifier)
     }
     fn get_resolved_module_from_module_specifier(
         &self,
@@ -539,10 +537,7 @@ impl<'p> EmitHost for BasicEmitHost<'p> {
         self.program
             .get_nearest_ancestor_directory_with_package_json(dirname)
     }
-    fn get_package_json_info(
-        &self,
-        pkg_json_path: &RootedFilePath,
-    ) -> Option<Arc<InfoCacheEntry>> {
+    fn get_package_json_info(&self, pkg_json_path: &RootedFilePath) -> Option<Arc<InfoCacheEntry>> {
         self.program.get_package_json_info(pkg_json_path)
     }
     fn get_source_of_project_reference_if_output_included(
@@ -570,8 +565,8 @@ impl<'p> EmitHost for BasicEmitHost<'p> {
     fn emit_nodes(&self, file_index: u32) -> Ref<'_, Vec<Node>> {
         self.program.nodes(file_index)
     }
-    fn emit_nodes_mut(&self, file_index: u32) -> std::cell::RefMut<'_, Vec<Node>> {
-        self.program.nodes_mut(file_index)
+    fn emit_nodes_mut(&self, file_index: u32) -> crate::program::ArenaCheckout {
+        self.program.arena_checkout(file_index)
     }
 }
 
@@ -589,7 +584,8 @@ impl<'p> SourceFileMayBeEmittedHost for BasicEmitHost<'p> {
         let nodes = self.program.nodes(file.file_index());
         let key = nodes[file].as_source_file().path_key().clone();
         drop(nodes);
-        self.program.is_source_file_from_external_library_by_path(&key)
+        self.program
+            .is_source_file_from_external_library_by_path(&key)
     }
     fn smbe_base_directory(&self) -> RootedDirectoryPath {
         self.program.base_directory_ref().clone()

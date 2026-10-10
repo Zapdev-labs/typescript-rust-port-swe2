@@ -58,7 +58,15 @@ impl NodeFactory {
         node: Option<NodeId>,
         options: &AutoGenerateOptions,
     ) -> NodeId {
-        new_generated_identifier(&self.shared, &mut self.inner, nodes, kind, text, node, options)
+        new_generated_identifier(
+            &self.shared,
+            &mut self.inner,
+            nodes,
+            kind,
+            text,
+            node,
+            options,
+        )
     }
 
     /// `NewTempVariable` — allocates a new temp variable name, but does not
@@ -75,13 +83,7 @@ impl NodeFactory {
         nodes: &mut Vec<Node>,
         options: &AutoGenerateOptions,
     ) -> NodeId {
-        self.new_generated_identifier(
-            nodes,
-            GeneratedIdentifierFlags::AUTO,
-            "",
-            None,
-            options,
-        )
+        self.new_generated_identifier(nodes, GeneratedIdentifierFlags::AUTO, "", None, options)
     }
 
     /// `NewLoopVariable` — allocates a new loop variable name.
@@ -95,13 +97,7 @@ impl NodeFactory {
         nodes: &mut Vec<Node>,
         options: &AutoGenerateOptions,
     ) -> NodeId {
-        self.new_generated_identifier(
-            nodes,
-            GeneratedIdentifierFlags::LOOP,
-            "",
-            None,
-            options,
-        )
+        self.new_generated_identifier(nodes, GeneratedIdentifierFlags::LOOP, "", None, options)
     }
 
     /// `NewUniqueName` — allocates a new unique name based on the provided
@@ -117,13 +113,7 @@ impl NodeFactory {
         text: &str,
         options: &AutoGenerateOptions,
     ) -> NodeId {
-        self.new_generated_identifier(
-            nodes,
-            GeneratedIdentifierFlags::UNIQUE,
-            text,
-            None,
-            options,
-        )
+        self.new_generated_identifier(nodes, GeneratedIdentifierFlags::UNIQUE, text, None, options)
     }
 
     /// `NewGeneratedNameForNode` — allocates a new unique name based on the
@@ -201,11 +191,7 @@ impl NodeFactory {
         nodes: &mut Vec<Node>,
         node: NodeId,
     ) -> NodeId {
-        self.new_generated_private_name_for_node_ex(
-            nodes,
-            node,
-            &AutoGenerateOptions::default(),
-        )
+        self.new_generated_private_name_for_node_ex(nodes, node, &AutoGenerateOptions::default())
     }
 
     /// `NewGeneratedPrivateNameForNodeEx`
@@ -343,12 +329,7 @@ impl NodeFactory {
         left: NodeId,
         right: NodeId,
     ) -> NodeId {
-        self.new_binary_operator_expression(
-            nodes,
-            Kind::ExclamationEqualsEqualsToken,
-            left,
-            right,
-        )
+        self.new_binary_operator_expression(nodes, Kind::ExclamationEqualsEqualsToken, left, right)
     }
 
     /// Common implementation of the `New<Op>Expression` helpers.
@@ -405,7 +386,10 @@ impl NodeFactory {
         if ast::is_qualified_name(&nodes[node]) {
             let (left, right) = {
                 let d = nodes[node].as_qualified_name();
-                (d.left.expect("QualifiedName.left"), d.right.expect("QualifiedName.right"))
+                (
+                    d.left.expect("QualifiedName.left"),
+                    d.right.expect("QualifiedName.right"),
+                )
             };
             let left = self.create_expression_from_entity_name(nodes, left);
             let right = self.inner.clone_node(nodes, right);
@@ -443,7 +427,9 @@ impl NodeFactory {
         {
             inner_label = self.restore_enclosing_label(nodes, node, statement);
         }
-        let label = nodes[outermost_labeled_statement].as_labeled_statement().label;
+        let label = nodes[outermost_labeled_statement]
+            .as_labeled_statement()
+            .label;
         self.inner
             .update_labeled_statement(nodes, outermost_labeled_statement, label, Some(inner_label))
             .unwrap_or(outermost_labeled_statement)
@@ -486,9 +472,9 @@ impl NodeFactory {
                     flags,
                 )
                 .unwrap_or(node);
-            let statement =
-                self.inner
-                    .new_variable_statement(nodes, None, Some(declaration_list));
+            let statement = self
+                .inner
+                .new_variable_statement(nodes, None, Some(declaration_list));
             nodes[statement].loc = nodes[node].loc;
             return statement;
         }
@@ -590,10 +576,11 @@ impl NodeFactory {
     ) -> NodeId {
         let mut args = Vec::new();
         if start != 0 {
-            args.push(
-                self.inner
-                    .new_numeric_literal(nodes, &start.to_string(), ast::TokenFlags::NONE),
-            );
+            args.push(self.inner.new_numeric_literal(
+                nodes,
+                &start.to_string(),
+                ast::TokenFlags::NONE,
+            ));
         }
         let method = self.inner.new_identifier(nodes, "slice");
         self.new_method_call(nodes, array, method, args)
@@ -722,7 +709,10 @@ impl NodeFactory {
     ) -> Vec<NodeId> {
         for &statement in statements {
             if ast::is_prologue_directive(&nodes[statement], nodes)
-                && &*nodes[statement].expression().map(|e| nodes[e].text(nodes)).unwrap_or_default()
+                && &*nodes[statement]
+                    .expression()
+                    .map(|e| nodes[e].text(nodes))
+                    .unwrap_or_default()
                     == "use strict"
             {
                 return statements.to_vec();
@@ -915,8 +905,8 @@ impl NodeFactory {
             let emit_node = shared.emit_nodes.get(qualified_name);
             emit_node.comment_range = comment_range;
             emit_node.source_map_range = source_map_range;
-            emit_node.flags |= crate::emit_context::HAS_COMMENT_RANGE
-                | crate::emit_context::HAS_SOURCE_MAP_RANGE;
+            emit_node.flags |=
+                crate::emit_context::HAS_COMMENT_RANGE | crate::emit_context::HAS_SOURCE_MAP_RANGE;
         }
         let mut flags = EmitFlags::NONE;
         if !opts.allow_comments {
@@ -943,9 +933,7 @@ impl NodeFactory {
         allow_comments: bool,
         allow_source_maps: bool,
     ) -> NodeId {
-        if ns.is_some()
-            && ast::has_syntactic_modifier(&nodes[node], ast::ModifierFlags::EXPORT)
-        {
+        if ns.is_some() && ast::has_syntactic_modifier(&nodes[node], ast::ModifierFlags::EXPORT) {
             let name_opts = NameOptions {
                 allow_comments,
                 allow_source_maps,
@@ -1076,7 +1064,11 @@ impl NodeFactory {
                 Kind::FalseKeyword
             },
         );
-        self.new_helper_call(nodes, "__addDisposableResource", vec![env_binding, value, flag])
+        self.new_helper_call(
+            nodes,
+            "__addDisposableResource",
+            vec![env_binding, value, flag],
+        )
     }
 
     /// `NewDisposeResourcesHelper`
@@ -1267,9 +1259,7 @@ impl NodeFactory {
             Some(eq_gt),
             Some(block),
         );
-        let parens = self
-            .inner
-            .new_parenthesized_expression(nodes, Some(arrow));
+        let parens = self.inner.new_parenthesized_expression(nodes, Some(arrow));
         self.inner.new_call_expression(
             nodes,
             Some(parens),
@@ -1282,35 +1272,20 @@ impl NodeFactory {
 
     /// `NewExportDefault` — creates `export default <expression>;`.
     pub fn new_export_default(&mut self, nodes: &mut Vec<Node>, expression: NodeId) -> NodeId {
-        self.inner.new_export_assignment(
-            nodes,
-            None,
-            false,
-            None,
-            Some(expression),
-        )
+        self.inner
+            .new_export_assignment(nodes, None, false, None, Some(expression))
     }
 
     /// `NewExternalModuleExport` — creates `export { <name> };`.
-    pub fn new_external_module_export(
-        &mut self,
-        nodes: &mut Vec<Node>,
-        name: NodeId,
-    ) -> NodeId {
+    pub fn new_external_module_export(&mut self, nodes: &mut Vec<Node>, name: NodeId) -> NodeId {
         let specifier = self
             .inner
             .new_export_specifier(nodes, false, None, Some(name));
         let named_exports = self
             .inner
             .new_named_exports(nodes, Some(self.inner.new_node_list([specifier])));
-        self.inner.new_export_declaration(
-            nodes,
-            None,
-            false,
-            Some(named_exports),
-            None,
-            None,
-        )
+        self.inner
+            .new_export_declaration(nodes, None, false, Some(named_exports), None, None)
     }
 
     // ES2018 Helpers
@@ -1462,11 +1437,7 @@ impl NodeFactory {
 
     /// `NewAsyncValuesHelper` — allocates a new Call expression to the
     /// `__asyncValues` helper.
-    pub fn new_async_values_helper(
-        &mut self,
-        nodes: &mut Vec<Node>,
-        expression: NodeId,
-    ) -> NodeId {
+    pub fn new_async_values_helper(&mut self, nodes: &mut Vec<Node>, expression: NodeId) -> NodeId {
         self.request_emit_helper(&emit_helpers::async_values_helper());
         self.new_helper_call(nodes, "__asyncValues", vec![expression])
     }
@@ -1628,14 +1599,8 @@ impl NodeFactory {
         );
 
         let get_id = self.inner.new_identifier(nodes, "get");
-        self.inner.new_property_assignment(
-            nodes,
-            None,
-            Some(get_id),
-            None,
-            None,
-            Some(arrow),
-        )
+        self.inner
+            .new_property_assignment(nodes, None, Some(get_id), None, None, Some(arrow))
     }
 
     /// `NewESDecorateClassElementAccessSetMethod`
@@ -1666,9 +1631,7 @@ impl NodeFactory {
 
         let value_id = self.inner.new_identifier(nodes, "value");
         let assignment = self.new_assignment_expression(nodes, accessor, value_id);
-        let stmt = self
-            .inner
-            .new_expression_statement(nodes, Some(assignment));
+        let stmt = self.inner.new_expression_statement(nodes, Some(assignment));
         let body = self
             .inner
             .new_block(nodes, Some(self.inner.new_node_list([stmt])), false);
@@ -1708,14 +1671,8 @@ impl NodeFactory {
         );
 
         let set_id = self.inner.new_identifier(nodes, "set");
-        self.inner.new_property_assignment(
-            nodes,
-            None,
-            Some(set_id),
-            None,
-            None,
-            Some(arrow),
-        )
+        self.inner
+            .new_property_assignment(nodes, None, Some(set_id), None, None, Some(arrow))
     }
 
     /// `NewESDecorateClassElementAccessHasMethod`
@@ -1770,14 +1727,8 @@ impl NodeFactory {
         );
 
         let has_id = self.inner.new_identifier(nodes, "has");
-        self.inner.new_property_assignment(
-            nodes,
-            None,
-            Some(has_id),
-            None,
-            None,
-            Some(arrow),
-        )
+        self.inner
+            .new_property_assignment(nodes, None, Some(has_id), None, None, Some(arrow))
     }
 
     /// `NewESDecorateClassElementAccessObject` — creates the "access" object
@@ -1897,14 +1848,8 @@ impl NodeFactory {
                 None,
                 Some(kind_lit),
             ),
-            self.inner.new_property_assignment(
-                nodes,
-                None,
-                Some(name_id),
-                None,
-                None,
-                name_value,
-            ),
+            self.inner
+                .new_property_assignment(nodes, None, Some(name_id), None, None, name_value),
             self.inner.new_property_assignment(
                 nodes,
                 None,
@@ -1998,11 +1943,7 @@ impl NodeFactory {
         raw_array: NodeId,
     ) -> NodeId {
         self.request_emit_helper(&emit_helpers::make_template_object_helper());
-        self.new_helper_call(
-            nodes,
-            "__makeTemplateObject",
-            vec![cooked_array, raw_array],
-        )
+        self.new_helper_call(nodes, "__makeTemplateObject", vec![cooked_array, raw_array])
     }
 
     /// `NewPropKeyHelper`
@@ -2046,11 +1987,7 @@ impl NodeFactory {
 
     /// `NewImportStarHelper` — allocates a new Call expression to the
     /// `__importStar` helper.
-    pub fn new_import_star_helper(
-        &mut self,
-        nodes: &mut Vec<Node>,
-        expression: NodeId,
-    ) -> NodeId {
+    pub fn new_import_star_helper(&mut self, nodes: &mut Vec<Node>, expression: NodeId) -> NodeId {
         self.request_emit_helper(&emit_helpers::import_star_helper());
         self.new_helper_call(nodes, "__importStar", vec![expression])
     }
@@ -2089,9 +2026,7 @@ impl NodeFactory {
             None,
         );
         let params = self.inner.new_node_list([param]);
-        let stmt = self
-            .inner
-            .new_expression_statement(nodes, Some(expression));
+        let stmt = self.inner.new_expression_statement(nodes, Some(expression));
         let body = self
             .inner
             .new_block(nodes, Some(self.inner.new_node_list([stmt])), false);
@@ -2228,9 +2163,7 @@ pub(crate) fn new_generated_identifier(
     let text = if text.is_empty() {
         let text = match node {
             None => format!("(auto@{})", id),
-            Some(node) if ast::is_member_name(&nodes[node]) => {
-                nodes[node].text(nodes).into_owned()
-            }
+            Some(node) if ast::is_member_name(&nodes[node]) => nodes[node].text(nodes).into_owned(),
             Some(node) => {
                 let worker_node = crate::emit_context::get_node_for_generated_name_worker(
                     shared, nodes, node, id,
@@ -2238,7 +2171,12 @@ pub(crate) fn new_generated_identifier(
                 format!("(generated@{:?})", ast::get_node_id(&nodes[worker_node]))
             }
         };
-        format_generated_name(false /*privateName*/, &options.prefix, &text, &options.suffix)
+        format_generated_name(
+            false, /*privateName*/
+            &options.prefix,
+            &text,
+            &options.suffix,
+        )
     } else {
         text.to_string()
     };
@@ -2251,7 +2189,10 @@ pub(crate) fn new_generated_identifier(
         suffix: options.suffix.clone(),
         node,
     };
-    shared.borrow_mut().auto_generate.insert(name, auto_generate);
+    shared
+        .borrow_mut()
+        .auto_generate
+        .insert(name, auto_generate);
     name
 }
 
@@ -2270,9 +2211,7 @@ pub(crate) fn new_generated_private_identifier(
     let text = if text.is_empty() {
         let text = match node {
             None => format!("(auto@{})", id),
-            Some(node) if ast::is_member_name(&nodes[node]) => {
-                nodes[node].text(nodes).into_owned()
-            }
+            Some(node) if ast::is_member_name(&nodes[node]) => nodes[node].text(nodes).into_owned(),
             Some(node) => {
                 let worker_node = crate::emit_context::get_node_for_generated_name_worker(
                     shared, nodes, node, id,
@@ -2280,7 +2219,12 @@ pub(crate) fn new_generated_private_identifier(
                 format!("(generated@{:?})", ast::get_node_id(&nodes[worker_node]))
             }
         };
-        format_generated_name(true /*privateName*/, &options.prefix, &text, &options.suffix)
+        format_generated_name(
+            true, /*privateName*/
+            &options.prefix,
+            &text,
+            &options.suffix,
+        )
     } else if !text.starts_with('#') {
         panic!("First character of private identifier must be #: {}", text)
     } else {
@@ -2295,7 +2239,10 @@ pub(crate) fn new_generated_private_identifier(
         suffix: options.suffix.clone(),
         node,
     };
-    shared.borrow_mut().auto_generate.insert(name, auto_generate);
+    shared
+        .borrow_mut()
+        .auto_generate
+        .insert(name, auto_generate);
     name
 }
 

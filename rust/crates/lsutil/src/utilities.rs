@@ -7,16 +7,16 @@ use tsc_ast::ast::Node;
 use tsc_ast::{self as ast, Kind, NodeFlags, NodeId, TokenFlags};
 use tsc_astnav::tokens::get_start_of_node;
 use tsc_core::core::find;
-use tsc_core::tristate::Tristate;
 use tsc_core::nodemodules::{EXCLUSIVELY_PREFIXED_NODE_CORE_MODULES, NODE_CORE_MODULES};
+use tsc_core::tristate::Tristate;
 use tsc_scanner::scanner::{
-    get_ecma_line_of_position, is_identifier_part, is_identifier_start, skip_trivia, string_to_token,
+    get_ecma_line_of_position, is_identifier_part, is_identifier_start, skip_trivia,
+    string_to_token,
 };
 use tsc_tspath::{get_base_file_name, remove_any_file_extension};
 
 use crate::asi::{
-    syntax_requires_trailing_comma_or_semicolon_or_asi,
-    syntax_requires_trailing_semicolon_or_asi,
+    syntax_requires_trailing_comma_or_semicolon_or_asi, syntax_requires_trailing_semicolon_or_asi,
 };
 use crate::children::get_last_token;
 use crate::userpreferences::QuotePreference;
@@ -57,16 +57,11 @@ pub fn probably_uses_semicolons(nodes: &mut Vec<Node>, file: NodeId) -> bool {
                 // file refs after it returns to avoid overlapping borrows.
                 let last_token_start =
                     get_start_of_node(nodes, file, last_token, false /* includeJSDoc */);
-                let last_token_line = get_ecma_line_of_position(
-                    nodes[file].as_source_file(),
-                    last_token_start,
-                );
+                let last_token_line =
+                    get_ecma_line_of_position(nodes[file].as_source_file(), last_token_start);
                 let next_token_line = get_ecma_line_of_position(
                     nodes[file].as_source_file(),
-                    skip_trivia(
-                        &nodes[file].as_source_file().text,
-                        nodes[last_token].end(),
-                    ),
+                    skip_trivia(&nodes[file].as_source_file().text, nodes[last_token].end()),
                 );
                 // Avoid counting missing semicolon in single-line objects:
                 // `function f(p: { x: string /*no semicolon here is insignificant*/ }) {`
@@ -208,10 +203,7 @@ pub fn get_quote_preference(
 }
 
 /// `ModuleSymbolToValidIdentifier`.
-pub fn module_symbol_to_valid_identifier(
-    symbol: &ast::Symbol,
-    force_capitalize: bool,
-) -> String {
+pub fn module_symbol_to_valid_identifier(symbol: &ast::Symbol, force_capitalize: bool) -> String {
     let mut module_name = symbol.name.clone();
     if let Some(ambient_module_name) =
         ast::try_get_ambient_module_name_from_symbol_name(&module_name)

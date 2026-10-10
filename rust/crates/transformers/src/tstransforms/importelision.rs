@@ -19,7 +19,7 @@ use tsc_core::tristate::TS_TRUE;
 use tsc_printer::EmitResolver;
 
 use crate::chain::TransformOptions;
-use crate::estransforms::{make_transformer, visit_each_child, Ec};
+use crate::estransforms::{Ec, make_transformer, visit_each_child};
 use crate::transformer::Transformer;
 
 /// `type ImportElisionTransformer struct`.
@@ -217,9 +217,7 @@ impl<'a> ImportElisionTransformer<'a> {
                 Some(result)
             }
 
-            Kind::ModuleDeclaration | Kind::ModuleBlock => {
-                Some(visit_each_child(v, cx, node))
-            }
+            Kind::ModuleDeclaration | Kind::ModuleBlock => Some(visit_each_child(v, cx, node)),
 
             _ => Some(node),
         }
@@ -232,7 +230,8 @@ impl<'a> ImportElisionTransformer<'a> {
         cx: &mut VisitorCx<'_, '_>,
         node: NodeId,
     ) -> bool {
-        ast::is_in_js_file(Some(node), cx.nodes) || self.is_referenced_alias_declaration(ec, cx, node)
+        ast::is_in_js_file(Some(node), cx.nodes)
+            || self.is_referenced_alias_declaration(ec, cx, node)
     }
 
     /// `tx.shouldEmitImportEqualsDeclaration`
@@ -270,7 +269,9 @@ impl<'a> ImportElisionTransformer<'a> {
         let Some(resolver) = &self.emit_resolver else {
             return false;
         };
-        resolver.borrow().is_referenced_alias_declaration(node, cx.nodes)
+        resolver
+            .borrow()
+            .is_referenced_alias_declaration(node, cx.nodes)
     }
 
     /// `tx.isValueAliasDeclaration`
@@ -311,9 +312,7 @@ impl<'a> ImportElisionTransformer<'a> {
 }
 
 /// `NewImportElisionTransformer`.
-pub fn new_import_elision_transformer<'a>(
-    opts: &TransformOptions<'a>,
-) -> Option<Transformer<'a>> {
+pub fn new_import_elision_transformer<'a>(opts: &TransformOptions<'a>) -> Option<Transformer<'a>> {
     let compiler_options = opts.compiler_options.unwrap_or(&EMPTY_COMPILER_OPTIONS);
     if compiler_options.verbatim_module_syntax == TS_TRUE {
         panic!("ImportElisionTransformer should not be used with VerbatimModuleSyntax");

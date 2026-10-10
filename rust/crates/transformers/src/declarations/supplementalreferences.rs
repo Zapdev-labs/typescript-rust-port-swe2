@@ -65,11 +65,10 @@ impl<'a> SupplementalReferencesTransformer<'a> {
             ) {
                 continue;
             }
-            let Some(paths) = self.host.get_output_paths_for(
-                supplemental,
-                self.force_declaration_paths,
-                nodes,
-            ) else {
+            let Some(paths) =
+                self.host
+                    .get_output_paths_for(supplemental, self.force_declaration_paths, nodes)
+            else {
                 continue;
             };
             let declaration_path = paths.declaration_file_path();
@@ -81,7 +80,9 @@ impl<'a> SupplementalReferencesTransformer<'a> {
                 .case_sensitivity()
                 .relative_path_from_file(&self.declaration_file_path, declaration_path)
             else {
-                panic!("supplemental declaration output must share a root with the primary declaration")
+                panic!(
+                    "supplemental declaration output must share a root with the primary declaration"
+                )
             };
             // `referenced_files` is a `Box<[FileReference]>` — rebuild it
             // like Go's `append`.

@@ -477,4 +477,3 @@ pub static MN: RangeTable = RangeTable {
     ],
     latin_offset: 0,
 };
-

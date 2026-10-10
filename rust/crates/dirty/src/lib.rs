@@ -32,8 +32,7 @@ pub use cloneable::{Cloneable, CloneableMap};
 pub use map::{Map, MapEntry};
 pub use mapbuilder::MapBuilder;
 pub use syncmap::{
-    FinalizationChangeHook, FinalizationHook, FinalizationHooks, LockedEntry, SyncMap,
-    SyncMapEntry,
+    FinalizationChangeHook, FinalizationHook, FinalizationHooks, LockedEntry, SyncMap, SyncMapEntry,
 };
 pub use util::clone_map_if_nil;
 pub use value::Value;

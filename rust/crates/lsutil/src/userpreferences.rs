@@ -9,10 +9,10 @@
 use std::borrow::Cow;
 use std::io::Read;
 
-use serde::{Deserialize, Deserializer, Serialize};
 use serde::de::{self, Visitor};
+use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::{Map, Value};
-use tsc_core::tristate::{bool_to_tristate, Tristate, TS_FALSE, TS_TRUE, TS_UNKNOWN};
+use tsc_core::tristate::{TS_FALSE, TS_TRUE, TS_UNKNOWN, Tristate, bool_to_tristate};
 use tsc_modulespecifiers::util::is_excluded_by_regex;
 use tsc_tspath::{CaseSensitivity, RootedDirectoryPath};
 use tsc_vfs::vfsmatch::{self, SpecMatcher, USAGE_EXCLUDE};
@@ -394,7 +394,10 @@ impl UserPreferences {
 
     /// `(p UserPreferences) IsModuleSpecifierExcluded`
     pub fn is_module_specifier_excluded(&self, module_specifier: &str) -> bool {
-        is_excluded_by_regex(module_specifier, &self.auto_import_specifier_exclude_regexes)
+        is_excluded_by_regex(
+            module_specifier,
+            &self.auto_import_specifier_exclude_regexes,
+        )
     }
 }
 

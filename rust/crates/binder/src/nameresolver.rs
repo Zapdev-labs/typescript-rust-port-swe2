@@ -225,11 +225,9 @@ impl<'a> NameResolver<'a> {
                                         || nodes[last].kind == Kind::JSDocReturnTag
                                         || nodes[last].kind == Kind::TypeParameter);
                             }
-                            if meaning
-                                .intersects(
-                                    symbols.borrow()[res.index()].flags & SymbolFlags::VARIABLE,
-                                )
-                            {
+                            if meaning.intersects(
+                                symbols.borrow()[res.index()].flags & SymbolFlags::VARIABLE,
+                            ) {
                                 // expression inside parameter will lookup as normal variable scope when targeting es2015+
                                 if self.use_outer_variable_scope_in_parameter(
                                     res, loc, last, nodes, symbols,
@@ -246,16 +244,16 @@ impl<'a> NameResolver<'a> {
                                     use_result = nodes[last].kind == Kind::Parameter
                                         || nodes[last].flags.intersects(NodeFlags::SYNTHESIZED)
                                         || Some(last) == nodes[loc].type_()
-                                            && symbols.borrow()[res.index()].value_declaration.is_some_and(
-                                                |vd| {
+                                            && symbols.borrow()[res.index()]
+                                                .value_declaration
+                                                .is_some_and(|vd| {
                                                     find_ancestor(
                                                         Some(vd),
                                                         nodes,
                                                         &mut is_parameter_declaration_fn,
                                                     )
                                                     .is_some()
-                                                },
-                                            );
+                                                });
                                 }
                             }
                         } else if nodes[loc].kind == Kind::ConditionalType {
@@ -392,10 +390,12 @@ impl<'a> NameResolver<'a> {
                             if name_not_found_message.is_some()
                                 && self.compiler_options.get_isolated_modules()
                                 && !nodes[loc].flags.intersects(NodeFlags::AMBIENT)
-                                && symbols.borrow()[res.index()].value_declaration.is_some_and(|vd| {
-                                    get_source_file_of_node(Some(loc), nodes)
-                                        != get_source_file_of_node(Some(vd), nodes)
-                                })
+                                && symbols.borrow()[res.index()].value_declaration.is_some_and(
+                                    |vd| {
+                                        get_source_file_of_node(Some(loc), nodes)
+                                            != get_source_file_of_node(Some(vd), nodes)
+                                    },
+                                )
                             {
                                 let isolated_modules_like_flag_name =
                                     if self.compiler_options.verbatim_module_syntax == TS_TRUE {
@@ -511,9 +511,7 @@ impl<'a> NameResolver<'a> {
                                     self.get_symbol_of_declaration(container, nodes)
                                 {
                                     result = self.lookup(
-                                        &symbols.borrow()[container_symbol.index()]
-                                            .members
-                                            .clone(),
+                                        &symbols.borrow()[container_symbol.index()].members.clone(),
                                         name,
                                         meaning & SymbolFlags::TYPE,
                                         symbols,
@@ -811,8 +809,7 @@ impl<'a> NameResolver<'a> {
     ) -> bool {
         if is_parameter_declaration(&nodes[last_location]) {
             if let Some(body) = nodes[location].body() {
-                if let Some(value_declaration) =
-                    symbols.borrow()[result.index()].value_declaration
+                if let Some(value_declaration) = symbols.borrow()[result.index()].value_declaration
                 {
                     if nodes[value_declaration].pos() >= nodes[body].pos()
                         && nodes[value_declaration].end() <= nodes[body].end()
@@ -1012,7 +1009,12 @@ impl<'a> NameResolver<'a> {
             );
         }
         if let Some(hook) = self.on_property_with_invalid_initializer.as_mut() {
-            return hook(error_location, name, property_with_invalid_initializer, result);
+            return hook(
+                error_location,
+                name,
+                property_with_invalid_initializer,
+                result,
+            );
         }
         false
     }

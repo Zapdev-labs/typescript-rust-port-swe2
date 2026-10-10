@@ -11,8 +11,8 @@ use std::rc::Rc;
 
 use tsc_ast::diagnostic::{DiagnosticRef, lock_diagnostic};
 use tsc_diagnostics::{self as diagnostics};
-use tsc_tspath::{PathKey, RootedDirectoryPath};
 use tsc_tsoptions::value::Value;
+use tsc_tspath::{PathKey, RootedDirectoryPath};
 
 use crate::file_include::FileIncludeReason;
 use crate::program::Program;
@@ -57,8 +57,7 @@ impl ExplainState {
                 .is_synthetic
         {
             self.preferred_location = Some(include_reason.clone());
-        } else if !matches!(&self.preferred_location, Some(p) if Rc::ptr_eq(p, include_reason))
-        {
+        } else if !matches!(&self.preferred_location, Some(p) if Rc::ptr_eq(p, include_reason)) {
             if let Some(info) = program
                 .include_processor
                 .get_related_info(include_reason, program)
@@ -70,7 +69,10 @@ impl ExplainState {
 
     /// `processInclude`.
     fn process_include(&mut self, include_reason: &Rc<FileIncludeReason>, program: &Program) {
-        if !self.seen_reasons.insert(Rc::as_ptr(include_reason) as usize) {
+        if !self
+            .seen_reasons
+            .insert(Rc::as_ptr(include_reason) as usize)
+        {
             return;
         }
         self.include_details.push(include_reason.to_diagnostic(
@@ -211,9 +213,8 @@ impl ProcessingDiagnostic {
             let nodes = program.arena_of(loc.file);
             result = Some(loc.diagnostic_at(&nodes, diag.message, &args));
         }
-        let result = result.unwrap_or_else(|| {
-            tsc_ast::diagnostic::new_compiler_diagnostic(diag.message, &args)
-        });
+        let result = result
+            .unwrap_or_else(|| tsc_ast::diagnostic::new_compiler_diagnostic(diag.message, &args));
         if !chain.is_empty() {
             lock_diagnostic(&result).set_message_chain(chain);
         }

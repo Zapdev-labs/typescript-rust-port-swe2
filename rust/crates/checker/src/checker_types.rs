@@ -1624,7 +1624,11 @@ pub fn is_non_deferred_type_reference(types: &TypeArena, t: TypeId) -> bool {
 pub fn is_type_reference_with_generic_arguments(c: &mut Checker, t: TypeId) -> bool {
     is_non_deferred_type_reference(&c.types, t)
         && c.get_type_arguments(t).iter().any(|&u| {
-            let __arena_is_type_parameter = c.types.clone(); let is_type_parameter = __arena_is_type_parameter.get(u).flags.intersects(TypeFlags::TYPE_PARAMETER);
+            let __arena_is_type_parameter = c.types.clone();
+            let is_type_parameter = __arena_is_type_parameter
+                .get(u)
+                .flags
+                .intersects(TypeFlags::TYPE_PARAMETER);
             is_type_parameter || is_type_reference_with_generic_arguments(c, u)
         })
 }
@@ -1650,6 +1654,12 @@ pub trait Program: Host {
     fn source_files(&self) -> Vec<NodeId>;
     /// `BindSourceFiles()`.
     fn bind_source_files(&self);
+    /// The program-global symbol arena (SPEC §5.2): `SymbolId` indexes this
+    /// shared `Vec`. The binder appends during `bind_source_files`; each
+    /// `Checker` aliases it as `symbol_arena` so binder ids and
+    /// checker-created (merged/instantiated) symbols share one id space,
+    /// mirroring Go's `*ast.Symbol` pointer identity on the heap.
+    fn symbols(&self) -> Rc<RefCell<Vec<ast::Symbol>>>;
     /// `FileExists(fileName)`.
     fn file_exists(&self, file_name: &RootedFilePath) -> bool;
     /// `GetSourceFileForResolvedModule(resolved)`.
@@ -1719,6 +1729,10 @@ pub trait Program: Host {
     fn nodes(&self, file_index: u32) -> std::cell::Ref<'_, Vec<ast::Node>>;
     /// `nodes_mut` — mutable arena access for synthetic-node creation
     /// (factory-created synthetic expressions, flow nodes).
+    ///
+    /// Plain `RefMut` — short-windowed mutation; callers must not hold a
+    /// shared `Ref` across the call (the emit pipeline is the exception —
+    /// it checks the arena out so re-entrant `nodes()` reads stay live).
     fn nodes_mut(&self, file_index: u32) -> std::cell::RefMut<'_, Vec<ast::Node>>;
     /// PORT(addition): the `Rc<RefCell>` arena handle itself — for caches
     /// (`FlowState::nodes`) that must keep a long-lived alias into the arena

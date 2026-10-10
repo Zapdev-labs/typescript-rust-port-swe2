@@ -13,8 +13,8 @@ use tsc_ast::{FileReference, Node, NodeId, node_is_synthesized};
 use tsc_diagnostics::{self as diagnostics};
 use tsc_module::PackageId;
 use tsc_scanner::scanner::skip_trivia;
-use tsc_tspath::{PathKey, RootedDirectoryPath, RootedFilePath};
 use tsc_tsoptions::value::Value;
+use tsc_tspath::{PathKey, RootedDirectoryPath, RootedFilePath};
 
 use crate::program::Program;
 
@@ -194,8 +194,9 @@ impl FileIncludeReason {
                         }
                     }
                 }
-                let resolution = specifier
-                    .and_then(|specifier| program.get_resolved_module_from_module_specifier(file, specifier));
+                let resolution = specifier.and_then(|specifier| {
+                    program.get_resolved_module_from_module_specifier(file, specifier)
+                });
                 ReferenceFileLocation {
                     file,
                     node: specifier,
@@ -393,12 +394,12 @@ impl FileIncludeReason {
         program: &Program,
         to_file_name: &mut dyn FnMut(&RootedFilePath) -> String,
     ) -> DiagnosticRef {
-        let reference_location = program.include_processor.get_reference_location(self, program);
+        let reference_location = program
+            .include_processor
+            .get_reference_location(self, program);
         let nodes = program.arena_of(reference_location.file);
         let reference_text = reference_location.text(&nodes);
-        let file_name = to_file_name(
-            nodes[reference_location.file].as_source_file().file_name(),
-        );
+        let file_name = to_file_name(nodes[reference_location.file].as_source_file().file_name());
         match self.kind {
             FILE_INCLUDE_KIND_IMPORT => {
                 if !reference_location.is_synthetic {
@@ -419,11 +420,7 @@ impl FileIncludeReason {
                     }
                 } else if program
                     .import_helpers_import_specifiers
-                    .get(
-                        nodes[reference_location.file]
-                            .as_source_file()
-                            .path_key(),
-                    )
+                    .get(nodes[reference_location.file].as_source_file().path_key())
                     .copied()
                     == reference_location.node
                 {
@@ -509,12 +506,14 @@ impl FileIncludeReason {
                             &matched_file_spec,
                         )
                     {
-                        return Some(tsc_tsoptions::errors::create_diagnostic_for_node_in_source_file(
-                            config_ctx,
-                            files_node,
-                            &diagnostics::File_is_matched_by_files_list_specified_here,
-                            &[],
-                        ));
+                        return Some(
+                            tsc_tsoptions::errors::create_diagnostic_for_node_in_source_file(
+                                config_ctx,
+                                files_node,
+                                &diagnostics::File_is_matched_by_files_list_specified_here,
+                                &[],
+                            ),
+                        );
                     }
                 } else {
                     let (matched_include_spec, is_default_include_spec) =
@@ -552,12 +551,14 @@ impl FileIncludeReason {
                             &data.type_reference,
                         )
                     {
-                        return Some(tsc_tsoptions::errors::create_diagnostic_for_node_in_source_file(
-                            config_ctx,
-                            types_syntax,
-                            &diagnostics::File_is_entry_point_of_type_library_specified_here,
-                            &[],
-                        ));
+                        return Some(
+                            tsc_tsoptions::errors::create_diagnostic_for_node_in_source_file(
+                                config_ctx,
+                                types_syntax,
+                                &diagnostics::File_is_entry_point_of_type_library_specified_here,
+                                &[],
+                            ),
+                        );
                     }
                 }
             }
@@ -580,12 +581,14 @@ impl FileIncludeReason {
                             &lib_value,
                         )
                     {
-                        return Some(tsc_tsoptions::errors::create_diagnostic_for_node_in_source_file(
-                            config_ctx,
-                            lib_syntax,
-                            &diagnostics::File_is_library_specified_here,
-                            &[],
-                        ));
+                        return Some(
+                            tsc_tsoptions::errors::create_diagnostic_for_node_in_source_file(
+                                config_ctx,
+                                lib_syntax,
+                                &diagnostics::File_is_library_specified_here,
+                                &[],
+                            ),
+                        );
                     }
                 } else {
                     let target = program.options().get_emit_script_target().to_string();
@@ -610,12 +613,14 @@ impl FileIncludeReason {
                                 None,
                             )
                         {
-                            return Some(tsc_tsoptions::errors::create_diagnostic_for_node_in_source_file(
-                                config_ctx,
-                                target_value_syntax,
-                                &diagnostics::File_is_default_library_for_target_specified_here,
-                                &[],
-                            ));
+                            return Some(
+                                tsc_tsoptions::errors::create_diagnostic_for_node_in_source_file(
+                                    config_ctx,
+                                    target_value_syntax,
+                                    &diagnostics::File_is_default_library_for_target_specified_here,
+                                    &[],
+                                ),
+                            );
                         }
                     }
                 }
@@ -631,7 +636,9 @@ impl FileIncludeReason {
         self: &Rc<Self>,
         program: &Program,
     ) -> Option<DiagnosticRef> {
-        let reference_location = program.include_processor.get_reference_location(self, program);
+        let reference_location = program
+            .include_processor
+            .get_reference_location(self, program);
         if reference_location.is_synthetic {
             return None;
         }

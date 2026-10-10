@@ -16,18 +16,20 @@ pub fn binary_search_unique_func<E>(
     if n == 0 {
         return (0, false);
     }
-    let mut low = 0usize;
-    let mut high = n - 1;
+    // PORT: `high` is signed — Go's `middle - 1` may produce -1 to end the
+    // loop, which panics as a `usize` underflow when `middle == 0`.
+    let mut low = 0isize;
+    let mut high = n as isize - 1;
     while low <= high {
         let middle = low + ((high - low) >> 1);
-        let value = cmp(middle, &x[middle]);
+        let value = cmp(middle as usize, &x[middle as usize]);
         if value < 0 {
             low = middle + 1;
         } else if value > 0 {
             high = middle - 1;
         } else {
-            return (middle, true);
+            return (middle as usize, true);
         }
     }
-    (low, false)
+    (low as usize, false)
 }

@@ -91,8 +91,8 @@ fn test_encode_content_mapper_source_file_metadata() {
     let (buf, _) = encode_source_file(&mut nodes, file);
     let nodes_offset = read_uint32(&buf, HEADER_OFFSET_NODES);
     let root_data = read_uint32(&buf, nodes_offset as usize + NODE_SIZE + NODE_OFFSET_DATA);
-    let extended_offset = read_uint32(&buf, HEADER_OFFSET_EXTENDED_DATA)
-        + (root_data & NODE_DATA_STRING_INDEX_MASK);
+    let extended_offset =
+        read_uint32(&buf, HEADER_OFFSET_EXTENDED_DATA) + (root_data & NODE_DATA_STRING_INDEX_MASK);
     if extended_offset as usize + 76 > buf.len() {
         panic!(
             "invalid extended offset {extended_offset} (nodes={nodes_offset} rootData={root_data:#x} extendedData={} len={})",
@@ -117,8 +117,8 @@ fn test_encode_content_mapper_source_file_metadata() {
             0x96, // six-element tuple
             2, 1, // original range [2, 3) in UTF-16
             2, 7, // virtual range [2, 9) in UTF-16
-            1,             // expect policy
-            0xcd, 10, 18,  // unused diagnostic code 2578
+            1, // expect policy
+            0xcd, 10, 18, // unused diagnostic code 2578
         ]
     );
 }
@@ -189,8 +189,7 @@ fn test_build_node_index_table_matches_encode() {
         let enc_idx = encode_table.get_index(*node);
         let build_idx = build_table.get_index(*node);
         assert_eq!(
-            enc_idx,
-            i as u32,
+            enc_idx, i as u32,
             "encode_table.get_index mismatch at index {i}, node kind={:?}",
             nodes[*node].kind
         );
@@ -211,8 +210,11 @@ fn bench_encode_source_file() {
         tsc_repo::test_data_path()
     ))
     .unwrap();
-    let (file, mut nodes) =
-        parse_source_file(test_parse_options("/checker.ts"), &file_content, ScriptKind::Ts);
+    let (file, mut nodes) = parse_source_file(
+        test_parse_options("/checker.ts"),
+        &file_content,
+        ScriptKind::Ts,
+    );
     let _ = encode_source_file(&mut nodes, file);
 }
 
@@ -225,8 +227,11 @@ fn bench_build_node_index_table() {
         tsc_repo::test_data_path()
     ))
     .unwrap();
-    let (file, mut nodes) =
-        parse_source_file(test_parse_options("/checker.ts"), &file_content, ScriptKind::Ts);
+    let (file, mut nodes) = parse_source_file(
+        test_parse_options("/checker.ts"),
+        &file_content,
+        ScriptKind::Ts,
+    );
     let _ = build_node_index_table(&mut nodes, file);
 }
 

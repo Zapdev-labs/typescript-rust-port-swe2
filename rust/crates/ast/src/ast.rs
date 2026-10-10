@@ -175,6 +175,11 @@ impl ModifierList {
 /// The AST node header. In the Go implementation this type is embedded in
 /// every node payload via `NodeBase`; here it is the arena element and the
 /// payload hangs off `data`.
+///
+/// PORT: `Clone` produces a shallow structural copy — `NodeId`s inside the
+/// data still reference arena slots — used by `ArenaCheckout` to leave a
+/// frozen arena in the program's cell while emit mutates the live `Vec`.
+#[derive(Clone)]
 pub struct Node {
     /// Packed `file:20|local:44` id, assigned on arena insertion. This stands
     /// in for Go's lazily-assigned `id atomic.Uint64` plus the pointer's
@@ -1769,6 +1774,80 @@ pub(crate) fn clone_source_file(
     clone_node(nodes, updated, node, &mut f.hooks)
 }
 
+/// PORT: manual `Clone` — `SourceFile` is generated in `ast_generated.rs`
+/// but several fields (`OnceLock` lazies, atomics, `NodeFactory` hooks) are
+/// not `Clone`. The clone is shallow in the arena sense: `NodeId`s inside
+/// still index the owning `Vec<Node>`, and `SourceFileData` cells are
+/// `Rc`-shared. Lazies are carried over only if already computed; the
+/// `token_factory` (JSDoc token reparse) is dropped — it is lazily
+/// recreated on demand.
+impl Clone for SourceFile {
+    fn clone(&self) -> SourceFile {
+        fn clone_lock<T: Clone + Send>(lock: &std::sync::OnceLock<T>) -> std::sync::OnceLock<T> {
+            match lock.get() {
+                Some(v) => std::sync::OnceLock::from(v.clone()),
+                None => std::sync::OnceLock::new(),
+            }
+        }
+        SourceFile {
+            declaration_base: self.declaration_base.clone(),
+            locals_container_base: self.locals_container_base.clone(),
+            composite_base: self.composite_base.clone(),
+            file_name: self.file_name.clone(),
+            parse_options: self.parse_options.clone(),
+            text: self.text.clone(),
+            content_mapper_info: self.content_mapper_info.clone(),
+            statements: self.statements.clone(),
+            end_of_file_token: self.end_of_file_token,
+            data: self.data.clone(),
+            diagnostics: self.diagnostics.clone(),
+            js_diagnostics: self.js_diagnostics.clone(),
+            jsdoc_diagnostics: self.jsdoc_diagnostics.clone(),
+            language_variant: self.language_variant,
+            script_kind: self.script_kind,
+            is_declaration_file: self.is_declaration_file,
+            uses_uri_style_node_core_modules: self.uses_uri_style_node_core_modules,
+            identifier_count: self.identifier_count,
+            imports: self.imports.clone(),
+            module_augmentations: self.module_augmentations.clone(),
+            ambient_module_names: self.ambient_module_names.clone(),
+            comment_directives: self.comment_directives.clone(),
+            jsdoc_cache: self.jsdoc_cache.clone(),
+            has_lazy_js_doc: self.has_lazy_js_doc,
+            identifiers: clone_lock(&self.identifiers),
+            reparsed_clones: self.reparsed_clones.clone(),
+            pragmas: self.pragmas.clone(),
+            referenced_files: self.referenced_files.clone(),
+            type_reference_directives: self.type_reference_directives.clone(),
+            lib_reference_directives: self.lib_reference_directives.clone(),
+            check_js_directive: self.check_js_directive.clone(),
+            node_count: self.node_count,
+            text_count: self.text_count,
+            common_js_module_indicator: self.common_js_module_indicator,
+            external_module_indicator: self.external_module_indicator,
+            is_bound: std::sync::atomic::AtomicBool::new(
+                self.is_bound.load(std::sync::atomic::Ordering::Acquire),
+            ),
+            bind_once: std::sync::atomic::AtomicBool::new(
+                self.bind_once.load(std::sync::atomic::Ordering::Acquire),
+            ),
+            bind_diagnostics: self.bind_diagnostics.clone(),
+            symbol_count: self.symbol_count,
+            pattern_ambient_modules: self.pattern_ambient_modules.clone(),
+            global_exports: self.global_exports.clone(),
+            ecma_line_map: clone_lock(&self.ecma_line_map),
+            hash: self.hash,
+            token_cache: self.token_cache.clone(),
+            // `NodeFactory` hooks hold closures — not `Clone`; the factory is
+            // lazily created by token reparse paths.
+            token_factory: None,
+            declaration_map: self.declaration_map.clone(),
+            name_table: self.name_table.clone(),
+            position_map: clone_lock(&self.position_map),
+        }
+    }
+}
+
 // SourceFile accessors and lazily-computed state — the `*SourceFile` methods
 // of ast.go. Methods that only read take `&self`; Go's `sync.Once` fields map
 // to `std::sync::OnceLock` where the computation is read-only, while
@@ -2615,4 +2694,61 @@ pub struct PragmaArgumentSpecification {
     pub name: &'static str,
     pub optional: bool,
     pub capture_span: bool,
+}
+
+// ---------------------------------------------------------------------------
+// ArenaCheckout — emit/transform-time arena handoff
+// ---------------------------------------------------------------------------
+
+/// `ArenaCheckout` — RAII guard that owns a file's live `Vec<Node>` while a
+/// `&mut Vec<Node>` consumer (transformers, checker mutations) runs; the
+/// arena cell holds a frozen clone so re-entrant reads through
+/// `Rc<RefCell<Vec<Node>>>` keep working. `Drop` writes the mutated `Vec`
+/// back into the cell.
+///
+/// PORT: Go's shared mutable `[]*ast.Node` heap lets a transform mutate the
+/// graph while emit-resolver/checker callbacks freely read it. A Rust
+/// `RefMut` held across such callbacks would panic every re-entrant
+/// `borrow()`, so the arena is checked out instead: the live `Vec` moves
+/// into the guard while a clone (see `Node: Clone` — shallow, `NodeId`s
+/// preserved) stays in the cell. Reads during the window see pre-mutation
+/// state — import-elision marking only walks original-tree nodes, so this
+/// is observationally equivalent there; `NodeId`s minted during the visit
+/// won't resolve through the clone (known limitation).
+pub struct ArenaCheckout {
+    arena: std::rc::Rc<std::cell::RefCell<Vec<Node>>>,
+    work: Vec<Node>,
+}
+
+impl ArenaCheckout {
+    /// Checks the arena out: leaves a clone in the cell, moves the live
+    /// `Vec` into the guard.
+    pub fn new(arena: std::rc::Rc<std::cell::RefCell<Vec<Node>>>) -> ArenaCheckout {
+        let work = {
+            let mut cell = arena.borrow_mut();
+            let mirror = cell.clone();
+            std::mem::replace(&mut *cell, mirror)
+        };
+        ArenaCheckout { arena, work }
+    }
+}
+
+impl std::ops::Deref for ArenaCheckout {
+    type Target = Vec<Node>;
+
+    fn deref(&self) -> &Vec<Node> {
+        &self.work
+    }
+}
+
+impl std::ops::DerefMut for ArenaCheckout {
+    fn deref_mut(&mut self) -> &mut Vec<Node> {
+        &mut self.work
+    }
+}
+
+impl Drop for ArenaCheckout {
+    fn drop(&mut self) {
+        *self.arena.borrow_mut() = std::mem::take(&mut self.work);
+    }
 }

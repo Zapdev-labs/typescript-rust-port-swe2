@@ -22,7 +22,9 @@ use tsc_binder::referenceresolver::ReferenceResolver;
 use tsc_core::languagevariant::LanguageVariant;
 use tsc_core::options_generated::{CompilerOptions, ScriptTarget};
 use tsc_core::tristate::Tristate;
-use tsc_printer::{AutoGenerateOptions, EmitFlags, GeneratedIdentifierFlags, PrivateIdentifierKind};
+use tsc_printer::{
+    AutoGenerateOptions, EmitFlags, GeneratedIdentifierFlags, PrivateIdentifierKind,
+};
 use tsc_scanner::utilities::is_identifier_text;
 
 use super::classthis::is_class_this_assignment_block;
@@ -31,7 +33,7 @@ use super::namedevaluation::{
     is_named_evaluation_and, transform_named_evaluation,
 };
 use super::utilities::create_accessor_property_backing_field;
-use super::{ec_visit_function_body, ec_visit_iteration_body, make_transformer, subtree_facts, Ec};
+use super::{Ec, ec_visit_function_body, ec_visit_iteration_body, make_transformer, subtree_facts};
 use crate::chain::TransformOptions;
 use crate::modifier_visitor::extract_modifiers;
 use crate::transformer::Transformer;
@@ -189,10 +191,11 @@ pub(crate) struct ClassFieldsTransformer<'a> {
 
 macro_rules! vref {
     ($self:expr, $field:ident) => {
-        $self.$field.borrow().as_ref().expect(concat!(
-            stringify!($field),
-            " not initialized"
-        ))
+        $self
+            .$field
+            .borrow()
+            .as_ref()
+            .expect(concat!(stringify!($field), " not initialized"))
     };
 }
 
@@ -212,9 +215,10 @@ impl<'a> ClassFieldsTransformer<'a> {
     /// block-scoped when a class expression is directly inside a loop body.
     fn requires_block_scoped_var(&self, cx: &VisitorCx<'_, '_>) -> bool {
         self.in_iteration_statement.get()
-            && self.current_class_container.get().is_some_and(|c| {
-                ast::is_class_expression(&cx.nodes[c])
-            })
+            && self
+                .current_class_container
+                .get()
+                .is_some_and(|c| ast::is_class_expression(&cx.nodes[c]))
     }
 
     /// `classExpressionNeedsBlockScopedTemp`.
@@ -265,12 +269,7 @@ impl<'a> ClassFieldsTransformer<'a> {
 
     /// `visitModifier` — the `modifierVisitor` callback. Takes `_ec` so the
     /// `install!` macro's uniform `s.$method(&ec2, cx, node)` call applies.
-    fn visit_modifier(
-        &self,
-        _ec: &Ec,
-        cx: &mut VisitorCx<'_, '_>,
-        node: NodeId,
-    ) -> Option<NodeId> {
+    fn visit_modifier(&self, _ec: &Ec, cx: &mut VisitorCx<'_, '_>, node: NodeId) -> Option<NodeId> {
         if cx.nodes[node].kind == Kind::AccessorKeyword {
             if self.should_transform_auto_accessors_in_current_class() {
                 return None;
@@ -532,13 +531,15 @@ impl<'a> ClassFieldsTransformer<'a> {
                             .expect("property access name")],
                     )
                 {
-                    name = Some(ec.borrow_mut().factory.new_string_literal_from_node(
-                        cx.nodes,
-                        cx.nodes[node]
-                            .as_property_access_expression()
-                            .name
-                            .expect("property access name"),
-                    ));
+                    name = Some(
+                        ec.borrow_mut().factory.new_string_literal_from_node(
+                            cx.nodes,
+                            cx.nodes[node]
+                                .as_property_access_expression()
+                                .name
+                                .expect("property access name"),
+                        ),
+                    );
                 }
                 if let Some(name) = name {
                     let temp = ec.borrow_mut().factory.new_temp_variable(cx.nodes);
@@ -549,11 +550,10 @@ impl<'a> ClassFieldsTransformer<'a> {
                         temp,
                         class_constructor,
                     );
-                    return ec.borrow_mut().factory.new_assignment_target_wrapper(
-                        cx.nodes,
-                        temp,
-                        set_expr,
-                    );
+                    return ec
+                        .borrow_mut()
+                        .factory
+                        .new_assignment_target_wrapper(cx.nodes, temp, set_expr);
                 }
             }
         }
@@ -677,12 +677,7 @@ impl<'a> ClassFieldsTransformer<'a> {
     }
 
     /// `visitIdentifier` — replaces Strada's onSubstituteNode/trySubstituteClassAlias.
-    fn visit_identifier(
-        &self,
-        ec: &Ec,
-        cx: &mut VisitorCx<'_, '_>,
-        node: NodeId,
-    ) -> NodeId {
+    fn visit_identifier(&self, ec: &Ec, cx: &mut VisitorCx<'_, '_>, node: NodeId) -> NodeId {
         if let (Some(resolver), Some(symbols)) = (&self.resolver, self.symbols) {
             let original = ec.borrow().most_original(Some(node));
             let declaration = original.and_then(|o| {
@@ -806,7 +801,8 @@ impl<'a> ClassFieldsTransformer<'a> {
             std::mem::take(&mut *self.pending_statements.borrow_mut());
         let visited_node = self.txv(ec).visit_each_child(cx, node).unwrap_or(node);
         if !self.pending_statements.borrow().is_empty() {
-            let mut result: Vec<NodeId> = Vec::with_capacity(1 + self.pending_statements.borrow().len());
+            let mut result: Vec<NodeId> =
+                Vec::with_capacity(1 + self.pending_statements.borrow().len());
             result.push(visited_node);
             result.extend(self.pending_statements.borrow().iter().copied());
             *self.pending_statements.borrow_mut() = saved_pending_statements;
@@ -877,7 +873,10 @@ impl<'a> ClassFieldsTransformer<'a> {
         let mut pending: Vec<NodeId> = self.pending_expressions.borrow().clone();
         let Some(expression) = expression else {
             self.pending_expressions.borrow_mut().clear();
-            return ec.borrow_mut().factory.inline_expressions(cx.nodes, &pending);
+            return ec
+                .borrow_mut()
+                .factory
+                .inline_expressions(cx.nodes, &pending);
         };
         let result = if ast::is_parenthesized_expression(&cx.nodes[expression]) {
             pending.push(
@@ -886,7 +885,10 @@ impl<'a> ClassFieldsTransformer<'a> {
                     .expression
                     .expect("parenthesized expression"),
             );
-            let inlined = ec.borrow_mut().factory.inline_expressions(cx.nodes, &pending);
+            let inlined = ec
+                .borrow_mut()
+                .factory
+                .inline_expressions(cx.nodes, &pending);
             ec.borrow_mut()
                 .factory
                 .update_parenthesized_expression(cx.nodes, expression, inlined)
@@ -1001,7 +1003,10 @@ impl<'a> ClassFieldsTransformer<'a> {
             &self.get_private_identifier_environment(),
             name.expect("member name"),
         );
-        debug_assert!(info.is_some(), "Undeclared private name for property declaration.");
+        debug_assert!(
+            info.is_some(),
+            "Undeclared private name for property declaration."
+        );
         let Some(info) = info else { return Some(node) };
         if info.borrow().kind == PrivateIdentifierKind::Untransformed || !info.borrow().is_valid {
             return Some(node);
@@ -1165,7 +1170,10 @@ impl<'a> ClassFieldsTransformer<'a> {
         let name = cx.nodes[node].name();
         debug_assert!(name.is_some_and(|n| ast::is_private_identifier(&cx.nodes[n])));
         let info = self.access_private_identifier(ec, cx, name.expect("member name"));
-        debug_assert!(info.is_some(), "Undeclared private name for property declaration.");
+        debug_assert!(
+            info.is_some(),
+            "Undeclared private name for property declaration."
+        );
         let info = info?;
         let info = info.borrow();
         if info.kind == PrivateIdentifierKind::Method {
@@ -1221,9 +1229,9 @@ impl<'a> ClassFieldsTransformer<'a> {
         let mut setter_name = name;
         if let Some(name) = name
             && ast::is_computed_property_name(&cx.nodes[name])
-            && !cx.nodes[name]
-                .expression()
-                .is_some_and(|e| transformer_utilities::is_simple_inlineable_expression(&cx.nodes[e]))
+            && !cx.nodes[name].expression().is_some_and(|e| {
+                transformer_utilities::is_simple_inlineable_expression(&cx.nodes[e])
+            })
         {
             let cpn_expression = cx.nodes[name].expression();
             let cache_assignment = find_computed_property_name_cache_assignment(cx.nodes, name);
@@ -1273,19 +1281,16 @@ impl<'a> ClassFieldsTransformer<'a> {
             }
         }
 
-        let modifiers = vref!(self, modifier_visitor)
-            .visit_modifiers(cx, cx.nodes[node].modifiers().cloned());
+        let modifiers =
+            vref!(self, modifier_visitor).visit_modifiers(cx, cx.nodes[node].modifiers().cloned());
         let initializer = cx.nodes[node].initializer();
-        let backing_field = create_accessor_property_backing_field(
-            ec,
-            cx,
-            node,
-            modifiers.clone(),
-            initializer,
-        );
+        let backing_field =
+            create_accessor_property_backing_field(ec, cx, node, modifiers.clone(), initializer);
         ec.borrow().set_original(backing_field, node);
-        ec.borrow().add_emit_flags(backing_field, EmitFlags::NO_COMMENTS);
-        ec.borrow().set_source_map_range(backing_field, source_map_range);
+        ec.borrow()
+            .add_emit_flags(backing_field, EmitFlags::NO_COMMENTS);
+        ec.borrow()
+            .set_source_map_range(backing_field, source_map_range);
 
         let receiver = if ast::is_static(&cx.nodes[node]) {
             match self.try_get_class_this(cx) {
@@ -1296,22 +1301,33 @@ impl<'a> ClassFieldsTransformer<'a> {
             ec.borrow_mut().factory.new_this_expression(cx.nodes)
         };
 
-        let getter =
-            self.create_accessor_property_get_redirector(ec, cx, node, modifiers.clone(), getter_name, receiver);
+        let getter = self.create_accessor_property_get_redirector(
+            ec,
+            cx,
+            node,
+            modifiers.clone(),
+            getter_name,
+            receiver,
+        );
         ec.borrow().set_original(getter, node);
         ec.borrow().set_comment_range(getter, comment_range);
         ec.borrow().set_source_map_range(getter, source_map_range);
 
         // create a fresh copy of the modifiers so that we don't duplicate comments
         let setter_modifiers = modifiers.map(|m| {
-            let mods = ast::create_modifiers_from_modifier_flags(
-                m.modifier_flags,
-                &mut |kind| ec.borrow_mut().factory.new_token(cx.nodes, kind),
-            );
+            let mods = ast::create_modifiers_from_modifier_flags(m.modifier_flags, &mut |kind| {
+                ec.borrow_mut().factory.new_token(cx.nodes, kind)
+            });
             ec.borrow_mut().factory.new_modifier_list(&*cx.nodes, mods)
         });
-        let setter =
-            self.create_accessor_property_set_redirector(ec, cx, node, setter_modifiers, setter_name, receiver);
+        let setter = self.create_accessor_property_set_redirector(
+            ec,
+            cx,
+            node,
+            setter_modifiers,
+            setter_name,
+            receiver,
+        );
         ec.borrow().set_original(setter, node);
         ec.borrow().add_emit_flags(setter, EmitFlags::NO_COMMENTS);
         ec.borrow().set_source_map_range(setter, source_map_range);
@@ -1339,7 +1355,10 @@ impl<'a> ClassFieldsTransformer<'a> {
                 &self.get_private_identifier_environment(),
                 name.expect("member name"),
             );
-            debug_assert!(info.is_some(), "Undeclared private name for property declaration.");
+            debug_assert!(
+                info.is_some(),
+                "Undeclared private name for property declaration."
+            );
             let Some(info) = info else { return Some(node) };
             let (kind, is_valid, is_static) = {
                 let i = info.borrow();
@@ -1359,10 +1378,14 @@ impl<'a> ClassFieldsTransformer<'a> {
                     .get()
             {
                 let this_expr = ec.borrow_mut().factory.new_this_expression(cx.nodes);
-                let statement = self.transform_property_or_class_static_block(ec, cx, node, this_expr);
+                let statement =
+                    self.transform_property_or_class_static_block(ec, cx, node, this_expr);
                 if let Some(statement) = statement {
                     let stmts = ec.borrow_mut().factory.new_node_list([statement]);
-                    let block = ec.borrow_mut().factory.new_block(cx.nodes, Some(stmts), true);
+                    let block = ec
+                        .borrow_mut()
+                        .factory
+                        .new_block(cx.nodes, Some(stmts), true);
                     return Some(ec.borrow_mut().factory.new_class_static_block_declaration(
                         cx.nodes,
                         None,
@@ -1376,37 +1399,39 @@ impl<'a> ClassFieldsTransformer<'a> {
 
         if self.should_transform_initializers_using_set.get()
             && !ast::has_static_modifier(&cx.nodes[node])
-            && self
-                .lexical_data()
-                .is_some_and(|d| d.borrow().facts & CLASS_FACTS_WILL_HOIST_INITIALIZERS_TO_CONSTRUCTOR != 0)
+            && self.lexical_data().is_some_and(|d| {
+                d.borrow().facts & CLASS_FACTS_WILL_HOIST_INITIALIZERS_TO_CONSTRUCTOR != 0
+            })
         {
-            let modifiers = self.txv(ec).visit_modifiers(cx, cx.nodes[node].modifiers().cloned());
+            let modifiers = self
+                .txv(ec)
+                .visit_modifiers(cx, cx.nodes[node].modifiers().cloned());
             let name = cx.nodes[node].name();
             return Some(
                 ec.borrow_mut()
                     .factory
-                    .update_property_declaration(
-                        cx.nodes,
-                        node,
-                        modifiers,
-                        name,
-                        None,
-                        None,
-                        None,
-                    )
+                    .update_property_declaration(cx.nodes, node, modifiers, name, None, None, None)
                     .unwrap_or(node),
             );
         }
 
         let node = self.named_evaluation(ec, cx, node, false, "");
-        let modifiers = vref!(self, modifier_visitor)
-            .visit_modifiers(cx, cx.nodes[node].modifiers().cloned());
+        let modifiers =
+            vref!(self, modifier_visitor).visit_modifiers(cx, cx.nodes[node].modifiers().cloned());
         let name = self.visit_property_name(ec, cx, cx.nodes[node].name());
         let initializer = self.txv(ec).visit_node(cx, cx.nodes[node].initializer());
         Some(
             ec.borrow_mut()
                 .factory
-                .update_property_declaration(cx.nodes, node, modifiers, name, None, None, initializer)
+                .update_property_declaration(
+                    cx.nodes,
+                    node,
+                    modifiers,
+                    name,
+                    None,
+                    None,
+                    initializer,
+                )
                 .unwrap_or(node),
         )
     }
@@ -1456,14 +1481,18 @@ impl<'a> ClassFieldsTransformer<'a> {
                         .borrow_mut()
                         .factory
                         .new_node_list([initializer_statement]);
-                    let block = ec.borrow_mut().factory.new_block(cx.nodes, Some(stmts), false);
+                    let block = ec
+                        .borrow_mut()
+                        .factory
+                        .new_block(cx.nodes, Some(stmts), false);
                     let static_block = ec.borrow_mut().factory.new_class_static_block_declaration(
                         cx.nodes,
                         None,
                         Some(block),
                     );
                     ec.borrow().set_original(static_block, node);
-                    ec.borrow().set_comment_range(static_block, cx.nodes[node].loc);
+                    ec.borrow()
+                        .set_comment_range(static_block, cx.nodes[node].loc);
                     ec.borrow()
                         .add_emit_flags(initializer_statement, EmitFlags::NO_COMMENTS);
                     return Some(static_block);
@@ -1473,14 +1502,22 @@ impl<'a> ClassFieldsTransformer<'a> {
             return None;
         }
 
-        let modifiers = vref!(self, modifier_visitor)
-            .visit_modifiers(cx, cx.nodes[node].modifiers().cloned());
+        let modifiers =
+            vref!(self, modifier_visitor).visit_modifiers(cx, cx.nodes[node].modifiers().cloned());
         let name = self.visit_property_name(ec, cx, cx.nodes[node].name());
         let initializer = self.txv(ec).visit_node(cx, cx.nodes[node].initializer());
         Some(
             ec.borrow_mut()
                 .factory
-                .update_property_declaration(cx.nodes, node, modifiers, name, None, None, initializer)
+                .update_property_declaration(
+                    cx.nodes,
+                    node,
+                    modifiers,
+                    name,
+                    None,
+                    None,
+                    initializer,
+                )
                 .unwrap_or(node),
         )
     }
@@ -1509,8 +1546,9 @@ impl<'a> ClassFieldsTransformer<'a> {
         }
         // When targeting ESNext with useDefineForClassFields: false, auto-accessors are only
         // transformed if the current class will hoist initializers to the constructor.
-        self.lexical_data()
-            .is_some_and(|d| d.borrow().facts & CLASS_FACTS_WILL_HOIST_INITIALIZERS_TO_CONSTRUCTOR != 0)
+        self.lexical_data().is_some_and(|d| {
+            d.borrow().facts & CLASS_FACTS_WILL_HOIST_INITIALIZERS_TO_CONSTRUCTOR != 0
+        })
     }
 
     /// `visitPropertyDeclaration`.
@@ -1540,7 +1578,10 @@ impl<'a> ClassFieldsTransformer<'a> {
         info: &Rc<RefCell<PrivateIdentifierInfo>>,
         receiver: NodeId,
     ) -> NodeId {
-        let receiver = self.txv(ec).visit_node(cx, Some(receiver)).expect("receiver");
+        let receiver = self
+            .txv(ec)
+            .visit_node(cx, Some(receiver))
+            .expect("receiver");
         self.create_private_identifier_access_helper(ec, cx, info, receiver)
     }
 
@@ -1577,7 +1618,11 @@ impl<'a> ClassFieldsTransformer<'a> {
                 )
             }
             PrivateIdentifierKind::Field => {
-                let f = if info.is_static { info.variable_name } else { None };
+                let f = if info.is_static {
+                    info.variable_name
+                } else {
+                    None
+                };
                 ec.borrow_mut().factory.new_class_private_field_get_helper(
                     cx.nodes,
                     receiver,
@@ -1601,7 +1646,12 @@ impl<'a> ClassFieldsTransformer<'a> {
     ) -> NodeId {
         let (expression, name, question_dot_token, flags) = {
             let pa = cx.nodes[node].as_property_access_expression();
-            (pa.expression, pa.name, pa.question_dot_token, cx.nodes[node].flags)
+            (
+                pa.expression,
+                pa.name,
+                pa.question_dot_token,
+                cx.nodes[node].flags,
+            )
         };
         if name.is_some_and(|n| ast::is_private_identifier(&cx.nodes[n])) {
             if let Some(info) = self.access_private_identifier(ec, cx, name.expect("name")) {
@@ -1634,10 +1684,10 @@ impl<'a> ClassFieldsTransformer<'a> {
                 (data.class_constructor, data.super_class_reference)
             {
                 // converts `super.x` into `Reflect.get(_baseTemp, "x", _classTemp)`
-                let property_name = ec.borrow_mut().factory.new_string_literal_from_node(
-                    cx.nodes,
-                    name.expect("name"),
-                );
+                let property_name = ec
+                    .borrow_mut()
+                    .factory
+                    .new_string_literal_from_node(cx.nodes, name.expect("name"));
                 let super_property = ec.borrow_mut().factory.new_reflect_get_call(
                     cx.nodes,
                     super_class_reference,
@@ -1778,12 +1828,8 @@ impl<'a> ClassFieldsTransformer<'a> {
                         .as_property_access_expression()
                         .expression;
                     let receiver = self.txv(ec).visit_node(cx, receiver_expr);
-                    let (read_expression, initialize_expression) = self
-                        .create_copiable_receiver_expr(
-                            ec,
-                            cx,
-                            receiver.expect("receiver"),
-                        );
+                    let (read_expression, initialize_expression) =
+                        self.create_copiable_receiver_expr(ec, cx, receiver.expect("receiver"));
 
                     let mut expression = self.create_private_identifier_access_helper(
                         ec,
@@ -1794,7 +1840,8 @@ impl<'a> ClassFieldsTransformer<'a> {
                     let mut temp: Option<NodeId> = None;
                     if !is_prefix && !discarded {
                         temp = Some(ec.borrow_mut().factory.new_temp_variable(cx.nodes));
-                        ec.borrow_mut().add_variable_declaration(cx.nodes, temp.unwrap());
+                        ec.borrow_mut()
+                            .add_variable_declaration(cx.nodes, temp.unwrap());
                     }
                     expression = expand_pre_or_postfix_increment_or_decrement_expression(
                         ec, cx, node, expression, temp,
@@ -1811,11 +1858,10 @@ impl<'a> ClassFieldsTransformer<'a> {
                     ec.borrow().set_original(expression, node);
                     cx.nodes[expression].loc = cx.nodes[node].loc;
                     if let Some(temp) = temp {
-                        expression = ec.borrow_mut().factory.new_comma_expression(
-                            cx.nodes,
-                            expression,
-                            temp,
-                        );
+                        expression = ec
+                            .borrow_mut()
+                            .factory
+                            .new_comma_expression(cx.nodes, expression, temp);
                         cx.nodes[expression].loc = cx.nodes[node].loc;
                     }
                     return expression;
@@ -1932,11 +1978,10 @@ impl<'a> ClassFieldsTransformer<'a> {
                         ec.borrow().set_original(expression, node);
                         cx.nodes[expression].loc = cx.nodes[node].loc;
                         if let Some(temp) = temp {
-                            expression = ec.borrow_mut().factory.new_comma_expression(
-                                cx.nodes,
-                                expression,
-                                temp,
-                            );
+                            expression = ec
+                                .borrow_mut()
+                                .factory
+                                .new_comma_expression(cx.nodes, expression, temp);
                             cx.nodes[expression].loc = cx.nodes[node].loc;
                         }
                         return expression;
@@ -1964,11 +2009,9 @@ impl<'a> ClassFieldsTransformer<'a> {
             )
         };
         let txv = self.txv(ec);
-        let visited_initializer =
-            vref!(self, discarded_value_visitor).visit_node(cx, initializer);
+        let visited_initializer = vref!(self, discarded_value_visitor).visit_node(cx, initializer);
         let visited_condition = txv.visit_node(cx, condition);
-        let visited_incrementor =
-            vref!(self, discarded_value_visitor).visit_node(cx, incrementor);
+        let visited_incrementor = vref!(self, discarded_value_visitor).visit_node(cx, incrementor);
         let saved = self.in_iteration_statement.replace(true);
         let visited_statement = ec_visit_iteration_body(&txv, cx, statement);
         self.in_iteration_statement.set(saved);
@@ -2026,11 +2069,10 @@ impl<'a> ClassFieldsTransformer<'a> {
         let read_expression = ec.borrow_mut().factory.new_temp_variable(cx.nodes);
         ec.borrow_mut()
             .add_variable_declaration(cx.nodes, read_expression);
-        let initialize_expression = ec.borrow_mut().factory.new_assignment_expression(
-            cx.nodes,
-            read_expression,
-            clone,
-        );
+        let initialize_expression =
+            ec.borrow_mut()
+                .factory
+                .new_assignment_expression(cx.nodes, read_expression, clone);
         (read_expression, Some(initialize_expression))
     }
 
@@ -2064,7 +2106,10 @@ impl<'a> ClassFieldsTransformer<'a> {
                 .as_property_access_expression()
                 .name
                 .expect("property access name");
-            if self.access_private_identifier(ec, cx, callee_name).is_some() {
+            if self
+                .access_private_identifier(ec, cx, callee_name)
+                .is_some()
+            {
                 // obj.#x()
                 // Transform call expressions of private names to properly bind `this`.
                 let (this_arg, target) = self.create_call_binding(ec, cx, callee);
@@ -2118,7 +2163,12 @@ impl<'a> ClassFieldsTransformer<'a> {
                 &cx.nodes[self.current_class_element.get().unwrap()],
             )
             && self.lexical_data().is_some()
-            && self.lexical_data().unwrap().borrow().class_constructor.is_some()
+            && self
+                .lexical_data()
+                .unwrap()
+                .borrow()
+                .class_constructor
+                .is_some()
         {
             let class_constructor = self
                 .lexical_data()
@@ -2131,9 +2181,7 @@ impl<'a> ClassFieldsTransformer<'a> {
             // converts `super.f(...)` into `Reflect.get(_baseTemp, "f", _classTemp).call(_classTemp, ...)`
             let visited_expr = self.txv(ec).visit_node(cx, expression);
             let visited_args = self.txv(ec).visit_nodes(cx, arguments);
-            let args: Vec<NodeId> = visited_args
-                .map(|a| a.nodes.to_vec())
-                .unwrap_or_default();
+            let args: Vec<NodeId> = visited_args.map(|a| a.nodes.to_vec()).unwrap_or_default();
             let invocation = ec.borrow_mut().factory.new_function_call_call(
                 cx.nodes,
                 visited_expr.expect("call expression"),
@@ -2222,7 +2270,12 @@ impl<'a> ClassFieldsTransformer<'a> {
                 &cx.nodes[self.current_class_element.get().unwrap()],
             )
             && self.lexical_data().is_some()
-            && self.lexical_data().unwrap().borrow().class_constructor.is_some()
+            && self
+                .lexical_data()
+                .unwrap()
+                .borrow()
+                .class_constructor
+                .is_some()
         {
             let class_constructor = self
                 .lexical_data()
@@ -2278,7 +2331,12 @@ impl<'a> ClassFieldsTransformer<'a> {
                 .as_class_static_block_declaration()
                 .body
                 .expect("static block body");
-            let first = cx.nodes[body].as_block().statements.as_ref().expect("statements").nodes[0];
+            let first = cx.nodes[body]
+                .as_block()
+                .statements
+                .as_ref()
+                .expect("statements")
+                .nodes[0];
             let result = self.txv(ec).visit_node(cx, cx.nodes[first].expression());
             // If the generated `_classThis` assignment is a noop (i.e., `_classThis = _classThis`), we can
             // eliminate the expression
@@ -2298,7 +2356,12 @@ impl<'a> ClassFieldsTransformer<'a> {
                 .as_class_static_block_declaration()
                 .body
                 .expect("static block body");
-            let first = cx.nodes[body].as_block().statements.as_ref().expect("statements").nodes[0];
+            let first = cx.nodes[body]
+                .as_block()
+                .statements
+                .as_ref()
+                .expect("statements")
+                .nodes[0];
             return self.txv(ec).visit_node(cx, cx.nodes[first].expression());
         }
 
@@ -2319,12 +2382,7 @@ impl<'a> ClassFieldsTransformer<'a> {
             .as_ref()
             .map(|l| l.loc)
             .unwrap_or_default();
-        let statements = self.set_current_class_element_and_visit_statements(
-            ec,
-            cx,
-            node,
-            &stmts,
-        );
+        let statements = self.set_current_class_element_and_visit_statements(ec, cx, node, &stmts);
         let statements = ec
             .borrow_mut()
             .end_and_merge_variable_environment(cx.nodes, &statements);
@@ -2342,10 +2400,7 @@ impl<'a> ClassFieldsTransformer<'a> {
             .add_emit_flags(arrow_function, EmitFlags::NO_LEXICAL_ARGUMENTS);
         // Preserve the statement list source range so the printer can emit detached comments
         if let Some(arrow_body) = cx.nodes[arrow_function].body()
-            && let Some(stmts_list) = cx.nodes[arrow_body]
-                .as_block_mut()
-                .statements
-                .as_mut()
+            && let Some(stmts_list) = cx.nodes[arrow_body].as_block_mut().statements.as_mut()
         {
             stmts_list.loc = stmts_loc;
         }
@@ -2421,8 +2476,7 @@ impl<'a> ClassFieldsTransformer<'a> {
                 let bin = cx.nodes[node].as_binary_expression();
                 (bin.left, bin.operator_token, bin.right)
             };
-            let visited_left =
-                vref!(self, assignment_target_visitor).visit_node(cx, left);
+            let visited_left = vref!(self, assignment_target_visitor).visit_node(cx, left);
             let visited_right = self.txv(ec).visit_node(cx, right);
             let updated = ec
                 .borrow_mut()
@@ -2455,7 +2509,11 @@ impl<'a> ClassFieldsTransformer<'a> {
         if ast::is_assignment_expression(&cx.nodes[node], cx.nodes, false) {
             // 13.15.2 RS: Evaluation — see esdecorator.rs for the full comment.
             let node = self.named_evaluation(ec, cx, node, false, "");
-            debug_assert!(ast::is_assignment_expression(&cx.nodes[node], cx.nodes, false));
+            debug_assert!(ast::is_assignment_expression(
+                &cx.nodes[node],
+                cx.nodes,
+                false
+            ));
 
             let (left, operator_token, right) = {
                 let bin = cx.nodes[node].as_binary_expression();
@@ -2491,7 +2549,9 @@ impl<'a> ClassFieldsTransformer<'a> {
                         &info,
                         receiver,
                         right.expect("assignment rhs"),
-                        operator_token.map(|t| cx.nodes[t].kind).unwrap_or(Kind::EqualsToken),
+                        operator_token
+                            .map(|t| cx.nodes[t].kind)
+                            .unwrap_or(Kind::EqualsToken),
                     );
                     ec.borrow().set_original(result, node);
                     cx.nodes[result].loc = cx.nodes[node].loc;
@@ -2548,13 +2608,15 @@ impl<'a> ClassFieldsTransformer<'a> {
                                 .expect("property access name")],
                         )
                     {
-                        setter_name = Some(ec.borrow_mut().factory.new_string_literal_from_node(
-                            cx.nodes,
-                            cx.nodes[left]
-                                .as_property_access_expression()
-                                .name
-                                .expect("property access name"),
-                        ));
+                        setter_name = Some(
+                            ec.borrow_mut().factory.new_string_literal_from_node(
+                                cx.nodes,
+                                cx.nodes[left]
+                                    .as_property_access_expression()
+                                    .name
+                                    .expect("property access name"),
+                            ),
+                        );
                     }
                     if let Some(mut setter_name) = setter_name {
                         // converts `super.x = 1` into `(Reflect.set(_baseTemp, "x", _a = 1, _classTemp), _a)`
@@ -2566,8 +2628,7 @@ impl<'a> ClassFieldsTransformer<'a> {
                             if !transformer_utilities::is_simple_inlineable_expression(
                                 &cx.nodes[setter_name],
                             ) {
-                                getter_name =
-                                    ec.borrow_mut().factory.new_temp_variable(cx.nodes);
+                                getter_name = ec.borrow_mut().factory.new_temp_variable(cx.nodes);
                                 ec.borrow_mut()
                                     .add_variable_declaration(cx.nodes, getter_name);
                                 setter_name = ec.borrow_mut().factory.new_assignment_expression(
@@ -2631,11 +2692,10 @@ impl<'a> ClassFieldsTransformer<'a> {
                         cx.nodes[expression].loc = cx.nodes[node].loc;
 
                         if let Some(temp) = temp {
-                            expression = ec.borrow_mut().factory.new_comma_expression(
-                                cx.nodes,
-                                expression,
-                                temp,
-                            );
+                            expression = ec
+                                .borrow_mut()
+                                .factory
+                                .new_comma_expression(cx.nodes, expression, temp);
                             cx.nodes[expression].loc = cx.nodes[node].loc;
                         }
                         return expression;
@@ -2689,7 +2749,10 @@ impl<'a> ClassFieldsTransformer<'a> {
         right: NodeId,
         operator: Kind,
     ) -> NodeId {
-        let receiver = self.txv(ec).visit_node(cx, Some(receiver)).expect("receiver");
+        let receiver = self
+            .txv(ec)
+            .visit_node(cx, Some(receiver))
+            .expect("receiver");
         let mut right = self.txv(ec).visit_node(cx, Some(right)).expect("right");
 
         let mut receiver = receiver;
@@ -2743,7 +2806,11 @@ impl<'a> ClassFieldsTransformer<'a> {
                 )
             }
             PrivateIdentifierKind::Field => {
-                let f = if info.is_static { info.variable_name } else { None };
+                let f = if info.is_static {
+                    info.variable_name
+                } else {
+                    None
+                };
                 ec.borrow_mut().factory.new_class_private_field_set_helper(
                     cx.nodes,
                     receiver,
@@ -2863,12 +2930,7 @@ impl<'a> ClassFieldsTransformer<'a> {
     }
 
     /// `getClassFacts`.
-    fn get_class_facts(
-        &self,
-        ec: &Ec,
-        cx: &VisitorCx<'_, '_>,
-        node: NodeId,
-    ) -> ClassFacts {
+    fn get_class_facts(&self, ec: &Ec, cx: &VisitorCx<'_, '_>, node: NodeId) -> ClassFacts {
         let nodes = &*cx.nodes;
         let mut facts = CLASS_FACTS_NONE;
 
@@ -2920,19 +2982,16 @@ impl<'a> ClassFieldsTransformer<'a> {
                     || ast::is_class_static_block_declaration(&nodes[member])
                 {
                     if self.should_transform_this_in_static_initializers.get()
-                        && nodes[member].subtree_facts(nodes)
-                            & SubtreeFacts::CONTAINS_LEXICAL_THIS
+                        && nodes[member].subtree_facts(nodes) & SubtreeFacts::CONTAINS_LEXICAL_THIS
                             != SubtreeFacts::NONE
                     {
-                        facts |=
-                            CLASS_FACTS_NEEDS_SUBSTITUTION_FOR_THIS_IN_CLASS_STATIC_FIELD;
+                        facts |= CLASS_FACTS_NEEDS_SUBSTITUTION_FOR_THIS_IN_CLASS_STATIC_FIELD;
                         if facts & CLASS_FACTS_CLASS_WAS_DECORATED == 0 {
                             facts |= CLASS_FACTS_NEEDS_CLASS_CONSTRUCTOR_REFERENCE;
                         }
                     }
                     if self.should_transform_super_in_static_initializers.get()
-                        && nodes[member].subtree_facts(nodes)
-                            & SubtreeFacts::CONTAINS_LEXICAL_SUPER
+                        && nodes[member].subtree_facts(nodes) & SubtreeFacts::CONTAINS_LEXICAL_SUPER
                             != SubtreeFacts::NONE
                     {
                         if facts & CLASS_FACTS_CLASS_WAS_DECORATED == 0 {
@@ -3114,13 +3173,8 @@ impl<'a> ClassFieldsTransformer<'a> {
                 self.get_private_instance_methods_and_accessors(cx.nodes, node);
             if !private_instance_methods_and_accessors.is_empty() {
                 let name = cx.nodes[private_instance_methods_and_accessors[0]].name();
-                let weak_set_name = self.create_hoisted_variable_for_class(
-                    ec,
-                    cx,
-                    "instances",
-                    name,
-                    "",
-                );
+                let weak_set_name =
+                    self.create_hoisted_variable_for_class(ec, cx, "instances", name, "");
                 self.get_private_identifier_environment()
                     .borrow_mut()
                     .data
@@ -3138,9 +3192,7 @@ impl<'a> ClassFieldsTransformer<'a> {
             Cb::VisitClassDeclarationInner => {
                 self.visit_class_declaration_inner(ec, cx, node, facts)
             }
-            Cb::VisitClassExpressionInner => {
-                self.visit_class_expression_inner(ec, cx, node, facts)
-            }
+            Cb::VisitClassExpressionInner => self.visit_class_expression_inner(ec, cx, node, facts),
             _ => unreachable!(),
         };
 
@@ -3150,8 +3202,12 @@ impl<'a> ClassFieldsTransformer<'a> {
                 .remove(&original);
         }
         self.end_class_lexical_environment();
-        debug_assert_eq!(self.lexical_environment.borrow().len(), saved_lexical_environment_len);
-        self.current_class_container.set(saved_current_class_container);
+        debug_assert_eq!(
+            self.lexical_environment.borrow().len(),
+            saved_lexical_environment_len
+        );
+        self.current_class_container
+            .set(saved_current_class_container);
         *self.pending_expressions.borrow_mut() = saved_pending_expressions;
         Some(result)
     }
@@ -3217,9 +3273,7 @@ impl<'a> ClassFieldsTransformer<'a> {
         }
 
         if let Some(class_this) = ec.borrow().class_this(node) {
-            self.get_class_lexical_environment()
-                .borrow_mut()
-                .class_this = Some(class_this);
+            self.get_class_lexical_environment().borrow_mut().class_this = Some(class_this);
         }
 
         let is_class_with_constructor_reference =
@@ -3236,11 +3290,15 @@ impl<'a> ClassFieldsTransformer<'a> {
             self.class_aliases.borrow_mut().insert(original, alias);
         }
 
-        let modifiers = vref!(self, modifier_visitor)
-            .visit_modifiers(cx, cx.nodes[node].modifiers().cloned());
+        let modifiers =
+            vref!(self, modifier_visitor).visit_modifiers(cx, cx.nodes[node].modifiers().cloned());
         let heritage_clauses = vref!(self, heritage_clause_visitor).visit_nodes(
             cx,
-            cx.nodes[node].as_class_declaration().class_like_base.heritage_clauses.clone(),
+            cx.nodes[node]
+                .as_class_declaration()
+                .class_like_base
+                .heritage_clauses
+                .clone(),
         );
         let (members, members_prologue) = self.transform_class_members(ec, cx, node);
 
@@ -3255,8 +3313,14 @@ impl<'a> ClassFieldsTransformer<'a> {
         // Write any pending expressions from elided or moved computed property names
         if !self.pending_expressions.borrow().is_empty() {
             let pending: Vec<NodeId> = self.pending_expressions.borrow().clone();
-            let inlined = ec.borrow_mut().factory.inline_expressions(cx.nodes, &pending);
-            let stmt = ec.borrow_mut().factory.new_expression_statement(cx.nodes, inlined);
+            let inlined = ec
+                .borrow_mut()
+                .factory
+                .inline_expressions(cx.nodes, &pending);
+            let stmt = ec
+                .borrow_mut()
+                .factory
+                .new_expression_statement(cx.nodes, inlined);
             statements.push(stmt);
         }
 
@@ -3276,21 +3340,25 @@ impl<'a> ClassFieldsTransformer<'a> {
                 self.get_static_properties_and_class_static_block(cx.nodes, node);
             if !static_properties.is_empty() {
                 if name.is_none() {
-                    name = Some(ec.borrow_mut().factory.new_generated_name_for_node(
-                        cx.nodes, node,
-                    ));
+                    name = Some(
+                        ec.borrow_mut()
+                            .factory
+                            .new_generated_name_for_node(cx.nodes, node),
+                    );
                 }
                 let local_name = ec.borrow_mut().factory.get_local_name(cx.nodes, Some(node));
                 statements = self.add_property_or_class_static_block_statements(
-                    ec, cx, statements, &static_properties, local_name,
+                    ec,
+                    cx,
+                    statements,
+                    &static_properties,
+                    local_name,
                 );
             }
         }
 
-        let is_export =
-            ast::has_syntactic_modifier(&cx.nodes[node], ModifierFlags::EXPORT);
-        let is_default =
-            ast::has_syntactic_modifier(&cx.nodes[node], ModifierFlags::DEFAULT);
+        let is_export = ast::has_syntactic_modifier(&cx.nodes[node], ModifierFlags::EXPORT);
+        let is_default = ast::has_syntactic_modifier(&cx.nodes[node], ModifierFlags::DEFAULT);
 
         let mut modifiers = modifiers;
         if !statements.is_empty() && is_export && is_default {
@@ -3363,9 +3431,7 @@ impl<'a> ClassFieldsTransformer<'a> {
         let is_decorated_class_declaration = facts & CLASS_FACTS_CLASS_WAS_DECORATED != 0;
 
         if let Some(class_this) = ec.borrow().class_this(node) {
-            self.get_class_lexical_environment()
-                .borrow_mut()
-                .class_this = Some(class_this);
+            self.get_class_lexical_environment().borrow_mut().class_this = Some(class_this);
         }
 
         let mut temp: Option<NodeId> = None;
@@ -3479,11 +3545,15 @@ impl<'a> ClassFieldsTransformer<'a> {
             }
         }
 
-        let modifiers = vref!(self, modifier_visitor)
-            .visit_modifiers(cx, cx.nodes[node].modifiers().cloned());
+        let modifiers =
+            vref!(self, modifier_visitor).visit_modifiers(cx, cx.nodes[node].modifiers().cloned());
         let heritage_clauses = vref!(self, heritage_clause_visitor).visit_nodes(
             cx,
-            cx.nodes[node].as_class_expression().class_like_base.heritage_clauses.clone(),
+            cx.nodes[node]
+                .as_class_expression()
+                .class_like_base
+                .heritage_clauses
+                .clone(),
         );
         let (members, members_prologue) = self.transform_class_members(ec, cx, node);
 
@@ -3562,12 +3632,13 @@ impl<'a> ClassFieldsTransformer<'a> {
                 expressions.extend(pending);
 
                 let receiver = temp;
-                let generated = self.generate_initialized_property_expressions_or_class_static_block(
-                    ec,
-                    cx,
-                    &static_properties_or_class_static_blocks,
-                    receiver,
-                );
+                let generated = self
+                    .generate_initialized_property_expressions_or_class_static_block(
+                        ec,
+                        cx,
+                        &static_properties_or_class_static_blocks,
+                        receiver,
+                    );
                 expressions.extend(generated);
                 let cloned = ec.borrow_mut().factory.clone_node(cx.nodes, temp);
                 expressions.push(cloned);
@@ -3582,10 +3653,10 @@ impl<'a> ClassFieldsTransformer<'a> {
             if !self.pending_expressions.borrow().is_empty() {
                 let pending: Vec<NodeId> = self.pending_expressions.borrow().clone();
                 for expr in pending {
-                    let stmt = ec.borrow_mut().factory.new_expression_statement(
-                        cx.nodes,
-                        Some(expr),
-                    );
+                    let stmt = ec
+                        .borrow_mut()
+                        .factory
+                        .new_expression_statement(cx.nodes, Some(expr));
                     self.pending_statements.borrow_mut().push(stmt);
                 }
             }
@@ -3633,7 +3704,8 @@ impl<'a> ClassFieldsTransformer<'a> {
             ec.borrow()
                 .add_emit_flags(class_expression, EmitFlags::INDENTED);
             for expr in &expressions {
-                ec.borrow().add_emit_flags(*expr, EmitFlags::START_ON_NEW_LINE);
+                ec.borrow()
+                    .add_emit_flags(*expr, EmitFlags::START_ON_NEW_LINE);
             }
         }
         ec.borrow_mut()
@@ -3660,12 +3732,7 @@ impl<'a> ClassFieldsTransformer<'a> {
     }
 
     /// `visitThisExpression` — replaces Strada's substituteThisExpression.
-    fn visit_this_expression(
-        &self,
-        ec: &Ec,
-        cx: &mut VisitorCx<'_, '_>,
-        node: NodeId,
-    ) -> NodeId {
+    fn visit_this_expression(&self, ec: &Ec, cx: &mut VisitorCx<'_, '_>, node: NodeId) -> NodeId {
         if self.inside_computed_property_name.get()
             && self.should_transform_this_in_static_initializers.get()
             && self.lexical_data().is_some()
@@ -3721,9 +3788,7 @@ impl<'a> ClassFieldsTransformer<'a> {
         if self
             .should_transform_private_elements_or_class_static_blocks
             .get()
-            || self
-                .should_transform_private_static_elements_in_file
-                .get()
+            || self.should_transform_private_static_elements_in_file.get()
         {
             for member in cx.nodes[node].members().unwrap_or(&[]).to_vec() {
                 if ast::is_private_identifier_class_element_declaration(&cx.nodes[member], cx.nodes)
@@ -3817,7 +3882,11 @@ impl<'a> ClassFieldsTransformer<'a> {
         let mut synthetic_constructor: Option<NodeId> = None;
         if !members
             .as_ref()
-            .map(|m| m.nodes.iter().any(|&n| ast::is_constructor_declaration(&cx.nodes[n])))
+            .map(|m| {
+                m.nodes
+                    .iter()
+                    .any(|&n| ast::is_constructor_declaration(&cx.nodes[n]))
+            })
             .unwrap_or(false)
         {
             synthetic_constructor = self.transform_constructor(ec, cx, None, node);
@@ -3834,7 +3903,10 @@ impl<'a> ClassFieldsTransformer<'a> {
             && !self.pending_expressions.borrow().is_empty()
         {
             let pending: Vec<NodeId> = self.pending_expressions.borrow().clone();
-            let inlined = ec.borrow_mut().factory.inline_expressions(cx.nodes, &pending);
+            let inlined = ec
+                .borrow_mut()
+                .factory
+                .inline_expressions(cx.nodes, &pending);
             let mut statement = ec
                 .borrow_mut()
                 .factory
@@ -3852,7 +3924,10 @@ impl<'a> ClassFieldsTransformer<'a> {
                     .factory
                     .new_token(cx.nodes, Kind::EqualsGreaterThanToken);
                 let stmts = ec.borrow_mut().factory.new_node_list([statement]);
-                let arrow_body = ec.borrow_mut().factory.new_block(cx.nodes, Some(stmts), false);
+                let arrow_body = ec
+                    .borrow_mut()
+                    .factory
+                    .new_block(cx.nodes, Some(stmts), false);
                 let arrow = ec.borrow_mut().factory.new_arrow_function(
                     cx.nodes,
                     None,
@@ -3863,11 +3938,11 @@ impl<'a> ClassFieldsTransformer<'a> {
                     Some(eq_gt),
                     Some(arrow_body),
                 );
-                prologue = Some(ec.borrow_mut().factory.new_assignment_expression(
-                    cx.nodes,
-                    temp,
-                    arrow,
-                ));
+                prologue = Some(
+                    ec.borrow_mut()
+                        .factory
+                        .new_assignment_expression(cx.nodes, temp, arrow),
+                );
                 let args = ec.borrow_mut().factory.new_node_list(Vec::<NodeId>::new());
                 let call = ec.borrow_mut().factory.new_call_expression(
                     cx.nodes,
@@ -3877,19 +3952,23 @@ impl<'a> ClassFieldsTransformer<'a> {
                     Some(args),
                     NodeFlags::NONE,
                 );
-                statement = ec.borrow_mut().factory.new_expression_statement(
-                    cx.nodes,
-                    Some(call),
-                );
+                statement = ec
+                    .borrow_mut()
+                    .factory
+                    .new_expression_statement(cx.nodes, Some(call));
             }
 
             let stmts = ec.borrow_mut().factory.new_node_list([statement]);
-            let block = ec.borrow_mut().factory.new_block(cx.nodes, Some(stmts), false);
-            synthetic_static_block = Some(ec.borrow_mut().factory.new_class_static_block_declaration(
-                cx.nodes,
-                None,
-                Some(block),
-            ));
+            let block = ec
+                .borrow_mut()
+                .factory
+                .new_block(cx.nodes, Some(stmts), false);
+            synthetic_static_block =
+                Some(ec.borrow_mut().factory.new_class_static_block_declaration(
+                    cx.nodes,
+                    None,
+                    Some(block),
+                ));
             self.pending_expressions.borrow_mut().clear();
         }
 
@@ -3902,12 +3981,12 @@ impl<'a> ClassFieldsTransformer<'a> {
             let mut members_array: Vec<NodeId> = Vec::with_capacity(member_ids.len() + 2);
 
             // Find and preserve classThis assignment block and named evaluation helper block at the top
-            let class_this_idx = member_ids.iter().position(|&n| {
-                is_class_this_assignment_block(&ec.borrow(), cx.nodes, n)
-            });
-            let named_eval_idx = member_ids.iter().position(|&n| {
-                is_class_named_evaluation_helper_block(&ec.borrow(), cx.nodes, n)
-            });
+            let class_this_idx = member_ids
+                .iter()
+                .position(|&n| is_class_this_assignment_block(&ec.borrow(), cx.nodes, n));
+            let named_eval_idx = member_ids
+                .iter()
+                .position(|&n| is_class_named_evaluation_helper_block(&ec.borrow(), cx.nodes, n));
 
             if let Some(i) = class_this_idx {
                 members_array.push(member_ids[i]);
@@ -3942,7 +4021,10 @@ impl<'a> ClassFieldsTransformer<'a> {
     fn create_brand_check_weak_set_for_private_methods(&self, ec: &Ec, cx: &mut VisitorCx<'_, '_>) {
         let env = self.get_private_identifier_environment();
         let weak_set_name = env.borrow().data.weak_set_name;
-        debug_assert!(weak_set_name.is_some(), "weakSetName should be set in private identifier environment");
+        debug_assert!(
+            weak_set_name.is_some(),
+            "weakSetName should be set in private identifier environment"
+        );
         let weak_set_name = weak_set_name.expect("weakSetName");
 
         let weakset_ident = ec.borrow_mut().factory.new_identifier(cx.nodes, "WeakSet");
@@ -3953,11 +4035,10 @@ impl<'a> ClassFieldsTransformer<'a> {
             None,
             Some(args),
         );
-        let assignment = ec.borrow_mut().factory.new_assignment_expression(
-            cx.nodes,
-            weak_set_name,
-            new_expr,
-        );
+        let assignment =
+            ec.borrow_mut()
+                .factory
+                .new_assignment_expression(cx.nodes, weak_set_name, new_expr);
         self.add_pending_expressions(&[assignment]);
     }
 
@@ -3980,28 +4061,39 @@ impl<'a> ClassFieldsTransformer<'a> {
             == 0
         {
             if let Some(constructor) = constructor {
-                return self.txv(ec).visit_each_child(cx, constructor).or(Some(constructor));
+                return self
+                    .txv(ec)
+                    .visit_each_child(cx, constructor)
+                    .or(Some(constructor));
             }
             return None;
         }
 
-        let extends_clause_element = ast::get_class_extends_heritage_element(&cx.nodes[container], cx.nodes);
+        let extends_clause_element =
+            ast::get_class_extends_heritage_element(&cx.nodes[container], cx.nodes);
         let is_derived_class = extends_clause_element.is_some_and(|e| {
             let expr = cx.nodes[e]
                 .as_expression_with_type_arguments()
                 .expression
                 .expect("extends expression");
-            let unwrapped = ast::skip_outer_expressions(expr, ast::outer_expression_kinds::ALL, cx.nodes);
+            let unwrapped =
+                ast::skip_outer_expressions(expr, ast::outer_expression_kinds::ALL, cx.nodes);
             cx.nodes[unwrapped].kind != Kind::NullKeyword
         });
 
-        let parameters = constructor
-            .and_then(|c| self.txv(ec).visit_nodes(cx, cx.nodes[c].parameter_list().cloned()));
+        let parameters = constructor.and_then(|c| {
+            self.txv(ec)
+                .visit_nodes(cx, cx.nodes[c].parameter_list().cloned())
+        });
 
-        let body = self.transform_constructor_body(ec, cx, container, constructor, is_derived_class);
+        let body =
+            self.transform_constructor_body(ec, cx, container, constructor, is_derived_class);
         if body.is_none() {
             if let Some(constructor) = constructor {
-                return self.txv(ec).visit_each_child(cx, constructor).or(Some(constructor));
+                return self
+                    .txv(ec)
+                    .visit_each_child(cx, constructor)
+                    .or(Some(constructor));
             }
             return None;
         }
@@ -4078,7 +4170,10 @@ impl<'a> ClassFieldsTransformer<'a> {
             let (try_stmts, try_stmts_loc, multi_line) = {
                 let b = cx.nodes[try_block_node].as_block();
                 (
-                    b.statements.as_ref().map(|l| l.nodes.to_vec()).unwrap_or_default(),
+                    b.statements
+                        .as_ref()
+                        .map(|l| l.nodes.to_vec())
+                        .unwrap_or_default(),
                     b.statements.as_ref().map(|l| l.loc).unwrap_or_default(),
                     b.multi_line,
                 )
@@ -4094,17 +4189,22 @@ impl<'a> ClassFieldsTransformer<'a> {
                 initializer_statements,
                 constructor,
             );
-            let mut try_statement_list = ec.borrow_mut().factory.new_node_list(try_block_statements);
+            let mut try_statement_list =
+                ec.borrow_mut().factory.new_node_list(try_block_statements);
             try_statement_list.loc = try_stmts_loc;
 
             let catch_clause = catch_clause.and_then(|c| self.txv(ec).visit_node(cx, Some(c)));
-            let finally_block =
-                finally_block.and_then(|f| self.txv(ec).visit_node(cx, Some(f)));
+            let finally_block = finally_block.and_then(|f| self.txv(ec).visit_node(cx, Some(f)));
 
             let new_try_block = ec
                 .borrow_mut()
                 .factory
-                .update_block(cx.nodes, try_block_node, Some(try_statement_list), multi_line)
+                .update_block(
+                    cx.nodes,
+                    try_block_node,
+                    Some(try_statement_list),
+                    multi_line,
+                )
                 .unwrap_or(try_block_node);
             let updated = ec
                 .borrow_mut()
@@ -4121,7 +4221,10 @@ impl<'a> ClassFieldsTransformer<'a> {
         } else {
             let visited = self
                 .txv(ec)
-                .visit_slice(cx, &statements_in[super_statement_index..super_statement_index + 1])
+                .visit_slice(
+                    cx,
+                    &statements_in[super_statement_index..super_statement_index + 1],
+                )
                 .unwrap_or_default();
             statements_out.extend(visited);
 
@@ -4315,8 +4418,14 @@ impl<'a> ClassFieldsTransformer<'a> {
                 // Add a synthetic `super` call:
                 //
                 //  super(...arguments);
-                let arguments_ident = ec.borrow_mut().factory.new_identifier(cx.nodes, "arguments");
-                let spread = ec.borrow_mut().factory.new_spread_element(cx.nodes, Some(arguments_ident));
+                let arguments_ident = ec
+                    .borrow_mut()
+                    .factory
+                    .new_identifier(cx.nodes, "arguments");
+                let spread = ec
+                    .borrow_mut()
+                    .factory
+                    .new_spread_element(cx.nodes, Some(arguments_ident));
                 let super_keyword = ec
                     .borrow_mut()
                     .factory
@@ -4330,10 +4439,10 @@ impl<'a> ClassFieldsTransformer<'a> {
                     Some(args),
                     NodeFlags::NONE,
                 );
-                let super_call = ec.borrow_mut().factory.new_expression_statement(
-                    cx.nodes,
-                    Some(super_call_expr),
-                );
+                let super_call = ec
+                    .borrow_mut()
+                    .factory
+                    .new_expression_statement(cx.nodes, Some(super_call_expr));
                 statements.push(super_call);
             }
             statements.extend(initializer_statements.iter().copied());
@@ -4361,7 +4470,12 @@ impl<'a> ClassFieldsTransformer<'a> {
             .unwrap_or((None, None, false, tsc_core::text::TextRange::default()));
 
         let multi_line = if ctor_body.is_some()
-            && cx.nodes[ctor_body.unwrap()].as_block().statements.as_ref().map(|l| l.len()).unwrap_or(0)
+            && cx.nodes[ctor_body.unwrap()]
+                .as_block()
+                .statements
+                .as_ref()
+                .map(|l| l.len())
+                .unwrap_or(0)
                 >= statements.len()
         {
             ctor_body_multi_line
@@ -4446,15 +4560,15 @@ impl<'a> ClassFieldsTransformer<'a> {
         ec.borrow().set_original(statement, property);
         let flags = ec.borrow().emit_flags(property) & EmitFlags::NO_COMMENTS;
         ec.borrow().add_emit_flags(statement, flags);
-        ec.borrow().set_comment_range(statement, cx.nodes[property].loc);
+        ec.borrow()
+            .set_comment_range(statement, cx.nodes[property].loc);
 
         let property_original = ec.borrow().most_original(Some(property));
         if property_original.is_some_and(|o| ast::is_parameter_declaration(&cx.nodes[o])) {
-            ec.borrow().set_source_map_range(
-                statement,
-                cx.nodes[property_original.unwrap()].loc,
-            );
-            ec.borrow().add_emit_flags(statement, EmitFlags::NO_COMMENTS);
+            ec.borrow()
+                .set_source_map_range(statement, cx.nodes[property_original.unwrap()].loc);
+            ec.borrow()
+                .add_emit_flags(statement, EmitFlags::NO_COMMENTS);
         } else {
             ec.borrow().set_source_map_range(
                 statement,
@@ -4473,7 +4587,8 @@ impl<'a> ClassFieldsTransformer<'a> {
         // If the property was originally an auto-accessor, don't emit comments here since they will
         // be attached to the synthesized getter.
         if property_original.is_some_and(|o| ast::has_accessor_modifier(&cx.nodes[o])) {
-            ec.borrow().add_emit_flags(statement, EmitFlags::NO_COMMENTS);
+            ec.borrow()
+                .add_emit_flags(statement, EmitFlags::NO_COMMENTS);
         }
 
         Some(statement)
@@ -4523,10 +4638,8 @@ impl<'a> ClassFieldsTransformer<'a> {
         let saved_current_class_element = self.current_class_element.get();
         let transformed = self.transform_property_worker(ec, cx, property, receiver);
         if transformed.is_some() && ast::has_static_modifier(&cx.nodes[property]) {
-            ec.borrow().add_emit_flags(
-                transformed.unwrap(),
-                EmitFlags::NO_LEXICAL_THIS,
-            );
+            ec.borrow()
+                .add_emit_flags(transformed.unwrap(), EmitFlags::NO_LEXICAL_THIS);
         }
         if transformed.is_some()
             && ast::has_static_modifier(&cx.nodes[property])
@@ -4540,7 +4653,8 @@ impl<'a> ClassFieldsTransformer<'a> {
                 .name()
                 .map(|n| ec.borrow().source_map_range(cx.nodes, n))
                 .unwrap_or_default();
-            ec.borrow().set_source_map_range(transformed.unwrap(), name_range);
+            ec.borrow()
+                .set_source_map_range(transformed.unwrap(), name_range);
         }
         self.current_class_element.set(saved_current_class_element);
         transformed
@@ -4565,18 +4679,24 @@ impl<'a> ClassFieldsTransformer<'a> {
 
         let mut property_name = cx.nodes[property].name();
         if ast::has_accessor_modifier(&cx.nodes[property]) {
-            property_name = Some(ec.borrow_mut().factory.new_generated_private_name_for_node_ex(
-                cx.nodes,
-                cx.nodes[property].name().expect("property name"),
-                &AutoGenerateOptions {
-                    suffix: "_accessor_storage".to_string(),
-                    ..Default::default()
-                },
-            ));
+            property_name = Some(
+                ec.borrow_mut()
+                    .factory
+                    .new_generated_private_name_for_node_ex(
+                        cx.nodes,
+                        cx.nodes[property].name().expect("property name"),
+                        &AutoGenerateOptions {
+                            suffix: "_accessor_storage".to_string(),
+                            ..Default::default()
+                        },
+                    ),
+            );
         } else if property_name.is_some_and(|n| ast::is_computed_property_name(&cx.nodes[n]))
             && !cx.nodes[property_name.unwrap()]
                 .expression()
-                .is_some_and(|e| transformer_utilities::is_simple_inlineable_expression(&cx.nodes[e]))
+                .is_some_and(|e| {
+                    transformer_utilities::is_simple_inlineable_expression(&cx.nodes[e])
+                })
         {
             let name = property_name.unwrap();
             let generated = ec
@@ -4602,12 +4722,12 @@ impl<'a> ClassFieldsTransformer<'a> {
             if let Some(info) = info {
                 if info.borrow().kind == PrivateIdentifierKind::Field {
                     if !info.borrow().is_static {
-                        let initializer =
-                            self.txv(ec).visit_node(cx, cx.nodes[property].initializer());
-                        let initializer = initializer
-                            .unwrap_or_else(|| {
-                                ec.borrow_mut().factory.new_void_zero_expression(cx.nodes)
-                            });
+                        let initializer = self
+                            .txv(ec)
+                            .visit_node(cx, cx.nodes[property].initializer());
+                        let initializer = initializer.unwrap_or_else(|| {
+                            ec.borrow_mut().factory.new_void_zero_expression(cx.nodes)
+                        });
                         let receiver = self
                             .txv(ec)
                             .visit_node(cx, Some(receiver))
@@ -4625,7 +4745,9 @@ impl<'a> ClassFieldsTransformer<'a> {
                         );
                         return Some(call);
                     }
-                    let initializer = self.txv(ec).visit_node(cx, cx.nodes[property].initializer());
+                    let initializer = self
+                        .txv(ec)
+                        .visit_node(cx, cx.nodes[property].initializer());
                     return Some(create_private_static_field_initializer(
                         ec,
                         cx,
@@ -4647,30 +4769,39 @@ impl<'a> ClassFieldsTransformer<'a> {
 
         // TODO: can we get rid of this original checking and better coordinate with runtimesyntax?
         if ast::has_abstract_modifier(
-            &cx.nodes[ec.borrow().most_original(Some(property)).unwrap_or(property)],
+            &cx.nodes[ec
+                .borrow()
+                .most_original(Some(property))
+                .unwrap_or(property)],
         ) {
             return None;
         }
 
-        let mut initializer = self.txv(ec).visit_node(cx, cx.nodes[property].initializer());
+        let mut initializer = self
+            .txv(ec)
+            .visit_node(cx, cx.nodes[property].initializer());
         let property_original = ec.borrow().most_original(Some(property));
         if property_original.is_some_and(|o| {
             ast::is_parameter_property_declaration(
                 &cx.nodes[o],
-                cx.nodes[o].parent.map(|p| &cx.nodes[p]).unwrap_or(&cx.nodes[o]),
+                cx.nodes[o]
+                    .parent
+                    .map(|p| &cx.nodes[p])
+                    .unwrap_or(&cx.nodes[o]),
             )
         }) && property_name.is_some_and(|n| ast::is_identifier(&cx.nodes[n]))
         {
             // A parameter-property declaration always overrides the initializer. The only time a
             // parameter-property declaration *should* have an initializer is when decorators have
             // added initializers that need to run before any other initializer.
-            let local_name = ec.borrow_mut().factory.clone_node(cx.nodes, property_name.unwrap());
+            let local_name = ec
+                .borrow_mut()
+                .factory
+                .clone_node(cx.nodes, property_name.unwrap());
             if let Some(mut unwrapped) = initializer {
                 // unwrap `(__runInitializers(this, _instanceExtraInitializers), void 0)`
                 if ast::is_parenthesized_expression(&cx.nodes[unwrapped]) {
-                    let inner = cx.nodes[unwrapped]
-                        .as_parenthesized_expression()
-                        .expression;
+                    let inner = cx.nodes[unwrapped].as_parenthesized_expression().expression;
                     if let Some(inner) = inner
                         && ast::is_comma_expression(&cx.nodes[inner], cx.nodes)
                     {
@@ -4679,7 +4810,9 @@ impl<'a> ClassFieldsTransformer<'a> {
                             (b.left, b.right)
                         };
                         if let (Some(l), Some(r)) = (l, r)
-                            && ec.borrow().is_call_to_helper(cx.nodes, l, "__runInitializers")
+                            && ec
+                                .borrow()
+                                .is_call_to_helper(cx.nodes, l, "__runInitializers")
                             && ast::is_void_expression(&cx.nodes[r])
                             && cx.nodes[r]
                                 .expression()
@@ -4704,7 +4837,8 @@ impl<'a> ClassFieldsTransformer<'a> {
                 ec.borrow()
                     .set_source_map_range(local_name, cx.nodes[orig_name].loc);
             }
-            ec.borrow().add_emit_flags(local_name, EmitFlags::NO_COMMENTS);
+            ec.borrow()
+                .add_emit_flags(local_name, EmitFlags::NO_COMMENTS);
         } else if initializer.is_none() {
             initializer = Some(ec.borrow_mut().factory.new_void_zero_expression(cx.nodes));
         }
@@ -4732,7 +4866,10 @@ impl<'a> ClassFieldsTransformer<'a> {
         let name = if property_name.is_some_and(|n| ast::is_computed_property_name(&cx.nodes[n])) {
             cx.nodes[property_name.unwrap()].expression().unwrap()
         } else if property_name.is_some_and(|n| ast::is_identifier(&cx.nodes[n])) {
-            let text = cx.nodes[property_name.unwrap()].as_identifier().text.clone();
+            let text = cx.nodes[property_name.unwrap()]
+                .as_identifier()
+                .text
+                .clone();
             ec.borrow_mut()
                 .factory
                 .new_string_literal(cx.nodes, &text, TokenFlags::NONE)
@@ -4762,17 +4899,15 @@ impl<'a> ClassFieldsTransformer<'a> {
             descriptor_props.push(prop);
         }
         let props = ec.borrow_mut().factory.new_node_list(descriptor_props);
-        let descriptor = ec.borrow_mut().factory.new_object_literal_expression(
-            cx.nodes,
-            Some(props),
-            true,
-        );
-        Some(ec.borrow_mut().factory.new_object_define_property_call(
-            cx.nodes,
-            receiver,
-            name,
-            descriptor,
-        ))
+        let descriptor =
+            ec.borrow_mut()
+                .factory
+                .new_object_literal_expression(cx.nodes, Some(props), true);
+        Some(
+            ec.borrow_mut()
+                .factory
+                .new_object_define_property_call(cx.nodes, receiver, name, descriptor),
+        )
     }
 
     /// `addInstanceMethodStatements` — generates brand-check initializer for
@@ -4795,7 +4930,10 @@ impl<'a> ClassFieldsTransformer<'a> {
 
         let env = self.get_private_identifier_environment();
         let weak_set_name = env.borrow().data.weak_set_name;
-        debug_assert!(weak_set_name.is_some(), "weakSetName should be set in private identifier environment");
+        debug_assert!(
+            weak_set_name.is_some(),
+            "weakSetName should be set in private identifier environment"
+        );
         let weak_set_name = weak_set_name.expect("weakSetName");
 
         let add_ident = ec.borrow_mut().factory.new_identifier(cx.nodes, "add");
@@ -4805,7 +4943,10 @@ impl<'a> ClassFieldsTransformer<'a> {
             add_ident,
             vec![receiver],
         );
-        let stmt = ec.borrow_mut().factory.new_expression_statement(cx.nodes, Some(call));
+        let stmt = ec
+            .borrow_mut()
+            .factory
+            .new_expression_statement(cx.nodes, Some(call));
         statements.push(stmt);
         statements
     }
@@ -4901,9 +5042,11 @@ impl<'a> ClassFieldsTransformer<'a> {
                 .factory
                 .new_generated_name_for_node(cx.nodes, name);
             if self.requires_block_scoped_var(cx) {
-                ec.borrow_mut().add_lexical_declaration(cx.nodes, generated_name);
+                ec.borrow_mut()
+                    .add_lexical_declaration(cx.nodes, generated_name);
             } else {
-                ec.borrow_mut().add_variable_declaration(cx.nodes, generated_name);
+                ec.borrow_mut()
+                    .add_variable_declaration(cx.nodes, generated_name);
             }
             return Some(ec.borrow_mut().factory.new_assignment_expression(
                 cx.nodes,
@@ -4930,9 +5073,7 @@ impl<'a> ClassFieldsTransformer<'a> {
     }
 
     /// `getClassLexicalEnvironment`.
-    fn get_class_lexical_environment(
-        &self,
-    ) -> Rc<RefCell<ClassLexicalEnvironment>> {
+    fn get_class_lexical_environment(&self) -> Rc<RefCell<ClassLexicalEnvironment>> {
         let mut stack = self.lexical_environment.borrow_mut();
         let frame = stack.last_mut().expect("lexicalEnvironment");
         if frame.data.is_none() {
@@ -4953,7 +5094,9 @@ impl<'a> ClassFieldsTransformer<'a> {
 
     /// `addPendingExpressions`.
     fn add_pending_expressions(&self, exprs: &[NodeId]) {
-        self.pending_expressions.borrow_mut().extend_from_slice(exprs);
+        self.pending_expressions
+            .borrow_mut()
+            .extend_from_slice(exprs);
     }
 
     /// `addPrivateIdentifierPropertyDeclarationToEnvironment`.
@@ -4971,10 +5114,7 @@ impl<'a> ClassFieldsTransformer<'a> {
         let is_valid = !self.is_reserved_private_name(ec, cx, name) && previous_info.is_none();
 
         if is_static {
-            let brand_check_identifier = lex
-                .borrow()
-                .class_this
-                .or(lex.borrow().class_constructor);
+            let brand_check_identifier = lex.borrow().class_this.or(lex.borrow().class_constructor);
             let variable_name = self.create_hoisted_variable_for_private_name(ec, cx, name, "");
             self.set_private_identifier(
                 ec,
@@ -5029,11 +5169,17 @@ impl<'a> ClassFieldsTransformer<'a> {
         let env = self.get_private_identifier_environment();
         if is_static {
             let b = lex.borrow().class_this.or(lex.borrow().class_constructor);
-            debug_assert!(b.is_some(), "classConstructor should be set in private identifier environment");
+            debug_assert!(
+                b.is_some(),
+                "classConstructor should be set in private identifier environment"
+            );
             b
         } else {
             let b = env.borrow().data.weak_set_name;
-            debug_assert!(b.is_some(), "weakSetName should be set in private identifier environment");
+            debug_assert!(
+                b.is_some(),
+                "weakSetName should be set in private identifier environment"
+            );
             b
         }
     }
@@ -5191,9 +5337,7 @@ impl<'a> ClassFieldsTransformer<'a> {
                 ec, cx, name, is_static, is_valid,
             );
         } else if ast::is_property_declaration(&cx.nodes[node]) {
-            self.add_private_identifier_property_declaration_to_environment(
-                ec, cx, node, name,
-            );
+            self.add_private_identifier_property_declaration_to_environment(ec, cx, node, name);
         } else if ast::is_method_declaration(&cx.nodes[node]) {
             self.add_private_identifier_method_to_environment(ec, cx, name, is_static, is_valid);
         } else if ast::is_get_accessor_declaration(&cx.nodes[node]) {
@@ -5317,9 +5461,11 @@ impl<'a> ClassFieldsTransformer<'a> {
             )
         };
         if self.requires_block_scoped_var(cx) {
-            ec.borrow_mut().add_lexical_declaration(cx.nodes, identifier);
+            ec.borrow_mut()
+                .add_lexical_declaration(cx.nodes, identifier);
         } else {
-            ec.borrow_mut().add_variable_declaration(cx.nodes, identifier);
+            ec.borrow_mut()
+                .add_variable_declaration(cx.nodes, identifier);
         }
         identifier
     }
@@ -5351,9 +5497,11 @@ impl<'a> ClassFieldsTransformer<'a> {
             },
         );
         if self.requires_block_scoped_var(cx) {
-            ec.borrow_mut().add_lexical_declaration(cx.nodes, identifier);
+            ec.borrow_mut()
+                .add_lexical_declaration(cx.nodes, identifier);
         } else {
-            ec.borrow_mut().add_variable_declaration(cx.nodes, identifier);
+            ec.borrow_mut()
+                .add_variable_declaration(cx.nodes, identifier);
         }
         identifier
     }
@@ -5517,17 +5665,25 @@ impl<'a> ClassFieldsTransformer<'a> {
             (pa.named_member_base.name, pa.initializer)
         };
         let name = self.txv(ec).visit_node(cx, name);
-        if initializer.is_some_and(|i| ast::is_assignment_expression(&cx.nodes[i], cx.nodes, true)) {
+        if initializer.is_some_and(|i| ast::is_assignment_expression(&cx.nodes[i], cx.nodes, true))
+        {
             let assign_elem = self.visit_assignment_element(ec, cx, initializer.unwrap());
             return ec
                 .borrow_mut()
                 .factory
-                .update_property_assignment(cx.nodes, node, None, name, None, None, Some(assign_elem))
+                .update_property_assignment(
+                    cx.nodes,
+                    node,
+                    None,
+                    name,
+                    None,
+                    None,
+                    Some(assign_elem),
+                )
                 .unwrap_or(node);
         }
         if initializer.is_some_and(|i| ast::is_left_hand_side_expression(&cx.nodes[i], cx.nodes)) {
-            let target =
-                self.visit_destructuring_assignment_target(ec, cx, initializer.unwrap());
+            let target = self.visit_destructuring_assignment_target(ec, cx, initializer.unwrap());
             return ec
                 .borrow_mut()
                 .factory
@@ -5603,8 +5759,7 @@ impl<'a> ClassFieldsTransformer<'a> {
                 let ale = cx.nodes[node].as_array_literal_expression();
                 (ale.elements.clone(), ale.multi_line)
             };
-            let elements =
-                vref!(self, array_assignment_element_visitor).visit_nodes(cx, elements);
+            let elements = vref!(self, array_assignment_element_visitor).visit_nodes(cx, elements);
             return ec
                 .borrow_mut()
                 .factory
@@ -5617,8 +5772,7 @@ impl<'a> ClassFieldsTransformer<'a> {
             let ole = cx.nodes[node].as_object_literal_expression();
             (ole.properties.clone(), ole.multi_line)
         };
-        let properties =
-            vref!(self, object_assignment_element_visitor).visit_nodes(cx, properties);
+        let properties = vref!(self, object_assignment_element_visitor).visit_nodes(cx, properties);
         ec.borrow_mut()
             .factory
             .update_object_literal_expression(cx.nodes, node, properties, multi_line)
@@ -5627,7 +5781,8 @@ impl<'a> ClassFieldsTransformer<'a> {
 
     /// `isReservedPrivateName`.
     fn is_reserved_private_name(&self, ec: &Ec, cx: &VisitorCx<'_, '_>, node: NodeId) -> bool {
-        !(ast::is_private_identifier(&cx.nodes[node]) && ec.borrow().has_auto_generate_info(Some(node)))
+        !(ast::is_private_identifier(&cx.nodes[node])
+            && ec.borrow().has_auto_generate_info(Some(node)))
             && cx.nodes[node].text(cx.nodes) == "#constructor"
     }
 
@@ -5694,10 +5849,10 @@ impl<'a> ClassFieldsTransformer<'a> {
                     this_arg,
                     expression.unwrap(),
                 );
-                let paren = ec.borrow_mut().factory.new_parenthesized_expression(
-                    cx.nodes,
-                    Some(assign),
-                );
+                let paren = ec
+                    .borrow_mut()
+                    .factory
+                    .new_parenthesized_expression(cx.nodes, Some(assign));
                 let target = ec.borrow_mut().factory.new_property_access_expression(
                     cx.nodes,
                     Some(paren),
@@ -5724,14 +5879,17 @@ impl<'a> ClassFieldsTransformer<'a> {
         name: Option<NodeId>,
         receiver: NodeId,
     ) -> NodeId {
-        let backing_field_name = ec.borrow_mut().factory.new_generated_private_name_for_node_ex(
-            cx.nodes,
-            cx.nodes[node].name().expect("node name"),
-            &AutoGenerateOptions {
-                suffix: "_accessor_storage".to_string(),
-                ..Default::default()
-            },
-        );
+        let backing_field_name = ec
+            .borrow_mut()
+            .factory
+            .new_generated_private_name_for_node_ex(
+                cx.nodes,
+                cx.nodes[node].name().expect("node name"),
+                &AutoGenerateOptions {
+                    suffix: "_accessor_storage".to_string(),
+                    ..Default::default()
+                },
+            );
         let return_expr = ec.borrow_mut().factory.new_property_access_expression(
             cx.nodes,
             Some(receiver),
@@ -5744,7 +5902,10 @@ impl<'a> ClassFieldsTransformer<'a> {
             .factory
             .new_return_statement(cx.nodes, Some(return_expr));
         let stmts = ec.borrow_mut().factory.new_node_list([return_stmt]);
-        let body = ec.borrow_mut().factory.new_block(cx.nodes, Some(stmts), false);
+        let body = ec
+            .borrow_mut()
+            .factory
+            .new_block(cx.nodes, Some(stmts), false);
         let params = ec.borrow_mut().factory.new_node_list(Vec::<NodeId>::new());
         ec.borrow_mut().factory.new_get_accessor_declaration(
             cx.nodes,
@@ -5769,14 +5930,17 @@ impl<'a> ClassFieldsTransformer<'a> {
         name: Option<NodeId>,
         receiver: NodeId,
     ) -> NodeId {
-        let backing_field_name = ec.borrow_mut().factory.new_generated_private_name_for_node_ex(
-            cx.nodes,
-            cx.nodes[node].name().expect("node name"),
-            &AutoGenerateOptions {
-                suffix: "_accessor_storage".to_string(),
-                ..Default::default()
-            },
-        );
+        let backing_field_name = ec
+            .borrow_mut()
+            .factory
+            .new_generated_private_name_for_node_ex(
+                cx.nodes,
+                cx.nodes[node].name().expect("node name"),
+                &AutoGenerateOptions {
+                    suffix: "_accessor_storage".to_string(),
+                    ..Default::default()
+                },
+            );
         let value_ident = ec.borrow_mut().factory.new_identifier(cx.nodes, "value");
         let value_param = ec.borrow_mut().factory.new_parameter_declaration(
             cx.nodes,
@@ -5795,17 +5959,19 @@ impl<'a> ClassFieldsTransformer<'a> {
             NodeFlags::NONE,
         );
         let value_ident = ec.borrow_mut().factory.new_identifier(cx.nodes, "value");
-        let assign_expr = ec.borrow_mut().factory.new_assignment_expression(
-            cx.nodes,
-            access,
-            value_ident,
-        );
+        let assign_expr =
+            ec.borrow_mut()
+                .factory
+                .new_assignment_expression(cx.nodes, access, value_ident);
         let expr_stmt = ec
             .borrow_mut()
             .factory
             .new_expression_statement(cx.nodes, Some(assign_expr));
         let stmts = ec.borrow_mut().factory.new_node_list([expr_stmt]);
-        let body = ec.borrow_mut().factory.new_block(cx.nodes, Some(stmts), false);
+        let body = ec
+            .borrow_mut()
+            .factory
+            .new_block(cx.nodes, Some(stmts), false);
         let params = ec.borrow_mut().factory.new_node_list([value_param]);
         ec.borrow_mut().factory.new_set_accessor_declaration(
             cx.nodes,
@@ -5864,7 +6030,11 @@ fn should_be_captured_in_temp_variable(nodes: &[tsc_ast::Node], node: NodeId) ->
     let target = ast::skip_parentheses(node, nodes);
     !matches!(
         nodes[target].kind,
-        Kind::Identifier | Kind::ThisKeyword | Kind::NumericLiteral | Kind::BigIntLiteral | Kind::StringLiteral
+        Kind::Identifier
+            | Kind::ThisKeyword
+            | Kind::NumericLiteral
+            | Kind::BigIntLiteral
+            | Kind::StringLiteral
     )
 }
 
@@ -5888,28 +6058,29 @@ fn create_member_access_for_property_name(
         cx.nodes[access].loc = cx.nodes[location].loc;
         return access;
     }
-    let expression = if ast::is_identifier(&cx.nodes[name])
-        || ast::is_private_identifier(&cx.nodes[name])
-    {
-        ec.borrow_mut().factory.new_property_access_expression(
-            cx.nodes,
-            Some(receiver),
-            None,
-            Some(name),
-            NodeFlags::NONE,
-        )
-    } else {
-        // string or numeric literal
-        ec.borrow_mut().factory.new_element_access_expression(
-            cx.nodes,
-            Some(receiver),
-            None,
-            Some(name),
-            NodeFlags::NONE,
-        )
-    };
-    ec.borrow().set_comment_range(expression, cx.nodes[name].loc);
-    ec.borrow().set_source_map_range(expression, cx.nodes[name].loc);
+    let expression =
+        if ast::is_identifier(&cx.nodes[name]) || ast::is_private_identifier(&cx.nodes[name]) {
+            ec.borrow_mut().factory.new_property_access_expression(
+                cx.nodes,
+                Some(receiver),
+                None,
+                Some(name),
+                NodeFlags::NONE,
+            )
+        } else {
+            // string or numeric literal
+            ec.borrow_mut().factory.new_element_access_expression(
+                cx.nodes,
+                Some(receiver),
+                None,
+                Some(name),
+                NodeFlags::NONE,
+            )
+        };
+    ec.borrow()
+        .set_comment_range(expression, cx.nodes[name].loc);
+    ec.borrow()
+        .set_source_map_range(expression, cx.nodes[name].loc);
     ec.borrow()
         .add_emit_flags(expression, EmitFlags::NO_NESTED_SOURCE_MAPS);
     expression
@@ -5922,8 +6093,8 @@ fn create_private_static_field_initializer(
     variable_name: NodeId,
     initializer: Option<NodeId>,
 ) -> NodeId {
-    let initializer = initializer
-        .unwrap_or_else(|| ec.borrow_mut().factory.new_void_zero_expression(cx.nodes));
+    let initializer =
+        initializer.unwrap_or_else(|| ec.borrow_mut().factory.new_void_zero_expression(cx.nodes));
     let value_ident = ec.borrow_mut().factory.new_identifier(cx.nodes, "value");
     let prop = ec.borrow_mut().factory.new_property_assignment(
         cx.nodes,
@@ -5934,11 +6105,10 @@ fn create_private_static_field_initializer(
         Some(initializer),
     );
     let props = ec.borrow_mut().factory.new_node_list([prop]);
-    let obj = ec.borrow_mut().factory.new_object_literal_expression(
-        cx.nodes,
-        Some(props),
-        false,
-    );
+    let obj = ec
+        .borrow_mut()
+        .factory
+        .new_object_literal_expression(cx.nodes, Some(props), false);
     ec.borrow_mut()
         .factory
         .new_assignment_expression(cx.nodes, variable_name, obj)
@@ -5948,8 +6118,7 @@ fn create_private_static_field_initializer(
 /// expressions.
 fn flatten_comma_list(nodes: &[tsc_ast::Node], node: NodeId) -> Vec<NodeId> {
     fn worker(nodes: &[tsc_ast::Node], node: NodeId, out: &mut Vec<NodeId>) {
-        if ast::is_parenthesized_expression(&nodes[node])
-            && ast::node_is_synthesized(&nodes[node])
+        if ast::is_parenthesized_expression(&nodes[node]) && ast::node_is_synthesized(&nodes[node])
         {
             if let Some(e) = nodes[node].expression() {
                 worker(nodes, e, out);
@@ -6019,10 +6188,10 @@ pub(crate) fn expand_pre_or_postfix_increment_or_decrement_expression(
 
     let temp = ec.borrow_mut().factory.new_temp_variable(cx.nodes);
     ec.borrow_mut().add_variable_declaration(cx.nodes, temp);
-    let mut expression =
-        ec.borrow_mut()
-            .factory
-            .new_assignment_expression(cx.nodes, temp, expression);
+    let mut expression = ec
+        .borrow_mut()
+        .factory
+        .new_assignment_expression(cx.nodes, temp, expression);
     if let Some(operand) = operand {
         cx.nodes[expression].loc = cx.nodes[operand].loc;
     }
@@ -6039,19 +6208,24 @@ pub(crate) fn expand_pre_or_postfix_increment_or_decrement_expression(
     cx.nodes[operation].loc = cx.nodes[node].loc;
 
     if let Some(result_variable) = result_variable {
-        operation = ec.borrow_mut().factory.new_assignment_expression(
-            cx.nodes,
-            result_variable,
-            operation,
-        );
+        operation =
+            ec.borrow_mut()
+                .factory
+                .new_assignment_expression(cx.nodes, result_variable, operation);
         cx.nodes[operation].loc = cx.nodes[node].loc;
     }
 
-    expression = ec.borrow_mut().factory.new_comma_expression(cx.nodes, expression, operation);
+    expression = ec
+        .borrow_mut()
+        .factory
+        .new_comma_expression(cx.nodes, expression, operation);
     cx.nodes[expression].loc = cx.nodes[node].loc;
 
     if !is_prefix {
-        expression = ec.borrow_mut().factory.new_comma_expression(cx.nodes, expression, temp);
+        expression = ec
+            .borrow_mut()
+            .factory
+            .new_comma_expression(cx.nodes, expression, temp);
         cx.nodes[expression].loc = cx.nodes[node].loc;
     }
 
@@ -6143,8 +6317,14 @@ pub(crate) fn new_class_fields_transformer<'a>(
         install!(assignment_target_visitor, visit_assignment_target);
         install!(class_element_visitor, visit_class_element);
         install!(accessor_field_result_visitor, visit_accessor_field_result);
-        install!(array_assignment_element_visitor, visit_array_assignment_element);
-        install!(object_assignment_element_visitor, visit_object_assignment_element);
+        install!(
+            array_assignment_element_visitor,
+            visit_array_assignment_element
+        );
+        install!(
+            object_assignment_element_visitor,
+            visit_object_assignment_element
+        );
         install!(substitution_visitor, visit_for_substitution_opt);
         Box::new(
             move |_v: &NodeVisitor<'a>, cx: &mut VisitorCx<'_, '_>, node: NodeId| {

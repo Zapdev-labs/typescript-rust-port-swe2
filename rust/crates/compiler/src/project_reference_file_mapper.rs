@@ -98,9 +98,7 @@ impl ResolvedProjectReference for ParsedCommandLineRedirect {
 /// let redirect = redirect.as_deref().map(ParsedCommandLineRedirect::new);
 /// resolver.resolve_module_name(name, file, mode, redirect.as_ref().map(|r| r as &dyn ResolvedProjectReference))
 /// ```
-pub fn as_resolved_project_reference(
-    config: &Arc<ParsedCommandLine>,
-) -> ParsedCommandLineRedirect {
+pub fn as_resolved_project_reference(config: &Arc<ParsedCommandLine>) -> ParsedCommandLineRedirect {
     ParsedCommandLineRedirect::new(config)
 }
 
@@ -118,8 +116,12 @@ pub fn compiler_options_arc(
 
 impl ProjectReferenceFileMapper {
     /// `(mapper *projectReferenceFileMapper) resolutionHost`.
-    pub fn resolution_host(self: &Arc<Self>, host: Arc<dyn ResolutionHost>) -> Arc<dyn ResolutionHost> {
-        if self.use_source_of_project_reference && !self.output_dts_to_project_reference.is_empty() {
+    pub fn resolution_host(
+        self: &Arc<Self>,
+        host: Arc<dyn ResolutionHost>,
+    ) -> Arc<dyn ResolutionHost> {
+        if self.use_source_of_project_reference && !self.output_dts_to_project_reference.is_empty()
+        {
             return new_project_reference_dts_faking_host(host, self.as_ref());
         }
         host
@@ -142,10 +144,7 @@ impl ProjectReferenceFileMapper {
             // Map to source file from project reference
             let mut source = self.get_project_reference_from_output_dts(file.path_key());
             if source.is_none() {
-                source = self
-                    .realpath_dts_to_source
-                    .load(file.path_key())
-                    .flatten();
+                source = self.realpath_dts_to_source.load(file.path_key()).flatten();
             }
             if let Some(source) = source {
                 return (source.source.clone(), source.source_path.clone());
@@ -211,12 +210,12 @@ impl ProjectReferenceFileMapper {
         file: &dyn HasFileName,
     ) -> Arc<tsc_core::options_generated::CompilerOptions> {
         let redirect = self.get_redirect_parsed_command_line_for_resolution(file);
-        let redirect = redirect
-            .as_ref()
-            .map(|r| as_resolved_project_reference(r));
+        let redirect = redirect.as_ref().map(|r| as_resolved_project_reference(r));
         tsc_module::get_compiler_options_with_redirect(
             &compiler_options_arc(&self.config),
-            redirect.as_ref().map(|r| r as &dyn ResolvedProjectReference),
+            redirect
+                .as_ref()
+                .map(|r| r as &dyn ResolvedProjectReference),
         )
     }
 
@@ -247,11 +246,7 @@ impl ProjectReferenceFileMapper {
             );
         }
 
-        if let Some(realpath_dts_to_source) = self
-            .realpath_dts_to_source
-            .load(path)
-            .flatten()
-        {
+        if let Some(realpath_dts_to_source) = self.realpath_dts_to_source.load(path).flatten() {
             return (
                 Some(realpath_dts_to_source.resolved.clone()),
                 realpath_dts_to_source.source.clone(),
@@ -275,7 +270,12 @@ impl ProjectReferenceFileMapper {
     /// `(mapper *projectReferenceFileMapper) rangeResolvedProjectReference`.
     pub fn range_resolved_project_reference(
         &self,
-        f: &mut dyn FnMut(&PathKey, Option<&Arc<ParsedCommandLine>>, &Arc<ParsedCommandLine>, usize) -> bool,
+        f: &mut dyn FnMut(
+            &PathKey,
+            Option<&Arc<ParsedCommandLine>>,
+            &Arc<ParsedCommandLine>,
+            usize,
+        ) -> bool,
     ) -> bool {
         if self.config.project_references().is_empty() {
             return false;
@@ -296,7 +296,12 @@ impl ProjectReferenceFileMapper {
     fn range_resolved_reference_worker(
         &self,
         references: &[PathKey],
-        f: &mut dyn FnMut(&PathKey, Option<&Arc<ParsedCommandLine>>, &Arc<ParsedCommandLine>, usize) -> bool,
+        f: &mut dyn FnMut(
+            &PathKey,
+            Option<&Arc<ParsedCommandLine>>,
+            &Arc<ParsedCommandLine>,
+            usize,
+        ) -> bool,
         parent: &Arc<ParsedCommandLine>,
         seen_ref: &mut HashSet<PathKey>,
     ) -> bool {
@@ -326,7 +331,12 @@ impl ProjectReferenceFileMapper {
     pub fn range_resolved_project_reference_in_child_config(
         &self,
         child_config: &Arc<ParsedCommandLine>,
-        f: &mut dyn FnMut(&PathKey, Option<&Arc<ParsedCommandLine>>, &Arc<ParsedCommandLine>, usize) -> bool,
+        f: &mut dyn FnMut(
+            &PathKey,
+            Option<&Arc<ParsedCommandLine>>,
+            &Arc<ParsedCommandLine>,
+            usize,
+        ) -> bool,
     ) -> bool {
         let Some(config_file) = &child_config.config_file else {
             return false;
@@ -386,12 +396,12 @@ impl ProjectReferenceFileMapperBuilder {
         file: &dyn HasFileName,
     ) -> Arc<tsc_core::options_generated::CompilerOptions> {
         let (redirect, _) = self.get_redirect_for_resolution(file);
-        let redirect = redirect
-            .as_ref()
-            .map(|r| as_resolved_project_reference(r));
+        let redirect = redirect.as_ref().map(|r| as_resolved_project_reference(r));
         tsc_module::get_compiler_options_with_redirect(
             &compiler_options_arc(&self.mapper.config),
-            redirect.as_ref().map(|r| r as &dyn ResolvedProjectReference),
+            redirect
+                .as_ref()
+                .map(|r| r as &dyn ResolvedProjectReference),
         )
     }
 
@@ -410,18 +420,19 @@ impl ProjectReferenceFileMapperBuilder {
         // Note:: Currently we try the real path only if the
         // file is from node_modules to avoid having to run real path on all file paths
         let path = file.path_key().clone();
-        if self
-            .mapper
-            .realpath_dts_to_source
-            .load(&path)
-            .is_some()
-        {
+        if self.mapper.realpath_dts_to_source.load(&path).is_some() {
             return;
         }
-        if !self.mapper.config.resolved_project_reference_paths().is_empty()
-            && self.mapper.config.compiler_options().is_some_and(|o| {
-                o.preserve_symlinks == tsc_core::tristate::TS_TRUE
-            })
+        if !self
+            .mapper
+            .config
+            .resolved_project_reference_paths()
+            .is_empty()
+            && self
+                .mapper
+                .config
+                .compiler_options()
+                .is_some_and(|o| o.preserve_symlinks == tsc_core::tristate::TS_TRUE)
         {
             let file_name = file.file_name();
             // `Path(file.FileName())` — the normalized path key.

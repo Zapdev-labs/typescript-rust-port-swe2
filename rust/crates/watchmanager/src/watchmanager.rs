@@ -196,9 +196,7 @@ impl WatchManager {
     fn on_watch_events(&self, events: Vec<WatchEvent>, err: Option<fswatch::Error>) {
         if let Some(err) = err {
             if err.is(&fswatch::ERR_OVERFLOW) {
-                self.dlog(format_args!(
-                    "[watch] event overflow, triggering rebuild\n"
-                ));
+                self.dlog(format_args!("[watch] event overflow, triggering rebuild\n"));
                 self.changed.lock().unwrap().overflow = true;
                 self.signal_do_cycle();
                 return;
@@ -227,12 +225,9 @@ impl WatchManager {
                 self.dlog(format_args!("{msg}"));
             }
             let mut changed = self.changed.lock().unwrap();
-            let paths = changed
-                .paths
-                .get_or_insert_with(|| FxHashMap::with_capacity_and_hasher(
-                    events.len(),
-                    Default::default(),
-                ));
+            let paths = changed.paths.get_or_insert_with(|| {
+                FxHashMap::with_capacity_and_hasher(events.len(), Default::default())
+            });
             for e in events {
                 paths.insert(e.path, e.kind);
             }
@@ -317,7 +312,10 @@ impl WatchManager {
             // Only directories on disk can be watched. The embedded libs
             // (bundled:///libs) exist in the FS but not on disk.
             if !tspath::is_rooted_disk_path(dir.as_string()) {
-                self.dlog(format_args!("[watch] not a disk path: {}\n", dir.as_string()));
+                self.dlog(format_args!(
+                    "[watch] not a disk path: {}\n",
+                    dir.as_string()
+                ));
                 continue;
             }
             let mut watch_dir = dir.clone();
@@ -395,7 +393,9 @@ impl WatchManager {
                     updates.into_iter().zip(entries.iter()).zip(closers)
                 {
                     *entry.closer.lock().unwrap() = Some(closer);
-                    inner.watched_dirs.insert(update.key.clone(), Arc::clone(entry));
+                    inner
+                        .watched_dirs
+                        .insert(update.key.clone(), Arc::clone(entry));
                 }
                 Ok(())
             }
@@ -527,17 +527,19 @@ impl WatchManagerLock<'_> {
                 wd.close();
                 removals.borrow_mut().push(key.clone());
             }),
-            Some(&mut |key: &PathKey, wd: &Arc<WatchedDir>, desired: &DirWatchUpdate| {
-                wm.dlog(format_args!(
-                    "[watch] recreating dir watch {} (recursive {}→{})\n",
-                    wd.dir.as_string(),
-                    wd.recursive,
-                    desired.recursive
-                ));
-                wd.close();
-                removals.borrow_mut().push(key.clone());
-                changes.push(desired.clone());
-            }),
+            Some(
+                &mut |key: &PathKey, wd: &Arc<WatchedDir>, desired: &DirWatchUpdate| {
+                    wm.dlog(format_args!(
+                        "[watch] recreating dir watch {} (recursive {}→{})\n",
+                        wd.dir.as_string(),
+                        wd.recursive,
+                        desired.recursive
+                    ));
+                    wd.close();
+                    removals.borrow_mut().push(key.clone());
+                    changes.push(desired.clone());
+                },
+            ),
         );
         for key in removals.into_inner() {
             self.inner.watched_dirs.remove(&key);

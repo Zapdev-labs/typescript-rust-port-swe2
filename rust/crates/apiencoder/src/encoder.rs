@@ -214,14 +214,15 @@ pub fn build_node_index_table(nodes: &mut Vec<Node>, source_file: NodeId) -> Nod
             ..Default::default()
         };
 
-        let visit = |v: &NodeVisitor<'_>, cx: &mut VisitorCx<'_, '_>, node: NodeId| -> Option<NodeId> {
-            nt.borrow_mut().push(Some(node));
-            v.visit_each_child(cx, node);
-            for j in js_doc(cx.nodes, node, Some(source_file)) {
-                (v.visit.as_ref().unwrap())(v, cx, j);
-            }
-            Some(node)
-        };
+        let visit =
+            |v: &NodeVisitor<'_>, cx: &mut VisitorCx<'_, '_>, node: NodeId| -> Option<NodeId> {
+                nt.borrow_mut().push(Some(node));
+                v.visit_each_child(cx, node);
+                for j in js_doc(cx.nodes, node, Some(source_file)) {
+                    (v.visit.as_ref().unwrap())(v, cx, j);
+                }
+                Some(node)
+            };
 
         let visitor = NodeVisitor::new(Box::new(visit), hooks);
         visitor.visit_each_child(&mut cx, source_file);
@@ -246,8 +247,9 @@ pub fn get_node_index_table(nodes: &mut Vec<Node>, source_file: NodeId) -> NodeI
 /// indices to AST nodes.
 pub fn encode_source_file(nodes: &mut Vec<Node>, source_file: NodeId) -> (Vec<u8>, NodeIndexTable) {
     let (data, node_table) = encode_tree(nodes, source_file, Some(source_file));
-    let node_table =
-        get_or_compute_data(nodes, source_file, &NODE_INDEX_TABLE_KEY, move |_, _| node_table);
+    let node_table = get_or_compute_data(nodes, source_file, &NODE_INDEX_TABLE_KEY, move |_, _| {
+        node_table
+    });
     (data, node_table)
 }
 
@@ -454,8 +456,7 @@ fn encode_tree(
     if root_is_source_file {
         let sf = nodes[root_node].as_source_file();
         let mut total = sf.imports().len() + sf.module_augmentations.len();
-        let external_module_indicator =
-            sf.external_module_indicator.filter(|&e| e != root_node);
+        let external_module_indicator = sf.external_module_indicator.filter(|&e| e != root_node);
         if external_module_indicator.is_some() {
             total += 1;
         }
@@ -508,7 +509,7 @@ fn encode_tree(
             move |cx: &mut VisitorCx<'_, '_>,
                   node_list: Option<NodeList>,
                   v: &NodeVisitor<'_>|
-             -> Option<NodeList> {
+                  -> Option<NodeList> {
                 let Some(node_list) = node_list else {
                     return None;
                 };
@@ -533,7 +534,7 @@ fn encode_tree(
             move |cx: &mut VisitorCx<'_, '_>,
                   modifiers: Option<ModifierList>,
                   v: &NodeVisitor<'_>|
-             -> Option<ModifierList> {
+                  -> Option<ModifierList> {
                 if let Some(m) = &modifiers
                     && !m.nodes.is_empty()
                 {
@@ -553,23 +554,20 @@ fn encode_tree(
         ..Default::default()
     };
 
-    let visit = move |v: &NodeVisitor<'_>,
-                      cx: &mut VisitorCx<'_, '_>,
-                      node: NodeId|
-          -> Option<NodeId> {
-        let (current_index, save_parent_index) =
-            st_ref.borrow_mut().begin_node(cx.nodes, node);
-        v.visit_each_child(cx, node);
-        if let Some(sf) = source_file {
-            for j in js_doc(cx.nodes, node, Some(sf)) {
-                (v.visit.as_ref().unwrap())(v, cx, j);
+    let visit =
+        move |v: &NodeVisitor<'_>, cx: &mut VisitorCx<'_, '_>, node: NodeId| -> Option<NodeId> {
+            let (current_index, save_parent_index) = st_ref.borrow_mut().begin_node(cx.nodes, node);
+            v.visit_each_child(cx, node);
+            if let Some(sf) = source_file {
+                for j in js_doc(cx.nodes, node, Some(sf)) {
+                    (v.visit.as_ref().unwrap())(v, cx, j);
+                }
             }
-        }
-        st_ref
-            .borrow_mut()
-            .end_node(current_index, save_parent_index);
-        Some(node)
-    };
+            st_ref
+                .borrow_mut()
+                .end_node(current_index, save_parent_index);
+            Some(node)
+        };
 
     {
         let mut factory = NodeFactory::default();
@@ -595,8 +593,11 @@ fn encode_tree(
         // Encode imports, moduleAugmentations, and ambientModuleNames into
         // structured data, and patch the placeholder offsets in the
         // SourceFile extended data.
-        let imports_offset =
-            encode_node_index_array(sf.imports(), st.node_index_map.as_ref(), &mut st.structured_data);
+        let imports_offset = encode_node_index_array(
+            sf.imports(),
+            st.node_index_map.as_ref(),
+            &mut st.structured_data,
+        );
         let module_augmentations_offset = encode_node_index_array(
             &sf.module_augmentations,
             st.node_index_map.as_ref(),
@@ -787,10 +788,8 @@ fn encode_diagnostic_directives(
             original_positions.utf8_to_utf16(directive.original_range.pos() as usize);
         let original_end =
             original_positions.utf8_to_utf16(directive.original_range.end() as usize);
-        let virtual_start =
-            virtual_positions.utf8_to_utf16(directive.virtual_range.pos() as usize);
-        let virtual_end =
-            virtual_positions.utf8_to_utf16(directive.virtual_range.end() as usize);
+        let virtual_start = virtual_positions.utf8_to_utf16(directive.virtual_range.pos() as usize);
+        let virtual_end = virtual_positions.utf8_to_utf16(directive.virtual_range.end() as usize);
         msgpack_write_uint(buf, original_start as u32);
         msgpack_write_uint(buf, (original_end - original_start) as u32);
         msgpack_write_uint(buf, virtual_start as u32);
@@ -878,7 +877,10 @@ pub(crate) fn get_node_common_data_synthetic_expression(_node: &Node) -> u32 {
 
 /// `recordExtendedData_StringLiteral`
 pub(crate) fn record_extended_data_string_literal(node: &Node, st: &mut EncSt, nodes: &[Node]) {
-    let n = &node.as_string_literal().literal_expression_base.literal_like_node_base;
+    let n = &node
+        .as_string_literal()
+        .literal_expression_base
+        .literal_like_node_base;
     let text_index = st
         .strs
         .add(nodes, n.text.as_bytes(), node.kind, node.pos(), node.end());
@@ -887,7 +889,10 @@ pub(crate) fn record_extended_data_string_literal(node: &Node, st: &mut EncSt, n
 
 /// `recordExtendedData_NumericLiteral`
 pub(crate) fn record_extended_data_numeric_literal(node: &Node, st: &mut EncSt, nodes: &[Node]) {
-    let n = &node.as_numeric_literal().literal_expression_base.literal_like_node_base;
+    let n = &node
+        .as_numeric_literal()
+        .literal_expression_base
+        .literal_like_node_base;
     let text_index = st
         .strs
         .add(nodes, n.text.as_bytes(), node.kind, node.pos(), node.end());
@@ -896,7 +901,10 @@ pub(crate) fn record_extended_data_numeric_literal(node: &Node, st: &mut EncSt, 
 
 /// `recordExtendedData_BigIntLiteral`
 pub(crate) fn record_extended_data_big_int_literal(node: &Node, st: &mut EncSt, nodes: &[Node]) {
-    let n = &node.as_big_int_literal().literal_expression_base.literal_like_node_base;
+    let n = &node
+        .as_big_int_literal()
+        .literal_expression_base
+        .literal_like_node_base;
     let text_index = st
         .strs
         .add(nodes, n.text.as_bytes(), node.kind, node.pos(), node.end());
@@ -925,7 +933,9 @@ pub(crate) fn record_extended_data_no_substitution_template_literal(
     st: &mut EncSt,
     nodes: &[Node],
 ) {
-    let n = &node.as_no_substitution_template_literal().template_literal_like_node_base;
+    let n = &node
+        .as_no_substitution_template_literal()
+        .template_literal_like_node_base;
     let text_index = st.strs.add(
         nodes,
         n.literal_like_node_base.text.as_bytes(),
@@ -1008,14 +1018,18 @@ pub(crate) fn record_extended_data_template_tail(node: &Node, st: &mut EncSt, no
 /// `recordExtendedData_SourceFile`
 pub(crate) fn record_extended_data_source_file(node: &Node, st: &mut EncSt, nodes: &[Node]) {
     let sf = node.as_source_file();
-    let text_index = st
-        .strs
-        .add(nodes, sf.text().as_bytes(), Kind::SourceFile, node.pos(), node.end());
+    let text_index = st.strs.add(
+        nodes,
+        sf.text().as_bytes(),
+        Kind::SourceFile,
+        node.pos(),
+        node.end(),
+    );
     let mut original_text_index = text_index;
     if sf.original_text() != sf.text() {
-        original_text_index = st
-            .strs
-            .add(nodes, sf.original_text().as_bytes(), Kind::Unknown, 0, 0);
+        original_text_index =
+            st.strs
+                .add(nodes, sf.original_text().as_bytes(), Kind::Unknown, 0, 0);
     }
     let file_name_index = st.strs.add(
         nodes,
@@ -1031,8 +1045,11 @@ pub(crate) fn record_extended_data_source_file(node: &Node, st: &mut EncSt, node
         0,
         0,
     );
-    let referenced_files_offset =
-        encode_file_references(&sf.referenced_files, &st.position_map, &mut st.structured_data);
+    let referenced_files_offset = encode_file_references(
+        &sf.referenced_files,
+        &st.position_map,
+        &mut st.structured_data,
+    );
     let type_ref_directives_offset = encode_file_references(
         &sf.type_reference_directives,
         &st.position_map,
@@ -1081,13 +1098,9 @@ pub(crate) fn record_extended_data_source_file(node: &Node, st: &mut EncSt, node
     }
     let mut content_mapper_index = NO_STRUCTURED_DATA;
     if !sf.content_mapper().is_empty() {
-        content_mapper_index = st.strs.add(
-            nodes,
-            sf.content_mapper().as_bytes(),
-            Kind::Unknown,
-            0,
-            0,
-        );
+        content_mapper_index =
+            st.strs
+                .add(nodes, sf.content_mapper().as_bytes(), Kind::Unknown, 0, 0);
     }
     let mut virtual_file_name_index = NO_STRUCTURED_DATA;
     let virtual_file_name = sf.virtual_file_name();

@@ -6,9 +6,7 @@ use std::sync::Arc;
 use std::time::SystemTime;
 
 use rustc_hash::FxHashMap;
-use tsc_tspath::{
-    CaseSensitivity, RootedDirectoryPath, RootedFilePath, RootedPath,
-};
+use tsc_tspath::{CaseSensitivity, RootedDirectoryPath, RootedFilePath, RootedPath};
 use tsc_vfs::fs::{DirEntry, FileInfo, FsError};
 use tsc_vfs::vfs::{Entries, Vfs};
 

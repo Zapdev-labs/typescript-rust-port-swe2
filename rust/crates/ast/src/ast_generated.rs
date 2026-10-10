@@ -18,14 +18,14 @@ use crate::tokenflags::TokenFlags;
 use crate::visitor::{NodeVisitor, VisitorCx};
 
 /// `type StatementBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct StatementBase {
     /// embedded `FlowNodeBase`
     pub flow_node_base: FlowNodeBase,
 }
 
 /// `type IterationStatementBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct IterationStatementBase {
     /// embedded `StatementBase`
     pub statement_base: StatementBase,
@@ -33,53 +33,53 @@ pub struct IterationStatementBase {
 }
 
 /// `type ExpressionBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ExpressionBase {}
 
 /// `type UnaryExpressionBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct UnaryExpressionBase {
     /// embedded `ExpressionBase`
     pub expression_base: ExpressionBase,
 }
 
 /// `type UpdateExpressionBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct UpdateExpressionBase {
     /// embedded `UnaryExpressionBase`
     pub unary_expression_base: UnaryExpressionBase,
 }
 
 /// `type LeftHandSideExpressionBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct LeftHandSideExpressionBase {
     /// embedded `UpdateExpressionBase`
     pub update_expression_base: UpdateExpressionBase,
 }
 
 /// `type MemberExpressionBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct MemberExpressionBase {
     /// embedded `LeftHandSideExpressionBase`
     pub left_hand_side_expression_base: LeftHandSideExpressionBase,
 }
 
 /// `type PrimaryExpressionBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct PrimaryExpressionBase {
     /// embedded `MemberExpressionBase`
     pub member_expression_base: MemberExpressionBase,
 }
 
 /// `type TypeNodeBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TypeNodeBase {
     /// embedded `TypeSyntaxBase`
     pub type_syntax_base: TypeSyntaxBase,
 }
 
 /// `type NodeWithTypeArgumentsBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct NodeWithTypeArgumentsBase {
     /// embedded `TypeNodeBase`
     pub type_node_base: TypeNodeBase,
@@ -87,55 +87,55 @@ pub struct NodeWithTypeArgumentsBase {
 }
 
 /// `type JSDocTypeBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocTypeBase {
     /// embedded `TypeNodeBase`
     pub type_node_base: TypeNodeBase,
 }
 
 /// `type DeclarationBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct DeclarationBase {
     pub symbol: Option<SymbolId>,
 }
 
 /// `type ExportableBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ExportableBase {
     pub local_symbol: Option<SymbolId>,
 }
 
 /// `type ModifiersBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ModifiersBase {
     pub modifiers: Option<ModifierList>,
 }
 
 /// `type LocalsContainerBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct LocalsContainerBase {
     pub locals: SymbolTable,
     pub next_container: Option<NodeId>,
 }
 
 /// `type FlowNodeBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct FlowNodeBase {
     pub flow_node: Option<FlowNodeId>,
 }
 
 /// `type CompositeBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct CompositeBase {
     pub facts: Cell<u32>,
 }
 
 /// `type TypeSyntaxBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TypeSyntaxBase {}
 
 /// `type FunctionLikeBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct FunctionLikeBase {
     /// embedded `LocalsContainerBase`
     pub locals_container_base: LocalsContainerBase,
@@ -146,7 +146,7 @@ pub struct FunctionLikeBase {
 }
 
 /// `type BodyBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct BodyBase {
     pub asterisk_token: Option<NodeId>,
     pub body: Option<NodeId>,
@@ -154,7 +154,7 @@ pub struct BodyBase {
 }
 
 /// `type FunctionLikeWithBodyBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct FunctionLikeWithBodyBase {
     /// embedded `FunctionLikeBase`
     pub function_like_base: FunctionLikeBase,
@@ -163,7 +163,7 @@ pub struct FunctionLikeWithBodyBase {
 }
 
 /// `type ClassLikeBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ClassLikeBase {
     /// embedded `ExportableBase`
     pub exportable_base: ExportableBase,
@@ -180,14 +180,14 @@ pub struct ClassLikeBase {
 }
 
 /// `type LiteralLikeNodeBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct LiteralLikeNodeBase {
     pub text: String,
     pub token_flags: TokenFlags,
 }
 
 /// `type LiteralExpressionBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct LiteralExpressionBase {
     /// embedded `PrimaryExpressionBase`
     pub primary_expression_base: PrimaryExpressionBase,
@@ -196,7 +196,7 @@ pub struct LiteralExpressionBase {
 }
 
 /// `type TemplateLiteralLikeNodeBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TemplateLiteralLikeNodeBase {
     /// embedded `LiteralLikeNodeBase`
     pub literal_like_node_base: LiteralLikeNodeBase,
@@ -205,15 +205,15 @@ pub struct TemplateLiteralLikeNodeBase {
 }
 
 /// `type TypeElementBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TypeElementBase {}
 
 /// `type ClassElementBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ClassElementBase {}
 
 /// `type NamedMemberBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct NamedMemberBase {
     /// embedded `ModifiersBase`
     pub modifiers_base: ModifiersBase,
@@ -222,11 +222,11 @@ pub struct NamedMemberBase {
 }
 
 /// `type ObjectLiteralElementBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ObjectLiteralElementBase {}
 
 /// `type AccessorDeclarationBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct AccessorDeclarationBase {
     /// embedded `TypeElementBase`
     pub type_element_base: TypeElementBase,
@@ -247,7 +247,7 @@ pub struct AccessorDeclarationBase {
 }
 
 /// `type FunctionOrConstructorTypeNodeBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct FunctionOrConstructorTypeNodeBase {
     /// embedded `TypeNodeBase`
     pub type_node_base: TypeNodeBase,
@@ -260,7 +260,7 @@ pub struct FunctionOrConstructorTypeNodeBase {
 }
 
 /// `type UnionOrIntersectionTypeNodeBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct UnionOrIntersectionTypeNodeBase {
     /// embedded `TypeNodeBase`
     pub type_node_base: TypeNodeBase,
@@ -268,24 +268,24 @@ pub struct UnionOrIntersectionTypeNodeBase {
 }
 
 /// `type JSDocTagBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocTagBase {
     pub tag_name: Option<NodeId>,
     pub comment: Option<NodeList>,
 }
 
 /// `type JSDocCommentBase struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocCommentBase {
     pub text: Box<[String]>,
 }
 
 /// `type Token struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct Token {}
 
 /// `type Identifier struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct Identifier {
     /// embedded `PrimaryExpressionBase`
     pub primary_expression_base: PrimaryExpressionBase,
@@ -295,7 +295,7 @@ pub struct Identifier {
 }
 
 /// `type PrivateIdentifier struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct PrivateIdentifier {
     /// embedded `PrimaryExpressionBase`
     pub primary_expression_base: PrimaryExpressionBase,
@@ -303,7 +303,7 @@ pub struct PrivateIdentifier {
 }
 
 /// `type QualifiedName struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct QualifiedName {
     /// embedded `FlowNodeBase`
     pub flow_node_base: FlowNodeBase,
@@ -314,7 +314,7 @@ pub struct QualifiedName {
 }
 
 /// `type ComputedPropertyName struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ComputedPropertyName {
     /// embedded `CompositeBase`
     pub composite_base: CompositeBase,
@@ -322,7 +322,7 @@ pub struct ComputedPropertyName {
 }
 
 /// `type Decorator struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct Decorator {
     /// embedded `CompositeBase`
     pub composite_base: CompositeBase,
@@ -330,14 +330,14 @@ pub struct Decorator {
 }
 
 /// `type EmptyStatement struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct EmptyStatement {
     /// embedded `StatementBase`
     pub statement_base: StatementBase,
 }
 
 /// `type IfStatement struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct IfStatement {
     /// embedded `StatementBase`
     pub statement_base: StatementBase,
@@ -349,7 +349,7 @@ pub struct IfStatement {
 }
 
 /// `type DoStatement struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct DoStatement {
     /// embedded `IterationStatementBase`
     pub iteration_statement_base: IterationStatementBase,
@@ -359,7 +359,7 @@ pub struct DoStatement {
 }
 
 /// `type WhileStatement struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct WhileStatement {
     /// embedded `IterationStatementBase`
     pub iteration_statement_base: IterationStatementBase,
@@ -369,7 +369,7 @@ pub struct WhileStatement {
 }
 
 /// `type ForStatement struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ForStatement {
     /// embedded `IterationStatementBase`
     pub iteration_statement_base: IterationStatementBase,
@@ -383,7 +383,7 @@ pub struct ForStatement {
 }
 
 /// `type ForInOrOfStatement struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ForInOrOfStatement {
     /// embedded `StatementBase`
     pub statement_base: StatementBase,
@@ -398,7 +398,7 @@ pub struct ForInOrOfStatement {
 }
 
 /// `type BreakStatement struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct BreakStatement {
     /// embedded `StatementBase`
     pub statement_base: StatementBase,
@@ -406,7 +406,7 @@ pub struct BreakStatement {
 }
 
 /// `type ContinueStatement struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ContinueStatement {
     /// embedded `StatementBase`
     pub statement_base: StatementBase,
@@ -414,7 +414,7 @@ pub struct ContinueStatement {
 }
 
 /// `type ReturnStatement struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ReturnStatement {
     /// embedded `StatementBase`
     pub statement_base: StatementBase,
@@ -424,7 +424,7 @@ pub struct ReturnStatement {
 }
 
 /// `type WithStatement struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct WithStatement {
     /// embedded `StatementBase`
     pub statement_base: StatementBase,
@@ -435,7 +435,7 @@ pub struct WithStatement {
 }
 
 /// `type SwitchStatement struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct SwitchStatement {
     /// embedded `StatementBase`
     pub statement_base: StatementBase,
@@ -446,7 +446,7 @@ pub struct SwitchStatement {
 }
 
 /// `type CaseBlock struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct CaseBlock {
     /// embedded `LocalsContainerBase`
     pub locals_container_base: LocalsContainerBase,
@@ -456,7 +456,7 @@ pub struct CaseBlock {
 }
 
 /// `type CaseOrDefaultClause struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct CaseOrDefaultClause {
     /// embedded `CompositeBase`
     pub composite_base: CompositeBase,
@@ -466,7 +466,7 @@ pub struct CaseOrDefaultClause {
 }
 
 /// `type ThrowStatement struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ThrowStatement {
     /// embedded `StatementBase`
     pub statement_base: StatementBase,
@@ -476,7 +476,7 @@ pub struct ThrowStatement {
 }
 
 /// `type TryStatement struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TryStatement {
     /// embedded `StatementBase`
     pub statement_base: StatementBase,
@@ -488,7 +488,7 @@ pub struct TryStatement {
 }
 
 /// `type CatchClause struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct CatchClause {
     /// embedded `LocalsContainerBase`
     pub locals_container_base: LocalsContainerBase,
@@ -499,14 +499,14 @@ pub struct CatchClause {
 }
 
 /// `type DebuggerStatement struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct DebuggerStatement {
     /// embedded `StatementBase`
     pub statement_base: StatementBase,
 }
 
 /// `type LabeledStatement struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct LabeledStatement {
     /// embedded `StatementBase`
     pub statement_base: StatementBase,
@@ -515,7 +515,7 @@ pub struct LabeledStatement {
 }
 
 /// `type ExpressionStatement struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ExpressionStatement {
     /// embedded `StatementBase`
     pub statement_base: StatementBase,
@@ -523,7 +523,7 @@ pub struct ExpressionStatement {
 }
 
 /// `type Block struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct Block {
     /// embedded `StatementBase`
     pub statement_base: StatementBase,
@@ -536,7 +536,7 @@ pub struct Block {
 }
 
 /// `type VariableStatement struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct VariableStatement {
     /// embedded `StatementBase`
     pub statement_base: StatementBase,
@@ -548,7 +548,7 @@ pub struct VariableStatement {
 }
 
 /// `type VariableDeclaration struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct VariableDeclaration {
     /// embedded `DeclarationBase`
     pub declaration_base: DeclarationBase,
@@ -563,7 +563,7 @@ pub struct VariableDeclaration {
 }
 
 /// `type VariableDeclarationList struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct VariableDeclarationList {
     /// embedded `CompositeBase`
     pub composite_base: CompositeBase,
@@ -571,7 +571,7 @@ pub struct VariableDeclarationList {
 }
 
 /// `type BindingPattern struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct BindingPattern {
     /// embedded `CompositeBase`
     pub composite_base: CompositeBase,
@@ -579,7 +579,7 @@ pub struct BindingPattern {
 }
 
 /// `type ParameterDeclaration struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ParameterDeclaration {
     /// embedded `DeclarationBase`
     pub declaration_base: DeclarationBase,
@@ -595,7 +595,7 @@ pub struct ParameterDeclaration {
 }
 
 /// `type BindingElement struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct BindingElement {
     /// embedded `DeclarationBase`
     pub declaration_base: DeclarationBase,
@@ -612,7 +612,7 @@ pub struct BindingElement {
 }
 
 /// `type MissingDeclaration struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct MissingDeclaration {
     /// embedded `StatementBase`
     pub statement_base: StatementBase,
@@ -623,7 +623,7 @@ pub struct MissingDeclaration {
 }
 
 /// `type FunctionDeclaration struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct FunctionDeclaration {
     /// embedded `StatementBase`
     pub statement_base: StatementBase,
@@ -642,7 +642,7 @@ pub struct FunctionDeclaration {
 }
 
 /// `type ClassDeclaration struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ClassDeclaration {
     /// embedded `StatementBase`
     pub statement_base: StatementBase,
@@ -653,7 +653,7 @@ pub struct ClassDeclaration {
 }
 
 /// `type ClassExpression struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ClassExpression {
     /// embedded `PrimaryExpressionBase`
     pub primary_expression_base: PrimaryExpressionBase,
@@ -664,7 +664,7 @@ pub struct ClassExpression {
 }
 
 /// `type HeritageClause struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct HeritageClause {
     /// embedded `CompositeBase`
     pub composite_base: CompositeBase,
@@ -673,7 +673,7 @@ pub struct HeritageClause {
 }
 
 /// `type InterfaceDeclaration struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct InterfaceDeclaration {
     /// embedded `TypeSyntaxBase`
     pub type_syntax_base: TypeSyntaxBase,
@@ -692,7 +692,7 @@ pub struct InterfaceDeclaration {
 }
 
 /// `type TypeAliasDeclaration struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TypeAliasDeclaration {
     /// embedded `TypeSyntaxBase`
     pub type_syntax_base: TypeSyntaxBase,
@@ -712,7 +712,7 @@ pub struct TypeAliasDeclaration {
 }
 
 /// `type EnumMember struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct EnumMember {
     /// embedded `DeclarationBase`
     pub declaration_base: DeclarationBase,
@@ -724,7 +724,7 @@ pub struct EnumMember {
 }
 
 /// `type EnumDeclaration struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct EnumDeclaration {
     /// embedded `StatementBase`
     pub statement_base: StatementBase,
@@ -741,7 +741,7 @@ pub struct EnumDeclaration {
 }
 
 /// `type ModuleBlock struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ModuleBlock {
     /// embedded `StatementBase`
     pub statement_base: StatementBase,
@@ -751,14 +751,14 @@ pub struct ModuleBlock {
 }
 
 /// `type NotEmittedStatement struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct NotEmittedStatement {
     /// embedded `StatementBase`
     pub statement_base: StatementBase,
 }
 
 /// `type NotEmittedTypeElement struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct NotEmittedTypeElement {
     /// embedded `TypeElementBase`
     pub type_element_base: TypeElementBase,
@@ -767,7 +767,7 @@ pub struct NotEmittedTypeElement {
 }
 
 /// `type ImportDeclaration struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ImportDeclaration {
     /// embedded `StatementBase`
     pub statement_base: StatementBase,
@@ -783,13 +783,13 @@ pub struct ImportDeclaration {
 }
 
 /// `type ExternalModuleReference struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ExternalModuleReference {
     pub expression: Option<NodeId>,
 }
 
 /// `type NamespaceImport struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct NamespaceImport {
     /// embedded `DeclarationBase`
     pub declaration_base: DeclarationBase,
@@ -799,7 +799,7 @@ pub struct NamespaceImport {
 }
 
 /// `type NamedImports struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct NamedImports {
     /// embedded `CompositeBase`
     pub composite_base: CompositeBase,
@@ -807,7 +807,7 @@ pub struct NamedImports {
 }
 
 /// `type ExportAssignment struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ExportAssignment {
     /// embedded `StatementBase`
     pub statement_base: StatementBase,
@@ -823,7 +823,7 @@ pub struct ExportAssignment {
 }
 
 /// `type NamespaceExportDeclaration struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct NamespaceExportDeclaration {
     /// embedded `TypeSyntaxBase`
     pub type_syntax_base: TypeSyntaxBase,
@@ -837,7 +837,7 @@ pub struct NamespaceExportDeclaration {
 }
 
 /// `type NamespaceExport struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct NamespaceExport {
     /// embedded `DeclarationBase`
     pub declaration_base: DeclarationBase,
@@ -845,7 +845,7 @@ pub struct NamespaceExport {
 }
 
 /// `type NamedExports struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct NamedExports {
     /// embedded `CompositeBase`
     pub composite_base: CompositeBase,
@@ -853,7 +853,7 @@ pub struct NamedExports {
 }
 
 /// `type ExportSpecifier struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ExportSpecifier {
     /// embedded `DeclarationBase`
     pub declaration_base: DeclarationBase,
@@ -867,7 +867,7 @@ pub struct ExportSpecifier {
 }
 
 /// `type CallSignatureDeclaration struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct CallSignatureDeclaration {
     /// embedded `TypeElementBase`
     pub type_element_base: TypeElementBase,
@@ -880,7 +880,7 @@ pub struct CallSignatureDeclaration {
 }
 
 /// `type ConstructSignatureDeclaration struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ConstructSignatureDeclaration {
     /// embedded `TypeElementBase`
     pub type_element_base: TypeElementBase,
@@ -893,7 +893,7 @@ pub struct ConstructSignatureDeclaration {
 }
 
 /// `type ConstructorDeclaration struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ConstructorDeclaration {
     /// embedded `ClassElementBase`
     pub class_element_base: ClassElementBase,
@@ -909,21 +909,21 @@ pub struct ConstructorDeclaration {
 }
 
 /// `type GetAccessorDeclaration struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct GetAccessorDeclaration {
     /// embedded `AccessorDeclarationBase`
     pub accessor_declaration_base: AccessorDeclarationBase,
 }
 
 /// `type SetAccessorDeclaration struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct SetAccessorDeclaration {
     /// embedded `AccessorDeclarationBase`
     pub accessor_declaration_base: AccessorDeclarationBase,
 }
 
 /// `type IndexSignatureDeclaration struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct IndexSignatureDeclaration {
     /// embedded `TypeElementBase`
     pub type_element_base: TypeElementBase,
@@ -940,7 +940,7 @@ pub struct IndexSignatureDeclaration {
 }
 
 /// `type MethodSignatureDeclaration struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct MethodSignatureDeclaration {
     /// embedded `TypeElementBase`
     pub type_element_base: TypeElementBase,
@@ -955,7 +955,7 @@ pub struct MethodSignatureDeclaration {
 }
 
 /// `type MethodDeclaration struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct MethodDeclaration {
     /// embedded `ClassElementBase`
     pub class_element_base: ClassElementBase,
@@ -974,7 +974,7 @@ pub struct MethodDeclaration {
 }
 
 /// `type PropertySignatureDeclaration struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct PropertySignatureDeclaration {
     /// embedded `TypeElementBase`
     pub type_element_base: TypeElementBase,
@@ -989,7 +989,7 @@ pub struct PropertySignatureDeclaration {
 }
 
 /// `type PropertyDeclaration struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct PropertyDeclaration {
     /// embedded `ClassElementBase`
     pub class_element_base: ClassElementBase,
@@ -1004,7 +1004,7 @@ pub struct PropertyDeclaration {
 }
 
 /// `type SemicolonClassElement struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct SemicolonClassElement {
     /// embedded `ClassElementBase`
     pub class_element_base: ClassElementBase,
@@ -1013,7 +1013,7 @@ pub struct SemicolonClassElement {
 }
 
 /// `type ClassStaticBlockDeclaration struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ClassStaticBlockDeclaration {
     /// embedded `ClassElementBase`
     pub class_element_base: ClassElementBase,
@@ -1030,14 +1030,14 @@ pub struct ClassStaticBlockDeclaration {
 }
 
 /// `type OmittedExpression struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct OmittedExpression {
     /// embedded `ExpressionBase`
     pub expression_base: ExpressionBase,
 }
 
 /// `type KeywordExpression struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct KeywordExpression {
     /// embedded `ExpressionBase`
     pub expression_base: ExpressionBase,
@@ -1046,35 +1046,35 @@ pub struct KeywordExpression {
 }
 
 /// `type StringLiteral struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct StringLiteral {
     /// embedded `LiteralExpressionBase`
     pub literal_expression_base: LiteralExpressionBase,
 }
 
 /// `type NumericLiteral struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct NumericLiteral {
     /// embedded `LiteralExpressionBase`
     pub literal_expression_base: LiteralExpressionBase,
 }
 
 /// `type BigIntLiteral struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct BigIntLiteral {
     /// embedded `LiteralExpressionBase`
     pub literal_expression_base: LiteralExpressionBase,
 }
 
 /// `type RegularExpressionLiteral struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct RegularExpressionLiteral {
     /// embedded `LiteralExpressionBase`
     pub literal_expression_base: LiteralExpressionBase,
 }
 
 /// `type NoSubstitutionTemplateLiteral struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct NoSubstitutionTemplateLiteral {
     /// embedded `ExpressionBase`
     pub expression_base: ExpressionBase,
@@ -1085,7 +1085,7 @@ pub struct NoSubstitutionTemplateLiteral {
 }
 
 /// `type BinaryExpression struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct BinaryExpression {
     /// embedded `ExpressionBase`
     pub expression_base: ExpressionBase,
@@ -1102,7 +1102,7 @@ pub struct BinaryExpression {
 }
 
 /// `type PrefixUnaryExpression struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct PrefixUnaryExpression {
     /// embedded `UpdateExpressionBase`
     pub update_expression_base: UpdateExpressionBase,
@@ -1111,7 +1111,7 @@ pub struct PrefixUnaryExpression {
 }
 
 /// `type PostfixUnaryExpression struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct PostfixUnaryExpression {
     /// embedded `UpdateExpressionBase`
     pub update_expression_base: UpdateExpressionBase,
@@ -1120,7 +1120,7 @@ pub struct PostfixUnaryExpression {
 }
 
 /// `type YieldExpression struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct YieldExpression {
     /// embedded `ExpressionBase`
     pub expression_base: ExpressionBase,
@@ -1129,7 +1129,7 @@ pub struct YieldExpression {
 }
 
 /// `type ArrowFunction struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ArrowFunction {
     /// embedded `ExpressionBase`
     pub expression_base: ExpressionBase,
@@ -1147,7 +1147,7 @@ pub struct ArrowFunction {
 }
 
 /// `type FunctionExpression struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct FunctionExpression {
     /// embedded `PrimaryExpressionBase`
     pub primary_expression_base: PrimaryExpressionBase,
@@ -1166,7 +1166,7 @@ pub struct FunctionExpression {
 }
 
 /// `type AsExpression struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct AsExpression {
     /// embedded `ExpressionBase`
     pub expression_base: ExpressionBase,
@@ -1175,7 +1175,7 @@ pub struct AsExpression {
 }
 
 /// `type SatisfiesExpression struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct SatisfiesExpression {
     /// embedded `ExpressionBase`
     pub expression_base: ExpressionBase,
@@ -1184,7 +1184,7 @@ pub struct SatisfiesExpression {
 }
 
 /// `type ConditionalExpression struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ConditionalExpression {
     /// embedded `ExpressionBase`
     pub expression_base: ExpressionBase,
@@ -1198,7 +1198,7 @@ pub struct ConditionalExpression {
 }
 
 /// `type PropertyAccessExpression struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct PropertyAccessExpression {
     /// embedded `MemberExpressionBase`
     pub member_expression_base: MemberExpressionBase,
@@ -1212,7 +1212,7 @@ pub struct PropertyAccessExpression {
 }
 
 /// `type ElementAccessExpression struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ElementAccessExpression {
     /// embedded `MemberExpressionBase`
     pub member_expression_base: MemberExpressionBase,
@@ -1226,7 +1226,7 @@ pub struct ElementAccessExpression {
 }
 
 /// `type CallExpression struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct CallExpression {
     /// embedded `LeftHandSideExpressionBase`
     pub left_hand_side_expression_base: LeftHandSideExpressionBase,
@@ -1241,7 +1241,7 @@ pub struct CallExpression {
 }
 
 /// `type NewExpression struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct NewExpression {
     /// embedded `PrimaryExpressionBase`
     pub primary_expression_base: PrimaryExpressionBase,
@@ -1253,7 +1253,7 @@ pub struct NewExpression {
 }
 
 /// `type MetaProperty struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct MetaProperty {
     /// embedded `PrimaryExpressionBase`
     pub primary_expression_base: PrimaryExpressionBase,
@@ -1266,7 +1266,7 @@ pub struct MetaProperty {
 }
 
 /// `type NonNullExpression struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct NonNullExpression {
     /// embedded `LeftHandSideExpressionBase`
     pub left_hand_side_expression_base: LeftHandSideExpressionBase,
@@ -1274,7 +1274,7 @@ pub struct NonNullExpression {
 }
 
 /// `type SpreadElement struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct SpreadElement {
     /// embedded `ExpressionBase`
     pub expression_base: ExpressionBase,
@@ -1282,7 +1282,7 @@ pub struct SpreadElement {
 }
 
 /// `type TemplateExpression struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TemplateExpression {
     /// embedded `PrimaryExpressionBase`
     pub primary_expression_base: PrimaryExpressionBase,
@@ -1293,14 +1293,14 @@ pub struct TemplateExpression {
 }
 
 /// `type TemplateSpan struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TemplateSpan {
     pub expression: Option<NodeId>,
     pub literal: Option<NodeId>,
 }
 
 /// `type TaggedTemplateExpression struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TaggedTemplateExpression {
     /// embedded `MemberExpressionBase`
     pub member_expression_base: MemberExpressionBase,
@@ -1313,7 +1313,7 @@ pub struct TaggedTemplateExpression {
 }
 
 /// `type ParenthesizedExpression struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ParenthesizedExpression {
     /// embedded `PrimaryExpressionBase`
     pub primary_expression_base: PrimaryExpressionBase,
@@ -1321,7 +1321,7 @@ pub struct ParenthesizedExpression {
 }
 
 /// `type ArrayLiteralExpression struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ArrayLiteralExpression {
     /// embedded `PrimaryExpressionBase`
     pub primary_expression_base: PrimaryExpressionBase,
@@ -1332,7 +1332,7 @@ pub struct ArrayLiteralExpression {
 }
 
 /// `type ObjectLiteralExpression struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ObjectLiteralExpression {
     /// embedded `PrimaryExpressionBase`
     pub primary_expression_base: PrimaryExpressionBase,
@@ -1345,7 +1345,7 @@ pub struct ObjectLiteralExpression {
 }
 
 /// `type SpreadAssignment struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct SpreadAssignment {
     /// embedded `ObjectLiteralElementBase`
     pub object_literal_element_base: ObjectLiteralElementBase,
@@ -1355,7 +1355,7 @@ pub struct SpreadAssignment {
 }
 
 /// `type PropertyAssignment struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct PropertyAssignment {
     /// embedded `ObjectLiteralElementBase`
     pub object_literal_element_base: ObjectLiteralElementBase,
@@ -1370,7 +1370,7 @@ pub struct PropertyAssignment {
 }
 
 /// `type ShorthandPropertyAssignment struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ShorthandPropertyAssignment {
     /// embedded `ObjectLiteralElementBase`
     pub object_literal_element_base: ObjectLiteralElementBase,
@@ -1386,7 +1386,7 @@ pub struct ShorthandPropertyAssignment {
 }
 
 /// `type DeleteExpression struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct DeleteExpression {
     /// embedded `UnaryExpressionBase`
     pub unary_expression_base: UnaryExpressionBase,
@@ -1394,7 +1394,7 @@ pub struct DeleteExpression {
 }
 
 /// `type TypeOfExpression struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TypeOfExpression {
     /// embedded `UnaryExpressionBase`
     pub unary_expression_base: UnaryExpressionBase,
@@ -1402,7 +1402,7 @@ pub struct TypeOfExpression {
 }
 
 /// `type VoidExpression struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct VoidExpression {
     /// embedded `UnaryExpressionBase`
     pub unary_expression_base: UnaryExpressionBase,
@@ -1410,7 +1410,7 @@ pub struct VoidExpression {
 }
 
 /// `type AwaitExpression struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct AwaitExpression {
     /// embedded `UnaryExpressionBase`
     pub unary_expression_base: UnaryExpressionBase,
@@ -1418,7 +1418,7 @@ pub struct AwaitExpression {
 }
 
 /// `type TypeAssertion struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TypeAssertion {
     /// embedded `UnaryExpressionBase`
     pub unary_expression_base: UnaryExpressionBase,
@@ -1427,28 +1427,28 @@ pub struct TypeAssertion {
 }
 
 /// `type KeywordTypeNode struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct KeywordTypeNode {
     /// embedded `TypeNodeBase`
     pub type_node_base: TypeNodeBase,
 }
 
 /// `type UnionTypeNode struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct UnionTypeNode {
     /// embedded `UnionOrIntersectionTypeNodeBase`
     pub union_or_intersection_type_node_base: UnionOrIntersectionTypeNodeBase,
 }
 
 /// `type IntersectionTypeNode struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct IntersectionTypeNode {
     /// embedded `UnionOrIntersectionTypeNodeBase`
     pub union_or_intersection_type_node_base: UnionOrIntersectionTypeNodeBase,
 }
 
 /// `type ConditionalTypeNode struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ConditionalTypeNode {
     /// embedded `TypeNodeBase`
     pub type_node_base: TypeNodeBase,
@@ -1461,7 +1461,7 @@ pub struct ConditionalTypeNode {
 }
 
 /// `type TypeOperatorNode struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TypeOperatorNode {
     /// embedded `TypeNodeBase`
     pub type_node_base: TypeNodeBase,
@@ -1470,7 +1470,7 @@ pub struct TypeOperatorNode {
 }
 
 /// `type InferTypeNode struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct InferTypeNode {
     /// embedded `TypeNodeBase`
     pub type_node_base: TypeNodeBase,
@@ -1478,7 +1478,7 @@ pub struct InferTypeNode {
 }
 
 /// `type ArrayTypeNode struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ArrayTypeNode {
     /// embedded `TypeNodeBase`
     pub type_node_base: TypeNodeBase,
@@ -1486,7 +1486,7 @@ pub struct ArrayTypeNode {
 }
 
 /// `type IndexedAccessTypeNode struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct IndexedAccessTypeNode {
     /// embedded `TypeNodeBase`
     pub type_node_base: TypeNodeBase,
@@ -1495,7 +1495,7 @@ pub struct IndexedAccessTypeNode {
 }
 
 /// `type TypeReferenceNode struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TypeReferenceNode {
     /// embedded `NodeWithTypeArgumentsBase`
     pub node_with_type_arguments_base: NodeWithTypeArgumentsBase,
@@ -1503,7 +1503,7 @@ pub struct TypeReferenceNode {
 }
 
 /// `type ExpressionWithTypeArguments struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ExpressionWithTypeArguments {
     /// embedded `MemberExpressionBase`
     pub member_expression_base: MemberExpressionBase,
@@ -1514,7 +1514,7 @@ pub struct ExpressionWithTypeArguments {
 }
 
 /// `type LiteralTypeNode struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct LiteralTypeNode {
     /// embedded `TypeNodeBase`
     pub type_node_base: TypeNodeBase,
@@ -1522,14 +1522,14 @@ pub struct LiteralTypeNode {
 }
 
 /// `type ThisTypeNode struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ThisTypeNode {
     /// embedded `TypeNodeBase`
     pub type_node_base: TypeNodeBase,
 }
 
 /// `type TypePredicateNode struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TypePredicateNode {
     /// embedded `TypeNodeBase`
     pub type_node_base: TypeNodeBase,
@@ -1539,7 +1539,7 @@ pub struct TypePredicateNode {
 }
 
 /// `type ImportAttribute struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ImportAttribute {
     /// embedded `CompositeBase`
     pub composite_base: CompositeBase,
@@ -1548,7 +1548,7 @@ pub struct ImportAttribute {
 }
 
 /// `type ImportAttributes struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ImportAttributes {
     /// embedded `CompositeBase`
     pub composite_base: CompositeBase,
@@ -1558,7 +1558,7 @@ pub struct ImportAttributes {
 }
 
 /// `type TypeQueryNode struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TypeQueryNode {
     /// embedded `NodeWithTypeArgumentsBase`
     pub node_with_type_arguments_base: NodeWithTypeArgumentsBase,
@@ -1566,7 +1566,7 @@ pub struct TypeQueryNode {
 }
 
 /// `type MappedTypeNode struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct MappedTypeNode {
     /// embedded `TypeNodeBase`
     pub type_node_base: TypeNodeBase,
@@ -1583,7 +1583,7 @@ pub struct MappedTypeNode {
 }
 
 /// `type TypeLiteralNode struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TypeLiteralNode {
     /// embedded `TypeNodeBase`
     pub type_node_base: TypeNodeBase,
@@ -1593,7 +1593,7 @@ pub struct TypeLiteralNode {
 }
 
 /// `type TupleTypeNode struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TupleTypeNode {
     /// embedded `TypeNodeBase`
     pub type_node_base: TypeNodeBase,
@@ -1601,7 +1601,7 @@ pub struct TupleTypeNode {
 }
 
 /// `type NamedTupleMember struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct NamedTupleMember {
     /// embedded `TypeNodeBase`
     pub type_node_base: TypeNodeBase,
@@ -1614,7 +1614,7 @@ pub struct NamedTupleMember {
 }
 
 /// `type OptionalTypeNode struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct OptionalTypeNode {
     /// embedded `TypeNodeBase`
     pub type_node_base: TypeNodeBase,
@@ -1622,7 +1622,7 @@ pub struct OptionalTypeNode {
 }
 
 /// `type RestTypeNode struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct RestTypeNode {
     /// embedded `TypeNodeBase`
     pub type_node_base: TypeNodeBase,
@@ -1630,7 +1630,7 @@ pub struct RestTypeNode {
 }
 
 /// `type ParenthesizedTypeNode struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ParenthesizedTypeNode {
     /// embedded `TypeNodeBase`
     pub type_node_base: TypeNodeBase,
@@ -1638,42 +1638,42 @@ pub struct ParenthesizedTypeNode {
 }
 
 /// `type FunctionTypeNode struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct FunctionTypeNode {
     /// embedded `FunctionOrConstructorTypeNodeBase`
     pub function_or_constructor_type_node_base: FunctionOrConstructorTypeNodeBase,
 }
 
 /// `type ConstructorTypeNode struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ConstructorTypeNode {
     /// embedded `FunctionOrConstructorTypeNodeBase`
     pub function_or_constructor_type_node_base: FunctionOrConstructorTypeNodeBase,
 }
 
 /// `type TemplateHead struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TemplateHead {
     /// embedded `TemplateLiteralLikeNodeBase`
     pub template_literal_like_node_base: TemplateLiteralLikeNodeBase,
 }
 
 /// `type TemplateMiddle struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TemplateMiddle {
     /// embedded `TemplateLiteralLikeNodeBase`
     pub template_literal_like_node_base: TemplateLiteralLikeNodeBase,
 }
 
 /// `type TemplateTail struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TemplateTail {
     /// embedded `TemplateLiteralLikeNodeBase`
     pub template_literal_like_node_base: TemplateLiteralLikeNodeBase,
 }
 
 /// `type TemplateLiteralTypeNode struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TemplateLiteralTypeNode {
     /// embedded `TypeNodeBase`
     pub type_node_base: TypeNodeBase,
@@ -1682,7 +1682,7 @@ pub struct TemplateLiteralTypeNode {
 }
 
 /// `type TemplateLiteralTypeSpan struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TemplateLiteralTypeSpan {
     /// embedded `TypeNodeBase`
     pub type_node_base: TypeNodeBase,
@@ -1691,7 +1691,7 @@ pub struct TemplateLiteralTypeSpan {
 }
 
 /// `type SyntheticExpression struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct SyntheticExpression {
     /// embedded `ExpressionBase`
     pub expression_base: ExpressionBase,
@@ -1701,7 +1701,7 @@ pub struct SyntheticExpression {
 }
 
 /// `type PartiallyEmittedExpression struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct PartiallyEmittedExpression {
     /// embedded `LeftHandSideExpressionBase`
     pub left_hand_side_expression_base: LeftHandSideExpressionBase,
@@ -1709,7 +1709,7 @@ pub struct PartiallyEmittedExpression {
 }
 
 /// `type JsxElement struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JsxElement {
     /// embedded `PrimaryExpressionBase`
     pub primary_expression_base: PrimaryExpressionBase,
@@ -1721,7 +1721,7 @@ pub struct JsxElement {
 }
 
 /// `type JsxAttributes struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JsxAttributes {
     /// embedded `PrimaryExpressionBase`
     pub primary_expression_base: PrimaryExpressionBase,
@@ -1733,7 +1733,7 @@ pub struct JsxAttributes {
 }
 
 /// `type JsxNamespacedName struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JsxNamespacedName {
     /// embedded `ExpressionBase`
     pub expression_base: ExpressionBase,
@@ -1744,7 +1744,7 @@ pub struct JsxNamespacedName {
 }
 
 /// `type JsxOpeningElement struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JsxOpeningElement {
     /// embedded `ExpressionBase`
     pub expression_base: ExpressionBase,
@@ -1756,7 +1756,7 @@ pub struct JsxOpeningElement {
 }
 
 /// `type JsxSelfClosingElement struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JsxSelfClosingElement {
     /// embedded `PrimaryExpressionBase`
     pub primary_expression_base: PrimaryExpressionBase,
@@ -1768,7 +1768,7 @@ pub struct JsxSelfClosingElement {
 }
 
 /// `type JsxFragment struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JsxFragment {
     /// embedded `PrimaryExpressionBase`
     pub primary_expression_base: PrimaryExpressionBase,
@@ -1780,21 +1780,21 @@ pub struct JsxFragment {
 }
 
 /// `type JsxOpeningFragment struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JsxOpeningFragment {
     /// embedded `ExpressionBase`
     pub expression_base: ExpressionBase,
 }
 
 /// `type JsxClosingFragment struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JsxClosingFragment {
     /// embedded `ExpressionBase`
     pub expression_base: ExpressionBase,
 }
 
 /// `type JsxAttribute struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JsxAttribute {
     /// embedded `DeclarationBase`
     pub declaration_base: DeclarationBase,
@@ -1805,7 +1805,7 @@ pub struct JsxAttribute {
 }
 
 /// `type JsxSpreadAttribute struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JsxSpreadAttribute {
     /// embedded `ObjectLiteralElementBase`
     pub object_literal_element_base: ObjectLiteralElementBase,
@@ -1815,13 +1815,13 @@ pub struct JsxSpreadAttribute {
 }
 
 /// `type JsxClosingElement struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JsxClosingElement {
     pub tag_name: Option<NodeId>,
 }
 
 /// `type JsxExpression struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JsxExpression {
     /// embedded `ExpressionBase`
     pub expression_base: ExpressionBase,
@@ -1830,7 +1830,7 @@ pub struct JsxExpression {
 }
 
 /// `type JsxText struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JsxText {
     /// embedded `ExpressionBase`
     pub expression_base: ExpressionBase,
@@ -1840,20 +1840,20 @@ pub struct JsxText {
 }
 
 /// `type SyntaxList struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct SyntaxList {
     pub children: Box<[NodeId]>,
 }
 
 /// `type JSDoc struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDoc {
     pub comment: Option<NodeList>,
     pub tags: Option<NodeList>,
 }
 
 /// `type JSDocTypeExpression struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocTypeExpression {
     /// embedded `TypeNodeBase`
     pub type_node_base: TypeNodeBase,
@@ -1861,7 +1861,7 @@ pub struct JSDocTypeExpression {
 }
 
 /// `type JSDocNonNullableType struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocNonNullableType {
     /// embedded `JSDocTypeBase`
     pub js_doc_type_base: JSDocTypeBase,
@@ -1869,7 +1869,7 @@ pub struct JSDocNonNullableType {
 }
 
 /// `type JSDocNullableType struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocNullableType {
     /// embedded `JSDocTypeBase`
     pub js_doc_type_base: JSDocTypeBase,
@@ -1877,14 +1877,14 @@ pub struct JSDocNullableType {
 }
 
 /// `type JSDocAllType struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocAllType {
     /// embedded `JSDocTypeBase`
     pub js_doc_type_base: JSDocTypeBase,
 }
 
 /// `type JSDocVariadicType struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocVariadicType {
     /// embedded `JSDocTypeBase`
     pub js_doc_type_base: JSDocTypeBase,
@@ -1892,7 +1892,7 @@ pub struct JSDocVariadicType {
 }
 
 /// `type JSDocOptionalType struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocOptionalType {
     /// embedded `JSDocTypeBase`
     pub js_doc_type_base: JSDocTypeBase,
@@ -1900,7 +1900,7 @@ pub struct JSDocOptionalType {
 }
 
 /// `type JSDocTypeTag struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocTypeTag {
     /// embedded `JSDocTagBase`
     pub js_doc_tag_base: JSDocTagBase,
@@ -1908,14 +1908,14 @@ pub struct JSDocTypeTag {
 }
 
 /// `type JSDocUnknownTag struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocUnknownTag {
     /// embedded `JSDocTagBase`
     pub js_doc_tag_base: JSDocTagBase,
 }
 
 /// `type JSDocTemplateTag struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocTemplateTag {
     /// embedded `JSDocTagBase`
     pub js_doc_tag_base: JSDocTagBase,
@@ -1924,7 +1924,7 @@ pub struct JSDocTemplateTag {
 }
 
 /// `type JSDocReturnTag struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocReturnTag {
     /// embedded `JSDocTagBase`
     pub js_doc_tag_base: JSDocTagBase,
@@ -1932,49 +1932,49 @@ pub struct JSDocReturnTag {
 }
 
 /// `type JSDocPublicTag struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocPublicTag {
     /// embedded `JSDocTagBase`
     pub js_doc_tag_base: JSDocTagBase,
 }
 
 /// `type JSDocPrivateTag struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocPrivateTag {
     /// embedded `JSDocTagBase`
     pub js_doc_tag_base: JSDocTagBase,
 }
 
 /// `type JSDocProtectedTag struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocProtectedTag {
     /// embedded `JSDocTagBase`
     pub js_doc_tag_base: JSDocTagBase,
 }
 
 /// `type JSDocReadonlyTag struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocReadonlyTag {
     /// embedded `JSDocTagBase`
     pub js_doc_tag_base: JSDocTagBase,
 }
 
 /// `type JSDocOverrideTag struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocOverrideTag {
     /// embedded `JSDocTagBase`
     pub js_doc_tag_base: JSDocTagBase,
 }
 
 /// `type JSDocDeprecatedTag struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocDeprecatedTag {
     /// embedded `JSDocTagBase`
     pub js_doc_tag_base: JSDocTagBase,
 }
 
 /// `type JSDocSeeTag struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocSeeTag {
     /// embedded `JSDocTagBase`
     pub js_doc_tag_base: JSDocTagBase,
@@ -1982,7 +1982,7 @@ pub struct JSDocSeeTag {
 }
 
 /// `type JSDocImplementsTag struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocImplementsTag {
     /// embedded `JSDocTagBase`
     pub js_doc_tag_base: JSDocTagBase,
@@ -1990,7 +1990,7 @@ pub struct JSDocImplementsTag {
 }
 
 /// `type JSDocAugmentsTag struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocAugmentsTag {
     /// embedded `JSDocTagBase`
     pub js_doc_tag_base: JSDocTagBase,
@@ -1998,7 +1998,7 @@ pub struct JSDocAugmentsTag {
 }
 
 /// `type JSDocSatisfiesTag struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocSatisfiesTag {
     /// embedded `JSDocTagBase`
     pub js_doc_tag_base: JSDocTagBase,
@@ -2006,7 +2006,7 @@ pub struct JSDocSatisfiesTag {
 }
 
 /// `type JSDocThrowsTag struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocThrowsTag {
     /// embedded `JSDocTagBase`
     pub js_doc_tag_base: JSDocTagBase,
@@ -2014,7 +2014,7 @@ pub struct JSDocThrowsTag {
 }
 
 /// `type JSDocThisTag struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocThisTag {
     /// embedded `JSDocTagBase`
     pub js_doc_tag_base: JSDocTagBase,
@@ -2022,7 +2022,7 @@ pub struct JSDocThisTag {
 }
 
 /// `type JSDocImportTag struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocImportTag {
     /// embedded `JSDocTagBase`
     pub js_doc_tag_base: JSDocTagBase,
@@ -2032,7 +2032,7 @@ pub struct JSDocImportTag {
 }
 
 /// `type JSDocCallbackTag struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocCallbackTag {
     /// embedded `JSDocTagBase`
     pub js_doc_tag_base: JSDocTagBase,
@@ -2041,7 +2041,7 @@ pub struct JSDocCallbackTag {
 }
 
 /// `type JSDocOverloadTag struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocOverloadTag {
     /// embedded `JSDocTagBase`
     pub js_doc_tag_base: JSDocTagBase,
@@ -2049,7 +2049,7 @@ pub struct JSDocOverloadTag {
 }
 
 /// `type JSDocTypedefTag struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocTypedefTag {
     /// embedded `JSDocTagBase`
     pub js_doc_tag_base: JSDocTagBase,
@@ -2058,7 +2058,7 @@ pub struct JSDocTypedefTag {
 }
 
 /// `type JSDocSignature struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocSignature {
     /// embedded `JSDocTypeBase`
     pub js_doc_type_base: JSDocTypeBase,
@@ -2069,7 +2069,7 @@ pub struct JSDocSignature {
 }
 
 /// `type JSDocNameReference struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocNameReference {
     /// embedded `TypeNodeBase`
     pub type_node_base: TypeNodeBase,
@@ -2077,7 +2077,7 @@ pub struct JSDocNameReference {
 }
 
 /// `type ModuleDeclaration struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ModuleDeclaration {
     /// embedded `StatementBase`
     pub statement_base: StatementBase,
@@ -2099,7 +2099,7 @@ pub struct ModuleDeclaration {
 }
 
 /// `type ImportEqualsDeclaration struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ImportEqualsDeclaration {
     /// embedded `StatementBase`
     pub statement_base: StatementBase,
@@ -2117,7 +2117,7 @@ pub struct ImportEqualsDeclaration {
 }
 
 /// `type ExportDeclaration struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ExportDeclaration {
     /// embedded `StatementBase`
     pub statement_base: StatementBase,
@@ -2134,7 +2134,7 @@ pub struct ExportDeclaration {
 }
 
 /// `type ImportTypeNode struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ImportTypeNode {
     /// embedded `NodeWithTypeArgumentsBase`
     pub node_with_type_arguments_base: NodeWithTypeArgumentsBase,
@@ -2145,7 +2145,7 @@ pub struct ImportTypeNode {
 }
 
 /// `type ImportClause struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ImportClause {
     /// embedded `DeclarationBase`
     pub declaration_base: DeclarationBase,
@@ -2159,7 +2159,7 @@ pub struct ImportClause {
 }
 
 /// `type ImportSpecifier struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ImportSpecifier {
     /// embedded `DeclarationBase`
     pub declaration_base: DeclarationBase,
@@ -2173,14 +2173,14 @@ pub struct ImportSpecifier {
 }
 
 /// `type JSDocText struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocText {
     /// embedded `JSDocCommentBase`
     pub js_doc_comment_base: JSDocCommentBase,
 }
 
 /// `type JSDocLink struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocLink {
     /// embedded `JSDocCommentBase`
     pub js_doc_comment_base: JSDocCommentBase,
@@ -2188,7 +2188,7 @@ pub struct JSDocLink {
 }
 
 /// `type JSDocLinkPlain struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocLinkPlain {
     /// embedded `JSDocCommentBase`
     pub js_doc_comment_base: JSDocCommentBase,
@@ -2196,7 +2196,7 @@ pub struct JSDocLinkPlain {
 }
 
 /// `type JSDocLinkCode struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocLinkCode {
     /// embedded `JSDocCommentBase`
     pub js_doc_comment_base: JSDocCommentBase,
@@ -2204,7 +2204,7 @@ pub struct JSDocLinkCode {
 }
 
 /// `type TypeParameterDeclaration struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TypeParameterDeclaration {
     /// embedded `TypeSyntaxBase`
     pub type_syntax_base: TypeSyntaxBase,
@@ -2219,7 +2219,7 @@ pub struct TypeParameterDeclaration {
 }
 
 /// `type SyntheticReferenceExpression struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct SyntheticReferenceExpression {
     /// embedded `ExpressionBase`
     pub expression_base: ExpressionBase,
@@ -2228,7 +2228,7 @@ pub struct SyntheticReferenceExpression {
 }
 
 /// `type JSDocTypeLiteral struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocTypeLiteral {
     /// embedded `JSDocTypeBase`
     pub js_doc_type_base: JSDocTypeBase,
@@ -2239,7 +2239,7 @@ pub struct JSDocTypeLiteral {
 }
 
 /// `type JSDocParameterOrPropertyTag struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct JSDocParameterOrPropertyTag {
     /// embedded `JSDocTagBase`
     pub js_doc_tag_base: JSDocTagBase,
@@ -2250,6 +2250,9 @@ pub struct JSDocParameterOrPropertyTag {
 }
 
 /// `type SourceFile struct`.
+///
+/// `Clone` is hand-implemented in `ast.rs` — several fields
+/// (`OnceLock` lazies, atomics, `NodeFactory` hooks) are not `Clone`.
 #[derive(Default)]
 pub struct SourceFile {
     /// embedded `DeclarationBase`
@@ -2306,7 +2309,7 @@ pub struct SourceFile {
 }
 
 /// `type FlowSwitchClauseData struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct FlowSwitchClauseData {
     pub switch_statement: Option<NodeId>,
     pub clause_start: i32,
@@ -2314,7 +2317,7 @@ pub struct FlowSwitchClauseData {
 }
 
 /// `type FlowReduceLabelData struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct FlowReduceLabelData {
     pub target: Option<FlowNodeId>,
     pub antecedents: Option<FlowListId>,
@@ -2322,6 +2325,7 @@ pub struct FlowReduceLabelData {
 
 /// `nodeData` — the payload enum; every variant is a
 /// generated or hand-authored node data struct.
+#[derive(Clone)]
 pub enum NodeData {
     Token(Token),
     Identifier(Identifier),

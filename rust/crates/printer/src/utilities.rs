@@ -65,10 +65,10 @@ fn escaped_chars_map(ch: i32) -> Option<&'static str> {
         0x22 => Some("\\\""),
         0x27 => Some("\\'"),
         0x60 => Some("\\`"),
-        0x24 => Some("\\$"), // when quoteChar == '`'
+        0x24 => Some("\\$"),       // when quoteChar == '`'
         0x2028 => Some("\\u2028"), // lineSeparator
         0x2029 => Some("\\u2029"), // paragraphSeparator
-        0x85 => Some("\\u0085"), // nextLine
+        0x85 => Some("\\u0085"),   // nextLine
         _ => None,
     }
 }
@@ -167,7 +167,11 @@ pub(crate) fn escape_string_worker(
                 } else {
                     encode_jsx_character_entity(b, ch);
                 }
-            } else if ch == 0x0D && quote_char == QuoteChar::Backtick && i + 1 < bytes.len() && bytes[i + 1] == b'\n' {
+            } else if ch == 0x0D
+                && quote_char == QuoteChar::Backtick
+                && i + 1 < bytes.len()
+                && bytes[i + 1] == b'\n'
+            {
                 // Template strings preserve simple LF newlines, but still must escape CRLF. Left alone, the
                 // above cases for `\r` and `\n` would inadvertently escape CRLF as two independent characters.
                 size += 1;
@@ -249,7 +253,8 @@ fn can_use_original_text(nodes: &[Node], node: NodeId, flags: GetLiteralTextFlag
     }
 
     if nodes[node].kind == Kind::NumericLiteral {
-        let token_flags = nodes[node].as_numeric_literal()
+        let token_flags = nodes[node]
+            .as_numeric_literal()
             .literal_expression_base
             .literal_like_node_base
             .token_flags;
@@ -297,20 +302,19 @@ pub(crate) fn get_literal_text(
     match nodes[node].kind {
         Kind::StringLiteral => {
             let mut b = String::new();
-            let quote_char =
-                if nodes[node]
-                    .as_string_literal()
-                    .literal_expression_base
-                    .literal_like_node_base
-                    .token_flags
-                    .0
-                    & ast::TokenFlags::SINGLE_QUOTE.0
-                    != 0
-                {
-                    QuoteChar::SingleQuote
-                } else {
-                    QuoteChar::DoubleQuote
-                };
+            let quote_char = if nodes[node]
+                .as_string_literal()
+                .literal_expression_base
+                .literal_like_node_base
+                .token_flags
+                .0
+                & ast::TokenFlags::SINGLE_QUOTE.0
+                != 0
+            {
+                QuoteChar::SingleQuote
+            } else {
+                QuoteChar::DoubleQuote
+            };
 
             let text = nodes[node].text(nodes).into_owned();
 
@@ -414,10 +418,7 @@ pub(crate) fn is_not_prologue_directive(nodes: &[Node], node: NodeId) -> bool {
 }
 
 /// `RangeIsOnSingleLine`
-pub(crate) fn range_is_on_single_line(
-    r: TextRange,
-    source_file: &ast::SourceFile,
-) -> bool {
+pub(crate) fn range_is_on_single_line(r: TextRange, source_file: &ast::SourceFile) -> bool {
     range_start_is_on_same_line_as_range_end(r, r, source_file)
 }
 
@@ -511,8 +512,11 @@ pub(crate) fn get_lines_between_positions(
     let is_negative = lower == pos2;
     let upper = if is_negative { pos1 } else { pos2 };
     let lower_line = tsc_scanner::scanner::compute_line_of_position(line_starts, lower);
-    let upper_line =
-        lower_line + tsc_scanner::scanner::compute_line_of_position(&line_starts[lower_line as usize..], upper);
+    let upper_line = lower_line
+        + tsc_scanner::scanner::compute_line_of_position(
+            &line_starts[lower_line as usize..],
+            upper,
+        );
     if is_negative {
         lower_line - upper_line
     } else {
@@ -570,7 +574,15 @@ pub(crate) fn get_lines_between_position_and_next_non_whitespace_character(
             ..Default::default()
         }),
     );
-    get_lines_between_positions(source_file, pos, if stop_pos < next_pos { stop_pos } else { next_pos })
+    get_lines_between_positions(
+        source_file,
+        pos,
+        if stop_pos < next_pos {
+            stop_pos
+        } else {
+            next_pos
+        },
+    )
 }
 
 /// `getPreviousNonWhitespacePosition`
@@ -612,14 +624,9 @@ pub(crate) fn sibling_node_positions_are_comparable(
     }
 
     if let Some(parent_node_array) = get_containing_node_array(nodes, previous_node) {
-        let prev_node_index = parent_node_array
-            .iter()
-            .position(|&n| n == previous_node);
+        let prev_node_index = parent_node_array.iter().position(|&n| n == previous_node);
         return prev_node_index.is_some_and(|i| {
-            parent_node_array
-                .iter()
-                .position(|&n| n == next_node)
-                == Some(i + 1)
+            parent_node_array.iter().position(|&n| n == next_node) == Some(i + 1)
         });
     }
 
@@ -725,7 +732,12 @@ pub(crate) fn get_containing_node_array<'a>(
             }
         }
         Kind::UnionType => {
-            return parent.as_union_type_node().union_or_intersection_type_node_base.types.as_ref().map(|l| l.nodes());
+            return parent
+                .as_union_type_node()
+                .union_or_intersection_type_node_base
+                .types
+                .as_ref()
+                .map(|l| l.nodes());
         }
         Kind::IntersectionType => {
             return parent
@@ -1062,7 +1074,8 @@ pub fn is_recognized_triple_slash_comment(text: &str, comment_range: CommentRang
         && text.as_bytes()[comment_range.text_range.pos() as usize + 1] == b'/'
         && text.as_bytes()[comment_range.text_range.pos() as usize + 2] == b'/'
     {
-        let text = &text[comment_range.text_range.pos() as usize + 3..comment_range.text_range.end() as usize];
+        let text = &text
+            [comment_range.text_range.pos() as usize + 3..comment_range.text_range.end() as usize];
         let mut pos = 0usize;
         skip_white_space_single_line(text, &mut pos);
         if !match_rune(text, &mut pos, '<') {
@@ -1193,13 +1206,13 @@ impl<'a> LineCharacterCache<'a> {
         // matching TypeScript's computeLineAndCharacterOfPosition which uses
         // arithmetic (position - lineStarts[lineNumber]) and handles this implicitly.
         let end_pos = pos.min(self.text.len() as i32);
-        let mut character = if self.has_cached && line == self.cached_line && end_pos >= self.cached_pos
+        let mut character = if self.has_cached
+            && line == self.cached_line
+            && end_pos >= self.cached_pos
         {
             // Incremental: only count UTF-16 code units from the last cached position.
             self.cached_char
-                + tsc_core::core::utf16_len(
-                    &self.text[self.cached_pos as usize..end_pos as usize],
-                )
+                + tsc_core::core::utf16_len(&self.text[self.cached_pos as usize..end_pos as usize])
         } else {
             // Full computation from line start.
             tsc_core::core::utf16_len(&self.text[line_start as usize..end_pos as usize])
@@ -1245,7 +1258,10 @@ mod tests {
         ];
         for (i, (s, quote_char, expected)) in data.iter().enumerate() {
             let actual = escape_string(s, *quote_char);
-            assert_eq!(actual, *expected, "[{i}] escapeString({s:?}, {quote_char:?})");
+            assert_eq!(
+                actual, *expected,
+                "[{i}] escapeString({s:?}, {quote_char:?})"
+            );
         }
     }
 
@@ -1291,7 +1307,11 @@ mod tests {
             ("ab'c", QuoteChar::SingleQuote, "ab&apos;c"),
             ("ab\"c", QuoteChar::SingleQuote, "ab\"c"),
             ("ab\u{8f}c", QuoteChar::DoubleQuote, "ab\u{8f}c"),
-            ("\u{1d7d8}\u{1d7d9}", QuoteChar::DoubleQuote, "\u{1d7d8}\u{1d7d9}"),
+            (
+                "\u{1d7d8}\u{1d7d9}",
+                QuoteChar::DoubleQuote,
+                "\u{1d7d8}\u{1d7d9}",
+            ),
         ];
         for (i, (s, quote_char, expected)) in data.iter().enumerate() {
             let actual = escape_jsx_attribute_string(s, *quote_char);
@@ -1355,7 +1375,10 @@ mod tests {
                 has_trailing_new_line: false,
             };
             let actual = is_recognized_triple_slash_comment(s, comment_range);
-            assert_eq!(actual, *expected, "[{i}] isRecognizedTripleSlashComment({s:?})");
+            assert_eq!(
+                actual, *expected,
+                "[{i}] isRecognizedTripleSlashComment({s:?})"
+            );
         }
     }
 }

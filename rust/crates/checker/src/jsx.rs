@@ -137,8 +137,8 @@ impl Checker {
 
     /// `func (c *Checker) checkJsxElementDeferred` (jsx.go:77).
     pub(crate) fn check_jsx_element_deferred(&mut self, node: NodeId) {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let jsx_element = nodes[node].as_jsx_element();
         let opening_element = jsx_element
             .opening_element
@@ -163,8 +163,8 @@ impl Checker {
     /// `func (c *Checker) checkJsxExpression` (jsx.go:89).
     pub(crate) fn check_jsx_expression(&mut self, node: NodeId, check_mode: CheckMode) -> TypeId {
         self.check_grammar_jsx_expression(node);
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let Some(expression) = nodes[node].expression() else {
             return self.error_type;
         };
@@ -198,8 +198,8 @@ impl Checker {
 
     /// `func (c *Checker) checkJsxFragment` (jsx.go:110).
     pub(crate) fn check_jsx_fragment(&mut self, node: NodeId) -> TypeId {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let opening_fragment = nodes[node]
             .as_jsx_fragment()
             .opening_fragment
@@ -244,8 +244,8 @@ impl Checker {
     /// `func (c *Checker) checkJsxAttributes` (jsx.go:126).
     pub(crate) fn check_jsx_attributes(&mut self, node: NodeId, check_mode: CheckMode) -> TypeId {
         self.check_node_deferred(node);
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let parent = nodes[node].parent.expect("JsxAttributes.parent");
         self.create_jsx_attributes_type_from_attributes_property(parent, check_mode)
     }
@@ -253,8 +253,8 @@ impl Checker {
     /// `func (c *Checker) checkJsxOpeningLikeElementOrOpeningFragment`
     /// (jsx.go:131).
     pub(crate) fn check_jsx_opening_like_element_or_opening_fragment(&mut self, node: NodeId) {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let is_node_opening_like_element = ast::is_jsx_opening_like_element(&nodes[node]);
         if is_node_opening_like_element {
             self.check_grammar_jsx_element(node);
@@ -267,8 +267,8 @@ impl Checker {
         }
         if is_node_opening_like_element {
             let element_type_constraint = self.get_jsx_element_type_type_at(node);
-                        let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((node).file_index());;
+            let __program = self.program.clone().expect("program");
+            let nodes = __program.nodes((node).file_index());
             let tag_name = nodes[node].tag_name().expect("opening-like tag name");
             if let Some(element_type_constraint) = element_type_constraint {
                 let tag_type = if crate::utilities::is_jsx_intrinsic_tag_name(tag_name, &nodes) {
@@ -287,8 +287,8 @@ impl Checker {
                     Some(&diagnostics::Its_type_0_is_not_a_valid_JSX_element_type),
                     Some(&mut diags),
                 ) {
-                                        let __program = self.program.clone().expect("program");
-                    let nodes = __program.nodes((node).file_index());;
+                    let __program = self.program.clone().expect("program");
+                    let nodes = __program.nodes((node).file_index());
                     let chain = ast::diagnostic::new_diagnostic_chain(
                         diags.first(),
                         &diagnostics::X_0_cannot_be_used_as_a_JSX_component,
@@ -340,8 +340,8 @@ impl Checker {
         let mut diags: Vec<ast::diagnostic::DiagnosticRef> = Vec::new();
         let relation = self.assignable_relation.clone();
         let tag_name = {
-                        let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((opening_like_element).file_index());;
+            let __program = self.program.clone().expect("program");
+            let nodes = __program.nodes((opening_like_element).file_index());
             nodes[opening_like_element].tag_name()
         };
         match ref_kind {
@@ -394,8 +394,8 @@ impl Checker {
             }
         }
         if !diags.is_empty() {
-                        let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((opening_like_element).file_index());;
+            let __program = self.program.clone().expect("program");
+            let nodes = __program.nodes((opening_like_element).file_index());
             let text = tag_name
                 .map(|t| tsc_scanner::utilities::get_text_of_node(t, &nodes))
                 .unwrap_or_default();
@@ -417,8 +417,8 @@ impl Checker {
         context: InferenceContextId,
     ) -> Vec<TypeId> {
         let param_type = self.get_effective_first_argument_for_jsx_signature(signature, node);
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let attributes = nodes[node].attributes().expect("jsx attributes");
         let check_attr_type = self.check_expression_with_contextual_type(
             attributes,
@@ -445,8 +445,8 @@ impl Checker {
         node: NodeId,
         context_flags: ContextFlags,
     ) -> Option<TypeId> {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let parent = nodes[node].parent?;
         if ast::is_jsx_attribute_like(&nodes[parent]) {
             return self.get_contextual_type(node, context_flags);
@@ -469,8 +469,8 @@ impl Checker {
         // trying out. If there is no contextual type (e.g. we are trying to
         // resolve stateful component), get attributes type from resolving
         // element's tagName
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((attribute).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((attribute).file_index());
         let parent = nodes[attribute].parent?;
         if ast::is_jsx_attribute(&nodes[attribute]) {
             let attributes_type = self.get_apparent_type_of_contextual_type(parent, context_flags);
@@ -493,8 +493,8 @@ impl Checker {
         node: NodeId,
         context_flags: ContextFlags,
     ) -> Option<TypeId> {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         if ast::is_jsx_opening_element(&nodes[node])
             && context_flags != ContextFlags::IGNORE_NODE_INFERENCES
         {
@@ -519,8 +519,8 @@ impl Checker {
         child: NodeId,
         context_flags: ContextFlags,
     ) -> Option<TypeId> {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let opening_element = nodes[node]
             .as_jsx_element()
             .opening_element
@@ -532,8 +532,8 @@ impl Checker {
         // JSX.ElementAttributesProperty)
         let jsx_namespace = self.get_jsx_namespace_at(Some(node));
         let jsx_children_property_name = self.get_jsx_element_children_property_name(jsx_namespace);
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let children: Vec<NodeId> = nodes[node]
             .children()
             .map(|c| c.nodes.to_vec())
@@ -576,8 +576,8 @@ impl Checker {
         node: NodeId,
         contextual_type: TypeId,
     ) -> TypeId {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let key = crate::checker_types::DiscriminatedContextualTypeKey {
             node_id: ast::get_node_id(&nodes[node]),
             type_id: contextual_type,
@@ -587,15 +587,15 @@ impl Checker {
         }
         let jsx_namespace = self.get_jsx_namespace_at(Some(node));
         let jsx_children_property_name = self.get_jsx_element_children_property_name(jsx_namespace);
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let properties = nodes[node].properties().unwrap_or(&[]).to_vec();
         let discriminant_properties: Vec<NodeId> = properties
             .iter()
             .copied()
             .filter(|&p| {
-                                let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((p).file_index());;
+                let __program = self.program.clone().expect("program");
+                let nodes = __program.nodes((p).file_index());
                 let symbol = nodes[p].symbol();
                 if symbol.is_none() || !ast::is_jsx_attribute(&nodes[p]) {
                     return false;
@@ -611,8 +611,8 @@ impl Checker {
             .iter()
             .copied()
             .filter(|&s| {
-                                let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((node).file_index());;
+                let __program = self.program.clone().expect("program");
+                let nodes = __program.nodes((node).file_index());
                 let node_symbol = nodes[node].symbol();
                 if !self.sym(s).flags.intersects(ast::SymbolFlags::OPTIONAL)
                     || node_symbol.is_none()
@@ -660,19 +660,24 @@ impl Checker {
     ) -> bool {
         let mut diagnostic_output = diagnostic_output;
         let mut reported_error = false;
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let props = nodes[node].properties().unwrap_or(&[]).to_vec();
         let parent = nodes[node].parent;
         for prop in props {
-                        let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((prop).file_index());;
+            let __program = self.program.clone().expect("program");
+            let nodes = __program.nodes((prop).file_index());
             if !ast::is_jsx_spread_attribute(&nodes[prop]) {
                 let prop_name = nodes[prop].name().expect("jsx attribute name");
                 let prop_name_text = nodes[prop_name].text(&nodes).into_owned();
                 if !is_hyphenated_jsx_name(&prop_name_text) {
                     let name_type = self.get_string_literal_type(&prop_name_text);
-                    if !self.types_handle().get(name_type).flags.intersects(TypeFlags::NEVER) {
+                    if !self
+                        .types_handle()
+                        .get(name_type)
+                        .flags
+                        .intersects(TypeFlags::NEVER)
+                    {
                         let initializer = nodes[prop].initializer();
                         let relation = relation.clone();
                         reported_error = self.elaborate_element(
@@ -691,8 +696,8 @@ impl Checker {
             }
         }
         if let Some(parent) = parent {
-                        let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((node).file_index());;
+            let __program = self.program.clone().expect("program");
+            let nodes = __program.nodes((node).file_index());
             if ast::is_jsx_opening_element(&nodes[parent])
                 && nodes[parent]
                     .parent
@@ -707,8 +712,8 @@ impl Checker {
                 }
                 let children_name_type = self.get_string_literal_type(&children_prop_name);
                 let children_target_type = self.get_indexed_access_type(target, children_name_type);
-                                let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((containing_element).file_index());;
+                let __program = self.program.clone().expect("program");
+                let nodes = __program.nodes((containing_element).file_index());
                 let children: Vec<NodeId> = nodes[containing_element]
                     .children()
                     .map(|c| c.nodes.to_vec())
@@ -745,8 +750,8 @@ impl Checker {
                 }
                 let invalid_text_diagnostic: InvalidTextDiagnostic = {
                     let children_prop_name = children_prop_name.clone();
-                                        let __program = self.program.clone().expect("program");
-                    let nodes = __program.nodes((node).file_index());;
+                    let __program = self.program.clone().expect("program");
+                    let nodes = __program.nodes((node).file_index());
                     let tag_name = nodes[parent].tag_name();
                     let cache: Rc<RefCell<Option<Vec<String>>>> = Rc::new(RefCell::new(None));
                     Rc::new(RefCell::new(
@@ -759,8 +764,8 @@ impl Checker {
                             }
                             let tag_name_text = tag_name
                                 .map(|t| {
-                                                                        let __program = c.program.clone().expect("program");
-                                    let nodes = __program.nodes((t).file_index());;
+                                    let __program = c.program.clone().expect("program");
+                                    let nodes = __program.nodes((t).file_index());
                                     tsc_scanner::utilities::get_text_of_node(t, &nodes)
                                 })
                                 .unwrap_or_default();
@@ -804,8 +809,8 @@ impl Checker {
                             &relation,
                         ) {
                             // arity mismatch
-                                                        let __program = self.program.clone().expect("program");
-                            let nodes = __program.nodes((containing_element).file_index());;
+                            let __program = self.program.clone().expect("program");
+                            let nodes = __program.nodes((containing_element).file_index());
                             let opening_tag = nodes[containing_element]
                                 .as_jsx_element()
                                 .opening_element
@@ -847,8 +852,8 @@ impl Checker {
                     let source_children = self.get_indexed_access_type(source, children_name_type);
                     if !self.is_type_related_to(source_children, children_target_type, &relation) {
                         // arity mismatch
-                                                let __program = self.program.clone().expect("program");
-                        let nodes = __program.nodes((containing_element).file_index());;
+                        let __program = self.program.clone().expect("program");
+                        let nodes = __program.nodes((containing_element).file_index());
                         let opening_tag = nodes[containing_element]
                             .as_jsx_element()
                             .opening_element
@@ -877,8 +882,8 @@ impl Checker {
         get_invalid_text_diagnostic: InvalidTextDiagnostic,
     ) -> Vec<JsxElaborationElement> {
         let mut result = Vec::new();
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let children: Vec<NodeId> = nodes[node]
             .children()
             .map(|c| c.nodes.to_vec())
@@ -908,8 +913,8 @@ impl Checker {
         name_type: Option<TypeId>,
         get_invalid_text_diagnostic: InvalidTextDiagnostic,
     ) -> JsxElaborationElement {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((child).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((child).file_index());
         match nodes[child].kind {
             ast::Kind::JsxExpression => {
                 // child is of the type of the expression
@@ -941,8 +946,8 @@ impl Checker {
                         move |c: &mut Checker, prop: Option<NodeId>| {
                             let (error_message, error_args) =
                                 (get_invalid_text_diagnostic.borrow_mut())(c);
-                                                        let __program = c.program.clone().expect("program");
-                            let nodes = __program.nodes((child).file_index());;
+                            let __program = c.program.clone().expect("program");
+                            let nodes = __program.nodes((child).file_index());
                             crate::utilities::new_diagnostic_for_node(
                                 prop,
                                 &nodes,
@@ -1012,7 +1017,9 @@ impl Checker {
                 );
             }
             if let Some(t) = target_indexed_prop_type {
-                if !self.types_handle().get(t)
+                if !self
+                    .types_handle()
+                    .get(t)
                     .flags
                     .intersects(TypeFlags::INDEXED_ACCESS)
                 {
@@ -1074,8 +1081,8 @@ impl Checker {
                     {
                         // `prop` is `e.errorNode` — always present on the
                         // paths that reach this (Go would nil-deref here).
-                                                let __program = self.program.clone().expect("program");
-                        let nodes = __program.nodes((prop.expect("prop")).file_index());;
+                        let __program = self.program.clone().expect("program");
+                        let nodes = __program.nodes((prop.expect("prop")).file_index());
                         let diag = crate::checker_b::create_diagnostic_for_node(
                             prop,
                             &nodes,
@@ -1167,8 +1174,8 @@ impl Checker {
     pub(crate) fn get_jsx_fragment_type(&mut self, node: NodeId) -> TypeId {
         // An opening fragment is required in order for `getJsxNamespace` to
         // give the fragment factory
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let file =
             ast::get_source_file_of_node(Some(node), &nodes).expect("jsx fragment source file");
         if let Some(t) = self.source_file_links.get(file).jsx_fragment_type {
@@ -1243,8 +1250,8 @@ impl Checker {
         candidates_out_array: Option<&mut Vec<SignatureId>>,
         check_mode: CheckMode,
     ) -> SignatureId {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let is_jsx_open_fragment = ast::is_jsx_opening_fragment(&nodes[node]);
         let tag_name = nodes[node].tag_name();
         let attributes = nodes[node].attributes();
@@ -1264,8 +1271,8 @@ impl Checker {
                 self.check_type_assignable_to_and_optionally_elaborate(
                     attr_type, result, tag_name, attributes, None, None,
                 );
-                                let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((node).file_index());;
+                let __program = self.program.clone().expect("program");
+                let nodes = __program.nodes((node).file_index());
                 let type_arguments = nodes[node].type_arguments().unwrap_or(&[]).to_vec();
                 if !type_arguments.is_empty() {
                     self.check_source_elements(&type_arguments);
@@ -1306,8 +1313,8 @@ impl Checker {
         }
         if signatures.is_empty() {
             // We found no signatures at all, which is an error
-                        let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((node).file_index());;
+            let __program = self.program.clone().expect("program");
+            let nodes = __program.nodes((node).file_index());
             if is_jsx_open_fragment {
                 let text = tsc_scanner::utilities::get_text_of_node(node, &nodes);
                 self.error(
@@ -1360,8 +1367,8 @@ impl Checker {
         // property.
         let mut diagnostic_output = diagnostic_output;
         let param_type = self.get_effective_first_argument_for_jsx_signature(signature, node);
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let is_opening_fragment = ast::is_jsx_opening_fragment(&nodes[node]);
         let attributes = nodes[node].attributes();
         let attributes_type = if is_opening_fragment {
@@ -1430,8 +1437,8 @@ impl Checker {
         }
         // We assume fragments have the correct arity since the node does not
         // have attributes
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let tag_name = nodes[node].tag_name();
         let mut tag_type = None;
         if (ast::is_jsx_opening_element(&nodes[node])
@@ -1509,8 +1516,8 @@ impl Checker {
             // function component provides
         }
         if report_errors {
-                        let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((node).file_index());;
+            let __program = self.program.clone().expect("program");
+            let nodes = __program.nodes((node).file_index());
             let tag_name = nodes[node].tag_name();
             // We will not report errors in this function for fragments, since
             // we do not check them in this function
@@ -1518,8 +1525,8 @@ impl Checker {
                 .map(|t| crate::utilities::entity_name_to_string(t, &nodes))
                 .unwrap_or_default();
             let factory_str = {
-                                let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((factory).file_index());;
+                let __program = self.program.clone().expect("program");
+                let nodes = __program.nodes((factory).file_index());
                 crate::utilities::entity_name_to_string(factory, &nodes)
             };
             let diag = crate::utilities::new_diagnostic_for_node(
@@ -1536,8 +1543,8 @@ impl Checker {
             if let Some(tag_name) = tag_name {
                 if let Some(tag_name_symbol) = self.get_symbol_at_location(tag_name, false) {
                     if let Some(value_declaration) = self.sym(tag_name_symbol).value_declaration {
-                                                let __program = self.program.clone().expect("program");
-                        let nodes = __program.nodes((value_declaration).file_index());;
+                        let __program = self.program.clone().expect("program");
+                        let nodes = __program.nodes((value_declaration).file_index());
                         let related = crate::utilities::new_diagnostic_for_node(
                             Some(value_declaration),
                             &nodes,
@@ -1580,8 +1587,8 @@ impl Checker {
         let mut object_flags = ObjectFlags::JSX_ATTRIBUTES;
         let jsx_namespace = self.get_jsx_namespace_at(Some(opening_like_element));
         let jsx_children_property_name = self.get_jsx_element_children_property_name(jsx_namespace);
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((opening_like_element).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((opening_like_element).file_index());
         let is_jsx_open_fragment = ast::is_jsx_opening_fragment(&nodes[opening_like_element]);
         if !is_jsx_open_fragment {
             let attributes = nodes[opening_like_element]
@@ -1594,17 +1601,17 @@ impl Checker {
             // `symbol` is a symbol of JsxAttributes containing attributes
             // corresponding to attributesTable; `attributesTable` is a
             // symbol table of attributes property.
-                        let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((attributes).file_index());;
+            let __program = self.program.clone().expect("program");
+            let nodes = __program.nodes((attributes).file_index());
             let props = nodes[attributes].properties().unwrap_or(&[]).to_vec();
             for attribute_decl in props {
-                                let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((attribute_decl).file_index());;
+                let __program = self.program.clone().expect("program");
+                let nodes = __program.nodes((attribute_decl).file_index());
                 let member = nodes[attribute_decl].symbol().expect("attribute symbol");
                 if ast::is_jsx_attribute(&nodes[attribute_decl]) {
                     let expr_type = self.check_jsx_attribute(attribute_decl, check_mode);
-                    object_flags |=
-                        self.types_handle().get(expr_type).object_flags & ObjectFlags::PROPAGATING_FLAGS;
+                    object_flags |= self.types_handle().get(expr_type).object_flags
+                        & ObjectFlags::PROPAGATING_FLAGS;
                     let member_flags = self.sym(member).flags;
                     let member_name = self.sym(member).name.clone();
                     let attribute_symbol =
@@ -1728,8 +1735,8 @@ impl Checker {
             }
         }
         if self.parent_has_semantic_jsx_children(opening_like_element) {
-                        let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((opening_like_element).file_index());;
+            let __program = self.program.clone().expect("program");
+            let nodes = __program.nodes((opening_like_element).file_index());
             let parent = nodes[opening_like_element].parent.expect("jsx parent");
             let child_types = self.check_jsx_children(parent, check_mode);
             if !has_spread_any_type
@@ -1749,8 +1756,8 @@ impl Checker {
                     );
                 }
                 let mut children_contextual_type = None;
-                                let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((opening_like_element).file_index());;
+                let __program = self.program.clone().expect("program");
+                let nodes = __program.nodes((opening_like_element).file_index());
                 if ast::is_jsx_opening_element(&nodes[opening_like_element]) {
                     if let Some(attributes) = nodes[opening_like_element].attributes() {
                         if let Some(contextual_type) = self
@@ -1878,8 +1885,8 @@ impl Checker {
     /// `createJsxAttributesTypeFromAttributesProperty` (jsx.go:798).
     fn parent_has_semantic_jsx_children(&mut self, opening_like_element: NodeId) -> bool {
         // Handle children attribute
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((opening_like_element).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((opening_like_element).file_index());
         let Some(parent) = nodes[opening_like_element].parent else {
             return false;
         };
@@ -1912,8 +1919,8 @@ impl Checker {
 
     /// `func (c *Checker) checkJsxAttribute` (jsx.go:869).
     pub(crate) fn check_jsx_attribute(&mut self, node: NodeId, check_mode: CheckMode) -> TypeId {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         if let Some(initializer) = nodes[node].initializer() {
             return self.check_expression_for_mutable_location(initializer, check_mode);
         }
@@ -1928,8 +1935,8 @@ impl Checker {
         check_mode: CheckMode,
     ) -> Vec<TypeId> {
         let mut child_types = Vec::new();
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let children: Vec<NodeId> = nodes[node]
             .children()
             .map(|c| c.nodes.to_vec())
@@ -1938,8 +1945,8 @@ impl Checker {
             // In React, JSX text that contains only whitespaces will be
             // ignored so we don't want to type-check that because then type
             // of children property will have constituent of string type.
-                        let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((child).file_index());;
+            let __program = self.program.clone().expect("program");
+            let nodes = __program.nodes((child).file_index());
             if ast::is_jsx_text(&nodes[child]) {
                 if !nodes[child].as_jsx_text().contains_only_trivia_white_spaces {
                     child_types.push(self.string_type);
@@ -1961,13 +1968,17 @@ impl Checker {
         element_type: TypeId,
         caller: NodeId,
     ) -> Vec<SignatureId> {
-        if self.types_handle().get(element_type)
+        if self
+            .types_handle()
+            .get(element_type)
             .flags
             .intersects(TypeFlags::STRING)
         {
             return vec![self.any_signature];
         }
-        if self.types_handle().get(element_type)
+        if self
+            .types_handle()
+            .get(element_type)
             .flags
             .intersects(TypeFlags::STRING_LITERAL)
         {
@@ -1996,13 +2007,16 @@ impl Checker {
             signatures = self.get_signatures_of_type(apparent_elem_type, SignatureKind::Call);
         }
         if signatures.is_empty()
-            && self.types_handle().get(apparent_elem_type)
+            && self
+                .types_handle()
+                .get(apparent_elem_type)
                 .flags
                 .intersects(TypeFlags::UNION)
         {
             // If each member has some combination of new/call signatures;
             // make a union signature list for those
-            let __arena_types = self.types.clone(); let types = __arena_types.get(apparent_elem_type).types().to_vec();
+            let __arena_types = self.types.clone();
+            let types = __arena_types.get(apparent_elem_type).types().to_vec();
             let signature_lists: Vec<Vec<SignatureId>> = types
                 .iter()
                 .map(|&t| self.get_uninstantiated_jsx_signatures_of_type(t, caller))
@@ -2019,8 +2033,8 @@ impl Checker {
         signature: SignatureId,
         node: NodeId,
     ) -> TypeId {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         if ast::is_jsx_opening_fragment(&nodes[node])
             || self.get_jsx_reference_kind(node) != JsxReferenceKind::Component
         {
@@ -2067,8 +2081,8 @@ impl Checker {
         } else {
             attributes_type =
                 self.get_jsx_props_type_for_signature_from_member(sig, &forced_lookup_location);
-                        let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((context).file_index());;
+            let __program = self.program.clone().expect("program");
+            let nodes = __program.nodes((context).file_index());
             let has_attributes = nodes[context]
                 .attributes()
                 .and_then(|a| nodes[a].properties().map(|p| !p.is_empty()))
@@ -2100,7 +2114,8 @@ impl Checker {
             // `intrinsicClassAttribs.symbol` may be absent; Go's
             // `getLocalTypeParametersOfClassOrInterfaceOrTypeAlias` returns
             // `nil` both for a nil symbol and for no appended parameters.
-            let __arena_intrinsic_symbol = self.types.clone(); let intrinsic_symbol = __arena_intrinsic_symbol.get(intrinsic_class_attribs).symbol;
+            let __arena_intrinsic_symbol = self.types.clone();
+            let intrinsic_symbol = __arena_intrinsic_symbol.get(intrinsic_class_attribs).symbol;
             let type_params = intrinsic_symbol
                 .map(|s| self.get_local_type_parameters_of_class_or_interface_or_type_alias(s))
                 .filter(|t| !t.is_empty());
@@ -2108,8 +2123,8 @@ impl Checker {
             let library_managed_attribute_type;
             if let Some(type_params) = type_params {
                 // apply JSX.IntrinsicClassAttributes<hostClassType, ...>
-                                let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((context).file_index());;
+                let __program = self.program.clone().expect("program");
+                let nodes = __program.nodes((context).file_index());
                 let in_js_file = ast::is_in_js_file(Some(context), &nodes);
                 let min_args = self.get_min_type_argument_count(&type_params);
                 let inferred_args = self.fill_missing_type_arguments(
@@ -2190,8 +2205,8 @@ impl Checker {
         let managed_sym = self.get_jsx_library_managed_attributes(ns);
         if let Some(managed_sym) = managed_sym {
             let ctor_type = self.get_static_type_of_referenced_jsx_constructor(context);
-                        let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((context).file_index());;
+            let __program = self.program.clone().expect("program");
+            let nodes = __program.nodes((context).file_index());
             let in_js_file = ast::is_in_js_file(Some(context), &nodes);
             if let Some(result) = self.instantiate_alias_or_interface_with_defaults(
                 managed_sym,
@@ -2237,11 +2252,15 @@ impl Checker {
                 return Some(self.get_type_alias_instantiation(managed_sym, &args, None));
             }
         }
-        if self.types_handle().get(declared_managed_type)
+        if self
+            .types_handle()
+            .get(declared_managed_type)
             .object_flags
             .intersects(ObjectFlags::CLASS_OR_INTERFACE)
         {
-            let __arena_type_parameters = self.types.clone(); let type_parameters = __arena_type_parameters.get(declared_managed_type)
+            let __arena_type_parameters = self.types.clone();
+            let type_parameters = __arena_type_parameters
+                .get(declared_managed_type)
                 .as_interface_type()
                 .map(|i| i.type_parameters().to_vec())
                 .unwrap_or_default();
@@ -2381,8 +2400,8 @@ impl Checker {
         &mut self,
         context: NodeId,
     ) -> TypeId {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((context).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((context).file_index());
         if ast::is_jsx_opening_fragment(&nodes[context]) {
             return self.get_jsx_fragment_type(context);
         }
@@ -2393,7 +2412,9 @@ impl Checker {
             return self.get_or_create_type_from_signature(fake_signature);
         }
         let tag_type = self.check_expression_cached(tag_name);
-        if self.types_handle().get(tag_type)
+        if self
+            .types_handle()
+            .get(tag_type)
             .flags
             .intersects(TypeFlags::STRING_LITERAL)
         {
@@ -2414,7 +2435,7 @@ impl Checker {
     /// If the elemType is a stringLiteral type, we can then provide a check
     /// to make sure that the string literal type is one of the Jsx intrinsic
     /// element type. For example:
-    /// ```tsx
+    /// ```ignore
     /// var CustomTag: "h1" = "h1";
     /// <CustomTag> Hello World </CustomTag>
     /// ```
@@ -2447,8 +2468,8 @@ impl Checker {
 
     /// `func (c *Checker) getJsxReferenceKind` (jsx.go:1157).
     pub(crate) fn get_jsx_reference_kind(&mut self, node: NodeId) -> JsxReferenceKind {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let tag_name = nodes[node].tag_name().expect("jsx tag name");
         if crate::utilities::is_jsx_intrinsic_tag_name(tag_name, &nodes) {
             return JsxReferenceKind::Mixed;
@@ -2513,8 +2534,8 @@ impl Checker {
         &mut self,
         node: NodeId,
     ) -> TypeId {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let tag_name = nodes[node].tag_name().expect("jsx tag name");
         debug_assert!(crate::utilities::is_jsx_intrinsic_tag_name(
             tag_name, &nodes
@@ -2550,8 +2571,8 @@ impl Checker {
             .intersects(JsxFlags::INTRINSIC_INDEXED_ELEMENT)
         {
             let intrinsic_elements = self.get_jsx_type(JSX_NAMES.intrinsic_elements, Some(node));
-                        let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((node).file_index());;
+            let __program = self.program.clone().expect("program");
+            let nodes = __program.nodes((node).file_index());
             let tag_name = nodes[node].tag_name().expect("jsx tag name");
             let name = nodes[tag_name].text(&nodes).into_owned();
             let index_info = self.get_applicable_index_info_for_name(intrinsic_elements, &name);
@@ -2585,8 +2606,8 @@ impl Checker {
         let intrinsic_elements_type = self.get_jsx_type(JSX_NAMES.intrinsic_elements, Some(node));
         if !self.is_error_type(intrinsic_elements_type) {
             // Property case
-                        let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((node).file_index());;
+            let __program = self.program.clone().expect("program");
+            let nodes = __program.nodes((node).file_index());
             let tag_name = nodes[node].tag_name().expect("jsx tag name");
             if !ast::is_identifier(&nodes[tag_name])
                 && !ast::is_jsx_namespaced_name(&nodes[tag_name])
@@ -2616,7 +2637,8 @@ impl Checker {
                 .is_some()
             {
                 self.jsx_element_links.get(node).jsx_flags |= JsxFlags::INTRINSIC_INDEXED_ELEMENT;
-                let __arena_symbol = self.types.clone(); let symbol = __arena_symbol.get(intrinsic_elements_type).symbol;
+                let __arena_symbol = self.types.clone();
+                let symbol = __arena_symbol.get(intrinsic_elements_type).symbol;
                 self.symbol_node_links.get(node).resolved_symbol = symbol;
                 return symbol.unwrap_or(self.unknown_symbol);
             }
@@ -2669,8 +2691,8 @@ impl Checker {
     pub(crate) fn get_jsx_element_type_type_at(&mut self, location: NodeId) -> Option<TypeId> {
         let ns = self.get_jsx_namespace_at(Some(location))?;
         let sym = self.get_jsx_element_type_symbol(Some(ns))?;
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((location).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((location).file_index());
         let in_js_file = ast::is_in_js_file(Some(location), &nodes);
         let t = self.instantiate_alias_or_interface_with_defaults(sym, &[], in_js_file)?;
         if self.is_error_type(t) {
@@ -2759,8 +2781,8 @@ impl Checker {
     pub fn get_jsx_namespace(&mut self, location: impl Into<Option<NodeId>>) -> String {
         let location = location.into();
         if let Some(location) = location {
-                        let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((location).file_index());;
+            let __program = self.program.clone().expect("program");
+            let nodes = __program.nodes((location).file_index());
             if let Some(file) = ast::get_source_file_of_node(Some(location), &nodes) {
                 let is_opening_fragment = ast::is_jsx_opening_fragment(&nodes[location]);
                 if is_opening_fragment {
@@ -2815,8 +2837,8 @@ impl Checker {
                 let jsx_factory = self.compiler_options.jsx_factory.clone();
                 self.jsx_factory_entity = self.parse_isolated_entity_name(&jsx_factory, file_index);
                 if let Some(entity) = self.jsx_factory_entity {
-                                        let __program = self.program.clone().expect("program");
-                    let nodes = __program.nodes((entity).file_index());;
+                    let __program = self.program.clone().expect("program");
+                    let nodes = __program.nodes((entity).file_index());
                     let first = ast::get_first_identifier(entity, &nodes);
                     self.jsx_namespace = nodes[first].text(&nodes).into_owned();
                 }
@@ -2849,8 +2871,8 @@ impl Checker {
         if !local.is_empty() {
             return local;
         }
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((file).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((file).file_index());
         let jsx_pragma_value = {
             let sf = nodes[file].as_source_file();
             ast::get_pragma_from_source_file(sf, "jsx")
@@ -2877,8 +2899,8 @@ impl Checker {
         let location = location.into();
         if let Some(location) = location {
             self.get_jsx_namespace(Some(location));
-                        let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((location).file_index());;
+            let __program = self.program.clone().expect("program");
+            let nodes = __program.nodes((location).file_index());
             let file = ast::get_source_file_of_node(Some(location), &nodes);
             if let Some(file) = file {
                 if let Some(local_jsx_factory) = self.source_file_links.get(file).local_jsx_factory
@@ -2897,8 +2919,8 @@ impl Checker {
     ) -> Option<NodeId> {
         let location = location.into();
         if let Some(location) = location {
-                        let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((location).file_index());;
+            let __program = self.program.clone().expect("program");
+            let nodes = __program.nodes((location).file_index());
             if let Some(file) = ast::get_source_file_of_node(Some(location), &nodes) {
                 if let Some(local) = self.source_file_links.get(file).local_jsx_fragment_factory {
                     return Some(local);
@@ -3015,16 +3037,16 @@ impl Checker {
         }
         let mut canonical_error_tag = self.jsx_element_links.get(file).first_jsx_tag_in_file;
         if canonical_error_tag.is_none() {
-                        let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((file).file_index());;
+            let __program = self.program.clone().expect("program");
+            let nodes = __program.nodes((file).file_index());
             let mut found = None;
             visit_for_first_jsx_tag(file, &nodes, &mut found);
             canonical_error_tag = found;
             self.jsx_element_links.get(file).first_jsx_tag_in_file = canonical_error_tag;
         }
         let path_key = {
-                        let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((file).file_index());;
+            let __program = self.program.clone().expect("program");
+            let nodes = __program.nodes((file).file_index());
             nodes[file].as_source_file().path_key().clone()
         };
         let (module_reference, specifier) = self
@@ -3064,8 +3086,8 @@ impl Checker {
         &mut self,
         file: NodeId,
     ) -> (String, Option<NodeId>) {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((file).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((file).file_index());
         let path_key = nodes[file].as_source_file().path_key().clone();
         self.program
             .as_ref()
@@ -3134,7 +3156,7 @@ fn visit_for_first_jsx_tag(node: NodeId, nodes: &[ast::Node], found: &mut Option
 
 /// `tag_name_or_none` — `node.TagName()` for opening-like elements.
 fn tag_name_or_none(c: &mut Checker, node: NodeId) -> Option<NodeId> {
-        let __program = c.program.clone().expect("program");
-    let nodes = __program.nodes((node).file_index());;
+    let __program = c.program.clone().expect("program");
+    let nodes = __program.nodes((node).file_index());
     nodes[node].tag_name()
 }

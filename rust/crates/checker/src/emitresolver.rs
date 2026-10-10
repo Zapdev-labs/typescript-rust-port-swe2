@@ -396,8 +396,8 @@ impl EmitResolver {
                     let c = c.clone();
                     move |node| {
                         let mut c = c.try_borrow_mut().ok()?;
-                                                let __program = c.program.clone().expect("program");
-                        let nodes = __program.nodes((node).file_index());;
+                        let __program = c.program.clone().expect("program");
+                        let nodes = __program.nodes((node).file_index());
                         let (name, ok) = c.try_get_element_access_expression_name(&nodes, node);
                         ok.then_some(name)
                     }
@@ -491,8 +491,8 @@ impl EmitResolver {
 
                 // declaration arenas may differ per file — re-read through
                 // the declaration's own arena like Go derefs the pointer.
-                                let __program = c.program.clone().expect("program");
-                let declaration_nodes = __program.nodes((declaration).file_index());;
+                let __program = c.program.clone().expect("program");
+                let declaration_nodes = __program.nodes((declaration).file_index());
                 if ast::is_internal_module_import_equals_declaration(
                     &declaration_nodes[declaration],
                     &declaration_nodes,
@@ -610,9 +610,7 @@ impl EmitResolver {
                 {
                     let symbol = c.get_symbol_of_declaration(node);
                     return self.is_alias_resolved_to_value(
-                        c,
-                        symbol,
-                        true, /*excludeTypeOnlyValues*/
+                        c, symbol, true, /*excludeTypeOnlyValues*/
                     );
                 }
                 true
@@ -623,9 +621,7 @@ impl EmitResolver {
                 {
                     let symbol = c.get_symbol_of_declaration(node);
                     return self.is_alias_resolved_to_value(
-                        c,
-                        symbol,
-                        true, /*excludeTypeOnlyValues*/
+                        c, symbol, true, /*excludeTypeOnlyValues*/
                     );
                 }
                 false
@@ -650,8 +646,8 @@ impl EmitResolver {
             // point at, and merge with, the file itself. If we don't, the
             // merge may not have yet occurred, and the flags check below will
             // be missing flags that are added as a result of the merge.
-                        let __program = c.program.clone().expect("program");
-            let decl_nodes = __program.nodes((value_declaration).file_index());;
+            let __program = c.program.clone().expect("program");
+            let decl_nodes = __program.nodes((value_declaration).file_index());
             if let Some(container) =
                 ast::get_source_file_of_node(Some(value_declaration), &decl_nodes)
             {
@@ -1073,7 +1069,8 @@ impl tsc_printer::EmitResolver for EmitResolver {
             return Kind0::Unknown;
         }
 
-        if c.types_handle().get(type_)
+        if c.types_handle()
+            .get(type_)
             .flags
             .intersects(TypeFlags::ANY_OR_UNKNOWN)
         {
@@ -1301,8 +1298,8 @@ impl tsc_printer::EmitResolver for EmitResolver {
                 let declarations = c.symbol_arena.borrow()[merged.index()].declarations.clone();
                 if !declarations.is_empty() {
                     for d in declarations {
-                                                let __program = c.program.clone().expect("program");
-                        let decl_nodes = __program.nodes((d).file_index());;
+                        let __program = c.program.clone().expect("program");
+                        let decl_nodes = __program.nodes((d).file_index());
                         let decl_file = ast::get_source_file_of_node(Some(d), &decl_nodes);
                         if decl_file == Some(import_target) {
                             return true;
@@ -1712,7 +1709,8 @@ impl tsc_printer::EmitResolver for EmitResolver {
             .intersects(TypeFlags::ENUM_LIKE)
         {
             let mut c = checker_lock(&self.checker);
-            let __arena_symbol = c.types.clone(); let symbol = __arena_symbol.get(t).symbol;
+            let __arena_symbol = c.types.clone();
+            let symbol = __arena_symbol.get(t).symbol;
             enum_result = self.node_builder(&c).symbol_to_expression(
                 &mut c,
                 nodes,
@@ -1756,7 +1754,8 @@ impl tsc_printer::EmitResolver for EmitResolver {
             if !c.types_handle().get(t).flags.intersects(TypeFlags::LITERAL) {
                 return None; // non-literal type
             }
-            let __arena_value = c.types.clone(); let value = __arena_value.get(t).as_literal_type().value.clone();
+            let __arena_value = c.types.clone();
+            let value = __arena_value.get(t).as_literal_type().value.clone();
             drop(c);
             match value {
                 Some(evaluator::Value::String(value)) => {
@@ -1910,8 +1909,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
         if let Some(instance_index_symbol) = instance_index_symbol {
             let members = c.get_members_of_symbol(sym);
             let sibling_symbols: Vec<SymbolId> = members.values().copied().collect();
-            for info in c.get_index_infos_of_index_symbol(instance_index_symbol, &sibling_symbols)
-            {
+            for info in c.get_index_infos_of_index_symbol(instance_index_symbol, &sibling_symbols) {
                 instance_infos.push(c.index_info_arena.alloc(info));
             }
         }

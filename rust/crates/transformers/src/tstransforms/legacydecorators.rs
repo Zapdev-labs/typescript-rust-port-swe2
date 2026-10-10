@@ -34,8 +34,8 @@ use std::rc::Rc;
 
 use tsc_ast::visitor::{NodeVisitor, VisitFn, VisitorCx};
 use tsc_ast::{
-    self as ast, Kind, ModifierFlags, ModifierList, Node, NodeFlags, NodeId, NodeList, SubtreeFacts,
-    Symbol,
+    self as ast, Kind, ModifierFlags, ModifierList, Node, NodeFlags, NodeId, NodeList,
+    SubtreeFacts, Symbol,
 };
 use tsc_binder::referenceresolver::ReferenceResolver;
 use tsc_core::compileroptions::EMPTY_COMPILER_OPTIONS;
@@ -44,7 +44,7 @@ use tsc_core::options_generated::ScriptTarget;
 use tsc_printer::{AssignedNameOptions, EmitFlags, NameOptions};
 
 use crate::chain::TransformOptions;
-use crate::estransforms::{make_transformer, visit_each_child, Ec};
+use crate::estransforms::{Ec, make_transformer, visit_each_child};
 use crate::transformer::Transformer;
 use crate::utilities::{
     is_generated_identifier, is_simple_inlineable_expression, move_range_past_modifiers,
@@ -104,7 +104,11 @@ fn elide_nodes(ec: &Ec, nodes: Option<NodeList>) -> Option<NodeList> {
 
 /// `elideModifiers` — replaces a non-empty modifier list with an empty list
 /// at the same location (`nil`/`None` passes through).
-fn elide_modifiers(ec: &Ec, cx: &VisitorCx<'_, '_>, nodes: Option<ModifierList>) -> Option<ModifierList> {
+fn elide_modifiers(
+    ec: &Ec,
+    cx: &VisitorCx<'_, '_>,
+    nodes: Option<ModifierList>,
+) -> Option<ModifierList> {
     let nodes = nodes?;
     if nodes.nodes.is_empty() {
         return Some(nodes);
@@ -188,8 +192,10 @@ fn get_all_decorators_of_class(
     let decorators = decorators_of(&nodes[node], nodes);
     let mut parameters = Vec::new();
     if use_legacy_decorators {
-        parameters =
-            get_decorators_of_parameters(ast::get_first_constructor_with_body(&nodes[node], nodes), nodes);
+        parameters = get_decorators_of_parameters(
+            ast::get_first_constructor_with_body(&nodes[node], nodes),
+            nodes,
+        );
     }
     if decorators.is_empty() && parameters.is_empty() {
         return None;
@@ -215,7 +221,9 @@ fn get_all_decorators_of_class_element(
             }
             get_all_decorators_of_accessors(member, parent, true, nodes)
         }
-        Kind::MethodDeclaration => get_all_decorators_of_method(member, use_legacy_decorators, nodes),
+        Kind::MethodDeclaration => {
+            get_all_decorators_of_method(member, use_legacy_decorators, nodes)
+        }
         Kind::PropertyDeclaration => get_all_decorators_of_property(member, nodes),
         _ => None,
     }
@@ -233,7 +241,10 @@ fn get_all_decorators_of_accessors(
         return None;
     }
     let decls = ast::get_all_accessor_declarations(
-        nodes[parent].member_list().map(|m| m.nodes()).unwrap_or(&[]),
+        nodes[parent]
+            .member_list()
+            .map(|m| m.nodes())
+            .unwrap_or(&[]),
         accessor,
         nodes,
     );
@@ -312,10 +323,7 @@ fn get_all_decorators_of_method(
 /// PORT: Go returns `[][]*ast.Node` lazily allocated once the first decorated
 /// parameter is seen; `Vec<Vec<NodeId>>` is empty until then and `None` mirrors
 /// Go's `nil` node.
-pub fn get_decorators_of_parameters(
-    node: Option<NodeId>,
-    nodes: &[Node],
-) -> Vec<Vec<NodeId>> {
+pub fn get_decorators_of_parameters(node: Option<NodeId>, nodes: &[Node]) -> Vec<Vec<NodeId>> {
     let mut decorators: Vec<Vec<NodeId>> = Vec::new();
     if let Some(node) = node {
         let parameters: Vec<NodeId> = nodes[node].parameters().unwrap_or(&[]).to_vec();
@@ -447,11 +455,7 @@ impl<'a> LegacyDecoratorsTransformer<'a> {
 
     /// `GetReferencedValueDeclaration` through `referenceResolver` — Go
     /// panics on a nil interface; the port `.expect()`s.
-    fn get_referenced_value_declaration(
-        &self,
-        nodes: &[Node],
-        node: NodeId,
-    ) -> Option<NodeId> {
+    fn get_referenced_value_declaration(&self, nodes: &[Node], node: NodeId) -> Option<NodeId> {
         let resolver = self
             .reference_resolver
             .as_ref()
@@ -500,7 +504,12 @@ impl<'a> LegacyDecoratorsTransformer<'a> {
     ) -> NodeId {
         let (expression, question_dot_token, name, flags) = {
             let d = cx.nodes[node].as_property_access_expression();
-            (d.expression, d.question_dot_token, d.name, cx.nodes[node].flags)
+            (
+                d.expression,
+                d.question_dot_token,
+                d.name,
+                cx.nodes[node].flags,
+            )
         };
         let visited_expression = v.visit_node(cx, expression);
         if visited_expression != expression {
@@ -607,9 +616,7 @@ impl<'a> LegacyDecoratorsTransformer<'a> {
             let expression = v.visit_node(cx, expression);
             let inner_expression =
                 expression.map(|e| ast::skip_partially_emitted_expressions(e, cx.nodes));
-            if !inner_expression
-                .is_some_and(|e| is_simple_inlineable_expression(&cx.nodes[e]))
-            {
+            if !inner_expression.is_some_and(|e| is_simple_inlineable_expression(&cx.nodes[e])) {
                 let generated_name = ec
                     .borrow_mut()
                     .factory
@@ -677,15 +684,7 @@ impl<'a> LegacyDecoratorsTransformer<'a> {
             .borrow_mut()
             .factory
             .update_get_accessor_declaration(
-                cx.nodes,
-                node,
-                modifiers,
-                name,
-                None,
-                parameters,
-                None,
-                None,
-                body,
+                cx.nodes, node, modifiers, name, None, parameters, None, None, body,
             )
             .unwrap_or(node);
         self.finish_class_element(ec, cx, updated, node)
@@ -707,15 +706,7 @@ impl<'a> LegacyDecoratorsTransformer<'a> {
             .borrow_mut()
             .factory
             .update_set_accessor_declaration(
-                cx.nodes,
-                node,
-                modifiers,
-                name,
-                None,
-                parameters,
-                None,
-                None,
-                body,
+                cx.nodes, node, modifiers, name, None, parameters, None, None, body,
             )
             .unwrap_or(node);
         self.finish_class_element(ec, cx, updated, node)
@@ -772,14 +763,7 @@ impl<'a> LegacyDecoratorsTransformer<'a> {
         ec.borrow_mut()
             .factory
             .update_constructor_declaration(
-                cx.nodes,
-                node,
-                modifiers,
-                None,
-                parameters,
-                None,
-                None,
-                body,
+                cx.nodes, node, modifiers, None, parameters, None, None, body,
             )
             .unwrap_or(node)
     }
@@ -806,7 +790,15 @@ impl<'a> LegacyDecoratorsTransformer<'a> {
         let members = v.visit_nodes(cx, members);
         ec.borrow_mut()
             .factory
-            .update_class_expression(cx.nodes, node, modifiers, name, None, heritage_clauses, members)
+            .update_class_expression(
+                cx.nodes,
+                node,
+                modifiers,
+                name,
+                None,
+                heritage_clauses,
+                members,
+            )
             .unwrap_or(node)
     }
 
@@ -871,7 +863,15 @@ impl<'a> LegacyDecoratorsTransformer<'a> {
         let updated = ec
             .borrow_mut()
             .factory
-            .update_class_declaration(cx.nodes, node, modifiers, name, None, heritage_clauses, members)
+            .update_class_declaration(
+                cx.nodes,
+                node,
+                modifiers,
+                name,
+                None,
+                heritage_clauses,
+                members,
+            )
             .unwrap_or(node);
 
         if decoration_statements.is_empty() {
@@ -879,7 +879,9 @@ impl<'a> LegacyDecoratorsTransformer<'a> {
         }
         let mut statements = vec![updated];
         statements.extend(decoration_statements);
-        ec.borrow_mut().factory.new_syntax_list(cx.nodes, &statements)
+        ec.borrow_mut()
+            .factory
+            .new_syntax_list(cx.nodes, &statements)
     }
 
     /// `popEnclosingClass`.
@@ -1092,10 +1094,14 @@ impl<'a> LegacyDecoratorsTransformer<'a> {
 
         if is_export {
             let export_statement = if is_default {
-                ec.borrow_mut().factory.new_export_default(cx.nodes, decl_name)
+                ec.borrow_mut()
+                    .factory
+                    .new_export_default(cx.nodes, decl_name)
             } else {
-                let export_name =
-                    ec.borrow_mut().factory.get_declaration_name(cx.nodes, Some(node));
+                let export_name = ec
+                    .borrow_mut()
+                    .factory
+                    .get_declaration_name(cx.nodes, Some(node));
                 ec.borrow_mut()
                     .factory
                     .new_external_module_export(cx.nodes, export_name)
@@ -1112,7 +1118,9 @@ impl<'a> LegacyDecoratorsTransformer<'a> {
         if statements.len() == 1 {
             return statements[0];
         }
-        ec.borrow_mut().factory.new_syntax_list(cx.nodes, &statements)
+        ec.borrow_mut()
+            .factory
+            .new_syntax_list(cx.nodes, &statements)
     }
 
     /// `hasInternalStaticReference` — determines whether the class contains
@@ -1136,9 +1144,9 @@ impl<'a> LegacyDecoratorsTransformer<'a> {
             // reference to the class.
             if ast::is_property_access_expression(&nodes[n]) {
                 return match nodes[n].expression() {
-                    Some(expression) => is_or_contains_static_self_reference(
-                        tx, ec, nodes, class_node, expression,
-                    ),
+                    Some(expression) => {
+                        is_or_contains_static_self_reference(tx, ec, nodes, class_node, expression)
+                    }
                     None => false,
                 };
             }
@@ -1166,7 +1174,12 @@ impl<'a> LegacyDecoratorsTransformer<'a> {
     /// if it is a decorated class with an internal reference to the static
     /// side of the class. This is necessary to avoid issues with
     /// double-binding semantics for the class name.
-    fn get_class_alias_if_needed(&self, ec: &Ec, cx: &mut VisitorCx<'_, '_>, node: NodeId) -> Option<NodeId> {
+    fn get_class_alias_if_needed(
+        &self,
+        ec: &Ec,
+        cx: &mut VisitorCx<'_, '_>,
+        node: NodeId,
+    ) -> Option<NodeId> {
         if !self.has_internal_static_reference(ec, cx, node) {
             return None;
         }
@@ -1277,7 +1290,8 @@ impl<'a> LegacyDecoratorsTransformer<'a> {
             local_name,
             assignment_target,
         );
-        ec.borrow().set_emit_flags(expression, EmitFlags::NO_COMMENTS);
+        ec.borrow()
+            .set_emit_flags(expression, EmitFlags::NO_COMMENTS);
         let range = move_range_past_modifiers(cx.nodes, node);
         ec.borrow().set_source_map_range(expression, range);
         Some(expression)
@@ -1312,11 +1326,11 @@ impl<'a> LegacyDecoratorsTransformer<'a> {
                 .borrow_mut()
                 .factory
                 .new_block(cx.nodes, Some(list), true);
-            member_nodes.push(
-                ec.borrow_mut()
-                    .factory
-                    .new_class_static_block_declaration(cx.nodes, None, Some(block)),
-            );
+            member_nodes.push(ec.borrow_mut().factory.new_class_static_block_declaration(
+                cx.nodes,
+                None,
+                Some(block),
+            ));
             members = Some(ec.borrow().factory.new_node_list(member_nodes));
         }
 
@@ -1334,7 +1348,8 @@ impl<'a> LegacyDecoratorsTransformer<'a> {
         is_static: bool,
     ) -> Vec<NodeId> {
         let exprs = self.generate_class_element_decoration_expressions(ec, v, cx, node, is_static);
-        exprs.into_iter()
+        exprs
+            .into_iter()
             .map(|e| {
                 ec.borrow_mut()
                     .factory
@@ -1436,7 +1451,12 @@ impl<'a> LegacyDecoratorsTransformer<'a> {
     }
 
     /// `isSyntheticMetadataDecorator`.
-    fn is_synthetic_metadata_decorator(&self, ec: &Ec, cx: &VisitorCx<'_, '_>, node: NodeId) -> bool {
+    fn is_synthetic_metadata_decorator(
+        &self,
+        ec: &Ec,
+        cx: &VisitorCx<'_, '_>,
+        node: NodeId,
+    ) -> bool {
         match cx.nodes[node].as_decorator().expression {
             Some(expression) => ec
                 .borrow()
@@ -1471,8 +1491,12 @@ impl<'a> LegacyDecoratorsTransformer<'a> {
         }
 
         let mut decorator_expressions = self.transform_decorators(v, cx, &decorators);
-        decorator_expressions
-            .extend(self.transform_decorators_of_parameters(ec, v, cx, &all_decorators.parameters));
+        decorator_expressions.extend(self.transform_decorators_of_parameters(
+            ec,
+            v,
+            cx,
+            &all_decorators.parameters,
+        ));
         decorator_expressions.extend(self.transform_decorators(v, cx, &metadata));
         decorator_expressions
     }
@@ -1490,16 +1514,12 @@ impl<'a> LegacyDecoratorsTransformer<'a> {
             if !decorators.is_empty() {
                 for &decorator in decorators {
                     let expression = cx.nodes[decorator].as_decorator().expression;
-                    let visited = v
-                        .visit_node(cx, expression)
-                        .expect("decorator expression");
+                    let visited = v.visit_node(cx, expression).expect("decorator expression");
                     let loc = expression.map(|e| cx.nodes[e].loc).unwrap_or_default();
-                    let helper = ec.borrow_mut().factory.new_param_helper(
-                        cx.nodes,
-                        visited,
-                        i as i32,
-                        loc,
-                    );
+                    let helper = ec
+                        .borrow_mut()
+                        .factory
+                        .new_param_helper(cx.nodes, visited, i as i32, loc);
                     ec.borrow().set_emit_flags(helper, EmitFlags::NO_COMMENTS);
                     results.push(helper);
                 }

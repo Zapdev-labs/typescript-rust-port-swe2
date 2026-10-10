@@ -443,11 +443,7 @@ pub fn get_computed_common_source_directory(
     current_directory: RootedDirectoryPath,
     case_sensitivity: CaseSensitivity,
 ) -> RootedDirectoryPath {
-    compute_common_source_directory_of_filenames(
-        emitted_files,
-        current_directory,
-        case_sensitivity,
-    )
+    compute_common_source_directory_of_filenames(emitted_files, current_directory, case_sensitivity)
 }
 
 /// `GetCommonSourceDirectory`.
@@ -459,7 +455,9 @@ pub fn get_common_source_directory(
     files: impl Fn() -> Vec<RootedFilePath>,
     current_directory: RootedDirectoryPath,
     case_sensitivity: CaseSensitivity,
-    check_source_files_belong_to_path: Option<&dyn Fn(&[RootedFilePath], RootedDirectoryPath) -> bool>,
+    check_source_files_belong_to_path: Option<
+        &dyn Fn(&[RootedFilePath], RootedDirectoryPath) -> bool,
+    >,
 ) -> RootedDirectoryPath {
     let common_source_directory;
     if !options.root_dir.is_empty() {

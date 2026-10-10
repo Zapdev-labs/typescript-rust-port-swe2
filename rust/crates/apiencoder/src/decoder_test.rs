@@ -66,18 +66,18 @@ fn test_decode_source_file_metadata() {
     ];
 
     for (name, file_name, script_kind, code) in tests {
-        let (source_file, mut nodes) = parse_source_file(
-            test_parse_options(file_name),
-            code,
-            script_kind,
-        );
+        let (source_file, mut nodes) =
+            parse_source_file(test_parse_options(file_name), code, script_kind);
         let (buf, _) = encode_source_file(&mut nodes, source_file);
 
         let (decoded, arena) = decode_source_file(&buf).unwrap();
         let decoded_sf = arena[decoded].as_source_file();
         let source_sf = nodes[source_file].as_source_file();
         assert_eq!(decoded_sf.script_kind, source_sf.script_kind, "{name}");
-        assert_eq!(decoded_sf.language_variant, source_sf.language_variant, "{name}");
+        assert_eq!(
+            decoded_sf.language_variant, source_sf.language_variant,
+            "{name}"
+        );
         assert_eq!(
             decoded_sf.is_declaration_file, source_sf.is_declaration_file,
             "{name}"
@@ -130,7 +130,12 @@ fn test_decode_source_file_variable_declaration() {
     let (sf, mut nodes) = parse_test_source_file("let x = 1;");
     let (decoded, arena) = round_trip(sf, &mut nodes);
 
-    let stmt = arena[decoded].as_source_file().statements.as_ref().unwrap().nodes[0];
+    let stmt = arena[decoded]
+        .as_source_file()
+        .statements
+        .as_ref()
+        .unwrap()
+        .nodes[0];
     let var_stmt = arena[stmt].as_variable_statement();
     let decl_list_id = var_stmt.declaration_list.unwrap();
     let decl_list = arena[decl_list_id].as_variable_declaration_list();
@@ -158,7 +163,12 @@ fn test_decode_source_file_variable_declaration_list_flags() {
         let (sf, mut nodes) = parse_test_source_file(code);
         let (decoded, arena) = round_trip(sf, &mut nodes);
 
-        let stmt = arena[decoded].as_source_file().statements.as_ref().unwrap().nodes[0];
+        let stmt = arena[decoded]
+            .as_source_file()
+            .statements
+            .as_ref()
+            .unwrap()
+            .nodes[0];
         let decl_list = arena[stmt]
             .as_variable_statement()
             .declaration_list
@@ -177,7 +187,12 @@ fn test_decode_source_file_function_declaration() {
         parse_test_source_file("function add(a: number, b: number): number { return a + b; }");
     let (decoded, arena) = round_trip(sf, &mut nodes);
 
-    let func = arena[decoded].as_source_file().statements.as_ref().unwrap().nodes[0];
+    let func = arena[decoded]
+        .as_source_file()
+        .statements
+        .as_ref()
+        .unwrap()
+        .nodes[0];
     let func_decl = arena[func].as_function_declaration();
     let name = func_decl.name.unwrap();
     assert_eq!(arena[name].as_identifier().text, "add");
@@ -187,10 +202,7 @@ fn test_decode_source_file_function_declaration() {
     assert!(arena[func].body().is_some());
 
     let param0 = arena[params[0]].as_parameter_declaration();
-    assert_eq!(
-        arena[param0.name.unwrap()].as_identifier().text,
-        "a"
-    );
+    assert_eq!(arena[param0.name.unwrap()].as_identifier().text, "a");
     assert!(param0.type_.is_some());
 }
 
@@ -199,7 +211,12 @@ fn test_decode_source_file_import_declaration() {
     let (sf, mut nodes) = parse_test_source_file("import { bar } from \"bar\";");
     let (decoded, arena) = round_trip(sf, &mut nodes);
 
-    let stmt = arena[decoded].as_source_file().statements.as_ref().unwrap().nodes[0];
+    let stmt = arena[decoded]
+        .as_source_file()
+        .statements
+        .as_ref()
+        .unwrap()
+        .nodes[0];
     let imp = arena[stmt].as_import_declaration();
     assert!(imp.import_clause.is_some());
     let module_specifier = imp.module_specifier.unwrap();
@@ -211,10 +228,7 @@ fn test_decode_source_file_import_declaration() {
     let elements = named_imports.elements.as_ref().unwrap();
     assert_eq!(elements.nodes.len(), 1);
     let spec = arena[elements.nodes[0]].as_import_specifier();
-    assert_eq!(
-        arena[spec.name.unwrap()].as_identifier().text,
-        "bar"
-    );
+    assert_eq!(arena[spec.name.unwrap()].as_identifier().text, "bar");
 }
 
 #[test]
@@ -222,9 +236,14 @@ fn test_decode_source_file_source_phase_import() {
     let (sf, mut nodes) = parse_test_source_file("import source a from \"./a.wasm\";");
     let (decoded, arena) = round_trip(sf, &mut nodes);
 
-    let stmt = arena[decoded].as_source_file().statements.as_ref().unwrap().nodes[0];
-    let clause = arena[arena[stmt].as_import_declaration().import_clause.unwrap()]
-        .as_import_clause();
+    let stmt = arena[decoded]
+        .as_source_file()
+        .statements
+        .as_ref()
+        .unwrap()
+        .nodes[0];
+    let clause =
+        arena[arena[stmt].as_import_declaration().import_clause.unwrap()].as_import_clause();
     assert_eq!(clause.phase_modifier, Kind::SourceKeyword);
     assert_eq!(arena[clause.name.unwrap()].text(&arena), "a");
 }
@@ -234,7 +253,12 @@ fn test_decode_source_file_if_statement() {
     let (sf, mut nodes) = parse_test_source_file("if (true) { } else { }");
     let (decoded, arena) = round_trip(sf, &mut nodes);
 
-    let stmt = arena[decoded].as_source_file().statements.as_ref().unwrap().nodes[0];
+    let stmt = arena[decoded]
+        .as_source_file()
+        .statements
+        .as_ref()
+        .unwrap()
+        .nodes[0];
     let if_stmt = arena[stmt].as_if_statement();
     assert!(if_stmt.expression.is_some());
     let then_stmt = if_stmt.then_statement.unwrap();
@@ -248,7 +272,12 @@ fn test_decode_source_file_template_expression() {
     let (sf, mut nodes) = parse_test_source_file("let x = `hello ${name} world`;");
     let (decoded, arena) = round_trip(sf, &mut nodes);
 
-    let stmt = arena[decoded].as_source_file().statements.as_ref().unwrap().nodes[0];
+    let stmt = arena[decoded]
+        .as_source_file()
+        .statements
+        .as_ref()
+        .unwrap()
+        .nodes[0];
     let decl_list = arena[stmt]
         .as_variable_statement()
         .declaration_list
@@ -278,7 +307,12 @@ fn test_decode_source_file_export_modifier() {
     let (sf, mut nodes) = parse_test_source_file("export function foo() {}");
     let (decoded, arena) = round_trip(sf, &mut nodes);
 
-    let func = arena[decoded].as_source_file().statements.as_ref().unwrap().nodes[0];
+    let func = arena[decoded]
+        .as_source_file()
+        .statements
+        .as_ref()
+        .unwrap()
+        .nodes[0];
     let modifiers = arena[func].modifiers().unwrap();
     assert_eq!(modifiers.nodes.len(), 1);
     assert_eq!(arena[modifiers.nodes[0]].kind, Kind::ExportKeyword);
@@ -299,9 +333,18 @@ fn test_decode_source_file_class_declaration() {
     let (sf, mut nodes) = parse_test_source_file("class Foo { bar(): void {} }");
     let (decoded, arena) = round_trip(sf, &mut nodes);
 
-    let stmt = arena[decoded].as_source_file().statements.as_ref().unwrap().nodes[0];
+    let stmt = arena[decoded]
+        .as_source_file()
+        .statements
+        .as_ref()
+        .unwrap()
+        .nodes[0];
     assert_eq!(arena[stmt].kind, Kind::ClassDeclaration);
-    let name = arena[stmt].as_class_declaration().class_like_base.name.unwrap();
+    let name = arena[stmt]
+        .as_class_declaration()
+        .class_like_base
+        .name
+        .unwrap();
     assert_eq!(arena[name].as_identifier().text, "Foo");
     let members = arena[stmt].members().unwrap();
     assert_eq!(members.len(), 1);
@@ -317,15 +360,13 @@ fn test_decode_nodes_subtree_round_trip() {
     {
         let mut factory = tsc_ast::NodeFactory::default();
         let mut cx = VisitorCx::new(&mut nodes, &mut factory);
-        let visit = |_v: &NodeVisitor<'_>,
-                     cx: &mut VisitorCx<'_, '_>,
-                     node: NodeId|
-         -> Option<NodeId> {
-            if cx.nodes[node].kind == Kind::FunctionDeclaration && func_cell.get().is_none() {
-                func_cell.set(Some(node));
-            }
-            Some(node)
-        };
+        let visit =
+            |_v: &NodeVisitor<'_>, cx: &mut VisitorCx<'_, '_>, node: NodeId| -> Option<NodeId> {
+                if cx.nodes[node].kind == Kind::FunctionDeclaration && func_cell.get().is_none() {
+                    func_cell.set(Some(node));
+                }
+                Some(node)
+            };
         let visitor = NodeVisitor::new(Box::new(visit), NodeVisitorHooks::default());
         visitor.visit_each_child(&mut cx, sf);
     }
@@ -347,13 +388,21 @@ fn test_decode_source_file_binary_expression() {
     let (sf, mut nodes) = parse_test_source_file("let x = 1 + 2;");
     let (decoded, arena) = round_trip(sf, &mut nodes);
 
-    let stmt = arena[decoded].as_source_file().statements.as_ref().unwrap().nodes[0];
-    let decl_id = arena[arena[stmt].as_variable_statement().declaration_list.unwrap()]
-        .as_variable_declaration_list()
-        .declarations
+    let stmt = arena[decoded]
+        .as_source_file()
+        .statements
         .as_ref()
         .unwrap()
         .nodes[0];
+    let decl_id = arena[arena[stmt]
+        .as_variable_statement()
+        .declaration_list
+        .unwrap()]
+    .as_variable_declaration_list()
+    .declarations
+    .as_ref()
+    .unwrap()
+    .nodes[0];
     let decl = arena[decl_id].as_variable_declaration();
     let bin_expr = arena[decl.initializer.unwrap()].as_binary_expression();
     let left = bin_expr.left.unwrap();
@@ -370,13 +419,21 @@ fn test_decode_source_file_keyword_expressions() {
     let (decoded, arena) = round_trip(sf, &mut nodes);
 
     // Navigate: const x = this -> VariableStatement -> declaration -> initializer
-    let stmt = arena[decoded].as_source_file().statements.as_ref().unwrap().nodes[0];
-    let decl_id = arena[arena[stmt].as_variable_statement().declaration_list.unwrap()]
-        .as_variable_declaration_list()
-        .declarations
+    let stmt = arena[decoded]
+        .as_source_file()
+        .statements
         .as_ref()
         .unwrap()
         .nodes[0];
+    let decl_id = arena[arena[stmt]
+        .as_variable_statement()
+        .declaration_list
+        .unwrap()]
+    .as_variable_declaration_list()
+    .declarations
+    .as_ref()
+    .unwrap()
+    .nodes[0];
     let decl = arena[decl_id].as_variable_declaration();
     let this_expr = decl.initializer.unwrap();
     assert_eq!(arena[this_expr].kind, Kind::ThisKeyword);
@@ -390,7 +447,12 @@ fn test_decode_source_file_empty_module_block() {
     let (decoded, arena) = round_trip(sf, &mut nodes);
 
     // Navigate: namespace N { } -> ModuleDeclaration -> ModuleBlock
-    let stmt = arena[decoded].as_source_file().statements.as_ref().unwrap().nodes[0];
+    let stmt = arena[decoded]
+        .as_source_file()
+        .statements
+        .as_ref()
+        .unwrap()
+        .nodes[0];
     let module = arena[stmt].as_module_declaration();
     let body = module.body_base.body.unwrap();
     let block = arena[body].as_module_block();
@@ -406,7 +468,12 @@ fn test_decode_source_file_empty_block_and_params() {
     let (sf, mut nodes) = parse_test_source_file("function foo() {}");
     let (decoded, arena) = round_trip(sf, &mut nodes);
 
-    let func = arena[decoded].as_source_file().statements.as_ref().unwrap().nodes[0];
+    let func = arena[decoded]
+        .as_source_file()
+        .statements
+        .as_ref()
+        .unwrap()
+        .nodes[0];
     assert_eq!(arena[func].kind, Kind::FunctionDeclaration);
     assert!(
         arena[func].parameters().is_some(),
@@ -429,14 +496,25 @@ fn test_decode_source_file_arrow_function_empty_params() {
     let (sf, mut nodes) = parse_test_source_file("const f = () => {};");
     let (decoded, arena) = round_trip(sf, &mut nodes);
 
-    let stmt = arena[decoded].as_source_file().statements.as_ref().unwrap().nodes[0];
-    let decl_id = arena[arena[stmt].as_variable_statement().declaration_list.unwrap()]
-        .as_variable_declaration_list()
-        .declarations
+    let stmt = arena[decoded]
+        .as_source_file()
+        .statements
         .as_ref()
         .unwrap()
         .nodes[0];
-    let arrow = arena[decl_id].as_variable_declaration().initializer.unwrap();
+    let decl_id = arena[arena[stmt]
+        .as_variable_statement()
+        .declaration_list
+        .unwrap()]
+    .as_variable_declaration_list()
+    .declarations
+    .as_ref()
+    .unwrap()
+    .nodes[0];
+    let arrow = arena[decl_id]
+        .as_variable_declaration()
+        .initializer
+        .unwrap();
     assert!(
         arena[arrow].parameters().is_some(),
         "ArrowFunction.Parameters must be non-nil for () => {{}}"
@@ -457,14 +535,25 @@ fn test_decode_source_file_function_expression_empty_params() {
     let (sf, mut nodes) = parse_test_source_file("const f = function() {};");
     let (decoded, arena) = round_trip(sf, &mut nodes);
 
-    let stmt = arena[decoded].as_source_file().statements.as_ref().unwrap().nodes[0];
-    let decl_id = arena[arena[stmt].as_variable_statement().declaration_list.unwrap()]
-        .as_variable_declaration_list()
-        .declarations
+    let stmt = arena[decoded]
+        .as_source_file()
+        .statements
         .as_ref()
         .unwrap()
         .nodes[0];
-    let func_expr = arena[decl_id].as_variable_declaration().initializer.unwrap();
+    let decl_id = arena[arena[stmt]
+        .as_variable_statement()
+        .declaration_list
+        .unwrap()]
+    .as_variable_declaration_list()
+    .declarations
+    .as_ref()
+    .unwrap()
+    .nodes[0];
+    let func_expr = arena[decl_id]
+        .as_variable_declaration()
+        .initializer
+        .unwrap();
     assert!(
         arena[func_expr].parameters().is_some(),
         "FunctionExpression.Parameters must be non-nil for function() {{}}"
@@ -477,9 +566,17 @@ fn test_decode_source_file_postfix_unary_operator() {
     let (sf, mut nodes) = parse_test_source_file("let i = 0; i++;");
     let (decoded, arena) = round_trip(sf, &mut nodes);
 
-    let expr_stmt = arena[decoded].as_source_file().statements.as_ref().unwrap().nodes[1];
-    let postfix = arena[arena[expr_stmt].as_expression_statement().expression.unwrap()]
-        .as_postfix_unary_expression();
+    let expr_stmt = arena[decoded]
+        .as_source_file()
+        .statements
+        .as_ref()
+        .unwrap()
+        .nodes[1];
+    let postfix = arena[arena[expr_stmt]
+        .as_expression_statement()
+        .expression
+        .unwrap()]
+    .as_postfix_unary_expression();
     assert_eq!(postfix.operator, Kind::PlusPlusToken);
     assert_eq!(arena[postfix.operand.unwrap()].kind, Kind::Identifier);
 }
@@ -489,9 +586,17 @@ fn test_decode_source_file_prefix_unary_operator() {
     let (sf, mut nodes) = parse_test_source_file("let x = true; !x;");
     let (decoded, arena) = round_trip(sf, &mut nodes);
 
-    let expr_stmt = arena[decoded].as_source_file().statements.as_ref().unwrap().nodes[1];
-    let prefix = arena[arena[expr_stmt].as_expression_statement().expression.unwrap()]
-        .as_prefix_unary_expression();
+    let expr_stmt = arena[decoded]
+        .as_source_file()
+        .statements
+        .as_ref()
+        .unwrap()
+        .nodes[1];
+    let prefix = arena[arena[expr_stmt]
+        .as_expression_statement()
+        .expression
+        .unwrap()]
+    .as_prefix_unary_expression();
     assert_eq!(prefix.operator, Kind::ExclamationToken);
     assert_eq!(arena[prefix.operand.unwrap()].kind, Kind::Identifier);
 }
@@ -501,9 +606,17 @@ fn test_decode_source_file_postfix_decrement() {
     let (sf, mut nodes) = parse_test_source_file("let n = 5; n--;");
     let (decoded, arena) = round_trip(sf, &mut nodes);
 
-    let expr_stmt = arena[decoded].as_source_file().statements.as_ref().unwrap().nodes[1];
-    let postfix = arena[arena[expr_stmt].as_expression_statement().expression.unwrap()]
-        .as_postfix_unary_expression();
+    let expr_stmt = arena[decoded]
+        .as_source_file()
+        .statements
+        .as_ref()
+        .unwrap()
+        .nodes[1];
+    let postfix = arena[arena[expr_stmt]
+        .as_expression_statement()
+        .expression
+        .unwrap()]
+    .as_postfix_unary_expression();
     assert_eq!(postfix.operator, Kind::MinusMinusToken);
 }
 
@@ -524,7 +637,11 @@ fn bench_decode_source_file() {
     let (buf, _) = encode_source_file(&mut nodes, source_file);
 
     // "parse" sub-benchmark.
-    let _ = parse_source_file(test_parse_options("/checker.ts"), &file_content, ScriptKind::Ts);
+    let _ = parse_source_file(
+        test_parse_options("/checker.ts"),
+        &file_content,
+        ScriptKind::Ts,
+    );
     // "decode" sub-benchmark.
     let _ = decode_source_file(&buf).unwrap();
 }

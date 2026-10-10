@@ -29,9 +29,9 @@
 // and `ModuleSpecifierToValidIdentifier`.
 #[allow(dead_code)]
 mod case_ranges_generated;
+mod unicode;
 #[allow(dead_code)]
 mod unicode_categories_generated;
-mod unicode;
 
 pub mod asi;
 pub mod children;

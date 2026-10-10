@@ -100,10 +100,7 @@ impl<K: Eq + Hash + Clone, V: Cloneable> MapEntry<K, V> {
                 panic!("tried to change a deleted entry");
             }
             if !st.dirty {
-                st.value = st
-                    .value
-                    .as_ref()
-                    .map(Cloneable::clone_value);
+                st.value = st.value.as_ref().map(Cloneable::clone_value);
                 st.dirty = true;
                 drop(st);
                 self.register();
@@ -305,11 +302,7 @@ impl<K: Eq + Hash + Clone, V: Cloneable> Map<K, V> {
             .base
             .borrow()
             .as_ref()
-            .map(|b| {
-                b.iter()
-                    .map(|(k, v)| (k.clone(), v.clone()))
-                    .collect()
-            })
+            .map(|b| b.iter().map(|(k, v)| (k.clone(), v.clone())).collect())
             .unwrap_or_default();
         for (key, value) in base_entries {
             if seen_in_dirty.contains(&key) {
@@ -368,4 +361,3 @@ impl<K: Eq + Hash + Clone, V: Cloneable> Map<K, V> {
         (Some(result), true)
     }
 }
-

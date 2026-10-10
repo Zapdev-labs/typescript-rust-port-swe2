@@ -75,9 +75,7 @@ pub struct JsxTransformer<'a> {
 }
 
 /// `NewJSXTransformer`.
-pub fn new_jsx_transformer<'a>(
-    opts: &TransformOptions<'a>,
-) -> Option<Transformer<'a>> {
+pub fn new_jsx_transformer<'a>(opts: &TransformOptions<'a>) -> Option<Transformer<'a>> {
     let compiler_options = opts
         .compiler_options
         .expect("jsxTransformer requires compiler options");
@@ -157,7 +155,11 @@ impl<'a> JsxTransformer<'a> {
     }
 
     /// `getJsxFactoryCallee`.
-    fn get_jsx_factory_callee(&self, cx: &mut VisitorCx<'_, '_>, is_static_children: bool) -> NodeId {
+    fn get_jsx_factory_callee(
+        &self,
+        cx: &mut VisitorCx<'_, '_>,
+        is_static_children: bool,
+    ) -> NodeId {
         let t = self.get_jsx_factory_callee_primitive(is_static_children);
         self.get_implicit_import_for_name(cx, t)
     }
@@ -171,8 +173,7 @@ impl<'a> JsxTransformer<'a> {
     fn get_implicit_import_for_name(&self, cx: &mut VisitorCx<'_, '_>, name: &str) -> NodeId {
         let mut import_source = self.import_specifier.borrow().clone();
         if name != "createElement" {
-            import_source =
-                ast::get_jsx_runtime_import(&import_source, self.compiler_options);
+            import_source = ast::get_jsx_runtime_import(&import_source, self.compiler_options);
         }
         {
             let utilized = self.utilized_implicit_runtime_imports.borrow();
@@ -200,11 +201,9 @@ impl<'a> JsxTransformer<'a> {
             Some(property_name),
             Some(generated_name),
         );
-        self.emit_resolver.borrow_mut().set_referenced_import_declaration(
-            generated_name,
-            Some(specifier),
-            cx.nodes,
-        );
+        self.emit_resolver
+            .borrow_mut()
+            .set_referenced_import_declaration(generated_name, Some(specifier), cx.nodes);
         // `getOrInsert(importSource, map[string]*ast.Node{})` — insertion
         // order is preserved by OrderedMap either way, so inserting the key
         // after creating the specifier is equivalent.
@@ -337,9 +336,9 @@ impl<'a> JsxTransformer<'a> {
                 Some(declaration_list),
                 ast::NodeFlags::CONST,
             );
-            let stmt =
-                self.factory()
-                    .new_variable_statement(cx.nodes, None, Some(decl_list));
+            let stmt = self
+                .factory()
+                .new_variable_statement(cx.nodes, None, Some(decl_list));
             statements = self.insert_statement_after_custom_prologue(cx.nodes, statements, stmt);
             statements_updated = true;
         }
@@ -347,16 +346,13 @@ impl<'a> JsxTransformer<'a> {
         if self.utilized_implicit_runtime_imports.borrow().size() > 0 {
             if ast::is_external_module(cx.nodes[node].as_source_file()) {
                 statements_updated = true;
-                let mut new_statements = Vec::with_capacity(
-                    self.utilized_implicit_runtime_imports.borrow().size(),
-                );
+                let mut new_statements =
+                    Vec::with_capacity(self.utilized_implicit_runtime_imports.borrow().size());
                 let imports = self.utilized_implicit_runtime_imports.borrow();
                 for (import_source, import_specifiers_map) in imports.entries() {
                     let specifiers = get_sorted_specifiers(cx.nodes, import_specifiers_map);
                     let elements = self.factory().new_node_list(specifiers);
-                    let named_imports = self
-                        .factory()
-                        .new_named_imports(cx.nodes, Some(elements));
+                    let named_imports = self.factory().new_named_imports(cx.nodes, Some(elements));
                     let clause = self.factory().new_import_clause(
                         cx.nodes,
                         Kind::Unknown,
@@ -385,9 +381,8 @@ impl<'a> JsxTransformer<'a> {
                 }
             } else if ast::is_external_or_commonjs_module(cx.nodes[node].as_source_file()) {
                 statements_updated = true;
-                let mut new_statements = Vec::with_capacity(
-                    self.utilized_implicit_runtime_imports.borrow().size(),
-                );
+                let mut new_statements =
+                    Vec::with_capacity(self.utilized_implicit_runtime_imports.borrow().size());
                 let imports = self.utilized_implicit_runtime_imports.borrow();
                 for (import_source, import_specifiers_map) in imports.entries() {
                     let sorted = get_sorted_specifiers(cx.nodes, import_specifiers_map);
@@ -487,7 +482,12 @@ impl<'a> JsxTransformer<'a> {
             (d.opening_element.unwrap(), d.children.clone())
         };
         let location = TextRange::new(
-            skip_trivia(&cx.nodes[self.current_source_file.get().unwrap()].as_source_file().text, cx.nodes[node].pos()),
+            skip_trivia(
+                &cx.nodes[self.current_source_file.get().unwrap()]
+                    .as_source_file()
+                    .text,
+                cx.nodes[node].pos(),
+            ),
             cx.nodes[node].end(),
         );
         if use_create_element {
@@ -604,7 +604,8 @@ impl<'a> JsxTransformer<'a> {
                     .dot_dot_dot_token
                     .is_none())
         {
-            let result = self.transform_jsx_child_to_expression(v, cx, non_whitespace_children[0])?;
+            let result =
+                self.transform_jsx_child_to_expression(v, cx, non_whitespace_children[0])?;
             let name = self.factory().new_identifier(cx.nodes, "children");
             return Some(self.factory().new_property_assignment(
                 cx.nodes,
@@ -773,7 +774,10 @@ impl<'a> JsxTransformer<'a> {
                 // attributes
                 let expression = cx.nodes[attr].expression().unwrap();
                 if ast::is_object_literal_expression(&cx.nodes[expression])
-                    && !has_proto(cx.nodes[expression].as_object_literal_expression(), cx.nodes)
+                    && !has_proto(
+                        cx.nodes[expression].as_object_literal_expression(),
+                        cx.nodes,
+                    )
                 {
                     for &prop in cx.nodes[expression]
                         .properties()
@@ -819,8 +823,7 @@ impl<'a> JsxTransformer<'a> {
             &mut properties,
         );
 
-        if !expressions.is_empty()
-            && !ast::is_object_literal_expression(&cx.nodes[expressions[0]])
+        if !expressions.is_empty() && !ast::is_object_literal_expression(&cx.nodes[expressions[0]])
         {
             // We must always emit at least one object literal before a spread
             // attribute as the JSX always factory expects a fresh object, so
@@ -876,7 +879,10 @@ impl<'a> JsxTransformer<'a> {
     ) -> Vec<NodeId> {
         let expression = cx.nodes[node].as_jsx_spread_attribute().expression.unwrap();
         if ast::is_object_literal_expression(&cx.nodes[expression])
-            && !has_proto(cx.nodes[expression].as_object_literal_expression(), cx.nodes)
+            && !has_proto(
+                cx.nodes[expression].as_object_literal_expression(),
+                cx.nodes,
+            )
         {
             let props = cx.nodes[expression]
                 .as_object_literal_expression()
@@ -888,9 +894,10 @@ impl<'a> JsxTransformer<'a> {
                 .unwrap_or_default();
         }
         let visited = raw_visit(v, cx, expression).unwrap_or(expression);
-        vec![self
-            .factory()
-            .new_spread_assignment(cx.nodes, Some(visited))]
+        vec![
+            self.factory()
+                .new_spread_assignment(cx.nodes, Some(visited)),
+        ]
     }
 
     /// `transformJsxAttributeToObjectLiteralElement`.
@@ -1100,13 +1107,14 @@ impl<'a> JsxTransformer<'a> {
                         Some(lit),
                     )
                 };
-                let members = self
-                    .factory()
-                    .new_node_list(vec![file_name_prop, line_prop, col_prop]);
-                args.push(
+                let members =
                     self.factory()
-                        .new_object_literal_expression(cx.nodes, Some(members), false),
-                );
+                        .new_node_list(vec![file_name_prop, line_prop, col_prop]);
+                args.push(self.factory().new_object_literal_expression(
+                    cx.nodes,
+                    Some(members),
+                    false,
+                ));
                 // __self development flag
                 args.push(self.factory().new_this_expression(cx.nodes));
             }
@@ -1152,10 +1160,11 @@ impl<'a> JsxTransformer<'a> {
         }
         if children_props.is_none() {
             let empty = self.factory().new_node_list(Vec::new());
-            children_props = Some(
-                self.factory()
-                    .new_object_literal_expression(cx.nodes, Some(empty), false),
-            );
+            children_props = Some(self.factory().new_object_literal_expression(
+                cx.nodes,
+                Some(empty),
+                false,
+            ));
         }
         let tag_name = self.get_implicit_jsx_fragment_reference(cx);
         Some(self.visit_jsx_opening_like_element_or_fragment_jsx(
@@ -1274,11 +1283,8 @@ impl<'a> JsxTransformer<'a> {
         if let Some(e) = e {
             return self.create_jsx_factory_expression_from_entity_name(cx, e, parent);
         }
-        let namespace = self.create_react_namespace(
-            cx,
-            &self.compiler_options.react_namespace,
-            parent,
-        );
+        let namespace =
+            self.create_react_namespace(cx, &self.compiler_options.react_namespace, parent);
         let target_id = self.factory().new_identifier(cx.nodes, target);
         self.factory().new_property_access_expression(
             cx.nodes,
@@ -1290,15 +1296,11 @@ impl<'a> JsxTransformer<'a> {
     }
 
     /// `createJsxFactoryExpression`.
-    fn create_jsx_factory_expression(
-        &self,
-        cx: &mut VisitorCx<'_, '_>,
-        parent: NodeId,
-    ) -> NodeId {
-        let e = self.emit_resolver.borrow().get_jsx_factory_entity(
-            self.current_source_file.get().unwrap(),
-            cx.nodes,
-        );
+    fn create_jsx_factory_expression(&self, cx: &mut VisitorCx<'_, '_>, parent: NodeId) -> NodeId {
+        let e = self
+            .emit_resolver
+            .borrow()
+            .get_jsx_factory_entity(self.current_source_file.get().unwrap(), cx.nodes);
         self.create_jsx_pseudo_factory_expression(cx, parent, e, "createElement")
     }
 
@@ -1308,10 +1310,10 @@ impl<'a> JsxTransformer<'a> {
         cx: &mut VisitorCx<'_, '_>,
         parent: NodeId,
     ) -> NodeId {
-        let e = self.emit_resolver.borrow().get_jsx_fragment_factory_entity(
-            self.current_source_file.get().unwrap(),
-            cx.nodes,
-        );
+        let e = self
+            .emit_resolver
+            .borrow()
+            .get_jsx_fragment_factory_entity(self.current_source_file.get().unwrap(), cx.nodes);
         self.create_jsx_pseudo_factory_expression(cx, parent, e, "Fragment")
     }
 
@@ -1469,7 +1471,11 @@ impl<'a> JsxTransformer<'a> {
     ) -> Option<NodeId> {
         let expression = cx.nodes[node].as_jsx_expression().expression;
         let e = expression.and_then(|e| raw_visit(v, cx, e));
-        if cx.nodes[node].as_jsx_expression().dot_dot_dot_token.is_some() {
+        if cx.nodes[node]
+            .as_jsx_expression()
+            .dot_dot_dot_token
+            .is_some()
+        {
             return Some(self.factory().new_spread_element(cx.nodes, e));
         }
         e
@@ -1513,17 +1519,11 @@ fn has_key_after_props_spread(nodes: &[ast::Node], node: NodeId) -> bool {
 }
 
 /// `sortImportSpecifiers`.
-fn sort_import_specifiers(
-    nodes: &[ast::Node],
-    a: &NodeId,
-    b: &NodeId,
-) -> std::cmp::Ordering {
+fn sort_import_specifiers(nodes: &[ast::Node], a: &NodeId, b: &NodeId) -> std::cmp::Ordering {
     let a_property = nodes[nodes[*a].property_name().unwrap()].text(nodes);
     let b_property = nodes[nodes[*b].property_name().unwrap()].text(nodes);
-    let res = stringutil::compare_strings_case_sensitive(
-        a_property.as_bytes(),
-        b_property.as_bytes(),
-    );
+    let res =
+        stringutil::compare_strings_case_sensitive(a_property.as_bytes(), b_property.as_bytes());
     if res != COMPARISON_EQUAL {
         return res.cmp(&0);
     }
@@ -1534,10 +1534,7 @@ fn sort_import_specifiers(
 }
 
 /// `getSortedSpecifiers`.
-fn get_sorted_specifiers(
-    nodes: &[ast::Node],
-    m: &HashMap<String, NodeId>,
-) -> Vec<NodeId> {
+fn get_sorted_specifiers(nodes: &[ast::Node], m: &HashMap<String, NodeId>) -> Vec<NodeId> {
     let mut res: Vec<NodeId> = m.values().copied().collect();
     res.sort_by(|a, b| sort_import_specifiers(nodes, a, b));
     res

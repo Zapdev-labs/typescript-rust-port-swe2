@@ -11,9 +11,9 @@ use std::cell::Cell;
 use tsc_ast::ast::Node;
 use tsc_ast::visitor::{NodeVisitor, VisitorCx};
 use tsc_ast::{self as ast, Kind, NodeFlags, NodeId, NodeList};
-use tsc_core::text::TextPos;
 use tsc_astnav::tokens::visit_each_child_and_jsdoc;
 use tsc_core::languagevariant::LanguageVariant;
+use tsc_core::text::TextPos;
 use tsc_scanner::scanner::Scanner;
 
 /// `scanner.GetScannerForSourceFile(sourceFile, pos)` on already-cloned text.
@@ -32,11 +32,7 @@ pub(crate) fn ls_scanner<'a>(
 }
 
 /// Replaces `last(node.getChildren(sourceFile))`.
-pub fn get_last_child(
-    nodes: &mut Vec<Node>,
-    node: NodeId,
-    source_file: NodeId,
-) -> Option<NodeId> {
+pub fn get_last_child(nodes: &mut Vec<Node>, node: NodeId, source_file: NodeId) -> Option<NodeId> {
     let last_child_node = get_last_visited_child(nodes, node, source_file);
     if ast::is_js_doc_single_comment_node(&nodes[node], nodes) && last_child_node.is_none() {
         return None;
@@ -108,22 +104,20 @@ pub fn get_last_visited_child(
         }
         Some(n)
     };
-    let visit_nodes = |_cx: &mut VisitorCx,
-                      node_list: Option<NodeList>,
-                      _v: &NodeVisitor|
-     -> Option<NodeList> {
-        if let Some(node_list) = &node_list {
-            if !node_list.nodes.is_empty() {
-                for &v in node_list.nodes.iter().rev() {
-                    if !_cx.nodes[v].flags.intersects(NodeFlags::REPARSED) {
-                        last_child.set(Some(v));
-                        break;
+    let visit_nodes =
+        |_cx: &mut VisitorCx, node_list: Option<NodeList>, _v: &NodeVisitor| -> Option<NodeList> {
+            if let Some(node_list) = &node_list {
+                if !node_list.nodes.is_empty() {
+                    for &v in node_list.nodes.iter().rev() {
+                        if !_cx.nodes[v].flags.intersects(NodeFlags::REPARSED) {
+                            last_child.set(Some(v));
+                            break;
+                        }
                     }
                 }
             }
-        }
-        node_list
-    };
+            node_list
+        };
 
     visit_each_child_and_jsdoc(
         nodes,
@@ -136,11 +130,7 @@ pub fn get_last_visited_child(
 }
 
 /// `GetFirstToken`.
-pub fn get_first_token(
-    nodes: &mut Vec<Node>,
-    node: NodeId,
-    source_file: NodeId,
-) -> Option<NodeId> {
+pub fn get_first_token(nodes: &mut Vec<Node>, node: NodeId, source_file: NodeId) -> Option<NodeId> {
     if ast::is_identifier(&nodes[node]) || nodes[node].kind.is_token_kind() {
         return None;
     }

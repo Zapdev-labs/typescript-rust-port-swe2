@@ -4,7 +4,7 @@
 use std::borrow::Cow;
 
 use serde::{Deserialize, Serialize};
-use tsc_core::tristate::{bool_to_tristate, TS_FALSE, TS_TRUE};
+use tsc_core::tristate::{TS_FALSE, TS_TRUE, bool_to_tristate};
 use tsc_lsproto::FormattingOptions;
 use tsc_printer::get_default_indent_size;
 
@@ -50,8 +50,7 @@ pub fn from_ls_format_options(
     let mut updated_settings = f;
     updated_settings.editor_settings.tab_size = opt.tab_size as i32;
     updated_settings.editor_settings.indent_size = opt.tab_size as i32;
-    updated_settings.editor_settings.convert_tabs_to_spaces =
-        bool_to_tristate(opt.insert_spaces);
+    updated_settings.editor_settings.convert_tabs_to_spaces = bool_to_tristate(opt.insert_spaces);
     if let Some(trim_trailing_whitespace) = opt.trim_trailing_whitespace {
         updated_settings.editor_settings.trim_trailing_whitespace =
             bool_to_tristate(trim_trailing_whitespace);

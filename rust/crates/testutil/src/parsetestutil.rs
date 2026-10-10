@@ -36,8 +36,7 @@ pub fn parse_typescript(text: &str, jsx: bool) -> (NodeId, Vec<Node>) {
     parser::parse_source_file(
         SourceFileParseOptions {
             file_name: file_name.clone(),
-            path_key: CaseSensitivity::CaseSensitive
-                .path_key(&RootedPath::from(file_name.clone())),
+            path_key: CaseSensitivity::CaseSensitive.path_key(&RootedPath::from(file_name.clone())),
             ..Default::default()
         },
         text,
@@ -69,11 +68,7 @@ pub fn check_diagnostics(nodes: &[Node], file: NodeId) -> Result<(), Error> {
 ///
 /// PORT: `t.Error` → `Err(Error)` carrying `message` plus the formatted
 /// diagnostics.
-pub fn check_diagnostics_message(
-    nodes: &[Node],
-    file: NodeId,
-    message: &str,
-) -> Result<(), Error> {
+pub fn check_diagnostics_message(nodes: &[Node], file: NodeId, message: &str) -> Result<(), Error> {
     let diagnostics = nodes[file].as_source_file().diagnostics();
     if !diagnostics.is_empty() {
         let mut b = Vec::new();
@@ -102,11 +97,13 @@ pub fn check_diagnostics_message(
 /// threaded through `VisitorCx` rather than bound at construction.
 fn new_synthetic_recursive_visitor() -> NodeVisitor<'static> {
     NodeVisitor::new(
-        Box::new(|v: &NodeVisitor, cx: &mut VisitorCx<'_, '_>, node: NodeId| {
-            // `return v.VisitEachChild(node)` — `None` here means "unchanged",
-            // not "removed"; map it back to the input node.
-            Some(v.visit_each_child(cx, node).unwrap_or(node))
-        }),
+        Box::new(
+            |v: &NodeVisitor, cx: &mut VisitorCx<'_, '_>, node: NodeId| {
+                // `return v.VisitEachChild(node)` — `None` here means "unchanged",
+                // not "removed"; map it back to the input node.
+                Some(v.visit_each_child(cx, node).unwrap_or(node))
+            },
+        ),
         NodeVisitorHooks {
             visit_node: Some(Box::new(
                 |cx: &mut VisitorCx<'_, '_>, node: NodeId, v: &NodeVisitor| {

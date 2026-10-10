@@ -22,7 +22,9 @@ use std::rc::{Rc, Weak};
 
 use rustc_hash::FxHashMap;
 use tsc_ast::visitor::{NodeVisitor, VisitorCx};
-use tsc_ast::{self as ast, Kind, ModifierFlags, Node, NodeFlags, NodeId, NodeList, SubtreeFacts, Symbol};
+use tsc_ast::{
+    self as ast, Kind, ModifierFlags, Node, NodeFlags, NodeId, NodeList, SubtreeFacts, Symbol,
+};
 use tsc_binder::referenceresolver::ReferenceResolver;
 use tsc_core::compileroptions::EMPTY_COMPILER_OPTIONS;
 use tsc_core::core::{coalesce, find};
@@ -33,8 +35,8 @@ use tsc_printer::{AssignedNameOptions, EmitFlags, EmitResolver, NameOptions};
 
 use super::utilities::constant_expression;
 use crate::chain::TransformOptions;
-use crate::destructuring::{flatten_destructuring_assignment, FlattenLevel};
-use crate::estransforms::{make_transformer, tx_adapter, visit_each_child, Ec};
+use crate::destructuring::{FlattenLevel, flatten_destructuring_assignment};
+use crate::estransforms::{Ec, make_transformer, tx_adapter, visit_each_child};
 use crate::modifier_visitor::extract_modifiers;
 use crate::transformer::Transformer;
 use crate::utilities::{
@@ -82,7 +84,10 @@ pub fn get_innermost_module_declaration_from_dotted_module(
 ) -> Option<NodeId> {
     let mut module_declaration = module_declaration;
     loop {
-        let body = nodes[module_declaration].as_module_declaration().body_base.body;
+        let body = nodes[module_declaration]
+            .as_module_declaration()
+            .body_base
+            .body;
         match body {
             Some(body) if nodes[body].kind == Kind::ModuleDeclaration => {
                 module_declaration = body;
@@ -146,8 +151,7 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
         if self.current_scope.get() != saved_current_scope {
             // only reset the first declaration for a name if we are exiting
             // the scope in which it was declared
-            *self.current_scope_first_declarations_of_name.borrow_mut() =
-                saved_first_declarations;
+            *self.current_scope_first_declarations_of_name.borrow_mut() = saved_first_declarations;
         }
         self.current_scope.set(saved_current_scope);
     }
@@ -219,11 +223,11 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
             }
 
             Kind::ImportEqualsDeclaration => {
-                let module_reference =
-                    cx.nodes[node].as_import_equals_declaration().module_reference;
-                let is_external = module_reference.is_some_and(|m| {
-                    cx.nodes[m].kind == Kind::ExternalModuleReference
-                });
+                let module_reference = cx.nodes[node]
+                    .as_import_equals_declaration()
+                    .module_reference;
+                let is_external = module_reference
+                    .is_some_and(|m| cx.nodes[m].kind == Kind::ExternalModuleReference);
                 if self.current_namespace.get().is_some()
                     && self
                         .current_scope
@@ -263,8 +267,7 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
     fn record_declaration_in_scope(&self, cx: &mut VisitorCx<'_, '_>, node: NodeId) {
         match cx.nodes[node].kind {
             Kind::VariableStatement => {
-                let decl_list =
-                    cx.nodes[node].as_variable_statement().declaration_list;
+                let decl_list = cx.nodes[node].as_variable_statement().declaration_list;
                 if let Some(decl_list) = decl_list {
                     self.record_declaration_in_scope(cx, decl_list);
                 }
@@ -553,11 +556,10 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
             cx.nodes[node].modifiers().cloned(),
             modifier_mask,
         );
-        let var_statement = ec.borrow_mut().factory.new_variable_statement(
-            cx.nodes,
-            modifiers,
-            Some(var_decls),
-        );
+        let var_statement =
+            ec.borrow_mut()
+                .factory
+                .new_variable_statement(cx.nodes, modifiers, Some(var_decls));
 
         ec.borrow().set_original(var_decl, node);
         // !!! synthetic comments
@@ -565,7 +567,8 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
 
         // Adjust the source map emit to match the old emitter.
         if ast::is_enum_declaration(&cx.nodes[node]) {
-            ec.borrow().set_source_map_range(var_decls, cx.nodes[node].loc);
+            ec.borrow()
+                .set_source_map_range(var_decls, cx.nodes[node].loc);
         } else {
             ec.borrow()
                 .set_source_map_range(var_statement, cx.nodes[node].loc);
@@ -628,14 +631,15 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
         let lhs = self.get_export_qualified_reference_to_declaration(ec, cx, node);
         let rhs_target = self.get_export_qualified_reference_to_declaration(ec, cx, node);
         let empty_list = ec.borrow_mut().factory.new_node_list([]);
-        let empty_object = ec
-            .borrow_mut()
-            .factory
-            .new_object_literal_expression(cx.nodes, Some(empty_list), false);
-        let rhs = ec
-            .borrow_mut()
-            .factory
-            .new_assignment_expression(cx.nodes, rhs_target, empty_object);
+        let empty_object = ec.borrow_mut().factory.new_object_literal_expression(
+            cx.nodes,
+            Some(empty_list),
+            false,
+        );
+        let rhs =
+            ec.borrow_mut()
+                .factory
+                .new_assignment_expression(cx.nodes, rhs_target, empty_object);
         let mut enum_arg = ec
             .borrow_mut()
             .factory
@@ -740,8 +744,10 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
         let node = v.visit_each_child(cx, node).unwrap_or(node);
 
         let members = cx.nodes[node].as_enum_declaration().members.clone();
-        let member_ids: Vec<NodeId> =
-            members.as_ref().map(|m| m.nodes.to_vec()).unwrap_or_default();
+        let member_ids: Vec<NodeId> = members
+            .as_ref()
+            .map(|m| m.nodes.to_vec())
+            .unwrap_or_default();
         let members_loc = members.map(|m| m.loc).unwrap_or_default();
 
         let mut statements: Vec<NodeId> = Vec::new();
@@ -754,7 +760,9 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
         statement_list.loc = members_loc;
 
         self.current_enum.set(saved_current_enum);
-        ec.borrow_mut().factory.new_block(cx.nodes, Some(statement_list), true)
+        ec.borrow_mut()
+            .factory
+            .new_block(cx.nodes, Some(statement_list), true)
     }
 
     /// `tx.transformEnumMember` — transforms an enum member into a statement.
@@ -768,8 +776,12 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
         enum_: NodeId,
         index: usize,
     ) -> Vec<NodeId> {
-        let member_node =
-            cx.nodes[enum_].as_enum_declaration().members.as_ref().unwrap().nodes[index];
+        let member_node = cx.nodes[enum_]
+            .as_enum_declaration()
+            .members
+            .as_ref()
+            .unwrap()
+            .nodes[index];
 
         let saved_parent = self.parent_node.get();
         self.parent_node.set(self.current_node.get());
@@ -894,14 +906,15 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
         let lhs = self.get_export_qualified_reference_to_declaration(ec, cx, node);
         let rhs_target = self.get_export_qualified_reference_to_declaration(ec, cx, node);
         let empty_list = ec.borrow_mut().factory.new_node_list([]);
-        let empty_object = ec
-            .borrow_mut()
-            .factory
-            .new_object_literal_expression(cx.nodes, Some(empty_list), false);
-        let rhs = ec
-            .borrow_mut()
-            .factory
-            .new_assignment_expression(cx.nodes, rhs_target, empty_object);
+        let empty_object = ec.borrow_mut().factory.new_object_literal_expression(
+            cx.nodes,
+            Some(empty_list),
+            false,
+        );
+        let rhs =
+            ec.borrow_mut()
+                .factory
+                .new_assignment_expression(cx.nodes, rhs_target, empty_object);
         let mut module_arg = ec
             .borrow_mut()
             .factory
@@ -1022,10 +1035,7 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
                 if let Some(body) = body {
                     let body_block = cx.nodes[body].as_module_block();
                     let stmts = body_block.statements.clone();
-                    statements = stmts
-                        .as_ref()
-                        .map(|s| s.nodes.to_vec())
-                        .unwrap_or_default();
+                    statements = stmts.as_ref().map(|s| s.nodes.to_vec()).unwrap_or_default();
                     statements_location = stmts.map(|s| s.loc).unwrap_or_default();
                     block_location = cx.nodes[body].loc;
                 }
@@ -1033,12 +1043,10 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
                 // node.Body.Kind == ast.KindModuleDeclaration
                 // !!! Strada didn't do this; why?
                 // tx.currentScope = node.AsNode()
-                statements =
-                    v.visit_slice(cx, &[body]).unwrap_or_default();
+                statements = v.visit_slice(cx, &[body]).unwrap_or_default();
                 let innermost = get_innermost_module_declaration_from_dotted_module(node, cx.nodes)
                     .unwrap_or(node);
-                let module_block =
-                    cx.nodes[innermost].as_module_declaration().body_base.body;
+                let module_block = cx.nodes[innermost].as_module_declaration().body_base.body;
                 statements_location = module_block
                     .and_then(|mb| {
                         cx.nodes[mb]
@@ -1054,8 +1062,7 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
 
         self.current_namespace.set(saved_current_namespace);
         self.current_scope.set(saved_current_scope);
-        *self.current_scope_first_declarations_of_name.borrow_mut() =
-            saved_first_declarations;
+        *self.current_scope_first_declarations_of_name.borrow_mut() = saved_first_declarations;
 
         statements = ec
             .borrow_mut()
@@ -1089,11 +1096,10 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
         cx: &mut VisitorCx<'_, '_>,
         node: NodeId,
     ) -> NodeId {
-        let module_reference =
-            cx.nodes[node].as_import_equals_declaration().module_reference;
-        if module_reference.is_some_and(|m| {
-            cx.nodes[m].kind == Kind::ExternalModuleReference
-        }) {
+        let module_reference = cx.nodes[node]
+            .as_import_equals_declaration()
+            .module_reference;
+        if module_reference.is_some_and(|m| cx.nodes[m].kind == Kind::ExternalModuleReference) {
             return visit_each_child(v, cx, node);
         }
 
@@ -1201,9 +1207,7 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
                                        name: NodeId,
                                        value: Option<NodeId>,
                                        location: &TextRange| {
-                            tx2.create_namespace_export_expression(
-                                &ec2, cx2, name, value, location,
-                            )
+                            tx2.create_namespace_export_expression(&ec2, cx2, name, value, location)
                         };
                         let expression = flatten_destructuring_assignment(
                             &adapter,
@@ -1322,7 +1326,11 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
     }
 
     /// `tx.getParameterProperties`
-    fn get_parameter_properties(&self, cx: &VisitorCx<'_, '_>, constructor: Option<NodeId>) -> Vec<NodeId> {
+    fn get_parameter_properties(
+        &self,
+        cx: &VisitorCx<'_, '_>,
+        constructor: Option<NodeId>,
+    ) -> Vec<NodeId> {
         let mut parameter_properties = Vec::new();
         if let Some(constructor) = constructor {
             for &parameter in cx.nodes[constructor].parameters().unwrap_or(&[]) {
@@ -1405,17 +1413,16 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
         if name.is_none()
             && (exported
                 || super::legacydecorators::child_is_decorated_no_parent(
-                    self.compiler_options
-                        .experimental_decorators
-                        .is_true(),
+                    self.compiler_options.experimental_decorators.is_true(),
                     node,
                     cx.nodes,
                 ))
         {
-            name = Some(ec
-                .borrow_mut()
-                .factory
-                .new_generated_name_for_node(cx.nodes, node));
+            name = Some(
+                ec.borrow_mut()
+                    .factory
+                    .new_generated_name_for_node(cx.nodes, node),
+            );
         }
         let heritage_clauses = v.visit_nodes(
             cx,
@@ -1426,11 +1433,9 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
                 .clone(),
         );
         let members = v.visit_nodes(cx, cx.nodes[node].member_list().cloned());
-        let constructor = cx.nodes[node].member_list().and_then(|m| {
-            find(&m.nodes, |m| {
-                ast::is_constructor_declaration(&cx.nodes[*m])
-            })
-        });
+        let constructor = cx.nodes[node]
+            .member_list()
+            .and_then(|m| find(&m.nodes, |m| ast::is_constructor_declaration(&cx.nodes[*m])));
         let parameter_properties = self.get_parameter_properties(cx, constructor);
         let members = self.synthesize_parameter_property_members(
             ec,
@@ -1488,11 +1493,9 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
                 .clone(),
         );
         let members = v.visit_nodes(cx, cx.nodes[node].member_list().cloned());
-        let constructor = cx.nodes[node].member_list().and_then(|m| {
-            find(&m.nodes, |m| {
-                ast::is_constructor_declaration(&cx.nodes[*m])
-            })
-        });
+        let constructor = cx.nodes[node]
+            .member_list()
+            .and_then(|m| find(&m.nodes, |m| ast::is_constructor_declaration(&cx.nodes[*m])));
         let parameter_properties = self.get_parameter_properties(cx, constructor);
         let members = self.synthesize_parameter_property_members(
             ec,
@@ -1534,12 +1537,8 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
         ec.borrow_mut()
             .factory
             .update_constructor_declaration(
-                cx.nodes,
-                node,
-                modifiers,
-                None, /* type_parameters */
-                parameters,
-                None, /* type_node */
+                cx.nodes, node, modifiers, None, /* type_parameters */
+                parameters, None, /* type_node */
                 None, /* full_signature */
                 body,
             )
@@ -1606,7 +1605,8 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
 
                 let local_name = ec.borrow_mut().factory.clone_node(cx.nodes, name);
                 cx.nodes[local_name].parent = cx.nodes[name].parent;
-                ec.borrow().add_emit_flags(local_name, EmitFlags::NO_COMMENTS);
+                ec.borrow()
+                    .add_emit_flags(local_name, EmitFlags::NO_COMMENTS);
 
                 let this_expr = ec.borrow_mut().factory.new_this_expression(cx.nodes);
                 let prop_access = ec.borrow_mut().factory.new_property_access_expression(
@@ -1621,10 +1621,10 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
                     prop_access,
                     local_name,
                 );
-                let parameter_property = ec.borrow_mut().factory.new_expression_statement(
-                    cx.nodes,
-                    Some(assignment),
-                );
+                let parameter_property = ec
+                    .borrow_mut()
+                    .factory
+                    .new_expression_statement(cx.nodes, Some(assignment));
                 ec.borrow().set_original(parameter_property, parameter);
                 ec.borrow()
                     .add_emit_flags(parameter_property, EmitFlags::START_ON_NEW_LINE);
@@ -1742,10 +1742,14 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
                     multi_line,
                 )
                 .unwrap_or(try_block_node);
-            let catch_clause =
-                v.visit_node(cx, cx.nodes[super_statement].as_try_statement().catch_clause);
-            let finally_block =
-                v.visit_node(cx, cx.nodes[super_statement].as_try_statement().finally_block);
+            let catch_clause = v.visit_node(
+                cx,
+                cx.nodes[super_statement].as_try_statement().catch_clause,
+            );
+            let finally_block = v.visit_node(
+                cx,
+                cx.nodes[super_statement].as_try_statement().finally_block,
+            );
             let updated_try = ec
                 .borrow_mut()
                 .factory
@@ -1765,8 +1769,11 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
         } else {
             // visit the statement containing `super`
             statements_out.extend(
-                v.visit_slice(cx, &statements_in[super_statement_index..super_statement_index + 1])
-                    .unwrap_or_default(),
+                v.visit_slice(
+                    cx,
+                    &statements_in[super_statement_index..super_statement_index + 1],
+                )
+                .unwrap_or_default(),
             );
 
             // insert the initializer statements
@@ -1789,7 +1796,9 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
         cx: &mut VisitorCx<'_, '_>,
         node: NodeId,
     ) -> NodeId {
-        let name = cx.nodes[node].name().expect("shorthand property has no name");
+        let name = cx.nodes[node]
+            .name()
+            .expect("shorthand property has no name");
         let exported_or_imported_name = self.visit_expression_identifier(ec, cx, name);
         if exported_or_imported_name != name {
             let mut expression = exported_or_imported_name;
@@ -1801,7 +1810,9 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
                     .as_shorthand_property_assignment()
                     .equals_token
                     .unwrap_or_else(|| {
-                        ec.borrow_mut().factory.new_token(cx.nodes, Kind::EqualsToken)
+                        ec.borrow_mut()
+                            .factory
+                            .new_token(cx.nodes, Kind::EqualsToken)
                     });
                 let right = v.visit_node(cx, object_assignment_initializer);
                 expression = ec.borrow_mut().factory.new_binary_expression(
@@ -1841,19 +1852,16 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
                 Some(exported_or_imported_name),
                 None, /* postfix_token */
                 None, /* type_node */
-                cx.nodes[node].as_shorthand_property_assignment().equals_token,
+                cx.nodes[node]
+                    .as_shorthand_property_assignment()
+                    .equals_token,
                 visited_initializer,
             )
             .unwrap_or(node)
     }
 
     /// `tx.visitIdentifier`
-    fn visit_identifier(
-        &self,
-        ec: &Ec,
-        cx: &mut VisitorCx<'_, '_>,
-        node: NodeId,
-    ) -> NodeId {
+    fn visit_identifier(&self, ec: &Ec, cx: &mut VisitorCx<'_, '_>, node: NodeId) -> NodeId {
         if self
             .parent_node
             .get()
@@ -1881,9 +1889,9 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
                     .resolver
                     .as_ref()
                     .expect("RuntimeSyntaxTransformer requires a reference resolver");
-                let symbols = self.symbols.expect(
-                    "RuntimeSyntaxTransformer requires TransformOptions::symbols",
-                );
+                let symbols = self
+                    .symbols
+                    .expect("RuntimeSyntaxTransformer requires TransformOptions::symbols");
                 resolver.borrow_mut().get_referenced_export_container(
                     location,
                     false,
@@ -1895,8 +1903,7 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
                 if ast::is_enum_declaration(&cx.nodes[container])
                     || ast::is_module_declaration(&cx.nodes[container])
                 {
-                    let container_name =
-                        self.get_namespace_container_name(ec, cx, Some(container));
+                    let container_name = self.get_namespace_container_name(ec, cx, Some(container));
 
                     let member_name = ec.borrow_mut().factory.clone_node(cx.nodes, node);
                     ec.borrow().set_emit_flags(
@@ -1940,14 +1947,11 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
                 false, /* allowComments */
                 true,  /* allowSourceMaps */
             );
-        let local_name = ec
-            .borrow_mut()
-            .factory
-            .get_local_name(cx.nodes, Some(node));
-        let expression = ec
-            .borrow_mut()
-            .factory
-            .new_assignment_expression(cx.nodes, export_name, local_name);
+        let local_name = ec.borrow_mut().factory.get_local_name(cx.nodes, Some(node));
+        let expression =
+            ec.borrow_mut()
+                .factory
+                .new_assignment_expression(cx.nodes, export_name, local_name);
         let mut export_assignment_source_map_range = cx.nodes[node].loc;
         if let Some(name) = cx.nodes[node].name() {
             export_assignment_source_map_range =
@@ -2020,8 +2024,7 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
 
     /// `tx.shouldEmitEnumDeclaration`
     fn should_emit_enum_declaration(&self, cx: &VisitorCx<'_, '_>, node: NodeId) -> bool {
-        !ast::is_enum_const(node, cx.nodes)
-            || self.compiler_options.should_preserve_const_enums()
+        !ast::is_enum_const(node, cx.nodes) || self.compiler_options.should_preserve_const_enums()
     }
 
     /// `tx.shouldEmitModuleDeclaration`
@@ -2049,13 +2052,9 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
 
 /// `NewRuntimeSyntaxTransformer`
 #[allow(dead_code)]
-pub fn new_runtime_syntax_transformer<'a>(
-    opt: &TransformOptions<'a>,
-) -> Option<Transformer<'a>> {
+pub fn new_runtime_syntax_transformer<'a>(opt: &TransformOptions<'a>) -> Option<Transformer<'a>> {
     let state = Rc::new(RuntimeSyntaxTransformer {
-        compiler_options: opt
-            .compiler_options
-            .unwrap_or(&EMPTY_COMPILER_OPTIONS),
+        compiler_options: opt.compiler_options.unwrap_or(&EMPTY_COMPILER_OPTIONS),
         parent_node: Cell::new(None),
         current_node: Cell::new(None),
         current_source_file: Cell::new(None),
@@ -2071,8 +2070,10 @@ pub fn new_runtime_syntax_transformer<'a>(
     *state.self_ref.borrow_mut() = Rc::downgrade(&state);
     make_transformer(opt, move |ec| {
         let state = state.clone();
-        Box::new(move |_v: &NodeVisitor<'a>, cx: &mut VisitorCx<'_, '_>, node: NodeId| {
-            state.visit(&ec, _v, cx, node)
-        })
+        Box::new(
+            move |_v: &NodeVisitor<'a>, cx: &mut VisitorCx<'_, '_>, node: NodeId| {
+                state.visit(&ec, _v, cx, node)
+            },
+        )
     })
 }

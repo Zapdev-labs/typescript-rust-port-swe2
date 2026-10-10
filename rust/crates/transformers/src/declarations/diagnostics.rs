@@ -38,8 +38,7 @@ pub type GetSymbolAccessibilityDiagnostic =
 
 /// `func(node, result) *diagnostics.Message` — a plain function pointer;
 /// every selector in this file is non-capturing.
-type SelectorFn =
-    fn(NodeId, &SymbolAccessibilityResult, &[Node]) -> Option<&'static Message>;
+type SelectorFn = fn(NodeId, &SymbolAccessibilityResult, &[Node]) -> Option<&'static Message>;
 
 /// `wrapSimpleDiagnosticSelector(node, selector)`.
 pub(crate) fn wrap_simple_diagnostic_selector(
@@ -79,8 +78,7 @@ pub(crate) fn wrap_fallback_error_diagnostic_selector(
 ) -> GetSymbolAccessibilityDiagnostic {
     Box::new(move |result, nodes| {
         let diagnostic_message = selector(node, result, nodes)?;
-        let error_node =
-            ast::get_name_of_declaration(Some(node), nodes).or(Some(node));
+        let error_node = ast::get_name_of_declaration(Some(node), nodes).or(Some(node));
         Some(SymbolAccessibilityDiagnostic {
             error_node,
             diagnostic_message,
@@ -148,7 +146,10 @@ fn get_accessor_name_visibility_diagnostic_message(
             &tsc_diagnostics::Public_static_property_0_of_exported_class_has_or_is_using_name_1_from_private_module_2,
             &tsc_diagnostics::Public_static_property_0_of_exported_class_has_or_is_using_private_name_1,
         ))
-    } else if nodes[node].parent.is_some_and(|p| nodes[p].kind == Kind::ClassDeclaration) {
+    } else if nodes[node]
+        .parent
+        .is_some_and(|p| nodes[p].kind == Kind::ClassDeclaration)
+    {
         Some(select_diagnostic_based_on_module_name(
             result,
             &tsc_diagnostics::Public_property_0_of_exported_class_has_or_is_using_name_1_from_external_module_2_but_cannot_be_named,
@@ -177,7 +178,10 @@ fn get_method_name_visibility_diagnostic_message(
             &tsc_diagnostics::Public_static_method_0_of_exported_class_has_or_is_using_name_1_from_private_module_2,
             &tsc_diagnostics::Public_static_method_0_of_exported_class_has_or_is_using_private_name_1,
         ))
-    } else if nodes[node].parent.is_some_and(|p| nodes[p].kind == Kind::ClassDeclaration) {
+    } else if nodes[node]
+        .parent
+        .is_some_and(|p| nodes[p].kind == Kind::ClassDeclaration)
+    {
         Some(select_diagnostic_based_on_module_name(
             result,
             &tsc_diagnostics::Public_method_0_of_exported_class_has_or_is_using_name_1_from_external_module_2_but_cannot_be_named,
@@ -357,7 +361,9 @@ fn get_variable_declaration_type_visibility_diagnostic_message(
                 &tsc_diagnostics::Public_static_property_0_of_exported_class_has_or_is_using_name_1_from_private_module_2,
                 &tsc_diagnostics::Public_static_property_0_of_exported_class_has_or_is_using_private_name_1,
             ));
-        } else if nodes[node].parent.is_some_and(|p| nodes[p].kind == Kind::ClassDeclaration)
+        } else if nodes[node]
+            .parent
+            .is_some_and(|p| nodes[p].kind == Kind::ClassDeclaration)
             || kind == Kind::Parameter
         {
             return Some(select_diagnostic_based_on_module_name(
@@ -736,20 +742,16 @@ fn is_function_like_and_not_constructor(node: &Node, nodes: &[Node]) -> bool {
 
 /// `findNearestDeclaration(node)`.
 fn find_nearest_declaration(node: NodeId, nodes: &[Node]) -> Option<NodeId> {
-    let result = ast::find_ancestor(
-        Some(node),
-        nodes,
-        &mut |n, nodes| is_declaration_enough_for_errors(n, nodes),
-    )?;
+    let result = ast::find_ancestor(Some(node), nodes, &mut |n, nodes| {
+        is_declaration_enough_for_errors(n, nodes)
+    })?;
     if ast::is_export_assignment(&nodes[result]) {
         return Some(result);
     }
     if ast::is_return_statement(&nodes[result]) {
-        return ast::find_ancestor(
-            Some(result),
-            nodes,
-            &mut |n, nodes| is_function_like_and_not_constructor(n, nodes),
-        );
+        return ast::find_ancestor(Some(result), nodes, &mut |n, nodes| {
+            is_function_like_and_not_constructor(n, nodes)
+        });
     }
     if ast::is_statement(&nodes[result], nodes) {
         return None;
@@ -792,11 +794,7 @@ fn add_parent_declaration_related_info(node: NodeId, diag: &DiagnosticRef, nodes
 }
 
 /// `createAccessorTypeError(node)`.
-fn create_accessor_type_error(
-    node: NodeId,
-    nodes: &[Node],
-    symbols: &[Symbol],
-) -> DiagnosticRef {
+fn create_accessor_type_error(node: NodeId, nodes: &[Node], symbols: &[Symbol]) -> DiagnosticRef {
     let declarations = nodes[node]
         .symbol()
         .map(|s| symbols[s.index()].declarations.clone())
@@ -971,18 +969,17 @@ fn create_expression_error_ex(
     {
         target_str = tsc_scanner::utilities::get_text_of_node(name, nodes);
     }
-    let parent = ast::find_ancestor_or_quit(
-        nodes[node].parent,
-        nodes,
-        &mut |n, nodes| is_parent_for_idd_diagnostic(n, nodes),
-    );
+    let parent = ast::find_ancestor_or_quit(nodes[node].parent, nodes, &mut |n, nodes| {
+        is_parent_for_idd_diagnostic(n, nodes)
+    });
 
     if parent == Some(parent_declaration) {
         let diagnostic_message = diagnostic_message.unwrap_or_else(|| {
             get_error_by_declaration_kind(nodes[parent_declaration].kind)
                 .expect("error by parent declaration kind")
         });
-        let diag = create_diagnostic_for_node(nodes, Some(node), diagnostic_message, &[] as &[String]);
+        let diag =
+            create_diagnostic_for_node(nodes, Some(node), diagnostic_message, &[] as &[String]);
         let related = create_diagnostic_for_node(
             nodes,
             Some(parent_declaration),
@@ -993,9 +990,8 @@ fn create_expression_error_ex(
         diag.lock().unwrap().add_related_info(Some(related));
         return diag;
     }
-    let diagnostic_message = diagnostic_message.unwrap_or(
-        &tsc_diagnostics::Expression_type_can_t_be_inferred_with_isolatedDeclarations,
-    );
+    let diagnostic_message = diagnostic_message
+        .unwrap_or(&tsc_diagnostics::Expression_type_can_t_be_inferred_with_isolatedDeclarations);
     let diag = create_diagnostic_for_node(nodes, Some(node), diagnostic_message, &[] as &[String]);
     let related = create_diagnostic_for_node(
         nodes,
@@ -1026,95 +1022,98 @@ pub type GetIsolatedDeclarationError<'a> =
 pub(crate) fn create_get_isolated_declaration_errors<'a>(
     resolver: Rc<RefCell<dyn EmitResolver + 'a>>,
 ) -> GetIsolatedDeclarationError<'a> {
-    let create_parameter_error =
-        move |node: NodeId, nodes: &[Node], symbols: &[Symbol]| -> DiagnosticRef {
-            if nodes[node]
-                .parent
-                .is_some_and(|p| ast::is_set_accessor_declaration(&nodes[p]))
-            {
-                let parent = nodes[node].parent.unwrap();
-                return create_accessor_type_error(parent, nodes, symbols);
-            }
-            // skip checker lock - node builder will already have one
-            let add_undefined = resolver.borrow().requires_adding_implicit_undefined_unsafe(
-                node, None, None, nodes, symbols,
-            );
-            if !add_undefined && nodes[node].initializer().is_some() {
-                return create_expression_error(nodes[node].initializer().unwrap(), nodes);
-            }
-            let mut message = get_error_by_declaration_kind(nodes[node].kind);
-            if add_undefined {
-                message = Some(&tsc_diagnostics::Declaration_emit_for_this_parameter_requires_implicitly_adding_undefined_to_its_type_This_is_not_supported_with_isolatedDeclarations);
-            }
-            let diag = create_diagnostic_for_node(
-                nodes,
-                Some(node),
-                message.expect("parameter error by declaration kind"),
-                &[] as &[String],
-            );
-            let target_str = nodes[node]
-                .name()
-                .map(|name| tsc_scanner::utilities::get_text_of_node(name, nodes))
-                .unwrap_or_default();
-            let related = create_diagnostic_for_node(
-                nodes,
-                Some(node),
-                get_related_suggestion_by_declaration_kind(nodes[node].kind)
-                    .expect("related suggestion for parameter kind"),
-                &[target_str],
-            );
-            diag.lock().unwrap().add_related_info(Some(related));
-            diag
-        };
-
-    Box::new(move |node: NodeId, nodes: &[Node], symbols: &[Symbol]| -> DiagnosticRef {
-        let heritage_clause = ast::find_ancestor(
-            Some(node),
+    let create_parameter_error = move |node: NodeId,
+                                       nodes: &[Node],
+                                       symbols: &[Symbol]|
+          -> DiagnosticRef {
+        if nodes[node]
+            .parent
+            .is_some_and(|p| ast::is_set_accessor_declaration(&nodes[p]))
+        {
+            let parent = nodes[node].parent.unwrap();
+            return create_accessor_type_error(parent, nodes, symbols);
+        }
+        // skip checker lock - node builder will already have one
+        let add_undefined = resolver
+            .borrow()
+            .requires_adding_implicit_undefined_unsafe(node, None, None, nodes, symbols);
+        if !add_undefined && nodes[node].initializer().is_some() {
+            return create_expression_error(nodes[node].initializer().unwrap(), nodes);
+        }
+        let mut message = get_error_by_declaration_kind(nodes[node].kind);
+        if add_undefined {
+            message = Some(&tsc_diagnostics::Declaration_emit_for_this_parameter_requires_implicitly_adding_undefined_to_its_type_This_is_not_supported_with_isolatedDeclarations);
+        }
+        let diag = create_diagnostic_for_node(
             nodes,
-            &mut |n, _| ast::is_heritage_clause(n),
+            Some(node),
+            message.expect("parameter error by declaration kind"),
+            &[] as &[String],
         );
-        if heritage_clause.is_some() {
-            return create_diagnostic_for_node(
+        let target_str = nodes[node]
+            .name()
+            .map(|name| tsc_scanner::utilities::get_text_of_node(name, nodes))
+            .unwrap_or_default();
+        let related = create_diagnostic_for_node(
+            nodes,
+            Some(node),
+            get_related_suggestion_by_declaration_kind(nodes[node].kind)
+                .expect("related suggestion for parameter kind"),
+            &[target_str],
+        );
+        diag.lock().unwrap().add_related_info(Some(related));
+        diag
+    };
+
+    Box::new(
+        move |node: NodeId, nodes: &[Node], symbols: &[Symbol]| -> DiagnosticRef {
+            let heritage_clause =
+                ast::find_ancestor(Some(node), nodes, &mut |n, _| ast::is_heritage_clause(n));
+            if heritage_clause.is_some() {
+                return create_diagnostic_for_node(
                 nodes,
                 Some(node),
                 &tsc_diagnostics::Extends_clause_can_t_contain_an_expression_with_isolatedDeclarations,
                 &[] as &[String],
             );
-        }
-        if ast::is_part_of_type_node(node, nodes) || ast::is_type_query_node(&nodes[node]) {
-            return create_entity_in_type_node_error(node, nodes);
-        }
-        if ast::is_entity_name(&nodes[node]) || ast::is_entity_name_expression(&nodes[node], nodes) {
-            return create_entity_in_type_node_error(node, nodes);
-        }
-        match nodes[node].kind {
-            Kind::GetAccessor | Kind::SetAccessor => {
-                create_accessor_type_error(node, nodes, symbols)
             }
-            Kind::ComputedPropertyName
-            | Kind::ShorthandPropertyAssignment
-            | Kind::SpreadAssignment => create_object_literal_error(node, nodes),
-            Kind::ArrayLiteralExpression | Kind::SpreadElement => {
-                create_array_literal_error(node, nodes)
+            if ast::is_part_of_type_node(node, nodes) || ast::is_type_query_node(&nodes[node]) {
+                return create_entity_in_type_node_error(node, nodes);
             }
-            Kind::MethodDeclaration
-            | Kind::ConstructSignature
-            | Kind::FunctionExpression
-            | Kind::ArrowFunction
-            | Kind::FunctionDeclaration => create_return_type_error(node, nodes),
-            Kind::BindingElement => create_binding_element_error(node, nodes),
-            Kind::PropertyDeclaration | Kind::VariableDeclaration => {
-                create_variable_or_property_error(node, nodes)
+            if ast::is_entity_name(&nodes[node])
+                || ast::is_entity_name_expression(&nodes[node], nodes)
+            {
+                return create_entity_in_type_node_error(node, nodes);
             }
-            Kind::Parameter => create_parameter_error(node, nodes, symbols),
-            Kind::PropertyAssignment => create_expression_error(
-                nodes[node]
-                    .initializer()
-                    .expect("PropertyAssignment.initializer"),
-                nodes,
-            ),
-            Kind::ClassExpression => create_class_expression_error(node, nodes),
-            _ => create_expression_error(node, nodes),
-        }
-    })
+            match nodes[node].kind {
+                Kind::GetAccessor | Kind::SetAccessor => {
+                    create_accessor_type_error(node, nodes, symbols)
+                }
+                Kind::ComputedPropertyName
+                | Kind::ShorthandPropertyAssignment
+                | Kind::SpreadAssignment => create_object_literal_error(node, nodes),
+                Kind::ArrayLiteralExpression | Kind::SpreadElement => {
+                    create_array_literal_error(node, nodes)
+                }
+                Kind::MethodDeclaration
+                | Kind::ConstructSignature
+                | Kind::FunctionExpression
+                | Kind::ArrowFunction
+                | Kind::FunctionDeclaration => create_return_type_error(node, nodes),
+                Kind::BindingElement => create_binding_element_error(node, nodes),
+                Kind::PropertyDeclaration | Kind::VariableDeclaration => {
+                    create_variable_or_property_error(node, nodes)
+                }
+                Kind::Parameter => create_parameter_error(node, nodes, symbols),
+                Kind::PropertyAssignment => create_expression_error(
+                    nodes[node]
+                        .initializer()
+                        .expect("PropertyAssignment.initializer"),
+                    nodes,
+                ),
+                Kind::ClassExpression => create_class_expression_error(node, nodes),
+                _ => create_expression_error(node, nodes),
+            }
+        },
+    )
 }

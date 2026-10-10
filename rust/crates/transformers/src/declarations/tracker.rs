@@ -30,13 +30,11 @@ use std::rc::Rc;
 use tsc_ast::diagnostic::{self, DiagnosticFile, DiagnosticRef};
 use tsc_ast::{self as ast, FindAncestorResult, Node, NodeId, Symbol, SymbolFlags, SymbolId};
 use tsc_nodebuilder::SymbolTracker;
-use tsc_printer::{
-    EmitResolver, SymbolAccessibility, SymbolAccessibilityResult,
-};
+use tsc_printer::{EmitResolver, SymbolAccessibility, SymbolAccessibilityResult};
 
 use crate::declarations::diagnostics::{
-    create_get_isolated_declaration_errors, GetIsolatedDeclarationError,
-    GetSymbolAccessibilityDiagnostic,
+    GetIsolatedDeclarationError, GetSymbolAccessibilityDiagnostic,
+    create_get_isolated_declaration_errors,
 };
 use crate::declarations::host::DeclarationEmitHost;
 
@@ -134,15 +132,16 @@ impl<'a> SymbolTrackerImpl<'a> {
         symbols: Option<&'a RefCell<Vec<Symbol>>>,
     ) -> SymbolTrackerImpl<'a> {
         SymbolTrackerImpl {
-            get_isolated_declaration_error:
-                create_get_isolated_declaration_errors(resolver.clone()),
+            get_isolated_declaration_error: create_get_isolated_declaration_errors(
+                resolver.clone(),
+            ),
             host,
             resolver,
             state,
             fallback_stack: Vec::new(),
             watched_class_symbol: None,
             class_symbol_tracked: false,
-                        symbols,
+            symbols,
         }
     }
 
@@ -152,10 +151,12 @@ impl<'a> SymbolTrackerImpl<'a> {
             return false;
         };
         if !(ast::is_expando_property_declaration(Some(node), nodes)
-            && ast::is_property_access_expression(&nodes[n
-                .as_binary_expression()
-                .left
-                .expect("expando BinaryExpression.left")]))
+            && ast::is_property_access_expression(
+                &nodes[n
+                    .as_binary_expression()
+                    .left
+                    .expect("expando BinaryExpression.left")],
+            ))
         {
             return false;
         }
@@ -241,11 +242,9 @@ impl<'a> SymbolTrackerImpl<'a> {
             {
                 for &ref_node in &symbol_accessibility_result.aliases_to_make_visible {
                     let mut state = self.state.borrow_mut();
-                    state.late_marked_statements = tsc_core::core::append_if_unique(
-                        &state.late_marked_statements,
-                        ref_node,
-                    )
-                    .into_owned();
+                    state.late_marked_statements =
+                        tsc_core::core::append_if_unique(&state.late_marked_statements, ref_node)
+                            .into_owned();
                 }
             }
             // TODO: Do all these accessibility checks inside/after the first pass in the checker when declarations are enabled, if possible
@@ -260,9 +259,7 @@ impl<'a> SymbolTrackerImpl<'a> {
                 .as_ref()
                 .and_then(|selector| selector(&symbol_accessibility_result, nodes));
             if let Some(info) = error_info {
-                let diag_node = symbol_accessibility_result
-                    .error_node
-                    .or(info.error_node);
+                let diag_node = symbol_accessibility_result.error_node.or(info.error_node);
                 let diag = if let Some(type_name) = info.type_name {
                     create_diagnostic_for_node(
                         nodes,
@@ -428,18 +425,14 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
             .symbols
             .expect("SymbolTrackerImpl requires TransformOptions::symbols")
             .borrow();
-        let primary_declaration = tsc_core::core::find(
-            &symbols[parent_symbol.index()].declarations,
-            |&d| {
+        let primary_declaration =
+            tsc_core::core::find(&symbols[parent_symbol.index()].declarations, |&d| {
                 ast::get_source_file_of_node(Some(d), nodes) == Some(containing_file)
-            },
-        );
-        let augmenting_declarations = tsc_core::core::filter(
-            &symbols[augmenting_symbol.index()].declarations,
-            |&d| {
+            });
+        let augmenting_declarations =
+            tsc_core::core::filter(&symbols[augmenting_symbol.index()].declarations, |&d| {
                 ast::get_source_file_of_node(Some(d), nodes) != Some(containing_file)
-            },
-        );
+            });
         if let Some(primary_declaration) = primary_declaration {
             if !augmenting_declarations.is_empty() {
                 for &augmentation in augmenting_declarations.iter() {
@@ -463,11 +456,7 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
     }
 
     /// `(s *SymbolTrackerImpl) ReportPrivateInBaseOfClassExpression`.
-    fn report_private_in_base_of_class_expression(
-        &mut self,
-        property_name: &str,
-        nodes: &[Node],
-    ) {
+    fn report_private_in_base_of_class_expression(&mut self, property_name: &str, nodes: &[Node]) {
         if let Some(location) = self.error_location() {
             let diag = create_diagnostic_for_node(
                 nodes,
@@ -520,7 +509,10 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
                 .symbols
                 .expect("SymbolTrackerImpl requires TransformOptions::symbols")
                 .borrow();
-            if symbols[symbol.index()].flags.intersects(SymbolFlags::TYPE_PARAMETER) {
+            if symbols[symbol.index()]
+                .flags
+                .intersects(SymbolFlags::TYPE_PARAMETER)
+            {
                 return false;
             }
         }

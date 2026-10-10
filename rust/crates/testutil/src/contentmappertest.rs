@@ -40,10 +40,10 @@ use std::thread;
 use tsc_collections::OrderedMap;
 use tsc_contentmapper::{
     CloseProjectParams, Diagnostic, DiagnosticDirectivePolicy, DiagnosticDirectives,
-    InitializeResult, MappedDiagnosticDirective, MappedOutput, OpenProjectParams, OpenProjectResult,
-    OptionDiagnosticResult, PositionEncoding, SpawnedProcess, Spawner, SupplementalOutput,
-    TransformParams, TransformResult, UnusedExpectDirectiveDiagnostic, METHOD_CLOSE_PROJECT,
-    METHOD_INITIALIZE, METHOD_OPEN_PROJECT, METHOD_TRANSFORM,
+    InitializeResult, METHOD_CLOSE_PROJECT, METHOD_INITIALIZE, METHOD_OPEN_PROJECT,
+    METHOD_TRANSFORM, MappedDiagnosticDirective, MappedOutput, OpenProjectParams,
+    OpenProjectResult, OptionDiagnosticResult, PositionEncoding, SpawnedProcess, Spawner,
+    SupplementalOutput, TransformParams, TransformResult, UnusedExpectDirectiveDiagnostic,
 };
 use tsc_core::context::Context;
 use tsc_core::text::{TextPos, TextRange};
@@ -146,12 +146,7 @@ struct StaticProjectHandler {
 }
 
 impl Handler for StaticProjectHandler {
-    fn handle_request(
-        &self,
-        ctx: &Context,
-        method: &str,
-        params: Option<Value>,
-    ) -> HandlerResult {
+    fn handle_request(&self, ctx: &Context, method: &str, params: Option<Value>) -> HandlerResult {
         match method {
             METHOD_OPEN_PROJECT => {
                 let p: OpenProjectParams = params_of(&params)?;
@@ -159,11 +154,13 @@ impl Handler for StaticProjectHandler {
                     handler.open_project(p.clone())?;
                 }
                 let mut diagnostics = None;
-                if p.options.as_ref().map_or("", |v| v.get())
-                    == r#"{"plugins":[{"name":1}]}"#
-                {
+                if p.options.as_ref().map_or("", |v| v.get()) == r#"{"plugins":[{"name":1}]}"# {
                     diagnostics = Some(vec![OptionDiagnosticResult {
-                        path: vec![raw_json(r#""plugins""#), raw_json("0"), raw_json(r#""name""#)],
+                        path: vec![
+                            raw_json(r#""plugins""#),
+                            raw_json("0"),
+                            raw_json(r#""name""#),
+                        ],
                         message_text: "Option 'name' requires a string.".to_string(),
                         code: 123,
                     }]);
@@ -302,11 +299,7 @@ fn handler_for_mapper(
             handler: Arc::new(DuplicateProjectionHandler),
             lifecycle: None,
         },
-        _ => {
-            return Err(
-                format!("contentmappertest: unknown mapper command {command:?}").into(),
-            )
-        }
+        _ => return Err(format!("contentmappertest: unknown mapper command {command:?}").into()),
     };
     Ok(spawned)
 }
@@ -347,9 +340,7 @@ pub fn new_spawner() -> Arc<dyn Spawner> {
 
 /// `NewSpawnerWithProjectLifecycle` returns an in-process spawner that
 /// records project protocol calls.
-pub fn new_spawner_with_project_lifecycle(
-    lifecycle: Arc<ProjectLifecycle>,
-) -> Arc<dyn Spawner> {
+pub fn new_spawner_with_project_lifecycle(lifecycle: Arc<ProjectLifecycle>) -> Arc<dyn Spawner> {
     Arc::new(TestSpawner {
         lifecycle: Some(lifecycle),
     })
@@ -546,7 +537,9 @@ pub fn package_json(mapper: &str) -> String {
     if mapper == DYNAMIC_VERBATIM_MAPPER {
         dynamic_config = r#", "dynamicConfig": true"#;
     }
-    format!("{{\n\t\"name\": {PACKAGE_NAME:?},\n\t\"version\": \"1.0.0\",\n\t\"typescript\": {{ \"contentMapper\": {{ \"exec\": [{mapper:?}]{compiler_options}{dynamic_config} }} }}\n}}")
+    format!(
+        "{{\n\t\"name\": {PACKAGE_NAME:?},\n\t\"version\": \"1.0.0\",\n\t\"typescript\": {{ \"contentMapper\": {{ \"exec\": [{mapper:?}]{compiler_options}{dynamic_config} }} }}\n}}"
+    )
 }
 
 // ---------------------------------------------------------------------------
@@ -557,12 +550,7 @@ struct VerbatimHandler;
 struct ModuleVerbatimHandler;
 
 impl Handler for VerbatimHandler {
-    fn handle_request(
-        &self,
-        _ctx: &Context,
-        method: &str,
-        params: Option<Value>,
-    ) -> HandlerResult {
+    fn handle_request(&self, _ctx: &Context, method: &str, params: Option<Value>) -> HandlerResult {
         match method {
             METHOD_INITIALIZE => respond(&initialize_result("mapper")),
             METHOD_TRANSFORM => {
@@ -581,12 +569,7 @@ impl Handler for VerbatimHandler {
 }
 
 impl Handler for ModuleVerbatimHandler {
-    fn handle_request(
-        &self,
-        _ctx: &Context,
-        method: &str,
-        params: Option<Value>,
-    ) -> HandlerResult {
+    fn handle_request(&self, _ctx: &Context, method: &str, params: Option<Value>) -> HandlerResult {
         match method {
             METHOD_INITIALIZE => respond(&initialize_result("mapper")),
             METHOD_TRANSFORM => {
@@ -664,12 +647,7 @@ impl ProjectLifecycleHandler for TransformingHandler {
 }
 
 impl Handler for TransformingHandler {
-    fn handle_request(
-        &self,
-        _ctx: &Context,
-        method: &str,
-        params: Option<Value>,
-    ) -> HandlerResult {
+    fn handle_request(&self, _ctx: &Context, method: &str, params: Option<Value>) -> HandlerResult {
         match method {
             METHOD_INITIALIZE => respond(&initialize_result(DIAGNOSTIC_SOURCE)),
             METHOD_TRANSFORM => {
@@ -678,10 +656,7 @@ impl Handler for TransformingHandler {
                 // because `OrderedMap` has no `Clone` — the map is not
                 // mutated during a transform, so holding it is equivalent.
                 let guard = self.compiler_options.lock().unwrap();
-                let Some(options) = guard
-                    .get(&p.project_handle)
-                    .and_then(Option::as_ref)
-                else {
+                let Some(options) = guard.get(&p.project_handle).and_then(Option::as_ref) else {
                     return Err(format!(
                         "contentmappertest: project {:?} is not open",
                         p.project_handle
@@ -1040,12 +1015,7 @@ struct DynamicVerbatimHandler {
 }
 
 impl Handler for DynamicVerbatimHandler {
-    fn handle_request(
-        &self,
-        ctx: &Context,
-        method: &str,
-        params: Option<Value>,
-    ) -> HandlerResult {
+    fn handle_request(&self, ctx: &Context, method: &str, params: Option<Value>) -> HandlerResult {
         match method {
             METHOD_OPEN_PROJECT => {
                 if let Some(lifecycle) = &self.lifecycle {
@@ -1058,11 +1028,13 @@ impl Handler for DynamicVerbatimHandler {
                     p.options.as_ref().map_or("", |v| v.get())
                 );
                 let mut diagnostics = None;
-                if p.options.as_ref().map_or("", |v| v.get())
-                    == r#"{"plugins":[{"name":1}]}"#
-                {
+                if p.options.as_ref().map_or("", |v| v.get()) == r#"{"plugins":[{"name":1}]}"# {
                     diagnostics = Some(vec![OptionDiagnosticResult {
-                        path: vec![raw_json(r#""plugins""#), raw_json("0"), raw_json(r#""name""#)],
+                        path: vec![
+                            raw_json(r#""plugins""#),
+                            raw_json("0"),
+                            raw_json(r#""name""#),
+                        ],
                         message_text: "Option 'name' requires a string.".to_string(),
                         code: 123,
                     }]);
@@ -1108,12 +1080,7 @@ impl Handler for DynamicVerbatimHandler {
 struct DiagnosticCodeCollisionHandler;
 
 impl Handler for DiagnosticCodeCollisionHandler {
-    fn handle_request(
-        &self,
-        _ctx: &Context,
-        method: &str,
-        params: Option<Value>,
-    ) -> HandlerResult {
+    fn handle_request(&self, _ctx: &Context, method: &str, params: Option<Value>) -> HandlerResult {
         match method {
             METHOD_INITIALIZE => respond(&initialize_result("mapper")),
             METHOD_TRANSFORM => {
@@ -1180,12 +1147,7 @@ fn verbatim_segments(
 }
 
 impl Handler for DuplicateHandler {
-    fn handle_request(
-        &self,
-        _ctx: &Context,
-        method: &str,
-        params: Option<Value>,
-    ) -> HandlerResult {
+    fn handle_request(&self, _ctx: &Context, method: &str, params: Option<Value>) -> HandlerResult {
         match method {
             METHOD_INITIALIZE => respond(&initialize_result("mapper")),
             METHOD_TRANSFORM => {
@@ -1325,12 +1287,7 @@ impl Handler for DuplicateHandler {
 struct DuplicateProjectionHandler;
 
 impl Handler for DuplicateProjectionHandler {
-    fn handle_request(
-        &self,
-        _ctx: &Context,
-        method: &str,
-        params: Option<Value>,
-    ) -> HandlerResult {
+    fn handle_request(&self, _ctx: &Context, method: &str, params: Option<Value>) -> HandlerResult {
         match method {
             METHOD_INITIALIZE => respond(&initialize_result("mapper")),
             METHOD_TRANSFORM => {
@@ -1359,12 +1316,7 @@ impl Handler for DuplicateProjectionHandler {
 struct PrefixedSupplementalHandler;
 
 impl Handler for PrefixedSupplementalHandler {
-    fn handle_request(
-        &self,
-        _ctx: &Context,
-        method: &str,
-        params: Option<Value>,
-    ) -> HandlerResult {
+    fn handle_request(&self, _ctx: &Context, method: &str, params: Option<Value>) -> HandlerResult {
         match method {
             METHOD_INITIALIZE => respond(&initialize_result("mapper")),
             METHOD_TRANSFORM => {
@@ -1431,10 +1383,8 @@ impl Handler for PrefixedSupplementalHandler {
                     };
                     const WRAPPER_START: &str = "if (true) {\n";
                     const WRAPPER_END: &str = "}\n";
-                    supplemental_text = format!(
-                        "{WRAPPER_START}{}{WRAPPER_END}",
-                        &p.content[second_start..]
-                    );
+                    supplemental_text =
+                        format!("{WRAPPER_START}{}{WRAPPER_END}", &p.content[second_start..]);
                     segments = vec![Segment {
                         virtual_start: WRAPPER_START.len() as TextPos,
                         virtual_end: (WRAPPER_START.len() + p.content.len() - second_start)
@@ -1579,12 +1529,7 @@ impl Handler for FailingHandler {
 struct HoistingHandler;
 
 impl Handler for HoistingHandler {
-    fn handle_request(
-        &self,
-        _ctx: &Context,
-        method: &str,
-        params: Option<Value>,
-    ) -> HandlerResult {
+    fn handle_request(&self, _ctx: &Context, method: &str, params: Option<Value>) -> HandlerResult {
         match method {
             METHOD_INITIALIZE => respond(&initialize_result("mapper")),
             METHOD_TRANSFORM => {
@@ -1626,19 +1571,21 @@ fn transform_hoisting(content: &str) -> Result<(String, Value), BoxedError> {
     let mut virtual_ = String::new();
     let mut segments: Vec<Segment> = Vec::new();
 
-    let write_mapped =
-        |virtual_: &mut String, segments: &mut Vec<Segment>, original_start: usize, original_end: usize| {
-            let virtual_start = virtual_.len() as TextPos;
-            virtual_.push_str(&content[original_start..original_end]);
-            segments.push(Segment {
-                virtual_start,
-                virtual_end: virtual_.len() as TextPos,
-                original_start: original_start as TextPos,
-                original_end: original_end as TextPos,
-                kind: Kind::Verbatim,
-                features: Feature::All,
-            });
-        };
+    let write_mapped = |virtual_: &mut String,
+                        segments: &mut Vec<Segment>,
+                        original_start: usize,
+                        original_end: usize| {
+        let virtual_start = virtual_.len() as TextPos;
+        virtual_.push_str(&content[original_start..original_end]);
+        segments.push(Segment {
+            virtual_start,
+            virtual_end: virtual_.len() as TextPos,
+            original_start: original_start as TextPos,
+            original_end: original_end as TextPos,
+            kind: Kind::Verbatim,
+            features: Feature::All,
+        });
+    };
 
     let (script_start, script_end) = script_range(content)?;
     let (imports_start, imports_end) = leading_import_range(content, script_start, script_end);
@@ -1709,12 +1656,7 @@ fn is_space_byte(ch: u8) -> bool {
 struct LispHandler;
 
 impl Handler for LispHandler {
-    fn handle_request(
-        &self,
-        _ctx: &Context,
-        method: &str,
-        params: Option<Value>,
-    ) -> HandlerResult {
+    fn handle_request(&self, _ctx: &Context, method: &str, params: Option<Value>) -> HandlerResult {
         match method {
             METHOD_INITIALIZE => respond(&initialize_result("lisp")),
             METHOD_TRANSFORM => {
@@ -1787,12 +1729,7 @@ impl Handler for LispHandler {
 struct SupplementalHandler;
 
 impl Handler for SupplementalHandler {
-    fn handle_request(
-        &self,
-        _ctx: &Context,
-        method: &str,
-        params: Option<Value>,
-    ) -> HandlerResult {
+    fn handle_request(&self, _ctx: &Context, method: &str, params: Option<Value>) -> HandlerResult {
         match method {
             METHOD_INITIALIZE => respond(&initialize_result("mapper")),
             METHOD_TRANSFORM => {
@@ -1818,12 +1755,7 @@ impl Handler for SupplementalHandler {
 struct SupplementalDiagnosticsHandler;
 
 impl Handler for SupplementalDiagnosticsHandler {
-    fn handle_request(
-        &self,
-        _ctx: &Context,
-        method: &str,
-        params: Option<Value>,
-    ) -> HandlerResult {
+    fn handle_request(&self, _ctx: &Context, method: &str, params: Option<Value>) -> HandlerResult {
         match method {
             METHOD_INITIALIZE => respond(&initialize_result("mapper")),
             METHOD_TRANSFORM => {
@@ -1865,12 +1797,7 @@ impl Handler for SupplementalDiagnosticsHandler {
 struct SupplementalGlobalsHandler;
 
 impl Handler for SupplementalGlobalsHandler {
-    fn handle_request(
-        &self,
-        _ctx: &Context,
-        method: &str,
-        params: Option<Value>,
-    ) -> HandlerResult {
+    fn handle_request(&self, _ctx: &Context, method: &str, params: Option<Value>) -> HandlerResult {
         match method {
             METHOD_INITIALIZE => respond(&initialize_result("mapper")),
             METHOD_TRANSFORM => {
@@ -1912,12 +1839,7 @@ impl Handler for SupplementalGlobalsHandler {
 struct SupplementalModuleHandler;
 
 impl Handler for SupplementalModuleHandler {
-    fn handle_request(
-        &self,
-        _ctx: &Context,
-        method: &str,
-        params: Option<Value>,
-    ) -> HandlerResult {
+    fn handle_request(&self, _ctx: &Context, method: &str, params: Option<Value>) -> HandlerResult {
         match method {
             METHOD_INITIALIZE => respond(&initialize_result("mapper")),
             METHOD_TRANSFORM => {
@@ -1954,12 +1876,7 @@ const SYNTHESIZED_OUTPUT: &str = "export const el = jsxRuntime(Widget);\n";
 struct SynthesizingHandler;
 
 impl Handler for SynthesizingHandler {
-    fn handle_request(
-        &self,
-        _ctx: &Context,
-        method: &str,
-        params: Option<Value>,
-    ) -> HandlerResult {
+    fn handle_request(&self, _ctx: &Context, method: &str, params: Option<Value>) -> HandlerResult {
         match method {
             METHOD_INITIALIZE => respond(&initialize_result("mapper")),
             METHOD_TRANSFORM => {
@@ -1989,12 +1906,7 @@ impl Handler for SynthesizingHandler {
 struct ComponentHandler;
 
 impl Handler for ComponentHandler {
-    fn handle_request(
-        &self,
-        _ctx: &Context,
-        method: &str,
-        params: Option<Value>,
-    ) -> HandlerResult {
+    fn handle_request(&self, _ctx: &Context, method: &str, params: Option<Value>) -> HandlerResult {
         match method {
             METHOD_INITIALIZE => respond(&initialize_result("mapper")),
             METHOD_TRANSFORM => {
@@ -2116,7 +2028,12 @@ fn transform_component(content: &str) -> Result<(String, Value), BoxedError> {
     w.synthesized("}\n");
     if let Some((name_start, name_end)) = component_name_range(content) {
         w.synthesized("export class ");
-        w.mapped(&content[name_start..name_end], name_start, name_end, Kind::Atom);
+        w.mapped(
+            &content[name_start..name_end],
+            name_start,
+            name_end,
+            Kind::Atom,
+        );
         w.synthesized(" {}\n");
     }
     w.anchored(

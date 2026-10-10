@@ -152,11 +152,7 @@ impl<K: Eq + Hash + Clone, V: Cloneable> SyncMapEntry<K, V> {
         let Some(map) = self.upgrade_map() else {
             // Map dropped: degrade to local copy-on-write (Go keeps the map
             // alive through the entry's back-pointer — see `map` field).
-            st.entry.value = st
-                .entry
-                .value
-                .as_ref()
-                .map(Cloneable::clone_value);
+            st.entry.value = st.entry.value.as_ref().map(Cloneable::clone_value);
             st.entry.dirty = true;
             apply(
                 st.entry
@@ -166,17 +162,11 @@ impl<K: Eq + Hash + Clone, V: Cloneable> SyncMapEntry<K, V> {
             );
             return;
         };
-        let (entry, loaded) = map
-            .dirty
-            .load_or_store(st.entry.key.clone(), self.clone());
+        let (entry, loaded) = map.dirty.load_or_store(st.entry.key.clone(), self.clone());
         if loaded {
             let mut est = entry.lock_state();
             if !est.entry.dirty {
-                est.entry.value = est
-                    .entry
-                    .value
-                    .as_ref()
-                    .map(Cloneable::clone_value);
+                est.entry.value = est.entry.value.as_ref().map(Cloneable::clone_value);
                 est.entry.dirty = true;
             }
             st.proxy_for = Some(entry.clone());
@@ -191,11 +181,7 @@ impl<K: Eq + Hash + Clone, V: Cloneable> SyncMapEntry<K, V> {
             );
         } else {
             // `entry` is `self`, now stored.
-            st.entry.value = st
-                .entry
-                .value
-                .as_ref()
-                .map(Cloneable::clone_value);
+            st.entry.value = st.entry.value.as_ref().map(Cloneable::clone_value);
             st.entry.dirty = true;
             apply(
                 st.entry
@@ -252,9 +238,7 @@ impl<K: Eq + Hash + Clone, V: Cloneable> SyncMapEntry<K, V> {
             st.entry.delete = true;
             return;
         };
-        let (entry, loaded) = map
-            .dirty
-            .load_or_store(st.entry.key.clone(), self.clone());
+        let (entry, loaded) = map.dirty.load_or_store(st.entry.key.clone(), self.clone());
         if loaded {
             let _est = entry.lock_state();
             st.entry.delete = true;
@@ -275,9 +259,7 @@ impl<K: Eq + Hash + Clone, V: Cloneable> SyncMapEntry<K, V> {
             st.entry.delete = true;
             return;
         };
-        let (entry, loaded) = map
-            .dirty
-            .load_or_store(st.entry.key.clone(), self.clone());
+        let (entry, loaded) = map.dirty.load_or_store(st.entry.key.clone(), self.clone());
         if loaded {
             let mut est = entry.lock_state();
             st.proxy_for = Some(entry.clone());
@@ -435,10 +417,7 @@ impl<K: Eq + Hash + Clone, V: Cloneable> SyncMap<K, V> {
                 }
                 return Some((dirty, true));
             }
-            return Some((
-                SyncMapEntry::from_base(&self.shared, key, base_value),
-                true,
-            ));
+            return Some((SyncMapEntry::from_base(&self.shared, key, base_value), true));
         }
         let (entry, loaded) = self.shared.dirty.load_or_store(
             key.clone(),
@@ -474,12 +453,7 @@ impl<K: Eq + Hash + Clone, V: Cloneable> SyncMap<K, V> {
                     state: Mutex::new(SyncEntryState {
                         entry: EntryState {
                             key: key.clone(),
-                            original: self
-                                .shared
-                                .base
-                                .as_ref()
-                                .and_then(|b| b.get(key))
-                                .cloned(),
+                            original: self.shared.base.as_ref().and_then(|b| b.get(key)).cloned(),
                             value: None,
                             dirty: false,
                             delete: true,
@@ -540,7 +514,10 @@ impl<K: Eq + Hash + Clone, V: Cloneable> SyncMap<K, V> {
     ///
     /// PORT: Go returns `m.base` itself when unchanged (shared); here the
     /// base is cloned — contents identical, aliasing not.
-    pub fn finalize_with(&self, mut hooks: FinalizationHooks<K, V>) -> (Option<FxHashMap<K, V>>, bool) {
+    pub fn finalize_with(
+        &self,
+        mut hooks: FinalizationHooks<K, V>,
+    ) -> (Option<FxHashMap<K, V>>, bool) {
         let mut changed = false;
         let mut result = self.shared.base.clone();
         macro_rules! ensure_cloned {

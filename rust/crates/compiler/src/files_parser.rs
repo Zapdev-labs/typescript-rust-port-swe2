@@ -33,8 +33,8 @@ use tsc_tracing::push;
 use tsc_tspath::{PathKey, RootedFilePath};
 
 use crate::file_include::{
-    FileIncludeReason, ReferencedFileData, FILE_INCLUDE_KIND_CONTENT_MAPPER_SUPPLEMENTAL,
-    FILE_INCLUDE_KIND_LIB_REFERENCE_DIRECTIVE,
+    FILE_INCLUDE_KIND_CONTENT_MAPPER_SUPPLEMENTAL, FILE_INCLUDE_KIND_LIB_REFERENCE_DIRECTIVE,
+    FileIncludeReason, ReferencedFileData,
 };
 use crate::file_loader::{
     DuplicateSourceFile, FileLoader, JsxRuntimeImportSpecifier, LibFile, LoadedFile,
@@ -107,17 +107,23 @@ impl ParseTask {
     /// PORT: takes `&RefCell` rather than `&Rc<RefCell>` so the file loader's
     /// `&RefCell<ParseTask>` task references can queue subtasks too (Go's
     /// `t.addSubTask` has no ownership requirement).
-    pub(crate) fn add_sub_task(task: &RefCell<ParseTask>, ref_: ResolvedRef, lib_file: Option<Rc<LibFile>>) {
-        task.borrow_mut().sub_tasks.push(Rc::new(RefCell::new(ParseTask {
-            normalized_file_path: ref_.file_name,
-            path: ref_.path,
-            lib_file,
-            increase_depth: ref_.increase_depth,
-            elide_on_depth: ref_.elide_on_depth,
-            include_reason: ref_.include_reason,
-            package_id: ref_.package_id,
-            ..Default::default()
-        })));
+    pub(crate) fn add_sub_task(
+        task: &RefCell<ParseTask>,
+        ref_: ResolvedRef,
+        lib_file: Option<Rc<LibFile>>,
+    ) {
+        task.borrow_mut()
+            .sub_tasks
+            .push(Rc::new(RefCell::new(ParseTask {
+                normalized_file_path: ref_.file_name,
+                path: ref_.path,
+                lib_file,
+                increase_depth: ref_.increase_depth,
+                elide_on_depth: ref_.elide_on_depth,
+                include_reason: ref_.include_reason,
+                package_id: ref_.package_id,
+                ..Default::default()
+            })));
     }
 
     /// `(t *parseTask) redirect`.
@@ -191,8 +197,12 @@ impl ParseTask {
                     )
                 };
                 if !is_supplemental && has_extension {
-                    let compiler_options =
-                        loader.opts.config.compiler_options().cloned().unwrap_or_default();
+                    let compiler_options = loader
+                        .opts
+                        .config
+                        .compiler_options()
+                        .cloned()
+                        .unwrap_or_default();
                     let allow_non_ts_extensions =
                         compiler_options.allow_non_ts_extensions.is_true();
                     if !allow_non_ts_extensions {
@@ -259,7 +269,9 @@ impl ParseTask {
             return;
         }
 
-        loader.total_file_count.set(loader.total_file_count.get() + 1);
+        loader
+            .total_file_count
+            .set(loader.total_file_count.get() + 1);
         {
             let mut t = task.borrow_mut();
             if t.lib_file.is_some() {
@@ -307,11 +319,16 @@ impl ParseTask {
         let file_name = sf.file_name().clone();
         drop(nodes);
 
-        let compiler_options = loader.opts.config.compiler_options().cloned().unwrap_or_default();
+        let compiler_options = loader
+            .opts
+            .config
+            .compiler_options()
+            .cloned()
+            .unwrap_or_default();
         if !compiler_options.no_resolve.is_true() && !loader.opts.skip_module_resolution {
             for (index, ref_) in referenced_files.iter().enumerate() {
-                let (resolved_ref, processing_diagnostic) = loader
-                    .resolve_tripleslash_path_reference(&ref_.file_name, &file_name, index);
+                let (resolved_ref, processing_diagnostic) =
+                    loader.resolve_tripleslash_path_reference(&ref_.file_name, &file_name, index);
                 if let Some(processing_diagnostic) = processing_diagnostic {
                     task.borrow_mut()
                         .processing_diagnostics
@@ -361,20 +378,24 @@ impl ParseTask {
         loader.resolve_imports_and_module_augmentations(task);
         for supplemental in supplementals {
             let supplemental_file_name = supplemental.file_name();
-            let supplemental_path =
-                loader.case_sensitivity.path_key(&supplemental_file_name.as_path());
-            task.borrow_mut().sub_tasks.push(Rc::new(RefCell::new(ParseTask {
-                normalized_file_path: supplemental_file_name,
-                path: supplemental_path,
-                file: Some(supplemental),
-                is_content_mapper_supplemental: true,
-                include_reason: Some(Rc::new(FileIncludeReason {
-                    kind: FILE_INCLUDE_KIND_CONTENT_MAPPER_SUPPLEMENTAL,
-                    canonical_source_file: task.borrow().path.clone(),
+            let supplemental_path = loader
+                .case_sensitivity
+                .path_key(&supplemental_file_name.as_path());
+            let canonical_source_file = task.borrow().path.clone();
+            task.borrow_mut()
+                .sub_tasks
+                .push(Rc::new(RefCell::new(ParseTask {
+                    normalized_file_path: supplemental_file_name,
+                    path: supplemental_path,
+                    file: Some(supplemental),
+                    is_content_mapper_supplemental: true,
+                    include_reason: Some(Rc::new(FileIncludeReason {
+                        kind: FILE_INCLUDE_KIND_CONTENT_MAPPER_SUPPLEMENTAL,
+                        canonical_source_file,
+                        ..Default::default()
+                    })),
                     ..Default::default()
-                })),
-                ..Default::default()
-            })));
+                })));
         }
         trace_done();
     }
@@ -534,11 +555,7 @@ impl FilesParser {
                         let mut load_sub_tasks = start_subtasks;
                         if !task_by_file_name.borrow().loaded {
                             ParseTask::load(&task_by_file_name, loader);
-                            if task_by_file_name
-                                .borrow()
-                                .redirected_parse_task
-                                .is_some()
-                            {
+                            if task_by_file_name.borrow().redirected_parse_task.is_some() {
                                 // Always load redirected task
                                 load_sub_tasks = true;
                                 data_b.started_sub_tasks = true;
@@ -592,13 +609,12 @@ impl FilesParser {
             FxHashMap::with_capacity_and_hasher(total_file_count, Default::default());
         // stores 'filename -> file association' ignoring case
         // used to track cases when two file names differ only in casing
-        let mut tasks_seen_by_name_ignore_case: Option<
-            HashMap<PathKey, Rc<RefCell<ParseTask>>>,
-        > = if loader.case_sensitivity.is_case_sensitive() {
-            Some(HashMap::with_capacity(total_file_count))
-        } else {
-            None
-        };
+        let mut tasks_seen_by_name_ignore_case: Option<HashMap<PathKey, Rc<RefCell<ParseTask>>>> =
+            if loader.case_sensitivity.is_case_sensitive() {
+                Some(HashMap::with_capacity(total_file_count))
+            } else {
+                None
+            };
 
         let mut include_data = FileIncludeData {
             file_include_reasons: FxHashMap::with_capacity_and_hasher(
@@ -657,9 +673,7 @@ impl FilesParser {
             files: &mut Vec<LoadedSourceFile>,
             lib_files: &mut Vec<LoadedSourceFile>,
             files_by_path: &mut FxHashMap<PathKey, NodeId>,
-            tasks_seen_by_name_ignore_case: &mut Option<
-                HashMap<PathKey, Rc<RefCell<ParseTask>>>,
-            >,
+            tasks_seen_by_name_ignore_case: &mut Option<HashMap<PathKey, Rc<RefCell<ParseTask>>>>,
             include_data: &mut FileIncludeData,
             output_file_to_project_reference_source: &mut FxHashMap<PathKey, RootedFilePath>,
             resolved_modules: &mut FxHashMap<PathKey, ModeAwareCache<Option<ResolvedModule>>>,
@@ -721,8 +735,7 @@ impl FilesParser {
                                 let sf = nodes[file.file].as_source_file();
                                 duplicate_source_files.push(DuplicateSourceFile {
                                     parse_options: sf.parse_options.clone(),
-                                    content_mapper_parse_options: sf
-                                        .content_mapper_parse_options(),
+                                    content_mapper_parse_options: sf.content_mapper_parse_options(),
                                     hash: sf.hash,
                                     script_kind: sf.script_kind,
                                     content_mapper: sf.content_mapper().to_string(),
@@ -743,8 +756,7 @@ impl FilesParser {
                         // Check if it differs only in drive letters its ok to
                         // ignore that error:
                         let checked_absolute_path = checked_name.without_root().to_string();
-                        let input_absolute_path =
-                            normalized_file_path.without_root().to_string();
+                        let input_absolute_path = normalized_file_path.without_root().to_string();
                         if checked_absolute_path != input_absolute_path {
                             include_data.add_processing_diagnostics_for_file_casing(
                                 task.borrow().path.clone(),
@@ -766,10 +778,7 @@ impl FilesParser {
                         include_data.add_processing_diagnostics_for_file_casing(
                             existing.path.clone(),
                             existing.normalized_file_path.as_string().to_string(),
-                            task.borrow()
-                                .normalized_file_path
-                                .as_string()
-                                .to_string(),
+                            task.borrow().normalized_file_path.as_string().to_string(),
                             include_reason.clone().unwrap_or_default(),
                         );
                     } else {
@@ -832,8 +841,7 @@ impl FilesParser {
                         continue;
                     } else if let Some(file) = &file {
                         let file_path_key = file.path();
-                        package_id_to_source_file
-                            .insert(package_id, (file.file, file_path_key));
+                        package_id_to_source_file.insert(package_id, (file.file, file_path_key));
                     }
                 }
 
@@ -889,8 +897,10 @@ impl FilesParser {
 
                 if task.borrow().is_for_automatic_type_directive {
                     let mut t = task.borrow_mut();
-                    type_resolutions_in_file
-                        .insert(t.path.clone(), std::mem::take(&mut t.type_resolutions_in_file));
+                    type_resolutions_in_file.insert(
+                        t.path.clone(),
+                        std::mem::take(&mut t.type_resolutions_in_file),
+                    );
                     include_data
                         .processing_diagnostics
                         .append(&mut t.processing_diagnostics);
@@ -1015,9 +1025,7 @@ impl FilesParser {
             files: all_files,
             duplicate_source_files,
             files_by_path,
-            project_reference_file_mapper: Some(
-                loader.project_references.borrow().mapper.clone(),
-            ),
+            project_reference_file_mapper: Some(loader.project_references.borrow().mapper.clone()),
             resolved_modules,
             type_resolutions_in_file,
             source_file_meta_datas,

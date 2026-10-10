@@ -1,0 +1,23 @@
+[package]
+name = "tsc-format"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+tsc-ast = { path = "../ast" }
+tsc-astnav = { path = "../astnav" }
+tsc-core = { path = "../core" }
+tsc-debug = { path = "../debug" }
+tsc-lsutil = { path = "../lsutil" }
+tsc-scanner = { path = "../scanner" }
+tsc-stringutil = { path = "../stringutil" }
+
+[dev-dependencies]
+tsc-parser = { path = "../parser" }
+tsc-repo = { path = "../repo" }
+tsc-tspath = { path = "../tspath" }

@@ -18,7 +18,7 @@ use tsc_collections::Set;
 
 use crate::emit_context::{AutoGenerateId, Shared, get_node_for_generated_name_worker};
 use tsc_core::options_generated::ScriptTarget;
-use tsc_scanner::scanner as scanner;
+use tsc_scanner::scanner;
 
 use crate::emit_flags::{EmitFlags, GeneratedIdentifierFlags};
 use crate::factory::format_generated_name;
@@ -198,12 +198,7 @@ fn next_container(nodes: &[Node], node: NodeId) -> Option<NodeId> {
 }
 
 /// `isUniqueLocalName`
-fn is_unique_local_name(
-    name: &str,
-    container: NodeId,
-    nodes: &[Node],
-    symbols: &[Symbol],
-) -> bool {
+fn is_unique_local_name(name: &str, container: NodeId, nodes: &[Node], symbols: &[Symbol]) -> bool {
     let mut node = Some(container);
     while let Some(n) = node
         && ast::is_node_descendant_of(Some(n), Some(container), nodes)
@@ -263,7 +258,7 @@ impl<'a> Printer<'a> {
                 let node = get_node_for_generated_name_worker(
                     &self.emit_context.shared(),
                     self.nodes,
-                    name,
+                    auto_generate.node.unwrap_or(name),
                     auto_generate.id,
                 );
                 return self.generate_name_for_node_cached(
@@ -347,19 +342,25 @@ impl<'a> Printer<'a> {
             }
             Kind::ModuleDeclaration | Kind::EnumDeclaration => {
                 if private_name || !prefix.is_empty() || !suffix.is_empty() {
-                    panic!("Generated name for a module or enum cannot be private and may have neither a prefix nor suffix")
+                    panic!(
+                        "Generated name for a module or enum cannot be private and may have neither a prefix nor suffix"
+                    )
                 }
                 self.generate_name_for_module_or_enum(node)
             }
             Kind::ImportDeclaration | Kind::JSImportDeclaration | Kind::ExportDeclaration => {
                 if private_name || !prefix.is_empty() || !suffix.is_empty() {
-                    panic!("Generated name for an import or export cannot be private and may have neither a prefix nor suffix")
+                    panic!(
+                        "Generated name for an import or export cannot be private and may have neither a prefix nor suffix"
+                    )
                 }
                 self.generate_name_for_import_or_export_declaration(node)
             }
             Kind::FunctionDeclaration | Kind::ClassDeclaration => {
                 if private_name || !prefix.is_empty() || !suffix.is_empty() {
-                    panic!("Generated name for a class or function declaration cannot be private and may have neither a prefix nor suffix")
+                    panic!(
+                        "Generated name for a class or function declaration cannot be private and may have neither a prefix nor suffix"
+                    )
                 }
                 let name = self.nodes[node].name();
                 // PORT: Go's condition is
@@ -371,20 +372,24 @@ impl<'a> Printer<'a> {
                     return self.generate_name_for_node(
                         name, false, /*privateName*/
                         flags, "", /*prefix*/
-                        "",  /*suffix*/
+                        "", /*suffix*/
                     );
                 }
                 self.generate_name_for_export_default()
             }
             Kind::ExportAssignment => {
                 if private_name || !prefix.is_empty() || !suffix.is_empty() {
-                    panic!("Generated name for an export assignment cannot be private and may have neither a prefix nor suffix")
+                    panic!(
+                        "Generated name for an export assignment cannot be private and may have neither a prefix nor suffix"
+                    )
                 }
                 self.generate_name_for_export_default()
             }
             Kind::ClassExpression => {
                 if private_name || !prefix.is_empty() || !suffix.is_empty() {
-                    panic!("Generated name for a class expression cannot be private and may have neither a prefix nor suffix")
+                    panic!(
+                        "Generated name for a class expression cannot be private and may have neither a prefix nor suffix"
+                    )
                 }
                 self.generate_name_for_class_expression()
             }
@@ -410,8 +415,7 @@ impl<'a> Printer<'a> {
 
     /// `generateNameForModuleOrEnum`
     fn generate_name_for_module_or_enum(&mut self, node: NodeId) -> String {
-        let name = self
-            .nodes[node]
+        let name = self.nodes[node]
             .name()
             .map(|n| self.get_text_of_node(n, false))
             .unwrap_or_default();
@@ -678,12 +682,8 @@ impl<'a> Printer<'a> {
 
         let mut i = 1;
         loop {
-            let full_name = format_generated_name(
-                private_name,
-                prefix,
-                &format!("{}{}", base_name, i),
-                suffix,
-            );
+            let full_name =
+                format_generated_name(private_name, prefix, &format!("{}{}", base_name, i), suffix);
             if self.check_unique_name(&full_name, private_name, use_file_level_check) {
                 self.name_generator.reserve_name(
                     full_name.clone(),
@@ -700,7 +700,7 @@ impl<'a> Printer<'a> {
     /// `MakeFileLevelOptimisticUniqueName`
     pub(crate) fn make_file_level_optimistic_unique_name(&mut self, name: &str) -> String {
         self.make_unique_name(
-            name, true, /*checkFn*/
+            name, true,  /*checkFn*/
             true,  /*optimistic*/
             false, /*scoped*/
             false, /*privateName*/
@@ -710,7 +710,12 @@ impl<'a> Printer<'a> {
     }
 
     /// `checkUniqueName`
-    fn check_unique_name(&mut self, name: &str, private_name: bool, use_file_level_check: bool) -> bool {
+    fn check_unique_name(
+        &mut self,
+        name: &str,
+        private_name: bool,
+        use_file_level_check: bool,
+    ) -> bool {
         if use_file_level_check {
             self.is_file_level_unique_name_in_current_file(name, private_name)
         } else {
@@ -746,14 +751,16 @@ impl<'a> Printer<'a> {
                         text = self.get_text_of_node(text_source_node, false)
                     }
                     _ => {
-                        let sf =
-                            ast::get_source_file_of_node(Some(text_source_node), self.nodes);
+                        let sf = ast::get_source_file_of_node(Some(text_source_node), self.nodes);
                         return self.get_literal_text_of_node(text_source_node, sf, flags);
                     }
                 }
 
                 if flags & GET_LITERAL_TEXT_FLAGS_JSX_ATTRIBUTE_ESCAPE != 0 {
-                    return format!("\"{}\"", util::escape_jsx_attribute_string(&text, QuoteChar::DoubleQuote));
+                    return format!(
+                        "\"{}\"",
+                        util::escape_jsx_attribute_string(&text, QuoteChar::DoubleQuote)
+                    );
                 }
                 if flags & GET_LITERAL_TEXT_FLAGS_NEVER_ASCII_ESCAPE != 0
                     || self
@@ -824,7 +831,7 @@ impl<'a> Printer<'a> {
             | Kind::TemplateHead
             | Kind::TemplateMiddle
             | Kind::TemplateTail => {
-                return self.get_literal_text_of_node(node, None, GET_LITERAL_TEXT_FLAGS_NONE)
+                return self.get_literal_text_of_node(node, None, GET_LITERAL_TEXT_FLAGS_NONE);
             }
             _ => panic!("unexpected node: {:?}", self.nodes[node].kind),
         }
@@ -861,7 +868,6 @@ impl<'a> Printer<'a> {
         }
         true
     }
-
 }
 
 #[cfg(test)]

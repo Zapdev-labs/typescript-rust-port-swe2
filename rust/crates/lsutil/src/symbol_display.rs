@@ -221,21 +221,20 @@ impl ScriptElementKindModifier {
 }
 
 /// `FileExtensionKindModifiers`.
-pub const FILE_EXTENSION_KIND_MODIFIERS: ScriptElementKindModifier =
-    ScriptElementKindModifier(
-        ScriptElementKindModifier::DTS.0
-            | ScriptElementKindModifier::TS.0
-            | ScriptElementKindModifier::TSX.0
-            | ScriptElementKindModifier::JS.0
-            | ScriptElementKindModifier::JSX.0
-            | ScriptElementKindModifier::JSON.0
-            | ScriptElementKindModifier::DMTS.0
-            | ScriptElementKindModifier::MTS.0
-            | ScriptElementKindModifier::MJS.0
-            | ScriptElementKindModifier::DCTS.0
-            | ScriptElementKindModifier::CTS.0
-            | ScriptElementKindModifier::CJS.0,
-    );
+pub const FILE_EXTENSION_KIND_MODIFIERS: ScriptElementKindModifier = ScriptElementKindModifier(
+    ScriptElementKindModifier::DTS.0
+        | ScriptElementKindModifier::TS.0
+        | ScriptElementKindModifier::TSX.0
+        | ScriptElementKindModifier::JS.0
+        | ScriptElementKindModifier::JSX.0
+        | ScriptElementKindModifier::JSON.0
+        | ScriptElementKindModifier::DMTS.0
+        | ScriptElementKindModifier::MTS.0
+        | ScriptElementKindModifier::MJS.0
+        | ScriptElementKindModifier::DCTS.0
+        | ScriptElementKindModifier::CTS.0
+        | ScriptElementKindModifier::CJS.0,
+);
 
 /// `symbol.CombinedLocalAndExportSymbolFlags()` — needs the symbol arena
 /// because `export_symbol` is a `SymbolId`, not a pointer.
@@ -448,10 +447,7 @@ fn get_symbol_kind_of_constructor_property_method_accessor_function_or_var(
 }
 
 /// `isFirstDeclarationOfSymbolParameter`.
-fn is_first_declaration_of_symbol_parameter(
-    declarations: &[NodeId],
-    nodes: &[Node],
-) -> bool {
+fn is_first_declaration_of_symbol_parameter(declarations: &[NodeId], nodes: &[Node]) -> bool {
     let declaration = declarations.first().copied();
     let result = ast::find_ancestor_or_quit(declaration, nodes, &mut |n, _nodes| {
         if ast::is_parameter_declaration(n) {
@@ -523,8 +519,7 @@ pub fn get_symbol_modifiers(
     };
     let mut type_checker = type_checker;
 
-    let mut modifiers =
-        get_normalized_symbol_modifiers(&mut type_checker, symbol, nodes, symbols);
+    let mut modifiers = get_normalized_symbol_modifiers(&mut type_checker, symbol, nodes, symbols);
     if symbols.borrow()[symbol.index()]
         .flags
         .intersects(SymbolFlags::ALIAS)
@@ -537,8 +532,7 @@ pub fn get_symbol_modifiers(
         if resolved_symbol != Some(symbol) {
             // Go passes the (never-nil in practice) resolved symbol straight
             // through; a nil would panic on `symbol.Declarations`.
-            let resolved =
-                resolved_symbol.expect("nil resolved symbol in GetSymbolModifiers");
+            let resolved = resolved_symbol.expect("nil resolved symbol in GetSymbolModifiers");
             modifiers |=
                 get_normalized_symbol_modifiers(&mut type_checker, resolved, nodes, symbols);
         }
@@ -578,8 +572,7 @@ fn get_normalized_symbol_modifiers(
         } else {
             exclude_flags = ModifierFlags::NONE;
         }
-        modifier_set =
-            get_node_modifiers(type_checker, declaration, exclude_flags, nodes);
+        modifier_set = get_node_modifiers(type_checker, declaration, exclude_flags, nodes);
     }
 
     modifier_set

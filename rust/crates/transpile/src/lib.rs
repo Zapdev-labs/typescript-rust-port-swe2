@@ -6,4 +6,4 @@ pub mod fs;
 pub mod options_generated;
 pub mod transpile;
 
-pub use transpile::{transpile_declaration, transpile_module, Options, Output};
+pub use transpile::{Options, Output, transpile_declaration, transpile_module};

@@ -102,8 +102,8 @@ pub fn new_diagnostic_chain_for_node<T: std::fmt::Display>(
     }
     match node.into() {
         Some(node) => {
-                        let __program = c.program.clone().expect("program");
-            let nodes = __program.nodes((node).file_index());;
+            let __program = c.program.clone().expect("program");
+            let nodes = __program.nodes((node).file_index());
             new_diagnostic_for_node(Some(node), &nodes, message, args)
         }
         None => ast::diagnostic::new_diagnostic(None, TextRange::default(), message, args),
@@ -169,8 +169,8 @@ pub(crate) fn is_static_private_identifier_property(c: &Checker, s: SymbolId) ->
     let Some(decl) = value_declaration else {
         return false;
     };
-        let __program = c.program.clone().expect("program");
-    let nodes = __program.nodes((decl).file_index());;
+    let __program = c.program.clone().expect("program");
+    let nodes = __program.nodes((decl).file_index());
     ast::is_private_identifier_class_element_declaration(&nodes[decl], &nodes)
         && ast::is_static(&nodes[decl])
 }
@@ -411,8 +411,8 @@ pub(crate) fn is_shorthand_ambient_module_symbol(c: &Checker, module_symbol: Sym
     let value_declaration = c.symbol_arena.borrow()[module_symbol.index()].value_declaration;
     match value_declaration {
         Some(decl) => {
-                        let __program = c.program.clone().expect("program");
-            let nodes = __program.nodes((decl).file_index());;
+            let __program = c.program.clone().expect("program");
+            let nodes = __program.nodes((decl).file_index());
             is_shorthand_ambient_module(&nodes[decl])
         }
         None => false,
@@ -579,8 +579,8 @@ impl Checker {
     /// `(c *Checker) isOptionalParameter` (checker/utilities.go).
     /// `!!! TODO: JSDoc support` — preserved from Go.
     pub(crate) fn is_optional_parameter(&mut self, node: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         if ast::is_parameter_declaration(&nodes[node])
             && nodes[node].question_token(&nodes).is_some()
         {
@@ -631,8 +631,8 @@ impl Checker {
         let Some(node) = node else {
             return false;
         };
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let file = ast::get_source_file_of_node(Some(node), &nodes);
         if let Some(file) = file {
             let sf = nodes[file].as_source_file();
@@ -656,11 +656,10 @@ impl Checker {
                     }
                 }
                 let suggestion_has_no_extends_or_decorators = suggestion.is_none_or(|s| {
-                    let value_declaration =
-                        self.symbol_arena.borrow()[s.index()].value_declaration;
+                    let value_declaration = self.symbol_arena.borrow()[s.index()].value_declaration;
                     value_declaration.is_none_or(|vd| {
-                                                let __program = self.program.clone().expect("program");
-                        let vd_nodes = __program.nodes((vd).file_index());;
+                        let __program = self.program.clone().expect("program");
+                        let vd_nodes = __program.nodes((vd).file_index());
                         !ast::is_class_like(Some(vd), &vd_nodes)
                             || ast::get_extends_heritage_clause_elements(&vd_nodes[vd], &vd_nodes)
                                 .map_or(0, |e| e.len())
@@ -672,8 +671,8 @@ impl Checker {
                 });
                 return !(declaration_file.is_some_and(|df| {
                     df != file && {
-                                                let __program = self.program.clone().expect("program");
-                        let df_nodes = __program.nodes((df).file_index());;
+                        let __program = self.program.clone().expect("program");
+                        let df_nodes = __program.nodes((df).file_index());
                         ast::is_global_source_file(&df_nodes[df], &df_nodes)
                     }
                 })) && !(exclude_classes
@@ -707,7 +706,8 @@ impl Checker {
         let flags;
         let object_flags;
         {
-            let __arena_g = self.types.clone(); let g = __arena_g.get(t);
+            let __arena_g = self.types.clone();
+            let g = __arena_g.get(t);
             flags = g.flags();
             object_flags = g.object_flags();
         }
@@ -715,12 +715,20 @@ impl Checker {
             return true;
         }
         if flags.intersects(TypeFlags::UNION) {
-            let types = { self.types_handle().get(t).as_union_type().union_or_intersection.types.clone() };
+            let types = {
+                self.types_handle()
+                    .get(t)
+                    .as_union_type()
+                    .union_or_intersection
+                    .types
+                    .clone()
+            };
             return types.iter().all(|&m| self.is_js_literal_type(m));
         }
         if flags.intersects(TypeFlags::INTERSECTION) {
             let types = {
-                self.types_handle().get(t)
+                self.types_handle()
+                    .get(t)
                     .as_intersection_type()
                     .union_or_intersection
                     .types
@@ -1614,10 +1622,11 @@ pub(crate) fn try_get_property_access_or_identifier_to_string(
 
 /// `getBaseTypeNodeOfClass` (checker.go:19671).
 pub(crate) fn get_base_type_node_of_class(c: &Checker, t: TypeId) -> Option<NodeId> {
-    let __arena_symbol = c.types.clone(); let symbol = __arena_symbol.get(t).symbol?;
+    let __arena_symbol = c.types.clone();
+    let symbol = __arena_symbol.get(t).symbol?;
     let first_decl = *c.sym(symbol).declarations.first()?;
-        let __program = c.program.clone().expect("program");
-    let nodes = __program.nodes((first_decl).file_index());;
+    let __program = c.program.clone().expect("program");
+    let nodes = __program.nodes((first_decl).file_index());
     let decl = ast::get_class_like_declaration_of_symbol(&*c.sym(symbol), &nodes)?;
 
     ast::get_class_extends_heritage_element(&nodes[decl], &nodes)
@@ -1634,10 +1643,7 @@ pub(crate) fn get_base_type_node_of_class(c: &Checker, t: TypeId) -> Option<Node
 // `&Symbol` were reconciled to this form.
 
 /// `getDeclarationModifierFlagsFromSymbol` (utilities.go:757).
-pub fn get_declaration_modifier_flags_from_symbol(
-    c: &Checker,
-    s: SymbolId,
-) -> ast::ModifierFlags {
+pub fn get_declaration_modifier_flags_from_symbol(c: &Checker, s: SymbolId) -> ast::ModifierFlags {
     get_declaration_modifier_flags_from_symbol_ex(c, s, false)
 }
 
@@ -1687,21 +1693,21 @@ pub(crate) fn get_declaration_modifier_flags_from_symbol_ex(
         let mut declaration: Option<NodeId> = None;
         if is_write {
             declaration = declarations.iter().copied().find(|&d| {
-                                let __program = c.program.clone().expect("program");
-                let nodes = __program.nodes((d).file_index());;
+                let __program = c.program.clone().expect("program");
+                let nodes = __program.nodes((d).file_index());
                 ast::is_set_accessor_declaration(&nodes[d])
             });
         }
         if declaration.is_none() && symbol_flags.intersects(ast::SymbolFlags::GET_ACCESSOR) {
             declaration = declarations.iter().copied().find(|&d| {
-                                let __program = c.program.clone().expect("program");
-                let nodes = __program.nodes((d).file_index());;
+                let __program = c.program.clone().expect("program");
+                let nodes = __program.nodes((d).file_index());
                 ast::is_get_accessor_declaration(&nodes[d])
             });
         }
         let declaration = declaration.unwrap_or(value_declaration);
-                let __program = c.program.clone().expect("program");
-        let nodes = __program.nodes((declaration).file_index());;
+        let __program = c.program.clone().expect("program");
+        let nodes = __program.nodes((declaration).file_index());
         let flags = ast::get_combined_modifier_flags(declaration, &nodes);
         let parent_is_class = parent.is_some_and(|p| {
             c.symbol_arena.borrow()[p.index()]
@@ -2041,8 +2047,8 @@ pub(crate) fn get_declarations_of_kind(
     declarations
         .into_iter()
         .filter(|&d| {
-                        let __program = c.program.clone().expect("program");
-            let nodes = __program.nodes((d).file_index());;
+            let __program = c.program.clone().expect("program");
+            let nodes = __program.nodes((d).file_index());
             nodes[d].kind == kind
         })
         .collect()
@@ -2983,7 +2989,9 @@ pub fn walk_up_outer_expressions(node: NodeId, nodes: &[ast::Node]) -> Option<No
 impl Checker {
     /// `(c *Checker) isConstantVariable` (utilities.go:1083).
     pub(crate) fn is_constant_variable(&mut self, symbol: SymbolId) -> bool {
-        self.sym(symbol).flags.intersects(ast::SymbolFlags::VARIABLE)
+        self.sym(symbol)
+            .flags
+            .intersects(ast::SymbolFlags::VARIABLE)
             && self
                 .get_declaration_node_flags_from_symbol(symbol)
                 .intersects(ast::NodeFlags::CONSTANT)
@@ -2995,8 +3003,8 @@ impl Checker {
     pub(crate) fn is_parameter_or_mutable_local_variable(&mut self, symbol: SymbolId) -> bool {
         let value_declaration = self.sym(symbol).value_declaration;
         if let Some(value_declaration) = value_declaration {
-                        let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((value_declaration).file_index());;
+            let __program = self.program.clone().expect("program");
+            let nodes = __program.nodes((value_declaration).file_index());
             let declaration = ast::get_root_declaration(value_declaration, &nodes);
             let is_param_or_catch = ast::is_parameter_declaration(&nodes[declaration])
                 || (ast::is_variable_declaration(&nodes[declaration])
@@ -3016,8 +3024,8 @@ impl Checker {
     /// `(c *Checker) isMutableLocalVariableDeclaration` (utilities.go:1099).
     /// Returns true if symbol is a non-exported and non-global `let` variable.
     pub(crate) fn is_mutable_local_variable_declaration(&mut self, declaration: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((declaration).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((declaration).file_index());
         let Some(decl_list) = nodes[declaration].parent else {
             return false;
         };

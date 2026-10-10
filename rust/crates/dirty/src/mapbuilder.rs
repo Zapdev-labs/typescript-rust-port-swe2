@@ -25,8 +25,7 @@ where
     build: G,
 }
 
-impl<K: Eq + Hash + Clone, VBase: Clone, VBuilder: Clone, F, G>
-    MapBuilder<K, VBase, VBuilder, F, G>
+impl<K: Eq + Hash + Clone, VBase: Clone, VBuilder: Clone, F, G> MapBuilder<K, VBase, VBuilder, F, G>
 where
     F: Fn(VBase) -> VBuilder,
     G: Fn(VBuilder) -> VBase,

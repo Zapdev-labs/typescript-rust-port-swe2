@@ -35,11 +35,7 @@ pub fn constant_expression(
                 return Some(factory.new_identifier(nodes, "NaN"));
             }
             if n.0 < 0.0 {
-                let operand = constant_expression(
-                    &Value::Number(Number(-n.0)),
-                    factory,
-                    nodes,
-                )?;
+                let operand = constant_expression(&Value::Number(Number(-n.0)), factory, nodes)?;
                 return Some(factory.new_prefix_unary_expression(
                     nodes,
                     Kind::MinusToken,

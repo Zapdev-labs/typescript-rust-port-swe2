@@ -34,28 +34,24 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use rustc_hash::{FxHashMap, FxHashSet};
-use tsc_ast::symbol::{
-    INTERNAL_SYMBOL_NAME_DEFAULT, INTERNAL_SYMBOL_NAME_EXPORT_EQUALS,
-};
+use tsc_ast::symbol::{INTERNAL_SYMBOL_NAME_DEFAULT, INTERNAL_SYMBOL_NAME_EXPORT_EQUALS};
 use tsc_ast::symbolflags::SymbolFlags;
 use tsc_ast::{
     self as ast, Kind, ModifierFlags, Node, NodeFlags, NodeId, Symbol, SymbolId, SymbolTable,
 };
-use tsc_binder::binder::{bind_result, bind_source_file};
+use tsc_binder::binder::bind_source_file;
 use tsc_binder::nameresolver::NameResolver;
 use tsc_binder::referenceresolver::ReferenceResolver;
 use tsc_core::options_generated::{CompilerOptions, NewLineKind};
 use tsc_evaluator::Value;
 use tsc_nodebuilder::{Flags, InternalFlags, SymbolTracker};
 use tsc_printer::{
-    EmitContext, EmitResolver, PrintHandlers, Printer, PrinterOptions,
-    SymbolAccessibilityResult, TypeReferenceSerializationKind,
+    EmitContext, EmitResolver, PrintHandlers, Printer, PrinterOptions, SymbolAccessibilityResult,
+    TypeReferenceSerializationKind,
 };
 use tsc_testutil::parsetestutil;
 use tsc_transformers::TransformOptions;
-use tsc_transformers::tstransforms::{
-    new_import_elision_transformer, new_type_eraser_transformer,
-};
+use tsc_transformers::tstransforms::{new_import_elision_transformer, new_type_eraser_transformer};
 
 // ---------------------------------------------------------------------------
 // Fake emit resolver (stands in for `checker.NewChecker` + `NewEmitResolver`)
@@ -77,6 +73,9 @@ struct FakeEmitResolver {
     /// `emit_context()` is never invoked by `ImportElisionTransformer`.
     emit_context: Rc<RefCell<EmitContext>>,
     compiler_options: CompilerOptions,
+    /// Shared `Symbol` arena for all bound files (SPEC §5.2 — `SymbolId`s
+    /// are program-wide; the test binds every file into one `Vec`).
+    symbols: Vec<Symbol>,
     /// Module specifier text → bound external module file.
     modules: FxHashMap<String, BoundFile>,
     /// `aliasSymbolLinks.referenced` — main-file `SymbolId`s marked by
@@ -146,8 +145,12 @@ fn is_in_type_query(node: NodeId, nodes: &[Node]) -> bool {
 
 /// `isInvalidComputedPropertyName` (checker.go).
 fn is_invalid_computed_property_name(node: NodeId, nodes: &[Node]) -> bool {
-    let Some(parent) = nodes[node].parent else { return false };
-    let Some(grandparent) = nodes[parent].parent else { return false };
+    let Some(parent) = nodes[node].parent else {
+        return false;
+    };
+    let Some(grandparent) = nodes[parent].parent else {
+        return false;
+    };
     (ast::is_type_literal_node(&nodes[grandparent])
         || ast::is_class_like(Some(grandparent), nodes)
         || ast::is_interface_declaration(&nodes[grandparent]))
@@ -222,9 +225,10 @@ fn enclosing_module_specifier(nodes: &[Node], decl: NodeId) -> Option<NodeId> {
 }
 
 impl FakeEmitResolver {
-    /// The bound `Symbol` arena of `file` (`binder.BindResult.symbols`).
-    fn symbols_of<'a>(nodes: &'a [Node], file: NodeId) -> Option<&'a [Symbol]> {
-        bind_result(nodes, file).map(|r| r.symbols.as_slice())
+    /// The shared `Symbol` arena (program-wide `SymbolId`s — `nodes`/`file`
+    /// are accepted only to keep call sites readable).
+    fn symbols_of<'a>(&'a self, _nodes: &'a [Node], _file: NodeId) -> Option<&'a [Symbol]> {
+        Some(self.symbols.as_slice())
     }
 
     /// `resolveName` — runs the binder `NameResolver` over a scratch copy of
@@ -256,9 +260,9 @@ impl FakeEmitResolver {
             on_successfully_resolved_symbol: None,
         };
         resolver.resolve(
-            location, name, meaning, None, // nameNotFoundMessage
-            true,    // isUse
-            false,   // excludeGlobals
+            location, name, meaning, None,  // nameNotFoundMessage
+            true,  // isUse
+            false, // excludeGlobals
             nodes, &scratch,
         )
     }
@@ -302,7 +306,7 @@ impl FakeEmitResolver {
     ) -> Option<(&'a [Node], &'a [Symbol], SymbolId)> {
         let text = nodes[specifier?].text(nodes).into_owned();
         let bound = self.modules.get(&text)?;
-        let symbols = Self::symbols_of(&bound.nodes, bound.file)?;
+        let symbols = self.symbols_of(&bound.nodes, bound.file)?;
         let file_symbol = bound.nodes[bound.file].symbol()?;
         Some((bound.nodes.as_slice(), symbols, file_symbol))
     }
@@ -318,10 +322,7 @@ impl FakeEmitResolver {
     ) -> Resolved<'a> {
         let mut seen: FxHashSet<(usize, SymbolId)> = FxHashSet::default();
         for _ in 0..128 {
-            if !symbols[symbol.index()]
-                .flags
-                .intersects(SymbolFlags::ALIAS)
-            {
+            if !symbols[symbol.index()].flags.intersects(SymbolFlags::ALIAS) {
                 return Some((nodes, symbols, symbol));
             }
             if !seen.insert((nodes.as_ptr() as usize, symbol)) {
@@ -363,7 +364,11 @@ impl FakeEmitResolver {
                     if nodes[export_decl].module_specifier().is_some() {
                         let (mnodes, msyms, file_sym) =
                             self.module_symbol(nodes[export_decl].module_specifier(), nodes)?;
-                        (mnodes, msyms, msyms[file_sym.index()].exports.get(&text).copied()?)
+                        (
+                            mnodes,
+                            msyms,
+                            msyms[file_sym.index()].exports.get(&text).copied()?,
+                        )
                     } else {
                         let target = self.resolve_entity_name(name, nodes, symbols)?;
                         (nodes, symbols, target)
@@ -384,8 +389,7 @@ impl FakeEmitResolver {
                             self.module_symbol(Some(expression), nodes)?;
                         (mnodes, msyms, file_sym)
                     } else {
-                        let target =
-                            self.resolve_entity_name(module_reference, nodes, symbols)?;
+                        let target = self.resolve_entity_name(module_reference, nodes, symbols)?;
                         (nodes, symbols, target)
                     }
                 }
@@ -438,10 +442,7 @@ impl FakeEmitResolver {
         };
         let mut seen: FxHashSet<(usize, SymbolId)> = FxHashSet::default();
         let (mut nodes, mut symbols, mut symbol) = (nodes, symbols, symbol);
-        while symbols[symbol.index()]
-            .flags
-            .intersects(SymbolFlags::ALIAS)
-        {
+        while symbols[symbol.index()].flags.intersects(SymbolFlags::ALIAS) {
             if exclude_type_only_meanings && self.is_type_only_alias(symbol, nodes, symbols) {
                 break;
             }
@@ -481,9 +482,7 @@ impl FakeEmitResolver {
         // `resolveExternalModuleSymbol`; with no checker merging there is
         // nothing to merge here.
         match self.resolve_alias(nodes, symbols, symbol) {
-            None => {
-                !exclude_type_only_values || !self.is_type_only_alias(symbol, nodes, symbols)
-            }
+            None => !exclude_type_only_values || !self.is_type_only_alias(symbol, nodes, symbols),
             Some((_, ts, target)) => {
                 let target = export_symbol_of_value_symbol_if_exported(ts, target);
                 self.symbol_flags_ex(nodes, symbols, symbol, exclude_type_only_values, true)
@@ -538,13 +537,13 @@ impl FakeEmitResolver {
         {
             return;
         }
-        let is_const_enum_target = self
-            .resolve_alias(nodes, symbols, symbol)
-            .is_some_and(|(_, ts, t)| {
-                is_const_enum_or_const_enum_only_module(
-                    &ts[export_symbol_of_value_symbol_if_exported(ts, t).index()],
-                )
-            });
+        let is_const_enum_target =
+            self.resolve_alias(nodes, symbols, symbol)
+                .is_some_and(|(_, ts, t)| {
+                    is_const_enum_or_const_enum_only_module(
+                        &ts[export_symbol_of_value_symbol_if_exported(ts, t).index()],
+                    )
+                });
         if !is_const_enum_target {
             self.mark_alias_symbol_as_referenced(symbol, nodes, symbols);
         }
@@ -567,16 +566,13 @@ impl FakeEmitResolver {
         if let Some(decl) = declaration_of_alias_symbol(symbol, nodes, symbols)
             && nodes[decl].kind == Kind::ImportEqualsDeclaration
         {
-            let module_reference =
-                nodes[decl].as_import_equals_declaration().module_reference;
+            let module_reference = nodes[decl].as_import_equals_declaration().module_reference;
             if let Some(module_reference) = module_reference
                 && !ast::is_external_module_reference(&nodes[module_reference])
             {
                 let resolves_to_value = self
                     .resolve_alias(nodes, symbols, symbol)
-                    .is_some_and(|(_, ts, t)| {
-                        ts[t.index()].flags.intersects(SymbolFlags::VALUE)
-                    });
+                    .is_some_and(|(_, ts, t)| ts[t.index()].flags.intersects(SymbolFlags::VALUE));
                 if resolves_to_value {
                     let left = ast::get_first_identifier(module_reference, nodes);
                     self.mark_identifier_alias_referenced(left, nodes, symbols);
@@ -587,7 +583,9 @@ impl FakeEmitResolver {
 
     /// `markExportAsReferenced`.
     fn mark_export_as_referenced(&self, node: NodeId, nodes: &[Node], symbols: &[Symbol]) {
-        let Some(symbol) = nodes[node].symbol() else { return };
+        let Some(symbol) = nodes[node].symbol() else {
+            return;
+        };
         let mark_alias = match self.resolve_alias(nodes, symbols, symbol) {
             None => true, // unknownSymbol
             Some((_, ts, target)) => {
@@ -603,12 +601,7 @@ impl FakeEmitResolver {
 
     /// `markPropertyAliasReferenced` (the const-enum property lookup arm is
     /// omitted — no const enums appear in this table).
-    fn mark_property_alias_referenced(
-        &self,
-        location: NodeId,
-        nodes: &[Node],
-        symbols: &[Symbol],
-    ) {
+    fn mark_property_alias_referenced(&self, location: NodeId, nodes: &[Node], symbols: &[Symbol]) {
         if is_part_of_import_equals_module_reference(location, nodes) {
             return;
         }
@@ -636,7 +629,9 @@ impl FakeEmitResolver {
         nodes: &[Node],
         symbols: &[Symbol],
     ) {
-        let Some(id) = nodes[node].expression() else { return };
+        let Some(id) = nodes[node].expression() else {
+            return;
+        };
         if nodes[id].kind == Kind::Identifier
             && let Some(symbol) = self.resolve_entity_name(id, nodes, symbols)
         {
@@ -668,7 +663,9 @@ impl FakeEmitResolver {
         if nodes[module_name].kind != Kind::StringLiteral {
             return false;
         }
-        nodes[node].parent.is_some_and(|p| nodes[p].kind == Kind::SourceFile)
+        nodes[node]
+            .parent
+            .is_some_and(|p| nodes[p].kind == Kind::SourceFile)
     }
 
     /// `markExportSpecifierAliasReferenced`.
@@ -679,14 +676,18 @@ impl FakeEmitResolver {
         symbols: &[Symbol],
     ) {
         let export_decl = nodes[node].parent.and_then(|p| nodes[p].parent);
-        let Some(export_decl) = export_decl else { return };
+        let Some(export_decl) = export_decl else {
+            return;
+        };
         if nodes[export_decl].module_specifier().is_some()
             || nodes[node].is_type_only()
             || nodes[export_decl].is_type_only()
         {
             return;
         }
-        let Some(exported_name) = nodes[node].property_name_or_name() else { return };
+        let Some(exported_name) = nodes[node].property_name_or_name() else {
+            return;
+        };
         if nodes[exported_name].kind == Kind::StringLiteral {
             return; // Skip for invalid syntax like this: export { "x" }
         }
@@ -768,8 +769,13 @@ impl FakeEmitResolver {
                         &mut |n: &Node| ast::is_heritage_clause(n),
                     ],
                 );
-                let [meta_property, decorator, for_node, computed_name, heritage_clause] =
-                    <[Option<NodeId>; 5]>::try_from(res).ok().unwrap();
+                let [
+                    meta_property,
+                    decorator,
+                    for_node,
+                    computed_name,
+                    heritage_clause,
+                ] = <[Option<NodeId>; 5]>::try_from(res).ok().unwrap();
                 if meta_property.is_some() {
                     return;
                 }
@@ -780,9 +786,7 @@ impl FakeEmitResolver {
                             false, // legacyDecorators is off in this table
                             decorated,
                             nodes[decorated].parent,
-                            nodes[decorated]
-                                .parent
-                                .and_then(|p| nodes[p].parent),
+                            nodes[decorated].parent.and_then(|p| nodes[p].parent),
                             nodes,
                         )
                     {
@@ -964,13 +968,17 @@ impl EmitResolver for FakeEmitResolver {
         if !ast::is_alias_symbol_declaration(node, nodes) {
             return false;
         }
-        let Some(symbol) = nodes[node].symbol() else { return false };
+        let Some(symbol) = nodes[node].symbol() else {
+            return false;
+        };
         if self.referenced.borrow().contains(&symbol) {
             return true;
         }
-        if nodes[node].modifier_flags().intersects(ModifierFlags::EXPORT)
+        if nodes[node]
+            .modifier_flags()
+            .intersects(ModifierFlags::EXPORT)
             && let Some(file) = ast::get_source_file_of_node(Some(node), nodes)
-            && let Some(symbols) = Self::symbols_of(nodes, file)
+            && let Some(symbols) = self.symbols_of(nodes, file)
             && let Some((_, ts, target)) = self.resolve_alias(nodes, symbols, symbol)
         {
             let target = export_symbol_of_value_symbol_if_exported(ts, target);
@@ -988,7 +996,7 @@ impl EmitResolver for FakeEmitResolver {
         let Some(file) = ast::get_source_file_of_node(Some(node), nodes) else {
             return false;
         };
-        let Some(symbols) = Self::symbols_of(nodes, file) else {
+        let Some(symbols) = self.symbols_of(nodes, file) else {
             return false;
         };
         match nodes[node].kind {
@@ -998,9 +1006,9 @@ impl EmitResolver for FakeEmitResolver {
             Kind::ImportClause
             | Kind::NamespaceImport
             | Kind::ImportSpecifier
-            | Kind::ExportSpecifier => nodes[node].symbol().is_some_and(|s| {
-                self.is_alias_resolved_to_value(nodes, symbols, Some(s), true)
-            }),
+            | Kind::ExportSpecifier => nodes[node]
+                .symbol()
+                .is_some_and(|s| self.is_alias_resolved_to_value(nodes, symbols, Some(s), true)),
             Kind::ExportDeclaration => {
                 let Some(clause) = nodes[node].as_export_declaration().export_clause else {
                     return false;
@@ -1051,16 +1059,14 @@ impl EmitResolver for FakeEmitResolver {
         }
         let module_reference = nodes[node].as_import_equals_declaration().module_reference;
         if ast::node_is_missing(module_reference, nodes)
-            || module_reference.is_some_and(|m| {
-                nodes[m].kind == Kind::ExternalModuleReference
-            })
+            || module_reference.is_some_and(|m| nodes[m].kind == Kind::ExternalModuleReference)
         {
             return false;
         }
         let Some(file) = ast::get_source_file_of_node(Some(node), nodes) else {
             return false;
         };
-        let Some(symbols) = Self::symbols_of(nodes, file) else {
+        let Some(symbols) = self.symbols_of(nodes, file) else {
             return false;
         };
         self.is_alias_resolved_to_value(nodes, symbols, nodes[node].symbol(), false)
@@ -1071,7 +1077,7 @@ impl EmitResolver for FakeEmitResolver {
         if !ast::is_parse_tree_node(&nodes[file]) {
             return;
         }
-        if let Some(symbols) = Self::symbols_of(nodes, file) {
+        if let Some(symbols) = self.symbols_of(nodes, file) {
             self.mark_visit(file, nodes, symbols);
         }
     }
@@ -1182,12 +1188,7 @@ impl EmitResolver for FakeEmitResolver {
         unimplemented!("unused by ImportElisionTransformer")
     }
 
-    fn is_name_resolvable(
-        &self,
-        _location: Option<NodeId>,
-        _name: &str,
-        _nodes: &[Node],
-    ) -> bool {
+    fn is_name_resolvable(&self, _location: Option<NodeId>, _name: &str, _nodes: &[Node]) -> bool {
         unimplemented!("unused by ImportElisionTransformer")
     }
 
@@ -1350,14 +1351,15 @@ fn check_emit(
 ) -> Result<(), String> {
     let (file, mut nodes) = parsetestutil::parse_typescript(input, jsx);
     parsetestutil::check_diagnostics(&nodes, file).map_err(|e| format!("{title}: {e}"))?;
-    bind_source_file(&mut nodes, file);
+    let mut symbols = Vec::new();
+    bind_source_file(&mut nodes, file, &mut symbols);
 
     let mut modules = FxHashMap::default();
     if !other.is_empty() {
         let (other_file, mut other_nodes) = parsetestutil::parse_typescript(other, jsx);
         parsetestutil::check_diagnostics(&other_nodes, other_file)
             .map_err(|e| format!("{title} (other): {e}"))?;
-        bind_source_file(&mut other_nodes, other_file);
+        bind_source_file(&mut other_nodes, other_file, &mut symbols);
         modules.insert(
             "other".to_string(),
             BoundFile {
@@ -1372,6 +1374,7 @@ fn check_emit(
     let resolver: Rc<RefCell<FakeEmitResolver>> = Rc::new(RefCell::new(FakeEmitResolver {
         emit_context: Rc::new(RefCell::new(EmitContext::new())),
         compiler_options: CompilerOptions::default(),
+        symbols,
         modules,
         referenced: RefCell::new(FxHashSet::default()),
     }));
@@ -1414,26 +1417,146 @@ fn check_emit(
 }
 
 static DATA: &[(&str, &str, &str, &str, bool)] = &[
-    ("ImportEquals#1", "import x = require(\"other\"); x;", "import x = require(\"other\");\nx;", "", false),
-    ("ImportEquals#2", "import x = require(\"other\");", "", "", false),
-    ("ImportDeclaration#1", "import \"m\";", "import \"m\";", "", false),
-    ("ImportDeclaration#2", "import * as x from \"other\"; x;", "import * as x from \"other\";\nx;", "", false),
-    ("ImportDeclaration#3", "import x from \"other\"; x;", "import x from \"other\";\nx;", "", false),
-    ("ImportDeclaration#4", "import { x } from \"other\"; x;", "import { x } from \"other\";\nx;", "", false),
-    ("ImportDeclaration#5", "import * as x from \"other\";", "", "", false),
-    ("ImportDeclaration#6", "import x from \"other\";", "", "", false),
-    ("ImportDeclaration#7", "import { x } from \"other\";", "", "", false),
-    ("ExportDeclaration#1", "export * from \"other\";", "export * from \"other\";", "export let x;", false),
-    ("ExportDeclaration#2", "export * as x from \"other\";", "export * as x from \"other\";", "export let x;", false),
-    ("ExportDeclaration#3", "export * from \"other\";", "export * from \"other\";", "export let x;", false),
-    ("ExportDeclaration#4", "export * as x from \"other\";", "export * as x from \"other\";", "export let x;", false),
-    ("ExportDeclaration#5", "export { x } from \"other\";", "export { x } from \"other\";", "export let x;", false),
-    ("ExportDeclaration#6", "export { x } from \"other\";", "", "export type x = any;", false),
-    ("ExportDeclaration#7", "export { x }; let x;", "export { x };\nlet x;", "", false),
-    ("ExportDeclaration#8", "export { x }; type x = any;", "", "", false),
-    ("ExportDeclaration#9", "import { x } from \"other\"; export { x };", "", "export type x = any;", false),
-    ("ExportAssignment#1", "let x; export default x;", "let x;\nexport default x;", "", false),
-    ("ExportAssignment#2", "type x = any; export default x;", "", "", false),
+    (
+        "ImportEquals#1",
+        "import x = require(\"other\"); x;",
+        "import x = require(\"other\");\nx;",
+        "",
+        false,
+    ),
+    (
+        "ImportEquals#2",
+        "import x = require(\"other\");",
+        "",
+        "",
+        false,
+    ),
+    (
+        "ImportDeclaration#1",
+        "import \"m\";",
+        "import \"m\";",
+        "",
+        false,
+    ),
+    (
+        "ImportDeclaration#2",
+        "import * as x from \"other\"; x;",
+        "import * as x from \"other\";\nx;",
+        "",
+        false,
+    ),
+    (
+        "ImportDeclaration#3",
+        "import x from \"other\"; x;",
+        "import x from \"other\";\nx;",
+        "",
+        false,
+    ),
+    (
+        "ImportDeclaration#4",
+        "import { x } from \"other\"; x;",
+        "import { x } from \"other\";\nx;",
+        "",
+        false,
+    ),
+    (
+        "ImportDeclaration#5",
+        "import * as x from \"other\";",
+        "",
+        "",
+        false,
+    ),
+    (
+        "ImportDeclaration#6",
+        "import x from \"other\";",
+        "",
+        "",
+        false,
+    ),
+    (
+        "ImportDeclaration#7",
+        "import { x } from \"other\";",
+        "",
+        "",
+        false,
+    ),
+    (
+        "ExportDeclaration#1",
+        "export * from \"other\";",
+        "export * from \"other\";",
+        "export let x;",
+        false,
+    ),
+    (
+        "ExportDeclaration#2",
+        "export * as x from \"other\";",
+        "export * as x from \"other\";",
+        "export let x;",
+        false,
+    ),
+    (
+        "ExportDeclaration#3",
+        "export * from \"other\";",
+        "export * from \"other\";",
+        "export let x;",
+        false,
+    ),
+    (
+        "ExportDeclaration#4",
+        "export * as x from \"other\";",
+        "export * as x from \"other\";",
+        "export let x;",
+        false,
+    ),
+    (
+        "ExportDeclaration#5",
+        "export { x } from \"other\";",
+        "export { x } from \"other\";",
+        "export let x;",
+        false,
+    ),
+    (
+        "ExportDeclaration#6",
+        "export { x } from \"other\";",
+        "",
+        "export type x = any;",
+        false,
+    ),
+    (
+        "ExportDeclaration#7",
+        "export { x }; let x;",
+        "export { x };\nlet x;",
+        "",
+        false,
+    ),
+    (
+        "ExportDeclaration#8",
+        "export { x }; type x = any;",
+        "",
+        "",
+        false,
+    ),
+    (
+        "ExportDeclaration#9",
+        "import { x } from \"other\"; export { x };",
+        "",
+        "export type x = any;",
+        false,
+    ),
+    (
+        "ExportAssignment#1",
+        "let x; export default x;",
+        "let x;\nexport default x;",
+        "",
+        false,
+    ),
+    (
+        "ExportAssignment#2",
+        "type x = any; export default x;",
+        "",
+        "",
+        false,
+    ),
 ];
 
 #[test]

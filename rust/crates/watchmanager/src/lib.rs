@@ -25,6 +25,5 @@ pub use watchbackend::{
     perceived_os_root_length_for_watching, should_ignore_watch_path,
 };
 pub use watchmanager::{
-    DirWatchSet, WatchEvent, WatchManager, WatchManagerLock, new_dir_watch_set,
-    new_watch_manager,
+    DirWatchSet, WatchEvent, WatchManager, WatchManagerLock, new_dir_watch_set, new_watch_manager,
 };

@@ -8,6 +8,7 @@
 
 use std::any::Any;
 use std::marker::PhantomData;
+use std::rc::Rc;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use rustc_hash::FxHashMap;
@@ -46,9 +47,14 @@ pub fn new_source_file_data_key<T: 'static>() -> SourceFileDataKey<T> {
 /// the map is only touched under `&mut Vec<Node>` (exclusive arena access),
 /// which replaces Go's mutex. Values are `Send + Sync` so `Vec<Node>` keeps
 /// the auto-traits a Go `SourceFile` gets from its mutex-guarded fields.
-#[derive(Default)]
+/// PORT: cells are `Rc` (not `Box`) so `Clone` shares them — the emit-time
+/// "frozen" arena copy aliases bind results/read-only data rather than
+/// losing them. `get_mut` requires an unshared cell (`Rc::get_mut`); it
+/// returns `None` while a frozen copy exists, which only happens during an
+/// `ArenaCheckout` window.
+#[derive(Default, Clone)]
 pub struct SourceFileData {
-    cells: FxHashMap<u64, Box<dyn Any + Send + Sync>>,
+    cells: FxHashMap<u64, Rc<dyn Any + Send + Sync>>,
 }
 
 impl SourceFileData {
@@ -65,7 +71,7 @@ impl SourceFileData {
 
     /// The write half of `getDataCell` — stores the computed cell value.
     pub fn insert<T: Send + Sync + 'static>(&mut self, key: &SourceFileDataKey<T>, value: T) {
-        self.cells.insert(key.key, Box::new(value));
+        self.cells.insert(key.key, Rc::new(value));
     }
 
     /// Mutable access to a stored cell — used by `bind_result_mut` so the
@@ -75,9 +81,14 @@ impl SourceFileData {
         &mut self,
         key: &SourceFileDataKey<T>,
     ) -> Option<&mut T> {
-        self.cells.get_mut(&key.key).map(|cell| {
-            cell.downcast_mut::<T>()
-                .expect("SourceFileData cell type mismatch")
+        self.cells.get_mut(&key.key).and_then(|cell| {
+            // `Rc::get_mut` yields `None` while a frozen arena copy shares the
+            // cell (`ArenaCheckout` window); callers get `None` rather than a
+            // panic so they can fall back instead of racing the checkout.
+            Rc::get_mut(cell).map(|any| {
+                any.downcast_mut::<T>()
+                    .expect("SourceFileData cell type mismatch")
+            })
         })
     }
 }

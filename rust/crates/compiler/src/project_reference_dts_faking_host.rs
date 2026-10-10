@@ -134,9 +134,8 @@ impl ProjectReferenceDtsFakingVfs {
             return;
         }
 
-        let real_directory = tsc_tspath::rooted_directory_path_from_path(
-            self.realpath(&directory.as_path()),
-        );
+        let real_directory =
+            tsc_tspath::rooted_directory_path_from_path(self.realpath(&directory.as_path()));
         if real_directory == *directory {
             // not symlinked
             return;
@@ -165,9 +164,9 @@ impl ProjectReferenceDtsFakingVfs {
         self.file_or_directory_exists_using_source(
             &file_or_directory,
             &mut |path: &RootedPath| {
-                self.file_exists_if_project_reference_dts(
-                    &tsc_tspath::rooted_file_path_from_path(path.clone()),
-                )
+                self.file_exists_if_project_reference_dts(&tsc_tspath::rooted_file_path_from_path(
+                    path.clone(),
+                ))
             },
             &tsc_module::node_module_package_root_for_file(file),
             Some(&|real_file: &RootedFilePath| {
@@ -358,11 +357,7 @@ impl Vfs for ProjectReferenceDtsFakingVfs {
 
     /// `(fs *projectReferenceDtsFakingVfs) Realpath`.
     fn realpath(&self, path: &RootedPath) -> RootedPath {
-        if let Some(result) = self
-            .known_symlinks
-            .files()
-            .load(&self.path_key(path))
-        {
+        if let Some(result) = self.known_symlinks.files().load(&self.path_key(path)) {
             return result.as_path();
         }
         self.host.fs().realpath(path)

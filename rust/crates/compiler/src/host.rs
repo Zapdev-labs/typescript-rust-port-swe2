@@ -12,8 +12,8 @@ use tsc_contentmapper::{
     Error as ContentMapperError, Mapper, ParsedSourceFile, Project, SourceFiles,
 };
 use tsc_diagnostics::Message;
-use tsc_tsoptions::tsconfigparsing::ExtendedConfigCache;
 use tsc_tsoptions::parsedcommandline::ParsedCommandLine;
+use tsc_tsoptions::tsconfigparsing::ExtendedConfigCache;
 use tsc_tspath::{PathKey, RootedDirectoryPath, RootedFilePath};
 use tsc_vfs::Vfs;
 
@@ -141,7 +141,8 @@ impl CompilerHost for BasicCompilerHost {
         let Some(content) = self.fs().read_file(&parse_options.file_name) else {
             return Ok(SourceFiles::default());
         };
-        let files = tsc_contentmapper::transform_and_parse(parse_options, &content, mapper, project)?;
+        let files =
+            tsc_contentmapper::transform_and_parse(parse_options, &content, mapper, project)?;
         tsc_contentmapper::check_supplemental_file_name_collisions(&files, |path| {
             self.fs().file_exists(path)
         })?;

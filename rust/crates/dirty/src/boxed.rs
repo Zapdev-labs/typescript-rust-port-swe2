@@ -83,7 +83,11 @@ impl<T: Cloneable> Box<T> {
     /// PORT: Go's `cond(b.value)` sees the raw value (not `Value()`), so `cond`
     /// always receives `Some` — it runs even when the box is deleted, matching
     /// Go.
-    pub fn change_if(&self, cond: impl FnOnce(Option<T>) -> bool, apply: impl FnOnce(&mut T)) -> bool {
+    pub fn change_if(
+        &self,
+        cond: impl FnOnce(Option<T>) -> bool,
+        apply: impl FnOnce(&mut T),
+    ) -> bool {
         let raw = self.inner.borrow().value.clone();
         if cond(Some(raw)) {
             self.change(apply);

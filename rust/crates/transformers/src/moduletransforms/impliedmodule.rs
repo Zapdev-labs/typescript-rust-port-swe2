@@ -43,9 +43,7 @@ struct ImpliedModuleTransformer<'a> {
 /// constructors) from the emit pipeline, which is not yet ported — nothing
 /// in the Rust workspace calls it yet. It is factory-shaped so it can be
 /// inserted into `chain(...)` once the emit driver exists.
-pub fn new_implied_module_transformer<'a>(
-    opts: &TransformOptions<'a>,
-) -> Option<Transformer<'a>> {
+pub fn new_implied_module_transformer<'a>(opts: &TransformOptions<'a>) -> Option<Transformer<'a>> {
     let opts_owned = TransformOptions {
         context: opts.context.clone(),
         compiler_options: opts.compiler_options,

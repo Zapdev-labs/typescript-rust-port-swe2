@@ -7,7 +7,7 @@
 // every field to the same non-zero value the Go helper would (Tristate→
 // TS_TRUE, ints→1, strings→type-appropriate valid strings, []string→["test"]).
 
-use serde_json::{json, Map, Value};
+use serde_json::{Map, Value, json};
 use tsc_core::tristate::{TS_FALSE, TS_TRUE, TS_UNKNOWN};
 use tsc_modulespecifiers::{
     ImportModuleSpecifierEndingPreference, ImportModuleSpecifierPreference,
@@ -15,9 +15,9 @@ use tsc_modulespecifiers::{
 
 use crate::formatcodeoptions::{IndentStyle, SemicolonPreference};
 use crate::userpreferences::{
-    new_default_user_preferences, parse_user_preferences, IncludeInlayParameterNameHints,
-    JsxAttributeCompletionStyle, OrganizeImportsCaseFirst, OrganizeImportsCollation,
-    OrganizeImportsSort, OrganizeImportsTypeOrder, QuotePreference, WorkspaceSymbolsScope,
+    IncludeInlayParameterNameHints, JsxAttributeCompletionStyle, OrganizeImportsCaseFirst,
+    OrganizeImportsCollation, OrganizeImportsSort, OrganizeImportsTypeOrder, QuotePreference,
+    WorkspaceSymbolsScope, new_default_user_preferences, parse_user_preferences,
 };
 use crate::userpreferences_generated::{
     CodeLensUserPreferences, CompletionPreferences, EditorSettings, FormatCodeSettings,
@@ -49,7 +49,8 @@ fn test_user_preferences_parsing_edge_cases() {
             name: "invalid boolean becomes unknown",
             config: obj(json!({"includeCompletionsForModuleExports": "invalid"})),
             expected: |p| {
-                p.completion_preferences.include_completions_for_module_exports = TS_UNKNOWN;
+                p.completion_preferences
+                    .include_completions_for_module_exports = TS_UNKNOWN;
             },
         },
         Case {
@@ -114,8 +115,7 @@ fn test_user_preferences_parsing_edge_cases() {
             name: "invalid module specifier preference uses its default",
             config: obj(json!({"importModuleSpecifierPreference": true})),
             expected: |p| {
-                p.import_module_specifier_preference =
-                    ImportModuleSpecifierPreference::SHORTEST;
+                p.import_module_specifier_preference = ImportModuleSpecifierPreference::SHORTEST;
             },
         },
     ];
@@ -288,7 +288,10 @@ fn test_user_preferences_serialize() {
         let inlay_hints = actual["inlayHints"].as_object().unwrap();
         let parameter_names = inlay_hints["parameterNames"].as_object().unwrap();
         assert_eq!(parameter_names["enabled"], json!("all"));
-        assert_eq!(parameter_names["suppressWhenArgumentMatchesName"], json!(false)); // inverted
+        assert_eq!(
+            parameter_names["suppressWhenArgumentMatchesName"],
+            json!(false)
+        ); // inverted
     }
 
     // mixed config and unstable fields
@@ -675,7 +678,10 @@ fn test_parse_user_preferences_editor_formatting() {
     assert_eq!(prefs.format_code_settings.editor_settings.tab_size, 2);
     assert_eq!(prefs.format_code_settings.editor_settings.indent_size, 2);
     assert_eq!(
-        prefs.format_code_settings.editor_settings.convert_tabs_to_spaces,
+        prefs
+            .format_code_settings
+            .editor_settings
+            .convert_tabs_to_spaces,
         TS_FALSE
     );
 }

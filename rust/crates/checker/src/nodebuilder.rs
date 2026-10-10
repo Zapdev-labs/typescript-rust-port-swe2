@@ -186,7 +186,11 @@ impl NodeBuilder {
     /// `EmitContext() *printer.EmitContext` — implements
     /// `NodeBuilderInterface`.
     pub fn emit_context(&self) -> std::rc::Rc<std::cell::RefCell<EmitContext>> {
-        self.impl_.as_ref().expect("NodeBuilder without impl").e.clone()
+        self.impl_
+            .as_ref()
+            .expect("NodeBuilder without impl")
+            .e
+            .clone()
     }
 
     /// `(b *NodeBuilder) enterContext`.
@@ -206,8 +210,8 @@ impl NodeBuilder {
         }
         let enclosing_file = match enclosing_declaration {
             Some(decl) => {
-                                let __program = c.program.clone().expect("program");
-                let nodes = __program.nodes((decl).file_index());;
+                let __program = c.program.clone().expect("program");
+                let nodes = __program.nodes((decl).file_index());
                 ast::get_source_file_of_node(Some(decl), &nodes)
             }
             None => None,
@@ -460,15 +464,13 @@ impl NodeBuilder {
         tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
     ) -> Option<NodeId> {
         self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
-        let result = self
-            .impl_mut()
-            .signature_to_signature_declaration_helper(
-                c,
-                nodes,
-                signature,
-                kind,
-                Default::default(),
-            );
+        let result = self.impl_mut().signature_to_signature_declaration_helper(
+            c,
+            nodes,
+            signature,
+            kind,
+            Default::default(),
+        );
         self.exit_context(nodes, Some(result))
     }
 
@@ -690,8 +692,10 @@ impl NodeBuilder {
         tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
     ) -> Option<NodeId> {
         self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
-        let result = predicate
-            .map(|p| self.impl_mut().type_predicate_to_type_predicate_node(c, nodes, p));
+        let result = predicate.map(|p| {
+            self.impl_mut()
+                .type_predicate_to_type_predicate_node(c, nodes, p)
+        });
         self.exit_context(nodes, result)
     }
 
@@ -748,8 +752,8 @@ fn simplify_class_declaration(
         .iter()
         .copied()
         .filter(|&d| {
-                        let __program = c.program.clone().expect("program");
-            let dn = __program.nodes((d).file_index());;
+            let __program = c.program.clone().expect("program");
+            let dn = __program.nodes((d).file_index());
             ast::is_class_like(Some(d), &dn)
         })
         .collect();
@@ -759,8 +763,8 @@ fn simplify_class_declaration(
         class_decl
     };
     let (modifiers, is_anonymous) = {
-                let __program = c.program.clone().expect("program");
-        let dn = __program.nodes((original_class_decl).file_index());;
+        let __program = c.program.clone().expect("program");
+        let dn = __program.nodes((original_class_decl).file_index());
         (
             dn[original_class_decl].modifier_flags()
                 & !(ast::ModifierFlags::EXPORT | ast::ModifierFlags::AMBIENT),
@@ -813,15 +817,15 @@ fn simplify_modifiers(
         .iter()
         .copied()
         .filter(|&d| {
-                        let __program = c.program.clone().expect("program");
-            let dn = __program.nodes((d).file_index());;
+            let __program = c.program.clone().expect("program");
+            let dn = __program.nodes((d).file_index());
             is_decl_kind(&dn[d])
         })
         .collect();
     let decl_with_modifiers = decls.first().copied().unwrap_or(new_decl);
     let modifiers = {
-                let __program = c.program.clone().expect("program");
-        let dn = __program.nodes((decl_with_modifiers).file_index());;
+        let __program = c.program.clone().expect("program");
+        let dn = __program.nodes((decl_with_modifiers).file_index());
         dn[decl_with_modifiers].modifier_flags()
             & !(ast::ModifierFlags::EXPORT | ast::ModifierFlags::AMBIENT)
     };

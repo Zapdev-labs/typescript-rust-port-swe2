@@ -407,7 +407,6 @@ impl<'a> ChildIter<'a> {
     }
 }
 
-
 /// `d.nodeAt(ci)` — index 0 is the nil sentinel.
 fn node_at(decoded: &[Option<NodeId>], ci: usize) -> Option<NodeId> {
     if ci == 0 {
@@ -454,9 +453,7 @@ fn single_node_list_child(
     node_lists: &[Option<NodeList>],
     child_indices: &[usize],
 ) -> Option<NodeList> {
-    child_indices
-        .first()
-        .and_then(|&ci| node_lists[ci].clone())
+    child_indices.first().and_then(|&ci| node_lists[ci].clone())
 }
 
 /// `d.allocNodeSlice` — Go batch-allocates `[]*ast.Node` from an arena and
@@ -479,26 +476,19 @@ pub(crate) fn create_string_node(
 
     match kind {
         Kind::Identifier => Ok(d.factory.new_identifier(&mut d.arena, &text)),
-        Kind::PrivateIdentifier => {
-            Ok(d.factory.new_private_identifier(&mut d.arena, &text))
-        }
+        Kind::PrivateIdentifier => Ok(d.factory.new_private_identifier(&mut d.arena, &text)),
         Kind::JsxText => {
             let contains_only_trivia_white_spaces = common_data & 1 != 0;
-            Ok(d.factory.new_jsx_text(
-                &mut d.arena,
-                &text,
-                contains_only_trivia_white_spaces,
-            ))
+            Ok(d.factory
+                .new_jsx_text(&mut d.arena, &text, contains_only_trivia_white_spaces))
         }
         Kind::JSDocText => Ok(d.factory.new_js_doc_text(&mut d.arena, &[text])),
         Kind::JSDocLink => Ok(d.factory.new_js_doc_link(&mut d.arena, None, &[text])),
-        Kind::JSDocLinkPlain => {
-            Ok(d.factory.new_js_doc_link_plain(&mut d.arena, None, &[text]))
-        }
-        Kind::JSDocLinkCode => {
-            Ok(d.factory.new_js_doc_link_code(&mut d.arena, None, &[text]))
-        }
-        _ => Err(DecodeError::new(format!("unknown string node kind {kind:?}"))),
+        Kind::JSDocLinkPlain => Ok(d.factory.new_js_doc_link_plain(&mut d.arena, None, &[text])),
+        Kind::JSDocLinkCode => Ok(d.factory.new_js_doc_link_code(&mut d.arena, None, &[text])),
+        _ => Err(DecodeError::new(format!(
+            "unknown string node kind {kind:?}"
+        ))),
     }
 }
 
@@ -523,9 +513,7 @@ pub(crate) fn create_extended_node(
         Kind::TemplateHead => Ok(d.decode_extended_data_template_head(data)),
         Kind::TemplateMiddle => Ok(d.decode_extended_data_template_middle(data)),
         Kind::TemplateTail => Ok(d.decode_extended_data_template_tail(data)),
-        Kind::SourceFile => {
-            d.decode_extended_data_source_file(data, child_indices, common_data)
-        }
+        Kind::SourceFile => d.decode_extended_data_source_file(data, child_indices, common_data),
         _ => Err(DecodeError::new(format!(
             "unknown extended data node kind {kind:?}"
         ))),
@@ -721,12 +709,7 @@ pub(crate) fn create_children_node(
             let expression = node_at(decoded, it.next_if(mask, 0));
             let then_statement = node_at(decoded, it.next_if(mask, 1));
             let else_statement = node_at(decoded, it.next_if(mask, 2));
-            Ok(factory.new_if_statement(
-                arena,
-                expression,
-                then_statement,
-                else_statement,
-            ))
+            Ok(factory.new_if_statement(arena, expression, then_statement, else_statement))
         }
         Kind::DoStatement => {
             let mut it = ChildIter::new(child_indices);
@@ -746,13 +729,7 @@ pub(crate) fn create_children_node(
             let condition = node_at(decoded, it.next_if(mask, 1));
             let incrementor = node_at(decoded, it.next_if(mask, 2));
             let statement = node_at(decoded, it.next_if(mask, 3));
-            Ok(factory.new_for_statement(
-                arena,
-                initializer,
-                condition,
-                incrementor,
-                statement,
-            ))
+            Ok(factory.new_for_statement(arena, initializer, condition, incrementor, statement))
         }
         Kind::ForInStatement | Kind::ForOfStatement => {
             let mut it = ChildIter::new(child_indices);
@@ -797,12 +774,7 @@ pub(crate) fn create_children_node(
             let mut it = ChildIter::new(child_indices);
             let expression = node_at(decoded, it.next_if(mask, 0));
             let statements = node_list_at(node_lists, it.next_if(mask, 1));
-            Ok(factory.new_case_or_default_clause(
-                arena,
-                kind,
-                expression,
-                statements,
-            ))
+            Ok(factory.new_case_or_default_clause(arena, kind, expression, statements))
         }
         Kind::ThrowStatement => Ok(d
             .factory
@@ -812,22 +784,13 @@ pub(crate) fn create_children_node(
             let try_block = node_at(decoded, it.next_if(mask, 0));
             let catch_clause = node_at(decoded, it.next_if(mask, 1));
             let finally_block = node_at(decoded, it.next_if(mask, 2));
-            Ok(factory.new_try_statement(
-                arena,
-                try_block,
-                catch_clause,
-                finally_block,
-            ))
+            Ok(factory.new_try_statement(arena, try_block, catch_clause, finally_block))
         }
         Kind::CatchClause => {
             let mut it = ChildIter::new(child_indices);
             let variable_declaration = node_at(decoded, it.next_if(mask, 0));
             let block = node_at(decoded, it.next_if(mask, 1));
-            Ok(factory.new_catch_clause(
-                arena,
-                variable_declaration,
-                block,
-            ))
+            Ok(factory.new_catch_clause(arena, variable_declaration, block))
         }
         Kind::DebuggerStatement => Ok(factory.new_debugger_statement(arena)),
         Kind::LabeledStatement => {
@@ -851,11 +814,7 @@ pub(crate) fn create_children_node(
             let mut it = ChildIter::new(child_indices);
             let modifiers = modifier_list_at(factory, arena, node_lists, it.next_if(mask, 0));
             let declaration_list = node_at(decoded, it.next_if(mask, 1));
-            Ok(factory.new_variable_statement(
-                arena,
-                modifiers,
-                declaration_list,
-            ))
+            Ok(factory.new_variable_statement(arena, modifiers, declaration_list))
         }
         Kind::VariableDeclaration => {
             let mut it = ChildIter::new(child_indices);
@@ -876,9 +835,13 @@ pub(crate) fn create_children_node(
             single_node_list_child(node_lists, child_indices),
             NodeFlags::NONE,
         )),
-        Kind::ObjectBindingPattern | Kind::ArrayBindingPattern => Ok(d
-            .factory
-            .new_binding_pattern(arena, kind, single_node_list_child(node_lists, child_indices))),
+        Kind::ObjectBindingPattern | Kind::ArrayBindingPattern => {
+            Ok(d.factory.new_binding_pattern(
+                arena,
+                kind,
+                single_node_list_child(node_lists, child_indices),
+            ))
+        }
         Kind::Parameter => {
             let mut it = ChildIter::new(child_indices);
             let modifiers = modifier_list_at(factory, arena, node_lists, it.next_if(mask, 0));
@@ -1033,20 +996,13 @@ pub(crate) fn create_children_node(
             let modifiers = modifier_list_at(factory, arena, node_lists, it.next_if(mask, 0));
             let name = node_at(decoded, it.next_if(mask, 1));
             let members = node_list_at(node_lists, it.next_if(mask, 2));
-            Ok(factory.new_enum_declaration(
-                arena,
-                modifiers,
-                name,
-                members,
-            ))
+            Ok(factory.new_enum_declaration(arena, modifiers, name, members))
         }
         Kind::ModuleBlock => Ok(d
             .factory
             .new_module_block(arena, single_node_list_child(node_lists, child_indices))),
         Kind::NotEmittedStatement => Ok(factory.new_not_emitted_statement(arena)),
-        Kind::NotEmittedTypeElement => {
-            Ok(factory.new_not_emitted_type_element(arena))
-        }
+        Kind::NotEmittedTypeElement => Ok(factory.new_not_emitted_type_element(arena)),
         Kind::ImportDeclaration | Kind::JSImportDeclaration => {
             let mut it = ChildIter::new(child_indices);
             let modifiers = modifier_list_at(factory, arena, node_lists, it.next_if(mask, 0));
@@ -1098,11 +1054,7 @@ pub(crate) fn create_children_node(
             let mut it = ChildIter::new(child_indices);
             let modifiers = modifier_list_at(factory, arena, node_lists, it.next_if(mask, 0));
             let name = node_at(decoded, it.next_if(mask, 1));
-            Ok(factory.new_namespace_export_declaration(
-                arena,
-                modifiers,
-                name,
-            ))
+            Ok(factory.new_namespace_export_declaration(arena, modifiers, name))
         }
         Kind::NamespaceExport => Ok(d
             .factory
@@ -1115,12 +1067,7 @@ pub(crate) fn create_children_node(
             let mut it = ChildIter::new(child_indices);
             let property_name = node_at(decoded, it.next_if(mask, 0));
             let name = node_at(decoded, it.next_if(mask, 1));
-            Ok(factory.new_export_specifier(
-                arena,
-                is_type_only,
-                property_name,
-                name,
-            ))
+            Ok(factory.new_export_specifier(arena, is_type_only, property_name, name))
         }
         Kind::CallSignature => {
             let mut it = ChildIter::new(child_indices);
@@ -1206,12 +1153,7 @@ pub(crate) fn create_children_node(
             let modifiers = modifier_list_at(factory, arena, node_lists, it.next_if(mask, 0));
             let parameters = node_list_at(node_lists, it.next_if(mask, 1));
             let type_node = node_at(decoded, it.next_if(mask, 2));
-            Ok(factory.new_index_signature_declaration(
-                arena,
-                modifiers,
-                parameters,
-                type_node,
-            ))
+            Ok(factory.new_index_signature_declaration(arena, modifiers, parameters, type_node))
         }
         Kind::MethodSignature => {
             let mut it = ChildIter::new(child_indices);
@@ -1286,18 +1228,12 @@ pub(crate) fn create_children_node(
                 initializer,
             ))
         }
-        Kind::SemicolonClassElement => {
-            Ok(factory.new_semicolon_class_element(arena))
-        }
+        Kind::SemicolonClassElement => Ok(factory.new_semicolon_class_element(arena)),
         Kind::ClassStaticBlockDeclaration => {
             let mut it = ChildIter::new(child_indices);
             let modifiers = modifier_list_at(factory, arena, node_lists, it.next_if(mask, 0));
             let body = node_at(decoded, it.next_if(mask, 1));
-            Ok(factory.new_class_static_block_declaration(
-                arena,
-                modifiers,
-                body,
-            ))
+            Ok(factory.new_class_static_block_declaration(arena, modifiers, body))
         }
         Kind::OmittedExpression => Ok(factory.new_omitted_expression(arena)),
         Kind::FalseKeyword
@@ -1354,11 +1290,7 @@ pub(crate) fn create_children_node(
             let mut it = ChildIter::new(child_indices);
             let asterisk_token = node_at(decoded, it.next_if(mask, 0));
             let expression = node_at(decoded, it.next_if(mask, 1));
-            Ok(factory.new_yield_expression(
-                arena,
-                asterisk_token,
-                expression,
-            ))
+            Ok(factory.new_yield_expression(arena, asterisk_token, expression))
         }
         Kind::ArrowFunction => {
             let mut it = ChildIter::new(child_indices);
@@ -1410,11 +1342,7 @@ pub(crate) fn create_children_node(
             let mut it = ChildIter::new(child_indices);
             let expression = node_at(decoded, it.next_if(mask, 0));
             let type_node = node_at(decoded, it.next_if(mask, 1));
-            Ok(factory.new_satisfies_expression(
-                arena,
-                expression,
-                type_node,
-            ))
+            Ok(factory.new_satisfies_expression(arena, expression, type_node))
         }
         Kind::ConditionalExpression => {
             let mut it = ChildIter::new(child_indices);
@@ -1478,12 +1406,7 @@ pub(crate) fn create_children_node(
             let expression = node_at(decoded, it.next_if(mask, 0));
             let type_arguments = node_list_at(node_lists, it.next_if(mask, 1));
             let arguments = node_list_at(node_lists, it.next_if(mask, 2));
-            Ok(factory.new_new_expression(
-                arena,
-                expression,
-                type_arguments,
-                arguments,
-            ))
+            Ok(factory.new_new_expression(arena, expression, type_arguments, arguments))
         }
         Kind::MetaProperty => {
             let mut keyword_token = Kind::ImportKeyword;
@@ -1508,11 +1431,7 @@ pub(crate) fn create_children_node(
             let mut it = ChildIter::new(child_indices);
             let head = node_at(decoded, it.next_if(mask, 0));
             let template_spans = node_list_at(node_lists, it.next_if(mask, 1));
-            Ok(factory.new_template_expression(
-                arena,
-                head,
-                template_spans,
-            ))
+            Ok(factory.new_template_expression(arena, head, template_spans))
         }
         Kind::TemplateSpan => {
             let mut it = ChildIter::new(child_indices);
@@ -1544,11 +1463,7 @@ pub(crate) fn create_children_node(
             if !child_indices.is_empty() {
                 list = node_list_at(node_lists, child_indices[0]);
             }
-            Ok(factory.new_array_literal_expression(
-                arena,
-                list,
-                multi_line,
-            ))
+            Ok(factory.new_array_literal_expression(arena, list, multi_line))
         }
         Kind::ObjectLiteralExpression => {
             let multi_line = common_data & 1 != 0;
@@ -1556,11 +1471,7 @@ pub(crate) fn create_children_node(
             if !child_indices.is_empty() {
                 list = node_list_at(node_lists, child_indices[0]);
             }
-            Ok(factory.new_object_literal_expression(
-                arena,
-                list,
-                multi_line,
-            ))
+            Ok(factory.new_object_literal_expression(arena, list, multi_line))
         }
         Kind::SpreadAssignment => Ok(d
             .factory
@@ -1673,31 +1584,19 @@ pub(crate) fn create_children_node(
             let mut it = ChildIter::new(child_indices);
             let object_type = node_at(decoded, it.next_if(mask, 0));
             let index_type = node_at(decoded, it.next_if(mask, 1));
-            Ok(factory.new_indexed_access_type_node(
-                arena,
-                object_type,
-                index_type,
-            ))
+            Ok(factory.new_indexed_access_type_node(arena, object_type, index_type))
         }
         Kind::TypeReference => {
             let mut it = ChildIter::new(child_indices);
             let type_name = node_at(decoded, it.next_if(mask, 0));
             let type_arguments = node_list_at(node_lists, it.next_if(mask, 1));
-            Ok(factory.new_type_reference_node(
-                arena,
-                type_name,
-                type_arguments,
-            ))
+            Ok(factory.new_type_reference_node(arena, type_name, type_arguments))
         }
         Kind::ExpressionWithTypeArguments => {
             let mut it = ChildIter::new(child_indices);
             let expression = node_at(decoded, it.next_if(mask, 0));
             let type_arguments = node_list_at(node_lists, it.next_if(mask, 1));
-            Ok(factory.new_expression_with_type_arguments(
-                arena,
-                expression,
-                type_arguments,
-            ))
+            Ok(factory.new_expression_with_type_arguments(arena, expression, type_arguments))
         }
         Kind::LiteralType => Ok(d
             .factory
@@ -1708,12 +1607,7 @@ pub(crate) fn create_children_node(
             let asserts_modifier = node_at(decoded, it.next_if(mask, 0));
             let parameter_name = node_at(decoded, it.next_if(mask, 1));
             let type_node = node_at(decoded, it.next_if(mask, 2));
-            Ok(factory.new_type_predicate_node(
-                arena,
-                asserts_modifier,
-                parameter_name,
-                type_node,
-            ))
+            Ok(factory.new_type_predicate_node(arena, asserts_modifier, parameter_name, type_node))
         }
         Kind::ImportAttribute => {
             let mut it = ChildIter::new(child_indices);
@@ -1731,22 +1625,13 @@ pub(crate) fn create_children_node(
             if !child_indices.is_empty() {
                 list = node_list_at(node_lists, child_indices[0]);
             }
-            Ok(factory.new_import_attributes(
-                arena,
-                token,
-                list,
-                multi_line,
-            ))
+            Ok(factory.new_import_attributes(arena, token, list, multi_line))
         }
         Kind::TypeQuery => {
             let mut it = ChildIter::new(child_indices);
             let expr_name = node_at(decoded, it.next_if(mask, 0));
             let type_arguments = node_list_at(node_lists, it.next_if(mask, 1));
-            Ok(factory.new_type_query_node(
-                arena,
-                expr_name,
-                type_arguments,
-            ))
+            Ok(factory.new_type_query_node(arena, expr_name, type_arguments))
         }
         Kind::MappedType => {
             let mut it = ChildIter::new(child_indices);
@@ -1800,12 +1685,7 @@ pub(crate) fn create_children_node(
             let type_parameters = node_list_at(node_lists, it.next_if(mask, 0));
             let parameters = node_list_at(node_lists, it.next_if(mask, 1));
             let type_node = node_at(decoded, it.next_if(mask, 2));
-            Ok(factory.new_function_type_node(
-                arena,
-                type_parameters,
-                parameters,
-                type_node,
-            ))
+            Ok(factory.new_function_type_node(arena, type_parameters, parameters, type_node))
         }
         Kind::ConstructorType => {
             let mut it = ChildIter::new(child_indices);
@@ -1825,25 +1705,18 @@ pub(crate) fn create_children_node(
             let mut it = ChildIter::new(child_indices);
             let head = node_at(decoded, it.next_if(mask, 0));
             let template_spans = node_list_at(node_lists, it.next_if(mask, 1));
-            Ok(factory.new_template_literal_type_node(
-                arena,
-                head,
-                template_spans,
-            ))
+            Ok(factory.new_template_literal_type_node(arena, head, template_spans))
         }
         Kind::TemplateLiteralTypeSpan => {
             let mut it = ChildIter::new(child_indices);
             let type_node = node_at(decoded, it.next_if(mask, 0));
             let literal = node_at(decoded, it.next_if(mask, 1));
-            Ok(factory.new_template_literal_type_span(
-                arena,
-                type_node,
-                literal,
-            ))
+            Ok(factory.new_template_literal_type_span(arena, type_node, literal))
         }
         Kind::SyntheticExpression => {
             // `decodeNodeCommonData_SyntheticExpression` — panics like Go.
-            let (_type_node, _is_spread) = decode_node_common_data_synthetic_expression(common_data);
+            let (_type_node, _is_spread) =
+                decode_node_common_data_synthetic_expression(common_data);
             unreachable!()
         }
         Kind::PartiallyEmittedExpression => Ok(d
@@ -1854,12 +1727,7 @@ pub(crate) fn create_children_node(
             let opening_element = node_at(decoded, it.next_if(mask, 0));
             let children = node_list_at(node_lists, it.next_if(mask, 1));
             let closing_element = node_at(decoded, it.next_if(mask, 2));
-            Ok(factory.new_jsx_element(
-                arena,
-                opening_element,
-                children,
-                closing_element,
-            ))
+            Ok(factory.new_jsx_element(arena, opening_element, children, closing_element))
         }
         Kind::JsxAttributes => Ok(d
             .factory
@@ -1875,36 +1743,21 @@ pub(crate) fn create_children_node(
             let tag_name = node_at(decoded, it.next_if(mask, 0));
             let type_arguments = node_list_at(node_lists, it.next_if(mask, 1));
             let attributes = node_at(decoded, it.next_if(mask, 2));
-            Ok(factory.new_jsx_opening_element(
-                arena,
-                tag_name,
-                type_arguments,
-                attributes,
-            ))
+            Ok(factory.new_jsx_opening_element(arena, tag_name, type_arguments, attributes))
         }
         Kind::JsxSelfClosingElement => {
             let mut it = ChildIter::new(child_indices);
             let tag_name = node_at(decoded, it.next_if(mask, 0));
             let type_arguments = node_list_at(node_lists, it.next_if(mask, 1));
             let attributes = node_at(decoded, it.next_if(mask, 2));
-            Ok(factory.new_jsx_self_closing_element(
-                arena,
-                tag_name,
-                type_arguments,
-                attributes,
-            ))
+            Ok(factory.new_jsx_self_closing_element(arena, tag_name, type_arguments, attributes))
         }
         Kind::JsxFragment => {
             let mut it = ChildIter::new(child_indices);
             let opening_fragment = node_at(decoded, it.next_if(mask, 0));
             let children = node_list_at(node_lists, it.next_if(mask, 1));
             let closing_fragment = node_at(decoded, it.next_if(mask, 2));
-            Ok(factory.new_jsx_fragment(
-                arena,
-                opening_fragment,
-                children,
-                closing_fragment,
-            ))
+            Ok(factory.new_jsx_fragment(arena, opening_fragment, children, closing_fragment))
         }
         Kind::JsxOpeningFragment => Ok(factory.new_jsx_opening_fragment(arena)),
         Kind::JsxClosingFragment => Ok(factory.new_jsx_closing_fragment(arena)),
@@ -1924,11 +1777,7 @@ pub(crate) fn create_children_node(
             let mut it = ChildIter::new(child_indices);
             let dot_dot_dot_token = node_at(decoded, it.next_if(mask, 0));
             let expression = node_at(decoded, it.next_if(mask, 1));
-            Ok(factory.new_jsx_expression(
-                arena,
-                dot_dot_dot_token,
-                expression,
-            ))
+            Ok(factory.new_jsx_expression(arena, dot_dot_dot_token, expression))
         }
         Kind::SyntaxList => {
             // PORT: Go does `nodes[i] = d.nodes[ci]` into a *zero-length*
@@ -1969,22 +1818,13 @@ pub(crate) fn create_children_node(
             let tag_name = node_at(decoded, it.next_if(mask, 0));
             let type_expression = node_at(decoded, it.next_if(mask, 1));
             let comment = node_list_at(node_lists, it.next_if(mask, 2));
-            Ok(factory.new_js_doc_type_tag(
-                arena,
-                tag_name,
-                type_expression,
-                comment,
-            ))
+            Ok(factory.new_js_doc_type_tag(arena, tag_name, type_expression, comment))
         }
         Kind::JSDocUnknownTag => {
             let mut it = ChildIter::new(child_indices);
             let tag_name = node_at(decoded, it.next_if(mask, 0));
             let comment = node_list_at(node_lists, it.next_if(mask, 1));
-            Ok(factory.new_js_doc_unknown_tag(
-                arena,
-                tag_name,
-                comment,
-            ))
+            Ok(factory.new_js_doc_unknown_tag(arena, tag_name, comment))
         }
         Kind::JSDocTemplateTag => {
             let mut it = ChildIter::new(child_indices);
@@ -2005,12 +1845,7 @@ pub(crate) fn create_children_node(
             let tag_name = node_at(decoded, it.next_if(mask, 0));
             let type_expression = node_at(decoded, it.next_if(mask, 1));
             let comment = node_list_at(node_lists, it.next_if(mask, 2));
-            Ok(factory.new_js_doc_return_tag(
-                arena,
-                tag_name,
-                type_expression,
-                comment,
-            ))
+            Ok(factory.new_js_doc_return_tag(arena, tag_name, type_expression, comment))
         }
         Kind::JSDocPublicTag => {
             let mut it = ChildIter::new(child_indices);
@@ -2053,72 +1888,42 @@ pub(crate) fn create_children_node(
             let tag_name = node_at(decoded, it.next_if(mask, 0));
             let name_expression = node_at(decoded, it.next_if(mask, 1));
             let comment = node_list_at(node_lists, it.next_if(mask, 2));
-            Ok(factory.new_js_doc_see_tag(
-                arena,
-                tag_name,
-                name_expression,
-                comment,
-            ))
+            Ok(factory.new_js_doc_see_tag(arena, tag_name, name_expression, comment))
         }
         Kind::JSDocImplementsTag => {
             let mut it = ChildIter::new(child_indices);
             let tag_name = node_at(decoded, it.next_if(mask, 0));
             let class_name = node_at(decoded, it.next_if(mask, 1));
             let comment = node_list_at(node_lists, it.next_if(mask, 2));
-            Ok(factory.new_js_doc_implements_tag(
-                arena,
-                tag_name,
-                class_name,
-                comment,
-            ))
+            Ok(factory.new_js_doc_implements_tag(arena, tag_name, class_name, comment))
         }
         Kind::JSDocAugmentsTag => {
             let mut it = ChildIter::new(child_indices);
             let tag_name = node_at(decoded, it.next_if(mask, 0));
             let class_name = node_at(decoded, it.next_if(mask, 1));
             let comment = node_list_at(node_lists, it.next_if(mask, 2));
-            Ok(factory.new_js_doc_augments_tag(
-                arena,
-                tag_name,
-                class_name,
-                comment,
-            ))
+            Ok(factory.new_js_doc_augments_tag(arena, tag_name, class_name, comment))
         }
         Kind::JSDocSatisfiesTag => {
             let mut it = ChildIter::new(child_indices);
             let tag_name = node_at(decoded, it.next_if(mask, 0));
             let type_expression = node_at(decoded, it.next_if(mask, 1));
             let comment = node_list_at(node_lists, it.next_if(mask, 2));
-            Ok(factory.new_js_doc_satisfies_tag(
-                arena,
-                tag_name,
-                type_expression,
-                comment,
-            ))
+            Ok(factory.new_js_doc_satisfies_tag(arena, tag_name, type_expression, comment))
         }
         Kind::JSDocThrowsTag => {
             let mut it = ChildIter::new(child_indices);
             let tag_name = node_at(decoded, it.next_if(mask, 0));
             let type_expression = node_at(decoded, it.next_if(mask, 1));
             let comment = node_list_at(node_lists, it.next_if(mask, 2));
-            Ok(factory.new_js_doc_throws_tag(
-                arena,
-                tag_name,
-                type_expression,
-                comment,
-            ))
+            Ok(factory.new_js_doc_throws_tag(arena, tag_name, type_expression, comment))
         }
         Kind::JSDocThisTag => {
             let mut it = ChildIter::new(child_indices);
             let tag_name = node_at(decoded, it.next_if(mask, 0));
             let type_expression = node_at(decoded, it.next_if(mask, 1));
             let comment = node_list_at(node_lists, it.next_if(mask, 2));
-            Ok(factory.new_js_doc_this_tag(
-                arena,
-                tag_name,
-                type_expression,
-                comment,
-            ))
+            Ok(factory.new_js_doc_this_tag(arena, tag_name, type_expression, comment))
         }
         Kind::JSDocImportTag => {
             let mut it = ChildIter::new(child_indices);
@@ -2142,25 +1947,14 @@ pub(crate) fn create_children_node(
             let type_expression = node_at(decoded, it.next_if(mask, 1));
             let name = node_at(decoded, it.next_if(mask, 2));
             let comment = node_list_at(node_lists, it.next_if(mask, 3));
-            Ok(factory.new_js_doc_callback_tag(
-                arena,
-                tag_name,
-                type_expression,
-                name,
-                comment,
-            ))
+            Ok(factory.new_js_doc_callback_tag(arena, tag_name, type_expression, name, comment))
         }
         Kind::JSDocOverloadTag => {
             let mut it = ChildIter::new(child_indices);
             let tag_name = node_at(decoded, it.next_if(mask, 0));
             let type_expression = node_at(decoded, it.next_if(mask, 1));
             let comment = node_list_at(node_lists, it.next_if(mask, 2));
-            Ok(factory.new_js_doc_overload_tag(
-                arena,
-                tag_name,
-                type_expression,
-                comment,
-            ))
+            Ok(factory.new_js_doc_overload_tag(arena, tag_name, type_expression, comment))
         }
         Kind::JSDocTypedefTag => {
             let mut it = ChildIter::new(child_indices);
@@ -2168,25 +1962,14 @@ pub(crate) fn create_children_node(
             let type_expression = node_at(decoded, it.next_if(mask, 1));
             let name = node_at(decoded, it.next_if(mask, 2));
             let comment = node_list_at(node_lists, it.next_if(mask, 3));
-            Ok(factory.new_js_doc_typedef_tag(
-                arena,
-                tag_name,
-                type_expression,
-                name,
-                comment,
-            ))
+            Ok(factory.new_js_doc_typedef_tag(arena, tag_name, type_expression, name, comment))
         }
         Kind::JSDocSignature => {
             let mut it = ChildIter::new(child_indices);
             let type_parameters = node_list_at(node_lists, it.next_if(mask, 0));
             let parameters = node_list_at(node_lists, it.next_if(mask, 1));
             let type_node = node_at(decoded, it.next_if(mask, 2));
-            Ok(factory.new_js_doc_signature(
-                arena,
-                type_parameters,
-                parameters,
-                type_node,
-            ))
+            Ok(factory.new_js_doc_signature(arena, type_parameters, parameters, type_node))
         }
         Kind::JSDocNameReference => Ok(d
             .factory
@@ -2201,14 +1984,7 @@ pub(crate) fn create_children_node(
             let name = node_at(decoded, it.next_if(mask, 1));
             let attributes = node_at(decoded, it.next_if(mask, 2));
             let body = node_at(decoded, it.next_if(mask, 3));
-            Ok(factory.new_module_declaration(
-                arena,
-                modifiers,
-                keyword,
-                name,
-                attributes,
-                body,
-            ))
+            Ok(factory.new_module_declaration(arena, modifiers, keyword, name, attributes, body))
         }
         Kind::ImportEqualsDeclaration => {
             let is_type_only = common_data & 1 != 0;
@@ -2267,24 +2043,14 @@ pub(crate) fn create_children_node(
             let mut it = ChildIter::new(child_indices);
             let name = node_at(decoded, it.next_if(mask, 0));
             let named_bindings = node_at(decoded, it.next_if(mask, 1));
-            Ok(factory.new_import_clause(
-                arena,
-                phase_modifier,
-                name,
-                named_bindings,
-            ))
+            Ok(factory.new_import_clause(arena, phase_modifier, name, named_bindings))
         }
         Kind::ImportSpecifier => {
             let is_type_only = common_data & 1 != 0;
             let mut it = ChildIter::new(child_indices);
             let property_name = node_at(decoded, it.next_if(mask, 0));
             let name = node_at(decoded, it.next_if(mask, 1));
-            Ok(factory.new_import_specifier(
-                arena,
-                is_type_only,
-                property_name,
-                name,
-            ))
+            Ok(factory.new_import_specifier(arena, is_type_only, property_name, name))
         }
         Kind::TypeParameter => {
             let mut it = ChildIter::new(child_indices);
@@ -2306,11 +2072,7 @@ pub(crate) fn create_children_node(
             let mut it = ChildIter::new(child_indices);
             let expression = node_at(decoded, it.next_if(mask, 0));
             let this_arg = node_at(decoded, it.next_if(mask, 1));
-            Ok(factory.new_synthetic_reference_expression(
-                arena,
-                expression,
-                this_arg,
-            ))
+            Ok(factory.new_synthetic_reference_expression(arena, expression, this_arg))
         }
         Kind::JSDocTypeLiteral => {
             let is_array_type = common_data & 1 != 0;
@@ -2321,11 +2083,7 @@ pub(crate) fn create_children_node(
                 nodes[i] = decoded[ci];
             }
             let children: Vec<NodeId> = nodes.into_iter().flatten().collect();
-            Ok(factory.new_js_doc_type_literal(
-                arena,
-                &children,
-                is_array_type,
-            ))
+            Ok(factory.new_js_doc_type_literal(arena, &children, is_array_type))
         }
         Kind::JSDocParameterTag | Kind::JSDocPropertyTag => {
             let is_bracketed = common_data & 1 != 0;
@@ -2359,6 +2117,8 @@ pub(crate) fn create_children_node(
 /// files. This function exists only to satisfy the code generator; it panics
 /// if called (same as Go).
 #[allow(clippy::type_complexity)]
-pub(crate) fn decode_node_common_data_synthetic_expression(_common_data: u8) -> (Option<u64>, bool) {
+pub(crate) fn decode_node_common_data_synthetic_expression(
+    _common_data: u8,
+) -> (Option<u64>, bool) {
     panic!("SyntheticExpression should never be decoded")
 }

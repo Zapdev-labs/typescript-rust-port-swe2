@@ -55,8 +55,10 @@ impl LogTreeInner {
     fn add(&self, log: LogEntry) {
         // indent + header + message + newline
         if let Some(root) = self.root.upgrade() {
-            root.string_length
-                .fetch_add(self.level + 15 + log.message.len() as i32 + 1, Ordering::Relaxed);
+            root.string_length.fetch_add(
+                self.level + 15 + log.message.len() as i32 + 1,
+                Ordering::Relaxed,
+            );
             root.count.fetch_add(1, Ordering::Relaxed);
         }
         self.logs.lock().unwrap().push(log);
@@ -165,10 +167,7 @@ impl fmt::Display for LogTree {
         let Some(inner) = &self.0 else {
             panic!("can only call String on root LogTree");
         };
-        assert!(
-            inner.is_root,
-            "can only call String on root LogTree"
-        );
+        assert!(inner.is_root, "can only call String on root LogTree");
         let header = format!("======== {} ========\n", inner.name);
         let mut builder = String::with_capacity(
             inner.string_length.load(Ordering::Relaxed) as usize + header.len(),

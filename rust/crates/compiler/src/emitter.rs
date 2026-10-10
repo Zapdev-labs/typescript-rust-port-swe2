@@ -32,8 +32,8 @@ use tsc_core::tristate::TS_TRUE;
 use tsc_diagnostics::{self as diagnostics};
 use tsc_outputpaths::{ForceEmitPaths, OutputPaths};
 use tsc_printer::{
-    EmitContext, EmitHost as PrinterEmitHost, EmitResolver, EmitTextWriter, PrintHandlers,
-    Printer, PrinterOptions, TextWriter,
+    EmitContext, EmitHost as PrinterEmitHost, EmitResolver, EmitTextWriter, PrintHandlers, Printer,
+    PrinterOptions, TextWriter,
 };
 use tsc_tracing::{PHASE_EMIT, Tracing, push};
 use tsc_transformers::declarations::supplementalreferences::SupplementalReferencesTransformer;
@@ -233,8 +233,8 @@ impl<'p, 'w> Emitter<'p, 'w> {
         let mut source_file = Some(source_file);
         let options = host.options();
         // JS files don't use reference calculations as they don't do import elision, no need to calculate it
-        let import_elision_enabled = options.verbatim_module_syntax != TS_TRUE
-            && !is_in_js_file(source_file, nodes);
+        let import_elision_enabled =
+            options.verbatim_module_syntax != TS_TRUE && !is_in_js_file(source_file, nodes);
         let reference_resolver: Rc<RefCell<dyn ReferenceResolver + '_>>;
         if import_elision_enabled
             || options.get_jsx_transform_enabled()
@@ -248,10 +248,9 @@ impl<'p, 'w> Emitter<'p, 'w> {
             reference_resolver =
                 Rc::new(RefCell::new(EmitResolverAsReference(emit_resolver.clone())));
         } else {
-            reference_resolver = Rc::new(RefCell::new(tsc_binder::referenceresolver::new_reference_resolver(
-                options,
-                Default::default(),
-            )));
+            reference_resolver = Rc::new(RefCell::new(
+                tsc_binder::referenceresolver::new_reference_resolver(options, Default::default()),
+            ));
         }
         let get_module_format = |file: &dyn HasFileName| -> ModuleKind {
             host.program().get_emit_module_format_of_file(file)
@@ -279,9 +278,7 @@ impl<'p, 'w> Emitter<'p, 'w> {
             get_emit_module_format_of_file: Some(&get_module_format),
             symbols: Some(&**symbol_arena),
         }));
-        for transformer in
-            get_script_transformers(opts, source_file.expect("source file"), nodes)
-        {
+        for transformer in get_script_transformers(opts, source_file.expect("source file"), nodes) {
             if let Some(file) = source_file {
                 source_file = transformer.transform_source_file(nodes, file);
             }
@@ -375,9 +372,7 @@ impl<'p, 'w> Emitter<'p, 'w> {
             return;
         }
 
-        if !self.force_emit
-            && (options.no_emit == TS_TRUE || host.is_emit_blocked(&js_file_path))
-        {
+        if !self.force_emit && (options.no_emit == TS_TRUE || host.is_emit_blocked(&js_file_path)) {
             self.emit_result.emit_skipped = true;
             return;
         }
@@ -422,8 +417,7 @@ impl<'p, 'w> Emitter<'p, 'w> {
             let symbols = symbol_arena.borrow();
             let mut writer = self.take_writer();
             // Compute before `Printer` takes the `&mut` arena borrow.
-            let should_emit_source_maps =
-                should_emit_source_maps(options, source_file, &nodes_mut);
+            let should_emit_source_maps = should_emit_source_maps(options, source_file, &nodes_mut);
             let mut printer = Printer::new(
                 printer_options,
                 PrintHandlers::default(),
@@ -548,9 +542,7 @@ impl<'p, 'w> Emitter<'p, 'w> {
                 .as_source_file()
                 .file_name()
                 .clone();
-            let span_map = nodes_mut[content_mapped_source]
-                .as_source_file()
-                .span_map();
+            let span_map = nodes_mut[content_mapped_source].as_source_file().span_map();
             if emit_declaration_map {
                 if let Some(span_map) = span_map {
                     // PORT(deferred): see file header — the Go handler swaps in
@@ -577,7 +569,11 @@ impl<'p, 'w> Emitter<'p, 'w> {
             let symbols = symbol_arena.borrow();
 
             let declaration_map_options = CompilerOptions {
-                source_map: if emit_declaration_map { TS_TRUE } else { tsc_core::tristate::TS_FALSE },
+                source_map: if emit_declaration_map {
+                    TS_TRUE
+                } else {
+                    tsc_core::tristate::TS_FALSE
+                },
                 source_root: options.source_root.clone(),
                 map_root: options.map_root.clone(),
                 // Explicitly do not pass through either inline option.
@@ -657,13 +653,11 @@ impl<'p, 'w> Emitter<'p, 'w> {
         let mut source_map_url_pos = -1;
         if let Some(source_map_generator) = source_map_generator.as_mut() {
             if map_options.source_map == TS_TRUE || map_options.inline_source_map == TS_TRUE {
-                self.emit_result
-                    .source_maps
-                    .push(SourceMapEmitResult {
-                        input_source_file_names: source_map_generator.sources().to_vec(),
-                        source_map: source_map_generator.raw_source_map(),
-                        generated_file: js_file_path.as_string().to_string(),
-                    });
+                self.emit_result.source_maps.push(SourceMapEmitResult {
+                    input_source_file_names: source_map_generator.sources().to_vec(),
+                    source_map: source_map_generator.raw_source_map(),
+                    generated_file: js_file_path.as_string().to_string(),
+                });
             }
 
             let source_mapping_url = self.get_source_mapping_url(
@@ -716,10 +710,9 @@ impl<'p, 'w> Emitter<'p, 'w> {
         // Write the output file
         let mut text = writer.get_text();
         if options.emit_bom == TS_TRUE {
-            text = String::from_utf8_lossy(
-                &tsc_stringutil::add_utf8_byte_order_mark(text.as_bytes()),
-            )
-            .into_owned();
+            text =
+                String::from_utf8_lossy(&tsc_stringutil::add_utf8_byte_order_mark(text.as_bytes()))
+                    .into_owned();
         }
         let mut data = WriteFileData {
             source_map_url_pos,
@@ -767,10 +760,8 @@ impl<'p, 'w> Emitter<'p, 'w> {
         map_root: &tsc_tspath::SourceMapLocation,
         source_file: Option<NodeId>,
     ) -> RootedDirectoryPath {
-        let mut source_map_directory = map_root.resolve_directory(
-            host.common_source_directory(),
-            host.base_directory(),
-        );
+        let mut source_map_directory =
+            map_root.resolve_directory(host.common_source_directory(), host.base_directory());
         if let Some(source_file) = source_file {
             let nodes = host.emit_nodes(source_file.file_index());
             source_map_directory = tsc_outputpaths::get_source_file_name_in_new_dir(
@@ -889,8 +880,8 @@ fn get_script_transformers<'a>(
     let options = opts.compiler_options.expect("compiler options");
 
     // JS files don't use reference calculations as they don't do import elision, no need to calculate it
-    let import_elision_enabled = options.verbatim_module_syntax != TS_TRUE
-        && !is_in_js_file(Some(source_file), nodes);
+    let import_elision_enabled =
+        options.verbatim_module_syntax != TS_TRUE && !is_in_js_file(Some(source_file), nodes);
     let jsx_transform_enabled = options.get_jsx_transform_enabled()
         && nodes[source_file].as_source_file().language_variant == LanguageVariant::Jsx;
 
@@ -929,7 +920,10 @@ fn get_script_transformers<'a>(
         }
 
         if options.experimental_decorators == TS_TRUE {
-            if let Some(t) = tsc_transformers::tstransforms::legacydecorators::new_legacy_decorators_transformer(opts)
+            if let Some(t) =
+                tsc_transformers::tstransforms::legacydecorators::new_legacy_decorators_transformer(
+                    opts,
+                )
             {
                 tx.push(t);
             }
@@ -942,7 +936,8 @@ fn get_script_transformers<'a>(
         }
     }
 
-    if let Some(downleveler) = tsc_transformers::estransforms::definitions::get_es_transformer(opts) {
+    if let Some(downleveler) = tsc_transformers::estransforms::definitions::get_es_transformer(opts)
+    {
         tx.push(downleveler);
     }
 

@@ -18,8 +18,8 @@ use std::rc::Rc;
 
 use tsc_ast::{self as ast, Kind, Node, NodeId, NodeList};
 use tsc_core::options_generated::ScriptTarget;
-use tsc_printer::{EmitResolver, TypeReferenceSerializationKind};
 use tsc_debug as debug;
+use tsc_printer::{EmitResolver, TypeReferenceSerializationKind};
 
 use crate::estransforms::Ec;
 
@@ -69,10 +69,7 @@ pub fn new_metadata_serializer<'a>(
 
 /// `GetSetAccessorValueParameter` — `node` must be a `SetAccessorDeclaration`
 /// (Go takes `*ast.SetAccessorDeclaration`; `None` mirrors nil).
-pub fn get_set_accessor_value_parameter(
-    node: Option<NodeId>,
-    nodes: &[Node],
-) -> Option<NodeId> {
+pub fn get_set_accessor_value_parameter(node: Option<NodeId>, nodes: &[Node]) -> Option<NodeId> {
     let node = node?;
     let params = nodes[node].parameters()?;
     if !params.is_empty() {
@@ -86,22 +83,18 @@ pub fn get_set_accessor_value_parameter(
 
 /// `getSetAccessorTypeAnnotationNode` — gets the type annotation for the
 /// value parameter. `node` must be a `SetAccessorDeclaration`.
-fn get_set_accessor_type_annotation_node(
-    node: Option<NodeId>,
-    nodes: &[Node],
-) -> Option<NodeId> {
+fn get_set_accessor_type_annotation_node(node: Option<NodeId>, nodes: &[Node]) -> Option<NodeId> {
     let p = get_set_accessor_value_parameter(node, nodes)?;
     nodes[p].as_parameter_declaration().type_
 }
 
 /// `getAccessorTypeNode`.
-fn get_accessor_type_node(
-    node: NodeId,
-    container: NodeId,
-    nodes: &[Node],
-) -> Option<NodeId> {
+fn get_accessor_type_node(node: NodeId, container: NodeId, nodes: &[Node]) -> Option<NodeId> {
     let accessors = ast::get_all_accessor_declarations(
-        nodes[container].member_list().map(|m| m.nodes()).unwrap_or(&[]),
+        nodes[container]
+            .member_list()
+            .map(|m| m.nodes())
+            .unwrap_or(&[]),
         node,
         nodes,
     );
@@ -125,7 +118,10 @@ fn get_parameters_of_decorated_declaration(
     if let Some(container) = container {
         if nodes[node].kind == Kind::GetAccessor {
             let acc = ast::get_all_accessor_declarations(
-                nodes[container].member_list().map(|m| m.nodes()).unwrap_or(&[]),
+                nodes[container]
+                    .member_list()
+                    .map(|m| m.nodes())
+                    .unwrap_or(&[]),
                 node,
                 nodes,
             );
@@ -196,13 +192,14 @@ impl<'a> MetadataSerializer<'a> {
                 self.serialize_type_node(nodes, nodes[node].type_())
             }
             Kind::GetAccessor | Kind::SetAccessor => {
-                let type_node =
-                    container.and_then(|c| get_accessor_type_node(node, c, nodes));
+                let type_node = container.and_then(|c| get_accessor_type_node(node, c, nodes));
                 self.serialize_type_node(nodes, type_node)
             }
-            Kind::ClassDeclaration | Kind::ClassExpression | Kind::MethodDeclaration => {
-                self.ec.borrow_mut().factory.new_identifier(nodes, "Function")
-            }
+            Kind::ClassDeclaration | Kind::ClassExpression | Kind::MethodDeclaration => self
+                .ec
+                .borrow_mut()
+                .factory
+                .new_identifier(nodes, "Function"),
             _ => self.ec.borrow_mut().factory.new_void_zero_expression(nodes),
         }
     }
@@ -226,15 +223,16 @@ impl<'a> MetadataSerializer<'a> {
 
         let Some(value_declaration) = value_declaration else {
             let elements = self.ec.borrow().factory.new_node_list([]);
-            return self
-                .ec
-                .borrow_mut()
-                .factory
-                .new_array_literal_expression(nodes, Some(elements), false);
+            return self.ec.borrow_mut().factory.new_array_literal_expression(
+                nodes,
+                Some(elements),
+                false,
+            );
         };
 
         let mut expressions: Vec<NodeId> = Vec::new();
-        let parameters = get_parameters_of_decorated_declaration(value_declaration, container, nodes);
+        let parameters =
+            get_parameters_of_decorated_declaration(value_declaration, container, nodes);
         if let Some(parameters) = parameters {
             for (i, &parameter) in parameters.nodes.iter().enumerate() {
                 if i == 0 {
@@ -256,7 +254,8 @@ impl<'a> MetadataSerializer<'a> {
                     );
                     expressions.push(self.serialize_type_node(nodes, rest_type));
                 } else {
-                    expressions.push(self.serialize_type_of_node_inner(nodes, parameter, container));
+                    expressions
+                        .push(self.serialize_type_of_node_inner(nodes, parameter, container));
                 }
             }
         }
@@ -269,15 +268,15 @@ impl<'a> MetadataSerializer<'a> {
 
     /// `s.serializeReturnTypeOfNode` — serializes the return type of a node
     /// for use with decorator type metadata.
-    fn serialize_return_type_of_node_inner(
-        &self,
-        nodes: &mut Vec<Node>,
-        node: NodeId,
-    ) -> NodeId {
+    fn serialize_return_type_of_node_inner(&self, nodes: &mut Vec<Node>, node: NodeId) -> NodeId {
         if ast::is_function_like(Some(node), nodes) && nodes[node].type_().is_some() {
             return self.serialize_type_node(nodes, nodes[node].type_());
         } else if ast::is_async_function(&nodes[node]) {
-            return self.ec.borrow_mut().factory.new_identifier(nodes, "Promise");
+            return self
+                .ec
+                .borrow_mut()
+                .factory
+                .new_identifier(nodes, "Promise");
         }
         self.ec.borrow_mut().factory.new_void_zero_expression(nodes)
     }
@@ -293,28 +292,44 @@ impl<'a> MetadataSerializer<'a> {
 
         match nodes[node].kind {
             Kind::VoidKeyword | Kind::UndefinedKeyword | Kind::NeverKeyword => {
-                return self.ec.borrow_mut().factory.new_void_zero_expression(nodes)
+                return self.ec.borrow_mut().factory.new_void_zero_expression(nodes);
             }
             Kind::FunctionType | Kind::ConstructorType => {
-                return self.ec.borrow_mut().factory.new_identifier(nodes, "Function")
+                return self
+                    .ec
+                    .borrow_mut()
+                    .factory
+                    .new_identifier(nodes, "Function");
             }
             Kind::ArrayType | Kind::TupleType => {
-                return self.ec.borrow_mut().factory.new_identifier(nodes, "Array")
+                return self.ec.borrow_mut().factory.new_identifier(nodes, "Array");
             }
             Kind::TypePredicate => {
-                if nodes[node].as_type_predicate_node().asserts_modifier.is_some() {
+                if nodes[node]
+                    .as_type_predicate_node()
+                    .asserts_modifier
+                    .is_some()
+                {
                     return self.ec.borrow_mut().factory.new_void_zero_expression(nodes);
                 }
-                return self.ec.borrow_mut().factory.new_identifier(nodes, "Boolean");
+                return self
+                    .ec
+                    .borrow_mut()
+                    .factory
+                    .new_identifier(nodes, "Boolean");
             }
             Kind::BooleanKeyword => {
-                return self.ec.borrow_mut().factory.new_identifier(nodes, "Boolean")
+                return self
+                    .ec
+                    .borrow_mut()
+                    .factory
+                    .new_identifier(nodes, "Boolean");
             }
             Kind::TemplateLiteralType | Kind::StringKeyword => {
-                return self.ec.borrow_mut().factory.new_identifier(nodes, "String")
+                return self.ec.borrow_mut().factory.new_identifier(nodes, "String");
             }
             Kind::ObjectKeyword => {
-                return self.ec.borrow_mut().factory.new_identifier(nodes, "Object")
+                return self.ec.borrow_mut().factory.new_identifier(nodes, "Object");
             }
             Kind::LiteralType => {
                 if let Some(literal) = nodes[node].as_literal_type_node().literal {
@@ -322,11 +337,11 @@ impl<'a> MetadataSerializer<'a> {
                 }
             }
             Kind::NumberKeyword => {
-                return self.ec.borrow_mut().factory.new_identifier(nodes, "Number")
+                return self.ec.borrow_mut().factory.new_identifier(nodes, "Number");
             }
             Kind::BigIntKeyword => return self.serialize_big_int_constructor(nodes),
             Kind::SymbolKeyword => {
-                return self.ec.borrow_mut().factory.new_identifier(nodes, "Symbol")
+                return self.ec.borrow_mut().factory.new_identifier(nodes, "Symbol");
             }
             Kind::TypeReference => return self.serialize_type_reference_node(nodes, node),
             Kind::IntersectionType => {
@@ -454,8 +469,11 @@ impl<'a> MetadataSerializer<'a> {
             // anything more complex and we will just default to Object
             if let Some(serialized_type) = serialized_type {
                 // Different types
-                if !self.equate_serialized_type_nodes(nodes, serialized_type, serialized_constituent)
-                {
+                if !self.equate_serialized_type_nodes(
+                    nodes,
+                    serialized_type,
+                    serialized_constituent,
+                ) {
                     return self.ec.borrow_mut().factory.new_identifier(nodes, "Object");
                 }
             } else {
@@ -495,9 +513,11 @@ impl<'a> MetadataSerializer<'a> {
             }
             Kind::NumericLiteral => self.ec.borrow_mut().factory.new_identifier(nodes, "Number"),
             Kind::BigIntLiteral => self.serialize_big_int_constructor(nodes),
-            Kind::TrueKeyword | Kind::FalseKeyword => {
-                self.ec.borrow_mut().factory.new_identifier(nodes, "Boolean")
-            }
+            Kind::TrueKeyword | Kind::FalseKeyword => self
+                .ec
+                .borrow_mut()
+                .factory
+                .new_identifier(nodes, "Boolean"),
             Kind::NullKeyword => self.ec.borrow_mut().factory.new_void_zero_expression(nodes),
             _ => debug::fail_bad_syntax_kind!(&nodes[node]),
         }
@@ -533,10 +553,8 @@ impl<'a> MetadataSerializer<'a> {
                     return self.ec.borrow_mut().factory.new_identifier(nodes, "Object");
                 }
 
-                let serialized = self.serialize_entity_name_as_expression_fallback(
-                    nodes,
-                    type_name.unwrap_or(node),
-                );
+                let serialized = self
+                    .serialize_entity_name_as_expression_fallback(nodes, type_name.unwrap_or(node));
                 let temp = self.ec.borrow_mut().factory.new_temp_variable(nodes);
                 self.ec.borrow_mut().add_variable_declaration(nodes, temp);
                 let assignment = self
@@ -544,8 +562,11 @@ impl<'a> MetadataSerializer<'a> {
                     .borrow_mut()
                     .factory
                     .new_assignment_expression(nodes, temp, serialized);
-                let type_check =
-                    self.ec.borrow_mut().factory.new_type_check(nodes, assignment, "function");
+                let type_check = self
+                    .ec
+                    .borrow_mut()
+                    .factory
+                    .new_type_check(nodes, assignment, "function");
                 let question = self
                     .ec
                     .borrow_mut()
@@ -567,8 +588,9 @@ impl<'a> MetadataSerializer<'a> {
                 )
             }
 
-            TypeReferenceSerializationKind::TypeWithConstructSignatureAndValue => self
-                .serialize_entity_name_as_expression(nodes, type_name.unwrap_or(node)),
+            TypeReferenceSerializationKind::TypeWithConstructSignatureAndValue => {
+                self.serialize_entity_name_as_expression(nodes, type_name.unwrap_or(node))
+            }
 
             TypeReferenceSerializationKind::VoidNullableOrNeverType => {
                 self.ec.borrow_mut().factory.new_void_zero_expression(nodes)
@@ -578,9 +600,11 @@ impl<'a> MetadataSerializer<'a> {
                 self.serialize_big_int_constructor(nodes)
             }
 
-            TypeReferenceSerializationKind::BooleanType => {
-                self.ec.borrow_mut().factory.new_identifier(nodes, "Boolean")
-            }
+            TypeReferenceSerializationKind::BooleanType => self
+                .ec
+                .borrow_mut()
+                .factory
+                .new_identifier(nodes, "Boolean"),
 
             TypeReferenceSerializationKind::NumberLikeType => {
                 self.ec.borrow_mut().factory.new_identifier(nodes, "Number")
@@ -598,13 +622,17 @@ impl<'a> MetadataSerializer<'a> {
                 self.ec.borrow_mut().factory.new_identifier(nodes, "Symbol")
             }
 
-            TypeReferenceSerializationKind::TypeWithCallSignature => {
-                self.ec.borrow_mut().factory.new_identifier(nodes, "Function")
-            }
+            TypeReferenceSerializationKind::TypeWithCallSignature => self
+                .ec
+                .borrow_mut()
+                .factory
+                .new_identifier(nodes, "Function"),
 
-            TypeReferenceSerializationKind::Promise => {
-                self.ec.borrow_mut().factory.new_identifier(nodes, "Promise")
-            }
+            TypeReferenceSerializationKind::Promise => self
+                .ec
+                .borrow_mut()
+                .factory
+                .new_identifier(nodes, "Promise"),
 
             TypeReferenceSerializationKind::ObjectType => {
                 self.ec.borrow_mut().factory.new_identifier(nodes, "Object")
@@ -618,8 +646,11 @@ impl<'a> MetadataSerializer<'a> {
             return self.ec.borrow_mut().factory.new_identifier(nodes, "BigInt");
         }
         let big_int = self.ec.borrow_mut().factory.new_identifier(nodes, "BigInt");
-        let type_check =
-            self.ec.borrow_mut().factory.new_type_check(nodes, big_int, "function");
+        let type_check = self
+            .ec
+            .borrow_mut()
+            .factory
+            .new_type_check(nodes, big_int, "function");
         let question = self
             .ec
             .borrow_mut()
@@ -644,11 +675,7 @@ impl<'a> MetadataSerializer<'a> {
 
     /// `s.serializeEntityNameAsExpression` — serializes an entity name as an
     /// expression for decorator type metadata.
-    fn serialize_entity_name_as_expression(
-        &self,
-        nodes: &mut Vec<Node>,
-        node: NodeId,
-    ) -> NodeId {
+    fn serialize_entity_name_as_expression(&self, nodes: &mut Vec<Node>, node: NodeId) -> NodeId {
         match nodes[node].kind {
             Kind::Identifier => {
                 // Create a clone of the name with a new parent, and treat it
@@ -731,11 +758,11 @@ impl<'a> MetadataSerializer<'a> {
             temp,
             left_right.expect("fallback left has no right"),
         );
-        let strict_neq = self.ec.borrow_mut().factory.new_strict_inequality_expression(
-            nodes,
-            assigned,
-            void_zero,
-        );
+        let strict_neq = self
+            .ec
+            .borrow_mut()
+            .factory
+            .new_strict_inequality_expression(nodes, assigned, void_zero);
         let and1 = self.ec.borrow_mut().factory.new_logical_and_expression(
             nodes,
             left_left.expect("fallback left has no left"),
@@ -766,12 +793,7 @@ impl<'a> MetadataSerializer<'a> {
     /// `L` may not be declared. It's acceptable for this expression to result
     /// in `false` at runtime, as the result is intended to be further checked
     /// by any containing expression.
-    fn create_checked_value(
-        &self,
-        nodes: &mut Vec<Node>,
-        left: NodeId,
-        right: NodeId,
-    ) -> NodeId {
+    fn create_checked_value(&self, nodes: &mut Vec<Node>, left: NodeId, right: NodeId) -> NodeId {
         let typeof_expr = self
             .ec
             .borrow_mut()
@@ -782,11 +804,11 @@ impl<'a> MetadataSerializer<'a> {
             "undefined",
             ast::TokenFlags::NONE,
         );
-        let strict_neq = self.ec.borrow_mut().factory.new_strict_inequality_expression(
-            nodes,
-            typeof_expr,
-            undefined_lit,
-        );
+        let strict_neq = self
+            .ec
+            .borrow_mut()
+            .factory
+            .new_strict_inequality_expression(nodes, typeof_expr, undefined_lit);
         self.ec
             .borrow_mut()
             .factory
@@ -794,12 +816,7 @@ impl<'a> MetadataSerializer<'a> {
     }
 
     /// `s.equateSerializedTypeNodes`.
-    fn equate_serialized_type_nodes(
-        &self,
-        nodes: &[Node],
-        left: NodeId,
-        right: NodeId,
-    ) -> bool {
+    fn equate_serialized_type_nodes(&self, nodes: &[Node], left: NodeId, right: NodeId) -> bool {
         // temp vars used in fallback
         if crate::utilities::is_generated_identifier(&self.ec.borrow(), left) {
             return crate::utilities::is_generated_identifier(&self.ec.borrow(), right);
@@ -885,19 +902,11 @@ impl<'a> MetadataSerializer<'a> {
             }
             let (lk, ll, lr) = {
                 let d = nodes[left].as_binary_expression();
-                (
-                    d.operator_token.map(|t| nodes[t].kind),
-                    d.left,
-                    d.right,
-                )
+                (d.operator_token.map(|t| nodes[t].kind), d.left, d.right)
             };
             let (rk, rl, rr) = {
                 let d = nodes[right].as_binary_expression();
-                (
-                    d.operator_token.map(|t| nodes[t].kind),
-                    d.left,
-                    d.right,
-                )
+                (d.operator_token.map(|t| nodes[t].kind), d.left, d.right)
             };
             return lk == rk
                 && self.equate_option(nodes, ll, rl)
@@ -909,12 +918,7 @@ impl<'a> MetadataSerializer<'a> {
     /// Equates two nilable operands of `equateSerializedTypeNodes` (Go would
     /// call `.Kind`/`.Expression()` on nil — practically these are always
     /// populated when reached; `None == None` equates).
-    fn equate_option(
-        &self,
-        nodes: &[Node],
-        left: Option<NodeId>,
-        right: Option<NodeId>,
-    ) -> bool {
+    fn equate_option(&self, nodes: &[Node], left: Option<NodeId>, right: Option<NodeId>) -> bool {
         match (left, right) {
             (Some(l), Some(r)) => self.equate_serialized_type_nodes(nodes, l, r),
             (None, None) => true,

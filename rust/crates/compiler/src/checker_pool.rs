@@ -18,8 +18,8 @@ use rustc_hash::FxHashMap;
 
 use tsc_ast::NodeId;
 use tsc_ast::diagnostic::{
-    DiagnosticRef, compare_diagnostics, equal_diagnostics,
-    equal_diagnostics_no_related_info, lock_diagnostic,
+    DiagnosticRef, compare_diagnostics, equal_diagnostics, equal_diagnostics_no_related_info,
+    lock_diagnostic,
 };
 use tsc_checker::checker_core::Checker;
 use tsc_checker::checker_types::Program as CheckerProgram;
@@ -42,9 +42,7 @@ pub trait CheckerPoolProgram: CheckerProgram + 'static {
 /// `func SortAndDeduplicateDiagnostics` (program.go). Kept in this module —
 /// checkerpool.go is a caller and program.rs is ported separately; program.rs
 /// can re-export `crate::checker_pool::sort_and_deduplicate_diagnostics`.
-pub fn sort_and_deduplicate_diagnostics(
-    mut diagnostics: Vec<DiagnosticRef>,
-) -> Vec<DiagnosticRef> {
+pub fn sort_and_deduplicate_diagnostics(mut diagnostics: Vec<DiagnosticRef>) -> Vec<DiagnosticRef> {
     // `slices.Clone` is implicit — the caller hands ownership over.
     // `slices.SortFunc` is unstable pdqsort → `sort_unstable_by`.
     diagnostics.sort_unstable_by(|a, b| compare_diagnostics(a, b).cmp(&0));
@@ -55,9 +53,7 @@ pub fn sort_and_deduplicate_diagnostics(
 /// runs of diagnostics that differ only by related information, create a
 /// single diagnostic with sorted and deduplicated related information.
 /// Compacts in place like the Go slice version.
-fn compact_and_merge_related_infos(
-    mut diagnostics: Vec<DiagnosticRef>,
-) -> Vec<DiagnosticRef> {
+fn compact_and_merge_related_infos(mut diagnostics: Vec<DiagnosticRef>) -> Vec<DiagnosticRef> {
     if diagnostics.len() < 2 {
         return diagnostics;
     }
@@ -82,8 +78,7 @@ fn compact_and_merge_related_infos(
                 );
             }
             if !related_infos.is_empty() {
-                related_infos
-                    .sort_unstable_by(|a, b| compare_diagnostics(a, b).cmp(&0));
+                related_infos.sort_unstable_by(|a, b| compare_diagnostics(a, b).cmp(&0));
                 // `slices.CompactFunc` — consecutive dedup.
                 related_infos.dedup_by(|a, b| equal_diagnostics(a, b));
                 // `d.Clone().SetRelatedInfo(relatedInfos)`.
@@ -113,11 +108,7 @@ pub type DoneFn = Box<dyn FnOnce()>;
 /// PORT: `file *ast.SourceFile` is `Option<NodeId>` (Go nil-able).
 pub trait CheckerPool {
     /// `GetChecker(ctx, file)`.
-    fn get_checker(
-        &self,
-        ctx: Context,
-        file: Option<NodeId>,
-    ) -> (Rc<RefCell<Checker>>, DoneFn);
+    fn get_checker(&self, ctx: Context, file: Option<NodeId>) -> (Rc<RefCell<Checker>>, DoneFn);
 }
 
 pub const CHECKER_ASSOCIATION_TEXT_WEIGHT_DIVISOR: i64 = 100;
@@ -187,12 +178,10 @@ pub fn get_checker_associations_in_order(
     let mut associations = vec![-1i32; file_weights.len()];
     let mut checker_weights = vec![0i64; checker_count];
     let average_checker_weight = (total_weight + checker_count as i64 - 1) / checker_count as i64;
-    let max_checker_weight = max_file_weight
-        .max(average_checker_weight + average_checker_weight / 100);
+    let max_checker_weight =
+        max_file_weight.max(average_checker_weight + average_checker_weight / 100);
     let total_weight_float = total_weight as f64;
-    let alpha = penalty_multiplier as f64
-        * (edge_count / 2) as f64
-        * (checker_count as f64).sqrt()
+    let alpha = penalty_multiplier as f64 * (edge_count / 2) as f64 * (checker_count as f64).sqrt()
         / (total_weight_float * total_weight_float.sqrt());
     let mut neighbor_counts = vec![0i64; checker_count];
 
@@ -224,8 +213,7 @@ pub fn get_checker_associations_in_order(
             let score = neighbor_counts[checker_index] as f64 - penalty;
             if score > best_score
                 || score == best_score
-                    && (best_checker < 0
-                        || checker_weight < checker_weights[best_checker as usize])
+                    && (best_checker < 0 || checker_weight < checker_weights[best_checker as usize])
             {
                 best_checker = checker_index as i32;
                 best_score = score;
@@ -326,9 +314,7 @@ pub struct CompilerCheckerPool<P: CheckerPoolProgram> {
 }
 
 /// `newCheckerPool`.
-pub fn new_checker_pool<P: CheckerPoolProgram>(
-    program: &Rc<P>,
-) -> CompilerCheckerPool<P> {
+pub fn new_checker_pool<P: CheckerPoolProgram>(program: &Rc<P>) -> CompilerCheckerPool<P> {
     new_checker_pool_with_tracing(program, None)
 }
 
@@ -378,10 +364,7 @@ impl<P: CheckerPoolProgram> CompilerCheckerPool<P> {
         let program_trait: Rc<dyn CheckerProgram> = program.clone();
         let mut checkers = Vec::with_capacity(checker_count);
         for i in 0..checker_count {
-            let tracer = self
-                .tracing
-                .as_ref()
-                .map(|tr| Tracer::new(tr, i as i32));
+            let tracer = self.tracing.as_ref().map(|tr| Tracer::new(tr, i as i32));
             checkers.push(Rc::new(RefCell::new(Checker::new_checker(
                 program_trait.clone(),
                 tracer,
@@ -399,10 +382,8 @@ impl<P: CheckerPoolProgram> CompilerCheckerPool<P> {
             for &file in files.iter() {
                 let nodes = program.nodes(file.file_index());
                 let sf = nodes[file].as_source_file();
-                let base_weight = get_checker_association_base_weight(
-                    sf.node_count as i64,
-                    sf.text.len() as i64,
-                );
+                let base_weight =
+                    get_checker_association_base_weight(sf.node_count as i64, sf.text.len() as i64);
                 total_base_weight += base_weight;
                 if sf.is_declaration_file {
                     declaration_base_weight += base_weight;
@@ -441,10 +422,8 @@ impl<P: CheckerPoolProgram> CompilerCheckerPool<P> {
                 policy.balance_penalty_multiplier,
             );
         }
-        let mut file_associations = FxHashMap::with_capacity_and_hasher(
-            files.len(),
-            Default::default(),
-        );
+        let mut file_associations =
+            FxHashMap::with_capacity_and_hasher(files.len(), Default::default());
         for (i, &file) in files.iter().enumerate() {
             file_associations.insert(file, associations[i] as usize);
         }
@@ -455,11 +434,8 @@ impl<P: CheckerPoolProgram> CompilerCheckerPool<P> {
     /// `getImportAdjacency` — an undirected import graph by file index.
     fn get_import_adjacency(&self, program: &Rc<P>) -> Vec<Vec<usize>> {
         let files = program.source_files();
-        let file_indices: FxHashMap<NodeId, usize> = files
-            .iter()
-            .enumerate()
-            .map(|(i, &f)| (f, i))
-            .collect();
+        let file_indices: FxHashMap<NodeId, usize> =
+            files.iter().enumerate().map(|(i, &f)| (f, i)).collect();
         let mut adjacent_files: Vec<Vec<usize>> = vec![Vec::new(); files.len()];
         for (file_index, &file) in files.iter().enumerate() {
             let path_key = {
@@ -588,11 +564,7 @@ impl<P: CheckerPoolProgram> CompilerCheckerPool<P> {
 impl<P: CheckerPoolProgram> CheckerPool for CompilerCheckerPool<P> {
     /// `GetChecker` — with a file, returns the checker associated with it;
     /// without, returns the first checker.
-    fn get_checker(
-        &self,
-        ctx: Context,
-        file: Option<NodeId>,
-    ) -> (Rc<RefCell<Checker>>, DoneFn) {
+    fn get_checker(&self, ctx: Context, file: Option<NodeId>) -> (Rc<RefCell<Checker>>, DoneFn) {
         match file {
             Some(file) => self.get_checker_for_file_exclusive(ctx, file),
             None => {
@@ -678,7 +650,8 @@ mod tests {
                 checker_count: 4,
                 want: CheckerAssociationPolicy {
                     prioritize_source_files: false,
-                    source_file_weight_multiplier: CHECKER_ASSOCIATION_SOURCE_FILE_WEIGHT_MULTIPLIER,
+                    source_file_weight_multiplier:
+                        CHECKER_ASSOCIATION_SOURCE_FILE_WEIGHT_MULTIPLIER,
                     balance_penalty_multiplier: CHECKER_ASSOCIATION_BALANCE_PENALTY_MULTIPLIER,
                 },
             },
@@ -696,16 +669,9 @@ mod tests {
     /// `TestGetCheckerAssociationOrder`.
     #[test]
     fn test_get_checker_association_order() {
-        let got = get_checker_association_order(
-            &[5, 10, 7, 2],
-            &[true, false, false, true],
-            true,
-        );
+        let got = get_checker_association_order(&[5, 10, 7, 2], &[true, false, false, true], true);
         assert_eq!(got, Some(vec![1, 2, 0, 3]));
-        assert_eq!(
-            get_checker_association_order(&[5], &[false], false),
-            None
-        );
+        assert_eq!(get_checker_association_order(&[5], &[false], false), None);
     }
 
     /// `TestGetCheckerAssociationWeights`.
@@ -732,8 +698,7 @@ mod tests {
             },
         ];
         for test in &tests {
-            let got =
-                get_checker_association_weights(test.base_weights, test.import_counts);
+            let got = get_checker_association_weights(test.base_weights, test.import_counts);
             assert_eq!(
                 got.as_slice(),
                 test.want,
@@ -774,13 +739,8 @@ mod tests {
     /// `TestGetCheckerAssociations`/`"uses program order"`.
     #[test]
     fn test_get_checker_associations_uses_program_order() {
-        let got = get_checker_associations_in_order(
-            &[1, 3, 2],
-            &[vec![], vec![], vec![]],
-            None,
-            2,
-            1,
-        );
+        let got =
+            get_checker_associations_in_order(&[1, 3, 2], &[vec![], vec![], vec![]], None, 2, 1);
         assert_eq!(got, vec![0, 1, 0]);
     }
 
@@ -795,13 +755,7 @@ mod tests {
             vec![3, 5],
             vec![3, 4],
         ];
-        let got = get_checker_associations_in_order(
-            &[1, 1, 1, 1, 1, 1],
-            &adjacent,
-            None,
-            2,
-            1,
-        );
+        let got = get_checker_associations_in_order(&[1, 1, 1, 1, 1, 1], &adjacent, None, 2, 1);
         assert_eq!(got, vec![0, 0, 0, 1, 1, 1]);
     }
 

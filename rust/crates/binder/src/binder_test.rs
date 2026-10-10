@@ -17,7 +17,7 @@ use tsc_tspath::{PathKey, RootedFilePath};
 
 use crate::binder::{bind_result, bind_source_file};
 
-fn parse_and_bind(source: &str, file_name: &str) -> (NodeId, Vec<Node>) {
+fn parse_and_bind(source: &str, file_name: &str) -> (NodeId, Vec<Node>, Vec<tsc_ast::Symbol>) {
     let file_name = RootedFilePath::from(file_name);
     let opts = SourceFileParseOptions {
         file_name,
@@ -25,15 +25,16 @@ fn parse_and_bind(source: &str, file_name: &str) -> (NodeId, Vec<Node>) {
         ..Default::default()
     };
     let (file, mut nodes) = parse_source_file(opts, source, ScriptKind::Ts);
-    bind_source_file(&mut nodes, file);
-    (file, nodes)
+    let mut symbols = Vec::new();
+    bind_source_file(&mut nodes, file, &mut symbols);
+    (file, nodes, symbols)
 }
 
 /// Binding a small module declares symbols into file locals and marks the
 //  external module indicator.
 #[test]
 fn bind_declares_symbols_and_module_indicator() {
-    let (file, nodes) = parse_and_bind(
+    let (file, nodes, symbols) = parse_and_bind(
         "import {x} from \"./m\";\nexport const y = x + 1;\nfunction foo() { return y; }\n",
         "/src/test.ts",
     );
@@ -53,23 +54,19 @@ fn bind_declares_symbols_and_module_indicator() {
 
     // The bound symbol arena and flow graph are retrievable.
     let result = bind_result(&nodes, file).expect("bind result");
-    assert!(!result.symbols.is_empty());
+    assert!(!symbols.is_empty());
     assert!(!result.flow_nodes.is_empty());
     let foo = *locals.get("foo").unwrap();
-    assert!(
-        result.symbols[foo.index()]
-            .flags
-            .intersects(SymbolFlags::FUNCTION)
-    );
-    assert_eq!(result.symbols[foo.index()].declarations.len(), 1);
+    assert!(symbols[foo.index()].flags.intersects(SymbolFlags::FUNCTION));
+    assert_eq!(symbols[foo.index()].declarations.len(), 1);
 }
 
 /// Re-binding a bound file is a no-op (`bind_once`).
 #[test]
 fn bind_is_idempotent() {
-    let (file, mut nodes) = parse_and_bind("export const a = 1;", "/src/a.ts");
+    let (file, mut nodes, _symbols) = parse_and_bind("export const a = 1;", "/src/a.ts");
     let result_ptr = bind_result(&nodes, file).expect("bind result") as *const _;
-    bind_source_file(&mut nodes, file);
+    bind_source_file(&mut nodes, file, &mut Vec::new());
     assert_eq!(
         bind_result(&nodes, file).expect("bind result") as *const _,
         result_ptr,
@@ -84,7 +81,7 @@ fn bind_builds_function_flow() {
     // `if (b) return 1;` leaves a fall-through path, so the function gets both
     // HAS_IMPLICIT_RETURN and HAS_EXPLICIT_RETURN (Go sets both only when the
     // end flow is reachable and hasExplicitReturn).
-    let (file, nodes) = parse_and_bind(
+    let (file, nodes, symbols) = parse_and_bind(
         "export function f(b: boolean) { if (b) { return 1; } }",
         "/src/flow.ts",
     );
@@ -94,7 +91,7 @@ fn bind_builds_function_flow() {
     // Find the function declaration and check reachability flags.
     let locals = nodes[file].locals().expect("locals");
     let f = *locals.get("f").expect("f symbol");
-    let decl = result.symbols[f.index()].declarations[0];
+    let decl = symbols[f.index()].declarations[0];
     assert!(nodes[decl].flags.intersects(NodeFlags::HAS_IMPLICIT_RETURN));
     assert!(nodes[decl].flags.intersects(NodeFlags::HAS_EXPLICIT_RETURN));
     assert!(
@@ -111,7 +108,7 @@ fn bind_builds_function_flow() {
 /// Strict-mode grammar check: `with` inside a module is a bind diagnostic.
 #[test]
 fn bind_reports_strict_mode_with() {
-    let (file, nodes) = parse_and_bind(
+    let (file, nodes, _symbols) = parse_and_bind(
         "export {};\ndeclare const o: any;\nwith (o) { console.log(1); }",
         "/src/strict.ts",
     );
@@ -126,7 +123,8 @@ fn bind_reports_strict_mode_with() {
 /// `FindUseStrictPrologue` port check.
 #[test]
 fn find_use_strict_prologue_detects_directive() {
-    let (file, nodes) = parse_and_bind("\"use strict\";\nexport const a = 1;", "/src/prologue.ts");
+    let (file, nodes, _symbols) =
+        parse_and_bind("\"use strict\";\nexport const a = 1;", "/src/prologue.ts");
     let statements = nodes[file].statements().expect("statements");
     let prologue =
         crate::binder::find_use_strict_prologue(nodes[file].as_source_file(), statements, &nodes);

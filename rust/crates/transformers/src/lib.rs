@@ -21,8 +21,8 @@ pub mod inliners;
 pub mod jsxtransforms;
 mod modifier_visitor;
 pub mod moduletransforms;
-pub mod tstransforms;
 mod transformer;
+pub mod tstransforms;
 mod utilities;
 
 pub use chain::*;

@@ -98,8 +98,8 @@ fn is_hash_private(c: &Checker, s: SymbolId) -> bool {
     let Some(vd) = symbol_value_declaration(c, s) else {
         return false;
     };
-        let __program = c.program.clone().expect("program");
-    let dn = __program.nodes((vd).file_index());;
+    let __program = c.program.clone().expect("program");
+    let dn = __program.nodes((vd).file_index());
     dn[vd]
         .name()
         .is_some_and(|n| ast::is_private_identifier(&dn[n]))
@@ -128,8 +128,14 @@ fn type_elements_to_class_elements(
                         ps.type_,
                     )
                 };
-                members[i] =
-                    f.new_property_declaration(nodes, modifiers, name, postfix_token, type_node, None);
+                members[i] = f.new_property_declaration(
+                    nodes,
+                    modifiers,
+                    name,
+                    postfix_token,
+                    type_node,
+                    None,
+                );
             }
             Kind::MethodSignature => {
                 let (modifiers, name, postfix_token, type_parameters, parameters, type_node) = {
@@ -203,7 +209,8 @@ impl<'a> NodeBuilderImpl<'a> {
         {
             results.push(node);
         }
-        if flags.intersects(SymbolFlags::INTERFACE) && !flags.intersects(SymbolFlags::CLASS)
+        if flags.intersects(SymbolFlags::INTERFACE)
+            && !flags.intersects(SymbolFlags::CLASS)
             && let Some(node) = self.expand_interface_decl(c, nodes, symbol)
         {
             results.push(node);
@@ -234,9 +241,9 @@ impl<'a> NodeBuilderImpl<'a> {
             if self.check_truncation_length_if_expanding() && i + 3 < member_props.len() - 1 {
                 self.ctx.expansion_truncated = true;
                 let text = format!(" ... {} more ... ", member_props.len() - i - 1);
-                let text_lit =
-                    self.f
-                        .new_string_literal(nodes, &text, ast::TokenFlags::NONE);
+                let text_lit = self
+                    .f
+                    .new_string_literal(nodes, &text, ast::TokenFlags::NONE);
                 members.push(self.f.new_enum_member(nodes, Some(text_lit), None));
                 let last = member_props[member_props.len() - 1];
                 let last_name = symbol_name(c, last);
@@ -245,18 +252,15 @@ impl<'a> NodeBuilderImpl<'a> {
                 members.push(self.f.new_enum_member(nodes, Some(last_name_id), init));
                 break;
             }
-            let member_decl = symbol_declarations(c, p)
-                .iter()
-                .copied()
-                .find(|&d| {
-                                        let __program = c.program.clone().expect("program");
-                    let dn = __program.nodes((d).file_index());;
-                    ast::is_enum_member(&dn[d])
-                });
+            let member_decl = symbol_declarations(c, p).iter().copied().find(|&d| {
+                let __program = c.program.clone().expect("program");
+                let dn = __program.nodes((d).file_index());
+                ast::is_enum_member(&dn[d])
+            });
             let initializer = if let Some(member_decl) = member_decl {
                 let decl_init = {
-                                        let __program = c.program.clone().expect("program");
-                    let dn = __program.nodes((member_decl).file_index());;
+                    let __program = c.program.clone().expect("program");
+                    let dn = __program.nodes((member_decl).file_index());
                     dn[member_decl].as_enum_member().initializer
                 };
                 match decl_init {
@@ -292,7 +296,10 @@ impl<'a> NodeBuilderImpl<'a> {
         };
         let name_id = self.f.new_identifier(nodes, &name);
         let member_list = self.f.new_node_list(members);
-        Some(self.f.new_enum_declaration(nodes, mods, Some(name_id), Some(member_list)))
+        Some(
+            self.f
+                .new_enum_declaration(nodes, mods, Some(name_id), Some(member_list)),
+        )
     }
 
     /// `(b *NodeBuilderImpl) enumMemberInitializer`.
@@ -302,22 +309,21 @@ impl<'a> NodeBuilderImpl<'a> {
         nodes: &mut Vec<ast::Node>,
         p: SymbolId,
     ) -> Option<NodeId> {
-        let member_decl = symbol_declarations(c, p)
-            .iter()
-            .copied()
-            .find(|&d| {
-                                let __program = c.program.clone().expect("program");
-                let dn = __program.nodes((d).file_index());;
-                ast::is_enum_member(&dn[d])
-            })?;
+        let member_decl = symbol_declarations(c, p).iter().copied().find(|&d| {
+            let __program = c.program.clone().expect("program");
+            let dn = __program.nodes((d).file_index());
+            ast::is_enum_member(&dn[d])
+        })?;
         let val = c.get_constant_value(member_decl)?;
         match val {
             evaluator::Value::String(s) => {
                 Some(self.f.new_string_literal(nodes, &s, ast::TokenFlags::NONE))
             }
-            evaluator::Value::Number(n) => {
-                Some(self.f.new_numeric_literal(nodes, &n.string(), ast::TokenFlags::NONE))
-            }
+            evaluator::Value::Number(n) => Some(self.f.new_numeric_literal(
+                nodes,
+                &n.string(),
+                ast::TokenFlags::NONE,
+            )),
             _ => None,
         }
     }
@@ -336,8 +342,8 @@ impl<'a> NodeBuilderImpl<'a> {
         let class_like_declarations: Vec<NodeId> = symbol_declarations(c, symbol)
             .into_iter()
             .filter(|&d| {
-                                let __program = c.program.clone().expect("program");
-                let dn = __program.nodes((d).file_index());;
+                let __program = c.program.clone().expect("program");
+                let dn = __program.nodes((d).file_index());
                 ast::is_class_like(Some(d), &dn)
             })
             .collect();
@@ -348,8 +354,7 @@ impl<'a> NodeBuilderImpl<'a> {
         }
         // Go `defer`: restore `ctx.enclosing_declaration` at the end.
 
-        let local_params =
-            c.get_local_type_parameters_of_class_or_interface_or_type_alias(symbol);
+        let local_params = c.get_local_type_parameters_of_class_or_interface_or_type_alias(symbol);
         let type_param_decls: Vec<NodeId> = local_params
             .iter()
             .map(|&p| self.type_parameter_to_declaration(c, nodes, p))
@@ -362,8 +367,8 @@ impl<'a> NodeBuilderImpl<'a> {
         let is_class = type_symbol(c, static_type)
             .and_then(|s| symbol_value_declaration(c, s))
             .is_some_and(|vd| {
-                                let __program = c.program.clone().expect("program");
-                let dn = __program.nodes((vd).file_index());;
+                let __program = c.program.clone().expect("program");
+                let dn = __program.nodes((vd).file_index());
                 ast::is_class_like(Some(vd), &dn)
             });
         let static_base_type = if is_class {
@@ -373,15 +378,13 @@ impl<'a> NodeBuilderImpl<'a> {
         };
 
         // Heritage clauses
-        let heritage_clauses =
-            self.hover_heritage_clauses(c, nodes, &class_like_declarations);
+        let heritage_clauses = self.hover_heritage_clauses(c, nodes, &class_like_declarations);
 
         // Instance members via addPropertyToElementList (reusing existing
         // serialization), then convert TypeElements to ClassElements and add
         // class-specific modifiers
         let all_props = c.get_properties_of_type(class_type);
-        let symbol_props =
-            self.filter_inherited_properties(c, class_type, &base_types, all_props);
+        let symbol_props = self.filter_inherited_properties(c, class_type, &base_types, all_props);
         let public_props: Vec<SymbolId> = symbol_props
             .iter()
             .copied()
@@ -533,13 +536,12 @@ impl<'a> NodeBuilderImpl<'a> {
         let interface_declarations: Vec<NodeId> = symbol_declarations(c, symbol)
             .into_iter()
             .filter(|&d| {
-                                let __program = c.program.clone().expect("program");
-                let dn = __program.nodes((d).file_index());;
+                let __program = c.program.clone().expect("program");
+                let dn = __program.nodes((d).file_index());
                 ast::is_interface_declaration(&dn[d])
             })
             .collect();
-        let local_params =
-            c.get_local_type_parameters_of_class_or_interface_or_type_alias(symbol);
+        let local_params = c.get_local_type_parameters_of_class_or_interface_or_type_alias(symbol);
         let type_param_decls: Vec<NodeId> = local_params
             .iter()
             .map(|&p| self.type_parameter_to_declaration(c, nodes, p))
@@ -554,7 +556,8 @@ impl<'a> NodeBuilderImpl<'a> {
         // Members: reuse existing serialization functions
         let resolved = c.resolve_structured_type_members(interface_type);
         let (construct_signatures, call_signatures, resolved_properties) = {
-            let __arena_guard = c.types.clone(); let guard = __arena_guard.get(resolved);
+            let __arena_guard = c.types.clone();
+            let guard = __arena_guard.get(resolved);
             let st = guard.as_structured_type().expect("structured type");
             (
                 st.construct_signatures().to_vec(),
@@ -625,8 +628,8 @@ impl<'a> NodeBuilderImpl<'a> {
         let mut implements_types: Vec<NodeId> = Vec::new();
         for &declaration in declarations {
             let extends: Vec<NodeId> = {
-                                let __program = c.program.clone().expect("program");
-                let dn = __program.nodes((declaration).file_index());;
+                let __program = c.program.clone().expect("program");
+                let dn = __program.nodes((declaration).file_index());
                 ast::get_extends_heritage_clause_elements(&dn[declaration], &dn)
                     .map(|els| els.to_vec())
                     .unwrap_or_default()
@@ -637,8 +640,8 @@ impl<'a> NodeBuilderImpl<'a> {
                 }
             }
             let implements: Vec<NodeId> = {
-                                let __program = c.program.clone().expect("program");
-                let dn = __program.nodes((declaration).file_index());;
+                let __program = c.program.clone().expect("program");
+                let dn = __program.nodes((declaration).file_index());
                 ast::get_implements_heritage_clause_elements(&dn[declaration], &dn)
                     .map(|els| els.to_vec())
                     .unwrap_or_default()
@@ -653,13 +656,19 @@ impl<'a> NodeBuilderImpl<'a> {
         let mut heritage_clauses: Vec<NodeId> = Vec::new();
         if !extends_types.is_empty() {
             let type_list = self.f.new_node_list(extends_types);
-            heritage_clauses
-                .push(self.f.new_heritage_clause(nodes, Kind::ExtendsKeyword, Some(type_list)));
+            heritage_clauses.push(self.f.new_heritage_clause(
+                nodes,
+                Kind::ExtendsKeyword,
+                Some(type_list),
+            ));
         }
         if !implements_types.is_empty() {
             let type_list = self.f.new_node_list(implements_types);
-            heritage_clauses
-                .push(self.f.new_heritage_clause(nodes, Kind::ImplementsKeyword, Some(type_list)));
+            heritage_clauses.push(self.f.new_heritage_clause(
+                nodes,
+                Kind::ImplementsKeyword,
+                Some(type_list),
+            ));
         }
         heritage_clauses
     }
@@ -720,19 +729,18 @@ impl<'a> NodeBuilderImpl<'a> {
     ) -> Vec<NodeId> {
         let is_non_constructable = !is_class
             && symbol_value_declaration(c, symbol).is_some_and(|vd| {
-                                let __program = c.program.clone().expect("program");
-                let dn = __program.nodes((vd).file_index());;
+                let __program = c.program.clone().expect("program");
+                let dn = __program.nodes((vd).file_index());
                 ast::is_in_js_file(Some(vd), &dn)
             })
-            && c
-                .get_signatures_of_type(static_type, SignatureKind::Construct)
+            && c.get_signatures_of_type(static_type, SignatureKind::Construct)
                 .is_empty();
         if is_non_constructable {
             self.ctx.approximate_length += 21;
-            let modifiers = ast::create_modifiers_from_modifier_flags(
-                ModifierFlags::PRIVATE,
-                &mut |kind| self.f.new_token(nodes, kind),
-            );
+            let modifiers =
+                ast::create_modifiers_from_modifier_flags(ModifierFlags::PRIVATE, &mut |kind| {
+                    self.f.new_token(nodes, kind)
+                });
             let modifier_list = self.f.new_modifier_list(nodes, modifiers);
             let params = self.f.new_node_list(Vec::new());
             return vec![self.f.new_constructor_declaration(
@@ -747,8 +755,7 @@ impl<'a> NodeBuilderImpl<'a> {
         }
         let signatures = c.get_signatures_of_type(static_type, SignatureKind::Construct);
         if let Some(static_base_type) = static_base_type {
-            let base_sigs =
-                c.get_signatures_of_type(static_base_type, SignatureKind::Construct);
+            let base_sigs = c.get_signatures_of_type(static_base_type, SignatureKind::Construct);
             if base_sigs.is_empty()
                 && signatures
                     .iter()
@@ -779,18 +786,17 @@ impl<'a> NodeBuilderImpl<'a> {
             let mut private_protected = ModifierFlags::NONE;
             for &sig in &signatures {
                 if let Some(decl) = c.signature_arena.get(sig).declaration {
-                                        let __program = c.program.clone().expect("program");
-                    let dn = __program.nodes((decl).file_index());;
-                    private_protected |= dn[decl]
-                        .modifier_flags()
+                    let __program = c.program.clone().expect("program");
+                    let dn = __program.nodes((decl).file_index());
+                    private_protected |= dn[decl].modifier_flags()
                         & (ModifierFlags::PRIVATE | ModifierFlags::PROTECTED);
                 }
             }
             if !private_protected.is_empty() {
-                let modifiers = ast::create_modifiers_from_modifier_flags(
-                    private_protected,
-                    &mut |kind| self.f.new_token(nodes, kind),
-                );
+                let modifiers =
+                    ast::create_modifiers_from_modifier_flags(private_protected, &mut |kind| {
+                        self.f.new_token(nodes, kind)
+                    });
                 let modifier_list = self.f.new_modifier_list(nodes, modifiers);
                 let params = self.f.new_node_list(Vec::new());
                 return vec![self.f.new_constructor_declaration(
@@ -849,9 +855,8 @@ impl<'a> NodeBuilderImpl<'a> {
                     }
                 }
             }
-            result.push(self.index_info_to_index_signature_declaration_helper(
-                c, nodes, &info, None,
-            ));
+            result
+                .push(self.index_info_to_index_signature_declaration_helper(c, nodes, &info, None));
         }
         result
     }
@@ -883,23 +888,15 @@ impl<'a> NodeBuilderImpl<'a> {
             let t = c.get_widened_type(member_type);
             self.ctx.approximate_length += name.len() as i32 + 5;
             let name_id = self.f.new_identifier(nodes, name);
-            let type_node = self.serialize_type_for_declaration(
-                c,
-                nodes,
-                None,
-                Some(t),
-                Some(resolved),
-                true,
-            );
+            let type_node =
+                self.serialize_type_for_declaration(c, nodes, None, Some(t), Some(resolved), true);
             let decl =
                 self.f
                     .new_variable_declaration(nodes, Some(name_id), None, Some(type_node), None);
             let decl_list = self.f.new_node_list(vec![decl]);
-            let var_list = self.f.new_variable_declaration_list(
-                nodes,
-                Some(decl_list),
-                ast::NodeFlags::LET,
-            );
+            let var_list =
+                self.f
+                    .new_variable_declaration_list(nodes, Some(decl_list), ast::NodeFlags::LET);
             Some(self.f.new_variable_statement(nodes, None, Some(var_list)))
         }
     }
@@ -998,8 +995,7 @@ impl<'a> NodeBuilderImpl<'a> {
                             Some(decl_list),
                             ast::NodeFlags::LET,
                         );
-                        let local_stmt =
-                            self.f.new_variable_statement(nodes, None, Some(var_list));
+                        let local_stmt = self.f.new_variable_statement(nodes, None, Some(var_list));
                         body_stmts.push(HoverStatement {
                             node: local_stmt,
                             is_local: true,
@@ -1014,12 +1010,9 @@ impl<'a> NodeBuilderImpl<'a> {
                     };
                     let m_name = symbol_name(c, m);
                     let m_name_id = self.f.new_identifier(nodes, &m_name);
-                    let specifier = self.f.new_export_specifier(
-                        nodes,
-                        false,
-                        property_name,
-                        Some(m_name_id),
-                    );
+                    let specifier =
+                        self.f
+                            .new_export_specifier(nodes, false, property_name, Some(m_name_id));
                     let named_list = self.f.new_node_list(vec![specifier]);
                     let named_exports = self.f.new_named_exports(nodes, Some(named_list));
                     let stmt = self.f.new_export_declaration(
@@ -1042,9 +1035,7 @@ impl<'a> NodeBuilderImpl<'a> {
             let resolved = c.resolve_symbol(m);
 
             // Handle functions as function declarations
-            if symbol_flags(c, resolved)
-                .intersects(SymbolFlags::FUNCTION | SymbolFlags::METHOD)
-            {
+            if symbol_flags(c, resolved).intersects(SymbolFlags::FUNCTION | SymbolFlags::METHOD) {
                 let t = c.get_type_of_symbol(resolved);
                 let sigs = c.get_signatures_of_type(t, SignatureKind::Call);
                 for sig in sigs {
@@ -1075,8 +1066,9 @@ impl<'a> NodeBuilderImpl<'a> {
                 if !has_module_exports {
                     let m_name = symbol_name(c, m);
                     let name_id = self.f.new_identifier(nodes, &m_name);
-                    let empty_block =
-                        self.f.new_module_block(nodes, Some(self.f.new_node_list(Vec::new())));
+                    let empty_block = self
+                        .f
+                        .new_module_block(nodes, Some(self.f.new_node_list(Vec::new())));
                     let decl = self.f.new_module_declaration(
                         nodes,
                         None,
@@ -1114,10 +1106,9 @@ impl<'a> NodeBuilderImpl<'a> {
             }
             if ast::can_have_modifiers(&nodes[stmt.node]) {
                 let mf = nodes[stmt.node].modifier_flags() | ModifierFlags::EXPORT;
-                let modifiers =
-                    ast::create_modifiers_from_modifier_flags(mf, &mut |kind| {
-                        self.f.new_token(nodes, kind)
-                    });
+                let modifiers = ast::create_modifiers_from_modifier_flags(mf, &mut |kind| {
+                    self.f.new_token(nodes, kind)
+                });
                 let modifier_list = self.f.new_modifier_list(nodes, modifiers);
                 if let Some(updated) =
                     ast::replace_modifiers(&mut self.f, nodes, stmt.node, Some(modifier_list))
@@ -1130,17 +1121,16 @@ impl<'a> NodeBuilderImpl<'a> {
         // Collect nodes, stripping export if all statements are exported.
         let mut body_statements: Vec<NodeId> = body_stmts.iter().map(|s| s.node).collect();
         let all_exported = !body_statements.is_empty()
-            && body_statements.iter().all(|&d| {
-                ast::has_syntactic_modifier(&nodes[d], ModifierFlags::EXPORT)
-            });
+            && body_statements
+                .iter()
+                .all(|&d| ast::has_syntactic_modifier(&nodes[d], ModifierFlags::EXPORT));
         if all_exported {
             for stmt in body_statements.iter_mut() {
                 if ast::can_have_modifiers(&nodes[*stmt]) {
                     let mf = nodes[*stmt].modifier_flags().without(ModifierFlags::EXPORT);
-                    let modifiers =
-                        ast::create_modifiers_from_modifier_flags(mf, &mut |kind| {
-                            self.f.new_token(nodes, kind)
-                        });
+                    let modifiers = ast::create_modifiers_from_modifier_flags(mf, &mut |kind| {
+                        self.f.new_token(nodes, kind)
+                    });
                     let modifier_list = self.f.new_modifier_list(nodes, modifiers);
                     if let Some(updated) =
                         ast::replace_modifiers(&mut self.f, nodes, *stmt, Some(modifier_list))
@@ -1161,17 +1151,14 @@ impl<'a> NodeBuilderImpl<'a> {
             .iter()
             .copied()
             .find(|&declaration| {
-                                let __program = c.program.clone().expect("program");
-                let dn = __program.nodes((declaration).file_index());;
+                let __program = c.program.clone().expect("program");
+                let dn = __program.nodes((declaration).file_index());
                 ast::is_module_declaration(&dn[declaration])
-                    && dn[declaration]
-                        .as_module_declaration()
-                        .attributes
-                        .is_some()
+                    && dn[declaration].as_module_declaration().attributes.is_some()
             })
             .and_then(|declaration| {
-                                let __program = c.program.clone().expect("program");
-                let dn = __program.nodes((declaration).file_index());;
+                let __program = c.program.clone().expect("program");
+                let dn = __program.nodes((declaration).file_index());
                 dn[declaration].as_module_declaration().attributes
             });
         if let Some(attr) = attributes_source {
@@ -1182,8 +1169,9 @@ impl<'a> NodeBuilderImpl<'a> {
                     .set_emit_flags(a, printer::EmitFlags::SINGLE_LINE);
             }
         }
-        let module_block =
-            self.f.new_module_block(nodes, Some(self.f.new_node_list(body_statements)));
+        let module_block = self
+            .f
+            .new_module_block(nodes, Some(self.f.new_node_list(body_statements)));
         Some(self.f.new_module_declaration(
             nodes,
             None,
@@ -1204,8 +1192,7 @@ impl<'a> NodeBuilderImpl<'a> {
         name: &str,
     ) -> Option<NodeId> {
         let alias_type = c.get_declared_type_of_type_alias(symbol);
-        let type_params =
-            c.get_local_type_parameters_of_class_or_interface_or_type_alias(symbol);
+        let type_params = c.get_local_type_parameters_of_class_or_interface_or_type_alias(symbol);
         let type_param_decls: Vec<NodeId> = type_params
             .iter()
             .map(|&p| self.type_parameter_to_declaration(c, nodes, p))
@@ -1250,7 +1237,8 @@ impl<'a> NodeBuilderImpl<'a> {
         for &base in base_types {
             let this_type = {
                 let target = c.get_target_type(t);
-                c.types_handle().get(target)
+                c.types_handle()
+                    .get(target)
                     .as_interface_type()
                     .and_then(|i| i.this_type())
             };
@@ -1283,8 +1271,8 @@ impl<'a> NodeBuilderImpl<'a> {
             return false;
         }
         if let Some(vd) = symbol_value_declaration(c, p) {
-                        let __program = c.program.clone().expect("program");
-            let dn = __program.nodes((vd).file_index());;
+            let __program = c.program.clone().expect("program");
+            let dn = __program.nodes((vd).file_index());
             if ast::has_static_modifier(&dn[vd])
                 && dn[vd]
                     .parent

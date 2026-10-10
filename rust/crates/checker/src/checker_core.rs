@@ -19,7 +19,7 @@
 // 4. `JsxFlags`/`JsxElementLinks` placeholders for the `jsx_element_links`
 //    link store (jsx.go is deferred entirely).
 
-use std::cell::RefCell;
+use std::cell::{RefCell, RefMut};
 use std::rc::Rc;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::{Arc, Mutex, Once, RwLock};
@@ -37,15 +37,14 @@ use tsc_scanner::scanner::Scanner;
 use tsc_tracing as tracing;
 
 use crate::checker_types::{
-    AssignmentReducedKey, CachedSignatureKey, CachedTypeKey, ContextualInfo, CachedTypeKind,
-    UnionReduction,
+    AssignmentReducedKey, CachedSignatureKey, CachedTypeKey, CachedTypeKind, ContextualInfo,
     DeferredDiagnosticCallback, DiscriminatedContextualTypeKey, EvaluatorThunk, FlowLoopInfo,
     FlowLoopKey, InstantiationExpressionKey, IterationTypes, IterationTypesKey,
     IterationTypesResolver, NameResolverThunk, NarrowedTypeKey, NodeBoolThunk,
     NonExistentPropertyKey, NumberLiteralKey, PropertiesTypesKey, ReverseMappedTypeKey,
     StringMappingKey, SubstitutionTypeKey, SymbolChainComparerThunk, SymbolComparerThunk,
     ThisAssignmentDeclarationKind, TypeBoolThunk, TypeResolution, TypeThunk, UnionOfUnionKey,
-    VarianceStackEntry,
+    UnionReduction, VarianceStackEntry,
 };
 use crate::emitresolver::EmitResolverLinks;
 use crate::flagdef::flag_type;
@@ -518,7 +517,8 @@ pub fn get_recursion_identity(c: &mut Checker, t: TypeId) -> RecursionId {
 
 /// `getRecursionIdentityTarget` (relater.go). PORT(mirrored): see above.
 fn get_recursion_identity_target(c: &mut Checker, t: TypeId) -> TypeId {
-    let __arena_ty = c.types.clone(); let ty = __arena_ty.get(t);
+    let __arena_ty = c.types.clone();
+    let ty = __arena_ty.get(t);
     if ty.flags.intersects(TypeFlags::INDEXED_ACCESS) {
         let object_type = ty.as_indexed_access_type().object_type;
         drop(ty);
@@ -531,12 +531,15 @@ fn get_recursion_identity_target(c: &mut Checker, t: TypeId) -> TypeId {
             // Stage `target`'s symbol/types before the nested `types.get` —
             // no read guard may be held across another arena read.
             let (has_symbol, constituents_have_symbol) = {
-                let __arena_tt = c.types.clone(); let tt = __arena_tt.get(target);
+                let __arena_tt = c.types.clone();
+                let tt = __arena_tt.get(target);
                 let has_symbol = tt.symbol.is_some();
                 let constituents_have_symbol = tt.flags.intersects(TypeFlags::INTERSECTION) && {
                     let types = tt.types().to_vec();
                     drop(tt);
-                    types.iter().any(|&s| c.types_handle().get(s).symbol.is_some())
+                    types
+                        .iter()
+                        .any(|&s| c.types_handle().get(s).symbol.is_some())
                 };
                 (has_symbol, constituents_have_symbol)
             };
@@ -555,7 +558,8 @@ fn get_recursion_identity_target(c: &mut Checker, t: TypeId) -> TypeId {
 fn get_recursion_identity_from_target(c: &mut Checker, t: TypeId) -> RecursionId {
     // Stage the fields Go reads off `t` before nested arena lookups.
     let (flags, object_flags, symbol, ref_node, cond_root_node) = {
-        let __arena_ty = c.types.clone(); let ty = __arena_ty.get(t);
+        let __arena_ty = c.types.clone();
+        let ty = __arena_ty.get(t);
         let ref_node = if ty.object_flags.intersects(ObjectFlags::REFERENCE) {
             ty.data.as_type_reference().and_then(|r| r.node)
         } else {
@@ -579,7 +583,9 @@ fn get_recursion_identity_from_target(c: &mut Checker, t: TypeId) -> RecursionId
     };
     // Object and array literals are known not to contain recursive
     // references and don't need a recursion identity.
-    if flags.intersects(TypeFlags::OBJECT) && !is_object_or_array_literal_type(&c.types_handle().get(t)) {
+    if flags.intersects(TypeFlags::OBJECT)
+        && !is_object_or_array_literal_type(&c.types_handle().get(t))
+    {
         if let Some(node) = ref_node {
             // Deferred type references are tracked through their associated
             // AST node. This gives us finer granularity than using their
@@ -840,7 +846,10 @@ pub struct Checker {
     pub intersection_types: FxHashMap<CacheHashKey, TypeId>,
     /// `propertiesTypes`.
     pub properties_types: FxHashMap<PropertiesTypesKey, TypeId>,
-    /// `diagnostics`.
+    /// `diagnostics`. `DiagnosticsCollection` clones share the underlying
+    /// `Arc<Mutex>` state — Go shares `*DiagnosticsCollection` by pointer,
+    /// so errors produced during `checkSourceFile` land in the same store
+    /// the worker reads afterwards.
     pub diagnostics: ast::diagnostic::DiagnosticsCollection,
     /// `suggestionDiagnostics`.
     pub suggestion_diagnostics: ast::diagnostic::DiagnosticsCollection,
@@ -1750,8 +1759,8 @@ impl Checker {
                 let constraint_decl = self
                     .get_constraint_declaration_for_mapped_type(t)
                     .expect("keyof constraint declaration");
-                                let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((constraint_decl).file_index());;
+                let __program = self.program.clone().expect("program");
+                let nodes = __program.nodes((constraint_decl).file_index());
                 let ty_node = nodes[constraint_decl]
                     .type_()
                     .expect("type operator operand");
@@ -1915,9 +1924,7 @@ impl Checker {
             result
         }
 
-        if !crate::checker_c::signature_has_rest_parameter(
-            self.signature_arena.get(signature),
-        ) {
+        if !crate::checker_c::signature_has_rest_parameter(self.signature_arena.get(signature)) {
             let parameters = self.signature_arena.get(signature).parameters.clone();
             return vec![parameters];
         }
@@ -1928,16 +1935,17 @@ impl Checker {
 
         if is_tuple_type(&self.types, rest_type) {
             return vec![expand_signature_parameters_with_tuple_members(
-                self, rest_type, rest_index, rest_symbol, &parameters,
+                self,
+                rest_type,
+                rest_index,
+                rest_symbol,
+                &parameters,
             )];
         }
         let rest_flags = self.types_handle().get(rest_type).flags;
         if !skip_union_expanding && rest_flags.intersects(TypeFlags::UNION) {
             let union_types = self.types_handle().get(rest_type).types().to_vec();
-            if union_types
-                .iter()
-                .all(|&t| is_tuple_type(&self.types, t))
-            {
+            if union_types.iter().all(|&t| is_tuple_type(&self.types, t)) {
                 return union_types
                     .iter()
                     .map(|&t| {
@@ -1957,7 +1965,7 @@ impl Checker {
 
     /// `c.getSymbolOfDeclaration` (checker.go).
     pub fn get_symbol_of_declaration(&mut self, node: NodeId) -> Option<SymbolId> {
-                let __program = self.program.clone().expect("program");
+        let __program = self.program.clone().expect("program");
         let symbol = __program.nodes((node).file_index())[node].symbol();
         symbol.map(|s| {
             let late = self.get_late_bound_symbol(s);
@@ -1990,8 +1998,8 @@ impl Checker {
     ) -> (Option<SignatureId>, Vec<SignatureId>) {
         self.apparent_argument_count = Some(argument_count);
         let mut candidates_out_array: Vec<SignatureId> = Vec::new();
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let res = if ast::is_parse_tree_node(&nodes[node]) {
             self.get_resolved_signature(node, Some(&mut candidates_out_array), check_mode)
         } else {
@@ -2117,7 +2125,8 @@ impl Checker {
             return;
         };
         // Clone the arena handle before the `&mut self` identity call.
-        let __arena_types = self.types.clone(); let types = __arena_types.clone();
+        let __arena_types = self.types.clone();
+        let types = __arena_types.clone();
         let pattern_for_type = self.pattern_for_type.clone();
         let _ = tracer;
         let recursion_identity = Some(get_recursion_identity(self, t).value);
@@ -2136,13 +2145,25 @@ impl Checker {
     /// PORT(mirrored from types.go MappedType.ResolveComponents).
     pub fn resolve_mapped_type_components(&mut self, t: TypeId) {
         let type_parameter = self.get_type_parameter_from_mapped_type(t);
-        self.types_handle().get_mut(t).as_mapped_type_mut().type_parameter = type_parameter;
+        self.types_handle()
+            .get_mut(t)
+            .as_mapped_type_mut()
+            .type_parameter = type_parameter;
         let constraint_type = self.get_constraint_type_from_mapped_type(t);
-        self.types_handle().get_mut(t).as_mapped_type_mut().constraint_type = constraint_type;
+        self.types_handle()
+            .get_mut(t)
+            .as_mapped_type_mut()
+            .constraint_type = constraint_type;
         let name_type = self.get_name_type_from_mapped_type(t);
-        self.types_handle().get_mut(t).as_mapped_type_mut().name_type = name_type;
+        self.types_handle()
+            .get_mut(t)
+            .as_mapped_type_mut()
+            .name_type = name_type;
         let template_type = self.get_template_type_from_mapped_type(t);
-        self.types_handle().get_mut(t).as_mapped_type_mut().template_type = template_type;
+        self.types_handle()
+            .get_mut(t)
+            .as_mapped_type_mut()
+            .template_type = template_type;
     }
 }
 
@@ -2214,6 +2235,10 @@ impl Checker {
         c.id = NEXT_CHECKER_ID.fetch_add(1, Ordering::Relaxed);
         c.tracer = tracer;
         c.program = Some(program.clone());
+        // Alias the program's global symbol arena (SPEC §5.2): binder ids and
+        // checker-created symbols share one `Vec`, standing in for Go's
+        // `*ast.Symbol` pointer identity.
+        c.symbol_arena = program.symbols();
         c.compiler_options = program.options();
         c.files = program.source_files();
         c.file_index_map = create_file_index_map(&c.files);
@@ -2261,7 +2286,8 @@ impl Checker {
             .verbatim_module_syntax
             .is_false_or_unknown();
         c.array_variances = vec![VarianceFlags::COVARIANT];
-        *c.globals.borrow_mut() = SymbolTable::with_size_hint(count_global_symbols(&c.files, &program));
+        *c.globals.borrow_mut() =
+            SymbolTable::with_size_hint(count_global_symbols(&c.files, &program));
         // PORT: Go `evaluator.NewEvaluator(c.evaluateEntity,
         // ast.OEKParentheses)` — the outer evaluator walk is deferred until
         // `new_evaluator` gains a checker-parameterized entry point; the thunk
@@ -2402,7 +2428,8 @@ impl Checker {
         // `c.emptyGenericType.AsObjectType().instantiations = make(map)` — the
         // port's field is already an empty map.
         c.any_function_type = c.new_anonymous_type(None, SymbolTable::new(), &[], &[], &[]);
-        c.types_handle().get_mut(c.any_function_type)
+        c.types_handle()
+            .get_mut(c.any_function_type)
             .object_flags
             .insert(ObjectFlags::NON_INFERRABLE_TYPE);
         c.no_constraint_type = c.new_anonymous_type(None, SymbolTable::new(), &[], &[], &[]);
@@ -2416,7 +2443,9 @@ impl Checker {
         c.marker_other_type = c.new_type_parameter(None);
         c.marker_super_type_for_check = c.new_type_parameter(None);
         c.marker_sub_type_for_check = c.new_type_parameter(None);
-        if let TypeData::TypeParameter(d) = &mut c.types_handle().get_mut(c.marker_sub_type_for_check).data {
+        if let TypeData::TypeParameter(d) =
+            &mut c.types_handle().get_mut(c.marker_sub_type_for_check).data
+        {
             d.constraint = Some(c.marker_super_type_for_check);
         }
         c.no_type_predicate = Some(Rc::new(TypePredicate {
@@ -2722,8 +2751,8 @@ impl Checker {
                         .iter()
                         .copied()
                         .find(|&d| {
-                                                        let __program = self.program.clone().expect("program");
-                            let nodes = __program.nodes((d).file_index());;
+                            let __program = self.program.clone().expect("program");
+                            let nodes = __program.nodes((d).file_index());
                             ast::is_type_alias_declaration(&nodes[d])
                         })
                 };
@@ -2752,7 +2781,9 @@ impl Checker {
             let flags = self.symbol_arena.borrow()[symbol.index()].flags;
             if flags.intersects(ast::SymbolFlags::CLASS | ast::SymbolFlags::INTERFACE) {
                 let t = self.get_declared_type_of_symbol(symbol);
-                let __arena_type_parameter_count = self.types.clone(); let type_parameter_count = __arena_type_parameter_count.get(t)
+                let __arena_type_parameter_count = self.types.clone();
+                let type_parameter_count = __arena_type_parameter_count
+                    .get(t)
                     .as_interface_type()
                     .expect("interface type")
                     .all_type_parameters
@@ -2792,8 +2823,8 @@ impl Checker {
             .declarations
             .clone();
         for declaration in declarations {
-                        let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((declaration).file_index());;
+            let __program = self.program.clone().expect("program");
+            let nodes = __program.nodes((declaration).file_index());
             match nodes[declaration].kind {
                 ast::Kind::ClassDeclaration
                 | ast::Kind::InterfaceDeclaration
@@ -2823,7 +2854,8 @@ impl Checker {
     /// `(c *Checker) initializeClosures` (checker.go).
     pub fn initialize_closures(&mut self) {
         self.is_primitive_or_object_or_empty_type = Some(Rc::new(|c: &mut Checker, t: TypeId| {
-            c.types_handle().get(t)
+            c.types_handle()
+                .get(t)
                 .flags
                 .intersects(TypeFlags::PRIMITIVE | TypeFlags::NON_PRIMITIVE)
                 || c.is_empty_anonymous_object_type(t)
@@ -2832,7 +2864,8 @@ impl Checker {
             if t == c.missing_type {
                 return true;
             }
-            let __arena_ty = c.types.clone(); let ty = __arena_ty.get(t);
+            let __arena_ty = c.types.clone();
+            let ty = __arena_ty.get(t);
             ty.flags.intersects(TypeFlags::UNION) && ty.types().first() == Some(&c.missing_type)
         }));
         self.could_contain_type_variables = Some(Rc::new(|c: &mut Checker, t: TypeId| {
@@ -3137,10 +3170,17 @@ impl Checker {
             self.sym_mut(target).flags.insert(source_flags);
             let source_value_declaration = self.sym(source).value_declaration;
             if let Some(value_declaration) = source_value_declaration {
-                                let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((value_declaration).file_index());;
+                let __program = self.program.clone().expect("program");
                 let mut arena = self.symbol_arena.borrow_mut();
-                tsc_binder::binder::set_value_declaration(&mut arena, target, value_declaration, &nodes);
+                tsc_binder::binder::set_value_declaration(
+                    &mut arena,
+                    target,
+                    value_declaration,
+                    &|id| {
+                        let nodes = __program.nodes(id.file_index());
+                        nodes[id].clone()
+                    },
+                );
             }
             let source_declarations = self.sym(source).declarations.clone();
             self.symbol_arena.borrow_mut()[target.index()]
@@ -3172,8 +3212,9 @@ impl Checker {
             // won't make much sense.
             if target != self.global_this_symbol {
                 let first_declaration = crate::checker_b::get_first_declaration(self, source);
-                                let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes(first_declaration.expect("first declaration").file_index());
+                let __program = self.program.clone().expect("program");
+                let nodes =
+                    __program.nodes(first_declaration.expect("first declaration").file_index());
                 let name_node = ast::get_name_of_declaration(first_declaration, &nodes);
                 let target_str = self.symbol_to_string(Some(target));
                 self.error(
@@ -3204,9 +3245,11 @@ impl Checker {
 
     /// `(c *Checker) mergeModuleAugmentation` (checker.go).
     pub fn merge_module_augmentation(&mut self, module_name: NodeId) {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((module_name).file_index());;
-        let module_node = nodes[module_name].parent.expect("module augmentation parent");
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((module_name).file_index());
+        let module_node = nodes[module_name]
+            .parent
+            .expect("module augmentation parent");
         let augmentation_symbol = nodes[module_node]
             .symbol()
             .expect("module augmentation symbol");
@@ -3259,19 +3302,18 @@ impl Checker {
                 // the pattern ('*.foo'), so that 'getMergedSymbol()' on a.foo gives you
                 // all the exports both from the pattern and from the augmentation, but
                 // 'getMergedSymbol()' on *.foo only gives you exports from *.foo.
-                let is_pattern_target = self
-                    .pattern_ambient_modules
-                    .clone()
-                    .iter()
-                    .any(|module| {
-                        module
-                            .symbol
-                            .map(|s| Some(main_module) == Some(self.get_merged_symbol(s)))
-                            .unwrap_or(false)
-                    });
+                let is_pattern_target = self.pattern_ambient_modules.clone().iter().any(|module| {
+                    module
+                        .symbol
+                        .map(|s| Some(main_module) == Some(self.get_merged_symbol(s)))
+                        .unwrap_or(false)
+                });
                 if is_pattern_target {
-                    let merged =
-                        self.merge_symbol(augmentation_symbol, main_module, true /*unidirectional*/);
+                    let merged = self.merge_symbol(
+                        augmentation_symbol,
+                        main_module,
+                        true, /*unidirectional*/
+                    );
                     // moduleName will be a StringLiteral since this is not `declare global`.
                     let text = nodes[module_name].text(&nodes).into_owned();
                     self.pattern_ambient_module_augmentations
@@ -3304,7 +3346,11 @@ impl Checker {
                             }
                         }
                     }
-                    self.merge_symbol(main_module, augmentation_symbol, false /*unidirectional*/);
+                    self.merge_symbol(
+                        main_module,
+                        augmentation_symbol,
+                        false, /*unidirectional*/
+                    );
                 }
             } else {
                 // moduleName will be a StringLiteral since this is not `declare global`.
@@ -3332,7 +3378,9 @@ impl Checker {
             let mut group_index: i32 = -1;
             let pattern_text = module.pattern.text.clone();
             for &index in groups_by_pattern.get(&pattern_text).into_iter().flatten() {
-                let other_symbol = grouped[index].symbol.expect("pattern ambient module symbol");
+                let other_symbol = grouped[index]
+                    .symbol
+                    .expect("pattern ambient module symbol");
                 let other_attributes = self.get_type_of_module_import_attributes(other_symbol);
                 if self.is_type_identical_to(attributes_type, other_attributes) {
                     group_index = index as i32;
@@ -3381,8 +3429,8 @@ impl Checker {
                 .declarations
                 .clone();
             for declaration in declarations {
-                                let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((declaration).file_index());;
+                let __program = self.program.clone().expect("program");
+                let nodes = __program.nodes((declaration).file_index());
                 if !ast::is_type_declaration(declaration, &nodes) {
                     let diagnostic = self.new_diagnostic_for_node(
                         Some(declaration),
@@ -3549,7 +3597,9 @@ impl Checker {
     // Go stores `binder.NameResolver` values whose `func` fields point back
     // into `*Checker`; the `NameResolverHost` trait is the port's mechanism
     // for that (self-referential closures can't be stored on the struct).
-    pub(crate) fn as_name_resolver_host(&mut self) -> &mut dyn tsc_binder::nameresolver::NameResolverHost {
+    pub(crate) fn as_name_resolver_host(
+        &mut self,
+    ) -> &mut dyn tsc_binder::nameresolver::NameResolverHost {
         self
     }
 
@@ -3560,8 +3610,8 @@ impl Checker {
         location: Option<NodeId>,
         _nodes: &[ast::Node],
     ) -> evaluator::Result {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((expr).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((expr).file_index());
         match nodes[expr].kind {
             ast::Kind::Identifier | ast::Kind::PropertyAccessExpression => {
                 let symbol = self.resolve_entity_name(
@@ -3611,8 +3661,8 @@ impl Checker {
                 if self.is_constant_variable(symbol) {
                     let declaration = self.sym(symbol).value_declaration;
                     if let Some(declaration) = declaration {
-                                                let __program = self.program.clone().expect("program");
-                        let decl_nodes = __program.nodes((declaration).file_index());;
+                        let __program = self.program.clone().expect("program");
+                        let decl_nodes = __program.nodes((declaration).file_index());
                         if ast::is_variable_declaration(&decl_nodes[declaration])
                             && decl_nodes[declaration].type_().is_none()
                             && decl_nodes[declaration]
@@ -3633,19 +3683,11 @@ impl Checker {
                             let result =
                                 self.evaluate_call(initializer, Some(declaration), &decl_nodes);
                             if let Some(location) = location {
-                                let loc_file =
-                                    ast::get_source_file_of_node(Some(location), &nodes);
-                                let decl_file = ast::get_source_file_of_node(
-                                    Some(declaration),
-                                    &decl_nodes,
-                                );
+                                let loc_file = ast::get_source_file_of_node(Some(location), &nodes);
+                                let decl_file =
+                                    ast::get_source_file_of_node(Some(declaration), &decl_nodes);
                                 if loc_file != decl_file {
-                                    return evaluator::new_result(
-                                        result.value,
-                                        false,
-                                        true,
-                                        true,
-                                    );
+                                    return evaluator::new_result(result.value, false, true, true);
                                 }
                             }
                             return evaluator::new_result(
@@ -3682,8 +3724,7 @@ impl Checker {
                                 .intersects(ast::SymbolFlags::ENUM)
                         {
                             let name = nodes[argument].text(&nodes).into_owned();
-                            let member =
-                                self.sym(root_symbol).exports.get(&name).copied();
+                            let member = self.sym(root_symbol).exports.get(&name).copied();
                             if let Some(member) = member {
                                 if let Some(location) = location {
                                     return self.evaluate_enum_member(expr, member, location);
@@ -3720,10 +3761,7 @@ impl Checker {
 
     /// `program.nodes_handle(...)` — the `Rc<RefCell>` arena handle for the
     /// file containing `node` — for long-lived arena aliases (`FlowState`).
-    pub fn program_nodes_handle(
-        &self,
-        node: NodeId,
-    ) -> Rc<std::cell::RefCell<Vec<ast::Node>>> {
+    pub fn program_nodes_handle(&self, node: NodeId) -> Rc<std::cell::RefCell<Vec<ast::Node>>> {
         self.program
             .as_ref()
             .expect("program")
@@ -3757,8 +3795,8 @@ impl Checker {
     /// `(c *Checker) callLikeExpressionMayHaveTypeArguments`
     /// (utilities.go:1132).
     pub fn call_like_expression_may_have_type_arguments(&self, node: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         ast::is_call_or_new_expression(&nodes[node])
             || ast::is_tagged_template_expression(&nodes[node])
             || ast::is_jsx_opening_like_element(&nodes[node])
@@ -3775,8 +3813,8 @@ impl Checker {
         let mut file = None;
         let mut loc = tsc_core::text::TextRange::default();
         if let Some(node) = node {
-                        let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((node).file_index());;
+            let __program = self.program.clone().expect("program");
+            let nodes = __program.nodes((node).file_index());
             if let Some(source_file) = ast::get_source_file_of_node(Some(node), &nodes) {
                 let sf = nodes[source_file].as_source_file();
                 loc = tsc_scanner::scanner::get_error_range_for_node(sf, node, &nodes);
@@ -3796,8 +3834,8 @@ impl Checker {
         let sym = &arena[symbol.index()];
         match sym.value_declaration {
             Some(d) => {
-                                let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((d).file_index());;
+                let __program = self.program.clone().expect("program");
+                let nodes = __program.nodes((d).file_index());
                 ast::symbol::symbol_name(sym, &nodes).into_owned()
             }
             None => sym.name.clone(),
@@ -3864,11 +3902,11 @@ impl Checker {
         }
         let Some(n1) = n1 else { return 1 };
         let Some(n2) = n2 else { return -1 };
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((n1).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((n1).file_index());
         let s1 = ast::get_source_file_of_node(Some(n1), &nodes);
-                let __program = self.program.clone().expect("program");
-        let nodes2 = __program.nodes((n2).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes2 = __program.nodes((n2).file_index());
         let s2 = ast::get_source_file_of_node(Some(n2), &nodes2);
         if s1 != s2 {
             let f1 = s1
@@ -3960,7 +3998,8 @@ impl Checker {
         data: TypeData,
     ) -> TypeId {
         self.type_count += 1;
-        let __arena_id = self.types.clone(); let id = __arena_id.alloc(Type {
+        let __arena_id = self.types.clone();
+        let id = __arena_id.alloc(Type {
             flags,
             object_flags: object_flags
                 & !(ObjectFlags::COULD_CONTAIN_TYPE_VARIABLES_COMPUTED
@@ -4005,11 +4044,13 @@ impl Checker {
             return non_widening_type;
         }
         let (flags, intrinsic_name) = {
-            let __arena_ty = self.types.clone(); let ty = __arena_ty.get(non_widening_type);
+            let __arena_ty = self.types.clone();
+            let ty = __arena_ty.get(non_widening_type);
             (ty.flags, ty.as_intrinsic_type().intrinsic_name.clone())
         };
         let t = self.new_intrinsic_type(flags, &intrinsic_name);
-        self.types_handle().get_mut(t)
+        self.types_handle()
+            .get_mut(t)
             .object_flags
             .insert(ObjectFlags::CONTAINS_WIDENING_TYPE);
         t
@@ -4126,10 +4167,12 @@ impl Checker {
         construct_signatures: &[SignatureId],
         index_infos: &[IndexInfoId],
     ) {
-        self.types_handle().get_mut(t)
+        self.types_handle()
+            .get_mut(t)
             .object_flags
             .insert(ObjectFlags::MEMBERS_RESOLVED);
-        let __arena_symbol = self.types.clone(); let symbol = __arena_symbol.get(t).symbol;
+        let __arena_symbol = self.types.clone();
+        let symbol = __arena_symbol.get(t).symbol;
         let properties = self.get_named_members(&members, symbol);
         let (signatures, call_signature_count) = if !call_signatures.is_empty() {
             let mut sigs = call_signatures.to_vec();
@@ -4183,7 +4226,8 @@ impl Checker {
     ) -> ObjectFlags {
         let mut result = ObjectFlags::NONE;
         for &t in types {
-            let __arena_ty = self.types.clone(); let ty = __arena_ty.get(t);
+            let __arena_ty = self.types.clone();
+            let ty = __arena_ty.get(t);
             if !ty.flags.intersects(exclude_kinds) {
                 result |= ty.object_flags;
             }
@@ -4354,9 +4398,11 @@ impl Checker {
 
     /// `(c *Checker) getRegularTypeOfLiteralType` (checker.go).
     pub fn get_regular_type_of_literal_type(&mut self, t: TypeId) -> TypeId {
-        let __arena_flags = self.types.clone(); let flags = __arena_flags.get(t).flags;
+        let __arena_flags = self.types.clone();
+        let flags = __arena_flags.get(t).flags;
         if flags.intersects(TypeFlags::FRESHABLE) {
-            let __arena_ty = self.types.clone(); let ty = __arena_ty.get(t);
+            let __arena_ty = self.types.clone();
+            let ty = __arena_ty.get(t);
             return ty.as_literal_type().regular_type.unwrap_or(t);
         }
         if flags.intersects(TypeFlags::UNION) {
@@ -4377,9 +4423,15 @@ impl Checker {
 
     /// `(c *Checker) getFreshTypeOfLiteralType` (checker.go).
     pub fn get_fresh_type_of_literal_type(&mut self, t: TypeId) -> TypeId {
-        if self.types_handle().get(t).flags.intersects(TypeFlags::FRESHABLE) {
+        if self
+            .types_handle()
+            .get(t)
+            .flags
+            .intersects(TypeFlags::FRESHABLE)
+        {
             let (flags, value, fresh_type) = {
-                let __arena_ty = self.types.clone(); let ty = __arena_ty.get(t);
+                let __arena_ty = self.types.clone();
+                let ty = __arena_ty.get(t);
                 let d = ty.as_literal_type();
                 (ty.flags, d.value.clone(), d.fresh_type)
             };
@@ -4387,7 +4439,8 @@ impl Checker {
                 return fresh;
             }
             let f = self.new_literal_type(flags, value, Some(t));
-            let __arena_sym = self.types.clone(); let sym = __arena_sym.get(t).symbol;
+            let __arena_sym = self.types.clone();
+            let sym = __arena_sym.get(t).symbol;
             self.types_handle().get_mut(f).symbol = sym;
             if let TypeData::Literal(fd) = &mut self.types_handle().get_mut(f).data {
                 fd.fresh_type = Some(f);
@@ -4486,7 +4539,9 @@ impl Checker {
         object_flags: ObjectFlags,
     ) -> TypeId {
         let id = crate::checker_types::get_type_list_key(type_arguments);
-        if let Some(&t) = self.types_handle().get(target)
+        if let Some(&t) = self
+            .types_handle()
+            .get(target)
             .as_interface_type()
             .expect("createTypeReferenceEx: target is not an interface type")
             .type_reference
@@ -4496,14 +4551,16 @@ impl Checker {
         {
             return t;
         }
-        let __arena_symbol = self.types.clone(); let symbol = __arena_symbol.get(target).symbol;
+        let __arena_symbol = self.types.clone();
+        let symbol = __arena_symbol.get(target).symbol;
         let propagating = self.get_propagating_flags_of_types(type_arguments, TypeFlags::NONE);
         let t = self.new_object_type(ObjectFlags::REFERENCE | object_flags | propagating, symbol);
         if let TypeData::TypeReference(d) = &mut self.types_handle().get_mut(t).data {
             d.object_type.target = Some(target);
             d.resolved_type_arguments = type_arguments.to_vec();
         }
-        self.types_handle().get_mut(target)
+        self.types_handle()
+            .get_mut(target)
             .data
             .as_interface_type_mut()
             .expect("createTypeReferenceEx: target is not an interface type")
@@ -4517,7 +4574,8 @@ impl Checker {
     /// `(c *Checker) cloneTypeReference` (checker.go).
     pub fn clone_type_reference(&mut self, source: TypeId) -> TypeId {
         let (symbol, object_flags, target, resolved_type_arguments) = {
-            let __arena_ty = self.types.clone(); let ty = __arena_ty.get(source);
+            let __arena_ty = self.types.clone();
+            let ty = __arena_ty.get(source);
             let r = ty.as_type_reference();
             (
                 ty.symbol,
@@ -4608,7 +4666,12 @@ impl Checker {
     /// `(c *Checker) getTemplateLiteralType` (checker.go).
     pub fn get_template_literal_type(&mut self, texts: &[String], types: &[TypeId]) -> TypeId {
         for (i, &t) in types.iter().enumerate() {
-            if self.types_handle().get(t).flags.intersects(TypeFlags::UNION) {
+            if self
+                .types_handle()
+                .get(t)
+                .flags
+                .intersects(TypeFlags::UNION)
+            {
                 if !self.check_cross_product_union(types) {
                     return self.error_type;
                 }
@@ -4703,13 +4766,7 @@ impl Checker {
         if thunk(self, t) {
             return true;
         }
-        if !self
-            .types
-            .clone()
-            .get(t)
-            .flags
-            .intersects(TypeFlags::UNION)
-        {
+        if !self.types.clone().get(t).flags.intersects(TypeFlags::UNION) {
             return false;
         }
         crate::checker_d::every_type(self, t, |c, u| {
@@ -4729,7 +4786,9 @@ impl Checker {
 
     /// `(c *Checker) getUniqueLiteralTypeForTypeParameter` (checker.go).
     pub fn get_unique_literal_type_for_type_parameter(&mut self, t: TypeId) -> TypeId {
-        if self.types_handle().get(t)
+        if self
+            .types_handle()
+            .get(t)
             .flags
             .intersects(TypeFlags::TYPE_PARAMETER)
         {
@@ -4756,7 +4815,9 @@ impl Checker {
 
     /// `(c *Checker) restrictiveMapperWorker` (checker.go).
     pub fn restrictive_mapper_worker(&mut self, t: TypeId) -> TypeId {
-        if self.types_handle().get(t)
+        if self
+            .types_handle()
+            .get(t)
             .flags
             .intersects(TypeFlags::TYPE_PARAMETER)
         {
@@ -4795,7 +4856,9 @@ impl Checker {
 
     /// `(c *Checker) permissiveMapperWorker` (checker.go).
     pub fn permissive_mapper_worker(&mut self, t: TypeId) -> TypeId {
-        if self.types_handle().get(t)
+        if self
+            .types_handle()
+            .get(t)
             .flags
             .intersects(TypeFlags::TYPE_PARAMETER)
         {
@@ -4895,7 +4958,9 @@ impl Checker {
     }
 
     /// `(c *Checker) get_global_es_symbol_constructor_type_symbol_or_nil` — invokes the `get_global_es_symbol_constructor_type_symbol_or_nil` thunk field.
-    pub(crate) fn get_global_es_symbol_constructor_type_symbol_or_nil(&mut self) -> Option<SymbolId> {
+    pub(crate) fn get_global_es_symbol_constructor_type_symbol_or_nil(
+        &mut self,
+    ) -> Option<SymbolId> {
         let thunk = self
             .get_global_es_symbol_constructor_type_symbol_or_nil
             .clone()
@@ -5136,7 +5201,6 @@ impl Checker {
             .expect("get_global_class_accessor_decorator_contxt_type");
         thunk(self)
     }
-
 }
 
 /// `binder::NameResolverHost` implementation — the Go `NameResolver` hook
@@ -5188,10 +5252,7 @@ impl tsc_binder::nameresolver::NameResolverHost for Checker {
         self.set_requires_scope_change_cache(node, value);
     }
 
-    fn nr_get_requires_scope_change_cache(
-        &mut self,
-        node: NodeId,
-    ) -> tsc_core::tristate::Tristate {
+    fn nr_get_requires_scope_change_cache(&mut self, node: NodeId) -> tsc_core::tristate::Tristate {
         self.get_requires_scope_change_cache(node)
     }
 

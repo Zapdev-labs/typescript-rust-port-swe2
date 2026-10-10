@@ -292,8 +292,7 @@ fn is_hoisted_function(shared: &RefCell<EmitContextShared>, nodes: &[Node], node
 
 /// `isHoistedVariable`
 fn is_hoisted_variable(nodes: &[Node], node: NodeId) -> bool {
-    ast::is_identifier(&nodes[node])
-        && nodes[node].initializer().is_none()
+    ast::is_identifier(&nodes[node]) && nodes[node].initializer().is_none()
 }
 
 /// `(c *EmitContext) isHoistedVariableStatement`
@@ -308,9 +307,7 @@ fn is_hoisted_variable_statement(
             .as_variable_statement()
             .declaration_list
             .and_then(|d| nodes[d].as_variable_declaration_list().declarations.clone())
-            .is_some_and(|d| {
-                tsc_core::core::every(&d.nodes, |n| is_hoisted_variable(nodes, *n))
-            })
+            .is_some_and(|d| tsc_core::core::every(&d.nodes, |n| is_hoisted_variable(nodes, *n)))
 }
 
 /// `core.Splice` wrapper returning an owned `Vec`.
@@ -401,11 +398,9 @@ impl EmitContext {
         let mut statements = scope.functions.clone();
         if !scope.variables.is_empty() {
             let list = self.factory.new_node_list(scope.variables);
-            let var_decl_list = self.factory.new_variable_declaration_list(
-                nodes,
-                Some(list),
-                ast::NodeFlags::NONE,
-            );
+            let var_decl_list =
+                self.factory
+                    .new_variable_declaration_list(nodes, Some(list), ast::NodeFlags::NONE);
             let var_statement =
                 self.factory
                     .new_variable_statement(nodes, None, Some(var_decl_list));
@@ -506,11 +501,9 @@ impl EmitContext {
         let mut statements = Vec::new();
         if !scope.variables.is_empty() {
             let list = self.factory.new_node_list(scope.variables);
-            let var_decl_list = self.factory.new_variable_declaration_list(
-                nodes,
-                Some(list),
-                ast::NodeFlags::LET,
-            );
+            let var_decl_list =
+                self.factory
+                    .new_variable_declaration_list(nodes, Some(list), ast::NodeFlags::LET);
             let var_statement =
                 self.factory
                     .new_variable_statement(nodes, None, Some(var_decl_list));
@@ -629,8 +622,11 @@ impl EmitContext {
         let shared = self.shared.clone();
 
         // find standard prologues on left in the following order: standard directives, hoisted functions, hoisted variables, other custom
-        let left_standard_prologue_end =
-            find_span_end(statements, |s| ast::is_prologue_directive(&nodes[*s], nodes), 0);
+        let left_standard_prologue_end = find_span_end(
+            statements,
+            |s| ast::is_prologue_directive(&nodes[*s], nodes),
+            0,
+        );
         let left_hoisted_functions_end = find_span_end(
             statements,
             |s| is_hoisted_function(&shared, nodes, *s),
@@ -643,8 +639,11 @@ impl EmitContext {
         );
 
         // find standard prologues on right in the following order: standard directives, hoisted functions, hoisted variables, other custom
-        let right_standard_prologue_end =
-            find_span_end(declarations, |s| ast::is_prologue_directive(&nodes[*s], nodes), 0);
+        let right_standard_prologue_end = find_span_end(
+            declarations,
+            |s| ast::is_prologue_directive(&nodes[*s], nodes),
+            0,
+        );
         let right_hoisted_functions_end = find_span_end(
             declarations,
             |s| is_hoisted_function(&shared, nodes, *s),
@@ -769,8 +768,6 @@ impl EmitContext {
         name
     }
 
-
-
     //
     // Original Node Tracking
     //
@@ -872,8 +869,11 @@ impl EmitContext {
 
     /// `SetSnippetElement`
     pub fn set_snippet_element(&self, node: NodeId, snippet_element: SnippetElement) {
-        self.shared.borrow_mut().emit_nodes.get(node).snippet_element =
-            Some(Box::new(snippet_element));
+        self.shared
+            .borrow_mut()
+            .emit_nodes
+            .get(node)
+            .snippet_element = Some(Box::new(snippet_element));
     }
 
     /// `CommentRange` — gets the range to use for a node when emitting comments.
@@ -926,12 +926,7 @@ impl EmitContext {
 
     /// `AssignCommentAndSourceMapRanges` — sets the range to use for a node
     /// when emitting comments and source maps.
-    pub fn assign_comment_and_source_map_ranges(
-        &self,
-        nodes: &[Node],
-        to: NodeId,
-        from: NodeId,
-    ) {
+    pub fn assign_comment_and_source_map_ranges(&self, nodes: &[Node], to: NodeId, from: NodeId) {
         let comment_range = self.comment_range(nodes, from);
         let source_map_range = self.source_map_range(nodes, from);
         let mut shared = self.shared.borrow_mut();
@@ -1005,11 +1000,8 @@ impl EmitContext {
     /// `ReadEmitHelpers`
     pub fn read_emit_helpers(&mut self) -> Vec<Arc<EmitHelper>> {
         let mut shared = self.shared.borrow_mut();
-        let helpers: Vec<Arc<EmitHelper>> = shared
-            .emit_helpers
-            .values()
-            .map(|h| h.0.clone())
-            .collect();
+        let helpers: Vec<Arc<EmitHelper>> =
+            shared.emit_helpers.values().map(|h| h.0.clone()).collect();
         shared.emit_helpers.clear();
         helpers
     }
@@ -1036,8 +1028,7 @@ impl EmitContext {
         if shared.emit_nodes.try_get(&source).is_none() {
             return;
         }
-        let mut source_emit_helpers =
-            std::mem::take(&mut shared.emit_nodes.get(source).helpers);
+        let mut source_emit_helpers = std::mem::take(&mut shared.emit_nodes.get(source).helpers);
         if source_emit_helpers.is_empty() {
             shared.emit_nodes.get(source).helpers = source_emit_helpers;
             return;
@@ -1049,7 +1040,11 @@ impl EmitContext {
             if predicate(&helper) {
                 helpers_removed += 1;
                 let target_emit_node = shared.emit_nodes.get(target);
-                if !target_emit_node.helpers.iter().any(|x| Arc::ptr_eq(x, &helper)) {
+                if !target_emit_node
+                    .helpers
+                    .iter()
+                    .any(|x| Arc::ptr_eq(x, &helper))
+                {
                     target_emit_node.helpers.push(helper);
                 }
             } else if helpers_removed > 0 {
@@ -1072,11 +1067,7 @@ impl EmitContext {
     }
 
     /// `GetExternalHelpersModuleName`
-    pub fn get_external_helpers_module_name(
-        &self,
-        nodes: &[Node],
-        node: NodeId,
-    ) -> Option<NodeId> {
+    pub fn get_external_helpers_module_name(&self, nodes: &[Node], node: NodeId) -> Option<NodeId> {
         if let Some(parse_node) = self.parse_node(nodes, node)
             && let Some(emit_node) = self.shared.borrow_mut().emit_nodes.try_get(&parse_node)
         {
@@ -1088,7 +1079,9 @@ impl EmitContext {
     /// `SetExternalHelpersModuleName`
     pub fn set_external_helpers_module_name(&self, nodes: &[Node], node: NodeId, name: NodeId) {
         let Some(parse_node) = self.parse_node(nodes, node) else {
-            panic!("Node must be a parse tree node or have an Original pointer to a parse tree node.")
+            panic!(
+                "Node must be a parse tree node or have an Original pointer to a parse tree node."
+            )
         };
         self.shared
             .borrow_mut()
@@ -1112,15 +1105,18 @@ impl EmitContext {
     }
 
     /// `IsCallToHelper`
-    pub fn is_call_to_helper(&self, nodes: &[Node], first_segment: NodeId, helper_name: &str) -> bool {
+    pub fn is_call_to_helper(
+        &self,
+        nodes: &[Node],
+        first_segment: NodeId,
+        helper_name: &str,
+    ) -> bool {
         ast::is_call_expression(&nodes[first_segment])
-            && nodes[first_segment]
-                .expression()
-                .is_some_and(|expr| {
-                    ast::is_identifier(&nodes[expr])
-                        && self.emit_flags(expr).0 & EmitFlags::HELPER_NAME.0 != 0
-                        && &*nodes[expr].text(nodes) == helper_name
-                })
+            && nodes[first_segment].expression().is_some_and(|expr| {
+                ast::is_identifier(&nodes[expr])
+                    && self.emit_flags(expr).0 & EmitFlags::HELPER_NAME.0 != 0
+                    && &*nodes[expr].text(nodes) == helper_name
+            })
     }
 
     //
@@ -1155,7 +1151,9 @@ impl EmitContext {
         match shared.var_scope_stack.last_mut() {
             Some(scope) => scope.initialization_statements.push(node),
             None => {
-                panic!("Tried to add an initialization statement without a surrounding variable scope")
+                panic!(
+                    "Tried to add an initialization statement without a surrounding variable scope"
+                )
             }
         }
     }
@@ -1215,7 +1213,11 @@ impl EmitContext {
         node: NodeId,
         comments: Vec<SynthesizedComment>,
     ) -> NodeId {
-        self.shared.borrow_mut().emit_nodes.get(node).leading_comments = comments;
+        self.shared
+            .borrow_mut()
+            .emit_nodes
+            .get(node)
+            .leading_comments = comments;
         node
     }
 
@@ -1258,7 +1260,11 @@ impl EmitContext {
         node: NodeId,
         comments: Vec<SynthesizedComment>,
     ) -> NodeId {
-        self.shared.borrow_mut().emit_nodes.get(node).trailing_comments = comments;
+        self.shared
+            .borrow_mut()
+            .emit_nodes
+            .get(node)
+            .trailing_comments = comments;
         node
     }
 
@@ -1332,8 +1338,14 @@ fn visit_variable_environment(
     nodes: Option<NodeList>,
     visitor: &NodeVisitor<'_>,
 ) -> Option<NodeList> {
-    shared.borrow_mut().var_scope_stack.push(VarScope::default());
-    shared.borrow_mut().let_scope_stack.push(VarScope::default());
+    shared
+        .borrow_mut()
+        .var_scope_stack
+        .push(VarScope::default());
+    shared
+        .borrow_mut()
+        .let_scope_stack
+        .push(VarScope::default());
     let visited = visitor.visit_nodes(cx, nodes);
     end_and_merge_variable_environment_list_shared(shared, cx, visited)
 }
@@ -1363,14 +1375,12 @@ fn end_variable_environment_shared(shared: &Shared, cx: &mut VisitorCx<'_, '_>) 
     let mut statements = scope.functions.clone();
     if !scope.variables.is_empty() {
         let list = cx.factory.new_node_list(scope.variables);
-        let var_decl_list = cx.factory.new_variable_declaration_list(
-            cx.nodes,
-            Some(list),
-            ast::NodeFlags::NONE,
-        );
-        let var_statement =
+        let var_decl_list =
             cx.factory
-                .new_variable_statement(cx.nodes, None, Some(var_decl_list));
+                .new_variable_declaration_list(cx.nodes, Some(list), ast::NodeFlags::NONE);
+        let var_statement = cx
+            .factory
+            .new_variable_statement(cx.nodes, None, Some(var_decl_list));
         {
             let mut s = shared.borrow_mut();
             s.emit_nodes.get(var_statement).emit_flags = EmitFlags::CUSTOM_PROLOGUE;
@@ -1388,14 +1398,12 @@ fn end_lexical_environment_shared(shared: &Shared, cx: &mut VisitorCx<'_, '_>) -
     let mut statements = Vec::new();
     if !scope.variables.is_empty() {
         let list = cx.factory.new_node_list(scope.variables);
-        let var_decl_list = cx.factory.new_variable_declaration_list(
-            cx.nodes,
-            Some(list),
-            ast::NodeFlags::LET,
-        );
-        let var_statement =
+        let var_decl_list =
             cx.factory
-                .new_variable_statement(cx.nodes, None, Some(var_decl_list));
+                .new_variable_declaration_list(cx.nodes, Some(list), ast::NodeFlags::LET);
+        let var_statement = cx
+            .factory
+            .new_variable_statement(cx.nodes, None, Some(var_decl_list));
         {
             let mut s = shared.borrow_mut();
             s.emit_nodes.get(var_statement).emit_flags = EmitFlags::CUSTOM_PROLOGUE;
@@ -1417,8 +1425,11 @@ fn merge_environment_shared(
     }
     let mut changed = false;
 
-    let left_standard_prologue_end =
-        find_span_end(statements, |s| ast::is_prologue_directive(&nodes[*s], nodes), 0);
+    let left_standard_prologue_end = find_span_end(
+        statements,
+        |s| ast::is_prologue_directive(&nodes[*s], nodes),
+        0,
+    );
     let left_hoisted_functions_end = find_span_end(
         statements,
         |s| is_hoisted_function(shared, nodes, *s),
@@ -1430,8 +1441,11 @@ fn merge_environment_shared(
         left_hoisted_functions_end,
     );
 
-    let right_standard_prologue_end =
-        find_span_end(declarations, |s| ast::is_prologue_directive(&nodes[*s], nodes), 0);
+    let right_standard_prologue_end = find_span_end(
+        declarations,
+        |s| ast::is_prologue_directive(&nodes[*s], nodes),
+        0,
+    );
     let right_hoisted_functions_end = find_span_end(
         declarations,
         |s| is_hoisted_function(shared, nodes, *s),
@@ -1517,8 +1531,14 @@ fn visit_parameters(
     nodes: Option<NodeList>,
     visitor: &NodeVisitor<'_>,
 ) -> Option<NodeList> {
-    shared.borrow_mut().var_scope_stack.push(VarScope::default());
-    shared.borrow_mut().let_scope_stack.push(VarScope::default());
+    shared
+        .borrow_mut()
+        .var_scope_stack
+        .push(VarScope::default());
+    shared
+        .borrow_mut()
+        .let_scope_stack
+        .push(VarScope::default());
     let old_flags = {
         let mut s = shared.borrow_mut();
         let scope = s.var_scope_stack.last_mut().unwrap();
@@ -1536,11 +1556,7 @@ fn visit_parameters(
     // when the emit target is greater than ES2015. (Which is now all targets.)
     let hoisted = {
         let s = shared.borrow();
-        s.var_scope_stack
-            .last()
-            .unwrap()
-            .flags
-            & ENVIRONMENT_FLAGS_VARIABLES_HOISTED_IN_PARAMETERS
+        s.var_scope_stack.last().unwrap().flags & ENVIRONMENT_FLAGS_VARIABLES_HOISTED_IN_PARAMETERS
             != 0
     };
     let nodes = if hoisted {
@@ -1548,7 +1564,12 @@ fn visit_parameters(
     } else {
         nodes
     };
-    shared.borrow_mut().var_scope_stack.last_mut().unwrap().flags = old_flags;
+    shared
+        .borrow_mut()
+        .var_scope_stack
+        .last_mut()
+        .unwrap()
+        .flags = old_flags;
     // !!! c.suspendVariableEnvironment()
     nodes
 }
@@ -1562,8 +1583,7 @@ fn add_default_value_assignments_if_needed(
     let node_list = node_list?;
     let mut result: Option<Vec<NodeId>> = None;
     for (i, &parameter) in node_list.nodes.iter().enumerate() {
-        let updated =
-            add_default_value_assignment_if_needed(shared, cx, parameter);
+        let updated = add_default_value_assignment_if_needed(shared, cx, parameter);
         if updated != parameter {
             if result.is_none() {
                 result = Some(node_list.nodes.to_vec());
@@ -1589,12 +1609,7 @@ fn add_default_value_assignment_if_needed(
     // so let's just ignore it.
     let (dot_dot_dot_token, name, initializer, ty) = {
         let d = cx.nodes[parameter].as_parameter_declaration();
-        (
-            d.dot_dot_dot_token,
-            d.name,
-            d.initializer,
-            d.type_,
-        )
+        (d.dot_dot_dot_token, d.name, d.initializer, d.type_)
     };
     if dot_dot_dot_token.is_some() {
         return parameter;
@@ -1653,35 +1668,30 @@ fn add_default_value_assignment_for_binding_pattern(
     } else {
         new_generated_name_for_node(shared, cx, parameter)
     };
-    let var_decl = cx.factory.new_variable_declaration(
-        cx.nodes,
-        name,
-        None,
-        ty,
-        Some(init_node),
-    );
+    let var_decl = cx
+        .factory
+        .new_variable_declaration(cx.nodes, name, None, ty, Some(init_node));
     let decl_list = cx.factory.new_node_list([var_decl]);
-    let var_decl_list = cx.factory.new_variable_declaration_list(
-        cx.nodes,
-        Some(decl_list),
-        ast::NodeFlags::NONE,
-    );
+    let var_decl_list =
+        cx.factory
+            .new_variable_declaration_list(cx.nodes, Some(decl_list), ast::NodeFlags::NONE);
     let var_statement = cx
         .factory
         .new_variable_statement(cx.nodes, None, Some(var_decl_list));
     add_initialization_statement_shared(shared, var_statement);
     let generated_name = new_generated_name_for_node(shared, cx, parameter);
-    cx.factory.update_parameter_declaration(
-        cx.nodes,
-        parameter,
-        modifiers,
-        dot_dot_dot_token,
-        Some(generated_name),
-        question_token,
-        ty,
-        None,
-    )
-    .unwrap_or(parameter)
+    cx.factory
+        .update_parameter_declaration(
+            cx.nodes,
+            parameter,
+            modifiers,
+            dot_dot_dot_token,
+            Some(generated_name),
+            question_token,
+            ty,
+            None,
+        )
+        .unwrap_or(parameter)
 }
 
 /// `(c *EmitContext) addDefaultValueAssignmentForInitializer`
@@ -1743,30 +1753,24 @@ fn add_default_value_assignment_for_initializer(
             | EmitFlags::NO_COMMENTS;
     }
     let name_clone2 = cx.factory.clone_node(cx.nodes, name);
-    let type_check = crate::factory::new_type_check(
-        &mut cx.factory,
-        cx.nodes,
-        name_clone2,
-        "undefined",
-    );
-    let if_statement = cx.factory.new_if_statement(
-        cx.nodes,
-        Some(type_check),
-        Some(init_block),
-        None,
-    );
+    let type_check =
+        crate::factory::new_type_check(&mut cx.factory, cx.nodes, name_clone2, "undefined");
+    let if_statement =
+        cx.factory
+            .new_if_statement(cx.nodes, Some(type_check), Some(init_block), None);
     add_initialization_statement_shared(shared, if_statement);
-    cx.factory.update_parameter_declaration(
-        cx.nodes,
-        parameter,
-        modifiers,
-        dot_dot_dot_token,
-        param_name,
-        question_token,
-        ty,
-        None,
-    )
-    .unwrap_or(parameter)
+    cx.factory
+        .update_parameter_declaration(
+            cx.nodes,
+            parameter,
+            modifiers,
+            dot_dot_dot_token,
+            param_name,
+            question_token,
+            ty,
+            None,
+        )
+        .unwrap_or(parameter)
 }
 
 /// `newGeneratedNameForNode` via the shared tables (mirrors
@@ -1835,12 +1839,7 @@ fn visit_function_body(
         }
         let block = convert_to_function_block_shared(shared, cx, updated, false);
         let block_statements = cx.nodes[block].statement_list().cloned();
-        let merged = merge_environment_list_shared(
-            shared,
-            cx,
-            block_statements,
-            &declarations,
-        );
+        let merged = merge_environment_list_shared(shared, cx, block_statements, &declarations);
         let multi_line = cx.nodes[block].as_block().multi_line;
         return cx
             .factory
@@ -1903,7 +1902,10 @@ fn visit_iteration_body(
     // PORT: the `visit_iteration_body` hook only runs for non-nil bodies.
     let body = body;
 
-    shared.borrow_mut().let_scope_stack.push(VarScope::default());
+    shared
+        .borrow_mut()
+        .let_scope_stack
+        .push(VarScope::default());
     let updated = visit_embedded_statement(shared, cx, body, visitor);
     let Some(updated) = updated else {
         panic!("Expected visitor to return a statement.")

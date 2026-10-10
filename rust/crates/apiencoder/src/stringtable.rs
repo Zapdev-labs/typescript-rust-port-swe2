@@ -82,7 +82,8 @@ impl StringTable {
 
         // Can't represent the string as a slice of the file text.
         let index = self.offsets.len() as u32;
-        self.offsets.push((file_text.len() + self.strings.len()) as u32);
+        self.offsets
+            .push((file_text.len() + self.strings.len()) as u32);
         self.strings.extend_from_slice(text);
         self.offsets
             .push((file_text.len() + self.strings.len()) as u32);
@@ -95,7 +96,8 @@ impl StringTable {
     /// The caller is responsible for prepending the offsets to the output.
     pub fn encode(&self, nodes: &[Node]) -> Vec<u8> {
         let file_text = self.file_text(nodes);
-        let mut result = Vec::with_capacity(self.offsets.len() * 4 + file_text.len() + self.strings.len());
+        let mut result =
+            Vec::with_capacity(self.offsets.len() * 4 + file_text.len() + self.strings.len());
         for &offset in &self.offsets {
             result.extend_from_slice(&offset.to_le_bytes());
         }

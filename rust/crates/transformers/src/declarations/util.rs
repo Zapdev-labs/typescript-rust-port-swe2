@@ -26,11 +26,9 @@ pub(crate) fn can_have_literal_initializer(
     nodes: &[Node],
 ) -> bool {
     match nodes[node].kind {
-        Kind::PropertyDeclaration | Kind::PropertySignature => {
-            resolver
-                .get_effective_declaration_flags(node, ModifierFlags::PRIVATE, nodes)
-                .is_empty()
-        }
+        Kind::PropertyDeclaration | Kind::PropertySignature => resolver
+            .get_effective_declaration_flags(node, ModifierFlags::PRIVATE, nodes)
+            .is_empty(),
         Kind::Parameter | Kind::VariableDeclaration => true,
         _ => false,
     }
@@ -69,8 +67,7 @@ pub(crate) fn can_produce_diagnostics(node: &Node) -> bool {
 /// added by the reparsing pass) cannot be reused verbatim.
 pub(crate) fn can_reuse_modifier_nodes(list: &[NodeId], nodes: &[Node]) -> bool {
     for &node in list {
-        if ast::is_modifier(&nodes[node])
-            && nodes[node].flags.intersects(ast::NodeFlags::REPARSED)
+        if ast::is_modifier(&nodes[node]) && nodes[node].flags.intersects(ast::NodeFlags::REPARSED)
         {
             return false;
         }
@@ -183,7 +180,9 @@ pub(crate) fn mask_modifier_flags(
 /// `unwrapParenthesizedExpression(o)`.
 pub(crate) fn unwrap_parenthesized_expression(mut o: NodeId, nodes: &[Node]) -> NodeId {
     while nodes[o].kind == Kind::ParenthesizedExpression {
-        o = nodes[o].expression().expect("ParenthesizedExpression.expression");
+        o = nodes[o]
+            .expression()
+            .expect("ParenthesizedExpression.expression");
     }
     o
 }
@@ -209,7 +208,13 @@ pub(crate) fn should_emit_function_properties(
     nodes: &[Node],
     symbols: &[ast::Symbol],
 ) -> bool {
-    if nodes[input].as_function_declaration().function_like_with_body_base.body_base.body.is_some() {
+    if nodes[input]
+        .as_function_declaration()
+        .function_like_with_body_base
+        .body_base
+        .body
+        .is_some()
+    {
         return true;
     }
     let Some(symbol) = nodes[input].symbol() else {
@@ -221,7 +226,8 @@ pub(crate) fn should_emit_function_properties(
         !ast::is_function_declaration(&nodes[*decl])
             || nodes[*decl]
                 .as_function_declaration()
-                .function_like_with_body_base.body_base
+                .function_like_with_body_base
+                .body_base
                 .body
                 .is_none()
     })

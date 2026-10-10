@@ -25,12 +25,14 @@
 use tsc_ast::{self as ast, Kind, NodeId, NodeList, SymbolFlags, SymbolId};
 use tsc_nodebuilder as nodebuilder;
 use tsc_printer as printer;
-use tsc_pseudochecker::{self as pseudochecker, PseudoParameter, PseudoType, PseudoTypeKind, PseudoTypeRef};
+use tsc_pseudochecker::{
+    self as pseudochecker, PseudoParameter, PseudoType, PseudoTypeKind, PseudoTypeRef,
+};
 
 use crate::checker_core::Checker;
+use crate::checker_types::TypeFacts;
 use crate::nodebuilderimpl::NodeBuilderImpl;
 use crate::nodebuilderscopes::ScopeCleanup;
-use crate::checker_types::TypeFacts;
 use crate::types::{
     ContextFlags, ElementFlags, SignatureId, Ternary, TypeFlags, TypeId, TypePredicate,
     TypePredicateKind,
@@ -67,11 +69,7 @@ fn symbol_value_declaration(c: &Checker, s: SymbolId) -> Option<NodeId> {
 
 /// `b.ctx.tracker.ReportInferenceFallback(node)` — reports through the
 // tracker when one is installed.
-fn report_inference_fallback(
-    b: &NodeBuilderImpl<'_>,
-    node: Option<NodeId>,
-    nodes: &[ast::Node],
-) {
+fn report_inference_fallback(b: &NodeBuilderImpl<'_>, node: Option<NodeId>, nodes: &[ast::Node]) {
     if let (Some(tracker), Some(node)) = (b.ctx.tracker.clone(), node) {
         tracker.borrow_mut().report_inference_fallback(node, nodes);
     }
@@ -81,8 +79,8 @@ fn report_inference_fallback(
 /// through the owning program arena.
 fn name_parent(c: &Checker, name: Option<NodeId>) -> Option<NodeId> {
     name.and_then(|n| {
-                let __program = c.program.clone().expect("program");
-        let nn = __program.nodes((n).file_index());;
+        let __program = c.program.clone().expect("program");
+        let nn = __program.nodes((n).file_index());
         nn[n].parent
     })
 }
@@ -96,8 +94,10 @@ fn append_type_node(
     nodes: &[ast::Node],
 ) {
     if ast::is_union_type_node(&nodes[node]) {
-        if let Some(types) =
-            &nodes[node].as_union_type_node().union_or_intersection_type_node_base.types
+        if let Some(types) = &nodes[node]
+            .as_union_type_node()
+            .union_or_intersection_type_node_base
+            .types
         {
             for &sub in types.nodes.iter() {
                 append_type_node(sub, res, has_undefined, nodes);
@@ -209,8 +209,8 @@ impl<'a> NodeBuilderImpl<'a> {
                     }
                 } else {
                     let (report_node,) = {
-                                                let __program = c.program.clone().expect("program");
-                        let nn = __program.nodes((node).file_index());;
+                        let __program = c.program.clone().expect("program");
+                        let nn = __program.nodes((node).file_index());
                         let parent = nn[node].parent;
                         if ast::is_entity_name_expression(&nn[node], &nn)
                             && parent.is_some_and(|p| ast::is_declaration(&nn[p]))
@@ -229,25 +229,25 @@ impl<'a> NodeBuilderImpl<'a> {
                 // use symbol type from parent declaration to automatically
                 // handle expression type widening without duplicating logic
                 let parent = {
-                                        let __program = c.program.clone().expect("program");
-                    let nn = __program.nodes((node).file_index());;
+                    let __program = c.program.clone().expect("program");
+                    let nn = __program.nodes((node).file_index());
                     nn[node].parent
                 };
                 if let Some(parent) = parent {
                     let parent_is_return = {
-                                                let __program = c.program.clone().expect("program");
-                        let nn = __program.nodes((parent).file_index());;
+                        let __program = c.program.clone().expect("program");
+                        let nn = __program.nodes((parent).file_index());
                         ast::is_return_statement(&nn[parent])
                     };
                     if parent_is_return {
                         let enclosing = {
-                                                        let __program = c.program.clone().expect("program");
-                            let nn = __program.nodes((node).file_index());;
+                            let __program = c.program.clone().expect("program");
+                            let nn = __program.nodes((node).file_index());
                             ast::get_containing_function(node, &nn)
                         };
                         if enclosing.is_some_and(|e| {
-                                                        let __program = c.program.clone().expect("program");
-                            let nn = __program.nodes((e).file_index());;
+                            let __program = c.program.clone().expect("program");
+                            let nn = __program.nodes((e).file_index());
                             ast::is_accessor(&nn[e])
                         }) {
                             return Some(self.serialize_type_for_declaration(
@@ -258,8 +258,8 @@ impl<'a> NodeBuilderImpl<'a> {
                         return self.serialize_return_type_for_signature(c, nodes, sig, false);
                     }
                     let parent_is_arrow_body = {
-                                                let __program = c.program.clone().expect("program");
-                        let nn = __program.nodes((parent).file_index());;
+                        let __program = c.program.clone().expect("program");
+                        let nn = __program.nodes((parent).file_index());
                         ast::is_arrow_function(&nn[parent])
                             && nn[parent]
                                 .as_arrow_function()
@@ -273,8 +273,8 @@ impl<'a> NodeBuilderImpl<'a> {
                         return self.serialize_return_type_for_signature(c, nodes, sig, false);
                     }
                     let parent_is_declaration = {
-                                                let __program = c.program.clone().expect("program");
-                        let nn = __program.nodes((parent).file_index());;
+                        let __program = c.program.clone().expect("program");
+                        let nn = __program.nodes((parent).file_index());
                         ast::is_declaration(&nn[parent])
                     };
                     if parent_is_declaration {
@@ -298,22 +298,15 @@ impl<'a> NodeBuilderImpl<'a> {
                 let node = t.as_pseudo_type_no_result().declaration;
                 report_inference_fallback(self, Some(node), nodes);
                 let is_fn_non_accessor = {
-                                        let __program = c.program.clone().expect("program");
-                    let nn = __program.nodes((node).file_index());;
+                    let __program = c.program.clone().expect("program");
+                    let nn = __program.nodes((node).file_index());
                     ast::is_function_like(Some(node), &nn) && !ast::is_accessor(&nn[node])
                 };
                 if is_fn_non_accessor {
                     let sig = c.get_signature_from_declaration(node);
                     return self.serialize_return_type_for_signature(c, nodes, sig, false);
                 }
-                Some(self.serialize_type_for_declaration(
-                    c,
-                    nodes,
-                    Some(node),
-                    None,
-                    None,
-                    false,
-                ))
+                Some(self.serialize_type_for_declaration(c, nodes, Some(node), None, None, false))
             }
             PseudoTypeKind::MaybeConstLocation => {
                 let d = t.as_pseudo_type_maybe_const_location();
@@ -324,8 +317,8 @@ impl<'a> NodeBuilderImpl<'a> {
                 // literalized templates
                 let mut is_in_const_context = c.is_const_context(d.node);
                 if !is_in_const_context && {
-                                        let __program = c.program.clone().expect("program");
-                    let nn = __program.nodes((d.node).file_index());;
+                    let __program = c.program.clone().expect("program");
+                    let nn = __program.nodes((d.node).file_index());
                     pseudochecker::is_in_const_context(d.node, &nn)
                 } {
                     // Only consult the contextual type if the pseudochecker's
@@ -357,10 +350,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 let members = t.as_pseudo_type_union().types.clone();
                 for m in members {
                     if !c.strict_null_checks
-                        && matches!(
-                            m.kind(),
-                            PseudoTypeKind::Undefined | PseudoTypeKind::Null
-                        )
+                        && matches!(m.kind(), PseudoTypeKind::Undefined | PseudoTypeKind::Null)
                     {
                         has_elided_type = true;
                         continue;
@@ -477,11 +467,10 @@ impl<'a> NodeBuilderImpl<'a> {
                 self.e
                     .borrow()
                     .add_emit_flags(result, printer::EmitFlags::SINGLE_LINE);
-                Some(self.f.new_type_operator_node(
-                    nodes,
-                    Kind::ReadonlyKeyword,
-                    Some(result),
-                ))
+                Some(
+                    self.f
+                        .new_type_operator_node(nodes, Kind::ReadonlyKeyword, Some(result)),
+                )
             }
             PseudoTypeKind::ObjectLiteral => {
                 let element_count = t.as_pseudo_type_object_literal().elements.len();
@@ -506,8 +495,8 @@ impl<'a> NodeBuilderImpl<'a> {
                 let is_const = {
                     let first_name = t.as_pseudo_type_object_literal().elements[0].name;
                     let grandparent = first_name.and_then(|n| {
-                                                let __program = c.program.clone().expect("program");
-                        let nn = __program.nodes((n).file_index());;
+                        let __program = c.program.clone().expect("program");
+                        let nn = __program.nodes((n).file_index());
                         nn[n].parent.and_then(|p| nn[p].parent)
                     });
                     grandparent.is_some_and(|gp| c.is_const_context(gp))
@@ -599,14 +588,11 @@ impl<'a> NodeBuilderImpl<'a> {
                                 None
                             };
                             if is_const {
-                                let name = self.reuse_name(c, nodes, e_name, false /*isMethod*/);
-                                let params = self.pseudo_parameters_to_node_list(
-                                    c,
-                                    nodes,
-                                    &d_parameters,
-                                );
-                                let return_type =
-                                    self.pseudo_type_to_node(c, nodes, d_return_type);
+                                let name =
+                                    self.reuse_name(c, nodes, e_name, false /*isMethod*/);
+                                let params =
+                                    self.pseudo_parameters_to_node_list(c, nodes, &d_parameters);
+                                let return_type = self.pseudo_type_to_node(c, nodes, d_return_type);
                                 let fn_type = self.f.new_function_type_node(
                                     nodes,
                                     type_params,
@@ -622,14 +608,11 @@ impl<'a> NodeBuilderImpl<'a> {
                                     None,
                                 )
                             } else {
-                                let name = self.reuse_name(c, nodes, e_name, true /*isMethod*/);
-                                let params = self.pseudo_parameters_to_node_list(
-                                    c,
-                                    nodes,
-                                    &d_parameters,
-                                );
-                                let return_type =
-                                    self.pseudo_type_to_node(c, nodes, d_return_type);
+                                let name =
+                                    self.reuse_name(c, nodes, e_name, true /*isMethod*/);
+                                let params =
+                                    self.pseudo_parameters_to_node_list(c, nodes, &d_parameters);
+                                let return_type = self.pseudo_type_to_node(c, nodes, d_return_type);
                                 self.f.new_method_signature_declaration(
                                     nodes,
                                     modifiers,
@@ -687,27 +670,19 @@ impl<'a> NodeBuilderImpl<'a> {
                             let name = self.reuse_name(c, nodes, e_name, false /*isMethod*/);
                             let type_node = self.pseudo_type_to_node(c, nodes, d_type);
                             self.f.new_get_accessor_declaration(
-                                nodes,
-                                None,
-                                name,
-                                None,
-                                None,
-                                type_node,
-                                None,
-                                None,
+                                nodes, None, name, None, None, type_node, None, None,
                             )
                         }
                     };
                     let in_enclosing_file = e_name.is_some_and(|n| {
-                                                let __program = c.program.clone().expect("program");
-                        let nn = __program.nodes((n).file_index());;
-                        self.ctx.enclosing_file
-                            == ast::get_source_file_of_node(e_name, &nn)
+                        let __program = c.program.clone().expect("program");
+                        let nn = __program.nodes((n).file_index());
+                        self.ctx.enclosing_file == ast::get_source_file_of_node(e_name, &nn)
                     });
                     if in_enclosing_file {
                         let loc = {
-                                                        let __program = c.program.clone().expect("program");
-                            let nn = __program.nodes((e_name.unwrap()).file_index());;
+                            let __program = c.program.clone().expect("program");
+                            let nn = __program.nodes((e_name.unwrap()).file_index());
                             e_name.and_then(|n| nn[n].parent).map(|p| nn[p].loc)
                         };
                         if let Some(loc) = loc {
@@ -780,8 +755,8 @@ impl<'a> NodeBuilderImpl<'a> {
         let name = {
             let parent = name_parent(c, p.name);
             let symbol = parent.and_then(|par| {
-                                let __program = c.program.clone().expect("program");
-                let pn = __program.nodes((par).file_index());;
+                let __program = c.program.clone().expect("program");
+                let pn = __program.nodes((par).file_index());
                 pn[par].symbol()
             });
             self.parameter_to_parameter_declaration_name(
@@ -803,8 +778,8 @@ impl<'a> NodeBuilderImpl<'a> {
         );
         if let Some(original) = name_parent(c, p.name) {
             let is_param = {
-                                let __program = c.program.clone().expect("program");
-                let nn = __program.nodes((original).file_index());;
+                let __program = c.program.clone().expect("program");
+                let nn = __program.nodes((original).file_index());
                 ast::is_parameter_declaration(&nn[original])
             };
             if is_param {
@@ -851,7 +826,8 @@ impl<'a> NodeBuilderImpl<'a> {
                     return true;
                 }
                 if c.types_handle().get(tfp).flags.intersects(TypeFlags::UNION)
-                    && c.types_handle().get(undefined_stripped)
+                    && c.types_handle()
+                        .get(undefined_stripped)
                         .flags
                         .intersects(TypeFlags::UNION)
                 {
@@ -864,13 +840,15 @@ impl<'a> NodeBuilderImpl<'a> {
             }
             // handles freshness mismatches (e.g., fresh true vs regular true
             // in as const)
-            if c.get_regular_type_of_literal_type(tfp)
-                == c.get_regular_type_of_literal_type(type_)
+            if c.get_regular_type_of_literal_type(tfp) == c.get_regular_type_of_literal_type(type_)
             {
                 return true;
             }
             if c.types_handle().get(tfp).flags.intersects(TypeFlags::UNION)
-                && c.types_handle().get(type_).flags.intersects(TypeFlags::UNION)
+                && c.types_handle()
+                    .get(type_)
+                    .flags
+                    .intersects(TypeFlags::UNION)
             {
                 // handles union comparison in general, since unions may not
                 // be `==` identical due to aliasing
@@ -921,15 +899,13 @@ impl<'a> NodeBuilderImpl<'a> {
                     };
                     let mut target_prop: Option<SymbolId> = None;
                     let elem_symbol = name_parent(c, e_name).and_then(|parent| {
-                                                let __program = c.program.clone().expect("program");
-                        let pn = __program.nodes((parent).file_index());;
+                        let __program = c.program.clone().expect("program");
+                        let pn = __program.nodes((parent).file_index());
                         pn[parent].symbol()
                     });
                     if let Some(elem_symbol) = elem_symbol {
-                        target_prop = c.get_property_of_type(
-                            undefined_stripped,
-                            &symbol_name(c, elem_symbol),
-                        );
+                        target_prop = c
+                            .get_property_of_type(undefined_stripped, &symbol_name(c, elem_symbol));
                     }
                     if target_prop.is_none() {
                         // Name lookup failed or returned no result; search
@@ -937,8 +913,8 @@ impl<'a> NodeBuilderImpl<'a> {
                         // node matches the one we have
                         for &prop in &target_props {
                             if symbol_value_declaration(c, prop).and_then(|vd| {
-                                                                let __program = c.program.clone().expect("program");
-                                let vn = __program.nodes((vd).file_index());;
+                                let __program = c.program.clone().expect("program");
+                                let vn = __program.nodes((vd).file_index());
                                 vn[vd].name()
                             }) == e_name
                             {
@@ -948,11 +924,7 @@ impl<'a> NodeBuilderImpl<'a> {
                         }
                         if target_prop.is_none() {
                             if report_errors {
-                                report_inference_fallback(
-                                    self,
-                                    name_parent(c, e_name),
-                                    nodes,
-                                );
+                                report_inference_fallback(self, name_parent(c, e_name), nodes);
                             }
                             return false;
                         }
@@ -979,17 +951,12 @@ impl<'a> NodeBuilderImpl<'a> {
                             ) {
                                 if report_errors {
                                     if d_type.kind() == PseudoTypeKind::Inferred
-                                        && !d_type
-                                            .as_pseudo_type_inferred()
-                                            .error_nodes
-                                            .is_empty()
+                                        && !d_type.as_pseudo_type_inferred().error_nodes.is_empty()
                                     {
                                         // Re-report the fine-grained error
                                         // nodes; the recursive call used
                                         // reportErrors=false
-                                        for &n in
-                                            &d_type.as_pseudo_type_inferred().error_nodes
-                                        {
+                                        for &n in &d_type.as_pseudo_type_inferred().error_nodes {
                                             report_inference_fallback(self, Some(n), nodes);
                                         }
                                     } else if !is_structural_pseudo_type(&d_type) {
@@ -1020,8 +987,7 @@ impl<'a> NodeBuilderImpl<'a> {
                                     d.return_type.clone(),
                                 )
                             };
-                            let Some(target_sig) = c.get_single_call_signature(prop_type)
-                            else {
+                            let Some(target_sig) = c.get_single_call_signature(prop_type) else {
                                 // Target property type doesn't have a single
                                 // call signature; can't validate
                                 continue;
@@ -1083,11 +1049,7 @@ impl<'a> NodeBuilderImpl<'a> {
                                 c, nodes, &d_type, prop_type, false, false,
                             ) {
                                 if report_errors {
-                                    report_inference_fallback(
-                                        self,
-                                        name_parent(c, e_name),
-                                        nodes,
-                                    );
+                                    report_inference_fallback(self, name_parent(c, e_name), nodes);
                                 }
                                 return false;
                             }
@@ -1108,11 +1070,7 @@ impl<'a> NodeBuilderImpl<'a> {
                                 false,
                             ) {
                                 if report_errors {
-                                    report_inference_fallback(
-                                        self,
-                                        name_parent(c, e_name),
-                                        nodes,
-                                    );
+                                    report_inference_fallback(self, name_parent(c, e_name), nodes);
                                 }
                                 return false;
                             }
@@ -1126,7 +1084,8 @@ impl<'a> NodeBuilderImpl<'a> {
                 if !crate::checker_core::is_tuple_type(&c.types, undefined_stripped) {
                     return false;
                 }
-                let __arena_tuple_target = c.types.clone(); let tuple_target = __arena_tuple_target.target_tuple_type(undefined_stripped);
+                let __arena_tuple_target = c.types.clone();
+                let tuple_target = __arena_tuple_target.target_tuple_type(undefined_stripped);
                 let Some(tuple_target) = tuple_target else {
                     return false;
                 };
@@ -1134,7 +1093,8 @@ impl<'a> NodeBuilderImpl<'a> {
                 // only ever have required elements. If the target tuple has
                 // optional, rest, or variadic elements, the structures can't
                 // match.
-                if c.types_handle().get(tuple_target)
+                if c.types_handle()
+                    .get(tuple_target)
                     .as_tuple_type()
                     .combined_flags
                     .intersects(ElementFlags::NON_REQUIRED)
@@ -1161,8 +1121,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 true
             }
             PseudoTypeKind::SingleCallSignature => {
-                let Some(target_sig) = c.get_single_call_signature(undefined_stripped)
-                else {
+                let Some(target_sig) = c.get_single_call_signature(undefined_stripped) else {
                     return false;
                 };
                 let (pt_type_parameters_len, pt_signature, pt_return_type, pt_parameters) = {
@@ -1182,8 +1141,7 @@ impl<'a> NodeBuilderImpl<'a> {
                             .collect::<Vec<_>>(),
                     )
                 };
-                if c.signature_arena.get(target_sig).type_parameters.len()
-                    != pt_type_parameters_len
+                if c.signature_arena.get(target_sig).type_parameters.len() != pt_type_parameters_len
                 {
                     if report_errors {
                         report_inference_fallback(self, Some(pt_signature), nodes);
@@ -1263,8 +1221,8 @@ impl<'a> NodeBuilderImpl<'a> {
                 }
                 return false;
             } else if params[0].name.is_some_and(|n| {
-                                let __program = c.program.clone().expect("program");
-                let nn = __program.nodes((n).file_index());;
+                let __program = c.program.clone().expect("program");
+                let nn = __program.nodes((n).file_index());
                 ast::is_this_identifier(&nn[n])
             }) {
                 let param_type = c.get_type_of_parameter(this_param);
@@ -1306,14 +1264,9 @@ impl<'a> NodeBuilderImpl<'a> {
                 return false;
             }
             let param_type = c.get_type_of_parameter(target_param);
-            if !self.pseudo_type_equivalent_to_type(
-                c,
-                nodes,
-                &p.type_,
-                param_type,
-                p.optional,
-                false,
-            ) {
+            if !self
+                .pseudo_type_equivalent_to_type(c, nodes, &p.type_, param_type, p.optional, false)
+            {
                 if report_errors {
                     report_inference_fallback(self, name_parent(c, p.name), nodes);
                 }
@@ -1336,8 +1289,8 @@ impl<'a> NodeBuilderImpl<'a> {
             return false;
         }
         let node = rt.as_pseudo_type_direct().type_node;
-                let __program = c.program.clone().expect("program");
-        let nn = __program.nodes((node).file_index());;
+        let __program = c.program.clone().expect("program");
+        let nn = __program.nodes((node).file_index());
         if !ast::is_type_predicate_node(&nn[node]) {
             return false;
         }
@@ -1355,8 +1308,7 @@ impl<'a> NodeBuilderImpl<'a> {
             return false;
         }
         // Check this vs identifier matches
-        let is_this =
-            parameter_name.is_some_and(|pn| ast::is_this_type_node(&nn[pn]));
+        let is_this = parameter_name.is_some_and(|pn| ast::is_this_type_node(&nn[pn]));
         let predicate_is_this = matches!(
             predicate.kind,
             TypePredicateKind::This | TypePredicateKind::AssertsThis
@@ -1378,8 +1330,7 @@ impl<'a> NodeBuilderImpl<'a> {
             };
             let predicate_type_from_node = c.get_type_from_type_node(tp_type);
             if predicate_type_from_node != predicate_t
-                && c.compare_types_identical(predicate_type_from_node, predicate_t)
-                    != Ternary::TRUE
+                && c.compare_types_identical(predicate_type_from_node, predicate_t) != Ternary::TRUE
             {
                 return false;
             }
@@ -1434,10 +1385,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 let members = t.as_pseudo_type_union().types.clone();
                 for m in members {
                     if !c.strict_null_checks
-                        && matches!(
-                            m.kind(),
-                            PseudoTypeKind::Undefined | PseudoTypeKind::Null
-                        )
+                        && matches!(m.kind(), PseudoTypeKind::Undefined | PseudoTypeKind::Null)
                     {
                         has_elided_type = true;
                         continue;

@@ -30,10 +30,8 @@ pub fn begin_profiling(profile_dir: &str, log_writer: Box<dyn Write + Send>) -> 
     std::fs::create_dir_all(profile_dir).unwrap();
 
     let pid = std::process::id();
-    let cpu_profile_path =
-        Path::new(profile_dir).join(format!("{pid}-cpuprofile.pb.gz"));
-    let mem_profile_path =
-        Path::new(profile_dir).join(format!("{pid}-memprofile.pb.gz"));
+    let cpu_profile_path = Path::new(profile_dir).join(format!("{pid}-cpuprofile.pb.gz"));
+    let mem_profile_path = Path::new(profile_dir).join(format!("{pid}-memprofile.pb.gz"));
 
     let guard = pprof::ProfilerGuardBuilder::default()
         .frequency(1000)
@@ -59,10 +57,8 @@ impl ProfileSession {
                         use prost::Message as _;
                         profile.encode(&mut content).unwrap();
                         let file = std::fs::File::create(&self.cpu_file_path).unwrap();
-                        let mut gz = flate2::write::GzEncoder::new(
-                            file,
-                            flate2::Compression::default(),
-                        );
+                        let mut gz =
+                            flate2::write::GzEncoder::new(file, flate2::Compression::default());
                         gz.write_all(&content).unwrap();
                         gz.finish().unwrap();
                     }
@@ -161,9 +157,8 @@ fn write_memory_summary(path: &str) {
         Err(e) => panic!("failed to create memory profile file: {e}"),
     };
     let mut gz = flate2::write::GzEncoder::new(file, flate2::Compression::default());
-    let mut summary = String::from(
-        "# Rust port — no Go-style heap profile; process memory summary follows.\n",
-    );
+    let mut summary =
+        String::from("# Rust port — no Go-style heap profile; process memory summary follows.\n");
     if let Ok(status) = std::fs::read_to_string("/proc/self/status") {
         for line in status.lines() {
             if line.starts_with("Vm") {

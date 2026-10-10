@@ -63,7 +63,15 @@ impl IncludeProcessor {
     pub fn get_diagnostics(&self, p: &Program) -> &DiagnosticsCollection {
         if !self.computed_diagnostics_done.get() {
             self.computed_diagnostics_done.set(true);
-            for d in &p.processing_diagnostics {
+            // Go's `addProcessingDiagnostic` appends to the same
+            // `processingDiagnostics` slice this loop reads; the port splits
+            // post-parse additions into `pending_processing_diagnostics`, so
+            // drain both (see `Program::for_each_processing_diagnostic`).
+            for d in p
+                .processing_diagnostics
+                .iter()
+                .chain(p.pending_processing_diagnostics.borrow().iter())
+            {
                 self.computed_diagnostics.add(&d.to_diagnostic(p));
             }
             for resolutions in p.resolved_modules.values() {
@@ -187,19 +195,18 @@ impl IncludeProcessor {
             // `program.GetSourceOfProjectReferenceIfOutputIncluded(file)`
             let file_file_name = match &file {
                 FileRef::Redirect(r) => r.file_name.clone(),
-                FileRef::Source(s) => program
-                    .arena_of(*s)[*s]
+                FileRef::Source(s) => program.arena_of(*s)[*s]
                     .as_source_file()
                     .file_name()
                     .clone(),
             };
             let source = match &file {
-                FileRef::Redirect(r) => program
-                    .get_source_of_project_reference_if_output_included(&**r),
-                FileRef::Source(s) => program
-                    .get_source_of_project_reference_if_output_included(
-                        &program.file_has_file_name(*s),
-                    ),
+                FileRef::Redirect(r) => {
+                    program.get_source_of_project_reference_if_output_included(&**r)
+                }
+                FileRef::Source(s) => program.get_source_of_project_reference_if_output_included(
+                    &program.file_has_file_name(*s),
+                ),
             };
             if source != file_file_name {
                 result.push(tsc_ast::diagnostic::new_compiler_diagnostic(
@@ -222,12 +229,11 @@ impl IncludeProcessor {
             if let FileRef::Source(sf_id) = &file {
                 let nodes = program.arena_of(*sf_id);
                 if is_external_or_commonjs_module(nodes[*sf_id].as_source_file()) {
-                    let meta_data = program.get_source_file_meta_data(
-                        nodes[*sf_id].as_source_file().path_key(),
-                    );
-                    match program.get_implied_node_format_for_emit(
-                        &program.file_has_file_name(*sf_id),
-                    ) {
+                    let meta_data = program
+                        .get_source_file_meta_data(nodes[*sf_id].as_source_file().path_key());
+                    match program
+                        .get_implied_node_format_for_emit(&program.file_has_file_name(*sf_id))
+                    {
                         ModuleKind::ESNext => {
                             if meta_data.package_json_type == "module" {
                                 result.push(tsc_ast::diagnostic::new_compiler_diagnostic(

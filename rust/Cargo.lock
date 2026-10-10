@@ -1180,6 +1180,38 @@ dependencies = [
 ]
 
 [[package]]
+name = "tsc-execute"
+version = "0.0.0"
+dependencies = [
+ "indexmap",
+ "rustc-hash",
+ "serde",
+ "serde_json",
+ "tsc-ast",
+ "tsc-bundled",
+ "tsc-collections",
+ "tsc-compiler",
+ "tsc-contentmapper",
+ "tsc-core",
+ "tsc-diagnostics",
+ "tsc-diagnosticwriter",
+ "tsc-fswatch",
+ "tsc-json",
+ "tsc-locale",
+ "tsc-module",
+ "tsc-parser",
+ "tsc-pprof",
+ "tsc-scanner",
+ "tsc-spanmap",
+ "tsc-tracing",
+ "tsc-tsoptions",
+ "tsc-tspath",
+ "tsc-vfs",
+ "tsc-watchmanager",
+ "xxhash-rust",
+]
+
+[[package]]
 name = "tsc-format"
 version = "0.0.0"
 dependencies = [
@@ -1189,8 +1221,10 @@ dependencies = [
  "tsc-debug",
  "tsc-lsutil",
  "tsc-parser",
+ "tsc-repo",
  "tsc-scanner",
  "tsc-stringutil",
+ "tsc-tspath",
 ]
 
 [[package]]
@@ -1562,6 +1596,19 @@ dependencies = [
  "tsc-stringutil",
  "tsc-testutil",
  "tsc-tspath",
+]
+
+[[package]]
+name = "tsc-transpile"
+version = "0.0.0"
+dependencies = [
+ "rustc-hash",
+ "tsc-ast",
+ "tsc-compiler",
+ "tsc-core",
+ "tsc-tsoptions",
+ "tsc-tspath",
+ "tsc-vfs",
 ]
 
 [[package]]

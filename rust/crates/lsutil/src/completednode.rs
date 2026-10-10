@@ -3,9 +3,9 @@
 
 use tsc_ast::ast::Node;
 use tsc_ast::{self as ast, Kind, NodeId};
-use tsc_core::text::TextPos;
 use tsc_astnav::tokens::find_child_of_kind;
 use tsc_core::core::last_or_nil;
+use tsc_core::text::TextPos;
 
 use crate::children::{get_last_visited_child, ls_scanner};
 
@@ -24,11 +24,7 @@ pub fn position_belongs_to_node(
 }
 
 /// `IsCompletedNode`.
-pub fn is_completed_node(
-    nodes: &mut Vec<Node>,
-    n: Option<NodeId>,
-    source_file: NodeId,
-) -> bool {
+pub fn is_completed_node(nodes: &mut Vec<Node>, n: Option<NodeId>, source_file: NodeId) -> bool {
     let Some(n) = n else {
         return false;
     };
@@ -116,9 +112,7 @@ pub fn is_completed_node(
         | Kind::ArrayBindingPattern
         | Kind::ElementAccessExpression
         | Kind::ComputedPropertyName
-        | Kind::TupleType => {
-            node_ends_with(nodes, n, Kind::CloseBracketToken, source_file)
-        }
+        | Kind::TupleType => node_ends_with(nodes, n, Kind::CloseBracketToken, source_file),
 
         Kind::IndexSignature => {
             let t = nodes[n].type_();

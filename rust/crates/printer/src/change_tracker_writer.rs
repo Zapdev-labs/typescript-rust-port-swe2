@@ -74,48 +74,54 @@ impl ChangeTrackerWriter {
         PrintHandlers {
             on_before_emit_node: Some(Box::new(move |node| {
                 if let Some(node) = node {
-                    tracked
-                        .borrow_mut()
-                        .pos
-                        .insert(TriviaKey::Node(node), tracked.borrow().last_non_trivia_position);
+                    tracked.borrow_mut().pos.insert(
+                        TriviaKey::Node(node),
+                        tracked.borrow().last_non_trivia_position,
+                    );
                 }
             })),
             on_after_emit_node: Some(Box::new(move |node| {
                 if let Some(node) = node {
-                    tracked2
-                        .borrow_mut()
-                        .end
-                        .insert(TriviaKey::Node(node), tracked2.borrow().last_non_trivia_position);
+                    tracked2.borrow_mut().end.insert(
+                        TriviaKey::Node(node),
+                        tracked2.borrow().last_non_trivia_position,
+                    );
                 }
             })),
             on_before_emit_node_list: Some(Box::new(move |nodes| {
                 if let Some(nodes) = nodes {
                     let last = tracked3.borrow().last_non_trivia_position;
-                    tracked3.borrow_mut().pos.insert(
-                        TriviaKey::List(nodes.loc.pos(), nodes.loc.end()),
-                        last,
-                    );
+                    tracked3
+                        .borrow_mut()
+                        .pos
+                        .insert(TriviaKey::List(nodes.loc.pos(), nodes.loc.end()), last);
                 }
             })),
             on_after_emit_node_list: Some(Box::new(move |nodes| {
                 if let Some(nodes) = nodes {
                     let last = tracked4.borrow().last_non_trivia_position;
-                    tracked4.borrow_mut().end.insert(
-                        TriviaKey::List(nodes.loc.pos(), nodes.loc.end()),
-                        last,
-                    );
+                    tracked4
+                        .borrow_mut()
+                        .end
+                        .insert(TriviaKey::List(nodes.loc.pos(), nodes.loc.end()), last);
                 }
             })),
             on_before_emit_token: Some(Box::new(move |node| {
                 if let Some(node) = node {
                     let last = tracked5.borrow().last_non_trivia_position;
-                    tracked5.borrow_mut().pos.insert(TriviaKey::Node(node), last);
+                    tracked5
+                        .borrow_mut()
+                        .pos
+                        .insert(TriviaKey::Node(node), last);
                 }
             })),
             on_after_emit_token: Some(Box::new(move |node| {
                 if let Some(node) = node {
                     let last = tracked6.borrow().last_non_trivia_position;
-                    tracked6.borrow_mut().end.insert(TriviaKey::Node(node), last);
+                    tracked6
+                        .borrow_mut()
+                        .end
+                        .insert(TriviaKey::Node(node), last);
                 }
             })),
             ..Default::default()
@@ -124,12 +130,22 @@ impl ChangeTrackerWriter {
 
     /// `ct.getPos(node)` / `ct.getPos(nodes)`
     fn get_pos(&self, key: TriviaKey) -> i32 {
-        self.tracked.borrow().pos.get(&key).copied().unwrap_or_default()
+        self.tracked
+            .borrow()
+            .pos
+            .get(&key)
+            .copied()
+            .unwrap_or_default()
     }
 
     /// `ct.getEnd(node)` / `ct.getEnd(nodes)`
     fn get_end(&self, key: TriviaKey) -> i32 {
-        self.tracked.borrow().end.get(&key).copied().unwrap_or_default()
+        self.tracked
+            .borrow()
+            .end
+            .get(&key)
+            .copied()
+            .unwrap_or_default()
     }
 
     /// `setLastNonTriviaPosition`
@@ -187,17 +203,11 @@ impl ChangeTrackerWriter {
                             nodes: modifiers.nodes,
                             is_missing: false,
                         };
-                        let new_node_list = assign_positions_to_node_array(
-                            &tracked5,
-                            cx,
-                            Some(node_list),
-                            v,
-                        )?;
+                        let new_node_list =
+                            assign_positions_to_node_array(&tracked5, cx, Some(node_list), v)?;
                         // Return a new ModifierList so that VisitEachChild/Update detects the
                         // change and creates a new node with reassigned child positions.
-                        let mut ml =
-                            cx.factory
-                                .new_modifier_list(cx.nodes, new_node_list.nodes);
+                        let mut ml = cx.factory.new_modifier_list(cx.nodes, new_node_list.nodes);
                         ml.loc = new_node_list.loc;
                         return Some(ml);
                     }
@@ -393,8 +403,14 @@ fn assign_positions_to_node_worker(
     let (pos, end) = {
         let t = tracked.borrow();
         (
-            t.pos.get(&TriviaKey::Node(node)).copied().unwrap_or_default(),
-            t.end.get(&TriviaKey::Node(node)).copied().unwrap_or_default(),
+            t.pos
+                .get(&TriviaKey::Node(node))
+                .copied()
+                .unwrap_or_default(),
+            t.end
+                .get(&TriviaKey::Node(node))
+                .copied()
+                .unwrap_or_default(),
         )
     };
     cx.nodes[new_node].loc = TextRange::new(pos, end);

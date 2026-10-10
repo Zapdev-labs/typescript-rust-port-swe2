@@ -11,9 +11,7 @@ use tsc_tspath::{path_key_from_canonical, rooted_file_path_from_normalized};
 use crate::organizeimports::{
     get_organize_imports_preset_string_comparer, resolve_organize_imports_sort,
 };
-use crate::userpreferences::{
-    OrganizeImportsCollation, OrganizeImportsSort,
-};
+use crate::userpreferences::{OrganizeImportsCollation, OrganizeImportsSort};
 use crate::userpreferences_generated::UserPreferences;
 use crate::utilities::probably_uses_semicolons;
 
@@ -129,9 +127,8 @@ fn test_resolve_organize_imports_sort() {
 
 #[test]
 fn test_compare_organize_imports_natural_strings() {
-    let comparer = get_organize_imports_preset_string_comparer(
-        OrganizeImportsSort::NATURAL_IGNORE_CASE,
-    );
+    let comparer =
+        get_organize_imports_preset_string_comparer(OrganizeImportsSort::NATURAL_IGNORE_CASE);
     let tests: &[(&str, &str, &str, i32)] = &[
         ("numeric runs sort by numeric value", "a2", "a100", -1),
         (

@@ -3,8 +3,8 @@
 
 use tsc_ast::ast::Node;
 use tsc_ast::{self as ast, FindAncestorResult, Kind, NodeId};
-use tsc_core::text::TextPos;
 use tsc_astnav::tokens::{find_next_token, get_start_of_node};
+use tsc_core::text::TextPos;
 use tsc_scanner::scanner::get_ecma_line_of_position;
 
 use crate::children::get_last_child;
@@ -17,16 +17,13 @@ pub fn position_is_asi_candidate(
     context: NodeId,
     file: NodeId,
 ) -> bool {
-    let context_ancestor = ast::find_ancestor_or_quit(
-        Some(context),
-        nodes,
-        &mut |ancestor, _nodes| {
+    let context_ancestor =
+        ast::find_ancestor_or_quit(Some(context), nodes, &mut |ancestor, _nodes| {
             if ancestor.end() != pos {
                 return FindAncestorResult::Quit;
             }
             ast::to_find_ancestor_result(syntax_may_be_asi_candidate(ancestor.kind))
-        },
-    );
+        });
 
     context_ancestor.is_some() && node_is_asi_candidate(nodes, context_ancestor, file)
 }
@@ -82,11 +79,7 @@ pub fn syntax_requires_trailing_semicolon_or_asi(kind: Kind) -> bool {
 }
 
 /// `NodeIsASICandidate`.
-pub fn node_is_asi_candidate(
-    nodes: &mut Vec<Node>,
-    node: Option<NodeId>,
-    file: NodeId,
-) -> bool {
+pub fn node_is_asi_candidate(nodes: &mut Vec<Node>, node: Option<NodeId>, file: NodeId) -> bool {
     let Some(node) = node else {
         return false;
     };
@@ -132,7 +125,6 @@ pub fn node_is_asi_candidate(
     let next_token_start =
         get_start_of_node(nodes, file, next_token, false /* includeJSDoc */);
     let start_line = get_ecma_line_of_position(nodes[file].as_source_file(), nodes[node].end());
-    let end_line =
-        get_ecma_line_of_position(nodes[file].as_source_file(), next_token_start);
+    let end_line = get_ecma_line_of_position(nodes[file].as_source_file(), next_token_start);
     start_line != end_line
 }

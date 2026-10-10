@@ -8,14 +8,12 @@ use rustc_hash::FxHashMap;
 use tsc_ast::diagnostic::DiagnosticRef;
 use tsc_compiler::emit_host::{EmitOnly, EmitOptions};
 use tsc_compiler::host::new_compiler_host;
-use tsc_compiler::program::{new_program, ProgramConfig, ProgramFactories, ProgramHosts};
+use tsc_compiler::program::{ProgramConfig, ProgramFactories, ProgramHosts, new_program};
 use tsc_core::context::Context;
 use tsc_core::options_generated::{CompilerOptions, JsxEmit};
 use tsc_tsoptions::enummaps::get_default_lib_file_name;
 use tsc_tsoptions::parsedcommandline::new_parsed_command_line;
-use tsc_tspath::{
-    rooted_directory_path_from_normalized, to_rooted_file_path, RootedFilePath,
-};
+use tsc_tspath::{RootedFilePath, rooted_directory_path_from_normalized, to_rooted_file_path};
 
 use crate::fs::TranspileFs;
 use crate::options_generated::set_options_for_transpile;
@@ -170,13 +168,7 @@ fn transpile_worker(
     }
 
     let program_fs = Arc::new(TranspileFs { files });
-    let host = new_compiler_host(
-        program_fs.clone(),
-        lib_directory,
-        None,
-        None,
-        None,
-    );
+    let host = new_compiler_host(program_fs.clone(), lib_directory, None, None, None);
 
     let program = new_program(tsc_compiler::program::ProgramOptions {
         config: Rc::new(ProgramConfig {
@@ -254,10 +246,7 @@ fn transpile_worker(
     // always included, regardless of ReportDiagnostics.
     all_diagnostics.extend(result.diagnostics);
 
-    debug_assert!(
-        *has_output_text.borrow(),
-        "Output generation failed"
-    );
+    debug_assert!(*has_output_text.borrow(), "Output generation failed");
 
     Some(Output {
         output_text: output_text.into_inner(),

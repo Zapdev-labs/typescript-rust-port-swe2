@@ -49,9 +49,7 @@ pub fn is_tuple_type_target(types: &TypeArena, t: TypeId) -> bool {
 /// `func IsDistributedTypeParameter` (exports.go:410).
 pub fn is_distributed_type_parameter(types: &TypeArena, t: TypeId) -> bool {
     let ty = types.get(t);
-    ty.flags
-        .intersects(TypeFlags::TYPE_PARAMETER)
-        && ty.as_type_parameter().is_distributed
+    ty.flags.intersects(TypeFlags::TYPE_PARAMETER) && ty.as_type_parameter().is_distributed
 }
 
 // -- Simple "global" accessors (exports.go:8-87) ---------------------------------
@@ -165,14 +163,18 @@ impl Checker {
     }
 
     /// `func (c *Checker) GetUnionTypeEx` (exports.go:382).
-    pub fn get_union_type_ex_api(&mut self, types: &[TypeId], union_reduction: UnionReduction) -> TypeId {
+    pub fn get_union_type_ex_api(
+        &mut self,
+        types: &[TypeId],
+        union_reduction: UnionReduction,
+    ) -> TypeId {
         self.get_union_type_ex(types, union_reduction, None, None)
     }
 
     /// `func (c *Checker) RequiresAddingImplicitUndefined` (exports.go:386).
     pub fn requires_adding_implicit_undefined_api(&mut self, node: NodeId) -> bool {
-                let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());;
+        let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());
         let mut enclosing_declaration =
             ast::find_ancestor(Some(node), &nodes, &mut |n, _| ast::is_declaration(n));
         if enclosing_declaration.is_none() {
@@ -206,8 +208,8 @@ impl Checker {
     /// `func (c *Checker) GetJsxFragmentFactory` (exports.go:300).
     pub fn get_jsx_fragment_factory(&mut self, location: NodeId) -> String {
         if let Some(entity) = self.get_jsx_fragment_factory_entity(location) {
-                        let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((location).file_index());;
+            let __program = self.program.clone().expect("program");
+            let nodes = __program.nodes((location).file_index());
             let first = ast::get_first_identifier(entity, &nodes);
             return nodes[first].as_identifier().text.clone();
         }

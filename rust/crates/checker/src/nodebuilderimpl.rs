@@ -54,7 +54,9 @@ use tsc_pseudochecker::{self as pseudochecker, PseudoTypeKind};
 use tsc_scanner as scanner;
 use tsc_stringutil as stringutil;
 
-use crate::checker_core::{CacheHashKey, Checker, get_non_distributed_type_parameter, is_this_type_parameter};
+use crate::checker_core::{
+    CacheHashKey, Checker, get_non_distributed_type_parameter, is_this_type_parameter,
+};
 use crate::checker_types::{Host, MappedTypeModifiers, TypeFacts};
 use crate::mapper::TypeMapperId;
 use crate::types::{
@@ -882,8 +884,8 @@ impl<'a> NodeBuilderImpl<'a> {
         node: Option<NodeId>,
     ) -> Option<SymbolId> {
         let node = node?;
-                let __program = c.program.clone().expect("program");
-        let n_nodes = __program.nodes((node).file_index());;
+        let __program = c.program.clone().expect("program");
+        let n_nodes = __program.nodes((node).file_index());
         n_nodes[node].parent?;
         c.get_type_from_type_node(node);
         // call to ensure symbol is resolved
@@ -907,8 +909,8 @@ impl<'a> NodeBuilderImpl<'a> {
         if !type_object_flags(c, t).intersects(ObjectFlags::REFERENCE) {
             return true;
         }
-                let __program = c.program.clone().expect("program");
-        let e_nodes = __program.nodes((existing).file_index());;
+        let __program = c.program.clone().expect("program");
+        let e_nodes = __program.nodes((existing).file_index());
         if !ast::is_type_reference_node(&e_nodes[existing]) {
             return true;
         }
@@ -926,14 +928,18 @@ impl<'a> NodeBuilderImpl<'a> {
         // target type before we go comparing their type argument counts.
 
         let existing_target = c.get_declared_type_of_symbol(symbol);
-        let __arena_target = c.types.clone(); let target = __arena_target.get(t)
+        let __arena_target = c.types.clone();
+        let target = __arena_target
+            .get(t)
             .data
             .as_type_reference()
             .and_then(|r| r.object_type.target);
         if Some(existing_target) != target {
             return true;
         }
-        let target_type_params: Vec<TypeId> = c.types_handle().get(target.unwrap())
+        let target_type_params: Vec<TypeId> = c
+            .types_handle()
+            .get(target.unwrap())
             .data
             .as_interface_type()
             .map(|i| i.type_parameters().to_vec())
@@ -978,7 +984,8 @@ impl<'a> NodeBuilderImpl<'a> {
         // `StructuredType` isn't `Clone`; extract the needed fields under a
         // single short borrow so `&mut Checker` calls below don't alias.
         let (all_construct_sigs, members, index_info_list, call_sigs, cached) = {
-            let __arena_guard = c.types.clone(); let guard = __arena_guard.get(t);
+            let __arena_guard = c.types.clone();
+            let guard = __arena_guard.get(t);
             let st = guard.data.as_structured_type();
             match st {
                 Some(st) => (
@@ -1008,7 +1015,8 @@ impl<'a> NodeBuilderImpl<'a> {
             })
             .collect();
         if construct_signatures.len() == all_construct_sigs.len() {
-            c.types_handle().get_mut(t)
+            c.types_handle()
+                .get_mut(t)
                 .data
                 .as_structured_type_mut()
                 .unwrap()
@@ -1019,7 +1027,8 @@ impl<'a> NodeBuilderImpl<'a> {
             .iter()
             .map(|i| c.index_info_arena.alloc(i.clone()))
             .collect();
-        let __arena_type_symbol = c.types.clone(); let type_symbol = __arena_type_symbol.get(t).symbol;
+        let __arena_type_symbol = c.types.clone();
+        let type_symbol = __arena_type_symbol.get(t).symbol;
         let type_copy = c.new_anonymous_type(
             type_symbol,
             members,
@@ -1027,12 +1036,14 @@ impl<'a> NodeBuilderImpl<'a> {
             &construct_signatures,
             &index_infos,
         );
-        c.types_handle().get_mut(t)
+        c.types_handle()
+            .get_mut(t)
             .data
             .as_structured_type_mut()
             .unwrap()
             .object_type_without_abstract_construct_signatures = Some(type_copy);
-        c.types_handle().get_mut(type_copy)
+        c.types_handle()
+            .get_mut(type_copy)
             .data
             .as_structured_type_mut()
             .unwrap()
@@ -1054,8 +1065,8 @@ impl<'a> NodeBuilderImpl<'a> {
             .intersects(nodebuilder::InternalFlags::WRITE_COMPUTED_PROPS)
         {
             if let Some(value_declaration) = symbol_value_declaration(c, symbol) {
-                                let __program = c.program.clone().expect("program");
-                let dn = __program.nodes((value_declaration).file_index());;
+                let __program = c.program.clone().expect("program");
+                let dn = __program.nodes((value_declaration).file_index());
                 let name = ast::get_name_of_declaration(Some(value_declaration), &dn);
                 if let Some(name) = name
                     && ast::is_computed_property_name(&dn[name])
@@ -1222,10 +1233,10 @@ impl<'a> NodeBuilderImpl<'a> {
                 if let (Some(target_file), Some(context_file)) = (target_file, context_file) {
                     let program = c.program.clone();
                     if let Some(program) = program.as_ref() {
-                                                let __program = c.program.clone().expect("program");
-                        let target_nodes = __program.nodes((target_file).file_index());;
-                                                let __program = c.program.clone().expect("program");
-                        let context_nodes = __program.nodes((context_file).file_index());;
+                        let __program = c.program.clone().expect("program");
+                        let target_nodes = __program.nodes((target_file).file_index());
+                        let __program = c.program.clone().expect("program");
+                        let context_nodes = __program.nodes((context_file).file_index());
                         let target_format = program.get_emit_module_format_of_file(
                             target_nodes[target_file].as_source_file(),
                         );
@@ -1265,8 +1276,8 @@ impl<'a> NodeBuilderImpl<'a> {
                     // a mode override; try specifier generation again, but
                     // with a different mode set
                     let context_format = context_file.and_then(|f| {
-                                                let __program = c.program.clone().expect("program");
-                        let fn_ = __program.nodes((f).file_index());;
+                        let __program = c.program.clone().expect("program");
+                        let fn_ = __program.nodes((f).file_index());
                         c.program.as_ref().map(|program| {
                             program.get_emit_module_format_of_file(fn_[f].as_source_file())
                         })
@@ -1452,16 +1463,16 @@ impl<'a> NodeBuilderImpl<'a> {
         if sym_name.is_empty() {
             let mut name: Option<NodeId> = None;
             for &d in &symbol_declarations(c, symbol) {
-                                let __program = c.program.clone().expect("program");
-                let dn = __program.nodes((d).file_index());;
+                let __program = c.program.clone().expect("program");
+                let dn = __program.nodes((d).file_index());
                 name = ast::get_name_of_declaration(Some(d), &dn);
                 if name.is_some() {
                     break;
                 }
             }
             if let Some(name) = name {
-                                let __program = c.program.clone().expect("program");
-                let nn = __program.nodes((name).file_index());;
+                let __program = c.program.clone().expect("program");
+                let nn = __program.nodes((name).file_index());
                 if ast::is_computed_property_name(&nn[name])
                     && is_entity_name_opt(nn[name].expression(), &nn)
                 {
@@ -1474,8 +1485,7 @@ impl<'a> NodeBuilderImpl<'a> {
                         override_type_arguments.clone(),
                     )?;
                     if ast::is_entity_name(&nodes[lhs]) {
-                        let query_inner =
-                            self.f.new_type_query_node(nodes, Some(lhs), None);
+                        let query_inner = self.f.new_type_query_node(nodes, Some(lhs), None);
                         let lhs = self.f.new_parenthesized_type_node(nodes, Some(query_inner));
                         // `name.Expression()` may live in a different arena;
                         // reuse the foreign-file id if arenas coincide.
@@ -1733,7 +1743,13 @@ impl<'a> NodeBuilderImpl<'a> {
                 return String::new();
             };
             if type_flags(c, name_type).intersects(TypeFlags::STRING_OR_NUMBER_LITERAL) {
-                let name = match c.types_handle().get(name_type).as_literal_type().value.as_ref() {
+                let name = match c
+                    .types_handle()
+                    .get(name_type)
+                    .as_literal_type()
+                    .value
+                    .as_ref()
+                {
                     Some(tsc_evaluator::Value::String(s)) => s.clone(),
                     Some(tsc_evaluator::Value::Number(n)) => n.string(),
                     _ => String::new(),
@@ -1742,7 +1758,11 @@ impl<'a> NodeBuilderImpl<'a> {
                     && !crate::utilities::is_numeric_literal_name(&name)
                 {
                     return crate::checker_core::value_to_string(
-                        c.types_handle().get(name_type).as_literal_type().value.as_ref(),
+                        c.types_handle()
+                            .get(name_type)
+                            .as_literal_type()
+                            .value
+                            .as_ref(),
                     );
                 }
                 if crate::utilities::is_numeric_literal_name(&name) && name.starts_with('-') {
@@ -1821,8 +1841,8 @@ impl<'a> NodeBuilderImpl<'a> {
         if !declarations.is_empty() {
             // Try using a declaration with a name, first
             let name = declarations.iter().find_map(|&d| {
-                                let __program = c.program.clone().expect("program");
-                let dn = __program.nodes((d).file_index());;
+                let __program = c.program.clone().expect("program");
+                let dn = __program.nodes((d).file_index());
                 ast::get_name_of_declaration(Some(d), &dn)
             });
             if let Some(name) = name {
@@ -1830,8 +1850,8 @@ impl<'a> NodeBuilderImpl<'a> {
                 // if ast.IsCallExpression(declaration) && ast.IsBindableObjectDefinePropertyCall(declaration) {
                 //   return symbol.Name
                 // }
-                                let __program = c.program.clone().expect("program");
-                let nn = __program.nodes((name).file_index());;
+                let __program = c.program.clone().expect("program");
+                let nn = __program.nodes((name).file_index());
                 if ast::is_computed_property_name(&nn[name])
                     && !symbol_check_flags(c, symbol).intersects(ast::checkflags::CheckFlags::LATE)
                     && c.value_symbol_links.has(symbol)
@@ -1849,18 +1869,18 @@ impl<'a> NodeBuilderImpl<'a> {
                 return scanner::utilities::declaration_name_to_string(Some(name), &nn);
             }
             let declaration = declarations[0]; // Declaration may be nameless, but we'll try anyway
-                        let __program = c.program.clone().expect("program");
-            let dn = __program.nodes((declaration).file_index());;
+            let __program = c.program.clone().expect("program");
+            let dn = __program.nodes((declaration).file_index());
             if dn[declaration]
                 .parent
                 .is_some_and(|p| c.program_nodes(p)[p].kind == Kind::VariableDeclaration)
             {
                 let parent = dn[declaration].parent.unwrap();
-                                let __program = c.program.clone().expect("program");
-                let parent_nodes = __program.nodes((parent).file_index());;
+                let __program = c.program.clone().expect("program");
+                let parent_nodes = __program.nodes((parent).file_index());
                 let var_name = parent_nodes[parent].as_variable_declaration().name;
-                                let __program = c.program.clone().expect("program");
-                let name_nodes = __program.nodes((var_name.unwrap_or(parent)).file_index());;
+                let __program = c.program.clone().expect("program");
+                let name_nodes = __program.nodes((var_name.unwrap_or(parent)).file_index());
                 return scanner::utilities::declaration_name_to_string(var_name, &name_nodes);
             }
             if ast::is_class_expression(&dn[declaration])
@@ -2164,8 +2184,8 @@ impl<'a> NodeBuilderImpl<'a> {
             .borrow()
             .most_original(self.ctx.enclosing_declaration);
         let original_module_specifier = enclosing_declaration.and_then(|d| {
-                        let __program = c.program.clone().expect("program");
-            let dn = __program.nodes((d).file_index());;
+            let __program = c.program.clone().expect("program");
+            let dn = __program.nodes((d).file_index());
             if can_have_module_specifier(&dn[d]) {
                 try_get_module_specifier_from_declaration(d, &dn)
             } else {
@@ -2187,13 +2207,13 @@ impl<'a> NodeBuilderImpl<'a> {
 
         if file.is_none() {
             let declaration = symbol_declarations(c, symbol).iter().copied().find(|&d| {
-                                let __program = c.program.clone().expect("program");
-                let dn = __program.nodes((d).file_index());;
+                let __program = c.program.clone().expect("program");
+                let dn = __program.nodes((d).file_index());
                 ast::is_module_with_string_literal_name(&dn[d], &dn)
             });
             if let Some(declaration) = declaration {
-                                let __program = c.program.clone().expect("program");
-                let dn = __program.nodes((declaration).file_index());;
+                let __program = c.program.clone().expect("program");
+                let dn = __program.nodes((declaration).file_index());
                 let specifier = tsc_tspath::to_module_specifier(&dn[declaration].text(&dn));
                 if let Some(original_import_attributes_type) = original_import_attributes_type
                     && self.module_specifier_resolves_to_symbol(
@@ -2234,8 +2254,8 @@ impl<'a> NodeBuilderImpl<'a> {
             let module_file = get_source_file_of_module_symbol(c, symbol);
             let specifier = module_file
                 .map(|f| {
-                                        let __program = c.program.clone().expect("program");
-                    let fn_ = __program.nodes((f).file_index());;
+                    let __program = c.program.clone().expect("program");
+                    let fn_ = __program.nodes((f).file_index());
                     tsc_tspath::to_module_specifier(fn_[f].as_source_file().file_name().as_string())
                 })
                 .unwrap_or_default();
@@ -2249,16 +2269,16 @@ impl<'a> NodeBuilderImpl<'a> {
         let mut resolution_mode = override_import_mode;
         if resolution_mode == RESOLUTION_MODE_NONE && original_module_specifier.is_some() {
             let host = self.ctx.host.clone();
-                        let __program = c.program.clone().expect("program");
-            let fn_ = __program.nodes((context_file).file_index());;
+            let __program = c.program.clone().expect("program");
+            let fn_ = __program.nodes((context_file).file_index());
             resolution_mode = host.as_ref().unwrap().get_mode_for_usage_location(
                 fn_[context_file].as_source_file(),
                 original_module_specifier.unwrap(),
             );
         } else if resolution_mode == RESOLUTION_MODE_NONE {
             let host = self.ctx.host.clone();
-                        let __program = c.program.clone().expect("program");
-            let fn_ = __program.nodes((context_file).file_index());;
+            let __program = c.program.clone().expect("program");
+            let fn_ = __program.nodes((context_file).file_index());
             resolution_mode = host
                 .as_ref()
                 .unwrap()
@@ -2266,8 +2286,8 @@ impl<'a> NodeBuilderImpl<'a> {
         }
         let cache_key = tsc_module::ModeAwareCacheKey {
             name: {
-                                let __program = c.program.clone().expect("program");
-                let fn_ = __program.nodes((context_file).file_index());;
+                let __program = c.program.clone().expect("program");
+                let fn_ = __program.nodes((context_file).file_index());
                 fn_[context_file]
                     .as_source_file()
                     .path_key()
@@ -2310,8 +2330,8 @@ impl<'a> NodeBuilderImpl<'a> {
                 .clone()
                 .expect("NodeBuilderContext.host must be set for specifier generation"),
         );
-                let __program = c.program.clone().expect("program");
-        let file_nodes = __program.nodes((context_file).file_index());;
+        let __program = c.program.clone().expect("program");
+        let file_nodes = __program.nodes((context_file).file_index());
         let symbol_arena = c.symbol_arena.clone();
         let symbol_arena_ref = symbol_arena.borrow();
         let checker_adapter = CheckerShapeAdapter::new(&mut *c);
@@ -2525,8 +2545,8 @@ impl<'a> NodeBuilderImpl<'a> {
         let Some(mut range_) = range_ else {
             return range_;
         };
-                let __program = c.program.clone().expect("program");
-        let range_nodes = __program.nodes((range_).file_index());;
+        let __program = c.program.clone().expect("program");
+        let range_nodes = __program.nodes((range_).file_index());
         let most_original_of_range = self
             .e
             .borrow()
@@ -2534,8 +2554,8 @@ impl<'a> NodeBuilderImpl<'a> {
             .unwrap_or(range_);
         let enclosing_file_matches = match (self.ctx.enclosing_file, most_original_of_range) {
             (Some(file), mo) => {
-                                let __program = c.program.clone().expect("program");
-                let mo_nodes = __program.nodes((mo).file_index());;
+                let __program = c.program.clone().expect("program");
+                let mo_nodes = __program.nodes((mo).file_index());
                 ast::get_source_file_of_node(Some(mo), &mo_nodes) == Some(file)
             }
             _ => false,
@@ -2564,8 +2584,8 @@ impl<'a> NodeBuilderImpl<'a> {
         }
         // Don't overwrite the original node if `range` has an `original`
         // node that points either directly or indirectly to `location`
-                let __program = c.program.clone().expect("program");
-        let location_nodes = __program.nodes((location).file_index());;
+        let __program = c.program.clone().expect("program");
+        let location_nodes = __program.nodes((location).file_index());
         let mut original = self.e.borrow().original(range_);
         while let Some(o) = original {
             if o == location {
@@ -2579,15 +2599,15 @@ impl<'a> NodeBuilderImpl<'a> {
 
         // only set positions if range comes from the same file since copying
         // text across files isn't supported by the emitter
-                let __program = c.program.clone().expect("program");
-        let loc_nodes = __program.nodes((location).file_index());;
+        let __program = c.program.clone().expect("program");
+        let loc_nodes = __program.nodes((location).file_index());
         let most_original_of_location = self
             .e
             .borrow()
             .most_original(Some(location))
             .unwrap_or(location);
-                let __program = c.program.clone().expect("program");
-        let mo_nodes = __program.nodes((most_original_of_location).file_index());;
+        let __program = c.program.clone().expect("program");
+        let mo_nodes = __program.nodes((most_original_of_location).file_index());
         if self.ctx.enclosing_file.is_some()
             && self.ctx.enclosing_file
                 == ast::get_source_file_of_node(Some(most_original_of_location), &mo_nodes)
@@ -2654,8 +2674,8 @@ impl<'a> NodeBuilderImpl<'a> {
         };
         if !decls.is_empty() {
             let decl = decls[0];
-                        let __program = c.program.clone().expect("program");
-            let decl_nodes = __program.nodes((decl).file_index());;
+            let __program = c.program.clone().expect("program");
+            let decl_nodes = __program.nodes((decl).file_index());
             if ast::is_type_parameter_declaration(&decl_nodes[decl]) {
                 result = self
                     .set_text_range(c, nodes, Some(result), decl_nodes[decl].name())
@@ -2721,7 +2741,12 @@ impl<'a> NodeBuilderImpl<'a> {
         c: &mut Checker,
         mapped: TypeId,
     ) -> bool {
-        let __arena_target = c.types.clone(); let target = __arena_target.get(mapped).as_mapped_type().object_type.target;
+        let __arena_target = c.types.clone();
+        let target = __arena_target
+            .get(mapped)
+            .as_mapped_type()
+            .object_type
+            .target;
         target.is_some()
             && !self.is_mapped_type_homomorphic(c, mapped)
             && self.is_mapped_type_homomorphic(c, target.unwrap())
@@ -2736,13 +2761,14 @@ impl<'a> NodeBuilderImpl<'a> {
     ) -> NodeId {
         debug_assert!(type_flags(c, t).intersects(TypeFlags::OBJECT));
         let (declaration, readonly_kind, question_kind, name_type_present) = {
-            let __arena_t_guard = c.types.clone(); let t_guard = __arena_t_guard.get(t);
+            let __arena_t_guard = c.types.clone();
+            let t_guard = __arena_t_guard.get(t);
             let mapped = t_guard.as_mapped_type();
             let declaration = mapped.declaration;
             let (readonly_kind, question_kind, name_type_present) = declaration
                 .map(|d| {
-                                        let __program = c.program.clone().expect("program");
-                    let dn = __program.nodes((d).file_index());;
+                    let __program = c.program.clone().expect("program");
+                    let dn = __program.nodes((d).file_index());
                     let md = dn[d].as_mapped_type_node();
                     (
                         md.readonly_token.map(|tok| dn[tok].kind),
@@ -2796,7 +2822,8 @@ impl<'a> NodeBuilderImpl<'a> {
                 let new_param_sym = c.new_symbol(ast::SymbolFlags::TYPE_PARAMETER, "T");
                 let new_constraint_param = c.new_type_parameter(Some(new_param_sym));
                 let name = self.type_parameter_to_name(c, nodes, new_constraint_param);
-                let __arena_target = c.types.clone(); let target = __arena_target.get(t).target();
+                let __arena_target = c.types.clone();
+                let target = __arena_target.get(t).target();
                 new_type_variable = Some(self.f.new_type_reference_node(nodes, Some(name), None));
                 if let Some(target) = target {
                     let target_type_parameter = c.get_type_parameter_from_mapped_type(target);
@@ -2900,8 +2927,8 @@ impl<'a> NodeBuilderImpl<'a> {
             // infer U ? {..the mapped type...} : never` to ensure the
             // resulting type stays homomorphic
             let mut raw_constraint_type_from_declaration = declaration.and_then(|d| {
-                                let __program = c.program.clone().expect("program");
-                let dn = __program.nodes((d).file_index());;
+                let __program = c.program.clone().expect("program");
+                let dn = __program.nodes((d).file_index());
                 dn[d]
                     .as_mapped_type_node()
                     .type_parameter
@@ -2915,7 +2942,12 @@ impl<'a> NodeBuilderImpl<'a> {
             }
             let raw_constraint_type_from_declaration =
                 raw_constraint_type_from_declaration.unwrap_or(c.unknown_type);
-            let __arena_mapped_mapper = c.types.clone(); let mapped_mapper = __arena_mapped_mapper.get(t).as_mapped_type().object_type.mapper;
+            let __arena_mapped_mapper = c.types.clone();
+            let mapped_mapper = __arena_mapped_mapper
+                .get(t)
+                .as_mapped_type()
+                .object_type
+                .mapper;
             let original_constraint =
                 c.instantiate_type(raw_constraint_type_from_declaration, mapped_mapper);
 
@@ -3140,8 +3172,8 @@ impl<'a> NodeBuilderImpl<'a> {
             && preserve_modifier_flags
             && let Some(parameter_declaration) = parameter_declaration
         {
-                        let __program = c.program.clone().expect("program");
-            let pd_nodes = __program.nodes((parameter_declaration).file_index());;
+            let __program = c.program.clone().expect("program");
+            let pd_nodes = __program.nodes((parameter_declaration).file_index());
             if ast::can_have_modifiers(&pd_nodes[parameter_declaration]) {
                 let originals: Vec<NodeId> = pd_nodes[parameter_declaration]
                     .modifier_nodes()
@@ -3162,8 +3194,8 @@ impl<'a> NodeBuilderImpl<'a> {
             }
         }
         let is_rest = parameter_declaration.is_some_and(|d| {
-                        let __program = c.program.clone().expect("program");
-            let pd_nodes = __program.nodes((d).file_index());;
+            let __program = c.program.clone().expect("program");
+            let pd_nodes = __program.nodes((d).file_index());
             is_rest_parameter(&pd_nodes, d)
         }) || symbol_check_flags(c, parameter_symbol)
             .intersects(ast::checkflags::CheckFlags::REST_PARAMETER);
@@ -3209,8 +3241,8 @@ impl<'a> NodeBuilderImpl<'a> {
         parameter_declaration: Option<NodeId>,
     ) -> Option<NodeId> {
         let name = parameter_declaration.and_then(|d| {
-                        let __program = c.program.clone().expect("program");
-            let pd_nodes = __program.nodes((d).file_index());;
+            let __program = c.program.clone().expect("program");
+            let pd_nodes = __program.nodes((d).file_index());
             pd_nodes[d].name()
         });
         let Some(name) = name else {
@@ -3220,8 +3252,8 @@ impl<'a> NodeBuilderImpl<'a> {
                 Some(parameter_symbol),
             ));
         };
-                let __program = c.program.clone().expect("program");
-        let name_nodes = __program.nodes((name).file_index());;
+        let __program = c.program.clone().expect("program");
+        let name_nodes = __program.nodes((name).file_index());
         match name_nodes[name].kind {
             Kind::Identifier => {
                 let cloned = self.f.deep_clone_node(nodes, name);
@@ -3810,8 +3842,8 @@ impl<'a> NodeBuilderImpl<'a> {
             return Some(self.symbol_to_parameter_declaration(c, nodes, this_parameter, false));
         }
         if let Some(declaration) = declaration {
-                        let __program = c.program.clone().expect("program");
-            let decl_nodes = __program.nodes((declaration).file_index());;
+            let __program = c.program.clone().expect("program");
+            let decl_nodes = __program.nodes((declaration).file_index());
             if ast::is_in_js_file(Some(declaration), &decl_nodes) {
                 // !!! JSDoc Support — Go leaves this commented out as well.
             }
@@ -3846,8 +3878,8 @@ impl<'a> NodeBuilderImpl<'a> {
         let sig_declaration = c.signature_arena.get(signature).declaration;
         let return_type;
         if let Some(declaration) = sig_declaration {
-                        let __program = c.program.clone().expect("program");
-            let decl_nodes = __program.nodes((declaration).file_index());;
+            let __program = c.program.clone().expect("program");
+            let decl_nodes = __program.nodes((declaration).file_index());
             if !ast::node_is_synthesized(&decl_nodes[declaration]) {
                 let symbol = c.get_symbol_of_declaration(declaration);
                 return_type =
@@ -3871,8 +3903,8 @@ impl<'a> NodeBuilderImpl<'a> {
                 && let Some(declaration) = sig_declaration
             {
                 let decl_nodes_is_synth = {
-                                        let __program = c.program.clone().expect("program");
-                    let decl_nodes = __program.nodes((declaration).file_index());;
+                    let __program = c.program.clone().expect("program");
+                    let decl_nodes = __program.nodes((declaration).file_index());
                     ast::node_is_synthesized(&decl_nodes[declaration])
                 };
                 if !decl_nodes_is_synth {
@@ -3880,8 +3912,8 @@ impl<'a> NodeBuilderImpl<'a> {
                     let restore =
                         declaration_symbol.map(|s| self.add_symbol_type_to_context(s, return_type));
                     let pt = {
-                                                let __program = c.program.clone().expect("program");
-                        let decl_nodes = __program.nodes((declaration).file_index());;
+                        let __program = c.program.clone().expect("program");
+                        let decl_nodes = __program.nodes((declaration).file_index());
                         let symbols = c.symbol_arena.borrow();
                         self.pc
                             .get_return_type_of_signature(declaration, &decl_nodes, &symbols)
@@ -3954,8 +3986,8 @@ impl<'a> NodeBuilderImpl<'a> {
 
     /// `(b *NodeBuilderImpl) isTriviallySerializableComputedName`.
     fn is_trivially_serializable_computed_name(&mut self, c: &mut Checker, e: NodeId) -> bool {
-                let __program = c.program.clone().expect("program");
-        let e_nodes = __program.nodes((e).file_index());;
+        let __program = c.program.clone().expect("program");
+        let e_nodes = __program.nodes((e).file_index());
         let shape_good = e_nodes[e].name().is_some_and(|name| {
             ast::is_computed_property_name(&e_nodes[name])
                 && e_nodes[name]
@@ -4002,16 +4034,16 @@ impl<'a> NodeBuilderImpl<'a> {
                 let mut bailed = false;
                 let mut results: Vec<NodeId> = Vec::new();
                 for e in new_components {
-                                        let __program = c.program.clone().expect("program");
-                    let e_nodes = __program.nodes((e).file_index());;
+                    let __program = c.program.clone().expect("program");
+                    let e_nodes = __program.nodes((e).file_index());
                     let e_name = e_nodes[e].name();
                     let name = e_name.and_then(|n| self.reuse_node(c, nodes, n));
                     if let Some(name) = name {
                         // Still need to track visibility even if we've
                         // already checked it to paint references as used.
                         let expr = {
-                                                        let __program = c.program.clone().expect("program");
-                            let e_nodes = __program.nodes((e).file_index());;
+                            let __program = c.program.clone().expect("program");
+                            let e_nodes = __program.nodes((e).file_index());
                             e_nodes[e_nodes[e].name().unwrap()].expression()
                         };
                         if let Some(expr) = expr {
@@ -4025,8 +4057,8 @@ impl<'a> NodeBuilderImpl<'a> {
                             None
                         };
                         let postfix_token = {
-                                                        let __program = c.program.clone().expect("program");
-                            let e_nodes = __program.nodes((e).file_index());;
+                            let __program = c.program.clone().expect("program");
+                            let e_nodes = __program.nodes((e).file_index());
                             e_nodes[e]
                                 .postfix_token()
                                 .map(|p| self.f.deep_clone_node(nodes, p).unwrap_or(p))
@@ -4042,8 +4074,8 @@ impl<'a> NodeBuilderImpl<'a> {
                                 .unwrap_or(type_node)
                         } else {
                             let e_symbol = {
-                                                                let __program = c.program.clone().expect("program");
-                                let e_nodes = __program.nodes((e).file_index());;
+                                let __program = c.program.clone().expect("program");
+                                let e_nodes = __program.nodes((e).file_index());
                                 e_nodes[e].symbol()
                             };
                             let t = c.get_type_of_symbol(e_symbol.unwrap_or(SymbolId::NONE));
@@ -4168,8 +4200,8 @@ impl<'a> NodeBuilderImpl<'a> {
         if t.is_none() {
             if symbol.is_none() {
                 if let Some(declaration) = declaration {
-                                        let __program = c.program.clone().expect("program");
-                    let decl_nodes = __program.nodes((declaration).file_index());;
+                    let __program = c.program.clone().expect("program");
+                    let decl_nodes = __program.nodes((declaration).file_index());
                     if ast::is_variable_like(&decl_nodes[declaration]) {
                         t = c.get_type_for_variable_like_declaration(
                             declaration,
@@ -4207,8 +4239,8 @@ impl<'a> NodeBuilderImpl<'a> {
         let t = t.unwrap_or(c.error_type);
 
         let requires_adding_undefined = declaration.is_some_and(|d| {
-                        let __program = c.program.clone().expect("program");
-            let decl_nodes = __program.nodes((d).file_index());;
+            let __program = c.program.clone().expect("program");
+            let decl_nodes = __program.nodes((d).file_index());
             (ast::is_parameter_declaration(&decl_nodes[d])
                 || ast::is_property_signature_declaration(&decl_nodes[d])
                 || ast::is_property_declaration(&decl_nodes[d]))
@@ -4216,8 +4248,8 @@ impl<'a> NodeBuilderImpl<'a> {
         });
         let add_undefined_for_parameter = requires_adding_undefined
             && declaration.is_some_and(|d| {
-                                let __program = c.program.clone().expect("program");
-                let decl_nodes = __program.nodes((d).file_index());;
+                let __program = c.program.clone().expect("program");
+                let decl_nodes = __program.nodes((d).file_index());
                 ast::is_parameter_declaration(&decl_nodes[d])
             });
         let t = if add_undefined_for_parameter {
@@ -4234,8 +4266,8 @@ impl<'a> NodeBuilderImpl<'a> {
             && (self.ctx.enclosing_declaration.is_none()
                 || symbol.is_some_and(|sym| {
                     symbol_declarations(c, sym).iter().any(|&d| {
-                                                let __program = c.program.clone().expect("program");
-                        let d_nodes = __program.nodes((d).file_index());;
+                        let __program = c.program.clone().expect("program");
+                        let d_nodes = __program.nodes((d).file_index());
                         ast::get_source_file_of_node(Some(d), &d_nodes) == self.ctx.enclosing_file
                     })
                 }))
@@ -4251,8 +4283,8 @@ impl<'a> NodeBuilderImpl<'a> {
             && declaration.is_some()
         {
             let declaration = declaration.unwrap();
-                        let __program = c.program.clone().expect("program");
-            let decl_nodes = __program.nodes((declaration).file_index());;
+            let __program = c.program.clone().expect("program");
+            let decl_nodes = __program.nodes((declaration).file_index());
             let is_accessor_decl = ast::is_accessor(&decl_nodes[declaration]);
             if is_accessor_decl
                 || (ast::has_inferred_type(&decl_nodes[declaration])
@@ -4260,8 +4292,8 @@ impl<'a> NodeBuilderImpl<'a> {
                     && !type_object_flags(c, t).intersects(ObjectFlags::REQUIRES_WIDENING))
             {
                 let remove = symbol.map(|s| self.add_symbol_type_to_context(s, t));
-                                let __program = c.program.clone().expect("program");
-                let decl_nodes = __program.nodes((declaration).file_index());;
+                let __program = c.program.clone().expect("program");
+                let decl_nodes = __program.nodes((declaration).file_index());
                 let symbols = c.symbol_arena.borrow();
                 let mut pt = if is_accessor_decl {
                     self.pc
@@ -4278,16 +4310,16 @@ impl<'a> NodeBuilderImpl<'a> {
                         .iter()
                         .copied()
                         .find(|&d| {
-                                                        let __program = c.program.clone().expect("program");
-                            let dn = __program.nodes((d).file_index());;
+                            let __program = c.program.clone().expect("program");
+                            let dn = __program.nodes((d).file_index());
                             has_type_annotation(d, &dn)
                         })
                 {
                     // Binary expressions have a first-in-wins type annotation
                     // system. The first one with an annotation supplies the
                     // type for the rest.
-                                        let __program = c.program.clone().expect("program");
-                    let dn = __program.nodes((annotated_decl).file_index());;
+                    let __program = c.program.clone().expect("program");
+                    let dn = __program.nodes((annotated_decl).file_index());
                     let symbols = c.symbol_arena.borrow();
                     pt = self
                         .pc
@@ -4295,8 +4327,8 @@ impl<'a> NodeBuilderImpl<'a> {
                 }
                 let report_errors = !self.ctx.suppress_report_inference_fallback;
                 let is_optional_annotated = !requires_adding_undefined && {
-                                        let __program = c.program.clone().expect("program");
-                    let decl_nodes = __program.nodes((declaration).file_index());;
+                    let __program = c.program.clone().expect("program");
+                    let decl_nodes = __program.nodes((declaration).file_index());
                     let decl = &decl_nodes[declaration];
                     (ast::is_parameter_declaration(decl)
                         || ast::is_property_signature_declaration(decl)
@@ -4493,8 +4525,8 @@ impl<'a> NodeBuilderImpl<'a> {
         enclosing_declaration: Option<NodeId>,
     ) {
         // get symbol of the first identifier of the entityName
-                let __program = c.program.clone().expect("program");
-        let expr_nodes = __program.nodes((access_expression).file_index());;
+        let __program = c.program.clone().expect("program");
+        let expr_nodes = __program.nodes((access_expression).file_index());
         let first_identifier = ast::get_first_identifier(access_expression, &expr_nodes);
         let text = expr_nodes[first_identifier].text(&expr_nodes).into_owned();
         let resolve = c.resolve_name.clone().expect("Checker::resolve_name");
@@ -4566,8 +4598,8 @@ impl<'a> NodeBuilderImpl<'a> {
 
     /// `(b *NodeBuilderImpl) isStringNamed`.
     fn is_string_named(&mut self, c: &mut Checker, d: NodeId) -> bool {
-                let __program = c.program.clone().expect("program");
-        let d_nodes = __program.nodes((d).file_index());;
+        let __program = c.program.clone().expect("program");
+        let d_nodes = __program.nodes((d).file_index());
         let Some(name) = ast::get_name_of_declaration(Some(d), &d_nodes) else {
             return false;
         };
@@ -4590,8 +4622,8 @@ impl<'a> NodeBuilderImpl<'a> {
 
     /// `(b *NodeBuilderImpl) isSingleQuotedStringNamed`.
     fn is_single_quoted_string_named(&mut self, c: &mut Checker, d: NodeId) -> bool {
-                let __program = c.program.clone().expect("program");
-        let d_nodes = __program.nodes((d).file_index());;
+        let __program = c.program.clone().expect("program");
+        let d_nodes = __program.nodes((d).file_index());
         let Some(name) = ast::get_name_of_declaration(Some(d), &d_nodes) else {
             return false;
         };
@@ -4615,8 +4647,8 @@ impl<'a> NodeBuilderImpl<'a> {
         // For hash-private names, clone the original private identifier from
         // the declaration.
         if let Some(value_declaration) = symbol_value_declaration(c, symbol) {
-                        let __program = c.program.clone().expect("program");
-            let decl_nodes = __program.nodes((value_declaration).file_index());;
+            let __program = c.program.clone().expect("program");
+            let decl_nodes = __program.nodes((value_declaration).file_index());
             if let Some(decl_name) = decl_nodes[value_declaration].name()
                 && ast::is_private_identifier(&decl_nodes[decl_name])
             {
@@ -4709,7 +4741,8 @@ impl<'a> NodeBuilderImpl<'a> {
         }
         if nt_flags.intersects(TypeFlags::STRING_OR_NUMBER_LITERAL) {
             let name = {
-                let __arena_lit = c.types.clone(); let lit = __arena_lit.get(name_type).as_literal_type().value.clone();
+                let __arena_lit = c.types.clone();
+                let lit = __arena_lit.get(name_type).as_literal_type().value.clone();
                 match lit {
                     Some(tsc_evaluator::Value::Number(n)) => n.to_string(),
                     Some(tsc_evaluator::Value::String(s)) => s,
@@ -4753,7 +4786,8 @@ impl<'a> NodeBuilderImpl<'a> {
             // The reference was tracked in the destination scope by
             // `trackComputedName`. Reconstructing its spelling in the source
             // scope must not paint that scope's declarations visible.
-            let __arena_sym = c.types.clone(); let sym = __arena_sym.get(name_type).symbol;
+            let __arena_sym = c.types.clone();
+            let sym = __arena_sym.get(name_type).symbol;
             let expr = self.symbol_to_expression_worker(
                 c,
                 nodes,
@@ -4788,8 +4822,8 @@ impl<'a> NodeBuilderImpl<'a> {
             if !declarations.is_empty() {
                 let decl = declarations[0];
                 if c.has_late_bindable_name(decl) {
-                                        let __program = c.program.clone().expect("program");
-                    let decl_nodes = __program.nodes((decl).file_index());;
+                    let __program = c.program.clone().expect("program");
+                    let decl_nodes = __program.nodes((decl).file_index());
                     if ast::is_binary_expression(&decl_nodes[decl]) {
                         let name = ast::get_name_of_declaration(Some(decl), &decl_nodes);
                         if let Some(name) = name
@@ -4910,8 +4944,8 @@ impl<'a> NodeBuilderImpl<'a> {
                 } else if symbol_parent(c, property_symbol)
                     .is_some_and(|p| symbol_flags(c, p).intersects(SymbolFlags::CLASS))
                     && prop_declaration.is_some_and(|prop_declaration| {
-                                                let __program = c.program.clone().expect("program");
-                        let pd_nodes = __program.nodes((prop_declaration).file_index());;
+                        let __program = c.program.clone().expect("program");
+                        let pd_nodes = __program.nodes((prop_declaration).file_index());
                         pd_nodes[prop_declaration]
                             .modifier_nodes()
                             .is_some_and(|ms| {
@@ -5089,7 +5123,8 @@ impl<'a> NodeBuilderImpl<'a> {
         }
         let mut type_elements: Vec<NodeId> = Vec::new();
         let (call_sigs, ctor_sigs, index_infos, properties, object_flags) = {
-            let __arena_g = c.types.clone(); let g = __arena_g.get(resolved_type);
+            let __arena_g = c.types.clone();
+            let g = __arena_g.get(resolved_type);
             let st = g.as_structured_type().expect("structured type");
             (
                 st.call_signatures().to_vec(),
@@ -5246,7 +5281,8 @@ impl<'a> NodeBuilderImpl<'a> {
 
         let resolved = c.resolve_structured_type_members(t);
         let (call_sigs, ctor_sigs, has_props_or_indexes) = {
-            let __arena_g = c.types.clone(); let g = __arena_g.get(resolved);
+            let __arena_g = c.types.clone();
+            let g = __arena_g.get(resolved);
             let st = g.as_structured_type().expect("structured type");
             (
                 st.call_signatures().to_vec(),
@@ -5305,7 +5341,8 @@ impl<'a> NodeBuilderImpl<'a> {
             // count the number of type elements excluding abstract
             // constructors
             let (index_info_count, property_count) = {
-                let __arena_g = c.types.clone(); let g = __arena_g.get(resolved);
+                let __arena_g = c.types.clone();
+                let g = __arena_g.get(resolved);
                 let st = g.as_structured_type().expect("structured type");
                 let property_count = if self
                     .ctx
@@ -5376,8 +5413,8 @@ impl<'a> NodeBuilderImpl<'a> {
                 LanguageVariant::Standard,
             )
             && symbol_declarations(c, symbol).iter().any(|&declaration| {
-                                let __program = c.program.clone().expect("program");
-                let decl_nodes = __program.nodes((declaration).file_index());;
+                let __program = c.program.clone().expect("program");
+                let decl_nodes = __program.nodes((declaration).file_index());
                 ast::is_static(&decl_nodes[declaration])
                     && !ast::get_name_of_declaration(Some(declaration), &decl_nodes)
                         .is_some_and(|n| c.is_late_bindable_index_signature(n))
@@ -5389,8 +5426,8 @@ impl<'a> NodeBuilderImpl<'a> {
                 is_non_local_function_symbol = true;
             } else {
                 for declaration in symbol_declarations(c, symbol) {
-                                        let __program = c.program.clone().expect("program");
-                    let decl_nodes = __program.nodes((declaration).file_index());;
+                    let __program = c.program.clone().expect("program");
+                    let decl_nodes = __program.nodes((declaration).file_index());
                     let parent = decl_nodes[declaration].parent;
                     let parent_kind = parent.map(|p| decl_nodes[p].kind);
                     if parent_kind == Some(Kind::SourceFile)
@@ -5427,8 +5464,8 @@ impl<'a> NodeBuilderImpl<'a> {
             if is_function_expression_symbol
                 && let Some(value_declaration) = symbol_value_declaration(c, symbol)
             {
-                                let __program = c.program.clone().expect("program");
-                let vd_nodes = __program.nodes((value_declaration).file_index());;
+                let __program = c.program.clone().expect("program");
+                let vd_nodes = __program.nodes((value_declaration).file_index());
                 if vd_nodes[value_declaration].parent.is_some()
                     && vd_nodes[value_declaration].parent != self.ctx.enclosing_declaration
                 {
@@ -5449,7 +5486,10 @@ impl<'a> NodeBuilderImpl<'a> {
                         .ctx
                         .flags
                         .intersects(nodebuilder::Flags::USE_STRUCTURAL_FALLBACK)
-                        || c.is_value_symbol_accessible(Some(symbol), self.ctx.enclosing_declaration)),
+                        || c.is_value_symbol_accessible(
+                            Some(symbol),
+                            self.ctx.enclosing_declaration,
+                        )),
                 symbol,
             );
         }
@@ -5483,8 +5523,8 @@ impl<'a> NodeBuilderImpl<'a> {
             && !force_class_expansion
             && c.get_base_type_variable_of_class(symbol).is_none()
             && !(symbol_value_declaration(c, symbol).is_some_and(|vd| {
-                                let __program = c.program.clone().expect("program");
-                let vd_nodes = __program.nodes((vd).file_index());;
+                let __program = c.program.clone().expect("program");
+                let vd_nodes = __program.nodes((vd).file_index());
                 ast::is_class_like(Some(vd), &vd_nodes)
             }) && self
                 .ctx
@@ -5492,8 +5532,8 @@ impl<'a> NodeBuilderImpl<'a> {
                 .intersects(nodebuilder::Flags::WRITE_CLASS_EXPRESSION_AS_TYPE_LITERAL)
                 && {
                     let vd = symbol_value_declaration(c, symbol).unwrap();
-                                        let __program = c.program.clone().expect("program");
-                    let vd_nodes = __program.nodes((vd).file_index());;
+                    let __program = c.program.clone().expect("program");
+                    let vd_nodes = __program.nodes((vd).file_index());
                     !ast::is_class_declaration(&vd_nodes[vd])
                         || c.is_symbol_accessible(
                             Some(symbol),
@@ -5525,13 +5565,17 @@ impl<'a> NodeBuilderImpl<'a> {
             let is_instantiation_expression_type =
                 type_object_flags(c, t).intersects(ObjectFlags::INSTANTIATION_EXPRESSION_TYPE);
             if is_instantiation_expression_type {
-                let __arena_existing = c.types.clone(); let existing = __arena_existing.get(t).as_instantiation_expression_type().node;
+                let __arena_existing = c.types.clone();
+                let existing = __arena_existing
+                    .get(t)
+                    .as_instantiation_expression_type()
+                    .node;
                 // instantiationExpressionType.node is unreliable for
                 // constituents of unions and intersections — see the Go
                 // comment for the `ErrAlias` example.
                 if existing.is_some_and(|e| {
-                                        let __program = c.program.clone().expect("program");
-                    let e_nodes = __program.nodes((e).file_index());;
+                    let __program = c.program.clone().expect("program");
+                    let e_nodes = __program.nodes((e).file_index());
                     ast::is_type_query_node(&e_nodes[e])
                 }) && self.get_type_from_type_node(c, existing.unwrap(), false) == Some(t)
                 {
@@ -5643,8 +5687,8 @@ impl<'a> NodeBuilderImpl<'a> {
         no_mapped_types: bool,
     ) -> Option<TypeId> {
         // !!! noMappedTypes optional param support
-                let __program = c.program.clone().expect("program");
-        let node_nodes = __program.nodes((node).file_index());;
+        let __program = c.program.clone().expect("program");
+        let node_nodes = __program.nodes((node).file_index());
         if node_nodes[node].parent.is_none() {
             return Some(c.error_type);
         }
@@ -5732,7 +5776,8 @@ impl<'a> NodeBuilderImpl<'a> {
             extends_type,
             mapper,
         ) = {
-            let __arena_t_guard = c.types.clone(); let t_guard = __arena_t_guard.get(t);
+            let __arena_t_guard = c.types.clone();
+            let t_guard = __arena_t_guard.get(t);
             let ct = t_guard.as_conditional_type();
             let root = ct.root.as_ref().expect("conditional type root");
             (
@@ -5784,8 +5829,8 @@ impl<'a> NodeBuilderImpl<'a> {
                 // `t.root.node.TrueType`/`FalseType` — read through the
                 // root node's own arena.
                 let root_node = root_node.unwrap_or(NodeId::NONE);
-                                let __program = c.program.clone().expect("program");
-                let rn = __program.nodes((root_node).file_index());;
+                let __program = c.program.clone().expect("program");
+                let rn = __program.nodes((root_node).file_index());
                 (
                     rn[root_node].as_conditional_type_node().true_type,
                     rn[root_node].as_conditional_type_node().false_type,
@@ -5884,8 +5929,8 @@ impl<'a> NodeBuilderImpl<'a> {
             tp_symbol.and_then(|s| get_declaration_of_kind_of_symbol(c, s, Kind::TypeParameter));
         let host = tp.and_then(|tp| {
             // !!! JSDoc support — see Go comment.
-                        let __program = c.program.clone().expect("program");
-            let tp_nodes = __program.nodes((tp).file_index());;
+            let __program = c.program.clone().expect("program");
+            let tp_nodes = __program.nodes((tp).file_index());
             tp_nodes[tp].parent
         });
         host.and_then(|host| c.get_symbol_of_node(host))
@@ -5899,7 +5944,8 @@ impl<'a> NodeBuilderImpl<'a> {
         t: TypeId,
     ) -> NodeId {
         let mut type_arguments = c.get_type_arguments(t);
-        let __arena_target = c.types.clone(); let target = __arena_target.get(t).target();
+        let __arena_target = c.types.clone();
+        let target = __arena_target.get(t).target();
         if target == Some(c.global_array_type) || target == Some(c.global_readonly_array_type) {
             if self
                 .ctx
@@ -5929,7 +5975,13 @@ impl<'a> NodeBuilderImpl<'a> {
 
         // debug.Assert(t.Target().objectFlags & ObjectFlagsTuple != 0)
         let element_infos = target
-            .map(|tt| c.types_handle().get(tt).as_tuple_type().element_infos.clone())
+            .map(|tt| {
+                c.types_handle()
+                    .get(tt)
+                    .as_tuple_type()
+                    .element_infos
+                    .clone()
+            })
             .unwrap_or_default();
         let readonly = target
             .map(|tt| c.types_handle().get(tt).as_tuple_type().readonly)
@@ -6056,18 +6108,22 @@ impl<'a> NodeBuilderImpl<'a> {
             && t_symbol
                 .and_then(|s| symbol_value_declaration(c, s))
                 .is_some_and(|vd| {
-                                        let __program = c.program.clone().expect("program");
-                    let vd_nodes = __program.nodes((vd).file_index());;
+                    let __program = c.program.clone().expect("program");
+                    let vd_nodes = __program.nodes((vd).file_index());
                     ast::is_class_like(Some(vd), &vd_nodes)
                 })
-            && t_symbol
-                .is_some_and(|s| !c.is_value_symbol_accessible(Some(s), self.ctx.enclosing_declaration))
+            && t_symbol.is_some_and(|s| {
+                !c.is_value_symbol_accessible(Some(s), self.ctx.enclosing_declaration)
+            })
         {
             return self.create_anonymous_type_node(c, nodes, t);
         }
 
-        let __arena_target = c.types.clone(); let target = __arena_target.get(t).target().unwrap_or(t);
-        let __arena_outer_type_parameters = c.types.clone(); let outer_type_parameters = __arena_outer_type_parameters.get(target)
+        let __arena_target = c.types.clone();
+        let target = __arena_target.get(t).target().unwrap_or(t);
+        let __arena_outer_type_parameters = c.types.clone();
+        let outer_type_parameters = __arena_outer_type_parameters
+            .get(target)
             .as_interface_type()
             .map(|it| it.outer_type_parameters().to_vec())
             .unwrap_or_default();
@@ -6125,7 +6181,9 @@ impl<'a> NodeBuilderImpl<'a> {
         let mut type_argument_nodes: Option<NodeList> = None;
         if !type_arguments.is_empty() {
             let mut type_parameter_count = 0usize;
-            let __arena_type_params = c.types.clone(); let type_params = __arena_type_params.get(target)
+            let __arena_type_params = c.types.clone();
+            let type_params = __arena_type_params
+                .get(target)
                 .as_interface_type()
                 .map(|it| it.type_parameters().to_vec());
             if let Some(type_params) = &type_params {
@@ -6151,10 +6209,11 @@ impl<'a> NodeBuilderImpl<'a> {
                     || c.is_reference_to_type(t, global_async_iterable)
                     || c.is_reference_to_type(t, global_async_iterable_iterator)
                 {
-                    let __arena_ref_node = c.types.clone(); let ref_node = __arena_ref_node.get(t).as_type_reference().node;
+                    let __arena_ref_node = c.types.clone();
+                    let ref_node = __arena_ref_node.get(t).as_type_reference().node;
                     let ref_node_type_arguments_len = ref_node.and_then(|n| {
-                                                let __program = c.program.clone().expect("program");
-                        let nn = __program.nodes((n).file_index());;
+                        let __program = c.program.clone().expect("program");
+                        let nn = __program.nodes((n).file_index());
                         if ast::is_type_reference_node(&nn[n]) {
                             nn[n].type_arguments().map(|l| l.len())
                         } else {
@@ -6198,10 +6257,9 @@ impl<'a> NodeBuilderImpl<'a> {
             (None, final_ref) => {
                 final_ref.unwrap_or_else(|| self.f.new_keyword_type_node(nodes, Kind::AnyKeyword))
             }
-            (Some(result), Some(final_ref)) => {
-                self.append_reference_to_type(c, nodes, result, final_ref)
-                    .unwrap_or(result)
-            }
+            (Some(result), Some(final_ref)) => self
+                .append_reference_to_type(c, nodes, result, final_ref)
+                .unwrap_or(result),
             (Some(result), None) => result,
         }
     }
@@ -6222,7 +6280,8 @@ impl<'a> NodeBuilderImpl<'a> {
         let is_array_or_tuple = c.is_array_or_tuple_type(t);
         if is_array_or_tuple {
             // Deferred and regular references share a cycle identity.
-            let __arena_target = c.types.clone(); let target = __arena_target.get(t).target().unwrap_or(t);
+            let __arena_target = c.types.clone();
+            let target = __arena_target.get(t).target().unwrap_or(t);
             let args = c.get_type_arguments(t);
             let new_ref = c.create_type_reference(target, &args);
             t_id = type_id(c, new_ref);
@@ -6249,7 +6308,9 @@ impl<'a> NodeBuilderImpl<'a> {
             Some(CompositeSymbolIdentity {
                 is_constructor_node: false,
                 symbol_id: SymbolId::NONE,
-                node_id: c.types_handle().get(t)
+                node_id: c
+                    .types_handle()
+                    .get(t)
                     .as_conditional_type()
                     .root
                     .as_ref()
@@ -6319,7 +6380,9 @@ impl<'a> NodeBuilderImpl<'a> {
             // Growing type arguments can prevent a reverse mapped type from
             // repeating. Bound expansion by its mapped declaration as well as
             // its type identity.
-            let __arena_origin_node = c.types.clone(); let origin_node = __arena_origin_node.get(t)
+            let __arena_origin_node = c.types.clone();
+            let origin_node = __arena_origin_node
+                .get(t)
                 .as_reverse_mapped_type()
                 .mapped_type
                 .and_then(|mt| c.types_handle().get(mt).as_mapped_type().declaration);
@@ -6889,14 +6952,17 @@ impl<'a> NodeBuilderImpl<'a> {
         let _ = &mut t_flags;
         if t_flags.intersects(TypeFlags::UNION | TypeFlags::INTERSECTION) {
             let types: Vec<TypeId> = if t_flags.intersects(TypeFlags::UNION) {
-                let __arena_union_types = c.types.clone(); let union_types = __arena_union_types.get(t)
+                let __arena_union_types = c.types.clone();
+                let union_types = __arena_union_types
+                    .get(t)
                     .as_union_type()
                     .union_or_intersection
                     .types
                     .clone();
                 c.format_union_types(&union_types, expanding_enum)
             } else {
-                c.types_handle().get(t)
+                c.types_handle()
+                    .get(t)
                     .as_intersection_type()
                     .union_or_intersection
                     .types
@@ -6935,7 +7001,8 @@ impl<'a> NodeBuilderImpl<'a> {
             return Some(self.create_anonymous_type_node(c, nodes, t));
         }
         if t_flags.intersects(TypeFlags::INDEX) {
-            let __arena_indexed_type = c.types.clone(); let indexed_type = __arena_indexed_type.get(t).as_index_type().target;
+            let __arena_indexed_type = c.types.clone();
+            let indexed_type = __arena_indexed_type.get(t).as_index_type().target;
             self.ctx.approximate_length += 6;
             let index_type_node =
                 self.type_to_type_node(c, nodes, indexed_type.unwrap_or(c.error_type));
@@ -6947,7 +7014,8 @@ impl<'a> NodeBuilderImpl<'a> {
         }
         if t_flags.intersects(TypeFlags::TEMPLATE_LITERAL) {
             let (texts, types_) = {
-                let __arena_t_guard = c.types.clone(); let t_guard = __arena_t_guard.get(t);
+                let __arena_t_guard = c.types.clone();
+                let t_guard = __arena_t_guard.get(t);
                 let tlt = t_guard.as_template_literal_type();
                 (tlt.texts.clone(), tlt.types.clone())
             };
@@ -6985,9 +7053,11 @@ impl<'a> NodeBuilderImpl<'a> {
             ));
         }
         if t_flags.intersects(TypeFlags::STRING_MAPPING) {
-            let __arena_target = c.types.clone(); let target = __arena_target.get(t).as_string_mapping_type().target;
+            let __arena_target = c.types.clone();
+            let target = __arena_target.get(t).as_string_mapping_type().target;
             let type_node = self.type_to_type_node(c, nodes, target.unwrap_or(c.error_type));
-            let __arena_symbol = c.types.clone(); let symbol = __arena_symbol.get(t).symbol;
+            let __arena_symbol = c.types.clone();
+            let symbol = __arena_symbol.get(t).symbol;
             let args = self.f.new_node_list([type_node]);
             return symbol.and_then(|s| {
                 self.symbol_to_type_node(c, nodes, s, SymbolFlags::TYPE, Some(args))
@@ -6995,7 +7065,8 @@ impl<'a> NodeBuilderImpl<'a> {
         }
         if t_flags.intersects(TypeFlags::INDEXED_ACCESS) {
             let (object_type, index_type) = {
-                let __arena_t_guard = c.types.clone(); let t_guard = __arena_t_guard.get(t);
+                let __arena_t_guard = c.types.clone();
+                let t_guard = __arena_t_guard.get(t);
                 let iat = t_guard.as_indexed_access_type();
                 (iat.object_type, iat.index_type)
             };
@@ -7019,7 +7090,8 @@ impl<'a> NodeBuilderImpl<'a> {
             ));
         }
         if t_flags.intersects(TypeFlags::SUBSTITUTION) {
-            let __arena_base_type = c.types.clone(); let base_type = __arena_base_type.get(t).as_substitution_type().base_type;
+            let __arena_base_type = c.types.clone();
+            let base_type = __arena_base_type.get(t).as_substitution_type().base_type;
             let type_node = self.type_to_type_node(c, nodes, base_type.unwrap_or(c.error_type));
             if !c.is_no_infer_type(t) {
                 return Some(type_node);
@@ -7323,7 +7395,8 @@ fn is_private_identifier_symbol(c: &Checker, symbol: SymbolId) -> bool {
 /// until utilities.go's copy lands.
 fn contains_non_missing_undefined_type(c: &Checker, t: TypeId) -> bool {
     let candidate = if type_flags(c, t).intersects(TypeFlags::UNION) {
-        c.types_handle().get(t)
+        c.types_handle()
+            .get(t)
             .as_union_type()
             .union_or_intersection
             .types
@@ -7356,12 +7429,9 @@ fn is_rest_parameter(nodes: &[ast::Node], param: NodeId) -> bool {
 /// `getNameFromIndexInfo` (checker.go).
 fn get_name_from_index_info(c: &Checker, info: IndexInfoId) -> String {
     if let Some(declaration) = c.index_info_arena.get(info).declaration {
-                let __program = c.program.clone().expect("program");
-        let nodes = __program.nodes((declaration).file_index());;
-        if let Some(first_param) = nodes[declaration]
-            .parameters()
-            .and_then(|l| l.first())
-        {
+        let __program = c.program.clone().expect("program");
+        let nodes = __program.nodes((declaration).file_index());
+        if let Some(first_param) = nodes[declaration].parameters().and_then(|l| l.first()) {
             return scanner::utilities::declaration_name_to_string(
                 nodes[*first_param].name(),
                 &nodes,
@@ -7377,8 +7447,8 @@ fn get_mapped_type_modifiers_local(c: &Checker, t: TypeId) -> MappedTypeModifier
     let Some(declaration) = c.types_handle().get(t).as_mapped_type().declaration else {
         return MappedTypeModifiers::NONE;
     };
-        let __program = c.program.clone().expect("program");
-    let nodes = __program.nodes((declaration).file_index());;
+    let __program = c.program.clone().expect("program");
+    let nodes = __program.nodes((declaration).file_index());
     let declaration = &nodes[declaration];
     let mut modifiers = MappedTypeModifiers::NONE;
     if let Some(readonly_token) = declaration.as_mapped_type_node().readonly_token {
@@ -7410,8 +7480,8 @@ pub(crate) fn get_target_symbol(c: &mut Checker, s: SymbolId) -> SymbolId {
 /// checker.go's copy lands.
 fn get_regular_type_of_expression(c: &mut Checker, expr: NodeId) -> TypeId {
     let mut expr = expr;
-        let __program = c.program.clone().expect("program");
-    let nodes = __program.nodes((expr).file_index());;
+    let __program = c.program.clone().expect("program");
+    let nodes = __program.nodes((expr).file_index());
     if ast::is_right_side_of_qualified_name_or_property_access(expr, &nodes) {
         if let Some(parent) = nodes[expr].parent {
             expr = parent;
@@ -7684,8 +7754,8 @@ fn get_source_file_of_module_symbol(c: &Checker, symbol: SymbolId) -> Option<Nod
     let declaration = value_declaration.or_else(|| {
         // `GetNonAugmentationDeclaration`.
         declarations.iter().copied().find(|&d| {
-                        let __program = c.program.clone().expect("program");
-            let dn = __program.nodes((d).file_index());;
+            let __program = c.program.clone().expect("program");
+            let dn = __program.nodes((d).file_index());
             !ast::is_external_module_augmentation(&dn[d], &dn)
                 && !ast::is_global_scope_augmentation(&dn[d])
         })
@@ -7829,7 +7899,11 @@ pub(crate) enum PropertyNameNodeKind {
 }
 
 /// `classifyPropertyName`.
-pub(crate) fn classify_property_name(name: &str, string_named: bool, is_method: bool) -> PropertyNameNodeKind {
+pub(crate) fn classify_property_name(
+    name: &str,
+    string_named: bool,
+    is_method: bool,
+) -> PropertyNameNodeKind {
     if is_method && name == "new" {
         return PropertyNameNodeKind::StringLiteral;
     }
@@ -7870,8 +7944,8 @@ fn get_type_alias_for_type_literal(c: &mut Checker, t: TypeId) -> Option<SymbolI
     {
         let declarations = symbol_declarations(c, symbol);
         if let Some(&decl) = declarations.first() {
-                        let __program = c.program.clone().expect("program");
-            let decl_nodes = __program.nodes((decl).file_index());;
+            let __program = c.program.clone().expect("program");
+            let decl_nodes = __program.nodes((decl).file_index());
             let node = decl_nodes[decl]
                 .parent
                 .and_then(|p| ast::walk_up_parenthesized_types(p, &decl_nodes));
@@ -7913,12 +7987,9 @@ fn get_effective_parameter_declaration(c: &Checker, symbol: SymbolId) -> Option<
 /// for the interned form).
 fn get_name_from_index_info_data(c: &Checker, index_info: &IndexInfo) -> String {
     if let Some(declaration) = index_info.declaration {
-                let __program = c.program.clone().expect("program");
-        let decl_nodes = __program.nodes((declaration).file_index());;
-        if let Some(first_param) = decl_nodes[declaration]
-            .parameters()
-            .and_then(|l| l.first())
-        {
+        let __program = c.program.clone().expect("program");
+        let decl_nodes = __program.nodes((declaration).file_index());
+        if let Some(first_param) = decl_nodes[declaration].parameters().and_then(|l| l.first()) {
             return scanner::utilities::declaration_name_to_string(
                 decl_nodes[*first_param].name(),
                 &decl_nodes,
@@ -7962,7 +8033,8 @@ impl Checker {
         let Some(target) = c_ref_target(&self.types, t) else {
             return 0;
         };
-        self.types_handle().get(target)
+        self.types_handle()
+            .get(target)
             .as_interface_type()
             .map(|i| i.type_parameters().len())
             .unwrap_or(0)
@@ -7983,8 +8055,8 @@ impl Checker {
             return symbol_value_declaration(self, symbol);
         }
         symbol_declarations(self, symbol).into_iter().find(|&d| {
-                        let __program = self.program.clone().expect("program");
-            let dn = __program.nodes((d).file_index());;
+            let __program = self.program.clone().expect("program");
+            let dn = __program.nodes((d).file_index());
             if ast::is_interface_declaration(&dn[d]) {
                 return true;
             }
@@ -7999,7 +8071,8 @@ impl Checker {
 
     /// `(c *Checker) canGetTypeParametersOfClassOrInterface` (checker.go).
     pub(crate) fn can_get_type_parameters_of_class_or_interface(&self, symbol: SymbolId) -> bool {
-        self.get_class_or_interface_like_declaration(symbol).is_some()
+        self.get_class_or_interface_like_declaration(symbol)
+            .is_some()
     }
 
     /// `(c *Checker) getOuterTypeParametersOfClassOrInterface` (checker.go).
@@ -8007,9 +8080,9 @@ impl Checker {
         &mut self,
         symbol: SymbolId,
     ) -> Vec<TypeId> {
-        let declaration = self
-            .get_class_or_interface_like_declaration(symbol)
-            .expect("Class was missing valueDeclaration -OR- non-class had no interface declarations");
+        let declaration = self.get_class_or_interface_like_declaration(symbol).expect(
+            "Class was missing valueDeclaration -OR- non-class had no interface declarations",
+        );
         self.get_outer_type_parameters(declaration, false /*includeThisTypes*/)
     }
 
@@ -8026,7 +8099,7 @@ impl Checker {
                 Some(p) => p,
                 None => return Vec::new(),
             };
-                        let __program = self.program.clone().expect("program");
+            let __program = self.program.clone().expect("program");
             let kind = __program.nodes((node).file_index())[node].kind;
             if !matches!(
                 kind,
@@ -8052,8 +8125,8 @@ impl Checker {
             let mut outer_type_parameters =
                 self.get_outer_type_parameters(node, include_this_types);
             {
-                                let __program = self.program.clone().expect("program");
-                let nn = __program.nodes((node).file_index());;
+                let __program = self.program.clone().expect("program");
+                let nn = __program.nodes((node).file_index());
                 let is_fn_like = kind == Kind::FunctionExpression
                     || kind == Kind::ArrowFunction
                     || ast::is_object_literal_method(node, &nn);
@@ -8061,8 +8134,10 @@ impl Checker {
                     let sym = self.get_symbol_of_declaration(node);
                     if let Some(sym) = sym {
                         let t = self.get_type_of_symbol(sym);
-                        if let Some(signature) =
-                            self.get_signatures_of_type(t, SignatureKind::Call).first().copied()
+                        if let Some(signature) = self
+                            .get_signatures_of_type(t, SignatureKind::Call)
+                            .first()
+                            .copied()
                         {
                             let tps = self.signature_arena.get(signature).type_parameters.clone();
                             if !tps.is_empty() {
@@ -8074,8 +8149,8 @@ impl Checker {
             }
             if kind == Kind::MappedType {
                 let mapped = {
-                                        let __program = self.program.clone().expect("program");
-                    let nn = __program.nodes((node).file_index());;
+                    let __program = self.program.clone().expect("program");
+                    let nn = __program.nodes((node).file_index());
                     nn[node].as_mapped_type_node().type_parameter
                 };
                 if let Some(mapped) = mapped
@@ -8102,7 +8177,9 @@ impl Checker {
             {
                 if let Some(sym) = self.get_symbol_of_declaration(node) {
                     let declared = self.get_declared_type_of_class_or_interface(sym);
-                    this_type = self.types_handle().get(declared)
+                    this_type = self
+                        .types_handle()
+                        .get(declared)
                         .as_interface_type()
                         .and_then(|i| i.this_type());
                 }
@@ -8118,8 +8195,8 @@ impl Checker {
     pub(crate) fn get_infer_type_parameters(&mut self, node: NodeId) -> Vec<TypeId> {
         let mut result = Vec::new();
         let locals: Vec<SymbolId> = {
-                        let __program = self.program.clone().expect("program");
-            let nn = __program.nodes((node).file_index());;
+            let __program = self.program.clone().expect("program");
+            let nn = __program.nodes((node).file_index());
             nn[node]
                 .locals()
                 .map(|l| l.values().copied().collect())
@@ -8130,9 +8207,7 @@ impl Checker {
                 result.push(self.get_declared_type_of_symbol(symbol));
             }
         }
-        result.sort_by(|&a, &b| {
-            crate::checker_d::compare_type_ids(a, b).cmp(&0)
-        });
+        result.sort_by(|&a, &b| crate::checker_d::compare_type_ids(a, b).cmp(&0));
         result
     }
 
@@ -8153,8 +8228,8 @@ impl Checker {
         symbol: SymbolId,
     ) -> Vec<TypeId> {
         for node in symbol_declarations(self, symbol) {
-                        let __program = self.program.clone().expect("program");
-            let nn = __program.nodes((node).file_index());;
+            let __program = self.program.clone().expect("program");
+            let nn = __program.nodes((node).file_index());
             let kind = nn[node].kind;
             if matches!(
                 kind,
@@ -8191,8 +8266,8 @@ impl Checker {
         node: NodeId,
     ) -> Option<TypeId> {
         let (is_jsdoc, type_name_text, type_args) = {
-                        let __program = self.program.clone().expect("program");
-            let nn = __program.nodes((node).file_index());;
+            let __program = self.program.clone().expect("program");
+            let nn = __program.nodes((node).file_index());
             if !nn[node].flags.intersects(ast::NodeFlags::JSDOC)
                 || !ast::is_type_reference_node(&nn[node])
             {

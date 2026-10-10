@@ -1581,3 +1581,36 @@ and surviving ones are ordinary statement temps.
 - Tests deferred: `tsc/internal/compiler` tests depend on `harnessutil`
   (fourslash/baseline harness), which is not ported; no test files were
   carried over.
+
+## 2026-10-14 emit-time arena reentrancy — ArenaCheckout
+- `Program::emit_nodes_mut` returns an `ArenaCheckout` guard instead of
+  `RefMut<Vec<Node>>`: the live `Vec<Node>` is checked out for the emit
+  visitor while a `Clone` is left in the `RefCell` as a frozen mirror.
+  Emit-resolver/checker callbacks that call `program.nodes()` during the
+  transform see the mirror instead of panicking on the held `RefMut`.
+  Go has no equivalent — its arenas are a shared GC heap. Consequence:
+  `Node`/`NodeData`/payloads now `derive(Clone)`, `SourceFile` has a
+  hand-written `Clone`, and `SourceFileData` fields are `Rc`-held so a
+  cloned node shares its source-file data. Known limitation: synthetic
+  nodes appended to the checked-out vec mid-visit are invisible to the
+  mirror until the guard drops (equivalent for current emit-resolver
+  reads, which only inspect pre-transform nodes).
+- `Program::nodes_mut` stays a plain `RefMut` — checker-internal
+  mutations must not pay a whole-arena clone. Held-`Ref`-across-call
+  bugs in the checker (`check_source_file`,
+  `check_source_element_worker`, `check_signature_declaration`,
+  `check_function_or_method_declaration`) were fixed by extracting owned
+  metadata and dropping the borrow before recursive calls; JSDoc lazy
+  parsing gets a throwaway arena clone.
+- `DiagnosticsCollection` is `Arc<Mutex<…>>`-backed and `Clone`, matching
+  Go where the collection is shared by pointer. `Checker::get_diagnostics`
+  passes a clone to the worker instead of `mem::take`-ing the field —
+  the take had silently discarded every diagnostic produced during
+  `check_source_file` (regression caught by
+  `test_content_mapper_directives_preserve_incremental_globals`).
+- Printer fix: `get_node_for_generated_name_worker` is seeded with
+  `auto_generate.node` (the recorded target), not the generated `name`
+  itself — the wrong seed recursed forever (stack overflow) when the
+  name's original-chain never reached the target.
+- `Symbol` arena is program-global (`Program::symbols`) so `SymbolId`s
+  keep Go's cross-file pointer identity; `bind_source_file` appends to it.

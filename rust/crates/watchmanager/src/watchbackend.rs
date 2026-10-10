@@ -137,15 +137,13 @@ pub fn perceived_os_root_length_for_watching(components: &[String]) -> usize {
     let root = &components[0];
     let mut index_after_os_root = 1;
     let root_bytes = root.as_bytes();
-    let mut is_dos_style =
-        root_bytes.len() >= 2 && tspath::is_volume_character(root_bytes[0]) && root_bytes[1] == b':';
+    let mut is_dos_style = root_bytes.len() >= 2
+        && tspath::is_volume_character(root_bytes[0])
+        && root_bytes[1] == b':';
 
     if root != "/" && !is_dos_style && length > 1 {
         let c1 = components[1].as_bytes();
-        if c1.len() >= 2
-            && tspath::is_volume_character(c1[0])
-            && components[1].ends_with('$')
-        {
+        if c1.len() >= 2 && tspath::is_volume_character(c1[0]) && components[1].ends_with('$') {
             if length == 2 {
                 return 2;
             }
@@ -171,4 +169,3 @@ pub fn perceived_os_root_length_for_watching(components: &[String]) -> usize {
 
     index_after_os_root + 2
 }
-

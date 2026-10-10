@@ -14,15 +14,18 @@ use unicode_normalization::UnicodeNormalization;
 
 use tsc_ast::ast::Node;
 use tsc_ast::{self as ast, Kind, NodeId};
-use tsc_core::tristate::Tristate;
 use tsc_core::binarysearch::binary_search_unique_func;
 use tsc_core::core::{compare_booleans, filter, first_result};
-use tsc_stringutil::{compare_strings_case_insensitive_eslint_compatible, compare_strings_case_sensitive};
+use tsc_core::tristate::Tristate;
+use tsc_stringutil::{
+    compare_strings_case_insensitive_eslint_compatible, compare_strings_case_sensitive,
+};
 use tsc_tspath::is_external_module_name_relative;
 
 use crate::unicode::{is_mn, is_upper, strings_to_lower};
 use crate::userpreferences::{
-    OrganizeImportsCaseFirst, OrganizeImportsCollation, OrganizeImportsSort, OrganizeImportsTypeOrder,
+    OrganizeImportsCaseFirst, OrganizeImportsCollation, OrganizeImportsSort,
+    OrganizeImportsTypeOrder,
 };
 use crate::userpreferences_generated::UserPreferences;
 
@@ -44,7 +47,9 @@ pub fn filter_import_declarations<'a>(
     nodes: &[Node],
     statements: &'a [NodeId],
 ) -> std::borrow::Cow<'a, [NodeId]> {
-    filter(statements, |stmt| nodes[*stmt].kind == Kind::ImportDeclaration)
+    filter(statements, |stmt| {
+        nodes[*stmt].kind == Kind::ImportDeclaration
+    })
 }
 
 /// `GetDetectionLists` returns the lists of comparers and type orders to test
@@ -54,8 +59,9 @@ pub fn get_detection_lists(
 ) -> (Vec<Rc<StringComparer>>, Vec<OrganizeImportsTypeOrder>) {
     let comparers_to_test: Vec<Rc<StringComparer>>;
     if preferences.organize_imports_sort != OrganizeImportsSort::AUTO {
-        comparers_to_test =
-            vec![get_organize_imports_preset_string_comparer(preferences.organize_imports_sort)];
+        comparers_to_test = vec![get_organize_imports_preset_string_comparer(
+            preferences.organize_imports_sort,
+        )];
     } else if !preferences.organize_imports_ignore_case.is_unknown() {
         comparers_to_test = vec![get_organize_imports_string_comparer(
             preferences,
@@ -110,16 +116,12 @@ fn get_organize_imports_ordinal_string_comparer(ignore_case: bool) -> Rc<StringC
             compare_strings_case_insensitive_eslint_compatible(a.as_bytes(), b.as_bytes())
         });
     }
-    Rc::new(|a: &str, b: &str| {
-        compare_strings_case_sensitive(a.as_bytes(), b.as_bytes())
-    })
+    Rc::new(|a: &str, b: &str| compare_strings_case_sensitive(a.as_bytes(), b.as_bytes()))
 }
 
 /// `getOrganizeImportsNaturalStringComparer`
 fn get_organize_imports_natural_string_comparer(case_sensitive: bool) -> Rc<StringComparer> {
-    Rc::new(move |a: &str, b: &str| {
-        compare_organize_imports_natural_strings(a, b, case_sensitive)
-    })
+    Rc::new(move |a: &str, b: &str| compare_organize_imports_natural_strings(a, b, case_sensitive))
 }
 
 /// `getOrganizeImportsUnicodeStringComparer`
@@ -199,9 +201,7 @@ fn natural_collation_key(s: &str) -> String {
 
 /// `removeDiacritics` — `strings.Map(drop Mn, norm.NFD.String(s))`.
 fn remove_diacritics(s: &str) -> String {
-    s.nfd()
-        .filter(|&r| !is_mn(r as i32))
-        .collect()
+    s.nfd().filter(|&r| !is_mn(r as i32)).collect()
 }
 
 /// `compareOrganizeImportsUnicodeKeys`.
@@ -282,11 +282,7 @@ fn compare_organize_imports_case_upper_first(a: &str, b: &str) -> i32 {
 }
 
 /// `compareOrganizeImportsCase`.
-fn compare_organize_imports_case(
-    a: &str,
-    b: &str,
-    case_first: OrganizeImportsCaseFirst,
-) -> i32 {
+fn compare_organize_imports_case(a: &str, b: &str, case_first: OrganizeImportsCaseFirst) -> i32 {
     let a_runes: Vec<char> = a.chars().collect();
     let b_runes: Vec<char> = b.chars().collect();
     let min_len = a_runes.len().min(b_runes.len());
@@ -367,7 +363,12 @@ fn get_module_specifier_expression(nodes: &[Node], declaration: NodeId) -> Optio
             let declarations = nodes[declaration]
                 .as_variable_statement()
                 .declaration_list
-                .and_then(|dl| nodes[dl].as_variable_declaration_list().declarations.clone())
+                .and_then(|dl| {
+                    nodes[dl]
+                        .as_variable_declaration_list()
+                        .declarations
+                        .clone()
+                })
                 .map(|l| l.nodes)
                 .unwrap_or_default();
             if !declarations.is_empty() {
@@ -597,7 +598,10 @@ fn get_comparers(preferences: &UserPreferences) -> Vec<Rc<StringComparer>> {
         } else {
             false
         };
-        return vec![get_organize_imports_string_comparer(preferences, ignore_case)];
+        return vec![get_organize_imports_string_comparer(
+            preferences,
+            ignore_case,
+        )];
     }
     vec![
         get_organize_imports_string_comparer(preferences, true),
@@ -687,19 +691,13 @@ fn detect_named_import_organization_by_sort_impl(
         return None;
     }
 
-    let mut named_imports_by_decl: Vec<Vec<NodeId>> = Vec::with_capacity(import_decls_with_named.len());
+    let mut named_imports_by_decl: Vec<Vec<NodeId>> =
+        Vec::with_capacity(import_decls_with_named.len());
     for &imp in &import_decls_with_named {
         let clause_id = nodes[imp].as_import_declaration().import_clause.unwrap();
         let clause = nodes[clause_id].as_import_clause();
         let named_imports = nodes[clause.named_bindings.unwrap()].as_named_imports();
-        named_imports_by_decl.push(
-            named_imports
-                .elements
-                .as_ref()
-                .unwrap()
-                .nodes
-                .to_vec(),
-        );
+        named_imports_by_decl.push(named_imports.elements.as_ref().unwrap().nodes.to_vec());
     }
 
     if !both_named_imports || types_to_test.is_empty() {
@@ -737,13 +735,20 @@ fn detect_named_import_organization_by_sort_impl(
     ]
     .into_iter()
     .collect();
-    let mut best_comparer: std::collections::HashMap<OrganizeImportsTypeOrder, Rc<StringComparer>> = [
-        (OrganizeImportsTypeOrder::FIRST, comparers_to_test[0].clone()),
-        (OrganizeImportsTypeOrder::LAST, comparers_to_test[0].clone()),
-        (OrganizeImportsTypeOrder::INLINE, comparers_to_test[0].clone()),
-    ]
-    .into_iter()
-    .collect();
+    let mut best_comparer: std::collections::HashMap<OrganizeImportsTypeOrder, Rc<StringComparer>> =
+        [
+            (
+                OrganizeImportsTypeOrder::FIRST,
+                comparers_to_test[0].clone(),
+            ),
+            (OrganizeImportsTypeOrder::LAST, comparers_to_test[0].clone()),
+            (
+                OrganizeImportsTypeOrder::INLINE,
+                comparers_to_test[0].clone(),
+            ),
+        ]
+        .into_iter()
+        .collect();
 
     for cur_comparer in comparers_to_test {
         let mut curr_diff: std::collections::HashMap<OrganizeImportsTypeOrder, usize> = [

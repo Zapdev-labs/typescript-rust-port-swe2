@@ -188,11 +188,8 @@ pub trait EmitResolver: ReferenceResolver {
     /// `IsImportRequiredByAugmentation(decl *ast.ImportDeclaration) bool`
     fn is_import_required_by_augmentation(&self, decl: NodeId, nodes: &[Node]) -> bool;
     /// `IsDefinitelyReferenceToGlobalSymbolObject(node *ast.Node) bool`
-    fn is_definitely_reference_to_global_symbol_object(
-        &self,
-        node: NodeId,
-        nodes: &[Node],
-    ) -> bool;
+    fn is_definitely_reference_to_global_symbol_object(&self, node: NodeId, nodes: &[Node])
+    -> bool;
     /// `IsImplementationOfOverload(node *ast.SignatureDeclaration) bool`
     fn is_implementation_of_overload(&self, node: NodeId, nodes: &[Node]) -> bool;
     /// `GetEnumMemberValue(node *ast.Node) evaluator.Result`

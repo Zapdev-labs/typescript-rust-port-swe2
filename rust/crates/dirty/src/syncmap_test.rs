@@ -44,9 +44,7 @@ impl Clone for TestVal {
 impl Cloneable for TestVal {
     /// `v.Clone()` — a fresh pointee.
     fn clone_value(&self) -> Self {
-        TestVal(Arc::new(Mutex::new(TestData {
-            data: self.get(),
-        })))
+        TestVal(Arc::new(Mutex::new(TestData { data: self.get() })))
     }
 }
 
@@ -119,16 +117,10 @@ fn sync_map_proxy_for_race() {
 
     // If entry1 has a proxy, it should point to entry2, and vice versa
     if let Some(proxy) = entry1.proxy_for() {
-        assert!(
-            proxy.ptr_eq(&entry2),
-            "entry1 should proxy to entry2"
-        );
+        assert!(proxy.ptr_eq(&entry2), "entry1 should proxy to entry2");
     }
     if let Some(proxy) = entry2.proxy_for() {
-        assert!(
-            proxy.ptr_eq(&entry1),
-            "entry2 should proxy to entry1"
-        );
+        assert!(proxy.ptr_eq(&entry1), "entry2 should proxy to entry1");
     }
 }
 
@@ -222,9 +214,7 @@ fn sync_map_proxy_delete() {
         entry4
     };
 
-    proxy2.delete_if(|v| {
-        v.is_some_and(|v| v.get() == "modified2" || v.get() == "modified")
-    });
+    proxy2.delete_if(|v| v.is_some_and(|v| v.get() == "modified2" || v.get() == "modified"));
 
     let exists2 = sync_map2.load(&"key2".to_owned()).is_some();
     assert!(!exists2, "key2 should be deleted conditionally");

@@ -45,11 +45,10 @@ mod positionmap_test;
 // Go package-level names land at the crate root, mirroring `package ast`.
 pub use ast::*;
 pub use ast_generated::*;
-pub use utilities::*;
 pub use flow::{FlowFlags, FlowList, FlowNode};
+pub use functionflags::{FunctionFlags, get_function_flags};
 pub use ids::{FlowListId, FlowNodeId, NodeId, SymbolId};
 pub use kind_generated::Kind;
-pub use functionflags::{get_function_flags, FunctionFlags};
 pub use modifierflags::ModifierFlags;
 pub use nodeflags::NodeFlags;
 pub use sourcefiledata::{
@@ -60,4 +59,5 @@ pub use symbol::*;
 pub use symbolflags::SymbolFlags;
 pub use tokenflags::TokenFlags;
 pub use utilities::is_private_identifier_class_element_declaration;
+pub use utilities::*;
 pub use visitor::{NodeVisitor, NodeVisitorHooks, VisitorCx};

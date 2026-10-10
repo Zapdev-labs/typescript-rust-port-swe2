@@ -26,10 +26,9 @@ use crate::decoder_generated::{
 use crate::encoder::{
     HEADER_OFFSET_EXTENDED_DATA, HEADER_OFFSET_METADATA, HEADER_OFFSET_NODES,
     HEADER_OFFSET_PARSE_OPTIONS, HEADER_OFFSET_STRING_DATA, HEADER_OFFSET_STRING_OFFSETS,
-    HEADER_SIZE, NODE_DATA_TYPE_EXTENDED_DATA, NODE_DATA_TYPE_MASK, NODE_DATA_TYPE_STRING,
-    NODE_DATA_STRING_INDEX_MASK, NODE_OFFSET_DATA, NODE_OFFSET_END, NODE_OFFSET_FLAGS,
-    NODE_OFFSET_KIND, NODE_OFFSET_NEXT, NODE_OFFSET_PARENT, NODE_OFFSET_POS, NODE_SIZE,
-    PROTOCOL_VERSION,
+    HEADER_SIZE, NODE_DATA_STRING_INDEX_MASK, NODE_DATA_TYPE_EXTENDED_DATA, NODE_DATA_TYPE_MASK,
+    NODE_DATA_TYPE_STRING, NODE_OFFSET_DATA, NODE_OFFSET_END, NODE_OFFSET_FLAGS, NODE_OFFSET_KIND,
+    NODE_OFFSET_NEXT, NODE_OFFSET_PARENT, NODE_OFFSET_POS, NODE_SIZE, PROTOCOL_VERSION,
     SYNTAX_KIND_NODE_LIST,
 };
 
@@ -221,16 +220,17 @@ impl<'a> AstDecoder<'a> {
                 continue;
             }
 
-            let node = self
-                .create_node(kind, data, &child_buf)
-                .map_err(|e| {
-                    DecodeError::new(format!("at node {i} (kind {}): {}", kind_from_u32_debug(kind), e))
-                })?;
+            let node = self.create_node(kind, data, &child_buf).map_err(|e| {
+                DecodeError::new(format!(
+                    "at node {i} (kind {}): {}",
+                    kind_from_u32_debug(kind),
+                    e
+                ))
+            })?;
             self.arena[node].loc = TextRange::new(pos as i32, end as i32);
             self.arena[node].flags = NodeFlags(self.node_field(i, NODE_OFFSET_FLAGS));
             if kind == Kind::SourceFile as i16 as u32 {
-                let is_declaration_file =
-                    self.arena[node].flags.intersects(NodeFlags::AMBIENT);
+                let is_declaration_file = self.arena[node].flags.intersects(NodeFlags::AMBIENT);
                 self.arena[node].as_source_file_mut().is_declaration_file = is_declaration_file;
             }
             self.decoded[i] = Some(node);
@@ -336,19 +336,22 @@ impl<'a> AstDecoder<'a> {
         let text = self.get_string(text_idx);
         let file_name = self.get_string(file_name_idx);
         let path_text = self.get_string(path_idx);
-        let path = try_path_key_from_canonical(&String::from_utf8_lossy(path_text)).ok_or_else(|| {
-            DecodeError::new(format!(
-                "invalid source file path {:?}",
-                String::from_utf8_lossy(path_text)
-            ))
-        })?;
-        let typed_file_name = try_rooted_file_path_from_normalized(&String::from_utf8_lossy(file_name))
-            .ok_or_else(|| {
+        let path =
+            try_path_key_from_canonical(&String::from_utf8_lossy(path_text)).ok_or_else(|| {
                 DecodeError::new(format!(
-                    "invalid source file name {:?}",
-                    String::from_utf8_lossy(file_name)
+                    "invalid source file path {:?}",
+                    String::from_utf8_lossy(path_text)
                 ))
             })?;
+        let typed_file_name = try_rooted_file_path_from_normalized(&String::from_utf8_lossy(
+            file_name,
+        ))
+        .ok_or_else(|| {
+            DecodeError::new(format!(
+                "invalid source file name {:?}",
+                String::from_utf8_lossy(file_name)
+            ))
+        })?;
 
         // Recover parse options from header.
         let parse_opts = read_le32(self.raw, HEADER_OFFSET_PARSE_OPTIONS);
@@ -455,10 +458,7 @@ impl<'a> AstDecoder<'a> {
     }
 
     /// `decodeExtendedData_RegularExpressionLiteral`
-    pub(crate) fn decode_extended_data_regular_expression_literal(
-        &mut self,
-        data: u32,
-    ) -> NodeId {
+    pub(crate) fn decode_extended_data_regular_expression_literal(&mut self, data: u32) -> NodeId {
         let ext_off = self.ext_data as usize + (data & NODE_DATA_STRING_INDEX_MASK) as usize;
         let text_idx = read_le32(self.raw, ext_off);
         let flags = read_le32(self.raw, ext_off + 4);

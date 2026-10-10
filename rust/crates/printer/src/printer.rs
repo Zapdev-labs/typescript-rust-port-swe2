@@ -21,13 +21,19 @@ use std::fmt::Write as _;
 use std::ops::{Deref, DerefMut};
 
 use rustc_hash::FxHashMap;
-use tsc_ast::precedence::{OperatorPrecedence, TypePrecedence, get_expression_precedence, get_leftmost_expression, get_type_node_precedence};
-use tsc_ast::{self as ast, CommentRange, FileReference, Kind, ModifierList, Node, NodeFlags, NodeId, NodeList, SymbolId};
+use tsc_ast::precedence::{
+    OperatorPrecedence, TypePrecedence, get_expression_precedence, get_leftmost_expression,
+    get_type_node_precedence,
+};
+use tsc_ast::{
+    self as ast, CommentRange, FileReference, Kind, ModifierList, Node, NodeFlags, NodeId,
+    NodeList, SymbolId,
+};
 use tsc_core::options_generated::{NewLineKind, ScriptTarget};
 use tsc_core::scriptkind::ScriptKind;
 use tsc_core::text::{TextPos, TextRange};
 use tsc_core::tristate::Tristate;
-use tsc_scanner::scanner as scanner;
+use tsc_scanner::scanner;
 use tsc_sourcemap as sourcemap;
 use tsc_stringutil as stringutil;
 
@@ -37,12 +43,12 @@ use crate::emit_helpers::{EmitHelper, UniqueNameFn, compare_emit_helpers};
 use crate::emit_text_writer::EmitTextWriter;
 use crate::name_generator::NameGenerator;
 use crate::semicolon_writer::get_trailing_semicolon_deferring_writer;
-use crate::text_writer::{get_default_indent_size, get_indent_string, TextWriter};
+use crate::text_writer::{TextWriter, get_default_indent_size, get_indent_string};
 use crate::utilities::{
-    self as util, greatest_end, QuoteChar, GET_LITERAL_TEXT_FLAGS_ALLOW_NUMERIC_SEPARATOR,
+    self as util, GET_LITERAL_TEXT_FLAGS_ALLOW_NUMERIC_SEPARATOR,
     GET_LITERAL_TEXT_FLAGS_JSX_ATTRIBUTE_ESCAPE, GET_LITERAL_TEXT_FLAGS_NEVER_ASCII_ESCAPE,
     GET_LITERAL_TEXT_FLAGS_NONE, GET_LITERAL_TEXT_FLAGS_TERMINATE_UNTERMINATED_LITERALS,
-    GetLiteralTextFlags,
+    GetLiteralTextFlags, QuoteChar, greatest_end,
 };
 
 /// `type PrinterOptions struct`
@@ -75,8 +81,7 @@ pub struct PrinterOptions {
 /// require callers to fabricate trait objects; the callback borrows the
 /// `Source` it was given and returns an index into the source list instead —
 /// see `PORT(deferred)` on source-map emit.
-pub type MapSourcePosition<'a> =
-    Box<dyn FnMut(NodeId, i32) -> (Option<NodeId>, Option<i32>) + 'a>;
+pub type MapSourcePosition<'a> = Box<dyn FnMut(NodeId, i32) -> (Option<NodeId>, Option<i32>) + 'a>;
 
 /// `type PrintHandlers struct`
 ///
@@ -646,7 +651,10 @@ impl<'p, 'a> Emitter<'p, 'a> {
         if self.p.options.preserve_source_newlines {
             let leading_newlines = self.get_leading_line_terminator_count(parent, node, LF_NONE);
             if leading_newlines > 0 {
-                self.write_lines_and_indent(leading_newlines, false /*writeSpaceIfNotIndenting*/);
+                self.write_lines_and_indent(
+                    leading_newlines,
+                    false, /*writeSpaceIfNotIndenting*/
+                );
                 return true;
             }
         }
@@ -719,10 +727,7 @@ impl<'p, 'a> Emitter<'p, 'a> {
     }
 
     /// `p.getEffectiveLines`
-    fn get_effective_lines(
-        &self,
-        get_line_difference: impl Fn(bool) -> i32,
-    ) -> i32 {
+    fn get_effective_lines(&self, get_line_difference: impl Fn(bool) -> i32) -> i32 {
         // If 'preserveSourceNewlines' is disabled, we should never call this function
         // because it could be more expensive than alternative approximations.
         debug_assert!(self.p.options.preserve_source_newlines);
@@ -759,15 +764,17 @@ impl<'p, 'a> Emitter<'p, 'a> {
             }
 
             let Some(first_child) = first_child else {
-                return i32::from(!(parent_node.is_none()
-                    || (self.p.current_source_file.is_some()
-                        && parent_node.is_some_and(|p| {
-                            util::range_is_on_single_line(
-                                self.p.nodes[p].loc,
-                                self.p.nodes[self.p.current_source_file.unwrap()]
-                                    .as_source_file(),
-                            )
-                        }))));
+                return i32::from(
+                    !(parent_node.is_none()
+                        || (self.p.current_source_file.is_some()
+                            && parent_node.is_some_and(|p| {
+                                util::range_is_on_single_line(
+                                    self.p.nodes[p].loc,
+                                    self.p.nodes[self.p.current_source_file.unwrap()]
+                                        .as_source_file(),
+                                )
+                            }))),
+                );
             };
             if self.next_list_element_pos > 0
                 && self.p.nodes[first_child].pos() == self.next_list_element_pos
@@ -890,15 +897,17 @@ impl<'p, 'a> Emitter<'p, 'a> {
                 return 1;
             }
             let Some(last_child) = last_child else {
-                return i32::from(!(parent_node.is_none()
-                    || (self.p.current_source_file.is_some()
-                        && parent_node.is_some_and(|p| {
-                            util::range_is_on_single_line(
-                                self.p.nodes[p].loc,
-                                self.p.nodes[self.p.current_source_file.unwrap()]
-                                    .as_source_file(),
-                            )
-                        }))));
+                return i32::from(
+                    !(parent_node.is_none()
+                        || (self.p.current_source_file.is_some()
+                            && parent_node.is_some_and(|p| {
+                                util::range_is_on_single_line(
+                                    self.p.nodes[p].loc,
+                                    self.p.nodes[self.p.current_source_file.unwrap()]
+                                        .as_source_file(),
+                                )
+                            }))),
+                );
             };
             if let (Some(sf), Some(parent_node)) = (self.p.current_source_file, parent_node)
                 && !ast::position_is_synthesized(self.p.nodes[parent_node].pos())
@@ -944,12 +953,7 @@ impl<'p, 'a> Emitter<'p, 'a> {
             return;
         };
         let text = self.p.nodes[sf].as_source_file().text().to_string();
-        let line_map = self
-            .p
-            .nodes[sf]
-            .as_source_file()
-            .ecma_line_map()
-            .to_vec();
+        let line_map = self.p.nodes[sf].as_source_file().ecma_line_map().to_vec();
         self.write_comment_range_worker(&text, &line_map, comment.kind, comment.text_range);
     }
 
@@ -1082,12 +1086,7 @@ impl<'p, 'a> Emitter<'p, 'a> {
 
     /// `p.shouldEmitIndented`
     fn should_emit_indented(&self, node: Option<NodeId>) -> bool {
-        node.is_some_and(|n| {
-            self.p
-                .emit_context
-                .emit_flags(n)
-                .has(EmitFlags::INDENTED)
-        })
+        node.is_some_and(|n| self.p.emit_context.emit_flags(n).has(EmitFlags::INDENTED))
     }
 
     /// `p.shouldElideIndentation`
@@ -1112,12 +1111,7 @@ impl<'p, 'a> Emitter<'p, 'a> {
 
     /// `p.shouldEmitOnMultipleLines`
     fn should_emit_on_multiple_lines(&self, node: Option<NodeId>) -> bool {
-        node.is_some_and(|n| {
-            self.p
-                .emit_context
-                .emit_flags(n)
-                .has(EmitFlags::MULTI_LINE)
-        })
+        node.is_some_and(|n| self.p.emit_context.emit_flags(n).has(EmitFlags::MULTI_LINE))
     }
 
     /// `p.shouldEmitBlockFunctionBodyOnSingleLine`
@@ -1262,18 +1256,10 @@ impl<'p, 'a> Emitter<'p, 'a> {
             return false;
         };
         let text = self.p.nodes[sf].as_source_file().text().to_string();
-        !scanner::get_trailing_comment_ranges(
-            &self.p.emit_context.factory,
-            &text,
-            pos + 1,
-        )
-        .is_empty()
-            || !scanner::get_leading_comment_ranges(
-                &self.p.emit_context.factory,
-                &text,
-                pos + 1,
-            )
+        !scanner::get_trailing_comment_ranges(&self.p.emit_context.factory, &text, pos + 1)
             .is_empty()
+            || !scanner::get_leading_comment_ranges(&self.p.emit_context.factory, &text, pos + 1)
+                .is_empty()
     }
 
     /// `p.shouldEmitIndirectCall`
@@ -1313,10 +1299,7 @@ impl<'p, 'a> Emitter<'p, 'a> {
             | Kind::NamedExports
             | Kind::ImportAttributes => true,
             Kind::ClassExpression | Kind::ClassDeclaration | Kind::InterfaceDeclaration => {
-                list.map(|l| l.loc)
-                    == self.p.nodes[node]
-                        .type_parameter_list()
-                        .map(|l| l.loc)
+                list.map(|l| l.loc) == self.p.nodes[node].type_parameter_list().map(|l| l.loc)
             }
             Kind::FunctionDeclaration | Kind::FunctionExpression | Kind::MethodDeclaration => true,
             Kind::CallExpression => true,
@@ -1343,7 +1326,13 @@ impl<'p, 'a> Emitter<'p, 'a> {
     }
 
     /// `p.emitToken`
-    fn emit_token(&mut self, token: Kind, pos: i32, write_kind: WriteKind, context_node: NodeId) -> i32 {
+    fn emit_token(
+        &mut self,
+        token: Kind,
+        pos: i32,
+        write_kind: WriteKind,
+        context_node: NodeId,
+    ) -> i32 {
         self.emit_token_ex(token, pos, write_kind, context_node, TEF_NONE)
     }
 
@@ -1370,7 +1359,11 @@ impl<'p, 'a> Emitter<'p, 'a> {
     /// `p.emitKeywordNodeEx`
     fn emit_keyword_node_ex(&mut self, node: NodeId, flags: TokenEmitFlags) {
         let state = self.enter_token_node(node, flags);
-        self.write_token_text(self.p.nodes[node].kind, WriteKind::Keyword, self.p.nodes[node].pos());
+        self.write_token_text(
+            self.p.nodes[node].kind,
+            WriteKind::Keyword,
+            self.p.nodes[node].pos(),
+        );
         self.exit_token_node(node, state);
     }
 
@@ -1389,7 +1382,11 @@ impl<'p, 'a> Emitter<'p, 'a> {
     /// `p.emitPunctuationNodeEx`
     fn emit_punctuation_node_ex(&mut self, node: NodeId, flags: TokenEmitFlags) {
         let state = self.enter_token_node(node, flags);
-        self.write_token_text(self.p.nodes[node].kind, WriteKind::Punctuation, self.p.nodes[node].pos());
+        self.write_token_text(
+            self.p.nodes[node].kind,
+            WriteKind::Punctuation,
+            self.p.nodes[node].pos(),
+        );
         self.exit_token_node(node, state);
     }
 
@@ -1578,11 +1575,7 @@ impl<'p, 'a> Emitter<'p, 'a> {
 
     /// `p.getUniqueHelperName`
     fn get_unique_helper_name(&mut self, name: &str) -> NodeId {
-        if let Some(&helper_name) = self
-            .unique_helper_names
-            .as_ref()
-            .and_then(|m| m.get(name))
-        {
+        if let Some(&helper_name) = self.unique_helper_names.as_ref().and_then(|m| m.get(name)) {
             let helper_name = self
                 .p
                 .emit_context
@@ -1625,25 +1618,19 @@ impl<'p, 'a> Emitter<'p, 'a> {
                     .emit_context
                     .factory
                     .clone_node(self.p.nodes, external_helpers_module_name);
-                let node_clone = self
-                    .p
-                    .emit_context
-                    .factory
-                    .clone_node(self.p.nodes, node);
-                let helper = self
-                    .p
-                    .emit_context
-                    .factory
-                    .new_property_access_expression(
-                        self.p.nodes,
-                        Some(module_name),
-                        None, /*questionDotToken*/
-                        Some(node_clone),
-                        NodeFlags::NONE,
-                    );
-                self.p
-                    .emit_context
-                    .assign_comment_and_source_map_ranges(self.p.nodes, helper, node);
+                let node_clone = self.p.emit_context.factory.clone_node(self.p.nodes, node);
+                let helper = self.p.emit_context.factory.new_property_access_expression(
+                    self.p.nodes,
+                    Some(module_name),
+                    None, /*questionDotToken*/
+                    Some(node_clone),
+                    NodeFlags::NONE,
+                );
+                self.p.emit_context.assign_comment_and_source_map_ranges(
+                    self.p.nodes,
+                    helper,
+                    node,
+                );
                 self.emit_property_access_expression(helper);
                 return;
             }
@@ -1651,9 +1638,11 @@ impl<'p, 'a> Emitter<'p, 'a> {
                 // Substitute `__helper` with `__helper_1` if there is a conflict in an ES module.
                 let text = self.p.nodes[node].text(self.p.nodes).into_owned();
                 let helper_name = self.get_unique_helper_name(&text);
-                self.p
-                    .emit_context
-                    .assign_comment_and_source_map_ranges(self.p.nodes, helper_name, node);
+                self.p.emit_context.assign_comment_and_source_map_ranges(
+                    self.p.nodes,
+                    helper_name,
+                    node,
+                );
                 let node = helper_name;
                 let state = self.enter_node(node);
                 self.emit_identifier_text(node);
@@ -1679,9 +1668,11 @@ impl<'p, 'a> Emitter<'p, 'a> {
             // Substitute `__helper` with `__helper_1` if there is a conflict in an ES module.
             let text = self.p.nodes[node].text(self.p.nodes).into_owned();
             let helper_name = self.get_unique_helper_name(&text);
-            self.p
-                .emit_context
-                .assign_comment_and_source_map_ranges(self.p.nodes, helper_name, node);
+            self.p.emit_context.assign_comment_and_source_map_ranges(
+                self.p.nodes,
+                helper_name,
+                node,
+            );
             let node = helper_name;
             let state = self.enter_node(node);
             self.emit_identifier_text(node);
@@ -1774,9 +1765,7 @@ impl<'p, 'a> Emitter<'p, 'a> {
             Kind::Identifier => self.emit_identifier_name(node),
             Kind::PrivateIdentifier => self.emit_private_identifier(node),
             Kind::StringLiteral => self.emit_string_literal(node),
-            Kind::NoSubstitutionTemplateLiteral => {
-                self.emit_no_substitution_template_literal(node)
-            }
+            Kind::NoSubstitutionTemplateLiteral => self.emit_no_substitution_template_literal(node),
             Kind::NumericLiteral => self.emit_numeric_literal(node),
             Kind::BigIntLiteral => self.emit_big_int_literal(node),
             Kind::ComputedPropertyName => self.emit_computed_property_name(node),
@@ -1866,7 +1855,11 @@ impl<'p, 'a> Emitter<'p, 'a> {
 
         let modifiers = modifiers.clone();
 
-        if modifiers.nodes.iter().all(|&m| ast::is_modifier(&self.p.nodes[m])) {
+        if modifiers
+            .nodes
+            .iter()
+            .all(|&m| ast::is_modifier(&self.p.nodes[m]))
+        {
             // if all modifier-likes are `Modifier`, simply emit the list as modifiers.
             let node_list = NodeList {
                 loc: modifiers.loc,
@@ -2123,12 +2116,22 @@ impl<'p, 'a> Emitter<'p, 'a> {
     }
 
     /// `p.emitInitializer`
-    fn emit_initializer(&mut self, node: Option<NodeId>, equal_token_pos: i32, context_node: NodeId) {
+    fn emit_initializer(
+        &mut self,
+        node: Option<NodeId>,
+        equal_token_pos: i32,
+        context_node: NodeId,
+    ) {
         let Some(node) = node else {
             return;
         };
         self.write_space();
-        self.emit_token(Kind::EqualsToken, equal_token_pos, WriteKind::Operator, context_node);
+        self.emit_token(
+            Kind::EqualsToken,
+            equal_token_pos,
+            WriteKind::Operator,
+            context_node,
+        );
         self.write_space();
         self.emit_expression(Some(node), OperatorPrecedence::DISALLOW_COMMA);
     }
@@ -2282,7 +2285,11 @@ impl<'p, 'a> Emitter<'p, 'a> {
     fn emit_property_signature(&mut self, node: NodeId) {
         let (name, postfix_token, type_) = {
             let d = self.p.nodes[node].as_property_signature_declaration();
-            (d.named_member_base.name, d.named_member_base.postfix_token, d.type_)
+            (
+                d.named_member_base.name,
+                d.named_member_base.postfix_token,
+                d.type_,
+            )
         };
         let modifiers = self.p.nodes[node].modifiers().cloned();
         let state = self.enter_node(node);
@@ -2475,7 +2482,10 @@ impl<'p, 'a> Emitter<'p, 'a> {
     fn emit_index_signature(&mut self, node: NodeId) {
         let (parameters, type_) = {
             let d = self.p.nodes[node].as_index_signature_declaration();
-            (d.function_like_base.parameters.clone(), d.function_like_base.type_)
+            (
+                d.function_like_base.parameters.clone(),
+                d.function_like_base.type_,
+            )
         };
         let modifiers = self.p.nodes[node].modifiers().cloned();
         let state = self.enter_node(node);
@@ -2532,19 +2542,30 @@ impl<'p, 'a> Emitter<'p, 'a> {
             Kind::MethodDeclaration => self.emit_method_declaration(node),
             Kind::GetAccessor => self.emit_get_accessor_declaration(node),
             Kind::SetAccessor => self.emit_set_accessor_declaration(node),
-            _ => panic!("unhandled ObjectLiteralElement: {:?}", self.p.nodes[node].kind),
+            _ => panic!(
+                "unhandled ObjectLiteralElement: {:?}",
+                self.p.nodes[node].kind
+            ),
         }
     }
 
-/// `node.AsGetAccessorDeclaration().AccessorDeclarationBase` /
-/// `node.AsSetAccessorDeclaration().AccessorDeclarationBase`.
-fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDeclarationBase {
-    match nodes[node].kind {
-        Kind::GetAccessor => &nodes[node].as_get_accessor_declaration().accessor_declaration_base,
-        Kind::SetAccessor => &nodes[node].as_set_accessor_declaration().accessor_declaration_base,
-        _ => panic!("unexpected accessor: {:?}", nodes[node].kind),
+    /// `node.AsGetAccessorDeclaration().AccessorDeclarationBase` /
+    /// `node.AsSetAccessorDeclaration().AccessorDeclarationBase`.
+    fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDeclarationBase {
+        match nodes[node].kind {
+            Kind::GetAccessor => {
+                &nodes[node]
+                    .as_get_accessor_declaration()
+                    .accessor_declaration_base
+            }
+            Kind::SetAccessor => {
+                &nodes[node]
+                    .as_set_accessor_declaration()
+                    .accessor_declaration_base
+            }
+            _ => panic!("unexpected accessor: {:?}", nodes[node].kind),
+        }
     }
-}
 
     //
     // Types
@@ -2614,7 +2635,10 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
     fn emit_type_reference(&mut self, node: NodeId) {
         let (type_name, type_arguments) = {
             let d = self.p.nodes[node].as_type_reference_node();
-            (d.type_name, d.node_with_type_arguments_base.type_arguments.clone())
+            (
+                d.type_name,
+                d.node_with_type_arguments_base.type_arguments.clone(),
+            )
         };
         let state = self.enter_node(node);
         self.emit_entity_name(type_name);
@@ -2658,11 +2682,15 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
             (
                 d.function_or_constructor_type_node_base
                     .function_like_base
-                    .type_parameters.clone(),
+                    .type_parameters
+                    .clone(),
                 d.function_or_constructor_type_node_base
                     .function_like_base
-                    .parameters.clone(),
-                d.function_or_constructor_type_node_base.function_like_base.type_,
+                    .parameters
+                    .clone(),
+                d.function_or_constructor_type_node_base
+                    .function_like_base
+                    .type_,
             )
         };
         let state = self.enter_node(node);
@@ -2687,11 +2715,15 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
             (
                 d.function_or_constructor_type_node_base
                     .function_like_base
-                    .type_parameters.clone(),
+                    .type_parameters
+                    .clone(),
                 d.function_or_constructor_type_node_base
                     .function_like_base
-                    .parameters.clone(),
-                d.function_or_constructor_type_node_base.function_like_base.type_,
+                    .parameters
+                    .clone(),
+                d.function_or_constructor_type_node_base
+                    .function_like_base
+                    .type_,
             )
         };
         let modifiers = self.p.nodes[node].modifiers().cloned();
@@ -2717,7 +2749,10 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
     fn emit_type_query(&mut self, node: NodeId) {
         let (expr_name, type_arguments) = {
             let d = self.p.nodes[node].as_type_query_node();
-            (d.expr_name, d.node_with_type_arguments_base.type_arguments.clone())
+            (
+                d.expr_name,
+                d.node_with_type_arguments_base.type_arguments.clone(),
+            )
         };
         let state = self.enter_node(node);
         self.write_keyword("typeof");
@@ -2860,12 +2895,11 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
 
     /// `p.emitUnionType`
     fn emit_union_type(&mut self, node: NodeId) {
-        let types = self
-            .p
-            .nodes[node]
+        let types = self.p.nodes[node]
             .as_union_type_node()
             .union_or_intersection_type_node_base
-            .types.clone();
+            .types
+            .clone();
         let state = self.enter_node(node);
         self.emit_list(
             Self::emit_union_type_constituent,
@@ -2883,12 +2917,11 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
 
     /// `p.emitIntersectionType`
     fn emit_intersection_type(&mut self, node: NodeId) {
-        let types = self
-            .p
-            .nodes[node]
+        let types = self.p.nodes[node]
             .as_intersection_type_node()
             .union_or_intersection_type_node_base
-            .types.clone();
+            .types
+            .clone();
         let state = self.enter_node(node);
         self.emit_list(
             Self::emit_intersection_type_constituent,
@@ -2973,12 +3006,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
             (d.operator, d.type_)
         };
         let state = self.enter_node(node);
-        self.emit_token(
-            operator,
-            self.p.nodes[node].pos(),
-            WriteKind::Keyword,
-            node,
-        );
+        self.emit_token(operator, self.p.nodes[node].pos(), WriteKind::Keyword, node);
         self.write_space();
         self.emit_type_node(
             type_,
@@ -3421,7 +3449,6 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         self.exit_node(node, state);
     }
 
-
     //
     // Expressions
     //
@@ -3551,7 +3578,8 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
             token = Some(t);
         }
         let token = token.unwrap();
-        let lines_before_dot = self.get_lines_between_nodes(Some(node), Some(expression), Some(token));
+        let lines_before_dot =
+            self.get_lines_between_nodes(Some(node), Some(expression), Some(token));
         self.write_line_repeat(lines_before_dot);
         self.increase_indent_if(lines_before_dot > 0);
         let should_emit_dot_dot = self.p.nodes[token].kind != Kind::QuestionDotToken
@@ -3661,7 +3689,12 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
     fn emit_call_expression(&mut self, node: NodeId) {
         let (expression, question_dot_token, type_arguments, arguments) = {
             let d = self.p.nodes[node].as_call_expression();
-            (d.expression, d.question_dot_token, d.type_arguments.clone(), d.arguments.clone())
+            (
+                d.expression,
+                d.question_dot_token,
+                d.type_arguments.clone(),
+                d.arguments.clone(),
+            )
         };
         let state = self.enter_node(node);
         self.emit_callee(expression, node);
@@ -3680,7 +3713,11 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
     fn emit_new_expression(&mut self, node: NodeId) {
         let (expression, type_arguments, arguments) = {
             let d = self.p.nodes[node].as_new_expression();
-            (d.expression.unwrap_or_default(), d.type_arguments.clone(), d.arguments.clone())
+            (
+                d.expression.unwrap_or_default(),
+                d.type_arguments.clone(),
+                d.arguments.clone(),
+            )
         };
         let state = self.enter_node(node);
         self.emit_token(
@@ -3690,8 +3727,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
             node,
         );
         self.write_space();
-        if self.p.nodes[ast::skip_partially_emitted_expressions(expression, self.p.nodes)]
-            .kind
+        if self.p.nodes[ast::skip_partially_emitted_expressions(expression, self.p.nodes)].kind
             == Kind::CallExpression
         {
             // Parenthesize `C()` inside of a NewExpression so it is treated as `new (C())` and not `new C()`
@@ -3712,14 +3748,9 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
     /// `p.emitTemplateLiteral`
     fn emit_template_literal(&mut self, node: NodeId) {
         match self.p.nodes[node].kind {
-            Kind::NoSubstitutionTemplateLiteral => {
-                self.emit_no_substitution_template_literal(node)
-            }
+            Kind::NoSubstitutionTemplateLiteral => self.emit_no_substitution_template_literal(node),
             Kind::TemplateExpression => self.emit_template_expression(node),
-            _ => panic!(
-                "unhandled TemplateLiteral: {:?}",
-                self.p.nodes[node].kind
-            ),
+            _ => panic!("unhandled TemplateLiteral: {:?}", self.p.nodes[node].kind),
         }
     }
 
@@ -3727,7 +3758,12 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
     fn emit_tagged_template_expression(&mut self, node: NodeId) {
         let (tag, question_dot_token, type_arguments, template) = {
             let d = self.p.nodes[node].as_tagged_template_expression();
-            (d.tag, d.question_dot_token, d.type_arguments.clone(), d.template)
+            (
+                d.tag,
+                d.question_dot_token,
+                d.type_arguments.clone(),
+                d.template,
+            )
         };
         let _ = question_dot_token;
         let state = self.enter_node(node);
@@ -3835,8 +3871,14 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         let (type_parameters, parameters, type_, equals_greater_than_token, body) = {
             let d = self.p.nodes[node].as_arrow_function();
             (
-                d.function_like_with_body_base.function_like_base.type_parameters.clone(),
-                d.function_like_with_body_base.function_like_base.parameters.clone(),
+                d.function_like_with_body_base
+                    .function_like_base
+                    .type_parameters
+                    .clone(),
+                d.function_like_with_body_base
+                    .function_like_base
+                    .parameters
+                    .clone(),
                 d.function_like_with_body_base.function_like_base.type_,
                 d.equals_greater_than_token,
                 d.function_like_with_body_base.body_base.body,
@@ -3998,21 +4040,20 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
                 (
                     n.left,
                     n.right,
-                    n.operator_token.is_some_and(|t| self.p.nodes[t].kind == Kind::PlusToken),
+                    n.operator_token
+                        .is_some_and(|t| self.p.nodes[t].kind == Kind::PlusToken),
                 )
             };
             if plus {
                 // !!! Determine if caching this is worthwhile over recomputing
-                let left_kind = self.get_literal_kind_of_binary_plus_operand(
-                    left.expect("binary expression left"),
-                );
+                let left_kind = self
+                    .get_literal_kind_of_binary_plus_operand(left.expect("binary expression left"));
                 let mut literal_kind = Kind::Unknown;
                 if left_kind.is_literal_kind()
                     && left_kind
-                        == self
-                            .get_literal_kind_of_binary_plus_operand(
-                                right.expect("binary expression right"),
-                            )
+                        == self.get_literal_kind_of_binary_plus_operand(
+                            right.expect("binary expression right"),
+                        )
                 {
                     literal_kind = left_kind;
                 }
@@ -4032,7 +4073,9 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
             let d = self.p.nodes[node].as_binary_expression();
             (
                 d.left,
-                d.operator_token.map(|t| self.p.nodes[t].kind).unwrap_or_default(),
+                d.operator_token
+                    .map(|t| self.p.nodes[t].kind)
+                    .unwrap_or_default(),
                 d.right,
             )
         };
@@ -4088,8 +4131,8 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
                         Kind::PlusToken,
                     )
                 {
-                    let left_kind = self
-                        .get_literal_kind_of_binary_plus_operand(left.expect("binary left"));
+                    let left_kind =
+                        self.get_literal_kind_of_binary_plus_operand(left.expect("binary left"));
                     if left_kind.is_literal_kind()
                         && left_kind
                             == self.get_literal_kind_of_binary_plus_operand(
@@ -4138,11 +4181,11 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
             let d = self.p.nodes[node].as_binary_expression();
             (d.left, d.operator_token, d.right)
         };
-        let operator_kind = operator_token.map(|t| self.p.nodes[t].kind).unwrap_or_default();
-        let emitted_left = ast::skip_partially_emitted_expressions(
-            left.expect("binary left"),
-            self.p.nodes,
-        );
+        let operator_kind = operator_token
+            .map(|t| self.p.nodes[t].kind)
+            .unwrap_or_default();
+        let emitted_left =
+            ast::skip_partially_emitted_expressions(left.expect("binary left"), self.p.nodes);
         if ast::node_is_synthesized(&self.p.nodes[emitted_left])
             && self.p.nodes[emitted_left].kind == Kind::BinaryExpression
             && util::mixing_binary_operators_requires_parentheses(
@@ -4156,10 +4199,8 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         {
             left_prec = OperatorPrecedence::HIGHEST;
         }
-        let emitted_right = ast::skip_partially_emitted_expressions(
-            right.expect("binary right"),
-            self.p.nodes,
-        );
+        let emitted_right =
+            ast::skip_partially_emitted_expressions(right.expect("binary right"), self.p.nodes);
         if ast::node_is_synthesized(&self.p.nodes[emitted_right])
             && self.p.nodes[emitted_right].kind == Kind::BinaryExpression
             && util::mixing_binary_operators_requires_parentheses(
@@ -4175,10 +4216,8 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         }
         let state = self.enter_node(node);
         self.emit_expression(left, left_prec);
-        let lines_before_operator =
-            self.get_lines_between_nodes(Some(node), left, operator_token);
-        let lines_after_operator =
-            self.get_lines_between_nodes(Some(node), operator_token, right);
+        let lines_before_operator = self.get_lines_between_nodes(Some(node), left, operator_token);
+        let lines_after_operator = self.get_lines_between_nodes(Some(node), operator_token, right);
         self.write_lines_and_indent(
             lines_before_operator,
             operator_kind != Kind::CommaToken, /*writeSpaceIfNotIndenting*/
@@ -4225,10 +4264,8 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
             self.get_lines_between_nodes(Some(node), condition, question_token);
         let lines_after_question =
             self.get_lines_between_nodes(Some(node), question_token, when_true);
-        let lines_before_colon =
-            self.get_lines_between_nodes(Some(node), when_true, colon_token);
-        let lines_after_colon =
-            self.get_lines_between_nodes(Some(node), colon_token, when_false);
+        let lines_before_colon = self.get_lines_between_nodes(Some(node), when_true, colon_token);
+        let lines_after_colon = self.get_lines_between_nodes(Some(node), colon_token, when_false);
         self.emit_short_circuit_expression(condition);
         self.write_lines_and_indent(lines_before_question, true);
         self.emit_punctuation_node_opt(question_token);
@@ -4592,11 +4629,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
                 Kind::PropertyAccessExpression => {
                     let (expression, question_dot_token, name) = {
                         let d = self.p.nodes[node].as_property_access_expression();
-                        (
-                            d.expression,
-                            d.question_dot_token,
-                            d.name,
-                        )
+                        (d.expression, d.question_dot_token, d.name)
                     };
                     let flags = self.p.nodes[node].flags;
                     let new_expression =
@@ -4618,11 +4651,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
                 Kind::ElementAccessExpression => {
                     let (expression, question_dot_token, argument_expression) = {
                         let d = self.p.nodes[node].as_element_access_expression();
-                        (
-                            d.expression,
-                            d.question_dot_token,
-                            d.argument_expression,
-                        )
+                        (d.expression, d.question_dot_token, d.argument_expression)
                     };
                     let flags = self.p.nodes[node].flags;
                     let new_expression =
@@ -4680,8 +4709,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
                         )
                     };
                     let flags = self.p.nodes[node].flags;
-                    let new_tag =
-                        self.parenthesize_expression_for_no_asi(tag.unwrap_or_default());
+                    let new_tag = self.parenthesize_expression_for_no_asi(tag.unwrap_or_default());
                     return self
                         .p
                         .emit_context
@@ -4783,12 +4811,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
                         .p
                         .emit_context
                         .factory
-                        .update_as_expression(
-                            self.p.nodes,
-                            node,
-                            Some(new_expression),
-                            type_,
-                        )
+                        .update_as_expression(self.p.nodes, node, Some(new_expression), type_)
                         .unwrap_or(node);
                 }
                 Kind::SatisfiesExpression => {
@@ -4811,8 +4834,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
                         .unwrap_or(node);
                 }
                 Kind::NonNullExpression => {
-                    let expression =
-                        self.p.nodes[node].as_non_null_expression().expression;
+                    let expression = self.p.nodes[node].as_non_null_expression().expression;
                     let flags = self.p.nodes[node].flags;
                     let new_expression =
                         self.parenthesize_expression_for_no_asi(expression.unwrap_or_default());
@@ -4820,12 +4842,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
                         .p
                         .emit_context
                         .factory
-                        .update_non_null_expression(
-                            self.p.nodes,
-                            node,
-                            Some(new_expression),
-                            flags,
-                        )
+                        .update_non_null_expression(self.p.nodes, node, Some(new_expression), flags)
                         .unwrap_or(node);
                 }
                 _ => {}
@@ -4867,9 +4884,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
             Kind::BigIntLiteral => self.emit_big_int_literal(node),
             Kind::StringLiteral => self.emit_string_literal(node),
             Kind::RegularExpressionLiteral => self.emit_regular_expression_literal(node),
-            Kind::NoSubstitutionTemplateLiteral => {
-                self.emit_no_substitution_template_literal(node)
-            }
+            Kind::NoSubstitutionTemplateLiteral => self.emit_no_substitution_template_literal(node),
 
             // Identifiers
             Kind::Identifier => self.emit_identifier_reference(node),
@@ -4902,9 +4917,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
             Kind::OmittedExpression => self.emit_omitted_expression(node),
             Kind::AsExpression => self.emit_as_expression(node),
             Kind::NonNullExpression => self.emit_non_null_expression(node),
-            Kind::ExpressionWithTypeArguments => {
-                self.emit_expression_with_type_arguments(node)
-            }
+            Kind::ExpressionWithTypeArguments => self.emit_expression_with_type_arguments(node),
             Kind::SatisfiesExpression => self.emit_satisfies_expression(node),
             Kind::MetaProperty => self.emit_meta_property(node),
             Kind::SyntheticExpression => {
@@ -4924,17 +4937,12 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
 
             // Transformation nodes
             Kind::NotEmittedStatement => return,
-            Kind::PartiallyEmittedExpression => {
-                self.emit_partially_emitted_expression(node)
-            }
+            Kind::PartiallyEmittedExpression => self.emit_partially_emitted_expression(node),
             Kind::SyntheticReferenceExpression => {
                 panic!("SyntheticReferenceExpression should not be printed")
             }
 
-            _ => panic!(
-                "unexpected Expression: {:?}",
-                self.p.nodes[node].kind
-            ),
+            _ => panic!("unexpected Expression: {:?}", self.p.nodes[node].kind),
         }
 
         if parens {
@@ -5058,9 +5066,11 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         let expression = self.p.nodes[node].as_expression_statement().expression;
         let state = self.enter_node(node);
 
-        if self.p.current_source_file.is_some_and(|sf| {
-            self.p.nodes[sf].as_source_file().script_kind == ScriptKind::Json
-        }) {
+        if self
+            .p
+            .current_source_file
+            .is_some_and(|sf| self.p.nodes[sf].as_source_file().script_kind == ScriptKind::Json)
+        {
             // !!! In strada, this was handled by an undefined parenthesizerRule, so this is a hack.
             self.emit_expression(expression, OperatorPrecedence::COMMA);
         } else if util::is_immediately_invoked_function_expression_or_arrow_function(
@@ -5072,11 +5082,8 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
             //   (function() { })()  -- not (function() { }())
             self.emit_iife_with_parenthesized_callee(expression.unwrap());
         } else {
-            match self.p.nodes[get_leftmost_expression(
-                expression.unwrap_or_default(),
-                false,
-                self.p.nodes,
-            )]
+            match self.p.nodes
+                [get_leftmost_expression(expression.unwrap_or_default(), false, self.p.nodes)]
             .kind
             {
                 Kind::FunctionExpression | Kind::ObjectLiteralExpression => {
@@ -5116,7 +5123,12 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         let call = ast::skip_partially_emitted_expressions(node, self.p.nodes);
         let (expression, question_dot_token, type_arguments, arguments) = {
             let d = self.p.nodes[call].as_call_expression();
-            (d.expression, d.question_dot_token, d.type_arguments.clone(), d.arguments.clone())
+            (
+                d.expression,
+                d.question_dot_token,
+                d.type_arguments.clone(),
+                d.arguments.clone(),
+            )
         };
         let state = self.enter_node(call);
         // Emit the callee wrapped in parens
@@ -5152,7 +5164,9 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         self.emit_expression(expression, OperatorPrecedence::LOWEST);
         self.emit_token(
             Kind::CloseParenToken,
-            expression.map(|e| self.p.nodes[e].end()).unwrap_or_default(),
+            expression
+                .map(|e| self.p.nodes[e].end())
+                .unwrap_or_default(),
             WriteKind::Punctuation,
             node,
         );
@@ -5161,7 +5175,9 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
             self.write_line_or_space(Some(node), then_statement, Some(else_statement));
             self.emit_token(
                 Kind::ElseKeyword,
-                then_statement.map(|t| self.p.nodes[t].end()).unwrap_or_default(),
+                then_statement
+                    .map(|t| self.p.nodes[t].end())
+                    .unwrap_or_default(),
                 WriteKind::Keyword,
                 node,
             );
@@ -5183,7 +5199,9 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         self.emit_expression(expression, OperatorPrecedence::LOWEST);
         self.emit_token(
             Kind::CloseParenToken,
-            expression.map(|e| self.p.nodes[e].end()).unwrap_or_default(),
+            expression
+                .map(|e| self.p.nodes[e].end())
+                .unwrap_or_default(),
             WriteKind::Punctuation,
             node,
         );
@@ -5289,11 +5307,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
     fn emit_for_in_statement(&mut self, node: NodeId) {
         let (initializer, expression, statement) = {
             let d = self.p.nodes[node].as_for_in_or_of_statement();
-            (
-                d.initializer,
-                d.expression,
-                d.statement,
-            )
+            (d.initializer, d.expression, d.statement)
         };
         let state = self.enter_node(node);
         let pos = self.emit_token(
@@ -5308,7 +5322,9 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         self.write_space();
         self.emit_token(
             Kind::InKeyword,
-            initializer.map(|i| self.p.nodes[i].end()).unwrap_or_default(),
+            initializer
+                .map(|i| self.p.nodes[i].end())
+                .unwrap_or_default(),
             WriteKind::Keyword,
             node,
         );
@@ -5316,7 +5332,9 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         self.emit_expression(expression, OperatorPrecedence::LOWEST);
         self.emit_token(
             Kind::CloseParenToken,
-            expression.map(|e| self.p.nodes[e].end()).unwrap_or_default(),
+            expression
+                .map(|e| self.p.nodes[e].end())
+                .unwrap_or_default(),
             WriteKind::Punctuation,
             node,
         );
@@ -5352,7 +5370,9 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         self.write_space();
         self.emit_token(
             Kind::OfKeyword,
-            initializer.map(|i| self.p.nodes[i].end()).unwrap_or_default(),
+            initializer
+                .map(|i| self.p.nodes[i].end())
+                .unwrap_or_default(),
             WriteKind::Keyword,
             node,
         );
@@ -5360,7 +5380,9 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         self.emit_expression(expression, OperatorPrecedence::LOWEST);
         self.emit_token(
             Kind::CloseParenToken,
-            expression.map(|e| self.p.nodes[e].end()).unwrap_or_default(),
+            expression
+                .map(|e| self.p.nodes[e].end())
+                .unwrap_or_default(),
             WriteKind::Punctuation,
             node,
         );
@@ -5440,7 +5462,9 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         self.emit_expression(expression, OperatorPrecedence::LOWEST);
         self.emit_token(
             Kind::CloseParenToken,
-            expression.map(|e| self.p.nodes[e].end()).unwrap_or_default(),
+            expression
+                .map(|e| self.p.nodes[e].end())
+                .unwrap_or_default(),
             WriteKind::Punctuation,
             node,
         );
@@ -5466,7 +5490,9 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         self.emit_expression(expression, OperatorPrecedence::LOWEST);
         self.emit_token(
             Kind::CloseParenToken,
-            expression.map(|e| self.p.nodes[e].end()).unwrap_or_default(),
+            expression
+                .map(|e| self.p.nodes[e].end())
+                .unwrap_or_default(),
             WriteKind::Punctuation,
             node,
         );
@@ -5512,7 +5538,10 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
             node,
         );
         self.write_space();
-        self.emit_expression_no_asi(expression.expect("throw expression"), OperatorPrecedence::LOWEST);
+        self.emit_expression_no_asi(
+            expression.expect("throw expression"),
+            OperatorPrecedence::LOWEST,
+        );
         self.write_trailing_semicolon();
         self.exit_node(node, state);
     }
@@ -5612,7 +5641,10 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
 
     /// `p.emitVariableDeclarationList`
     fn emit_variable_declaration_list(&mut self, node: NodeId) {
-        let declarations = self.p.nodes[node].as_variable_declaration_list().declarations.clone();
+        let declarations = self.p.nodes[node]
+            .as_variable_declaration_list()
+            .declarations
+            .clone();
         let state = self.enter_node(node);
         if ast::is_var_let(node, self.p.nodes) {
             self.write_keyword("let");
@@ -5716,7 +5748,12 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
     fn emit_interface_declaration(&mut self, node: NodeId) {
         let (name, type_parameters, heritage_clauses, members) = {
             let d = self.p.nodes[node].as_interface_declaration();
-            (d.name, d.type_parameters.clone(), d.heritage_clauses.clone(), d.members.clone())
+            (
+                d.name,
+                d.type_parameters.clone(),
+                d.heritage_clauses.clone(),
+                d.members.clone(),
+            )
         };
         let modifiers = self.p.nodes[node].modifiers().cloned();
         let state = self.enter_node(node);
@@ -5910,10 +5947,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         self.emit_modifier_list(node, modifiers.as_ref(), false /*allowDecorators*/);
         let pos = self.emit_token(
             Kind::ImportKeyword,
-            greatest_end(
-                self.p.nodes[node].pos(),
-                [modifiers.map(|m| m.loc.end())],
-            ),
+            greatest_end(self.p.nodes[node].pos(), [modifiers.map(|m| m.loc.end())]),
             WriteKind::Keyword,
             node,
         );
@@ -5942,10 +5976,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
             Kind::Identifier => self.emit_identifier_reference(node),
             Kind::QualifiedName => self.emit_qualified_name(node),
             Kind::ExternalModuleReference => self.emit_external_module_reference(node),
-            _ => panic!(
-                "unhandled ModuleReference: {:?}",
-                self.p.nodes[node].kind
-            ),
+            _ => panic!("unhandled ModuleReference: {:?}", self.p.nodes[node].kind),
         }
     }
 
@@ -5960,10 +5991,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         self.emit_modifier_list(node, modifiers.as_ref(), false /*allowDecorators*/);
         self.emit_token(
             Kind::ImportKeyword,
-            greatest_end(
-                self.p.nodes[node].pos(),
-                [modifiers.map(|m| m.loc.end())],
-            ),
+            greatest_end(self.p.nodes[node].pos(), [modifiers.map(|m| m.loc.end())]),
             WriteKind::Keyword,
             node,
         );
@@ -6195,12 +6223,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
             (d.token, d.attributes.clone())
         };
         let state = self.enter_node(node);
-        self.emit_token(
-            token,
-            self.p.nodes[node].pos(),
-            WriteKind::Keyword,
-            node,
-        );
+        self.emit_token(token, self.p.nodes[node].pos(), WriteKind::Keyword, node);
         self.write_space();
         self.emit_list(
             Self::emit_import_attribute_node,
@@ -6340,11 +6363,8 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         if ast::is_block(&self.p.nodes[node])
             || self.should_emit_on_single_line(Some(parent_node))
             || (self.p.options.preserve_source_newlines
-                && self.get_leading_line_terminator_count(
-                    Some(parent_node),
-                    Some(node),
-                    LF_NONE,
-                ) == 0)
+                && self.get_leading_line_terminator_count(Some(parent_node), Some(node), LF_NONE)
+                    == 0)
         {
             self.write_space();
             self.emit_statement(node);
@@ -6406,9 +6426,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
             }
 
             // Import/Export Statements
-            Kind::NamespaceExportDeclaration => {
-                self.emit_namespace_export_declaration(node)
-            }
+            Kind::NamespaceExportDeclaration => self.emit_namespace_export_declaration(node),
             Kind::ImportEqualsDeclaration => self.emit_import_equals_declaration(node),
             Kind::ImportDeclaration => self.emit_import_declaration(node),
             Kind::ExportAssignment => self.emit_export_assignment(node),
@@ -6500,16 +6518,13 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         let indented = self.write_line_separators_and_indent_before(tag_name, Some(node));
         self.emit_jsx_tag_name(tag_name.expect("jsx tag name"));
         self.emit_type_arguments(node, type_arguments);
-        if attributes
-            .as_ref()
-            .is_some_and(|a| {
-                self.p.nodes[*a]
-                    .as_jsx_attributes()
-                    .properties
-                    .as_ref()
-                    .is_some_and(|p| !p.nodes.is_empty())
-            })
-        {
+        if attributes.as_ref().is_some_and(|a| {
+            self.p.nodes[*a]
+                .as_jsx_attributes()
+                .properties
+                .as_ref()
+                .is_some_and(|p| !p.nodes.is_empty())
+        }) {
             self.write_space();
         }
         self.emit_jsx_attributes(attributes.expect("jsx attributes"));
@@ -6603,10 +6618,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         match self.p.nodes[node].kind {
             Kind::JsxAttribute => self.emit_jsx_attribute(node),
             Kind::JsxSpreadAttribute => self.emit_jsx_spread_attribute(node),
-            _ => panic!(
-                "unhandled JsxAttributeLike: {:?}",
-                self.p.nodes[node].kind
-            ),
+            _ => panic!("unhandled JsxAttributeLike: {:?}", self.p.nodes[node].kind),
         }
     }
 
@@ -6699,10 +6711,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         match self.p.nodes[node].kind {
             Kind::Identifier => self.emit_identifier_name(node),
             Kind::JsxNamespacedName => self.emit_jsx_namespaced_name(node),
-            _ => panic!(
-                "unhandled JsxAttributeName: {:?}",
-                self.p.nodes[node].kind
-            ),
+            _ => panic!("unhandled JsxAttributeName: {:?}", self.p.nodes[node].kind),
         }
     }
 
@@ -6724,7 +6733,10 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
 
     /// `p.emitCaseOrDefaultClauseStatements`
     fn emit_case_or_default_clause_statements(&mut self, node: NodeId, colon_pos: i32) {
-        let statements = self.p.nodes[node].as_case_or_default_clause().statements.clone();
+        let statements = self.p.nodes[node]
+            .as_case_or_default_clause()
+            .statements
+            .clone();
         let emit_as_single_statement = statements.as_ref().is_some_and(|s| {
             s.nodes.len() == 1
                 // treat synthesized nodes as located on the same line for emit purposes
@@ -6749,7 +6761,12 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
             self.emit_token(Kind::ColonToken, colon_pos, WriteKind::Punctuation, node);
         }
 
-        self.emit_list(Self::emit_statement, Some(node), statements.as_ref(), format);
+        self.emit_list(
+            Self::emit_statement,
+            Some(node),
+            statements.as_ref(),
+            format,
+        );
     }
 
     /// `p.emitCaseClause`
@@ -6766,7 +6783,9 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         self.emit_expression(expression, OperatorPrecedence::LOWEST);
         self.emit_case_or_default_clause_statements(
             node,
-            expression.map(|e| self.p.nodes[e].end()).unwrap_or_default(),
+            expression
+                .map(|e| self.p.nodes[e].end())
+                .unwrap_or_default(),
         );
         self.exit_node(node, state);
     }
@@ -6804,12 +6823,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         };
         let state = self.enter_node(node);
         self.write_space();
-        self.emit_token(
-            token,
-            self.p.nodes[node].pos(),
-            WriteKind::Keyword,
-            node,
-        );
+        self.emit_token(token, self.p.nodes[node].pos(), WriteKind::Keyword, node);
         self.write_space();
         self.emit_list(
             Self::emit_heritage_clause_element,
@@ -6823,9 +6837,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
     /// `p.emitHeritageClauseElement`
     fn emit_heritage_clause_element(&mut self, node: NodeId) {
         match self.p.nodes[node].kind {
-            Kind::ExpressionWithTypeArguments => {
-                self.emit_expression_with_type_arguments(node)
-            }
+            Kind::ExpressionWithTypeArguments => self.emit_expression_with_type_arguments(node),
             Kind::TypeReference => self.emit_type_reference(node),
             _ => panic!(
                 "unhandled HeritageClauseElement: {:?}",
@@ -6990,10 +7002,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         if ast::node_is_synthesized(&self.p.nodes[node]) {
             return;
         }
-        let shebang = scanner::get_shebang(
-            self.p.nodes[node].as_source_file().text(),
-        )
-        .to_string();
+        let shebang = scanner::get_shebang(self.p.nodes[node].as_source_file().text()).to_string();
         if !shebang.is_empty() {
             self.write_comment(&shebang);
             self.write_line();
@@ -7040,10 +7049,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
                 }
                 if let Some(text_callback) = &helper.text_callback {
                     // `p.makeFileLevelOptimisticUniqueName`
-                    let mut name_fn = |n: &str| {
-                        self.p
-                            .make_file_level_optimistic_unique_name(n)
-                    };
+                    let mut name_fn = |n: &str| self.p.make_file_level_optimistic_unique_name(n);
                     let name_fn: &mut UniqueNameFn = &mut name_fn;
                     let text = text_callback(name_fn);
                     self.write_lines(&text);
@@ -7148,7 +7154,11 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
                 kind,
                 ref_.file_name,
                 resolution_mode,
-                if ref_.preserve { "preserve=\"true\" " } else { "" },
+                if ref_.preserve {
+                    "preserve=\"true\" "
+                } else {
+                    ""
+                },
             ));
             self.write_line();
         }
@@ -7239,8 +7249,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
                             ))))
             {
                 self.write_line();
-            } else if format & LF_SPACE_BETWEEN_BRACES != 0 && format & LF_NO_SPACE_IF_EMPTY == 0
-            {
+            } else if format & LF_SPACE_BETWEEN_BRACES != 0 && format & LF_NO_SPACE_IF_EMPTY == 0 {
                 self.write_space();
             }
         } else {
@@ -7272,7 +7281,11 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
     }
 
     /// `p.hasTrailingComma`
-    fn has_trailing_comma(&mut self, parent_node: Option<NodeId>, children: Option<&NodeList>) -> bool {
+    fn has_trailing_comma(
+        &mut self,
+        parent_node: Option<NodeId>,
+        children: Option<&NodeList>,
+    ) -> bool {
         let (Some(parent_node), Some(children)) = (parent_node, children) else {
             return false;
         };
@@ -7422,11 +7435,8 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
 
         let mut leading_line_terminator_count = 0;
         if !children.is_empty() {
-            leading_line_terminator_count = self.get_leading_line_terminator_count(
-                parent_node,
-                Some(children[0]),
-                format,
-            );
+            leading_line_terminator_count =
+                self.get_leading_line_terminator_count(parent_node, Some(children[0]), format);
         }
         if leading_line_terminator_count > 0 {
             for _ in 0..leading_line_terminator_count {
@@ -7628,9 +7638,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
             Kind::PropertyDeclaration => self.emit_property_declaration(node),
             Kind::MethodSignature => self.emit_method_signature(node),
             Kind::MethodDeclaration => self.emit_method_declaration(node),
-            Kind::ClassStaticBlockDeclaration => {
-                self.emit_class_static_block_declaration(node)
-            }
+            Kind::ClassStaticBlockDeclaration => self.emit_class_static_block_declaration(node),
             Kind::Constructor => self.emit_constructor(node),
             Kind::GetAccessor => self.emit_get_accessor_declaration(node),
             Kind::SetAccessor => self.emit_set_accessor_declaration(node),
@@ -7685,9 +7693,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
 
             // Property assignments
             Kind::PropertyAssignment => self.emit_property_assignment(node),
-            Kind::ShorthandPropertyAssignment => {
-                self.emit_shorthand_property_assignment(node)
-            }
+            Kind::ShorthandPropertyAssignment => self.emit_shorthand_property_assignment(node),
             Kind::SpreadAssignment => self.emit_spread_assignment(node),
 
             // Enum
@@ -7944,8 +7950,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         let end = comment_range.end();
 
         // Save current container state on the stack.
-        if (!ast::position_is_synthesized(pos) || !ast::position_is_synthesized(end))
-            && pos != end
+        if (!ast::position_is_synthesized(pos) || !ast::position_is_synthesized(end)) && pos != end
         {
             // We have to explicitly check that the node is JsxText because if the compilerOptions.jsx is "preserve" we will not do any transformation.
             // It is expensive to walk entire tree just to set one kind of node to have no comments.
@@ -8002,8 +8007,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         let skip_trailing_comments = end < 0
             || emit_flags & EmitFlags::NO_TRAILING_COMMENTS != EmitFlags::NONE
             || self.p.nodes[node].kind == Kind::JsxText;
-        if (!ast::position_is_synthesized(pos) || !ast::position_is_synthesized(end))
-            && pos != end
+        if (!ast::position_is_synthesized(pos) || !ast::position_is_synthesized(end)) && pos != end
         {
             // Restore previous container state.
             self.container_pos = container_pos;
@@ -8012,9 +8016,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
 
             // Emit trailing comments if the position is not synthesized and the node
             // has not opted out from emitting leading comments and is an emitted node.
-            if !skip_trailing_comments
-                && self.p.nodes[node].kind != Kind::NotEmittedStatement
-            {
+            if !skip_trailing_comments && self.p.nodes[node].kind != Kind::NotEmittedStatement {
                 self.emit_trailing_comments(end, CommentSeparator::Before);
             }
         }
@@ -8096,9 +8098,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         let mut triple_slash = Tristate::Unknown;
         if !elided {
             if pos == 0
-                && self
-                    .p
-                    .nodes[self.p.current_source_file.unwrap()]
+                && self.p.nodes[self.p.current_source_file.unwrap()]
                     .as_source_file()
                     .is_declaration_file
             {
@@ -8122,7 +8122,11 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         if let Some(info) = self.detached_comments_info.last()
             && info.node_pos == pos
         {
-            pos = self.detached_comments_info.pop().unwrap().detached_comment_end_pos;
+            pos = self
+                .detached_comments_info
+                .pop()
+                .unwrap()
+                .detached_comment_end_pos;
         }
 
         let source_file = self.p.current_source_file.unwrap();
@@ -8131,11 +8135,9 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
             .text()
             .to_string();
         let mut comments: Vec<CommentRange> = Vec::new();
-        for comment in scanner::get_leading_comment_ranges(
-            &self.p.emit_context.factory.inner,
-            &text,
-            pos,
-        ) {
+        for comment in
+            scanner::get_leading_comment_ranges(&self.p.emit_context.factory.inner, &text, pos)
+        {
             if self.should_write_comment(comment)
                 && Self::should_emit_comment_if_triple_slash(
                     self.p.nodes,
@@ -8182,8 +8184,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         comment_pos: i32,
     ) -> bool {
         // If the leading comments start on different line than the start of node, write new line
-        self.p.current_source_file.is_some()
-            && pos != comment_pos && {
+        self.p.current_source_file.is_some() && pos != comment_pos && {
             let line_map = self.p.nodes[self.p.current_source_file.unwrap()]
                 .as_source_file()
                 .ecma_line_map();
@@ -8221,11 +8222,9 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
             .text()
             .to_string();
         let mut comments: Vec<CommentRange> = Vec::new();
-        for comment in scanner::get_trailing_comment_ranges(
-            &self.p.emit_context.factory.inner,
-            &text,
-            pos,
-        ) {
+        for comment in
+            scanner::get_trailing_comment_ranges(&self.p.emit_context.factory.inner, &text, pos)
+        {
             if self.should_write_comment(comment) {
                 comments.push(comment);
             }
@@ -8257,11 +8256,9 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
             .text()
             .to_string();
         let mut comments: Vec<CommentRange> = Vec::new();
-        for comment in scanner::get_trailing_comment_ranges(
-            &self.p.emit_context.factory.inner,
-            &text,
-            pos,
-        ) {
+        for comment in
+            scanner::get_trailing_comment_ranges(&self.p.emit_context.factory.inner, &text, pos)
+        {
             comments.push(comment);
         }
         if comments.is_empty() {
@@ -8302,7 +8299,8 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
             return;
         }
         if let Some(current_detached_comment_info) = self.emit_detached_comments(text_range) {
-            self.detached_comments_info.push(current_detached_comment_info);
+            self.detached_comments_info
+                .push(current_detached_comment_info);
         }
     }
 
@@ -8312,10 +8310,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
 
         let (text, line_map) = {
             let sf = self.p.nodes[source_file].as_source_file();
-            (
-                sf.text().to_string(),
-                sf.ecma_line_map().to_vec(),
-            )
+            (sf.text().to_string(), sf.ecma_line_map().to_vec())
         };
 
         let mut leading_comments: Vec<CommentRange> = Vec::new();
@@ -8355,7 +8350,8 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
             if i > 0 {
                 let last_comment_line =
                     scanner::compute_line_of_position(&line_map, last_comment.text_range.end());
-                let comment_line = scanner::compute_line_of_position(&line_map, comment.text_range.pos());
+                let comment_line =
+                    scanner::compute_line_of_position(&line_map, comment.text_range.pos());
 
                 if comment_line >= last_comment_line + 2 {
                     // There was a blank line between the last comment and this comment.  This
@@ -8437,8 +8433,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
             self.emit_comment(comment);
 
             if comment.kind == Kind::SingleLineCommentTrivia
-                || (comment.has_trailing_new_line
-                    && comment_separator != CommentSeparator::None)
+                || (comment.has_trailing_new_line && comment_separator != CommentSeparator::None)
             {
                 self.write_line();
             } else {
@@ -8486,10 +8481,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         {
             let (line_map, text) = {
                 let sf = self.p.nodes[source].as_source_file();
-                (
-                    sf.ecma_line_map().to_vec(),
-                    sf.text().to_string(),
-                )
+                (sf.ecma_line_map().to_vec(), sf.text().to_string())
             };
             self.source_map_line_char_cache = Some(LineCharacterCache {
                 line_map,
@@ -8514,14 +8506,15 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         }
 
         if let Some(generator) = self.source_map_generator.as_mut() {
-            self.source_map_source_index = generator
-                .add_source(self.p.nodes[source].as_source_file().file_name().clone());
+            self.source_map_source_index =
+                generator.add_source(self.p.nodes[source].as_source_file().file_name().clone());
             if self.p.options.inline_sources {
-                generator.set_source_content(
-                    self.source_map_source_index,
-                    self.p.nodes[source].as_source_file().text(),
-                )
-                .expect("SetSourceContent failed");
+                generator
+                    .set_source_content(
+                        self.source_map_source_index,
+                        self.p.nodes[source].as_source_file().text(),
+                    )
+                    .expect("SetSourceContent failed");
             }
         }
 
@@ -8692,8 +8685,7 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
                 pos,
             );
         }
-        if emit_flags & EmitFlags::NO_TOKEN_LEADING_SOURCE_MAPS == EmitFlags::NONE && pos >= 0
-        {
+        if emit_flags & EmitFlags::NO_TOKEN_LEADING_SOURCE_MAPS == EmitFlags::NONE && pos >= 0 {
             self.emit_source_pos(self.source_map_source, pos);
         }
 
@@ -8824,13 +8816,14 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
                 self.generate_names(block);
             }
             Kind::VariableStatement => {
-                let declaration_list =
-                    self.p.nodes[node].as_variable_statement().declaration_list;
+                let declaration_list = self.p.nodes[node].as_variable_statement().declaration_list;
                 self.generate_names(declaration_list);
             }
             Kind::VariableDeclarationList => {
-                let declarations =
-                    self.p.nodes[node].as_variable_declaration_list().declarations.clone();
+                let declarations = self.p.nodes[node]
+                    .as_variable_declaration_list()
+                    .declarations
+                    .clone();
                 self.generate_all_names(declarations.as_ref());
             }
             Kind::VariableDeclaration
@@ -8849,7 +8842,8 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
                         (
                             d.function_like_with_body_base
                                 .function_like_base
-                                .parameters.clone(),
+                                .parameters
+                                .clone(),
                             d.function_like_with_body_base.body_base.body,
                         )
                     };
@@ -9009,7 +9003,8 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         let mut state = PrinterState::default();
         let (comment_state, pos) = self.emit_comments_before_token(token, pos, context_node, flags);
         state.comment_state = comment_state;
-        state.source_map_state = self.emit_source_maps_before_token(token, pos, context_node, flags);
+        state.source_map_state =
+            self.emit_source_maps_before_token(token, pos, context_node, flags);
         (state, pos)
     }
 
@@ -9021,7 +9016,12 @@ fn accessor_declaration_base(nodes: &[Node], node: NodeId) -> &ast::AccessorDecl
         context_node: NodeId,
         previous_state: PrinterState,
     ) {
-        self.emit_source_maps_after_token(token, pos, context_node, previous_state.source_map_state);
+        self.emit_source_maps_after_token(
+            token,
+            pos,
+            context_node,
+            previous_state.source_map_state,
+        );
         self.emit_comments_after_token(token, pos, context_node, previous_state.comment_state);
     }
 }
@@ -9037,8 +9037,7 @@ pub(crate) const LF_MULTI_LINE: ListFormat = 1 << 0;
 /// `LFPreserveLines` — prints the list using line preservation if possible.
 pub(crate) const LF_PRESERVE_LINES: ListFormat = 1 << 1;
 /// `LFLinesMask`
-pub(crate) const LF_LINES_MASK: ListFormat =
-    LF_SINGLE_LINE | LF_MULTI_LINE | LF_PRESERVE_LINES;
+pub(crate) const LF_LINES_MASK: ListFormat = LF_SINGLE_LINE | LF_MULTI_LINE | LF_PRESERVE_LINES;
 
 // Delimiters
 /// `LFNotDelimited` — there is no delimiter between list items (default).
@@ -9054,10 +9053,8 @@ pub(crate) const LF_COMMA_DELIMITED: ListFormat = 1 << 4;
 /// with JSDoc.
 pub(crate) const LF_ASTERISK_DELIMITED: ListFormat = 1 << 5;
 /// `LFDelimitersMask`
-pub(crate) const LF_DELIMITERS_MASK: ListFormat = LF_BAR_DELIMITED
-    | LF_AMPERSAND_DELIMITED
-    | LF_COMMA_DELIMITED
-    | LF_ASTERISK_DELIMITED;
+pub(crate) const LF_DELIMITERS_MASK: ListFormat =
+    LF_BAR_DELIMITED | LF_AMPERSAND_DELIMITED | LF_COMMA_DELIMITED | LF_ASTERISK_DELIMITED;
 
 /// `LFAllowTrailingComma` — write a trailing comma (",") if present.
 pub(crate) const LF_ALLOW_TRAILING_COMMA: ListFormat = 1 << 6;
@@ -9111,10 +9108,8 @@ pub(crate) const LF_NONE: ListFormat = 0;
 
 // Precomputed Formats
 /// `LFModifiers`
-pub(crate) const LF_MODIFIERS: ListFormat = LF_SINGLE_LINE
-    | LF_SPACE_BETWEEN_SIBLINGS
-    | LF_NO_INTERVENING_COMMENTS
-    | LF_SPACE_AFTER_LIST;
+pub(crate) const LF_MODIFIERS: ListFormat =
+    LF_SINGLE_LINE | LF_SPACE_BETWEEN_SIBLINGS | LF_NO_INTERVENING_COMMENTS | LF_SPACE_AFTER_LIST;
 /// `LFHeritageClauses`
 pub(crate) const LF_HERITAGE_CLAUSES: ListFormat = LF_SINGLE_LINE | LF_SPACE_BETWEEN_SIBLINGS;
 /// `LFSingleLineTypeLiteralMembers`
@@ -9206,8 +9201,7 @@ pub(crate) const LF_CLASS_MEMBERS: ListFormat = LF_INDENTED | LF_MULTI_LINE;
 /// `LFInterfaceMembers`
 pub(crate) const LF_INTERFACE_MEMBERS: ListFormat = LF_INDENTED | LF_MULTI_LINE;
 /// `LFEnumMembers`
-pub(crate) const LF_ENUM_MEMBERS: ListFormat =
-    LF_COMMA_DELIMITED | LF_INDENTED | LF_MULTI_LINE;
+pub(crate) const LF_ENUM_MEMBERS: ListFormat = LF_COMMA_DELIMITED | LF_INDENTED | LF_MULTI_LINE;
 /// `LFCaseBlockClauses`
 pub(crate) const LF_CASE_BLOCK_CLAUSES: ListFormat = LF_INDENTED | LF_MULTI_LINE;
 /// `LFNamedImportsOrExportsElements`
@@ -9230,11 +9224,9 @@ pub(crate) const LF_CASE_OR_DEFAULT_CLAUSE_STATEMENTS: ListFormat =
 pub(crate) const LF_HERITAGE_CLAUSE_TYPES: ListFormat =
     LF_COMMA_DELIMITED | LF_SPACE_BETWEEN_SIBLINGS | LF_SINGLE_LINE;
 /// `LFSourceFileStatements`
-pub(crate) const LF_SOURCE_FILE_STATEMENTS: ListFormat =
-    LF_MULTI_LINE | LF_NO_TRAILING_NEW_LINE;
+pub(crate) const LF_SOURCE_FILE_STATEMENTS: ListFormat = LF_MULTI_LINE | LF_NO_TRAILING_NEW_LINE;
 /// `LFDecorators`
-pub(crate) const LF_DECORATORS: ListFormat =
-    LF_MULTI_LINE | LF_OPTIONAL | LF_SPACE_AFTER_LIST;
+pub(crate) const LF_DECORATORS: ListFormat = LF_MULTI_LINE | LF_OPTIONAL | LF_SPACE_AFTER_LIST;
 /// `LFTypeArguments`
 pub(crate) const LF_TYPE_ARGUMENTS: ListFormat = LF_COMMA_DELIMITED
     | LF_SPACE_BETWEEN_SIBLINGS

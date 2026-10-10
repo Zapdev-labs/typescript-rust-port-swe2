@@ -182,7 +182,13 @@ fn dir_watch_set_dirs() {
 #[test]
 fn resolve_desired_dirs_shallow_project() {
     let existing = set(&[
-        "/", "/app", "/app/src", "/srv", "/srv/app", "/home", "/home/user",
+        "/",
+        "/app",
+        "/app/src",
+        "/srv",
+        "/srv/app",
+        "/home",
+        "/home/user",
         "/home/user/project",
     ]);
     let wm = new_watch_manager(
@@ -215,7 +221,13 @@ fn resolve_desired_dirs_shallow_project() {
 #[test]
 fn resolve_desired_dirs_ancestor_fallback() {
     let existing = set(&[
-        "/", "/app", "/home", "/home/user", "/repo", "/repo/a", "/repo/a/b",
+        "/",
+        "/app",
+        "/home",
+        "/home/user",
+        "/repo",
+        "/repo/a",
+        "/repo/a/b",
         "/repo/a/b/c",
     ]);
     let wm = new_watch_manager(
@@ -225,8 +237,8 @@ fn resolve_desired_dirs_ancestor_fallback() {
     );
 
     let resolved = wm.resolve_desired_dirs(desired(&[
-        ("/app/missing", true), // ancestor /app is too shallow
-        ("/home/user/missing", true), // ancestor /home/user is too shallow
+        ("/app/missing", true),             // ancestor /app is too shallow
+        ("/home/user/missing", true),       // ancestor /home/user is too shallow
         ("/repo/a/b/c/missing/deep", true), // ancestor /repo/a/b/c is deep enough, and is never recursive
         ("/nothing/exists/anywhere", true), // no existing ancestor except /
     ]));
@@ -245,10 +257,7 @@ fn resolve_desired_dirs_skips_non_disk_paths() {
         CASE_SENSITIVE,
     );
 
-    let resolved = wm.resolve_desired_dirs(desired(&[
-        ("bundled:///libs", false),
-        ("/app", true),
-    ]));
+    let resolved = wm.resolve_desired_dirs(desired(&[("bundled:///libs", false), ("/app", true)]));
 
     assert_eq!(resolved, desired(&[("/app", true)]));
 }
@@ -258,7 +267,10 @@ fn resolve_desired_dirs_skips_non_disk_paths() {
 fn resolve_desired_dirs_deduplicates_case_insensitive_ancestors() {
     let manager = new_watch_manager(
         Box::new(io::sink()),
-        |dir: &RootedDirectoryPath| dir.as_string().eq_ignore_ascii_case("/home/repo/project/src"),
+        |dir: &RootedDirectoryPath| {
+            dir.as_string()
+                .eq_ignore_ascii_case("/home/repo/project/src")
+        },
         CASE_INSENSITIVE,
     );
     let resolved = manager.resolve_desired_dirs(desired(&[
@@ -268,7 +280,10 @@ fn resolve_desired_dirs_deduplicates_case_insensitive_ancestors() {
 
     assert_eq!(resolved.len(), 1);
     for (dir, recursive) in &resolved {
-        assert!(dir.as_string().eq_ignore_ascii_case("/home/repo/project/src"));
+        assert!(
+            dir.as_string()
+                .eq_ignore_ascii_case("/home/repo/project/src")
+        );
         assert!(!recursive);
     }
 }

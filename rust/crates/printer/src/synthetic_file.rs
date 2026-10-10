@@ -39,12 +39,7 @@ pub fn print_and_position_node(
         nodes,
         &[],
     )
-    .write(
-        Some(node),
-        source_file,
-        &mut writer,
-        None,
-    );
+    .write(Some(node), source_file, &mut writer, None);
 
     let mut text = writer.to_string_owned();
     if let Some(stripped) = text.strip_suffix(new_line) {
@@ -69,13 +64,8 @@ pub fn create_synthetic_source_file(
     nodes[eof].loc = TextRange::new(text.len() as i32, text.len() as i32);
     let mut statements = factory.new_node_list([node]);
     statements.loc = TextRange::new(nodes[node].pos(), nodes[node].end());
-    let synthetic_file = factory.new_source_file(
-        nodes,
-        parse_options,
-        text,
-        Some(statements),
-        Some(eof),
-    );
+    let synthetic_file =
+        factory.new_source_file(nodes, parse_options, text, Some(statements), Some(eof));
     nodes[synthetic_file].loc = TextRange::new(0, text.len() as i32);
     ast::set_parent_in_children(nodes, synthetic_file);
     synthetic_file

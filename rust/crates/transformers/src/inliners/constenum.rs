@@ -44,9 +44,7 @@ pub fn new_const_enum_inlining_transformer<'a>(
     make_transformer(opts, move |ec| {
         let emit_resolver = emit_resolver.clone();
         let ec2 = ec.clone();
-        Box::new(move |v, cx, node| {
-            visit(&ec2, compiler_options, &emit_resolver, v, cx, node)
-        })
+        Box::new(move |v, cx, node| visit(&ec2, compiler_options, &emit_resolver, v, cx, node))
     })
 }
 
@@ -74,23 +72,20 @@ fn visit<'a>(
                 Value::Number(n) => {
                     if n.is_inf() {
                         if n.abs() == n {
-                            replacement = Some(
-                                ec.borrow_mut().factory.new_identifier(cx.nodes, "Infinity"),
-                            );
+                            replacement =
+                                Some(ec.borrow_mut().factory.new_identifier(cx.nodes, "Infinity"));
                         } else {
                             let inner =
                                 ec.borrow_mut().factory.new_identifier(cx.nodes, "Infinity");
-                            replacement = Some(
-                                ec.borrow_mut().factory.new_prefix_unary_expression(
+                            replacement =
+                                Some(ec.borrow_mut().factory.new_prefix_unary_expression(
                                     cx.nodes,
                                     Kind::MinusToken,
                                     Some(inner),
-                                ),
-                            );
+                                ));
                         }
                     } else if n.is_nan() {
-                        replacement =
-                            Some(ec.borrow_mut().factory.new_identifier(cx.nodes, "NaN"));
+                        replacement = Some(ec.borrow_mut().factory.new_identifier(cx.nodes, "NaN"));
                     } else if n.abs() == n {
                         replacement = Some(ec.borrow_mut().factory.new_numeric_literal(
                             cx.nodes,
@@ -103,13 +98,11 @@ fn visit<'a>(
                             &n.abs().string(),
                             ast::TokenFlags::NONE,
                         );
-                        replacement = Some(
-                            ec.borrow_mut().factory.new_prefix_unary_expression(
-                                cx.nodes,
-                                Kind::MinusToken,
-                                Some(lit),
-                            ),
-                        );
+                        replacement = Some(ec.borrow_mut().factory.new_prefix_unary_expression(
+                            cx.nodes,
+                            Kind::MinusToken,
+                            Some(lit),
+                        ));
                     }
                 }
                 Value::String(s) => {
@@ -140,13 +133,11 @@ fn visit<'a>(
                             &b.base10_value,
                             ast::TokenFlags::NONE,
                         );
-                        replacement = Some(
-                            ec.borrow_mut().factory.new_prefix_unary_expression(
-                                cx.nodes,
-                                Kind::MinusToken,
-                                Some(lit),
-                            ),
-                        );
+                        replacement = Some(ec.borrow_mut().factory.new_prefix_unary_expression(
+                            cx.nodes,
+                            Kind::MinusToken,
+                            Some(lit),
+                        ));
                     }
                 }
                 // Go leaves `replacement` nil for `bool` values and returns it;

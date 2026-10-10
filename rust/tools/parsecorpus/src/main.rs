@@ -5,7 +5,7 @@
 // Usage: parsecorpus <root> [root...] > out.jsonl
 // Go oracle produces the same shape via tsc's parser (see scripts/).
 
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::panic::{AssertUnwindSafe, catch_unwind};
 
 use tsc_ast::ast::Node;
 use tsc_ast::ids::NodeId;
@@ -25,7 +25,7 @@ fn parse_one(path: &str) -> String {
                 "{{\"file\":{},\"read_error\":\"{}\"}}",
                 serde_json::to_string(path).unwrap(),
                 e
-            )
+            );
         }
     };
     let script_kind = get_script_kind_from_file_name(&file_name);
@@ -36,8 +36,7 @@ fn parse_one(path: &str) -> String {
     };
 
     let result = catch_unwind(AssertUnwindSafe(|| {
-        let (file, nodes): (NodeId, Vec<Node>) =
-            parse_source_file(opts, &text, script_kind);
+        let (file, nodes): (NodeId, Vec<Node>) = parse_source_file(opts, &text, script_kind);
         let d = nodes[file].as_source_file();
         let mut diags = Vec::new();
         for dr in d.diagnostics.iter().chain(d.js_diagnostics.iter()) {
@@ -52,9 +51,11 @@ fn parse_one(path: &str) -> String {
                 serde_json::to_string(g.message_args()).unwrap()
             ));
         }
-        format!("{{\"file\":{},\"diags\":[{}]}}",
+        format!(
+            "{{\"file\":{},\"diags\":[{}]}}",
             serde_json::to_string(path).unwrap(),
-            diags.join(","))
+            diags.join(",")
+        )
     }));
 
     match result {
@@ -111,4 +112,3 @@ fn main() {
         writeln!(w, "{}", parse_one(f)).unwrap();
     }
 }
-

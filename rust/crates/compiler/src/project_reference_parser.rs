@@ -51,10 +51,9 @@ impl ProjectReferenceParseTask {
             .collect(),
             false,
         );
-        let resolved = loader.host.get_resolved_project_reference(
-            &config_name,
-            &loader.to_path(&config_name.as_path()),
-        );
+        let resolved = loader
+            .host
+            .get_resolved_project_reference(&config_name, &loader.to_path(&config_name.as_path()));
         task.borrow_mut().resolved = resolved;
         let resolved = match &task.borrow().resolved {
             Some(r) => r.clone(),
@@ -66,8 +65,7 @@ impl ProjectReferenceParseTask {
         resolved.parse_input_output_names();
         let sub_references = resolved.resolved_project_reference_paths();
         if !sub_references.is_empty() {
-            task.borrow_mut().sub_tasks =
-                create_project_reference_parse_tasks(sub_references);
+            task.borrow_mut().sub_tasks = create_project_reference_parse_tasks(sub_references);
         }
         trace_done();
     }
@@ -99,7 +97,11 @@ pub struct ProjectReferenceParser {
 
 impl ProjectReferenceParser {
     /// `(p *projectReferenceParser) parse`.
-    pub fn parse(&self, loader: &FileLoader, mut tasks: Vec<Rc<RefCell<ProjectReferenceParseTask>>>) {
+    pub fn parse(
+        &self,
+        loader: &FileLoader,
+        mut tasks: Vec<Rc<RefCell<ProjectReferenceParseTask>>>,
+    ) {
         self.start(loader, &mut tasks);
         self.init_mapper(loader, &tasks);
     }
@@ -134,10 +136,8 @@ impl ProjectReferenceParser {
     /// `(p *projectReferenceParser) initMapper`.
     fn init_mapper(&self, loader: &FileLoader, tasks: &[Rc<RefCell<ProjectReferenceParseTask>>]) {
         let total_references = self.tasks_by_file_name.borrow().len() + 1;
-        let mut config_to_project_reference: FxHashMap<
-            PathKey,
-            Option<Arc<ParsedCommandLine>>,
-        > = FxHashMap::with_capacity_and_hasher(total_references, Default::default());
+        let mut config_to_project_reference: FxHashMap<PathKey, Option<Arc<ParsedCommandLine>>> =
+            FxHashMap::with_capacity_and_hasher(total_references, Default::default());
         let mut references_in_config_file: FxHashMap<PathKey, Vec<PathKey>> =
             FxHashMap::with_capacity_and_hasher(total_references, Default::default());
         let mut source_to_project_reference: FxHashMap<
@@ -234,7 +234,8 @@ impl ProjectReferenceParser {
                     // project references overwrite parent entries when a file
                     // belongs to multiple projects.
                     if let Some(map) = resolved.source_to_project_reference() {
-                        source_to_project_reference.extend(map.iter().map(|(k, v)| (k.clone(), v.clone())));
+                        source_to_project_reference
+                            .extend(map.iter().map(|(k, v)| (k.clone(), v.clone())));
                     }
                     if let Some(map) = resolved.output_dts_to_project_reference() {
                         output_dts_to_project_reference
@@ -247,8 +248,7 @@ impl ProjectReferenceParser {
                                 decl_dir = options.out_dir.clone();
                             }
                             if !decl_dir.as_string().is_empty() {
-                                dts_directories
-                                    .add(loader.to_path(&decl_dir.as_path()));
+                                dts_directories.add(loader.to_path(&decl_dir.as_path()));
                             }
                         }
                     }

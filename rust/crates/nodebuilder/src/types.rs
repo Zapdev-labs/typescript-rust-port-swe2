@@ -2,9 +2,9 @@
 //
 // Exports interfaces and types defining the node builder - concrete implementations are on top of the checker, but these types and interfaces are used by the emit resolver in the printer
 
+use tsc_ast::Node;
 use tsc_ast::ids::{NodeId, SymbolId};
 use tsc_ast::symbolflags::SymbolFlags;
-use tsc_ast::Node;
 
 /// `type SymbolTracker interface`.
 ///
@@ -30,11 +30,7 @@ pub trait SymbolTracker {
     /// `ReportInaccessibleThisError()`
     fn report_inaccessible_this_error(&mut self, nodes: &[Node]);
     /// `ReportPrivateInBaseOfClassExpression(propertyName string)`
-    fn report_private_in_base_of_class_expression(
-        &mut self,
-        property_name: &str,
-        nodes: &[Node],
-    );
+    fn report_private_in_base_of_class_expression(&mut self, property_name: &str, nodes: &[Node]);
     /// `ReportInaccessibleUniqueSymbolError()`
     fn report_inaccessible_unique_symbol_error(&mut self, nodes: &[Node]);
     /// `ReportCyclicStructureError()`

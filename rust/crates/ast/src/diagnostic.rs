@@ -541,9 +541,13 @@ pub fn new_external_diagnostic(
 ///
 /// PORT: all guarded fields live in one `DiagnosticsCollectionState` under
 /// a single `Mutex` — the Go lock granularity.
-#[derive(Default)]
+/// PORT: the state is `Arc`-shared and `Clone` shares it — `Checker` passes
+/// `self.diagnostics.clone()` into `get_diagnostics_worker` so diagnostics
+/// produced during `check_source_file` land in the same store the worker
+/// reads (Go shares `*DiagnosticsCollection` by pointer).
+#[derive(Clone, Default)]
 pub struct DiagnosticsCollection {
-    state: Mutex<DiagnosticsCollectionState>,
+    state: Arc<Mutex<DiagnosticsCollectionState>>,
 }
 
 #[derive(Default)]

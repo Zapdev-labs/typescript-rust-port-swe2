@@ -37,13 +37,13 @@ use std::sync::Arc;
 use rustc_hash::FxHashMap;
 
 use tsc_ast::diagnostic::{
-    self, DiagnosticFile, DiagnosticRef, lock_diagnostic, new_compiler_diagnostic,
-    new_diagnostic, new_external_diagnostic,
+    self, DiagnosticFile, DiagnosticRef, lock_diagnostic, new_compiler_diagnostic, new_diagnostic,
+    new_external_diagnostic,
 };
 use tsc_ast::utilities::HasFileName;
 use tsc_ast::{
     CheckJsDirective, CommentDirectiveKind, FileReference, Node, NodeId, SourceFileMetaData,
-    is_check_js_enabled_for_file, is_external_or_commonjs_module, is_external_module,
+    Symbol, is_check_js_enabled_for_file, is_external_module, is_external_or_commonjs_module,
     is_plain_js_file, is_source_file_js, is_source_phase_import, is_string_literal,
     is_string_literal_like, new_has_file_name,
 };
@@ -80,14 +80,14 @@ use crate::checker_pool::{
     CheckerPool, CheckerPoolProgram, CompilerCheckerPool, DoneFn, new_checker_pool_with_tracing,
 };
 use crate::emit_host::{
-    BasicEmitHost, EmitOptions, EmitResult, SourceFileMayBeEmittedHost,
-    get_source_files_to_emit, source_file_may_be_emitted,
+    BasicEmitHost, EmitOptions, EmitResult, SourceFileMayBeEmittedHost, get_source_files_to_emit,
+    source_file_may_be_emitted,
 };
 use crate::file_include::FileIncludeReason;
 use crate::file_loader::{
-    LibFile, LoadedSourceFile, ProcessedFiles, RedirectsFile,
-    get_default_resolution_mode_for_file, get_emit_syntax_for_usage_location_worker,
-    get_mode_for_usage_location, process_all_program_files,
+    LibFile, LoadedSourceFile, ProcessedFiles, RedirectsFile, get_default_resolution_mode_for_file,
+    get_emit_syntax_for_usage_location_worker, get_mode_for_usage_location,
+    process_all_program_files,
 };
 use crate::include_processor::IncludeProcessor;
 use crate::processing_diagnostic::{IncludeExplainingDiagnostic, ProcessingDiagnostic};
@@ -164,8 +164,7 @@ pub struct ProgramFactories {
     /// the full-build fallback.
     pub create_checker_pool: Option<Arc<dyn Fn(&Rc<Program>) -> Rc<dyn CheckerPool>>>,
     /// `CreateModuleResolver func(module.ResolverOptions) module.Resolver`.
-    pub create_module_resolver:
-        Option<Arc<dyn Fn(ResolverOptions) -> Arc<dyn Resolver>>>,
+    pub create_module_resolver: Option<Arc<dyn Fn(ResolverOptions) -> Arc<dyn Resolver>>>,
 }
 
 /// `type packageNamesInfo struct`.
@@ -202,6 +201,12 @@ pub struct Program {
 
     /// `caseSensitivity`.
     case_sensitivity: CaseSensitivity,
+
+    /// Program-global symbol arena (SPEC §5.2 — `Program::symbols`). Go has
+    /// no explicit arena: binder- and checker-allocated `*ast.Symbol`s share
+    /// pointer identity on the heap. Here every `SymbolId` indexes this one
+    /// `Vec<ast::Symbol>`; `Checker::symbol_arena` aliases it via `Rc`.
+    pub symbols: Rc<RefCell<Vec<Symbol>>>,
 
     /// `processedFiles` (embedded in Go).
     pub processed: ProcessedFiles,
@@ -240,7 +245,8 @@ pub struct Program {
 
     /// Post-parse additions to `processed.processing_diagnostics` (see
     /// header PORT note on the Go `sync.Once`/verify-time mutation).
-    pending_processing_diagnostics: RefCell<Vec<ProcessingDiagnostic>>,
+    /// `pub(crate)` for `IncludeProcessor::get_diagnostics`, which drains it.
+    pub(crate) pending_processing_diagnostics: RefCell<Vec<ProcessingDiagnostic>>,
 
     /// Cached `compiler_options_arc(opts.config)` — the checker `Program`
     /// trait returns `Rc<CompilerOptions>` by value.
@@ -324,10 +330,7 @@ impl Program {
     }
 
     /// `PackageJsonCacheEntries` — iterates all package.json cache entries.
-    pub fn package_json_cache_entries(
-        &self,
-        f: impl FnMut(PathKey, Arc<InfoCacheEntry>) -> bool,
-    ) {
+    pub fn package_json_cache_entries(&self, f: impl FnMut(PathKey, Arc<InfoCacheEntry>) -> bool) {
         self.resolution_data.package_json_cache_entries(f);
     }
 
@@ -353,7 +356,10 @@ impl Program {
     /// `GetRedirectTargets` — the list of file paths that redirect to the
     /// given path (same package installed in different locations).
     pub fn get_redirect_targets(&self, path: &PathKey) -> Vec<RootedFilePath> {
-        self.redirect_targets_map.get(path).cloned().unwrap_or_default()
+        self.redirect_targets_map
+            .get(path)
+            .cloned()
+            .unwrap_or_default()
     }
 
     /// `GetSourceOfProjectReferenceIfOutputIncluded` — the original file
@@ -428,10 +434,7 @@ impl Program {
     }
 
     /// `getParseFileRedirectByFileName`.
-    fn get_parse_file_redirect_by_file_name(
-        &self,
-        file_name: &RootedFilePath,
-    ) -> RootedFilePath {
+    fn get_parse_file_redirect_by_file_name(&self, file_name: &RootedFilePath) -> RootedFilePath {
         let (redirect, _) = self.mapper().get_parse_file_redirect(&new_has_file_name(
             file_name.clone(),
             self.case_sensitivity.path_key(&file_name.as_path()),
@@ -514,6 +517,10 @@ impl Program {
     }
 
     /// Inherent mutable arena access — see `nodes`.
+    ///
+    /// Plain `RefMut` (no clone): checker/binder mutation is short-windowed
+    /// and callers must not hold a shared `Ref` across the call. The emit
+    /// pipeline is the exception — it uses [`Program::arena_checkout`].
     pub fn nodes_mut(&self, file_index: u32) -> RefMut<'_, Vec<Node>> {
         self.arenas
             .get(&file_index)
@@ -529,6 +536,22 @@ impl Program {
     /// Borrowed arena for a `NodeId`'s owning file.
     pub fn arena_of(&self, file: NodeId) -> Ref<'_, Vec<Node>> {
         self.nodes(file.file_index())
+    }
+
+    /// `arena_checkout` — emit-time arena handoff. PORT(divergence): Go's
+    /// emit mutates the shared `[]*ast.Node` graph while emit-resolver
+    /// callbacks freely read it. A `RefMut` held across transformer visits
+    /// would panic every such re-entrant `program.nodes()` read, so emit
+    /// checks the arena out instead: the live `Vec` moves into the returned
+    /// guard (transformers mutate it via `&mut`), while a clone is left in
+    /// the cell for checker callbacks. On drop the guard writes the mutated
+    /// `Vec` back. Checker reads during the window see pre-transform state —
+    /// import-elision marking only walks original-tree nodes, so this is
+    /// observationally equivalent there; if a future caller hands a
+    /// synthetic `NodeId` minted during the visit to a checker callback, the
+    /// clone will be too short — that's the known limitation.
+    pub fn arena_checkout(&self, file_index: u32) -> ArenaCheckout {
+        ArenaCheckout::new(self.arena_handle(file_index))
     }
 
     /// The `*ast.SourceFile`-as-`HasFileName` adapter — `fileName` +
@@ -559,11 +582,10 @@ impl Program {
                 .resolve_file(&ref_.file_name)
         };
         let options = self.options();
-        let supported_extensions_base =
-            tsc_tsoptions::tsconfigparsing::get_supported_extensions(
-                &options,
-                self.opts.config.content_mapper_extensions(),
-            );
+        let supported_extensions_base = tsc_tsoptions::tsconfigparsing::get_supported_extensions(
+            &options,
+            self.opts.config.content_mapper_extensions(),
+        );
         let supported_extensions =
             tsc_tsoptions::tsconfigparsing::get_supported_extensions_with_json_if_resolve_json_module(
                 Some(&options),
@@ -572,13 +594,10 @@ impl Program {
         let allow_non_ts_extensions = options.allow_non_ts_extensions == TS_TRUE;
         if file_name.has_extension() {
             if !allow_non_ts_extensions {
-                let canonical_file_name =
-                    self.case_sensitivity.path_key(&file_name.as_path());
+                let canonical_file_name = self.case_sensitivity.path_key(&file_name.as_path());
                 let supported = supported_extensions.iter().any(|exts| {
                     canonical_file_name
-                        .extension_is_one_of(
-                            &exts.iter().map(|s| s.as_str()).collect::<Vec<_>>(),
-                        )
+                        .extension_is_one_of(&exts.iter().map(|s| s.as_str()).collect::<Vec<_>>())
                 });
                 if !supported {
                     return None; // unsupported extensions are forced to fail
@@ -590,10 +609,8 @@ impl Program {
             );
         }
         if allow_non_ts_extensions {
-            let extensionless = self.get_source_file_with_redirect(
-                &file_name,
-                self.path_key_for_file_name(&file_name),
-            );
+            let extensionless = self
+                .get_source_file_with_redirect(&file_name, self.path_key_for_file_name(&file_name));
             if extensionless.is_some() {
                 return extensionless;
             }
@@ -661,55 +678,58 @@ impl Program {
                 == f2.parse_options().external_module_indicator_options.jsx
             && f1.parse_options().external_module_indicator_options.force
                 == f2.parse_options().external_module_indicator_options.force;
-        let equal_refs =
-            |a: &[FileReference], b: &[FileReference]| {
-                a.len() == b.len()
-                    && a.iter()
-                        .zip(b.iter())
-                        .all(|(x, y)| equal_file_references(x, y))
-            };
+        let equal_refs = |a: &[FileReference], b: &[FileReference]| {
+            a.len() == b.len()
+                && a.iter()
+                    .zip(b.iter())
+                    .all(|(x, y)| equal_file_references(x, y))
+        };
         if !same_parse_options
             || f1.script_kind != f2.script_kind
             || is_external_or_commonjs_module(nodes1[file1.file].as_source_file())
                 != is_external_or_commonjs_module(nodes2[file2.file].as_source_file())
             || f1.uses_uri_style_node_core_modules != f2.uses_uri_style_node_core_modules
             || f1.imports().len() != f2.imports().len()
-            || !f1.imports().iter().zip(f2.imports().iter()).all(|(&n1, &n2)| {
-                // `file2` was parsed by the incoming host and is not in
-                // `p.arenas`, so build `HasFileName` adapters from each
-                // file's own parse options rather than `file_has_file_name`
-                // (which looks the node up in the program arenas).
-                let has1 = tsc_ast::utilities::new_has_file_name(
-                    f1.parse_options.file_name.clone(),
-                    f1.parse_options.path_key.clone(),
-                );
-                let has2 = tsc_ast::utilities::new_has_file_name(
-                    f2.parse_options.file_name.clone(),
-                    f2.parse_options.path_key.clone(),
-                );
-                let options1 = self.compiler_options_for_file(&has1);
-                let options2 = self.compiler_options_for_file(&has2);
-                equal_module_specifiers(&nodes1[n1], &nodes2[n2], &nodes1, &nodes2)
-                    && get_mode_for_usage_location(
-                        has1.file_name(),
-                        &self.get_source_file_meta_data(has1.path_key()),
-                        n1,
-                        &nodes1,
-                        Some(&options1),
-                    ) == get_mode_for_usage_location(
-                        has2.file_name(),
-                        &self.get_source_file_meta_data(has2.path_key()),
-                        n2,
-                        &nodes2,
-                        Some(&options2),
-                    )
-                    && nodes1[n1]
-                        .parent
-                        .is_some_and(|p| is_source_phase_import(&nodes1[p], &nodes1))
-                        == nodes2[n2]
+            || !f1
+                .imports()
+                .iter()
+                .zip(f2.imports().iter())
+                .all(|(&n1, &n2)| {
+                    // `file2` was parsed by the incoming host and is not in
+                    // `p.arenas`, so build `HasFileName` adapters from each
+                    // file's own parse options rather than `file_has_file_name`
+                    // (which looks the node up in the program arenas).
+                    let has1 = tsc_ast::utilities::new_has_file_name(
+                        f1.parse_options.file_name.clone(),
+                        f1.parse_options.path_key.clone(),
+                    );
+                    let has2 = tsc_ast::utilities::new_has_file_name(
+                        f2.parse_options.file_name.clone(),
+                        f2.parse_options.path_key.clone(),
+                    );
+                    let options1 = self.compiler_options_for_file(&has1);
+                    let options2 = self.compiler_options_for_file(&has2);
+                    equal_module_specifiers(&nodes1[n1], &nodes2[n2], &nodes1, &nodes2)
+                        && get_mode_for_usage_location(
+                            has1.file_name(),
+                            &self.get_source_file_meta_data(has1.path_key()),
+                            n1,
+                            &nodes1,
+                            Some(&options1),
+                        ) == get_mode_for_usage_location(
+                            has2.file_name(),
+                            &self.get_source_file_meta_data(has2.path_key()),
+                            n2,
+                            &nodes2,
+                            Some(&options2),
+                        )
+                        && nodes1[n1]
                             .parent
-                            .is_some_and(|p| is_source_phase_import(&nodes2[p], &nodes2))
-            })
+                            .is_some_and(|p| is_source_phase_import(&nodes1[p], &nodes1))
+                            == nodes2[n2]
+                                .parent
+                                .is_some_and(|p| is_source_phase_import(&nodes2[p], &nodes2))
+                })
             || f1.module_augmentations.len() != f2.module_augmentations.len()
             || !f1
                 .module_augmentations
@@ -725,7 +745,10 @@ impl Program {
         {
             return false;
         }
-        equal_check_js_directives(f1.check_js_directive.as_ref(), f2.check_js_directive.as_ref())
+        equal_check_js_directives(
+            f1.check_js_directive.as_ref(),
+            f2.check_js_directive.as_ref(),
+        )
     }
 
     /// `needsImportHelpersImportSpecifier`.
@@ -754,11 +777,8 @@ impl Program {
         if !is_source_file_js(sf) && sf.script_kind != ScriptKind::Tsx {
             return String::new();
         }
-        let file_has_name =
-            new_has_file_name(sf.file_name().clone(), sf.path_key().clone());
-        let options_for_file = self
-            .mapper()
-            .get_compiler_options_for_file(&file_has_name);
+        let file_has_name = new_has_file_name(sf.file_name().clone(), sf.path_key().clone());
+        let options_for_file = self.mapper().get_compiler_options_for_file(&file_has_name);
         tsc_ast::get_jsx_runtime_import(
             &tsc_ast::get_jsx_implicit_import_base(&options_for_file, Some(sf)),
             &options_for_file,
@@ -767,14 +787,10 @@ impl Program {
 
     /// `projectReferenceFileMapper.getCompilerOptionsForFile` for a
     /// `LoadedSourceFile`.
-    fn compiler_options_for_file_nodes(
-        &self,
-        file: &LoadedSourceFile,
-    ) -> Arc<CompilerOptions> {
+    fn compiler_options_for_file_nodes(&self, file: &LoadedSourceFile) -> Arc<CompilerOptions> {
         let nodes = file.nodes.borrow();
         let sf = nodes[file.file].as_source_file();
-        let file_has_name =
-            new_has_file_name(sf.file_name().clone(), sf.path_key().clone());
+        let file_has_name = new_has_file_name(sf.file_name().clone(), sf.path_key().clone());
         drop(nodes);
         self.mapper().get_compiler_options_for_file(&file_has_name)
     }
@@ -814,10 +830,7 @@ impl Program {
     /// `GetContentMapper` — the content mapper that produced the given
     /// source file, or `None` if the file was not produced by a content
     /// mapper.
-    pub fn get_content_mapper(
-        &self,
-        file: NodeId,
-    ) -> Option<Arc<tsc_contentmapper::Mapper>> {
+    pub fn get_content_mapper(&self, file: NodeId) -> Option<Arc<tsc_contentmapper::Mapper>> {
         let nodes = self.arena_of(file);
         let sf = nodes[file].as_source_file();
         let content_mapper = sf.content_mapper().to_string();
@@ -925,6 +938,9 @@ impl Program {
     /// `BindSourceFiles`.
     pub fn bind_source_files(&self) {
         // PORT: sequential — `Rc`/`RefCell` arenas are not `Send`.
+        // The global symbol arena is borrowed for the whole pass; per-file
+        // binds append so `SymbolId`s are program-wide (SPEC §5.2).
+        let mut symbols = self.symbols.borrow_mut();
         for &file in &self.source_file_ids {
             let needs_bind = {
                 let nodes = self.arena_of(file);
@@ -950,7 +966,7 @@ impl Program {
                     true,
                 );
                 let mut nodes = self.nodes_mut(file.file_index());
-                tsc_binder::binder::bind_source_file(&mut nodes, file);
+                tsc_binder::binder::bind_source_file(&mut *nodes, file, &mut symbols);
                 drop(nodes);
                 trace_done();
             }
@@ -1129,14 +1145,10 @@ impl Program {
             return filter_and_sort_diagnostics(result);
         }
         filter_and_sort_diagnostics(
-            self.collect_checker_diagnostics_from_files(
-                ctx,
-                &self.source_file_ids,
-                collect,
-            )
-            .into_iter()
-            .flatten()
-            .collect(),
+            self.collect_checker_diagnostics_from_files(ctx, &self.source_file_ids, collect)
+                .into_iter()
+                .flatten()
+                .collect(),
         )
     }
 
@@ -1204,7 +1216,8 @@ impl Program {
     ) -> Vec<DiagnosticRef> {
         if let Some(source_file) = source_file {
             let mut nodes = self.nodes_mut(source_file.file_index());
-            tsc_binder::binder::bind_source_file(&mut nodes, source_file);
+            let mut symbols = self.symbols.borrow_mut();
+            tsc_binder::binder::bind_source_file(&mut *nodes, source_file, &mut symbols);
         } else {
             self.bind_source_files();
         }
@@ -1237,7 +1250,8 @@ impl Program {
             self.collect_checker_diagnostics_from_files(ctx, source_files, &mut |ctx, c, file| {
                 self.get_bind_and_check_diagnostics_with_checker(ctx, c, file, true)
             });
-        let mut result = FxHashMap::with_capacity_and_hasher(source_files.len(), Default::default());
+        let mut result =
+            FxHashMap::with_capacity_and_hasher(source_files.len(), Default::default());
         for (i, diags) in all_diags.into_iter().enumerate() {
             result.insert(source_files[i], filter_and_sort_diagnostics(diags));
         }
@@ -1259,7 +1273,12 @@ impl Program {
     pub fn get_program_diagnostics(&self) -> Vec<DiagnosticRef> {
         let mut all: Vec<DiagnosticRef> = self.program_diagnostics.borrow().clone();
         all.extend(self.content_mapper_diagnostics.iter().cloned());
-        all.extend(self.content_mapper_option_diagnostics.borrow().iter().cloned());
+        all.extend(
+            self.content_mapper_option_diagnostics
+                .borrow()
+                .iter()
+                .cloned(),
+        );
         all.extend(
             self.include_processor
                 .get_diagnostics(self)
@@ -1276,18 +1295,14 @@ impl Program {
         let option_diagnostics = project.diagnostics();
         let mut out = self.content_mapper_option_diagnostics.borrow_mut();
         for diagnostic in &option_diagnostics {
-            let (file, loc) =
-                match get_content_mapper_option_diagnostic_location(
-                    Some(&self.opts.config),
-                    &diagnostic.mapper,
-                    &diagnostic.path,
-                ) {
-                    Some((ctx, loc)) => (
-                        Some(DiagnosticFile::from_node(ctx.file, ctx.nodes)),
-                        loc,
-                    ),
-                    None => (None, TextRange::default()),
-                };
+            let (file, loc) = match get_content_mapper_option_diagnostic_location(
+                Some(&self.opts.config),
+                &diagnostic.mapper,
+                &diagnostic.path,
+            ) {
+                Some((ctx, loc)) => (Some(DiagnosticFile::from_node(ctx.file, ctx.nodes)), loc),
+                None => (None, TextRange::default()),
+            };
             out.push(new_external_diagnostic(
                 file,
                 loc,
@@ -1358,9 +1373,8 @@ impl Program {
     ) -> Vec<NodeId> {
         if target_source_files.is_none() && !force_dts_emit && !force_js_emit {
             if self.source_files_to_emit.borrow().is_none() {
-                *self.source_files_to_emit.borrow_mut() = Some(Rc::new(
-                    get_source_files_to_emit(self, None, false, false),
-                ));
+                *self.source_files_to_emit.borrow_mut() =
+                    Some(Rc::new(get_source_files_to_emit(self, None, false, false)));
             }
             return self
                 .source_files_to_emit
@@ -1377,33 +1391,23 @@ impl Program {
     fn verify_compiler_options(&self) {
         let options = self.options.clone();
 
-        let source_file_ctx = || {
-            self.opts
-                .config
-                .config_file
-                .as_ref()
-                .map(|cf| cf.as_ctx())
-        };
+        let source_file_ctx = || self.opts.config.config_file.as_ref().map(|cf| cf.as_ctx());
         let config_file_path = || -> RootedFilePath {
             source_file_ctx()
-                .map(|ctx| {
-                    ctx.nodes[ctx.file]
-                        .as_source_file()
-                        .file_name()
-                        .clone()
-                })
+                .map(|ctx| ctx.nodes[ctx.file].as_source_file().file_name().clone())
                 .unwrap_or_default()
         };
 
         // `getCompilerOptionsPropertySyntax` — `(name, initializer)` node ids
         // of the top-level "compilerOptions" property.
-        let get_compiler_options_property_syntax = || -> Option<(Option<NodeId>, Option<NodeId>)> {
-            for_each_ts_config_prop_array(
-                source_file_ctx(),
-                "compilerOptions",
-                &mut |property| Some((property.named_member_base.name, property.initializer)),
-            )
-        };
+        let get_compiler_options_property_syntax =
+            || -> Option<(Option<NodeId>, Option<NodeId>)> {
+                for_each_ts_config_prop_array(
+                    source_file_ctx(),
+                    "compilerOptions",
+                    &mut |property| Some((property.named_member_base.name, property.initializer)),
+                )
+            };
 
         let get_compiler_options_object_literal_syntax = || -> Option<NodeId> {
             let (_, initializer) = get_compiler_options_property_syntax()?;
@@ -1431,16 +1435,21 @@ impl Program {
                     ctx,
                     key1,
                     &mut |property| {
-                        Some(tsc_tsoptions::errors::create_diagnostic_for_node_in_source_file(
-                            ctx,
-                            if on_key {
-                                property.named_member_base.name.unwrap_or(property.initializer.unwrap_or_default())
-                            } else {
-                                property.initializer.unwrap_or_default()
-                            },
-                            message,
-                            args,
-                        ))
+                        Some(
+                            tsc_tsoptions::errors::create_diagnostic_for_node_in_source_file(
+                                ctx,
+                                if on_key {
+                                    property
+                                        .named_member_base
+                                        .name
+                                        .unwrap_or(property.initializer.unwrap_or_default())
+                                } else {
+                                    property.initializer.unwrap_or_default()
+                                },
+                                message,
+                                args,
+                            ),
+                        )
                     },
                     key2,
                 );
@@ -1701,13 +1710,18 @@ impl Program {
                     let nodes = self.arena_of(file);
                     let sf = nodes[file].as_source_file();
                     let mut root_path = sf.path_key().clone();
-                    if let Some(canonical) = sf.canonical_source_file() {
-                        root_path = nodes[canonical]
+                    let canonical = sf.canonical_source_file();
+                    let file_name = sf.file_name().clone();
+                    drop(nodes);
+                    if let Some(canonical) = canonical {
+                        // `canonical` is a NodeId in the CANONICAL file's
+                        // arena — index it there, not in `file`'s arena.
+                        root_path = self.arena_of(canonical)[canonical]
                             .as_source_file()
                             .path_key()
                             .clone();
                     }
-                    (root_path, sf.file_name().clone())
+                    (root_path, file_name)
                 };
                 if source_file_may_be_emitted(file, self, false, false)
                     && !root_paths.contains(&root_path)
@@ -1727,18 +1741,20 @@ impl Program {
             }
         }
 
-        let for_each_option_paths_syntax =
-            |callback: &mut dyn FnMut(&tsc_ast::ast_generated::PropertyAssignment) -> Option<DiagnosticRef>| {
-                source_file_ctx().and_then(|ctx| {
-                    for_each_property_assignment(
-                        get_compiler_options_object_literal_syntax(),
-                        ctx,
-                        "paths",
-                        callback,
-                        None,
-                    )
-                })
-            };
+        let for_each_option_paths_syntax = |callback: &mut dyn FnMut(
+            &tsc_ast::ast_generated::PropertyAssignment,
+        )
+            -> Option<DiagnosticRef>| {
+            source_file_ctx().and_then(|ctx| {
+                for_each_property_assignment(
+                    get_compiler_options_object_literal_syntax(),
+                    ctx,
+                    "paths",
+                    callback,
+                    None,
+                )
+            })
+        };
 
         // `createDiagnosticForOptionPaths`.
         macro_rules! create_diagnostic_for_option_paths {
@@ -1867,7 +1883,8 @@ impl Program {
             }
         }
 
-        if options.source_map.is_false_or_unknown() && options.inline_source_map.is_false_or_unknown()
+        if options.source_map.is_false_or_unknown()
+            && options.inline_source_map.is_false_or_unknown()
         {
             if options.inline_sources == TS_TRUE {
                 create_diagnostic_for_option_name!(
@@ -1948,7 +1965,11 @@ impl Program {
             if !options.out_dir.is_empty()
                 && dir.is_empty()
                 && self.source_file_ids.iter().any(|&f| {
-                    self.arena_of(f)[f].as_source_file().file_name().root_length() > 1
+                    self.arena_of(f)[f]
+                        .as_source_file()
+                        .file_name()
+                        .root_length()
+                        > 1
                 })
             {
                 create_diagnostic_for_option_name!(
@@ -2006,7 +2027,8 @@ impl Program {
                     .case_sensitivity
                     .relative_path_from_file_to_path(&options.config_file_path, &dir59.as_path())
                 {
-                    common_source_directory = relative_path.as_module_specifier().as_string().to_string();
+                    common_source_directory =
+                        relative_path.as_module_specifier().as_string().to_string();
                 }
                 let diag = create_diagnostic_for_option!(
                     true,
@@ -2079,7 +2101,10 @@ impl Program {
                 );
             }
         } else if !options.react_namespace.is_empty()
-            && !tsc_scanner::utilities::is_identifier_text(&options.react_namespace, LanguageVariant::Standard)
+            && !tsc_scanner::utilities::is_identifier_text(
+                &options.react_namespace,
+                LanguageVariant::Standard,
+            )
         {
             create_option_value_diagnostic!(
                 "reactNamespace",
@@ -2306,7 +2331,10 @@ impl Program {
             self.opts.config.get_build_info_file_name()
         };
         let create_diagnostic_for_reference =
-            |config: &ParsedCommandLine, index: usize, message: &'static diagnostics::Message, args: &[Value]| {
+            |config: &ParsedCommandLine,
+             index: usize,
+             message: &'static diagnostics::Message,
+             args: &[Value]| {
                 let diag = create_diagnostic_at_reference_syntax(config, index, message, args)
                     .unwrap_or_else(|| new_compiler_diagnostic(message, args));
                 self.program_diagnostics.borrow_mut().push(diag);
@@ -2469,8 +2497,7 @@ impl Program {
             let nodes = self.arena_of(source_file);
             let sf = nodes[source_file].as_source_file();
             let is_plain_js = is_plain_js_file(Some(sf), self.options.check_js);
-            let is_js =
-                sf.script_kind == ScriptKind::Js || sf.script_kind == ScriptKind::Jsx;
+            let is_js = sf.script_kind == ScriptKind::Js || sf.script_kind == ScriptKind::Jsx;
             let is_check_js = is_js && is_check_js_enabled_for_file(sf, &self.options);
             let jsdoc = sf.jsdoc_diagnostics().to_vec();
             (is_plain_js, is_check_js, jsdoc)
@@ -2509,7 +2536,10 @@ impl Program {
         &self,
         source_file: NodeId,
         diags: Vec<DiagnosticRef>,
-    ) -> (Vec<DiagnosticRef>, std::collections::HashMap<i32, tsc_ast::CommentDirective>) {
+    ) -> (
+        Vec<DiagnosticRef>,
+        std::collections::HashMap<i32, tsc_ast::CommentDirective>,
+    ) {
         let nodes = self.arena_of(source_file);
         let sf = nodes[source_file].as_source_file();
         if sf.comment_directives.is_empty() {
@@ -2749,10 +2779,7 @@ impl Program {
         let (imports, module_augmentations) = {
             let nodes = self.arena_of(source_file);
             let sf = nodes[source_file].as_source_file();
-            (
-                sf.imports().to_vec(),
-                sf.module_augmentations.to_vec(),
-            )
+            (sf.imports().to_vec(), sf.module_augmentations.to_vec())
         };
         let mut index = index;
         if index < imports.len() {
@@ -2902,13 +2929,10 @@ impl Program {
             true,
         );
 
-        if !options.force_emit && options.emit_only != crate::emit_host::EmitOnly::BuilderSignature {
-            let result = handle_no_emit_options(
-                &ctx,
-                self,
-                options.target_source_files.as_deref(),
-                None,
-            );
+        if !options.force_emit && options.emit_only != crate::emit_host::EmitOnly::BuilderSignature
+        {
+            let result =
+                handle_no_emit_options(&ctx, self, options.target_source_files.as_deref(), None);
             if result.is_some() || ctx.is_cancelled() {
                 return result.unwrap_or_default();
             }
@@ -2918,11 +2942,16 @@ impl Program {
         let _ = new_line;
         let force_dts_emit = options.emit_only == crate::emit_host::EmitOnly::BuilderSignature
             || options.force_emit && options.emit_only == crate::emit_host::EmitOnly::Dts;
-        let force_js_emit = options.force_emit && options.emit_only == crate::emit_host::EmitOnly::Js;
-        let source_files =
-            self.get_source_files_to_emit(options.target_source_files.take(), force_dts_emit, force_js_emit);
+        let force_js_emit =
+            options.force_emit && options.emit_only == crate::emit_host::EmitOnly::Js;
+        let source_files = self.get_source_files_to_emit(
+            options.target_source_files.take(),
+            force_dts_emit,
+            force_js_emit,
+        );
 
-        let mut emitters: Vec<crate::emitter::Emitter<'_, '_>> = Vec::with_capacity(source_files.len());
+        let mut emitters: Vec<crate::emitter::Emitter<'_, '_>> =
+            Vec::with_capacity(source_files.len());
         for source_file in source_files {
             let mut emitter = crate::emitter::Emitter::new(
                 source_file,
@@ -2941,8 +2970,7 @@ impl Program {
         }
 
         // collect results from emit, preserving input order
-        let result =
-            combine_emit_results(emitters.iter_mut().map(|e| e.emit_result()));
+        let result = combine_emit_results(emitters.iter_mut().map(|e| e.emit_result()));
         trace_done();
         result
     }
@@ -2958,11 +2986,11 @@ impl Program {
     }
 
     /// `GetSourceFileForResolvedModule` — implements `checker.Program`.
-    pub fn get_source_file_for_resolved_module(
-        &self,
-        resolved: &ResolvedModule,
-    ) -> Option<NodeId> {
-        self.get_source_file_with_redirect(&resolved.resolved_file_name, resolved.resolved_path.clone())
+    pub fn get_source_file_for_resolved_module(&self, resolved: &ResolvedModule) -> Option<NodeId> {
+        self.get_source_file_with_redirect(
+            &resolved.resolved_file_name,
+            resolved.resolved_path.clone(),
+        )
     }
 
     /// `getSourceFileWithRedirect`.
@@ -2999,10 +3027,12 @@ impl Program {
                 == other.arena_of(*b)[*b].as_source_file().file_name()
         };
         self.files_by_path.len() == other.files_by_path.len()
-            && self
-                .files_by_path
-                .iter()
-                .all(|(k, v)| other.files_by_path.get(k).is_some_and(|b| file_name_eq(v, b)))
+            && self.files_by_path.iter().all(|(k, v)| {
+                other
+                    .files_by_path
+                    .get(k)
+                    .is_some_and(|b| file_name_eq(v, b))
+            })
             && self.redirect_files_by_path.len() == other.redirect_files_by_path.len()
             && self.redirect_files_by_path.iter().all(|(k, v)| {
                 other
@@ -3013,9 +3043,7 @@ impl Program {
     }
 
     /// `GetIncludeReasons` — testing only.
-    pub fn get_include_reasons(
-        &self,
-    ) -> &FxHashMap<PathKey, Vec<Rc<FileIncludeReason>>> {
+    pub fn get_include_reasons(&self) -> &FxHashMap<PathKey, Vec<Rc<FileIncludeReason>>> {
         &self.file_include_reasons
     }
 
@@ -3041,27 +3069,26 @@ impl Program {
             file_name.as_string().to_string()
         };
         let mut files_explained = 0usize;
-        let mut explain_file = |file: &dyn HasFileName,
-                                files_explained: &mut usize|
-         -> Vec<String> {
-            let mut lines = Vec::new();
-            lines.push(to_relative_file_name(file.file_name()));
-            if let Some(reasons) = self.file_include_reasons.get(file.path_key()) {
-                for reason in reasons {
-                    let d = reason.to_diagnostic(self, true, current_directory.clone());
-                    lines.push(format!("   {}", lock_diagnostic(&d).localize(locale)));
+        let mut explain_file =
+            |file: &dyn HasFileName, files_explained: &mut usize| -> Vec<String> {
+                let mut lines = Vec::new();
+                lines.push(to_relative_file_name(file.file_name()));
+                if let Some(reasons) = self.file_include_reasons.get(file.path_key()) {
+                    for reason in reasons {
+                        let d = reason.to_diagnostic(self, true, current_directory.clone());
+                        lines.push(format!("   {}", lock_diagnostic(&d).localize(locale)));
+                    }
                 }
-            }
-            for diag in self.include_processor.explain_redirect_and_implied_format(
-                self,
-                file.path_key(),
-                &mut |file_name| to_relative_file_name(file_name),
-            ) {
-                lines.push(format!("   {}", lock_diagnostic(&diag).localize(locale)));
-            }
-            *files_explained += 1;
-            lines
-        };
+                for diag in self.include_processor.explain_redirect_and_implied_format(
+                    self,
+                    file.path_key(),
+                    &mut |file_name| to_relative_file_name(file_name),
+                ) {
+                    lines.push(format!("   {}", lock_diagnostic(&diag).localize(locale)));
+                }
+                *files_explained += 1;
+                lines
+            };
 
         let mut redirect_files: Vec<Rc<RedirectsFile>> =
             self.redirect_files_by_path.values().cloned().collect();
@@ -3177,14 +3204,12 @@ impl Program {
 
     /// `IsSourceFileFromExternalLibrary` by path key.
     pub fn is_source_file_from_external_library_by_path(&self, path: &PathKey) -> bool {
-        self.source_files_found_searching_node_modules.contains(path)
+        self.source_files_found_searching_node_modules
+            .contains(path)
     }
 
     /// `GetJSXRuntimeImportSpecifier` — implements `checker.Program`.
-    pub fn get_jsx_runtime_import_specifier(
-        &self,
-        path: &PathKey,
-    ) -> (String, Option<NodeId>) {
+    pub fn get_jsx_runtime_import_specifier(&self, path: &PathKey) -> (String, Option<NodeId>) {
         if let Some(result) = self.jsx_runtime_import_specifiers.get(path) {
             return (result.module_reference.clone(), Some(result.specifier));
         }
@@ -3558,7 +3583,13 @@ pub fn new_program(opts: ProgramOptions) -> Rc<Program> {
         arenas.insert(file.file.file_index(), file.nodes.clone());
     }
     let p = Rc::new(Program {
-        options: Rc::new(opts.config.config.compiler_options().cloned().unwrap_or_default()),
+        options: Rc::new(
+            opts.config
+                .config
+                .compiler_options()
+                .cloned()
+                .unwrap_or_default(),
+        ),
         opts: opts.config.clone(),
         hosts: opts.hosts.clone(),
         resolution_data,
@@ -3567,6 +3598,7 @@ pub fn new_program(opts: ProgramOptions) -> Rc<Program> {
         include_processor: IncludeProcessor::default(),
         module_resolution_error: None,
         case_sensitivity,
+        symbols: Rc::new(RefCell::new(Vec::new())),
         processed,
         uses_uri_style_node_core_modules: Tristate::default(),
         common_source_directory: OnceCell::new(),
@@ -3616,7 +3648,9 @@ pub fn update_program(
                 config: p.opts.clone(),
                 hosts: ProgramHosts {
                     host: new_host,
-                    tracing: p.hosts.tracing.clone(),
+                    // `ProgramConfig` carries no hosts in Go — tracing is not
+                    // propagated to the fallback program.
+                    tracing: None,
                 },
                 factories: ProgramFactories {
                     create_checker_pool,
@@ -3687,7 +3721,9 @@ pub fn reuse_program(
         } else {
             let parse_options = old_sf.parse_options().clone();
             drop(nodes);
-            new_file = new_host.get_source_file(&parse_options).map(LoadedSourceFile::from);
+            new_file = new_host
+                .get_source_file(&parse_options)
+                .map(LoadedSourceFile::from);
         }
     }
     let Some(new_file_value) = new_file.clone() else {
@@ -3712,13 +3748,17 @@ pub fn reuse_program(
     }
     // Cloning does not recompute synthetic helper or JSX-runtime import bookkeeping. Fall back to a full
     // build whenever either version requires those imports.
-    if p.import_helpers_import_specifiers.contains_key(&old_file.path())
+    if p.import_helpers_import_specifiers
+        .contains_key(&old_file.path())
         || p.needs_import_helpers_import_specifier(&new_file_value)
     {
         return (None, Some(new_file_value), false);
     }
-    if p.jsx_runtime_import_specifiers.contains_key(&old_file.path())
-        || !p.jsx_runtime_import_specifier_for(&new_file_value).is_empty()
+    if p.jsx_runtime_import_specifiers
+        .contains_key(&old_file.path())
+        || !p
+            .jsx_runtime_import_specifier_for(&new_file_value)
+            .is_empty()
     {
         return (None, Some(new_file_value), false);
     }
@@ -3747,7 +3787,9 @@ pub fn reuse_program(
         }
         if p.jsx_runtime_import_specifiers
             .contains_key(&old_supplemental_lsf.path())
-            || !p.jsx_runtime_import_specifier_for(new_supplemental).is_empty()
+            || !p
+                .jsx_runtime_import_specifier_for(new_supplemental)
+                .is_empty()
         {
             return (None, Some(new_file_value), false);
         }
@@ -3781,7 +3823,10 @@ pub fn reuse_program(
 
     let source_file_ids: Vec<NodeId> = processed.files.iter().map(|f| f.file).collect();
     let mut arenas = p.arenas.clone();
-    arenas.insert(new_file_value.file.file_index(), new_file_value.nodes.clone());
+    arenas.insert(
+        new_file_value.file.file_index(),
+        new_file_value.nodes.clone(),
+    );
     for supplemental in &new_supplemental_files {
         arenas.insert(supplemental.file.file_index(), supplemental.nodes.clone());
     }
@@ -3799,6 +3844,12 @@ pub fn reuse_program(
         include_processor: IncludeProcessor::default(),
         module_resolution_error: None,
         case_sensitivity: p.case_sensitivity,
+        // Share the global symbol arena: `SymbolId`s of unchanged files must
+        // keep indexing the same `Vec`, and `Symbol` is not `Clone` (arena
+        // design). The changed file's rebind appends fresh ids at the tail —
+        // old-program ids stay valid (Go parity: rebinding allocates new
+        // `*ast.Symbol`s while old ones remain reachable).
+        symbols: p.symbols.clone(),
         processed,
         uses_uri_style_node_core_modules: p.uses_uri_style_node_core_modules,
         common_source_directory: OnceCell::new(),
@@ -3847,12 +3898,7 @@ fn equal_module_specifiers(n1: &Node, n2: &Node, nodes1: &[Node], nodes2: &[Node
 }
 
 /// `equalModuleAugmentationNames`.
-fn equal_module_augmentation_names(
-    n1: &Node,
-    n2: &Node,
-    nodes1: &[Node],
-    nodes2: &[Node],
-) -> bool {
+fn equal_module_augmentation_names(n1: &Node, n2: &Node, nodes1: &[Node], nodes2: &[Node]) -> bool {
     n1.kind == n2.kind && n1.text(nodes1) == n2.text(nodes2)
 }
 
@@ -3864,10 +3910,7 @@ pub fn equal_file_references(f1: &FileReference, f2: &FileReference) -> bool {
 }
 
 /// `equalCheckJSDirectives`.
-fn equal_check_js_directives(
-    d1: Option<&CheckJsDirective>,
-    d2: Option<&CheckJsDirective>,
-) -> bool {
+fn equal_check_js_directives(d1: Option<&CheckJsDirective>, d2: Option<&CheckJsDirective>) -> bool {
     (d1.is_none() && d2.is_none())
         || (d1.is_some() && d2.is_some() && d1.unwrap().enabled == d2.unwrap().enabled)
 }
@@ -3875,7 +3918,8 @@ fn equal_check_js_directives(
 /// `filterAndSortDiagnostics`.
 fn filter_and_sort_diagnostics(diags: Vec<DiagnosticRef>) -> Vec<DiagnosticRef> {
     sort_and_deduplicate_diagnostics(
-        diags.into_iter()
+        diags
+            .into_iter()
             .filter(|diag| {
                 let d = lock_diagnostic(diag);
                 let file = d.file();
@@ -3986,8 +4030,7 @@ fn apply_content_mapper_diagnostic_directives(
             return false;
         }
         for (i, directive) in directives.iter().enumerate() {
-            if d.pos() >= directive.virtual_range.pos() && d.pos() < directive.virtual_range.end()
-            {
+            if d.pos() >= directive.virtual_range.pos() && d.pos() < directive.virtual_range.end() {
                 used[i] = true;
                 return true;
             }
@@ -4016,10 +4059,7 @@ fn apply_content_mapper_diagnostic_directives(
 /// `getAdditionalJSSyntacticDiagnostics` — option-dependent syntactic
 /// diagnostics for JS files that aren't covered by the parser or the
 /// checker. Mirrors Strada's `getJSSyntacticDiagnosticsForFile`.
-fn get_additional_js_syntactic_diagnostics(
-    program: &Program,
-    file: NodeId,
-) -> Vec<DiagnosticRef> {
+fn get_additional_js_syntactic_diagnostics(program: &Program, file: NodeId) -> Vec<DiagnosticRef> {
     if program.options.experimental_decorators == TS_TRUE {
         return Vec::new();
     }
@@ -4039,9 +4079,7 @@ fn get_additional_js_syntactic_diagnostics(
         {
             return;
         }
-        if nodes[node].kind == tsc_ast::Kind::Parameter
-            && tsc_ast::has_decorators(&nodes[node])
-        {
+        if nodes[node].kind == tsc_ast::Kind::Parameter && tsc_ast::has_decorators(&nodes[node]) {
             if let Some(decorator) = nodes[node]
                 .modifier_nodes()
                 .unwrap_or(&[])
@@ -4231,7 +4269,8 @@ pub trait ProgramLike {
     /// `GetSemanticDiagnostics(ctx, file)`.
     fn get_semantic_diagnostics(&self, ctx: Context, file: Option<NodeId>) -> Vec<DiagnosticRef>;
     /// `GetDeclarationDiagnostics(ctx, file)`.
-    fn get_declaration_diagnostics(&self, ctx: Context, file: Option<NodeId>) -> Vec<DiagnosticRef>;
+    fn get_declaration_diagnostics(&self, ctx: Context, file: Option<NodeId>)
+    -> Vec<DiagnosticRef>;
     /// `GetSuggestionDiagnostics(ctx, file)`.
     fn get_suggestion_diagnostics(&self, ctx: Context, file: Option<NodeId>) -> Vec<DiagnosticRef>;
     /// `Emit(ctx, options)`.
@@ -4258,11 +4297,7 @@ impl ProgramLike for Program {
     fn get_config_file_parsing_diagnostics(&self) -> Vec<DiagnosticRef> {
         Program::get_config_file_parsing_diagnostics(self)
     }
-    fn get_syntactic_diagnostics(
-        &self,
-        ctx: Context,
-        file: Option<NodeId>,
-    ) -> Vec<DiagnosticRef> {
+    fn get_syntactic_diagnostics(&self, ctx: Context, file: Option<NodeId>) -> Vec<DiagnosticRef> {
         Program::get_syntactic_diagnostics(self, ctx, file)
     }
     fn get_bind_diagnostics(&self, ctx: Context, file: Option<NodeId>) -> Vec<DiagnosticRef> {
@@ -4274,11 +4309,7 @@ impl ProgramLike for Program {
     fn get_global_diagnostics(&self, ctx: Context) -> Vec<DiagnosticRef> {
         Program::get_global_diagnostics(self, ctx)
     }
-    fn get_semantic_diagnostics(
-        &self,
-        ctx: Context,
-        file: Option<NodeId>,
-    ) -> Vec<DiagnosticRef> {
+    fn get_semantic_diagnostics(&self, ctx: Context, file: Option<NodeId>) -> Vec<DiagnosticRef> {
         Program::get_semantic_diagnostics(self, ctx, file)
     }
     fn get_declaration_diagnostics(
@@ -4288,11 +4319,7 @@ impl ProgramLike for Program {
     ) -> Vec<DiagnosticRef> {
         Program::get_declaration_diagnostics(self, ctx, file)
     }
-    fn get_suggestion_diagnostics(
-        &self,
-        ctx: Context,
-        file: Option<NodeId>,
-    ) -> Vec<DiagnosticRef> {
+    fn get_suggestion_diagnostics(&self, ctx: Context, file: Option<NodeId>) -> Vec<DiagnosticRef> {
         Program::get_suggestion_diagnostics(self, ctx, file)
     }
     fn emit(&self, ctx: Context, options: &mut EmitOptions<'_>) -> EmitResult {
@@ -4359,13 +4386,21 @@ pub fn get_diagnostics_of_any_program(
     files: Option<&[NodeId]>,
     skip_no_emit_check_for_dts_diagnostics: bool,
     get_bind_diagnostics: &dyn Fn(&dyn ProgramLike, Context, Option<NodeId>) -> Vec<DiagnosticRef>,
-    get_semantic_diagnostics: &dyn Fn(&dyn ProgramLike, Context, Option<NodeId>) -> Vec<DiagnosticRef>,
+    get_semantic_diagnostics: &dyn Fn(
+        &dyn ProgramLike,
+        Context,
+        Option<NodeId>,
+    ) -> Vec<DiagnosticRef>,
 ) -> Vec<DiagnosticRef> {
     let mut all_diagnostics = program.get_config_file_parsing_diagnostics();
     let config_file_parsing_diagnostics_length = all_diagnostics.len();
 
     let append_diagnostics_for_all_files = |diagnostics: &mut Vec<DiagnosticRef>,
-                                          get_diagnostics: &dyn Fn(&dyn ProgramLike, Context, Option<NodeId>) -> Vec<DiagnosticRef>| {
+                                            get_diagnostics: &dyn Fn(
+        &dyn ProgramLike,
+        Context,
+        Option<NodeId>,
+    ) -> Vec<DiagnosticRef>| {
         match files {
             None => diagnostics.extend(get_diagnostics(program, ctx.clone(), None)),
             Some(files) => {
@@ -4469,10 +4504,7 @@ impl ModuleSpecifierGenerationHost for Program {
     ) -> RootedDirectoryPath {
         self.get_nearest_ancestor_directory_with_package_json(dirname)
     }
-    fn get_package_json_info(
-        &self,
-        pkg_json_path: &RootedFilePath,
-    ) -> Option<Arc<InfoCacheEntry>> {
+    fn get_package_json_info(&self, pkg_json_path: &RootedFilePath) -> Option<Arc<InfoCacheEntry>> {
         self.get_package_json_info(pkg_json_path)
     }
     fn get_default_resolution_mode_for_file(&self, file: &dyn HasFileName) -> ResolutionMode {
@@ -4506,19 +4538,16 @@ impl tsc_checker::checker_types::Program for Program {
     fn bind_source_files(&self) {
         self.bind_source_files();
     }
+    fn symbols(&self) -> Rc<RefCell<Vec<Symbol>>> {
+        self.symbols.clone()
+    }
     fn file_exists(&self, file_name: &RootedFilePath) -> bool {
         self.file_exists(file_name)
     }
-    fn get_source_file_for_resolved_module(
-        &self,
-        resolved: &ResolvedModule,
-    ) -> Option<NodeId> {
+    fn get_source_file_for_resolved_module(&self, resolved: &ResolvedModule) -> Option<NodeId> {
         self.get_source_file_for_resolved_module(resolved)
     }
-    fn get_emit_module_format_of_file(
-        &self,
-        source_file: &dyn HasFileName,
-    ) -> ModuleKind {
+    fn get_emit_module_format_of_file(&self, source_file: &dyn HasFileName) -> ModuleKind {
         self.get_emit_module_format_of_file(source_file)
     }
     fn get_emit_syntax_for_usage_location(
@@ -4528,10 +4557,7 @@ impl tsc_checker::checker_types::Program for Program {
     ) -> ResolutionMode {
         self.get_emit_syntax_for_usage_location(source_file, usage_location)
     }
-    fn get_implied_node_format_for_emit(
-        &self,
-        source_file: &dyn HasFileName,
-    ) -> ModuleKind {
+    fn get_implied_node_format_for_emit(&self, source_file: &dyn HasFileName) -> ModuleKind {
         self.get_implied_node_format_for_emit(source_file)
     }
     fn get_resolved_module(
@@ -4658,3 +4684,8 @@ pub fn combine_emit_results(results: impl Iterator<Item = EmitResult>) -> EmitRe
 
 #[cfg(test)]
 mod program_test;
+
+/// Re-export — `ArenaCheckout` lives in `tsc_ast::ast` so the
+/// `tsc_checker::checker_types::Program::nodes_mut` signature can name it
+/// without a `tsc-checker` → `tsc-compiler` dependency.
+pub use tsc_ast::ast::ArenaCheckout;

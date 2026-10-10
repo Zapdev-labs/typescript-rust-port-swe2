@@ -14,14 +14,16 @@ use serde::Deserialize;
 use serde_json::{Map, Value};
 use tsc_core::tristate::Tristate;
 use tsc_json::MarshalerTo;
-use tsc_modulespecifiers::{ImportModuleSpecifierEndingPreference, ImportModuleSpecifierPreference};
+use tsc_modulespecifiers::{
+    ImportModuleSpecifierEndingPreference, ImportModuleSpecifierPreference,
+};
 
 use crate::formatcodeoptions::{IndentStyle, SemicolonPreference};
 use crate::userpreferences::{
-    get_preference_config_value, parse_organize_imports_case_sensitivity, parse_preference_tristate,
-    set_nested_value, value_as_int, IncludeInlayParameterNameHints, JsxAttributeCompletionStyle,
-    OrganizeImportsCaseFirst, OrganizeImportsCollation, OrganizeImportsSort, OrganizeImportsTypeOrder,
-    QuotePreference, WorkspaceSymbolsScope,
+    IncludeInlayParameterNameHints, JsxAttributeCompletionStyle, OrganizeImportsCaseFirst,
+    OrganizeImportsCollation, OrganizeImportsSort, OrganizeImportsTypeOrder, QuotePreference,
+    WorkspaceSymbolsScope, get_preference_config_value, parse_organize_imports_case_sensitivity,
+    parse_preference_tristate, set_nested_value, value_as_int,
 };
 
 fn is_default<T: Default + PartialEq>(v: &T) -> bool {
@@ -464,9 +466,7 @@ fn parse_preference_indent_style(value: &Value) -> IndentStyle {
 }
 
 /// `parsePreferenceJsxAttributeCompletionStyle`
-fn parse_preference_jsx_attribute_completion_style(
-    value: &Value,
-) -> JsxAttributeCompletionStyle {
+fn parse_preference_jsx_attribute_completion_style(value: &Value) -> JsxAttributeCompletionStyle {
     if let Some(value) = value.as_str() {
         match &*value.to_lowercase() {
             "auto" => return JsxAttributeCompletionStyle::AUTO,
@@ -492,7 +492,9 @@ fn parse_preference_organize_imports_case_first(value: &Value) -> OrganizeImport
 }
 
 /// `serializePreferenceOrganizeImportsCaseFirst`
-fn serialize_preference_organize_imports_case_first(value: OrganizeImportsCaseFirst) -> &'static str {
+fn serialize_preference_organize_imports_case_first(
+    value: OrganizeImportsCaseFirst,
+) -> &'static str {
     match value {
         OrganizeImportsCaseFirst::DEFAULT => "default",
         OrganizeImportsCaseFirst::LOWER => "lower",
@@ -675,8 +677,9 @@ fn apply_raw_preferences(p: &mut UserPreferences, settings: &Map<String, Value>)
                 }
             }
             "convertTabsToSpaces" => {
-                p.format_code_settings.editor_settings.convert_tabs_to_spaces =
-                    parse_preference_tristate(value);
+                p.format_code_settings
+                    .editor_settings
+                    .convert_tabs_to_spaces = parse_preference_tristate(value);
             }
             "indentSize" => {
                 if let Some(v) = value_as_int(value) {
@@ -698,8 +701,9 @@ fn apply_raw_preferences(p: &mut UserPreferences, settings: &Map<String, Value>)
                 }
             }
             "trimTrailingWhitespace" => {
-                p.format_code_settings.editor_settings.trim_trailing_whitespace =
-                    parse_preference_tristate(value);
+                p.format_code_settings
+                    .editor_settings
+                    .trim_trailing_whitespace = parse_preference_tristate(value);
             }
             "indentMultiLineObjectLiteralBeginningOnBlankLine" => {
                 p.format_code_settings
@@ -772,8 +776,8 @@ fn apply_raw_preferences(p: &mut UserPreferences, settings: &Map<String, Value>)
                     parse_preference_tristate(value);
             }
             "insertSpaceBeforeFunctionParenthesis" => {
-                p.format_code_settings.insert_space_before_function_parenthesis =
-                    parse_preference_tristate(value);
+                p.format_code_settings
+                    .insert_space_before_function_parenthesis = parse_preference_tristate(value);
             }
             "insertSpaceBeforeTypeAnnotation" => {
                 p.format_code_settings.insert_space_before_type_annotation =
@@ -785,8 +789,8 @@ fn apply_raw_preferences(p: &mut UserPreferences, settings: &Map<String, Value>)
                     parse_preference_tristate(value);
             }
             "placeOpenBraceOnNewLineForFunctions" => {
-                p.format_code_settings.place_open_brace_on_new_line_for_functions =
-                    parse_preference_tristate(value);
+                p.format_code_settings
+                    .place_open_brace_on_new_line_for_functions = parse_preference_tristate(value);
             }
             "semicolons" => {
                 p.format_code_settings.semicolons = parse_preference_semicolon_preference(value);
@@ -798,12 +802,11 @@ fn apply_raw_preferences(p: &mut UserPreferences, settings: &Map<String, Value>)
             }
             "includeCompletionsForImportStatements" => {
                 p.completion_preferences
-                    .include_completions_for_import_statements =
-                    parse_preference_tristate(value);
+                    .include_completions_for_import_statements = parse_preference_tristate(value);
             }
             "includeCompletionsForModuleExports" => {
-                p.completion_preferences.include_completions_for_module_exports =
-                    parse_preference_tristate(value);
+                p.completion_preferences
+                    .include_completions_for_module_exports = parse_preference_tristate(value);
             }
             "includeCompletionsWithClassMemberSnippets" => {
                 p.completion_preferences
@@ -820,8 +823,8 @@ fn apply_raw_preferences(p: &mut UserPreferences, settings: &Map<String, Value>)
                     parse_preference_jsx_attribute_completion_style(value);
             }
             "includeInlayEnumMemberValueHints" => {
-                p.inlay_hints_preferences.include_inlay_enum_member_value_hints =
-                    parse_preference_tristate(value);
+                p.inlay_hints_preferences
+                    .include_inlay_enum_member_value_hints = parse_preference_tristate(value);
             }
             "includeInlayFunctionLikeReturnTypeHints" => {
                 p.inlay_hints_preferences
@@ -830,8 +833,7 @@ fn apply_raw_preferences(p: &mut UserPreferences, settings: &Map<String, Value>)
             }
             "includeInlayFunctionParameterTypeHints" => {
                 p.inlay_hints_preferences
-                    .include_inlay_function_parameter_type_hints =
-                    parse_preference_tristate(value);
+                    .include_inlay_function_parameter_type_hints = parse_preference_tristate(value);
             }
             "includeInlayParameterNameHints" => {
                 p.inlay_hints_preferences.include_inlay_parameter_name_hints =
@@ -876,8 +878,7 @@ fn apply_raw_preferences(p: &mut UserPreferences, settings: &Map<String, Value>)
             }
             "referencesCodeLensShowOnAllFunctions" => {
                 p.code_lens_user_preferences
-                    .references_code_lens_show_on_all_functions =
-                    parse_preference_tristate(value);
+                    .references_code_lens_show_on_all_functions = parse_preference_tristate(value);
             }
             "allowRenameOfImportPath" => {
                 p.allow_rename_of_import_path = parse_preference_tristate(value);
@@ -942,8 +943,7 @@ fn apply_raw_preferences(p: &mut UserPreferences, settings: &Map<String, Value>)
                     parse_preference_import_module_specifier_preference(value);
             }
             "lazyConfiguredProjectsFromExternalProject" => {
-                p.lazy_configured_projects_from_external_project =
-                    parse_preference_tristate(value);
+                p.lazy_configured_projects_from_external_project = parse_preference_tristate(value);
             }
             "locale" => {
                 if let Some(v) = value.as_str() {
@@ -959,12 +959,10 @@ fn apply_raw_preferences(p: &mut UserPreferences, settings: &Map<String, Value>)
                 p.organize_imports_accent_collation = parse_preference_tristate(value);
             }
             "organizeImportsCaseFirst" => {
-                p.organize_imports_case_first =
-                    parse_preference_organize_imports_case_first(value);
+                p.organize_imports_case_first = parse_preference_organize_imports_case_first(value);
             }
             "organizeImportsCollation" => {
-                p.organize_imports_collation =
-                    parse_preference_organize_imports_collation(value);
+                p.organize_imports_collation = parse_preference_organize_imports_collation(value);
             }
             "organizeImportsIgnoreCase" => {
                 p.organize_imports_ignore_case = parse_preference_tristate(value);
@@ -981,8 +979,7 @@ fn apply_raw_preferences(p: &mut UserPreferences, settings: &Map<String, Value>)
                 p.organize_imports_sort = parse_preference_organize_imports_sort(value);
             }
             "organizeImportsTypeOrder" => {
-                p.organize_imports_type_order =
-                    parse_preference_organize_imports_type_order(value);
+                p.organize_imports_type_order = parse_preference_organize_imports_type_order(value);
             }
             "preferGoToSourceDefinition" => {
                 if let Some(v) = value.as_bool() {
@@ -1204,9 +1201,20 @@ impl MarshalerTo for UserPreferences {
             };
         }
 
-        set_int!("format.baseIndentSize", p.format_code_settings.editor_settings.base_indent_size);
-        set_tri!("format.convertTabsToSpaces", p.format_code_settings.editor_settings.convert_tabs_to_spaces);
-        set_int!("format.indentSize", p.format_code_settings.editor_settings.indent_size);
+        set_int!(
+            "format.baseIndentSize",
+            p.format_code_settings.editor_settings.base_indent_size
+        );
+        set_tri!(
+            "format.convertTabsToSpaces",
+            p.format_code_settings
+                .editor_settings
+                .convert_tabs_to_spaces
+        );
+        set_int!(
+            "format.indentSize",
+            p.format_code_settings.editor_settings.indent_size
+        );
         if p.format_code_settings.editor_settings.indent_style != IndentStyle::NONE {
             set_nested_value(
                 &mut config,
@@ -1214,28 +1222,110 @@ impl MarshalerTo for UserPreferences {
                 Value::from(p.format_code_settings.editor_settings.indent_style.0),
             );
         }
-        set_owned_str!("format.newLineCharacter", p.format_code_settings.editor_settings.new_line_character);
-        set_int!("format.tabSize", p.format_code_settings.editor_settings.tab_size);
-        set_tri!("format.trimTrailingWhitespace", p.format_code_settings.editor_settings.trim_trailing_whitespace);
-        set_tri!("format.indentMultiLineObjectLiteralBeginningOnBlankLine", p.format_code_settings.indent_multi_line_object_literal_beginning_on_blank_line);
-        set_tri!("format.indentSwitchCase", p.format_code_settings.indent_switch_case);
-        set_tri!("format.insertSpaceAfterCommaDelimiter", p.format_code_settings.insert_space_after_comma_delimiter);
-        set_tri!("format.insertSpaceAfterConstructor", p.format_code_settings.insert_space_after_constructor);
-        set_tri!("format.insertSpaceAfterFunctionKeywordForAnonymousFunctions", p.format_code_settings.insert_space_after_function_keyword_for_anonymous_functions);
-        set_tri!("format.insertSpaceAfterKeywordsInControlFlowStatements", p.format_code_settings.insert_space_after_keywords_in_control_flow_statements);
-        set_tri!("format.insertSpaceAfterOpeningAndBeforeClosingEmptyBraces", p.format_code_settings.insert_space_after_opening_and_before_closing_empty_braces);
-        set_tri!("format.insertSpaceAfterOpeningAndBeforeClosingJsxExpressionBraces", p.format_code_settings.insert_space_after_opening_and_before_closing_jsx_expression_braces);
-        set_tri!("format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces", p.format_code_settings.insert_space_after_opening_and_before_closing_nonempty_braces);
-        set_tri!("format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBrackets", p.format_code_settings.insert_space_after_opening_and_before_closing_nonempty_brackets);
-        set_tri!("format.insertSpaceAfterOpeningAndBeforeClosingNonemptyParenthesis", p.format_code_settings.insert_space_after_opening_and_before_closing_nonempty_parenthesis);
-        set_tri!("format.insertSpaceAfterOpeningAndBeforeClosingTemplateStringBraces", p.format_code_settings.insert_space_after_opening_and_before_closing_template_string_braces);
-        set_tri!("format.insertSpaceAfterSemicolonInForStatements", p.format_code_settings.insert_space_after_semicolon_in_for_statements);
-        set_tri!("format.insertSpaceAfterTypeAssertion", p.format_code_settings.insert_space_after_type_assertion);
-        set_tri!("format.insertSpaceBeforeAndAfterBinaryOperators", p.format_code_settings.insert_space_before_and_after_binary_operators);
-        set_tri!("format.insertSpaceBeforeFunctionParenthesis", p.format_code_settings.insert_space_before_function_parenthesis);
-        set_tri!("format.insertSpaceBeforeTypeAnnotation", p.format_code_settings.insert_space_before_type_annotation);
-        set_tri!("format.placeOpenBraceOnNewLineForControlBlocks", p.format_code_settings.place_open_brace_on_new_line_for_control_blocks);
-        set_tri!("format.placeOpenBraceOnNewLineForFunctions", p.format_code_settings.place_open_brace_on_new_line_for_functions);
+        set_owned_str!(
+            "format.newLineCharacter",
+            p.format_code_settings.editor_settings.new_line_character
+        );
+        set_int!(
+            "format.tabSize",
+            p.format_code_settings.editor_settings.tab_size
+        );
+        set_tri!(
+            "format.trimTrailingWhitespace",
+            p.format_code_settings
+                .editor_settings
+                .trim_trailing_whitespace
+        );
+        set_tri!(
+            "format.indentMultiLineObjectLiteralBeginningOnBlankLine",
+            p.format_code_settings
+                .indent_multi_line_object_literal_beginning_on_blank_line
+        );
+        set_tri!(
+            "format.indentSwitchCase",
+            p.format_code_settings.indent_switch_case
+        );
+        set_tri!(
+            "format.insertSpaceAfterCommaDelimiter",
+            p.format_code_settings.insert_space_after_comma_delimiter
+        );
+        set_tri!(
+            "format.insertSpaceAfterConstructor",
+            p.format_code_settings.insert_space_after_constructor
+        );
+        set_tri!(
+            "format.insertSpaceAfterFunctionKeywordForAnonymousFunctions",
+            p.format_code_settings
+                .insert_space_after_function_keyword_for_anonymous_functions
+        );
+        set_tri!(
+            "format.insertSpaceAfterKeywordsInControlFlowStatements",
+            p.format_code_settings
+                .insert_space_after_keywords_in_control_flow_statements
+        );
+        set_tri!(
+            "format.insertSpaceAfterOpeningAndBeforeClosingEmptyBraces",
+            p.format_code_settings
+                .insert_space_after_opening_and_before_closing_empty_braces
+        );
+        set_tri!(
+            "format.insertSpaceAfterOpeningAndBeforeClosingJsxExpressionBraces",
+            p.format_code_settings
+                .insert_space_after_opening_and_before_closing_jsx_expression_braces
+        );
+        set_tri!(
+            "format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces",
+            p.format_code_settings
+                .insert_space_after_opening_and_before_closing_nonempty_braces
+        );
+        set_tri!(
+            "format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBrackets",
+            p.format_code_settings
+                .insert_space_after_opening_and_before_closing_nonempty_brackets
+        );
+        set_tri!(
+            "format.insertSpaceAfterOpeningAndBeforeClosingNonemptyParenthesis",
+            p.format_code_settings
+                .insert_space_after_opening_and_before_closing_nonempty_parenthesis
+        );
+        set_tri!(
+            "format.insertSpaceAfterOpeningAndBeforeClosingTemplateStringBraces",
+            p.format_code_settings
+                .insert_space_after_opening_and_before_closing_template_string_braces
+        );
+        set_tri!(
+            "format.insertSpaceAfterSemicolonInForStatements",
+            p.format_code_settings
+                .insert_space_after_semicolon_in_for_statements
+        );
+        set_tri!(
+            "format.insertSpaceAfterTypeAssertion",
+            p.format_code_settings.insert_space_after_type_assertion
+        );
+        set_tri!(
+            "format.insertSpaceBeforeAndAfterBinaryOperators",
+            p.format_code_settings
+                .insert_space_before_and_after_binary_operators
+        );
+        set_tri!(
+            "format.insertSpaceBeforeFunctionParenthesis",
+            p.format_code_settings
+                .insert_space_before_function_parenthesis
+        );
+        set_tri!(
+            "format.insertSpaceBeforeTypeAnnotation",
+            p.format_code_settings.insert_space_before_type_annotation
+        );
+        set_tri!(
+            "format.placeOpenBraceOnNewLineForControlBlocks",
+            p.format_code_settings
+                .place_open_brace_on_new_line_for_control_blocks
+        );
+        set_tri!(
+            "format.placeOpenBraceOnNewLineForFunctions",
+            p.format_code_settings
+                .place_open_brace_on_new_line_for_functions
+        );
         if !p.format_code_settings.semicolons.0.is_empty() {
             set_nested_value(
                 &mut config,
@@ -1243,57 +1333,160 @@ impl MarshalerTo for UserPreferences {
                 Value::from(p.format_code_settings.semicolons.0.as_ref()),
             );
         }
-        set_tri!("suggest.includeAutomaticOptionalChainCompletions", p.completion_preferences.include_automatic_optional_chain_completions);
-        set_tri!("suggest.includeCompletionsForImportStatements", p.completion_preferences.include_completions_for_import_statements);
-        set_tri!("suggest.autoImports", p.completion_preferences.include_completions_for_module_exports);
-        set_tri!("suggest.classMemberSnippets.enabled", p.completion_preferences.include_completions_with_class_member_snippets);
-        set_tri!("suggest.objectLiteralMethodSnippets.enabled", p.completion_preferences.include_completions_with_object_literal_method_snippets);
-        if !p.completion_preferences.jsx_attribute_completion_style.0.is_empty() {
+        set_tri!(
+            "suggest.includeAutomaticOptionalChainCompletions",
+            p.completion_preferences
+                .include_automatic_optional_chain_completions
+        );
+        set_tri!(
+            "suggest.includeCompletionsForImportStatements",
+            p.completion_preferences
+                .include_completions_for_import_statements
+        );
+        set_tri!(
+            "suggest.autoImports",
+            p.completion_preferences
+                .include_completions_for_module_exports
+        );
+        set_tri!(
+            "suggest.classMemberSnippets.enabled",
+            p.completion_preferences
+                .include_completions_with_class_member_snippets
+        );
+        set_tri!(
+            "suggest.objectLiteralMethodSnippets.enabled",
+            p.completion_preferences
+                .include_completions_with_object_literal_method_snippets
+        );
+        if !p
+            .completion_preferences
+            .jsx_attribute_completion_style
+            .0
+            .is_empty()
+        {
             set_nested_value(
                 &mut config,
                 "preferences.jsxAttributeCompletionStyle",
-                Value::from(p.completion_preferences.jsx_attribute_completion_style.0.as_ref()),
+                Value::from(
+                    p.completion_preferences
+                        .jsx_attribute_completion_style
+                        .0
+                        .as_ref(),
+                ),
             );
         }
-        set_tri!("inlayHints.enumMemberValues.enabled", p.inlay_hints_preferences.include_inlay_enum_member_value_hints);
-        set_tri!("inlayHints.functionLikeReturnTypes.enabled", p.inlay_hints_preferences.include_inlay_function_like_return_type_hints);
-        set_tri!("inlayHints.parameterTypes.enabled", p.inlay_hints_preferences.include_inlay_function_parameter_type_hints);
-        if !p.inlay_hints_preferences.include_inlay_parameter_name_hints.0.is_empty() {
+        set_tri!(
+            "inlayHints.enumMemberValues.enabled",
+            p.inlay_hints_preferences
+                .include_inlay_enum_member_value_hints
+        );
+        set_tri!(
+            "inlayHints.functionLikeReturnTypes.enabled",
+            p.inlay_hints_preferences
+                .include_inlay_function_like_return_type_hints
+        );
+        set_tri!(
+            "inlayHints.parameterTypes.enabled",
+            p.inlay_hints_preferences
+                .include_inlay_function_parameter_type_hints
+        );
+        if !p
+            .inlay_hints_preferences
+            .include_inlay_parameter_name_hints
+            .0
+            .is_empty()
+        {
             set_nested_value(
                 &mut config,
                 "inlayHints.parameterNames.enabled",
-                Value::from(p.inlay_hints_preferences.include_inlay_parameter_name_hints.0.as_ref()),
+                Value::from(
+                    p.inlay_hints_preferences
+                        .include_inlay_parameter_name_hints
+                        .0
+                        .as_ref(),
+                ),
             );
         }
-        if p.inlay_hints_preferences.include_inlay_parameter_name_hints_when_argument_matches_name.is_true()
-            || p.inlay_hints_preferences.include_inlay_parameter_name_hints_when_argument_matches_name.is_false()
+        if p.inlay_hints_preferences
+            .include_inlay_parameter_name_hints_when_argument_matches_name
+            .is_true()
+            || p.inlay_hints_preferences
+                .include_inlay_parameter_name_hints_when_argument_matches_name
+                .is_false()
         {
             set_nested_value(
                 &mut config,
                 "inlayHints.parameterNames.suppressWhenArgumentMatchesName",
-                Value::from(!p.inlay_hints_preferences.include_inlay_parameter_name_hints_when_argument_matches_name.is_true()),
+                Value::from(
+                    !p.inlay_hints_preferences
+                        .include_inlay_parameter_name_hints_when_argument_matches_name
+                        .is_true(),
+                ),
             );
         }
-        set_tri!("inlayHints.propertyDeclarationTypes.enabled", p.inlay_hints_preferences.include_inlay_property_declaration_type_hints);
-        set_tri!("inlayHints.variableTypes.enabled", p.inlay_hints_preferences.include_inlay_variable_type_hints);
-        if p.inlay_hints_preferences.include_inlay_variable_type_hints_when_type_matches_name.is_true()
-            || p.inlay_hints_preferences.include_inlay_variable_type_hints_when_type_matches_name.is_false()
+        set_tri!(
+            "inlayHints.propertyDeclarationTypes.enabled",
+            p.inlay_hints_preferences
+                .include_inlay_property_declaration_type_hints
+        );
+        set_tri!(
+            "inlayHints.variableTypes.enabled",
+            p.inlay_hints_preferences.include_inlay_variable_type_hints
+        );
+        if p.inlay_hints_preferences
+            .include_inlay_variable_type_hints_when_type_matches_name
+            .is_true()
+            || p.inlay_hints_preferences
+                .include_inlay_variable_type_hints_when_type_matches_name
+                .is_false()
         {
             set_nested_value(
                 &mut config,
                 "inlayHints.variableTypes.suppressWhenTypeMatchesName",
-                Value::from(!p.inlay_hints_preferences.include_inlay_variable_type_hints_when_type_matches_name.is_true()),
+                Value::from(
+                    !p.inlay_hints_preferences
+                        .include_inlay_variable_type_hints_when_type_matches_name
+                        .is_true(),
+                ),
             );
         }
-        set_tri!("implementationsCodeLens.enabled", p.code_lens_user_preferences.implementations_code_lens_enabled);
-        set_tri!("implementationsCodeLens.showOnAllClassMethods", p.code_lens_user_preferences.implementations_code_lens_show_on_all_class_methods);
-        set_tri!("implementationsCodeLens.showOnInterfaceMethods", p.code_lens_user_preferences.implementations_code_lens_show_on_interface_methods);
-        set_tri!("referencesCodeLens.enabled", p.code_lens_user_preferences.references_code_lens_enabled);
-        set_tri!("referencesCodeLens.showOnAllFunctions", p.code_lens_user_preferences.references_code_lens_show_on_all_functions);
-        set_tri!("unstable.allowRenameOfImportPath", p.allow_rename_of_import_path);
-        set_tri!("unstable.allowTextChangesInNewFiles", p.allow_text_changes_in_new_files);
+        set_tri!(
+            "implementationsCodeLens.enabled",
+            p.code_lens_user_preferences
+                .implementations_code_lens_enabled
+        );
+        set_tri!(
+            "implementationsCodeLens.showOnAllClassMethods",
+            p.code_lens_user_preferences
+                .implementations_code_lens_show_on_all_class_methods
+        );
+        set_tri!(
+            "implementationsCodeLens.showOnInterfaceMethods",
+            p.code_lens_user_preferences
+                .implementations_code_lens_show_on_interface_methods
+        );
+        set_tri!(
+            "referencesCodeLens.enabled",
+            p.code_lens_user_preferences.references_code_lens_enabled
+        );
+        set_tri!(
+            "referencesCodeLens.showOnAllFunctions",
+            p.code_lens_user_preferences
+                .references_code_lens_show_on_all_functions
+        );
+        set_tri!(
+            "unstable.allowRenameOfImportPath",
+            p.allow_rename_of_import_path
+        );
+        set_tri!(
+            "unstable.allowTextChangesInNewFiles",
+            p.allow_text_changes_in_new_files
+        );
         set_tri!("autoClosingTags.enabled", p.auto_closing_tags);
-        set_tri!("preferences.autoImportEntrypointDirectorySearch", p.auto_import_entrypoint_directory_search);
+        set_tri!(
+            "preferences.autoImportEntrypointDirectorySearch",
+            p.auto_import_entrypoint_directory_search
+        );
         if !p.auto_import_file_exclude_patterns.is_empty() {
             set_nested_value(
                 &mut config,
@@ -1308,16 +1501,31 @@ impl MarshalerTo for UserPreferences {
                 Value::from(p.auto_import_specifier_exclude_regexes.clone()),
             );
         }
-        set_tri!("tsserver.automaticTypeAcquisition.enabled", p.automatic_type_acquisition_enabled);
+        set_tri!(
+            "tsserver.automaticTypeAcquisition.enabled",
+            p.automatic_type_acquisition_enabled
+        );
         set_tri!("suggest.jsdoc.enabled", p.complete_jsdocs);
         set_owned_str!("customConfigFileName", p.custom_config_file_name);
-        set_tri!("disableAutomaticTypeAcquisition", p.disable_automatic_type_acquisition);
-        set_tri!("unstable.disableLineTextInReferences", p.disable_line_text_in_references);
+        set_tri!(
+            "disableAutomaticTypeAcquisition",
+            p.disable_automatic_type_acquisition
+        );
+        set_tri!(
+            "unstable.disableLineTextInReferences",
+            p.disable_line_text_in_references
+        );
         set_tri!("unstable.disableSuggestions", p.disable_suggestions);
         set_tri!("unstable.displayPartsForJSDoc", p.display_parts_for_jsdoc);
-        set_tri!("workspaceSymbols.excludeLibrarySymbols", p.exclude_library_symbols_in_nav_to);
+        set_tri!(
+            "workspaceSymbols.excludeLibrarySymbols",
+            p.exclude_library_symbols_in_nav_to
+        );
         set_tri!("format.enabled", p.format_enabled);
-        set_tri!("suggest.jsdoc.generateReturns", p.generate_return_in_doc_template);
+        set_tri!(
+            "suggest.jsdoc.generateReturns",
+            p.generate_return_in_doc_template
+        );
         if !p.import_module_specifier_ending.0.is_empty() {
             set_nested_value(
                 &mut config,
@@ -1332,7 +1540,10 @@ impl MarshalerTo for UserPreferences {
                 Value::from(p.import_module_specifier_preference.0),
             );
         }
-        set_tri!("unstable.lazyConfiguredProjectsFromExternalProject", p.lazy_configured_projects_from_external_project);
+        set_tri!(
+            "unstable.lazyConfiguredProjectsFromExternalProject",
+            p.lazy_configured_projects_from_external_project
+        );
         set_owned_str!("locale", p.locale);
         if p.maximum_hover_length != 0 {
             set_nested_value(
@@ -1341,18 +1552,28 @@ impl MarshalerTo for UserPreferences {
                 Value::from(p.maximum_hover_length),
             );
         }
-        set_tri!("preferences.organizeImports.accentCollation", p.organize_imports_accent_collation);
+        set_tri!(
+            "preferences.organizeImports.accentCollation",
+            p.organize_imports_accent_collation
+        );
         set_nested_value(
             &mut config,
             "preferences.organizeImports.caseFirst",
-            Value::from(serialize_preference_organize_imports_case_first(p.organize_imports_case_first)),
+            Value::from(serialize_preference_organize_imports_case_first(
+                p.organize_imports_case_first,
+            )),
         );
         set_nested_value(
             &mut config,
             "preferences.organizeImports.unicodeCollation",
-            Value::from(serialize_preference_organize_imports_collation(p.organize_imports_collation)),
+            Value::from(serialize_preference_organize_imports_collation(
+                p.organize_imports_collation,
+            )),
         );
-        set_tri!("preferences.organizeImports.caseSensitivity", p.organize_imports_ignore_case);
+        set_tri!(
+            "preferences.organizeImports.caseSensitivity",
+            p.organize_imports_ignore_case
+        );
         if !p.organize_imports_locale.is_empty() {
             set_nested_value(
                 &mut config,
@@ -1360,25 +1581,41 @@ impl MarshalerTo for UserPreferences {
                 Value::from(p.organize_imports_locale.as_str()),
             );
         }
-        set_tri!("preferences.organizeImports.numericCollation", p.organize_imports_numeric_collation);
+        set_tri!(
+            "preferences.organizeImports.numericCollation",
+            p.organize_imports_numeric_collation
+        );
         set_nested_value(
             &mut config,
             "preferences.organizeImports.sort",
-            Value::from(serialize_preference_organize_imports_sort(p.organize_imports_sort)),
+            Value::from(serialize_preference_organize_imports_sort(
+                p.organize_imports_sort,
+            )),
         );
         set_nested_value(
             &mut config,
             "preferences.organizeImports.typeOrder",
-            Value::from(serialize_preference_organize_imports_type_order(p.organize_imports_type_order)),
+            Value::from(serialize_preference_organize_imports_type_order(
+                p.organize_imports_type_order,
+            )),
         );
         set_nested_value(
             &mut config,
             "unstable.preferGoToSourceDefinition",
             Value::from(p.prefer_go_to_source_definition),
         );
-        set_tri!("preferences.preferTypeOnlyAutoImports", p.prefer_type_only_auto_imports);
-        set_tri!("preferences.useAliasesForRenames", p.provide_prefix_and_suffix_text_for_rename);
-        set_tri!("unstable.provideRefactorNotApplicableReason", p.provide_refactor_not_applicable_reason);
+        set_tri!(
+            "preferences.preferTypeOnlyAutoImports",
+            p.prefer_type_only_auto_imports
+        );
+        set_tri!(
+            "preferences.useAliasesForRenames",
+            p.provide_prefix_and_suffix_text_for_rename
+        );
+        set_tri!(
+            "unstable.provideRefactorNotApplicableReason",
+            p.provide_refactor_not_applicable_reason
+        );
         if !p.quote_preference.0.is_empty() {
             set_nested_value(
                 &mut config,
@@ -1386,7 +1623,10 @@ impl MarshalerTo for UserPreferences {
                 Value::from(p.quote_preference.0.as_ref()),
             );
         }
-        set_tri!("reportStyleChecksAsWarnings", p.report_style_checks_as_warnings);
+        set_tri!(
+            "reportStyleChecksAsWarnings",
+            p.report_style_checks_as_warnings
+        );
         set_tri!("validate.enabled", p.validate_enabled);
         if !p.workspace_symbols_scope.0.is_empty() {
             set_nested_value(

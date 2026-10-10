@@ -73,9 +73,7 @@ pub fn new_test_logger() -> TestLogger {
             verbose: false,
             writer: Box::new(SharedBuf(Arc::clone(&buf))),
         }),
-        prefix: Arc::new(|| {
-            format_time(UNIX_EPOCH + Duration::from_secs(1_349_085_672))
-        }),
+        prefix: Arc::new(|| format_time(UNIX_EPOCH + Duration::from_secs(1_349_085_672))),
         buf,
     }
 }

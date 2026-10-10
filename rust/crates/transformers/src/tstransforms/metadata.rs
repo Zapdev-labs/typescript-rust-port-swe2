@@ -25,7 +25,7 @@ use super::typeserializer::{
     MetadataSerializer, MetadataSerializerContext, new_metadata_serializer,
 };
 use crate::chain::TransformOptions;
-use crate::estransforms::{make_transformer, visit_each_child, Ec};
+use crate::estransforms::{Ec, make_transformer, visit_each_child};
 use crate::transformer::Transformer;
 
 /// `const USE_NEW_TYPE_METADATA_FORMAT`.
@@ -134,10 +134,8 @@ impl<'a> MetadataTransformer<'a> {
         ) {
             v.visit_each_child(cx, node).unwrap_or(node)
         } else {
-            let visited_modifiers =
-                v.visit_modifiers(cx, cx.nodes[node].modifiers().cloned());
-            let modifiers =
-                self.inject_class_type_metadata(ec, cx, visited_modifiers, node);
+            let visited_modifiers = v.visit_modifiers(cx, cx.nodes[node].modifiers().cloned());
+            let modifiers = self.inject_class_type_metadata(ec, cx, visited_modifiers, node);
             let name = v.visit_node(cx, cx.nodes[node].name());
             let type_parameters = v.visit_nodes(
                 cx,
@@ -191,10 +189,8 @@ impl<'a> MetadataTransformer<'a> {
         ) {
             v.visit_each_child(cx, node).unwrap_or(node)
         } else {
-            let visited_modifiers =
-                v.visit_modifiers(cx, cx.nodes[node].modifiers().cloned());
-            let modifiers =
-                self.inject_class_type_metadata(ec, cx, visited_modifiers, node);
+            let visited_modifiers = v.visit_modifiers(cx, cx.nodes[node].modifiers().cloned());
+            let modifiers = self.inject_class_type_metadata(ec, cx, visited_modifiers, node);
             let name = v.visit_node(cx, cx.nodes[node].name());
             let type_parameters = v.visit_nodes(
                 cx,
@@ -298,14 +294,31 @@ impl<'a> MetadataTransformer<'a> {
             self.parent.get(),
         );
         let d = cx.nodes[node].as_method_declaration();
-        let (asterisk_token, name, postfix_token, type_parameters, parameters, type_, full_signature, body) = (
+        let (
+            asterisk_token,
+            name,
+            postfix_token,
+            type_parameters,
+            parameters,
+            type_,
+            full_signature,
+            body,
+        ) = (
             d.function_like_with_body_base.body_base.asterisk_token,
             d.named_member_base.name,
             d.named_member_base.postfix_token,
-            d.function_like_with_body_base.function_like_base.type_parameters.clone(),
-            d.function_like_with_body_base.function_like_base.parameters.clone(),
+            d.function_like_with_body_base
+                .function_like_base
+                .type_parameters
+                .clone(),
+            d.function_like_with_body_base
+                .function_like_base
+                .parameters
+                .clone(),
             d.function_like_with_body_base.function_like_base.type_,
-            d.function_like_with_body_base.function_like_base.full_signature,
+            d.function_like_with_body_base
+                .function_like_base
+                .full_signature,
             d.function_like_with_body_base.body_base.body,
         );
         let asterisk_token = v.visit_node(cx, asterisk_token);
@@ -482,12 +495,13 @@ impl<'a> MetadataTransformer<'a> {
     ) -> Option<ModifierList> {
         let metadata = self.get_type_metadata(ec, cx, node, Some(node));
         if !metadata.is_empty() {
-            let original_nodes: Vec<NodeId> = list
-                .as_ref()
-                .map(|l| l.nodes.to_vec())
-                .unwrap_or_default();
+            let original_nodes: Vec<NodeId> =
+                list.as_ref().map(|l| l.nodes.to_vec()).unwrap_or_default();
             if original_nodes.is_empty() {
-                let mut res = ec.borrow_mut().factory.new_modifier_list(cx.nodes, metadata);
+                let mut res = ec
+                    .borrow_mut()
+                    .factory
+                    .new_modifier_list(cx.nodes, metadata);
                 if let Some(list) = &list {
                     res.loc = list.loc;
                 }
@@ -507,10 +521,8 @@ impl<'a> MetadataTransformer<'a> {
                 }
             }
             let rest_start = modifiers_array.len();
-            let decos: Vec<NodeId> = filter(&original_nodes, |&n| {
-                ast::is_decorator(&cx.nodes[n])
-            })
-            .into_owned();
+            let decos: Vec<NodeId> =
+                filter(&original_nodes, |&n| ast::is_decorator(&cx.nodes[n])).into_owned();
             modifiers_array.extend(decos);
             modifiers_array.extend(metadata);
             let other_modifiers: Vec<NodeId> = filter(&original_nodes[rest_start..], |&n| {
@@ -550,28 +562,25 @@ impl<'a> MetadataTransformer<'a> {
         }
         let metadata = self.get_type_metadata(ec, cx, node, container);
         if !metadata.is_empty() {
-            let original_nodes: Vec<NodeId> = list
-                .as_ref()
-                .map(|l| l.nodes.to_vec())
-                .unwrap_or_default();
+            let original_nodes: Vec<NodeId> =
+                list.as_ref().map(|l| l.nodes.to_vec()).unwrap_or_default();
             if original_nodes.is_empty() {
-                let mut res = ec.borrow_mut().factory.new_modifier_list(cx.nodes, metadata);
+                let mut res = ec
+                    .borrow_mut()
+                    .factory
+                    .new_modifier_list(cx.nodes, metadata);
                 if let Some(list) = &list {
                     res.loc = list.loc;
                 }
                 return Some(res);
             }
             let mut modifiers_array: Vec<NodeId> = Vec::new();
-            let decos: Vec<NodeId> = filter(&original_nodes, |&n| {
-                ast::is_decorator(&cx.nodes[n])
-            })
-            .into_owned();
+            let decos: Vec<NodeId> =
+                filter(&original_nodes, |&n| ast::is_decorator(&cx.nodes[n])).into_owned();
             modifiers_array.extend(decos);
             modifiers_array.extend(metadata);
-            let modifiers: Vec<NodeId> = filter(&original_nodes, |&n| {
-                ast::is_modifier(&cx.nodes[n])
-            })
-            .into_owned();
+            let modifiers: Vec<NodeId> =
+                filter(&original_nodes, |&n| ast::is_modifier(&cx.nodes[n])).into_owned();
             modifiers_array.extend(modifiers);
             let mut res = ec
                 .borrow_mut()
@@ -717,12 +726,7 @@ impl<'a> MetadataTransformer<'a> {
                         container,
                     )
             };
-            properties.push(self.new_metadata_property(
-                ec,
-                cx,
-                "type",
-                value,
-            ));
+            properties.push(self.new_metadata_property(ec, cx, "type", value));
         }
         if self.should_add_param_types_metadata(cx, node) {
             let value = {
@@ -763,10 +767,11 @@ impl<'a> MetadataTransformer<'a> {
         }
         if !properties.is_empty() {
             let props_list = ec.borrow_mut().factory.new_node_list(properties);
-            let object_literal = ec
-                .borrow_mut()
-                .factory
-                .new_object_literal_expression(cx.nodes, Some(props_list), true);
+            let object_literal = ec.borrow_mut().factory.new_object_literal_expression(
+                cx.nodes,
+                Some(props_list),
+                true,
+            );
             let type_info_metadata = ec.borrow_mut().factory.new_metadata_helper(
                 cx.nodes,
                 "design:typeinfo",
@@ -849,9 +854,7 @@ impl<'a> MetadataTransformer<'a> {
 
 /// `NewMetadataTransformer`.
 #[allow(dead_code)]
-pub fn new_metadata_transformer<'a>(
-    opts: &TransformOptions<'a>,
-) -> Option<Transformer<'a>> {
+pub fn new_metadata_transformer<'a>(opts: &TransformOptions<'a>) -> Option<Transformer<'a>> {
     let compiler_options = opts.compiler_options.unwrap_or(&EMPTY_COMPILER_OPTIONS);
     let state = Rc::new(MetadataTransformer {
         legacy_decorators: compiler_options.experimental_decorators.is_true(),

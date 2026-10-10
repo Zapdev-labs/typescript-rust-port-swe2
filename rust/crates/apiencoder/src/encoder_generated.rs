@@ -13,12 +13,11 @@ use tsc_ast::{Kind, Node};
 
 use crate::encoder::{
     EncSt, NODE_DATA_TYPE_CHILDREN, NODE_DATA_TYPE_EXTENDED_DATA, NODE_DATA_TYPE_STRING,
-    has_modifiers, record_extended_data_big_int_literal,
-    record_extended_data_no_substitution_template_literal,
-    record_extended_data_numeric_literal, record_extended_data_regular_expression_literal,
-    record_extended_data_source_file, record_extended_data_string_literal,
-    record_extended_data_template_head, record_extended_data_template_middle,
-    record_extended_data_template_tail, get_node_common_data_synthetic_expression,
+    get_node_common_data_synthetic_expression, has_modifiers, record_extended_data_big_int_literal,
+    record_extended_data_no_substitution_template_literal, record_extended_data_numeric_literal,
+    record_extended_data_regular_expression_literal, record_extended_data_source_file,
+    record_extended_data_string_literal, record_extended_data_template_head,
+    record_extended_data_template_middle, record_extended_data_template_tail,
 };
 use crate::stringtable::StringTable;
 
@@ -622,7 +621,9 @@ pub fn get_children_property_mask(node: &Node) -> u8 {
             b(n.type_.is_some()) << 0
         }
         Kind::FunctionType => {
-            let n = &node.as_function_type_node().function_or_constructor_type_node_base;
+            let n = &node
+                .as_function_type_node()
+                .function_or_constructor_type_node_base;
             let fl = &n.function_like_base;
             (b(fl.type_parameters.is_some()) << 0)
                 | (b(fl.parameters.is_some()) << 1)
@@ -1085,22 +1086,29 @@ pub fn record_node_strings(node: &Node, strs: &mut StringTable, nodes: &[Node]) 
         ),
         Kind::JSDocText => strs.add(
             nodes,
-            node.as_js_doc_text().js_doc_comment_base.text.join("").as_bytes(),
+            node.as_js_doc_text()
+                .js_doc_comment_base
+                .text
+                .join("")
+                .as_bytes(),
             node.kind,
             node.pos(),
             node.end(),
         ),
         Kind::JSDocLink => strs.add(
             nodes,
-            node.as_js_doc_link().js_doc_comment_base.text.join("").as_bytes(),
+            node.as_js_doc_link()
+                .js_doc_comment_base
+                .text
+                .join("")
+                .as_bytes(),
             node.kind,
             node.pos(),
             node.end(),
         ),
         Kind::JSDocLinkPlain => strs.add(
             nodes,
-            node
-                .as_js_doc_link_plain()
+            node.as_js_doc_link_plain()
                 .js_doc_comment_base
                 .text
                 .join("")
@@ -1111,8 +1119,7 @@ pub fn record_node_strings(node: &Node, strs: &mut StringTable, nodes: &[Node]) 
         ),
         Kind::JSDocLinkCode => strs.add(
             nodes,
-            node
-                .as_js_doc_link_code()
+            node.as_js_doc_link_code()
                 .js_doc_comment_base
                 .text
                 .join("")

@@ -78,8 +78,8 @@ impl<'a> NodeBuilderImpl<'a> {
         let res = node.and_then(|node| self.reuse_node(c, nodes, node))?;
 
         let ((text, _had_text), is_string_literal) = {
-                        let __program = c.program.clone().expect("program");
-            let n_nodes = __program.nodes((res).file_index());;
+            let __program = c.program.clone().expect("program");
+            let n_nodes = __program.nodes((res).file_index());
             (
                 ast::try_get_text_of_property_name(res, &n_nodes),
                 ast::is_string_literal(&n_nodes[res]),
@@ -91,8 +91,8 @@ impl<'a> NodeBuilderImpl<'a> {
 
         let kind = classify_property_name(&text, is_string_literal, is_method);
         let res_kind = {
-                        let __program = c.program.clone().expect("program");
-            let n_nodes = __program.nodes((res).file_index());;
+            let __program = c.program.clone().expect("program");
+            let n_nodes = __program.nodes((res).file_index());
             n_nodes[res].kind
         };
         if res_kind == Kind::Identifier && kind == PropertyNameNodeKind::Identifier {
@@ -105,7 +105,8 @@ impl<'a> NodeBuilderImpl<'a> {
         let renamed = match kind {
             PropertyNameNodeKind::Identifier => self.new_identifier(nodes, &text, None),
             PropertyNameNodeKind::StringLiteral => {
-                self.f.new_string_literal(nodes, &text, ast::TokenFlags::NONE)
+                self.f
+                    .new_string_literal(nodes, &text, ast::TokenFlags::NONE)
             }
             _ => return Some(res),
         };
@@ -149,8 +150,8 @@ impl<'a> NodeBuilderImpl<'a> {
         // Check these explicitly so we look into type arguments whether or
         // not they are in the tree.
         {
-                        let __program = c.program.clone().expect("program");
-            let nn = __program.nodes((node).file_index());;
+            let __program = c.program.clone().expect("program");
+            let nn = __program.nodes((node).file_index());
             let n = &nn[node];
             if ast::is_type_reference_node(n)
                 || ast::is_expression_with_type_arguments(n)
@@ -167,8 +168,8 @@ impl<'a> NodeBuilderImpl<'a> {
                 }
             }
         }
-                let __program = c.program.clone().expect("program");
-        let nn = __program.nodes((node).file_index());;
+        let __program = c.program.clone().expect("program");
+        let nn = __program.nodes((node).file_index());
         let mut children: Vec<NodeId> = Vec::new();
         nn[node].for_each_child(&nn, &mut |child| {
             children.push(child);
@@ -279,7 +280,8 @@ impl nodebuilder::SymbolTracker for WrappingTracker {
             .borrow_mut()
             .mark_error(Some(Box::new(move |nodes| {
                 if let Some(w) = &wrapped {
-                    w.borrow_mut().report_inaccessible_unique_symbol_error(nodes);
+                    w.borrow_mut()
+                        .report_inaccessible_unique_symbol_error(nodes);
                 }
             })));
     }
@@ -323,7 +325,8 @@ impl nodebuilder::SymbolTracker for WrappingTracker {
             .borrow_mut()
             .mark_error(Some(Box::new(move |nodes| {
                 if let Some(w) = &wrapped {
-                    w.borrow_mut().report_non_serializable_property(&property_name, nodes);
+                    w.borrow_mut()
+                        .report_non_serializable_property(&property_name, nodes);
                 }
             })));
     }
@@ -412,11 +415,8 @@ impl<'a> NodeBuilderImpl<'a> {
             wrapped: self.ctx.tracker.clone(),
             bound: bound.clone(),
         };
-        let new_tracker = new_symbol_tracker_impl(
-            &self.ctx,
-            Some(Box::new(wrapping)),
-            c.symbol_arena.clone(),
-        );
+        let new_tracker =
+            new_symbol_tracker_impl(&self.ctx, Some(Box::new(wrapping)), c.symbol_arena.clone());
         self.ctx.tracker = Some(Rc::new(RefCell::new(new_tracker)));
         self.ctx.tracked_symbols.borrow_mut().clear();
         bound
@@ -486,9 +486,7 @@ impl<'a> NodeBuilderImpl<'a> {
     ) {
         let mut b = bound.borrow_mut();
         b.had_error = state.had_error;
-        ctx_tracked
-            .borrow_mut()
-            .truncate(state.tracked_symbols_top);
+        ctx_tracked.borrow_mut().truncate(state.tracked_symbols_top);
         b.deferred_reports.truncate(state.unreported_errors_top);
     }
 
@@ -525,8 +523,8 @@ impl<'a> NodeBuilderImpl<'a> {
             return None;
         }
         {
-                        let __program = c.program.clone().expect("program");
-            let nn = __program.nodes((existing).file_index());;
+            let __program = c.program.clone().expect("program");
+            let nn = __program.nodes((existing).file_index());
             self.ctx.approximate_length += nn[existing].loc.end() - nn[existing].loc.pos();
         }
         transformed
@@ -541,11 +539,11 @@ impl<'a> NodeBuilderImpl<'a> {
         lit: NodeId,
     ) -> Option<String> {
         let (same_file, attributes, is_type_of) = {
-                        let __program = c.program.clone().expect("program");
-            let nn = __program.nodes((lit).file_index());;
+            let __program = c.program.clone().expect("program");
+            let nn = __program.nodes((lit).file_index());
             let lit_file = ast::get_source_file_of_node(Some(lit), &nn);
-                        let __program = c.program.clone().expect("program");
-            let pn = __program.nodes((parent).file_index());;
+            let __program = c.program.clone().expect("program");
+            let pn = __program.nodes((parent).file_index());
             let itn = pn[parent].as_import_type_node();
             (
                 self.ctx.enclosing_file == lit_file,
@@ -564,8 +562,8 @@ impl<'a> NodeBuilderImpl<'a> {
                 mode = m;
             }
             let name = {
-                                let __program = c.program.clone().expect("program");
-                let nn = __program.nodes((lit).file_index());;
+                let __program = c.program.clone().expect("program");
+                let nn = __program.nodes((lit).file_index());
                 nn[lit].text(&nn).into_owned()
             };
             let original_name = name.clone();
@@ -637,7 +635,9 @@ impl<'a> NodeBuilderImpl<'a> {
         let Some(new_name) = self.get_module_specifier_override(c, nodes, parent, lit) else {
             return lit;
         };
-        let res = self.f.new_string_literal(nodes, &new_name, ast::TokenFlags::NONE);
+        let res = self
+            .f
+            .new_string_literal(nodes, &new_name, ast::TokenFlags::NONE);
         self.e.borrow().set_original(res, lit);
         res
     }
@@ -755,7 +755,13 @@ fn attach_symbol_visit(
         let mut name: Option<NodeId> = None;
         if let Some(sym) = sym {
             let declared_type = sh.c.borrow_mut().get_declared_type_of_symbol(sym);
-            if sh.c.borrow_mut().sym(sym).flags.intersects(SymbolFlags::TYPE_PARAMETER) {
+            if sh
+                .c
+                .borrow_mut()
+                .sym(sym)
+                .flags
+                .intersects(SymbolFlags::TYPE_PARAMETER)
+            {
                 let mut b = sh.b.borrow_mut();
                 let mut c = sh.c.borrow_mut();
                 name = Some(b.type_parameter_to_name(&mut **c, cx.nodes, declared_type));
@@ -766,15 +772,18 @@ fn attach_symbol_visit(
             None => {
                 let text = {
                     let c = sh.c.borrow();
-                                        let __program = c.program.clone().expect("program");
-                    let nn = __program.nodes((node).file_index());;
+                    let __program = c.program.clone().expect("program");
+                    let nn = __program.nodes((node).file_index());
                     nn[node].text(&nn).into_owned()
                 };
                 sh.b.borrow_mut().new_identifier(cx.nodes, &text, sym)
             }
         };
         let name = nb_set_text_range(sh, cx.nodes, Some(name), Some(node))?;
-        sh.b.borrow().e.borrow().add_emit_flags(name, printer::EmitFlags::NO_ASCII_ESCAPING);
+        sh.b.borrow()
+            .e
+            .borrow()
+            .add_emit_flags(name, printer::EmitFlags::NO_ASCII_ESCAPING);
         return Some(name);
     }
     let visited = v.visit_each_child(cx, node).unwrap_or(node);
@@ -791,9 +800,11 @@ fn attach_symbol_to_leftmost_identifier(
 ) -> Option<NodeId> {
     let sh2 = sh.clone();
     let vis = ast::NodeVisitor::new(
-        Box::new(move |v: &ast::NodeVisitor, cx: &mut ast::VisitorCx<'_, '_>, n: NodeId| {
-            attach_symbol_visit(&sh2, v, cx, n, leftmost, sym)
-        }),
+        Box::new(
+            move |v: &ast::NodeVisitor, cx: &mut ast::VisitorCx<'_, '_>, n: NodeId| {
+                attach_symbol_visit(&sh2, v, cx, n, leftmost, sym)
+            },
+        ),
         ast::NodeVisitorHooks::default(),
     );
     // Go calls `visitorFunc(node)` directly for the root (the inner visitor
@@ -814,8 +825,8 @@ fn track_existing_entity_name(
     let mut introduces_error = false;
     let (leftmost, js_exports_left) = {
         let c = sh.c.borrow();
-                let __program = c.program.clone().expect("program");
-        let nn = __program.nodes((node).file_index());;
+        let __program = c.program.clone().expect("program");
+        let nn = __program.nodes((node).file_index());
         let leftmost = ast::get_first_identifier(node, &nn);
         let in_js = ast::is_in_js_file(Some(node), &nn);
         let js_special = in_js
@@ -840,19 +851,23 @@ fn track_existing_entity_name(
             let mut b = sh.b.borrow_mut();
             b.f.deep_clone_node(cx.nodes, node)
         };
-        return (introduces_error, nb_set_text_range(sh, cx.nodes, cloned, Some(node)), None);
+        return (
+            introduces_error,
+            nb_set_text_range(sh, cx.nodes, cloned, Some(node)),
+            None,
+        );
     }
     let meaning = {
         let c = sh.c.borrow();
-                let __program = c.program.clone().expect("program");
-        let nn = __program.nodes((node).file_index());;
+        let __program = c.program.clone().expect("program");
+        let nn = __program.nodes((node).file_index());
         crate::emitsupport::get_meaning_of_entity_name_reference(node, &nn)
     };
     let mut sym: Option<SymbolId>;
     let leftmost_is_this = {
         let c = sh.c.borrow();
-                let __program = c.program.clone().expect("program");
-        let nn = __program.nodes((leftmost).file_index());;
+        let __program = c.program.clone().expect("program");
+        let nn = __program.nodes((leftmost).file_index());
         ast::is_this_identifier(&nn[leftmost])
     };
     if leftmost_is_this {
@@ -874,7 +889,9 @@ fn track_existing_entity_name(
             {
                 let tracker = sh.b.borrow().ctx.tracker.clone();
                 if let Some(tracker) = tracker {
-                    tracker.borrow_mut().report_inaccessible_this_error(cx.nodes);
+                    tracker
+                        .borrow_mut()
+                        .report_inaccessible_this_error(cx.nodes);
                 }
             }
         }
@@ -884,16 +901,15 @@ fn track_existing_entity_name(
             None,
         );
     }
-    sym = sh.c.borrow_mut().resolve_entity_name(
-        Some(leftmost),
-        meaning,
-        true,
-        true,
-        None,
-    );
+    sym =
+        sh.c.borrow_mut()
+            .resolve_entity_name(Some(leftmost), meaning, true, true, None);
     if sh.b.borrow().ctx.enclosing_declaration.is_some()
         && !(sym.is_some_and(|s| {
-            sh.c.borrow_mut().sym(s).flags.intersects(SymbolFlags::TYPE_PARAMETER)
+            sh.c.borrow_mut()
+                .sym(s)
+                .flags
+                .intersects(SymbolFlags::TYPE_PARAMETER)
         }))
     {
         sym = sym.and_then(|s| {
@@ -909,13 +925,9 @@ fn track_existing_entity_name(
         // newly added parameters from the tuple, which might have different
         // meanings in the original context.
         let enc = sh.b.borrow().ctx.enclosing_declaration;
-        let sym_at_location = sh.c.borrow_mut().resolve_entity_name(
-            Some(leftmost),
-            meaning,
-            true,
-            true,
-            enc,
-        );
+        let sym_at_location =
+            sh.c.borrow_mut()
+                .resolve_entity_name(Some(leftmost), meaning, true, true, enc);
         let unknown_symbol = sh.c.borrow().unknown_symbol;
         let same_reference = {
             let mut c = sh.c.borrow_mut();
@@ -970,8 +982,8 @@ fn track_existing_entity_name(
             let vd = value_decl.unwrap();
             let is_param = {
                 let c = sh.c.borrow();
-                                let __program = c.program.clone().expect("program");
-                let nn = __program.nodes((vd).file_index());;
+                let __program = c.program.clone().expect("program");
+                let nn = __program.nodes((vd).file_index());
                 ast::is_part_of_parameter_declaration(vd, &nn)
                     || nn[vd].kind == Kind::JSDocParameterTag
             };
@@ -983,35 +995,33 @@ fn track_existing_entity_name(
                 );
             }
         }
-        let sym_is_type_param = sh.c.borrow_mut().sym(sym_v).flags.intersects(SymbolFlags::TYPE_PARAMETER);
+        let sym_is_type_param =
+            sh.c.borrow_mut()
+                .sym(sym_v)
+                .flags
+                .intersects(SymbolFlags::TYPE_PARAMETER);
         let node_is_decl_name = {
             let c = sh.c.borrow();
-                        let __program = c.program.clone().expect("program");
-            let nn = __program.nodes((node).file_index());;
+            let __program = c.program.clone().expect("program");
+            let nn = __program.nodes((node).file_index());
             ast::is_declaration_name(node, &nn)
         };
         // Type parameters are visible in the current context if they are
         // resolvable.
-        if !sym_is_type_param
-            && !node_is_decl_name
-            && {
-                let mut c = sh.c.borrow_mut();
-                c.is_symbol_accessible(sym, enclosing_declaration, meaning, false)
-                    .accessibility
-                    != printer::SymbolAccessibility::Accessible
-            }
-        {
+        if !sym_is_type_param && !node_is_decl_name && {
+            let mut c = sh.c.borrow_mut();
+            c.is_symbol_accessible(sym, enclosing_declaration, meaning, false)
+                .accessibility
+                != printer::SymbolAccessibility::Accessible
+        } {
             nb_report_inference_fallback(sh, cx.nodes, node);
             introduces_error = true;
         } else {
             let tracker = sh.b.borrow().ctx.tracker.clone();
             if let Some(tracker) = tracker {
-                tracker.borrow_mut().track_symbol(
-                    sym_v,
-                    enclosing_declaration,
-                    meaning,
-                    cx.nodes,
-                );
+                tracker
+                    .borrow_mut()
+                    .track_symbol(sym_v, enclosing_declaration, meaning, cx.nodes);
             }
         }
         return (
@@ -1042,8 +1052,7 @@ fn try_visit_indexed_access(
         let d = cx.nodes[node].as_indexed_access_type_node();
         (d.object_type, d.index_type)
     };
-    let result_object_type = object_type
-        .and_then(|o| try_visit_simple_type_node(sh, v, cx, o))?;
+    let result_object_type = object_type.and_then(|o| try_visit_simple_type_node(sh, v, cx, o))?;
     let index = v.visit_node(cx, index_type);
     let updated = {
         let mut b = sh.b.borrow_mut();
@@ -1082,7 +1091,10 @@ fn try_visit_type_query(
 ) -> Option<NodeId> {
     let (expr_name, type_arguments) = {
         let d = cx.nodes[node].as_type_query_node();
-        (d.expr_name, d.node_with_type_arguments_base.type_arguments.clone())
+        (
+            d.expr_name,
+            d.node_with_type_arguments_base.type_arguments.clone(),
+        )
     };
     let (introduces_error, new_expr_name, _) = expr_name
         .map(|e| track_existing_entity_name(sh, cx, e, None))
@@ -1118,8 +1130,8 @@ fn try_visit_type_reference(
 ) -> Option<NodeId> {
     {
         let c = sh.c.borrow();
-                let __program = c.program.clone().expect("program");
-        let nn = __program.nodes((node).file_index());;
+        let __program = c.program.clone().expect("program");
+        let nn = __program.nodes((node).file_index());
         if ast::is_const_type_reference(&nn[node], &nn) {
             return None;
         }
@@ -1164,7 +1176,10 @@ fn try_visit_type_reference(
     }
     let (type_name, type_arguments) = {
         let d = cx.nodes[node].as_type_reference_node();
-        (d.type_name, d.node_with_type_arguments_base.type_arguments.clone())
+        (
+            d.type_name,
+            d.node_with_type_arguments_base.type_arguments.clone(),
+        )
     };
     let (introduces_error, new_name, _) = type_name
         .map(|t| track_existing_entity_name(sh, cx, t, None))
@@ -1245,19 +1260,29 @@ fn visit_existing_node_tree_symbols_worker(
         Kind::JSDocNullableType => {
             let t = cx.nodes[node].as_js_doc_nullable_type().type_;
             let visited = v.visit_node(cx, t);
-            let kw = cx.factory.new_keyword_expression(cx.nodes, Kind::NullKeyword);
+            let kw = cx
+                .factory
+                .new_keyword_expression(cx.nodes, Kind::NullKeyword);
             let null_lit = cx.factory.new_literal_type_node(cx.nodes, Some(kw));
             let list = cx.factory.new_node_list(
-                [visited, Some(null_lit)].into_iter().flatten().collect::<Vec<_>>(),
+                [visited, Some(null_lit)]
+                    .into_iter()
+                    .flatten()
+                    .collect::<Vec<_>>(),
             );
             return Some(cx.factory.new_union_type_node(cx.nodes, Some(list)));
         }
         Kind::JSDocOptionalType => {
             let t = cx.nodes[node].as_js_doc_optional_type().type_;
             let visited = v.visit_node(cx, t);
-            let undef = cx.factory.new_keyword_type_node(cx.nodes, Kind::UndefinedKeyword);
+            let undef = cx
+                .factory
+                .new_keyword_type_node(cx.nodes, Kind::UndefinedKeyword);
             let list = cx.factory.new_node_list(
-                [visited, Some(undef)].into_iter().flatten().collect::<Vec<_>>(),
+                [visited, Some(undef)]
+                    .into_iter()
+                    .flatten()
+                    .collect::<Vec<_>>(),
             );
             return Some(cx.factory.new_union_type_node(cx.nodes, Some(list)));
         }
@@ -1299,8 +1324,7 @@ fn visit_existing_node_tree_symbols_worker(
                 let tag = cx.nodes[t].as_js_doc_parameter_or_property_tag();
                 let should_be_optional = tag.is_bracketed
                     || (tag.type_expression.is_some()
-                        && cx.nodes[tag.type_expression.unwrap()].kind
-                            == Kind::JSDocOptionalType);
+                        && cx.nodes[tag.type_expression.unwrap()].kind == Kind::JSDocOptionalType);
                 let question = if should_be_optional {
                     Some(cx.factory.new_token(cx.nodes, Kind::QuestionToken))
                 } else {
@@ -1310,9 +1334,11 @@ fn visit_existing_node_tree_symbols_worker(
                 // serialize on demand if it doesn't serialze? strada does
                 // something funky here.
                 let ty = v.visit_node(cx, cx.nodes[t].type_expression());
-                members.push(cx.factory.new_property_signature_declaration(
-                    cx.nodes, None, name, question, ty, None,
-                ));
+                members.push(
+                    cx.factory.new_property_signature_declaration(
+                        cx.nodes, None, name, question, ty, None,
+                    ),
+                );
             }
             let list = cx.factory.new_node_list(members);
             return Some(cx.factory.new_type_literal_node(cx.nodes, Some(list)));
@@ -1407,18 +1433,18 @@ fn visit_existing_node_tree_symbols_worker(
         if ast::is_type_operator_node(&cx.nodes[node]) {
             let to = cx.nodes[node].as_type_operator_node();
             if to.operator == Kind::UniqueKeyword
-                && to.type_.is_some_and(|t| cx.nodes[t].kind == Kind::SymbolKeyword)
+                && to
+                    .type_
+                    .is_some_and(|t| cx.nodes[t].kind == Kind::SymbolKeyword)
             {
                 let non_fake_enclosing = {
                     let mut b = sh.b.borrow_mut();
                     let mut c = sh.c.borrow_mut();
                     b.get_enclosing_declaration_ignoring_fake_scope(&mut **c)
                 };
-                let same_scope = ast::find_ancestor(
-                    Some(node),
-                    cx.nodes,
-                    &mut |a, _| Some(a.id) == non_fake_enclosing,
-                );
+                let same_scope = ast::find_ancestor(Some(node), cx.nodes, &mut |a, _| {
+                    Some(a.id) == non_fake_enclosing
+                });
                 if same_scope.is_none() {
                     nb_mark_error(sh);
                     return Some(node);
@@ -1436,9 +1462,9 @@ fn visit_existing_node_tree_symbols_worker(
             // don't reuse types that contain it
             // Ex: import("pkg", { assert: {} }
             let itn = cx.nodes[node].as_import_type_node();
-            let attrs_is_assert = itn.attributes.is_some_and(|a| {
-                cx.nodes[a].as_import_attributes().token == Kind::AssertKeyword
-            });
+            let attrs_is_assert = itn
+                .attributes
+                .is_some_and(|a| cx.nodes[a].as_import_attributes().token == Kind::AssertKeyword);
             let (is_type_of, argument, attributes, qualifier, type_arguments) = (
                 itn.is_type_of,
                 itn.argument,
@@ -1521,15 +1547,13 @@ fn visit_existing_node_tree_symbols_worker(
             let should_remove_declaration = {
                 let name = cx.nodes[node].name().unwrap();
                 let expr = cx.nodes[name].as_computed_property_name().expression;
-                let allow_unresolved = sh
-                    .b
-                    .borrow()
-                    .ctx
-                    .internal_flags
-                    .intersects(nodebuilder::InternalFlags::ALLOW_UNRESOLVED_NAMES);
-                let entity_name = expr.is_some_and(|e| {
-                    ast::is_entity_name_expression(&cx.nodes[e], cx.nodes)
-                });
+                let allow_unresolved =
+                    sh.b.borrow()
+                        .ctx
+                        .internal_flags
+                        .intersects(nodebuilder::InternalFlags::ALLOW_UNRESOLVED_NAMES);
+                let entity_name =
+                    expr.is_some_and(|e| ast::is_entity_name_expression(&cx.nodes[e], cx.nodes));
                 let any_type = expr.is_some_and(|_e| {
                     let t = sh.c.borrow_mut().check_computed_property_name(name);
                     sh.c.borrow().types.get(t).flags.intersects(TypeFlags::ANY)
@@ -1742,8 +1766,14 @@ fn visit_existing_node_tree_symbols_worker(
                     let (type_params, params) = {
                         let d = cx.nodes[node].as_function_type_node();
                         (
-                            d.function_or_constructor_type_node_base.function_like_base.type_parameters.clone(),
-                            d.function_or_constructor_type_node_base.function_like_base.parameters.clone(),
+                            d.function_or_constructor_type_node_base
+                                .function_like_base
+                                .type_parameters
+                                .clone(),
+                            d.function_or_constructor_type_node_base
+                                .function_like_base
+                                .parameters
+                                .clone(),
                         )
                     };
                     return Some(
@@ -1762,9 +1792,18 @@ fn visit_existing_node_tree_symbols_worker(
                     let (modifiers, type_params, params) = {
                         let d = cx.nodes[node].as_constructor_type_node();
                         (
-                            d.function_or_constructor_type_node_base.modifiers_base.modifiers.clone(),
-                            d.function_or_constructor_type_node_base.function_like_base.type_parameters.clone(),
-                            d.function_or_constructor_type_node_base.function_like_base.parameters.clone(),
+                            d.function_or_constructor_type_node_base
+                                .modifiers_base
+                                .modifiers
+                                .clone(),
+                            d.function_or_constructor_type_node_base
+                                .function_like_base
+                                .type_parameters
+                                .clone(),
+                            d.function_or_constructor_type_node_base
+                                .function_like_base
+                                .parameters
+                                .clone(),
                         )
                     };
                     return Some(
@@ -1793,8 +1832,7 @@ fn visit_existing_node_tree_symbols_worker(
             .is_some_and(|e| ast::is_entity_name_expression(&cx.nodes[e], cx.nodes))
     {
         let expr = cx.nodes[node].as_computed_property_name().expression?;
-        let (introduces_error, result, _) =
-            track_existing_entity_name(sh, cx, expr, None);
+        let (introduces_error, result, _) = track_existing_entity_name(sh, cx, expr, None);
         if !introduces_error {
             return Some(
                 cx.factory
@@ -1817,15 +1855,10 @@ fn visit_existing_node_tree_symbols_worker(
             let d = cx.nodes[node].as_type_predicate_node();
             (d.asserts_modifier, d.parameter_name, d.type_)
         };
-        let parameter_name = if parameter_name
-            .is_some_and(|p| cx.nodes[p].kind == Kind::Identifier)
+        let parameter_name = if parameter_name.is_some_and(|p| cx.nodes[p].kind == Kind::Identifier)
         {
-            let (introduces_error, result, _) = track_existing_entity_name(
-                sh,
-                cx,
-                parameter_name.unwrap(),
-                None,
-            );
+            let (introduces_error, result, _) =
+                track_existing_entity_name(sh, cx, parameter_name.unwrap(), None);
             // Should not usually happen the only case is when a type
             // predicate comes from a JSDoc type annotation with it's own
             // parameter symbol definition.
@@ -1842,13 +1875,7 @@ fn visit_existing_node_tree_symbols_worker(
         let type_ = v.visit_node(cx, type_);
         return Some(
             cx.factory
-                .update_type_predicate_node(
-                    cx.nodes,
-                    node,
-                    asserts_modifier,
-                    parameter_name,
-                    type_,
-                )
+                .update_type_predicate_node(cx.nodes, node, asserts_modifier, parameter_name, type_)
                 .unwrap_or(node),
         );
     }
@@ -1910,8 +1937,7 @@ fn visit_existing_node_tree_symbols_worker(
                 res = cx.factory.clone_node(cx.nodes, res);
                 res = nb_set_text_range(sh, cx.nodes, Some(res), Some(node))?;
             }
-            sh.b
-                .borrow()
+            sh.b.borrow()
                 .e
                 .borrow()
                 .add_emit_flags(res, printer::EmitFlags::SINGLE_LINE);
@@ -1940,12 +1966,18 @@ fn visit_existing_node_tree_symbols_worker(
                 .intersects(ast::TokenFlags::SINGLE_QUOTE)
         {
             // set single quote on string literals
-            let f = cx.nodes[c2].as_string_literal().literal_expression_base.literal_like_node_base.token_flags;
-            cx.nodes[c2].as_string_literal_mut().literal_expression_base.literal_like_node_base.token_flags =
-                f | ast::TokenFlags::SINGLE_QUOTE;
+            let f = cx.nodes[c2]
+                .as_string_literal()
+                .literal_expression_base
+                .literal_like_node_base
+                .token_flags;
+            cx.nodes[c2]
+                .as_string_literal_mut()
+                .literal_expression_base
+                .literal_like_node_base
+                .token_flags = f | ast::TokenFlags::SINGLE_QUOTE;
         }
-        sh.b
-            .borrow()
+        sh.b.borrow()
             .e
             .borrow()
             .add_emit_flags(c2, printer::EmitFlags::NO_ASCII_ESCAPING);
@@ -1958,9 +1990,7 @@ fn visit_existing_node_tree_symbols_worker(
 /// `getExistingNodeTreeVisitor` (nodecopy.go) — builds the reuse visitor.
 /// PORT: returns a `NodeVisitor` over the shared `ExistingNodeTreeState`;
 /// the `nonLocalNode` flag is the `Cell` on `sh`.
-fn get_existing_node_tree_visitor<'v, 'a>(
-    sh: NCShared<'v, 'a>,
-) -> ast::NodeVisitor<'v>
+fn get_existing_node_tree_visitor<'v, 'a>(sh: NCShared<'v, 'a>) -> ast::NodeVisitor<'v>
 where
     'a: 'v,
 {
@@ -2021,8 +2051,7 @@ where
                         )
                     });
                 }
-                let mut result =
-                    visit_existing_node_tree_symbols_worker(sh, v, cx, node);
+                let mut result = visit_existing_node_tree_symbols_worker(sh, v, cx, node);
                 if let Some(exit) = exit {
                     exit.restore(&mut **sh.b.borrow_mut(), cx.nodes);
                 }
@@ -2094,25 +2123,22 @@ where
                 },
             )),
             visit_node: Some(Box::new(
-                move |cx: &mut ast::VisitorCx<'_, '_>,
-                      node: NodeId,
-                      v: &ast::NodeVisitor| {
+                move |cx: &mut ast::VisitorCx<'_, '_>, node: NodeId, v: &ast::NodeVisitor| {
                     // Capture if the current node is in the current file so
                     // node lists know if they can keep positions or not
                     let sh = &sh4;
                     let old_non_local_node = sh.non_local_node.get();
                     let enclosing_file = sh.b.borrow().ctx.enclosing_file;
-                    let most_original = sh
-                        .b
-                        .borrow()
-                        .e
-                        .borrow()
-                        .most_original(Some(node))
-                        .unwrap_or(node);
+                    let most_original =
+                        sh.b.borrow()
+                            .e
+                            .borrow()
+                            .most_original(Some(node))
+                            .unwrap_or(node);
                     let file_of = {
                         let c = sh.c.borrow();
-                                                let __program = c.program.clone().expect("program");
-                        let nn = __program.nodes((most_original).file_index());;
+                        let __program = c.program.clone().expect("program");
+                        let nn = __program.nodes((most_original).file_index());
                         ast::get_source_file_of_node(Some(most_original), &nn)
                     };
                     sh.non_local_node

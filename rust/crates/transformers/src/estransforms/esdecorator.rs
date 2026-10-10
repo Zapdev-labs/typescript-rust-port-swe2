@@ -2929,8 +2929,7 @@ impl<'a> EsDecoratorTransformer<'a> {
 
         if let Some(ci) = self.class_info_stack.borrow().clone() {
             if ast::is_static(&cx.nodes[node]) {
-                initializer =
-                    self.inject_pending_initializers(ec, &ci, cx, true, initializer);
+                initializer = self.inject_pending_initializers(ec, &ci, cx, true, initializer);
                 if let Some(extra_initializers_name) = result.extra_initializers_name {
                     let this_arg = match ci.borrow().class_this {
                         Some(class_this) => class_this,
@@ -2945,8 +2944,7 @@ impl<'a> EsDecoratorTransformer<'a> {
                     ci.borrow_mut().pending_static_initializers.push(helper);
                 }
             } else {
-                initializer =
-                    self.inject_pending_initializers(ec, &ci, cx, false, initializer);
+                initializer = self.inject_pending_initializers(ec, &ci, cx, false, initializer);
                 if let Some(extra_initializers_name) = result.extra_initializers_name {
                     let this_expr = ec.borrow_mut().factory.new_this_expression(cx.nodes);
                     let helper = ec.borrow_mut().factory.new_run_initializers_helper(
@@ -2994,8 +2992,7 @@ impl<'a> EsDecoratorTransformer<'a> {
                 let prop_name_expression = cx.nodes[prop_name].expression();
                 let cache_assignment =
                     super::classfields::find_computed_property_name_cache_assignment(
-                        cx.nodes,
-                        prop_name,
+                        cx.nodes, prop_name,
                     );
                 if let Some(cache_assignment) = cache_assignment {
                     let visited_prop_name_expression =
@@ -4305,12 +4302,10 @@ impl<'a> EsDecoratorTransformer<'a> {
             ast::skip_outer_expressions(expression, ast::outer_expression_kinds::ALL, cx.nodes);
         if ast::is_access_expression(&cx.nodes[inner_expression]) {
             let (target, this_arg) = self.create_call_binding(ec, cx, expression);
-            let bind_call = ec.borrow_mut().factory.new_function_bind_call(
-                cx.nodes,
-                target,
-                this_arg,
-                vec![],
-            );
+            let bind_call =
+                ec.borrow_mut()
+                    .factory
+                    .new_function_bind_call(cx.nodes, target, this_arg, vec![]);
             return ec.borrow_mut().factory.restore_outer_expressions(
                 cx.nodes,
                 Some(expression),
@@ -4744,10 +4739,12 @@ impl<'a> EsDecoratorTransformer<'a> {
             NodeFlags::NONE,
         );
         let this_expr = ec.borrow_mut().factory.new_this_expression(cx.nodes);
-        let call = ec
-            .borrow_mut()
-            .factory
-            .new_function_call_call(cx.nodes, access, Some(this_expr), vec![]);
+        let call = ec.borrow_mut().factory.new_function_call_call(
+            cx.nodes,
+            access,
+            Some(this_expr),
+            vec![],
+        );
         let return_stmt = cx.factory.new_return_statement(cx.nodes, Some(call));
         let stmts = cx.factory.new_node_list([return_stmt]);
         let body = cx.factory.new_block(cx.nodes, Some(stmts), false);
@@ -4786,10 +4783,12 @@ impl<'a> EsDecoratorTransformer<'a> {
         );
         let this_expr = ec.borrow_mut().factory.new_this_expression(cx.nodes);
         let value_ident = cx.factory.new_identifier(cx.nodes, "value");
-        let call = ec
-            .borrow_mut()
-            .factory
-            .new_function_call_call(cx.nodes, access, Some(this_expr), vec![value_ident]);
+        let call = ec.borrow_mut().factory.new_function_call_call(
+            cx.nodes,
+            access,
+            Some(this_expr),
+            vec![value_ident],
+        );
         let return_stmt = cx.factory.new_return_statement(cx.nodes, Some(call));
         let stmts = cx.factory.new_node_list([return_stmt]);
         let body = cx.factory.new_block(cx.nodes, Some(stmts), false);
@@ -5124,11 +5123,7 @@ fn can_ignore_empty_string_literal_in_assigned_name(
         ast::skip_outer_expressions(node, ast::outer_expression_kinds::ALL, cx.nodes);
     ast::is_class_expression(&cx.nodes[inner_expression])
         && cx.nodes[inner_expression].name().is_none()
-        && !ast::class_or_constructor_parameter_is_decorated(
-            false,
-            inner_expression,
-            cx.nodes,
-        )
+        && !ast::class_or_constructor_parameter_is_decorated(false, inner_expression, cx.nodes)
 }
 
 /// `injectClassThisAssignmentIfMissing`.
