@@ -1750,7 +1750,8 @@ impl Checker {
                 let constraint_decl = self
                     .get_constraint_declaration_for_mapped_type(t)
                     .expect("keyof constraint declaration");
-                let nodes = self.program_nodes(constraint_decl);
+                                let __program = self.program.clone().expect("program");
+                let nodes = __program.nodes((constraint_decl).file_index());;
                 let ty_node = nodes[constraint_decl]
                     .type_()
                     .expect("type operator operand");
@@ -1956,7 +1957,8 @@ impl Checker {
 
     /// `c.getSymbolOfDeclaration` (checker.go).
     pub fn get_symbol_of_declaration(&mut self, node: NodeId) -> Option<SymbolId> {
-        let symbol = self.program_nodes(node)[node].symbol();
+                let __program = self.program.clone().expect("program");
+        let symbol = __program.nodes((node).file_index())[node].symbol();
         symbol.map(|s| {
             let late = self.get_late_bound_symbol(s);
             self.get_merged_symbol(late)
@@ -1988,7 +1990,8 @@ impl Checker {
     ) -> (Option<SignatureId>, Vec<SignatureId>) {
         self.apparent_argument_count = Some(argument_count);
         let mut candidates_out_array: Vec<SignatureId> = Vec::new();
-        let nodes = self.program_nodes(node);
+                let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());;
         let res = if ast::is_parse_tree_node(&nodes[node]) {
             self.get_resolved_signature(node, Some(&mut candidates_out_array), check_mode)
         } else {
@@ -2719,7 +2722,8 @@ impl Checker {
                         .iter()
                         .copied()
                         .find(|&d| {
-                            let nodes = self.program_nodes(d);
+                                                        let __program = self.program.clone().expect("program");
+                            let nodes = __program.nodes((d).file_index());;
                             ast::is_type_alias_declaration(&nodes[d])
                         })
                 };
@@ -2788,7 +2792,8 @@ impl Checker {
             .declarations
             .clone();
         for declaration in declarations {
-            let nodes = self.program_nodes(declaration);
+                        let __program = self.program.clone().expect("program");
+            let nodes = __program.nodes((declaration).file_index());;
             match nodes[declaration].kind {
                 ast::Kind::ClassDeclaration
                 | ast::Kind::InterfaceDeclaration
@@ -2926,12 +2931,11 @@ impl Checker {
         let mut ambient_module_symbols: Vec<SymbolId> = Vec::new();
         let mut augmentations: Vec<Vec<NodeId>> = Vec::new();
         let files = self.files.clone();
+        // PORT(borrowck): clone the program `Rc` so per-file `Ref` arena
+        // borrows don't pin `*self` while `merge_*` needs `&mut`.
+        let __program = self.program.clone().expect("program");
         for file in &files {
-            let nodes = self
-                .program
-                .as_ref()
-                .expect("program")
-                .nodes(file.file_index());
+            let nodes = __program.nodes(file.file_index());
             let file_node = &nodes[*file];
             if !ast::is_external_or_commonjs_module(file_node.as_source_file()) {
                 // It is an error for a non-external-module (i.e. script) to
@@ -2997,11 +3001,7 @@ impl Checker {
         //     types.
         for list in &augmentations {
             for &augmentation in list {
-                let nodes = self
-                    .program
-                    .as_ref()
-                    .expect("program")
-                    .nodes(augmentation.file_index());
+                let nodes = __program.nodes(augmentation.file_index());
                 let parent = nodes[augmentation].parent.unwrap_or(NodeId::NONE);
                 if ast::is_global_scope_augmentation(&nodes[parent]) {
                     self.merge_module_augmentation(augmentation);
@@ -3060,11 +3060,7 @@ impl Checker {
         // modules are indexed
         for list in &augmentations {
             for &augmentation in list {
-                let nodes = self
-                    .program
-                    .as_ref()
-                    .expect("program")
-                    .nodes(augmentation.file_index());
+                let nodes = __program.nodes(augmentation.file_index());
                 let parent = nodes[augmentation].parent.unwrap_or(NodeId::NONE);
                 if !ast::is_global_scope_augmentation(&nodes[parent]) {
                     self.merge_module_augmentation(augmentation);
@@ -3141,7 +3137,8 @@ impl Checker {
             self.sym_mut(target).flags.insert(source_flags);
             let source_value_declaration = self.sym(source).value_declaration;
             if let Some(value_declaration) = source_value_declaration {
-                let nodes = self.program_nodes(value_declaration);
+                                let __program = self.program.clone().expect("program");
+                let nodes = __program.nodes((value_declaration).file_index());;
                 let mut arena = self.symbol_arena.borrow_mut();
                 tsc_binder::binder::set_value_declaration(&mut arena, target, value_declaration, &nodes);
             }
@@ -3175,9 +3172,8 @@ impl Checker {
             // won't make much sense.
             if target != self.global_this_symbol {
                 let first_declaration = crate::checker_b::get_first_declaration(self, source);
-                let nodes = self.program_nodes(
-                    first_declaration.expect("first declaration"),
-                );
+                                let __program = self.program.clone().expect("program");
+                let nodes = __program.nodes(first_declaration.expect("first declaration").file_index());
                 let name_node = ast::get_name_of_declaration(first_declaration, &nodes);
                 let target_str = self.symbol_to_string(Some(target));
                 self.error(
@@ -3208,7 +3204,8 @@ impl Checker {
 
     /// `(c *Checker) mergeModuleAugmentation` (checker.go).
     pub fn merge_module_augmentation(&mut self, module_name: NodeId) {
-        let nodes = self.program_nodes(module_name);
+                let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((module_name).file_index());;
         let module_node = nodes[module_name].parent.expect("module augmentation parent");
         let augmentation_symbol = nodes[module_node]
             .symbol()
@@ -3384,7 +3381,8 @@ impl Checker {
                 .declarations
                 .clone();
             for declaration in declarations {
-                let nodes = self.program_nodes(declaration);
+                                let __program = self.program.clone().expect("program");
+                let nodes = __program.nodes((declaration).file_index());;
                 if !ast::is_type_declaration(declaration, &nodes) {
                     let diagnostic = self.new_diagnostic_for_node(
                         Some(declaration),
@@ -3495,13 +3493,15 @@ impl Checker {
         // The resolver walks `location`'s ancestors within its own file arena.
         // With no location (global lookups) the arena is only read for the
         // error paths, which are guarded on `original_location.is_some()`.
+        // PORT(borrowck): `nodes` must stay live across `resolver.resolve`,
+        // which borrows `&mut self` through `host` — borrow the arena from a
+        // cloned program handle instead of `*self`.
+        let __program = self.program.clone().expect("program");
         let nodes = match location {
-            Some(loc) => self.program_nodes(loc),
-            None => self
-                .files
-                .first()
-                .map(|&f| self.program_nodes(f))
-                .unwrap_or_default(),
+            Some(loc) => __program.nodes(loc.file_index()),
+            // `files[0]` mirrors Go `c.files[0]` — panics on an empty
+            // program, matching Go's index-out-of-range.
+            None => __program.nodes(self.files[0].file_index()),
         };
         let symbol_arena = self.symbol_arena.clone();
         let compiler_options = self.compiler_options.clone();
@@ -3560,7 +3560,8 @@ impl Checker {
         location: Option<NodeId>,
         _nodes: &[ast::Node],
     ) -> evaluator::Result {
-        let nodes = self.program_nodes(expr);
+                let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((expr).file_index());;
         match nodes[expr].kind {
             ast::Kind::Identifier | ast::Kind::PropertyAccessExpression => {
                 let symbol = self.resolve_entity_name(
@@ -3610,7 +3611,8 @@ impl Checker {
                 if self.is_constant_variable(symbol) {
                     let declaration = self.sym(symbol).value_declaration;
                     if let Some(declaration) = declaration {
-                        let decl_nodes = self.program_nodes(declaration);
+                                                let __program = self.program.clone().expect("program");
+                        let decl_nodes = __program.nodes((declaration).file_index());;
                         if ast::is_variable_declaration(&decl_nodes[declaration])
                             && decl_nodes[declaration].type_().is_none()
                             && decl_nodes[declaration]
@@ -3704,11 +3706,28 @@ impl Checker {
 
     /// `program.nodes(...)` — the per-file node arena for `NodeId` derefs
     /// (the `Program` trait's port-added accessor).
-    pub fn program_nodes(&self, node: NodeId) -> Rc<Vec<ast::Node>> {
+    ///
+    /// Returns a `Ref` over the shared `Rc<RefCell<Vec<Node>>>` arena. The
+    /// guard borrows `*self` — where the arena must stay live across a
+    /// `&mut self` call, clone the program handle into a local first:
+    /// `let program = self.program.clone().unwrap(); let nodes = program.nodes(i);`.
+    pub fn program_nodes(&self, node: NodeId) -> std::cell::Ref<'_, Vec<ast::Node>> {
         self.program
             .as_ref()
             .expect("program")
             .nodes(node.file_index())
+    }
+
+    /// `program.nodes_handle(...)` — the `Rc<RefCell>` arena handle for the
+    /// file containing `node` — for long-lived arena aliases (`FlowState`).
+    pub fn program_nodes_handle(
+        &self,
+        node: NodeId,
+    ) -> Rc<std::cell::RefCell<Vec<ast::Node>>> {
+        self.program
+            .as_ref()
+            .expect("program")
+            .nodes_handle(node.file_index())
     }
 
     /// `program.nodes_mut(...)` — mutable arena access for synthetic-node
@@ -3738,7 +3757,8 @@ impl Checker {
     /// `(c *Checker) callLikeExpressionMayHaveTypeArguments`
     /// (utilities.go:1132).
     pub fn call_like_expression_may_have_type_arguments(&self, node: NodeId) -> bool {
-        let nodes = self.program_nodes(node);
+                let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());;
         ast::is_call_or_new_expression(&nodes[node])
             || ast::is_tagged_template_expression(&nodes[node])
             || ast::is_jsx_opening_like_element(&nodes[node])
@@ -3755,7 +3775,8 @@ impl Checker {
         let mut file = None;
         let mut loc = tsc_core::text::TextRange::default();
         if let Some(node) = node {
-            let nodes = self.program_nodes(node);
+                        let __program = self.program.clone().expect("program");
+            let nodes = __program.nodes((node).file_index());;
             if let Some(source_file) = ast::get_source_file_of_node(Some(node), &nodes) {
                 let sf = nodes[source_file].as_source_file();
                 loc = tsc_scanner::scanner::get_error_range_for_node(sf, node, &nodes);
@@ -3775,7 +3796,8 @@ impl Checker {
         let sym = &arena[symbol.index()];
         match sym.value_declaration {
             Some(d) => {
-                let nodes = self.program_nodes(d);
+                                let __program = self.program.clone().expect("program");
+                let nodes = __program.nodes((d).file_index());;
                 ast::symbol::symbol_name(sym, &nodes).into_owned()
             }
             None => sym.name.clone(),
@@ -3842,9 +3864,11 @@ impl Checker {
         }
         let Some(n1) = n1 else { return 1 };
         let Some(n2) = n2 else { return -1 };
-        let nodes = self.program_nodes(n1);
+                let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((n1).file_index());;
         let s1 = ast::get_source_file_of_node(Some(n1), &nodes);
-        let nodes2 = self.program_nodes(n2);
+                let __program = self.program.clone().expect("program");
+        let nodes2 = __program.nodes((n2).file_index());;
         let s2 = ast::get_source_file_of_node(Some(n2), &nodes2);
         if s1 != s2 {
             let f1 = s1

@@ -1558,3 +1558,26 @@ and surviving ones are ordinary statement temps.
   for_each_property` took `impl FnMut` and recursed on `&mut callback`,
   causing infinite monomorphization ("reached the recursion limit"); it
   now takes `&mut dyn FnMut(&mut Checker, SymbolId) -> bool`.
+
+## 2026-10-10 crates/compiler — tsc/internal/compiler port shape
+- `*ast.Node`/`*ast.SourceFile` are `NodeId`s into per-file `Vec<ast::Node>`
+  arenas shared as `Rc<RefCell<Vec<Node>>>` (`Program::nodes`,
+  `nodes_handle`, `arena_of`). All Go pointer graphs become NodeId + arena.
+- Single-threaded by design: Go parallelizes `filesParser.start`,
+  `CheckerPool`, and emit through `core.WorkGroup` goroutines. The Rust
+  arenas use `Rc`/`RefCell` (not `Send`) while `WorkGroup::queue` requires
+  `Send` closures, so `files_parser.rs` runs a `WorkList` (`Box<dyn FnOnce>`
+  queue drained in `parse_files`) and `checker_pool.rs`/`program.rs` run
+  checkers and emitters sequentially. Semantics preserved; only the
+  parallelism is dropped.
+- `emitter.rs` `run_script_transformers`: `Box::leak` pins the per-file
+  `TransformOptions<'a>` for the rest of the program. Four transformer
+  constructors retain `&'a TransformOptions<'a>` inside their visitor
+  closures, so the options value must outlive `Transformer<'a>` while `'a`
+  stays live at its own drop — impossible for a stack local (dropck), and
+  `#![forbid(unsafe_code)]` rules out reclaiming a `Box::into_raw` pinning.
+  The leak is one small struct plus `Rc` strong counts per emitted file;
+  the Go implementation relies on GC for the same object.
+- Tests deferred: `tsc/internal/compiler` tests depend on `harnessutil`
+  (fourslash/baseline harness), which is not ported; no test files were
+  carried over.

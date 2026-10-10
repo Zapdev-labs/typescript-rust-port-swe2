@@ -2050,7 +2050,7 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
 /// `NewRuntimeSyntaxTransformer`
 #[allow(dead_code)]
 pub fn new_runtime_syntax_transformer<'a>(
-    opt: &'a TransformOptions<'a>,
+    opt: &TransformOptions<'a>,
 ) -> Option<Transformer<'a>> {
     let state = Rc::new(RuntimeSyntaxTransformer {
         compiler_options: opt

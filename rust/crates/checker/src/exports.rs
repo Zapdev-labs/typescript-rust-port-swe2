@@ -171,7 +171,8 @@ impl Checker {
 
     /// `func (c *Checker) RequiresAddingImplicitUndefined` (exports.go:386).
     pub fn requires_adding_implicit_undefined_api(&mut self, node: NodeId) -> bool {
-        let nodes = self.program_nodes(node);
+                let __program = self.program.clone().expect("program");
+        let nodes = __program.nodes((node).file_index());;
         let mut enclosing_declaration =
             ast::find_ancestor(Some(node), &nodes, &mut |n, _| ast::is_declaration(n));
         if enclosing_declaration.is_none() {
@@ -205,7 +206,8 @@ impl Checker {
     /// `func (c *Checker) GetJsxFragmentFactory` (exports.go:300).
     pub fn get_jsx_fragment_factory(&mut self, location: NodeId) -> String {
         if let Some(entity) = self.get_jsx_fragment_factory_entity(location) {
-            let nodes = self.program_nodes(location);
+                        let __program = self.program.clone().expect("program");
+            let nodes = __program.nodes((location).file_index());;
             let first = ast::get_first_identifier(entity, &nodes);
             return nodes[first].as_identifier().text.clone();
         }

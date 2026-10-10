@@ -120,7 +120,8 @@ pub(crate) fn has_non_global_augmentation_external_module_symbol(
     declaration: NodeId,
     c: &crate::checker_core::Checker,
 ) -> bool {
-    let nodes = c.program_nodes(declaration);
+        let __program = c.program.clone().expect("program");
+    let nodes = __program.nodes((declaration).file_index());;
     let d = &nodes[declaration];
     tsc_ast::is_module_with_string_literal_name(d, &nodes)
         || (d.kind == tsc_ast::Kind::SourceFile
@@ -435,7 +436,8 @@ impl Checker {
         enclosing_declaration: NodeId,
     ) -> Vec<SymbolId> {
         let containing_file = {
-            let nn = self.program_nodes(enclosing_declaration);
+                        let __program = self.program.clone().expect("program");
+            let nn = __program.nodes((enclosing_declaration).file_index());;
             ast::get_source_file_of_node(Some(enclosing_declaration), &nn)
         };
         let Some(containing_file) = containing_file else {
@@ -452,14 +454,16 @@ impl Checker {
         }
         let mut results: Vec<SymbolId> = Vec::new();
         let imports: Vec<NodeId> = {
-            let nn = self.program_nodes(containing_file);
+                        let __program = self.program.clone().expect("program");
+            let nn = __program.nodes((containing_file).file_index());;
             nn[containing_file].as_source_file().imports.to_vec()
         };
         if !imports.is_empty() {
             // Try to make an import using an import already in the enclosing file, if possible
             for import_ref in imports {
                 if {
-                    let nn = self.program_nodes(import_ref);
+                                        let __program = self.program.clone().expect("program");
+                    let nn = __program.nodes((import_ref).file_index());;
                     ast::node_is_synthesized(&nn[import_ref])
                 } {
                     // Synthetic names can't be resolved by `resolveExternalModuleName` - they'll cause a debug assert if they error
@@ -549,7 +553,8 @@ impl Checker {
         let files = self.files.clone();
         for file in files {
             let is_external = {
-                let nn = self.program_nodes(file);
+                                let __program = self.program.clone().expect("program");
+                let nn = __program.nodes((file).file_index());;
                 ast::is_external_module(nn[file].as_source_file())
             };
             if !is_external {
@@ -600,7 +605,8 @@ impl Checker {
         let files = self.files.clone();
         for file in files {
             let is_external = {
-                let nn = self.program_nodes(file);
+                                let __program = self.program.clone().expect("program");
+                let nn = __program.nodes((file).file_index());;
                 ast::is_external_module(nn[file].as_source_file())
             };
             if !is_external {
@@ -631,7 +637,8 @@ impl Checker {
         }
         let (_, decls, ..) = sym_fields(self, symbol);
         let &first_decl = decls.first()?;
-        let dn = self.program_nodes(first_decl);
+                let __program = self.program.clone().expect("program");
+        let dn = __program.nodes((first_decl).file_index());;
         let parent = dn[first_decl].parent?;
         if !ast::is_variable_declaration(&dn[parent]) {
             return None;
@@ -655,7 +662,8 @@ impl Checker {
         declaration: NodeId,
     ) -> Option<SymbolId> {
         let node = {
-            let nn = self.program_nodes(declaration);
+                        let __program = self.program.clone().expect("program");
+            let nn = __program.nodes((declaration).file_index());;
             ast::find_ancestor(
                 Some(declaration),
                 &nn,
@@ -709,7 +717,8 @@ impl Checker {
         }
         let mut candidates: Vec<SymbolId> = Vec::new();
         for d in sym_fields(self, symbol).1 {
-            let dn = self.program_nodes(d);
+                        let __program = self.program.clone().expect("program");
+            let dn = __program.nodes((d).file_index());;
             let d_parent = dn[d].parent;
             if !ast::is_ambient_module(&dn[d], &dn) && d_parent.is_some() {
                 let d_parent = d_parent.unwrap();
@@ -1077,14 +1086,16 @@ impl Checker {
                 && st_name != ast::symbol::INTERNAL_SYMBOL_NAME_DEFAULT
                 && !(is_umd_export_symbol(self, symbol_from_symbol_table)
                     && ctx.enclosing_declaration.is_some_and(|ed| {
-                        let nn = self.program_nodes(ed);
+                                                let __program = self.program.clone().expect("program");
+                        let nn = __program.nodes((ed).file_index());;
                         ast::get_source_file_of_node(Some(ed), &nn)
                             .is_some_and(|sf| ast::is_external_module(nn[sf].as_source_file()))
                     }))
                 // If `!useOnlyExternalAliasing`, we can use any type of alias to get the name
                 && (!ctx.use_only_external_aliasing
                     || st_decls.iter().any(|&d| {
-                        let nn = self.program_nodes(d);
+                                                let __program = self.program.clone().expect("program");
+                        let nn = __program.nodes((d).file_index());;
                         ast::is_external_module_import_equals_declaration(&nn[d], &nn)
                     }))
                 // If we're looking up a local name to reference directly, omit namespace reexports, otherwise when we're trawling through an export list to make a dotted name, we can keep it
@@ -1344,7 +1355,8 @@ impl Checker {
         while let Some(loc) = location {
             // Locals of a source file are not in scope (because they get merged into the global symbol table)
             let locals = {
-                let nn = self.program_nodes(loc);
+                                let __program = self.program.clone().expect("program");
+                let nn = __program.nodes((loc).file_index());;
                 if !ast::is_global_source_file(&nn[loc], &nn) {
                     nn[loc].locals().cloned()
                 } else {
@@ -1364,13 +1376,15 @@ impl Checker {
                 }
             }
             let kind = {
-                let nn = self.program_nodes(loc);
+                                let __program = self.program.clone().expect("program");
+                let nn = __program.nodes((loc).file_index());;
                 nn[loc].kind
             };
             match kind {
                 Kind::SourceFile | Kind::ModuleDeclaration => {
                     {
-                        let nn = self.program_nodes(loc);
+                                                let __program = self.program.clone().expect("program");
+                        let nn = __program.nodes((loc).file_index());;
                         if kind == Kind::SourceFile
                             && !ast::is_external_or_commonjs_module(nn[loc].as_source_file())
                         {
@@ -1378,7 +1392,8 @@ impl Checker {
                         } else {
                             drop(nn);
                             let reparsed = {
-                                let nn = self.program_nodes(loc);
+                                                                let __program = self.program.clone().expect("program");
+                                let nn = __program.nodes((loc).file_index());;
                                 ast::get_reparsed_node_for_node(loc, &nn)
                             };
                             if let Some(sym) = self.get_symbol_of_declaration(reparsed) {
@@ -1431,7 +1446,8 @@ impl Checker {
                     // scope table — the binder uses bindAnonymousDeclaration. Expose the name
                     // binding here so getAccessibleSymbolChain can resolve self-references.
                     let is_class_expr_with_name = {
-                        let nn = self.program_nodes(loc);
+                                                let __program = self.program.clone().expect("program");
+                        let nn = __program.nodes((loc).file_index());;
                         ast::is_class_expression(&nn[loc])
                             && nn[loc].name().is_some()
                     };
@@ -1476,7 +1492,8 @@ impl Checker {
         }
         let class_symbol = self.get_symbol_of_declaration(location)?;
         let name_text = {
-            let nn = self.program_nodes(location);
+                        let __program = self.program.clone().expect("program");
+            let nn = __program.nodes((location).file_index());;
             let name = nn[location].name()?;
             nn[name].as_identifier().text.clone()
         };
@@ -1542,7 +1559,8 @@ impl Checker {
                 if Some(symbol_external_module) != enclosing_external_module {
                     // name from different external module that is not visible
                     let in_js = {
-                        let nn = self.program_nodes(enclosing_declaration);
+                                                let __program = self.program.clone().expect("program");
+                        let nn = __program.nodes((enclosing_declaration).file_index());;
                         ast::is_in_js_file(Some(enclosing_declaration), &nn)
                     };
                     return SymbolAccessibilityResult {
@@ -1584,14 +1602,16 @@ impl Checker {
 fn is_umd_export_symbol(c: &Checker, symbol: SymbolId) -> bool {
     let decls = sym_fields(c, symbol).1;
     decls.first().is_some_and(|&d| {
-        let nn = c.program_nodes(d);
+                let __program = c.program.clone().expect("program");
+        let nn = __program.nodes((d).file_index());;
         ast::is_namespace_export_declaration(&nn[d])
     })
 }
 
 /// `isNamespaceReexportDeclaration` (symbolaccessibility.go).
 fn is_namespace_reexport_declaration(c: &Checker, node: NodeId) -> bool {
-    let nn = c.program_nodes(node);
+        let __program = c.program.clone().expect("program");
+    let nn = __program.nodes((node).file_index());;
     ast::is_namespace_export(&nn[node])
         && nn[node]
             .parent
@@ -1605,7 +1625,8 @@ fn is_property_or_method_declaration_symbol(c: &Checker, symbol: SymbolId) -> bo
         return false;
     }
     decls.iter().all(|&d| {
-        let nn = c.program_nodes(d);
+                let __program = c.program.clone().expect("program");
+        let nn = __program.nodes((d).file_index());;
         matches!(
             nn[d].kind,
             Kind::PropertyDeclaration | Kind::MethodDeclaration | Kind::GetAccessor | Kind::SetAccessor
@@ -1626,7 +1647,8 @@ fn get_declarations_of_kind(c: &Checker, symbol: SymbolId, kind: Kind) -> Vec<No
         .1
         .into_iter()
         .filter(|&d| {
-            let nn = c.program_nodes(d);
+                        let __program = c.program.clone().expect("program");
+            let nn = __program.nodes((d).file_index());;
             nn[d].kind == kind
         })
         .collect()

@@ -47,7 +47,7 @@ struct EsModuleTransformer<'a> {
 }
 
 /// `NewESModuleTransformer`.
-pub fn new_es_module_transformer<'a>(opts: &'a TransformOptions<'a>) -> Option<Transformer<'a>> {
+pub fn new_es_module_transformer<'a>(opts: &TransformOptions<'a>) -> Option<Transformer<'a>> {
     let compiler_options = opts
         .compiler_options
         .expect("NewESModuleTransformer requires opts.CompilerOptions");

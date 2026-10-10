@@ -255,6 +255,36 @@ pub struct Tracing {
     inner: Mutex<TracingInner>,
 }
 
+impl Default for Tracing {
+    /// Go's `new(tracing.Tracing)` / `&Tracing{}` — an inert instance whose
+    /// `trace_started` flag is false, so every recording method is a no-op.
+    /// Used by tests that only need a comparable `*Tracing` identity.
+    fn default() -> Self {
+        Tracing {
+            fs: tsc_vfs::vfstest::from_map(
+                std::iter::empty::<(String, String)>(),
+                CaseSensitivity::CaseSensitive,
+            ),
+            trace_dir: RootedDirectoryPath::default(),
+            trace_path: RootedFilePath::default(),
+            config_file_path: String::new(),
+            trace_started: AtomicBool::new(false),
+            deterministic: false,
+            start_time: Instant::now(),
+            inner: Mutex::new(TracingInner {
+                legend: Vec::new(),
+                tracers: Vec::new(),
+                trace_content: Vec::new(),
+                thread_ids: HashMap::new(),
+                thread_keys: HashMap::new(),
+                metadata_ts: 0.0,
+                timestamp_counter: 0,
+                flush_err: None,
+            }),
+        }
+    }
+}
+
 struct TracingInner {
     legend: Vec<TraceRecord>,
     tracers: Vec<Arc<TypeTracer>>,

@@ -1596,7 +1596,7 @@ impl<'a> LegacyDecoratorsTransformer<'a> {
 
 /// `NewLegacyDecoratorsTransformer`.
 pub fn new_legacy_decorators_transformer<'a>(
-    opt: &'a TransformOptions<'a>,
+    opt: &TransformOptions<'a>,
 ) -> Option<Transformer<'a>> {
     let language_version = opt
         .compiler_options

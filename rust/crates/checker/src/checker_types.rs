@@ -1709,8 +1709,20 @@ pub trait Program: Host {
     /// PORT(addition): the per-file `Vec<ast::Node>` arena indexed by
     /// `NodeId::file_index` — not part of Go's `Program` interface (Go
     /// derefs `*ast.Node` directly).
-    fn nodes(&self, file_index: u32) -> Rc<Vec<ast::Node>>;
+    ///
+    /// Returns a `Ref` over the program's shared `Rc<RefCell<Vec<Node>>>`
+    /// arena so reads observe nodes appended through `nodes_mut` (Go mutates
+    /// the shared `*ast.Node` graph freely — a `Rc<Vec<Node>>` snapshot would
+    /// go stale). The `Ref` borrows the `Rc<dyn Program>` handle it was
+    /// obtained from: in `&mut self` checker methods, clone `self.program`
+    /// into a local first so the guard does not pin `*self`.
+    fn nodes(&self, file_index: u32) -> std::cell::Ref<'_, Vec<ast::Node>>;
     /// `nodes_mut` — mutable arena access for synthetic-node creation
     /// (factory-created synthetic expressions, flow nodes).
     fn nodes_mut(&self, file_index: u32) -> std::cell::RefMut<'_, Vec<ast::Node>>;
+    /// PORT(addition): the `Rc<RefCell>` arena handle itself — for caches
+    /// (`FlowState::nodes`) that must keep a long-lived alias into the arena
+    /// rather than a borrow-tied `Ref`. Mirrors Go's `*ast.Node` graph
+    /// pointer stability.
+    fn nodes_handle(&self, file_index: u32) -> Rc<std::cell::RefCell<Vec<ast::Node>>>;
 }

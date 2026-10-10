@@ -73,6 +73,7 @@ pub struct Sys {
 }
 
 /// A file entry for [from_map]: a string, byte slice, or [MapFile].
+#[derive(Clone)]
 pub enum TestFile {
     Text(String),
     Bytes(Vec<u8>),

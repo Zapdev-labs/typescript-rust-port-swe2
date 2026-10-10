@@ -78,7 +78,8 @@ impl<'a> NodeBuilderImpl<'a> {
         let res = node.and_then(|node| self.reuse_node(c, nodes, node))?;
 
         let ((text, _had_text), is_string_literal) = {
-            let n_nodes = c.program_nodes(res);
+                        let __program = c.program.clone().expect("program");
+            let n_nodes = __program.nodes((res).file_index());;
             (
                 ast::try_get_text_of_property_name(res, &n_nodes),
                 ast::is_string_literal(&n_nodes[res]),
@@ -90,7 +91,8 @@ impl<'a> NodeBuilderImpl<'a> {
 
         let kind = classify_property_name(&text, is_string_literal, is_method);
         let res_kind = {
-            let n_nodes = c.program_nodes(res);
+                        let __program = c.program.clone().expect("program");
+            let n_nodes = __program.nodes((res).file_index());;
             n_nodes[res].kind
         };
         if res_kind == Kind::Identifier && kind == PropertyNameNodeKind::Identifier {
@@ -147,7 +149,8 @@ impl<'a> NodeBuilderImpl<'a> {
         // Check these explicitly so we look into type arguments whether or
         // not they are in the tree.
         {
-            let nn = c.program_nodes(node);
+                        let __program = c.program.clone().expect("program");
+            let nn = __program.nodes((node).file_index());;
             let n = &nn[node];
             if ast::is_type_reference_node(n)
                 || ast::is_expression_with_type_arguments(n)
@@ -164,7 +167,8 @@ impl<'a> NodeBuilderImpl<'a> {
                 }
             }
         }
-        let nn = c.program_nodes(node);
+                let __program = c.program.clone().expect("program");
+        let nn = __program.nodes((node).file_index());;
         let mut children: Vec<NodeId> = Vec::new();
         nn[node].for_each_child(&nn, &mut |child| {
             children.push(child);
@@ -521,7 +525,8 @@ impl<'a> NodeBuilderImpl<'a> {
             return None;
         }
         {
-            let nn = c.program_nodes(existing);
+                        let __program = c.program.clone().expect("program");
+            let nn = __program.nodes((existing).file_index());;
             self.ctx.approximate_length += nn[existing].loc.end() - nn[existing].loc.pos();
         }
         transformed
@@ -536,9 +541,11 @@ impl<'a> NodeBuilderImpl<'a> {
         lit: NodeId,
     ) -> Option<String> {
         let (same_file, attributes, is_type_of) = {
-            let nn = c.program_nodes(lit);
+                        let __program = c.program.clone().expect("program");
+            let nn = __program.nodes((lit).file_index());;
             let lit_file = ast::get_source_file_of_node(Some(lit), &nn);
-            let pn = c.program_nodes(parent);
+                        let __program = c.program.clone().expect("program");
+            let pn = __program.nodes((parent).file_index());;
             let itn = pn[parent].as_import_type_node();
             (
                 self.ctx.enclosing_file == lit_file,
@@ -557,7 +564,8 @@ impl<'a> NodeBuilderImpl<'a> {
                 mode = m;
             }
             let name = {
-                let nn = c.program_nodes(lit);
+                                let __program = c.program.clone().expect("program");
+                let nn = __program.nodes((lit).file_index());;
                 nn[lit].text(&nn).into_owned()
             };
             let original_name = name.clone();
@@ -758,7 +766,8 @@ fn attach_symbol_visit(
             None => {
                 let text = {
                     let c = sh.c.borrow();
-                    let nn = c.program_nodes(node);
+                                        let __program = c.program.clone().expect("program");
+                    let nn = __program.nodes((node).file_index());;
                     nn[node].text(&nn).into_owned()
                 };
                 sh.b.borrow_mut().new_identifier(cx.nodes, &text, sym)
@@ -805,7 +814,8 @@ fn track_existing_entity_name(
     let mut introduces_error = false;
     let (leftmost, js_exports_left) = {
         let c = sh.c.borrow();
-        let nn = c.program_nodes(node);
+                let __program = c.program.clone().expect("program");
+        let nn = __program.nodes((node).file_index());;
         let leftmost = ast::get_first_identifier(node, &nn);
         let in_js = ast::is_in_js_file(Some(node), &nn);
         let js_special = in_js
@@ -834,13 +844,15 @@ fn track_existing_entity_name(
     }
     let meaning = {
         let c = sh.c.borrow();
-        let nn = c.program_nodes(node);
+                let __program = c.program.clone().expect("program");
+        let nn = __program.nodes((node).file_index());;
         crate::emitsupport::get_meaning_of_entity_name_reference(node, &nn)
     };
     let mut sym: Option<SymbolId>;
     let leftmost_is_this = {
         let c = sh.c.borrow();
-        let nn = c.program_nodes(leftmost);
+                let __program = c.program.clone().expect("program");
+        let nn = __program.nodes((leftmost).file_index());;
         ast::is_this_identifier(&nn[leftmost])
     };
     if leftmost_is_this {
@@ -958,7 +970,8 @@ fn track_existing_entity_name(
             let vd = value_decl.unwrap();
             let is_param = {
                 let c = sh.c.borrow();
-                let nn = c.program_nodes(vd);
+                                let __program = c.program.clone().expect("program");
+                let nn = __program.nodes((vd).file_index());;
                 ast::is_part_of_parameter_declaration(vd, &nn)
                     || nn[vd].kind == Kind::JSDocParameterTag
             };
@@ -973,7 +986,8 @@ fn track_existing_entity_name(
         let sym_is_type_param = sh.c.borrow_mut().sym(sym_v).flags.intersects(SymbolFlags::TYPE_PARAMETER);
         let node_is_decl_name = {
             let c = sh.c.borrow();
-            let nn = c.program_nodes(node);
+                        let __program = c.program.clone().expect("program");
+            let nn = __program.nodes((node).file_index());;
             ast::is_declaration_name(node, &nn)
         };
         // Type parameters are visible in the current context if they are
@@ -1104,7 +1118,8 @@ fn try_visit_type_reference(
 ) -> Option<NodeId> {
     {
         let c = sh.c.borrow();
-        let nn = c.program_nodes(node);
+                let __program = c.program.clone().expect("program");
+        let nn = __program.nodes((node).file_index());;
         if ast::is_const_type_reference(&nn[node], &nn) {
             return None;
         }
@@ -2096,7 +2111,8 @@ where
                         .unwrap_or(node);
                     let file_of = {
                         let c = sh.c.borrow();
-                        let nn = c.program_nodes(most_original);
+                                                let __program = c.program.clone().expect("program");
+                        let nn = __program.nodes((most_original).file_index());;
                         ast::get_source_file_of_node(Some(most_original), &nn)
                     };
                     sh.non_local_node

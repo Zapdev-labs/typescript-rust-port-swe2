@@ -76,7 +76,7 @@ pub struct JsxTransformer<'a> {
 
 /// `NewJSXTransformer`.
 pub fn new_jsx_transformer<'a>(
-    opts: &'a TransformOptions<'a>,
+    opts: &TransformOptions<'a>,
 ) -> Option<Transformer<'a>> {
     let compiler_options = opts
         .compiler_options

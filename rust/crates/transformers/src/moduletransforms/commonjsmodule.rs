@@ -116,7 +116,7 @@ impl Drop for PopGuard<'_, '_> {
 
 /// `NewCommonJSModuleTransformer`.
 pub fn new_common_js_module_transformer<'a>(
-    opts: &'a TransformOptions<'a>,
+    opts: &TransformOptions<'a>,
 ) -> Option<Transformer<'a>> {
     let compiler_options = opts
         .compiler_options

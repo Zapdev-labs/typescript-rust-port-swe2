@@ -98,7 +98,8 @@ fn is_hash_private(c: &Checker, s: SymbolId) -> bool {
     let Some(vd) = symbol_value_declaration(c, s) else {
         return false;
     };
-    let dn = c.program_nodes(vd);
+        let __program = c.program.clone().expect("program");
+    let dn = __program.nodes((vd).file_index());;
     dn[vd]
         .name()
         .is_some_and(|n| ast::is_private_identifier(&dn[n]))
@@ -248,12 +249,14 @@ impl<'a> NodeBuilderImpl<'a> {
                 .iter()
                 .copied()
                 .find(|&d| {
-                    let dn = c.program_nodes(d);
+                                        let __program = c.program.clone().expect("program");
+                    let dn = __program.nodes((d).file_index());;
                     ast::is_enum_member(&dn[d])
                 });
             let initializer = if let Some(member_decl) = member_decl {
                 let decl_init = {
-                    let dn = c.program_nodes(member_decl);
+                                        let __program = c.program.clone().expect("program");
+                    let dn = __program.nodes((member_decl).file_index());;
                     dn[member_decl].as_enum_member().initializer
                 };
                 match decl_init {
@@ -303,7 +306,8 @@ impl<'a> NodeBuilderImpl<'a> {
             .iter()
             .copied()
             .find(|&d| {
-                let dn = c.program_nodes(d);
+                                let __program = c.program.clone().expect("program");
+                let dn = __program.nodes((d).file_index());;
                 ast::is_enum_member(&dn[d])
             })?;
         let val = c.get_constant_value(member_decl)?;
@@ -332,7 +336,8 @@ impl<'a> NodeBuilderImpl<'a> {
         let class_like_declarations: Vec<NodeId> = symbol_declarations(c, symbol)
             .into_iter()
             .filter(|&d| {
-                let dn = c.program_nodes(d);
+                                let __program = c.program.clone().expect("program");
+                let dn = __program.nodes((d).file_index());;
                 ast::is_class_like(Some(d), &dn)
             })
             .collect();
@@ -357,7 +362,8 @@ impl<'a> NodeBuilderImpl<'a> {
         let is_class = type_symbol(c, static_type)
             .and_then(|s| symbol_value_declaration(c, s))
             .is_some_and(|vd| {
-                let dn = c.program_nodes(vd);
+                                let __program = c.program.clone().expect("program");
+                let dn = __program.nodes((vd).file_index());;
                 ast::is_class_like(Some(vd), &dn)
             });
         let static_base_type = if is_class {
@@ -527,7 +533,8 @@ impl<'a> NodeBuilderImpl<'a> {
         let interface_declarations: Vec<NodeId> = symbol_declarations(c, symbol)
             .into_iter()
             .filter(|&d| {
-                let dn = c.program_nodes(d);
+                                let __program = c.program.clone().expect("program");
+                let dn = __program.nodes((d).file_index());;
                 ast::is_interface_declaration(&dn[d])
             })
             .collect();
@@ -618,7 +625,8 @@ impl<'a> NodeBuilderImpl<'a> {
         let mut implements_types: Vec<NodeId> = Vec::new();
         for &declaration in declarations {
             let extends: Vec<NodeId> = {
-                let dn = c.program_nodes(declaration);
+                                let __program = c.program.clone().expect("program");
+                let dn = __program.nodes((declaration).file_index());;
                 ast::get_extends_heritage_clause_elements(&dn[declaration], &dn)
                     .map(|els| els.to_vec())
                     .unwrap_or_default()
@@ -629,7 +637,8 @@ impl<'a> NodeBuilderImpl<'a> {
                 }
             }
             let implements: Vec<NodeId> = {
-                let dn = c.program_nodes(declaration);
+                                let __program = c.program.clone().expect("program");
+                let dn = __program.nodes((declaration).file_index());;
                 ast::get_implements_heritage_clause_elements(&dn[declaration], &dn)
                     .map(|els| els.to_vec())
                     .unwrap_or_default()
@@ -711,7 +720,8 @@ impl<'a> NodeBuilderImpl<'a> {
     ) -> Vec<NodeId> {
         let is_non_constructable = !is_class
             && symbol_value_declaration(c, symbol).is_some_and(|vd| {
-                let dn = c.program_nodes(vd);
+                                let __program = c.program.clone().expect("program");
+                let dn = __program.nodes((vd).file_index());;
                 ast::is_in_js_file(Some(vd), &dn)
             })
             && c
@@ -769,7 +779,8 @@ impl<'a> NodeBuilderImpl<'a> {
             let mut private_protected = ModifierFlags::NONE;
             for &sig in &signatures {
                 if let Some(decl) = c.signature_arena.get(sig).declaration {
-                    let dn = c.program_nodes(decl);
+                                        let __program = c.program.clone().expect("program");
+                    let dn = __program.nodes((decl).file_index());;
                     private_protected |= dn[decl]
                         .modifier_flags()
                         & (ModifierFlags::PRIVATE | ModifierFlags::PROTECTED);
@@ -1150,7 +1161,8 @@ impl<'a> NodeBuilderImpl<'a> {
             .iter()
             .copied()
             .find(|&declaration| {
-                let dn = c.program_nodes(declaration);
+                                let __program = c.program.clone().expect("program");
+                let dn = __program.nodes((declaration).file_index());;
                 ast::is_module_declaration(&dn[declaration])
                     && dn[declaration]
                         .as_module_declaration()
@@ -1158,7 +1170,8 @@ impl<'a> NodeBuilderImpl<'a> {
                         .is_some()
             })
             .and_then(|declaration| {
-                let dn = c.program_nodes(declaration);
+                                let __program = c.program.clone().expect("program");
+                let dn = __program.nodes((declaration).file_index());;
                 dn[declaration].as_module_declaration().attributes
             });
         if let Some(attr) = attributes_source {
@@ -1270,7 +1283,8 @@ impl<'a> NodeBuilderImpl<'a> {
             return false;
         }
         if let Some(vd) = symbol_value_declaration(c, p) {
-            let dn = c.program_nodes(vd);
+                        let __program = c.program.clone().expect("program");
+            let dn = __program.nodes((vd).file_index());;
             if ast::has_static_modifier(&dn[vd])
                 && dn[vd]
                     .parent

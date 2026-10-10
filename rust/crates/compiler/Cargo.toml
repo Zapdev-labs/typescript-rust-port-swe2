@@ -1,0 +1,41 @@
+[package]
+name = "tsc-compiler"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+tsc-ast = { path = "../ast" }
+tsc-binder = { path = "../binder" }
+tsc-checker = { path = "../checker" }
+tsc-collections = { path = "../collections" }
+tsc-contentmapper = { path = "../contentmapper" }
+tsc-core = { path = "../core" }
+tsc-diagnostics = { path = "../diagnostics" }
+tsc-json = { path = "../json" }
+tsc-locale = { path = "../locale" }
+tsc-module = { path = "../module" }
+tsc-modulespecifiers = { path = "../modulespecifiers" }
+tsc-outputpaths = { path = "../outputpaths" }
+tsc-packagejson = { path = "../packagejson" }
+tsc-parser = { path = "../parser" }
+tsc-printer = { path = "../printer" }
+tsc-scanner = { path = "../scanner" }
+tsc-sourcemap = { path = "../sourcemap" }
+tsc-spanmap = { path = "../spanmap" }
+tsc-stringutil = { path = "../stringutil" }
+tsc-symlinks = { path = "../symlinks" }
+tsc-tracing = { path = "../tracing" }
+tsc-transformers = { path = "../transformers" }
+tsc-tsoptions = { path = "../tsoptions" }
+tsc-tspath = { path = "../tspath" }
+tsc-vfs = { path = "../vfs" }
+rustc-hash = { workspace = true }
+serde_json = { workspace = true }
+
+[dev-dependencies]
+tsc-bundled = { path = "../bundled" }

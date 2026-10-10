@@ -396,7 +396,8 @@ impl EmitResolver {
                     let c = c.clone();
                     move |node| {
                         let mut c = c.try_borrow_mut().ok()?;
-                        let nodes = c.program_nodes(node);
+                                                let __program = c.program.clone().expect("program");
+                        let nodes = __program.nodes((node).file_index());;
                         let (name, ok) = c.try_get_element_access_expression_name(&nodes, node);
                         ok.then_some(name)
                     }
@@ -490,7 +491,8 @@ impl EmitResolver {
 
                 // declaration arenas may differ per file — re-read through
                 // the declaration's own arena like Go derefs the pointer.
-                let declaration_nodes = c.program_nodes(declaration);
+                                let __program = c.program.clone().expect("program");
+                let declaration_nodes = __program.nodes((declaration).file_index());;
                 if ast::is_internal_module_import_equals_declaration(
                     &declaration_nodes[declaration],
                     &declaration_nodes,
@@ -648,7 +650,8 @@ impl EmitResolver {
             // point at, and merge with, the file itself. If we don't, the
             // merge may not have yet occurred, and the flags check below will
             // be missing flags that are added as a result of the merge.
-            let decl_nodes = c.program_nodes(value_declaration);
+                        let __program = c.program.clone().expect("program");
+            let decl_nodes = __program.nodes((value_declaration).file_index());;
             if let Some(container) =
                 ast::get_source_file_of_node(Some(value_declaration), &decl_nodes)
             {
@@ -767,10 +770,15 @@ impl ReferenceResolver for EmitResolver {
         let Some(expression) = expression else {
             return String::new();
         };
-        let nodes = checker_lock(&self.checker).program_nodes(expression);
+        // PORT(borrowck): bind the `RefMut` checker guard so the `Ref` arena
+        // borrow outlives the temporary.
+        let checker = checker_lock(&self.checker);
+        let nodes = checker.program_nodes(expression);
         if !ast::is_parse_tree_node(&nodes[expression]) {
             return String::new();
         }
+        drop(nodes);
+        drop(checker);
         self.reference_resolver()
             .get_element_access_expression_name(Some(expression))
     }
@@ -1293,7 +1301,8 @@ impl tsc_printer::EmitResolver for EmitResolver {
                 let declarations = c.symbol_arena.borrow()[merged.index()].declarations.clone();
                 if !declarations.is_empty() {
                     for d in declarations {
-                        let decl_nodes = c.program_nodes(d);
+                                                let __program = c.program.clone().expect("program");
+                        let decl_nodes = __program.nodes((d).file_index());;
                         let decl_file = ast::get_source_file_of_node(Some(d), &decl_nodes);
                         if decl_file == Some(import_target) {
                             return true;

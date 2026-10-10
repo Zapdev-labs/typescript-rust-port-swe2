@@ -206,7 +206,8 @@ impl NodeBuilder {
         }
         let enclosing_file = match enclosing_declaration {
             Some(decl) => {
-                let nodes = c.program_nodes(decl);
+                                let __program = c.program.clone().expect("program");
+                let nodes = __program.nodes((decl).file_index());;
                 ast::get_source_file_of_node(Some(decl), &nodes)
             }
             None => None,
@@ -747,7 +748,8 @@ fn simplify_class_declaration(
         .iter()
         .copied()
         .filter(|&d| {
-            let dn = c.program_nodes(d);
+                        let __program = c.program.clone().expect("program");
+            let dn = __program.nodes((d).file_index());;
             ast::is_class_like(Some(d), &dn)
         })
         .collect();
@@ -757,7 +759,8 @@ fn simplify_class_declaration(
         class_decl
     };
     let (modifiers, is_anonymous) = {
-        let dn = c.program_nodes(original_class_decl);
+                let __program = c.program.clone().expect("program");
+        let dn = __program.nodes((original_class_decl).file_index());;
         (
             dn[original_class_decl].modifier_flags()
                 & !(ast::ModifierFlags::EXPORT | ast::ModifierFlags::AMBIENT),
@@ -810,13 +813,15 @@ fn simplify_modifiers(
         .iter()
         .copied()
         .filter(|&d| {
-            let dn = c.program_nodes(d);
+                        let __program = c.program.clone().expect("program");
+            let dn = __program.nodes((d).file_index());;
             is_decl_kind(&dn[d])
         })
         .collect();
     let decl_with_modifiers = decls.first().copied().unwrap_or(new_decl);
     let modifiers = {
-        let dn = c.program_nodes(decl_with_modifiers);
+                let __program = c.program.clone().expect("program");
+        let dn = __program.nodes((decl_with_modifiers).file_index());;
         dn[decl_with_modifiers].modifier_flags()
             & !(ast::ModifierFlags::EXPORT | ast::ModifierFlags::AMBIENT)
     };

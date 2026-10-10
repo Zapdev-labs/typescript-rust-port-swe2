@@ -1074,6 +1074,7 @@ dependencies = [
  "serde_json",
  "tsc-ast",
  "tsc-binder",
+ "tsc-bundled",
  "tsc-checker",
  "tsc-collections",
  "tsc-contentmapper",
@@ -1175,6 +1176,20 @@ dependencies = [
  "tsc-ast",
  "tsc-core",
  "tsc-jsnum",
+ "tsc-stringutil",
+]
+
+[[package]]
+name = "tsc-format"
+version = "0.0.0"
+dependencies = [
+ "tsc-ast",
+ "tsc-astnav",
+ "tsc-core",
+ "tsc-debug",
+ "tsc-lsutil",
+ "tsc-parser",
+ "tsc-scanner",
  "tsc-stringutil",
 ]
 

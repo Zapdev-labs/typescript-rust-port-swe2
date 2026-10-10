@@ -128,7 +128,7 @@ impl std::ops::BitAnd for NodeResolutionFeatures {
 }
 
 /// `type PackageId struct`
-#[derive(Clone, Default, PartialEq, Eq, Debug)]
+#[derive(Clone, Default, PartialEq, Eq, Hash, Debug)]
 pub struct PackageId {
     pub name: String,
     pub sub_module_name: String,

@@ -21,7 +21,10 @@ use crate::transformer::Transformer;
 
 /// `type ImpliedModuleTransformer struct`.
 struct ImpliedModuleTransformer<'a> {
-    opts: &'a TransformOptions<'a>,
+    /// PORT: Go stores `opts *TransformOptions`; an owned copy keeps the
+    /// lazy component-constructor calls from needing a `&'a` borrow of the
+    /// caller's options (which cannot outlive the local binding).
+    opts: TransformOptions<'a>,
     /// `resolver` — stored for parity with Go's
     /// `ImpliedModuleTransformer.resolver`; nothing in `impliedmodule.go`
     /// consults it (the component transformers re-read `opts.Resolver`).
@@ -41,11 +44,19 @@ struct ImpliedModuleTransformer<'a> {
 /// in the Rust workspace calls it yet. It is factory-shaped so it can be
 /// inserted into `chain(...)` once the emit driver exists.
 pub fn new_implied_module_transformer<'a>(
-    opts: &'a TransformOptions<'a>,
+    opts: &TransformOptions<'a>,
 ) -> Option<Transformer<'a>> {
+    let opts_owned = TransformOptions {
+        context: opts.context.clone(),
+        compiler_options: opts.compiler_options,
+        resolver: opts.resolver.clone(),
+        emit_resolver: opts.emit_resolver.clone(),
+        get_emit_module_format_of_file: opts.get_emit_module_format_of_file,
+        symbols: opts.symbols,
+    };
     make_transformer(opts, |ec| {
         let tx = Rc::new(ImpliedModuleTransformer {
-            opts,
+            opts: opts_owned,
             resolver: opts.resolver.clone(),
             get_emit_module_format_of_file: opts.get_emit_module_format_of_file,
             cjs_transformer: RefCell::new(None),
@@ -86,7 +97,7 @@ impl<'a> ImpliedModuleTransformer<'a> {
         if format >= ModuleKind::ES2015 {
             let mut esm = self.esm_transformer.borrow_mut();
             if esm.is_none() {
-                *esm = new_es_module_transformer(self.opts);
+                *esm = new_es_module_transformer(&self.opts);
             }
             esm.as_ref()
                 .expect("NewESModuleTransformer returned nil")
@@ -94,7 +105,7 @@ impl<'a> ImpliedModuleTransformer<'a> {
         } else {
             let mut cjs = self.cjs_transformer.borrow_mut();
             if cjs.is_none() {
-                *cjs = new_common_js_module_transformer(self.opts);
+                *cjs = new_common_js_module_transformer(&self.opts);
             }
             cjs.as_ref()
                 .expect("NewCommonJSModuleTransformer returned nil")
