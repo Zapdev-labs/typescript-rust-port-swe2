@@ -1614,3 +1614,17 @@ and surviving ones are ordinary statement temps.
   name's original-chain never reached the target.
 - `Symbol` arena is program-global (`Program::symbols`) so `SymbolId`s
   keep Go's cross-file pointer identity; `bind_source_file` appends to it.
+
+## 2026-10-14 crates/execute — tsc-execute port shape
+- Single-threaded throughout: Go parallelizes the build orchestrator and
+  incremental snapshotting through goroutines/`sync.Map`; the Rust port is
+  sequential (Rc/RefCell arenas are `!Send`). `Watcher`'s parsed-file cache
+  is `thread_local!`; `SyncSet`/`SyncMap` replace shared mutable maps where
+  handlers take `&self`.
+- `ExtendedConfigCache` is passed as `None` to compiler hosts: the host
+  field requires `Arc<dyn ExtendedConfigCache + Send + Sync>` but cache
+  entries retain `Cell`/`Rc` config ASTs. Semantics preserved; memoization
+  lost (PORT(deferred) in watcher.rs/tsc_main.rs).
+- `stop_tracing`'s `DumpTypes` receives `program.symbols` + the first
+  source-file arena (Rust needs explicit arenas where Go reached them via
+  pointers); cross-arena node locations can be wrong — PORT(deferred).
