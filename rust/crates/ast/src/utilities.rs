@@ -3920,26 +3920,36 @@ pub fn is_parse_tree_node(node: &Node) -> bool {
 /// node containing `position` (including the leading trivia of the node start),
 /// or the containing node when `position` lands on a `MetaProperty` name.
 ///
-/// PORT(deferred): the `includeJSDoc` branch iterates `current.JSDoc(file)`,
-/// which requires the unported lazy JSDoc resolution cache. When
-/// `include_jsdoc` is `true`, JSDoc children are simply not scanned here.
+/// `get_node_at_position` — walks JSDoc children via `eager_js_doc` when
+/// `include_jsdoc` is set. Lazy JSDoc (non-JS files) cannot be resolved here
+/// without `&mut nodes`; callers that pass `include_jsdoc=true` only do so
+/// for JS files, which parse JSDoc eagerly.
 pub fn get_node_at_position(
     file: NodeId,
     position: TextPos,
     include_jsdoc: bool,
     nodes: &[Node],
 ) -> NodeId {
-    let _ = include_jsdoc;
     let mut current = file;
     loop {
         let mut child = None;
-        nodes[current].for_each_child(nodes, &mut |n| {
-            if node_contains_position(&nodes[n], position) {
-                child = Some(n);
-                return true;
+        if include_jsdoc {
+            for jsdoc in crate::ast::eager_js_doc(nodes, current, Some(file)) {
+                if node_contains_position(&nodes[jsdoc], position) {
+                    child = Some(jsdoc);
+                    break;
+                }
             }
-            false
-        });
+        }
+        if child.is_none() {
+            nodes[current].for_each_child(nodes, &mut |n| {
+                if node_contains_position(&nodes[n], position) {
+                    child = Some(n);
+                    return true;
+                }
+                false
+            });
+        }
         match child {
             None => return current,
             Some(c) if is_meta_property(&nodes[c]) => return current,

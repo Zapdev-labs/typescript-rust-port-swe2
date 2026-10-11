@@ -2069,3 +2069,4 @@ fn test_resolve_peer_dependency_nil_contents_race() {
         assert!(resolved, "{containing_file:?} failed to resolve pkg");
     }
 }
+
