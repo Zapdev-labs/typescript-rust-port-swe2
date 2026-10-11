@@ -12182,7 +12182,7 @@ impl Checker {
             let element_types = self.get_element_types(t);
             let element_infos: Vec<TupleElementInfo> = self
                 .types_handle()
-                .get(t)
+                .get(self.types_handle().target_tuple_type(t).unwrap())
                 .as_tuple_type()
                 .element_infos
                 .to_vec();
