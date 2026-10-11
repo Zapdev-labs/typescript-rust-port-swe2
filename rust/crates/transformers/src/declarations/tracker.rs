@@ -497,12 +497,19 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
     }
 
     /// `(s *SymbolTrackerImpl) TrackSymbol`.
+    ///
+    /// PORT: Go calls `s.resolver.IsSymbolAccessible` — which reaches the
+    /// checker directly under the nodebuilder's held `checkerMu`. Here the
+    /// checker cell is already `borrow_mut`'d by that serialization, so the
+    /// caller supplies the query as `is_symbol_accessible` (see the trait's
+    /// PORT note); it runs the identical `Checker::is_symbol_accessible`.
     fn track_symbol(
         &mut self,
         symbol: SymbolId,
         enclosing_declaration: Option<NodeId>,
         meaning: SymbolFlags,
         nodes: &[Node],
+        is_symbol_accessible: &mut tsc_nodebuilder::IsSymbolAccessible<'_>,
     ) -> bool {
         {
             let symbols = self
@@ -523,18 +530,26 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
             self.class_symbol_tracked = true;
             return false;
         }
-        let symbols = self
-            .symbols
-            .expect("SymbolTrackerImpl requires TransformOptions::symbols")
-            .borrow();
-        let result = self.resolver.borrow().is_symbol_accessible(
-            symbol,
+        let result = is_symbol_accessible(
+            Some(symbol),
             enclosing_declaration,
             meaning,
             /*should_compute_alias_to_mark_visible*/ true,
-            nodes,
-            &symbols,
         );
+        if std::env::var("TSC_DBG_TRACK").is_ok() {
+            let symbols = self
+                .symbols
+                .expect("SymbolTrackerImpl requires TransformOptions::symbols")
+                .borrow();
+            eprintln!(
+                "[track] sym={:?} name={:?} decls={:?} accessibility={:?} aliases={:?}",
+                symbol,
+                symbols[symbol.index()].name.as_str(),
+                symbols[symbol.index()].declarations,
+                result.accessibility,
+                result.aliases_to_make_visible
+            );
+        }
         self.handle_symbol_accessibility_error(result, nodes)
     }
 }

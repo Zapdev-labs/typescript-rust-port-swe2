@@ -1115,14 +1115,18 @@ impl EmitResolver for FakeEmitResolver {
         unimplemented!("unused by ImportElisionTransformer")
     }
 
-    fn get_jsx_factory_entity(&self, _location: NodeId, _nodes: &[Node]) -> Option<NodeId> {
+    fn get_jsx_factory_entity(
+        &self,
+        _location: NodeId,
+        _nodes: &mut Vec<Node>,
+    ) -> Option<NodeId> {
         unimplemented!("unused by ImportElisionTransformer")
     }
 
     fn get_jsx_fragment_factory_entity(
         &self,
         _location: NodeId,
-        _nodes: &[Node],
+        _nodes: &mut Vec<Node>,
     ) -> Option<NodeId> {
         unimplemented!("unused by ImportElisionTransformer")
     }

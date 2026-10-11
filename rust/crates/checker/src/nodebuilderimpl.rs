@@ -1628,9 +1628,16 @@ impl<'a> NodeBuilderImpl<'a> {
         mask: SymbolFlags,
     ) -> Option<NodeId> {
         if let Some(tracker) = self.ctx.tracker.clone() {
-            tracker
-                .borrow_mut()
-                .track_symbol(symbol, self.ctx.enclosing_declaration, mask, nodes);
+            let nodes_view: &[ast::Node] = nodes;
+            tracker.borrow_mut().track_symbol(
+                symbol,
+                self.ctx.enclosing_declaration,
+                mask,
+                nodes_view,
+                &mut |sym, en, mn, sc| {
+                    c.is_symbol_accessible(sym, en, mn, sc, Some(nodes_view))
+                },
+            );
         }
         self.symbol_to_expression_worker(c, nodes, symbol, mask)
     }
@@ -2003,11 +2010,15 @@ impl<'a> NodeBuilderImpl<'a> {
         yield_module_symbol: bool,
     ) -> Vec<SymbolId> {
         if let Some(tracker) = self.ctx.tracker.clone() {
+            let nodes_view: &[ast::Node] = nodes;
             tracker.borrow_mut().track_symbol(
                 symbol,
                 self.ctx.enclosing_declaration,
                 meaning,
-                nodes,
+                nodes_view,
+                &mut |sym, en, mn, sc| {
+                    c.is_symbol_accessible(sym, en, mn, sc, Some(nodes_view))
+                },
             );
         }
         self.lookup_symbol_chain_worker(c, nodes, symbol, meaning, yield_module_symbol)
@@ -4815,11 +4826,15 @@ impl<'a> NodeBuilderImpl<'a> {
         if let Some(tracked) = tracked
             && let Some(tracker) = self.ctx.tracker.clone()
         {
+            let nodes_view: &[ast::Node] = nodes;
             tracker.borrow_mut().track_symbol(
                 tracked,
                 enclosing_declaration,
                 SymbolFlags::VALUE,
-                nodes,
+                nodes_view,
+                &mut |sym, en, mn, sc| {
+                    c.is_symbol_accessible(sym, en, mn, sc, Some(nodes_view))
+                },
             );
         }
     }
@@ -6640,11 +6655,21 @@ impl<'a> NodeBuilderImpl<'a> {
                     // associated with this?
                     for arg in &tracked_symbols {
                         if let Some(tracker) = self.ctx.tracker.clone() {
+                            let nodes_view: &[ast::Node] = nodes;
                             tracker.borrow_mut().track_symbol(
                                 arg.symbol,
                                 arg.enclosing_declaration,
                                 arg.meaning,
-                                nodes,
+                                nodes_view,
+                                &mut |sym, en, mn, sc| {
+                                    c.is_symbol_accessible(
+                                        sym,
+                                        en,
+                                        mn,
+                                        sc,
+                                        Some(nodes_view),
+                                    )
+                                },
                             );
                         }
                     }
@@ -7851,6 +7876,12 @@ fn track_computed_name_shared(
             shared.enclosing_declaration,
             ast::SymbolFlags::VALUE,
             nodes,
+            &mut |sym, en, mn, sc| {
+                shared
+                    .c
+                    .borrow_mut()
+                    .is_symbol_accessible(sym, en, mn, sc, Some(nodes))
+            },
         );
     }
 }

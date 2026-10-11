@@ -500,6 +500,19 @@ impl<'p> DeclarationEmitHost for BasicEmitHost<'p> {
     ) -> bool {
         source_file_may_be_emitted(file, self, force_dts_emit, false)
     }
+    fn resolve_node(&self, id: NodeId, nodes: &[Node]) -> Option<Node> {
+        if nodes
+            .first()
+            .is_some_and(|n| n.id.file_index() == id.file_index())
+            && let Some(n) = nodes.get(id.local_index() as usize)
+        {
+            return Some(n.clone());
+        }
+        self.program
+            .nodes(id.file_index())
+            .get(id.local_index() as usize)
+            .cloned()
+    }
 }
 
 impl<'p> EmitHost for BasicEmitHost<'p> {

@@ -2048,11 +2048,21 @@ impl tsc_printer::EmitResolver for EmitResolver {
                                 Some(nodes),
                             );
                             if let Some(name) = name {
+                                let nodes_view: &[ast::Node] = nodes;
                                 tracker.borrow_mut().track_symbol(
                                     name,
                                     enclosing_declaration,
                                     ast::SymbolFlags::VALUE,
-                                    nodes,
+                                    nodes_view,
+                                    &mut |sym, en, mn, sc| {
+                                        c.is_symbol_accessible(
+                                            sym,
+                                            en,
+                                            mn,
+                                            sc,
+                                            Some(nodes_view),
+                                        )
+                                    },
                                 );
                             }
 

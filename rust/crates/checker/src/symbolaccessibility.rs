@@ -271,6 +271,17 @@ impl Checker {
                     accessible_symbol_chain[0],
                     should_compute_aliases_to_make_visible,
                 );
+                if std::env::var("TSC_DBG_TRACK").is_ok() {
+                    let nm = |s: SymbolId| self.sym(s).name.clone();
+                    eprintln!(
+                        "[chain] sym={:?}({}) chain={:?}({:?}) hvd={:?}",
+                        symbol,
+                        nm(symbol),
+                        accessible_symbol_chain,
+                        accessible_symbol_chain.iter().map(|&s| nm(s)).collect::<Vec<_>>(),
+                        has_accessible_declarations.as_ref().map(|r| r.accessibility)
+                    );
+                }
                 if has_accessible_declarations.is_some() {
                     return has_accessible_declarations;
                 }
@@ -978,9 +989,11 @@ impl Checker {
         }
 
         let mut result: Vec<SymbolId> = Vec::new();
+        let mut dbg_tables = 0usize;
         self.some_symbol_table_in_scope(
             ctx.enclosing_declaration,
             |c2, t, table_id, ignore_qualification, is_local_name_lookup, _node| {
+                dbg_tables += 1;
                 let res = c2.get_accessible_symbol_chain_from_symbol_table(
                     ctx,
                     t,
@@ -994,6 +1007,15 @@ impl Checker {
                 }
                 false
             }, live_nodes);
+        if std::env::var("TSC_DBG_TRACK").is_ok() {
+            eprintln!(
+                "[gasc] sym={:?}({}) enc={:?} tables={dbg_tables} result={:?}",
+                symbol,
+                self.sym(symbol).name,
+                ctx.enclosing_declaration,
+                result,
+            );
+        }
         self.symbol_container_links
             .get(symbol)
             .accessible_chain_cache

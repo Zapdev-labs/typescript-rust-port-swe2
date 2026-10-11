@@ -6,6 +6,59 @@ use tsc_ast::Node;
 use tsc_ast::ids::{NodeId, SymbolId};
 use tsc_ast::symbolflags::SymbolFlags;
 
+/// `type SymbolAccessibility int32`
+///
+/// PORT: lives here (not `tsc-printer`) so `SymbolTracker::track_symbol`
+/// can name `SymbolAccessibilityResult` — `tsc-printer` already depends on
+/// this crate, so the dependency cannot point the other way. `tsc-printer`
+/// re-exports both types for its existing consumers.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+pub enum SymbolAccessibility {
+    /// `SymbolAccessibilityAccessible`
+    #[default]
+    Accessible,
+    /// `SymbolAccessibilityNotAccessible`
+    NotAccessible,
+    /// `SymbolAccessibilityCannotBeNamed`
+    CannotBeNamed,
+    /// `SymbolAccessibilityNotResolved`
+    NotResolved,
+}
+
+/// `type SymbolAccessibilityResult struct`
+#[derive(Clone, Default)]
+pub struct SymbolAccessibilityResult {
+    pub accessibility: SymbolAccessibility,
+    /// aliases that need to have this symbol visible
+    pub aliases_to_make_visible: Vec<NodeId>,
+    /// Optional - symbol name that results in error
+    pub error_symbol_name: String,
+    /// Optional - node that results in error
+    pub error_node: Option<NodeId>,
+    /// Optional - If the symbol is not visible from module, module's name
+    pub error_module_name: String,
+}
+
+/// `resolver.IsSymbolAccessible` supplied by the `track_symbol` caller.
+///
+/// PORT(deviation): Go trackers call `resolver.IsSymbolAccessible`, which
+/// reaches `*Checker` directly while the nodebuilder's serialization call
+/// already holds `checkerMu`. Here the checker is behind
+/// `Rc<RefCell<Checker>>` and cannot be re-borrowed mid-serialization, so
+/// the caller — which holds the live `&mut Checker` — supplies the query
+/// as a hook. Tracker implementations invoke it at exactly the point Go
+/// calls the resolver.
+///
+/// Args: `(symbol, enclosingDeclaration, meaning, shouldComputeAliasToMarkVisible)`.
+/// The hook captures the arena the tracker passes as `nodes`.
+pub type IsSymbolAccessible<'x> = dyn FnMut(
+        Option<SymbolId>,
+        Option<NodeId>,
+        SymbolFlags,
+        bool,
+    ) -> SymbolAccessibilityResult
+    + 'x;
+
 /// `type SymbolTracker interface`.
 ///
 /// TODO: previously all symboltracker methods were optional, but now they're required.
@@ -26,6 +79,7 @@ pub trait SymbolTracker {
         enclosing_declaration: Option<NodeId>,
         meaning: SymbolFlags,
         nodes: &[Node],
+        is_symbol_accessible: &mut IsSymbolAccessible<'_>,
     ) -> bool;
     /// `ReportInaccessibleThisError()`
     fn report_inaccessible_this_error(&mut self, nodes: &[Node]);

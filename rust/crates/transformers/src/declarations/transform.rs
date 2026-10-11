@@ -920,8 +920,13 @@ impl<'a> DeclarationTransformerState<'a> {
             };
 
             let decl_file_name: RootedFilePath;
-            if nodes[file].as_source_file().is_declaration_file {
-                decl_file_name = nodes[file].as_source_file().file_name().clone();
+            // `file` lives in its own program arena, not the emit working
+            // buffer — resolve through the host.
+            let Some(file_node) = self.host.resolve_node(file, nodes) else {
+                continue;
+            };
+            if file_node.as_source_file().is_declaration_file {
+                decl_file_name = file_node.as_source_file().file_name().clone();
             } else {
                 // Try to use output path for referenced file, or output js path if that doesn't exist, or the input path if all else fails
                 let Some(paths) = self.host.get_output_paths_for(file, true, nodes) else {
@@ -932,7 +937,7 @@ impl<'a> DeclarationTransformerState<'a> {
                     decl = paths.js_file_path().clone();
                 }
                 if decl.as_string().is_empty() {
-                    decl = nodes[file].as_source_file().file_name().clone();
+                    decl = file_node.as_source_file().file_name().clone();
                 }
                 decl_file_name = decl;
             }
@@ -5267,13 +5272,17 @@ impl<'a> DeclarationTransformerState<'a> {
         }
         // The `importClause` visibility corresponds to the default's visibility.
         let mut visible_default_binding: Option<NodeId> = None;
-        if cx.nodes[import_clause].name().is_some()
-            && self
+        if cx.nodes[import_clause].name().is_some() {
+            let vis = self
                 .resolver
                 .borrow()
-                .is_declaration_visible(import_clause, cx.nodes)
-        {
-            visible_default_binding = cx.nodes[import_clause].name();
+                .is_declaration_visible(import_clause, cx.nodes);
+            if std::env::var("TSC_DBG_TRACK").is_ok() {
+                eprintln!("[importDecl] decl={:?} clause={:?} visible={vis}", decl, import_clause);
+            }
+            if vis {
+                visible_default_binding = cx.nodes[import_clause].name();
+            }
         }
         let named_bindings = cx.nodes[import_clause].as_import_clause().named_bindings;
         let Some(named_bindings) = named_bindings else {

@@ -1989,7 +1989,8 @@ impl Checker {
     /// `c.getSymbolOfDeclaration` (checker.go).
     pub fn get_symbol_of_declaration(&mut self, node: NodeId) -> Option<SymbolId> {
         let __program = self.program.clone().expect("program");
-        let symbol = __program.nodes((node).file_index())[node].symbol();
+        let nodes = crate::printer_util::resolve_arena_for(&__program, &[], node);
+        let symbol = nodes.get(node.local_index() as usize)?.symbol();
         symbol.map(|s| {
             let late = self.get_late_bound_symbol(s);
             self.get_merged_symbol(late)

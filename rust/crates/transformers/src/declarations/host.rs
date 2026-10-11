@@ -47,4 +47,8 @@ pub trait DeclarationEmitHost {
         force_dts_emit: bool,
         nodes: &[Node],
     ) -> bool;
+
+    /// PORT: resolves `id` into its own arena — referenced files live in
+    /// the program arenas, not the emit working buffer (`nodes`).
+    fn resolve_node(&self, id: NodeId, nodes: &[Node]) -> Option<Node>;
 }

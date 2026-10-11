@@ -33,7 +33,7 @@ use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
 use tsc_ast::{self as ast, NodeId, SymbolFlags, SymbolId};
-use tsc_nodebuilder::SymbolTracker;
+use tsc_nodebuilder::{IsSymbolAccessible, SymbolTracker};
 
 use crate::nodebuilderimpl::{NodeBuilderContext, TrackedSymbolArgs};
 
@@ -78,10 +78,17 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
         enclosing_declaration: Option<NodeId>,
         meaning: SymbolFlags,
         nodes: &[ast::Node],
+        is_symbol_accessible: &mut IsSymbolAccessible<'_>,
     ) -> bool {
         if !self.disable_track_symbol {
             if let Some(inner) = self.inner.as_ref()
-                && inner.borrow_mut().track_symbol(symbol, enclosing_declaration, meaning, nodes)
+                && inner.borrow_mut().track_symbol(
+                    symbol,
+                    enclosing_declaration,
+                    meaning,
+                    nodes,
+                    is_symbol_accessible,
+                )
             {
                 self.on_diagnostic_reported();
                 return true;

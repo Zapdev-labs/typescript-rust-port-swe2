@@ -18,33 +18,10 @@ use tsc_nodebuilder::{Flags, InternalFlags, SymbolTracker};
 
 use crate::emit_context::EmitContext;
 
-/// `type SymbolAccessibility int32`
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
-pub enum SymbolAccessibility {
-    /// `SymbolAccessibilityAccessible`
-    #[default]
-    Accessible,
-    /// `SymbolAccessibilityNotAccessible`
-    NotAccessible,
-    /// `SymbolAccessibilityCannotBeNamed`
-    CannotBeNamed,
-    /// `SymbolAccessibilityNotResolved`
-    NotResolved,
-}
-
-/// `type SymbolAccessibilityResult struct`
-#[derive(Clone, Default)]
-pub struct SymbolAccessibilityResult {
-    pub accessibility: SymbolAccessibility,
-    /// aliases that need to have this symbol visible
-    pub aliases_to_make_visible: Vec<NodeId>,
-    /// Optional - symbol name that results in error
-    pub error_symbol_name: String,
-    /// Optional - node that results in error
-    pub error_node: Option<NodeId>,
-    /// Optional - If the symbol is not visible from module, module's name
-    pub error_module_name: String,
-}
+// `SymbolAccessibility`/`SymbolAccessibilityResult` are defined in
+// `tsc-nodebuilder` so `SymbolTracker::track_symbol` can name them (see
+// the type's PORT note); re-exported here for the resolver's consumers.
+pub use tsc_nodebuilder::{SymbolAccessibility, SymbolAccessibilityResult};
 
 /// `type TypeReferenceSerializationKind int32` — indicates how to serialize
 /// the name for a TypeReferenceNode when emitting decorator metadata.

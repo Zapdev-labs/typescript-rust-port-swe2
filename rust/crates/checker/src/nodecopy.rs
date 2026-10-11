@@ -385,6 +385,7 @@ impl<'a> nodebuilder::SymbolTracker for WrappingTracker<'a> {
         enclosing_declaration: Option<NodeId>,
         meaning: SymbolFlags,
         _nodes: &[ast::Node],
+        _is_symbol_accessible: &mut nodebuilder::IsSymbolAccessible<'_>,
     ) -> bool {
         self.bound
             .borrow_mut()
@@ -430,6 +431,7 @@ impl<'a> NodeBuilderImpl<'a> {
     /// `(b *NodeBuilderImpl) finalizeBoundary` (nodecopy.go).
     fn finalize_boundary(
         &mut self,
+        c: &mut Checker,
         bound: &Rc<RefCell<RecoveryBoundary<'a>>>,
         nodes: &mut Vec<ast::Node>,
     ) -> bool {
@@ -458,11 +460,15 @@ impl<'a> NodeBuilderImpl<'a> {
         let tracked = std::mem::take(&mut bound.borrow_mut().tracked_symbols);
         for a in tracked {
             if let Some(tracker) = self.ctx.tracker.clone() {
+                let nodes_view: &[ast::Node] = nodes;
                 tracker.borrow_mut().track_symbol(
                     a.symbol,
                     a.enclosing_declaration,
                     a.meaning,
-                    nodes,
+                    nodes_view,
+                    &mut |sym, en, mn, sc| {
+                        c.is_symbol_accessible(sym, en, mn, sc, Some(nodes_view))
+                    },
                 );
             }
         }
@@ -577,7 +583,7 @@ impl<'a> NodeBuilderImpl<'a> {
         };
         drop(visitor);
         drop(shared);
-        if !self.finalize_boundary(&bound, nodes) {
+        if !self.finalize_boundary(c, &bound, nodes) {
             return None;
         }
         {
@@ -1137,9 +1143,17 @@ fn track_existing_entity_name(
         } else {
             let tracker = sh.b.borrow().ctx.tracker.clone();
             if let Some(tracker) = tracker {
-                tracker
-                    .borrow_mut()
-                    .track_symbol(sym_v, enclosing_declaration, meaning, cx.nodes);
+                let nodes_view: &[ast::Node] = cx.nodes;
+                tracker.borrow_mut().track_symbol(
+                    sym_v,
+                    enclosing_declaration,
+                    meaning,
+                    nodes_view,
+                    &mut |sym, en, mn, sc| {
+                        sh.c.borrow_mut()
+                            .is_symbol_accessible(sym, en, mn, sc, Some(nodes_view))
+                    },
+                );
             }
         }
         let attached = attach_symbol_to_leftmost_identifier(sh, cx, leftmost, node, sym);
