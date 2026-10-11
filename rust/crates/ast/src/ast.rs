@@ -1702,7 +1702,17 @@ impl NodeFactory<'_> {
         let (changed, opts, text) = {
             let d = nodes[node].as_source_file();
             (
-                statements != d.statements || end_of_file_token != d.end_of_file_token,
+                // PORT: Go compares `*StatementList` pointers — a freshly
+                // built list counts as changed even when its contents are
+                // identical, so callers that reuse the stored list must pass
+                // the same backing allocation (deep equality would wrongly
+                // reuse `node` and let writes like `IsDeclarationFile`
+                // mutate the original SourceFile).
+                statements
+                    .as_ref()
+                    .map(|l| l.nodes.as_ptr())
+                    != d.statements.as_ref().map(|l| l.nodes.as_ptr())
+                    || end_of_file_token != d.end_of_file_token,
                 d.parse_options.clone(),
                 d.text.clone(),
             )
