@@ -59,6 +59,11 @@ impl<T: Eq + Hash> OrderedSet<T> {
         self.m.keys()
     }
 
+    /// GetAt returns the value at the given insertion-order index.
+    pub fn get_at(&self, index: usize) -> Option<&T> {
+        self.m.entry_at(index).map(|(k, _)| k)
+    }
+
     /// Clear removes all elements from the set.
     /// The space allocated for the set will be reused.
     pub fn clear(&mut self) {

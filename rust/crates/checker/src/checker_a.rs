@@ -2132,31 +2132,25 @@ impl Checker {
     }
 
     /// `(c *Checker) checkDeferredNodes` (checker.go). Go iterates the live
-    /// ordered set, so nodes deferred *during* deferred checking are visited
-    /// too — drain until the set is empty.
+    /// ordered set: a node remains a member while it is being checked, so a
+    /// node that re-defers itself during its own deferred check is a no-op,
+    /// and nodes deferred *during* the pass are appended and visited once.
+    /// The set is cleared afterward.
     pub(crate) fn check_deferred_nodes(&mut self, context: NodeId) {
-        loop {
-            let deferred: Vec<NodeId> = self
-                .source_file_links
-                .get(context)
-                .deferred_nodes
-                .values()
-                .copied()
-                .collect();
-            if deferred.is_empty() {
-                break;
-            }
-            self.source_file_links.get(context).deferred_nodes = OrderedSet::new();
-            for node in deferred {
-                if self.is_canceled() {
-                    break;
-                }
-                self.check_deferred_node(node);
-            }
+        let mut index = 0usize;
+        while let Some(&node) = self
+            .source_file_links
+            .get(context)
+            .deferred_nodes
+            .get_at(index)
+        {
             if self.is_canceled() {
                 break;
             }
+            self.check_deferred_node(node);
+            index += 1;
         }
+        self.source_file_links.get(context).deferred_nodes = OrderedSet::new();
     }
 
     /// `(c *Checker) checkDeferredNode` (checker.go).
