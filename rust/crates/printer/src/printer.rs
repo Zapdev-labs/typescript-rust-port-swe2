@@ -8624,7 +8624,7 @@ impl<'p, 'a> Emitter<'p, 'a> {
         let loc = self.p.emit_context.source_map_range(self.p.nodes, node);
 
         if !ast::is_not_emitted_statement(&self.p.nodes[node])
-            && emit_flags & EmitFlags::NO_LEADING_SOURCE_MAP != EmitFlags::NONE
+            && emit_flags & EmitFlags::NO_LEADING_SOURCE_MAP == EmitFlags::NONE
             && self.p.current_source_file.is_some()
             && !ast::position_is_synthesized(loc.pos())
         {
@@ -8666,7 +8666,7 @@ impl<'p, 'a> Emitter<'p, 'a> {
         }
 
         if !ast::is_not_emitted_statement(&self.p.nodes[node])
-            && emit_flags & EmitFlags::NO_TRAILING_SOURCE_MAP != EmitFlags::NONE
+            && emit_flags & EmitFlags::NO_TRAILING_SOURCE_MAP == EmitFlags::NONE
             && !ast::position_is_synthesized(loc.end())
         {
             self.emit_source_pos(self.source_map_source, loc.end());

@@ -392,8 +392,9 @@ impl NodeFactory {
                 )
             };
             let left = self.create_expression_from_entity_name(nodes, left);
+            let right_loc = nodes[right].loc;
             let right = self.inner.clone_node(nodes, right);
-            nodes[right].loc = nodes[node].loc;
+            nodes[right].loc = right_loc;
             // TODO(rbuckton): Does this need to be parented?
             // PORT: parents are not tracked in the Rust AST.
             let prop_access = self.inner.new_property_access_expression(
