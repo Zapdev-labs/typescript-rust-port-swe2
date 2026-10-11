@@ -3643,10 +3643,14 @@ impl Checker {
                 live_nodes.unwrap_or(&[]),
                 loc.file_index(),
             ),
-            // `files[0]` mirrors Go `c.files[0]` — panics on an empty
-            // program, matching Go's index-out-of-range.
+            // PORT: Go never reads `c.files` for a nil location (global
+            // lookups walk `globals` only), so an empty program yields an
+            // empty arena view instead of Go's `files[0]` index panic.
             None => crate::printer_util::ArenaView::Snapshot(
-                __program.nodes(self.files[0].file_index()),
+                self.files
+                    .first()
+                    .map(|f| __program.nodes(f.file_index()))
+                    .unwrap_or_default(),
             ),
         };
         let symbol_arena = self.symbol_arena.clone();

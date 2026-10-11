@@ -613,7 +613,13 @@ impl EmitResolver {
         let props = get_properties_of_container_function_c(c, node);
         props.iter().any(|&p| {
             let value_declaration = c.symbol_arena.borrow()[p.index()].value_declaration;
-            ast::is_expando_property_declaration(value_declaration, nodes)
+            value_declaration.is_some_and(|d| {
+                let __program = c.program.clone().expect("program");
+                let arena = crate::printer_util::resolve_arena_for(&__program, nodes, d);
+                arena
+                    .get(d.local_index() as usize)
+                    .is_some_and(|n| ast::is_binary_expression(n))
+            })
         })
     }
 

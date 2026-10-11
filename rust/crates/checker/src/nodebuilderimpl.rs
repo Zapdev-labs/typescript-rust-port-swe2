@@ -5496,7 +5496,8 @@ impl<'a> NodeBuilderImpl<'a> {
                 if self.ctx.flags.intersects(nodebuilder::Flags::NO_TRUNCATION) {
                     if let Some(&last) = type_elements.last() {
                         let text = format!("... {} more elided ...", properties.len() - i);
-                        type_elements[i - 1] = self.e.borrow().add_synthetic_trailing_comment(
+                        let last_index = type_elements.len() - 1;
+                        type_elements[last_index] = self.e.borrow().add_synthetic_trailing_comment(
                             last,
                             Kind::MultiLineCommentTrivia,
                             &text,

@@ -2885,47 +2885,15 @@ impl Checker {
         if self.jsx_namespace.is_empty() {
             self.jsx_namespace = "React".to_string();
             if !self.compiler_options.jsx_factory.is_empty() {
-                let jsx_factory = self.compiler_options.jsx_factory.clone();
-                self.jsx_factory_entity = self.parse_isolated_entity_name(
-                    &jsx_factory,
-                    file_index,
-                    live.as_deref_mut(),
-                );
-                if let Some(entity) = self.jsx_factory_entity {
-                    let __program = self.program.clone().expect("program");
-                    let nodes = crate::printer_util::resolve_arena_for(
-                        &__program,
-                        live.as_deref().map(|v| v.as_slice()).unwrap_or(&[]),
-                        entity,
-                    );
-                    let first = ast::get_first_identifier(entity, &nodes);
-                    self.jsx_namespace = nodes[first].text(&nodes).into_owned();
-                }
+                self.jsx_factory_entity =
+                    self.mint_jsx_factory_entity(file_index, live.as_deref_mut());
             } else if !self.compiler_options.react_namespace.is_empty() {
                 self.jsx_namespace = self.compiler_options.react_namespace.clone();
             }
         }
         if self.jsx_factory_entity.is_none() {
-            let program = self.program.clone().expect("program");
-            let mut _arena;
-            let buf: &mut Vec<Node> = match live.as_deref_mut() {
-                Some(l) => l,
-                None => {
-                    _arena = program.nodes_mut(file_index);
-                    &mut _arena
-                }
-            };
-            let old_file_index = self.factory.file_index();
-            self.factory.set_file_index(file_index);
-            let left = self
-                .factory
-                .new_identifier(buf, &self.jsx_namespace.clone());
-            let right = self.factory.new_identifier(buf, "createElement");
-            let qualified = self
-                .factory
-                .new_qualified_name(buf, Some(left), Some(right));
-            self.factory.set_file_index(old_file_index);
-            self.jsx_factory_entity = Some(qualified);
+            self.jsx_factory_entity =
+                self.mint_jsx_factory_entity(file_index, live.as_deref_mut());
         }
         self.jsx_namespace.clone()
     }
@@ -3008,6 +2976,86 @@ impl Checker {
         Some(parts)
     }
 
+    /// Whether `e` still resolves to an entity-name chain in some arena —
+    /// `false` when the cached id was minted into a since-dropped scratch
+    /// buffer (or an arena region later clobbered by a checkout write-back).
+    fn entity_resolves(&self, e: NodeId, live: &[Node]) -> bool {
+        let __program = self.program.clone().expect("program");
+        let arena = crate::printer_util::resolve_arena_for(&__program, live, e);
+        Self::entity_name_parts(&arena, e).is_some_and(|p| !p.is_empty())
+    }
+
+    /// Re-parse a `jsx`/`jsxfrag` pragma `factory` argument on `file` and
+    /// materialize the entity — used to regenerate cached ids gone stale.
+    fn parse_pragma_factory(
+        &mut self,
+        file: NodeId,
+        pragma: &str,
+        live: Option<&mut Vec<Node>>,
+    ) -> Option<NodeId> {
+        let __program = self.program.clone().expect("program");
+        let value = {
+            let f_nodes = crate::printer_util::resolve_arena_for(
+                &__program,
+                live.as_deref().map(|v| v.as_slice()).unwrap_or(&[]),
+                file,
+            );
+            let sf = f_nodes[file].as_source_file();
+            ast::get_pragma_from_source_file(sf, pragma)
+                .map(|p| ast::get_pragma_argument(Some(p), "factory"))
+        };
+        let value = value?;
+        self.parse_isolated_entity_name(&value, file.file_index(), live)
+    }
+
+    /// Mint the checker-level `jsx_factory_entity`: the `jsxFactory`
+    /// option's entity name, or `<jsxNamespace>.createElement` by default.
+    fn mint_jsx_factory_entity(
+        &mut self,
+        file_index: u32,
+        mut live: Option<&mut Vec<Node>>,
+    ) -> Option<NodeId> {
+        if !self.compiler_options.jsx_factory.is_empty() {
+            let jsx_factory = self.compiler_options.jsx_factory.clone();
+            let entity =
+                self.parse_isolated_entity_name(&jsx_factory, file_index, live.as_deref_mut());
+            if let Some(entity) = entity {
+                let __program = self.program.clone().expect("program");
+                let nodes = crate::printer_util::resolve_arena_for(
+                    &__program,
+                    live.as_deref().map(|v| v.as_slice()).unwrap_or(&[]),
+                    entity,
+                );
+                let first = ast::get_first_identifier(entity, &nodes);
+                self.jsx_namespace = nodes[first].text(&nodes).into_owned();
+            }
+            return entity;
+        }
+        let program = self.program.clone().expect("program");
+        let mut _arena;
+        // Mint into `live` only when it is `file_index`'s own arena
+        // checkout — a foreign checkout's write-back would land the
+        // entity in the wrong arena and leave a dangling id.
+        let buf: &mut Vec<Node> = match Self::entity_dest(file_index, live.as_deref_mut()) {
+            Some(l) => l,
+            None => {
+                _arena = program.nodes_mut(file_index);
+                &mut _arena
+            }
+        };
+        let old_file_index = self.factory.file_index();
+        self.factory.set_file_index(file_index);
+        let left = self
+            .factory
+            .new_identifier(buf, &self.jsx_namespace.clone());
+        let right = self.factory.new_identifier(buf, "createElement");
+        let qualified = self
+            .factory
+            .new_qualified_name(buf, Some(left), Some(right));
+        self.factory.set_file_index(old_file_index);
+        Some(qualified)
+    }
+
     /// Entity ids returned to a caller holding a live working buffer (the
     /// emit transform) can point into the file arena — where they alias
     /// unrelated nodes at the same packed index in the caller's buffer.
@@ -3029,6 +3077,27 @@ impl Checker {
         let Some(parts) = parts.filter(|p| !p.is_empty()) else {
             return e;
         };
+        // `l` is only safe to mint into when it is `file_index`'s own arena
+        // checkout — stamping `file_index` on nodes appended to a *foreign*
+        // buffer leaves ids that dangle once the buffer writes back/drops.
+        let live_is_target_arena = l
+            .first()
+            .is_some_and(|n| n.id.file_index() == file_index);
+        if !live_is_target_arena {
+            let mut arena = __program.nodes_mut(file_index);
+            let old_file_index = self.factory.file_index();
+            self.factory.set_file_index(file_index);
+            let mut acc = self.factory.new_identifier(&mut arena, &parts[0]);
+            for part in &parts[1..] {
+                let right = self.factory.new_identifier(&mut arena, part);
+                acc = self
+                    .factory
+                    .new_qualified_name(&mut arena, Some(acc), Some(right));
+            }
+            self.factory.set_file_index(old_file_index);
+            mark_as_synthetic(acc, &mut arena);
+            return acc;
+        }
         let old_file_index = self.factory.file_index();
         self.factory.set_file_index(file_index);
         let mut acc = self.factory.new_identifier(l, &parts[0]);
@@ -3063,15 +3132,33 @@ impl Checker {
                 let file = self.canonical_source_file(file);
                 if let Some(local_jsx_factory) = self.source_file_links.get(file).local_jsx_factory
                 {
-                    return Some(self.caller_entity(
+                    // PORT: cached ids can go stale — minted into a caller's
+                    // scratch buffer or clobbered by an arena-checkout
+                    // write-back. Re-derive from the pragma when the cached
+                    // id no longer resolves to an entity-name chain.
+                    let e = if self.entity_resolves(
                         local_jsx_factory,
-                        file.file_index(),
-                        live,
-                    ));
+                        live.as_deref().map(|v| v.as_slice()).unwrap_or(&[]),
+                    ) {
+                        local_jsx_factory
+                    } else {
+                        let parsed = self.parse_pragma_factory(file, "jsx", live.as_deref_mut());
+                        self.source_file_links.get(file).local_jsx_factory = parsed;
+                        parsed?
+                    };
+                    return Some(self.caller_entity(e, file.file_index(), live));
                 }
             }
         }
-        let e = self.jsx_factory_entity?;
+        let mut e = self.jsx_factory_entity?;
+        if !self.entity_resolves(e, live.as_deref().map(|v| v.as_slice()).unwrap_or(&[])) {
+            // PORT: stale cache — see above; re-mint from the option/default.
+            e = self.mint_jsx_factory_entity(
+                location.map(|l0| l0.file_index()).unwrap_or(0),
+                live.as_deref_mut(),
+            )?;
+            self.jsx_factory_entity = Some(e);
+        }
         Some(self.caller_entity(
             e,
             location.map(|l0| l0.file_index()).unwrap_or(0),
@@ -3104,9 +3191,22 @@ impl Checker {
             if let Some(file) = ast::get_source_file_of_node(Some(location), &nodes) {
                 let file = self.canonical_source_file(file);
                 if let Some(local) = self.source_file_links.get(file).local_jsx_fragment_factory {
-                    return Some(self.caller_entity(local, file.file_index(), live));
+                    // PORT: re-derive when the cached id went stale — see
+                    // `get_jsx_factory_entity_live`.
+                    let e = if self.entity_resolves(
+                        local,
+                        live.as_deref().map(|v| v.as_slice()).unwrap_or(&[]),
+                    ) {
+                        local
+                    } else {
+                        let parsed =
+                            self.parse_pragma_factory(file, "jsxfrag", live.as_deref_mut());
+                        self.source_file_links.get(file).local_jsx_fragment_factory = parsed;
+                        parsed?
+                    };
+                    return Some(self.caller_entity(e, file.file_index(), live));
                 }
-                let jsx_frag_pragma_value = {
+                let pragma_has_value = {
                     let f_nodes = crate::printer_util::resolve_arena_for(
                         &__program,
                         live.as_deref().map(|v| v.as_slice()).unwrap_or(&[]),
@@ -3114,14 +3214,11 @@ impl Checker {
                     );
                     let sf = f_nodes[file].as_source_file();
                     ast::get_pragma_from_source_file(sf, "jsxfrag")
-                        .map(|p| ast::get_pragma_argument(Some(p), "factory"))
+                        .is_some_and(|p| !ast::get_pragma_argument(Some(p), "factory").is_empty())
                 };
-                if let Some(value) = jsx_frag_pragma_value {
-                    let parsed = self.parse_isolated_entity_name(
-                        &value,
-                        file.file_index(),
-                        live.as_deref_mut(),
-                    );
+                if pragma_has_value {
+                    let parsed =
+                        self.parse_pragma_factory(file, "jsxfrag", live.as_deref_mut());
                     self.source_file_links.get(file).local_jsx_fragment_factory = parsed;
                     return parsed;
                 }
@@ -3152,7 +3249,7 @@ impl Checker {
         let result = self.materialize_entity_name(entity, &src, file_index, live.as_deref_mut());
         let program = self.program.clone().expect("program");
         let mut _arena;
-        let buf: &mut Vec<Node> = match live.as_deref_mut() {
+        let buf: &mut Vec<Node> = match Self::entity_dest(file_index, live.as_deref_mut()) {
             Some(l) => l,
             None => {
                 _arena = program.nodes_mut(file_index);
@@ -3161,6 +3258,17 @@ impl Checker {
         };
         mark_as_synthetic(result, buf);
         Some(result)
+    }
+
+    /// `live` is a valid destination for `file_index` entities only when it
+    /// is that file's own arena checkout (first node carries the file index).
+    /// Any other buffer — a scratch Vec or a *different* file's checkout —
+    /// would strand the minted ids once it drops or writes back.
+    fn entity_dest<'x>(
+        file_index: u32,
+        live: Option<&'x mut Vec<Node>>,
+    ) -> Option<&'x mut Vec<Node>> {
+        live.filter(|l| l.first().is_some_and(|n| n.id.file_index() == file_index))
     }
 
     /// `materializeEntityName` — port helper: re-create a parsed
@@ -3190,7 +3298,7 @@ impl Checker {
                     live.as_deref_mut(),
                 );
                 let mut _arena;
-                let buf: &mut Vec<Node> = match live.as_deref_mut() {
+                let buf: &mut Vec<Node> = match Self::entity_dest(file_index, live.as_deref_mut()) {
                     Some(l) => l,
                     None => {
                         _arena = program.nodes_mut(file_index);
@@ -3208,7 +3316,7 @@ impl Checker {
             _ => {
                 let text = src[node].text(src).into_owned();
                 let mut _arena;
-                let buf: &mut Vec<Node> = match live.as_deref_mut() {
+                let buf: &mut Vec<Node> = match Self::entity_dest(file_index, live.as_deref_mut()) {
                     Some(l) => l,
                     None => {
                         _arena = program.nodes_mut(file_index);
