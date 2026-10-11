@@ -14082,7 +14082,8 @@ impl Checker {
         }
 
         if ast::is_expression_node(node, &nodes) {
-            return self.get_regular_type_of_expression(node);
+            let t = self.get_regular_type_of_expression(node);
+            return t;
         }
 
         if class_type.is_some() && !is_implements {

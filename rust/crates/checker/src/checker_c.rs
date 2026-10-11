@@ -9951,9 +9951,34 @@ impl Checker {
         source: Option<SymbolId>,
         t: Option<TypeId>,
     ) -> SymbolId {
-        let clone = self.clone_symbol(source.expect("createSymbolWithType source"));
-        self.value_symbol_links.get(clone).resolved_type = t;
-        clone
+        let source = source.expect("createSymbolWithType source");
+        let name_type = self.value_symbol_links.get(source).name_type;
+        let (flags, name, check_flags, declarations, parent, value_declaration) = {
+            let s = self.sym(source);
+            (
+                s.flags,
+                s.name.clone(),
+                s.check_flags,
+                s.declarations.clone(),
+                s.parent,
+                s.value_declaration,
+            )
+        };
+        // Go uses `newSymbolEx` (not `cloneSymbol`) — crucially this does NOT
+        // `recordMergedSymbol`, so the synthesized symbol must not shadow the
+        // source in `mergedSymbols` lookups.
+        let symbol = self.new_symbol_ex(
+            flags,
+            &name,
+            check_flags & ast::checkflags::CheckFlags::READONLY,
+        );
+        self.sym_mut(symbol).declarations = declarations;
+        self.sym_mut(symbol).parent = parent;
+        self.sym_mut(symbol).value_declaration = value_declaration;
+        self.value_symbol_links.get(symbol).resolved_type = t;
+        self.value_symbol_links.get(symbol).target = Some(source);
+        self.value_symbol_links.get(symbol).name_type = name_type;
+        symbol
     }
 
     /// `(c *Checker) resolveIntersectionTypeMembers` (checker.go:21700).
