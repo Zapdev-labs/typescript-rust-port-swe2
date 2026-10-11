@@ -132,6 +132,11 @@ pub struct CompilerBaselineRunner {
     /// `testSuitName` — read only under `feature = "harness"`.
     #[cfg_attr(not(feature = "harness"), allow(dead_code))]
     test_suit_name: String,
+    /// Failed test names. In Go each file runs as a `t.Run` subtest whose
+    /// panic is recovered into `t.Fail`, so one failing file never aborts
+    /// the rest of the suite.
+    #[cfg(feature = "harness")]
+    pub failures: std::cell::RefCell<Vec<String>>,
 }
 
 /// `NewCompilerBaselineRunner`.
@@ -141,6 +146,8 @@ pub fn new_compiler_baseline_runner(test_type: CompilerTestType) -> CompilerBase
         test_files: Vec::new(),
         base_path: format!("tests/cases/{test_suit_name}"),
         test_suit_name: test_suit_name.to_string(),
+        #[cfg(feature = "harness")]
+        failures: std::cell::RefCell::new(Vec::new()),
     }
 }
 
@@ -317,7 +324,9 @@ impl CompilerBaselineRunner {
             compiler_test.verify_parent_pointers();
         }));
         if let Err(payload) = result {
-            tsc_testutil::recover_and_fail(&format!("Panic on compiler test {filename}"), &payload);
+            let msg = tsc_testutil::describe_payload(&payload);
+            eprintln!("[FAIL] {test_name}: {msg}");
+            self.failures.borrow_mut().push(format!("{test_name} ({filename})"));
         }
     }
 }
@@ -970,6 +979,13 @@ fn test_local_inner() {
     }
     for runner in &mut runners {
         runner.run_tests();
+    }
+    let failures: Vec<String> = runners
+        .iter()
+        .flat_map(|r| r.failures.borrow().clone())
+        .collect();
+    if !failures.is_empty() {
+        panic!("{} compiler baseline test(s) failed:\n{}", failures.len(), failures.join("\n"));
     }
 }
 

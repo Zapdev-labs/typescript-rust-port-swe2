@@ -4078,13 +4078,9 @@ fn is_abstract_constructor_symbol(program: &Program, symbol: SymbolId) -> bool {
         let declaration = {
             let symbols = program.symbols.borrow();
             let s = &symbols[symbol.index()];
-            match s.declarations.first().copied() {
-                Some(d) => {
-                    let nodes = program.arena_of(d);
-                    ast::get_class_like_declaration_of_symbol(s, &nodes)
-                }
-                None => None,
-            }
+            ast::get_class_like_declaration_of_symbol_with(s, |d| {
+                ast::is_class_like(Some(d), &program.arena_of(d))
+            })
         };
         return declaration.is_some_and(|declaration| {
             let nodes = program.arena_of(declaration);

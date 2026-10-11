@@ -1684,10 +1684,11 @@ pub(crate) fn try_get_property_access_or_identifier_to_string(
 pub(crate) fn get_base_type_node_of_class(c: &Checker, t: TypeId) -> Option<NodeId> {
     let __arena_symbol = c.types.clone();
     let symbol = __arena_symbol.get(t).symbol?;
-    let first_decl = *c.sym(symbol).declarations.first()?;
     let __program = c.program.clone().expect("program");
-    let nodes = __program.nodes((first_decl).file_index());
-    let decl = ast::get_class_like_declaration_of_symbol(&*c.sym(symbol), &nodes)?;
+    let decl = ast::get_class_like_declaration_of_symbol_with(&*c.sym(symbol), |d| {
+        ast::is_class_like(Some(d), &__program.nodes(d.file_index()))
+    })?;
+    let nodes = __program.nodes((decl).file_index());
 
     ast::get_class_extends_heritage_element(&nodes[decl], &nodes)
 }

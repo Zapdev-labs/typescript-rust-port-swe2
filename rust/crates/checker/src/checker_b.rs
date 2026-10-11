@@ -1324,15 +1324,10 @@ impl Checker {
                 let value_decl = {
                     let arena = self.symbol_arena.borrow();
                     let __program = self.program.clone().expect("program");
-                    let decl_nodes = __program.nodes(
-                        arena[symbol.index()]
-                            .declarations
-                            .first()
-                            .copied()
-                            .unwrap_or(node)
-                            .file_index(),
-                    );
-                    ast::get_class_like_declaration_of_symbol(&arena[symbol.index()], &decl_nodes)
+                    ast::get_class_like_declaration_of_symbol_with(
+                        &arena[symbol.index()],
+                        |d| ast::is_class_like(Some(d), &__program.nodes(d.file_index())),
+                    )
                 };
                 if let Some(value_decl) = value_decl {
                     let __program = self.program.clone().expect("program");
@@ -1428,8 +1423,12 @@ impl Checker {
                 let __program = self.program.clone().expect("program");
                 let parent_nodes = __program.nodes((parent).file_index());
                 let symbol = parent_nodes[parent].symbol().expect("parent symbol");
+                drop(parent_nodes);
                 let arena = self.symbol_arena.borrow();
-                ast::get_class_like_declaration_of_symbol(&arena[symbol.index()], &parent_nodes)
+                ast::get_class_like_declaration_of_symbol_with(
+                    &arena[symbol.index()],
+                    |d| ast::is_class_like(Some(d), &__program.nodes(d.file_index())),
+                )
             };
             // A private or protected constructor can only be instantiated
             // within its own class (or a subclass, for protected)
@@ -8255,10 +8254,14 @@ impl Checker {
         if flags.intersects(ast::ModifierFlags::PRIVATE) {
             let mut declaring_class_declaration: Option<NodeId> = None;
             if let Some(parent) = self.get_parent_of_symbol(prop) {
-                declaring_class_declaration = ast::get_class_like_declaration_of_symbol(
-                    &self.sym(parent),
-                    &self.program_nodes_for_symbol(parent),
-                );
+                {
+                    let __program = self.program.clone().expect("program");
+                    declaring_class_declaration =
+                        ast::get_class_like_declaration_of_symbol_with(
+                            &self.sym(parent),
+                            |d| ast::is_class_like(Some(d), &__program.nodes(d.file_index())),
+                        );
+                }
             }
             if declaring_class_declaration.is_none()
                 || !self.is_node_within_class(location, declaring_class_declaration)

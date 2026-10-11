@@ -1159,7 +1159,9 @@ impl<'a> QuickInfoState<'a> {
         meaning: SymbolFlags,
         flags: SymbolFormatFlags,
     ) {
-        let text = self.checker().symbol_to_string_ex(symbol, enclosing, meaning, flags);
+        let text = self
+            .checker()
+            .symbol_to_string_ex(symbol, enclosing, meaning, flags, None);
         if !self.vs_capability {
             self.dpw.write(&text);
             return;

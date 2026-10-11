@@ -8921,11 +8921,12 @@ impl Checker {
                 s.value_declaration
                     .or_else(|| s.declarations.first().copied())
             };
-            anchor.and_then(|d| {
+            anchor.and_then(|_d| {
                 let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((d).file_index());
                 let s = self.sym(symbol);
-                ast::get_class_like_declaration_of_symbol(&s, &nodes)
+                ast::get_class_like_declaration_of_symbol_with(&s, |d| {
+                    ast::is_class_like(Some(d), &__program.nodes(d.file_index()))
+                })
             })
         };
         let is_abstract = declaration.is_some_and(|d| {

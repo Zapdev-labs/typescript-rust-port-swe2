@@ -111,7 +111,7 @@ where
     }
 }
 
-fn describe_payload(payload: &Box<dyn Any + Send>) -> String {
+pub fn describe_payload(payload: &Box<dyn Any + Send>) -> String {
     if let Some(s) = payload.downcast_ref::<String>() {
         return s.clone();
     }

@@ -1036,9 +1036,27 @@ pub mod outer_expression_kinds {
     pub const EXCLUDE_JS_DOC_TYPE_ASSERTION: OuterExpressionKinds = OuterExpressionKinds(1 << 6);
     pub const ASSIGNMENTS: OuterExpressionKinds = OuterExpressionKinds(1 << 7);
     pub const COMMA: OuterExpressionKinds = OuterExpressionKinds(1 << 8);
-    pub const ALL: OuterExpressionKinds = OuterExpressionKinds(0xFFFF);
+    /// `OEKAssertions` = `OEKTypeAssertions | OEKNonNullAssertions | OEKSatisfies`.
+    pub const ASSERTIONS: OuterExpressionKinds =
+        OuterExpressionKinds(TYPE_ASSERTIONS.0 | NON_NULL_ASSERTIONS.0 | SATISFIES.0);
+    /// `OEKAll` = `OEKParentheses | OEKAssertions |
+    /// OEKPartiallyEmittedExpressions | OEKExpressionsWithTypeArguments`.
+    /// NOTE: `OEKAssignments` and `OEKComma` are deliberately excluded — they
+    /// belong only to `OEKExpressionTypePassthrough`.
+    pub const ALL: OuterExpressionKinds = OuterExpressionKinds(
+        PARENTHESES.0 | ASSERTIONS.0 | PARTIALLY_EMITTED_EXPRESSIONS.0
+            | EXPRESSIONS_WITH_TYPE_ARGUMENTS.0,
+    );
+    /// `OEKAllExceptAssertionsOrExpressionsWithTypeArguments`.
+    pub const ALL_EXCEPT_ASSERTIONS_OR_EXPRESSIONS_WITH_TYPE_ARGUMENTS:
+        OuterExpressionKinds =
+        OuterExpressionKinds(ALL.0 & !ASSERTIONS.0 & !EXPRESSIONS_WITH_TYPE_ARGUMENTS.0);
+    /// `OEKAll | OEKExcludeJSDocTypeAssertion`.
     pub const ALL_EXCLUDING_JS_DOC_TYPE_ASSERTIONS: OuterExpressionKinds =
         OuterExpressionKinds(ALL.0 | EXCLUDE_JS_DOC_TYPE_ASSERTION.0);
+    /// `OEKExpressionTypePassthrough` = `OEKParentheses | OEKAssignments | OEKComma`.
+    pub const EXPRESSION_TYPE_PASSTHROUGH: OuterExpressionKinds =
+        OuterExpressionKinds(PARENTHESES.0 | ASSIGNMENTS.0 | COMMA.0);
 }
 
 impl std::ops::BitOr for OuterExpressionKinds {
@@ -4320,6 +4338,21 @@ pub fn get_class_like_declaration_of_symbol(symbol: &Symbol, nodes: &[Node]) -> 
         .iter()
         .copied()
         .find(|&d| is_class_like(Some(d), nodes))
+}
+
+/// `get_class_like_declaration_of_symbol` variant for symbols whose
+/// `declarations` may span multiple files: the caller resolves each
+/// candidate declaration in its own arena (Go reads declaration nodes by
+/// pointer; a single `nodes` slice can only resolve one file_index).
+pub fn get_class_like_declaration_of_symbol_with(
+    symbol: &Symbol,
+    mut is_class_like: impl FnMut(NodeId) -> bool,
+) -> Option<NodeId> {
+    symbol
+        .declarations
+        .iter()
+        .copied()
+        .find(|&d| is_class_like(d))
 }
 
 /// `IsCallLikeExpression(node)`.
