@@ -7687,8 +7687,17 @@ diag_name.clone(), __h7292_50],
                     let suggestion = self
                         .get_suggested_symbol_for_nonexistent_property(prop_node, containing_type);
                     if let Some(suggestion) = suggestion {
+                        // The suggested symbol's value declaration can live
+                        // in another file (e.g. a lib .d.ts) — `symbol_name`
+                        // must read it through its own arena.
+                        let decl_arena = match self.sym(suggestion).value_declaration {
+                            Some(vd) => {
+                                crate::printer_util::resolve_arena_for(&__program, &nodes, vd)
+                            }
+                            None => crate::printer_util::ArenaView::Working(&nodes),
+                        };
                         let suggested_name =
-                            ast::symbol_name(&self.sym(suggestion), &nodes).into_owned();
+                            ast::symbol_name(&self.sym(suggestion), &decl_arena).into_owned();
                         let message = tsc_core::core::if_else(
                             is_unchecked_js,
                             &tsc_diagnostics::Property_0_may_not_exist_on_type_1_Did_you_mean_2,
