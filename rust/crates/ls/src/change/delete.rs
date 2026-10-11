@@ -28,7 +28,8 @@ pub(crate) fn delete_declaration(
     node: NodeId,
 ) {
     let handle = t.arena_handle(source_file);
-    match handle.borrow()[node].kind {
+    let node_kind = handle.borrow()[node].kind;
+    match node_kind {
         Kind::Parameter => {
             let mut n = handle.borrow_mut();
             let old_function = n[node].parent.unwrap_or(NodeId::NONE);
@@ -386,7 +387,8 @@ fn delete_variable_declaration(
     }
 
     let gp = gp.unwrap();
-    match handle.borrow()[gp].kind {
+    let gp_kind = handle.borrow()[gp].kind;
+    match gp_kind {
         Kind::ForOfStatement | Kind::ForInStatement => {
             let obj = {
                 let empty = t.node_factory(source_file).new_node_list(Vec::new());

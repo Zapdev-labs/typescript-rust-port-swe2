@@ -471,7 +471,9 @@ impl Checker {
             } else if flags.intersects(FlowFlags::BRANCH_LABEL) {
                 let antecedents = get_branch_label_antecedents(f, flow);
                 if antecedents.and_then(|a| f.flow_list(a).next).is_none() {
-                    flow = antecedents.and_then(|a| f.flow_list(a).flow).unwrap();
+                    flow = antecedents
+                        .and_then(|a| f.flow_list(a).flow)
+                        .expect("branch-label antecedent flow (Go: antecedents.Flow)");
                     continue;
                 }
                 t = self.get_type_at_flow_branch_label(f, flow, antecedents);
@@ -3751,7 +3753,11 @@ impl Checker {
                 }
                 self.symbol_arena.borrow()[symbol.index()]
                     .value_declaration
-                    .is_some_and(|d| ast::is_function_expression(&nodes[d]))
+                    .is_some_and(|d| {
+                        let __program = self.program.clone().expect("program");
+                        let decl_nodes = __program.nodes((d).file_index());
+                        ast::is_function_expression(&decl_nodes[d])
+                    })
             }
             Kind::PropertyAccessExpression | Kind::ElementAccessExpression => {
                 // The resolvedSymbol property is initialized by

@@ -319,7 +319,14 @@ impl<'a, 'b> ExternalModuleInfoCollector<'a, 'b> {
                     });
                 }
                 if let Some(decl) = decl {
-                    if nodes[decl].kind == ast::Kind::FunctionDeclaration {
+                    // PORT: `decl` can resolve to a declaration in another
+                    // file's arena (Go dereferences the node pointer); read
+                    // its kind through the resolver's arena-aware lookup.
+                    let decl_kind = self
+                        .resolver()
+                        .resolve_node(decl, nodes)
+                        .map(|n| n.kind);
+                    if decl_kind == Some(ast::Kind::FunctionDeclaration) {
                         self.unique_exports.delete(specifier_name_text.as_str());
                         let is_default =
                             ast::module_export_name_is_default(&nodes[specifier_name], nodes);

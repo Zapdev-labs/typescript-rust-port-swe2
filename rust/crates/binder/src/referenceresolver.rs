@@ -68,6 +68,12 @@ pub trait ReferenceResolver {
         nodes: &[Node],
         symbols: &std::cell::RefCell<Vec<Symbol>>,
     ) -> Option<NodeId>;
+
+    /// PORT: resolves `id` to a cloned `Node` — checks `nodes` first (the
+    /// caller's working arena), then the checker's program-arena hook.
+    /// Returned declaration `NodeId`s can live outside `nodes` (the Go port
+    /// dereferences node pointers freely).
+    fn resolve_node(&mut self, id: NodeId, nodes: &[Node]) -> Option<Node>;
 }
 
 /// `type ReferenceResolverHooks struct`.
@@ -113,6 +119,9 @@ pub struct ReferenceResolverHooks<'a> {
     /// dereferences node pointers, which have no arena concept). The
     /// checker wires this to its arena lookup.
     pub get_kind_of_node: Option<Box<dyn FnMut(NodeId) -> Option<Kind> + 'a>>,
+    /// PORT: resolves `id` (a cloned `Node`) when `id` is not in the working
+    /// arena — like `get_kind_of_node` but for whole-node field reads.
+    pub resolve_node: Option<Box<dyn FnMut(NodeId) -> Option<Node> + 'a>>,
 }
 
 /// `type referenceResolver struct` — exported under the Go constructor's
@@ -343,6 +352,24 @@ impl<'a> ReferenceResolverImpl<'a> {
     }
 }
 
+impl<'a> ReferenceResolverImpl<'a> {
+    /// Resolves `id` against `nodes` first (the caller's working arena),
+    /// falling back to the `resolve_node` hook for program-arena ids.
+    fn resolved_node(&mut self, id: NodeId, nodes: &[Node]) -> Option<Node> {
+        if nodes
+            .first()
+            .is_some_and(|n| n.id.file_index() == id.file_index())
+            && let Some(n) = nodes.get(id.local_index() as usize)
+        {
+            return Some(n.clone());
+        }
+        self.hooks
+            .resolve_node
+            .as_mut()
+            .and_then(|hook| hook(id))
+    }
+}
+
 impl<'a> ReferenceResolver for ReferenceResolverImpl<'a> {
     /// `func (r *referenceResolver) GetReferencedExportContainer` — returns
     /// `SourceFile|ModuleDeclaration|EnumDeclaration`.
@@ -557,5 +584,11 @@ impl<'a> ReferenceResolver for ReferenceResolverImpl<'a> {
         s?;
         self.get_export_symbol_of_value_symbol_if_exported(s, symbols)
             .and_then(|sym| symbols.borrow()[sym.index()].value_declaration)
+    }
+
+    /// `resolve_node` — `nodes` is checked first (the caller's working
+    /// arena), then the `resolve_node` hook resolves program-arena ids.
+    fn resolve_node(&mut self, id: NodeId, nodes: &[Node]) -> Option<Node> {
+        self.resolved_node(id, nodes)
     }
 }

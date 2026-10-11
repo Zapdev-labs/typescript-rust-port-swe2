@@ -952,6 +952,10 @@ impl ReferenceResolver for FakeEmitResolver {
     ) -> Option<NodeId> {
         unimplemented!("unused by ImportElisionTransformer")
     }
+
+    fn resolve_node(&mut self, id: NodeId, nodes: &[Node]) -> Option<Node> {
+        nodes.get(id.local_index() as usize).cloned()
+    }
 }
 
 impl EmitResolver for FakeEmitResolver {

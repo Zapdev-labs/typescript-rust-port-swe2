@@ -1012,6 +1012,10 @@ impl<'a> ReferenceResolver for EmitResolverAsReference<'a> {
             .borrow_mut()
             .get_referenced_member_value_declaration(node, nodes, symbols)
     }
+
+    fn resolve_node(&mut self, id: NodeId, nodes: &[Node]) -> Option<Node> {
+        self.0.borrow_mut().resolve_node(id, nodes)
+    }
 }
 
 /// `shouldEmitSourceMaps`.

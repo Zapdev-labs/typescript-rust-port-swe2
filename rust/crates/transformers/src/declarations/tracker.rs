@@ -81,7 +81,9 @@ pub struct SymbolTrackerSharedState<'a> {
     /// `reportExpandoFunctionErrors` — installed by the transformer after
     /// construction (it needs `tx` state the shared state doesn't have).
     /// Takes the `nodes` arena like the other arena-touching callbacks.
-    pub report_expando_function_errors: Option<Box<dyn Fn(NodeId, &[Node]) + 'a>>,
+    /// `Rc` so call sites can clone it out and drop the state borrow before
+    /// invoking — the callback itself mutably borrows the shared state.
+    pub report_expando_function_errors: Option<Rc<dyn Fn(NodeId, &[Node]) + 'a>>,
 }
 
 impl<'a> SymbolTrackerSharedState<'a> {
@@ -357,7 +359,12 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
                 .is_expando_function_declaration_unsafe(node, nodes)
             {
                 // within a node builder call that should already lock the checker, use the unsafe call
-                if let Some(report) = self.state.borrow().report_expando_function_errors.as_ref() {
+                let report = self
+                    .state
+                    .borrow()
+                    .report_expando_function_errors
+                    .clone();
+                if let Some(report) = report {
                     report(node, nodes);
                 }
             }

@@ -1028,12 +1028,14 @@ impl<'a> Binder<'a> {
     fn combine_flow_lists(
         &mut self,
         head: Option<FlowListId>,
-        _tail: Option<FlowListId>,
+        tail: Option<FlowListId>,
     ) -> Option<FlowListId> {
-        let head = head?;
+        let Some(head) = head else {
+            return tail;
+        };
         let head_flow = self.flow_lists[head.index()].flow.expect("flow list cell");
         let head_next = self.flow_lists[head.index()].next;
-        let new_tail = self.combine_flow_lists(head_next, _tail);
+        let new_tail = self.combine_flow_lists(head_next, tail);
         Some(self.new_flow_list(head_flow, new_tail))
     }
 

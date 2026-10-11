@@ -3663,7 +3663,8 @@ impl<'a> ClassFieldsTransformer<'a> {
             // Emit static properties as statements (via pendingStatements) using the class's
             // internal name as the receiver, matching the class declaration output structure.
             if !static_properties_or_class_static_blocks.is_empty() {
-                let class_this_or_name = match ec.borrow().class_this(node) {
+                let class_this = ec.borrow().class_this(node);
+                let class_this_or_name = match class_this {
                     Some(class_this) => class_this,
                     None => ec.borrow_mut().factory.get_local_name(cx.nodes, Some(node)),
                 };

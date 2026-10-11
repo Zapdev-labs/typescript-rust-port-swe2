@@ -435,6 +435,16 @@ impl EmitResolver {
                         nodes.get(node.local_index() as usize).map(|n| n.kind)
                     }
                 })),
+                resolve_node: Some(Box::new({
+                    let c = c.clone();
+                    move |node| {
+                        let mut c = c.try_borrow_mut().ok()?;
+                        let __program = c.program.clone()?;
+                        let nodes =
+                            crate::printer_util::resolve_arena_for(&__program, &[], node);
+                        nodes.get(node.local_index() as usize).cloned()
+                    }
+                })),
             },
         )
     }
@@ -828,6 +838,12 @@ impl ReferenceResolver for EmitResolver {
         }
         self.reference_resolver()
             .get_referenced_member_value_declaration(node, nodes, symbols)
+    }
+
+    /// `resolve_node` — the reference resolver already routes non-working
+    /// arena ids through the `resolve_node` hook.
+    fn resolve_node(&mut self, id: NodeId, nodes: &[Node]) -> Option<Node> {
+        self.reference_resolver().resolve_node(id, nodes)
     }
 }
 

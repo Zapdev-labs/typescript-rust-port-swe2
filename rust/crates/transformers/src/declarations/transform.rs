@@ -327,6 +327,7 @@ pub fn new_declaration_transformer<'a>(
     shared.borrow_mut().report_expando_function_errors = {
         let resolver = resolver.clone();
         let shared = shared.clone();
+        let host = state.host.clone();
         Some(Box::new(move |node: NodeId, nodes: &[Node]| {
             if !shared.borrow().isolated_declarations {
                 return;
@@ -341,14 +342,17 @@ pub fn new_declaration_transformer<'a>(
             );
             for p in props {
                 let value_declaration = symbols.borrow()[p.index()].value_declaration;
-                if ast::is_expando_property_declaration(value_declaration, nodes) {
-                    let mut error_target = value_declaration.expect("expando property decl");
-                    if ast::is_binary_expression(&nodes[error_target]) {
-                        error_target = nodes[error_target]
-                            .as_binary_expression()
-                            .left
-                            .expect("BinaryExpression.left");
-                    }
+                // `value_declaration` lives in its program arena, not the emit
+                // working buffer — resolve through the host.
+                let decl_node =
+                    value_declaration.and_then(|d| host.resolve_node(d, nodes));
+                if decl_node.as_ref().is_some_and(|n| ast::is_binary_expression(n)) {
+                    let error_target = decl_node
+                        .as_ref()
+                        .unwrap()
+                        .as_binary_expression()
+                        .left
+                        .expect("BinaryExpression.left");
                     shared.borrow_mut().add_diagnostic(create_diagnostic_for_node(
                         nodes,
                         Some(error_target),
@@ -358,6 +362,7 @@ pub fn new_declaration_transformer<'a>(
                 }
             }
         }))
+        .map(|f| Rc::new(f) as Rc<dyn Fn(NodeId, &[Node]) + 'a>)
     };
 
     // `tx.NewTransformer(tx.visit, context)`.
@@ -6303,7 +6308,12 @@ impl<'a> DeclarationTransformerState<'a> {
     /// The `reportExpandoFunctionErrors` hook installed on the shared state —
     /// `tx.state.reportExpandoFunctionErrors(declaration)`.
     fn report_expando_function_errors(&self, node: NodeId, nodes: &[Node]) {
-        if let Some(f) = &self.shared.borrow().report_expando_function_errors {
+        let f = self
+            .shared
+            .borrow()
+            .report_expando_function_errors
+            .clone();
+        if let Some(f) = f {
             f(node, nodes);
         }
     }
