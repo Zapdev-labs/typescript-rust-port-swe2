@@ -1553,6 +1553,7 @@ pub fn for_each_return_statement(
             | Kind::SwitchStatement
             | Kind::CaseClause
             | Kind::DefaultClause
+            | Kind::LabeledStatement
             | Kind::TryStatement
             | Kind::CatchClause => {
                 nodes[node].for_each_child(nodes, &mut |c| traverse(nodes, c, visitor))
