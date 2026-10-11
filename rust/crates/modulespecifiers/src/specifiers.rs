@@ -585,7 +585,8 @@ where
                 // If the candidate import mode doesn't match the mode we're generating for, don't consider it
                 continue;
             }
-            existing_specifier = tspath::to_module_specifier(&nodes[existing_import].text(nodes));
+            existing_specifier =
+                tspath::to_module_specifier(&existing_buf[existing_import].text(&existing_buf));
             break 'module_paths;
         }
     }
