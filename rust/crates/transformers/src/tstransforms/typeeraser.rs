@@ -598,16 +598,19 @@ impl<'a> TypeEraserTransformer<'a> {
                         .iter()
                         .map(|d| d.id)
                         .collect();
-                    if let Some(visited) = v.visit_slice(cx, &decorator_ids) {
-                        modifiers = Some(match modifiers {
-                            None => ec.borrow_mut().factory.new_modifier_list(cx.nodes, visited),
-                            Some(m) => {
-                                let mut all = m.nodes.to_vec();
-                                all.extend_from_slice(&visited);
-                                ec.borrow_mut().factory.new_modifier_list(cx.nodes, all)
-                            }
-                        });
-                    }
+                    // Go's `VisitSlice` returns the input slice unchanged when
+                    // no element changed; ours returns `None` in that case.
+                    let visited = v
+                        .visit_slice(cx, &decorator_ids)
+                        .unwrap_or(decorator_ids);
+                    modifiers = Some(match modifiers {
+                        None => ec.borrow_mut().factory.new_modifier_list(cx.nodes, visited),
+                        Some(m) => {
+                            let mut all = m.nodes.to_vec();
+                            all.extend_from_slice(&visited);
+                            ec.borrow_mut().factory.new_modifier_list(cx.nodes, all)
+                        }
+                    });
                 }
                 let name = v.visit_node(cx, name);
                 let initializer = v.visit_node(cx, initializer);
