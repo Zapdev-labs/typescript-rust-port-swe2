@@ -14022,7 +14022,7 @@ impl Checker {
                     if let Some(contextual_type) = contextual_type {
                         let t = self.get_this_type_of_object_literal_from_contextual_type(
                             containing_literal,
-                            contextual_type,
+                            Some(contextual_type),
                         );
                         return t.is_some_and(|t| !crate::utilities::is_type_any(&self.types, t));
                     }
@@ -14187,10 +14187,10 @@ impl Checker {
     pub(crate) fn get_this_type_of_object_literal_from_contextual_type(
         &mut self,
         containing_literal: NodeId,
-        contextual_type: TypeId,
+        contextual_type: Option<TypeId>,
     ) -> Option<TypeId> {
         let mut literal = containing_literal;
-        let mut t = Some(contextual_type);
+        let mut t = contextual_type;
         while let Some(t_) = t {
             let this_type = self.get_this_type_from_contextual_type(t_);
             if this_type.is_some() {

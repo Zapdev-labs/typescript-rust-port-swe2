@@ -144,6 +144,24 @@ impl FileLike<'static> {
             fresh_file_key(),
         )
     }
+
+    /// `FileLike` backed by a node-less `DiagnosticFile` snapshot — keyed by
+    /// the file's canonical path so diagnostics on the same file share an
+    /// error-summary bucket (Go's `*SourceFile` pointer is stable per file).
+    pub fn from_text_path_keyed(
+        file_name: RootedFilePath,
+        text: impl Into<Arc<str>>,
+        path_key: PathKey,
+    ) -> FileLike<'static> {
+        let text: Arc<str> = text.into();
+        let line_map = compute_ecma_line_starts(&text);
+        FileLike::new(
+            file_name,
+            FileText::Shared(text),
+            FileLineMap::Owned(line_map),
+            FileKey::Path(path_key),
+        )
+    }
 }
 
 impl SourceFileLike for FileLike<'_> {

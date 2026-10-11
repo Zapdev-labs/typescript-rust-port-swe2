@@ -112,7 +112,11 @@ impl Diagnostic for SnapshotDiagnostic {
         if self.resolve().use_original {
             return Some(FileLike::from_text(file_name, file.original_text));
         }
-        Some(FileLike::from_text(file_name, file.text))
+        Some(FileLike::from_text_path_keyed(
+            file_name,
+            file.text,
+            file.path_key,
+        ))
     }
 
     fn pos(&self) -> i32 {

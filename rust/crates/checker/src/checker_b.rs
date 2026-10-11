@@ -8641,7 +8641,7 @@ impl Checker {
                     .get_apparent_type_of_contextual_type(containing_literal, ContextFlags::NONE);
                 let mut this_type = self.get_this_type_of_object_literal_from_contextual_type(
                     containing_literal,
-                    contextual_type.expect("contextual type"),
+                    contextual_type,
                 );
                 if let Some(tt) = this_type {
                     let context = self.get_inference_context(containing_literal);
