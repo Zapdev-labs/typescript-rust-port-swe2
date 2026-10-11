@@ -3411,13 +3411,28 @@ fn find_originating_jsdoc_satisfies_tag(
             current = nodes[cur].parent;
             continue;
         }
-        // PORT(deferred): `current.EagerJSDoc(sourceFile)` (lazy JSDoc
-        // resolution + jsdocCache) is not yet ported in tsc-ast — the tag
-        // walk cannot be evaluated, so `first_satisfies_tag` stays `None`.
-        let first_satisfies_tag: Option<NodeId> = None;
-        // for js_doc in current.eager_jsdoc(source_file) {
-        //     if let Some(tags) = nodes[js_doc].as_js_doc().tags { ... }
-        // }
+        let mut first_satisfies_tag: Option<NodeId> = None;
+        for js_doc in tsc_ast::eager_js_doc(nodes, cur, None) {
+            if let Some(tags) = nodes[js_doc].as_js_doc().tags.clone() {
+                for &tag in &tags.nodes {
+                    if nodes[tag].kind != Kind::JSDocSatisfiesTag {
+                        continue;
+                    }
+                    if first_satisfies_tag.is_none() {
+                        first_satisfies_tag = Some(tag);
+                    }
+                    if let Some(type_expr) =
+                        nodes[tag].as_js_doc_satisfies_tag().type_expression
+                    {
+                        if let Some(t) = nodes[type_expr].type_() {
+                            if nodes[t].loc == nodes[target_type].loc {
+                                return Some(tag);
+                            }
+                        }
+                    }
+                }
+            }
+        }
         return first_satisfies_tag;
     }
     None
