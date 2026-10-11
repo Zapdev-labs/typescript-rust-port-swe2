@@ -165,7 +165,7 @@ pub trait EmitHost: PrinterEmitHost + DeclarationEmitHost {
     ) -> Rc<RefCell<tsc_checker::emitresolver::EmitResolver>>;
 
     /// Arena access for `NodeId`s owned by the program's files.
-    fn emit_nodes(&self, file_index: u32) -> Ref<'_, Vec<Node>>;
+    fn emit_nodes(&self, file_index: u32) -> Rc<Vec<Node>>;
     /// Mutable arena access (transforms, synthetic imports). Returns an
     /// [`crate::program::ArenaCheckout`] guard — the arena is checked out so
     /// checker callbacks can keep reading during the visit.
@@ -195,6 +195,13 @@ impl<'p> BasicEmitHost<'p> {
         file: NodeId,
     ) -> (Rc<BasicEmitHost<'p>>, impl FnOnce() + 'p) {
         let (checker, done) = program.get_type_checker_for_file(ctx, file);
+        if std::env::var("TSC_DBG_ALIAS").is_ok() {
+            eprintln!(
+                "[emit-host] file={:?} checker={:p}",
+                file,
+                checker.as_ptr()
+            );
+        }
         (
             Rc::new(BasicEmitHost {
                 program,
@@ -243,7 +250,7 @@ pub trait SourceFileMayBeEmittedHost {
     fn smbe_base_directory(&self) -> RootedDirectoryPath;
     fn smbe_case_sensitivity(&self) -> CaseSensitivity;
     fn smbe_source_files(&self) -> Vec<NodeId>;
-    fn smbe_nodes(&self, file_index: u32) -> Ref<'_, Vec<Node>>;
+    fn smbe_nodes(&self, file_index: u32) -> Rc<Vec<Node>>;
 }
 
 /// `sourceFileMayBeEmitted`.
@@ -562,7 +569,7 @@ impl<'p> EmitHost for BasicEmitHost<'p> {
             emit_context,
         )))
     }
-    fn emit_nodes(&self, file_index: u32) -> Ref<'_, Vec<Node>> {
+    fn emit_nodes(&self, file_index: u32) -> Rc<Vec<Node>> {
         self.program.nodes(file_index)
     }
     fn emit_nodes_mut(&self, file_index: u32) -> crate::program::ArenaCheckout {
@@ -596,7 +603,7 @@ impl<'p> SourceFileMayBeEmittedHost for BasicEmitHost<'p> {
     fn smbe_source_files(&self) -> Vec<NodeId> {
         self.program.source_files()
     }
-    fn smbe_nodes(&self, file_index: u32) -> Ref<'_, Vec<Node>> {
+    fn smbe_nodes(&self, file_index: u32) -> Rc<Vec<Node>> {
         self.program.nodes(file_index)
     }
 }

@@ -682,9 +682,7 @@ impl<'a> ClassFieldsTransformer<'a> {
             let original = ec.borrow().most_original(Some(node));
             let declaration = original.and_then(|o| {
                 resolver.borrow_mut().get_referenced_value_declaration(
-                    o,
-                    cx.nodes,
-                    &mut symbols.borrow_mut(),
+                    o, cx.nodes, symbols,
                 )
             });
             if let Some(declaration) = declaration
@@ -1335,7 +1333,7 @@ impl<'a> ClassFieldsTransformer<'a> {
         // Visit the results in a second pass
         let visited = vref!(self, accessor_field_result_visitor)
             .visit_slice(cx, &[backing_field, getter, setter])
-            .unwrap_or_default();
+            .unwrap_or_else(|| vec![backing_field, getter, setter]);
         Some(ec.borrow_mut().factory.new_syntax_list(cx.nodes, &visited))
     }
 
@@ -2420,7 +2418,10 @@ impl<'a> ClassFieldsTransformer<'a> {
         statements: &[NodeId],
     ) -> Vec<NodeId> {
         let saved = self.current_class_element.replace(Some(class_element));
-        let result = self.txv(ec).visit_slice(cx, statements).unwrap_or_default();
+        let result = self
+            .txv(ec)
+            .visit_slice(cx, statements)
+            .unwrap_or_else(|| statements.to_vec());
         self.current_class_element.set(saved);
         result
     }
@@ -2870,11 +2871,9 @@ impl<'a> ClassFieldsTransformer<'a> {
             n: NodeId,
         ) -> bool {
             if ast::is_identifier(&nodes[n]) && Some(n) != class_name {
-                let decl = resolver.borrow_mut().get_referenced_value_declaration(
-                    n,
-                    nodes,
-                    &mut symbols.borrow_mut(),
-                );
+                let decl = resolver
+                    .borrow_mut()
+                    .get_referenced_value_declaration(n, nodes, symbols);
                 if decl == Some(class_original) {
                     return true;
                 }
@@ -4156,7 +4155,7 @@ impl<'a> ClassFieldsTransformer<'a> {
             let visited = self
                 .txv(ec)
                 .visit_slice(cx, &statements_in[statement_offset..super_statement_index])
-                .unwrap_or_default();
+                .unwrap_or_else(|| statements_in[statement_offset..super_statement_index].to_vec());
             statements_out.extend(visited);
         }
         statement_offset = super_statement_index + 1;
@@ -4225,7 +4224,9 @@ impl<'a> ClassFieldsTransformer<'a> {
                     cx,
                     &statements_in[super_statement_index..super_statement_index + 1],
                 )
-                .unwrap_or_default();
+                .unwrap_or_else(|| {
+                    statements_in[super_statement_index..super_statement_index + 1].to_vec()
+                });
             statements_out.extend(visited);
 
             // parameter-property assignments should occur immediately after the prologue and
@@ -4250,7 +4251,7 @@ impl<'a> ClassFieldsTransformer<'a> {
             let visited = self
                 .txv(ec)
                 .visit_slice(cx, &statements_in[statement_offset..])
-                .unwrap_or_default();
+                .unwrap_or_else(|| statements_in[statement_offset..].to_vec());
             statements_out.extend(visited);
         }
         statements_out
@@ -4410,7 +4411,7 @@ impl<'a> ClassFieldsTransformer<'a> {
                 let visited = self
                     .txv(ec)
                     .visit_slice(cx, &body_statements[statement_offset..])
-                    .unwrap_or_default();
+                    .unwrap_or_else(|| body_statements[statement_offset..].to_vec());
                 statements.extend(visited);
             }
         } else {

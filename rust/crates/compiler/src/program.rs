@@ -1,7 +1,7 @@
 // Ported from tsc/internal/compiler/program.go @ ec47d33c23e464a17cdf2475632cba629bee8763
 //
 // PORT: `*ast.SourceFile`/`​*ast.Node` are `NodeId` values resolved through
-// the program's per-file `Rc<RefCell<Vec<Node>>>` arenas (`Program::nodes`/
+// the program's per-file `Rc<ArenaCell>` arenas (`Program::nodes`/
 // `arena_of`). `*tsoptions.ParsedCommandLine` is `Arc<ParsedCommandLine>`,
 // `*tsoptions.SourceOutputAndProjectReference` is `Arc<...>` (tsoptions
 // convention). `sync.Once`/`collections.SyncMap`/`lazyValue` fields become
@@ -42,7 +42,8 @@ use tsc_ast::diagnostic::{
 };
 use tsc_ast::utilities::HasFileName;
 use tsc_ast::{
-    CheckJsDirective, CommentDirectiveKind, FileReference, Node, NodeId, SourceFileMetaData,
+    ArenaCell, ArenaMut, CheckJsDirective, CommentDirectiveKind, FileReference, Node, NodeId,
+    SourceFileMetaData,
     Symbol, is_check_js_enabled_for_file, is_external_module, is_external_or_commonjs_module,
     is_plain_js_file, is_source_file_js, is_source_phase_import, is_string_literal,
     is_string_literal_like, new_has_file_name,
@@ -256,7 +257,11 @@ pub struct Program {
     source_file_ids: Vec<NodeId>,
     /// `file_index` → arena. `NodeId::file_index` is a global counter, not a
     /// position in `files`, so arenas are keyed by it.
-    arenas: FxHashMap<u32, Rc<RefCell<Vec<Node>>>>,
+    arenas: FxHashMap<u32, Rc<ArenaCell>>,
+    /// Last-resolved `(file_index, arena)` — `nodes()`/`nodes_mut()` are
+    /// called per node access and overwhelmingly stay within one file, so a
+    /// 1-entry cache skips the map lookup on the hot path.
+    last_arena: std::cell::RefCell<Option<(u32, Rc<ArenaCell>)>>,
 }
 
 impl std::ops::Deref for Program {
@@ -493,11 +498,8 @@ impl Program {
     // -- Arena plumbing -------------------------------------------------------
 
     /// The arena handle owning `file`'s nodes.
-    pub fn arena_handle(&self, file_index: u32) -> Rc<RefCell<Vec<Node>>> {
-        self.arenas
-            .get(&file_index)
-            .expect("unknown file_index")
-            .clone()
+    pub fn arena_handle(&self, file_index: u32) -> Rc<ArenaCell> {
+        self.arena_cell(file_index)
     }
 
     /// `p.options`/`Options()` — inherent accessor so sibling modules can
@@ -507,34 +509,62 @@ impl Program {
     }
 
     /// Inherent arena reads so sibling modules (emit_host, emitter,
-    /// file_include) can borrow without the checker `Program` trait in
-    /// scope. Borrows through `&Rc` so the `Ref` borrows `*self`.
-    pub fn nodes(&self, file_index: u32) -> Ref<'_, Vec<Node>> {
-        self.arenas
+    /// file_include) can read without the checker `Program` trait in scope.
+    /// Returns a cheap `Rc` snapshot — no `RefCell` borrow is held, so a
+    /// held snapshot can never block `nodes_mut`.
+    fn arena_cell(&self, file_index: u32) -> Rc<ArenaCell> {
+        {
+            let last = self.last_arena.borrow();
+            if let Some((i, cell)) = &*last {
+                if *i == file_index {
+                    return cell.clone();
+                }
+            }
+        }
+        let cell = self
+            .arenas
             .get(&file_index)
-            .expect("unknown file_index")
-            .borrow()
+            .unwrap_or_else(|| {
+                panic!(
+                    "unknown file_index {file_index} (arenas: {:?})",
+                    self.arenas.keys().collect::<Vec<_>>()
+                )
+            })
+            .clone();
+        *self.last_arena.borrow_mut() = Some((file_index, cell.clone()));
+        cell
     }
 
-    /// Inherent mutable arena access — see `nodes`.
-    ///
-    /// Plain `RefMut` (no clone): checker/binder mutation is short-windowed
-    /// and callers must not hold a shared `Ref` across the call. The emit
-    /// pipeline is the exception — it uses [`Program::arena_checkout`].
-    pub fn nodes_mut(&self, file_index: u32) -> RefMut<'_, Vec<Node>> {
-        self.arenas
-            .get(&file_index)
-            .expect("unknown file_index")
-            .borrow_mut()
+    pub fn nodes(&self, file_index: u32) -> Rc<Vec<Node>> {
+        self.arena_cell(file_index).snapshot()
     }
 
-    /// The shared `Rc<RefCell>` arena handle — see `nodes`.
-    pub fn nodes_handle(&self, file_index: u32) -> Rc<RefCell<Vec<Node>>> {
+    /// Inherent mutable arena access — copy-on-write via [`ArenaMut`]: the
+    /// first mutation clones the arena iff snapshots still share it; `Drop`
+    /// writes back. Never panics on a held read snapshot.
+    pub fn nodes_mut(&self, file_index: u32) -> ArenaMut {
+        self.arena_cell(file_index).cow()
+    }
+
+    /// The shared arena cell handle — see `nodes`.
+    pub fn nodes_handle(&self, file_index: u32) -> Rc<ArenaCell> {
         self.arena_handle(file_index)
     }
 
-    /// Borrowed arena for a `NodeId`'s owning file.
-    pub fn arena_of(&self, file: NodeId) -> Ref<'_, Vec<Node>> {
+    /// `nodes_handle` with fallback: `NodeId::file_index` is process-global,
+    /// so a synthetic arena index (or a node minted before this program's
+    /// files were parsed) may not be present. Falls back to any registered
+    /// arena — synthetic builder nodes only need a writable arena.
+    pub fn nodes_handle_or_fallback(&self, file_index: u32) -> (u32, Rc<ArenaCell>) {
+        if let Some(cell) = self.arenas.get(&file_index) {
+            return (file_index, cell.clone());
+        }
+        let (&k, cell) = self.arenas.iter().next().expect("program has no arenas");
+        (k, cell.clone())
+    }
+
+    /// Arena snapshot for a `NodeId`'s owning file.
+    pub fn arena_of(&self, file: NodeId) -> Rc<Vec<Node>> {
         self.nodes(file.file_index())
     }
 
@@ -668,8 +698,8 @@ impl Program {
         file1: &LoadedSourceFile,
         file2: &LoadedSourceFile,
     ) -> bool {
-        let nodes1 = file1.nodes.borrow();
-        let nodes2 = file2.nodes.borrow();
+        let nodes1 = file1.nodes.snapshot();
+        let nodes2 = file2.nodes.snapshot();
         let f1 = nodes1[file1.file].as_source_file();
         let f2 = nodes2[file2.file].as_source_file();
         let same_parse_options = f1.parse_options().file_name == f2.parse_options().file_name
@@ -757,7 +787,7 @@ impl Program {
         if options_for_file.import_helpers != TS_TRUE {
             return false;
         }
-        let nodes = file.nodes.borrow();
+        let nodes = file.nodes.snapshot();
         let sf = nodes[file.file].as_source_file();
         let is_java_script_file = is_source_file_js(sf);
         let is_external_module_file = is_external_module(sf);
@@ -772,7 +802,7 @@ impl Program {
 
     /// `jsxRuntimeImportSpecifier` (the file-scanning variant).
     fn jsx_runtime_import_specifier_for(&self, file: &LoadedSourceFile) -> String {
-        let nodes = file.nodes.borrow();
+        let nodes = file.nodes.snapshot();
         let sf = nodes[file.file].as_source_file();
         if !is_source_file_js(sf) && sf.script_kind != ScriptKind::Tsx {
             return String::new();
@@ -788,7 +818,7 @@ impl Program {
     /// `projectReferenceFileMapper.getCompilerOptionsForFile` for a
     /// `LoadedSourceFile`.
     fn compiler_options_for_file_nodes(&self, file: &LoadedSourceFile) -> Arc<CompilerOptions> {
-        let nodes = file.nodes.borrow();
+        let nodes = file.nodes.snapshot();
         let sf = nodes[file.file].as_source_file();
         let file_has_name = new_has_file_name(sf.file_name().clone(), sf.path_key().clone());
         drop(nodes);
@@ -1160,13 +1190,18 @@ impl Program {
         collect: &mut dyn FnMut(Context, &Rc<RefCell<Checker>>, NodeId) -> Vec<DiagnosticRef>,
     ) -> Vec<Vec<DiagnosticRef>> {
         let mut diagnostics: Vec<Vec<DiagnosticRef>> = vec![Vec::new(); source_files.len()];
+        let __collect_t = std::time::Instant::now();
         if let Some(pool) = self.compiler_checker_pool.borrow().as_ref().cloned() {
             pool.for_each_checker_group_do(
                 ctx.clone(),
                 source_files,
                 self.single_threaded(),
                 &mut |c, file_index, file| {
+                    let __t = std::time::Instant::now();
                     diagnostics[file_index] = collect(ctx.clone(), c, file);
+                    if std::env::var("TSC_FILE_TIME").is_ok() {
+                        eprintln!("[cb-inner] {:?} file_idx={}", __t.elapsed(), file_index);
+                    }
                 },
             );
         } else {
@@ -1174,10 +1209,17 @@ impl Program {
                 if self.skip_type_checking(file, false) {
                     continue;
                 }
+                let __ft = std::time::Instant::now();
                 let (c, done) = self.get_checker_pool().get_checker(ctx.clone(), Some(file));
+                if std::env::var("TSC_FILE_TIME").is_ok() {
+                    eprintln!("[get-checker] {:?}", __ft.elapsed());
+                }
                 diagnostics[i] = collect(ctx.clone(), &c, file);
                 done();
             }
+        }
+        if std::env::var("TSC_FILE_TIME").is_ok() {
+            eprintln!("[collect-all] {:?}", __collect_t.elapsed());
         }
         diagnostics
     }
@@ -2431,11 +2473,20 @@ impl Program {
         c: &Rc<RefCell<Checker>>,
         source_file: NodeId,
     ) -> Vec<DiagnosticRef> {
-        let mut diags = filter_no_emit_semantic_diagnostics(
-            self.get_bind_and_check_diagnostics_with_checker(ctx, c, source_file, false),
-            &self.options,
-        );
+        let __t0 = std::time::Instant::now();
+        let inner = self.get_bind_and_check_diagnostics_with_checker(ctx, c, source_file, false);
+        let __t1 = std::time::Instant::now();
+        let mut diags = filter_no_emit_semantic_diagnostics(inner, &self.options);
+        let __t2 = std::time::Instant::now();
         diags.extend(self.get_include_processor_diagnostics(source_file));
+        if std::env::var("TSC_FILE_TIME").is_ok() {
+            eprintln!(
+                "[sem-diag] bindcheck={:?} filternoemit={:?} includeproc={:?}",
+                __t1 - __t0,
+                __t2 - __t1,
+                __t2.elapsed()
+            );
+        }
         diags
     }
 
@@ -3577,7 +3628,7 @@ pub fn new_program(opts: ProgramOptions) -> Rc<Program> {
     let case_sensitivity = opts.hosts.host.fs().case_sensitivity();
     let (processed, resolution_data) = process_all_program_files(&opts);
     let source_file_ids: Vec<NodeId> = processed.files.iter().map(|f| f.file).collect();
-    let mut arenas: FxHashMap<u32, Rc<RefCell<Vec<Node>>>> =
+    let mut arenas: FxHashMap<u32, Rc<ArenaCell>> =
         FxHashMap::with_capacity_and_hasher(processed.files.len(), Default::default());
     for file in &processed.files {
         arenas.insert(file.file.file_index(), file.nodes.clone());
@@ -3615,6 +3666,7 @@ pub fn new_program(opts: ProgramOptions) -> Rc<Program> {
         pending_processing_diagnostics: RefCell::new(Vec::new()),
         source_file_ids,
         arenas,
+        last_arena: std::cell::RefCell::new(None),
     });
     p.init_checker_pool(opts.factories.create_checker_pool, &p);
     p.verify_compiler_options();
@@ -3689,7 +3741,7 @@ pub fn reuse_program(
     let mut old_supplemental_files: Vec<NodeId> = Vec::new();
     let mut new_supplemental_files: Vec<LoadedSourceFile> = Vec::new();
     {
-        let nodes = old_file.nodes.borrow();
+        let nodes = old_file.nodes.snapshot();
         let old_sf = nodes[old_file.file].as_source_file();
         let has_content_mapper = !old_sf.content_mapper().is_empty();
         if has_content_mapper {
@@ -3872,6 +3924,7 @@ pub fn reuse_program(
         ),
         source_file_ids,
         arenas,
+        last_arena: std::cell::RefCell::new(None),
     });
     // `tryReuse` — copy over the already-initialized lazy values.
     if let Some(v) = p.unresolved_imports.get() {
@@ -4604,14 +4657,17 @@ impl tsc_checker::checker_types::Program for Program {
     fn common_source_directory(&self) -> RootedDirectoryPath {
         self.common_source_directory()
     }
-    fn nodes(&self, file_index: u32) -> Ref<'_, Vec<Node>> {
+    fn nodes(&self, file_index: u32) -> Rc<Vec<Node>> {
         Program::nodes(self, file_index)
     }
-    fn nodes_mut(&self, file_index: u32) -> RefMut<'_, Vec<Node>> {
+    fn nodes_mut(&self, file_index: u32) -> ArenaMut {
         Program::nodes_mut(self, file_index)
     }
-    fn nodes_handle(&self, file_index: u32) -> Rc<RefCell<Vec<Node>>> {
+    fn nodes_handle(&self, file_index: u32) -> Rc<ArenaCell> {
         self.arena_handle(file_index)
+    }
+    fn nodes_handle_or_fallback(&self, file_index: u32) -> (u32, Rc<ArenaCell>) {
+        Program::nodes_handle_or_fallback(self, file_index)
     }
 }
 
@@ -4644,11 +4700,8 @@ impl SourceFileMayBeEmittedHost for Program {
     fn smbe_source_files(&self) -> Vec<NodeId> {
         self.source_files()
     }
-    fn smbe_nodes(&self, file_index: u32) -> Ref<'_, Vec<Node>> {
-        self.arenas
-            .get(&file_index)
-            .expect("unknown file_index")
-            .borrow()
+    fn smbe_nodes(&self, file_index: u32) -> Rc<Vec<Node>> {
+        self.nodes(file_index)
     }
 }
 

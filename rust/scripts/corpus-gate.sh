@@ -17,7 +17,7 @@ fi
 
 ssh "$REMOTE_HOST" bash -s -- "${ROOTS[@]}" <<'OUTER'
 set -uo pipefail
-export CARGO_TARGET_DIR=/tmp/tsc-target
+export CARGO_TARGET_DIR=${TSC_TARGET:-/tmp/tsc-target}
 export CARGO_INCREMENTAL=0
 export RUSTFLAGS='-C linker-features=-lld'
 CARGO=$HOME/.cargo/bin/cargo
@@ -36,7 +36,7 @@ for r in "${args[@]}"; do
   safe=$(echo "$r" | tr / _)
   rout=/tmp/corpus-rust-$safe.jsonl
   gout=/tmp/corpus-go-$safe.jsonl
-  /tmp/tsc-target/release/parsecorpus "$r" > "$rout"
+  ${TSC_TARGET:-/tmp/tsc-target}/release/parsecorpus "$r" > "$rout"
   /tmp/goparsecorpus "$r" > "$gout"
   n=$(wc -l < "$rout"); gn=$(wc -l < "$gout")
   rp=$(grep -c '"panic"' "$rout" || true)

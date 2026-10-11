@@ -264,7 +264,7 @@ impl<'a> NodeBuilderImpl<'a> {
                     dn[member_decl].as_enum_member().initializer
                 };
                 match decl_init {
-                    Some(init) => self.f.deep_clone_node(nodes, init),
+                    Some(init) => self.deep_clone_node_in(c, nodes, init),
                     None => self.enum_member_initializer(c, nodes, p),
                 }
             } else {
@@ -354,7 +354,7 @@ impl<'a> NodeBuilderImpl<'a> {
         }
         // Go `defer`: restore `ctx.enclosing_declaration` at the end.
 
-        let local_params = c.get_local_type_parameters_of_class_or_interface_or_type_alias(symbol);
+        let local_params = c.get_local_type_parameters_of_class_or_interface_or_type_alias(symbol, nodes);
         let type_param_decls: Vec<NodeId> = local_params
             .iter()
             .map(|&p| self.type_parameter_to_declaration(c, nodes, p))
@@ -541,7 +541,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 ast::is_interface_declaration(&dn[d])
             })
             .collect();
-        let local_params = c.get_local_type_parameters_of_class_or_interface_or_type_alias(symbol);
+        let local_params = c.get_local_type_parameters_of_class_or_interface_or_type_alias(symbol, nodes);
         let type_param_decls: Vec<NodeId> = local_params
             .iter()
             .map(|&p| self.type_parameter_to_declaration(c, nodes, p))
@@ -635,7 +635,7 @@ impl<'a> NodeBuilderImpl<'a> {
                     .unwrap_or_default()
             };
             for element in extends {
-                if let Some(cloned) = self.f.deep_clone_node(nodes, element) {
+                if let Some(cloned) = self.deep_clone_node_in(c, nodes, element) {
                     extends_types.push(cloned);
                 }
             }
@@ -647,7 +647,7 @@ impl<'a> NodeBuilderImpl<'a> {
                     .unwrap_or_default()
             };
             for element in implements {
-                if let Some(cloned) = self.f.deep_clone_node(nodes, element) {
+                if let Some(cloned) = self.deep_clone_node_in(c, nodes, element) {
                     implements_types.push(cloned);
                 }
             }
@@ -1162,7 +1162,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 dn[declaration].as_module_declaration().attributes
             });
         if let Some(attr) = attributes_source {
-            attributes = self.f.deep_clone_node(nodes, attr);
+            attributes = self.deep_clone_node_in(c, nodes, attr);
             if let Some(a) = attributes {
                 self.e
                     .borrow()
@@ -1192,7 +1192,7 @@ impl<'a> NodeBuilderImpl<'a> {
         name: &str,
     ) -> Option<NodeId> {
         let alias_type = c.get_declared_type_of_type_alias(symbol);
-        let type_params = c.get_local_type_parameters_of_class_or_interface_or_type_alias(symbol);
+        let type_params = c.get_local_type_parameters_of_class_or_interface_or_type_alias(symbol, nodes);
         let type_param_decls: Vec<NodeId> = type_params
             .iter()
             .map(|&p| self.type_parameter_to_declaration(c, nodes, p))

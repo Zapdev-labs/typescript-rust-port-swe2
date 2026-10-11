@@ -119,9 +119,9 @@ pub fn symbol_table_id_from_globals() -> SymbolTableId {
 pub(crate) fn has_non_global_augmentation_external_module_symbol(
     declaration: NodeId,
     c: &crate::checker_core::Checker,
-) -> bool {
+live_nodes: Option<&[Node]>) -> bool {
     let __program = c.program.clone().expect("program");
-    let nodes = __program.nodes((declaration).file_index());
+    let nodes = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), declaration);
     let d = &nodes[declaration];
     tsc_ast::is_module_with_string_literal_name(d, &nodes)
         || (d.kind == tsc_ast::Kind::SourceFile
@@ -192,14 +192,15 @@ impl Checker {
         &mut self,
         type_symbol: Option<SymbolId>,
         enclosing_declaration: Option<NodeId>,
-    ) -> bool {
+    live_nodes: Option<&[Node]>,
+) -> bool {
         let access = self.is_symbol_accessible_worker(
             type_symbol,
             enclosing_declaration,
             ast::SymbolFlags::TYPE, // shouldComputeAliasesToMakeVisible
             false,
             true,
-        );
+        live_nodes);
         access.accessibility == SymbolAccessibility::Accessible
     }
 
@@ -208,14 +209,15 @@ impl Checker {
         &mut self,
         symbol: Option<SymbolId>,
         enclosing_declaration: Option<NodeId>,
-    ) -> bool {
+    live_nodes: Option<&[Node]>,
+) -> bool {
         let access = self.is_symbol_accessible_worker(
             symbol,
             enclosing_declaration,
             ast::SymbolFlags::VALUE, // shouldComputeAliasesToMakeVisible
             false,
             true,
-        );
+        live_nodes);
         access.accessibility == SymbolAccessibility::Accessible
     }
 
@@ -225,13 +227,15 @@ impl Checker {
         symbol: Option<SymbolId>,
         enclosing_declaration: Option<NodeId>,
         flags: SymbolFlags,
-    ) -> bool {
+    live_nodes: Option<&[Node]>,
+) -> bool {
         let access = self.is_symbol_accessible_worker(
             symbol,
             enclosing_declaration,
             flags, // shouldComputeAliasesToMakeVisible
             false,
             false, // TODO: Strada bug? Why is this allowModules: false?
+        live_nodes,
         );
         access.accessibility == SymbolAccessibility::Accessible
     }
@@ -245,7 +249,8 @@ impl Checker {
         meaning: SymbolFlags,
         should_compute_aliases_to_make_visible: bool,
         allow_modules: bool,
-    ) -> Option<SymbolAccessibilityResult> {
+    live_nodes: Option<&[Node]>,
+) -> Option<SymbolAccessibilityResult> {
         if symbols.is_empty() {
             return None;
         }
@@ -259,7 +264,7 @@ impl Checker {
                 enclosing_declaration,
                 meaning, /*useOnlyExternalAliasing*/
                 false,
-            );
+            live_nodes);
             if !accessible_symbol_chain.is_empty() {
                 had_accessible_chain = Some(symbol);
                 let has_accessible_declarations = self.has_visible_declarations(
@@ -275,7 +280,7 @@ impl Checker {
                 let _ = flags;
                 if decls
                     .iter()
-                    .any(|&d| has_non_global_augmentation_external_module_symbol(d, self))
+                    .any(|&d| has_non_global_augmentation_external_module_symbol(d, self, live_nodes))
                 {
                     if should_compute_aliases_to_make_visible {
                         early_module_bail = true;
@@ -306,7 +311,7 @@ impl Checker {
             // But it can't, hence the accessible is going to be undefined, but that doesn't mean m.c is inaccessible
             // It is accessible if the parent m is accessible because then m.c can be accessed through qualification
 
-            let containers = self.get_containers_of_symbol(symbol, enclosing_declaration, meaning);
+            let containers = self.get_containers_of_symbol(symbol, enclosing_declaration, meaning, live_nodes);
             let mut next_meaning = meaning;
             if initial_symbol == Some(symbol) {
                 next_meaning = get_qualified_left_meaning(meaning);
@@ -318,7 +323,7 @@ impl Checker {
                 next_meaning,
                 should_compute_aliases_to_make_visible,
                 allow_modules,
-            ) {
+            live_nodes) {
                 return Some(parent_result);
             }
         }
@@ -338,6 +343,7 @@ impl Checker {
                     enclosing_declaration,
                     ast::SymbolFlags::NAMESPACE,
                     crate::types::SymbolFormatFlags::ALLOW_ANY_NODE_KIND,
+                    live_nodes,
                 );
             }
             return Some(SymbolAccessibilityResult {
@@ -347,6 +353,7 @@ impl Checker {
                     enclosing_declaration,
                     meaning,
                     crate::types::SymbolFormatFlags::ALLOW_ANY_NODE_KIND,
+                    live_nodes,
                 ),
                 error_module_name: module_name,
                 ..Default::default()
@@ -362,21 +369,22 @@ impl Checker {
         symbol: SymbolId,
         enclosing_declaration: Option<NodeId>,
         meaning: SymbolFlags,
-    ) -> Vec<SymbolId> {
+    live_nodes: Option<&[Node]>,
+) -> Vec<SymbolId> {
         let (_, container_decls, ..) = sym_fields(self, container);
         let additional_containers: Vec<SymbolId> = container_decls
             .iter()
             .filter_map(|&d| {
-                self.get_file_symbol_if_file_symbol_export_equals_container(d, container)
+                self.get_file_symbol_if_file_symbol_export_equals_container(d, container, live_nodes)
             })
             .collect();
         let mut reexport_containers: Vec<SymbolId> = Vec::new();
         if enclosing_declaration.is_some() {
             reexport_containers =
-                self.get_alternative_containing_modules(symbol, enclosing_declaration.unwrap());
+                self.get_alternative_containing_modules(symbol, enclosing_declaration.unwrap(), live_nodes);
         }
         let object_literal_container =
-            self.get_variable_declaration_of_object_literal(container, meaning);
+            self.get_variable_declaration_of_object_literal(container, meaning, live_nodes);
         let left_meaning = get_qualified_left_meaning(meaning);
         let container_flags = sym_fields(self, container).0;
         if enclosing_declaration.is_some()
@@ -387,7 +395,7 @@ impl Checker {
                     enclosing_declaration,
                     ast::SymbolFlags::NAMESPACE, /*useOnlyExternalAliasing*/
                     false,
-                )
+                live_nodes)
                 .is_empty()
         {
             // This order expresses a preference for the real container if it is in scope
@@ -428,7 +436,7 @@ impl Checker {
                     }
                     found
                 },
-            );
+            live_nodes);
             self.sort_symbols(&mut variable_matches);
         }
 
@@ -448,10 +456,10 @@ impl Checker {
         &mut self,
         symbol: SymbolId,
         enclosing_declaration: NodeId,
-    ) -> Vec<SymbolId> {
+    live_nodes: Option<&[Node]>) -> Vec<SymbolId> {
         let containing_file = {
             let __program = self.program.clone().expect("program");
-            let nn = __program.nodes((enclosing_declaration).file_index());
+            let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), enclosing_declaration);
             ast::get_source_file_of_node(Some(enclosing_declaration), &nn)
         };
         let Some(containing_file) = containing_file else {
@@ -467,7 +475,7 @@ impl Checker {
         let mut results: Vec<SymbolId> = Vec::new();
         let imports: Vec<NodeId> = {
             let __program = self.program.clone().expect("program");
-            let nn = __program.nodes((containing_file).file_index());
+            let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), containing_file);
             nn[containing_file].as_source_file().imports.to_vec()
         };
         if !imports.is_empty() {
@@ -475,18 +483,19 @@ impl Checker {
             for import_ref in imports {
                 if {
                     let __program = self.program.clone().expect("program");
-                    let nn = __program.nodes((import_ref).file_index());
+                    let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), import_ref);
                     ast::node_is_synthesized(&nn[import_ref])
                 } {
                     // Synthetic names can't be resolved by `resolveExternalModuleName` - they'll cause a debug assert if they error
                     continue;
                 }
                 let attrs = self.get_import_attributes_type_for_module_specifier(import_ref);
-                let Some(resolved_module) = self.resolve_external_module_name(
+                let Some(resolved_module) = self.resolve_external_module_name_live(
                     enclosing_declaration,
                     Some(import_ref), /*ignoreErrors*/
                     true,
                     attrs,
+                    live_nodes,
                 ) else {
                     continue;
                 };
@@ -509,19 +518,21 @@ impl Checker {
             return extended.clone();
         }
         // No results from files already being imported by this file - expand search (not location-specific, so cached)
-        let results = self.get_external_module_containers(symbol);
+        let results = self.get_external_module_containers(symbol, live_nodes);
         self.symbol_container_links.get(symbol).extended_containers = Some(results.clone());
         results
     }
 
     /// `(c *Checker) getExternalModuleContainers` (symbolaccessibility.go).
-    fn get_external_module_containers(&mut self, symbol: SymbolId) -> Vec<SymbolId> {
+    fn get_external_module_containers(&mut self, symbol: SymbolId,
+    live_nodes: Option<&[Node]>,
+) -> Vec<SymbolId> {
         if self.external_module_containers.is_none() {
-            self.build_external_module_container_index();
+            self.build_external_module_container_index(live_nodes);
         }
         if !self.external_module_containers.as_ref().unwrap().complete {
             // Re-entered from an alias resolved while building the index; answer this query without it.
-            return self.scan_external_module_containers(symbol);
+            return self.scan_external_module_containers(symbol, live_nodes);
         }
         let target = self.get_resolved_target(symbol);
         let parent = self.get_parent_of_symbol(symbol);
@@ -562,13 +573,14 @@ impl Checker {
     }
 
     /// `(c *Checker) buildExternalModuleContainerIndex` (symbolaccessibility.go).
-    fn build_external_module_container_index(&mut self) {
+    fn build_external_module_container_index(&mut self,
+    live_nodes: Option<&[Node]>) {
         self.external_module_containers = Some(ExternalModuleContainerIndex::default());
         let files = self.files.clone();
         for file in files {
             let is_external = {
                 let __program = self.program.clone().expect("program");
-                let nn = __program.nodes((file).file_index());
+                let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), file);
                 ast::is_external_module(nn[file].as_source_file())
             };
             if !is_external {
@@ -614,13 +626,14 @@ impl Checker {
     }
 
     /// `(c *Checker) scanExternalModuleContainers` (symbolaccessibility.go).
-    fn scan_external_module_containers(&mut self, symbol: SymbolId) -> Vec<SymbolId> {
+    fn scan_external_module_containers(&mut self, symbol: SymbolId,
+    live_nodes: Option<&[Node]>) -> Vec<SymbolId> {
         let mut containers = Vec::new();
         let files = self.files.clone();
         for file in files {
             let is_external = {
                 let __program = self.program.clone().expect("program");
-                let nn = __program.nodes((file).file_index());
+                let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), file);
                 ast::is_external_module(nn[file].as_source_file())
             };
             if !is_external {
@@ -642,7 +655,7 @@ impl Checker {
         &mut self,
         symbol: SymbolId,
         meaning: SymbolFlags,
-    ) -> Option<SymbolId> {
+    live_nodes: Option<&[Node]>) -> Option<SymbolId> {
         // If we're trying to reference some object literal in, eg `var a = { x: 1 }`, the symbol for the literal, `__object`, is distinct
         // from the symbol of the declaration it is being assigned to. Since we can use the declaration to refer to the literal, however,
         // we'd like to make that connection here - potentially causing us to paint the declaration's visibility, and therefore the literal.
@@ -652,7 +665,7 @@ impl Checker {
         let (_, decls, ..) = sym_fields(self, symbol);
         let &first_decl = decls.first()?;
         let __program = self.program.clone().expect("program");
-        let dn = __program.nodes((first_decl).file_index());
+        let dn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), first_decl);
         let parent = dn[first_decl].parent?;
         if !ast::is_variable_declaration(&dn[parent]) {
             return None;
@@ -674,10 +687,10 @@ impl Checker {
     pub(crate) fn get_external_module_container(
         &mut self,
         declaration: NodeId,
-    ) -> Option<SymbolId> {
+    live_nodes: Option<&[Node]>) -> Option<SymbolId> {
         let node = {
             let __program = self.program.clone().expect("program");
-            let nn = __program.nodes((declaration).file_index());
+            let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), declaration);
             ast::find_ancestor(Some(declaration), &nn, &mut |n, nodes| {
                 has_external_module_symbol(n, nodes)
             })
@@ -691,8 +704,9 @@ impl Checker {
         &mut self,
         d: NodeId,
         container: SymbolId,
-    ) -> Option<SymbolId> {
-        let file_symbol = self.get_external_module_container(d)?;
+    live_nodes: Option<&[Node]>,
+) -> Option<SymbolId> {
+        let file_symbol = self.get_external_module_container(d, live_nodes)?;
         let exported = self
             .sym(file_symbol)
             .exports
@@ -716,7 +730,7 @@ impl Checker {
         symbol: SymbolId,
         enclosing_declaration: Option<NodeId>,
         meaning: SymbolFlags,
-    ) -> Vec<SymbolId> {
+    live_nodes: Option<&[Node]>) -> Vec<SymbolId> {
         let container = self.get_parent_of_symbol(symbol);
         let symbol_flags_ = sym_fields(self, symbol).0;
         // Type parameters end up in the `members` lists but are not externally visible
@@ -728,17 +742,17 @@ impl Checker {
                 symbol,
                 enclosing_declaration,
                 meaning,
-            );
+            live_nodes);
         }
         let mut candidates: Vec<SymbolId> = Vec::new();
         for d in sym_fields(self, symbol).1 {
             let __program = self.program.clone().expect("program");
-            let dn = __program.nodes((d).file_index());
+            let dn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), d);
             let d_parent = dn[d].parent;
             if !ast::is_ambient_module(&dn[d], &dn) && d_parent.is_some() {
                 let d_parent = d_parent.unwrap();
                 // direct children of a module
-                if has_non_global_augmentation_external_module_symbol(d_parent, self) {
+                if has_non_global_augmentation_external_module_symbol(d_parent, self, live_nodes) {
                     let sym = self.get_symbol_of_declaration(d_parent);
                     if let Some(sym) = sym
                         && !candidates.contains(&sym)
@@ -831,7 +845,7 @@ impl Checker {
                 symbol,
                 enclosing_declaration,
                 meaning,
-            );
+            live_nodes);
             if all_alts.is_empty() {
                 continue;
             }
@@ -896,7 +910,8 @@ impl Checker {
         enclosing_declaration: Option<NodeId>,
         meaning: SymbolFlags,
         use_only_external_aliasing: bool,
-    ) -> Vec<SymbolId> {
+    live_nodes: Option<&[Node]>,
+) -> Vec<SymbolId> {
         let mut ctx = AccessibleSymbolChainContext {
             symbol: Some(symbol),
             enclosing_declaration,
@@ -904,7 +919,7 @@ impl Checker {
             use_only_external_aliasing,
             visited_symbol_tables_map: FxHashMap::default(),
         };
-        self.get_accessible_symbol_chain_ex(&mut ctx)
+        self.get_accessible_symbol_chain_ex(&mut ctx, live_nodes)
     }
 
     /// `(c *Checker) GetAccessibleSymbolChain` (symbolaccessibility.go).
@@ -914,14 +929,15 @@ impl Checker {
         enclosing_declaration: Option<NodeId>,
         meaning: SymbolFlags,
         use_only_external_aliasing: bool,
-    ) -> Vec<SymbolId> {
+    live_nodes: Option<&[Node]>,
+) -> Vec<SymbolId> {
         match symbol {
             Some(symbol) => self.get_accessible_symbol_chain(
                 symbol,
                 enclosing_declaration,
                 meaning,
                 use_only_external_aliasing,
-            ),
+            live_nodes),
             None => Vec::new(),
         }
     }
@@ -930,11 +946,12 @@ impl Checker {
     fn get_accessible_symbol_chain_ex(
         &mut self,
         ctx: &mut AccessibleSymbolChainContext,
-    ) -> Vec<SymbolId> {
+    live_nodes: Option<&[Node]>,
+) -> Vec<SymbolId> {
         let Some(symbol) = ctx.symbol else {
             return Vec::new();
         };
-        if is_property_or_method_declaration_symbol(self, symbol) {
+        if is_property_or_method_declaration_symbol(self, symbol, live_nodes) {
             return Vec::new();
         }
         // Go from enclosingDeclaration to the first scope we check, so the cache is keyed off the scope and thus shared more
@@ -945,7 +962,7 @@ impl Checker {
                 first_relevant_location = node;
                 true
             },
-        );
+        live_nodes);
         let link_key = crate::types::AccessibleChainCacheKey {
             use_only_external_aliasing: ctx.use_only_external_aliasing,
             location: first_relevant_location.unwrap_or(NodeId::NONE),
@@ -970,14 +987,13 @@ impl Checker {
                     table_id,
                     ignore_qualification,
                     is_local_name_lookup,
-                );
+                live_nodes);
                 if !res.is_empty() {
                     result = res;
                     return true;
                 }
                 false
-            },
-        );
+            }, live_nodes);
         self.symbol_container_links
             .get(symbol)
             .accessible_chain_cache
@@ -998,7 +1014,8 @@ impl Checker {
         table_id: SymbolTableId,
         ignore_qualification: bool,
         is_local_name_lookup: bool,
-    ) -> Vec<SymbolId> {
+    live_nodes: Option<&[Node]>,
+) -> Vec<SymbolId> {
         let sym_id = ctx.symbol.unwrap_or(SymbolId::NONE);
         let visited = ctx.visited_symbol_tables_map.entry(sym_id).or_default();
         if visited.contains(&table_id) {
@@ -1007,7 +1024,7 @@ impl Checker {
         visited.insert(table_id);
 
         let res =
-            self.try_symbol_table(ctx, t, table_id, ignore_qualification, is_local_name_lookup);
+            self.try_symbol_table(ctx, t, table_id, ignore_qualification, is_local_name_lookup, live_nodes);
 
         ctx.visited_symbol_tables_map
             .entry(sym_id)
@@ -1058,7 +1075,7 @@ impl Checker {
         table_id: SymbolTableId,
         ignore_qualification: bool,
         is_local_name_lookup: bool,
-    ) -> Vec<SymbolId> {
+    live_nodes: Option<&[Node]>) -> Vec<SymbolId> {
         let is_globals = table_id == ST_KIND_GLOBALS;
         let ctx_symbol = ctx.symbol.unwrap_or(SymbolId::NONE);
         let ctx_name = sym_fields(self, ctx_symbol).3;
@@ -1070,7 +1087,7 @@ impl Checker {
                 res, /*resolvedAliasSymbol*/
                 None,
                 ignore_qualification,
-            )
+            live_nodes)
         {
             return vec![ctx_symbol];
         }
@@ -1089,7 +1106,7 @@ impl Checker {
                     merged_export, /*resolvedAliasSymbol*/
                     None,
                     ignore_qualification,
-                )
+                live_nodes)
             }
         {
             candidate_chains.push(vec![ctx_symbol]);
@@ -1103,10 +1120,10 @@ impl Checker {
             let _ = st_flags;
             if st_name != ast::symbol::INTERNAL_SYMBOL_NAME_EXPORT_EQUALS
                 && st_name != ast::symbol::INTERNAL_SYMBOL_NAME_DEFAULT
-                && !(is_umd_export_symbol(self, symbol_from_symbol_table)
+                && !(is_umd_export_symbol(self, symbol_from_symbol_table, live_nodes)
                     && ctx.enclosing_declaration.is_some_and(|ed| {
                                                 let __program = self.program.clone().expect("program");
-                        let nn = __program.nodes((ed).file_index());;
+                        let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), ed);;
                         ast::get_source_file_of_node(Some(ed), &nn)
                             .is_some_and(|sf| ast::is_external_module(nn[sf].as_source_file()))
                     }))
@@ -1114,19 +1131,19 @@ impl Checker {
                 && (!ctx.use_only_external_aliasing
                     || st_decls.iter().any(|&d| {
                                                 let __program = self.program.clone().expect("program");
-                        let nn = __program.nodes((d).file_index());;
+                        let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), d);;
                         ast::is_external_module_import_equals_declaration(&nn[d], &nn)
                     }))
                 // If we're looking up a local name to reference directly, omit namespace reexports, otherwise when we're trawling through an export list to make a dotted name, we can keep it
                 && (is_local_name_lookup
                     && !st_decls.iter().any(|&d| {
-                        is_namespace_reexport_declaration(self, d)
+                        is_namespace_reexport_declaration(self, d, live_nodes)
                     })
                     || !is_local_name_lookup)
                 // While exports are generally considered to be in scope, export-specifier declared symbols are _not_
                 // See similar comment in `resolveName` for details
                 && (ignore_qualification
-                    || get_declarations_of_kind(self, symbol_from_symbol_table, Kind::ExportSpecifier)
+                    || get_declarations_of_kind(self, symbol_from_symbol_table, Kind::ExportSpecifier, live_nodes)
                         .is_empty())
             {
                 let resolved_imported_symbol = self.resolve_alias(symbol_from_symbol_table);
@@ -1135,7 +1152,7 @@ impl Checker {
                     symbol_from_symbol_table,
                     resolved_imported_symbol,
                     ignore_qualification,
-                );
+                live_nodes);
                 if !candidate.is_empty() {
                     candidate_chains.push(candidate);
                 }
@@ -1155,7 +1172,7 @@ impl Checker {
                 self.global_this_symbol,
                 self.global_this_symbol,
                 ignore_qualification,
-            );
+            live_nodes);
         }
         Vec::new()
     }
@@ -1183,13 +1200,14 @@ impl Checker {
         symbol_from_symbol_table: SymbolId,
         resolved_imported_symbol: SymbolId,
         ignore_qualification: bool,
-    ) -> Vec<SymbolId> {
+    live_nodes: Option<&[Node]>,
+) -> Vec<SymbolId> {
         if self.is_accessible(
             ctx,
             symbol_from_symbol_table,
             Some(resolved_imported_symbol),
             ignore_qualification,
-        ) {
+        live_nodes) {
             return vec![symbol_from_symbol_table];
         }
 
@@ -1203,7 +1221,7 @@ impl Checker {
             candidate_table_id, /*ignoreQualification*/
             true,
             false,
-        );
+        live_nodes);
         if accessible_symbols_from_exports.is_empty() {
             return Vec::new();
         }
@@ -1211,7 +1229,7 @@ impl Checker {
             ctx,
             symbol_from_symbol_table,
             get_qualified_left_meaning(ctx.meaning),
-        ) {
+        live_nodes) {
             return Vec::new();
         }
         let mut res = vec![symbol_from_symbol_table];
@@ -1226,7 +1244,8 @@ impl Checker {
         symbol_from_symbol_table: SymbolId,
         resolved_alias_symbol: Option<SymbolId>,
         ignore_qualification: bool,
-    ) -> bool {
+    live_nodes: Option<&[Node]>,
+) -> bool {
         let mut like_symbols = false;
         if ctx.symbol == resolved_alias_symbol {
             like_symbols = true;
@@ -1273,10 +1292,10 @@ impl Checker {
         let (_, decls, ..) = sym_fields(self, symbol_from_symbol_table);
         !decls
             .iter()
-            .any(|&d| has_non_global_augmentation_external_module_symbol(d, self))
+            .any(|&d| has_non_global_augmentation_external_module_symbol(d, self, live_nodes))
             && (ignore_qualification || {
                 let merged_from_table = self.get_merged_symbol(symbol_from_symbol_table);
-                self.can_qualify_symbol(ctx, merged_from_table, ctx.meaning)
+                self.can_qualify_symbol(ctx, merged_from_table, ctx.meaning, live_nodes)
             })
     }
 
@@ -1286,9 +1305,10 @@ impl Checker {
         ctx: &AccessibleSymbolChainContext,
         symbol_from_symbol_table: SymbolId,
         meaning: SymbolFlags,
-    ) -> bool {
+    live_nodes: Option<&[Node]>,
+) -> bool {
         // If the symbol is equivalent and doesn't need further qualification, this symbol is accessible
-        if !self.needs_qualification(symbol_from_symbol_table, ctx.enclosing_declaration, meaning) {
+        if !self.needs_qualification(symbol_from_symbol_table, ctx.enclosing_declaration, meaning, live_nodes) {
             return true;
         }
         // If symbol needs qualification, make sure that parent is accessible, if it is then this symbol is accessible too
@@ -1300,7 +1320,7 @@ impl Checker {
             use_only_external_aliasing: ctx.use_only_external_aliasing,
             visited_symbol_tables_map: ctx.visited_symbol_tables_map.clone(),
         };
-        !self.get_accessible_symbol_chain_ex(&mut sub_ctx).is_empty()
+        !self.get_accessible_symbol_chain_ex(&mut sub_ctx, live_nodes).is_empty()
     }
 
     /// `(c *Checker) needsQualification` (symbolaccessibility.go).
@@ -1309,7 +1329,7 @@ impl Checker {
         symbol: SymbolId,
         enclosing_declaration: Option<NodeId>,
         meaning: SymbolFlags,
-    ) -> bool {
+    live_nodes: Option<&[Node]>) -> bool {
         let mut qualify = false;
         let name = sym_fields(self, symbol).3;
         self.some_symbol_table_in_scope(
@@ -1331,7 +1351,7 @@ impl Checker {
                 let should_resolve_alias = sf_flags.intersects(ast::SymbolFlags::ALIAS) && {
                     let decls = sym_fields(c2, symbol_from_symbol_table).1;
                     !decls.iter().any(|&d| {
-                        let nn = c2.program_nodes(d);
+                        let nn = c2.program_nodes_live(d, live_nodes.unwrap_or(&[]));
                         nn[d].kind == Kind::ExportSpecifier
                     })
                 };
@@ -1349,8 +1369,7 @@ impl Checker {
 
                 // Continue to the next symbol table
                 false
-            },
-        );
+            }, live_nodes);
 
         qualify
     }
@@ -1368,13 +1387,13 @@ impl Checker {
             bool,           // isLocalNameLookup
             Option<NodeId>, // scopeNode
         ) -> bool,
-    ) -> bool {
+    live_nodes: Option<&[Node]>) -> bool {
         let mut location = enclosing_declaration;
         while let Some(loc) = location {
             // Locals of a source file are not in scope (because they get merged into the global symbol table)
             let locals = {
                 let __program = self.program.clone().expect("program");
-                let nn = __program.nodes((loc).file_index());
+                let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), loc);
                 if !ast::is_global_source_file(&nn[loc], &nn) {
                     nn[loc].locals().cloned()
                 } else {
@@ -1395,14 +1414,14 @@ impl Checker {
             }
             let kind = {
                 let __program = self.program.clone().expect("program");
-                let nn = __program.nodes((loc).file_index());
+                let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), loc);
                 nn[loc].kind
             };
             match kind {
                 Kind::SourceFile | Kind::ModuleDeclaration => {
                     {
                         let __program = self.program.clone().expect("program");
-                        let nn = __program.nodes((loc).file_index());
+                        let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), loc);
                         if kind == Kind::SourceFile
                             && !ast::is_external_or_commonjs_module(nn[loc].as_source_file())
                         {
@@ -1411,7 +1430,7 @@ impl Checker {
                             drop(nn);
                             let reparsed = {
                                 let __program = self.program.clone().expect("program");
-                                let nn = __program.nodes((loc).file_index());
+                                let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), loc);
                                 ast::get_reparsed_node_for_node(loc, &nn)
                             };
                             if let Some(sym) = self.get_symbol_of_declaration(reparsed) {
@@ -1465,11 +1484,11 @@ impl Checker {
                     // binding here so getAccessibleSymbolChain can resolve self-references.
                     let is_class_expr_with_name = {
                         let __program = self.program.clone().expect("program");
-                        let nn = __program.nodes((loc).file_index());
+                        let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), loc);
                         ast::is_class_expression(&nn[loc]) && nn[loc].name().is_some()
                     };
                     if is_class_expr_with_name
-                        && let Some(name_table) = self.get_class_expression_name_table(loc)
+                        && let Some(name_table) = self.get_class_expression_name_table(loc, live_nodes)
                         && callback(
                             self,
                             &name_table,
@@ -1484,7 +1503,7 @@ impl Checker {
                 }
                 _ => {}
             }
-            location = self.program_nodes(loc)[loc].parent;
+            location = self.program_nodes_live(loc, live_nodes.unwrap_or(&[]))[loc].parent;
         }
 
         let globals = self.globals.borrow().clone();
@@ -1503,14 +1522,15 @@ impl Checker {
     /// binding. Class expression names are bound via `bindAnonymousDeclaration`
     /// and aren't stored in any container's locals, so this synthesized table
     /// lets `someSymbolTableInScope` expose them during accessibility checks.
-    fn get_class_expression_name_table(&mut self, location: NodeId) -> Option<SymbolTable> {
+    fn get_class_expression_name_table(&mut self, location: NodeId,
+    live_nodes: Option<&[Node]>) -> Option<SymbolTable> {
         if let Some(table) = self.class_expression_name_tables.get(&location) {
             return Some(table.clone());
         }
         let class_symbol = self.get_symbol_of_declaration(location)?;
         let name_text = {
             let __program = self.program.clone().expect("program");
-            let nn = __program.nodes((location).file_index());
+            let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), location);
             let name = nn[location].name()?;
             nn[name].as_identifier().text.clone()
         };
@@ -1531,13 +1551,15 @@ impl Checker {
         enclosing_declaration: Option<NodeId>,
         meaning: SymbolFlags,
         should_compute_aliases_to_make_visible: bool,
-    ) -> SymbolAccessibilityResult {
+    live_nodes: Option<&[Node]>,
+) -> SymbolAccessibilityResult {
         self.is_symbol_accessible_worker(
             symbol,
             enclosing_declaration,
             meaning,
             should_compute_aliases_to_make_visible,
             true, /*allowModules*/
+        live_nodes,
         )
     }
 
@@ -1549,7 +1571,7 @@ impl Checker {
         meaning: SymbolFlags,
         should_compute_aliases_to_make_visible: bool,
         allow_modules: bool,
-    ) -> SymbolAccessibilityResult {
+    live_nodes: Option<&[Node]>) -> SymbolAccessibilityResult {
         if let Some(symbol) = symbol
             && let Some(enclosing_declaration) = enclosing_declaration
         {
@@ -1560,7 +1582,7 @@ impl Checker {
                 meaning,
                 should_compute_aliases_to_make_visible,
                 allow_modules,
-            ) {
+            live_nodes) {
                 return result;
             }
 
@@ -1569,15 +1591,15 @@ impl Checker {
             let decls = sym_fields(self, symbol).1;
             let symbol_external_module = decls
                 .iter()
-                .find_map(|&d| self.get_external_module_container(d));
+                .find_map(|&d| self.get_external_module_container(d, live_nodes));
             if let Some(symbol_external_module) = symbol_external_module {
                 let enclosing_external_module =
-                    self.get_external_module_container(enclosing_declaration);
+                    self.get_external_module_container(enclosing_declaration, live_nodes);
                 if Some(symbol_external_module) != enclosing_external_module {
                     // name from different external module that is not visible
                     let in_js = {
                         let __program = self.program.clone().expect("program");
-                        let nn = __program.nodes((enclosing_declaration).file_index());
+                        let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), enclosing_declaration);
                         ast::is_in_js_file(Some(enclosing_declaration), &nn)
                     };
                     return SymbolAccessibilityResult {
@@ -1587,6 +1609,7 @@ impl Checker {
                             Some(enclosing_declaration),
                             meaning,
                             crate::types::SymbolFormatFlags::ALLOW_ANY_NODE_KIND,
+                            live_nodes,
                         ),
                         error_module_name: self.symbol_to_string(symbol_external_module),
                         error_node: if in_js {
@@ -1607,6 +1630,7 @@ impl Checker {
                     Some(enclosing_declaration),
                     meaning,
                     crate::types::SymbolFormatFlags::ALLOW_ANY_NODE_KIND,
+                    live_nodes,
                 ),
                 ..Default::default()
             };
@@ -1620,19 +1644,21 @@ impl Checker {
 }
 
 /// `isUMDExportSymbol` (symbolaccessibility.go).
-fn is_umd_export_symbol(c: &Checker, symbol: SymbolId) -> bool {
+fn is_umd_export_symbol(c: &Checker, symbol: SymbolId,
+    live_nodes: Option<&[Node]>) -> bool {
     let decls = sym_fields(c, symbol).1;
     decls.first().is_some_and(|&d| {
         let __program = c.program.clone().expect("program");
-        let nn = __program.nodes((d).file_index());
+        let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), d);
         ast::is_namespace_export_declaration(&nn[d])
     })
 }
 
 /// `isNamespaceReexportDeclaration` (symbolaccessibility.go).
-fn is_namespace_reexport_declaration(c: &Checker, node: NodeId) -> bool {
+fn is_namespace_reexport_declaration(c: &Checker, node: NodeId,
+    live_nodes: Option<&[Node]>) -> bool {
     let __program = c.program.clone().expect("program");
-    let nn = __program.nodes((node).file_index());
+    let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), node);
     ast::is_namespace_export(&nn[node])
         && nn[node]
             .parent
@@ -1640,14 +1666,15 @@ fn is_namespace_reexport_declaration(c: &Checker, node: NodeId) -> bool {
 }
 
 /// `isPropertyOrMethodDeclarationSymbol` (symbolaccessibility.go).
-fn is_property_or_method_declaration_symbol(c: &Checker, symbol: SymbolId) -> bool {
+fn is_property_or_method_declaration_symbol(c: &Checker, symbol: SymbolId,
+    live_nodes: Option<&[Node]>) -> bool {
     let decls = sym_fields(c, symbol).1;
     if decls.is_empty() {
         return false;
     }
     decls.iter().all(|&d| {
         let __program = c.program.clone().expect("program");
-        let nn = __program.nodes((d).file_index());
+        let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), d);
         matches!(
             nn[d].kind,
             Kind::PropertyDeclaration
@@ -1666,13 +1693,14 @@ fn has_external_module_symbol(declaration: &Node, nodes: &[Node]) -> bool {
 }
 
 /// `getDeclarationsOfKind` — all declarations of `symbol` matching `kind`.
-fn get_declarations_of_kind(c: &Checker, symbol: SymbolId, kind: Kind) -> Vec<NodeId> {
+fn get_declarations_of_kind(c: &Checker, symbol: SymbolId, kind: Kind,
+    live_nodes: Option<&[Node]>) -> Vec<NodeId> {
     sym_fields(c, symbol)
         .1
         .into_iter()
         .filter(|&d| {
             let __program = c.program.clone().expect("program");
-            let nn = __program.nodes((d).file_index());
+            let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), d);
             nn[d].kind == kind
         })
         .collect()

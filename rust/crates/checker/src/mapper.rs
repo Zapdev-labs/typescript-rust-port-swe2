@@ -130,7 +130,10 @@ impl TypeMapperArena {
     /// Allocate a mapper, returning its `TypeMapperId` — the role of Go's
     /// `&X{...}` constructor returns.
     pub fn alloc(&self, m: TypeMapper) -> TypeMapperId {
-        let mut mappers = self.mappers.write().unwrap();
+        let mut mappers = self
+            .mappers
+            .try_write()
+            .expect("DEADLOCK-PROBE: type_mappers.alloc called while a mapper lock is held");
         let id = TypeMapperId(mappers.len() as u32);
         mappers.push(m);
         id

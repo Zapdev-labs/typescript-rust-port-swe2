@@ -213,6 +213,32 @@ pub struct ErrorOutputContainer {
 /// [`Relater::report_error`], `None` is Go's `nil`.
 pub type ErrorReporter<'a> = Option<&'a mut Relater>;
 
+/// Run `f` on the `Relater` a `Comparer` should dispatch to: the in-scope
+/// reporter when present, else a snapshot of the relater active on an
+/// enclosing `check_type_related_to_ex` frame, popped from
+/// `Checker::relater_stack` for the duration of the call and pushed back
+/// after (Go comparer closures capture the live `r`; a popped snapshot is
+/// the closest safe equivalent — `relation` is `Rc`-shared so the results
+/// cache stays coherent).
+fn run_comparer_relater<R>(
+    c: &mut Checker,
+    r: &mut ErrorReporter<'_>,
+    f: impl FnOnce(&mut Relater, &mut Checker) -> R,
+) -> R {
+    if let Some(rr) = r.as_deref_mut() {
+        return f(rr, c);
+    }
+    let mut rr = c.relater_pool.pop().unwrap_or_else(|| {
+        c.relater_seed
+            .as_ref()
+            .expect("relater comparer invoked outside a relation")
+            .snapshot()
+    });
+    let out = f(&mut rr, c);
+    c.relater_pool.push(rr);
+    out
+}
+
 // Comparer
 
 /// Go `TypeComparer` (`func(s,t *Type, reportErrors bool) Ternary`) and
@@ -264,18 +290,15 @@ fn compare_via(
         Comparer::Identical => c.compare_types_identical(s, t),
         Comparer::SubtypeOf => c.compare_types_subtype_of(s, t),
         Comparer::AssignableSimple => c.compare_types_assignable_simple(s, t),
-        Comparer::IsRelatedToSimple => r
-            .as_deref_mut()
-            .expect("isRelatedToSimple requires a Relater")
-            .is_related_to_simple(c, s, t),
-        Comparer::IsRelatedToWorker => r
-            .as_deref_mut()
-            .expect("isRelatedToWorker requires a Relater")
-            .is_related_to_worker(c, s, t, report_errors),
-        Comparer::IsRelatedToEx(state) => r
-            .as_deref_mut()
-            .expect("isRelatedToEx comparer requires a Relater")
-            .is_related_to_ex(c, s, t, RecursionFlags::BOTH, report_errors, None, state),
+        Comparer::IsRelatedToSimple => {
+            run_comparer_relater(c, r, |rr, c| rr.is_related_to_simple(c, s, t))
+        }
+        Comparer::IsRelatedToWorker => {
+            run_comparer_relater(c, r, |rr, c| rr.is_related_to_worker(c, s, t, report_errors))
+        }
+        Comparer::IsRelatedToEx(state) => run_comparer_relater(c, r, |rr, c| {
+            rr.is_related_to_ex(c, s, t, RecursionFlags::BOTH, report_errors, None, state)
+        }),
     }
 }
 
@@ -425,6 +448,31 @@ impl Relater {
         self.relation
             .clone()
             .expect("relater has an active relation")
+    }
+
+    /// Copy of the relater's comparison state for use as a comparer target
+    /// (see `Checker::relater_stack`). `relation` is `Rc`-shared with the
+    /// original — the results cache stays coherent — while the in-flight
+    /// keys/stacks carry the entry-time state for cycle detection. `next`
+    /// (the freelist link) is not part of Go state and is not copied.
+    fn snapshot(&self) -> Relater {
+        Relater {
+            relation: self.relation.clone(),
+            error_node: self.error_node,
+            error_chain: self.error_chain.clone(),
+            related_info: self.related_info.clone(),
+            maybe_keys: self.maybe_keys.clone(),
+            maybe_keys_set: self.maybe_keys_set.clone(),
+            source_stack: self.source_stack.clone(),
+            target_stack: self.target_stack.clone(),
+            maybe_count: self.maybe_count,
+            source_depth: self.source_depth,
+            target_depth: self.target_depth,
+            expanding_flags: self.expanding_flags,
+            overflow: self.overflow,
+            relation_count: self.relation_count,
+            next: None,
+        }
     }
 }
 
@@ -1051,6 +1099,11 @@ impl Checker {
         r.relation = Some(relation.clone());
         r.error_node = error_node;
         r.relation_count = ((16_000_000i64 - relation.borrow().size() as i64) / 8) as i32;
+        // Comparer closures (e.g. inference's `context_compare`) need to
+        // re-enter the live relater; `&mut` can't be captured, so seed a
+        // pool of snapshot relaters they fall back to via `compare_via`.
+        let saved_relater_seed = self.relater_seed.replace(r.snapshot());
+        self.relater_pool.clear();
         let result = r.is_related_to_ex(
             self,
             source,
@@ -1060,6 +1113,8 @@ impl Checker {
             head_message,
             IntersectionState::NONE,
         );
+        self.relater_seed = saved_relater_seed;
+        self.relater_pool.clear();
         if r.overflow {
             // Record this relation as having failed such that we don't
             // attempt the overflowing operation again.
@@ -1975,7 +2030,7 @@ impl Checker {
         }
         if flags.intersects(TypeFlags::SUBSTITUTION) {
             let __arena___guard_base_type = self.types.clone();
-            let __guard_base_type = __arena___guard_base_type.get(t);
+            let __guard_base_type = __arena___guard_base_type.get(t).clone();
             let base_type = __guard_base_type
                 .as_substitution_type()
                 .base_type()
@@ -2040,7 +2095,7 @@ impl Checker {
         }
         if flags.intersects(TypeFlags::SUBSTITUTION) {
             let __arena___guard_base_type = self.types.clone();
-            let __guard_base_type = __arena___guard_base_type.get(target_type);
+            let __guard_base_type = __arena___guard_base_type.get(target_type).clone();
             let base_type = __guard_base_type
                 .as_substitution_type()
                 .base_type()
@@ -2367,27 +2422,29 @@ impl Checker {
             let __arena_targets = self.types.clone();
             let targets = __arena_targets.get(union_target).types().to_vec();
             for target in targets {
-                let (target_flags, target_object_flags, target_target, target_alias_symbol) = {
+                let (target_flags, target_object_flags) = {
                     let __arena_t = self.types.clone();
                     let t = __arena_t.get(target);
-                    (
-                        t.flags,
-                        t.object_flags,
-                        t.target(),
-                        t.alias.as_ref().and_then(|a| a.symbol),
-                    )
+                    (t.flags, t.object_flags)
                 };
                 if target_flags.intersects(TypeFlags::OBJECT) {
                     let overlap_obj_flags = source_object_flags & target_object_flags;
                     if overlap_obj_flags.intersects(ObjectFlags::REFERENCE)
                         && source_target.is_some()
-                        && source_target == target_target
+                        && source_target
+                            == self.types_handle().get(target).target()
                     {
                         return Some(target);
                     }
                     if overlap_obj_flags.intersects(ObjectFlags::ANONYMOUS)
                         && source_alias_symbol.is_some()
-                        && source_alias_symbol == target_alias_symbol
+                        && source_alias_symbol
+                            == self
+                                .types_handle()
+                                .get(target)
+                                .alias
+                                .as_ref()
+                                .and_then(|a| a.symbol)
                     {
                         return Some(target);
                     }
@@ -2870,7 +2927,7 @@ impl Checker {
             drop(g);
         }
         let __arena___guard_name = self.types.clone();
-        let __guard_name = __arena___guard_name.get(t);
+        let __guard_name = __arena___guard_name.get(t).clone();
         let name = __guard_name.as_union_type().key_property_name.clone();
         if name == ast::symbol::INTERNAL_SYMBOL_NAME_MISSING {
             return String::new();
@@ -2889,7 +2946,7 @@ impl Checker {
     ) -> Option<TypeId> {
         let regular = self.get_regular_type_of_literal_type(key_type);
         let __arena___guard_result = self.types.clone();
-        let __guard_result = __arena___guard_result.get(t);
+        let __guard_result = __arena___guard_result.get(t).clone();
         let result = __guard_result
             .as_union_type()
             .constituent_map
@@ -3468,7 +3525,7 @@ impl Checker {
             result = self.get_type_alias_instantiation(symbol, &instantiated, None);
         } else {
             let __arena___guard_type_parameters = self.types.clone();
-            let __guard_type_parameters = __arena___guard_type_parameters.get(t);
+            let __guard_type_parameters = __arena___guard_type_parameters.get(t).clone();
             let type_parameters = __guard_type_parameters
                 .as_interface_type()
                 .map(|i| i.type_parameters().to_vec())
@@ -4100,7 +4157,7 @@ impl Checker {
                 let __arena_target = self.types.clone();
                 let target = __arena_target.target_tuple_type(rest_type).unwrap();
                 let __arena___guard_tuple = self.types.clone();
-                let __guard_tuple = __arena___guard_tuple.get(target);
+                let __guard_tuple = __arena___guard_tuple.get(target).clone();
                 let tuple = __guard_tuple.as_tuple_type();
                 return length + tuple.fixed_length
                     - tsc_core::core::if_else(
@@ -4259,7 +4316,7 @@ impl Checker {
                 let __arena_target = self.types.clone();
                 let target = __arena_target.target_tuple_type(rest_type).unwrap();
                 let __arena___guard_tuple = self.types.clone();
-                let __guard_tuple = __arena___guard_tuple.get(target);
+                let __guard_tuple = __arena___guard_tuple.get(target).clone();
                 let tuple = __guard_tuple.as_tuple_type();
                 tuple.combined_flags.intersects(ElementFlags::VARIABLE)
                     || index < tuple.fixed_length
@@ -4364,7 +4421,7 @@ impl Checker {
                 let __arena_target = self.types.clone();
                 let target = __arena_target.target_tuple_type(rest_type).unwrap();
                 let __arena___guard_element_infos = self.types.clone();
-                let __guard_element_infos = __arena___guard_element_infos.get(target);
+                let __guard_element_infos = __arena___guard_element_infos.get(target).clone();
                 let element_infos = __guard_element_infos.as_tuple_type().element_infos.clone();
                 let index = pos - param_count;
                 if index < element_infos.len() {
@@ -4425,7 +4482,7 @@ impl Checker {
             let target = __arena_target.target_tuple_type(rest_type).unwrap();
             let (combined_flags, fixed_length) = {
                 let __arena___guard_tuple = self.types.clone();
-                let __guard_tuple = __arena___guard_tuple.get(target);
+                let __guard_tuple = __arena___guard_tuple.get(target).clone();
                 let tuple = __guard_tuple.as_tuple_type();
                 (tuple.combined_flags, tuple.fixed_length)
             };
@@ -4446,7 +4503,7 @@ impl Checker {
         let __arena_target_id = self.types.clone();
         let target_id = __arena_target_id.target_tuple_type(t).unwrap();
         let __arena___guard_fixed_length = self.types.clone();
-        let __guard_fixed_length = __arena___guard_fixed_length.get(target_id);
+        let __guard_fixed_length = __arena___guard_fixed_length.get(target_id).clone();
         let fixed_length = __guard_fixed_length.as_tuple_type().fixed_length;
         let arity = self.get_type_reference_arity(t) as i32;
         let end_index = arity - std::cmp::max(end_skip_count, 0);
@@ -4461,7 +4518,7 @@ impl Checker {
         }
         let type_arguments = self.get_type_arguments(t);
         let __arena___guard_element_infos = self.types.clone();
-        let __guard_element_infos = __arena___guard_element_infos.get(target_id);
+        let __guard_element_infos = __arena___guard_element_infos.get(target_id).clone();
         let element_infos = __guard_element_infos.as_tuple_type().element_infos.clone();
         self.create_tuple_type_ex(
             &type_arguments[index..end_index as usize],
@@ -4476,7 +4533,7 @@ impl Checker {
         let target_id = __arena_target_id.target_tuple_type(t).unwrap();
         let (fixed_length, readonly) = {
             let __arena___guard_tuple = self.types.clone();
-            let __guard_tuple = __arena___guard_tuple.get(target_id);
+            let __guard_tuple = __arena___guard_tuple.get(target_id).clone();
             let tuple = __guard_tuple.as_tuple_type();
             (tuple.fixed_length, tuple.readonly)
         };
@@ -4538,7 +4595,7 @@ impl Checker {
             let __arena_target = self.types.clone();
             let target = __arena_target.target_tuple_type(rest_type).unwrap();
             let __arena___guard_info = self.types.clone();
-            let __guard_info = __arena___guard_info.get(target);
+            let __guard_info = __arena___guard_info.get(target).clone();
             let info = __guard_info.as_tuple_type().element_infos[pos - param_count].clone();
             return self.get_tuple_element_label(info, Some(rest_parameter), pos - param_count);
         }
@@ -5366,7 +5423,7 @@ impl Checker {
         if flags.intersects(TypeFlags::TEMPLATE_LITERAL) {
             let (texts, types) = {
                 let __arena___guard_st = self.types.clone();
-                let __guard_st = __arena___guard_st.get(source);
+                let __guard_st = __arena___guard_st.get(source).clone();
                 let st = __guard_st.as_template_literal_type();
                 (st.texts.clone(), st.types.clone())
             };
@@ -5577,7 +5634,7 @@ impl Checker {
         if source_flags.intersects(TypeFlags::TEMPLATE_LITERAL) {
             let (texts, types) = {
                 let __arena___guard_st = self.types.clone();
-                let __guard_st = __arena___guard_st.get(source);
+                let __guard_st = __arena___guard_st.get(source).clone();
                 let st = __guard_st.as_template_literal_type();
                 (st.texts.clone(), st.types.clone())
             };
@@ -5978,16 +6035,17 @@ impl Relater {
                     });
                     let calls = c.get_signatures_of_type(source, SignatureKind::Call);
                     let constructs = c.get_signatures_of_type(source, SignatureKind::Construct);
-                    let rt = c.get_return_type_of_signature(calls[0]);
-                    let rt = c.get_return_type_of_signature(constructs[0]);
-
-                    if (!calls.is_empty()
-                        && self.is_related_to(c, rt, target, RecursionFlags::SOURCE, false)
-                            != Ternary::FALSE)
-                        || (!constructs.is_empty()
-                            && self.is_related_to(c, rt, target, RecursionFlags::SOURCE, false)
-                                != Ternary::FALSE)
-                    {
+                    let call_related = !calls.is_empty() && {
+                        let rt = c.get_return_type_of_signature(calls[0]);
+                        self.is_related_to(c, rt, target, RecursionFlags::SOURCE, false)
+                            != Ternary::FALSE
+                    };
+                    let construct_related = !constructs.is_empty() && {
+                        let rt = c.get_return_type_of_signature(constructs[0]);
+                        self.is_related_to(c, rt, target, RecursionFlags::SOURCE, false)
+                            != Ternary::FALSE
+                    };
+                    if call_related || construct_related {
                         self.report_error(
                             c,
                             &tsc_diagnostics::Value_of_type_0_has_no_properties_in_common_with_type_1_Did_you_mean_to_call_it,
@@ -6400,7 +6458,7 @@ impl Relater {
                 // then we know the result to be true (for any two types A and
                 // B, A & B is related to both A and B).
                 let __arena___guard_source_origin = c.types.clone();
-                let __guard_source_origin = __arena___guard_source_origin.get(source);
+                let __guard_source_origin = __arena___guard_source_origin.get(source).clone();
                 let source_origin = __guard_source_origin.as_union_type().origin;
                 if let Some(origin) = source_origin {
                     if c.types_handle()
@@ -6418,7 +6476,7 @@ impl Relater {
                 // than the normalized result, so we scan it in the following
                 // fast path.
                 let __arena___guard_target_origin = c.types.clone();
-                let __guard_target_origin = __arena___guard_target_origin.get(target);
+                let __guard_target_origin = __arena___guard_target_origin.get(target).clone();
                 let target_origin = __guard_target_origin.as_union_type().origin;
                 if let Some(origin) = target_origin {
                     if c.types_handle()
@@ -6580,8 +6638,17 @@ impl Relater {
             .get(stripped_target)
             .flags
             .intersects(TypeFlags::UNION);
-        let __arena_stripped_types = c.types.clone();
-        let stripped_types = __arena_stripped_types.get(stripped_target).types().to_vec();
+        // `Types()` is only valid when the stripped target is still a union
+        // — Go reads `strippedTarget.Types()` under the same condition.
+        let stripped_types = if stripped_is_union {
+            let __arena_stripped_types = c.types.clone();
+            __arena_stripped_types
+                .get(stripped_target)
+                .types()
+                .to_vec()
+        } else {
+            Vec::new()
+        };
         for (i, source_type) in source_types.iter().enumerate() {
             if stripped_is_union
                 && source_types.len() >= stripped_types.len()
@@ -7351,13 +7418,13 @@ impl Relater {
             if source_flags.intersects(TypeFlags::INDEXED_ACCESS) {
                 let (s_object, s_index) = {
                     let __arena___guard_i = c.types.clone();
-                    let __guard_i = __arena___guard_i.get(source);
+                    let __guard_i = __arena___guard_i.get(source).clone();
                     let i = __guard_i.as_indexed_access_type();
                     (i.object_type, i.index_type)
                 };
                 let (t_object, t_index) = {
                     let __arena___guard_i = c.types.clone();
-                    let __guard_i = __arena___guard_i.get(target);
+                    let __guard_i = __arena___guard_i.get(target).clone();
                     let i = __guard_i.as_indexed_access_type();
                     (i.object_type, i.index_type)
                 };
@@ -7383,7 +7450,7 @@ impl Relater {
             } else if source_flags.intersects(TypeFlags::CONDITIONAL) {
                 let (s_root_is_distributive, s_check, s_extends) = {
                     let __arena___guard_ct = c.types.clone();
-                    let __guard_ct = __arena___guard_ct.get(source);
+                    let __guard_ct = __arena___guard_ct.get(source).clone();
                     let ct = __guard_ct.as_conditional_type();
                     (
                         ct.root
@@ -7396,7 +7463,7 @@ impl Relater {
                 };
                 let (t_root_is_distributive, t_check, t_extends) = {
                     let __arena___guard_ct = c.types.clone();
-                    let __guard_ct = __arena___guard_ct.get(target);
+                    let __guard_ct = __arena___guard_ct.get(target).clone();
                     let ct = __guard_ct.as_conditional_type();
                     (
                         ct.root
@@ -7453,13 +7520,13 @@ impl Relater {
             } else if source_flags.intersects(TypeFlags::SUBSTITUTION) {
                 let (s_base, s_constraint) = {
                     let __arena___guard_st = c.types.clone();
-                    let __guard_st = __arena___guard_st.get(source);
+                    let __guard_st = __arena___guard_st.get(source).clone();
                     let st = __guard_st.as_substitution_type();
                     (st.base_type, st.constraint)
                 };
                 let (t_base, t_constraint) = {
                     let __arena___guard_st = c.types.clone();
-                    let __guard_st = __arena___guard_st.get(target);
+                    let __guard_st = __arena___guard_st.get(target).clone();
                     let st = __guard_st.as_substitution_type();
                     (st.base_type, st.constraint)
                 };
@@ -7485,13 +7552,13 @@ impl Relater {
             } else if source_flags.intersects(TypeFlags::TEMPLATE_LITERAL) {
                 let (s_texts, s_types) = {
                     let __arena___guard_tl = c.types.clone();
-                    let __guard_tl = __arena___guard_tl.get(source);
+                    let __guard_tl = __arena___guard_tl.get(source).clone();
                     let tl = __guard_tl.as_template_literal_type();
                     (tl.texts.clone(), tl.types.clone())
                 };
                 let (t_texts, t_types) = {
                     let __arena___guard_tl = c.types.clone();
-                    let __guard_tl = __arena___guard_tl.get(target);
+                    let __guard_tl = __arena___guard_tl.get(target).clone();
                     let tl = __guard_tl.as_template_literal_type();
                     (tl.texts.clone(), tl.types.clone())
                 };
@@ -7514,10 +7581,10 @@ impl Relater {
             } else if source_flags.intersects(TypeFlags::STRING_MAPPING) {
                 if c.types_handle().get(source).symbol() == c.types_handle().get(target).symbol() {
                     let __arena___guard_s_target = c.types.clone();
-                    let __guard_s_target = __arena___guard_s_target.get(source);
+                    let __guard_s_target = __arena___guard_s_target.get(source).clone();
                     let s_target = __guard_s_target.as_string_mapping_type().target;
                     let __arena___guard_t_target = c.types.clone();
-                    let __guard_t_target = __arena___guard_t_target.get(target);
+                    let __guard_t_target = __arena___guard_t_target.get(target).clone();
                     let t_target = __guard_t_target.as_string_mapping_type().target;
                     return self.is_related_to(
                         c,
@@ -7665,18 +7732,25 @@ impl Relater {
                             .is_some()
                     })
             };
-            let __h7348_21 = c.get_constraint_type_from_mapped_type(source);
-            let __h7347_21 = c.get_index_type(target);
-
-            if c.types_handle()
+            // `getConstraintTypeFromMappedType` requires a mapped source —
+            // evaluate it only after the `MAPPED` check, as Go's `&&`
+            // short-circuit does; a hoisted precompute would call
+            // `as_mapped_type()` on e.g. an `Index` type and panic.
+            let source_is_mapped = c
+                .types_handle()
                 .get(source)
                 .object_flags
-                .intersects(ObjectFlags::MAPPED)
+                .intersects(ObjectFlags::MAPPED);
+            let __h7348_21 =
+                source_is_mapped.then(|| c.get_constraint_type_from_mapped_type(source));
+            let __h7347_21 = c.get_index_type(target);
+
+            if source_is_mapped
                 && !mapped_has_name_type
                 && self.is_related_to(
                     c,
                     __h7347_21,
-                    __h7348_21.unwrap_or(c.never_type),
+                    __h7348_21.flatten().unwrap_or(c.never_type),
                     RecursionFlags::BOTH,
                     false,
                 ) != Ternary::FALSE
@@ -7736,13 +7810,13 @@ impl Relater {
                 // T[J] if S is related to T and K is related to J.
                 let (s_object, s_index) = {
                     let __arena___guard_i = c.types.clone();
-                    let __guard_i = __arena___guard_i.get(source);
+                    let __guard_i = __arena___guard_i.get(source).clone();
                     let i = __guard_i.as_indexed_access_type();
                     (i.object_type, i.index_type)
                 };
                 let (t_object, t_index) = {
                     let __arena___guard_i = c.types.clone();
-                    let __guard_i = __arena___guard_i.get(target);
+                    let __guard_i = __arena___guard_i.get(target).clone();
                     let i = __guard_i.as_indexed_access_type();
                     (i.object_type, i.index_type)
                 };
@@ -7776,7 +7850,7 @@ impl Relater {
             {
                 let (object_type, index_type) = {
                     let __arena___guard_i = c.types.clone();
-                    let __guard_i = __arena___guard_i.get(target);
+                    let __guard_i = __arena___guard_i.get(target).clone();
                     let i = __guard_i.as_indexed_access_type();
                     (i.object_type, i.index_type)
                 };
@@ -7837,12 +7911,12 @@ impl Relater {
             }
         } else if target_flags.intersects(TypeFlags::INDEX) {
             let __arena___guard_target_type = c.types.clone();
-            let __guard_target_type = __arena___guard_target_type.get(target);
+            let __guard_target_type = __arena___guard_target_type.get(target).clone();
             let target_type = __guard_target_type.as_index_type().target;
             // A keyof S is related to a keyof T if T is related to S.
             if source_flags.intersects(TypeFlags::INDEX) {
                 let __arena___guard_source_target = c.types.clone();
-                let __guard_source_target = __arena___guard_source_target.get(source);
+                let __guard_source_target = __arena___guard_source_target.get(source).clone();
                 let source_target = __guard_source_target.as_index_type().target;
                 if let (Some(target_type), Some(source_target)) = (target_type, source_target) {
                     result = self.is_related_to(
@@ -7880,7 +7954,7 @@ impl Relater {
                         // 'keyof T' has itself as its constraint and produces
                         // a Ternary.Maybe when related to other types.
                         let __arena___guard_index_flags = c.types.clone();
-                        let __guard_index_flags = __arena___guard_index_flags.get(target);
+                        let __guard_index_flags = __arena___guard_index_flags.get(target).clone();
                         let index_flags = __guard_index_flags.as_index_type().index_flags;
                         let index_t = c.get_index_type_ex(
                             constraint,
@@ -7955,12 +8029,12 @@ impl Relater {
             // when computing variance).
             let can_relate = {
                 let __arena___guard_ct = c.types.clone();
-                let __guard_ct = __arena___guard_ct.get(target);
+                let __guard_ct = __arena___guard_ct.get(target).clone();
                 let ct = __guard_ct.as_conditional_type();
                 let root = ct.root.as_deref();
                 let same_root = source_flags.intersects(TypeFlags::CONDITIONAL) && {
                     let __arena___guard_s_root = c.types.clone();
-                    let __guard_s_root = __arena___guard_s_root.get(source);
+                    let __guard_s_root = __arena___guard_s_root.get(source).clone();
                     let s_root = __guard_s_root.as_conditional_type().root.as_deref();
                     match (s_root, root) {
                         (Some(a), Some(b)) => std::ptr::eq(a, b),
@@ -7978,7 +8052,7 @@ impl Relater {
                 // still deferred for distribution purposes.
                 let (check_type, extends_type) = {
                     let __arena___guard_ct = c.types.clone();
-                    let __guard_ct = __arena___guard_ct.get(target);
+                    let __guard_ct = __arena___guard_ct.get(target).clone();
                     let ct = __guard_ct.as_conditional_type();
 
                     (ct.check_type, ct.extends_type)
@@ -8067,7 +8141,7 @@ impl Relater {
             // Check if source type `S` is related to target type
             // `{ [P in Q]: T }` or `{ [P in Q as R]: T}`.
             let __arena___guard_keys_remapped = c.types.clone();
-            let __guard_keys_remapped = __arena___guard_keys_remapped.get(target);
+            let __guard_keys_remapped = __arena___guard_keys_remapped.get(target).clone();
             let keys_remapped = __guard_keys_remapped
                 .as_mapped_type()
                 .declaration
@@ -8171,7 +8245,7 @@ impl Relater {
                             {
                                 let __arena___guard_object_type = c.types.clone();
                                 let __guard_object_type =
-                                    __arena___guard_object_type.get(non_null_component);
+                                    __arena___guard_object_type.get(non_null_component).clone();
                                 let object_type = __guard_object_type
                                     .as_indexed_access_type()
                                     .object_type
@@ -8287,12 +8361,12 @@ impl Relater {
                     // substituted for P. We also want to explore type
                     // { [P in K]: E }[C], where C is the constraint of X.
                     let __arena___guard_index_type = c.types.clone();
-                    let __guard_index_type = __arena___guard_index_type.get(source);
+                    let __guard_index_type = __arena___guard_index_type.get(source).clone();
                     let index_type = __guard_index_type.as_indexed_access_type().index_type;
                     let index_constraint = index_type.and_then(|i| c.get_constraint_of_type(i));
                     if let Some(index_constraint) = index_constraint {
                         let __arena___guard_object_type = c.types.clone();
-                        let __guard_object_type = __arena___guard_object_type.get(source);
+                        let __guard_object_type = __arena___guard_object_type.get(source).clone();
                         let object_type = __guard_object_type
                             .as_indexed_access_type()
                             .object_type
@@ -8314,7 +8388,7 @@ impl Relater {
             }
         } else if source_flags.intersects(TypeFlags::INDEX) {
             let __arena___guard_index_target = c.types.clone();
-            let __guard_index_target = __arena___guard_index_target.get(source);
+            let __guard_index_target = __arena___guard_index_target.get(source).clone();
             let index_target = __guard_index_target.as_index_type().target;
             let is_deferred_mapped_index = index_target.is_some_and(|t| {
                 c.should_defer_index_type(
@@ -8386,7 +8460,7 @@ impl Relater {
                 // is related to X2, and Y1 is related to Y2.
                 let (source_params, mut source_extends) = {
                     let __arena___guard_ct = c.types.clone();
-                    let __guard_ct = __arena___guard_ct.get(source);
+                    let __guard_ct = __arena___guard_ct.get(source).clone();
                     let ct = __guard_ct.as_conditional_type();
                     (
                         ct.root
@@ -8425,7 +8499,7 @@ impl Relater {
                     let mut inferences =
                         std::mem::take(&mut c.inference_contexts[ctx.index()].inferences);
                     let __arena___guard_target_extends = c.types.clone();
-                    let __guard_target_extends = __arena___guard_target_extends.get(target);
+                    let __guard_target_extends = __arena___guard_target_extends.get(target).clone();
                     let target_extends = __guard_target_extends
                         .as_conditional_type()
                         .extends_type
@@ -8446,10 +8520,10 @@ impl Relater {
                 }
                 let (s_check, t_check, t_extends) = {
                     let __arena___guard_s = c.types.clone();
-                    let __guard_s = __arena___guard_s.get(source);
+                    let __guard_s = __arena___guard_s.get(source).clone();
                     let s = __guard_s.as_conditional_type();
                     let __arena___guard_t = c.types.clone();
-                    let __guard_t = __arena___guard_t.get(target);
+                    let __guard_t = __arena___guard_t.get(target).clone();
                     let t = __guard_t.as_conditional_type();
                     (s.check_type, t.check_type, t.extends_type)
                 };
@@ -8564,10 +8638,10 @@ impl Relater {
                     return Ternary::FALSE;
                 }
                 let __arena___guard_s_target = c.types.clone();
-                let __guard_s_target = __arena___guard_s_target.get(source);
+                let __guard_s_target = __arena___guard_s_target.get(source).clone();
                 let s_target = __guard_s_target.as_string_mapping_type().target;
                 let __arena___guard_t_target = c.types.clone();
-                let __guard_t_target = __arena___guard_t_target.get(target);
+                let __guard_t_target = __arena___guard_t_target.get(target).clone();
                 let t_target = __guard_t_target.as_string_mapping_type().target;
                 result = self.is_related_to(
                     c,
@@ -8730,7 +8804,7 @@ impl Relater {
                             .as_ref()
                             .map(|e| &**e as *const ErrorChain)
                     && !source_is_primitive;
-                result = result.and(self.properties_related_to(
+                result = self.properties_related_to(
                     c,
                     source,
                     target,
@@ -8738,7 +8812,7 @@ impl Relater {
                     &Set::new(),
                     false,
                     intersection_state,
-                ));
+                );
                 if result != Ternary::FALSE {
                     result = result.and(self.signatures_related_to(
                         c,
@@ -9144,7 +9218,7 @@ impl Relater {
                         continue 'outer;
                     }
                 }
-                core::append_if_unique(&mut matching_types, t);
+                matching_types = core::append_if_unique(&matching_types, t).into_owned();
                 has_match = true;
             }
             if !has_match {
@@ -9273,7 +9347,8 @@ impl Relater {
                     0
                 };
                 let __arena___guard_target_min_length = c.types.clone();
-                let __guard_target_min_length = __arena___guard_target_min_length.get(target_tuple);
+                let __guard_target_min_length =
+                    __arena___guard_target_min_length.get(target_tuple).clone();
                 let target_min_length = __guard_target_min_length.as_tuple_type().min_length;
                 if !source_rest && source_arity < target_min_length {
                     if report_errors {
@@ -9869,8 +9944,9 @@ impl Relater {
     ) -> bool {
         if crate::checker_core::is_tuple_type(&c.types, source) {
             let __arena___guard_readonly = c.types.clone();
-            let __guard_readonly =
-                __arena___guard_readonly.get(c.types_handle().target_tuple_type(source).unwrap());
+            let __guard_readonly = __arena___guard_readonly
+                .get(c.types_handle().target_tuple_type(source).unwrap())
+                .clone();
             let readonly = __guard_readonly.as_tuple_type().readonly;
             if readonly && c.is_mutable_array_or_tuple(target) {
                 if report_errors {
@@ -10748,13 +10824,16 @@ impl Relater {
                 t.flags.intersects(TypeFlags::TYPE_PARAMETER)
                     && t.as_type_parameter().is_distributed
             };
-            let __arena___guard_tp_constraint = c.types.clone();
-            let __guard_tp_constraint = __arena___guard_tp_constraint.get(target);
-            let tp_constraint = __guard_tp_constraint
-                .as_type_parameter()
-                .constraint
-                .unwrap_or(c.never_type);
-            if is_distributed && c.is_type_assignable_to(generalized_source, tp_constraint) {
+            let is_distributed_ok = is_distributed && {
+                let __arena___guard_tp_constraint = c.types.clone();
+                let tp_constraint = __arena___guard_tp_constraint
+                    .get(target)
+                    .as_type_parameter()
+                    .constraint
+                    .unwrap_or(c.never_type);
+                c.is_type_assignable_to(generalized_source, tp_constraint)
+            };
+            if is_distributed_ok {
                 self.report_error(
                     c,
                     &tsc_diagnostics::X_0_is_only_assignable_to_the_non_distributed_1_but_1_has_been_distributed_here,
@@ -11168,7 +11247,7 @@ impl Checker {
         }) || object_flags.intersects(ObjectFlags::JS_LITERAL | ObjectFlags::OBJECT_REST_TYPE)
             || object_flags.intersects(ObjectFlags::REVERSE_MAPPED) && {
                 let __arena___guard_source = self.types.clone();
-                let __guard_source = __arena___guard_source.get(t);
+                let __guard_source = __arena___guard_source.get(t).clone();
                 let source = __guard_source.as_reverse_mapped_type().source;
                 source.is_some_and(|s| self.is_object_type_with_inferable_index(s))
             }

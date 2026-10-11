@@ -865,12 +865,20 @@ impl OrchestratorState {
     /// `(o *Orchestrator) buildOrCleanProject` — `close(task.built)` is a
     /// no-op in the sequential port.
     fn build_or_clean_project(&mut self, task_id: TaskId) {
-        let builder = TaskBuffer::default();
+        // Go assigns `task.result` before creating the reporters since
+        // `getWriter` reads `task.result.builder`. Placeholder reporters are
+        // overwritten below.
         self.tasks[task_id].result = Some(TaskResult::new(
-            builder,
-            self.create_builder_status_reporter_for(Some(task_id)),
-            self.create_diagnostic_reporter_for(Some(task_id)),
+            TaskBuffer::default(),
+            std::sync::Arc::new(|_| {}),
+            std::sync::Arc::new(|_| {}),
         ));
+        let report_status = self.create_builder_status_reporter_for(Some(task_id));
+        let diagnostic_reporter = self.create_diagnostic_reporter_for(Some(task_id));
+        if let Some(result) = &mut self.tasks[task_id].result {
+            result.report_status = report_status;
+            result.diagnostic_reporter = diagnostic_reporter;
+        }
         if !self.build_options().clean.is_true() {
             self.build_project(task_id);
         } else {

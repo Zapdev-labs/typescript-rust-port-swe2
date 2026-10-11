@@ -329,6 +329,10 @@ pub fn new_checker_pool_with_tracing<P: CheckerPoolProgram>(
     } else if let Some(c) = program.options().checkers {
         checker_count = c as usize;
     }
+    // DEBUG: isolate cross-checker TypeId aliasing.
+    if std::env::var("TSC_ONE_CHECKER").is_ok() {
+        checker_count = 1;
+    }
 
     checker_count = checker_count
         .min(program.source_files().len())
@@ -537,7 +541,13 @@ impl<P: CheckerPoolProgram> CompilerCheckerPool<P> {
         _single_threaded: bool,
         cb: &mut dyn FnMut(&Rc<RefCell<Checker>>, usize, NodeId),
     ) {
+        let __ct = std::time::Instant::now();
         self.create_checkers();
+        if std::env::var("TSC_FILE_TIME").is_ok() {
+            eprintln!("[create-checkers] {:?}", __ct.elapsed());
+        }
+        let mut __cb_total = std::time::Duration::ZERO;
+        let __wall0 = std::time::Instant::now();
         let checker_count = self.checkers.borrow().len();
         for checker_idx in 0..checker_count {
             let checker = self.checkers.borrow()[checker_idx].clone();
@@ -550,9 +560,21 @@ impl<P: CheckerPoolProgram> CompilerCheckerPool<P> {
                     .unwrap_or(0)
                     == checker_idx
                 {
+                    let __t = std::time::Instant::now();
                     cb(&checker, i, file);
+                    let __e = __t.elapsed();
+                    __cb_total += __e;
+                    if std::env::var("TSC_FILE_TIME").is_ok() {
+                        eprintln!(
+                            "[cb-gap] start={:?} dur={__e:?} fidx={i}",
+                            __t - __wall0
+                        );
+                    }
                 }
             }
+        }
+        if std::env::var("TSC_FILE_TIME").is_ok() {
+            eprintln!("[cb-total] {__cb_total:?} wall={:?}", __wall0.elapsed());
         }
     }
 

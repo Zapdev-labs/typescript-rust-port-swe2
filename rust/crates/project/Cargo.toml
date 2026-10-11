@@ -1,0 +1,50 @@
+[package]
+name = "tsc-project"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+tsc-ast = { path = "../ast" }
+tsc-binder = { path = "../binder" }
+tsc-bundled = { path = "../bundled" }
+tsc-checker = { path = "../checker" }
+tsc-collections = { path = "../collections" }
+tsc-compiler = { path = "../compiler" }
+tsc-contentmapper = { path = "../contentmapper" }
+tsc-core = { path = "../core" }
+tsc-debug = { path = "../debug" }
+tsc-diagnostics = { path = "../diagnostics" }
+tsc-dirty = { path = "../dirty" }
+tsc-json = { path = "../json" }
+tsc-locale = { path = "../locale" }
+# PORT(blocked): tsc-ls does not yet compile (sibling port in progress);
+# re-enable when `cargo check -p tsc-ls` succeeds. Needed for autoimport.
+# tsc-ls = { path = "../ls" }
+tsc-lsconv = { path = "../lsconv" }
+tsc-lsproto = { path = "../lsproto" }
+tsc-lsutil = { path = "../lsutil" }
+tsc-module = { path = "../module" }
+tsc-packagejson = { path = "../packagejson" }
+tsc-parser = { path = "../parser" }
+tsc-project-logging = { path = "../projectlogging" }
+tsc-semver = { path = "../semver" }
+tsc-sourcemap = { path = "../sourcemap" }
+tsc-spanmap = { path = "../spanmap" }
+tsc-tsoptions = { path = "../tsoptions" }
+tsc-tspath = { path = "../tspath" }
+tsc-vfs = { path = "../vfs" }
+rustc-hash = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+xxhash-rust = { workspace = true }
+fragile = "2"
+elsa = "1.11.2"
+
+[dev-dependencies]
+tsc-repo = { path = "../repo" }
+tsc-testutil = { path = "../testutil" }

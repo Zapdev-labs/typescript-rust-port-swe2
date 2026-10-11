@@ -908,7 +908,7 @@ impl ReferenceResolver for FakeEmitResolver {
         _node: NodeId,
         _prefix_locals: bool,
         _nodes: &[Node],
-        _symbols: &mut Vec<Symbol>,
+        _symbols: &std::cell::RefCell<Vec<Symbol>>,
     ) -> Option<NodeId> {
         unimplemented!("unused by ImportElisionTransformer")
     }
@@ -917,7 +917,7 @@ impl ReferenceResolver for FakeEmitResolver {
         &mut self,
         _node: NodeId,
         _nodes: &[Node],
-        _symbols: &mut Vec<Symbol>,
+        _symbols: &std::cell::RefCell<Vec<Symbol>>,
     ) -> Option<NodeId> {
         unimplemented!("unused by ImportElisionTransformer")
     }
@@ -926,7 +926,7 @@ impl ReferenceResolver for FakeEmitResolver {
         &mut self,
         _node: NodeId,
         _nodes: &[Node],
-        _symbols: &mut Vec<Symbol>,
+        _symbols: &std::cell::RefCell<Vec<Symbol>>,
     ) -> Option<NodeId> {
         unimplemented!("unused by ImportElisionTransformer")
     }
@@ -935,7 +935,7 @@ impl ReferenceResolver for FakeEmitResolver {
         &mut self,
         _node: NodeId,
         _nodes: &[Node],
-        _symbols: &mut Vec<Symbol>,
+        _symbols: &std::cell::RefCell<Vec<Symbol>>,
     ) -> Vec<NodeId> {
         unimplemented!("unused by ImportElisionTransformer")
     }
@@ -948,7 +948,7 @@ impl ReferenceResolver for FakeEmitResolver {
         &mut self,
         _node: NodeId,
         _nodes: &[Node],
-        _symbols: &mut Vec<Symbol>,
+        _symbols: &std::cell::RefCell<Vec<Symbol>>,
     ) -> Option<NodeId> {
         unimplemented!("unused by ImportElisionTransformer")
     }
@@ -1073,7 +1073,7 @@ impl EmitResolver for FakeEmitResolver {
     }
 
     /// `MarkLinkedReferencesRecursively`.
-    fn mark_linked_references_recursively(&mut self, file: NodeId, nodes: &[Node]) {
+    fn mark_linked_references_recursively(&mut self, file: NodeId, nodes: &mut Vec<Node>) {
         if !ast::is_parse_tree_node(&nodes[file]) {
             return;
         }
@@ -1124,6 +1124,10 @@ impl EmitResolver for FakeEmitResolver {
         _location: NodeId,
         _nodes: &[Node],
     ) -> Option<NodeId> {
+        unimplemented!("unused by ImportElisionTransformer")
+    }
+
+    fn entity_name_texts(&self, _e: NodeId, _nodes: &[Node]) -> Vec<String> {
         unimplemented!("unused by ImportElisionTransformer")
     }
 

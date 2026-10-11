@@ -1736,7 +1736,16 @@ impl<'p, 'a> Emitter<'p, 'a> {
                 // TS's emitter handles this via generic emit(); we dispatch to expression emitter here.
                 self.emit_expression(Some(node), OperatorPrecedence::DISALLOW_COMMA)
             }
-            _ => panic!("unexpected EntityName: {:?}", self.p.nodes[node].kind),
+            _ => {
+                let parent = self.p.nodes[node].parent;
+                let n = &self.p.nodes[node];
+                panic!(
+                    "unexpected EntityName: {:?} node={:?} loc={:?} flags={:?} parent={:?} parent_kind={:?}",
+                    n.kind, node, n.loc, n.flags,
+                    parent,
+                    parent.map(|p| self.p.nodes[p].kind)
+                )
+            }
         }
     }
 
@@ -7306,6 +7315,16 @@ impl<'p, 'a> Emitter<'p, 'a> {
             return true;
         }
 
+        // `original_parent` may live in a different file arena than
+        // `self.p.nodes` (e.g. node-builder clones carrying parse-node
+        // `original` links into a scratch buffer). If the id doesn't resolve
+        // in this buffer we cannot correlate the list.
+        if original_parent.local_index() as usize >= self.p.nodes.len()
+            || self.p.nodes[original_parent].id != original_parent
+        {
+            return false;
+        }
+
         if self.p.nodes[original_parent].kind != self.p.nodes[parent_node].kind {
             // if the original node is some other kind of node, we cannot correlate the list
             return false;
@@ -7322,11 +7341,11 @@ impl<'p, 'a> Emitter<'p, 'a> {
             }
             Kind::CallExpression | Kind::NewExpression => {
                 if let Some(ta) = self.p.nodes[parent_node].type_argument_list()
-                    && std::ptr::eq(children, ta)
+                    && *children == *ta
                 {
                     original_list = self.p.nodes[original_parent].type_argument_list();
                 } else if let Some(al) = self.p.nodes[parent_node].argument_list()
-                    && std::ptr::eq(children, al)
+                    && *children == *al
                 {
                     original_list = self.p.nodes[original_parent].argument_list();
                 }
@@ -7343,11 +7362,11 @@ impl<'p, 'a> Emitter<'p, 'a> {
             | Kind::CallSignature
             | Kind::ConstructSignature => {
                 if let Some(tp) = self.p.nodes[parent_node].type_parameter_list()
-                    && std::ptr::eq(children, tp)
+                    && *children == *tp
                 {
                     original_list = self.p.nodes[original_parent].type_parameter_list();
                 } else if let Some(pl) = self.p.nodes[parent_node].parameter_list()
-                    && std::ptr::eq(children, pl)
+                    && *children == *pl
                 {
                     original_list = self.p.nodes[original_parent].parameter_list();
                 }
@@ -7358,14 +7377,14 @@ impl<'p, 'a> Emitter<'p, 'a> {
             | Kind::TypeAliasDeclaration
             | Kind::JSTypeAliasDeclaration => {
                 if let Some(tp) = self.p.nodes[parent_node].type_parameter_list()
-                    && std::ptr::eq(children, tp)
+                    && *children == *tp
                 {
                     original_list = self.p.nodes[original_parent].type_parameter_list();
                 }
             }
             Kind::ObjectBindingPattern | Kind::ArrayBindingPattern => {
                 if let Some(el) = self.p.nodes[parent_node].element_list()
-                    && std::ptr::eq(children, el)
+                    && *children == *el
                 {
                     original_list = self.p.nodes[original_parent].element_list();
                 }

@@ -61,6 +61,7 @@ pub fn clone_node_builder_context(
     context: &mut NodeBuilderContext,
 ) -> Box<dyn FnOnce(&mut NodeBuilderContext)> {
     let restore_names = context.type_parameter_names.enter_scope();
+    let restore_name_texts = context.type_parameter_name_texts.enter_scope();
     let restore_names_by_text = context.type_parameter_names_by_text.enter_scope();
     let restore_names_by_text_next_name_count = context
         .type_parameter_names_by_text_next_name_count
@@ -68,6 +69,7 @@ pub fn clone_node_builder_context(
     let restore_symbol_list = context.type_parameter_symbol_list.enter_scope();
     Box::new(move |context: &mut NodeBuilderContext| {
         restore_names(&mut context.type_parameter_names);
+        restore_name_texts(&mut context.type_parameter_name_texts);
         restore_names_by_text(&mut context.type_parameter_names_by_text);
         restore_names_by_text_next_name_count(
             &mut context.type_parameter_names_by_text_next_name_count,
@@ -356,27 +358,33 @@ impl<'a> NodeBuilderImpl<'a> {
         // We only ever need to look two declarations upward.
         debug_assert!(self.ctx.enclosing_declaration.is_some());
         let enclosing = self.ctx.enclosing_declaration.unwrap();
-        let mut existing_fake_scope: Option<NodeId> = None;
-        if self.links.has(&enclosing) {
-            if self
-                .links
-                .get(enclosing)
-                .fake_scope_for_signature_declaration
-                .as_deref()
-                == Some(kind)
-            {
-                existing_fake_scope = Some(enclosing);
-            }
+        // PORT: Go's `links.Has(node)`/`links.Get(node)` key by node pointer,
+        // so a `fakeScopeForSignatureDeclaration` match can only ever come
+        // from the fake-scope Block itself. Here NodeIds alias across arena
+        // buffers (a fake-scope id minted in a scratch buffer can coincide
+        // with a real node in the live buffer), so the link is trusted only
+        // when the candidate node is actually a Block — the only kind that
+        // ever receives the link (Go's `debug.Assert` enforces the same
+        // invariant).
+        fn node_at<'n>(nodes: &'n [ast::Node], id: NodeId) -> Option<&'n ast::Node> {
+            nodes.get(id.local_index() as usize)
         }
-        if existing_fake_scope.is_none()
-            && let Some(parent) = nodes[enclosing].parent
-            && self.links.has(&parent)
+        let mut existing_fake_scope: Option<NodeId> = None;
+        if node_at(nodes, enclosing).is_some_and(|n| n.kind == Kind::Block)
             && self
                 .links
-                .get(parent)
-                .fake_scope_for_signature_declaration
-                .as_deref()
-                == Some(kind)
+                .try_get(&enclosing)
+                .is_some_and(|l| l.fake_scope_for_signature_declaration.as_deref() == Some(kind))
+        {
+            existing_fake_scope = Some(enclosing);
+        }
+        if existing_fake_scope.is_none()
+            && let Some(parent) = node_at(nodes, enclosing).and_then(|n| n.parent)
+            && node_at(nodes, parent).is_some_and(|n| n.kind == Kind::Block)
+            && self
+                .links
+                .try_get(&parent)
+                .is_some_and(|l| l.fake_scope_for_signature_declaration.as_deref() == Some(kind))
         {
             existing_fake_scope = Some(parent);
         }
@@ -492,9 +500,11 @@ pub(crate) fn collect_binding_pattern_symbols(
     additions: &mut Vec<(String, SymbolId)>,
 ) -> bool {
     // `bindPattern`/`bindElement` recursion over the binding pattern.
+    // `nodes` is the arena containing the declaration being walked — it may
+    // be a snapshot of another file's arena when `param` is declared there.
     fn bind_pattern(
         c: &mut Checker,
-        nodes: &mut Vec<ast::Node>,
+        nodes: &[ast::Node],
         pattern: NodeId,
         additions: &mut Vec<(String, SymbolId)>,
     ) {
@@ -515,7 +525,7 @@ pub(crate) fn collect_binding_pattern_symbols(
 
     fn bind_element(
         c: &mut Checker,
-        nodes: &mut Vec<ast::Node>,
+        nodes: &[ast::Node],
         e: NodeId,
         additions: &mut Vec<(String, SymbolId)>,
     ) {
@@ -535,11 +545,16 @@ pub(crate) fn collect_binding_pattern_symbols(
 
     let declarations = c.symbol_arena.borrow()[param.index()].declarations.clone();
     for d in declarations {
-        if ast::is_parameter_declaration(&nodes[d])
-            && let Some(name) = nodes[d].name()
-            && ast::is_binding_pattern(&nodes[name])
+        // `d` may be declared in another file's arena (e.g. a lib parameter
+        // symbol) — view it through the right arena rather than the caller's
+        // working buffer.
+        let arena =
+            crate::printer_util::checker_arena_view(c, nodes.as_slice(), d.file_index());
+        if ast::is_parameter_declaration(&arena[d])
+            && let Some(name) = arena[d].name()
+            && ast::is_binding_pattern(&arena[name])
         {
-            bind_pattern(c, nodes, name, additions);
+            bind_pattern(c, &arena, name, additions);
             return true;
         }
     }

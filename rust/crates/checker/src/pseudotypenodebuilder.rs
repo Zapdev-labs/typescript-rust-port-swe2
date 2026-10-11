@@ -77,10 +77,11 @@ fn report_inference_fallback(b: &NodeBuilderImpl<'_>, node: Option<NodeId>, node
 
 /// `e.Name.Parent` — the parent of a pseudo element's name node, resolved
 /// through the owning program arena.
-fn name_parent(c: &Checker, name: Option<NodeId>) -> Option<NodeId> {
+fn name_parent(c: &Checker, name: Option<NodeId>,
+        nodes: &[ast::Node],) -> Option<NodeId> {
     name.and_then(|n| {
         let __program = c.program.clone().expect("program");
-        let nn = __program.nodes((n).file_index());
+        let nn = crate::printer_util::arena_view(&__program, nodes, (n).file_index());
         nn[n].parent
     })
 }
@@ -210,7 +211,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 } else {
                     let (report_node,) = {
                         let __program = c.program.clone().expect("program");
-                        let nn = __program.nodes((node).file_index());
+                        let nn = crate::printer_util::arena_view(&__program, nodes, (node).file_index());
                         let parent = nn[node].parent;
                         if ast::is_entity_name_expression(&nn[node], &nn)
                             && parent.is_some_and(|p| ast::is_declaration(&nn[p]))
@@ -230,24 +231,24 @@ impl<'a> NodeBuilderImpl<'a> {
                 // handle expression type widening without duplicating logic
                 let parent = {
                     let __program = c.program.clone().expect("program");
-                    let nn = __program.nodes((node).file_index());
+                    let nn = crate::printer_util::arena_view(&__program, nodes, (node).file_index());
                     nn[node].parent
                 };
                 if let Some(parent) = parent {
                     let parent_is_return = {
                         let __program = c.program.clone().expect("program");
-                        let nn = __program.nodes((parent).file_index());
+                        let nn = crate::printer_util::arena_view(&__program, nodes, (parent).file_index());
                         ast::is_return_statement(&nn[parent])
                     };
                     if parent_is_return {
                         let enclosing = {
                             let __program = c.program.clone().expect("program");
-                            let nn = __program.nodes((node).file_index());
+                            let nn = crate::printer_util::arena_view(&__program, nodes, (node).file_index());
                             ast::get_containing_function(node, &nn)
                         };
                         if enclosing.is_some_and(|e| {
                             let __program = c.program.clone().expect("program");
-                            let nn = __program.nodes((e).file_index());
+                            let nn = crate::printer_util::arena_view(&__program, nodes, (e).file_index());
                             ast::is_accessor(&nn[e])
                         }) {
                             return Some(self.serialize_type_for_declaration(
@@ -259,7 +260,7 @@ impl<'a> NodeBuilderImpl<'a> {
                     }
                     let parent_is_arrow_body = {
                         let __program = c.program.clone().expect("program");
-                        let nn = __program.nodes((parent).file_index());
+                        let nn = crate::printer_util::arena_view(&__program, nodes, (parent).file_index());
                         ast::is_arrow_function(&nn[parent])
                             && nn[parent]
                                 .as_arrow_function()
@@ -274,7 +275,7 @@ impl<'a> NodeBuilderImpl<'a> {
                     }
                     let parent_is_declaration = {
                         let __program = c.program.clone().expect("program");
-                        let nn = __program.nodes((parent).file_index());
+                        let nn = crate::printer_util::arena_view(&__program, nodes, (parent).file_index());
                         ast::is_declaration(&nn[parent])
                     };
                     if parent_is_declaration {
@@ -299,7 +300,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 report_inference_fallback(self, Some(node), nodes);
                 let is_fn_non_accessor = {
                     let __program = c.program.clone().expect("program");
-                    let nn = __program.nodes((node).file_index());
+                    let nn = crate::printer_util::arena_view(&__program, nodes, (node).file_index());
                     ast::is_function_like(Some(node), &nn) && !ast::is_accessor(&nn[node])
                 };
                 if is_fn_non_accessor {
@@ -318,7 +319,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 let mut is_in_const_context = c.is_const_context(d.node);
                 if !is_in_const_context && {
                     let __program = c.program.clone().expect("program");
-                    let nn = __program.nodes((d.node).file_index());
+                    let nn = crate::printer_util::arena_view(&__program, nodes, (d.node).file_index());
                     pseudochecker::is_in_const_context(d.node, &nn)
                 } {
                     // Only consult the contextual type if the pseudochecker's
@@ -496,7 +497,7 @@ impl<'a> NodeBuilderImpl<'a> {
                     let first_name = t.as_pseudo_type_object_literal().elements[0].name;
                     let grandparent = first_name.and_then(|n| {
                         let __program = c.program.clone().expect("program");
-                        let nn = __program.nodes((n).file_index());
+                        let nn = crate::printer_util::arena_view(&__program, nodes, (n).file_index());
                         nn[n].parent.and_then(|p| nn[p].parent)
                     });
                     grandparent.is_some_and(|gp| c.is_const_context(gp))
@@ -676,13 +677,13 @@ impl<'a> NodeBuilderImpl<'a> {
                     };
                     let in_enclosing_file = e_name.is_some_and(|n| {
                         let __program = c.program.clone().expect("program");
-                        let nn = __program.nodes((n).file_index());
+                        let nn = crate::printer_util::arena_view(&__program, nodes, (n).file_index());
                         self.ctx.enclosing_file == ast::get_source_file_of_node(e_name, &nn)
                     });
                     if in_enclosing_file {
                         let loc = {
                             let __program = c.program.clone().expect("program");
-                            let nn = __program.nodes((e_name.unwrap()).file_index());
+                            let nn = crate::printer_util::arena_view(&__program, nodes, (e_name.unwrap()).file_index());
                             e_name.and_then(|n| nn[n].parent).map(|p| nn[p].loc)
                         };
                         if let Some(loc) = loc {
@@ -753,10 +754,10 @@ impl<'a> NodeBuilderImpl<'a> {
         // matches strada behavior of always reserializing param names from
         // scratch
         let name = {
-            let parent = name_parent(c, p.name);
+            let parent = name_parent(c, p.name, &[]);
             let symbol = parent.and_then(|par| {
                 let __program = c.program.clone().expect("program");
-                let pn = __program.nodes((par).file_index());
+                let pn = crate::printer_util::arena_view(&__program, nodes, (par).file_index());
                 pn[par].symbol()
             });
             self.parameter_to_parameter_declaration_name(
@@ -776,10 +777,10 @@ impl<'a> NodeBuilderImpl<'a> {
             type_node,
             None,
         );
-        if let Some(original) = name_parent(c, p.name) {
+        if let Some(original) = name_parent(c, p.name, &[]) {
             let is_param = {
                 let __program = c.program.clone().expect("program");
-                let nn = __program.nodes((original).file_index());
+                let nn = crate::printer_util::arena_view(&__program, nodes, (original).file_index());
                 ast::is_parameter_declaration(&nn[original])
             };
             if is_param {
@@ -898,9 +899,9 @@ impl<'a> NodeBuilderImpl<'a> {
                         (e.kind(), e.name, e.optional)
                     };
                     let mut target_prop: Option<SymbolId> = None;
-                    let elem_symbol = name_parent(c, e_name).and_then(|parent| {
+                    let elem_symbol = name_parent(c, e_name, &[]).and_then(|parent| {
                         let __program = c.program.clone().expect("program");
-                        let pn = __program.nodes((parent).file_index());
+                        let pn = crate::printer_util::arena_view(&__program, nodes, (parent).file_index());
                         pn[parent].symbol()
                     });
                     if let Some(elem_symbol) = elem_symbol {
@@ -914,7 +915,7 @@ impl<'a> NodeBuilderImpl<'a> {
                         for &prop in &target_props {
                             if symbol_value_declaration(c, prop).and_then(|vd| {
                                 let __program = c.program.clone().expect("program");
-                                let vn = __program.nodes((vd).file_index());
+                                let vn = crate::printer_util::arena_view(&__program, nodes, (vd).file_index());
                                 vn[vd].name()
                             }) == e_name
                             {
@@ -924,7 +925,7 @@ impl<'a> NodeBuilderImpl<'a> {
                         }
                         if target_prop.is_none() {
                             if report_errors {
-                                report_inference_fallback(self, name_parent(c, e_name), nodes);
+                                report_inference_fallback(self, name_parent(c, e_name, &[]), nodes);
                             }
                             return false;
                         }
@@ -934,7 +935,7 @@ impl<'a> NodeBuilderImpl<'a> {
                         symbol_flags(c, target_prop).intersects(SymbolFlags::OPTIONAL);
                     if e_optional != target_is_optional {
                         if report_errors {
-                            report_inference_fallback(self, name_parent(c, e_name), nodes);
+                            report_inference_fallback(self, name_parent(c, e_name, &[]), nodes);
                         }
                         return false;
                     }
@@ -962,7 +963,7 @@ impl<'a> NodeBuilderImpl<'a> {
                                     } else if !is_structural_pseudo_type(&d_type) {
                                         report_inference_fallback(
                                             self,
-                                            name_parent(c, e_name),
+                                            name_parent(c, e_name, &[]),
                                             nodes,
                                         );
                                     }
@@ -998,7 +999,7 @@ impl<'a> NodeBuilderImpl<'a> {
                                 &d_parameters,
                                 target_sig,
                                 report_errors,
-                                name_parent(c, e_name),
+                                name_parent(c, e_name, &[]),
                             );
                             if !param_eq {
                                 return false;
@@ -1008,12 +1009,11 @@ impl<'a> NodeBuilderImpl<'a> {
                                 if !self.pseudo_return_type_matches_predicate(
                                     c,
                                     &d_return_type,
-                                    target_predicate,
-                                ) {
+                                    target_predicate, &[]) {
                                     if report_errors {
                                         report_inference_fallback(
                                             self,
-                                            name_parent(c, e_name),
+                                            name_parent(c, e_name, &[]),
                                             nodes,
                                         );
                                     }
@@ -1032,7 +1032,7 @@ impl<'a> NodeBuilderImpl<'a> {
                                     if report_errors {
                                         report_inference_fallback(
                                             self,
-                                            name_parent(c, e_name),
+                                            name_parent(c, e_name, &[]),
                                             nodes,
                                         );
                                     }
@@ -1049,7 +1049,7 @@ impl<'a> NodeBuilderImpl<'a> {
                                 c, nodes, &d_type, prop_type, false, false,
                             ) {
                                 if report_errors {
-                                    report_inference_fallback(self, name_parent(c, e_name), nodes);
+                                    report_inference_fallback(self, name_parent(c, e_name, &[]), nodes);
                                 }
                                 return false;
                             }
@@ -1070,7 +1070,7 @@ impl<'a> NodeBuilderImpl<'a> {
                                 false,
                             ) {
                                 if report_errors {
-                                    report_inference_fallback(self, name_parent(c, e_name), nodes);
+                                    report_inference_fallback(self, name_parent(c, e_name, &[]), nodes);
                                 }
                                 return false;
                             }
@@ -1164,8 +1164,7 @@ impl<'a> NodeBuilderImpl<'a> {
                     if !self.pseudo_return_type_matches_predicate(
                         c,
                         &pt_return_type,
-                        target_predicate,
-                    ) {
+                        target_predicate, &[]) {
                         if report_errors {
                             report_inference_fallback(self, Some(pt_signature), nodes);
                         }
@@ -1222,7 +1221,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 return false;
             } else if params[0].name.is_some_and(|n| {
                 let __program = c.program.clone().expect("program");
-                let nn = __program.nodes((n).file_index());
+                let nn = crate::printer_util::arena_view(&__program, nodes, (n).file_index());
                 ast::is_this_identifier(&nn[n])
             }) {
                 let param_type = c.get_type_of_parameter(this_param);
@@ -1235,7 +1234,7 @@ impl<'a> NodeBuilderImpl<'a> {
                     false,
                 ) {
                     if report_errors {
-                        report_inference_fallback(self, name_parent(c, params[0].name), nodes);
+                        report_inference_fallback(self, name_parent(c, params[0].name, &[]), nodes);
                     }
                     return false;
                 }
@@ -1259,7 +1258,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 .is_some_and(|vd| c.is_optional_parameter(vd));
             if p.optional != target_is_optional {
                 if report_errors {
-                    report_inference_fallback(self, name_parent(c, p.name), nodes);
+                    report_inference_fallback(self, name_parent(c, p.name, &[]), nodes);
                 }
                 return false;
             }
@@ -1268,7 +1267,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 .pseudo_type_equivalent_to_type(c, nodes, &p.type_, param_type, p.optional, false)
             {
                 if report_errors {
-                    report_inference_fallback(self, name_parent(c, p.name), nodes);
+                    report_inference_fallback(self, name_parent(c, p.name, &[]), nodes);
                 }
                 return false;
             }
@@ -1284,13 +1283,13 @@ impl<'a> NodeBuilderImpl<'a> {
         c: &mut Checker,
         rt: &PseudoTypeRef,
         predicate: &TypePredicate,
-    ) -> bool {
+            nodes: &[ast::Node],) -> bool {
         if rt.kind() != PseudoTypeKind::Direct {
             return false;
         }
         let node = rt.as_pseudo_type_direct().type_node;
         let __program = c.program.clone().expect("program");
-        let nn = __program.nodes((node).file_index());
+        let nn = crate::printer_util::arena_view(&__program, nodes, (node).file_index());
         if !ast::is_type_predicate_node(&nn[node]) {
             return false;
         }

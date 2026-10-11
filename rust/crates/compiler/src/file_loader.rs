@@ -1,7 +1,7 @@
 // Ported from tsc/internal/compiler/fileloader.go @ ec47d33c23e464a17cdf2475632cba629bee8763
 //
 // PORT: `*ast.SourceFile` is `ParsedSourceFile` (`NodeId` + arena); the
-// arena moves into the `Program`'s `Rc<RefCell<Vec<Node>>>` arenas when
+// arena moves into the `Program`'s `Rc<ArenaCell>` arenas when
 // `processedFiles` is consumed. `collections.SyncMap`/`sync.Once`/`atomic`
 // fields are `RefCell`/`Cell` — the loader is single-threaded (see
 // PORTING-NOTES). `module.Resolver`'s Rust trait drops the Go `error`
@@ -17,7 +17,7 @@ use rustc_hash::FxHashMap;
 
 use tsc_ast::diagnostic::DiagnosticRef;
 use tsc_ast::parseoptions::SourceFileParseOptions;
-use tsc_ast::{FileReference, HasFileName, Node, NodeFactory, NodeId, SourceFileMetaData, Uint128};
+use tsc_ast::{ArenaCell, FileReference, HasFileName, Node, NodeFactory, NodeId, SourceFileMetaData, Uint128};
 use tsc_contentmapper::{
     DiagnosticDirectiveErrorKind, Error as ContentMapperError, InitializeErrorKind, Mapper,
     ProjectErrorKind, TransformErrorKind,
@@ -64,17 +64,17 @@ pub struct LibResolution {
 pub const MAX_CONTENT_MAPPER_FAILURES: i32 = 5;
 
 /// `LoadedSourceFile` — a parsed source file whose arena is shared with the
-/// program (`*ast.SourceFile` — `NodeId` + `Rc<RefCell<Vec<Node>>>`).
+/// program (`*ast.SourceFile` — `NodeId` + `Rc<ArenaCell>`).
 #[derive(Clone)]
 pub struct LoadedSourceFile {
     pub file: NodeId,
-    pub nodes: Rc<RefCell<Vec<Node>>>,
+    pub nodes: Rc<ArenaCell>,
 }
 
 impl LoadedSourceFile {
     /// `SourceFileName()` — borrowed from the arena.
     pub fn file_name(&self) -> RootedFilePath {
-        self.nodes.borrow()[self.file]
+        self.nodes.snapshot()[self.file]
             .as_source_file()
             .file_name()
             .clone()
@@ -82,7 +82,7 @@ impl LoadedSourceFile {
 
     /// `Path()` — borrowed from the arena.
     pub fn path(&self) -> PathKey {
-        self.nodes.borrow()[self.file]
+        self.nodes.snapshot()[self.file]
             .as_source_file()
             .path_key()
             .clone()
@@ -93,7 +93,7 @@ impl From<tsc_contentmapper::ParsedSourceFile> for LoadedSourceFile {
     fn from(f: tsc_contentmapper::ParsedSourceFile) -> Self {
         LoadedSourceFile {
             file: f.file,
-            nodes: Rc::new(RefCell::new(f.nodes)),
+            nodes: Rc::new(ArenaCell::new(f.nodes)),
         }
     }
 }
@@ -807,7 +807,7 @@ impl FileLoader {
                     } else {
                         content_mapper_transform_diagnostic(&source_file.canonical, &label, &err)
                     };
-                    let mut nodes = source_file.canonical.nodes.borrow_mut();
+                    let mut nodes = source_file.canonical.nodes.cow();
                     let file = source_file.canonical.file;
                     let mut diags = nodes[file].as_source_file().diagnostics().to_vec();
                     diags.push(diagnostic);
@@ -870,7 +870,7 @@ impl FileLoader {
         LoadedFile {
             canonical: LoadedSourceFile {
                 file,
-                nodes: Rc::new(RefCell::new(nodes)),
+                nodes: Rc::new(ArenaCell::new(nodes)),
             },
             supplemental: Vec::new(),
         }
@@ -1118,7 +1118,7 @@ impl FileLoader {
                 None => return,
             }
         };
-        let nodes = nodes.borrow();
+        let nodes = nodes.snapshot();
         let sf = nodes[file].as_source_file();
         if sf.type_reference_directives.is_empty() {
             return;
@@ -1265,7 +1265,7 @@ impl FileLoader {
             [(
                 "containingFileName".to_string(),
                 serde_json::Value::from(
-                    nodes_rc.borrow()[file]
+                    nodes_rc.snapshot()[file]
                         .as_source_file()
                         .file_name()
                         .as_string()
@@ -1289,7 +1289,7 @@ impl FileLoader {
             file_name_of_file,
             path_key_of_file,
         ) = {
-            let nodes = nodes_rc.borrow();
+            let nodes = nodes_rc.snapshot();
             let sf = nodes[file].as_source_file();
             (
                 sf.imports().to_vec(),
@@ -1335,7 +1335,7 @@ impl FileLoader {
         }
 
         if is_java_script_file || script_kind == CoreScriptKind::Tsx {
-            let nodes = nodes_rc.borrow();
+            let nodes = nodes_rc.snapshot();
             let jsx_import = tsc_ast::get_jsx_runtime_import(
                 &tsc_ast::get_jsx_implicit_import_base(
                     &options_for_file,
@@ -1358,7 +1358,7 @@ impl FileLoader {
 
         module_names.extend(imports.iter().copied());
         for &imp in &module_augmentations {
-            let nodes = nodes_rc.borrow();
+            let nodes = nodes_rc.snapshot();
             if nodes[imp].kind == tsc_ast::Kind::StringLiteral {
                 module_names.push(imp);
             }
@@ -1376,7 +1376,7 @@ impl FileLoader {
 
             for (index, &entry) in module_names.iter().enumerate() {
                 let (module_name, is_source_phase) = {
-                    let nodes = nodes_rc.borrow();
+                    let nodes = nodes_rc.snapshot();
                     let text = nodes[entry].text(&nodes[..]).into_owned();
                     let phase = nodes[entry]
                         .parent
@@ -1391,7 +1391,7 @@ impl FileLoader {
                     &file_name_of_file,
                     &meta,
                     entry,
-                    &nodes_rc.borrow()[..],
+                    &nodes_rc.snapshot()[..],
                     Some(&options_for_file),
                 );
                 let (resolved_module, trace) = self.resolver.resolve_module_name(
@@ -1445,7 +1445,7 @@ impl FileLoader {
                 let import_index = index as isize - imports_start as isize;
 
                 let should_add_file = {
-                    let nodes = nodes_rc.borrow();
+                    let nodes = nodes_rc.snapshot();
                     let file_sf = nodes[file].as_source_file();
                     !module_name.is_empty()
                         && tsc_module::get_resolution_diagnostic(
@@ -1502,9 +1502,9 @@ impl FileLoader {
         &self,
         text: &str,
         file: NodeId,
-        nodes: &Rc<RefCell<Vec<Node>>>,
+        nodes: &Rc<ArenaCell>,
     ) -> NodeId {
-        let mut nodes = nodes.borrow_mut();
+        let mut nodes = nodes.cow();
         let mut factory = self.factory.borrow_mut();
         factory.set_file_index(file.file_index());
         let external_helpers_module_reference =
@@ -1952,7 +1952,7 @@ fn content_mapper_transform_diagnostic(
             TransformErrorKind::Mappings => {
                 return tsc_ast::diagnostic::new_diagnostic(
                     Some(tsc_ast::diagnostic::DiagnosticFile::from_node(
-                        file.file, &file.nodes.borrow(),
+                        file.file, &file.nodes.snapshot(),
                     )),
                     tsc_core::text::TextRange::new(0, 0),
                     &diagnostics::The_content_mapper_0_did_not_provide_the_required_position_mappings,
@@ -1965,7 +1965,7 @@ fn content_mapper_transform_diagnostic(
     tsc_ast::diagnostic::new_diagnostic(
         Some(tsc_ast::diagnostic::DiagnosticFile::from_node(
             file.file,
-            &file.nodes.borrow(),
+            &file.nodes.snapshot(),
         )),
         tsc_core::text::TextRange::new(0, 0),
         &diagnostics::The_content_mapper_0_failed_to_transform_this_file,
@@ -2021,7 +2021,7 @@ fn content_mapper_transform_diagnostic_with_detail(
     let diag = tsc_ast::diagnostic::new_diagnostic(
         Some(tsc_ast::diagnostic::DiagnosticFile::from_node(
             file.file,
-            &file.nodes.borrow(),
+            &file.nodes.snapshot(),
         )),
         tsc_core::text::TextRange::new(0, 0),
         &diagnostics::The_content_mapper_0_failed_to_transform_this_file,
@@ -2040,7 +2040,7 @@ fn content_mapper_mapping_diagnostic(
     let loc = tsc_core::text::TextRange::new(0, 0);
     let file_ = Some(tsc_ast::diagnostic::DiagnosticFile::from_node(
         file.file,
-        &file.nodes.borrow(),
+        &file.nodes.snapshot(),
     ));
     let l = tsc_tsoptions::value::Value::Str(label.to_string());
     use tsc_spanmap::MappingErrorKind as K;

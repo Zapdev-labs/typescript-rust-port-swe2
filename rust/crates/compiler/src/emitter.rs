@@ -1,7 +1,7 @@
 // Ported from tsc/internal/compiler/emitter.go @ ec47d33c23e464a17cdf2475632cba629bee8763
 //
 // PORT: `*ast.SourceFile`/`​*ast.Node` are `NodeId` values resolved through
-// the per-file `Rc<RefCell<Vec<Node>>>` arenas exposed by `BasicEmitHost`.
+// the per-file `Rc<ArenaCell>` arenas exposed by `BasicEmitHost`.
 // Go's `sync.Pool` of `printer.EmitTextWriter`s becomes a fresh
 // `TextWriter` per emitter — the port is single-threaded (PORTING-NOTES).
 //
@@ -24,7 +24,7 @@ use std::sync::Arc;
 
 use tsc_ast::diagnostic::{DiagnosticRef, DiagnosticsCollection, new_compiler_diagnostic};
 use tsc_ast::utilities::HasFileName;
-use tsc_ast::{Node, NodeId, is_in_js_file};
+use tsc_ast::{ArenaCell, Node, NodeId, is_in_js_file};
 use tsc_binder::referenceresolver::ReferenceResolver;
 use tsc_core::languagevariant::LanguageVariant;
 use tsc_core::options_generated::{CompilerOptions, ModuleKind, NewLineKind};
@@ -973,7 +973,7 @@ impl<'a> ReferenceResolver for EmitResolverAsReference<'a> {
         node: NodeId,
         prefix_locals: bool,
         nodes: &[Node],
-        symbols: &mut Vec<tsc_ast::Symbol>,
+        symbols: &std::cell::RefCell<Vec<tsc_ast::Symbol>>,
     ) -> Option<NodeId> {
         self.0
             .borrow_mut()
@@ -983,7 +983,7 @@ impl<'a> ReferenceResolver for EmitResolverAsReference<'a> {
         &mut self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &mut Vec<tsc_ast::Symbol>,
+        symbols: &std::cell::RefCell<Vec<tsc_ast::Symbol>>,
     ) -> Option<NodeId> {
         self.0
             .borrow_mut()
@@ -993,7 +993,7 @@ impl<'a> ReferenceResolver for EmitResolverAsReference<'a> {
         &mut self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &mut Vec<tsc_ast::Symbol>,
+        symbols: &std::cell::RefCell<Vec<tsc_ast::Symbol>>,
     ) -> Option<NodeId> {
         self.0
             .borrow_mut()
@@ -1003,7 +1003,7 @@ impl<'a> ReferenceResolver for EmitResolverAsReference<'a> {
         &mut self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &mut Vec<tsc_ast::Symbol>,
+        symbols: &std::cell::RefCell<Vec<tsc_ast::Symbol>>,
     ) -> Vec<NodeId> {
         self.0
             .borrow_mut()
@@ -1018,7 +1018,7 @@ impl<'a> ReferenceResolver for EmitResolverAsReference<'a> {
         &mut self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &mut Vec<tsc_ast::Symbol>,
+        symbols: &std::cell::RefCell<Vec<tsc_ast::Symbol>>,
     ) -> Option<NodeId> {
         self.0
             .borrow_mut()

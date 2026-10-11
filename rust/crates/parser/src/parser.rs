@@ -265,8 +265,8 @@ impl<'a> Parser<'a> {
         // `p.scanner.Reset()` — `set_text` below resets the scanned state;
         // caches are kept.
         self.scanner.reset();
-        self.factory
-            .set_file_index(NEXT_FILE_INDEX.fetch_add(1, Ordering::Relaxed));
+        let __fi = NEXT_FILE_INDEX.fetch_add(1, Ordering::Relaxed);
+        self.factory.set_file_index(__fi);
         self.opts = opts;
         self.source_text = source_text;
         self.script_kind = script_kind;

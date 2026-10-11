@@ -163,7 +163,8 @@ impl TranspileBaselineRunner {
                 &mut harness_options,
                 crate::compiler_runner::src_folder(),
                 false,
-            );
+            )
+            .unwrap_or_else(|e| panic!("{e}"));
 
             if !options.emit_declaration_only.is_true() {
                 self.run_kind(
@@ -265,13 +266,12 @@ impl TranspileBaselineRunner {
             }
         }
 
+        let full_name = format!("{configured_name}{extension}");
         let baseline_extension: std::borrow::Cow<'_, str> = if declaration {
-            tsc_tspath::get_declaration_emit_extension_for_path(&format!(
-                "{configured_name}{extension}"
-            ))
+            tsc_tspath::get_declaration_emit_extension_for_path(&full_name)
         } else {
             std::borrow::Cow::Borrowed(tsc_outputpaths::get_output_extension(
-                &format!("{configured_name}{extension}"),
+                &full_name,
                 options.jsx,
             ))
         };

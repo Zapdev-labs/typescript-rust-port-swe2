@@ -1,0 +1,32 @@
+[package]
+name = "tsc-lsp"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+tsc-api = { path = "../api" }
+tsc-bundled = { path = "../bundled" }
+tsc-collections = { path = "../collections" }
+tsc-compiler = { path = "../compiler" }
+tsc-contentmapper = { path = "../contentmapper" }
+tsc-core = { path = "../core" }
+tsc-diagnostics = { path = "../diagnostics" }
+tsc-fswatch = { path = "../fswatch" }
+tsc-ipc = { path = "../ipc" }
+tsc-json = { path = "../json" }
+tsc-jsonrpc = { path = "../jsonrpc" }
+tsc-locale = { path = "../locale" }
+tsc-ls = { path = "../ls" }
+tsc-lsconv = { path = "../lsconv" }
+tsc-lsproto = { path = "../lsproto" }
+tsc-lsutil = { path = "../lsutil" }
+tsc-project = { path = "../project" }
+tsc-project-logging = { path = "../projectlogging" }
+tsc-tsoptions = { path = "../tsoptions" }
+tsc-tspath = { path = "../tspath" }
+tsc-vfs = { path = "../vfs" }

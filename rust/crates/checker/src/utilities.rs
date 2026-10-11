@@ -20,18 +20,16 @@
 // `createSymbolTable`, `isThisTypeParameter`, `isObjectOrArrayLiteralType`,
 // `isTupleType` (checker.go), `ValueToString` (checker_core::value_to_string).
 //
-// PORT(approximation) — `compare_types` operates on `&TypeArena` only
-// (committed signature `crate::utilities::compare_types(&self.types, a, b)`).
-// Without the checker it cannot reach `symbol_arena`/`file_index_map`/
-// `type_mappers`, so symbol ordering uses `SymbolId` index order and node
-// ordering uses `NodeId` ordering (`file_index << 44 | local_index`, which
-// approximates Go's `fileIndexMap[s]` + `Pos()` order because files are
-// indexed in program order and nodes are allocated in source order). This
-// yields a deterministic total order — sufficient for the sort/dedup/
-// binary-search call sites — but may differ from Go's order when names or
-// declaration order would have disagreed with id order.
+// PORT(approximation) — `compare_types` takes `&TypeArena` plus the symbol
+// arena (`&RefCell<Vec<ast::Symbol>>`); node ordering uses `NodeId`
+// ordering (`file_index << 44 | local_index`, which approximates Go's
+// `fileIndexMap[s]` + `Pos()` order because files are indexed in program
+// order and nodes are allocated in source order), and the instantiation-
+// expression declaration comparison treats declarations as absent (see
+// the OBJECT branch).
 
 use rustc_hash::FxHashMap;
+use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::OnceLock;
 
@@ -798,11 +796,21 @@ impl Checker {
 ///
 /// PORT(approximation): the committed signature operates on `&TypeArena`
 /// only (see the module header for the ordering caveats).
-pub fn compare_types(types: &TypeArena, t1: TypeId, t2: TypeId) -> i32 {
-    compare_types_opt(types, Some(t1), Some(t2))
+pub fn compare_types(
+    types: &TypeArena,
+    symbols: &RefCell<Vec<ast::Symbol>>,
+    t1: TypeId,
+    t2: TypeId,
+) -> i32 {
+    compare_types_opt(types, symbols, Some(t1), Some(t2))
 }
 
-fn compare_types_opt(types: &TypeArena, t1: Option<TypeId>, t2: Option<TypeId>) -> i32 {
+fn compare_types_opt(
+    types: &TypeArena,
+    symbols: &RefCell<Vec<ast::Symbol>>,
+    t1: Option<TypeId>,
+    t2: Option<TypeId>,
+) -> i32 {
     if t1 == t2 {
         return 0;
     }
@@ -824,7 +832,7 @@ fn compare_types_opt(types: &TypeArena, t1: Option<TypeId>, t2: Option<TypeId>) 
     }
     // Order named types by name and, in the case of aliased types, by alias
     // type arguments.
-    let c = compare_type_names(types, t1, t2);
+    let c = compare_type_names(types, symbols, t1, t2);
     if c != 0 {
         return c;
     }
@@ -858,12 +866,13 @@ fn compare_types_opt(types: &TypeArena, t1: Option<TypeId>, t2: Option<TypeId>) 
             if object_flags1.intersects(ObjectFlags::INSTANTIATION_EXPRESSION_TYPE)
                 && object_flags2.intersects(ObjectFlags::INSTANTIATION_EXPRESSION_TYPE)
             {
-                // PORT(approximation): `t.symbol.declarations` needs the
-                // symbol arena, which is unreachable from `&TypeArena`.
-                // Treat both declarations as absent; the shared
-                // expression-node comparison below decides ordering.
-                let declaration1 = None;
-                let declaration2 = None;
+                let (declaration1, declaration2) = {
+                    let syms = symbols.borrow();
+                    let decl = |s: Option<SymbolId>| {
+                        s.and_then(|s| syms[s.index()].declarations.first().copied())
+                    };
+                    (decl(types.get(t1).symbol), decl(types.get(t2).symbol))
+                };
                 // A single instantiation expression can produce multiple
                 // types for union constituents, so compare their source
                 // declarations before comparing the shared expression node.
@@ -879,7 +888,7 @@ fn compare_types_opt(types: &TypeArena, t1: Option<TypeId>, t2: Option<TypeId>) 
                     return c;
                 }
             } else {
-                let c = compare_symbol_ids(types.get(t1).symbol, types.get(t2).symbol);
+                let c = compare_symbols(symbols, types.get(t1).symbol, types.get(t2).symbol);
                 if c != 0 {
                     return c;
                 }
@@ -922,6 +931,7 @@ fn compare_types_opt(types: &TypeArena, t1: Option<TypeId>, t2: Option<TypeId>) 
                     // sorted by their type argument lists.
                     let c = compare_type_lists(
                         types,
+                        symbols,
                         &types.get(t1).as_type_reference().resolved_type_arguments,
                         &types.get(t2).as_type_reference().resolved_type_arguments,
                     );
@@ -972,15 +982,15 @@ fn compare_types_opt(types: &TypeArena, t1: Option<TypeId>, t2: Option<TypeId>) 
                         let r = r.as_reverse_mapped_type();
                         (r.source, r.mapped_type, r.constraint_type)
                     };
-                    let c = compare_types_opt(types, source1, source2);
+                    let c = compare_types_opt(types, symbols, source1, source2);
                     if c != 0 {
                         return c;
                     }
-                    let c = compare_types_opt(types, mapped1, mapped2);
+                    let c = compare_types_opt(types, symbols, mapped1, mapped2);
                     if c != 0 {
                         return c;
                     }
-                    let c = compare_types_opt(types, constraint1, constraint2);
+                    let c = compare_types_opt(types, symbols, constraint1, constraint2);
                     if c != 0 {
                         return c;
                     }
@@ -1010,7 +1020,7 @@ fn compare_types_opt(types: &TypeArena, t1: Option<TypeId>, t2: Option<TypeId>) 
             };
             match (o1, o2) {
                 (None, None) => {
-                    let c = compare_type_lists(types, &types1, &types2);
+                    let c = compare_type_lists(types, symbols, &types1, &types2);
                     if c != 0 {
                         return c;
                     }
@@ -1018,7 +1028,7 @@ fn compare_types_opt(types: &TypeArena, t1: Option<TypeId>, t2: Option<TypeId>) 
                 (None, Some(_)) => return 1,
                 (Some(_), None) => return -1,
                 (Some(o1), Some(o2)) => {
-                    let c = compare_types(types, o1, o2);
+                    let c = compare_types(types, symbols, o1, o2);
                     if c != 0 {
                         return c;
                     }
@@ -1027,7 +1037,8 @@ fn compare_types_opt(types: &TypeArena, t1: Option<TypeId>, t2: Option<TypeId>) 
         }
         _ if flags.intersects(TypeFlags::INTERSECTION) => {
             // Intersections are ordered by their constituent type lists.
-            let c = compare_type_lists(types, types.get(t1).types(), types.get(t2).types());
+            let c =
+                compare_type_lists(types, symbols, types.get(t1).types(), types.get(t2).types());
             if c != 0 {
                 return c;
             }
@@ -1038,7 +1049,7 @@ fn compare_types_opt(types: &TypeArena, t1: Option<TypeId>, t2: Option<TypeId>) 
         {
             // Enum members are ordered by their symbol (and thus their
             // declaration order).
-            let c = compare_symbol_ids(types.get(t1).symbol, types.get(t2).symbol);
+            let c = compare_symbols(symbols, types.get(t1).symbol, types.get(t2).symbol);
             if c != 0 {
                 return c;
             }
@@ -1084,7 +1095,7 @@ fn compare_types_opt(types: &TypeArena, t1: Option<TypeId>, t2: Option<TypeId>) 
             }
         }
         _ if flags.intersects(TypeFlags::TYPE_PARAMETER) => {
-            let c = compare_symbol_ids(types.get(t1).symbol, types.get(t2).symbol);
+            let c = compare_symbols(symbols, types.get(t1).symbol, types.get(t2).symbol);
             if c != 0 {
                 return c;
             }
@@ -1100,7 +1111,7 @@ fn compare_types_opt(types: &TypeArena, t1: Option<TypeId>, t2: Option<TypeId>) 
                 let t = t.as_index_type();
                 (t.target, t.index_flags)
             };
-            let c = compare_types_opt(types, target1, target2);
+            let c = compare_types_opt(types, symbols, target1, target2);
             if c != 0 {
                 return c;
             }
@@ -1120,11 +1131,11 @@ fn compare_types_opt(types: &TypeArena, t1: Option<TypeId>, t2: Option<TypeId>) 
                 let t = t.as_indexed_access_type();
                 (t.object_type, t.index_type)
             };
-            let c = compare_types_opt(types, object1, object2);
+            let c = compare_types_opt(types, symbols, object1, object2);
             if c != 0 {
                 return c;
             }
-            let c = compare_types_opt(types, index1, index2);
+            let c = compare_types_opt(types, symbols, index1, index2);
             if c != 0 {
                 return c;
             }
@@ -1160,11 +1171,11 @@ fn compare_types_opt(types: &TypeArena, t1: Option<TypeId>, t2: Option<TypeId>) 
                 let t = t.as_substitution_type();
                 (t.base_type, t.constraint)
             };
-            let c = compare_types_opt(types, base1, base2);
+            let c = compare_types_opt(types, symbols, base1, base2);
             if c != 0 {
                 return c;
             }
-            let c = compare_types_opt(types, constraint1, constraint2);
+            let c = compare_types_opt(types, symbols, constraint1, constraint2);
             if c != 0 {
                 return c;
             }
@@ -1184,7 +1195,7 @@ fn compare_types_opt(types: &TypeArena, t1: Option<TypeId>, t2: Option<TypeId>) 
             if c != std::cmp::Ordering::Equal {
                 return c as i32;
             }
-            let c = compare_type_lists(types, &types1, &types2);
+            let c = compare_type_lists(types, symbols, &types1, &types2);
             if c != 0 {
                 return c;
             }
@@ -1192,7 +1203,7 @@ fn compare_types_opt(types: &TypeArena, t1: Option<TypeId>, t2: Option<TypeId>) 
         _ if flags.intersects(TypeFlags::STRING_MAPPING) => {
             let target1 = types.get(t1).as_string_mapping_type().target;
             let target2 = types.get(t2).as_string_mapping_type().target;
-            let c = compare_types_opt(types, target1, target2);
+            let c = compare_types_opt(types, symbols, target1, target2);
             if c != 0 {
                 return c;
             }
@@ -1215,15 +1226,20 @@ fn get_sort_order_flags(flags: TypeFlags) -> u32 {
     flags.0
 }
 
-/// `compareTypeNames` — order named types by symbol, then by alias type
-/// arguments. PORT(approximation): symbol name comparison would need the
-/// symbol arena; `SymbolId` order is used instead (see module header).
-fn compare_type_names(types: &TypeArena, t1: TypeId, t2: TypeId) -> i32 {
+/// `compareTypeNames` — order named types by name and, in the case of
+/// aliased types, by alias type arguments.
+fn compare_type_names(
+    types: &TypeArena,
+    symbols: &RefCell<Vec<ast::Symbol>>,
+    t1: TypeId,
+    t2: TypeId,
+) -> i32 {
     let s1 = get_type_name_symbol(&types.get(t1));
     let s2 = get_type_name_symbol(&types.get(t2));
     if s1 == s2 {
         return compare_type_lists(
             types,
+            symbols,
             types
                 .get(t1)
                 .alias
@@ -1236,7 +1252,58 @@ fn compare_type_names(types: &TypeArena, t1: TypeId, t2: TypeId) -> i32 {
                 .map_or(&[][..], |a| &a.type_arguments),
         );
     }
-    compare_symbol_ids(s1, s2)
+    let Some(s1) = s1 else { return 1 };
+    let Some(s2) = s2 else { return -1 };
+    let c = {
+        let syms = symbols.borrow();
+        syms[s1.index()].name.cmp(&syms[s2.index()].name) as i32
+    };
+    if c != 0 {
+        return c;
+    }
+    // Keep distinct same-named declarations together before comparing
+    // alias arguments or structure.
+    compare_symbols(symbols, Some(s1), Some(s2))
+}
+
+/// `compareSymbolsWorker` (checker/utilities.go) — declaration position,
+/// then name, then symbol id. `NodeId` ordering (`file_index << 44 |
+/// local_index`) approximates Go's `fileIndexMap[s]` + `Pos()` ordering —
+/// files are indexed in program order and nodes allocated in source order.
+fn compare_symbols(
+    symbols: &RefCell<Vec<ast::Symbol>>,
+    s1: Option<SymbolId>,
+    s2: Option<SymbolId>,
+) -> i32 {
+    if s1 == s2 {
+        return 0;
+    }
+    let Some(s1) = s1 else { return 1 };
+    let Some(s2) = s2 else { return -1 };
+    let (decl1, decl2, name_ord) = {
+        let syms = symbols.borrow();
+        (
+            syms[s1.index()].declarations.first().copied(),
+            syms[s2.index()].declarations.first().copied(),
+            syms[s1.index()].name.cmp(&syms[s2.index()].name) as i32,
+        )
+    };
+    match (decl1, decl2) {
+        (Some(d1), Some(d2)) => {
+            let c = d1.0.cmp(&d2.0) as i32;
+            if c != 0 {
+                return c;
+            }
+        }
+        (Some(_), None) => return -1,
+        (None, Some(_)) => return 1,
+        (None, None) => {}
+    }
+    if name_ord != 0 {
+        return name_ord;
+    }
+    // Fall back to symbol IDs — only for declaration-less duplicate names.
+    s1.index().cmp(&s2.index()) as i32
 }
 
 /// `getTypeNameSymbol`.
@@ -1311,12 +1378,17 @@ fn compare_element_labels(n1: Option<NodeId>, n2: Option<NodeId>) -> i32 {
 }
 
 /// `compareTypeLists`.
-fn compare_type_lists(types: &TypeArena, s1: &[TypeId], s2: &[TypeId]) -> i32 {
+fn compare_type_lists(
+    types: &TypeArena,
+    symbols: &RefCell<Vec<ast::Symbol>>,
+    s1: &[TypeId],
+    s2: &[TypeId],
+) -> i32 {
     if s1.len() != s2.len() {
         return s1.len().cmp(&s2.len()) as i32;
     }
     for (&t1, &t2) in s1.iter().zip(s2.iter()) {
-        let c = compare_types(types, t1, t2);
+        let c = compare_types(types, symbols, t1, t2);
         if c != 0 {
             return c;
         }
@@ -1347,18 +1419,6 @@ fn compare_node_ids(n1: Option<NodeId>, n2: Option<NodeId>) -> i32 {
     let Some(n1) = n1 else { return 1 };
     let Some(n2) = n2 else { return -1 };
     n1.0.cmp(&n2.0) as i32
-}
-
-/// `compareSymbols` fallback — PORT(approximation): symbol order by arena
-/// index approximates declaration order (symbols are interned in bind
-/// order); nil sorts last, matching `compareSymbolsWorker`.
-fn compare_symbol_ids(s1: Option<SymbolId>, s2: Option<SymbolId>) -> i32 {
-    if s1 == s2 {
-        return 0;
-    }
-    let Some(s1) = s1 else { return 1 };
-    let Some(s2) = s2 else { return -1 };
-    s1.index().cmp(&s2.index()) as i32
 }
 
 /// Extract the `evaluator::Value::String` payload of a literal type.
@@ -1408,7 +1468,7 @@ pub(crate) fn is_late_bound_name(name: &str) -> bool {
 }
 
 /// `IsKnownSymbol` (utilities.go:1018).
-pub(crate) fn is_known_symbol(c: &Checker, s: SymbolId) -> bool {
+pub fn is_known_symbol(c: &Checker, s: SymbolId) -> bool {
     is_late_bound_name(&c.symbol_arena.borrow()[s.index()].name)
 }
 
@@ -2898,9 +2958,9 @@ impl Checker {
     /// (value) declaration — the Rust spelling of reading `*ast.Node` fields
     /// through a declaration.
     ///
-    /// PORT: returns a `Ref` over the shared arena — the guard borrows
-    /// `*self` (see `Checker::program_nodes`).
-    pub fn program_nodes_for_symbol(&self, s: SymbolId) -> std::cell::Ref<'_, Vec<ast::Node>> {
+    /// PORT: returns an `Rc` snapshot of the shared arena (see
+    /// `checker_types::Program::nodes`).
+    pub fn program_nodes_for_symbol(&self, s: SymbolId) -> std::rc::Rc<Vec<ast::Node>> {
         let declaration = {
             let arena = self.symbol_arena.borrow();
             let symbol = &arena[s.index()];

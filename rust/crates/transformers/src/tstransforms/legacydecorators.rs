@@ -463,11 +463,9 @@ impl<'a> LegacyDecoratorsTransformer<'a> {
         let symbols = self
             .symbols
             .expect("opts.symbols (the binder symbol arena) is required alongside opts.Resolver");
-        resolver.borrow_mut().get_referenced_value_declaration(
-            node,
-            nodes,
-            &mut symbols.borrow_mut(),
-        )
+        resolver
+            .borrow_mut()
+            .get_referenced_value_declaration(node, nodes, symbols)
     }
 
     /// `tx.visitIdentifier` — takes the place of `substituteIdentifier` in

@@ -305,7 +305,7 @@ impl ParseTask {
         let supplementals = loaded_file.supplemental;
 
         let canonical = task.borrow().file.clone().unwrap();
-        let nodes = canonical.nodes.borrow();
+        let nodes = canonical.nodes.snapshot();
         let sf = nodes[canonical.file].as_source_file();
         let virtual_file_name = sf.virtual_file_name();
         if !virtual_file_name.as_string().is_empty() {
@@ -731,7 +731,7 @@ impl FilesParser {
                         if checked_name != normalized_file_path {
                             let dups = recorded_duplicates.entry(data_key).or_default();
                             if dups.insert(normalized_file_path.clone()) {
-                                let nodes = file.nodes.borrow();
+                                let nodes = file.nodes.snapshot();
                                 let sf = nodes[file.file].as_source_file();
                                 duplicate_source_files.push(DuplicateSourceFile {
                                     parse_options: sf.parse_options.clone(),
@@ -808,7 +808,7 @@ impl FilesParser {
                             // in the program, but we still parsed this file and
                             // acquired it through the host, so snapshot disposal must
                             // release that extra owner.
-                            let nodes = file.nodes.borrow();
+                            let nodes = file.nodes.snapshot();
                             let sf = nodes[file.file].as_source_file();
                             duplicate_source_files.push(DuplicateSourceFile {
                                 parse_options: sf.parse_options.clone(),

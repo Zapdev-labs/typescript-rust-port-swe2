@@ -2152,7 +2152,10 @@ impl<'a> EsDecoratorTransformer<'a> {
                     );
                 } else {
                     stmts.extend_from_slice(&initializer_statements);
-                    let visited = self.txv(ec).visit_slice(cx, &rest).unwrap_or_default();
+                    let visited = self
+                        .txv(ec)
+                        .visit_slice(cx, &rest)
+                        .unwrap_or_else(|| rest.to_vec());
                     stmts.extend(visited);
                 }
 

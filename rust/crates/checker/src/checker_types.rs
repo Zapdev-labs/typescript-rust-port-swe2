@@ -35,7 +35,7 @@ use std::rc::Rc;
 use std::sync::LazyLock;
 
 use rustc_hash::FxHashMap;
-use tsc_ast::{self as ast, FlowNodeId, HasFileName, NodeId, SymbolId};
+use tsc_ast::{FlowNodeId, HasFileName, NodeId, SymbolId, self as ast};
 use tsc_core::options_generated::CompilerOptions;
 use tsc_module::{ModeAwareCache, ResolvedModule};
 use tsc_tsoptions::parsedcommandline::{ParsedCommandLine, SourceOutputAndProjectReference};
@@ -1720,23 +1720,27 @@ pub trait Program: Host {
     /// `NodeId::file_index` — not part of Go's `Program` interface (Go
     /// derefs `*ast.Node` directly).
     ///
-    /// Returns a `Ref` over the program's shared `Rc<RefCell<Vec<Node>>>`
-    /// arena so reads observe nodes appended through `nodes_mut` (Go mutates
-    /// the shared `*ast.Node` graph freely — a `Rc<Vec<Node>>` snapshot would
-    /// go stale). The `Ref` borrows the `Rc<dyn Program>` handle it was
-    /// obtained from: in `&mut self` checker methods, clone `self.program`
-    /// into a local first so the guard does not pin `*self`.
-    fn nodes(&self, file_index: u32) -> std::cell::Ref<'_, Vec<ast::Node>>;
+    /// Returns a cheap `Rc` snapshot of the program's shared per-file arena —
+    /// no `RefCell` borrow is held, so snapshots never block `nodes_mut`.
+    /// Snapshots observe the arena as of the call; mutations made afterwards
+    /// are invisible to the snapshot (Go slice holders see element writes —
+    /// see `ast::ArenaCell` for the divergence note). Re-snapshot for fresh
+    /// reads.
+    fn nodes(&self, file_index: u32) -> Rc<Vec<ast::Node>>;
     /// `nodes_mut` — mutable arena access for synthetic-node creation
     /// (factory-created synthetic expressions, flow nodes).
     ///
-    /// Plain `RefMut` — short-windowed mutation; callers must not hold a
-    /// shared `Ref` across the call (the emit pipeline is the exception —
-    /// it checks the arena out so re-entrant `nodes()` reads stay live).
-    fn nodes_mut(&self, file_index: u32) -> std::cell::RefMut<'_, Vec<ast::Node>>;
-    /// PORT(addition): the `Rc<RefCell>` arena handle itself — for caches
+    /// Returns a copy-on-write [`ast::ArenaMut`] guard: the first mutation
+    /// clones the arena iff snapshots still share it; `Drop` writes back.
+    /// Never panics on held read snapshots.
+    fn nodes_mut(&self, file_index: u32) -> tsc_ast::ast::ArenaMut;
+    /// PORT(addition): the arena cell handle itself — for caches
     /// (`FlowState::nodes`) that must keep a long-lived alias into the arena
-    /// rather than a borrow-tied `Ref`. Mirrors Go's `*ast.Node` graph
-    /// pointer stability.
-    fn nodes_handle(&self, file_index: u32) -> Rc<std::cell::RefCell<Vec<ast::Node>>>;
+    /// rather than a snapshot.
+    fn nodes_handle(&self, file_index: u32) -> Rc<tsc_ast::ast::ArenaCell>;
+    /// `nodes_handle` with fallback for synthetic/foreign indices — the
+    /// concrete `compiler::Program` overrides this; default is strict.
+    fn nodes_handle_or_fallback(&self, file_index: u32) -> (u32, Rc<tsc_ast::ast::ArenaCell>) {
+        (file_index, self.nodes_handle(file_index))
+    }
 }

@@ -1285,6 +1285,7 @@ pub fn get_node_modules_package_name<S, H>(
     preferences: &UserPreferences,
     options: &ModuleSpecifierOptions,
     nodes: &[tsc_ast::ast::Node],
+    resolve: crate::types::NodeResolver,
 ) -> ModuleSpecifier
 where
     S: SourceFileForSpecifierGeneration,
@@ -1310,6 +1311,7 @@ where
             true, // packageNameOnly
             options.override_import_mode,
             nodes,
+            resolve,
         );
         if !result.is_empty() {
             return result;
@@ -1368,6 +1370,7 @@ pub fn process_entrypoint_ending<S, H>(
     importing_source_file: &S,
     allowed_endings: &[ModuleSpecifierEnding],
     nodes: &[tsc_ast::ast::Node],
+    resolve: crate::types::NodeResolver,
 ) -> ModuleSpecifier
 where
     S: SourceFileForSpecifierGeneration,
@@ -1387,6 +1390,7 @@ where
             "",
             host.get_default_resolution_mode_for_file(importing_source_file),
             nodes,
+            resolve,
         )
     } else {
         allowed_endings.to_vec()

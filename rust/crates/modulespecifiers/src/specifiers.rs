@@ -7,7 +7,8 @@ use tsc_ast::ids::{NodeId, SymbolId};
 use tsc_ast::symbol::{INTERNAL_SYMBOL_NAME_EXPORT_EQUALS, Symbol};
 use tsc_ast::symbolflags::SymbolFlags;
 use tsc_ast::utilities::{
-    find_ancestor, get_source_file_of_module, is_module_augmentation_external,
+    find_ancestor, get_source_file_of_node, is_external_module_augmentation,
+    is_global_scope_augmentation, is_module_augmentation_external,
     is_module_with_string_literal_name,
 };
 use tsc_collections::OrderedMap;
@@ -50,6 +51,7 @@ pub fn get_module_specifiers<S, H, C>(
     for_auto_imports: bool,
     symbols: &[Symbol],
     nodes: &[Node],
+    resolve: crate::types::NodeResolver,
 ) -> ModuleSpecifiersResult
 where
     S: SourceFileForSpecifierGeneration,
@@ -67,6 +69,7 @@ where
         for_auto_imports,
         symbols,
         nodes,
+        resolve,
     )
 }
 
@@ -82,13 +85,15 @@ pub fn get_module_specifiers_with_info<S, H, C>(
     for_auto_imports: bool,
     symbols: &[Symbol],
     nodes: &[Node],
+    resolve: crate::types::NodeResolver,
 ) -> ModuleSpecifiersResult
 where
     S: SourceFileForSpecifierGeneration,
     H: ModuleSpecifierGenerationHost,
     C: CheckerShape,
 {
-    let ambient = try_get_module_name_from_ambient_module(module_symbol, checker, symbols, nodes);
+    let ambient =
+        try_get_module_name_from_ambient_module(module_symbol, checker, symbols, nodes, resolve);
     if !ambient.name.is_empty() {
         if for_auto_imports
             && is_excluded_by_regex(
@@ -109,14 +114,16 @@ where
         };
     }
 
-    let module_source_file = get_source_file_of_module(&symbols[module_symbol.index()], nodes);
+    let module_source_file =
+        source_file_of_module(&symbols[module_symbol.index()], nodes, resolve);
     let Some(module_source_file) = module_source_file else {
         return ModuleSpecifiersResult::default();
     };
 
     // Use original source file name when file is from project reference output
     let module_file_name = host.get_source_of_project_reference_if_output_included(
-        nodes[module_source_file].as_source_file(),
+        crate::types::arena_of_id(nodes, resolve, module_source_file)[module_source_file]
+            .as_source_file(),
     );
 
     let (specifiers, kind) = get_module_specifiers_for_file_with_info(
@@ -128,6 +135,7 @@ where
         options,
         for_auto_imports,
         nodes,
+        resolve,
     );
     ModuleSpecifiersResult {
         specifiers,
@@ -147,6 +155,7 @@ pub fn get_module_specifiers_for_file_with_info<S, H>(
     options: &ModuleSpecifierOptions,
     for_auto_imports: bool,
     nodes: &[Node],
+    resolve: crate::types::NodeResolver,
 ) -> (Vec<ModuleSpecifier>, ResultKind)
 where
     S: SourceFileForSpecifierGeneration,
@@ -172,6 +181,7 @@ where
         options,
         for_auto_imports,
         nodes,
+        resolve,
     )
 }
 
@@ -189,22 +199,45 @@ struct AmbientModuleInfo {
     symbol: Option<SymbolId>,
 }
 
+/// `getSourceFileOfModule` — like `ast::get_source_file_of_module`, but each
+/// declaration is read in its own file's arena via `resolve` (Go reads the
+/// shared heap through raw pointers; a single `nodes` slice only covers one
+/// file's arena here).
+fn source_file_of_module(
+    module: &Symbol,
+    nodes: &[Node],
+    resolve: crate::types::NodeResolver,
+) -> Option<NodeId> {
+    let declaration = module.value_declaration.or_else(|| {
+        module.declarations.iter().copied().find(|&d| {
+            let dn = crate::types::arena_of_id(nodes, resolve, d);
+            !is_external_module_augmentation(&dn[d], &dn)
+                && !is_global_scope_augmentation(&dn[d])
+        })
+    });
+    let declaration = declaration?;
+    let dn = crate::types::arena_of_id(nodes, resolve, declaration);
+    get_source_file_of_node(Some(declaration), &dn)
+}
+
 fn try_get_module_name_from_ambient_module<C: CheckerShape>(
     module_symbol: SymbolId,
     checker: &C,
     symbols: &[Symbol],
     nodes: &[Node],
+    resolve: crate::types::NodeResolver,
 ) -> AmbientModuleInfo {
     for &decl in &symbols[module_symbol.index()].declarations {
-        if is_module_with_string_literal_name(&nodes[decl], nodes)
-            && (!is_module_augmentation_external(&nodes[decl], nodes)
+        let dn = crate::types::arena_of_id(nodes, resolve, decl);
+        if is_module_with_string_literal_name(&dn[decl], &dn)
+            && (!is_module_augmentation_external(&dn[decl], &dn)
                 || !tspath::is_external_module_name_relative(
-                    &nodes[nodes[decl].name().expect("module name")].text(nodes),
+                    &dn[dn[decl].name().expect("module name")].text(&dn),
                 ))
         {
             return AmbientModuleInfo {
                 name: tspath::to_module_specifier(
-                    &nodes[nodes[decl].name().expect("module name")].text(nodes),
+                    &dn[dn[decl].name().expect("module name")].text(&dn),
                 ),
                 symbol: Some(module_symbol),
             };
@@ -222,24 +255,25 @@ fn try_get_module_name_from_ambient_module<C: CheckerShape>(
      */
     // `import {c} from "m";` is valid, in which case, `moduleSymbol` is "ns", but the module name should be "m"
     for &d in &symbols[module_symbol.index()].declarations {
-        if !is_module_declaration(&nodes[d]) {
+        let dn = crate::types::arena_of_id(nodes, resolve, d);
+        if !is_module_declaration(&dn[d]) {
             continue;
         }
 
-        let possible_container = find_ancestor(Some(d), nodes, &mut |n, nodes| {
+        let possible_container = find_ancestor(Some(d), &dn, &mut |n, nodes| {
             is_module_with_string_literal_name(n, nodes)
         });
         let Some(possible_container) = possible_container else {
             continue;
         };
-        let Some(parent) = nodes[possible_container].parent else {
+        let Some(parent) = dn[possible_container].parent else {
             continue;
         };
-        if !is_source_file(&nodes[parent]) {
+        if !is_source_file(&dn[parent]) {
             continue;
         }
 
-        let Some(container_symbol) = nodes[possible_container].symbol() else {
+        let Some(container_symbol) = dn[possible_container].symbol() else {
             continue;
         };
         let Some(sym) = symbols[container_symbol.index()]
@@ -249,15 +283,17 @@ fn try_get_module_name_from_ambient_module<C: CheckerShape>(
         else {
             continue;
         };
-        let export_assignment_decl = symbols[sym.index()].value_declaration;
-        if export_assignment_decl.is_none()
-            || nodes[export_assignment_decl.unwrap()].kind != tsc_ast::Kind::ExportAssignment
-        {
+        let Some(export_assignment_decl) = symbols[sym.index()].value_declaration else {
+            continue;
+        };
+        let export_assignment_arena =
+            crate::types::arena_of_id(nodes, resolve, export_assignment_decl);
+        if export_assignment_arena[export_assignment_decl].kind != tsc_ast::Kind::ExportAssignment {
             continue;
         }
         // PORT: `Expression()` is always present on a valid export assignment;
         // Go would dereference a nil node here.
-        let export_assignment_expr = nodes[export_assignment_decl.unwrap()]
+        let export_assignment_expr = export_assignment_arena[export_assignment_decl]
             .expression()
             .expect("export assignment expression");
         let Some(export_symbol) = checker.get_symbol_at_location(export_assignment_expr) else {
@@ -273,10 +309,10 @@ fn try_get_module_name_from_ambient_module<C: CheckerShape>(
         // TODO: Possible strada bug - isn't this insufficient in the presence of merge symbols?
         // PORT: `SymbolId` is a file-local index; the checker implementation is
         // responsible for making symbol identity meaningful across arenas.
-        if Some(export_symbol) == nodes[d].symbol() {
+        if Some(export_symbol) == dn[d].symbol() {
             return AmbientModuleInfo {
                 name: tspath::to_module_specifier(
-                    &nodes[nodes[possible_container].name().expect("module name")].text(nodes),
+                    &dn[dn[possible_container].name().expect("module name")].text(&dn),
                 ),
                 symbol: Some(container_symbol),
             };
@@ -498,6 +534,7 @@ fn compute_module_specifiers<S, H>(
     options: &ModuleSpecifierOptions,
     for_auto_import: bool,
     nodes: &[Node],
+    resolve: crate::types::NodeResolver,
 ) -> (Vec<ModuleSpecifier>, ResultKind)
 where
     S: SourceFileForSpecifierGeneration,
@@ -526,8 +563,11 @@ where
             }
         }
         if let Some(existing_import) = existing_import {
+            let existing_buf = crate::types::arena_of_id(nodes, resolve, existing_import);
             if preferences.relative_preference == RelativePreferenceKind::NonRelative
-                && tspath::path_is_relative(&nodes[existing_import].text(nodes))
+                && tspath::path_is_relative(
+                    &existing_buf[existing_import].text(&existing_buf),
+                )
             {
                 // If the preference is for non-relative and the module specifier is relative, ignore it
                 continue;
@@ -579,6 +619,7 @@ where
                 false, // packageNameOnly
                 options.override_import_mode,
                 nodes,
+                resolve,
             );
         }
         if !specifier.is_empty()
@@ -606,6 +647,7 @@ where
             &preferences,
             /*pathsOnly*/ module_path.is_redirect || !specifier.is_empty(),
             nodes,
+            resolve,
         );
         if local.is_empty()
             || for_auto_import
@@ -665,6 +707,7 @@ fn get_local_module_specifier<S, H>(
     preferences: &ModuleSpecifierPreferences<'_, S, H>,
     paths_only: bool,
     nodes: &[Node],
+    resolve: crate::types::NodeResolver,
 ) -> ModuleSpecifier
 where
     S: SourceFileForSpecifierGeneration,
@@ -679,7 +722,8 @@ where
 
     let source_directory = &info.source_directory;
 
-    let allowed_endings = preferences.get_allowed_endings_in_preferred_order(import_mode, nodes);
+    let allowed_endings =
+        preferences.get_allowed_endings_in_preferred_order(import_mode, nodes, resolve);
     let mut relative_path = ModuleSpecifier::default();
     if let Some(root_dirs) = &root_dirs {
         if !root_dirs.is_empty() {
@@ -1045,6 +1089,7 @@ pub(crate) fn try_get_module_name_as_node_module<S, H>(
     package_name_only: bool,
     override_mode: ResolutionMode,
     nodes: &[Node],
+    resolve: crate::types::NodeResolver,
 ) -> ModuleSpecifier
 where
     S: SourceFileForSpecifierGeneration,
@@ -1062,8 +1107,11 @@ where
         importing_source_file,
         "",
     );
-    let allowed_endings =
-        preferences.get_allowed_endings_in_preferred_order(RESOLUTION_MODE_NONE, nodes);
+    let allowed_endings = preferences.get_allowed_endings_in_preferred_order(
+        RESOLUTION_MODE_NONE,
+        nodes,
+        resolve,
+    );
 
     let case_sensitivity = host.case_sensitivity();
     let mut module_specifier = path_obj.file_name.as_string().to_string();
@@ -1998,6 +2046,7 @@ pub fn get_module_specifier<H>(
     to_file_name: &RootedFilePath,
     options: &ModuleSpecifierOptions,
     nodes: &[Node],
+    resolve: crate::types::NodeResolver,
 ) -> ModuleSpecifier
 where
     H: ModuleSpecifierGenerationHost,
@@ -2012,6 +2061,7 @@ where
         &UserPreferences::default(),
         options,
         nodes,
+        resolve,
     )
 }
 
@@ -2027,6 +2077,7 @@ pub fn update_module_specifier<H>(
     user_preferences: &UserPreferences,
     options: &ModuleSpecifierOptions,
     nodes: &[Node],
+    resolve: crate::types::NodeResolver,
 ) -> ModuleSpecifier
 where
     H: ModuleSpecifierGenerationHost,
@@ -2041,6 +2092,7 @@ where
         user_preferences,
         options,
         nodes,
+        resolve,
     )
 }
 
@@ -2056,6 +2108,7 @@ fn get_module_specifier_with_preferences<S, H>(
     user_preferences: &UserPreferences,
     options: &ModuleSpecifierOptions,
     nodes: &[Node],
+    resolve: crate::types::NodeResolver,
 ) -> ModuleSpecifier
 where
     S: SourceFileForSpecifierGeneration,
@@ -2094,6 +2147,7 @@ where
             false, // packageNameOnly
             options.override_import_mode,
             nodes,
+            resolve,
         );
         if !first_defined.is_empty() {
             return first_defined;
@@ -2109,5 +2163,6 @@ where
         &preferences,
         false,
         nodes,
+        resolve,
     )
 }

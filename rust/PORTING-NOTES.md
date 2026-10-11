@@ -1628,3 +1628,20 @@ and surviving ones are ordinary statement temps.
 - `stop_tracing`'s `DumpTypes` receives `program.symbols` + the first
   source-file arena (Rust needs explicit arenas where Go reached them via
   pointers); cross-arena node locations can be wrong — PORT(deferred).
+
+## Known divergence — crossProductUnionIntersectionRepeatedPropDeclarationsNoOOM1 `.types`
+- Local `.types` (~2.6MB) vs reference (~2.0MB); first diff on line 802
+  (`newShapePartial.props`): reference prints `Partial<any>` for all 16
+  distributed members, ours prints fully expanded `Partial<props_i & ...>`.
+- NOT an instantiation-depth/count issue: measured total counted
+  `instantiate_type` work for the whole compile+baseline = 999, max
+  `instantiation_stack` depth = 7 (deepest chain is StringMapping/
+  TemplateLiteral/Substitution intrinsics, not the Partial/Omit chain).
+  `instantiate_type_with_alias` is faithful to Go (cache-before-count,
+  same 100/5M thresholds, same reset sites).
+- Since no `.errors` baseline exists, Go's `Partial<any>` is likely a
+  legitimate `any` argument (homomorphic mapped instantiation over `any`,
+  e.g. an indexed access resolving to `any`), not `errorType` from the
+  depth cap. Suspect area: indexed-access / union-intersection reduction
+  producing `any` in Go vs concrete expansion in ours, inside
+  `TLShapePartial<ShapeWithDimensions<N>>` constraint expansion.

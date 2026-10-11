@@ -92,6 +92,14 @@ impl<'a, 'b> ExternalModuleInfoCollector<'a, 'b> {
             .borrow_mut()
     }
 
+    fn with_symbols<R>(
+        &self,
+        f: impl FnOnce(&std::cell::RefCell<Vec<Symbol>>) -> R,
+    ) -> R {
+        f(self.symbols
+            .expect("opts.symbols (the binder symbol arena) is required alongside opts.Resolver"))
+    }
+
     fn most_original(&self, node: NodeId) -> NodeId {
         self.emit_context
             .borrow()
@@ -299,18 +307,16 @@ impl<'a, 'b> ExternalModuleInfoCollector<'a, 'b> {
                 }
 
                 let original = self.most_original(name);
-                let mut decl = {
-                    let mut symbols = self.symbols();
+                let mut decl = self.with_symbols(|symbols| {
                     self.resolver()
-                        .get_referenced_import_declaration(original, nodes, &mut symbols)
-                };
+                        .get_referenced_import_declaration(original, nodes, symbols)
+                });
                 if decl.is_none() {
-                    let mut symbols = self.symbols();
-                    decl = self.resolver().get_referenced_value_declaration(
-                        original,
-                        nodes,
-                        &mut symbols,
-                    );
+                    decl = self.with_symbols(|symbols| {
+                        self.resolver().get_referenced_value_declaration(
+                            original, nodes, symbols,
+                        )
+                    });
                 }
                 if let Some(decl) = decl {
                     if nodes[decl].kind == ast::Kind::FunctionDeclaration {

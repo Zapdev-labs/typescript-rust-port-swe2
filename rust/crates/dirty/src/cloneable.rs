@@ -28,6 +28,15 @@ pub trait Cloneable: Clone {
     fn clone_value(&self) -> Self;
 }
 
+/// `Cloneable` for `Rc<T>` — Go's `*T` is cloneable when `T` has `Clone()`.
+/// `Clone::clone` is Go's pointer assignment (shared pointee);
+/// `clone_value` is Go's `T.Clone()` + fresh pointer (`&clone`).
+impl<T: Cloneable> Cloneable for Rc<T> {
+    fn clone_value(&self) -> Self {
+        Rc::new((**self).clone_value())
+    }
+}
+
 /// `Cloneable` for `Option<T>` — a nil-able value type is cloneable when
 /// its payload is. `Clone::clone` is Go's assignment semantics (a shallow
 /// copy of the payload); `clone_value` deep-copies the payload.

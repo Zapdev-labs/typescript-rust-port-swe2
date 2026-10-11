@@ -50,7 +50,7 @@ pub fn new_result(
 /// PORT: the Go func value becomes a boxed closure trait object. `*ast.Node`
 /// → `NodeId` plus the owning `nodes` arena; `location` is `Option<NodeId>`
 /// since Go callers pass nil.
-pub type Evaluator<'a> = dyn Fn(NodeId, Option<NodeId>, &[Node]) -> Result + 'a;
+pub type Evaluator<'a> = dyn FnMut(NodeId, Option<NodeId>, &[Node]) -> Result + 'a;
 
 /// `NewEvaluator(evaluateEntity, outerExpressionsToSkip)`.
 pub fn new_evaluator<'a, F>(
@@ -58,9 +58,9 @@ pub fn new_evaluator<'a, F>(
     outer_expressions_to_skip: OuterExpressionKinds,
 ) -> Box<Evaluator<'a>>
 where
-    F: Fn(NodeId, Option<NodeId>, &[Node]) -> Result + 'a,
+    F: FnMut(NodeId, Option<NodeId>, &[Node]) -> Result + 'a,
 {
-    let evaluator = EvaluatorImpl {
+    let mut evaluator = EvaluatorImpl {
         evaluate_entity,
         outer_expressions_to_skip,
     };
@@ -80,10 +80,10 @@ struct EvaluatorImpl<F> {
 
 impl<F> EvaluatorImpl<F>
 where
-    F: Fn(NodeId, Option<NodeId>, &[Node]) -> Result,
+    F: FnMut(NodeId, Option<NodeId>, &[Node]) -> Result,
 {
     /// The `evaluate` closure body inside `NewEvaluator`.
-    fn evaluate(&self, expr: NodeId, location: Option<NodeId>, nodes: &[Node]) -> Result {
+    fn evaluate(&mut self, expr: NodeId, location: Option<NodeId>, nodes: &[Node]) -> Result {
         let mut is_syntactically_string = false;
         let mut resolved_other_files = false;
         let mut has_external_references = false;
@@ -243,7 +243,7 @@ where
     /// `evaluateTemplateExpression(expr, location, evaluate)` — folded into a
     /// method so it can share the captured `evaluate` closure via `self`.
     fn evaluate_template_expression(
-        &self,
+        &mut self,
         expr: &Node,
         location: Option<NodeId>,
         nodes: &[Node],

@@ -34,6 +34,7 @@ tsc-spanmap = { path = "../spanmap" }
 tsc-tracing = { path = "../tracing" }
 tsc-tsoptions = { path = "../tsoptions" }
 tsc-tspath = { path = "../tspath" }
+tsc-osutil = { path = "../osutil" }
 tsc-vfs = { path = "../vfs" }
 tsc-watchmanager = { path = "../watchmanager" }
 rustc-hash = { workspace = true }

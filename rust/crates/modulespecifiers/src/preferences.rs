@@ -29,9 +29,14 @@ fn should_allow_importing_ts_extension(
 fn uses_extensions_on_imports<S: SourceFileForSpecifierGeneration>(
     file: &S,
     nodes: &[Node],
+    resolve: crate::types::NodeResolver,
 ) -> bool {
     for &import_ref in file.imports() {
-        let text = nodes[import_ref].text(nodes);
+        // Import specifier ids live in `file`'s own arena, which is not
+        // necessarily `nodes` — route through `arena_of_id` (Go reads them
+        // through raw pointers on the shared heap).
+        let buf = crate::types::arena_of_id(nodes, resolve, import_ref);
+        let text = buf[import_ref].text(&buf);
         if tspath::path_is_relative(&text)
             && !tspath::file_extension_is_one_of(
                 &text,
@@ -49,6 +54,7 @@ fn infer_preference<S: SourceFileForSpecifierGeneration>(
     source_file: Option<&S>,
     module_resolution_is_node_next: bool,
     nodes: &[Node],
+    resolve: crate::types::NodeResolver,
 ) -> ModuleSpecifierEnding {
     let mut uses_js_extensions = false;
     let specifiers: &[NodeId] = match source_file {
@@ -62,7 +68,8 @@ fn infer_preference<S: SourceFileForSpecifierGeneration>(
     };
 
     for &specifier in specifiers {
-        let path = nodes[specifier].text(nodes);
+        let buf = crate::types::arena_of_id(nodes, resolve, specifier);
+        let path = buf[specifier].text(&buf);
         if tspath::path_is_relative(&path) {
             // !!! TODO: proper resolutionMode support
             if module_resolution_is_node_next && resolution_mode == RESOLUTION_MODE_COMMON_JS
@@ -99,6 +106,7 @@ fn get_module_specifier_ending_preference<S: SourceFileForSpecifierGeneration>(
     compiler_options: &CompilerOptions,
     source_file: Option<&S>,
     nodes: &[Node],
+    resolve: crate::types::NodeResolver,
 ) -> ModuleSpecifierEnding {
     let module_resolution = compiler_options.get_module_resolution_kind();
     let module_resolution_is_node_next = ModuleResolutionKind::Node16 <= module_resolution
@@ -118,6 +126,7 @@ fn get_module_specifier_ending_preference<S: SourceFileForSpecifierGeneration>(
             source_file,
             module_resolution_is_node_next,
             nodes,
+            resolve,
         ) != ModuleSpecifierEnding::JsExtension
         {
             return ModuleSpecifierEnding::TsExtension;
@@ -139,7 +148,7 @@ fn get_module_specifier_ending_preference<S: SourceFileForSpecifierGeneration>(
     // accurately, and more importantly, literally nobody wants `Index` and its existence is a mystery.
     if !should_allow_importing_ts_extension(compiler_options, &RootedFilePath::default()) {
         // If .ts imports are not valid, we only need to see one .js import to go with that.
-        if source_file.is_some_and(|f| uses_extensions_on_imports(f, nodes)) {
+        if source_file.is_some_and(|f| uses_extensions_on_imports(f, nodes, resolve)) {
             return ModuleSpecifierEnding::JsExtension;
         }
         return ModuleSpecifierEnding::Minimal;
@@ -150,6 +159,7 @@ fn get_module_specifier_ending_preference<S: SourceFileForSpecifierGeneration>(
         source_file,
         module_resolution_is_node_next,
         nodes,
+        resolve,
     )
 }
 
@@ -161,6 +171,7 @@ fn get_preferred_ending<S, H>(
     old_import_specifier: &str,
     mut resolution_mode: ResolutionMode,
     nodes: &[Node],
+    resolve: crate::types::NodeResolver,
 ) -> ModuleSpecifierEnding
 where
     S: SourceFileForSpecifierGeneration,
@@ -183,6 +194,7 @@ where
         compiler_options,
         Some(importing_source_file),
         nodes,
+        resolve,
     )
 }
 
@@ -212,6 +224,7 @@ where
         &self,
         syntax_implied_node_format: ResolutionMode,
         nodes: &[Node],
+        resolve: crate::types::NodeResolver,
     ) -> Vec<ModuleSpecifierEnding> {
         get_allowed_endings_in_preferred_order(
             self.prefs,
@@ -221,6 +234,7 @@ where
             self.old_import_specifier,
             syntax_implied_node_format,
             nodes,
+            resolve,
         )
     }
 }
@@ -234,6 +248,7 @@ pub fn get_allowed_endings_in_preferred_order<S, H>(
     old_import_specifier: &str,
     syntax_implied_node_format: ResolutionMode,
     nodes: &[Node],
+    resolve: crate::types::NodeResolver,
 ) -> Vec<ModuleSpecifierEnding>
 where
     S: SourceFileForSpecifierGeneration,
@@ -247,6 +262,7 @@ where
         old_import_specifier,
         RESOLUTION_MODE_NONE,
         nodes,
+        resolve,
     );
     let resolution_mode = host.get_default_resolution_mode_for_file(importing_source_file);
     if resolution_mode != syntax_implied_node_format {
@@ -258,6 +274,7 @@ where
             old_import_specifier,
             syntax_implied_node_format,
             nodes,
+            resolve,
         );
     }
     let module_resolution = compiler_options.get_module_resolution_kind();

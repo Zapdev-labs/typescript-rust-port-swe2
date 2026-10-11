@@ -13,6 +13,56 @@ use tsc_symlinks::KnownSymlinks;
 use tsc_tsoptions::parsedcommandline::SourceOutputAndProjectReference;
 use tsc_tspath::{ModuleSpecifier, PathKey, RootedDirectoryPath, RootedFilePath};
 
+/// `ArenaSlice` — a read view over one file's node arena: either the
+/// caller's primary `nodes` slice or an arena fetched through
+/// [`NodeResolver`]. Deref resolves to `[Node]` either way, so
+/// `slice[id]`/`slice.len()` work unchanged.
+pub enum ArenaSlice<'x> {
+    Primary(&'x [tsc_ast::Node]),
+    Fetched(std::rc::Rc<Vec<tsc_ast::Node>>),
+}
+
+impl std::ops::Deref for ArenaSlice<'_> {
+    type Target = [tsc_ast::Node];
+
+    fn deref(&self) -> &[tsc_ast::Node] {
+        match self {
+            ArenaSlice::Primary(s) => s,
+            ArenaSlice::Fetched(rc) => rc,
+        }
+    }
+}
+
+/// `NodeResolver` — fetches the arena buffer for a file index. Used for
+/// node ids that live in a different file's arena than `nodes` (Go's
+/// single heap read them through raw pointers; the port stores nodes
+/// per-file).
+pub type NodeResolver<'a> = &'a dyn Fn(u32) -> Option<std::rc::Rc<Vec<tsc_ast::Node>>>;
+
+/// Pick the slice holding `fi`'s nodes: `nodes` when it is that arena
+/// (its first node's `file_index` matches), otherwise `resolve(fi)`.
+/// An empty/nonexistent result yields an empty slice.
+pub fn arena_of<'x>(
+    nodes: &'x [tsc_ast::Node],
+    resolve: NodeResolver<'x>,
+    fi: u32,
+) -> ArenaSlice<'x> {
+    if nodes.first().is_some_and(|n| n.id.file_index() == fi) {
+        ArenaSlice::Primary(nodes)
+    } else {
+        ArenaSlice::Fetched(resolve(fi).unwrap_or_default())
+    }
+}
+
+/// `arena_of` for the arena that owns `id`.
+pub fn arena_of_id<'x>(
+    nodes: &'x [tsc_ast::Node],
+    resolve: NodeResolver<'x>,
+    id: NodeId,
+) -> ArenaSlice<'x> {
+    arena_of(nodes, resolve, id.file_index())
+}
+
 /// `type SourceFileForSpecifierGeneration interface`.
 ///
 // PORT: `*ast.StringLiteralLike` nodes become `NodeId`s resolved through the

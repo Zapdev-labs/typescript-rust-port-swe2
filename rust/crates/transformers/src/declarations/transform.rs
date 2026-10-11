@@ -1123,11 +1123,17 @@ impl<'a> DeclarationTransformerState<'a> {
         input: NodeId,
     ) -> Option<NodeId> {
         if self.should_strip_internal(Some(input), cx.nodes) {
+            if std::env::var("TSC_DBG_DECL").is_ok() {
+                eprintln!("[decl-subtree] input={:?} strip_internal", input);
+            }
             return None;
         }
         if ast::is_declaration(&cx.nodes[input]) {
             if is_declaration_and_not_visible(&self.ec(), &*self.resolver.borrow(), input, cx.nodes)
             {
+                if std::env::var("TSC_DBG_DECL").is_ok() {
+                    eprintln!("[decl-subtree] input={:?} not_visible", input);
+                }
                 return None;
             }
             if ast::has_dynamic_name(input, cx.nodes) {
@@ -1260,6 +1266,9 @@ impl<'a> DeclarationTransformerState<'a> {
             }
             Kind::VariableDeclaration => {
                 result = self.transform_variable_declaration(v, cx, input);
+                if std::env::var("TSC_DBG_DECL").is_ok() {
+                    eprintln!("[decl-subtree] vardecl input={:?} -> {:?}", input, result);
+                }
             }
             Kind::TypeParameter => {
                 result = self.transform_type_parameter_declaration(v, cx, input);
@@ -3237,7 +3246,7 @@ impl<'a> DeclarationTransformerState<'a> {
                             self.resolver.borrow_mut().get_referenced_value_declaration(
                                 name.unwrap(),
                                 cx.nodes,
-                                &mut symbols.borrow_mut(),
+                                symbols,
                             )
                         }
                         None => self
@@ -4446,11 +4455,7 @@ impl<'a> DeclarationTransformerState<'a> {
                 let base = self.symbols.and_then(|symbols| {
                     self.resolver
                         .borrow_mut()
-                        .get_referenced_member_value_declaration(
-                            node,
-                            cx.nodes,
-                            &mut symbols.borrow_mut(),
-                        )
+                        .get_referenced_member_value_declaration(node, cx.nodes, symbols)
                 });
                 let key = get_this_property_assignment_key(name, node, is_static, cx.nodes);
                 if base.is_none() || self.seen_properties.borrow().contains(&key) {
@@ -4645,6 +4650,9 @@ impl<'a> DeclarationTransformerState<'a> {
             }
         }
         if !visible {
+            if std::env::var("TSC_DBG_DECL").is_ok() {
+                eprintln!("[decl-varstmt] input={:?} NOT VISIBLE", input);
+            }
             return None;
         }
 
@@ -4670,7 +4678,15 @@ impl<'a> DeclarationTransformerState<'a> {
             extra_imports = v.visit_slice(cx, &imports).unwrap_or(imports);
         }
 
-        let nodes = v.visit_slice(cx, &input_nodes_vec).unwrap_or_default();
+        let nodes = v
+            .visit_slice(cx, &input_nodes_vec)
+            .unwrap_or_else(|| input_nodes_vec.clone());
+        if std::env::var("TSC_DBG_DECL").is_ok() {
+            eprintln!(
+                "[decl-varstmt] input={:?} decls_in={:?} decls_out={:?}",
+                input, input_nodes_vec, nodes
+            );
+        }
         if nodes.is_empty() {
             if !extra_imports.is_empty() {
                 return Some(
@@ -5437,7 +5453,9 @@ impl<'a> DeclarationTransformerState<'a> {
             .as_js_doc_type_literal()
             .js_doc_property_tags
             .clone();
-        let members = v.visit_slice(cx, &tags).unwrap_or_default();
+        let members = v
+            .visit_slice(cx, &tags)
+            .unwrap_or_else(|| tags.to_vec());
         let replacement = {
             let mut ec = self.ec.borrow_mut();
             let list = ec.factory.new_node_list(members);
@@ -5740,9 +5758,7 @@ impl<'a> DeclarationTransformerState<'a> {
             return;
         };
         let declaration = self.resolver.borrow_mut().get_referenced_value_declaration(
-            ns,
-            cx.nodes,
-            &mut symbols.borrow_mut(),
+            ns, cx.nodes, symbols,
         );
         let Some(declaration) = declaration else {
             return;

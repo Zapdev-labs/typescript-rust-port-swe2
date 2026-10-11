@@ -222,9 +222,14 @@ const SKIPPED_TESTS: &[&str] = &[
 ///
 /// PORT: Rust's test harness takes the name filter as a bare positional
 /// argument to the test binary rather than a flag, so scan argv for the first
-/// non-flag argument.
+/// non-flag argument. `TSC_TEST_FILTER` wins — `cargo test <pat>` already
+/// consumes positionals for test-name filtering, so the file filter needs a
+/// separate channel.
 #[cfg(feature = "harness")]
 fn test_run_flag() -> String {
+    if let Ok(filter) = std::env::var("TSC_TEST_FILTER") {
+        return filter;
+    }
     let mut args = std::env::args();
     args.next(); // binary name
     args.find(|a| !a.starts_with('-')).unwrap_or_default()
@@ -348,6 +353,9 @@ fn get_compiler_file_based_test(filename: &str) -> CompilerFileBasedTest {
 /// `compilerTest`.
 #[cfg(feature = "harness")]
 struct CompilerTest {
+    /// `testName` — kept for parity with Go; nothing in the runner reads it
+    /// back (it's the `t.Run` subtest name there).
+    #[allow(dead_code)]
     test_name: String,
     filename: String,
     basename: String,
@@ -734,17 +742,15 @@ impl CompilerTest {
             return;
         }
         let program = &self.result.program;
-        let all_files = tsc_core::core::filter(
-            &tsc_core::core::concatenate(&self.to_be_compiled, &self.other_files),
-            |f| {
-                program
-                    .get_source_file(&tsc_tspath::to_rooted_file_path(
-                        &f.unit_name,
-                        &self.current_directory,
-                    ))
-                    .is_some()
-            },
-        );
+        let combined = tsc_core::core::concatenate(&self.to_be_compiled, &self.other_files);
+        let all_files = tsc_core::core::filter(&combined, |f| {
+            program
+                .get_source_file(&tsc_tspath::to_rooted_file_path(
+                    &f.unit_name,
+                    &self.current_directory,
+                ))
+                .is_some()
+        });
 
         let header_components = tsc_tspath::get_path_components_relative_to(
             test_data_path(),
@@ -803,23 +809,25 @@ impl CompilerTest {
             let checker = checker.borrow();
             let types = checker.types_handle();
             for union in checker.union_types_iter() {
-                let union_types = types.get(union).types();
+                // PORT: `types.get` returns a `TypeReadGuard`; `to_vec` up
+                // front so the borrow doesn't outlive the temporary.
+                let union_types = types.get(union).types().to_vec();
 
-                let mut reversed = union_types.to_vec();
+                let mut reversed = union_types.clone();
                 reversed.reverse();
                 reversed
-                    .sort_by(|a, b| tsc_checker::utilities::compare_types(&types, *a, *b).cmp(&0));
+                    .sort_by(|a, b| tsc_checker::utilities::compare_types(&types, checker.symbol_arena.as_ref(), *a, *b).cmp(&0));
                 assert_eq!(
                     reversed, union_types,
                     "compareTypes does not sort union types consistently"
                 );
 
-                let mut shuffled = union_types.to_vec();
+                let mut shuffled = union_types.clone();
                 let mut rng = Pcg::new(1234, 5678);
                 for _ in 0..10 {
                     rng.shuffle(&mut shuffled);
                     shuffled.sort_by(|a, b| {
-                        tsc_checker::utilities::compare_types(&types, *a, *b).cmp(&0)
+                        tsc_checker::utilities::compare_types(&types, checker.symbol_arena.as_ref(), *a, *b).cmp(&0)
                     });
                     assert_eq!(
                         shuffled, union_types,

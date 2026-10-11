@@ -4183,7 +4183,7 @@ pub fn get_module_specifier_of_bare_or_accessed_require(
     nodes: &[Node],
 ) -> Option<NodeId> {
     if is_variable_declaration_initialized_with_require_helper(node, false, nodes) {
-        return Some(nodes[node].arguments().unwrap()[0]);
+        return Some(nodes[nodes[node].initializer().unwrap()].arguments().unwrap()[0]);
     }
     if is_variable_declaration_initialized_with_require_helper(node, true, nodes) {
         let leftmost = get_leftmost_access_expression(nodes[node].initializer().unwrap(), nodes);

@@ -37,6 +37,10 @@ impl<K: Eq + std::hash::Hash, V: Default> LinkStore<K, V> {
     pub fn try_get(&mut self, key: &K) -> Option<&mut V> {
         self.entries.get_mut(key).map(|b| &mut **b)
     }
+
+    pub fn remove(&mut self, key: &K) {
+        self.entries.remove(key);
+    }
 }
 
 const PAGE_SHIFT: u32 = 8;

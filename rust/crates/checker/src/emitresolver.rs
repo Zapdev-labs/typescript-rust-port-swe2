@@ -168,7 +168,19 @@ pub(crate) fn call_resolve_name(
     name_not_found_message: Option<&'static tsc_diagnostics::Message>,
     is_use: bool,
     exclude_globals: bool,
+    live_nodes: Option<&[ast::Node]>,
 ) -> Option<SymbolId> {
+    if live_nodes.is_some() {
+        return c.resolve_name_via_binder_live(
+            location,
+            name,
+            meaning,
+            name_not_found_message,
+            is_use,
+            exclude_globals,
+            live_nodes,
+        );
+    }
     let f = c.resolve_name.clone().expect("Checker::resolve_name");
     f(
         c,
@@ -328,7 +340,7 @@ impl EmitResolver {
             ReferenceResolverHooks {
                 resolve_name: Some(Box::new({
                     let c = c.clone();
-                    move |location, name, meaning, msg, is_use, exclude_globals| {
+                    move |live_nodes, location, name, meaning, msg, is_use, exclude_globals| {
                         let mut c = c.try_borrow_mut().ok()?;
                         call_resolve_name(
                             &mut c,
@@ -338,6 +350,7 @@ impl EmitResolver {
                             msg,
                             is_use,
                             exclude_globals,
+                            Some(live_nodes),
                         )
                     }
                 })),
@@ -397,7 +410,7 @@ impl EmitResolver {
                     move |node| {
                         let mut c = c.try_borrow_mut().ok()?;
                         let __program = c.program.clone().expect("program");
-                        let nodes = __program.nodes((node).file_index());
+                        let nodes = crate::printer_util::arena_view(&__program, &[], (node).file_index());
                         let (name, ok) = c.try_get_element_access_expression_name(&nodes, node);
                         ok.then_some(name)
                     }
@@ -463,6 +476,7 @@ impl EmitResolver {
                 None,  /*nameNotFoundMessage*/
                 false, /*isUse*/
                 false, /*excludeGlobals*/
+                Some(nodes),
             );
         } else if parent.is_some_and(|p| nodes[p].kind == ast::Kind::ExportSpecifier) {
             export_symbol = c.get_target_of_export_specifier(
@@ -492,7 +506,7 @@ impl EmitResolver {
                 // declaration arenas may differ per file — re-read through
                 // the declaration's own arena like Go derefs the pointer.
                 let __program = c.program.clone().expect("program");
-                let declaration_nodes = __program.nodes((declaration).file_index());
+                let declaration_nodes = crate::printer_util::arena_view(&__program, nodes, (declaration).file_index());
                 if ast::is_internal_module_import_equals_declaration(
                     &declaration_nodes[declaration],
                     &declaration_nodes,
@@ -518,6 +532,7 @@ impl EmitResolver {
                         None,  /*nameNotFoundMessage*/
                         false, /*isUse*/
                         false, /*excludeGlobals*/
+                        Some(nodes),
                     );
                 }
             }
@@ -539,12 +554,14 @@ impl EmitResolver {
         enclosing_declaration: Option<NodeId>,
         meaning: ast::SymbolFlags,
         should_compute_alias_to_mark_visible: bool,
+        live_nodes: Option<&[Node]>,
     ) -> SymbolAccessibilityResult {
         c.is_symbol_accessible(
             symbol,
             enclosing_declaration,
             meaning,
             should_compute_alias_to_mark_visible,
+            live_nodes,
         )
     }
 
@@ -647,7 +664,7 @@ impl EmitResolver {
             // merge may not have yet occurred, and the flags check below will
             // be missing flags that are added as a result of the merge.
             let __program = c.program.clone().expect("program");
-            let decl_nodes = __program.nodes((value_declaration).file_index());
+            let decl_nodes = crate::printer_util::arena_view(&__program, &[], (value_declaration).file_index());
             if let Some(container) =
                 ast::get_source_file_of_node(Some(value_declaration), &decl_nodes)
             {
@@ -686,7 +703,7 @@ impl ReferenceResolver for EmitResolver {
         node: NodeId,
         prefix_locals: bool,
         nodes: &[Node],
-        symbols: &mut Vec<Symbol>,
+        symbols: &std::cell::RefCell<Vec<Symbol>>,
     ) -> Option<NodeId> {
         if !ast::is_parse_tree_node(&nodes[node]) {
             return None;
@@ -706,7 +723,7 @@ impl ReferenceResolver for EmitResolver {
         &mut self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &mut Vec<Symbol>,
+        symbols: &std::cell::RefCell<Vec<Symbol>>,
     ) -> Option<NodeId> {
         let _ = symbols;
         let mut c = checker_lock(&self.checker);
@@ -714,7 +731,7 @@ impl ReferenceResolver for EmitResolver {
             return c.emit_resolver_links.jsx_links.get(node).import_ref;
         }
 
-        let symbol = c.get_referenced_value_or_alias_symbol(node);
+        let symbol = c.get_referenced_value_or_alias_symbol(node, Some(nodes));
         let is_non_local_alias = {
             let arena = c.symbol_arena.borrow();
             ast::is_non_local_alias(symbol.map(|s| &arena[s.index()]), ast::SymbolFlags::VALUE)
@@ -738,7 +755,7 @@ impl ReferenceResolver for EmitResolver {
         &mut self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &mut Vec<Symbol>,
+        symbols: &std::cell::RefCell<Vec<Symbol>>,
     ) -> Option<NodeId> {
         if !ast::is_parse_tree_node(&nodes[node]) {
             return None;
@@ -752,7 +769,7 @@ impl ReferenceResolver for EmitResolver {
         &mut self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &mut Vec<Symbol>,
+        symbols: &std::cell::RefCell<Vec<Symbol>>,
     ) -> Vec<NodeId> {
         if !ast::is_parse_tree_node(&nodes[node]) {
             return Vec::new();
@@ -769,7 +786,7 @@ impl ReferenceResolver for EmitResolver {
         // PORT(borrowck): bind the `RefMut` checker guard so the `Ref` arena
         // borrow outlives the temporary.
         let checker = checker_lock(&self.checker);
-        let nodes = checker.program_nodes(expression);
+        let nodes = checker.program_nodes_live(expression, &[]);
         if !ast::is_parse_tree_node(&nodes[expression]) {
             return String::new();
         }
@@ -784,7 +801,7 @@ impl ReferenceResolver for EmitResolver {
         &mut self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &mut Vec<Symbol>,
+        symbols: &std::cell::RefCell<Vec<Symbol>>,
     ) -> Option<NodeId> {
         if !ast::is_parse_tree_node(&nodes[node]) {
             return None;
@@ -817,6 +834,10 @@ impl tsc_printer::EmitResolver for EmitResolver {
             && let Some(symbol) = c.get_symbol_of_declaration(node)
         {
             let alias_links_referenced = c.alias_symbol_links.get(symbol).referenced;
+            if std::env::var("TSC_DBG_ALIAS").is_ok() {
+                eprintln!("[alias] checker={:p} node={:?} symbol={:?} referenced={}",
+                    &*c, node, symbol, alias_links_referenced);
+            }
             if alias_links_referenced {
                 return true;
             }
@@ -887,14 +908,16 @@ impl tsc_printer::EmitResolver for EmitResolver {
     }
 
     /// `(r *EmitResolver) MarkLinkedReferencesRecursively`.
-    fn mark_linked_references_recursively(&mut self, file: NodeId, nodes: &[Node]) {
+    fn mark_linked_references_recursively(&mut self, file: NodeId, nodes: &mut Vec<Node>) {
         if !ast::is_parse_tree_node(&nodes[file]) {
             return;
         }
         let mut c = checker_lock(&self.checker);
         let c = &mut *c;
         // `visit` — recursive closure spelling of Go's self-calling Visitor.
-        fn visit(c: &mut Checker, nodes: &[Node], n: NodeId) {
+        // Children are collected before recursing so the buffer can be
+        // reborrowed mutably for live-aware checker calls.
+        fn visit(c: &mut Checker, nodes: &mut Vec<Node>, n: NodeId) {
             if ast::is_import_equals_declaration(&nodes[n])
                 && !nodes[n]
                     .modifier_flags()
@@ -910,16 +933,25 @@ impl tsc_printer::EmitResolver for EmitResolver {
                 crate::checker_types::ReferenceHint::Unspecified,
                 None, /*propSymbol*/
                 None, /*parentType*/
+                Some(&mut *nodes),
             );
-            nodes[n].for_each_child(nodes, &mut |child| {
-                visit(c, nodes, child);
+            let mut children = Vec::new();
+            nodes[n].for_each_child(&nodes[..], &mut |child| {
+                children.push(child);
                 false
             });
+            for child in children {
+                visit(c, nodes, child);
+            }
         }
-        nodes[file].for_each_child(nodes, &mut |child| {
-            visit(c, nodes, child);
+        let mut children = Vec::new();
+        nodes[file].for_each_child(&nodes[..], &mut |child| {
+            children.push(child);
             false
         });
+        for child in children {
+            visit(c, nodes, child);
+        }
     }
 
     /// `(r *EmitResolver) GetExternalModuleFileFromDeclaration`.
@@ -983,7 +1015,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
                     .clone();
                 if !declarations.is_empty() {
                     is_type_only = core_helpers::every(&declarations, |&d| {
-                        ast::is_type_only_import_or_export_declaration(d, &c.program_nodes(d))
+                        ast::is_type_only_import_or_export_declaration(d, &c.program_nodes_live(d, nodes))
                     });
                 }
             }
@@ -1108,15 +1140,36 @@ impl tsc_printer::EmitResolver for EmitResolver {
     }
 
     /// `(r *EmitResolver) GetJsxFactoryEntity`.
-    fn get_jsx_factory_entity(&self, location: NodeId, _nodes: &[Node]) -> Option<NodeId> {
+    fn get_jsx_factory_entity(&self, location: NodeId, _nodes: &mut Vec<Node>) -> Option<NodeId> {
         let mut c = checker_lock(&self.checker);
-        c.get_jsx_factory_entity(location)
+        c.get_jsx_factory_entity_live(location, Some(_nodes))
     }
 
     /// `(r *EmitResolver) GetJsxFragmentFactoryEntity`.
-    fn get_jsx_fragment_factory_entity(&self, location: NodeId, _nodes: &[Node]) -> Option<NodeId> {
+    fn get_jsx_fragment_factory_entity(&self, location: NodeId, _nodes: &mut Vec<Node>) -> Option<NodeId> {
         let mut c = checker_lock(&self.checker);
-        c.get_jsx_fragment_factory_entity(location)
+        c.get_jsx_fragment_factory_entity_live(location, Some(_nodes))
+    }
+
+    /// PORT: `e` may live in the checker's file arena or the caller's
+    /// working buffer — resolve it there and flatten the qualified-name
+    /// chain.
+    fn entity_name_texts(&self, e: NodeId, _nodes: &[Node]) -> Vec<String> {
+        let c = self.checker.borrow();
+        let program = c.program.clone().expect("program");
+        let arena = crate::printer_util::resolve_arena_for(&program, _nodes, e);
+        let mut stack = vec![e];
+        let mut parts = Vec::new();
+        while let Some(n) = stack.pop() {
+            if ast::is_qualified_name(&arena[n]) {
+                let d = &arena[n].as_qualified_name();
+                stack.push(d.right.unwrap());
+                stack.push(d.left.unwrap());
+            } else {
+                parts.push(arena[n].text(&arena).into_owned());
+            }
+        }
+        parts
     }
 
     /// `(r *EmitResolver) SetReferencedImportDeclaration`.
@@ -1180,6 +1233,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
             enclosing_declaration,
             meaning,
             should_compute_alias_to_mark_visible,
+            Some(_nodes),
         )
     }
 
@@ -1191,7 +1245,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
         _nodes: &[Node],
     ) -> SymbolAccessibilityResult {
         let mut c = checker_lock(&self.checker);
-        c.is_entity_name_visible(entity_name, enclosing_declaration, true)
+        c.is_entity_name_visible(entity_name, enclosing_declaration, true, Some(_nodes))
     }
 
     /// `(r *EmitResolver) IsExpandoFunctionDeclaration`.
@@ -1256,7 +1310,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
 
     /// `(r *EmitResolver) IsNameResolvable` — returns `true` if the given
     /// `name` resolves to any symbol at `location`.
-    fn is_name_resolvable(&self, location: Option<NodeId>, name: &str, _nodes: &[Node]) -> bool {
+    fn is_name_resolvable(&self, location: Option<NodeId>, name: &str, nodes: &[Node]) -> bool {
         let mut c = checker_lock(&self.checker);
         let c = &mut *c;
         call_resolve_name(
@@ -1267,6 +1321,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
             None,  /*nameNotFoundMessage*/
             false, /*isUse*/
             false, /*excludeGlobals*/
+            Some(nodes),
         )
         .is_some()
     }
@@ -1299,7 +1354,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
                 if !declarations.is_empty() {
                     for d in declarations {
                         let __program = c.program.clone().expect("program");
-                        let decl_nodes = __program.nodes((d).file_index());
+                        let decl_nodes = crate::printer_util::arena_view(&__program, nodes, (d).file_index());
                         let decl_file = ast::get_source_file_of_node(Some(d), &decl_nodes);
                         if decl_file == Some(import_target) {
                             return true;
@@ -1404,7 +1459,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
                 let declaration = c.signature_arena.get(signature).declaration;
                 if declaration != Some(node)
                     && declaration.is_some_and(|d| {
-                        !c.program_nodes(d)[d]
+                        !c.program_nodes_live(d, nodes)[d]
                             .flags
                             .intersects(ast::NodeFlags::JSDOC)
                     })
@@ -1557,12 +1612,12 @@ impl tsc_printer::EmitResolver for EmitResolver {
         if !ast::is_parse_tree_node(&nodes[node]) {
             return None;
         }
-        let mut symbols = {
+        let symbols = {
             let c = checker_try_lock(&self.checker)?;
-            clone_symbols(&c.symbol_arena.borrow())
+            std::cell::RefCell::new(clone_symbols(&c.symbol_arena.borrow()))
         };
         self.reference_resolver()
-            .get_referenced_value_declaration(node, nodes, &mut symbols)
+            .get_referenced_value_declaration(node, nodes, &symbols)
     }
 
     /// `(r *EmitResolver) CreateReturnTypeOfSignatureDeclaration`.
@@ -1940,7 +1995,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
                             ast::is_computed_property_name(&nodes[name])
                                 && nodes[name].expression().is_some_and(|e| {
                                     ast::is_entity_name_expression(&nodes[e], nodes)
-                                        && c.is_entity_name_visible(e, enclosing_declaration, false)
+                                        && c.is_entity_name_visible(e, enclosing_declaration, false, Some(nodes))
                                             .accessibility
                                             == SymbolAccessibility::Accessible
                                 })
@@ -1970,6 +2025,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
                                 None,  /*nameNotFoundMessage*/
                                 true,  /*isUse*/
                                 false, /*excludeGlobals*/
+                                Some(nodes),
                             );
                             if let Some(name) = name {
                                 tracker.track_symbol(

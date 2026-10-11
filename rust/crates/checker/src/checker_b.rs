@@ -114,7 +114,7 @@ impl Checker {
                             && c.types_handle().get(t).as_mapped_type().name_type.is_none()
                             && {
                                 let __arena___guard_target = c.types.clone();
-                                let __guard_target = __arena___guard_target.get(t);
+                                let __guard_target = __arena___guard_target.get(t).clone();
                                 let target = __guard_target
                                     .as_mapped_type()
                                     .object_type
@@ -3852,7 +3852,19 @@ fn call_resolve_name(
     name_not_found_message: Option<&'static tsc_diagnostics::Message>,
     is_use: bool,
     exclude_globals: bool,
+    live_nodes: Option<&[ast::Node]>,
 ) -> Option<SymbolId> {
+    if live_nodes.is_some() {
+        return c.resolve_name_via_binder_live(
+            location,
+            name,
+            meaning,
+            name_not_found_message,
+            is_use,
+            exclude_globals,
+            live_nodes,
+        );
+    }
     let f = c.resolve_name.clone().expect("Checker::resolve_name");
     f(
         c,
@@ -5578,7 +5590,7 @@ impl Checker {
         let mut non_applicable_type: Option<TypeId> = None;
         let mut has_signatures_flag = std::cell::Cell::new(false);
         let mut has_applicable_signature_flag = std::cell::Cell::new(false);
-        let result = self.get_instantiated_type_part(
+        let result = self.get_instantiated_type(
             node,
             &type_argument_nodes,
             expr_type,
@@ -5816,7 +5828,7 @@ impl Checker {
             return self.get_union_type(&mapped);
         } else if flags.intersects(TypeFlags::INTERSECTION) {
             let __arena___guard_types = self.types.clone();
-            let __guard_types = __arena___guard_types.get(t);
+            let __guard_types = __arena___guard_types.get(t).clone();
             let types = __guard_types
                 .as_intersection_type()
                 .union_or_intersection
@@ -6508,6 +6520,8 @@ impl Checker {
                 ReferenceHint::Identifier,
                 None, /*propSymbol*/
                 None, /*parentType*/
+            
+                None,
             );
         }
         let local_or_export_symbol = self
@@ -7068,7 +7082,9 @@ impl Checker {
                         ReferenceHint::Property,
                         None, /* propSymbol */
                         Some(left_type),
-                    );
+                    
+                None,
+            );
                 }
                 if self.is_error_type(apparent_type) {
                     return self.error_type;
@@ -7082,7 +7098,7 @@ impl Checker {
                 nodes[node].kind == ast::Kind::QualifiedName, /* includeTypeOnlyMembers */
             );
         }
-        self.mark_linked_references(node, ReferenceHint::Property, prop, Some(left_type));
+        self.mark_linked_references(node, ReferenceHint::Property, prop, Some(left_type), None);
         let prop_type: Option<TypeId>;
         if prop.is_none() {
             let mut index_info: Option<IndexInfoId> = None;
@@ -11128,9 +11144,9 @@ impl Checker {
         }
         let mut offset = 0usize;
         for &member_decl in &node_properties {
-            let mut member = self
-                .get_symbol_of_declaration(member_decl)
-                .expect("object literal member symbol");
+            // Go: `member` may be nil for spread assignments — those branches
+            // never dereference it.
+            let mut member = self.get_symbol_of_declaration(member_decl);
             let mut computed_name_type: Option<TypeId> = None;
             if let Some(name) = nodes[member_decl].name()
                 && nodes[name].kind == ast::Kind::ComputedPropertyName
@@ -11161,8 +11177,8 @@ impl Checker {
                 {
                     name_type = Some(computed);
                 }
-                let member_flags = self.sym(member).flags;
-                let member_name = self.sym(member).name.clone();
+                let member_flags = self.sym(member.expect("object literal member symbol")).flags;
+                let member_name = self.sym(member.expect("object literal member symbol")).name.clone();
                 let prop = if let Some(name_type) = name_type {
                     let text =
                         crate::utilities::get_property_name_from_type(&self.types, name_type);
@@ -11203,7 +11219,8 @@ impl Checker {
                         .get_index_info_of_type(contextual_type.unwrap(), self.string_type)
                         .is_none()
                     {
-                        let member_str = self.symbol_to_string(member);
+                        let member_str =
+                            self.symbol_to_string(member.expect("object literal member symbol"));
                         let contextual_str = self.type_to_string(contextual_type.unwrap());
                         self.error(
                             nodes[member_decl].name(),
@@ -11212,15 +11229,17 @@ impl Checker {
                         );
                     }
                 }
-                let member_declarations = self.sym(member).declarations.clone();
-                let member_parent = self.sym(member).parent;
-                let member_value_declaration = self.sym(member).value_declaration;
+                let member_declarations =
+                    self.sym(member.expect("object literal member symbol")).declarations.clone();
+                let member_parent = self.sym(member.expect("object literal member symbol")).parent;
+                let member_value_declaration =
+                    self.sym(member.expect("object literal member symbol")).value_declaration;
                 self.sym_mut(prop).declarations = member_declarations;
                 self.sym_mut(prop).parent = member_parent;
                 self.sym_mut(prop).value_declaration = member_value_declaration;
                 self.value_symbol_links.get(prop).resolved_type = Some(t);
-                self.value_symbol_links.get(prop).target = Some(member);
-                member = prop;
+                self.value_symbol_links.get(prop).target = member;
+                member = Some(prop);
                 if let Some(table) = all_properties_table.as_mut() {
                     table.set(member_name.clone(), prop);
                 }
@@ -11332,10 +11351,11 @@ impl Checker {
                         pattern_with_computed_properties = true;
                     }
                 }
-            } else if computed_name_type.is_none() {
+            } else {
+                let member = member.expect("object literal member symbol");
                 properties_table.set(self.sym(member).name.clone(), member);
             }
-            properties_array.push(member);
+            properties_array.push(member.expect("object literal member symbol"));
         }
         self.pop_contextual_type();
         if self.is_error_type(spread) {
@@ -12129,7 +12149,7 @@ impl Checker {
         }
         if flags.intersects(TypeFlags::INDEXED_ACCESS) {
             let __arena___guard_object_type = self.types.clone();
-            let __guard_object_type = __arena___guard_object_type.get(t);
+            let __guard_object_type = __arena___guard_object_type.get(t).clone();
             let object_type = __guard_object_type.as_indexed_access_type().object_type;
             return self.is_const_type_variable(object_type, depth + 1);
         }
@@ -12139,7 +12159,7 @@ impl Checker {
         }
         if flags.intersects(TypeFlags::SUBSTITUTION) {
             let __arena___guard_base_type = self.types.clone();
-            let __guard_base_type = __arena___guard_base_type.get(t);
+            let __guard_base_type = __arena___guard_base_type.get(t).clone();
             let base_type = __guard_base_type.as_substitution_type().base_type;
             return self.is_const_type_variable(base_type, depth);
         }
@@ -12629,6 +12649,7 @@ impl Checker {
                     diagnostic,
                     is_use,
                     false, /*excludeGlobals*/
+                 None,
                 );
             }
             self.symbol_node_links.get(node).resolved_symbol =
@@ -12649,6 +12670,7 @@ impl Checker {
     pub(crate) fn get_referenced_value_or_alias_symbol(
         &mut self,
         reference: NodeId,
+        live_nodes: Option<&[ast::Node]>,
     ) -> Option<SymbolId> {
         let resolved_symbol = self.symbol_node_links.get(reference).resolved_symbol;
         if let Some(resolved) = resolved_symbol
@@ -12657,7 +12679,11 @@ impl Checker {
             return Some(resolved);
         }
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((reference).file_index());
+        let nodes = crate::printer_util::resolve_arena_for(
+            &__program,
+            live_nodes.unwrap_or(&[]),
+            reference,
+        );
         let text = nodes[reference].text(&nodes).into_owned();
         call_resolve_name(
             self,
@@ -12667,6 +12693,7 @@ impl Checker {
             None,
             false, /*isUse*/
             false, /*excludeGlobals*/
+         live_nodes,
         )
     }
 
@@ -12895,9 +12922,25 @@ impl Checker {
     pub fn is_deprecated_declaration(&mut self, declaration: NodeId) -> bool {
         let combined_flags = self.get_combined_node_flags_cached(declaration);
         let __program = self.program.clone().expect("program");
-        let mut nodes = __program.nodes_mut(declaration.file_index());
+        // Lazy JSDoc parsing mutates the arena; run in place when the arena
+        // is unshared. When snapshots are held, use the checker's per-file
+        // scratch clone (cloned once per file — the deprecated-tag reads only
+        // touch parse-stable fields).
+        let arena = __program.nodes_handle(declaration.file_index());
+        if !arena.is_shared() {
+            let mut nodes = arena.cow();
+            return crate::jsdoc::is_deprecated_declaration_with_cached_flags(
+                &mut nodes,
+                declaration,
+                combined_flags,
+            );
+        }
+        let scratch = self
+            .jsdoc_scratch_arenas
+            .entry(declaration.file_index())
+            .or_insert_with(|| arena.snapshot().to_vec());
         crate::jsdoc::is_deprecated_declaration_with_cached_flags(
-            &mut nodes,
+            scratch,
             declaration,
             combined_flags,
         )
@@ -12926,12 +12969,26 @@ impl Checker {
     ) -> DiagnosticRef {
         for &declaration in declarations {
             let __program = self.program.clone().expect("program");
-            let mut nodes = __program.nodes_mut(declaration.file_index());
-            let deprecated_tag = crate::jsdoc::get_jsdoc_deprecated_tag(&mut nodes, declaration);
+            // In-place when the arena is free; per-file scratch clone when a
+            // caller holds a `Ref` (see `is_deprecated_declaration`). The tag
+            // id's arena membership is transient — `create_diagnostic_for_node`
+            // resolves file/span eagerly — so scratch ids never escape.
+            let arena = __program.nodes_handle(declaration.file_index());
+            let unshared = !arena.is_shared();
+            let mut guard;
+            let mut owned;
+            let nodes: &mut Vec<ast::Node> = if unshared {
+                guard = arena.cow();
+                &mut guard
+            } else {
+                owned = self.jsdoc_scratch_arenas.entry(declaration.file_index());
+                owned.or_insert_with(|| arena.snapshot().to_vec())
+            };
+            let deprecated_tag = crate::jsdoc::get_jsdoc_deprecated_tag(nodes, declaration);
             if let Some(deprecated_tag) = deprecated_tag {
                 let related = create_diagnostic_for_node(
                     Some(deprecated_tag),
-                    &nodes,
+                    &*nodes,
                     &tsc_diagnostics::The_declaration_was_marked_as_deprecated_here,
                     &[],
                 );
@@ -14760,19 +14817,40 @@ impl Checker {
         ignore_errors: bool,
         import_attributes_type: Option<TypeId>,
     ) -> Option<SymbolId> {
+        self.resolve_external_module_name_live(
+            location,
+            module_reference_expression,
+            ignore_errors,
+            import_attributes_type,
+            None,
+        )
+    }
+
+    /// `resolve_external_module_name` with the caller's live (checked-out)
+    /// node buffer so `location`/`module_reference_expression` resolve against
+    /// the arena that actually owns them.
+    pub(crate) fn resolve_external_module_name_live(
+        &mut self,
+        location: NodeId,
+        module_reference_expression: Option<NodeId>,
+        ignore_errors: bool,
+        import_attributes_type: Option<TypeId>,
+        live_nodes: Option<&[ast::Node]>,
+    ) -> Option<SymbolId> {
         let error_message = self
             .get_cannot_resolve_module_name_error_for_specific_module(module_reference_expression);
         let error_message = error_message.or(Some(
             &tsc_diagnostics::Cannot_find_module_0_or_its_corresponding_type_declarations,
         ));
         let ignore_errors = ignore_errors || self.compiler_options.no_check.is_true();
-        self.resolve_external_module_name_worker(
+        self.resolve_external_module_name_worker_live(
             location,
             module_reference_expression,
             if ignore_errors { None } else { error_message },
             ignore_errors,
             false, /*isForAugmentation*/
             import_attributes_type,
+            live_nodes,
         )
     }
 
@@ -14807,9 +14885,35 @@ impl Checker {
         is_for_augmentation: bool,
         import_attributes_type: Option<TypeId>,
     ) -> Option<SymbolId> {
+        self.resolve_external_module_name_worker_live(
+            location,
+            module_reference_expression,
+            module_not_found_error,
+            ignore_errors,
+            is_for_augmentation,
+            import_attributes_type,
+            None,
+        )
+    }
+
+    /// `resolve_external_module_name_worker` with the caller's live node buffer.
+    pub(crate) fn resolve_external_module_name_worker_live(
+        &mut self,
+        location: NodeId,
+        module_reference_expression: Option<NodeId>,
+        module_not_found_error: Option<&'static tsc_diagnostics::Message>,
+        ignore_errors: bool,
+        is_for_augmentation: bool,
+        import_attributes_type: Option<TypeId>,
+        live_nodes: Option<&[ast::Node]>,
+    ) -> Option<SymbolId> {
         let module_reference_expression = module_reference_expression?;
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((module_reference_expression).file_index());
+        let nodes = crate::printer_util::arena_view(
+            &__program,
+            live_nodes.unwrap_or(&[]),
+            (module_reference_expression).file_index(),
+        );
         if !ast::is_string_literal_like(&nodes[module_reference_expression]) {
             return None;
         }
@@ -14820,7 +14924,7 @@ impl Checker {
             return None;
         }
         let module_reference = nodes[module_reference_expression].text(&nodes).into_owned();
-        self.resolve_external_module(
+        self.resolve_external_module_live(
             location,
             &module_reference,
             module_not_found_error,
@@ -14831,6 +14935,7 @@ impl Checker {
             },
             is_for_augmentation,
             import_attributes_type,
+            live_nodes,
         )
     }
 
@@ -14891,8 +14996,34 @@ impl Checker {
         is_for_augmentation: bool,
         import_attributes_type: Option<TypeId>,
     ) -> Option<SymbolId> {
+        self.resolve_external_module_live(
+            location,
+            module_reference,
+            module_not_found_error,
+            error_node,
+            is_for_augmentation,
+            import_attributes_type,
+            None,
+        )
+    }
+
+    /// `resolve_external_module` with the caller's live node buffer.
+    pub(crate) fn resolve_external_module_live(
+        &mut self,
+        location: NodeId,
+        module_reference: &str,
+        module_not_found_error: Option<&'static tsc_diagnostics::Message>,
+        error_node: Option<NodeId>,
+        is_for_augmentation: bool,
+        import_attributes_type: Option<TypeId>,
+        live_nodes: Option<&[ast::Node]>,
+    ) -> Option<SymbolId> {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((location).file_index());
+        let nodes = crate::printer_util::arena_view(
+            &__program,
+            live_nodes.unwrap_or(&[]),
+            (location).file_index(),
+        );
         if error_node.is_some() && module_reference.starts_with("@types/") {
             let without_at_type_prefix = &module_reference["@types/".len()..];
             self.error(
@@ -15025,6 +15156,8 @@ impl Checker {
         }
 
         if let Some(source_file) = source_file {
+            // `source_file` is a foreign NodeId — index it via its own arena.
+            let source_file_nodes = __program.nodes(source_file.file_index());
             // If there's a resolutionDiagnostic we need to report it even if a sourceFile is found.
             if let Some(resolution_diagnostic) = resolution_diagnostic {
                 self.error(
@@ -15161,7 +15294,9 @@ impl Checker {
                             .program
                             .as_ref()
                             .expect("program")
-                            .get_redirect_for_resolution(nodes[source_file].as_source_file())
+                            .get_redirect_for_resolution(
+                                source_file_nodes[source_file].as_source_file(),
+                            )
                         {
                             let own_root_dir =
                                 crate::checker_types::Program::common_source_directory(
@@ -15211,7 +15346,7 @@ impl Checker {
                 }
             }
 
-            if nodes[source_file].symbol().is_some() {
+            if source_file_nodes[source_file].symbol().is_some() {
                 if let Some(error_node) = error_node {
                     let resolved = resolved_module.as_ref().unwrap();
                     if resolved.is_external_library_import
@@ -15249,7 +15384,7 @@ impl Checker {
                                 ast::is_resolution_mode_override_host(Some(n.id), nodes)
                             });
                         let __program = self.program.clone().expect("program");
-                        let source_file_nodes = __program.nodes((source_file).file_index());
+                        let source_file_nodes = __program.nodes(source_file.file_index());
                         if is_sync_import
                             && self
                                 .program
@@ -15318,7 +15453,7 @@ impl Checker {
                         }
                     }
                 }
-                let source_file_symbol = nodes[source_file].symbol();
+                let source_file_symbol = source_file_nodes[source_file].symbol();
                 let merged_symbol = source_file_symbol.map(|s| self.get_merged_symbol(s));
                 return self.try_resolve_pattern_ambient_module(
                     merged_symbol,
@@ -16174,6 +16309,7 @@ impl Checker {
             None,  /*nameNotFoundMessage*/
             true,  /*isUse*/
             false, /*excludeGlobals*/
+         None,
         );
         if resolved_require == Some(self.require_symbol) {
             return true;
@@ -16362,9 +16498,53 @@ impl Checker {
         dont_resolve_alias: bool,
         location: Option<NodeId>,
     ) -> Option<SymbolId> {
+        self.resolve_entity_name_live(
+            name,
+            meaning,
+            ignore_errors,
+            dont_resolve_alias,
+            location,
+            None,
+        )
+    }
+
+    /// `resolve_entity_name` with a live-arena override for the checked-out
+    /// working buffer — see [`crate::printer_util::arena_view`].
+    pub(crate) fn resolve_entity_name_live(
+        &mut self,
+        name: Option<NodeId>,
+        meaning: ast::SymbolFlags,
+        ignore_errors: bool,
+        dont_resolve_alias: bool,
+        location: Option<NodeId>,
+        live_nodes: Option<&[ast::Node]>,
+    ) -> Option<SymbolId> {
         let name = name?;
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((name).file_index());
+        let nodes = crate::printer_util::arena_view(
+            &__program,
+            live_nodes.unwrap_or(&[]),
+            name.file_index(),
+        );
+        if std::env::var("DBG_REN").is_ok()
+            && !matches!(
+                nodes[name].kind,
+                ast::Kind::Identifier
+                    | ast::Kind::QualifiedName
+                    | ast::Kind::PropertyAccessExpression
+            )
+        {
+            let prog_nodes = __program.nodes(name.file_index());
+            eprintln!(
+                "[ren] name={name:?} kind={:?} buflen={} first={:?} prog_len={} prog_kind={:?}\n{}",
+                nodes[name].kind,
+                nodes.len(),
+                nodes.first().map(|n| n.id),
+                prog_nodes.len(),
+                prog_nodes.get(name.local_index() as usize).map(|n| n.kind),
+                std::backtrace::Backtrace::force_capture()
+            );
+        }
         if ast::node_is_missing(Some(name), &nodes) {
             return None;
         }
@@ -16393,6 +16573,7 @@ impl Checker {
                         None,
                         true,  /*isUse*/
                         false, /*excludeGlobals*/
+                     live_nodes,
                     )
                     .map(|s| self.get_merged_symbol(s));
                     if symbol.is_none() {
@@ -16404,6 +16585,7 @@ impl Checker {
                             None,
                             true,  /*isUse*/
                             false, /*excludeGlobals*/
+                         live_nodes,
                         )
                         .map(|s| self.get_merged_symbol(s));
                         if let Some(alias) = alias
@@ -16423,6 +16605,7 @@ impl Checker {
                             message,
                             true,  /*isUse*/
                             false, /*excludeGlobals*/
+                         live_nodes,
                         );
                     }
                 } else {
@@ -16434,6 +16617,7 @@ impl Checker {
                         message,
                         true,  /*isUse*/
                         false, /*excludeGlobals*/
+                     live_nodes,
                     )
                     .map(|s| self.get_merged_symbol(s));
                 }
@@ -16450,6 +16634,7 @@ impl Checker {
                     meaning,
                     ignore_errors,
                     location,
+                    live_nodes,
                 );
             }
             ast::Kind::PropertyAccessExpression => {
@@ -16464,9 +16649,10 @@ impl Checker {
                     meaning,
                     ignore_errors,
                     location,
+                    live_nodes,
                 );
             }
-            _ => panic!("Unknown entity name kind"),
+            _ => panic!("Unknown entity name kind {:?} for node {:?}", nodes[name].kind, name),
         }
         if let Some(mut sym) = symbol
             && sym != self.unknown_symbol
@@ -16502,15 +16688,21 @@ impl Checker {
         meaning: ast::SymbolFlags,
         ignore_errors: bool,
         location: Option<NodeId>,
+        live_nodes: Option<&[ast::Node]>,
     ) -> Option<SymbolId> {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((name).file_index());
-        let namespace = self.resolve_entity_name(
+        let nodes = crate::printer_util::arena_view(
+            &__program,
+            live_nodes.unwrap_or(&[]),
+            name.file_index(),
+        );
+        let namespace = self.resolve_entity_name_live(
             Some(left),
             ast::SymbolFlags::NAMESPACE,
             ignore_errors,
             false, /*dontResolveAlias*/
             location,
+            live_nodes,
         );
         let Some(mut namespace) = namespace else {
             return None;
@@ -16524,7 +16716,11 @@ impl Checker {
         let namespace_value_declaration = self.sym(namespace).value_declaration;
         if let Some(vd) = namespace_value_declaration {
             let __program = self.program.clone().expect("program");
-            let vdn = __program.nodes((vd).file_index());
+            let vdn = crate::printer_util::arena_view(
+                &__program,
+                live_nodes.unwrap_or(&[]),
+                vd.file_index(),
+            );
             if ast::is_in_js_file(Some(vd), &vdn)
                 && self.compiler_options.get_module_resolution_kind()
                     != ModuleResolutionKind::Bundler
@@ -16535,7 +16731,11 @@ impl Checker {
             {
                 let initializer = vdn[vd].initializer().unwrap();
                 let __program = self.program.clone().expect("program");
-                let init_nodes = __program.nodes((initializer).file_index());
+                let init_nodes = crate::printer_util::arena_view(
+                    &__program,
+                    live_nodes.unwrap_or(&[]),
+                    initializer.file_index(),
+                );
                 if let Some(module_name) = init_nodes[initializer]
                     .arguments()
                     .and_then(|a| a.first().copied())
@@ -16665,6 +16865,7 @@ impl Checker {
             None,  /*nameNotFoundMessage*/
             true,  /*isUse*/
             false, /*excludeGlobals*/
+         None,
         )?;
         let mut n = id;
         while let Some(parent) = nodes[n].parent {

@@ -104,16 +104,38 @@ impl DiagnosticFile {
     /// Builds the handle for a parsed `SourceFile` node, reading
     /// `FileName()`/`PathKey()`/`Text()`/`OriginalText()`/`SpanMap()` off the
     /// node's `SourceFile` data.
+    ///
+    /// PORT: Go builds `&Diagnostic{file: sourceFile}` for free; this
+    /// snapshot copies the text, so speculative diagnostic construction
+    /// (relation elaboration, grammar checks) was paying a full-text copy
+    /// per call. `NodeId`s are process-unique and the file attributes are
+    /// fixed before the file is published, so results are cached by node —
+    /// stale entries are only dead memory, capped by the map bound.
     pub fn from_node(node: NodeId, nodes: &[Node]) -> DiagnosticFile {
+        thread_local! {
+            static CACHE: std::cell::RefCell<FxHashMap<NodeId, DiagnosticFile>> =
+                std::cell::RefCell::new(FxHashMap::default());
+        }
+        if let Some(f) = CACHE.with(|c| c.borrow().get(&node).cloned()) {
+            return f;
+        }
         let d = nodes[node].as_source_file();
-        DiagnosticFile {
+        let f = DiagnosticFile {
             node: Some(node),
             file_name: d.file_name().clone(),
             path_key: d.path_key().clone(),
             text: Arc::from(d.text()),
             original_text: Arc::from(d.original_text()),
             span_map: d.span_map(),
-        }
+        };
+        CACHE.with(|c| {
+            let mut c = c.borrow_mut();
+            if c.len() >= 8192 {
+                c.clear();
+            }
+            c.insert(node, f.clone());
+        });
+        f
     }
 }
 

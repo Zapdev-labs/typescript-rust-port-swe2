@@ -120,6 +120,7 @@ enum SymbolTableDest {
 /// PORT: symbols are NOT stored here — Go's `b.symbolArena` is the program's
 /// shared `Vec<Symbol>` (SPEC §5.2), borrowed by the binder for the duration
 /// of the bind so `SymbolId`s are globally unique.
+#[derive(Clone)]
 pub struct BindResult {
     /// `b.flowNodeArena` — the control-flow graph, indexed by `FlowNodeId`.
     pub flow_nodes: Vec<FlowNode>,
@@ -138,11 +139,19 @@ pub fn bind_result(nodes: &[Node], file: NodeId) -> Option<&BindResult> {
 /// Mutable `bind_result` — the checker appends synthetic `FlowNode`s
 /// (`&ast.FlowNode{}` literals in Go become `FlowNodeId`s here) e.g. in
 /// `checkIfExpressionRefinesParameter`.
+///
+/// PORT(COW): when an arena snapshot shares the `Rc` cell, `get_mut` cannot
+/// hand out `&mut`. Clone the `BindResult` into a fresh cell instead —
+/// pre-existing snapshots keep their point-in-time view (they'd see the old
+/// `flow_nodes` length under in-place mutation anyway), and post-clone
+/// reads observe the appended node.
 pub fn bind_result_mut(nodes: &mut [Node], file: NodeId) -> Option<&mut BindResult> {
-    nodes[file]
-        .as_source_file_mut()
-        .data
-        .get_mut(&BIND_RESULT_KEY)
+    let data = &mut nodes[file].as_source_file_mut().data;
+    if data.get_mut(&BIND_RESULT_KEY).is_none() {
+        let cloned = data.get(&BIND_RESULT_KEY)?.clone();
+        data.insert(&BIND_RESULT_KEY, cloned);
+    }
+    data.get_mut(&BIND_RESULT_KEY)
 }
 
 /// `type Binder struct`
@@ -2501,7 +2510,11 @@ impl<'a> Binder<'a> {
             let save_continue_target = self.current_continue_target;
             let save_return_target = self.current_return_target;
             let save_exception_target = self.current_exception_target;
-            let save_active_label_list_len = self.active_labels.len();
+            // Go: `saveActiveLabelList := b.activeLabelList` …
+            // `b.activeLabelList = nil` … `b.activeLabelList = saveActiveLabelList`
+            // — swap the whole list out so labels bound inside the container
+            // don't leak and outer labels stay invisible to inner lookups.
+            let save_active_label_list = std::mem::take(&mut self.active_labels);
             let save_has_explicit_return = self.has_explicit_return;
             let save_seen_this_keyword = self.seen_this_keyword;
             let is_immediately_invoked = (container_flags & CONTAINER_FLAGS_IS_FUNCTION_EXPRESSION
@@ -2534,7 +2547,6 @@ impl<'a> Binder<'a> {
             self.current_exception_target = None;
             self.current_break_target = None;
             self.current_continue_target = None;
-            self.active_labels.clear();
             self.has_explicit_return = false;
             self.seen_this_keyword = false;
             self.bind_children(node);
@@ -2584,7 +2596,7 @@ impl<'a> Binder<'a> {
             self.current_continue_target = save_continue_target;
             self.current_return_target = save_return_target;
             self.current_exception_target = save_exception_target;
-            self.active_labels.truncate(save_active_label_list_len);
+            self.active_labels = save_active_label_list;
             self.has_explicit_return = save_has_explicit_return;
             if container_flags & CONTAINER_FLAGS_PROPAGATES_THIS_KEYWORD != 0 {
                 self.seen_this_keyword = save_seen_this_keyword || self.seen_this_keyword;

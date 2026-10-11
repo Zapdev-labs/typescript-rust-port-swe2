@@ -436,7 +436,7 @@ impl fmt::Debug for SignatureId {
 // Links for referenced symbols
 
 /// `type SymbolReferenceLinks struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct SymbolReferenceLinks {
     /// `referenceKinds` — flags for the meanings of the symbol that were
     /// referenced.
@@ -446,7 +446,7 @@ pub struct SymbolReferenceLinks {
 // Links for value symbols
 
 /// `type ValueSymbolLinks struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ValueSymbolLinks {
     /// `resolvedType` — type of value symbol.
     pub resolved_type: Option<TypeId>,
@@ -468,7 +468,7 @@ pub struct ValueSymbolLinks {
 // Additional links for mapped symbols
 
 /// `type MappedSymbolLinks struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct MappedSymbolLinks {
     /// `keyType` — key type for mapped type member.
     pub key_type: Option<TypeId>,
@@ -480,7 +480,7 @@ pub struct MappedSymbolLinks {
 // Additional links for deferred type symbols
 
 /// `type DeferredSymbolLinks struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct DeferredSymbolLinks {
     /// `parent` — source union/intersection of a deferred type.
     pub parent: Option<TypeId>,
@@ -493,7 +493,7 @@ pub struct DeferredSymbolLinks {
 // Links for alias symbols
 
 /// `type AliasSymbolLinks struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct AliasSymbolLinks {
     /// `immediateTarget` — immediate target of an alias. May be another
     /// alias. Do not access directly, use `checker.getImmediateAliasedSymbol`
@@ -512,7 +512,7 @@ pub struct AliasSymbolLinks {
 // Links for module symbols
 
 /// `type ModuleSymbolLinks struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ModuleSymbolLinks {
     /// `resolvedExports` — resolved exports of module or combined early- and
     /// late-bound static members of a class.
@@ -530,7 +530,7 @@ pub struct ModuleSymbolLinks {
 }
 
 /// `type ReverseMappedSymbolLinks struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ReverseMappedSymbolLinks {
     /// `propertyType`.
     pub property_type: Option<TypeId>,
@@ -543,7 +543,7 @@ pub struct ReverseMappedSymbolLinks {
 // Links for late-bound symbols
 
 /// `type LateBoundLinks struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct LateBoundLinks {
     /// `lateSymbol`.
     pub late_symbol: Option<SymbolId>,
@@ -552,7 +552,7 @@ pub struct LateBoundLinks {
 // Links for export type symbols
 
 /// `type ExportTypeLinks struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ExportTypeLinks {
     /// `target` — target symbol.
     pub target: Option<SymbolId>,
@@ -565,7 +565,7 @@ pub struct ExportTypeLinks {
 // Links for type aliases
 
 /// `type TypeAliasLinks struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TypeAliasLinks {
     /// `declaredType`.
     pub declared_type: Option<TypeId>,
@@ -583,7 +583,7 @@ pub struct TypeAliasLinks {
 // enums)
 
 /// `type DeclaredTypeLinks struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct DeclaredTypeLinks {
     /// `declaredType`.
     pub declared_type: Option<TypeId>,
@@ -615,7 +615,7 @@ pub enum ExhaustiveState {
 }
 
 /// `type SwitchStatementLinks struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct SwitchStatementLinks {
     /// `exhaustiveState` — switch statement exhaustiveness.
     pub exhaustive_state: ExhaustiveState,
@@ -632,7 +632,7 @@ pub struct SwitchStatementLinks {
 }
 
 /// `type ArrayLiteralLinks struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ArrayLiteralLinks {
     /// `indicesComputed`.
     pub indices_computed: bool,
@@ -657,13 +657,13 @@ pub enum MembersOrExportsResolutionKind {
 
 /// `type MembersAndExportsLinks [2]ast.SymbolTable` — indexed by
 /// `MembersOrExportsResolutionKind`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct MembersAndExportsLinks(pub [SymbolTable; 2]);
 
 // Links for synthetic spread properties
 
 /// `type SpreadLinks struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct SpreadLinks {
     /// `leftSpread` — left source for synthetic spread property.
     pub left_spread: Option<SymbolId>,
@@ -674,7 +674,7 @@ pub struct SpreadLinks {
 // Links for variances of type aliases and interface types
 
 /// `type VarianceLinks struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct VarianceLinks {
     /// `variances`.
     pub variances: Vec<VarianceFlags>,
@@ -714,7 +714,7 @@ impl VarianceFlags {
 }
 
 /// `type MarkedAssignmentSymbolLinks struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct MarkedAssignmentSymbolLinks {
     /// `lastAssignmentPos`.
     pub last_assignment_pos: i32,
@@ -734,7 +734,7 @@ pub struct AccessibleChainCacheKey {
 }
 
 /// `type ContainingSymbolLinks struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ContainingSymbolLinks {
     /// `extendedContainersByFile` — symbols of nodes which logically contain
     /// this one, cached by file the request is made within.
@@ -809,7 +809,7 @@ impl NodeCheckFlags {
 // Common links
 
 /// `type NodeLinks struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct NodeLinks {
     /// `flags` — set of flags specific to Node.
     pub flags: NodeCheckFlags,
@@ -823,14 +823,14 @@ pub struct NodeLinks {
 }
 
 /// `type SymbolNodeLinks struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct SymbolNodeLinks {
     /// `resolvedSymbol` — resolved symbol associated with node.
     pub resolved_symbol: Option<SymbolId>,
 }
 
 /// `type TypeNodeLinks struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TypeNodeLinks {
     /// `resolvedType` — resolved type associated with node.
     pub resolved_type: Option<TypeId>,
@@ -840,7 +840,7 @@ pub struct TypeNodeLinks {
 }
 
 /// `type ComputedNameNodeLinks struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ComputedNameNodeLinks {
     /// `hasName` — if the node has a computable name.
     pub has_name: Option<bool>,
@@ -851,7 +851,7 @@ pub struct ComputedNameNodeLinks {
 // Links for enum members
 
 /// `type EnumMemberLinks struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct EnumMemberLinks {
     /// `value` — constant value of enum member.
     pub value: evaluator::Result,
@@ -860,7 +860,7 @@ pub struct EnumMemberLinks {
 // Links for assertion expressions
 
 /// `type AssertionLinks struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct AssertionLinks {
     /// `exprType` — assertion expression type.
     pub expr_type: Option<TypeId>,
@@ -869,7 +869,7 @@ pub struct AssertionLinks {
 // SourceFile links
 
 /// `type SourceFileLinks struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct SourceFileLinks {
     /// `typeChecked`.
     pub type_checked: bool,
@@ -898,7 +898,7 @@ pub struct SourceFileLinks {
 // Signature specific links
 
 /// `type SignatureLinks struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct SignatureLinks {
     /// `resolvedSignature` — cached signature of signature node or call
     /// expression.
@@ -1458,7 +1458,7 @@ impl TypeAlias {
 ///
 /// PORT: `checker *Checker` becomes `checker_shard` (SPEC §5.4); `data
 /// TypeData` becomes the `TypeData` enum.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct Type {
     /// `flags`.
     pub flags: TypeFlags,
@@ -1809,7 +1809,7 @@ impl Type {
         if self.flags.intersects(TypeFlags::TEMPLATE_LITERAL) {
             return &self.as_template_literal_type().types;
         }
-        panic!("Unhandled case in Type.Types")
+        panic!("Unhandled case in Type.Types (flags={:?})", self.flags)
     }
 
     // PORT: `(t *Type) TargetInterfaceType` / `TargetTupleType` dereference
@@ -1898,6 +1898,7 @@ impl Type {
 /// `AsStructuredType`/`AsObjectType`/`AsTypeReference`/`AsInterfaceType`/
 /// `AsUnionOrIntersectionType` become `Option` accessors; `AsType` is
 /// unnecessary (the `Type` is the arena element, reached via `TypeId`).
+#[derive(Clone)]
 pub enum TypeData {
     /// `*IntrinsicType`.
     Intrinsic(IntrinsicType),
@@ -2192,7 +2193,7 @@ impl TypeData {
 
 /// `type IntrinsicType struct` — the `TypeBase` embed is the enclosing
 /// `Type`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct IntrinsicType {
     /// `intrinsicName`.
     pub intrinsic_name: String,
@@ -2208,7 +2209,7 @@ impl IntrinsicType {
 // LiteralTypeData
 
 /// `type LiteralType struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct LiteralType {
     /// `value any` — `string | jsnum.Number | bool | PseudoBigInt`; `None`
     /// is Go's nil (computed enum).
@@ -2246,7 +2247,7 @@ impl fmt::Display for LiteralType {
 // UniqueESSymbolTypeData
 
 /// `type UniqueESSymbolType struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct UniqueESSymbolType {
     /// `name`.
     pub name: String,
@@ -2264,7 +2265,7 @@ pub struct ConstrainedType {
 // StructuredType (base of all types with members)
 
 /// `type StructuredType struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct StructuredType {
     /// embedded `ConstrainedType`.
     pub constrained_type: ConstrainedType,
@@ -2342,7 +2343,7 @@ impl StructuredType {
 //   ObjectFlagsEvolvingArray: Evolving array type
 
 /// `type ObjectType struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ObjectType {
     /// embedded `StructuredType`.
     pub structured_type: StructuredType,
@@ -2357,7 +2358,7 @@ pub struct ObjectType {
 // TypeReference (instantiation of an InterfaceType)
 
 /// `type TypeReference struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TypeReference {
     /// embedded `ObjectType`.
     pub object_type: ObjectType,
@@ -2372,7 +2373,7 @@ pub struct TypeReference {
 // itself)
 
 /// `type InterfaceType struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct InterfaceType {
     /// embedded `TypeReference`.
     pub type_reference: TypeReference,
@@ -2482,7 +2483,7 @@ impl TupleElementInfo {
 }
 
 /// `type TupleType struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TupleType {
     /// embedded `InterfaceType`.
     pub interface_type: InterfaceType,
@@ -2523,7 +2524,7 @@ impl TupleType {
 // InstantiationExpressionType
 
 /// `type InstantiationExpressionType struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct InstantiationExpressionType {
     /// embedded `ObjectType`.
     pub object_type: ObjectType,
@@ -2534,7 +2535,7 @@ pub struct InstantiationExpressionType {
 // MappedType
 
 /// `type MappedType struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct MappedType {
     /// embedded `ObjectType`.
     pub object_type: ObjectType,
@@ -2587,7 +2588,7 @@ impl MappedType {
 // ReverseMappedType
 
 /// `type ReverseMappedType struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ReverseMappedType {
     /// embedded `ObjectType`.
     pub object_type: ObjectType,
@@ -2602,7 +2603,7 @@ pub struct ReverseMappedType {
 // EvolvingArrayType
 
 /// `type EvolvingArrayType struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct EvolvingArrayType {
     /// embedded `ObjectType`.
     pub object_type: ObjectType,
@@ -2615,7 +2616,7 @@ pub struct EvolvingArrayType {
 // UnionOrIntersectionTypeData
 
 /// `type UnionOrIntersectionType struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct UnionOrIntersectionType {
     /// embedded `StructuredType`.
     pub structured_type: StructuredType,
@@ -2639,7 +2640,7 @@ impl UnionOrIntersectionType {
 // UnionType
 
 /// `type UnionType struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct UnionType {
     /// embedded `UnionOrIntersectionType`.
     pub union_or_intersection: UnionOrIntersectionType,
@@ -2661,7 +2662,7 @@ pub struct UnionType {
 // IntersectionType
 
 /// `type IntersectionType struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct IntersectionType {
     /// embedded `UnionOrIntersectionType`.
     pub union_or_intersection: UnionOrIntersectionType,
@@ -2675,7 +2676,7 @@ pub struct IntersectionType {
 // TypeParameter
 
 /// `type TypeParameter struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TypeParameter {
     /// embedded `ConstrainedType`.
     pub constrained_type: ConstrainedType,
@@ -2721,7 +2722,7 @@ impl IndexFlags {
 // IndexType
 
 /// `type IndexType struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct IndexType {
     /// embedded `ConstrainedType`.
     pub constrained_type: ConstrainedType,
@@ -2741,7 +2742,7 @@ impl IndexType {
 // IndexedAccessType
 
 /// `type IndexedAccessType struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct IndexedAccessType {
     /// embedded `ConstrainedType`.
     pub constrained_type: ConstrainedType,
@@ -2789,7 +2790,7 @@ impl TemplateLiteralType {
 }
 
 /// `type StringMappingType struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct StringMappingType {
     /// embedded `ConstrainedType`.
     pub constrained_type: ConstrainedType,
@@ -2805,7 +2806,7 @@ impl StringMappingType {
 }
 
 /// `type SubstitutionType struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct SubstitutionType {
     /// embedded `ConstrainedType`.
     pub constrained_type: ConstrainedType,
@@ -2829,7 +2830,7 @@ impl SubstitutionType {
 
 /// `type ConditionalRoot struct`. `ConditionalType.root` is `*ConditionalRoot`
 /// in Go — `Option<Box<ConditionalRoot>>` here.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ConditionalRoot {
     /// `node` — `*ast.ConditionalTypeNode`.
     pub node: Option<NodeId>,
@@ -2850,7 +2851,7 @@ pub struct ConditionalRoot {
 }
 
 /// `type ConditionalType struct`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ConditionalType {
     /// embedded `ConstrainedType`.
     pub constrained_type: ConstrainedType,
@@ -2945,7 +2946,7 @@ impl SignatureFlags {
 // Signature
 
 /// `type Signature struct` — the arena element of `SignatureArena`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct Signature {
     /// `id`.
     pub id: SignatureId,
@@ -3125,7 +3126,7 @@ impl IndexInfoId {
 
 /// `IndexInfoArena` — the port's `core.Arena[IndexInfo]`, a plain `Vec`
 /// indexed by `IndexInfoId` (mirroring `SignatureArena`).
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct IndexInfoArena {
     index_infos: Vec<IndexInfo>,
 }
@@ -3315,28 +3316,17 @@ pub type StringLiteralType = TypeId;
 pub struct TypeArena {
     /// `Arc` so `tracer.rs`'s `Send + Sync` `TracedType` adapter can hold a
     /// share of the arena post-hoc (Go's adapter holds the `*Type` heap
-    /// pointer).
-    types: Arc<RwLock<Vec<Type>>>,
-}
-
-/// `TypeArena::get` result — derefs to `Type`. PORT: a custom guard instead
-/// of `MappedRwLockReadGuard` (`mapped_lock_guards` is unstable on stable).
-pub struct TypeReadGuard<'a> {
-    guard: RwLockReadGuard<'a, Vec<Type>>,
-    index: usize,
-}
-
-impl std::ops::Deref for TypeReadGuard<'_> {
-    type Target = Type;
-    #[inline]
-    fn deref(&self) -> &Type {
-        &self.guard[self.index]
-    }
+    /// pointer). Elements are `Arc<Type>` so `get` hands out a cheap shared
+    /// pointer (Go's `*Type`) rather than deep-cloning the type — including
+    /// its member `IndexMap`s — on every read. `get_mut` copy-on-writes via
+    /// `Arc::make_mut`: in-place when unshared, a fresh copy when readers hold
+    /// a snapshot (snapshot holders then see the pre-write value).
+    types: Arc<RwLock<Vec<std::sync::Arc<Type>>>>,
 }
 
 /// `TypeArena::get_mut` result — derefs to `Type` (mutable).
 pub struct TypeWriteGuard<'a> {
-    guard: RwLockWriteGuard<'a, Vec<Type>>,
+    guard: RwLockWriteGuard<'a, Vec<std::sync::Arc<Type>>>,
     index: usize,
 }
 
@@ -3351,35 +3341,45 @@ impl std::ops::Deref for TypeWriteGuard<'_> {
 impl std::ops::DerefMut for TypeWriteGuard<'_> {
     #[inline]
     fn deref_mut(&mut self) -> &mut Type {
-        &mut self.guard[self.index]
+        std::sync::Arc::make_mut(&mut self.guard[self.index])
     }
 }
 
 impl TypeArena {
     /// Allocate a type in the arena, returning its `TypeId`.
     pub fn alloc(&self, t: Type) -> TypeId {
-        let mut types = self.types.write().unwrap();
+        let mut types = self
+            .types
+            .try_write()
+            .expect("DEADLOCK-PROBE: types.alloc while arena lock held");
         let id = TypeId(types.len() as u32);
-        types.push(t);
+        types.push(std::sync::Arc::new(t));
         id
     }
 
-    /// Read-locked access to a single type — the Go `t.field` read shape.
-    /// Do not hold across `get_mut`/`alloc` (same-thread RwLock recursion
-    /// deadlocks).
-    pub fn get(&self, id: TypeId) -> TypeReadGuard<'_> {
-        TypeReadGuard {
-            guard: self.types.read().unwrap(),
-            index: id.index(),
-        }
+    /// Shared-pointer access to a single type — the Go `t.field` read shape.
+    /// Returns an `Rc<Type>` clone: a live read guard held across `get_mut`/
+    /// `alloc` deadlocks same-thread `RwLock` recursion, and the checker is
+    /// full of such call chains (Go reads the shared heap freely). Reads
+    /// under a held write guard still panic via `try_read` — Go-legal
+    /// reads-while-mutating must extract fields before `get_mut`.
+    pub fn get(&self, id: TypeId) -> std::sync::Arc<Type> {
+        self.types
+            .try_read()
+            .expect("DEADLOCK-PROBE: types.get while write lock held")[id.index()]
+        .clone()
     }
 
     /// Write-locked access to a single type — the Go `t.field = v` write
     /// shape. Compute the value before calling (a nested `get`/`get_mut` on
-    /// the same arena deadlocks while the guard is held).
+    /// the same arena deadlocks while the guard is held). `Arc::make_mut`
+    /// clones the element iff `get` snapshots still share it.
     pub fn get_mut(&self, id: TypeId) -> TypeWriteGuard<'_> {
         TypeWriteGuard {
-            guard: self.types.write().unwrap(),
+            guard: self
+                .types
+                .try_write()
+                .expect("DEADLOCK-PROBE: types.get_mut while arena lock held"),
             index: id.index(),
         }
     }
@@ -3425,7 +3425,7 @@ impl TypeArena {
 // lock discipline doesn't apply to signature construction).
 
 /// `SignatureArena` — arena of `Signature`, indexed by `SignatureId`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct SignatureArena {
     signatures: Vec<Signature>,
 }

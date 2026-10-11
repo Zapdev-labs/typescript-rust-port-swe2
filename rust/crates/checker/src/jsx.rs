@@ -21,7 +21,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use tsc_ast::{self as ast, NodeId, SymbolId};
+use tsc_ast::{self as ast, Node, NodeId, SymbolId};
 use tsc_core::options_generated::JsxEmit;
 use tsc_core::text::TextRange;
 use tsc_diagnostics as diagnostics;
@@ -260,7 +260,7 @@ impl Checker {
             self.check_grammar_jsx_element(node);
         }
         self.check_jsx_preconditions(node);
-        self.mark_jsx_alias_referenced(node);
+        self.mark_jsx_alias_referenced(node, None);
         let sig = self.get_resolved_signature(node, None, CheckMode::NORMAL);
         if let Some(sig) = sig {
             self.check_deprecated_signature(sig, node);
@@ -1253,10 +1253,10 @@ impl Checker {
         let __program = self.program.clone().expect("program");
         let nodes = __program.nodes((node).file_index());
         let is_jsx_open_fragment = ast::is_jsx_opening_fragment(&nodes[node]);
-        let tag_name = nodes[node].tag_name();
-        let attributes = nodes[node].attributes();
         let expr_types;
         if !is_jsx_open_fragment {
+            let tag_name = nodes[node].tag_name();
+            let attributes = nodes[node].attributes();
             if crate::utilities::is_jsx_intrinsic_tag_name(tag_name.expect("tag name"), &nodes) {
                 let result = self.get_intrinsic_attributes_type_from_jsx_opening_like_element(node);
                 let fake_signature = self.create_signature_for_jsx_intrinsic(node, result);
@@ -1322,7 +1322,7 @@ impl Checker {
                     &diagnostics::JSX_element_type_0_does_not_have_any_construct_or_call_signatures,
                     &[text],
                 );
-            } else if let Some(tag_name) = tag_name {
+            } else if let Some(tag_name) = nodes[node].tag_name() {
                 let text = tsc_scanner::utilities::get_text_of_node(tag_name, &nodes);
                 self.error(
                     Some(tag_name),
@@ -1370,7 +1370,11 @@ impl Checker {
         let __program = self.program.clone().expect("program");
         let nodes = __program.nodes((node).file_index());
         let is_opening_fragment = ast::is_jsx_opening_fragment(&nodes[node]);
-        let attributes = nodes[node].attributes();
+        let attributes = if is_opening_fragment {
+            None
+        } else {
+            nodes[node].attributes()
+        };
         let attributes_type = if is_opening_fragment {
             self.create_jsx_attributes_type_from_attributes_property(node, CheckMode::NORMAL)
         } else {
@@ -1402,11 +1406,6 @@ impl Checker {
                 error_node = tag_name_or_none(self, node);
             }
         }
-        let attributes = if is_opening_fragment {
-            None
-        } else {
-            attributes
-        };
         self.check_type_related_to_and_optionally_elaborate(
             check_attributes_type,
             param_type,
@@ -1439,16 +1438,17 @@ impl Checker {
         // have attributes
         let __program = self.program.clone().expect("program");
         let nodes = __program.nodes((node).file_index());
-        let tag_name = nodes[node].tag_name();
         let mut tag_type = None;
-        if (ast::is_jsx_opening_element(&nodes[node])
-            || ast::is_jsx_self_closing_element(&nodes[node]))
-            && tag_name.is_some_and(|t| {
-                !crate::utilities::is_jsx_intrinsic_tag_name(t, &nodes)
-                    && !ast::is_jsx_namespaced_name(&nodes[t])
-            })
+        if ast::is_jsx_opening_element(&nodes[node])
+            || ast::is_jsx_self_closing_element(&nodes[node])
         {
-            tag_type = Some(self.check_expression(tag_name.unwrap()));
+            if let Some(tag_name) = nodes[node].tag_name() {
+                if !crate::utilities::is_jsx_intrinsic_tag_name(tag_name, &nodes)
+                    && !ast::is_jsx_namespaced_name(&nodes[tag_name])
+                {
+                    tag_type = Some(self.check_expression(tag_name));
+                }
+            }
         }
         let Some(tag_type) = tag_type else {
             return true;
@@ -1607,8 +1607,9 @@ impl Checker {
             for attribute_decl in props {
                 let __program = self.program.clone().expect("program");
                 let nodes = __program.nodes((attribute_decl).file_index());
-                let member = nodes[attribute_decl].symbol().expect("attribute symbol");
+                let member = nodes[attribute_decl].symbol();
                 if ast::is_jsx_attribute(&nodes[attribute_decl]) {
+                    let member = member.expect("attribute symbol");
                     let expr_type = self.check_jsx_attribute(attribute_decl, check_mode);
                     object_flags |= self.types_handle().get(expr_type).object_flags
                         & ObjectFlags::PROPAGATING_FLAGS;
@@ -2117,7 +2118,7 @@ impl Checker {
             let __arena_intrinsic_symbol = self.types.clone();
             let intrinsic_symbol = __arena_intrinsic_symbol.get(intrinsic_class_attribs).symbol;
             let type_params = intrinsic_symbol
-                .map(|s| self.get_local_type_parameters_of_class_or_interface_or_type_alias(s))
+                .map(|s| self.get_local_type_parameters_of_class_or_interface_or_type_alias(s, &[]))
                 .filter(|t| !t.is_empty());
             let host_class_type = self.get_return_type_of_signature(sig);
             let library_managed_attribute_type;
@@ -2777,14 +2778,42 @@ impl Checker {
         s
     }
 
+    /// The parsed `SourceFile` `NodeId` for `file_index` — emit/transform
+    /// paths can produce the transform's *cloned* SourceFile, while
+    /// `source_file_links` is keyed by the original (Go compares
+    /// `*SourceFile` pointers; transform visitors keep the original root).
+    fn canonical_source_file(&self, file: NodeId) -> NodeId {
+        self.files
+            .iter()
+            .find(|f| f.file_index() == file.file_index())
+            .copied()
+            .unwrap_or(file)
+    }
+
     /// `func (c *Checker) getJsxNamespace` (jsx.go:1339).
     pub fn get_jsx_namespace(&mut self, location: impl Into<Option<NodeId>>) -> String {
+        self.get_jsx_namespace_live(location, None)
+    }
+
+    /// `getJsxNamespace` with the caller's live node buffer — emit/transform
+    /// paths pass their working arena so `location` resolves even when its
+    /// parent chain points at transform-minted nodes (Go follows pointers).
+    pub fn get_jsx_namespace_live(
+        &mut self,
+        location: impl Into<Option<NodeId>>,
+        mut live: Option<&mut Vec<Node>>,
+    ) -> String {
         let location = location.into();
         if let Some(location) = location {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((location).file_index());
+            let nodes = crate::printer_util::resolve_arena_for(
+                &__program,
+                live.as_deref().map(|v| v.as_slice()).unwrap_or(&[]),
+                location,
+            );
             if let Some(file) = ast::get_source_file_of_node(Some(location), &nodes) {
                 let is_opening_fragment = ast::is_jsx_opening_fragment(&nodes[location]);
+                let file = self.canonical_source_file(file);
                 if is_opening_fragment {
                     let local = self
                         .source_file_links
@@ -2795,33 +2824,55 @@ impl Checker {
                         return local;
                     }
                     let jsx_frag_pragma_value = {
-                        let sf = nodes[file].as_source_file();
+                        let f_nodes = crate::printer_util::resolve_arena_for(
+                            &__program,
+                            live.as_deref().map(|v| v.as_slice()).unwrap_or(&[]),
+                            file,
+                        );
+                        let sf = f_nodes[file].as_source_file();
                         ast::get_pragma_from_source_file(sf, "jsxfrag")
                             .map(|p| ast::get_pragma_argument(Some(p), "factory"))
                     };
                     if let Some(value) = jsx_frag_pragma_value {
-                        let factory = self.parse_isolated_entity_name(&value, file.file_index());
+                        let factory = self.parse_isolated_entity_name(
+                            &value,
+                            file.file_index(),
+                            live.as_deref_mut(),
+                        );
                         self.source_file_links.get(file).local_jsx_fragment_factory = factory;
                         if let Some(factory) = factory {
-                            let first = ast::get_first_identifier(factory, &nodes);
-                            let text = nodes[first].text(&nodes).into_owned();
+                            let f_nodes = crate::printer_util::resolve_arena_for(
+                                &__program,
+                                live.as_deref().map(|v| v.as_slice()).unwrap_or(&[]),
+                                factory,
+                            );
+                            let first = ast::get_first_identifier(factory, &f_nodes);
+                            let text = f_nodes[first].text(&f_nodes).into_owned();
                             self.source_file_links
                                 .get(file)
                                 .local_jsx_fragment_namespace = text.clone();
                             return text;
                         }
                     }
-                    if let Some(entity) = self.get_jsx_fragment_factory_entity(Some(location)) {
+                    if let Some(entity) =
+                        self.get_jsx_fragment_factory_entity_live(Some(location), live.as_deref_mut())
+                    {
                         self.source_file_links.get(file).local_jsx_fragment_factory = Some(entity);
-                        let first = ast::get_first_identifier(entity, &nodes);
-                        let text = nodes[first].text(&nodes).into_owned();
+                        let e_nodes = crate::printer_util::resolve_arena_for(
+                            &__program,
+                            live.as_deref().map(|v| v.as_slice()).unwrap_or(&[]),
+                            entity,
+                        );
+                        let first = ast::get_first_identifier(entity, &e_nodes);
+                        let text = e_nodes[first].text(&e_nodes).into_owned();
                         self.source_file_links
                             .get(file)
                             .local_jsx_fragment_namespace = text.clone();
                         return text;
                     }
                 } else {
-                    let local_jsx_namespace = self.get_local_jsx_namespace(file);
+                    let local_jsx_namespace =
+                        self.get_local_jsx_namespace(file, live.as_deref_mut());
                     if !local_jsx_namespace.is_empty() {
                         self.source_file_links.get(file).local_jsx_namespace =
                             local_jsx_namespace.clone();
@@ -2835,7 +2886,11 @@ impl Checker {
             self.jsx_namespace = "React".to_string();
             if !self.compiler_options.jsx_factory.is_empty() {
                 let jsx_factory = self.compiler_options.jsx_factory.clone();
-                self.jsx_factory_entity = self.parse_isolated_entity_name(&jsx_factory, file_index);
+                self.jsx_factory_entity = self.parse_isolated_entity_name(
+                    &jsx_factory,
+                    file_index,
+                    live.as_deref_mut(),
+                );
                 if let Some(entity) = self.jsx_factory_entity {
                     let __program = self.program.clone().expect("program");
                     let nodes = __program.nodes((entity).file_index());
@@ -2848,42 +2903,66 @@ impl Checker {
         }
         if self.jsx_factory_entity.is_none() {
             let program = self.program.clone().expect("program");
-            let mut arena = program.nodes_mut(file_index);
+            let mut _arena;
+            let buf: &mut Vec<Node> = match live.as_deref_mut() {
+                Some(l) => l,
+                None => {
+                    _arena = program.nodes_mut(file_index);
+                    &mut _arena
+                }
+            };
             let old_file_index = self.factory.file_index();
             self.factory.set_file_index(file_index);
             let left = self
                 .factory
-                .new_identifier(&mut arena, &self.jsx_namespace.clone());
-            let right = self.factory.new_identifier(&mut arena, "createElement");
+                .new_identifier(buf, &self.jsx_namespace.clone());
+            let right = self.factory.new_identifier(buf, "createElement");
             let qualified = self
                 .factory
-                .new_qualified_name(&mut arena, Some(left), Some(right));
+                .new_qualified_name(buf, Some(left), Some(right));
             self.factory.set_file_index(old_file_index);
-            drop(arena);
             self.jsx_factory_entity = Some(qualified);
         }
         self.jsx_namespace.clone()
     }
 
     /// `func (c *Checker) getLocalJsxNamespace` (jsx.go:1388).
-    pub(crate) fn get_local_jsx_namespace(&mut self, file: NodeId) -> String {
+    pub(crate) fn get_local_jsx_namespace(
+        &mut self,
+        file: NodeId,
+        live: Option<&mut Vec<Node>>,
+    ) -> String {
         let local = self.source_file_links.get(file).local_jsx_namespace.clone();
         if !local.is_empty() {
             return local;
         }
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((file).file_index());
+        let mut live = live;
         let jsx_pragma_value = {
+            let nodes = crate::printer_util::resolve_arena_for(
+                &__program,
+                live.as_deref().map(|v| v.as_slice()).unwrap_or(&[]),
+                file,
+            );
             let sf = nodes[file].as_source_file();
             ast::get_pragma_from_source_file(sf, "jsx")
                 .map(|p| ast::get_pragma_argument(Some(p), "factory"))
         };
         if let Some(value) = jsx_pragma_value {
-            let factory = self.parse_isolated_entity_name(&value, file.file_index());
+            let factory = self.parse_isolated_entity_name(
+                &value,
+                file.file_index(),
+                live.as_deref_mut(),
+            );
             self.source_file_links.get(file).local_jsx_factory = factory;
             if let Some(factory) = factory {
-                let first = ast::get_first_identifier(factory, &nodes);
-                let text = nodes[first].text(&nodes).into_owned();
+                let f_nodes = crate::printer_util::resolve_arena_for(
+                    &__program,
+                    live.as_deref().map(|v| v.as_slice()).unwrap_or(&[]),
+                    factory,
+                );
+                let first = ast::get_first_identifier(factory, &f_nodes);
+                let text = f_nodes[first].text(&f_nodes).into_owned();
                 self.source_file_links.get(file).local_jsx_namespace = text.clone();
                 return text;
             }
@@ -2896,20 +2975,104 @@ impl Checker {
         &mut self,
         location: impl Into<Option<NodeId>>,
     ) -> Option<NodeId> {
+        self.get_jsx_factory_entity_live(location, None)
+    }
+
+    /// Flattens an entity-name chain (`a` or `a.b.c`) to its identifier
+    /// texts, left-to-right. `None` when `e` doesn't resolve to an entity
+    /// name in `nodes`.
+    fn entity_name_parts(nodes: &[Node], e: NodeId) -> Option<Vec<String>> {
+        if (e.local_index() as usize) >= nodes.len() || nodes[e].id != e {
+            return None;
+        }
+        let mut stack = vec![e];
+        let mut parts = Vec::new();
+        while let Some(n) = stack.pop() {
+            if (n.local_index() as usize) >= nodes.len() {
+                return None;
+            }
+            match nodes[n].kind {
+                ast::Kind::QualifiedName => {
+                    let d = &nodes[n].as_qualified_name();
+                    stack.push(d.right?);
+                    stack.push(d.left?);
+                }
+                ast::Kind::Identifier => parts.push(nodes[n].text(nodes).into_owned()),
+                _ => return None,
+            }
+        }
+        Some(parts)
+    }
+
+    /// Entity ids returned to a caller holding a live working buffer (the
+    /// emit transform) can point into the file arena — where they alias
+    /// unrelated nodes at the same packed index in the caller's buffer.
+    /// Flatten the entity's texts (reading whichever buffer truly holds it)
+    /// and mint a fresh chain into `live` so the returned id unambiguously
+    /// resolves there.
+    fn caller_entity(
+        &mut self,
+        e: NodeId,
+        file_index: u32,
+        live: Option<&mut Vec<Node>>,
+    ) -> NodeId {
+        let Some(l) = live else { return e };
+        let __program = self.program.clone().expect("program");
+        let parts = {
+            let arena = crate::printer_util::resolve_arena_for(&__program, l.as_slice(), e);
+            Self::entity_name_parts(&arena, e)
+        };
+        let Some(parts) = parts.filter(|p| !p.is_empty()) else {
+            return e;
+        };
+        let old_file_index = self.factory.file_index();
+        self.factory.set_file_index(file_index);
+        let mut acc = self.factory.new_identifier(l, &parts[0]);
+        for part in &parts[1..] {
+            let right = self.factory.new_identifier(l, part);
+            acc = self
+                .factory
+                .new_qualified_name(l, Some(acc), Some(right));
+        }
+        self.factory.set_file_index(old_file_index);
+        mark_as_synthetic(acc, l);
+        acc
+    }
+
+    /// `getJsxFactoryEntity` with the caller's live node buffer.
+    pub fn get_jsx_factory_entity_live(
+        &mut self,
+        location: impl Into<Option<NodeId>>,
+        mut live: Option<&mut Vec<Node>>,
+    ) -> Option<NodeId> {
         let location = location.into();
         if let Some(location) = location {
-            self.get_jsx_namespace(Some(location));
+            self.get_jsx_namespace_live(Some(location), live.as_deref_mut());
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((location).file_index());
+            let nodes = crate::printer_util::resolve_arena_for(
+                &__program,
+                live.as_deref().map(|v| v.as_slice()).unwrap_or(&[]),
+                location,
+            );
             let file = ast::get_source_file_of_node(Some(location), &nodes);
             if let Some(file) = file {
+                let file = self.canonical_source_file(file);
                 if let Some(local_jsx_factory) = self.source_file_links.get(file).local_jsx_factory
                 {
-                    return Some(local_jsx_factory);
+                    return Some(self.caller_entity(
+                        local_jsx_factory,
+                        file.file_index(),
+                        live,
+                    ));
                 }
             }
         }
-        self.jsx_factory_entity
+        let e = self.jsx_factory_entity?;
+        Some(self.caller_entity(
+            e,
+            location.map(|l0| l0.file_index()).unwrap_or(0),
+            live,
+        ))
     }
 
     /// `func (c *Checker) getJsxFragmentFactoryEntity` (jsx.go:1414).
@@ -2917,21 +3080,44 @@ impl Checker {
         &mut self,
         location: impl Into<Option<NodeId>>,
     ) -> Option<NodeId> {
+        self.get_jsx_fragment_factory_entity_live(location, None)
+    }
+
+    /// `getJsxFragmentFactoryEntity` with the caller's live node buffer.
+    pub fn get_jsx_fragment_factory_entity_live(
+        &mut self,
+        location: impl Into<Option<NodeId>>,
+        mut live: Option<&mut Vec<Node>>,
+    ) -> Option<NodeId> {
         let location = location.into();
         if let Some(location) = location {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((location).file_index());
+            let nodes = crate::printer_util::resolve_arena_for(
+                &__program,
+                live.as_deref().map(|v| v.as_slice()).unwrap_or(&[]),
+                location,
+            );
             if let Some(file) = ast::get_source_file_of_node(Some(location), &nodes) {
+                let file = self.canonical_source_file(file);
                 if let Some(local) = self.source_file_links.get(file).local_jsx_fragment_factory {
-                    return Some(local);
+                    return Some(self.caller_entity(local, file.file_index(), live));
                 }
                 let jsx_frag_pragma_value = {
-                    let sf = nodes[file].as_source_file();
+                    let f_nodes = crate::printer_util::resolve_arena_for(
+                        &__program,
+                        live.as_deref().map(|v| v.as_slice()).unwrap_or(&[]),
+                        file,
+                    );
+                    let sf = f_nodes[file].as_source_file();
                     ast::get_pragma_from_source_file(sf, "jsxfrag")
                         .map(|p| ast::get_pragma_argument(Some(p), "factory"))
                 };
                 if let Some(value) = jsx_frag_pragma_value {
-                    let parsed = self.parse_isolated_entity_name(&value, file.file_index());
+                    let parsed = self.parse_isolated_entity_name(
+                        &value,
+                        file.file_index(),
+                        live.as_deref_mut(),
+                    );
                     self.source_file_links.get(file).local_jsx_fragment_factory = parsed;
                     return parsed;
                 }
@@ -2940,7 +3126,7 @@ impl Checker {
         if !self.compiler_options.jsx_fragment_factory.is_empty() {
             let file_index = location.map(|l| l.file_index()).unwrap_or(0);
             let name = self.compiler_options.jsx_fragment_factory.clone();
-            return self.parse_isolated_entity_name(&name, file_index);
+            return self.parse_isolated_entity_name(&name, file_index, live.as_deref_mut());
         }
         None
     }
@@ -2954,13 +3140,22 @@ impl Checker {
         &mut self,
         name: &str,
         file_index: u32,
+        live: Option<&mut Vec<Node>>,
     ) -> Option<NodeId> {
         let (entity, src) = tsc_parser::parser::parse_isolated_entity_name(name);
         let entity = entity?;
-        let result = self.materialize_entity_name(entity, &src, file_index);
+        let mut live = live;
+        let result = self.materialize_entity_name(entity, &src, file_index, live.as_deref_mut());
         let program = self.program.clone().expect("program");
-        let mut arena = program.nodes_mut(file_index);
-        mark_as_synthetic(result, &mut arena);
+        let mut _arena;
+        let buf: &mut Vec<Node> = match live.as_deref_mut() {
+            Some(l) => l,
+            None => {
+                _arena = program.nodes_mut(file_index);
+                &mut _arena
+            }
+        };
+        mark_as_synthetic(result, buf);
         Some(result)
     }
 
@@ -2972,6 +3167,7 @@ impl Checker {
         node: NodeId,
         src: &[ast::Node],
         file_index: u32,
+        mut live: Option<&mut Vec<Node>>,
     ) -> NodeId {
         let program = self.program.clone().expect("program");
         match src[node].kind {
@@ -2981,27 +3177,43 @@ impl Checker {
                     q.left.expect("qualified name left"),
                     src,
                     file_index,
+                    live.as_deref_mut(),
                 );
                 let right = self.materialize_entity_name(
                     q.right.expect("qualified name right"),
                     src,
                     file_index,
+                    live.as_deref_mut(),
                 );
-                let mut arena = program.nodes_mut(file_index);
+                let mut _arena;
+                let buf: &mut Vec<Node> = match live.as_deref_mut() {
+                    Some(l) => l,
+                    None => {
+                        _arena = program.nodes_mut(file_index);
+                        &mut _arena
+                    }
+                };
                 let old_file_index = self.factory.file_index();
                 self.factory.set_file_index(file_index);
                 let result = self
                     .factory
-                    .new_qualified_name(&mut arena, Some(left), Some(right));
+                    .new_qualified_name(buf, Some(left), Some(right));
                 self.factory.set_file_index(old_file_index);
                 result
             }
             _ => {
                 let text = src[node].text(src).into_owned();
-                let mut arena = program.nodes_mut(file_index);
+                let mut _arena;
+                let buf: &mut Vec<Node> = match live.as_deref_mut() {
+                    Some(l) => l,
+                    None => {
+                        _arena = program.nodes_mut(file_index);
+                        &mut _arena
+                    }
+                };
                 let old_file_index = self.factory.file_index();
                 self.factory.set_file_index(file_index);
-                let result = self.factory.new_identifier(&mut arena, &text);
+                let result = self.factory.new_identifier(buf, &text);
                 self.factory.set_file_index(old_file_index);
                 result
             }

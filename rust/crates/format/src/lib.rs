@@ -28,7 +28,7 @@ pub use api::*;
 pub use context::FormattingContext;
 pub use indent::{
     find_first_non_whitespace_column, get_containing_list, get_indentation,
-    get_indentation_for_node,
+    get_indentation_for_node, should_indent_child_node,
 };
 pub use scanner::TextRangeWithKind;
 pub use span::LineAction;

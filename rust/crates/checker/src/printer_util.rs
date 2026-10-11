@@ -52,6 +52,166 @@ use crate::types::{
     TypePredicate,
 };
 
+/// `ArenaView` — a read view over a file's node arena that is either an
+/// `Rc` snapshot ([`Program::nodes`]) or a borrow of the caller's
+/// checked-out working buffer. Deref/Index resolve through the slice
+/// either way, so `view[id]`/`view.len()` work unchanged.
+pub enum ArenaView<'x> {
+    Snapshot(std::rc::Rc<Vec<Node>>),
+    Working(&'x [Node]),
+}
+
+impl<'x> std::ops::Deref for ArenaView<'x> {
+    type Target = [Node];
+
+    fn deref(&self) -> &[Node] {
+        match self {
+            ArenaView::Snapshot(rc) => rc,
+            ArenaView::Working(nodes) => nodes,
+        }
+    }
+}
+
+thread_local! {
+    /// Extra live working buffers that cannot be threaded through a single
+    /// `work` slice — e.g. while `nodecopy` visits a scratch clone of a
+    /// foreign source arena, the destination arena buffer is immutably
+    /// borrowed (`nodes.as_slice()` → `extra_live`) for the visit, and
+    /// nested walks (enclosing-declaration chains, symbol accessibility)
+    /// may hit node ids belonging to *either* buffer (Go follows raw
+    /// pointers). Because the registered buffer is immutably borrowed for
+    /// the whole scope it cannot change, so a snapshot `Rc` is faithful.
+    static LIVE_ARENAS: std::cell::RefCell<Vec<std::rc::Rc<Vec<Node>>>> =
+        const { std::cell::RefCell::new(Vec::new()) };
+}
+
+/// RAII registration of an extra live arena buffer. While the guard is
+/// alive, `arena_view` resolves reads for the buffer's file index against
+/// a clone of the buffer rather than a program snapshot.
+pub struct LiveArenaGuard;
+
+impl LiveArenaGuard {
+    /// `nodes` should stay immutably borrowed for the guard's lifetime
+    /// (e.g. `vec.as_slice()` while `vec` is borrowed `&`) — the registry
+    /// keeps a clone, so reads reflect the buffer at registration time.
+    pub fn register(nodes: &[Node]) -> Self {
+        LIVE_ARENAS.with(|r| {
+            r.borrow_mut()
+                .push(std::rc::Rc::new(nodes.to_vec()))
+        });
+        LiveArenaGuard
+    }
+}
+
+impl Drop for LiveArenaGuard {
+    fn drop(&mut self) {
+        LIVE_ARENAS.with(|r| {
+            r.borrow_mut().pop();
+        });
+    }
+}
+
+fn live_arena_lookup(fi: u32) -> Option<std::rc::Rc<Vec<Node>>> {
+    LIVE_ARENAS.with(|r| {
+        r.borrow()
+            .iter()
+            .rev()
+            .find(|buf| buf.first().is_some_and(|n| n.id.file_index() == fi))
+            .cloned()
+    })
+}
+
+/// `buf` physically holds `id` — a node's packed `id` matches its slot only
+/// in the buffer it was minted into (per-file arenas alias `local_index`).
+pub(crate) fn buffer_resolves_id(buf: &[Node], id: NodeId) -> bool {
+    (id.local_index() as usize) < buf.len() && buf[id].id == id
+}
+
+pub(crate) fn live_arena_lookup_for(id: NodeId) -> Option<std::rc::Rc<Vec<Node>>> {
+    LIVE_ARENAS.with(|r| {
+        r.borrow()
+            .iter()
+            .rev()
+            .find(|buf| buffer_resolves_id(buf, id))
+            .cloned()
+    })
+}
+
+/// True when every id reachable from `root` physically lives in `buf` —
+/// i.e. `deep_clone_node(buf, root)` can visit the whole subtree without
+/// crossing arena buffers. Go's clone follows heap pointers into any
+/// arena; the port's visitor can only read `cx.nodes`, so a tree minted
+/// in a since-dropped scratch buffer (or one embedding foreign-arena ids)
+/// is not clonable and the caller must regenerate it.
+pub(crate) fn subtree_clonable_in(buf: &[Node], root: NodeId) -> bool {
+    let mut stack = vec![root];
+    let mut seen: rustc_hash::FxHashSet<NodeId> = rustc_hash::FxHashSet::default();
+    while let Some(id) = stack.pop() {
+        if id.is_none() || !seen.insert(id) {
+            continue;
+        }
+        if !buffer_resolves_id(buf, id) {
+            return false;
+        }
+        buf[id].for_each_child(buf, &mut |child| {
+            stack.push(child);
+            false
+        });
+    }
+    true
+}
+
+/// `arena_view` for callers that must deref a specific `id`: picks the
+/// buffer where `id` actually resolves (a scratch/live clone can share the
+/// destination arena's `file_index` while `work` is a different buffer with
+/// the same index). Falls back to `arena_view`'s fi-based selection.
+pub fn resolve_arena_for<'x>(
+    program: &std::rc::Rc<dyn crate::checker_types::Program>,
+    work: &'x [Node],
+    id: NodeId,
+) -> ArenaView<'x> {
+    if buffer_resolves_id(work, id) {
+        return ArenaView::Working(work);
+    }
+    if let Some(extra) = live_arena_lookup_for(id) {
+        return ArenaView::Snapshot(extra);
+    }
+    let snap = program.nodes(id.file_index());
+    if buffer_resolves_id(&snap, id) {
+        return ArenaView::Snapshot(snap);
+    }
+    arena_view(program, work, id.file_index())
+}
+
+/// `program.nodes(fi)` that stays correct while the caller holds an
+/// `ArenaMut`/`ArenaCheckout` on arena `fi`: when `work` IS that arena's
+/// working buffer (its first node's `file_index` is `fi`), borrowing it
+/// reproduces Go's live-slice semantics — synthetic nodes minted
+/// mid-operation are visible to nested reads. Next, buffers registered via
+/// [`LiveArenaGuard`] are checked. Any other `fi` takes a normal snapshot.
+pub fn arena_view<'x>(
+    program: &std::rc::Rc<dyn crate::checker_types::Program>,
+    work: &'x [Node],
+    fi: u32,
+) -> ArenaView<'x> {
+    if work.first().is_some_and(|n| n.id.file_index() == fi) {
+        ArenaView::Working(work)
+    } else if let Some(extra) = live_arena_lookup(fi) {
+        ArenaView::Snapshot(extra)
+    } else {
+        ArenaView::Snapshot(program.nodes(fi))
+    }
+}
+
+/// `arena_view` through the checker's program handle.
+pub fn checker_arena_view<'x>(
+    c: &Checker,
+    work: &'x [Node],
+    fi: u32,
+) -> ArenaView<'x> {
+    arena_view(c.program.as_ref().expect("program"), work, fi)
+}
+
 /// `createPrinterWithDefaults`.
 fn create_printer_with_defaults<'a>(
     emit_context: &'a mut EmitContext,
@@ -260,7 +420,14 @@ impl Checker {
         // `nodes` — the arena guard is cloned out of `program` so it does
         // not hold a `&self` borrow (see the header note).
         let program = self.program.clone().expect("program");
-        let mut nodes = program.nodes_mut(file_index);
+        let (file_index, __arena_cell) = program.nodes_handle_or_fallback(file_index);
+        node_builder
+            .impl_
+            .as_mut()
+            .expect("NodeBuilder without impl")
+            .f
+            .set_file_index(file_index);
+        let mut nodes = tsc_ast::ast::ArenaCheckout::new(__arena_cell);
         self.serialization_level += 1;
         let type_node = node_builder.type_to_type_node(
             self,
@@ -350,18 +517,28 @@ impl Checker {
             None,
             ast::SymbolFlags::ALL,
             SymbolFormatFlags::ALLOW_ANY_NODE_KIND,
+            None,
         )
     }
 
     /// `(c *Checker) SymbolToStringEx` + `symbolToStringEx`.
+    ///
+    /// `live_nodes` is the caller's live node buffer for resolving
+    /// `enclosing_declaration` when it is a synthetic node minted outside
+    /// this function's fresh arena checkout (Go follows raw pointers).
     pub fn symbol_to_string_ex(
         &mut self,
         symbol: SymbolId,
         enclosing_declaration: Option<NodeId>,
         meaning: ast::SymbolFlags,
         flags: SymbolFormatFlags,
+        live_nodes: Option<&[Node]>,
     ) -> String {
         let mut writer = printer::get_single_line_string_writer();
+        // `enclosing_declaration` may be a synthetic id that only resolves in
+        // the caller's working buffer — register it so `arena_view`/
+        // `resolve_arena_for` find it from nested calls.
+        let _live_guard = live_nodes.map(LiveArenaGuard::register);
 
         let mut node_flags = nodebuilder::Flags::IGNORE_ERRORS;
         let mut internal_node_flags = nodebuilder::InternalFlags::NONE;
@@ -384,9 +561,18 @@ impl Checker {
         let mut node_builder = self.get_node_builder();
         let file_index = builder_arena_index(&node_builder, enclosing_declaration);
         let program = self.program.clone().expect("program");
-        let mut nodes = program.nodes_mut(file_index);
-        let source_file =
-            enclosing_declaration.and_then(|d| ast::get_source_file_of_node(Some(d), &nodes));
+        let (file_index, __arena_cell) = program.nodes_handle_or_fallback(file_index);
+        node_builder
+            .impl_
+            .as_mut()
+            .expect("NodeBuilder without impl")
+            .f
+            .set_file_index(file_index);
+        let mut nodes = tsc_ast::ast::ArenaCheckout::new(__arena_cell);
+        let source_file = enclosing_declaration.and_then(|d| {
+            let arena = resolve_arena_for(&program, &nodes, d);
+            ast::get_source_file_of_node(Some(d), &arena)
+        });
         // `builder = nodeBuilder.SymbolToNode` / `SymbolToEntityName` —
         // runs before the printer is created because the printer holds
         // `&mut nodes` while `symbol_to_*` needs it mutably too.
@@ -423,8 +609,9 @@ impl Checker {
         let symbol_arena = self.symbol_arena.clone();
         let symbols = symbol_arena.borrow();
         // add neverAsciiEscape for GH#39027
-        let enclosing_is_source_file =
-            enclosing_declaration.is_some_and(|d| nodes[d].kind == ast::Kind::SourceFile);
+        let enclosing_is_source_file = enclosing_declaration.is_some_and(|d| {
+            resolve_arena_for(&program, &nodes, d)[d].kind == ast::Kind::SourceFile
+        });
         let mut p = if enclosing_is_source_file {
             create_printer_with_remove_comments_omit_trailing_semicolon_never_ascii_escape(
                 &mut emit_context,
@@ -487,7 +674,14 @@ impl Checker {
             | nodebuilder::Flags::WRITE_TYPE_PARAMETERS_IN_QUALIFIED_NAME;
         let file_index = builder_arena_index(&node_builder, enclosing_declaration);
         let program = self.program.clone().expect("program");
-        let mut nodes = program.nodes_mut(file_index);
+        let (file_index, __arena_cell) = program.nodes_handle_or_fallback(file_index);
+        node_builder
+            .impl_
+            .as_mut()
+            .expect("NodeBuilder without impl")
+            .f
+            .set_file_index(file_index);
+        let mut nodes = tsc_ast::ast::ArenaCheckout::new(__arena_cell);
         let sig = node_builder.signature_to_signature_declaration(
             self,
             &mut nodes,
@@ -556,7 +750,14 @@ impl Checker {
             | nodebuilder::Flags::WRITE_TYPE_PARAMETERS_IN_QUALIFIED_NAME;
         let file_index = builder_arena_index(&node_builder, enclosing_declaration);
         let program = self.program.clone().expect("program");
-        let mut nodes = program.nodes_mut(file_index);
+        let (file_index, __arena_cell) = program.nodes_handle_or_fallback(file_index);
+        node_builder
+            .impl_
+            .as_mut()
+            .expect("NodeBuilder without impl")
+            .f
+            .set_file_index(file_index);
+        let mut nodes = tsc_ast::ast::ArenaCheckout::new(__arena_cell);
         let predicate = node_builder.type_predicate_to_type_predicate_node(
             self,
             &mut nodes,
@@ -682,7 +883,14 @@ impl Checker {
         let mut node_builder = self.get_node_builder_ex(id_to_symbol);
         let file_index = builder_arena_index(&node_builder, enclosing_declaration);
         let program = self.program.clone().expect("program");
-        let mut nodes = program.nodes_mut(file_index);
+        let (file_index, __arena_cell) = program.nodes_handle_or_fallback(file_index);
+        node_builder
+            .impl_
+            .as_mut()
+            .expect("NodeBuilder without impl")
+            .f
+            .set_file_index(file_index);
+        let mut nodes = tsc_ast::ast::ArenaCheckout::new(__arena_cell);
         node_builder.type_to_type_node(
             self,
             &mut nodes,
@@ -705,7 +913,14 @@ impl Checker {
         let mut node_builder = self.get_node_builder();
         let file_index = builder_arena_index(&node_builder, enclosing_declaration);
         let program = self.program.clone().expect("program");
-        let mut nodes = program.nodes_mut(file_index);
+        let (file_index, __arena_cell) = program.nodes_handle_or_fallback(file_index);
+        node_builder
+            .impl_
+            .as_mut()
+            .expect("NodeBuilder without impl")
+            .f
+            .set_file_index(file_index);
+        let mut nodes = tsc_ast::ast::ArenaCheckout::new(__arena_cell);
         let result = node_builder.signature_to_signature_declaration(
             self,
             &mut nodes,
@@ -748,7 +963,14 @@ impl Checker {
                     .file_index()
             });
         let program = self.program.clone().expect("program");
-        let mut nodes = program.nodes_mut(file_index);
+        let (file_index, __arena_cell) = program.nodes_handle_or_fallback(file_index);
+        node_builder
+            .impl_
+            .as_mut()
+            .expect("NodeBuilder without impl")
+            .f
+            .set_file_index(file_index);
+        let mut nodes = tsc_ast::ast::ArenaCheckout::new(__arena_cell);
         let nodes_out = node_builder.expand_symbol_for_hover(self, &mut nodes, symbol, meaning);
         if nodes_out.is_empty() {
             drop(nodes);
@@ -801,7 +1023,14 @@ impl Checker {
         let old_verbosity = take_verbosity(&mut node_builder, vc.as_deref_mut());
         let file_index = builder_arena_index(&node_builder, enclosing_declaration);
         let program = self.program.clone().expect("program");
-        let mut nodes = program.nodes_mut(file_index);
+        let (file_index, __arena_cell) = program.nodes_handle_or_fallback(file_index);
+        node_builder
+            .impl_
+            .as_mut()
+            .expect("NodeBuilder without impl")
+            .f
+            .set_file_index(file_index);
+        let mut nodes = tsc_ast::ast::ArenaCheckout::new(__arena_cell);
         let type_param_node = node_builder.type_parameter_to_declaration(
             self,
             &mut nodes,
@@ -841,6 +1070,45 @@ impl Checker {
         result
     }
 
+    /// `(c *Checker) TypeToTypeNode` variant that also returns the
+    /// `idToSymbol` map the Go caller retains by reference after the call
+    /// (Go fills the caller's `map[*ast.IdentifierNode]*ast.Symbol`; the
+    /// builder consumes it here, so it is handed back to the caller).
+    /// Used by `autoimport::TypeToAutoImportableTypeNode`.
+    pub fn type_to_type_node_with_id_map(
+        &mut self,
+        t: TypeId,
+        enclosing_declaration: Option<NodeId>,
+        flags: nodebuilder::Flags,
+    ) -> (Option<NodeId>, FxHashMap<NodeId, SymbolId>) {
+        let mut node_builder = self.get_node_builder_ex(FxHashMap::default());
+        let file_index = builder_arena_index(&node_builder, enclosing_declaration);
+        let program = self.program.clone().expect("program");
+        let (file_index, __arena_cell) = program.nodes_handle_or_fallback(file_index);
+        node_builder
+            .impl_
+            .as_mut()
+            .expect("NodeBuilder without impl")
+            .f
+            .set_file_index(file_index);
+        let mut nodes = tsc_ast::ast::ArenaCheckout::new(__arena_cell);
+        let type_node = node_builder.type_to_type_node(
+            self,
+            &mut nodes,
+            t,
+            enclosing_declaration,
+            flags,
+            nodebuilder::InternalFlags::NONE,
+            None,
+        );
+        let id_to_symbol = node_builder
+            .impl_
+            .as_mut()
+            .map(|i| std::mem::take(&mut i.id_to_symbol))
+            .unwrap_or_default();
+        (type_node, id_to_symbol)
+    }
+
     /// `(c *Checker) TypeToTypeNodeEx`.
     pub fn type_to_type_node_ex(
         &mut self,
@@ -853,7 +1121,14 @@ impl Checker {
         let mut node_builder = self.get_node_builder_ex(id_to_symbol);
         let file_index = builder_arena_index(&node_builder, enclosing_declaration);
         let program = self.program.clone().expect("program");
-        let mut nodes = program.nodes_mut(file_index);
+        let (file_index, __arena_cell) = program.nodes_handle_or_fallback(file_index);
+        node_builder
+            .impl_
+            .as_mut()
+            .expect("NodeBuilder without impl")
+            .f
+            .set_file_index(file_index);
+        let mut nodes = tsc_ast::ast::ArenaCheckout::new(__arena_cell);
         node_builder.type_to_type_node(
             self,
             &mut nodes,
@@ -876,7 +1151,14 @@ impl Checker {
         let mut node_builder = self.get_node_builder_ex(id_to_symbol);
         let file_index = builder_arena_index(&node_builder, enclosing_declaration);
         let program = self.program.clone().expect("program");
-        let mut nodes = program.nodes_mut(file_index);
+        let (file_index, __arena_cell) = program.nodes_handle_or_fallback(file_index);
+        node_builder
+            .impl_
+            .as_mut()
+            .expect("NodeBuilder without impl")
+            .f
+            .set_file_index(file_index);
+        let mut nodes = tsc_ast::ast::ArenaCheckout::new(__arena_cell);
         node_builder.type_predicate_to_type_predicate_node(
             self,
             &mut nodes,

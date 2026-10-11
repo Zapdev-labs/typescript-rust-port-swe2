@@ -1217,12 +1217,11 @@ impl<'a> JsxTransformer<'a> {
         // symbol arena. Absent resolver/symbols, skip the substitution.
         let container = match (&self.resolver, self.symbols) {
             (Some(resolver), Some(symbols)) => {
-                let mut symbols = symbols.borrow_mut();
                 resolver.borrow_mut().get_referenced_export_container(
                     react,
                     false, /*prefixLocals*/
                     cx.nodes,
-                    &mut symbols,
+                    symbols,
                 )
             }
             _ => None,
@@ -1252,24 +1251,26 @@ impl<'a> JsxTransformer<'a> {
         e: NodeId,
         parent: NodeId,
     ) -> NodeId {
-        if ast::is_qualified_name(&cx.nodes[e]) {
-            let (left, right) = {
-                let d = cx.nodes[e].as_qualified_name();
-                (d.left.unwrap(), d.right.unwrap())
-            };
-            let left = self.create_jsx_factory_expression_from_entity_name(cx, left, parent);
-            let right_text = cx.nodes[right].text(cx.nodes).to_string();
-            let right = self.factory().new_identifier(cx.nodes, &right_text);
-            return self.factory().new_property_access_expression(
+        // PORT: `e` lives in the checker's file arena — `entity_name_texts`
+        // resolves it there and flattens the qualified-name chain
+        // (Go's recursion reads `e.Left`/`e.Right` through pointers).
+        let parts = self.emit_resolver.borrow().entity_name_texts(e, cx.nodes);
+        let mut it = parts.iter();
+        let Some(first) = it.next() else {
+            return self.create_react_namespace(cx, "", parent);
+        };
+        let mut expr = self.create_react_namespace(cx, first, parent);
+        for part in it {
+            let right = self.factory().new_identifier(cx.nodes, part);
+            expr = self.factory().new_property_access_expression(
                 cx.nodes,
-                Some(left),
+                Some(expr),
                 None,
                 Some(right),
                 ast::NodeFlags::NONE,
             );
         }
-        let text = cx.nodes[e].text(cx.nodes).to_string();
-        self.create_react_namespace(cx, &text, parent)
+        expr
     }
 
     /// `createJsxPseudoFactoryExpression`.
@@ -1451,7 +1452,9 @@ impl<'a> JsxTransformer<'a> {
 
     /// `visitJsxText`.
     fn visit_jsx_text(&self, cx: &mut VisitorCx<'_, '_>, node: NodeId) -> Option<NodeId> {
-        let text = cx.nodes[node].text(cx.nodes).to_string();
+        // Go reads `(*JsxText).Text` (LiteralLikeNodeBase.text), not
+        // `Node.Text()` — JsxText is not in the `Node.Text` kind switch.
+        let text = cx.nodes[node].as_jsx_text().literal_like_node_base.text.clone();
         let fixed = fixup_whitespace_and_decode_entities(&text);
         if fixed.is_empty() {
             return None;

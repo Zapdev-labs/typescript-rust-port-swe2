@@ -39,7 +39,7 @@ use crate::host::{
 
 /// `type SourceFiles struct` — the canonical output and its unnamed
 /// supplemental compiler inputs.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct SourceFiles {
     /// `Canonical` — the virtual source file named after the original.
     pub canonical: ParsedSourceFile,
@@ -48,8 +48,10 @@ pub struct SourceFiles {
 }
 
 /// A parsed `SourceFile` — Go's `*ast.SourceFile` becomes the `(NodeId,
-/// arena)` pair. `file` indexes `nodes`.
-#[derive(Default)]
+/// arena)` pair. `file` indexes `nodes`. `Clone` is a shallow structural
+/// copy of the arena (the cache holds the canonical instance; programs
+/// re-bind their own copy).
+#[derive(Clone, Default)]
 pub struct ParsedSourceFile {
     /// The `NodeId` of the parsed `SourceFile` inside `nodes`.
     pub file: NodeId,

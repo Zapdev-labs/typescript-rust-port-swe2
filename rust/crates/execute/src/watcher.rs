@@ -876,9 +876,10 @@ impl Watcher {
             factories: Default::default(),
         });
         let sys = self.sys.clone();
+        let old_program = self.program.borrow().clone();
         *self.program.borrow_mut() = Some(crate::incremental::new_program(
             program,
-            self.program.borrow().clone(),
+            old_program,
             None,
             Arc::new(move || sys.now()),
             self.testing.is_some(),

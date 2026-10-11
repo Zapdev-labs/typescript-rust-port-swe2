@@ -2697,39 +2697,284 @@ pub struct PragmaArgumentSpecification {
 }
 
 // ---------------------------------------------------------------------------
-// ArenaCheckout — emit/transform-time arena handoff
+// ArenaCell / ArenaMut / ArenaCheckout — shared per-file node arenas
 // ---------------------------------------------------------------------------
 
-/// `ArenaCheckout` — RAII guard that owns a file's live `Vec<Node>` while a
-/// `&mut Vec<Node>` consumer (transformers, checker mutations) runs; the
-/// arena cell holds a frozen clone so re-entrant reads through
-/// `Rc<RefCell<Vec<Node>>>` keep working. `Drop` writes the mutated `Vec`
-/// back into the cell.
+/// `ArenaCell` — a per-file node arena: `RefCell<Rc<Vec<Node>>>`.
 ///
-/// PORT: Go's shared mutable `[]*ast.Node` heap lets a transform mutate the
-/// graph while emit-resolver/checker callbacks freely read it. A Rust
-/// `RefMut` held across such callbacks would panic every re-entrant
-/// `borrow()`, so the arena is checked out instead: the live `Vec` moves
-/// into the guard while a clone (see `Node: Clone` — shallow, `NodeId`s
-/// preserved) stays in the cell. Reads during the window see pre-mutation
-/// state — import-elision marking only walks original-tree nodes, so this
-/// is observationally equivalent there; `NodeId`s minted during the visit
-/// won't resolve through the clone (known limitation).
+/// Readers take cheap `Rc` snapshots ([`ArenaCell::snapshot`], `Program::nodes`)
+/// that never pin a `RefCell` borrow, so a held snapshot can never block a
+/// writer. Writers go through copy-on-write ([`ArenaCell::cow`] /
+/// `Program::nodes_mut` → [`ArenaMut`]): `Rc::make_mut` mutates in place when
+/// the arena is unshared, otherwise clones once per guard.
+///
+/// PORT(divergence): Go's shared mutable `[]*ast.Node` graph has no borrow
+/// discipline — element writes are visible to anyone holding the slice. A
+/// Rust snapshot does not observe in-place mutations made after it was taken
+/// (appended nodes were invisible to Go slice holders too). In practice
+/// checker mutations append synthetic nodes or patch transient fields and
+/// all consumers re-snapshot, so this is observationally equivalent.
+pub struct ArenaCell(
+    pub std::cell::RefCell<std::rc::Rc<Vec<Node>>>,
+    std::cell::Cell<bool>,
+    /// Write generation — bumped on every `set`/`flush`. `ArenaMut`/
+    /// `ArenaCheckout` record it at checkout; a mismatch at write-back means
+    /// a concurrent writer committed in between (lost update — Go's shared
+    /// mutable arena can't express this). Detected when `TSC_ARENA_DBG` is
+    /// set; the write still goes through (last-writer-wins).
+    std::cell::Cell<u64>,
+    /// Nonzero while an [`ArenaCheckout`] holds the arena — concurrent
+    /// `set`/`flush` commits during that window will be clobbered by the
+    /// checkout's write-back. Diagnostic only (`TSC_ARENA_DBG`).
+    std::cell::Cell<u64>,
+);
+
+impl ArenaCell {
+    pub fn new(nodes: Vec<Node>) -> ArenaCell {
+        ArenaCell(
+            std::cell::RefCell::new(std::rc::Rc::new(nodes)),
+            std::cell::Cell::new(false),
+            std::cell::Cell::new(0),
+            std::cell::Cell::new(0),
+        )
+    }
+
+    /// Cheap read snapshot — an `Rc` clone, never a held borrow.
+    /// While a `cow()` guard has the buffer checked out this returns the
+    /// empty placeholder.
+    pub fn snapshot(&self) -> std::rc::Rc<Vec<Node>> {
+        self.0.borrow().clone()
+    }
+
+    /// Copy-on-write mutable access — see [`ArenaMut`]. The guard owns an
+    /// `Rc` of this cell so it can outlive the lookup that produced it.
+    pub fn cow(self: &std::rc::Rc<Self>) -> ArenaMut {
+        assert!(
+            !self.1.get(),
+            "ArenaCell: nested cow() while a checkout is active"
+        );
+        let mut slot = self.0.borrow_mut();
+        if std::rc::Rc::strong_count(&slot) == 1 {
+            // Sole owner: move the buffer out so `make_mut` mutates in
+            // place with no clone; the cell is refilled on flush/drop.
+            // Snapshots taken while the guard lives see the empty
+            // placeholder — mirrors the exclusive-writer semantics the
+            // `RefMut` design enforced.
+            let work = std::mem::replace(&mut *slot, std::rc::Rc::new(Vec::new()));
+            drop(slot);
+            self.1.set(true);
+            ArenaMut {
+                cell: self.clone(),
+                work,
+                dirty: false,
+                checked_out: true,
+                wgen: self.2.get(),
+            }
+        } else {
+            ArenaMut {
+                cell: self.clone(),
+                work: slot.clone(),
+                dirty: false,
+                checked_out: false,
+                wgen: self.2.get(),
+            }
+        }
+    }
+
+    /// Replaces the arena contents (construction/restore paths).
+    pub fn set(&self, nodes: Vec<Node>) {
+        if std::env::var("TSC_ARENA_DBG").is_ok() && self.3.get() != 0 {
+            eprintln!(
+                "[arena] set() while ArenaCheckout active len={}\n{}",
+                nodes.len(),
+                std::backtrace::Backtrace::force_capture()
+            );
+        }
+        *self.0.borrow_mut() = std::rc::Rc::new(nodes);
+        self.2.set(self.2.get() + 1);
+    }
+
+    /// Whether read snapshots (or the cell copy) share the buffer — a
+    /// `cow()` on an unshared cell mutates in place; on a shared cell it
+    /// clones first.
+    pub fn is_shared(&self) -> bool {
+        std::rc::Rc::strong_count(&self.0.borrow()) > 1
+    }
+
+    /// Compat alias for [`ArenaCell::snapshot`] — the `Rc` snapshot plays the
+    /// role `Ref<Vec<Node>>` had before the COW conversion.
+    pub fn borrow(&self) -> std::rc::Rc<Vec<Node>> {
+        self.snapshot()
+    }
+
+    /// Compat alias for [`ArenaCell::cow`].
+    pub fn borrow_mut(self: &std::rc::Rc<Self>) -> ArenaMut {
+        self.cow()
+    }
+}
+
+/// `ArenaMut` — RAII copy-on-write guard over an [`ArenaCell`]. Reads deref
+/// to `&Vec<Node>`; the first mutable access calls `Rc::make_mut` (cloning
+/// only when snapshots share the buffer) and marks the guard dirty. `Drop`
+/// writes a dirty buffer back into the cell — a clean guard leaves the cell
+/// untouched so a nested guard's earlier write-back is never clobbered.
+pub struct ArenaMut {
+    cell: std::rc::Rc<ArenaCell>,
+    work: std::rc::Rc<Vec<Node>>,
+    dirty: bool,
+    /// The working buffer was moved out of the cell (no snapshot was
+    /// alive at checkout). The cell holds an empty placeholder until
+    /// `flush`/`drop` restores it — write-back is then mandatory even
+    /// when `dirty` is false.
+    checked_out: bool,
+    /// `ArenaCell::wgen` at checkout — see `ArenaCell::wgen`.
+    wgen: u64,
+}
+
+impl ArenaMut {
+    /// Writes back the working buffer if dirty, even mid-scope (a second
+    /// call is a no-op). Normally not needed — `Drop` handles it.
+    pub fn flush(&mut self) {
+        if std::env::var("TSC_ARENA_DBG").is_ok()
+            && self.cell.3.get() != 0
+            && (self.checked_out || self.dirty)
+        {
+            eprintln!(
+                "[arena] flush() while ArenaCheckout active len={}\n{}",
+                self.work.len(),
+                std::backtrace::Backtrace::force_capture()
+            );
+        }
+        if self.checked_out {
+            *self.cell.0.borrow_mut() = self.work.clone();
+            self.checked_out = false;
+            self.cell.1.set(false);
+            self.dirty = false;
+            self.cell.2.set(self.cell.2.get() + 1);
+        } else if self.dirty {
+            if std::env::var("TSC_ARENA_DBG").is_ok() && self.cell.2.get() != self.wgen {
+                eprintln!(
+                    "[arena] ArenaMut stale write-back (gen {} -> {}) len={}\n{}",
+                    self.wgen,
+                    self.cell.2.get(),
+                    self.work.len(),
+                    std::backtrace::Backtrace::force_capture()
+                );
+            }
+            *self.cell.0.borrow_mut() = self.work.clone();
+            self.dirty = false;
+            self.cell.2.set(self.cell.2.get() + 1);
+        }
+    }
+}
+
+impl std::ops::Deref for ArenaMut {
+    type Target = Vec<Node>;
+
+    fn deref(&self) -> &Vec<Node> {
+        &self.work
+    }
+}
+
+/// Diagnostic counters for the COW path — set `TSC_COW_STATS` in the
+/// `tsc` binary to print (clones, cloned elements) at exit.
+pub static COW_CLONES: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+pub static COW_ELEMS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+impl std::ops::DerefMut for ArenaMut {
+    fn deref_mut(&mut self) -> &mut Vec<Node> {
+        self.dirty = true;
+        if std::rc::Rc::strong_count(&self.work) > 1 {
+            use std::sync::atomic::Ordering::Relaxed;
+            COW_CLONES.fetch_add(1, Relaxed);
+            COW_ELEMS.fetch_add(self.work.len() as u64, Relaxed);
+            if std::env::var("TSC_COW_STATS").is_ok() && self.work.len() > 50_000 {
+                eprintln!("[cow-big] cloning {} nodes", self.work.len());
+            }
+            if std::env::var("TSC_COW_TRACE").is_ok() {
+                static N: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+                let n = N.fetch_add(1, Relaxed);
+                if n < 12 {
+                    eprintln!(
+                        "[cow-trace] clone #{n} len={}\n{}",
+                        self.work.len(),
+                        std::backtrace::Backtrace::force_capture()
+                    );
+                }
+            }
+        }
+        std::rc::Rc::make_mut(&mut self.work)
+    }
+}
+
+impl Drop for ArenaMut {
+    fn drop(&mut self) {
+        self.flush();
+    }
+}
+
+/// `ArenaRef<T>` — the `Rc`-snapshot analog of `Ref::map`: owns an arena
+/// snapshot and projects it to `&T` on deref via a stored accessor.
+/// `Deref` re-resolves the projection each call, so the returned `&T`
+/// borrows `self` (the snapshot) — no self-reference problem.
+pub struct ArenaRef<T: ?Sized, F> {
+    arena: std::rc::Rc<Vec<Node>>,
+    f: F,
+    _t: std::marker::PhantomData<fn() -> T>,
+}
+
+impl<T: ?Sized, F> ArenaRef<T, F>
+where
+    F: for<'a> Fn(&'a Vec<Node>) -> &'a T,
+{
+    pub fn new(
+        arena: std::rc::Rc<Vec<Node>>,
+        f: F,
+    ) -> ArenaRef<T, F> {
+        ArenaRef {
+            arena,
+            f,
+            _t: std::marker::PhantomData,
+        }
+    }
+}
+
+impl<T: ?Sized, F> std::ops::Deref for ArenaRef<T, F>
+where
+    F: for<'a> Fn(&'a Vec<Node>) -> &'a T,
+{
+    type Target = T;
+
+    fn deref(&self) -> &T {
+        (self.f)(&self.arena)
+    }
+}
+
+/// `ArenaCheckout` — RAII guard that owns a private working `Vec<Node>` for
+/// a `&mut Vec<Node>` consumer (transformers, node builders); the arena
+/// cell keeps its original contents so re-entrant reads through
+/// `ArenaCell::snapshot` keep working. `Drop` writes the mutated `Vec` back.
+/// `NodeId`s minted during the visit don't resolve through the cell
+/// (known limitation).
 pub struct ArenaCheckout {
-    arena: std::rc::Rc<std::cell::RefCell<Vec<Node>>>,
+    arena: std::rc::Rc<ArenaCell>,
     work: Vec<Node>,
+    /// `ArenaCell::wgen` at checkout — see `ArenaCell::wgen`.
+    wgen: u64,
 }
 
 impl ArenaCheckout {
-    /// Checks the arena out: leaves a clone in the cell, moves the live
-    /// `Vec` into the guard.
-    pub fn new(arena: std::rc::Rc<std::cell::RefCell<Vec<Node>>>) -> ArenaCheckout {
-        let work = {
-            let mut cell = arena.borrow_mut();
-            let mirror = cell.clone();
-            std::mem::replace(&mut *cell, mirror)
-        };
-        ArenaCheckout { arena, work }
+    /// Checks the arena out: clones its contents into a private working
+    /// `Vec`.
+    pub fn new(arena: std::rc::Rc<ArenaCell>) -> ArenaCheckout {
+        assert!(
+            !arena.1.get(),
+            "ArenaCell: ArenaCheckout while a cow() checkout is active"
+        );
+        let wgen = arena.2.get();
+        let work = arena.0.borrow().as_ref().clone();
+        arena.3.set(arena.3.get() + 1);
+        ArenaCheckout { arena, work, wgen }
     }
 }
 
@@ -2749,6 +2994,16 @@ impl std::ops::DerefMut for ArenaCheckout {
 
 impl Drop for ArenaCheckout {
     fn drop(&mut self) {
-        *self.arena.borrow_mut() = std::mem::take(&mut self.work);
+        if std::env::var("TSC_ARENA_DBG").is_ok() && self.arena.2.get() != self.wgen {
+            eprintln!(
+                "[arena] ArenaCheckout stale write-back (gen {} -> {}) len={}\n{}",
+                self.wgen,
+                self.arena.2.get(),
+                self.work.len(),
+                std::backtrace::Backtrace::force_capture()
+            );
+        }
+        self.arena.3.set(self.arena.3.get().saturating_sub(1));
+        self.arena.set(std::mem::take(&mut self.work));
     }
 }

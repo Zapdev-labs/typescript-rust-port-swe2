@@ -79,7 +79,7 @@ impl<'a> NodeBuilderImpl<'a> {
 
         let ((text, _had_text), is_string_literal) = {
             let __program = c.program.clone().expect("program");
-            let n_nodes = __program.nodes((res).file_index());
+            let n_nodes = crate::printer_util::arena_view(&__program, nodes, (res).file_index());
             (
                 ast::try_get_text_of_property_name(res, &n_nodes),
                 ast::is_string_literal(&n_nodes[res]),
@@ -92,7 +92,7 @@ impl<'a> NodeBuilderImpl<'a> {
         let kind = classify_property_name(&text, is_string_literal, is_method);
         let res_kind = {
             let __program = c.program.clone().expect("program");
-            let n_nodes = __program.nodes((res).file_index());
+            let n_nodes = crate::printer_util::arena_view(&__program, nodes, (res).file_index());
             n_nodes[res].kind
         };
         if res_kind == Kind::Identifier && kind == PropertyNameNodeKind::Identifier {
@@ -128,14 +128,14 @@ impl<'a> NodeBuilderImpl<'a> {
             // even though typeToTypeNode (and shouldExpandType) were never
             // called.
             if self.ctx.max_expansion_depth >= 0 && !self.ctx.can_increase_expansion_depth {
-                self.walk_node_for_expandability(c, node);
+                self.walk_node_for_expandability(c, nodes, node);
             }
             return Some(r);
         }
         if let Some(tracker) = self.ctx.tracker.clone() {
             tracker.borrow_mut().report_inference_fallback(node, nodes);
         }
-        let t = self.get_type_from_type_node(c, node, false);
+        let t = self.get_type_from_type_node(c, node, false, nodes);
         self.type_to_type_node_opt(c, nodes, t)
     }
 
@@ -143,7 +143,7 @@ impl<'a> NodeBuilderImpl<'a> {
     /// a reused AST node tree, calling `checkTypeExpandability` on each type
     /// reference, type predicate, or import type node. Short-circuits once
     /// `canIncreaseExpansionDepth` is set.
-    fn walk_node_for_expandability(&mut self, c: &mut Checker, node: NodeId) {
+    fn walk_node_for_expandability(&mut self, c: &mut Checker, nodes: &[ast::Node], node: NodeId) {
         if self.ctx.can_increase_expansion_depth {
             return;
         }
@@ -151,7 +151,7 @@ impl<'a> NodeBuilderImpl<'a> {
         // not they are in the tree.
         {
             let __program = c.program.clone().expect("program");
-            let nn = __program.nodes((node).file_index());
+            let nn = crate::printer_util::arena_view(&__program, nodes, (node).file_index());
             let n = &nn[node];
             if ast::is_type_reference_node(n)
                 || ast::is_expression_with_type_arguments(n)
@@ -160,7 +160,7 @@ impl<'a> NodeBuilderImpl<'a> {
             {
                 let _ = n;
                 drop(nn);
-                if let Some(t) = self.get_type_from_type_node(c, node, false) {
+                if let Some(t) = self.get_type_from_type_node(c, node, false, nodes) {
                     self.check_type_expandability(c, Some(t));
                     if self.ctx.can_increase_expansion_depth {
                         return;
@@ -169,7 +169,7 @@ impl<'a> NodeBuilderImpl<'a> {
             }
         }
         let __program = c.program.clone().expect("program");
-        let nn = __program.nodes((node).file_index());
+        let nn = crate::printer_util::arena_view(&__program, nodes, (node).file_index());
         let mut children: Vec<NodeId> = Vec::new();
         nn[node].for_each_child(&nn, &mut |child| {
             children.push(child);
@@ -180,7 +180,7 @@ impl<'a> NodeBuilderImpl<'a> {
             if self.ctx.can_increase_expansion_depth {
                 return;
             }
-            self.walk_node_for_expandability(c, child);
+            self.walk_node_for_expandability(c, nodes, child);
         }
     }
 }
@@ -497,6 +497,58 @@ impl<'a> NodeBuilderImpl<'a> {
         nodes: &mut Vec<ast::Node>,
         existing: NodeId,
     ) -> Option<NodeId> {
+        if existing.file_index() != self.f.file_index() {
+            // `existing` lives in another file's arena — the visitor must
+            // read it there while appending results into `nodes`. Run the
+            // visit on a scratch clone of the source arena (a `borrow()`
+            // clone, since checker ancestors may hold `Ref`s on it), pad
+            // it so scratch-minted ids can't alias real `nodes` ids in the
+            // emit tables, then relocate the produced tail.
+            let program = c.program.clone().expect("program");
+            let mut src = program.nodes(existing.file_index()).to_vec();
+            if src.len() < nodes.len() {
+                let filler = src[0].clone();
+                src.resize(nodes.len(), filler);
+            }
+            let tmp_base = src.len();
+            let dest_base = nodes.len();
+            // Mint scratch clones with the SOURCE file index: a node's
+            // `file_index` names the buffer it lives in, and `arena_view`
+            // reads inside the visit must resolve to `src` itself.
+            let src_fi = existing.file_index();
+            let saved_fi = self.f.file_index();
+            self.f.set_file_index(src_fi);
+            // `type_parameter_names` caches minted `NodeId`s — they are only
+            // valid in the buffer they were minted into. Give the scratch
+            // arena its own epoch so cached ids are recomputed here.
+            let next_epoch = self.ctx.epoch_counter.get() + 1;
+            self.ctx.epoch_counter.set(next_epoch);
+            let saved_epoch = self.ctx.nodes_epoch.replace(next_epoch);
+            let root = {
+                // While the visit runs on `src`, nested checker reads may
+                // hit ids in the destination buffer (`nodes`) — register it
+                // so `arena_view` resolves them live instead of snapshotting.
+                let live = nodes.as_slice();
+                let _live_guard = crate::printer_util::LiveArenaGuard::register(live);
+                self.try_reuse_existing_node_helper_in_arena(c, &mut src, existing, Some(live))
+            };
+            self.f.set_file_index(saved_fi);
+            self.ctx.nodes_epoch.set(saved_epoch);
+            let root = root?;
+            return Some(self.relocate_cloned_tail(nodes, &mut src, tmp_base, dest_base, root, src_fi));
+        }
+        self.try_reuse_existing_node_helper_in_arena(c, nodes, existing, None)
+    }
+
+    /// The body of Go's `tryReuseExistingNodeHelper` running inside `nodes`
+    /// (either the dest arena or a scratch clone of a foreign source arena).
+    fn try_reuse_existing_node_helper_in_arena(
+        &mut self,
+        c: &mut Checker,
+        nodes: &mut Vec<ast::Node>,
+        existing: NodeId,
+        extra_live: Option<&[ast::Node]>,
+    ) -> Option<NodeId> {
         // The visitor's `cx.factory` cannot alias `b.f` (b is behind the
         // RefCell for the whole visit), so give it an equivalent fresh
         // factory — see the file header. Must be built before `self` is
@@ -511,6 +563,7 @@ impl<'a> NodeBuilderImpl<'a> {
             c: RefCell::new(&mut *c),
             bound: bound.clone(),
             non_local_node: Cell::new(true),
+            extra_live,
         });
         let visitor = get_existing_node_tree_visitor(shared.clone());
         let transformed = {
@@ -524,7 +577,7 @@ impl<'a> NodeBuilderImpl<'a> {
         }
         {
             let __program = c.program.clone().expect("program");
-            let nn = __program.nodes((existing).file_index());
+            let nn = crate::printer_util::arena_view(&__program, nodes, (existing).file_index());
             self.ctx.approximate_length += nn[existing].loc.end() - nn[existing].loc.pos();
         }
         transformed
@@ -540,10 +593,10 @@ impl<'a> NodeBuilderImpl<'a> {
     ) -> Option<String> {
         let (same_file, attributes, is_type_of) = {
             let __program = c.program.clone().expect("program");
-            let nn = __program.nodes((lit).file_index());
+            let nn = crate::printer_util::arena_view(&__program, nodes, (lit).file_index());
             let lit_file = ast::get_source_file_of_node(Some(lit), &nn);
             let __program = c.program.clone().expect("program");
-            let pn = __program.nodes((parent).file_index());
+            let pn = crate::printer_util::arena_view(&__program, nodes, (parent).file_index());
             let itn = pn[parent].as_import_type_node();
             (
                 self.ctx.enclosing_file == lit_file,
@@ -557,17 +610,17 @@ impl<'a> NodeBuilderImpl<'a> {
                 let (m, _) = ast::import_attributes_resolution_mode_override(
                     attributes,
                     None,
-                    &c.program_nodes(parent),
+                    &c.program_nodes_live(parent, nodes),
                 );
                 mode = m;
             }
             let name = {
                 let __program = c.program.clone().expect("program");
-                let nn = __program.nodes((lit).file_index());
+                let nn = crate::printer_util::arena_view(&__program, nodes, (lit).file_index());
                 nn[lit].text(&nn).into_owned()
             };
             let original_name = name.clone();
-            let node_symbol = self.try_get_resolved_symbol_from_type_node(c, Some(parent));
+            let node_symbol = self.try_get_resolved_symbol_from_type_node(c, Some(parent), nodes);
             let meaning = if is_type_of {
                 SymbolFlags::VALUE
             } else {
@@ -580,6 +633,7 @@ impl<'a> NodeBuilderImpl<'a> {
                     self.ctx.enclosing_declaration,
                     meaning,
                     false,
+                    Some(nodes.as_slice()),
                 )
                 .accessibility
                     == printer::SymbolAccessibility::Accessible
@@ -647,15 +701,22 @@ impl<'a> NodeBuilderImpl<'a> {
     pub(crate) fn get_enclosing_declaration_ignoring_fake_scope(
         &mut self,
         c: &mut Checker,
+        nodes: &[ast::Node],
     ) -> Option<NodeId> {
         let mut enc = self.ctx.enclosing_declaration;
         while let Some(e) = enc {
-            if self
-                .links
-                .try_get(&e)
-                .is_some_and(|l| l.fake_scope_for_signature_declaration.is_some())
+            // Same NodeId-aliasing guard as `push_fake_scope`: a stale
+            // fake-scope link is only trusted when the node in the live
+            // buffer is actually a Block.
+            if nodes
+                .get(e.local_index() as usize)
+                .is_some_and(|n| n.kind == ast::Kind::Block)
+                && self
+                    .links
+                    .try_get(&e)
+                    .is_some_and(|l| l.fake_scope_for_signature_declaration.is_some())
             {
-                enc = c.program_nodes(e)[e].parent;
+                enc = c.program_nodes_live(e, nodes)[e].parent;
             } else {
                 break;
             }
@@ -673,7 +734,7 @@ impl<'a> NodeBuilderImpl<'a> {
 /// and `visitor`. `b`/`c` are `RefCell`-wrapped because `VisitFn` is `Fn`;
 /// borrows are scoped per statement and must never be held across
 /// `v.visit_*` calls (those re-enter the visit fn).
-struct ExistingNodeTreeState<'b, 'a> {
+struct ExistingNodeTreeState<'b, 'a, 'e> {
     /// `b`.
     b: RefCell<&'b mut NodeBuilderImpl<'a>>,
     /// `b.ch`.
@@ -682,14 +743,43 @@ struct ExistingNodeTreeState<'b, 'a> {
     bound: Rc<RefCell<RecoveryBoundary>>,
     /// `nonLocalNode`.
     non_local_node: Cell<bool>,
+    /// The destination arena buffer while the visit runs on a scratch
+    /// clone of a foreign source arena (`try_reuse_existing_node_helper`'s
+    /// `nodes`). Nested name resolution may walk node ids belonging to
+    /// *either* live buffer (Go follows raw pointers), so both must be
+    /// reachable — see [`live_nodes_for`]. Kept on a separate lifetime so
+    /// the struct stays covariant over `'e`.
+    extra_live: Option<&'e [ast::Node]>,
 }
 
-type NCShared<'b, 'a> = Rc<ExistingNodeTreeState<'b, 'a>>;
+type NCShared<'b, 'a, 'e> = Rc<ExistingNodeTreeState<'b, 'a, 'e>>;
+
+/// Pick the live working buffer that physically holds `id` — `cx.nodes`
+/// (the visit arena, `src` in scratch mode) or `sh.extra_live` (the dest
+/// buffer while the visit runs on a scratch clone). Falls back to
+/// `cx.nodes`, which makes `arena_view` degrade to a snapshot exactly as
+/// passing no live buffer would.
+fn live_nodes_for<'x, 'e: 'x>(
+    sh: &NCShared<'_, '_, 'e>,
+    cx_nodes: &'x [ast::Node],
+    id: Option<NodeId>,
+) -> Option<&'x [ast::Node]> {
+    let Some(fi) = id.map(|i| i.file_index()) else {
+        return Some(cx_nodes);
+    };
+    if let Some(extra) = sh.extra_live
+        && extra.first().is_some_and(|n| n.id.file_index() == fi)
+        && !cx_nodes.first().is_some_and(|n| n.id.file_index() == fi)
+    {
+        return Some(extra);
+    }
+    Some(cx_nodes)
+}
 
 /// `b.ctx.tracker.ReportInferenceFallback(node)` — small helper that clones
 /// the tracker `Rc` out from under the `b` borrow before calling.
 fn nb_report_inference_fallback(
-    sh: &ExistingNodeTreeState<'_, '_>,
+    sh: &ExistingNodeTreeState<'_, '_, '_>,
     nodes: &[ast::Node],
     node: NodeId,
 ) {
@@ -701,7 +791,7 @@ fn nb_report_inference_fallback(
 
 /// `b.setTextRange(node, location)`.
 fn nb_set_text_range(
-    sh: &ExistingNodeTreeState<'_, '_>,
+    sh: &ExistingNodeTreeState<'_, '_, '_>,
     nodes: &mut Vec<ast::Node>,
     node: Option<NodeId>,
     location: Option<NodeId>,
@@ -713,7 +803,7 @@ fn nb_set_text_range(
 
 /// `(b *recoveryBoundary) startRecoveryScope` — the `ctx` back-pointer is
 /// supplied by `sh`.
-fn nb_start_recovery_scope(sh: &ExistingNodeTreeState<'_, '_>) -> OriginalRecoveryScopeState {
+fn nb_start_recovery_scope(sh: &ExistingNodeTreeState<'_, '_, '_>) -> OriginalRecoveryScopeState {
     let tracked = sh.b.borrow().ctx.tracked_symbols.clone();
     let bound = sh.bound.borrow();
     OriginalRecoveryScopeState {
@@ -724,7 +814,7 @@ fn nb_start_recovery_scope(sh: &ExistingNodeTreeState<'_, '_>) -> OriginalRecove
 }
 
 /// `(b *recoveryBoundary) endRecoveryScope`.
-fn nb_end_recovery_scope(sh: &ExistingNodeTreeState<'_, '_>, state: OriginalRecoveryScopeState) {
+fn nb_end_recovery_scope(sh: &ExistingNodeTreeState<'_, '_, '_>, state: OriginalRecoveryScopeState) {
     let tracked = sh.b.borrow().ctx.tracked_symbols.clone();
     let mut bound = sh.bound.borrow_mut();
     bound.had_error = state.had_error;
@@ -736,7 +826,7 @@ fn nb_end_recovery_scope(sh: &ExistingNodeTreeState<'_, '_>, state: OriginalReco
 /// deferred report needs no `nodes` argument there; the port's tracker
 /// methods take `&[ast::Node]`, so deferred reports are stored as
 /// `FnMut(&[ast::Node])` and invoked with the destination arena.
-fn nb_mark_error(sh: &ExistingNodeTreeState<'_, '_>) {
+fn nb_mark_error(sh: &ExistingNodeTreeState<'_, '_, '_>) {
     sh.bound.borrow_mut().mark_error(None);
 }
 
@@ -744,7 +834,7 @@ fn nb_mark_error(sh: &ExistingNodeTreeState<'_, '_>) {
 /// `node == leftmost` attaches `sym` (and renames type parameters renamed in
 /// the current context); otherwise it recurses via `VisitEachChild`.
 fn attach_symbol_visit(
-    sh: &NCShared<'_, '_>,
+    sh: &NCShared<'_, '_, '_>,
     v: &ast::NodeVisitor,
     cx: &mut ast::VisitorCx<'_, '_>,
     node: NodeId,
@@ -773,10 +863,11 @@ fn attach_symbol_visit(
                 let text = {
                     let c = sh.c.borrow();
                     let __program = c.program.clone().expect("program");
-                    let nn = __program.nodes((node).file_index());
+                    let nn = crate::printer_util::arena_view(&__program, cx.nodes, (node).file_index());
                     nn[node].text(&nn).into_owned()
                 };
-                sh.b.borrow_mut().new_identifier(cx.nodes, &text, sym)
+                let m = sh.b.borrow_mut().new_identifier(cx.nodes, &text, sym);
+                m
             }
         };
         let name = nb_set_text_range(sh, cx.nodes, Some(name), Some(node))?;
@@ -792,7 +883,7 @@ fn attach_symbol_visit(
 
 /// `attachSymbolToLeftmostIdentifier` (nodecopy.go).
 fn attach_symbol_to_leftmost_identifier(
-    sh: &NCShared<'_, '_>,
+    sh: &NCShared<'_, '_, '_>,
     cx: &mut ast::VisitorCx<'_, '_>,
     leftmost: NodeId,
     node: NodeId,
@@ -816,7 +907,7 @@ fn attach_symbol_to_leftmost_identifier(
 /// type parameters renamed within the current context.
 /// Returns `(introducesError, newNode, symbol)`.
 fn track_existing_entity_name(
-    sh: &NCShared<'_, '_>,
+    sh: &NCShared<'_, '_, '_>,
     cx: &mut ast::VisitorCx<'_, '_>,
     node: NodeId,
     override_enclosing: Option<NodeId>,
@@ -826,7 +917,7 @@ fn track_existing_entity_name(
     let (leftmost, js_exports_left) = {
         let c = sh.c.borrow();
         let __program = c.program.clone().expect("program");
-        let nn = __program.nodes((node).file_index());
+        let nn = crate::printer_util::arena_view(&__program, cx.nodes, (node).file_index());
         let leftmost = ast::get_first_identifier(node, &nn);
         let in_js = ast::is_in_js_file(Some(node), &nn);
         let js_special = in_js
@@ -860,14 +951,14 @@ fn track_existing_entity_name(
     let meaning = {
         let c = sh.c.borrow();
         let __program = c.program.clone().expect("program");
-        let nn = __program.nodes((node).file_index());
+        let nn = crate::printer_util::arena_view(&__program, cx.nodes, (node).file_index());
         crate::emitsupport::get_meaning_of_entity_name_reference(node, &nn)
     };
     let mut sym: Option<SymbolId>;
     let leftmost_is_this = {
         let c = sh.c.borrow();
         let __program = c.program.clone().expect("program");
-        let nn = __program.nodes((leftmost).file_index());
+        let nn = crate::printer_util::arena_view(&__program, cx.nodes, (leftmost).file_index());
         ast::is_this_identifier(&nn[leftmost])
     };
     if leftmost_is_this {
@@ -881,8 +972,14 @@ fn track_existing_entity_name(
         };
         if {
             let mut c = sh.c.borrow_mut();
-            c.is_symbol_accessible(sym, Some(leftmost), meaning, false)
-                .accessibility
+            c.is_symbol_accessible(
+                sym,
+                Some(leftmost),
+                meaning,
+                false,
+                live_nodes_for(sh, cx.nodes, Some(leftmost)),
+            )
+            .accessibility
                 != printer::SymbolAccessibility::Accessible
         } {
             introduces_error = true;
@@ -901,9 +998,14 @@ fn track_existing_entity_name(
             None,
         );
     }
-    sym =
-        sh.c.borrow_mut()
-            .resolve_entity_name(Some(leftmost), meaning, true, true, None);
+    sym = sh.c.borrow_mut().resolve_entity_name_live(
+        Some(leftmost),
+        meaning,
+        true,
+        true,
+        None,
+        live_nodes_for(sh, cx.nodes, Some(leftmost)),
+    );
     if sh.b.borrow().ctx.enclosing_declaration.is_some()
         && !(sym.is_some_and(|s| {
             sh.c.borrow_mut()
@@ -925,9 +1027,14 @@ fn track_existing_entity_name(
         // newly added parameters from the tuple, which might have different
         // meanings in the original context.
         let enc = sh.b.borrow().ctx.enclosing_declaration;
-        let sym_at_location =
-            sh.c.borrow_mut()
-                .resolve_entity_name(Some(leftmost), meaning, true, true, enc);
+        let sym_at_location = sh.c.borrow_mut().resolve_entity_name_live(
+            Some(leftmost),
+            meaning,
+            true,
+            true,
+            enc,
+            live_nodes_for(sh, cx.nodes, enc.or(Some(leftmost))),
+        );
         let unknown_symbol = sh.c.borrow().unknown_symbol;
         let same_reference = {
             let mut c = sh.c.borrow_mut();
@@ -983,7 +1090,7 @@ fn track_existing_entity_name(
             let is_param = {
                 let c = sh.c.borrow();
                 let __program = c.program.clone().expect("program");
-                let nn = __program.nodes((vd).file_index());
+                let nn = crate::printer_util::arena_view(&__program, cx.nodes, (vd).file_index());
                 ast::is_part_of_parameter_declaration(vd, &nn)
                     || nn[vd].kind == Kind::JSDocParameterTag
             };
@@ -1003,15 +1110,21 @@ fn track_existing_entity_name(
         let node_is_decl_name = {
             let c = sh.c.borrow();
             let __program = c.program.clone().expect("program");
-            let nn = __program.nodes((node).file_index());
+            let nn = crate::printer_util::arena_view(&__program, cx.nodes, (node).file_index());
             ast::is_declaration_name(node, &nn)
         };
         // Type parameters are visible in the current context if they are
         // resolvable.
         if !sym_is_type_param && !node_is_decl_name && {
             let mut c = sh.c.borrow_mut();
-            c.is_symbol_accessible(sym, enclosing_declaration, meaning, false)
-                .accessibility
+            c.is_symbol_accessible(
+                sym,
+                enclosing_declaration,
+                meaning,
+                false,
+                live_nodes_for(sh, cx.nodes, enclosing_declaration),
+            )
+            .accessibility
                 != printer::SymbolAccessibility::Accessible
         } {
             nb_report_inference_fallback(sh, cx.nodes, node);
@@ -1024,11 +1137,8 @@ fn track_existing_entity_name(
                     .track_symbol(sym_v, enclosing_declaration, meaning, cx.nodes);
             }
         }
-        return (
-            introduces_error,
-            attach_symbol_to_leftmost_identifier(sh, cx, leftmost, node, sym),
-            None,
-        );
+        let attached = attach_symbol_to_leftmost_identifier(sh, cx, leftmost, node, sym);
+        return (introduces_error, attached, None);
     }
     let cloned = {
         let mut b = sh.b.borrow_mut();
@@ -1043,7 +1153,7 @@ fn track_existing_entity_name(
 
 /// `tryVisitIndexedAccess` (nodecopy.go).
 fn try_visit_indexed_access(
-    sh: &NCShared<'_, '_>,
+    sh: &NCShared<'_, '_, '_>,
     v: &ast::NodeVisitor,
     cx: &mut ast::VisitorCx<'_, '_>,
     node: NodeId,
@@ -1064,7 +1174,7 @@ fn try_visit_indexed_access(
 
 /// `tryVisitKeyOf` (nodecopy.go).
 fn try_visit_key_of(
-    sh: &NCShared<'_, '_>,
+    sh: &NCShared<'_, '_, '_>,
     v: &ast::NodeVisitor,
     cx: &mut ast::VisitorCx<'_, '_>,
     node: NodeId,
@@ -1084,7 +1194,7 @@ fn try_visit_key_of(
 
 /// `tryVisitTypeQuery` (nodecopy.go).
 fn try_visit_type_query(
-    sh: &NCShared<'_, '_>,
+    sh: &NCShared<'_, '_, '_>,
     v: &ast::NodeVisitor,
     cx: &mut ast::VisitorCx<'_, '_>,
     node: NodeId,
@@ -1123,7 +1233,7 @@ fn try_visit_type_query(
 
 /// `tryVisitTypeReference` (nodecopy.go).
 fn try_visit_type_reference(
-    sh: &NCShared<'_, '_>,
+    sh: &NCShared<'_, '_, '_>,
     v: &ast::NodeVisitor,
     cx: &mut ast::VisitorCx<'_, '_>,
     node: NodeId,
@@ -1131,7 +1241,7 @@ fn try_visit_type_reference(
     {
         let c = sh.c.borrow();
         let __program = c.program.clone().expect("program");
-        let nn = __program.nodes((node).file_index());
+        let nn = crate::printer_util::arena_view(&__program, cx.nodes, (node).file_index());
         if ast::is_const_type_reference(&nn[node], &nn) {
             return None;
         }
@@ -1139,7 +1249,7 @@ fn try_visit_type_reference(
     let s = {
         let mut cb = sh.c.borrow_mut();
         let mut bb = sh.b.borrow_mut();
-        bb.try_get_resolved_symbol_from_type_node(&mut **cb, Some(node))
+        bb.try_get_resolved_symbol_from_type_node(&mut **cb, Some(node), cx.nodes)
     };
     let s = s?; // ???
     {
@@ -1162,7 +1272,7 @@ fn try_visit_type_reference(
     let can_reuse = {
         let mut b = sh.b.borrow_mut();
         let mut c = sh.c.borrow_mut();
-        let t = b.get_type_from_type_node(&mut **c, node, false);
+        let t = b.get_type_from_type_node(&mut **c, node, false, cx.nodes);
         t.is_some_and(|t| b.can_reuse_existing_js_type_node(&mut **c, cx.nodes, node, t))
     };
     if !can_reuse {
@@ -1208,7 +1318,7 @@ fn try_visit_type_reference(
 
 /// `tryVisitSimpleTypeNode` (nodecopy.go).
 fn try_visit_simple_type_node(
-    sh: &NCShared<'_, '_>,
+    sh: &NCShared<'_, '_, '_>,
     v: &ast::NodeVisitor,
     cx: &mut ast::VisitorCx<'_, '_>,
     node: NodeId,
@@ -1236,7 +1346,7 @@ fn try_visit_simple_type_node(
 /// equivalent to `b.f`, see the file header); `b.*`/`b.ch.*` calls go
 /// through scoped `RefCell` borrows on `sh`.
 fn visit_existing_node_tree_symbols_worker(
-    sh: &NCShared<'_, '_>,
+    sh: &NCShared<'_, '_, '_>,
     v: &ast::NodeVisitor,
     cx: &mut ast::VisitorCx<'_, '_>,
     node: NodeId,
@@ -1440,7 +1550,7 @@ fn visit_existing_node_tree_symbols_worker(
                 let non_fake_enclosing = {
                     let mut b = sh.b.borrow_mut();
                     let mut c = sh.c.borrow_mut();
-                    b.get_enclosing_declaration_ignoring_fake_scope(&mut **c)
+                    b.get_enclosing_declaration_ignoring_fake_scope(&mut **c, cx.nodes)
                 };
                 let same_scope = ast::find_ancestor(Some(node), cx.nodes, &mut |a, _| {
                     Some(a.id) == non_fake_enclosing
@@ -1479,7 +1589,7 @@ fn visit_existing_node_tree_symbols_worker(
             let t = {
                 let mut b = sh.b.borrow_mut();
                 let mut c = sh.c.borrow_mut();
-                b.get_type_from_type_node(&mut **c, node, true)
+                b.get_type_from_type_node(&mut **c, node, true, cx.nodes)
             };
             if t.is_none() {
                 nb_mark_error(sh);
@@ -1887,7 +1997,7 @@ fn visit_existing_node_tree_symbols_worker(
             (d.check_type, d.extends_type, d.true_type, d.false_type)
         };
         let check_type = v.visit_node(cx, check_type);
-        let type_params = sh.c.borrow_mut().get_infer_type_parameters(node);
+        let type_params = sh.c.borrow_mut().get_infer_type_parameters(node, cx.nodes);
         let dispose = {
             let mut b = sh.b.borrow_mut();
             let mut c = sh.c.borrow_mut();
@@ -1990,7 +2100,7 @@ fn visit_existing_node_tree_symbols_worker(
 /// `getExistingNodeTreeVisitor` (nodecopy.go) — builds the reuse visitor.
 /// PORT: returns a `NodeVisitor` over the shared `ExistingNodeTreeState`;
 /// the `nonLocalNode` flag is the `Cell` on `sh`.
-fn get_existing_node_tree_visitor<'v, 'a>(sh: NCShared<'v, 'a>) -> ast::NodeVisitor<'v>
+fn get_existing_node_tree_visitor<'v, 'a>(sh: NCShared<'v, 'a, 'v>) -> ast::NodeVisitor<'v>
 where
     'a: 'v,
 {
@@ -2027,7 +2137,7 @@ where
                     } else if cx.nodes[node].kind == Kind::ConditionalType {
                         // !!! TODO: impossible in combination with the scope
                         // start check???
-                        type_params = Some(sh.c.borrow_mut().get_infer_type_parameters(node));
+                        type_params = Some(sh.c.borrow_mut().get_infer_type_parameters(node, cx.nodes));
                     } else if cx.nodes[node].kind == Kind::MappedType {
                         let tp = cx.nodes[node].as_mapped_type_node().type_parameter;
                         let tps = tp.and_then(|tp| {
@@ -2085,7 +2195,7 @@ where
                         let t = {
                             let mut b = sh.b.borrow_mut();
                             let mut c = sh.c.borrow_mut();
-                            b.get_type_from_type_node(&mut **c, node, false)
+                            b.get_type_from_type_node(&mut **c, node, false, cx.nodes)
                         };
                         let mut b = sh.b.borrow_mut();
                         let mut c = sh.c.borrow_mut();
@@ -2138,7 +2248,7 @@ where
                     let file_of = {
                         let c = sh.c.borrow();
                         let __program = c.program.clone().expect("program");
-                        let nn = __program.nodes((most_original).file_index());
+                        let nn = crate::printer_util::arena_view(&__program, cx.nodes, (most_original).file_index());
                         ast::get_source_file_of_node(Some(most_original), &nn)
                     };
                     sh.non_local_node

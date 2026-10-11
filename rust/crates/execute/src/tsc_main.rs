@@ -95,7 +95,7 @@ fn stop_tracing(sys: &Arc<dyn System>, tr: Option<&Arc<Tracing>>, program: &Rc<P
         .source_files_slice()
         .first()
         .map(|file| program.nodes_handle(file.file_index()));
-    let nodes_ref = nodes_handle.as_ref().map(|h| h.borrow());
+    let nodes_ref = nodes_handle.as_ref().map(|h| h.snapshot());
     let empty_nodes: &[Node] = &[];
     let nodes: &[Node] = nodes_ref
         .as_ref()
@@ -704,7 +704,6 @@ fn perform_compilation(
         )),
         content_mapper_project.clone(),
     ));
-
     let tr = start_tracing_if_needed(sys, config, testing.as_ref());
 
     let parse_start = sys.now();

@@ -9,4 +9,4 @@ REMOTE_HOST="${TS_REMOTE_HOST:-dih@192.168.1.15}"
 "$(dirname "$0")/remote-sync.sh"
 
 ssh -o BatchMode=yes "$REMOTE_HOST" \
-  "cd /tmp/TypeScript/rust && env CARGO_TARGET_DIR=/tmp/tsc-target CARGO_INCREMENTAL=0 RUSTFLAGS='-C linker-features=-lld' \"\$HOME/.cargo/bin/cargo\" run --release $*"
+  "cd /tmp/TypeScript/rust && env CARGO_TARGET_DIR=$HOME/tsc-target CARGO_INCREMENTAL=0 RUSTFLAGS='-C linker-features=-lld' \"\$HOME/.cargo/bin/cargo\" run --release $*"

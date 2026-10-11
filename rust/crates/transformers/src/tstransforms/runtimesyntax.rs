@@ -119,26 +119,24 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
         node: NodeId,
     ) -> (Option<NodeId>, Option<FxHashMap<String, NodeId>>) {
         let saved_current_scope = self.current_scope.get();
-        let saved_first_declarations = self.current_scope_first_declarations_of_name.take();
-        match cx.nodes[node].kind {
+        // Only the scope-resetting kinds save/clear the declaration map —
+        // Go's pushScope leaves it untouched for every other kind.
+        let saved_first_declarations = match cx.nodes[node].kind {
             Kind::SourceFile => {
                 self.current_scope.set(Some(node));
                 self.current_source_file.set(Some(node));
-                *self.current_scope_first_declarations_of_name.borrow_mut() = None;
+                self.current_scope_first_declarations_of_name.take()
             }
             Kind::CaseBlock | Kind::ModuleBlock | Kind::Block => {
                 self.current_scope.set(Some(node));
-                *self.current_scope_first_declarations_of_name.borrow_mut() = None;
+                self.current_scope_first_declarations_of_name.take()
             }
             Kind::FunctionDeclaration | Kind::ClassDeclaration | Kind::VariableStatement => {
-                // Restore the saved map for recordDeclarationInScope to write
-                // into — Go keeps writing into the *current* (outer) map here.
-                *self.current_scope_first_declarations_of_name.borrow_mut() =
-                    saved_first_declarations.clone();
                 self.record_declaration_in_scope(cx, node);
+                None
             }
-            _ => {}
-        }
+            _ => None,
+        };
         (saved_current_scope, saved_first_declarations)
     }
 
@@ -1043,7 +1041,7 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
                 // node.Body.Kind == ast.KindModuleDeclaration
                 // !!! Strada didn't do this; why?
                 // tx.currentScope = node.AsNode()
-                statements = v.visit_slice(cx, &[body]).unwrap_or_default();
+                statements = v.visit_slice(cx, &[body]).unwrap_or_else(|| vec![body]);
                 let innermost = get_innermost_module_declaration_from_dotted_module(node, cx.nodes)
                     .unwrap_or(node);
                 let module_block = cx.nodes[innermost].as_module_declaration().body_base.body;
@@ -1645,7 +1643,9 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
             ));
         } else {
             statements.extend(parameter_property_assignments.iter().copied());
-            statements.extend(v.visit_slice(cx, &rest).unwrap_or_default());
+            statements.extend(
+                v.visit_slice(cx, &rest).unwrap_or_else(|| rest.to_vec()),
+            );
         }
 
         let statements = ec
@@ -1687,7 +1687,7 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
         // visit up to the statement containing `super`
         statements_out.extend(
             v.visit_slice(cx, &statements_in[..super_statement_index])
-                .unwrap_or_default(),
+                .unwrap_or_else(|| statements_in[..super_statement_index].to_vec()),
         );
 
         // if the statement containing `super` is a `try` statement, transform
@@ -1773,7 +1773,9 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
                     cx,
                     &statements_in[super_statement_index..super_statement_index + 1],
                 )
-                .unwrap_or_default(),
+                .unwrap_or_else(|| {
+                    statements_in[super_statement_index..super_statement_index + 1].to_vec()
+                }),
             );
 
             // insert the initializer statements
@@ -1783,7 +1785,7 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
         // visit the statements after `super`
         statements_out.extend(
             v.visit_slice(cx, &statements_in[super_statement_index + 1..])
-                .unwrap_or_default(),
+                .unwrap_or_else(|| statements_in[super_statement_index + 1..].to_vec()),
         );
         statements_out
     }
@@ -1893,10 +1895,7 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
                     .symbols
                     .expect("RuntimeSyntaxTransformer requires TransformOptions::symbols");
                 resolver.borrow_mut().get_referenced_export_container(
-                    location,
-                    false,
-                    cx.nodes,
-                    &mut symbols.borrow_mut(),
+                    location, false, cx.nodes, symbols,
                 )
             };
             if let Some(container) = container {

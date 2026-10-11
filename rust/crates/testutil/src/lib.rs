@@ -23,10 +23,12 @@ pub mod contentmappertest;
 pub mod filefixture;
 pub mod fixtures;
 pub mod fsbaselineutil;
+pub mod harnessutil;
 pub mod jstest;
 pub mod parsetestutil;
 pub mod race;
 pub mod stringtestutil;
+pub mod tsbaseline;
 
 /// Error is the `t.Error`/`t.Fatalf` payload for helpers that Go reports
 /// through `testing.TB`. Test callers unwrap or `?` it.

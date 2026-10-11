@@ -1,0 +1,51 @@
+[package]
+name = "tsc-ls"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+tsc-ast = { path = "../ast" }
+tsc-astnav = { path = "../astnav" }
+tsc-binder = { path = "../binder" }
+tsc-bundled = { path = "../bundled" }
+tsc-checker = { path = "../checker" }
+tsc-collections = { path = "../collections" }
+tsc-compiler = { path = "../compiler" }
+tsc-core = { path = "../core" }
+tsc-debug = { path = "../debug" }
+tsc-diagnostics = { path = "../diagnostics" }
+tsc-format = { path = "../format" }
+tsc-locale = { path = "../locale" }
+tsc-lsconv = { path = "../lsconv" }
+tsc-lsproto = { path = "../lsproto" }
+tsc-lsutil = { path = "../lsutil" }
+tsc-module = { path = "../module" }
+tsc-modulespecifiers = { path = "../modulespecifiers" }
+tsc-nodebuilder = { path = "../nodebuilder" }
+tsc-outputpaths = { path = "../outputpaths" }
+tsc-packagejson = { path = "../packagejson" }
+tsc-parser = { path = "../parser" }
+tsc-printer = { path = "../printer" }
+tsc-dirty = { path = "../dirty" }
+tsc-evaluator = { path = "../evaluator" }
+tsc-jsnum = { path = "../jsnum" }
+tsc-project-logging = { path = "../projectlogging" }
+tsc-scanner = { path = "../scanner" }
+tsc-sourcemap = { path = "../sourcemap" }
+tsc-spanmap = { path = "../spanmap" }
+tsc-stringutil = { path = "../stringutil" }
+tsc-symlinks = { path = "../symlinks" }
+tsc-tsoptions = { path = "../tsoptions" }
+tsc-tspath = { path = "../tspath" }
+tsc-vfs = { path = "../vfs" }
+
+rustc-hash = { workspace = true }
+
+[dev-dependencies]
+tsc-repo = { path = "../repo" }
+tsc-testutil = { path = "../testutil" }

@@ -146,7 +146,9 @@ impl UsingDeclarationTransformer {
             let (prologue, rest) = (prologue.to_vec(), rest.to_vec());
             let top_level_statements = RefCell::new(Vec::<NodeId>::new());
             let txv = self.txv(ec);
-            let visited_prologue = txv.visit_slice(cx, &prologue).unwrap_or_default();
+            let visited_prologue = txv
+                .visit_slice(cx, &prologue)
+                .unwrap_or_else(|| prologue.clone());
             top_level_statements.borrow_mut().extend(visited_prologue);
 
             // Collect and transform any leading statements up to the first `using` or `await using`. This preserves
@@ -157,7 +159,9 @@ impl UsingDeclarationTransformer {
                 let statement = rest[pos];
                 if get_using_kind(cx, statement) != UsingKind::None {
                     if pos > 0 {
-                        let visited = txv.visit_slice(cx, &rest[..pos]).unwrap_or_default();
+                        let visited = txv
+                            .visit_slice(cx, &rest[..pos])
+                            .unwrap_or_else(|| rest[..pos].to_vec());
                         top_level_statements.borrow_mut().extend(visited);
                     }
                     break;
@@ -297,7 +301,10 @@ impl UsingDeclarationTransformer {
             let (prologue, rest) = (prologue.to_vec(), rest.to_vec());
             let env_binding = self.create_env_binding(ec, cx);
             let mut statements = Vec::with_capacity(prologue.len() + 2);
-            let visited_prologue = self.txv(ec).visit_slice(cx, &prologue).unwrap_or_default();
+            let visited_prologue = self
+                .txv(ec)
+                .visit_slice(cx, &prologue)
+                .unwrap_or_else(|| prologue.clone());
             statements.extend(visited_prologue);
             let body_statements =
                 self.transform_using_declarations(ec, cx, &rest, env_binding, None);

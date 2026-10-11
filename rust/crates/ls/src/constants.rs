@@ -1,0 +1,4 @@
+// Ported from tsc/internal/ls/constants.go @ ec47d33c23e464a17cdf2475632cba629bee8763
+
+pub const MODULE_SPECIFIER_RESOLUTION_LIMIT: i32 = 100;
+pub const MODULE_SPECIFIER_RESOLUTION_CACHE_ATTEMPT_LIMIT: i32 = 1000;

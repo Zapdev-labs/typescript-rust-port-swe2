@@ -105,7 +105,7 @@ pub trait EmitResolver: ReferenceResolver {
         nodes: &[Node],
     ) -> bool;
     /// `MarkLinkedReferencesRecursively(file *ast.SourceFile)`
-    fn mark_linked_references_recursively(&mut self, file: NodeId, nodes: &[Node]);
+    fn mark_linked_references_recursively(&mut self, file: NodeId, nodes: &mut Vec<Node>);
     /// `GetExternalModuleFileFromDeclaration(node *ast.Node) *ast.SourceFile`
     fn get_external_module_file_from_declaration(
         &self,
@@ -135,9 +135,20 @@ pub trait EmitResolver: ReferenceResolver {
 
     // JSX Emit
     /// `GetJsxFactoryEntity(location *ast.Node) *ast.Node`
-    fn get_jsx_factory_entity(&self, location: NodeId, nodes: &[Node]) -> Option<NodeId>;
+    ///
+    /// `nodes` is mutable: entity names synthesized during the call are
+    /// minted into the caller's working buffer (Go appends to the shared
+    /// arena — a concurrent `nodes_mut` would be lost under a live
+    /// `ArenaCheckout` write-back).
+    fn get_jsx_factory_entity(&self, location: NodeId, nodes: &mut Vec<Node>) -> Option<NodeId>;
     /// `GetJsxFragmentFactoryEntity(location *ast.Node) *ast.Node`
-    fn get_jsx_fragment_factory_entity(&self, location: NodeId, nodes: &[Node]) -> Option<NodeId>;
+    fn get_jsx_fragment_factory_entity(&self, location: NodeId, nodes: &mut Vec<Node>) -> Option<NodeId>;
+    /// PORT: the entity name returned by `GetJsxFactoryEntity`/
+    /// `GetJsxFragmentFactoryEntity` lives in the checker's file arena, not
+    /// the caller's transform buffer (Go reads `*ast.Node` pointers
+    /// globally). This resolves `e` through the checker and returns its
+    /// identifier texts left-to-right (`React.DOM` → `["React","DOM"]`).
+    fn entity_name_texts(&self, e: NodeId, nodes: &[Node]) -> Vec<String>;
     /// `SetReferencedImportDeclaration(node *ast.IdentifierNode, ref *ast.Declaration)` — for overriding the reference resolver behavior for generated identifiers
     fn set_referenced_import_declaration(
         &mut self,

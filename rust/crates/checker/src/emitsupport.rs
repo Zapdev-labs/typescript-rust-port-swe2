@@ -124,6 +124,9 @@ impl Checker {
             .is_visible;
         if is_visible == Tristate::Unknown {
             let visible = self.determine_if_declaration_is_visible(node);
+            if std::env::var("TSC_DBG_VIS").is_ok() {
+                eprintln!("[vis] node={:?} visible={}", node, visible);
+            }
             self.emit_resolver_links
                 .declaration_links
                 .get(node)
@@ -294,6 +297,7 @@ impl Checker {
         entity_name: NodeId,
         enclosing_declaration: Option<NodeId>,
         should_compute_alias_to_make_visible: bool,
+        live_nodes: Option<&[Node]>,
     ) -> SymbolAccessibilityResult {
         let __program = self.program.clone().expect("program");
         let nodes = __program.nodes((entity_name).file_index());
@@ -316,6 +320,7 @@ impl Checker {
             None,  /*nameNotFoundMessage*/
             false, /*isUse*/
             false, /*excludeGlobals*/
+            live_nodes.or(Some(&nodes)),
         );
 
         if let Some(symbol) = symbol
@@ -335,7 +340,7 @@ impl Checker {
             let this_container = self.get_this_container(first_identifier, false, false);
             let sym = self.get_symbol_of_declaration(this_container);
             if self
-                .is_symbol_accessible(sym, enclosing_declaration, meaning, false)
+                .is_symbol_accessible(sym, enclosing_declaration, meaning, false, None)
                 .accessibility
                 == SymbolAccessibility::Accessible
             {

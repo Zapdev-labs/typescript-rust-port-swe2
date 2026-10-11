@@ -1,0 +1,33 @@
+[package]
+name = "tsc-fourslash"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+tsc-bundled = { path = "../bundled" }
+tsc-collections = { path = "../collections" }
+tsc-compiler = { path = "../compiler" }
+tsc-contentmapper = { path = "../contentmapper" }
+tsc-core = { path = "../core" }
+tsc-debug = { path = "../debug" }
+tsc-diagnostics = { path = "../diagnostics" }
+tsc-diagnosticwriter = { path = "../diagnosticwriter" }
+tsc-json = { path = "../json" }
+tsc-jsonrpc = { path = "../jsonrpc" }
+tsc-locale = { path = "../locale" }
+tsc-ls = { path = "../ls" }
+tsc-lsconv = { path = "../lsconv" }
+tsc-lsp = { path = "../lsp" }
+tsc-lsproto = { path = "../lsproto" }
+tsc-lsutil = { path = "../lsutil" }
+tsc-project = { path = "../project" }
+tsc-spanmap = { path = "../spanmap" }
+tsc-stringutil = { path = "../stringutil" }
+tsc-testutil = { path = "../testutil" }
+tsc-tspath = { path = "../tspath" }
+tsc-vfs = { path = "../vfs" }

@@ -10,7 +10,10 @@ workspace = true
 
 [dependencies]
 tsc-ast = { path = "../ast" }
+tsc-bundled = { path = "../bundled" }
+tsc-checker = { path = "../checker" }
 tsc-collections = { path = "../collections" }
+tsc-compiler = { path = "../compiler" }
 tsc-contentmapper = { path = "../contentmapper" }
 tsc-core = { path = "../core" }
 tsc-diagnosticwriter = { path = "../diagnosticwriter" }
@@ -18,12 +21,19 @@ tsc-diagnostics = { path = "../diagnostics" }
 tsc-ipc = { path = "../ipc" }
 tsc-json = { path = "../json" }
 tsc-locale = { path = "../locale" }
+tsc-nodebuilder = { path = "../nodebuilder" }
+tsc-outputpaths = { path = "../outputpaths" }
 tsc-parser = { path = "../parser" }
+tsc-printer = { path = "../printer" }
 tsc-repo = { path = "../repo" }
+tsc-scanner = { path = "../scanner" }
+tsc-sourcemap = { path = "../sourcemap" }
 tsc-spanmap = { path = "../spanmap" }
 tsc-stringutil = { path = "../stringutil" }
+tsc-tsoptions = { path = "../tsoptions" }
 tsc-tspath = { path = "../tspath" }
 tsc-vfs = { path = "../vfs" }
+rustc-hash = { workspace = true }
 serde = { workspace = true }
 # "raw_value" for `serde_json::value::RawValue` (tsc-json's `Value` type).
 serde_json = { workspace = true, features = ["raw_value"] }

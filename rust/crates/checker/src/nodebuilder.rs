@@ -197,6 +197,7 @@ impl NodeBuilder {
     pub(crate) fn enter_context(
         &mut self,
         c: &mut Checker,
+        nodes: &mut Vec<ast::Node>,
         enclosing_declaration: Option<NodeId>,
         flags: nodebuilder::Flags,
         internal_flags: nodebuilder::InternalFlags,
@@ -211,8 +212,17 @@ impl NodeBuilder {
         let enclosing_file = match enclosing_declaration {
             Some(decl) => {
                 let __program = c.program.clone().expect("program");
-                let nodes = __program.nodes((decl).file_index());
-                ast::get_source_file_of_node(Some(decl), &nodes)
+                let arena =
+                    crate::printer_util::resolve_arena_for(&__program, nodes, decl);
+                // While the caller's `nodes_mut` guard has the arena checked
+                // out, `program.nodes` reads the empty placeholder — the
+                // in-hand `nodes` buffer IS that arena's contents.
+                let read: &[ast::Node] = if arena.is_empty() && !nodes.is_empty() {
+                    nodes
+                } else {
+                    &arena
+                };
+                ast::get_source_file_of_node(Some(decl), read)
             }
             None => None,
         };
@@ -344,7 +354,7 @@ impl NodeBuilder {
         internal_flags: nodebuilder::InternalFlags,
         tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
     ) -> Option<NodeId> {
-        self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
+        self.enter_context(c, nodes, enclosing_declaration, flags, internal_flags, tracker);
         let info = c.index_info_arena.get(info).clone();
         let result = self
             .impl_mut()
@@ -364,7 +374,7 @@ impl NodeBuilder {
         internal_flags: nodebuilder::InternalFlags,
         tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
     ) -> Option<NodeId> {
-        self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
+        self.enter_context(c, nodes, enclosing_declaration, flags, internal_flags, tracker);
         let signature = c.get_signature_from_declaration(signature_declaration);
         let impl_ = self.impl_mut();
         let (_expanded, cleanup) = impl_.enter_signature_scope(c, nodes, signature);
@@ -390,6 +400,7 @@ impl NodeBuilder {
         let tracker = share_tracker(tracker);
         self.enter_context(
             c,
+            nodes,
             enclosing_declaration,
             flags,
             internal_flags,
@@ -420,7 +431,7 @@ impl NodeBuilder {
         internal_flags: nodebuilder::InternalFlags,
         tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
     ) -> Option<NodeId> {
-        self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
+        self.enter_context(c, nodes, enclosing_declaration, flags, internal_flags, tracker);
         let result = self.impl_mut().serialize_type_for_declaration(
             c,
             nodes,
@@ -443,7 +454,7 @@ impl NodeBuilder {
         internal_flags: nodebuilder::InternalFlags,
         tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
     ) -> Option<NodeId> {
-        self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
+        self.enter_context(c, nodes, enclosing_declaration, flags, internal_flags, tracker);
         let result = self
             .impl_mut()
             .serialize_type_for_expression(c, nodes, expr);
@@ -463,7 +474,7 @@ impl NodeBuilder {
         internal_flags: nodebuilder::InternalFlags,
         tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
     ) -> Option<NodeId> {
-        self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
+        self.enter_context(c, nodes, enclosing_declaration, flags, internal_flags, tracker);
         let result = self.impl_mut().signature_to_signature_declaration_helper(
             c,
             nodes,
@@ -485,6 +496,7 @@ impl NodeBuilder {
     ) -> Vec<NodeId> {
         self.enter_context(
             c,
+            nodes,
             None,
             nodebuilder::Flags::IGNORE_ERRORS
                 | nodebuilder::Flags::MULTILINE_OBJECT_LITERALS
@@ -579,7 +591,7 @@ impl NodeBuilder {
         internal_flags: nodebuilder::InternalFlags,
         tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
     ) -> Option<NodeId> {
-        self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
+        self.enter_context(c, nodes, enclosing_declaration, flags, internal_flags, tracker);
         let result = self
             .impl_mut()
             .symbol_to_name(c, nodes, symbol, meaning, false);
@@ -598,7 +610,7 @@ impl NodeBuilder {
         internal_flags: nodebuilder::InternalFlags,
         tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
     ) -> Option<NodeId> {
-        self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
+        self.enter_context(c, nodes, enclosing_declaration, flags, internal_flags, tracker);
         let result = self
             .impl_mut()
             .symbol_to_expression(c, nodes, symbol, meaning);
@@ -617,7 +629,7 @@ impl NodeBuilder {
         internal_flags: nodebuilder::InternalFlags,
         tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
     ) -> Option<NodeId> {
-        self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
+        self.enter_context(c, nodes, enclosing_declaration, flags, internal_flags, tracker);
         let result = self.impl_mut().symbol_to_node(c, nodes, symbol, meaning);
         self.exit_context(nodes, result)
     }
@@ -635,7 +647,7 @@ impl NodeBuilder {
         internal_flags: nodebuilder::InternalFlags,
         tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
     ) -> Option<NodeId> {
-        self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
+        self.enter_context(c, nodes, enclosing_declaration, flags, internal_flags, tracker);
         let result = self
             .impl_mut()
             .symbol_to_parameter_declaration(c, nodes, symbol, false);
@@ -654,7 +666,7 @@ impl NodeBuilder {
         internal_flags: nodebuilder::InternalFlags,
         tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
     ) -> Vec<NodeId> {
-        self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
+        self.enter_context(c, nodes, enclosing_declaration, flags, internal_flags, tracker);
         let result = self
             .impl_mut()
             .symbol_to_type_parameter_declarations(c, nodes, symbol);
@@ -672,7 +684,7 @@ impl NodeBuilder {
         internal_flags: nodebuilder::InternalFlags,
         tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
     ) -> Option<NodeId> {
-        self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
+        self.enter_context(c, nodes, enclosing_declaration, flags, internal_flags, tracker);
         let result = self
             .impl_mut()
             .type_parameter_to_declaration(c, nodes, parameter);
@@ -691,7 +703,7 @@ impl NodeBuilder {
         internal_flags: nodebuilder::InternalFlags,
         tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
     ) -> Option<NodeId> {
-        self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
+        self.enter_context(c, nodes, enclosing_declaration, flags, internal_flags, tracker);
         let result = predicate.map(|p| {
             self.impl_mut()
                 .type_predicate_to_type_predicate_node(c, nodes, p)
@@ -710,7 +722,7 @@ impl NodeBuilder {
         internal_flags: nodebuilder::InternalFlags,
         tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
     ) -> Option<NodeId> {
-        self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
+        self.enter_context(c, nodes, enclosing_declaration, flags, internal_flags, tracker);
         let result = self.impl_mut().type_to_type_node(c, nodes, typ);
         self.exit_context(nodes, Some(result))
     }
@@ -726,7 +738,7 @@ impl NodeBuilder {
         internal_flags: nodebuilder::InternalFlags,
         tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
     ) -> Option<NodeId> {
-        self.enter_context(c, enclosing_declaration, flags, internal_flags, tracker);
+        self.enter_context(c, nodes, enclosing_declaration, flags, internal_flags, tracker);
         let result = self
             .impl_mut()
             .try_js_type_node_to_type_node(c, nodes, node);
@@ -753,7 +765,7 @@ fn simplify_class_declaration(
         .copied()
         .filter(|&d| {
             let __program = c.program.clone().expect("program");
-            let dn = __program.nodes((d).file_index());
+            let dn = crate::printer_util::arena_view(&__program, nodes, (d).file_index());
             ast::is_class_like(Some(d), &dn)
         })
         .collect();
@@ -764,7 +776,7 @@ fn simplify_class_declaration(
     };
     let (modifiers, is_anonymous) = {
         let __program = c.program.clone().expect("program");
-        let dn = __program.nodes((original_class_decl).file_index());
+        let dn = crate::printer_util::arena_view(&__program, nodes, (original_class_decl).file_index());
         (
             dn[original_class_decl].modifier_flags()
                 & !(ast::ModifierFlags::EXPORT | ast::ModifierFlags::AMBIENT),
@@ -818,14 +830,14 @@ fn simplify_modifiers(
         .copied()
         .filter(|&d| {
             let __program = c.program.clone().expect("program");
-            let dn = __program.nodes((d).file_index());
+            let dn = crate::printer_util::arena_view(&__program, nodes, (d).file_index());
             is_decl_kind(&dn[d])
         })
         .collect();
     let decl_with_modifiers = decls.first().copied().unwrap_or(new_decl);
     let modifiers = {
         let __program = c.program.clone().expect("program");
-        let dn = __program.nodes((decl_with_modifiers).file_index());
+        let dn = crate::printer_util::arena_view(&__program, nodes, (decl_with_modifiers).file_index());
         dn[decl_with_modifiers].modifier_flags()
             & !(ast::ModifierFlags::EXPORT | ast::ModifierFlags::AMBIENT)
     };

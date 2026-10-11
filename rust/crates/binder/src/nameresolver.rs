@@ -1155,6 +1155,12 @@ fn is_type_parameter_symbol_declared_in_container(
     symbols: &[Symbol],
 ) -> bool {
     for &decl in &symbols[symbol.index()].declarations {
+        // `nodes` is the container's arena — a declaration in a different
+        // file can never have `container` as parent (parents are
+        // intra-file), so skip it instead of indexing the wrong arena.
+        if decl.file_index() != container.file_index() {
+            continue;
+        }
         if nodes[decl].kind == Kind::TypeParameter && nodes[decl].parent == Some(container) {
             return true;
         }

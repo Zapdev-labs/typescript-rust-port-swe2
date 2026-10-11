@@ -91,11 +91,16 @@ impl Checker {
                 if self.is_array_type(t) {
                     return;
                 }
-                self.error(
+                // PORT(borrowck): resolve diagnostics against `nodes` — the
+                // caller's arena may be a scratch clone whose lazily-parsed
+                // JSDoc ids don't exist in the program arena.
+                let d = crate::utilities::new_diagnostic_for_node(
                     Some(last_jsdoc_param_name),
+                    nodes,
                     &diagnostics::JSDoc_param_tag_has_name_0_but_there_is_no_parameter_with_that_name_It_would_match_arguments_if_it_had_an_array_type,
                     &[nodes[last_jsdoc_param_name].text(nodes).into_owned()],
                 );
+                self.add_diagnostic(&d);
             }
         } else {
             for (index, tag) in jsdoc_parameters.iter().enumerate() {
@@ -116,22 +121,25 @@ impl Checker {
                     if ast::is_qualified_name(&nodes[name]) {
                         if is_js {
                             let left = nodes[name].as_qualified_name().left.unwrap();
-                            self.error(
+                            let d = crate::utilities::new_diagnostic_for_node(
                                 Some(name),
+                                nodes,
                                 &diagnostics::Qualified_name_0_is_not_allowed_without_a_leading_param_object_1,
                                 &[
                                     ast::entity_name_to_string(name, nodes, None),
                                     ast::entity_name_to_string(left, nodes, None),
                                 ],
                             );
+                            self.add_diagnostic(&d);
                         }
                     } else if !is_name_first {
-                        self.error_or_suggestion(
-                            is_js,
+                        let d = crate::utilities::new_diagnostic_for_node(
                             Some(name),
+                            nodes,
                             &diagnostics::JSDoc_param_tag_has_name_0_but_there_is_no_parameter_with_that_name,
                             &[nodes[name].text(nodes).into_owned()],
                         );
+                        self.add_error_or_suggestion(is_js, &d);
                     }
                 }
             }

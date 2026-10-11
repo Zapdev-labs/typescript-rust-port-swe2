@@ -19,13 +19,13 @@
 // 4. `JsxFlags`/`JsxElementLinks` placeholders for the `jsx_element_links`
 //    link store (jsx.go is deferred entirely).
 
-use std::cell::{RefCell, RefMut};
+use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::{Arc, Mutex, Once, RwLock};
 
 use rustc_hash::FxHashMap;
-use tsc_ast::{self as ast, FlowNodeId, NodeId, SymbolId, SymbolTable};
+use tsc_ast::{FlowNodeId, NodeId, SymbolId, SymbolTable, self as ast};
 use tsc_collections::OrderedSet;
 use tsc_core::context::Context;
 use tsc_core::linkstore::LinkStore;
@@ -758,7 +758,7 @@ pub struct Checker {
     pub globals: Rc<RefCell<SymbolTable>>,
     /// `evaluate` — `evaluator.Evaluator` (see `EvaluatorThunk` for the
     /// `&mut Checker` receiver addition).
-    pub evaluate: Option<Box<EvaluatorThunk<'static>>>,
+    pub evaluate: Option<Rc<EvaluatorThunk<'static>>>,
     /// `stringLiteralTypes`.
     pub string_literal_types: FxHashMap<String, TypeId>,
     /// `numberLiteralTypes` — `map[jsnum.Number]*Type` (see
@@ -783,7 +783,7 @@ pub struct Checker {
     /// `thisExpandoKinds` — `map[*ast.Symbol]thisAssignmentDeclarationKind`.
     pub this_expando_kinds: FxHashMap<SymbolId, ThisAssignmentDeclarationKind>,
     /// `thisExpandoLocations` — `map[*ast.Symbol]*ast.Node`.
-    pub this_expando_locations: FxHashMap<SymbolId, NodeId>,
+    pub this_expando_locations: FxHashMap<SymbolId, Option<NodeId>>,
     /// `subtypeReductionCache`.
     pub subtype_reduction_cache: FxHashMap<CacheHashKey, Vec<TypeId>>,
     /// `cachedTypes`.
@@ -925,6 +925,14 @@ pub struct Checker {
     pub external_module_containers: Option<ExternalModuleContainerIndex>,
     /// `sourceFileLinks` — keyed by the source file's `NodeId`.
     pub source_file_links: LinkStore<NodeId, SourceFileLinks>,
+    /// PORT(addition): per-file scratch arena clones used when a lazy-JSDoc
+    /// mutation site runs while an ancestor holds a shared `Ref` on the real
+    /// arena. Cloned once per file (not per call); the reads they serve —
+    /// deprecated-tag queries over parse-time nodes — observe only
+    /// parse-stable fields, so divergence from the live arena is benign.
+    /// JSDoc nodes minted in a scratch are scratch-relative: they must never
+    /// escape into diagnostics or emit tables.
+    pub jsdoc_scratch_arenas: FxHashMap<u32, Vec<ast::Node>>,
     /// `regExpScanner`. PORT(deferred): `Scanner<'a>` borrows its text, so
     /// the lazy `getRegularExpressionScanner` rebinding lands with the
     /// regex-checking code; `'static` is the storage lifetime here.
@@ -1178,6 +1186,18 @@ pub struct Checker {
     pub reverse_expanding_flags: ExpandingFlags,
     /// `freeRelater` — `*Relater` free list.
     pub free_relater: Option<Box<Relater>>,
+    /// Snapshot of the relater active in the innermost enclosing
+    /// `check_type_related_to_ex` frame, plus a pool of checked-out worker
+    /// relaters. Go comparer closures capture `r` directly so they re-enter
+    /// the live relater even on non-reporting paths (e.g. `context_compare`
+    /// during signature inference). The port can't capture `&mut Relater` in
+    /// a `'static` comparer box, so `compare_via` falls back to a pooled
+    /// relater seeded from this snapshot: `relation` is `Rc`-shared (same
+    /// results cache) and the stacks carry the entry-time in-flight keys for
+    /// cycle detection.
+    pub relater_seed: Option<Relater>,
+    /// See `relater_seed`.
+    pub relater_pool: Vec<Relater>,
     /// `subtypeRelation`.
     pub subtype_relation: SharedRelation,
     /// `strictSubtypeRelation`.
@@ -1495,6 +1515,7 @@ impl Checker {
             symbol_container_links: LinkStore::new(),
             external_module_containers: None,
             source_file_links: LinkStore::new(),
+            jsdoc_scratch_arenas: FxHashMap::default(),
             reg_exp_scanner: None,
             pattern_for_type: Arc::new(RwLock::new(FxHashMap::default())),
             context_free_types: FxHashMap::default(),
@@ -1619,6 +1640,8 @@ impl Checker {
             reverse_mapped_target_stack: Vec::new(),
             reverse_expanding_flags: ExpandingFlags::NONE,
             free_relater: None,
+            relater_seed: None,
+            relater_pool: Vec::new(),
             subtype_relation: SharedRelation::default(),
             strict_subtype_relation: SharedRelation::default(),
             assignable_relation: SharedRelation::default(),
@@ -2221,6 +2244,19 @@ fn gather_pattern_ambient_modules(file: &ast::Node, out: &mut Vec<ast::PatternAm
     out.extend_from_slice(&file.as_source_file().pattern_ambient_modules);
 }
 
+/// Mutable state shared across `getTemplateLiteralType`'s recursive `addSpans`
+/// inner function (checker.go:29704) — `newTypes`/`newTexts` collect the
+/// placeholders while `sb` accumulates literal text, `textLength` tracks the
+/// combined length already moved into `newTexts`, and `tooLarge` records a
+/// span/size overflow.
+struct TemplateLiteralSpanState {
+    new_types: Vec<TypeId>,
+    new_texts: Vec<String>,
+    sb: String,
+    text_length: usize,
+    too_large: bool,
+}
+
 impl Checker {
     /// `func NewChecker` (checker.go) — PORT: fields are assigned in the same
     /// order as Go. Go returns `(*Checker, *sync.Mutex)`; the mutex is the
@@ -2289,11 +2325,15 @@ impl Checker {
         *c.globals.borrow_mut() =
             SymbolTable::with_size_hint(count_global_symbols(&c.files, &program));
         // PORT: Go `evaluator.NewEvaluator(c.evaluateEntity,
-        // ast.OEKParentheses)` — the outer evaluator walk is deferred until
-        // `new_evaluator` gains a checker-parameterized entry point; the thunk
-        // defers to `evaluate_entity` at call time.
-        c.evaluate = Some(Box::new(|c: &mut Checker, expr, location, nodes| {
-            c.evaluate_entity(expr, location, nodes)
+        // ast.OEKParentheses)` — the thunk rebuilds the stateless evaluator
+        // around `evaluate_entity` so template/binary/unary expressions are
+        // folded before entity lookup.
+        c.evaluate = Some(Rc::new(|c: &mut Checker, expr, location, nodes| {
+            let mut evaluator = tsc_evaluator::new_evaluator(
+                |e: NodeId, l: Option<NodeId>, ns: &[ast::Node]| c.evaluate_entity(e, l, ns),
+                tsc_ast::utilities::outer_expression_kinds::PARENTHESES,
+            );
+            evaluator(expr, location, nodes)
         }));
         c.undefined_symbol = c.new_symbol(ast::SymbolFlags::PROPERTY, "undefined");
         c.arguments_symbol = c.new_symbol(ast::SymbolFlags::PROPERTY, "arguments");
@@ -2786,7 +2826,7 @@ impl Checker {
                     .get(t)
                     .as_interface_type()
                     .expect("interface type")
-                    .all_type_parameters
+                    .type_parameters()
                     .len();
                 if type_parameter_count == arity as usize {
                     return t;
@@ -2960,6 +3000,7 @@ impl Checker {
     /// resolutions panic via `unimplemented!`/deferred machinery until
     /// wave-2 (they need `resolve_name` and symbol merging).
     pub fn initialize_checker(&mut self) {
+        let __init_t = std::time::Instant::now();
         // Initialize global symbol table
         let mut ambient_module_symbols: Vec<SymbolId> = Vec::new();
         let mut augmentations: Vec<Vec<NodeId>> = Vec::new();
@@ -3008,15 +3049,15 @@ impl Checker {
                         }
                     }
                 }
-                gather_pattern_ambient_modules(&nodes[*file], &mut self.pattern_ambient_modules);
-                augmentations.push(nodes[*file].as_source_file().module_augmentations.to_vec());
-                if let Some(_file_symbol) = file_node.symbol() {
-                    // Merge in UMD exports with first-in-wins semantics
-                    // (see #9771)
-                    for (name, &symbol) in nodes[*file].as_source_file().global_exports.entries() {
-                        if self.globals.borrow().get(name).is_none() {
-                            self.globals.borrow_mut().set(name.clone(), symbol);
-                        }
+            }
+            gather_pattern_ambient_modules(&nodes[*file], &mut self.pattern_ambient_modules);
+            augmentations.push(nodes[*file].as_source_file().module_augmentations.to_vec());
+            if let Some(_file_symbol) = file_node.symbol() {
+                // Merge in UMD exports with first-in-wins semantics
+                // (see #9771)
+                for (name, &symbol) in nodes[*file].as_source_file().global_exports.entries() {
+                    if self.globals.borrow().get(name).is_none() {
+                        self.globals.borrow_mut().set(name.clone(), symbol);
                     }
                 }
             }
@@ -3099,6 +3140,14 @@ impl Checker {
                     self.merge_module_augmentation(augmentation);
                 }
             }
+        }
+        // `globalThisSymbol.exports` was snapshotted before the merges above;
+        // Go shares `c.globals`'s map header so post-merge lookups (e.g.
+        // `globalThis.IteratorObject`) see augmentation members. Re-sync here.
+        self.symbol_arena.borrow_mut()[self.global_this_symbol.index()].exports =
+            self.globals.borrow().clone();
+        if std::env::var("TSC_FILE_TIME").is_ok() {
+            eprintln!("[init-checker] {:?}", __init_t.elapsed());
         }
     }
 
@@ -3263,6 +3312,18 @@ impl Checker {
             let augmentation_exports = self.sym(augmentation_symbol).exports.clone();
             let mut globals = self.globals.borrow().clone();
             self.merge_symbol_table(&mut globals, &augmentation_exports, false, None);
+            // Go shares `globalThisSymbol.Exports` with `c.globals` (same
+            // map header), so merging `namespace globalThis { ... }` into
+            // `globals["globalThis"]` writes the namespace's members into
+            // `globals` itself. `Symbol.exports` is a value field here —
+            // fold the merged symbol's exports back so augmented
+            // `globalThis` members become true globals.
+            if augmentation_exports.get("globalThis").is_some()
+                && let Some(&merged_global_this) = globals.get("globalThis")
+            {
+                let global_this_exports = self.sym(merged_global_this).exports.clone();
+                self.merge_symbol_table(&mut globals, &global_this_exports, false, None);
+            }
             *self.globals.borrow_mut() = globals;
         } else {
             // find a module that about to be augmented
@@ -3490,6 +3551,31 @@ impl Checker {
         is_use: bool,
         exclude_globals: bool,
     ) -> Option<SymbolId> {
+        self.resolve_name_via_binder_live(
+            location,
+            name,
+            meaning,
+            name_not_found_message,
+            is_use,
+            exclude_globals,
+            None,
+        )
+    }
+
+    /// `resolve_name_via_binder` with a live-arena override — used when the
+    /// caller holds the file's checked-out working buffer (node-builder /
+    /// emit paths) so name resolution sees synthetic nodes minted
+    /// mid-operation, matching Go's shared-slice reads.
+    pub fn resolve_name_via_binder_live(
+        &mut self,
+        location: Option<NodeId>,
+        name: &str,
+        meaning: ast::SymbolFlags,
+        name_not_found_message: Option<&'static tsc_diagnostics::Message>,
+        is_use: bool,
+        exclude_globals: bool,
+        live_nodes: Option<&[ast::Node]>,
+    ) -> Option<SymbolId> {
         self.resolve_name_with_binder(
             location,
             name,
@@ -3498,6 +3584,7 @@ impl Checker {
             is_use,
             exclude_globals,
             false,
+            live_nodes,
         )
     }
 
@@ -3520,6 +3607,7 @@ impl Checker {
             is_use,
             exclude_globals,
             true,
+            None,
         )
     }
 
@@ -3527,6 +3615,8 @@ impl Checker {
     /// `resolve_name_for_suggestion_via_binder`: builds the
     /// `binder::NameResolver` Go stores at construction time, on the stack —
     /// the `host` wiring makes Go's hook calls delegate to `self`.
+    /// `live_nodes` is the caller's checked-out working buffer for the arena
+    /// being resolved in — see [`crate::printer_util::arena_view`].
     #[allow(clippy::too_many_arguments)]
     fn resolve_name_with_binder(
         &mut self,
@@ -3537,6 +3627,7 @@ impl Checker {
         is_use: bool,
         exclude_globals: bool,
         for_suggestion: bool,
+        live_nodes: Option<&[ast::Node]>,
     ) -> Option<SymbolId> {
         // The resolver walks `location`'s ancestors within its own file arena.
         // With no location (global lookups) the arena is only read for the
@@ -3546,10 +3637,16 @@ impl Checker {
         // cloned program handle instead of `*self`.
         let __program = self.program.clone().expect("program");
         let nodes = match location {
-            Some(loc) => __program.nodes(loc.file_index()),
+            Some(loc) => crate::printer_util::arena_view(
+                &__program,
+                live_nodes.unwrap_or(&[]),
+                loc.file_index(),
+            ),
             // `files[0]` mirrors Go `c.files[0]` — panics on an empty
             // program, matching Go's index-out-of-range.
-            None => __program.nodes(self.files[0].file_index()),
+            None => crate::printer_util::ArenaView::Snapshot(
+                __program.nodes(self.files[0].file_index()),
+            ),
         };
         let symbol_arena = self.symbol_arena.clone();
         let compiler_options = self.compiler_options.clone();
@@ -3748,20 +3845,35 @@ impl Checker {
     /// `program.nodes(...)` — the per-file node arena for `NodeId` derefs
     /// (the `Program` trait's port-added accessor).
     ///
-    /// Returns a `Ref` over the shared `Rc<RefCell<Vec<Node>>>` arena. The
+    /// Returns a `Ref` over the shared `Rc<ArenaCell>` arena. The
     /// guard borrows `*self` — where the arena must stay live across a
     /// `&mut self` call, clone the program handle into a local first:
     /// `let program = self.program.clone().unwrap(); let nodes = program.nodes(i);`.
-    pub fn program_nodes(&self, node: NodeId) -> std::cell::Ref<'_, Vec<ast::Node>> {
+    pub fn program_nodes(&self, node: NodeId) -> std::rc::Rc<Vec<ast::Node>> {
         self.program
             .as_ref()
             .expect("program")
             .nodes(node.file_index())
     }
 
-    /// `program.nodes_handle(...)` — the `Rc<RefCell>` arena handle for the
+    /// `program_nodes` that falls back to the caller's checked-out working
+    /// buffer when `node`'s arena is the buffer under construction — see
+    /// [`crate::printer_util::arena_view`].
+    pub fn program_nodes_live<'x>(
+        &self,
+        node: NodeId,
+        live: &'x [ast::Node],
+    ) -> crate::printer_util::ArenaView<'x> {
+        crate::printer_util::resolve_arena_for(
+            self.program.as_ref().expect("program"),
+            live,
+            node,
+        )
+    }
+
+    /// `program.nodes_handle(...)` — the `Rc<ArenaCell>` handle for the
     /// file containing `node` — for long-lived arena aliases (`FlowState`).
-    pub fn program_nodes_handle(&self, node: NodeId) -> Rc<std::cell::RefCell<Vec<ast::Node>>> {
+    pub fn program_nodes_handle(&self, node: NodeId) -> Rc<tsc_ast::ast::ArenaCell> {
         self.program
             .as_ref()
             .expect("program")
@@ -3769,8 +3881,9 @@ impl Checker {
     }
 
     /// `program.nodes_mut(...)` — mutable arena access for synthetic-node
-    /// creation (Go mutates the shared `*ast.Node` graph freely).
-    pub fn program_nodes_mut(&self, file_index: u32) -> std::cell::RefMut<'_, Vec<ast::Node>> {
+    /// creation (Go mutates the shared `*ast.Node` graph freely). Returns a
+    /// copy-on-write `ArenaMut` — see `checker_types::Program::nodes_mut`.
+    pub fn program_nodes_mut(&self, file_index: u32) -> tsc_ast::ast::ArenaMut {
         self.program
             .as_ref()
             .expect("program")
@@ -3783,7 +3896,9 @@ impl Checker {
     /// `self.types_handle().get(..)`-across-`&mut self`-call borrow conflict; Go has
     /// no such constraint. Guards still share the underlying `RwLock` —
     /// do not hold a read guard across `get_mut`/`alloc` on the same arena.
-    pub(crate) fn types_handle(&self) -> crate::types::TypeArena {
+    /// PORT: `pub` so `tsc-testrunner`'s union-ordering check can take an
+    /// arena handle without borrowing the `Checker` across calls.
+    pub fn types_handle(&self) -> crate::types::TypeArena {
         self.types.clone()
     }
 
@@ -4663,45 +4778,135 @@ impl Checker {
         self.get_union_type_ex(types, UnionReduction::LITERAL, None, None)
     }
 
-    /// `(c *Checker) getTemplateLiteralType` (checker.go).
+    /// `(c *Checker) getTemplateLiteralType` (checker.go:29682).
     pub fn get_template_literal_type(&mut self, texts: &[String], types: &[TypeId]) -> TypeId {
-        for (i, &t) in types.iter().enumerate() {
-            if self
-                .types_handle()
+        let union_index = types.iter().position(|&t| {
+            self.types_handle()
                 .get(t)
                 .flags
-                .intersects(TypeFlags::UNION)
-            {
-                if !self.check_cross_product_union(types) {
-                    return self.error_type;
-                }
-                let texts2 = texts.to_vec();
-                let types2 = types.to_vec();
-                return self.map_type(
-                    t,
-                    Rc::new(move |c: &mut Checker, t2| {
-                        let types3 = tsc_core::core::replace_element(&types2, i, t2);
-                        c.get_template_literal_type(&texts2, &types3)
-                    }),
+                .intersects(TypeFlags::NEVER | TypeFlags::UNION)
+        });
+        if let Some(union_index) = union_index {
+            if !self.check_cross_product_union(types) {
+                return self.error_type;
+            }
+            let texts2 = texts.to_vec();
+            let types2 = types.to_vec();
+            return self.map_type(
+                types[union_index],
+                Rc::new(move |c: &mut Checker, t2| {
+                    let types3 = tsc_core::core::replace_element(&types2, union_index, t2);
+                    c.get_template_literal_type(&texts2, &types3)
+                }),
+            );
+        }
+        if types.contains(&self.wildcard_type) {
+            return self.wildcard_type;
+        }
+        let mut state = TemplateLiteralSpanState {
+            new_types: Vec::new(),
+            new_texts: Vec::new(),
+            sb: texts[0].clone(),
+            text_length: 0,
+            too_large: false,
+        };
+        if !self.template_literal_add_spans(texts, types, &mut state) {
+            if state.too_large {
+                self.error(
+                    self.current_node,
+                    &tsc_diagnostics::Type_instantiation_is_excessively_deep_and_possibly_infinite,
+                    &[],
                 );
+                return self.error_type;
+            }
+            return self.string_type;
+        }
+        if state.new_types.is_empty() {
+            return self.get_string_literal_type(&String::from_utf8_lossy(
+                &tsc_stringutil::combine_surrogate_pairs(state.sb.as_bytes()),
+            ));
+        }
+        state.new_texts.push(
+            String::from_utf8_lossy(&tsc_stringutil::combine_surrogate_pairs(
+                state.sb.as_bytes(),
+            ))
+            .into_owned(),
+        );
+        if state.new_texts.iter().all(|t| t.is_empty()) {
+            if state.new_types.iter().all(|&t| {
+                self.types_handle()
+                    .get(t)
+                    .flags
+                    .intersects(TypeFlags::STRING)
+            }) {
+                return self.string_type;
+            }
+            // Normalize `${Mapping<xxx>}` into Mapping<xxx>
+            if state.new_types.len() == 1 && self.is_pattern_literal_type(state.new_types[0]) {
+                return state.new_types[0];
             }
         }
-        let mut types2 = types.to_vec();
-        let mut texts2 = texts.to_vec();
-        if types2.len() > texts2.len() {
-            types2.truncate(texts2.len());
-        } else {
-            while texts2.len() > types2.len() + 1 {
-                texts2.pop();
-            }
-        }
-        let new_type_key = crate::checker_types::get_template_type_key(&texts2, &types2);
-        if let Some(&cached) = self.template_literal_types.get(&new_type_key) {
+        let key = crate::checker_types::get_template_type_key(&state.new_texts, &state.new_types);
+        if let Some(&cached) = self.template_literal_types.get(&key) {
             return cached;
         }
-        let ty = self.new_template_literal_type(texts2, types2);
-        self.template_literal_types.insert(new_type_key, ty);
+        let ty = self.new_template_literal_type(state.new_texts, state.new_types);
+        self.template_literal_types.insert(key, ty);
         ty
+    }
+
+    /// `addSpans` inner function of `getTemplateLiteralType` (checker.go:29704).
+    /// Appends placeholder types to `state.new_types`/`state.new_texts` and
+    /// merges literal and nested-template segments into `state.sb`. Returns
+    /// false when a constituent cannot be folded into the template (callers
+    /// then produce `stringType` or, when `state.too_large`, an error).
+    fn template_literal_add_spans(
+        &mut self,
+        texts: &[String],
+        types: &[TypeId],
+        state: &mut TemplateLiteralSpanState,
+    ) -> bool {
+        for (i, &t) in types.iter().enumerate() {
+            let flags = self.types_handle().get(t).flags;
+            if flags.intersects(TypeFlags::LITERAL | TypeFlags::NULL | TypeFlags::UNDEFINED) {
+                let s = self.get_template_string_for_type(t);
+                state.sb.push_str(&s);
+                state.sb.push_str(&texts[i + 1]);
+            } else if flags.intersects(TypeFlags::TEMPLATE_LITERAL) {
+                let (t_texts, t_types) = {
+                    let arena = self.types.clone();
+                    let g = arena.get(t);
+                    let tl = g.as_template_literal_type();
+                    (tl.texts.clone(), tl.types.clone())
+                };
+                state.sb.push_str(&t_texts[0]);
+                if !self.template_literal_add_spans(&t_texts, &t_types, state) {
+                    return false;
+                }
+                state.sb.push_str(&texts[i + 1]);
+            } else if self.is_generic_index_type(t) || self.is_pattern_literal_placeholder_type(t) {
+                state.new_types.push(t);
+                state.new_texts.push(
+                    String::from_utf8_lossy(&tsc_stringutil::combine_surrogate_pairs(
+                        state.sb.as_bytes(),
+                    ))
+                    .into_owned(),
+                );
+                state.text_length += state.sb.len();
+                state.sb.clear();
+                state.sb.push_str(&texts[i + 1]);
+            } else {
+                return false;
+            }
+            if state.text_length + state.sb.len()
+                > crate::checker_d::MAX_TEMPLATE_LITERAL_TYPE_LENGTH
+                || state.new_types.len() > crate::checker_d::MAX_TEMPLATE_LITERAL_TYPE_SPANS
+            {
+                state.too_large = true;
+                return false;
+            }
+        }
+        true
     }
 
     /// `(c *Checker) getTypeArguments` (checker.go) — delegates to the free
@@ -4759,22 +4964,29 @@ impl Checker {
 
     /// `(c *Checker) isStringIndexSignatureOnlyTypeWorker` (checker.go).
     pub fn is_string_index_signature_only_type_worker(&mut self, t: TypeId) -> bool {
-        let thunk = self
-            .is_string_index_signature_only_type
-            .clone()
-            .expect("isStringIndexSignatureOnlyType not initialized");
-        if thunk(self, t) {
+        let flags = self.types.clone().get(t).flags;
+        if flags.intersects(TypeFlags::OBJECT)
+            && !self.is_generic_mapped_type(t)
+            && self.get_properties_of_type(t).is_empty()
+            && self.get_index_infos_of_type(t).len() == 1
+            && self.get_index_info_of_type(t, self.string_type).is_some()
+        {
             return true;
         }
-        if !self.types.clone().get(t).flags.intersects(TypeFlags::UNION) {
+        // PORT: Go calls `core.Every(t.Types(), ...)` directly here — it must
+        // iterate BOTH union and intersection constituents. Routing through
+        // `every_type` (union-only) recurses on the intersection itself.
+        if !flags.intersects(TypeFlags::UNION_OR_INTERSECTION) {
             return false;
         }
-        crate::checker_d::every_type(self, t, |c, u| {
-            let thunk2 = c
+        let __arena_types = self.types.clone();
+        let types = __arena_types.get(t).types().to_vec();
+        types.iter().all(|&u| {
+            let thunk = self
                 .is_string_index_signature_only_type
                 .clone()
                 .expect("isStringIndexSignatureOnlyType not initialized");
-            thunk2(c, u)
+            thunk(self, u)
         })
     }
 

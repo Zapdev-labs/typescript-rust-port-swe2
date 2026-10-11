@@ -38,7 +38,7 @@ use std::sync::LazyLock;
 
 use tsc_ast::checkflags::CheckFlags;
 use tsc_ast::diagnostic::DiagnosticRef;
-use tsc_ast::{self as ast, FlowFlags, FlowListId, FlowNode, FlowNodeId, Kind, NodeId, SymbolId};
+use tsc_ast::{ArenaCell, FlowFlags, FlowListId, FlowNode, FlowNodeId, Kind, NodeId, SymbolId, self as ast};
 
 use crate::checker_core::{CacheHashKey, CheckMode, Checker};
 use crate::checker_types::{
@@ -137,11 +137,11 @@ pub struct FlowState {
     pub reduce_labels: Vec<NodeId>,
     /// `next` — free-list link (`Checker::free_flow_state`).
     pub next: Option<Box<FlowState>>,
-    /// PORT(addition): shared handle of the owning file's `Vec<ast::Node>`
-    /// arena — `Rc<RefCell>` so nodes appended through
-    /// `Program::nodes_mut` (synthetic `FlowSwitchClauseData` /
-    /// `FlowReduceLabelData` payloads) stay visible through this alias.
-    pub nodes: Option<Rc<std::cell::RefCell<Vec<ast::Node>>>>,
+    /// PORT(addition): shared handle of the owning file's arena — an
+    /// `Rc<ArenaCell>` so nodes appended through `Program::nodes_mut`
+    /// (synthetic `FlowSwitchClauseData` / `FlowReduceLabelData` payloads)
+    /// stay visible through later snapshots.
+    pub nodes: Option<Rc<ast::ArenaCell>>,
     /// PORT(addition): `NodeId` of the owning file's `SourceFile` — used to
     /// reach `tsc_binder::bind_result` (the `flow_nodes`/`flow_lists` arenas).
     pub file: Option<NodeId>,
@@ -167,30 +167,54 @@ impl FlowState {
     /// graph, including the synthetic `FlowSwitchClauseData` /
     /// `FlowReduceLabelData` payloads, lives here).
     ///
-    /// Returns a `Ref` over the shared `Rc<RefCell<Vec<Node>>>` arena — the
-    /// guard borrows `*self`, so a `&mut FlowState` use while the arena is
-    /// live needs the `let arena = f.nodes.clone().unwrap()` Rc-clone
-    /// pattern first.
-    pub fn nodes(&self) -> std::cell::Ref<'_, Vec<ast::Node>> {
-        self.nodes.as_ref().expect("FlowState.nodes unset").borrow()
+    /// Returns an `Rc` snapshot of the shared arena — snapshots never pin a
+    /// borrow, so `&mut FlowState` use while a snapshot is live is fine.
+    /// Re-call for post-mutation reads.
+    pub fn nodes(&self) -> Rc<Vec<ast::Node>> {
+        self.nodes
+            .as_ref()
+            .expect("FlowState.nodes unset")
+            .snapshot()
     }
 
     /// The owning file's `BindResult` (`flow_nodes`/`flow_lists` arenas).
-    pub fn bind_result(&self) -> std::cell::Ref<'_, tsc_binder::binder::BindResult> {
+    pub fn bind_result(
+        &self,
+    ) -> ast::ArenaRef<
+        tsc_binder::binder::BindResult,
+        impl for<'a> Fn(&'a Vec<ast::Node>) -> &'a tsc_binder::binder::BindResult,
+    > {
         let file = self.file.expect("FlowState.file unset");
-        std::cell::Ref::map(self.nodes(), |nodes| {
+        ast::ArenaRef::new(self.nodes(), move |nodes| {
             tsc_binder::binder::bind_result(nodes, file).expect("flow graph without bind result")
         })
     }
 
     /// `flow.Flags`, `flow.Antecedent`, … — dereference a `FlowNodeId`.
-    pub fn flow_node(&self, id: FlowNodeId) -> std::cell::Ref<'_, FlowNode> {
-        std::cell::Ref::map(self.bind_result(), |br| &br.flow_nodes[id.index()])
+    pub fn flow_node(
+        &self,
+        id: FlowNodeId,
+    ) -> ast::ArenaRef<FlowNode, impl for<'a> Fn(&'a Vec<ast::Node>) -> &'a FlowNode> {
+        let file = self.file.expect("FlowState.file unset");
+        ast::ArenaRef::new(self.nodes(), move |nodes| {
+            &tsc_binder::binder::bind_result(nodes, file)
+                .expect("flow graph without bind result")
+                .flow_nodes[id.index()]
+        })
     }
 
     /// `list.Flow`, `list.Next` — dereference a `FlowListId`.
-    pub fn flow_list(&self, id: FlowListId) -> std::cell::Ref<'_, ast::FlowList> {
-        std::cell::Ref::map(self.bind_result(), |br| &br.flow_lists[id.index()])
+    pub fn flow_list(
+        &self,
+        id: FlowListId,
+    ) -> ast::ArenaRef<ast::FlowList, impl for<'a> Fn(&'a Vec<ast::Node>) -> &'a ast::FlowList>
+    {
+        let file = self.file.expect("FlowState.file unset");
+        ast::ArenaRef::new(self.nodes(), move |nodes| {
+            &tsc_binder::binder::bind_result(nodes, file)
+                .expect("flow graph without bind result")
+                .flow_lists[id.index()]
+        })
     }
 }
 
@@ -348,7 +372,7 @@ impl Checker {
             .object_flags
             .intersects(ObjectFlags::EVOLVING_ARRAY);
         let __nodes_arena = f.nodes.clone().unwrap();
-        let nodes = __nodes_arena.borrow();
+        let nodes = __nodes_arena.snapshot();
         self.put_flow_state(f);
         // When the reference is 'x' in an 'x.length', 'x.push(value)', 'x.unshift(value)' or x[n] = value' operation,
         // we give type 'any[]' to 'x' instead of using the type determined by control flow analysis such that operations
@@ -774,7 +798,7 @@ impl Checker {
                         self.get_discriminant_property_access(f, predicate_argument, t)
                     {
                         let __nodes_arena = f.nodes.clone().unwrap();
-                        let nodes = __nodes_arena.borrow();
+                        let nodes = __nodes_arena.snapshot();
                         return self.narrow_type_by_discriminant(
                             t,
                             access,
@@ -966,7 +990,7 @@ impl Checker {
         }
         if let Some(access) = self.get_discriminant_property_access(f, expr, t) {
             let __nodes_arena = f.nodes.clone().unwrap();
-            let nodes = __nodes_arena.borrow();
+            let nodes = __nodes_arena.snapshot();
             return self.narrow_type_by_discriminant(
                 t,
                 access,
@@ -1008,7 +1032,7 @@ impl Checker {
         }
         if let Some(access) = self.get_discriminant_property_access(f, expr, t) {
             let __nodes_arena = f.nodes.clone().unwrap();
-            let nodes = __nodes_arena.borrow();
+            let nodes = __nodes_arena.snapshot();
             return self.narrow_type_by_discriminant(
                 t,
                 access,
@@ -1435,7 +1459,7 @@ impl Checker {
             }
             if let Some(property_access) = self.get_discriminant_property_access(f, target, t) {
                 let __nodes_arena = f.nodes.clone().unwrap();
-                let nodes = __nodes_arena.borrow();
+                let nodes = __nodes_arena.snapshot();
                 return self.narrow_type_by_discriminant(
                     t,
                     property_access,
@@ -2977,7 +3001,7 @@ impl Checker {
     ) -> Option<NodeId> {
         let reference = f.reference();
         let __nodes_arena = f.nodes.clone().expect("FlowState.nodes unset");
-        let nodes = __nodes_arena.borrow();
+        let nodes = __nodes_arena.snapshot();
         if ast::is_binding_pattern(&nodes[reference])
             || ast::is_function_expression_or_arrow_function(&nodes[reference])
             || ast::is_object_literal_method(reference, nodes.as_slice())
@@ -3177,7 +3201,9 @@ impl Checker {
         let base = self.get_base_type_of_literal_type(cf_type);
         let new_element_type = self.get_regular_type_of_object_literal(base);
         let __arena___guard_element_type = self.types.clone();
-        let __guard_element_type = __arena___guard_element_type.get(evolving_array_type);
+        let __guard_element_type = __arena___guard_element_type
+            .get(evolving_array_type)
+            .clone();
         let element_type = __guard_element_type
             .as_evolving_array_type()
             .element_type
@@ -3212,7 +3238,7 @@ impl Checker {
             .is_none()
         {
             let __arena___guard_element_type = self.types.clone();
-            let __guard_element_type = __arena___guard_element_type.get(t);
+            let __guard_element_type = __arena___guard_element_type.get(t).clone();
             let element_type = __guard_element_type
                 .as_evolving_array_type()
                 .element_type
@@ -5000,6 +5026,8 @@ impl Checker {
         // `RefMut` borrows the local, not `self` — `self.factory` needs
         // `&mut` while the arena is alive.
         let program = self.program.clone().expect("program");
+        let old_file_index = self.factory.file_index();
+        self.factory.set_file_index(file_index);
         let access_name = {
             let mut arena = program.nodes_mut(file_index);
             if let Some(private_name) = private_name {
@@ -5025,6 +5053,7 @@ impl Checker {
             arena[reference].parent = Some(constructor);
             reference
         };
+        self.factory.set_file_index(old_file_index);
         // `reference.FlowNodeData().FlowNode = constructor.AsConstructorDeclaration().ReturnFlowNode`
         {
             let __program = self.program.clone().expect("program");
@@ -5078,6 +5107,8 @@ impl Checker {
             // PORT(borrowck): clone the `Rc` program handle so the arena
             // `RefMut` borrows the local, not `self`.
             let program = self.program.clone().expect("program");
+            let old_file_index = self.factory.file_index();
+            self.factory.set_file_index(file_index);
             let access_name = {
                 let mut arena = program.nodes_mut(file_index);
                 if let Some(private_name) = private_name.clone() {
@@ -5103,6 +5134,7 @@ impl Checker {
                 arena[reference].parent = Some(static_block);
                 reference
             };
+            self.factory.set_file_index(old_file_index);
             {
                 let __program = self.program.clone().expect("program");
                 let nodes = __program.nodes((static_block).file_index());

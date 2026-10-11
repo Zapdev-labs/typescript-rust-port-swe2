@@ -112,6 +112,26 @@ pub fn parse(locale_str: &str) -> (Locale, bool) {
     (Locale { tag: canon }, true)
 }
 
+// Go threads the locale through `context.Context` via `context.WithValue`;
+// the Rust `Context` value chain is the equivalent, so `Context` itself
+// implements `LocaleContext` here.
+struct LocaleKey;
+
+fn locale_key() -> tsc_core::context::ContextKey<LocaleKey, Locale> {
+    // Keys are compared by `TypeId`, so a fresh `ContextKey` is equivalent.
+    tsc_core::context::ContextKey::new()
+}
+
+impl LocaleContext for tsc_core::context::Context {
+    fn get_locale(&self) -> Option<Locale> {
+        self.value(locale_key()).cloned()
+    }
+
+    fn set_locale(&mut self, locale: Locale) {
+        *self = self.with_value(locale_key(), locale);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

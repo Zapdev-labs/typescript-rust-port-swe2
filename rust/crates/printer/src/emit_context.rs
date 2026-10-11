@@ -197,6 +197,9 @@ pub(crate) fn set_original_shared(
             }
         }
         Some(&existing) if !allow_overwrite && existing != original => {
+            if std::env::var("TSC_DBG_ORIG").is_ok() {
+                eprintln!("[orig] node={node:?} existing={existing:?} new={original:?}");
+            }
             panic!("Original node already set.")
         }
         Some(_) if allow_overwrite => {
@@ -782,6 +785,22 @@ impl EmitContext {
     /// `UnsetOriginal`
     pub fn unset_original(&self, node: NodeId) {
         self.shared.borrow_mut().original.remove(&node);
+    }
+
+    /// Drops every per-node emit-table entry keyed by `node`.
+    ///
+    /// PORT: nodebuilder scratch-arena clones mint temporary ids in the
+    /// destination file's index space; after the clone tail is relocated,
+    /// the tmp ids would alias future real ids and poison their emit data
+    /// (Go never reuses node pointers, so it needs no counterpart).
+    pub fn dispose_emit_node(&self, node: NodeId) {
+        let mut shared = self.shared.borrow_mut();
+        shared.auto_generate.remove(&node);
+        shared.text_source.remove(&node);
+        shared.original.remove(&node);
+        shared.emit_nodes.remove(&node);
+        shared.assigned_name.remove(&node);
+        shared.class_this.remove(&node);
     }
 
     /// `SetOriginalEx`

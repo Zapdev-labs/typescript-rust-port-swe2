@@ -363,6 +363,11 @@ pub fn single_or_many(
     list: Option<Vec<NodeId>>,
 ) -> Option<NodeId> {
     let list = list?;
+    // Go callers build `var statements []*ast.Statement` and grow it with
+    // `append`, so an empty list is the nil slice -> nil result.
+    if list.is_empty() {
+        return None;
+    }
     if list.len() == 1 {
         return list.into_iter().next();
     }

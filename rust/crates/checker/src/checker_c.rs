@@ -140,6 +140,7 @@ impl Checker {
             ast::SymbolFlags::ALL,
             crate::types::SymbolFormatFlags::DO_NOT_INCLUDE_SYMBOL_CHAIN
                 | crate::types::SymbolFormatFlags::ALLOW_ANY_NODE_KIND,
+            None,
         )
     }
 
@@ -1732,7 +1733,8 @@ impl Checker {
             .target_tuple_type(t)
             .expect("TargetTupleType");
         let __arena___guard_target_combined_flags = self.types.clone();
-        let __guard_target_combined_flags = __arena___guard_target_combined_flags.get(target);
+        let __guard_target_combined_flags =
+            __arena___guard_target_combined_flags.get(target).clone();
         let target_combined_flags = __guard_target_combined_flags.as_tuple_type().combined_flags;
         if target_combined_flags.intersects(ElementFlags::VARIABLE)
             || self.get_type_reference_arity(t) >= pattern_elements.len()
@@ -1770,7 +1772,7 @@ impl Checker {
             }
         }
         let __arena___guard_readonly = self.types.clone();
-        let __guard_readonly = __arena___guard_readonly.get(target);
+        let __guard_readonly = __arena___guard_readonly.get(target).clone();
         let readonly = __guard_readonly.as_tuple_type().readonly;
         self.create_tuple_type_ex(&element_types, &element_infos, readonly)
     }
@@ -2131,7 +2133,7 @@ impl Checker {
         {
             let (target, mapper) = {
                 let __arena___guard_tp = self.types.clone();
-                let __guard_tp = __arena___guard_tp.get(t);
+                let __guard_tp = __arena___guard_tp.get(t).clone();
                 let tp = __guard_tp.as_type_parameter();
                 (tp.target, tp.mapper)
             };
@@ -2173,7 +2175,7 @@ impl Checker {
                 .constraint = Some(constraint);
         }
         let __arena___guard_constraint = self.types.clone();
-        let __guard_constraint = __arena___guard_constraint.get(t);
+        let __guard_constraint = __arena___guard_constraint.get(t).clone();
         let constraint = __guard_constraint.as_type_parameter().constraint.unwrap();
         if constraint != self.no_constraint_type {
             return Some(constraint);
@@ -2386,7 +2388,7 @@ impl Checker {
                 let __arena_target = self.types.clone();
                 let target = __arena_target.get(t).target().unwrap();
                 let __arena___guard_d = self.types.clone();
-                let __guard_d = __arena___guard_d.get(target);
+                let __guard_d = __arena___guard_d.get(target).clone();
                 let d = __guard_d.as_interface_type();
                 return d.map(|i| i.local_type_parameters().to_vec());
             }
@@ -2422,7 +2424,7 @@ impl Checker {
     pub(crate) fn get_constraint_from_indexed_access(&mut self, t: TypeId) -> Option<TypeId> {
         let (object_type, index_type, access_flags) = {
             let __arena___guard_d = self.types.clone();
-            let __guard_d = __arena___guard_d.get(t);
+            let __guard_d = __arena___guard_d.get(t).clone();
             let d = __guard_d.as_indexed_access_type();
             (
                 d.object_type.unwrap(),
@@ -2547,7 +2549,7 @@ impl Checker {
             // "constraint" likely doesn't need to exist.
             let (is_distributive, root_check_type, check_type, mapper) = {
                 let __arena___guard_d = self.types.clone();
-                let __guard_d = __arena___guard_d.get(t);
+                let __guard_d = __arena___guard_d.get(t).clone();
                 let d = __guard_d.as_conditional_type();
                 let root = d.root.as_ref().unwrap();
                 (
@@ -2599,7 +2601,7 @@ impl Checker {
                 .resolved_constraint_of_distributive = Some(self.no_constraint_type);
         }
         let __arena___guard_resolved = self.types.clone();
-        let __guard_resolved = __arena___guard_resolved.get(t);
+        let __guard_resolved = __arena___guard_resolved.get(t).clone();
         let resolved = __guard_resolved
             .as_conditional_type()
             .resolved_constraint_of_distributive
@@ -2621,12 +2623,11 @@ impl Checker {
             let t = self.new_object_type(kind, Some(symbol));
             self.declared_type_links.get(symbol).declared_type = Some(t);
             let outer_type_parameters =
-                self.get_outer_type_parameters_of_class_or_interface(symbol);
+                self.get_outer_type_parameters_of_class_or_interface(symbol, &[]);
             let type_parameters = self
                 .append_local_type_parameters_of_class_or_interface_or_type_alias(
                     outer_type_parameters.clone(),
-                    symbol,
-                );
+                    symbol, &[]);
             // A class or interface is generic if it has type parameters or a
             // "this" type. We always give classes a "this" type because it is not
             // feasible to analyze all members to determine if the "this" type
@@ -3140,9 +3141,12 @@ impl Checker {
                 if ok {
                     let file_index = node.file_index();
                     let node_loc = nodes[node].loc;
+                    let flow_node = crate::flow::get_flow_node_of_node(&nodes, parent_access);
                     drop(nodes);
                     let program = self.program.as_ref().expect("program").clone();
                     let mut arena = program.nodes_mut(file_index);
+                    let old_file_index = self.factory.file_index();
+                    self.factory.set_file_index(file_index);
                     let literal = self.factory.new_string_literal(
                         &mut arena,
                         &prop_name,
@@ -3163,17 +3167,13 @@ impl Checker {
                         Some(literal),
                         ast::NodeFlags::NONE,
                     );
+                    self.factory.set_file_index(old_file_index);
                     arena[result].loc = node_loc;
                     arena[literal].parent = Some(result);
                     arena[result].parent = Some(node);
                     if lhs_expr != parent_access {
                         arena[lhs_expr].parent = Some(result);
                     }
-                    let flow_node = {
-                        let __program = self.program.clone().expect("program");
-                        let nodes = __program.nodes((node).file_index());
-                        crate::flow::get_flow_node_of_node(&nodes, parent_access)
-                    };
                     arena[result]
                         .as_element_access_expression_mut()
                         .flow_node_base
@@ -3448,7 +3448,7 @@ impl Checker {
         let parent = self.get_parent_of_symbol(prototype).unwrap();
         let class_type = self.get_declared_type_of_symbol(parent);
         let __arena___guard_type_parameters = self.types.clone();
-        let __guard_type_parameters = __arena___guard_type_parameters.get(class_type);
+        let __guard_type_parameters = __arena___guard_type_parameters.get(class_type).clone();
         let type_parameters = __guard_type_parameters
             .as_interface_type()
             .map(|d| d.type_parameters().to_vec())
@@ -3705,7 +3705,7 @@ impl Checker {
                 .unwrap_or_else(|| {
                     panic!("location should be cached whenever this expando symbol is cached")
                 });
-            return (kind, Some(location));
+            return (kind, location);
         }
         let mut all_this = true;
         let mut type_annotation: Option<NodeId> = None;
@@ -3754,9 +3754,7 @@ impl Checker {
             }
         }
         self.this_expando_kinds.insert(symbol, kind);
-        if let Some(location) = location {
-            self.this_expando_locations.insert(symbol, location);
-        }
+        self.this_expando_locations.insert(symbol, location);
         (kind, location)
     }
 
@@ -4674,7 +4672,7 @@ impl Checker {
         let flags = __arena_flags.get(t).flags;
         if flags.intersects(TypeFlags::UNIQUE_ES_SYMBOL) {
             let __arena___guard_name = self.types.clone();
-            let __guard_name = __arena___guard_name.get(t);
+            let __guard_name = __arena___guard_name.get(t).clone();
             let name = __guard_name.as_unique_es_symbol_type().name.clone();
             return (name, true);
         }
@@ -4925,7 +4923,7 @@ impl Checker {
         {
             let resolved = self.resolve_structured_type_members(t);
             let __arena___guard_properties = self.types.clone();
-            let __guard_properties = __arena___guard_properties.get(resolved);
+            let __guard_properties = __arena___guard_properties.get(resolved).clone();
             let properties = __guard_properties
                 .as_structured_type()
                 .map(|st| st.properties.clone());
@@ -4942,7 +4940,7 @@ impl Checker {
     ) -> Vec<SymbolId> {
         {
             let __arena___guard_resolved_properties = self.types.clone();
-            let __guard_resolved_properties = __arena___guard_resolved_properties.get(t);
+            let __guard_resolved_properties = __arena___guard_resolved_properties.get(t).clone();
             let resolved_properties = __guard_resolved_properties
                 .as_union_or_intersection_type()
                 .map(|u| u.resolved_properties.clone())
@@ -5022,17 +5020,12 @@ impl Checker {
         let flags = __arena_flags.get(t).flags;
         if flags.intersects(TypeFlags::OBJECT) {
             let resolved = self.resolve_structured_type_members(t);
-            let (members, call_signature_count, construct_signature_count) = {
-                let __arena_g = self.types.clone();
-                let g = __arena_g.get(resolved);
-                let st = g.as_structured_type().expect("structured type");
-                (
-                    st.members.clone(),
-                    st.call_signature_count,
-                    st.signatures.len() - st.call_signature_count,
-                )
-            };
-            let symbol = members.get(name).copied();
+            let __arena_g = self.types.clone();
+            let g = __arena_g.get(resolved);
+            let st = g.as_structured_type().expect("structured type");
+            let symbol = st.members.get(name).copied();
+            let call_signature_count = st.call_signature_count;
+            let construct_signature_count = st.signatures.len() - st.call_signature_count;
             if let Some(symbol_id) = symbol {
                 if !include_type_only_members
                     && let Some(t_symbol) = self.types_handle().get(t).symbol
@@ -5389,7 +5382,7 @@ impl Checker {
             .target()
             .expect("type reference target");
         let __arena___guard_type_parameters = self.types.clone();
-        let __guard_type_parameters = __arena___guard_type_parameters.get(source);
+        let __guard_type_parameters = __arena___guard_type_parameters.get(source).clone();
         let type_parameters = __guard_type_parameters
             .as_interface_type()
             .expect("interface type")
@@ -6317,7 +6310,7 @@ impl Checker {
     /// last outer parameter needs to be checked.
     pub(crate) fn are_all_outer_type_parameters_applied(&mut self, t: TypeId) -> bool {
         let __arena___guard_outer_type_parameters = self.types.clone();
-        let __guard_outer_type_parameters = __arena___guard_outer_type_parameters.get(t);
+        let __guard_outer_type_parameters = __arena___guard_outer_type_parameters.get(t).clone();
         let outer_type_parameters = __guard_outer_type_parameters
             .as_interface_type()
             .expect("interface type")
@@ -6429,7 +6422,7 @@ impl Checker {
             let target = get_target_type(&self.types, t);
             let type_arguments = self.get_type_arguments(t);
             let __arena___guard_type_parameters = self.types.clone();
-            let __guard_type_parameters = __arena___guard_type_parameters.get(target);
+            let __guard_type_parameters = __arena___guard_type_parameters.get(target).clone();
             let type_parameters = __guard_type_parameters
                 .as_interface_type()
                 .expect("interface type")
@@ -6939,6 +6932,7 @@ impl Checker {
                     None,  /*nameNotFoundMessage*/
                     false, /*isUse*/
                     false, /*excludeGlobals*/
+                    None,
                 );
                 nodes = __program.nodes(declaration.file_index());
             }
@@ -8946,7 +8940,7 @@ impl Checker {
                 SignatureFlags::CONSTRUCT
             };
             let __arena___guard_local_tps = self.types.clone();
-            let __guard_local_tps = __arena___guard_local_tps.get(class_type);
+            let __guard_local_tps = __arena___guard_local_tps.get(class_type).clone();
             let local_tps = __guard_local_tps
                 .as_interface_type()
                 .expect("interface type")
@@ -8992,7 +8986,7 @@ impl Checker {
                     self.clone_signature(base_sig)
                 };
                 let __arena___guard_local_tps = self.types.clone();
-                let __guard_local_tps = __arena___guard_local_tps.get(class_type);
+                let __guard_local_tps = __arena___guard_local_tps.get(class_type).clone();
                 let local_tps = __guard_local_tps
                     .as_interface_type()
                     .expect("interface type")
@@ -9027,7 +9021,7 @@ impl Checker {
             .expect("mapped type parameter");
         let constraint_type = self.get_constraint_type_from_mapped_type(t);
         let __arena___guard_mapped_type = self.types.clone();
-        let __guard_mapped_type = __arena___guard_mapped_type.get(t);
+        let __guard_mapped_type = __arena___guard_mapped_type.get(t).clone();
         let mapped_type = __guard_mapped_type
             .as_mapped_type()
             .object_type
@@ -9148,7 +9142,7 @@ impl Checker {
                             prop_name_type
                         };
                     let __arena___guard_mapper = c.types.clone();
-                    let __guard_mapper = __arena___guard_mapper.get(t);
+                    let __guard_mapper = __arena___guard_mapper.get(t).clone();
                     let mapper = __guard_mapper.as_mapped_type().object_type.mapper;
                     let mapper = append_type_mapping(c, mapper, type_parameter, key_type);
                     let prop_type =
@@ -9183,7 +9177,7 @@ impl Checker {
                 // addMemberForKeyType
                 let prop_name_type = if let Some(name_type) = name_type {
                     let __arena___guard_mapper = c.types.clone();
-                    let __guard_mapper = __arena___guard_mapper.get(t);
+                    let __guard_mapper = __arena___guard_mapper.get(t).clone();
                     let mapper = __guard_mapper.as_mapped_type().object_type.mapper;
                     let mapper = append_type_mapping(c, mapper, type_parameter, key_type);
                     c.instantiate_type(name_type, Some(mapper))
@@ -9219,7 +9213,7 @@ impl Checker {
             crate::checker_d::for_each_type(self, &types, lower, |c, key_type| {
                 let prop_name_type = if let Some(name_type) = name_type {
                     let __arena___guard_mapper = c.types.clone();
-                    let __guard_mapper = __arena___guard_mapper.get(t_mapper_source);
+                    let __guard_mapper = __arena___guard_mapper.get(t_mapper_source).clone();
                     let mapper = __guard_mapper.as_mapped_type().object_type.mapper;
                     let mapper = append_type_mapping(c, mapper, type_parameter, key_type);
                     c.instantiate_type(name_type, Some(mapper))
@@ -9307,7 +9301,7 @@ impl Checker {
                 return self.error_type;
             }
             let __arena___guard_target = self.types.clone();
-            let __guard_target = __arena___guard_target.get(mapped_type);
+            let __guard_target = __arena___guard_target.get(mapped_type).clone();
             let target = __guard_target
                 .as_mapped_type()
                 .object_type
@@ -9315,7 +9309,7 @@ impl Checker {
                 .unwrap_or(mapped_type);
             let template_type = self.get_template_type_from_mapped_type(target);
             let __arena___guard_mapper = self.types.clone();
-            let __guard_mapper = __arena___guard_mapper.get(mapped_type);
+            let __guard_mapper = __arena___guard_mapper.get(mapped_type).clone();
             let mapper = __guard_mapper.as_mapped_type().object_type.mapper;
             let key_type = self.mapped_symbol_links.get(symbol).key_type;
             let __h8847_17 = self
@@ -9371,7 +9365,7 @@ impl Checker {
         let flags = __arena_flags.get(t).flags;
         if flags.intersects(TypeFlags::INDEX) {
             let __arena___guard_target = self.types.clone();
-            let __guard_target = __arena___guard_target.get(t);
+            let __guard_target = __arena___guard_target.get(t).clone();
             let target = __guard_target.as_index_type().target.unwrap_or(t);
             let target = self.get_apparent_type(target);
             if self.is_generic_tuple_type(target) {
@@ -9529,7 +9523,7 @@ impl Checker {
                     c.global_array_type
                 };
                 let __arena___guard_tp = c.types.clone();
-                let __guard_tp = __arena___guard_tp.get(interface);
+                let __guard_tp = __arena___guard_tp.get(interface).clone();
                 let tp = __guard_tp
                     .as_interface_type()
                     .expect("interface type")
@@ -10277,17 +10271,10 @@ impl Checker {
         let __arena_symbol = self.types.clone();
         let symbol = __arena_symbol.get(tp).symbol;
         let result = self.new_type_parameter(symbol);
-        let (target, mapper) = {
-            let __arena_tp_ref = self.types.clone();
-            let tp_ref = __arena_tp_ref.get(tp);
-            let tp_d = tp_ref.as_type_parameter();
-            (tp_d.target, tp_d.mapper)
-        };
-        let __arena_result_ref = self.types.clone();
-        let mut result_ref = __arena_result_ref.get_mut(result);
-        let result_d = result_ref.as_type_parameter_mut();
-        result_d.target = target;
-        result_d.mapper = mapper;
+        self.types_handle()
+            .get_mut(result)
+            .as_type_parameter_mut()
+            .target = Some(tp);
         result
     }
 
@@ -10354,7 +10341,7 @@ impl Checker {
         t: TypeId,
     ) -> Option<NodeId> {
         let __arena___guard_declaration = self.types.clone();
-        let __guard_declaration = __arena___guard_declaration.get(t);
+        let __guard_declaration = __arena___guard_declaration.get(t).clone();
         let declaration = __guard_declaration.as_mapped_type().declaration?;
         let __program = self.program.clone().expect("program");
         let nodes = __program.nodes((declaration).file_index());
@@ -10611,8 +10598,7 @@ impl Checker {
                             merged_instantiations = single_parent.is_some_and(|p| {
                                 !self
                                     .get_local_type_parameters_of_class_or_interface_or_type_alias(
-                                        p,
-                                    )
+                                        p, &[])
                                     .is_empty()
                             });
                         } else {
@@ -10763,12 +10749,15 @@ impl Checker {
                 single_prop_mapper = links.mapper;
             }
             let clone = self.create_symbol_with_type(Some(single_prop), single_prop_type);
-            if let Some(value_declaration) = self.sym(single_prop).value_declaration {
+            let value_declaration = self.sym(single_prop).value_declaration;
+            if let Some(value_declaration) = value_declaration {
                 let __program = self.program.clone().expect("program");
                 let nodes = __program.nodes((value_declaration).file_index());
-                if let Some(decl_symbol) = nodes[value_declaration].symbol() {
-                    self.symbol_arena.borrow_mut()[clone.index()].parent =
-                        self.sym(decl_symbol).parent;
+                let parent = nodes[value_declaration]
+                    .symbol()
+                    .map(|decl_symbol| self.sym(decl_symbol).parent);
+                if let Some(parent) = parent {
+                    self.symbol_arena.borrow_mut()[clone.index()].parent = parent;
                 }
             }
             let write_type = self.get_write_type_of_symbol(single_prop);
@@ -11043,7 +11032,7 @@ impl Checker {
     /// `(c *Checker) getResolvedApparentTypeOfMappedType` (checker.go:22197).
     pub(crate) fn get_resolved_apparent_type_of_mapped_type(&mut self, t: TypeId) -> TypeId {
         let __arena___guard_target = self.types.clone();
-        let __guard_target = __arena___guard_target.get(t);
+        let __guard_target = __arena___guard_target.get(t).clone();
         let target = __guard_target
             .as_mapped_type()
             .object_type
@@ -11052,7 +11041,7 @@ impl Checker {
         let type_variable = self.get_homomorphic_type_variable(target);
         let name_type_absent = {
             let __arena___guard_declaration = self.types.clone();
-            let __guard_declaration = __arena___guard_declaration.get(target);
+            let __guard_declaration = __arena___guard_declaration.get(target).clone();
             let declaration = __guard_declaration.as_mapped_type().declaration;
             declaration.is_none_or(|d| {
                 d.is_none()
@@ -11084,7 +11073,7 @@ impl Checker {
                 });
                 if is_array_like {
                     let __arena___guard_mapper = self.types.clone();
-                    let __guard_mapper = __arena___guard_mapper.get(t);
+                    let __guard_mapper = __arena___guard_mapper.get(t).clone();
                     let mapper = __guard_mapper.as_mapped_type().object_type.mapper;
                     let mapper = prepend_type_mapping(self, type_variable, base_constraint, mapper);
                     return crate::checker_c::instantiate_type(self, target, Some(mapper));
@@ -11516,8 +11505,11 @@ impl Checker {
         if let Some(declaration) = declaration {
             for &d in self.sym(container).declarations.clone().iter() {
                 let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((d).file_index());
-                if nodes[declaration].loc.contained_by(&nodes[d].loc) {
+                // `declaration` and `d` may live in different arenas — Go
+                // compares raw `Loc` positions across files.
+                let d_nodes = __program.nodes((d).file_index());
+                let decl_nodes = __program.nodes((declaration).file_index());
+                if decl_nodes[declaration].loc.contained_by(&d_nodes[d].loc) {
                     return true;
                 }
             }
@@ -11769,7 +11761,7 @@ impl Checker {
                 {
                     let __arena___guard_resolved_type_arguments = self.types.clone();
                     let __guard_resolved_type_arguments =
-                        __arena___guard_resolved_type_arguments.get(t);
+                        __arena___guard_resolved_type_arguments.get(t).clone();
                     let resolved_type_arguments = __guard_resolved_type_arguments
                         .as_type_reference()
                         .resolved_type_arguments
@@ -11902,7 +11894,7 @@ impl Checker {
         }
         if flags.intersects(TypeFlags::CONDITIONAL) {
             let __arena___guard_mapper = self.types.clone();
-            let __guard_mapper = __arena___guard_mapper.get(t);
+            let __guard_mapper = __arena___guard_mapper.get(t).clone();
             let mapper = __guard_mapper.as_conditional_type().mapper;
             let new_mapper = self.combine_type_mappers(mapper, m);
             return self.get_conditional_type_instantiation(t, new_mapper, false, alias);
@@ -12020,7 +12012,7 @@ impl Checker {
             // parameters that are in scope (and therefore potentially referenced). For type literals that
             // aren't the right hand side of a generic type alias declaration we optimize by reducing the
             // set of type parameters to those that are possibly referenced in the literal.
-            type_parameters = self.get_outer_type_parameters(declaration, true);
+            type_parameters = self.get_outer_type_parameters(declaration, true, &[]);
             let __arena_target_alias_arg_count = self.types.clone();
             let target_alias_arg_count = __arena_target_alias_arg_count
                 .get(target)
@@ -12131,7 +12123,7 @@ impl Checker {
         let target_object_flags = __arena_target_object_flags.get(target).object_flags;
         let result = if target_object_flags.intersects(ObjectFlags::REFERENCE) {
             let __arena___guard_node = self.types.clone();
-            let __guard_node = __arena___guard_node.get(t);
+            let __guard_node = __arena___guard_node.get(t).clone();
             let node = __guard_node.as_type_reference().node;
             let __arena_target2 = self.types.clone();
             let target2 = __arena_target2
@@ -12194,7 +12186,7 @@ impl Checker {
         node: NodeId,
     ) -> bool {
         let __arena___guard_tp_is_this_type = self.types.clone();
-        let __guard_tp_is_this_type = __arena___guard_tp_is_this_type.get(tp);
+        let __guard_tp_is_this_type = __arena___guard_tp_is_this_type.get(tp).clone();
         let tp_is_this_type = __guard_tp_is_this_type.as_type_parameter().is_this_type;
         let __arena_tp_symbol = self.types.clone();
         let tp_symbol = __arena_tp_symbol.get(tp).symbol;
@@ -12267,7 +12259,7 @@ impl Checker {
         let mut m = m;
         if t_object_flags.intersects(ObjectFlags::MAPPED) {
             let __arena___guard_declaration = self.types.clone();
-            let __guard_declaration = __arena___guard_declaration.get(t);
+            let __guard_declaration = __arena___guard_declaration.get(t).clone();
             let declaration = __guard_declaration.as_mapped_type().declaration;
             self.types_handle()
                 .get_mut(result)
@@ -12290,7 +12282,7 @@ impl Checker {
                 .mapper = Some(m);
         } else if t_object_flags.intersects(ObjectFlags::INSTANTIATION_EXPRESSION_TYPE) {
             let __arena___guard_node = self.types.clone();
-            let __guard_node = __arena___guard_node.get(t);
+            let __guard_node = __arena___guard_node.get(t).clone();
             let node = __guard_node.as_instantiation_expression_type().node;
             self.types_handle()
                 .get_mut(result)
@@ -12424,7 +12416,7 @@ impl Checker {
             .intersects(TypeFlags::INDEX)
         {
             let __arena___guard_target = self.types.clone();
-            let __guard_target = __arena___guard_target.get(constraint_type);
+            let __guard_target = __arena___guard_target.get(constraint_type).clone();
             let target = __guard_target
                 .as_index_type()
                 .target
@@ -12459,7 +12451,7 @@ impl Checker {
     ) -> TypeId {
         let name_type_absent = {
             let __arena___guard_declaration = self.types.clone();
-            let __guard_declaration = __arena___guard_declaration.get(t);
+            let __guard_declaration = __arena___guard_declaration.get(t).clone();
             let declaration = __guard_declaration.as_mapped_type().declaration;
             declaration.is_none_or(|d| {
                 d.is_none()
@@ -12664,7 +12656,7 @@ impl Checker {
             crate::checker_c::get_type_parameter_from_mapped_type(self, t).expect("type parameter");
         let template_mapper = append_type_mapping(self, Some(m), type_parameter, key);
         let __arena___guard_target = self.types.clone();
-        let __guard_target = __arena___guard_target.get(t);
+        let __guard_target = __arena___guard_target.get(t).clone();
         let target = __guard_target
             .as_mapped_type()
             .object_type
@@ -12701,7 +12693,7 @@ impl Checker {
         let modifiers_type = self.get_apparent_type(modifiers_type);
         let mut mapped_keys: Vec<TypeId> = Vec::new();
         let __arena___guard_target_mapper = self.types.clone();
-        let __guard_target_mapper = __arena___guard_target_mapper.get(target_type);
+        let __guard_target_mapper = __arena___guard_target_mapper.get(target_type).clone();
         let target_mapper = __guard_target_mapper.as_mapped_type().object_type.mapper;
         let type_parameter =
             crate::checker_c::get_type_parameter_from_mapped_type(self, target_type)
@@ -13421,7 +13413,7 @@ impl Checker {
         let merged = self.get_merged_symbol(symbol);
         let t = self.get_declared_type_of_class_or_interface(merged);
         let __arena___guard_type_parameters = self.types.clone();
-        let __guard_type_parameters = __arena___guard_type_parameters.get(t);
+        let __guard_type_parameters = __arena___guard_type_parameters.get(t).clone();
         let type_parameters = __guard_type_parameters
             .as_interface_type()
             .map(|d| d.local_type_parameters().to_vec())
@@ -13790,7 +13782,7 @@ impl Checker {
             n.types.push(element_types[element_infos.len()]);
         }
         let __arena___guard_readonly = self.types.clone();
-        let __guard_readonly = __arena___guard_readonly.get(target);
+        let __guard_readonly = __arena___guard_readonly.get(target).clone();
         let readonly = __guard_readonly.as_tuple_type().readonly;
         let tuple_target = self.get_tuple_target_type(&n.infos, readonly);
         if tuple_target == self.empty_generic_type {
@@ -14171,7 +14163,7 @@ impl Checker {
     ) -> Vec<TypeId> {
         match symbol {
             Some(symbol) => {
-                self.get_local_type_parameters_of_class_or_interface_or_type_alias(symbol)
+                self.get_local_type_parameters_of_class_or_interface_or_type_alias(symbol, &[])
             }
             None => Vec::new(),
         }
@@ -14224,7 +14216,7 @@ impl Checker {
                 .unwrap_or(self.error_type);
             if self.pop_type_resolution() {
                 let type_parameters =
-                    self.get_local_type_parameters_of_class_or_interface_or_type_alias(symbol);
+                    self.get_local_type_parameters_of_class_or_interface_or_type_alias(symbol, &[]);
                 if !type_parameters.is_empty() {
                     // Initialize the instantiation cache for generic type aliases. The declared type corresponds to
                     // an instantiation of the type alias with the type parameters supplied as type arguments.
@@ -14856,11 +14848,16 @@ pub(crate) fn could_contain_type_variables_worker(c: &mut Checker, t: TypeId) ->
     if object_flags.intersects(ObjectFlags::COULD_CONTAIN_TYPE_VARIABLES_COMPUTED) {
         return object_flags.intersects(ObjectFlags::COULD_CONTAIN_TYPE_VARIABLES);
     }
+    // PORT(borrowck): the `.get` guard must drop at the `;` — inside the
+    // big `result` expression it would live across `get_type_arguments`
+    // (which allocates) and deadlock the `get_mut` at the tail.
+    let reference_has_node = object_flags.intersects(ObjectFlags::REFERENCE)
+        && c.types_handle().get(t).as_type_reference().node.is_some();
     let result = flags.intersects(TypeFlags::INSTANTIABLE)
         || (flags.intersects(TypeFlags::OBJECT)
             && !c.is_non_generic_top_level_type(t)
             && ((object_flags.intersects(ObjectFlags::REFERENCE)
-                && (c.types_handle().get(t).as_type_reference().node.is_some() || {
+                && (reference_has_node || {
                     let type_arguments = c.get_type_arguments(t);
                     type_arguments
                         .iter()
@@ -15054,7 +15051,7 @@ pub(crate) fn get_type_parameter_from_mapped_type(c: &mut Checker, t: TypeId) ->
         .is_none()
     {
         let __arena___guard_tp_node = c.types.clone();
-        let __guard_tp_node = __arena___guard_tp_node.get(t);
+        let __guard_tp_node = __arena___guard_tp_node.get(t).clone();
         let tp_node = __guard_tp_node
             .as_mapped_type()
             .declaration
@@ -15364,7 +15361,7 @@ impl TupleNormalizer {
                     }
                     // Spread variadic elements with tuple types into the resulting tuple.
                     let __arena___guard_spread_infos = c.types.clone();
-                    let __guard_spread_infos = __arena___guard_spread_infos.get(t);
+                    let __guard_spread_infos = __arena___guard_spread_infos.get(t).clone();
                     let spread_infos = __guard_spread_infos
                         .as_type_reference()
                         .object_type

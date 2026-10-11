@@ -503,13 +503,13 @@ impl Checker {
             && target_flags.intersects(TypeFlags::INDEX)
         {
             let __arena___guard_source_target = self.types.clone();
-            let __guard_source_target = __arena___guard_source_target.get(source);
+            let __guard_source_target = __arena___guard_source_target.get(source).clone();
             let source_target = __guard_source_target
                 .as_index_type()
                 .target
                 .expect("index target");
             let __arena___guard_target_target = self.types.clone();
-            let __guard_target_target = __arena___guard_target_target.get(target);
+            let __guard_target_target = __arena___guard_target_target.get(target).clone();
             let target_target = __guard_target_target
                 .as_index_type()
                 .target
@@ -521,7 +521,7 @@ impl Checker {
         {
             let empty = self.create_empty_object_type_from_string_literal(source);
             let __arena___guard_target_target = self.types.clone();
-            let __guard_target_target = __arena___guard_target_target.get(target);
+            let __guard_target_target = __arena___guard_target_target.get(target).clone();
             let target_target = __guard_target_target
                 .as_index_type()
                 .target
@@ -566,13 +566,13 @@ impl Checker {
             let target_symbol = __arena_target_symbol.get(target).symbol;
             if source_symbol == target_symbol {
                 let __arena___guard_source_target = self.types.clone();
-                let __guard_source_target = __arena___guard_source_target.get(source);
+                let __guard_source_target = __arena___guard_source_target.get(source).clone();
                 let source_target = __guard_source_target
                     .as_string_mapping_type()
                     .target
                     .expect("string mapping target");
                 let __arena___guard_target_target = self.types.clone();
-                let __guard_target_target = __arena___guard_target_target.get(target);
+                let __guard_target_target = __arena___guard_target_target.get(target).clone();
                 let target_target = __guard_target_target
                     .as_string_mapping_type()
                     .target
@@ -581,7 +581,7 @@ impl Checker {
             }
         } else if source_flags.intersects(TypeFlags::SUBSTITUTION) {
             let __arena___guard_base_type = self.types.clone();
-            let __guard_base_type = __arena___guard_base_type.get(source);
+            let __guard_base_type = __arena___guard_base_type.get(source).clone();
             let base_type = __guard_base_type
                 .as_substitution_type()
                 .base_type
@@ -703,7 +703,7 @@ impl Checker {
         let source_types = self.get_type_arguments(source);
         let target_types = self.get_type_arguments(target);
         let __arena___guard_target_target = self.types.clone();
-        let __guard_target_target = __arena___guard_target_target.get(target);
+        let __guard_target_target = __arena___guard_target_target.get(target).clone();
         let target_target = __guard_target_target
             .as_type_reference()
             .object_type
@@ -1448,7 +1448,7 @@ impl Checker {
                     .target_tuple_type(target)
                     .expect("target tuple type");
                 let __arena___guard_element_infos = self.types.clone();
-                let __guard_element_infos = __arena___guard_element_infos.get(target_tuple);
+                let __guard_element_infos = __arena___guard_element_infos.get(target_tuple).clone();
                 let element_infos = __guard_element_infos.as_tuple_type().element_infos.clone();
                 let source_type_arguments = self.get_type_arguments(source);
                 // When source and target are tuple types with the same
@@ -1606,7 +1606,9 @@ impl Checker {
                                         {
                                             let __arena___guard_implied_arity = self.types.clone();
                                             let __guard_implied_arity =
-                                                __arena___guard_implied_arity.get(constraint_tuple);
+                                                __arena___guard_implied_arity
+                                                    .get(constraint_tuple)
+                                                    .clone();
                                             let implied_arity =
                                                 __guard_implied_arity.as_tuple_type().fixed_length;
                                             let first = self.slice_tuple_type(
@@ -1674,7 +1676,9 @@ impl Checker {
                                         {
                                             let __arena___guard_implied_arity = self.types.clone();
                                             let __guard_implied_arity =
-                                                __arena___guard_implied_arity.get(constraint_tuple);
+                                                __arena___guard_implied_arity
+                                                    .get(constraint_tuple)
+                                                    .clone();
                                             let implied_arity =
                                                 __guard_implied_arity.as_tuple_type().fixed_length;
                                             let end_index = source_arity as isize
@@ -1800,7 +1804,7 @@ impl Checker {
     /// `target.AsMappedType().declaration.NameType == nil`.
     fn mapped_type_declaration_has_name_type(&self, target: TypeId) -> bool {
         let __arena___guard_declaration = self.types.clone();
-        let __guard_declaration = __arena___guard_declaration.get(target);
+        let __guard_declaration = __arena___guard_declaration.get(target).clone();
         let declaration = __guard_declaration
             .as_mapped_type()
             .declaration
@@ -2096,7 +2100,7 @@ impl Checker {
             // a secondary inference such that direct inferences to T get
             // priority over inferences to Partial<T>, for example.
             let __arena___guard_index_target = self.types.clone();
-            let __guard_index_target = __arena___guard_index_target.get(constraint_type);
+            let __guard_index_target = __arena___guard_index_target.get(constraint_type).clone();
             let index_target = __guard_index_target
                 .as_index_type()
                 .target
@@ -2268,7 +2272,7 @@ impl Checker {
                 .into_owned();
             }
             let __arena___guard_readonly = self.types.clone();
-            let __guard_readonly = __arena___guard_readonly.get(source_tuple);
+            let __guard_readonly = __arena___guard_readonly.get(source_tuple).clone();
             let readonly = __guard_readonly.as_tuple_type().readonly;
             return Some(self.create_tuple_type_ex(&element_types, &element_infos, readonly));
         }
@@ -2370,7 +2374,7 @@ impl Checker {
         constraint: TypeId,
     ) -> Option<TypeId> {
         let __arena___guard_index_target = self.types.clone();
-        let __guard_index_target = __arena___guard_index_target.get(constraint);
+        let __guard_index_target = __arena___guard_index_target.get(constraint).clone();
         let index_target = __guard_index_target
             .as_index_type()
             .target
@@ -2473,8 +2477,9 @@ impl Checker {
             self.value_symbol_links.get(inferred_prop).name_type = name_type;
             let property_type = self.get_type_of_symbol(prop);
             let __arena___guard_constraint_target = self.types.clone();
-            let __guard_constraint_target =
-                __arena___guard_constraint_target.get(r_constraint_type);
+            let __guard_constraint_target = __arena___guard_constraint_target
+                .get(r_constraint_type)
+                .clone();
             let constraint_target = __guard_constraint_target
                 .as_index_type()
                 .target
@@ -2563,7 +2568,7 @@ impl Checker {
     /// -> `"a" | "b"`.
     fn get_limited_constraint(&mut self, t: TypeId) -> Option<TypeId> {
         let __arena___guard_mapped_type = self.types.clone();
-        let __guard_mapped_type = __arena___guard_mapped_type.get(t);
+        let __guard_mapped_type = __arena___guard_mapped_type.get(t).clone();
         let mapped_type = __guard_mapped_type
             .as_reverse_mapped_type()
             .mapped_type
@@ -2589,7 +2594,7 @@ impl Checker {
             return None;
         }
         let __arena___guard_constraint_type = self.types.clone();
-        let __guard_constraint_type = __arena___guard_constraint_type.get(t);
+        let __guard_constraint_type = __arena___guard_constraint_type.get(t).clone();
         let constraint_type = __guard_constraint_type
             .as_reverse_mapped_type()
             .constraint_type
@@ -2656,12 +2661,14 @@ impl Checker {
             return false;
         }
         let __arena___guard_t1_infos = self.types.clone();
-        let __guard_t1_infos =
-            __arena___guard_t1_infos.get(self.types_handle().target_tuple_type(t1).expect("tuple"));
+        let __guard_t1_infos = __arena___guard_t1_infos
+            .get(self.types_handle().target_tuple_type(t1).expect("tuple"))
+            .clone();
         let t1_infos = __guard_t1_infos.as_tuple_type().element_infos.clone();
         let __arena___guard_t2_infos = self.types.clone();
-        let __guard_t2_infos =
-            __arena___guard_t2_infos.get(self.types_handle().target_tuple_type(t2).expect("tuple"));
+        let __guard_t2_infos = __arena___guard_t2_infos
+            .get(self.types_handle().target_tuple_type(t2).expect("tuple"))
+            .clone();
         let t2_infos = __guard_t2_infos.as_tuple_type().element_infos.clone();
         for (i, e) in t1_infos.iter().enumerate() {
             if e.flags.intersects(ElementFlags::VARIABLE)
@@ -3260,7 +3267,7 @@ fn compare_types_and_depth(c: &mut Checker, t1: TypeId, t2: TypeId) -> i32 {
     if d1 != d2 {
         return d2 - d1; // Largest depth sorts first
     }
-    crate::utilities::compare_types(&c.types, t1, t2)
+    crate::utilities::compare_types(&c.types, c.symbol_arena.as_ref(), t1, t2)
 }
 
 /// `getTypeDepth` (inference.go) — return the depth of the given type up to

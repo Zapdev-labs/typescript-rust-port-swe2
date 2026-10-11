@@ -1728,6 +1728,10 @@ impl Checker {
         check_unused: bool,
     ) {
         self.ctx = ctx;
+        let __check_t = std::time::Instant::now();
+        if std::env::var("TSC_DBG_ALIAS").is_ok() {
+            eprintln!("[check] checker={:p} file={:?}", self as *const _, source_file);
+        }
         let __program = self.program.clone().expect("program");
         // PORT(borrowck): descendant checks take `nodes_mut`; hold the arena
         // `Ref` only to extract source-file metadata, then drop it.
@@ -1760,10 +1764,16 @@ impl Checker {
                 )))
             });
             // Grammar checking
+            let __gt = std::time::Instant::now();
             self.check_grammar_source_file(source_file);
+            let __t_gram = __gt.elapsed();
             self.renamed_binding_elements_in_types = Vec::new();
+            let __gt = std::time::Instant::now();
             self.check_source_elements(&statements);
+            let __t_elems = __gt.elapsed();
+            let __gt = std::time::Instant::now();
             self.check_deferred_nodes(source_file);
+            let __t_def = __gt.elapsed();
             if is_external_commonjs {
                 self.check_external_module_exports(source_file);
                 self.register_for_unused_identifiers_check(source_file);
@@ -1771,9 +1781,16 @@ impl Checker {
             if !is_declaration_file && !self.is_canceled() {
                 self.check_unused_renamed_binding_elements();
             }
+            let __gt = std::time::Instant::now();
             self.produce_deferred_diagnostics();
+            let __t_defdiag = __gt.elapsed();
             self.reported_unreachable_nodes.clear();
             self.source_file_links.get(source_file).type_checked = true;
+            if std::env::var("TSC_FILE_TIME").is_ok() && __check_t.elapsed().as_millis() > 500 {
+                eprintln!(
+                    "[phases] {file_name} gram={__t_gram:?} elems={__t_elems:?} defer={__t_def:?} defdiag={__t_defdiag:?}"
+                );
+            }
         }
         if check_unused && !self.source_file_links.get(source_file).unused_checked {
             // The unused identifiers check relies on a full type check having first been performed
@@ -1791,15 +1808,36 @@ impl Checker {
             self.was_canceled = true;
         }
         self.ctx = Context::default();
+        if std::env::var("TSC_FILE_TIME").is_ok() {
+            eprintln!("[file-time] {:?} {file_name}", __check_t.elapsed());
+        }
     }
 
     /// `(c *Checker) checkSourceElements` (checker.go).
     pub(crate) fn check_source_elements(&mut self, nodes: &[NodeId]) {
+        let __per_kind = std::env::var("TSC_FILE_TIME").is_ok();
+        let mut __times: rustc_hash::FxHashMap<ast::Kind, std::time::Duration> =
+            Default::default();
         for &node in nodes {
             if self.is_canceled() {
                 break;
             }
-            self.check_source_element(Some(node));
+            if __per_kind {
+                let __p = self.program.clone().expect("program");
+                let __k = __p.nodes(node.file_index())[node].kind;
+                let __t = std::time::Instant::now();
+                self.check_source_element(Some(node));
+                *__times.entry(__k).or_default() += __t.elapsed();
+            } else {
+                self.check_source_element(Some(node));
+            }
+        }
+        if __per_kind {
+            let mut v: Vec<_> = __times.into_iter().collect();
+            v.sort_by_key(|(_, d)| std::cmp::Reverse(*d));
+            for (k, d) in v.into_iter().take(12) {
+                eprintln!("[kind-time] {k:?} {d:?}");
+            }
         }
     }
 
@@ -2093,22 +2131,32 @@ impl Checker {
         }
     }
 
-    /// `(c *Checker) checkDeferredNodes` (checker.go).
+    /// `(c *Checker) checkDeferredNodes` (checker.go). Go iterates the live
+    /// ordered set, so nodes deferred *during* deferred checking are visited
+    /// too — drain until the set is empty.
     pub(crate) fn check_deferred_nodes(&mut self, context: NodeId) {
-        let deferred: Vec<NodeId> = self
-            .source_file_links
-            .get(context)
-            .deferred_nodes
-            .values()
-            .copied()
-            .collect();
-        for node in deferred {
+        loop {
+            let deferred: Vec<NodeId> = self
+                .source_file_links
+                .get(context)
+                .deferred_nodes
+                .values()
+                .copied()
+                .collect();
+            if deferred.is_empty() {
+                break;
+            }
+            self.source_file_links.get(context).deferred_nodes = OrderedSet::new();
+            for node in deferred {
+                if self.is_canceled() {
+                    break;
+                }
+                self.check_deferred_node(node);
+            }
             if self.is_canceled() {
                 break;
             }
-            self.check_deferred_node(node);
         }
-        self.source_file_links.get(context).deferred_nodes = OrderedSet::new();
     }
 
     /// `(c *Checker) checkDeferredNode` (checker.go).
@@ -2562,7 +2610,7 @@ impl Checker {
             && !nodes[node]
                 .name()
                 .is_some_and(|n| ast::is_binding_pattern(&nodes[n]))
-            && {
+            && !{
                 let param_sym = nodes[node].symbol().expect("parameter symbol");
                 let sym_t = self.get_type_of_symbol(param_sym);
                 let reduced = self.get_reduced_type(sym_t);
@@ -2676,13 +2724,30 @@ impl Checker {
         self.check_type_parameters(&type_parameters);
         // PORT(borrowck): `checkUnmatchedJSDocParameters` only needs `&mut`
         // for lazy JSDoc parsing (`ast::js_doc` may append parsed JSDoc
-        // nodes to the arena); Go mutates the shared graph. Ancestor `Ref`s
-        // rule out `program.nodes_mut`, so run it against a throwaway arena
-        // clone — the only side effect lost is the JSDoc lazy-parse cache,
-        // which simply re-parses on demand.
+        // nodes to the arena); Go mutates the shared graph. Run in place
+        // when the arena is free; when an ancestor holds a `Ref`, run it
+        // against the checker's per-file scratch clone (cloned once per
+        // file — see `jsdoc_scratch_arenas`). The only side effect lost is
+        // the JSDoc lazy-parse cache, which simply re-parses on demand.
         {
-            let mut jsdoc_nodes = __program.nodes((node).file_index()).to_vec();
-            self.check_unmatched_js_doc_parameters(&mut jsdoc_nodes, node);
+            // NOTE: never in-place — `check_unmatched_js_doc_parameters`
+            // calls back into `self` (`contains_arguments_reference`,
+            // `get_type_from_type_node`, error emission), which re-borrows
+            // `program.nodes` — a held `RefMut` would panic. The per-file
+            // scratch (see `jsdoc_scratch_arenas`) is a detached `Vec`, so
+            // re-entrant borrows of the live cell stay legal. Diagnostics
+            // resolve file/span eagerly against `nodes`, so scratch-minted
+            // JSDoc ids are safe here.
+            let fi = (node).file_index();
+            let arena = __program.nodes_handle(fi);
+            if !self.jsdoc_scratch_arenas.contains_key(&fi) {
+                self.jsdoc_scratch_arenas
+                    .insert(fi, arena.snapshot().to_vec());
+            }
+            // Take-out/reinsert so the `&mut Vec` doesn't alias `self`.
+            let mut nodes = self.jsdoc_scratch_arenas.remove(&fi).unwrap();
+            self.check_unmatched_js_doc_parameters(&mut nodes, node);
+            self.jsdoc_scratch_arenas.insert(fi, nodes);
         }
         self.check_source_elements(&parameters);
         if return_type_node.is_some() {
@@ -3175,8 +3240,11 @@ impl Checker {
         let t = self.get_type_from_type_node(node);
         if !crate::utilities::is_error_type(&self.types, t) {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((node).file_index());
-            if nodes[node].type_arguments().map_or(0, |a| a.len()) != 0 {
+            let has_type_arguments = {
+                let nodes = __program.nodes((node).file_index());
+                nodes[node].type_arguments().map_or(0, |a| a.len()) != 0
+            };
+            if has_type_arguments {
                 let type_parameters = self.get_type_parameters_for_type_reference_or_import(node);
                 if type_parameters.as_ref().is_some_and(|tp| !tp.is_empty()) {
                     self.check_type_argument_constraints(
@@ -3189,8 +3257,14 @@ impl Checker {
                 let declarations = sym_declarations(self, symbol);
                 if declarations.iter().any(|&d| {
                     let __program = self.program.clone().expect("program");
-                    let dn = __program.nodes((d).file_index());
-                    ast::is_type_declaration(d, &dn) && self.is_deprecated_declaration(d)
+                    let is_type_declaration = {
+                        let dn = __program.nodes((d).file_index());
+                        ast::is_type_declaration(d, &dn)
+                    };
+                    // PORT(borrowck): `dn` is dropped before the call so the
+                    // lazy-JSDoc `nodes_mut` inside `is_deprecated_declaration`
+                    // can take the arena.
+                    is_type_declaration && self.is_deprecated_declaration(d)
                 }) {
                     let name = sym_name(self, symbol);
                     let suggestion_node = self.get_deprecated_suggestion_node(node);
@@ -3771,8 +3845,7 @@ impl Checker {
                     let declarations = crate::utilities::get_declarations_of_kind(
                         self,
                         symbol,
-                        ast::Kind::TypeParameter,
-                    );
+                        ast::Kind::TypeParameter);
                     if !self.are_type_parameters_identical(
                         &declarations,
                         &[type_parameter],
@@ -4856,7 +4929,7 @@ impl Checker {
         {
             // EnumLiteral type at condition with known value is always truthy or always falsy, likely an error
             let __arena___guard_value = self.types.clone();
-            let __guard_value = __arena___guard_value.get(t);
+            let __guard_value = __arena___guard_value.get(t).clone();
             let value = __guard_value.as_literal_type().value.clone();
             let arg = tsc_core::core::if_else(
                 evaluator::is_truthy(value.as_ref().expect("literal value")),
@@ -5824,7 +5897,7 @@ impl Checker {
         let symbol = self.get_symbol_of_declaration(node).expect("class symbol");
         let class_type = self.get_declared_type_of_symbol(symbol);
         let __arena___guard_this_type = self.types.clone();
-        let __guard_this_type = __arena___guard_this_type.get(class_type);
+        let __guard_this_type = __arena___guard_this_type.get(class_type).clone();
         let this_type = __guard_this_type
             .as_interface_type()
             .and_then(|i| i.this_type);
@@ -6113,7 +6186,7 @@ impl Checker {
             }
             let t = self.get_declared_type_of_symbol(symbol);
             let __arena___guard_target_parameters = self.types.clone();
-            let __guard_target_parameters = __arena___guard_target_parameters.get(t);
+            let __guard_target_parameters = __arena___guard_target_parameters.get(t).clone();
             let target_parameters = __guard_target_parameters
                 .as_interface_type()
                 .map(|i| i.local_type_parameters().to_vec())
@@ -6321,7 +6394,7 @@ impl Checker {
             }
         } else if tflags(self, t).intersects(TypeFlags::INTERSECTION) {
             let __arena___guard_types = self.types.clone();
-            let __guard_types = __arena___guard_types.get(t);
+            let __guard_types = __arena___guard_types.get(t).clone();
             let types = __guard_types
                 .as_intersection_type()
                 .union_or_intersection
@@ -6712,7 +6785,7 @@ impl Checker {
             let base_types = self.get_base_types(t);
             if let Some(&first) = base_types.first() {
                 let __arena___guard_this_arg = self.types.clone();
-                let __guard_this_arg = __arena___guard_this_arg.get(t);
+                let __guard_this_arg = __arena___guard_this_arg.get(t).clone();
                 let this_arg = __guard_this_arg
                     .as_interface_type()
                     .and_then(|i| i.this_type);
@@ -6813,7 +6886,7 @@ impl Checker {
             let base_types = self.get_base_types(t);
             if let Some(&first) = base_types.first() {
                 let __arena___guard_this_arg = self.types.clone();
-                let __guard_this_arg = __arena___guard_this_arg.get(t);
+                let __guard_this_arg = __arena___guard_this_arg.get(t).clone();
                 let this_arg = __guard_this_arg
                     .as_interface_type()
                     .and_then(|i| i.this_type);
@@ -7284,7 +7357,11 @@ impl Checker {
                 if parameters.len() == 1 {
                     if let Some(param_type_node) = nodes[parameters[0]].type_() {
                         let param_type = self.get_type_from_type_node(param_type_node);
-                        for t in self.types_handle().get(param_type).distributed(param_type) {
+                        // Bind first — a `for`-head temporary would hold the
+                        // arena read guard for the whole loop body.
+                        let distributed =
+                            self.types_handle().get(param_type).distributed(param_type);
+                        for t in distributed {
                             index_signature_map
                                 .entry(t)
                                 .or_insert_with(|| {
@@ -7466,6 +7543,8 @@ impl Checker {
         // RefMut borrows a local, not `*self` (factory calls need `self`).
         let program = self.program.clone().expect("program");
         let mut arena = program.nodes_mut(file_index);
+        let old_file_index = self.factory.file_index();
+        self.factory.set_file_index(file_index);
         let this = self
             .factory
             .new_keyword_expression(&mut arena, ast::Kind::ThisKeyword);
@@ -7486,6 +7565,7 @@ impl Checker {
                 ast::NodeFlags::NONE,
             )
         };
+        self.factory.set_file_index(old_file_index);
         // `reference.Expression().Parent = reference`
         arena[this].parent = Some(reference);
         // `reference.Parent = parent` + `reference.FlowNodeData().FlowNode = flowNode`
@@ -7545,14 +7625,16 @@ impl Checker {
             if self.check_inherited_properties_are_identical(t, first_name) {
                 let base_types = self.get_base_types(t);
                 for base_type in base_types {
-                    let target = self.get_type_with_this_argument(
-                        base_type,
-                        self.types_handle()
-                            .get(t)
-                            .as_interface_type()
-                            .and_then(|i| i.this_type),
-                        false,
-                    );
+                    // The `get` guard is a statement temporary — bind the
+                    // value first so the arena read lock drops before
+                    // `get_type_with_this_argument` can allocate a type.
+                    let this_type = self
+                        .types_handle()
+                        .get(t)
+                        .as_interface_type()
+                        .and_then(|i| i.this_type);
+                    let target =
+                        self.get_type_with_this_argument(base_type, this_type, false);
                     self.check_type_assignable_to(
                         type_with_this,
                         target,
@@ -7604,7 +7686,7 @@ impl Checker {
         let mut seen: FxHashMap<String, (SymbolId, TypeId)> = FxHashMap::default();
         let resolved_t = self.resolve_declared_members(t);
         let __arena___guard_declared = self.types.clone();
-        let __guard_declared = __arena___guard_declared.get(resolved_t);
+        let __guard_declared = __arena___guard_declared.get(resolved_t).clone();
         let declared = __guard_declared
             .as_interface_type()
             .expect("interface type")
@@ -7617,7 +7699,7 @@ impl Checker {
         }
         let mut identical = true;
         let __arena___guard_this_type = self.types.clone();
-        let __guard_this_type = __arena___guard_this_type.get(t);
+        let __guard_this_type = __arena___guard_this_type.get(t).clone();
         let this_type = __guard_this_type
             .as_interface_type()
             .and_then(|i| i.this_type);
@@ -8558,6 +8640,8 @@ impl Checker {
                 crate::checker_types::ReferenceHint::ExportImportEquals,
                 None,
                 None,
+            
+                None,
             );
             let module_reference = nodes[node].as_import_equals_declaration().module_reference;
             let module_reference = module_reference.expect("moduleReference");
@@ -8832,6 +8916,8 @@ impl Checker {
                 crate::checker_types::ReferenceHint::ExportSpecifier,
                 None, /*propSymbol*/
                 None, /*parentType*/
+            
+                None,
             );
         } else if self
             .program
@@ -8935,7 +9021,9 @@ impl Checker {
                     crate::checker_types::ReferenceHint::ExportAssignment,
                     None,
                     None,
-                );
+                
+                None,
+            );
                 let type_only_declaration =
                     self.get_type_only_alias_declaration_ex(sym, ast::SymbolFlags::VALUE);
                 // If not a value, we're interpreting the identifier as a type export, along the lines of (`export { Id as default }`)
@@ -9101,7 +9189,8 @@ impl Checker {
             return;
         }
         {
-            let export_equals_symbol = sym_exports(self, module_symbol)
+            let export_equals_symbol = self.symbol_arena.borrow()[module_symbol.index()]
+                .exports
                 .get(ast::INTERNAL_SYMBOL_NAME_EXPORT_EQUALS)
                 .copied();
             // An export assignment is in error if (a) the module exports value members or (b) if the module exports type or
@@ -9876,7 +9965,9 @@ impl Checker {
             crate::checker_types::ReferenceHint::Decorator,
             None,
             None,
-        );
+        
+                None,
+            );
         for &modifier in nodes[node].modifier_nodes().unwrap_or(&[]) {
             if ast::is_decorator(&nodes[modifier]) {
                 self.check_decorator(modifier);
@@ -10802,7 +10893,8 @@ impl Checker {
                 .get(global_generator_type)
                 .symbol;
             let is_generator_method = global_generator_symbol.is_some_and(|s| {
-                sym_members(self, s).get(method_name).copied() == Some(method_type_symbol)
+                self.symbol_arena.borrow()[s.index()].members.get(method_name).copied()
+                    == Some(method_type_symbol)
             });
             let __arena_global_iterator_symbol = self.types.clone();
             let global_iterator_symbol = __arena_global_iterator_symbol
@@ -10810,7 +10902,8 @@ impl Checker {
                 .symbol;
             let is_iterator_method = !is_generator_method
                 && global_iterator_symbol.is_some_and(|s| {
-                    sym_members(self, s).get(method_name).copied() == Some(method_type_symbol)
+                    self.symbol_arena.borrow()[s.index()].members.get(method_name).copied()
+                        == Some(method_type_symbol)
                 });
             if is_generator_method || is_iterator_method {
                 let global = if is_generator_method {
@@ -11201,8 +11294,11 @@ impl Checker {
                     .and_then(|sf| nodes[sf].symbol())
                 {
                     let export_name = nodes[error_node].text(&nodes).to_string();
-                    if let Some(already_exported_symbol) =
-                        sym_exports(self, source_symbol).get(&export_name).copied()
+                    if let Some(already_exported_symbol) = self.symbol_arena.borrow()
+                        [source_symbol.index()]
+                    .exports
+                    .get(&export_name)
+                    .copied()
                     {
                         if already_exported_symbol == target {
                             let decls = sym_declarations(self, already_exported_symbol);
@@ -11491,18 +11587,21 @@ impl Checker {
 
     /// `(c *Checker) areDeclarationFlagsIdentical` (checker.go).
     pub(crate) fn are_declaration_flags_identical(&mut self, left: NodeId, right: NodeId) -> bool {
+        // `left`/`right` may live in different file arenas (Go compares raw
+        // node pointers across files) — fetch each arena by its own id.
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((left).file_index());
-        if (ast::is_parameter_declaration(&nodes[left])
-            && ast::is_variable_declaration(&nodes[right]))
-            || (ast::is_variable_declaration(&nodes[left])
-                && ast::is_parameter_declaration(&nodes[right]))
+        let left_nodes = __program.nodes((left).file_index());
+        let right_nodes = __program.nodes((right).file_index());
+        if (ast::is_parameter_declaration(&left_nodes[left])
+            && ast::is_variable_declaration(&right_nodes[right]))
+            || (ast::is_variable_declaration(&left_nodes[left])
+                && ast::is_parameter_declaration(&right_nodes[right]))
         {
             // Differences in optionality between parameters and variables are allowed.
             return true;
         }
-        if crate::utilities::is_optional_declaration(&nodes[left], &nodes)
-            != crate::utilities::is_optional_declaration(&nodes[right], &nodes)
+        if crate::utilities::is_optional_declaration(&left_nodes[left], &left_nodes)
+            != crate::utilities::is_optional_declaration(&right_nodes[right], &right_nodes)
         {
             return false;
         }
@@ -11512,8 +11611,8 @@ impl Checker {
             | ast::ModifierFlags::ABSTRACT
             | ast::ModifierFlags::READONLY
             | ast::ModifierFlags::STATIC;
-        crate::utilities::get_selected_modifier_flags(&nodes[left], interesting_flags)
-            == crate::utilities::get_selected_modifier_flags(&nodes[right], interesting_flags)
+        crate::utilities::get_selected_modifier_flags(&left_nodes[left], interesting_flags)
+            == crate::utilities::get_selected_modifier_flags(&right_nodes[right], interesting_flags)
     }
 
     /// `(c *Checker) checkTypeAliasDeclaration` (checker.go).
@@ -13543,7 +13642,7 @@ impl Checker {
             return self.get_base_constructor_type_of_class(class_type);
         }
         let __arena___guard_this_type = self.types.clone();
-        let __guard_this_type = __arena___guard_this_type.get(class_type);
+        let __guard_this_type = __arena___guard_this_type.get(class_type).clone();
         let this_type = __guard_this_type
             .as_interface_type()
             .and_then(|i| i.this_type);

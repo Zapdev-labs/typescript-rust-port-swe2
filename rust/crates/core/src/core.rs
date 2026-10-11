@@ -180,11 +180,13 @@ pub fn same_map_index<'a, T: PartialEq + Clone>(
     Cow::Borrowed(slice)
 }
 
-pub fn same<T>(s1: &[T], s2: &[T]) -> bool {
-    if s1.len() == s2.len() {
-        return s1.is_empty() || s1.as_ptr() == s2.as_ptr();
-    }
-    false
+/// `core.Same` — Go compares slice data pointers, which works because
+/// `core.Filter`/`Map` return sub-slices of the input's backing array when
+/// nothing changed. Rust always allocates on transform, so compare
+/// element-wise: a superset of Go's identity test that only makes the
+/// fast path hit more often (the result is identical either way).
+pub fn same<T: PartialEq>(s1: &[T], s2: &[T]) -> bool {
+    s1 == s2
 }
 
 pub fn some<T>(slice: &[T], mut f: impl FnMut(&T) -> bool) -> bool {

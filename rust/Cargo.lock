@@ -174,6 +174,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0e9c71c2167ca323c882b99918929403426e2373ea17242ff5653e0d5e1058be"
 
 [[package]]
+name = "elsa"
+version = "1.11.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9abf33c656a7256451ebb7d0082c5a471820c31269e49d807c538c252352186e"
+dependencies = [
+ "stable_deref_trait",
+]
+
+[[package]]
 name = "equator"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -248,6 +257,15 @@ dependencies = [
  "crc32fast",
  "miniz_oxide 0.9.1",
  "zlib-rs",
+]
+
+[[package]]
+name = "fragile"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8878864ba14bb86e818a412bfd6f18f9eabd4ec0f008a28e8f7eb61db532fcf9"
+dependencies = [
+ "futures-core",
 ]
 
 [[package]]
@@ -960,6 +978,46 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fd3ca314f692efd6c868f8408f53fe444634a845f96c028b97d35f6a1f79f0ee"
 
 [[package]]
+name = "tsc-api"
+version = "0.0.0"
+dependencies = [
+ "tsc-apiencoder",
+ "tsc-ast",
+ "tsc-astnav",
+ "tsc-bundled",
+ "tsc-checker",
+ "tsc-collections",
+ "tsc-compiler",
+ "tsc-contentmapper",
+ "tsc-core",
+ "tsc-debug",
+ "tsc-diagnostics",
+ "tsc-diagnosticwriter",
+ "tsc-execute",
+ "tsc-format",
+ "tsc-ipc",
+ "tsc-jsnum",
+ "tsc-json",
+ "tsc-jsonrpc",
+ "tsc-locale",
+ "tsc-ls",
+ "tsc-lsconv",
+ "tsc-lsproto",
+ "tsc-lsutil",
+ "tsc-module",
+ "tsc-nodebuilder",
+ "tsc-packagejson",
+ "tsc-printer",
+ "tsc-project",
+ "tsc-scanner",
+ "tsc-spanmap",
+ "tsc-transpile",
+ "tsc-tsoptions",
+ "tsc-tspath",
+ "tsc-vfs",
+]
+
+[[package]]
 name = "tsc-apiencoder"
 version = "0.0.0"
 dependencies = [
@@ -1188,17 +1246,24 @@ dependencies = [
  "serde",
  "serde_json",
  "tsc-ast",
+ "tsc-binder",
  "tsc-bundled",
+ "tsc-checker",
  "tsc-collections",
  "tsc-compiler",
  "tsc-contentmapper",
  "tsc-core",
  "tsc-diagnostics",
  "tsc-diagnosticwriter",
+ "tsc-format",
  "tsc-fswatch",
  "tsc-json",
  "tsc-locale",
+ "tsc-lsutil",
  "tsc-module",
+ "tsc-osutil",
+ "tsc-outputpaths",
+ "tsc-packagejson",
  "tsc-parser",
  "tsc-pprof",
  "tsc-scanner",
@@ -1225,6 +1290,34 @@ dependencies = [
  "tsc-scanner",
  "tsc-stringutil",
  "tsc-tspath",
+]
+
+[[package]]
+name = "tsc-fourslash"
+version = "0.0.0"
+dependencies = [
+ "tsc-bundled",
+ "tsc-collections",
+ "tsc-compiler",
+ "tsc-contentmapper",
+ "tsc-core",
+ "tsc-debug",
+ "tsc-diagnostics",
+ "tsc-diagnosticwriter",
+ "tsc-json",
+ "tsc-jsonrpc",
+ "tsc-locale",
+ "tsc-ls",
+ "tsc-lsconv",
+ "tsc-lsp",
+ "tsc-lsproto",
+ "tsc-lsutil",
+ "tsc-project",
+ "tsc-spanmap",
+ "tsc-stringutil",
+ "tsc-testutil",
+ "tsc-tspath",
+ "tsc-vfs",
 ]
 
 [[package]]
@@ -1281,6 +1374,52 @@ dependencies = [
 [[package]]
 name = "tsc-locale"
 version = "0.0.0"
+dependencies = [
+ "tsc-core",
+]
+
+[[package]]
+name = "tsc-ls"
+version = "0.0.0"
+dependencies = [
+ "rustc-hash",
+ "tsc-ast",
+ "tsc-astnav",
+ "tsc-binder",
+ "tsc-bundled",
+ "tsc-checker",
+ "tsc-collections",
+ "tsc-compiler",
+ "tsc-core",
+ "tsc-debug",
+ "tsc-diagnostics",
+ "tsc-dirty",
+ "tsc-evaluator",
+ "tsc-format",
+ "tsc-jsnum",
+ "tsc-locale",
+ "tsc-lsconv",
+ "tsc-lsproto",
+ "tsc-lsutil",
+ "tsc-module",
+ "tsc-modulespecifiers",
+ "tsc-nodebuilder",
+ "tsc-outputpaths",
+ "tsc-packagejson",
+ "tsc-parser",
+ "tsc-printer",
+ "tsc-project-logging",
+ "tsc-repo",
+ "tsc-scanner",
+ "tsc-sourcemap",
+ "tsc-spanmap",
+ "tsc-stringutil",
+ "tsc-symlinks",
+ "tsc-testutil",
+ "tsc-tsoptions",
+ "tsc-tspath",
+ "tsc-vfs",
+]
 
 [[package]]
 name = "tsc-lsconv"
@@ -1301,6 +1440,33 @@ dependencies = [
  "tsc-parser",
  "tsc-spanmap",
  "tsc-tspath",
+]
+
+[[package]]
+name = "tsc-lsp"
+version = "0.0.0"
+dependencies = [
+ "tsc-api",
+ "tsc-bundled",
+ "tsc-collections",
+ "tsc-compiler",
+ "tsc-contentmapper",
+ "tsc-core",
+ "tsc-diagnostics",
+ "tsc-fswatch",
+ "tsc-ipc",
+ "tsc-json",
+ "tsc-jsonrpc",
+ "tsc-locale",
+ "tsc-ls",
+ "tsc-lsconv",
+ "tsc-lsproto",
+ "tsc-lsutil",
+ "tsc-project",
+ "tsc-project-logging",
+ "tsc-tsoptions",
+ "tsc-tspath",
+ "tsc-vfs",
 ]
 
 [[package]]
@@ -1461,6 +1627,46 @@ dependencies = [
 ]
 
 [[package]]
+name = "tsc-project"
+version = "0.0.0"
+dependencies = [
+ "elsa",
+ "fragile",
+ "rustc-hash",
+ "serde",
+ "serde_json",
+ "tsc-ast",
+ "tsc-binder",
+ "tsc-bundled",
+ "tsc-checker",
+ "tsc-collections",
+ "tsc-compiler",
+ "tsc-contentmapper",
+ "tsc-core",
+ "tsc-debug",
+ "tsc-diagnostics",
+ "tsc-dirty",
+ "tsc-json",
+ "tsc-locale",
+ "tsc-lsconv",
+ "tsc-lsproto",
+ "tsc-lsutil",
+ "tsc-module",
+ "tsc-packagejson",
+ "tsc-parser",
+ "tsc-project-logging",
+ "tsc-repo",
+ "tsc-semver",
+ "tsc-sourcemap",
+ "tsc-spanmap",
+ "tsc-testutil",
+ "tsc-tsoptions",
+ "tsc-tspath",
+ "tsc-vfs",
+ "xxhash-rust",
+]
+
+[[package]]
 name = "tsc-project-logging"
 version = "0.0.0"
 
@@ -1540,13 +1746,40 @@ dependencies = [
 ]
 
 [[package]]
+name = "tsc-testrunner"
+version = "0.0.0"
+dependencies = [
+ "rustc-hash",
+ "tsc-ast",
+ "tsc-bundled",
+ "tsc-checker",
+ "tsc-collections",
+ "tsc-compiler",
+ "tsc-core",
+ "tsc-diagnosticwriter",
+ "tsc-outputpaths",
+ "tsc-parser",
+ "tsc-repo",
+ "tsc-scanner",
+ "tsc-testutil",
+ "tsc-transpile",
+ "tsc-tsoptions",
+ "tsc-tspath",
+ "tsc-vfs",
+]
+
+[[package]]
 name = "tsc-testutil"
 version = "0.0.0"
 dependencies = [
+ "rustc-hash",
  "serde",
  "serde_json",
  "tsc-ast",
+ "tsc-bundled",
+ "tsc-checker",
  "tsc-collections",
+ "tsc-compiler",
  "tsc-contentmapper",
  "tsc-core",
  "tsc-diagnostics",
@@ -1554,10 +1787,16 @@ dependencies = [
  "tsc-ipc",
  "tsc-json",
  "tsc-locale",
+ "tsc-nodebuilder",
+ "tsc-outputpaths",
  "tsc-parser",
+ "tsc-printer",
  "tsc-repo",
+ "tsc-scanner",
+ "tsc-sourcemap",
  "tsc-spanmap",
  "tsc-stringutil",
+ "tsc-tsoptions",
  "tsc-tspath",
  "tsc-vfs",
 ]

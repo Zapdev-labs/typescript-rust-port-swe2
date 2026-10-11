@@ -1,0 +1,45 @@
+[package]
+name = "tsc-api"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+tsc-apiencoder = { path = "../apiencoder" }
+tsc-ast = { path = "../ast" }
+tsc-astnav = { path = "../astnav" }
+tsc-bundled = { path = "../bundled" }
+tsc-checker = { path = "../checker" }
+tsc-collections = { path = "../collections" }
+tsc-compiler = { path = "../compiler" }
+tsc-contentmapper = { path = "../contentmapper" }
+tsc-core = { path = "../core" }
+tsc-debug = { path = "../debug" }
+tsc-diagnostics = { path = "../diagnostics" }
+tsc-diagnosticwriter = { path = "../diagnosticwriter" }
+tsc-execute = { path = "../execute" }
+tsc-format = { path = "../format" }
+tsc-ipc = { path = "../ipc" }
+tsc-jsnum = { path = "../jsnum" }
+tsc-json = { path = "../json" }
+tsc-jsonrpc = { path = "../jsonrpc" }
+tsc-locale = { path = "../locale" }
+tsc-ls = { path = "../ls" }
+tsc-lsconv = { path = "../lsconv" }
+tsc-lsproto = { path = "../lsproto" }
+tsc-lsutil = { path = "../lsutil" }
+tsc-module = { path = "../module" }
+tsc-nodebuilder = { path = "../nodebuilder" }
+tsc-packagejson = { path = "../packagejson" }
+tsc-printer = { path = "../printer" }
+tsc-project = { path = "../project" }
+tsc-scanner = { path = "../scanner" }
+tsc-spanmap = { path = "../spanmap" }
+tsc-transpile = { path = "../transpile" }
+tsc-tsoptions = { path = "../tsoptions" }
+tsc-tspath = { path = "../tspath" }
+tsc-vfs = { path = "../vfs" }

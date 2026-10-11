@@ -222,6 +222,14 @@ impl<'a> CommonJsModuleTransformer<'a> {
             .borrow_mut()
     }
 
+    fn with_symbols<R>(
+        &self,
+        f: impl FnOnce(&std::cell::RefCell<Vec<Symbol>>) -> R,
+    ) -> R {
+        f(self.symbols
+            .expect("opts.symbols (the binder symbol arena) is required alongside opts.Resolver"))
+    }
+
     /// `tx.getEmitModuleFormatOfFile(file)` — `file` must be a `SourceFile`.
     fn emit_module_format(&self, cx: &VisitorCx<'_, '_>, file: NodeId) -> ModuleKind {
         (self
@@ -265,7 +273,7 @@ impl<'a> CommonJsModuleTransformer<'a> {
             }
             Kind::ClassDeclaration => self.visit_top_level_class_declaration(ec, cx, node),
             Kind::VariableStatement => self.visit_top_level_variable_statement(ec, cx, node),
-            _ => Some(self.visit_top_level_nested_no_stack(ec, cx, node)),
+            _ => self.visit_top_level_nested_no_stack(ec, cx, node),
         }
     }
 
@@ -277,7 +285,7 @@ impl<'a> CommonJsModuleTransformer<'a> {
         node: NodeId,
     ) -> Option<NodeId> {
         let _guard = self.push_node(node);
-        Some(self.visit_top_level_nested_no_stack(ec, cx, node))
+        self.visit_top_level_nested_no_stack(ec, cx, node)
     }
 
     /// Visits nested elements at the top-level of a module without ancestor tracking.
@@ -286,29 +294,33 @@ impl<'a> CommonJsModuleTransformer<'a> {
         ec: &Ec,
         cx: &mut VisitorCx<'_, '_>,
         node: NodeId,
-    ) -> NodeId {
+    ) -> Option<NodeId> {
         match cx.nodes[node].kind {
-            Kind::VariableStatement => self
-                .visit_top_level_variable_statement(ec, cx, node)
-                .unwrap_or(node),
-            Kind::ForStatement => self.visit_top_level_nested_for_statement(ec, cx, node),
+            Kind::VariableStatement => self.visit_top_level_variable_statement(ec, cx, node),
+            Kind::ForStatement => Some(self.visit_top_level_nested_for_statement(ec, cx, node)),
             Kind::ForInStatement | Kind::ForOfStatement => {
-                self.visit_top_level_nested_for_in_or_of_statement(ec, cx, node)
+                Some(self.visit_top_level_nested_for_in_or_of_statement(ec, cx, node))
             }
-            Kind::DoStatement => self.visit_top_level_nested_do_statement(ec, cx, node),
-            Kind::WhileStatement => self.visit_top_level_nested_while_statement(ec, cx, node),
-            Kind::LabeledStatement => self.visit_top_level_nested_labeled_statement(ec, cx, node),
-            Kind::WithStatement => self.visit_top_level_nested_with_statement(ec, cx, node),
-            Kind::IfStatement => self.visit_top_level_nested_if_statement(ec, cx, node),
-            Kind::SwitchStatement => self.visit_top_level_nested_switch_statement(ec, cx, node),
-            Kind::CaseBlock => self.visit_top_level_nested_case_block(cx, node),
+            Kind::DoStatement => Some(self.visit_top_level_nested_do_statement(ec, cx, node)),
+            Kind::WhileStatement => {
+                Some(self.visit_top_level_nested_while_statement(ec, cx, node))
+            }
+            Kind::LabeledStatement => {
+                Some(self.visit_top_level_nested_labeled_statement(ec, cx, node))
+            }
+            Kind::WithStatement => Some(self.visit_top_level_nested_with_statement(ec, cx, node)),
+            Kind::IfStatement => Some(self.visit_top_level_nested_if_statement(ec, cx, node)),
+            Kind::SwitchStatement => {
+                Some(self.visit_top_level_nested_switch_statement(ec, cx, node))
+            }
+            Kind::CaseBlock => Some(self.visit_top_level_nested_case_block(cx, node)),
             Kind::CaseClause | Kind::DefaultClause => {
-                self.visit_top_level_nested_case_or_default_clause(ec, cx, node)
+                Some(self.visit_top_level_nested_case_or_default_clause(ec, cx, node))
             }
-            Kind::TryStatement => self.visit_top_level_nested_try_statement(cx, node),
-            Kind::CatchClause => self.visit_top_level_nested_catch_clause(ec, cx, node),
-            Kind::Block => self.visit_top_level_nested_block(cx, node),
-            _ => self.visit_no_stack(ec, cx, node, false /* resultIsDiscarded */),
+            Kind::TryStatement => Some(self.visit_top_level_nested_try_statement(cx, node)),
+            Kind::CatchClause => Some(self.visit_top_level_nested_catch_clause(ec, cx, node)),
+            Kind::Block => Some(self.visit_top_level_nested_block(cx, node)),
+            _ => Some(self.visit_no_stack(ec, cx, node, false /* resultIsDiscarded */)),
         }
     }
 
@@ -2890,15 +2902,14 @@ impl<'a> CommonJsModuleTransformer<'a> {
             .borrow()
             .most_original(Some(name))
             .expect("MostOriginal returned nil for a non-nil node");
-        let export_container = {
-            let mut symbols = self.symbols();
+        let export_container = self.with_symbols(|symbols| {
             self.resolver().get_referenced_export_container(
                 original,
                 false, /* prefixLocals */
                 cx.nodes,
-                &mut symbols,
+                symbols,
             )
-        };
+        });
         export_container.is_some_and(|c| ast::is_source_file(&cx.nodes[c]))
     }
 
@@ -3875,15 +3886,14 @@ impl<'a> CommonJsModuleTransformer<'a> {
                 .borrow()
                 .most_original(Some(node))
                 .expect("MostOriginal returned nil for a non-nil node");
-            let export_container = {
-                let mut symbols = self.symbols();
+            let export_container = self.with_symbols(|symbols| {
                 self.resolver().get_referenced_export_container(
                     original,
                     is_export_name(&ec.borrow(), node),
                     cx.nodes,
-                    &mut symbols,
+                    symbols,
                 )
-            };
+            });
             if export_container.is_some_and(|c| ast::is_source_file(&cx.nodes[c])) {
                 let reference = fac(ec, cx.nodes, |f, nodes| {
                     let exports = f.new_identifier(nodes, "exports");
@@ -3902,11 +3912,10 @@ impl<'a> CommonJsModuleTransformer<'a> {
                 return reference;
             }
 
-            let import_declaration = {
-                let mut symbols = self.symbols();
+            let import_declaration = self.with_symbols(|symbols| {
                 self.resolver()
-                    .get_referenced_import_declaration(original, cx.nodes, &mut symbols)
-            };
+                    .get_referenced_import_declaration(original, cx.nodes, symbols)
+            });
             if let Some(import_declaration) = import_declaration {
                 if ast::is_import_clause(&cx.nodes[import_declaration]) {
                     let parent = cx.nodes[import_declaration]
@@ -3988,22 +3997,20 @@ impl<'a> CommonJsModuleTransformer<'a> {
                 .borrow()
                 .most_original(Some(name))
                 .expect("MostOriginal returned nil for a non-nil node");
-            let import_declaration = {
-                let mut symbols = self.symbols();
+            let import_declaration = self.with_symbols(|symbols| {
                 self.resolver()
-                    .get_referenced_import_declaration(original, cx.nodes, &mut symbols)
-            };
+                    .get_referenced_import_declaration(original, cx.nodes, symbols)
+            });
             if let Some(import_declaration) = import_declaration {
                 return self.module_info(|i| i.exported_bindings.get(&import_declaration).to_vec());
             }
 
             // An exported namespace or enum may merge with an ambient declaration, which won't show up in .js emit, so
             // we analyze all value exports of a symbol.
-            let declarations = {
-                let mut symbols = self.symbols();
+            let declarations = self.with_symbols(|symbols| {
                 self.resolver()
-                    .get_referenced_value_declarations(original, cx.nodes, &mut symbols)
-            };
+                    .get_referenced_value_declarations(original, cx.nodes, symbols)
+            });
             let mut bindings_set: Set<NodeId> = Set::default();
             let mut bindings: Vec<NodeId> = Vec::new();
             for declaration in declarations {
