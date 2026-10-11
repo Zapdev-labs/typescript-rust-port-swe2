@@ -938,6 +938,24 @@ fn test_local() {
     if !tsc_bundled::EMBEDDED {
         return; // t.Skip: "bundled files are not embedded"
     }
+    let _guard = test_main();
+    // Go's runtime grows goroutine stacks up to `TS_GO_DEBUG_STACK_LIMIT`
+    // (default 1GB); Rust test threads get a fixed ~2MB, which
+    // deep-recursion stress tests (e.g. binderBinaryExpressionStressJs)
+    // overflow. Run the suite on a thread with a comparably-sized stack.
+    let stack_size = tsc_core::core::debug_stack_limit()
+        .unwrap_or(0)
+        .max(1 << 30);
+    std::thread::Builder::new()
+        .stack_size(stack_size)
+        .spawn(test_local_inner)
+        .expect("spawn test_local worker")
+        .join()
+        .expect("test_local worker panicked");
+}
+
+#[cfg(all(test, feature = "harness"))]
+fn test_local_inner() {
     let mut runners: Vec<CompilerBaselineRunner> = vec![
         new_compiler_baseline_runner(CompilerTestType::Regression),
         new_compiler_baseline_runner(CompilerTestType::Conformance),
