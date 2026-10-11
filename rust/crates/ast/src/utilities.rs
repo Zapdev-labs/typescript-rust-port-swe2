@@ -5833,22 +5833,22 @@ pub fn try_get_property_name_of_binding_or_assignment_element(
     match nodes[binding_element].kind {
         Kind::BindingElement => {
             if let Some(property_name) = nodes[binding_element].property_name() {
-                let expr = nodes[property_name].expression();
-                if is_computed_property_name(&nodes[property_name])
-                    && expr.is_some_and(|e| is_string_or_numeric_literal_like(&nodes[e]))
-                {
-                    return expr;
+                if is_computed_property_name(&nodes[property_name]) {
+                    let expr = nodes[property_name].expression();
+                    if expr.is_some_and(|e| is_string_or_numeric_literal_like(&nodes[e])) {
+                        return expr;
+                    }
                 }
                 return Some(property_name);
             }
         }
         Kind::PropertyAssignment => {
             if let Some(property_name) = nodes[binding_element].name() {
-                let expr = nodes[property_name].expression();
-                if is_computed_property_name(&nodes[property_name])
-                    && expr.is_some_and(|e| is_string_or_numeric_literal_like(&nodes[e]))
-                {
-                    return expr;
+                if is_computed_property_name(&nodes[property_name]) {
+                    let expr = nodes[property_name].expression();
+                    if expr.is_some_and(|e| is_string_or_numeric_literal_like(&nodes[e])) {
+                        return expr;
+                    }
                 }
                 return Some(property_name);
             }
