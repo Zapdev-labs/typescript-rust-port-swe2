@@ -14820,8 +14820,9 @@ pub(crate) fn is_thisless_type_parameter(node: NodeId, nodes: &[ast::Node]) -> b
 /// where the first is not `@` or `#`. PORT: file-local until utilities.go's
 /// copy lands (mirrors `nodebuilderimpl.rs`).
 pub(crate) fn is_reserved_member_name(name: &str) -> bool {
-    let b = name.as_bytes();
-    b.len() >= 2 && b[0] == 0xFE && b[1] != b'@' && b[1] != b'#'
+    let mut chars = name.chars();
+    matches!(chars.next(), Some('\u{FE}'))
+        && matches!(chars.next(), Some(c) if c != '@' && c != '#')
 }
 
 /// `isPrototypeProperty` (checker.go:22100).

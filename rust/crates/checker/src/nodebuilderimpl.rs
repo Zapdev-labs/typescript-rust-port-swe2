@@ -7700,8 +7700,9 @@ fn types_are_same_reference(c: &Checker, a: TypeId, b: TypeId) -> bool {
 /// characters where the first is not `@` or `#`. PORT: file-local until
 /// utilities.go's copy lands.
 fn is_reserved_member_name(name: &str) -> bool {
-    let b = name.as_bytes();
-    b.len() >= 2 && b[0] == 0xFE && b[1] != b'@' && b[1] != b'#'
+    let mut chars = name.chars();
+    matches!(chars.next(), Some('\u{FE}'))
+        && matches!(chars.next(), Some(c) if c != '@' && c != '#')
 }
 
 /// `IsPrivateIdentifierSymbol` (utilities.go:1022). PORT: file-local until
