@@ -27,16 +27,14 @@
 //   Go's shared `r.emitContext`.
 // - `isValueAliasDeclaration`/`aliasMarkingVisitor` Go method-value fields
 //   become plain methods (Rust has no method values).
-// - `tracker nodebuilder.SymbolTracker` arrives as `&mut dyn SymbolTracker`
-//   per the `tsc_printer::EmitResolver` trait (changed from `&dyn` because
-//   `track_symbol` is `&mut` and `unsafe` is forbidden). PORT(deviation):
-//   `NodeBuilder`'s serialize APIs take `Option<Box<dyn SymbolTracker>>` —
-//   an owned `'static` trait object — which cannot express a borrowed
-//   tracker without parameterizing `SymbolTrackerImpl`/`NodeBuilderContext`
-//   over a lifetime (cross-agent nodebuilder work). `create_*` therefore
-//   pass `None` for now, dropping inner-tracker forwarding (isolated-
-//   declaration diagnostics, expando reports, alias marking during
-//   serialization); `get_late_bound_index_signatures` still calls
+// - `tracker nodebuilder.SymbolTracker` arrives as
+//   `Rc<RefCell<dyn SymbolTracker + 'a>>` per the `tsc_printer::EmitResolver`
+//   trait so the declarations transformer's lifetime-bound tracker can
+//   forward through `enter_context` into `ctx.tracker` (which is likewise
+//   `+'a` — see `symboltracker.rs`). `create_*` build a fresh
+//   `NodeBuilder<'a>` via `node_builder_for` — the cached
+//   `NodeBuilder<'static>` cannot hold an `+'a` tracker (`RefCell` is
+//   invariant). `get_late_bound_index_signatures` still calls
 //   `tracker.track_symbol` directly where Go does.
 // - `nodes: &[Node]`/`nodes: &mut Vec<Node>` arena parameters come from the
 //   trait surface; checker-internal reads go through `c.program_nodes`.
@@ -110,7 +108,7 @@ pub struct EmitResolver {
     /// `referenceResolver` can borrow it.
     options: Rc<CompilerOptions>,
     /// `requestNodeBuilder`.
-    request_node_builder: RefCell<Option<NodeBuilder>>,
+    request_node_builder: RefCell<Option<NodeBuilder<'static>>>,
     // `referenceResolver` is built per call — see `reference_resolver`.
     // `isValueAliasDeclaration`/`aliasMarkingVisitor` are plain methods —
     // see the header note.
@@ -293,7 +291,7 @@ impl EmitResolver {
     /// builder. The builder's `EmitContext` (`impl_.e`) is pointed at this
     /// resolver's `emit_context` cell so builder-synthesized files are
     /// visible to `parse_node`, matching Go's shared `r.emitContext`.
-    fn node_builder(&self, c: &Checker) -> RefMut<'_, NodeBuilder> {
+    fn node_builder(&self, c: &Checker) -> RefMut<'_, NodeBuilder<'static>> {
         {
             let mut nb = self.request_node_builder.borrow_mut();
             if nb.is_none() {
@@ -307,6 +305,18 @@ impl EmitResolver {
         RefMut::map(self.request_node_builder.borrow_mut(), |o| {
             o.as_mut().expect("node builder")
         })
+    }
+
+    /// Builds a fresh `NodeBuilder<'a>` for a serialization carrying a
+    /// lifetime-bound tracker — the cached `'static` builder cannot hold
+    /// `Rc<RefCell<dyn SymbolTracker + 'a>>` (`RefCell` is invariant).
+    /// Same `impl_.e` wiring as `node_builder`.
+    fn node_builder_for<'a>(&self, c: &Checker) -> NodeBuilder<'a> {
+        let mut builder = new_node_builder(c, EmitContext::new());
+        if let Some(impl_) = builder.impl_.as_mut() {
+            impl_.e = self.emit_context.clone();
+        }
+        builder
     }
 
     /// `(r *EmitResolver) getReferenceResolver` — builds the binder
@@ -1621,13 +1631,13 @@ impl tsc_printer::EmitResolver for EmitResolver {
     }
 
     /// `(r *EmitResolver) CreateReturnTypeOfSignatureDeclaration`.
-    fn create_return_type_of_signature_declaration(
+    fn create_return_type_of_signature_declaration<'a>(
         &self,
         signature_declaration: NodeId,
         enclosing_declaration: Option<NodeId>,
         flags: nodebuilder::Flags,
         internal_flags: nodebuilder::InternalFlags,
-        _tracker: &mut dyn nodebuilder::SymbolTracker,
+        tracker: Rc<RefCell<dyn nodebuilder::SymbolTracker + 'a>>,
         nodes: &mut Vec<Node>,
     ) -> Option<NodeId> {
         let Some(original) = self
@@ -1644,25 +1654,25 @@ impl tsc_printer::EmitResolver for EmitResolver {
         };
 
         let mut c = checker_lock(&self.checker);
-        self.node_builder(&c).serialize_return_type_for_signature(
+        self.node_builder_for(&c).serialize_return_type_for_signature(
             &mut c,
             nodes,
             original,
             enclosing_declaration,
             flags,
             internal_flags,
-            None, /* tracker — see PORT(deviation) at the call site */
+            Some(tracker.clone()),
         )
     }
 
     /// `(r *EmitResolver) CreateTypeParametersOfSignatureDeclaration`.
-    fn create_type_parameters_of_signature_declaration(
+    fn create_type_parameters_of_signature_declaration<'a>(
         &self,
         signature_declaration: NodeId,
         enclosing_declaration: Option<NodeId>,
         flags: nodebuilder::Flags,
         internal_flags: nodebuilder::InternalFlags,
-        _tracker: &mut dyn nodebuilder::SymbolTracker,
+        tracker: Rc<RefCell<dyn nodebuilder::SymbolTracker + 'a>>,
         nodes: &mut Vec<Node>,
     ) -> Vec<NodeId> {
         let Some(original) = self
@@ -1674,7 +1684,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
         };
 
         let mut c = checker_lock(&self.checker);
-        self.node_builder(&c)
+        self.node_builder_for(&c)
             .serialize_type_parameters_for_signature(
                 &mut c,
                 nodes,
@@ -1682,18 +1692,18 @@ impl tsc_printer::EmitResolver for EmitResolver {
                 enclosing_declaration,
                 flags,
                 internal_flags,
-                None, /* tracker — see PORT(deviation) at the call site */
+                Some(tracker.clone()),
             )
     }
 
     /// `(r *EmitResolver) CreateTypeOfDeclaration`.
-    fn create_type_of_declaration(
+    fn create_type_of_declaration<'a>(
         &self,
         declaration: NodeId,
         enclosing_declaration: Option<NodeId>,
         flags: nodebuilder::Flags,
         internal_flags: nodebuilder::InternalFlags,
-        _tracker: &mut dyn nodebuilder::SymbolTracker,
+        tracker: Rc<RefCell<dyn nodebuilder::SymbolTracker + 'a>>,
         nodes: &mut Vec<Node>,
     ) -> Option<NodeId> {
         if self
@@ -1727,7 +1737,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
                     .new_keyword_type_node(nodes, ast::Kind::AnyKeyword),
             );
         };
-        self.node_builder(&c).serialize_type_for_declaration(
+        self.node_builder_for(&c).serialize_type_for_declaration(
             &mut c,
             nodes,
             declaration,
@@ -1735,15 +1745,15 @@ impl tsc_printer::EmitResolver for EmitResolver {
             enclosing_declaration,
             flags | nodebuilder::Flags::MULTILINE_OBJECT_LITERALS,
             internal_flags,
-            None, /* tracker — see PORT(deviation) at the call site */
+            Some(tracker.clone()),
         )
     }
 
     /// `(r *EmitResolver) CreateLiteralConstValue`.
-    fn create_literal_const_value(
+    fn create_literal_const_value<'a>(
         &self,
         node: NodeId,
-        _tracker: &mut dyn nodebuilder::SymbolTracker,
+        tracker: Rc<RefCell<dyn nodebuilder::SymbolTracker + 'a>>,
         nodes: &mut Vec<Node>,
     ) -> Option<NodeId> {
         let node = self.emit_context.borrow().parse_node(nodes, node);
@@ -1766,7 +1776,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
             let mut c = checker_lock(&self.checker);
             let __arena_symbol = c.types.clone();
             let symbol = __arena_symbol.get(t).symbol;
-            enum_result = self.node_builder(&c).symbol_to_expression(
+            enum_result = self.node_builder_for(&c).symbol_to_expression(
                 &mut c,
                 nodes,
                 symbol.expect("enum-like type symbol"),
@@ -1774,7 +1784,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
                 node,
                 nodebuilder::Flags::NONE,
                 nodebuilder::InternalFlags::NONE,
-                None, /* tracker — see PORT(deviation) at the call site */
+                Some(tracker.clone()),
             );
             // What about regularTrueType/regularFalseType - since those
             // aren't fresh, we never make initializers from them
@@ -1905,13 +1915,13 @@ impl tsc_printer::EmitResolver for EmitResolver {
     }
 
     /// `(r *EmitResolver) CreateTypeOfExpression`.
-    fn create_type_of_expression(
+    fn create_type_of_expression<'a>(
         &self,
         expression: NodeId,
         enclosing_declaration: Option<NodeId>,
         flags: nodebuilder::Flags,
         internal_flags: nodebuilder::InternalFlags,
-        _tracker: &mut dyn nodebuilder::SymbolTracker,
+        tracker: Rc<RefCell<dyn nodebuilder::SymbolTracker + 'a>>,
         nodes: &mut Vec<Node>,
     ) -> Option<NodeId> {
         let Some(expression) = self.emit_context.borrow().parse_node(nodes, expression) else {
@@ -1924,25 +1934,25 @@ impl tsc_printer::EmitResolver for EmitResolver {
         };
 
         let mut c = checker_lock(&self.checker);
-        self.node_builder(&c).serialize_type_for_expression(
+        self.node_builder_for(&c).serialize_type_for_expression(
             &mut c,
             nodes,
             expression,
             enclosing_declaration,
             flags | nodebuilder::Flags::MULTILINE_OBJECT_LITERALS,
             internal_flags,
-            None, /* tracker — see PORT(deviation) at the call site */
+            Some(tracker.clone()),
         )
     }
 
     /// `(r *EmitResolver) CreateLateBoundIndexSignatures`.
-    fn create_late_bound_index_signatures(
+    fn create_late_bound_index_signatures<'a>(
         &self,
         container: NodeId,
         enclosing_declaration: Option<NodeId>,
         flags: nodebuilder::Flags,
         internal_flags: nodebuilder::InternalFlags,
-        tracker: &mut dyn nodebuilder::SymbolTracker,
+        tracker: Rc<RefCell<dyn nodebuilder::SymbolTracker + 'a>>,
         nodes: &mut Vec<Node>,
     ) -> Vec<NodeId> {
         let Some(container) = self.emit_context.borrow().parse_node(nodes, container) else {
@@ -2028,7 +2038,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
                                 Some(nodes),
                             );
                             if let Some(name) = name {
-                                tracker.track_symbol(
+                                tracker.borrow_mut().track_symbol(
                                     name,
                                     enclosing_declaration,
                                     ast::SymbolFlags::VALUE,
@@ -2066,14 +2076,14 @@ impl tsc_printer::EmitResolver for EmitResolver {
                             let component_symbol = nodes[component].symbol();
                             let type_node = component_symbol.and_then(|sym| {
                                 let t = c.get_type_of_symbol(sym);
-                                self.node_builder(c).type_to_type_node(
+                                self.node_builder_for(c).type_to_type_node(
                                     c,
                                     nodes,
                                     t,
                                     enclosing_declaration,
                                     flags,
                                     internal_flags,
-                                    None, /* tracker — see PORT(deviation) at the call site */
+                                    Some(tracker.clone()),
                                 )
                             });
                             // `f.NewPropertyDeclaration(modifiers,
@@ -2100,7 +2110,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
                     }
                 }
                 let node = self
-                    .node_builder(c)
+                    .node_builder_for(c)
                     .index_info_to_index_signature_declaration(
                         c,
                         nodes,
@@ -2108,7 +2118,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
                         enclosing_declaration,
                         flags,
                         internal_flags,
-                        None, /* tracker — see PORT(deviation) at the call site */
+                        Some(tracker.clone()),
                     );
                 let node = node.and_then(|node| {
                     if is_static {
@@ -2159,25 +2169,25 @@ impl tsc_printer::EmitResolver for EmitResolver {
     }
 
     /// `(r *EmitResolver) TryJSTypeNodeToTypeNode`.
-    fn try_js_type_node_to_type_node(
+    fn try_js_type_node_to_type_node<'a>(
         &self,
         type_node: NodeId,
         enclosing_declaration: Option<NodeId>,
         flags: nodebuilder::Flags,
         internal_flags: nodebuilder::InternalFlags,
-        _tracker: &mut dyn nodebuilder::SymbolTracker,
+        tracker: Rc<RefCell<dyn nodebuilder::SymbolTracker + 'a>>,
         nodes: &mut Vec<Node>,
     ) -> Option<NodeId> {
         let type_node = self.emit_context.borrow().parse_node(nodes, type_node);
         let mut c = checker_lock(&self.checker);
-        self.node_builder(&c).try_js_type_node_to_type_node(
+        self.node_builder_for(&c).try_js_type_node_to_type_node(
             &mut c,
             nodes,
             type_node?,
             enclosing_declaration,
             flags,
             internal_flags,
-            None, /* tracker — see PORT(deviation) at the call site */
+            Some(tracker.clone()),
         )
     }
 }

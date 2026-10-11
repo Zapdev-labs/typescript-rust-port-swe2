@@ -242,70 +242,70 @@ pub trait EmitResolver: ReferenceResolver {
 
     // Node construction for declaration emit
     /// `CreateTypeOfDeclaration(declaration *ast.Node, enclosingDeclaration *ast.Node, flags nodebuilder.Flags, internalFlags nodebuilder.InternalFlags, tracker nodebuilder.SymbolTracker) *ast.Node`
-    fn create_type_of_declaration(
+    fn create_type_of_declaration<'a>(
         &self,
         declaration: NodeId,
         enclosing_declaration: Option<NodeId>,
         flags: Flags,
         internal_flags: InternalFlags,
-        tracker: &mut dyn SymbolTracker,
+        tracker: Rc<RefCell<dyn SymbolTracker + 'a>>,
         nodes: &mut Vec<Node>,
     ) -> Option<NodeId>;
     /// `CreateReturnTypeOfSignatureDeclaration(...)`
-    fn create_return_type_of_signature_declaration(
+    fn create_return_type_of_signature_declaration<'a>(
         &self,
         signature_declaration: NodeId,
         enclosing_declaration: Option<NodeId>,
         flags: Flags,
         internal_flags: InternalFlags,
-        tracker: &mut dyn SymbolTracker,
+        tracker: Rc<RefCell<dyn SymbolTracker + 'a>>,
         nodes: &mut Vec<Node>,
     ) -> Option<NodeId>;
     /// `CreateTypeParametersOfSignatureDeclaration(...)`
-    fn create_type_parameters_of_signature_declaration(
+    fn create_type_parameters_of_signature_declaration<'a>(
         &self,
         signature_declaration: NodeId,
         enclosing_declaration: Option<NodeId>,
         flags: Flags,
         internal_flags: InternalFlags,
-        tracker: &mut dyn SymbolTracker,
+        tracker: Rc<RefCell<dyn SymbolTracker + 'a>>,
         nodes: &mut Vec<Node>,
     ) -> Vec<NodeId>;
     /// `CreateLiteralConstValue(node *ast.Node, tracker nodebuilder.SymbolTracker) *ast.Node`
-    fn create_literal_const_value(
+    fn create_literal_const_value<'a>(
         &self,
         node: NodeId,
-        tracker: &mut dyn SymbolTracker,
+        tracker: Rc<RefCell<dyn SymbolTracker + 'a>>,
         nodes: &mut Vec<Node>,
     ) -> Option<NodeId>;
     /// `CreateTypeOfExpression(...)`
-    fn create_type_of_expression(
+    fn create_type_of_expression<'a>(
         &self,
         expression: NodeId,
         enclosing_declaration: Option<NodeId>,
         flags: Flags,
         internal_flags: InternalFlags,
-        tracker: &mut dyn SymbolTracker,
+        tracker: Rc<RefCell<dyn SymbolTracker + 'a>>,
         nodes: &mut Vec<Node>,
     ) -> Option<NodeId>;
     /// `CreateLateBoundIndexSignatures(...)`
-    fn create_late_bound_index_signatures(
+    fn create_late_bound_index_signatures<'a>(
         &self,
         container: NodeId,
         enclosing_declaration: Option<NodeId>,
         flags: Flags,
         internal_flags: InternalFlags,
-        tracker: &mut dyn SymbolTracker,
+        tracker: Rc<RefCell<dyn SymbolTracker + 'a>>,
         nodes: &mut Vec<Node>,
     ) -> Vec<NodeId>;
     /// `TryJSTypeNodeToTypeNode(...)`
-    fn try_js_type_node_to_type_node(
+    fn try_js_type_node_to_type_node<'a>(
         &self,
         type_node: NodeId,
         enclosing_declaration: Option<NodeId>,
         flags: Flags,
         internal_flags: InternalFlags,
-        tracker: &mut dyn SymbolTracker,
+        tracker: Rc<RefCell<dyn SymbolTracker + 'a>>,
         nodes: &mut Vec<Node>,
     ) -> Option<NodeId>;
 }

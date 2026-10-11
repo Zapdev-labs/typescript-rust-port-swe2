@@ -1368,7 +1368,7 @@ pub struct Checker {
     /// `deferredDiagnosticCallbacks` — `[]func()`.
     pub deferred_diagnostic_callbacks: Vec<DeferredDiagnosticCallback<'static>>,
     /// `typeToStringNodebuilder`.
-    pub type_to_string_nodebuilder: Option<Box<NodeBuilder>>,
+    pub type_to_string_nodebuilder: Option<Box<NodeBuilder<'static>>>,
     /// `mu` — `sync.Mutex`.
     pub mu: Mutex<()>,
     /// `tracer` — `*Tracer`, optional.

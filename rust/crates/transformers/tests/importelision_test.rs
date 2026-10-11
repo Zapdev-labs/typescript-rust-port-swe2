@@ -1260,82 +1260,82 @@ impl EmitResolver for FakeEmitResolver {
         unimplemented!("unused by ImportElisionTransformer")
     }
 
-    fn create_type_of_declaration(
+    fn create_type_of_declaration<'a>(
         &self,
         _declaration: NodeId,
         _enclosing_declaration: Option<NodeId>,
         _flags: Flags,
         _internal_flags: InternalFlags,
-        _tracker: &mut dyn SymbolTracker,
+        _tracker: Rc<RefCell<dyn SymbolTracker + 'a>>,
         _nodes: &mut Vec<Node>,
     ) -> Option<NodeId> {
         unimplemented!("unused by ImportElisionTransformer")
     }
 
-    fn create_return_type_of_signature_declaration(
+    fn create_return_type_of_signature_declaration<'a>(
         &self,
         _signature_declaration: NodeId,
         _enclosing_declaration: Option<NodeId>,
         _flags: Flags,
         _internal_flags: InternalFlags,
-        _tracker: &mut dyn SymbolTracker,
+        _tracker: Rc<RefCell<dyn SymbolTracker + 'a>>,
         _nodes: &mut Vec<Node>,
     ) -> Option<NodeId> {
         unimplemented!("unused by ImportElisionTransformer")
     }
 
-    fn create_type_parameters_of_signature_declaration(
+    fn create_type_parameters_of_signature_declaration<'a>(
         &self,
         _signature_declaration: NodeId,
         _enclosing_declaration: Option<NodeId>,
         _flags: Flags,
         _internal_flags: InternalFlags,
-        _tracker: &mut dyn SymbolTracker,
+        _tracker: Rc<RefCell<dyn SymbolTracker + 'a>>,
         _nodes: &mut Vec<Node>,
     ) -> Vec<NodeId> {
         unimplemented!("unused by ImportElisionTransformer")
     }
 
-    fn create_literal_const_value(
+    fn create_literal_const_value<'a>(
         &self,
         _node: NodeId,
-        _tracker: &mut dyn SymbolTracker,
+        _tracker: Rc<RefCell<dyn SymbolTracker + 'a>>,
         _nodes: &mut Vec<Node>,
     ) -> Option<NodeId> {
         unimplemented!("unused by ImportElisionTransformer")
     }
 
-    fn create_type_of_expression(
+    fn create_type_of_expression<'a>(
         &self,
         _expression: NodeId,
         _enclosing_declaration: Option<NodeId>,
         _flags: Flags,
         _internal_flags: InternalFlags,
-        _tracker: &mut dyn SymbolTracker,
+        _tracker: Rc<RefCell<dyn SymbolTracker + 'a>>,
         _nodes: &mut Vec<Node>,
     ) -> Option<NodeId> {
         unimplemented!("unused by ImportElisionTransformer")
     }
 
-    fn create_late_bound_index_signatures(
+    fn create_late_bound_index_signatures<'a>(
         &self,
         _container: NodeId,
         _enclosing_declaration: Option<NodeId>,
         _flags: Flags,
         _internal_flags: InternalFlags,
-        _tracker: &mut dyn SymbolTracker,
+        _tracker: Rc<RefCell<dyn SymbolTracker + 'a>>,
         _nodes: &mut Vec<Node>,
     ) -> Vec<NodeId> {
         unimplemented!("unused by ImportElisionTransformer")
     }
 
-    fn try_js_type_node_to_type_node(
+    fn try_js_type_node_to_type_node<'a>(
         &self,
         _type_node: NodeId,
         _enclosing_declaration: Option<NodeId>,
         _flags: Flags,
         _internal_flags: InternalFlags,
-        _tracker: &mut dyn SymbolTracker,
+        _tracker: Rc<RefCell<dyn SymbolTracker + 'a>>,
         _nodes: &mut Vec<Node>,
     ) -> Option<NodeId> {
         unimplemented!("unused by ImportElisionTransformer")

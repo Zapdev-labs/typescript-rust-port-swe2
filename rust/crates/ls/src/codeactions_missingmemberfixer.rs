@@ -116,7 +116,7 @@ impl<'a, 'c, 'h> MissingMemberFixer<'a, 'c, 'h> {
     }
 
     /// `createNodeBuilder` — see PORT note on the fresh `EmitContext`.
-    fn create_node_builder(&self) -> NodeBuilder {
+    fn create_node_builder(&self) -> NodeBuilder<'static> {
         new_node_builder_ex(
             &self.checker.borrow(),
             EmitContext::new(),

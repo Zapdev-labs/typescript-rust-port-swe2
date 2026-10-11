@@ -144,13 +144,15 @@ pub struct ModuleSpecifierResult {
 /// `modulespecifiers.ModuleSpecifierGenerationHost` implemented by `Program`,
 /// stored as `Rc<dyn Host>`.
 #[derive(Default)]
-pub struct NodeBuilderContext {
+pub struct NodeBuilderContext<'a> {
     /// `host` — `modulespecifiers.ModuleSpecifierGenerationHost`.
     pub host: Option<Rc<dyn Host>>,
     /// `tracker` — `Rc<RefCell>` so visit closures (e.g. the computed-name
     /// tracker inside `clone_binding_name`) can reach the tracker while
     /// `b`/`c` are borrowed elsewhere — Go shares it via `b.ctx.tracker`.
-    pub tracker: Option<Rc<RefCell<dyn nodebuilder::SymbolTracker>>>,
+    /// `+ 'a` rather than `'static` so the declarations transformer's
+    /// lifetime-bound tracker forwards through — see `symboltracker.rs`.
+    pub tracker: Option<Rc<RefCell<dyn nodebuilder::SymbolTracker + 'a>>>,
     /// `approximateLength`.
     pub approximate_length: i32,
     /// `maxTruncationLength`.
@@ -243,7 +245,7 @@ pub struct SaveRestoreFlags {
 
 impl SaveRestoreFlags {
     /// The Go `func()` cleanup: restore `flags`, `internalFlags`, `depth`.
-    pub fn restore(self, ctx: &mut NodeBuilderContext) {
+    pub fn restore(self, ctx: &mut NodeBuilderContext<'_>) {
         ctx.flags = self.flags;
         ctx.internal_flags = self.internal_flags;
         ctx.depth = self.depth;
@@ -272,7 +274,7 @@ pub struct NodeBuilderImpl<'a> {
 
     // state
     /// `ctx`.
-    pub ctx: NodeBuilderContext,
+    pub ctx: NodeBuilderContext<'a>,
 
     // symbols for synthesized identifiers, needed for e.g. inlay hints
     /// `idToSymbol` — `map[*ast.IdentifierNode]*ast.Symbol` keyed by the
@@ -327,12 +329,13 @@ impl<'a> NodeBuilderImpl<'a> {
 // Node builder utility functions
 
 /// `newNodeBuilderImpl`. PORT: `e` is wrapped in `Rc<RefCell>` (see header);
-/// `cloneBindingNameVisitor` is not stored.
-pub fn new_node_builder_impl(
+/// `cloneBindingNameVisitor` is not stored. `'a` is free — callers bind it
+/// to the tracker lifetime they intend to feed `enter_context`.
+pub fn new_node_builder_impl<'a>(
     c: &Checker,
     e: EmitContext,
     id_to_symbol: FxHashMap<NodeId, SymbolId>,
-) -> NodeBuilderImpl<'static> {
+) -> NodeBuilderImpl<'a> {
     let e = Rc::new(RefCell::new(e));
     let f = new_nodebuilder_factory(&e);
     NodeBuilderImpl {
@@ -7793,11 +7796,11 @@ fn get_regular_type_of_expression(c: &mut Checker, expr: NodeId,
 /// Shared state for the `cloneBindingName` visitor — the `b`/`c` pieces the
 /// per-node visit fn needs, routed through cells since `VisitFn` is `Fn`
 /// (not `FnMut`) and `cx.factory` already borrows `self.f`.
-struct CloneBindingShared<'s, 'x> {
+struct CloneBindingShared<'s, 'x, 't> {
     /// `b.ch` — `RefCell` so the `Fn` visit fn can call `&mut` methods.
     c: &'s RefCell<&'x mut Checker>,
     /// `b.ctx.tracker`.
-    tracker: Option<Rc<RefCell<dyn nodebuilder::SymbolTracker>>>,
+    tracker: Option<Rc<RefCell<dyn nodebuilder::SymbolTracker + 't>>>,
     /// `b.ctx.enclosingDeclaration`.
     enclosing_declaration: Option<NodeId>,
     /// `b.e`.
@@ -7807,7 +7810,7 @@ struct CloneBindingShared<'s, 'x> {
 /// `(b *NodeBuilderImpl) trackComputedName` on shared state — the visit-fn
 /// path. `track_computed_name` (method) wraps this for direct callers.
 fn track_computed_name_shared(
-    shared: &CloneBindingShared<'_, '_>,
+    shared: &CloneBindingShared<'_, '_, '_>,
     nodes: &[ast::Node],
     access_expression: NodeId,
 ) {
@@ -7855,7 +7858,7 @@ fn track_computed_name_shared(
 /// The `cloneBindingName` visit fn — the body of Go's `cloneBindingName`
 /// applied per visited node.
 fn clone_binding_name_visit(
-    shared: &CloneBindingShared<'_, '_>,
+    shared: &CloneBindingShared<'_, '_, '_>,
     v: &ast::visitor::NodeVisitor,
     cx: &mut ast::visitor::VisitorCx<'_, '_>,
     node: NodeId,

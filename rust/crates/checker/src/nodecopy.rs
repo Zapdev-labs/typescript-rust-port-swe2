@@ -190,13 +190,13 @@ impl<'a> NodeBuilderImpl<'a> {
 // ----------------------------------------------------------------------------
 
 /// `type recoveryBoundary struct` (nodecopy.go).
-pub(crate) struct RecoveryBoundary {
+pub(crate) struct RecoveryBoundary<'a> {
     /// `hadError`.
     pub had_error: bool,
     /// `deferredReports` — `[]func()` → report closures taking the arena.
-    pub deferred_reports: Vec<Box<dyn FnMut(&[ast::Node])>>,
+    pub deferred_reports: Vec<Box<dyn FnMut(&[ast::Node]) + 'a>>,
     /// `oldTracker`.
-    pub old_tracker: Option<Rc<RefCell<dyn nodebuilder::SymbolTracker>>>,
+    pub old_tracker: Option<Rc<RefCell<dyn nodebuilder::SymbolTracker + 'a>>>,
     /// `oldTrackedSymbols`.
     pub old_tracked_symbols: Vec<TrackedSymbolArgs>,
     /// `trackedSymbols`.
@@ -207,9 +207,9 @@ pub(crate) struct RecoveryBoundary {
     pub old_approximate_length: i32,
 }
 
-impl RecoveryBoundary {
+impl<'a> RecoveryBoundary<'a> {
     /// `(b *recoveryBoundary) markError` (nodecopy.go).
-    fn mark_error(&mut self, f: Option<Box<dyn FnMut(&[ast::Node])>>) {
+    fn mark_error(&mut self, f: Option<Box<dyn FnMut(&[ast::Node]) + 'a>>) {
         self.had_error = true;
         if let Some(f) = f {
             self.deferred_reports.push(f);
@@ -227,14 +227,14 @@ struct OriginalRecoveryScopeState {
 /// `type wrappingTracker struct` (nodecopy.go) — a `SymbolTracker` that
 /// defers error reports through the `RecoveryBoundary` so failed reuse
 /// attempts can roll them back.
-struct WrappingTracker {
+struct WrappingTracker<'a> {
     /// `wrapped`.
-    wrapped: Option<Rc<RefCell<dyn nodebuilder::SymbolTracker>>>,
+    wrapped: Option<Rc<RefCell<dyn nodebuilder::SymbolTracker + 'a>>>,
     /// `bound`.
-    bound: Rc<RefCell<RecoveryBoundary>>,
+    bound: Rc<RefCell<RecoveryBoundary<'a>>>,
 }
 
-impl nodebuilder::SymbolTracker for WrappingTracker {
+impl<'a> nodebuilder::SymbolTracker for WrappingTracker<'a> {
     /// `(w *wrappingTracker) PopErrorFallbackNode`.
     fn pop_error_fallback_node(&mut self) {
         if let Some(w) = self.wrapped.clone() {
@@ -400,7 +400,10 @@ impl nodebuilder::SymbolTracker for WrappingTracker {
 
 impl<'a> NodeBuilderImpl<'a> {
     /// `(b *NodeBuilderImpl) createRecoveryBoundary` (nodecopy.go).
-    fn create_recovery_boundary(&mut self, c: &mut Checker) -> Rc<RefCell<RecoveryBoundary>> {
+    fn create_recovery_boundary(
+        &mut self,
+        c: &mut Checker,
+    ) -> Rc<RefCell<RecoveryBoundary<'a>>> {
         c.check_not_canceled();
         let bound = Rc::new(RefCell::new(RecoveryBoundary {
             had_error: false,
@@ -415,8 +418,10 @@ impl<'a> NodeBuilderImpl<'a> {
             wrapped: self.ctx.tracker.clone(),
             bound: bound.clone(),
         };
+        let wrapping: Rc<RefCell<dyn nodebuilder::SymbolTracker + 'a>> =
+            Rc::new(RefCell::new(wrapping));
         let new_tracker =
-            new_symbol_tracker_impl(&self.ctx, Some(Box::new(wrapping)), c.symbol_arena.clone());
+            new_symbol_tracker_impl(&self.ctx, Some(wrapping), c.symbol_arena.clone());
         self.ctx.tracker = Some(Rc::new(RefCell::new(new_tracker)));
         self.ctx.tracked_symbols.borrow_mut().clear();
         bound
@@ -425,7 +430,7 @@ impl<'a> NodeBuilderImpl<'a> {
     /// `(b *NodeBuilderImpl) finalizeBoundary` (nodecopy.go).
     fn finalize_boundary(
         &mut self,
-        bound: &Rc<RefCell<RecoveryBoundary>>,
+        bound: &Rc<RefCell<RecoveryBoundary<'a>>>,
         nodes: &mut Vec<ast::Node>,
     ) -> bool {
         let (old_tracker, old_tracked, old_encountered_error, old_approximate_length, had_error) = {
@@ -468,7 +473,7 @@ impl<'a> NodeBuilderImpl<'a> {
     /// tracked-symbols cell (Go reaches `b.ctx` through `bound.ctx`).
     fn start_recovery_scope(
         ctx_tracked: &Rc<RefCell<Vec<TrackedSymbolArgs>>>,
-        bound: &Rc<RefCell<RecoveryBoundary>>,
+        bound: &Rc<RefCell<RecoveryBoundary<'a>>>,
     ) -> OriginalRecoveryScopeState {
         let b = bound.borrow();
         OriginalRecoveryScopeState {
@@ -481,7 +486,7 @@ impl<'a> NodeBuilderImpl<'a> {
     /// `(b *recoveryBoundary) endRecoveryScope` (nodecopy.go).
     fn end_recovery_scope(
         ctx_tracked: &Rc<RefCell<Vec<TrackedSymbolArgs>>>,
-        bound: &Rc<RefCell<RecoveryBoundary>>,
+        bound: &Rc<RefCell<RecoveryBoundary<'a>>>,
         state: OriginalRecoveryScopeState,
     ) {
         let mut b = bound.borrow_mut();
@@ -740,7 +745,7 @@ struct ExistingNodeTreeState<'b, 'a, 'e> {
     /// `b.ch`.
     c: RefCell<&'b mut Checker>,
     /// `bound`.
-    bound: Rc<RefCell<RecoveryBoundary>>,
+    bound: Rc<RefCell<RecoveryBoundary<'a>>>,
     /// `nonLocalNode`.
     non_local_node: Cell<bool>,
     /// The destination arena buffer while the visit runs on a scratch

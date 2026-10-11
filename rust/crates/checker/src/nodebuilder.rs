@@ -26,6 +26,7 @@
 //   counterpart in the ported arena model (`Vec<Node>` arenas are owned by
 //   the program/source files) — `get_node_builder` documents the omission.
 
+use std::cell::RefCell;
 use std::rc::Rc;
 
 use rustc_hash::FxHashMap;
@@ -39,122 +40,18 @@ use crate::nodebuilderimpl::{NodeBuilderContext, NodeBuilderImpl};
 use crate::symboltracker::new_symbol_tracker_impl;
 use crate::types::{IndexInfoId, SignatureId, TypeId, TypePredicate};
 
-/// PORT: Go passes the same `tracker` interface value to multiple
-/// `enterContext`/serialize calls (e.g. `SerializeTypeParametersForSignature`
-/// enters a context, then forwards `tracker` to
-/// `SymbolToTypeParameterDeclarations`). `Box<dyn SymbolTracker>` cannot be
-/// cloned, so a shared `Rc<RefCell<dyn SymbolTracker>>` can be re-wrapped
-/// in this delegating shim for each `enter_context` call.
-pub(crate) struct SharedTracker(pub Rc<std::cell::RefCell<Box<dyn nodebuilder::SymbolTracker>>>);
-
-impl nodebuilder::SymbolTracker for SharedTracker {
-    fn track_symbol(
-        &mut self,
-        symbol: SymbolId,
-        enclosing_declaration: Option<NodeId>,
-        meaning: ast::SymbolFlags,
-        nodes: &[ast::Node],
-    ) -> bool {
-        self.0
-            .borrow_mut()
-            .track_symbol(symbol, enclosing_declaration, meaning, nodes)
-    }
-    fn report_inaccessible_this_error(&mut self, nodes: &[ast::Node]) {
-        self.0.borrow_mut().report_inaccessible_this_error(nodes)
-    }
-    fn report_private_in_base_of_class_expression(
-        &mut self,
-        property_name: &str,
-        nodes: &[ast::Node],
-    ) {
-        self.0
-            .borrow_mut()
-            .report_private_in_base_of_class_expression(property_name, nodes)
-    }
-    fn report_inaccessible_unique_symbol_error(&mut self, nodes: &[ast::Node]) {
-        self.0
-            .borrow_mut()
-            .report_inaccessible_unique_symbol_error(nodes)
-    }
-    fn report_cyclic_structure_error(&mut self, nodes: &[ast::Node]) {
-        self.0.borrow_mut().report_cyclic_structure_error(nodes)
-    }
-    fn report_likely_unsafe_import_required_error(
-        &mut self,
-        specifier: &str,
-        symbol_name: &str,
-        nodes: &[ast::Node],
-    ) {
-        self.0
-            .borrow_mut()
-            .report_likely_unsafe_import_required_error(specifier, symbol_name, nodes)
-    }
-    fn report_truncation_error(&mut self, nodes: &[ast::Node]) {
-        self.0.borrow_mut().report_truncation_error(nodes)
-    }
-    fn report_nonlocal_augmentation(
-        &mut self,
-        containing_file: NodeId,
-        parent_symbol: SymbolId,
-        augmenting_symbol: SymbolId,
-        nodes: &[ast::Node],
-    ) {
-        self.0.borrow_mut().report_nonlocal_augmentation(
-            containing_file,
-            parent_symbol,
-            augmenting_symbol,
-            nodes,
-        )
-    }
-    fn report_non_serializable_property(&mut self, property_name: &str, nodes: &[ast::Node]) {
-        self.0
-            .borrow_mut()
-            .report_non_serializable_property(property_name, nodes)
-    }
-    fn report_inference_fallback(&mut self, node: NodeId, nodes: &[ast::Node]) {
-        self.0.borrow_mut().report_inference_fallback(node, nodes)
-    }
-    fn push_error_fallback_node(&mut self, node: NodeId) {
-        self.0.borrow_mut().push_error_fallback_node(node)
-    }
-    fn pop_error_fallback_node(&mut self) {
-        self.0.borrow_mut().pop_error_fallback_node()
-    }
-}
-
-/// Re-box `tracker` as a shared handle so it can back several
-/// `enter_context` calls, mirroring Go's shared `tracker` interface value.
-pub(crate) fn share_tracker(
-    tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
-) -> Option<Rc<std::cell::RefCell<Box<dyn nodebuilder::SymbolTracker>>>> {
-    tracker.map(|t| {
-        let rc: Rc<std::cell::RefCell<Box<dyn nodebuilder::SymbolTracker>>> =
-            Rc::new(std::cell::RefCell::new(t));
-        rc
-    })
-}
-
-/// Wrap one clone of a shared tracker for an `enter_context` parameter.
-pub(crate) fn shared_tracker_box(
-    tracker: &Option<Rc<std::cell::RefCell<Box<dyn nodebuilder::SymbolTracker>>>>,
-) -> Option<Box<dyn nodebuilder::SymbolTracker>> {
-    tracker
-        .clone()
-        .map(|t| Box::new(SharedTracker(t)) as Box<dyn nodebuilder::SymbolTracker>)
-}
-
 /// `type NodeBuilder struct` (nodebuilder.go). `impl_` is the
 /// `NodeBuilderImpl<'static>` (its `ch *Checker` back-pointer is an
 /// explicit `&mut Checker` parameter on the methods; its `f`/`e`/`pc`
 /// members live on the struct).
-pub struct NodeBuilder {
+pub struct NodeBuilder<'a> {
     /// `ctxStack` — Go stores `*NodeBuilderContext` pointers pushed in
     /// `enterContext`; here the whole context value is pushed/popped.
-    pub ctx_stack: Vec<NodeBuilderContext>,
+    pub ctx_stack: Vec<NodeBuilderContext<'a>>,
     /// `host`.
     pub host: Option<Rc<dyn Host>>,
     /// `impl`.
-    pub impl_: Option<Box<NodeBuilderImpl<'static>>>,
+    pub impl_: Option<Box<NodeBuilderImpl<'a>>>,
     /// `verbosity` — nil for non-hover callers.
     pub verbosity: Option<Box<VerbosityContext>>,
 }
@@ -178,8 +75,8 @@ pub struct VerbosityContext {
     pub truncated: bool,
 }
 
-impl NodeBuilder {
-    fn impl_mut(&mut self) -> &mut NodeBuilderImpl<'static> {
+impl<'a> NodeBuilder<'a> {
+    fn impl_mut(&mut self) -> &mut NodeBuilderImpl<'a> {
         self.impl_.as_deref_mut().expect("NodeBuilder without impl")
     }
 
@@ -201,7 +98,7 @@ impl NodeBuilder {
         enclosing_declaration: Option<NodeId>,
         flags: nodebuilder::Flags,
         internal_flags: nodebuilder::InternalFlags,
-        tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
+        tracker: Option<Rc<RefCell<dyn nodebuilder::SymbolTracker + 'a>>>,
     ) {
         let mut verbosity_level = -1;
         let mut max_truncation_length = 0;
@@ -352,7 +249,7 @@ impl NodeBuilder {
         enclosing_declaration: Option<NodeId>,
         flags: nodebuilder::Flags,
         internal_flags: nodebuilder::InternalFlags,
-        tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
+        tracker: Option<Rc<RefCell<dyn nodebuilder::SymbolTracker + 'a>>>,
     ) -> Option<NodeId> {
         self.enter_context(c, nodes, enclosing_declaration, flags, internal_flags, tracker);
         let info = c.index_info_arena.get(info).clone();
@@ -372,7 +269,7 @@ impl NodeBuilder {
         enclosing_declaration: Option<NodeId>,
         flags: nodebuilder::Flags,
         internal_flags: nodebuilder::InternalFlags,
-        tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
+        tracker: Option<Rc<RefCell<dyn nodebuilder::SymbolTracker + 'a>>>,
     ) -> Option<NodeId> {
         self.enter_context(c, nodes, enclosing_declaration, flags, internal_flags, tracker);
         let signature = c.get_signature_from_declaration(signature_declaration);
@@ -392,19 +289,15 @@ impl NodeBuilder {
         enclosing_declaration: Option<NodeId>,
         flags: nodebuilder::Flags,
         internal_flags: nodebuilder::InternalFlags,
-        tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
+        tracker: Option<Rc<RefCell<dyn nodebuilder::SymbolTracker + 'a>>>,
     ) -> Vec<NodeId> {
-        // Go forwards the same `tracker` interface value to both
-        // `enterContext` and `SymbolToTypeParameterDeclarations`; share it
-        // through `SharedTracker` so both calls see one tracker.
-        let tracker = share_tracker(tracker);
         self.enter_context(
             c,
             nodes,
             enclosing_declaration,
             flags,
             internal_flags,
-            shared_tracker_box(&tracker),
+            tracker.clone(),
         );
         let symbol = c.get_symbol_of_declaration(signature_declaration);
         let type_params = self.symbol_to_type_parameter_declarations(
@@ -414,7 +307,7 @@ impl NodeBuilder {
             enclosing_declaration,
             flags,
             internal_flags,
-            shared_tracker_box(&tracker),
+            tracker.clone(),
         );
         self.exit_context_slice(nodes, type_params)
     }
@@ -429,7 +322,7 @@ impl NodeBuilder {
         enclosing_declaration: Option<NodeId>,
         flags: nodebuilder::Flags,
         internal_flags: nodebuilder::InternalFlags,
-        tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
+        tracker: Option<Rc<RefCell<dyn nodebuilder::SymbolTracker + 'a>>>,
     ) -> Option<NodeId> {
         self.enter_context(c, nodes, enclosing_declaration, flags, internal_flags, tracker);
         let result = self.impl_mut().serialize_type_for_declaration(
@@ -452,7 +345,7 @@ impl NodeBuilder {
         enclosing_declaration: Option<NodeId>,
         flags: nodebuilder::Flags,
         internal_flags: nodebuilder::InternalFlags,
-        tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
+        tracker: Option<Rc<RefCell<dyn nodebuilder::SymbolTracker + 'a>>>,
     ) -> Option<NodeId> {
         self.enter_context(c, nodes, enclosing_declaration, flags, internal_flags, tracker);
         let result = self
@@ -472,7 +365,7 @@ impl NodeBuilder {
         enclosing_declaration: Option<NodeId>,
         flags: nodebuilder::Flags,
         internal_flags: nodebuilder::InternalFlags,
-        tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
+        tracker: Option<Rc<RefCell<dyn nodebuilder::SymbolTracker + 'a>>>,
     ) -> Option<NodeId> {
         self.enter_context(c, nodes, enclosing_declaration, flags, internal_flags, tracker);
         let result = self.impl_mut().signature_to_signature_declaration_helper(
@@ -589,7 +482,7 @@ impl NodeBuilder {
         enclosing_declaration: Option<NodeId>,
         flags: nodebuilder::Flags,
         internal_flags: nodebuilder::InternalFlags,
-        tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
+        tracker: Option<Rc<RefCell<dyn nodebuilder::SymbolTracker + 'a>>>,
     ) -> Option<NodeId> {
         self.enter_context(c, nodes, enclosing_declaration, flags, internal_flags, tracker);
         let result = self
@@ -608,7 +501,7 @@ impl NodeBuilder {
         enclosing_declaration: Option<NodeId>,
         flags: nodebuilder::Flags,
         internal_flags: nodebuilder::InternalFlags,
-        tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
+        tracker: Option<Rc<RefCell<dyn nodebuilder::SymbolTracker + 'a>>>,
     ) -> Option<NodeId> {
         self.enter_context(c, nodes, enclosing_declaration, flags, internal_flags, tracker);
         let result = self
@@ -627,7 +520,7 @@ impl NodeBuilder {
         enclosing_declaration: Option<NodeId>,
         flags: nodebuilder::Flags,
         internal_flags: nodebuilder::InternalFlags,
-        tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
+        tracker: Option<Rc<RefCell<dyn nodebuilder::SymbolTracker + 'a>>>,
     ) -> Option<NodeId> {
         self.enter_context(c, nodes, enclosing_declaration, flags, internal_flags, tracker);
         let result = self.impl_mut().symbol_to_node(c, nodes, symbol, meaning);
@@ -645,7 +538,7 @@ impl NodeBuilder {
         enclosing_declaration: Option<NodeId>,
         flags: nodebuilder::Flags,
         internal_flags: nodebuilder::InternalFlags,
-        tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
+        tracker: Option<Rc<RefCell<dyn nodebuilder::SymbolTracker + 'a>>>,
     ) -> Option<NodeId> {
         self.enter_context(c, nodes, enclosing_declaration, flags, internal_flags, tracker);
         let result = self
@@ -664,7 +557,7 @@ impl NodeBuilder {
         enclosing_declaration: Option<NodeId>,
         flags: nodebuilder::Flags,
         internal_flags: nodebuilder::InternalFlags,
-        tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
+        tracker: Option<Rc<RefCell<dyn nodebuilder::SymbolTracker + 'a>>>,
     ) -> Vec<NodeId> {
         self.enter_context(c, nodes, enclosing_declaration, flags, internal_flags, tracker);
         let result = self
@@ -682,7 +575,7 @@ impl NodeBuilder {
         enclosing_declaration: Option<NodeId>,
         flags: nodebuilder::Flags,
         internal_flags: nodebuilder::InternalFlags,
-        tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
+        tracker: Option<Rc<RefCell<dyn nodebuilder::SymbolTracker + 'a>>>,
     ) -> Option<NodeId> {
         self.enter_context(c, nodes, enclosing_declaration, flags, internal_flags, tracker);
         let result = self
@@ -701,7 +594,7 @@ impl NodeBuilder {
         enclosing_declaration: Option<NodeId>,
         flags: nodebuilder::Flags,
         internal_flags: nodebuilder::InternalFlags,
-        tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
+        tracker: Option<Rc<RefCell<dyn nodebuilder::SymbolTracker + 'a>>>,
     ) -> Option<NodeId> {
         self.enter_context(c, nodes, enclosing_declaration, flags, internal_flags, tracker);
         let result = predicate.map(|p| {
@@ -720,7 +613,7 @@ impl NodeBuilder {
         enclosing_declaration: Option<NodeId>,
         flags: nodebuilder::Flags,
         internal_flags: nodebuilder::InternalFlags,
-        tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
+        tracker: Option<Rc<RefCell<dyn nodebuilder::SymbolTracker + 'a>>>,
     ) -> Option<NodeId> {
         self.enter_context(c, nodes, enclosing_declaration, flags, internal_flags, tracker);
         let result = self.impl_mut().type_to_type_node(c, nodes, typ);
@@ -736,7 +629,7 @@ impl NodeBuilder {
         enclosing_declaration: Option<NodeId>,
         flags: nodebuilder::Flags,
         internal_flags: nodebuilder::InternalFlags,
-        tracker: Option<Box<dyn nodebuilder::SymbolTracker>>,
+        tracker: Option<Rc<RefCell<dyn nodebuilder::SymbolTracker + 'a>>>,
     ) -> Option<NodeId> {
         self.enter_context(c, nodes, enclosing_declaration, flags, internal_flags, tracker);
         let result = self
@@ -850,16 +743,16 @@ fn simplify_modifiers(
 }
 
 /// `NewNodeBuilder(ch, e)`.
-pub fn new_node_builder(c: &Checker, e: EmitContext) -> NodeBuilder {
+pub fn new_node_builder<'a>(c: &Checker, e: EmitContext) -> NodeBuilder<'a> {
     new_node_builder_ex(c, e, FxHashMap::default())
 }
 
 /// `NewNodeBuilderEx(ch, e, idToSymbol)`.
-pub fn new_node_builder_ex(
+pub fn new_node_builder_ex<'a>(
     c: &Checker,
     e: EmitContext,
     id_to_symbol: FxHashMap<NodeId, SymbolId>,
-) -> NodeBuilder {
+) -> NodeBuilder<'a> {
     let impl_ = crate::nodebuilderimpl::new_node_builder_impl(c, e, id_to_symbol);
     NodeBuilder {
         impl_: Some(Box::new(impl_)),
@@ -878,7 +771,7 @@ impl Checker {
     /// arenas are file-owned), so this returns the builder by value — the
     /// caller stores it back when done (`take`/`put` instead of Go's
     /// shared pointer).
-    pub fn get_node_builder(&mut self) -> NodeBuilder {
+    pub fn get_node_builder(&mut self) -> NodeBuilder<'static> {
         if let Some(b) = self.type_to_string_nodebuilder.take() {
             return *b;
         }
@@ -886,10 +779,10 @@ impl Checker {
     }
 
     /// `(c *Checker) getNodeBuilderEx`.
-    pub fn get_node_builder_ex(
+    pub fn get_node_builder_ex<'a>(
         &mut self,
         id_to_symbol: FxHashMap<NodeId, SymbolId>,
-    ) -> NodeBuilder {
+    ) -> NodeBuilder<'a> {
         new_node_builder_ex(self, EmitContext::new(), id_to_symbol)
     }
 }

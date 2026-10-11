@@ -14,10 +14,18 @@
 //   (`Rc<Cell<bool>>` / `Rc<RefCell<Vec<TrackedSymbolArgs>>>`) and the
 //   tracker keeps clones. Same aliasing semantics, no `unsafe`.
 // - `inner nodebuilder.SymbolTracker` →
-//   `Option<Box<dyn nodebuilder::SymbolTracker>>`.
-// - `NewSymbolTrackerImpl`'s `tracker.(*SymbolTrackerImpl)` peel loop needs
-//   a downcast on `dyn SymbolTracker` — `tsc-nodebuilder`'s trait gains a
-//   `take_symbol_tracker_impl_inner` hook (default: not-a-`SymbolTrackerImpl`).
+//   `Option<Rc<RefCell<dyn SymbolTracker + 'a>>>`. The declarations
+//   transformer's tracker is lifetime-bound (`SymbolTrackerImpl<'a>`
+//   carries `Rc<dyn EmitResolver + 'a>`), so the inner slot shares the
+//   enclosing context's `'a` rather than forcing `'static` (which dropped
+//   all inner-tracker forwarding — the old `Box<dyn>` parameter couldn't
+//   express the borrow). `Rc<RefCell>` lets `enter_context` hand clones to
+//   nested contexts.
+// - `NewSymbolTrackerImpl`'s `tracker.(*SymbolTrackerImpl)` peel loop has no
+//   `Rc<RefCell<dyn + 'a>>` analogue (a trait method cannot name `'a`).
+//   In practice the incoming tracker is the declarations transformer
+//   tracker or a checker-internal one — never this wrapper type — so the
+//   loop is omitted rather than approximated.
 // - `*ast.Symbol` → `SymbolId`, `*ast.Node` → `Option<NodeId>`,
 //   `*ast.SourceFile` → `NodeId`, matching the trait.
 
@@ -30,7 +38,7 @@ use tsc_nodebuilder::SymbolTracker;
 use crate::nodebuilderimpl::{NodeBuilderContext, TrackedSymbolArgs};
 
 /// `type SymbolTrackerImpl struct`.
-pub struct SymbolTrackerImpl {
+pub struct SymbolTrackerImpl<'a> {
     /// `context.trackedSymbols` — shared cell (see header).
     pub tracked_symbols: Rc<RefCell<Vec<TrackedSymbolArgs>>>,
     /// `context.reportedDiagnostic` — shared cell (see header).
@@ -39,30 +47,20 @@ pub struct SymbolTrackerImpl {
     /// type parameters; Go reads through the `*ast.Symbol` pointer.
     pub symbols: Rc<RefCell<Vec<ast::Symbol>>>,
     /// `inner`.
-    pub inner: Option<Box<dyn SymbolTracker>>,
+    pub inner: Option<Rc<RefCell<dyn SymbolTracker + 'a>>>,
     /// `DisableTrackSymbol` — exported field in Go.
     pub disable_track_symbol: bool,
 }
 
 /// `NewSymbolTrackerImpl`. PORT: gains the shared symbol arena (`symbols`)
 /// for the `symbol.Flags` read — see header.
-pub fn new_symbol_tracker_impl(
-    context: &NodeBuilderContext,
-    tracker: Option<Box<dyn SymbolTracker>>,
+pub fn new_symbol_tracker_impl<'a>(
+    context: &NodeBuilderContext<'a>,
+    tracker: Option<Rc<RefCell<dyn SymbolTracker + 'a>>>,
     symbols: Rc<RefCell<Vec<ast::Symbol>>>,
-) -> SymbolTrackerImpl {
-    let mut tracker = tracker;
-    // Peel nested SymbolTrackerImpl wrappers (Go's `t.(*SymbolTrackerImpl)`
-    // loop) via the `take_symbol_tracker_impl_inner` hook.
-    loop {
-        match tracker
-            .as_mut()
-            .and_then(|t| t.take_symbol_tracker_impl_inner())
-        {
-            Some(inner) => tracker = inner,
-            None => break,
-        }
-    }
+) -> SymbolTrackerImpl<'a> {
+    // Go peels nested `*SymbolTrackerImpl` wrappers here; see the header
+    // note for why that loop is omitted.
     SymbolTrackerImpl {
         tracked_symbols: context.tracked_symbols.clone(),
         reported_diagnostic: context.reported_diagnostic.clone(),
@@ -72,7 +70,7 @@ pub fn new_symbol_tracker_impl(
     }
 }
 
-impl SymbolTracker for SymbolTrackerImpl {
+impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
     /// `(this *SymbolTrackerImpl) TrackSymbol`.
     fn track_symbol(
         &mut self,
@@ -82,8 +80,8 @@ impl SymbolTracker for SymbolTrackerImpl {
         nodes: &[ast::Node],
     ) -> bool {
         if !self.disable_track_symbol {
-            if let Some(inner) = self.inner.as_mut()
-                && inner.track_symbol(symbol, enclosing_declaration, meaning, nodes)
+            if let Some(inner) = self.inner.as_ref()
+                && inner.borrow_mut().track_symbol(symbol, enclosing_declaration, meaning, nodes)
             {
                 self.on_diagnostic_reported();
                 return true;
@@ -107,8 +105,8 @@ impl SymbolTracker for SymbolTrackerImpl {
     /// `(this *SymbolTrackerImpl) ReportInaccessibleThisError`.
     fn report_inaccessible_this_error(&mut self, nodes: &[ast::Node]) {
         self.on_diagnostic_reported();
-        if let Some(inner) = self.inner.as_mut() {
-            inner.report_inaccessible_this_error(nodes);
+        if let Some(inner) = self.inner.as_ref() {
+            inner.borrow_mut().report_inaccessible_this_error(nodes);
         }
     }
 
@@ -119,24 +117,28 @@ impl SymbolTracker for SymbolTrackerImpl {
         nodes: &[ast::Node],
     ) {
         self.on_diagnostic_reported();
-        if let Some(inner) = self.inner.as_mut() {
-            inner.report_private_in_base_of_class_expression(property_name, nodes);
+        if let Some(inner) = self.inner.as_ref() {
+            inner
+                .borrow_mut()
+                .report_private_in_base_of_class_expression(property_name, nodes);
         }
     }
 
     /// `(this *SymbolTrackerImpl) ReportInaccessibleUniqueSymbolError`.
     fn report_inaccessible_unique_symbol_error(&mut self, nodes: &[ast::Node]) {
         self.on_diagnostic_reported();
-        if let Some(inner) = self.inner.as_mut() {
-            inner.report_inaccessible_unique_symbol_error(nodes);
+        if let Some(inner) = self.inner.as_ref() {
+            inner
+                .borrow_mut()
+                .report_inaccessible_unique_symbol_error(nodes);
         }
     }
 
     /// `(this *SymbolTrackerImpl) ReportCyclicStructureError`.
     fn report_cyclic_structure_error(&mut self, nodes: &[ast::Node]) {
         self.on_diagnostic_reported();
-        if let Some(inner) = self.inner.as_mut() {
-            inner.report_cyclic_structure_error(nodes);
+        if let Some(inner) = self.inner.as_ref() {
+            inner.borrow_mut().report_cyclic_structure_error(nodes);
         }
     }
 
@@ -148,16 +150,20 @@ impl SymbolTracker for SymbolTrackerImpl {
         nodes: &[ast::Node],
     ) {
         self.on_diagnostic_reported();
-        if let Some(inner) = self.inner.as_mut() {
-            inner.report_likely_unsafe_import_required_error(specifier, symbol_name, nodes);
+        if let Some(inner) = self.inner.as_ref() {
+            inner.borrow_mut().report_likely_unsafe_import_required_error(
+                specifier,
+                symbol_name,
+                nodes,
+            );
         }
     }
 
     /// `(this *SymbolTrackerImpl) ReportTruncationError`.
     fn report_truncation_error(&mut self, nodes: &[ast::Node]) {
         self.on_diagnostic_reported();
-        if let Some(inner) = self.inner.as_mut() {
-            inner.report_truncation_error(nodes);
+        if let Some(inner) = self.inner.as_ref() {
+            inner.borrow_mut().report_truncation_error(nodes);
         }
     }
 
@@ -170,8 +176,8 @@ impl SymbolTracker for SymbolTrackerImpl {
         nodes: &[ast::Node],
     ) {
         self.on_diagnostic_reported();
-        if let Some(inner) = self.inner.as_mut() {
-            inner.report_nonlocal_augmentation(
+        if let Some(inner) = self.inner.as_ref() {
+            inner.borrow_mut().report_nonlocal_augmentation(
                 containing_file,
                 parent_symbol,
                 augmenting_symbol,
@@ -183,41 +189,36 @@ impl SymbolTracker for SymbolTrackerImpl {
     /// `(this *SymbolTrackerImpl) ReportNonSerializableProperty`.
     fn report_non_serializable_property(&mut self, property_name: &str, nodes: &[ast::Node]) {
         self.on_diagnostic_reported();
-        if let Some(inner) = self.inner.as_mut() {
-            inner.report_non_serializable_property(property_name, nodes);
+        if let Some(inner) = self.inner.as_ref() {
+            inner
+                .borrow_mut()
+                .report_non_serializable_property(property_name, nodes);
         }
     }
 
     /// `(this *SymbolTrackerImpl) ReportInferenceFallback`.
     fn report_inference_fallback(&mut self, node: NodeId, nodes: &[ast::Node]) {
-        if let Some(inner) = self.inner.as_mut() {
-            inner.report_inference_fallback(node, nodes);
+        if let Some(inner) = self.inner.as_ref() {
+            inner.borrow_mut().report_inference_fallback(node, nodes);
         }
     }
 
     /// `(this *SymbolTrackerImpl) PushErrorFallbackNode`.
     fn push_error_fallback_node(&mut self, node: NodeId) {
-        if let Some(inner) = self.inner.as_mut() {
-            inner.push_error_fallback_node(node);
+        if let Some(inner) = self.inner.as_ref() {
+            inner.borrow_mut().push_error_fallback_node(node);
         }
     }
 
     /// `(this *SymbolTrackerImpl) PopErrorFallbackNode`.
     fn pop_error_fallback_node(&mut self) {
-        if let Some(inner) = self.inner.as_mut() {
-            inner.pop_error_fallback_node();
+        if let Some(inner) = self.inner.as_ref() {
+            inner.borrow_mut().pop_error_fallback_node();
         }
-    }
-
-    /// `take_symbol_tracker_impl_inner` — peels this wrapper so
-    /// `new_symbol_tracker_impl` can unwrap nested SymbolTrackerImpls (Go's
-    /// `tracker.(*SymbolTrackerImpl)` loop).
-    fn take_symbol_tracker_impl_inner(&mut self) -> Option<Option<Box<dyn SymbolTracker>>> {
-        Some(self.inner.take())
     }
 }
 
-impl SymbolTrackerImpl {
+impl<'a> SymbolTrackerImpl<'a> {
     /// `(this *SymbolTrackerImpl) onDiagnosticReported`.
     fn on_diagnostic_reported(&self) {
         self.reported_diagnostic.set(true);

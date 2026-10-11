@@ -336,7 +336,7 @@ fn put_verbosity(
 
 /// The Go `release()` callback of `getNodeBuilder` — returns the pooled
 /// builder to `c.typeToStringNodeBuilder`.
-fn release_node_builder(c: &mut Checker, node_builder: NodeBuilder) {
+fn release_node_builder(c: &mut Checker, node_builder: NodeBuilder<'static>) {
     c.type_to_string_nodebuilder = Some(Box::new(node_builder));
 }
 
