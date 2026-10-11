@@ -5051,6 +5051,7 @@ impl Checker {
                 ignore_this_types,
                 ignore_return_types,
                 compare_types,
+                &mut None,
             ) != Ternary::FALSE
             {
                 return Some(s);
@@ -5069,6 +5070,7 @@ impl Checker {
         ignore_this_types: bool,
         ignore_return_types: bool,
         compare_types: Comparer,
+        reporter: &mut ErrorReporter<'_>,
     ) -> Ternary {
         if source == target {
             return Ternary::TRUE;
@@ -5106,7 +5108,7 @@ impl Checker {
                 let t_default = self.get_default_or_unknown_from_type_parameter(t);
                 if !(compare_via(
                     self,
-                    &mut None,
+                    reporter,
                     compare_types,
                     instantiated,
                     t_constraint,
@@ -5114,7 +5116,7 @@ impl Checker {
                 ) != Ternary::FALSE
                     && compare_via(
                         self,
-                        &mut None,
+                        reporter,
                         compare_types,
                         instantiated_default,
                         t_default,
@@ -5133,7 +5135,7 @@ impl Checker {
                 if let Some(target_this_type) = self.get_this_type_of_signature(target) {
                     let related = compare_via(
                         self,
-                        &mut None,
+                        reporter,
                         compare_types,
                         source_this_type,
                         target_this_type,
@@ -5149,7 +5151,7 @@ impl Checker {
         for i in 0..self.get_parameter_count(target) {
             let s = self.get_type_at_position(source, i);
             let t = self.get_type_at_position(target, i);
-            let related = compare_via(self, &mut None, compare_types, t, s, false);
+            let related = compare_via(self, reporter, compare_types, t, s, false);
             if related == Ternary::FALSE {
                 return Ternary::FALSE;
             }
@@ -5171,7 +5173,7 @@ impl Checker {
                 result = result
                     & compare_via(
                         self,
-                        &mut None,
+                        reporter,
                         compare_types,
                         source_return,
                         target_return,
@@ -5388,8 +5390,12 @@ impl Checker {
         // into the arena guard; dereference before cloning to get an owned
         // `TemplateLiteralType` snapshot (Go reads `target.AsTemplateLiteralType()`).
         let target_data = (*self.types_handle().get(target).as_template_literal_type()).clone();
-        let inferences =
-            self.infer_types_from_template_literal_type(source, &target_data, compare_types);
+        let inferences = self.infer_types_from_template_literal_type(
+            source,
+            &target_data,
+            &mut r,
+            compare_types,
+        );
         if let Some(inferences) = inferences {
             for (i, inference) in inferences.iter().enumerate() {
                 if !self.is_valid_type_for_template_literal_placeholder(
@@ -5412,6 +5418,7 @@ impl Checker {
         &mut self,
         source: TypeId,
         target: &crate::types::TemplateLiteralType,
+        r: &mut ErrorReporter<'_>,
         compare_types: Comparer,
     ) -> Option<Vec<TypeId>> {
         let __arena_flags = self.types.clone();
@@ -5432,7 +5439,7 @@ impl Checker {
                 for (i, s) in types.iter().enumerate() {
                     let s_base = self.get_base_constraint_or_type(*s);
                     let t_base = self.get_base_constraint_or_type(target.types[i]);
-                    if compare_via(self, &mut None, compare_types, s_base, t_base, false)
+                    if compare_via(self, r, compare_types, s_base, t_base, false)
                         != Ternary::FALSE
                     {
                         result.push(*s);
@@ -5641,7 +5648,7 @@ impl Checker {
             return texts.len() == 2
                 && texts[0].is_empty()
                 && texts[1].is_empty()
-                && compare_via(self, &mut None, compare_types, types[0], target, false)
+                && compare_via(self, r, compare_types, types[0], target, false)
                     != Ternary::FALSE;
         }
         false
@@ -10319,6 +10326,7 @@ impl Relater {
                 false,
                 false,
                 Comparer::IsRelatedToSimple,
+                &mut Some(&mut *self),
             );
             if related == Ternary::FALSE {
                 return Ternary::FALSE;

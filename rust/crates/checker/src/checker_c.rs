@@ -10018,6 +10018,7 @@ impl Checker {
                         false, /*ignoreThisTypes*/
                         false, /*ignoreReturnTypes*/
                         crate::relater::Comparer::Identical,
+                        &mut None,
                     ) == Ternary::FALSE
                 })
             {

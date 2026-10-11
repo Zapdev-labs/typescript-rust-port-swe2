@@ -1123,7 +1123,7 @@ impl Checker {
         let target_data: TemplateLiteralType =
             (*self.types_handle().get(target).as_template_literal_type()).clone();
         let matches = self
-            .infer_types_from_template_literal_type(source, &target_data, Comparer::Assignable)
+            .infer_types_from_template_literal_type(source, &target_data, &mut None, Comparer::Assignable)
             .unwrap_or_default();
         let types = target_data.types.clone();
         // When the target template literal contains only placeholders (meaning

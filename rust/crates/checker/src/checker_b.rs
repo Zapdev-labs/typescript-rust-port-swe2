@@ -4802,6 +4802,7 @@ impl Checker {
                         true,  /*ignoreThisTypes*/
                         true,  /*ignoreReturnTypes*/
                         Comparer::Identical,
+                        &mut None,
                     ) == Ternary::FALSE
                     {
                         // Signatures aren't identical, do not use

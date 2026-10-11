@@ -773,6 +773,7 @@ impl<'a> NodeBuilderImpl<'a> {
                         false,
                         true,
                         Comparer::Identical,
+                        &mut None,
                     ) != Ternary::TRUE
                     {
                         all_match = false;
