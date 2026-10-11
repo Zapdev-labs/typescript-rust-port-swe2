@@ -279,7 +279,10 @@ pub fn new_declaration_transformer<'a>(
         report_expando_function_errors: None,
     }));
     let tracker = SymbolTrackerImpl::new(host.clone(), resolver.clone(), shared.clone(), symbols);
-    let ec = Rc::new(RefCell::new(EmitContext::new()));
+    // `context := resolver.EmitContext()` — the context shared with the
+    // printer, not a fresh one: comment ranges and other emit-node metadata
+    // assigned during the transform must be visible when the file prints.
+    let ec = resolver.borrow().emit_context().clone();
     let state = Rc::new(DeclarationTransformerState {
         host,
         compiler_options,
