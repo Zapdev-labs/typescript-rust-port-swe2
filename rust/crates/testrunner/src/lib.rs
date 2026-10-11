@@ -16,6 +16,12 @@
 // against their natural names and gated behind the crate feature `harness`
 // (see Cargo.toml) until they land.
 
+// The baseline runner checks hundreds of files per process; glibc malloc
+// retains the ~600MB/test churn at the heap's high-water mark and OOMs the
+// machine. mimalloc returns freed pages aggressively.
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 pub mod compiler_runner;
 pub mod compiler_test_filter;
 pub mod options_generated;

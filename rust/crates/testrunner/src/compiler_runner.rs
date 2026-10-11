@@ -270,6 +270,7 @@ impl CompilerBaselineRunner {
     fn run_test(&self, filename: &str) {
         let test = get_compiler_file_based_test(filename);
         let basename = tsc_tspath::get_base_file_name(filename);
+        eprintln!("[run] {basename}");
         if !test.configurations.is_empty() {
             for config in &test.configurations {
                 let mut test_name = basename.to_string();

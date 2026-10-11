@@ -1060,6 +1060,11 @@ fn compile_files_with_host(
         pre_errors.extend(pre_program.get_declaration_diagnostics(ctx.clone(), None));
     }
     let pre_errors = tsc_compiler::program::sort_and_deduplicate_diagnostics(pre_errors);
+    // `pre_program` is dead after its diagnostics — release the pooled
+    // checkers' `Rc<Program>` back-edge so the whole graph can drop here
+    // rather than surviving for the rest of the process (`Rc` cycle; Go
+    // relies on GC).
+    pre_program.release_checker_pool();
 
     let post_program = create_program(dyn_host.clone(), config);
     let emit_result = post_program.emit(ctx.clone(), &mut EmitOptions::default());
@@ -1149,6 +1154,18 @@ pub struct CompilationResult {
     /// `Host compiler.CompilerHost`.
     pub host: Arc<dyn CompilerHost>,
     current_directory: RootedDirectoryPath,
+}
+
+impl Drop for CompilationResult {
+    /// The program's checker pool keeps `Rc<RefCell<Checker>>`s whose
+    /// `Checker.program` back-edge keeps the `Rc<Program>` alive — an `Rc`
+    /// cycle the Go side resolves through GC. Without releasing it, each
+    /// test's entire program graph (checker arenas, symbols, types) is
+    /// retained for the rest of the process — the baseline runner's ~600MB
+    /// per-test RSS growth.
+    fn drop(&mut self) {
+        self.program.release_checker_pool();
+    }
 }
 
 /// `type CompilationOutput struct`.

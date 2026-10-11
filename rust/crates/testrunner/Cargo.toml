@@ -18,6 +18,7 @@ default = []
 harness = []
 
 [dependencies]
+mimalloc = { workspace = true }
 rustc-hash = { workspace = true }
 tsc-ast = { path = "../ast" }
 tsc-bundled = { path = "../bundled" }

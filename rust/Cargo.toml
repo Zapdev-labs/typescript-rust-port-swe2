@@ -43,6 +43,10 @@ prost = "0.12"
 # golang.org/x/text/unicode/norm (NFD in removeDiacritics) — the spec
 # anticipates unicode-normalization exactly for this.
 unicode-normalization = "0.1"
+# mimalloc returns freed memory to the OS far more aggressively than glibc
+# malloc (the baseline runner's per-test checker churn otherwise pins the
+# process at a multi-GB high-water mark).
+mimalloc = "0.1"
 
 [profile.release]
 lto = "fat"

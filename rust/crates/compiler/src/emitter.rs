@@ -255,30 +255,23 @@ impl<'p, 'w> Emitter<'p, 'w> {
         let get_module_format = |file: &dyn HasFileName| -> ModuleKind {
             host.program().get_emit_module_format_of_file(file)
         };
-        // `TransformOptions<'a>` carries `&'a` fields whose inferred region is
-        // necessarily shorter than `opts`'s own scope, but several transformer
-        // constructors (`new_runtime_syntax_transformer`,
-        // `new_legacy_decorators_transformer`, `new_jsx_transformer`,
-        // `new_common_js_module_transformer`) retain the
-        // `&'a TransformOptions<'a>` itself inside their visitor closures, so
-        // `opts` must outlive the transformers while `'a` — which also
-        // parameterizes the transformers — must still be live when `opts` is
-        // dropped. That is impossible for an owned `TransformOptions<'a>`
-        // (dropck), so the struct is deliberately leaked for the remainder of
-        // the program: `Box::leak` never runs the value's destructor, so no
-        // `'a` liveness requirement applies. The leak is one small options
-        // struct (plus its `Rc` strong counts) per emitted file — the Go
-        // implementation relies on GC here anyway — and `#![forbid(
-        // unsafe_code)]` rules out the reclaim-after-consume alternative.
-        let opts: &TransformOptions = Box::leak(Box::new(TransformOptions {
+        // `TransformOptions<'a>` is an ordinary local: the transformer
+        // constructors retain only the *fields* they need (`Rc` clones and
+        // `&'a` field values), not `&'a TransformOptions<'a>` itself, so
+        // `opts` drops with this scope — leaking it here would pin the
+        // `emit_resolver`'s `Rc`s (and, transitively, its `NodeBuilder`
+        // arenas) for the rest of the process.
+        let opts = TransformOptions {
             context: Some(emit_context.clone()),
             compiler_options: Some(options),
             resolver: Some(reference_resolver),
             emit_resolver: Some(emit_resolver.clone()),
             get_emit_module_format_of_file: Some(&get_module_format),
             symbols: Some(&**symbol_arena),
-        }));
-        for transformer in get_script_transformers(opts, source_file.expect("source file"), nodes) {
+        };
+        for transformer in
+            get_script_transformers(&opts, source_file.expect("source file"), nodes)
+        {
             if let Some(file) = source_file {
                 source_file = transformer.transform_source_file(nodes, file);
             }
@@ -836,7 +829,7 @@ enum DeclarationTransformerKind<'a> {
 }
 
 /// `getModuleTransformer`.
-fn get_module_transformer<'a>(opts: &'a TransformOptions<'a>) -> Option<Transformer<'a>> {
+fn get_module_transformer<'a>(opts: &TransformOptions<'a>) -> Option<Transformer<'a>> {
     match opts
         .compiler_options
         .expect("compiler options")
@@ -864,13 +857,8 @@ fn get_module_transformer<'a>(opts: &'a TransformOptions<'a>) -> Option<Transfor
 }
 
 /// `getScriptTransformers`.
-// `opts` is `&'a` rather than a short borrow: several transformer
-// constructors (`new_runtime_syntax_transformer`,
-// `new_legacy_decorators_transformer`, `new_jsx_transformer`,
-// `new_common_js_module_transformer`) retain the `&'a TransformOptions<'a>`
-// itself inside their visitor closures.
 fn get_script_transformers<'a>(
-    opts: &'a TransformOptions<'a>,
+    opts: &TransformOptions<'a>,
     source_file: NodeId,
     nodes: &[Node],
 ) -> Vec<Transformer<'a>> {

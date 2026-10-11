@@ -1003,6 +1003,17 @@ impl Program {
         }
     }
 
+    /// `Program::releaseCheckerPool` — PORT(addition): drops the program's
+    /// pool `Rc`s. Each pooled `Checker` holds `Rc<dyn Program>` back to this
+    /// program, so without this the program graph is kept alive by an `Rc`
+    /// cycle even after every external reference is gone. Called from
+    /// `harnessutil::CompilationResult`'s `Drop` (and any other owner that
+    /// is finished with a program); checker lookups after release panic.
+    pub fn release_checker_pool(&self) {
+        self.compiler_checker_pool.borrow_mut().take();
+        self.checker_pool.borrow_mut().take();
+    }
+
     /// `GetTypeChecker` — the type checker associated with the program.
     pub fn get_type_checker(&self, ctx: Context) -> (Rc<RefCell<Checker>>, DoneFn) {
         if let Some(pool) = self.compiler_checker_pool.borrow().as_ref() {
@@ -4335,6 +4346,11 @@ pub trait ProgramLike {
     /// `Program()` — narrows to `*Program` for program-only state (Go's
     /// `program.Program().contentMapperDiagnostics`).
     fn program(&self) -> &Program;
+    /// PORT(addition): release the checker pool's `Rc<Checker>`s so the
+    /// `Program -> checkerPool -> Checker.program -> Program` `Rc` cycle
+    /// breaks and the program graph drops at teardown (Go relies on GC for
+    /// this). Default no-op for non-`Program` implementors.
+    fn release_checker_pool(&self) {}
 }
 
 impl ProgramLike for Program {
@@ -4386,6 +4402,9 @@ impl ProgramLike for Program {
     }
     fn program(&self) -> &Program {
         self
+    }
+    fn release_checker_pool(&self) {
+        Program::release_checker_pool(self)
     }
 }
 
