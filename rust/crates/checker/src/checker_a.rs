@@ -4186,7 +4186,10 @@ impl Checker {
         // report the errors on those. To achieve this, we will say that the implementation is
         // the canonical signature only if it is in the same container as the first overload
         let implementation_shares_container_with_first_overload =
-            implementation.is_some_and(|i| nodes[i].parent == nodes[overloads[0]].parent);
+            implementation.is_some_and(|i| {
+                i.file_index() == overloads[0].file_index()
+                    && nodes[i].parent == nodes[overloads[0]].parent
+            });
         if implementation_shares_container_with_first_overload {
             implementation.unwrap()
         } else {
@@ -4220,7 +4223,8 @@ impl Checker {
         let mut groups: FxHashMap<NodeId, Vec<NodeId>> = FxHashMap::default();
         let mut group_order: Vec<NodeId> = Vec::new();
         for &overload in overloads {
-            let source_file = ast::get_source_file_of_node(Some(overload), &nodes);
+            let overload_nodes = __program.nodes(overload.file_index());
+            let source_file = ast::get_source_file_of_node(Some(overload), &overload_nodes);
             if let Some(source_file) = source_file {
                 groups
                     .entry(source_file)
@@ -4233,8 +4237,9 @@ impl Checker {
         }
         for source_file in group_order {
             let overloads_in_file = &groups[&source_file];
+            let file_nodes = __program.nodes(overloads_in_file[0].file_index());
             let canonical_flags_for_file = self.get_effective_declaration_flags(
-                Self::get_canonical_overload(overloads_in_file, implementation, &nodes),
+                Self::get_canonical_overload(overloads_in_file, implementation, &file_nodes),
                 flags_to_check,
             );
             for &overload in overloads_in_file {

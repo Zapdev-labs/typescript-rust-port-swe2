@@ -7308,8 +7308,8 @@ impl Checker {
                         {
                             let flow_container = self.get_control_flow_container(node);
                             if flow_container.is_some_and(|fc| {
-                                ast::is_constructor_declaration(&decl_nodes[fc])
-                                    && decl_nodes[fc].parent == decl_nodes[declaration].parent
+                                ast::is_constructor_declaration(&nodes[fc])
+                                    && nodes[fc].parent == decl_nodes[declaration].parent
                             }) && !decl_nodes[declaration]
                                 .flags
                                 .intersects(ast::NodeFlags::AMBIENT)
@@ -12015,11 +12015,13 @@ impl Checker {
         let parent = nodes[node].parent;
         let parent_is =
             |kinds: &[ast::Kind]| parent.is_some_and(|p| kinds.contains(&nodes[p].kind));
-        let ct = self.get_contextual_type(node, ContextFlags::NONE);
 
         parent.is_some_and(|p| ast::is_const_assertion(&nodes[p], &nodes))
             || self.is_inline_import_attributes(node)
-            || (self.is_valid_const_assertion_argument(node) && self.is_const_type_variable(ct, 0))
+            || (self.is_valid_const_assertion_argument(node) && {
+                let ct = self.get_contextual_type(node, ContextFlags::NONE);
+                self.is_const_type_variable(ct, 0)
+            })
             || (parent_is(&[
                 ast::Kind::ParenthesizedExpression,
                 ast::Kind::ArrayLiteralExpression,

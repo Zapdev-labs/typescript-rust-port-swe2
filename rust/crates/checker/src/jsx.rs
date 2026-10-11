@@ -2893,7 +2893,11 @@ impl Checker {
                 );
                 if let Some(entity) = self.jsx_factory_entity {
                     let __program = self.program.clone().expect("program");
-                    let nodes = __program.nodes((entity).file_index());
+                    let nodes = crate::printer_util::resolve_arena_for(
+                        &__program,
+                        live.as_deref().map(|v| v.as_slice()).unwrap_or(&[]),
+                        entity,
+                    );
                     let first = ast::get_first_identifier(entity, &nodes);
                     self.jsx_namespace = nodes[first].text(&nodes).into_owned();
                 }

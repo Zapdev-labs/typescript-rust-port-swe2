@@ -6845,7 +6845,10 @@ impl Checker {
             // parent and ends where the implementation starts).
             if i > 0 && nodes[decl].body().is_some() {
                 let previous = declarations[i - 1];
-                if nodes[decl].parent == nodes[previous].parent
+                // NodeIds are per-file; declarations in different files can
+                // never share a parent, so only compare within the same arena.
+                if previous.file_index() == decl.file_index()
+                    && nodes[decl].parent == nodes[previous].parent
                     && nodes[decl].kind == nodes[previous].kind
                     && (nodes[decl].loc.pos() == nodes[previous].loc.end()
                         || nodes[previous].flags.intersects(ast::NodeFlags::REPARSED))
