@@ -536,20 +536,6 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
             meaning,
             /*should_compute_alias_to_mark_visible*/ true,
         );
-        if std::env::var("TSC_DBG_TRACK").is_ok() {
-            let symbols = self
-                .symbols
-                .expect("SymbolTrackerImpl requires TransformOptions::symbols")
-                .borrow();
-            eprintln!(
-                "[track] sym={:?} name={:?} decls={:?} accessibility={:?} aliases={:?}",
-                symbol,
-                symbols[symbol.index()].name.as_str(),
-                symbols[symbol.index()].declarations,
-                result.accessibility,
-                result.aliases_to_make_visible
-            );
-        }
         self.handle_symbol_accessibility_error(result, nodes)
     }
 }

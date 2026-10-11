@@ -195,13 +195,6 @@ impl<'p> BasicEmitHost<'p> {
         file: NodeId,
     ) -> (Rc<BasicEmitHost<'p>>, impl FnOnce() + 'p) {
         let (checker, done) = program.get_type_checker_for_file(ctx, file);
-        if std::env::var("TSC_DBG_ALIAS").is_ok() {
-            eprintln!(
-                "[emit-host] file={:?} checker={:p}",
-                file,
-                checker.as_ptr()
-            );
-        }
         (
             Rc::new(BasicEmitHost {
                 program,

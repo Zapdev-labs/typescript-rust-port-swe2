@@ -1131,17 +1131,11 @@ impl<'a> DeclarationTransformerState<'a> {
         input: NodeId,
     ) -> Option<NodeId> {
         if self.should_strip_internal(Some(input), cx.nodes) {
-            if std::env::var("TSC_DBG_DECL").is_ok() {
-                eprintln!("[decl-subtree] input={:?} strip_internal", input);
-            }
             return None;
         }
         if ast::is_declaration(&cx.nodes[input]) {
             if is_declaration_and_not_visible(&self.ec(), &*self.resolver.borrow(), input, cx.nodes)
             {
-                if std::env::var("TSC_DBG_DECL").is_ok() {
-                    eprintln!("[decl-subtree] input={:?} not_visible", input);
-                }
                 return None;
             }
             if ast::has_dynamic_name(input, cx.nodes) {
@@ -1274,9 +1268,6 @@ impl<'a> DeclarationTransformerState<'a> {
             }
             Kind::VariableDeclaration => {
                 result = self.transform_variable_declaration(v, cx, input);
-                if std::env::var("TSC_DBG_DECL").is_ok() {
-                    eprintln!("[decl-subtree] vardecl input={:?} -> {:?}", input, result);
-                }
             }
             Kind::TypeParameter => {
                 result = self.transform_type_parameter_declaration(v, cx, input);
@@ -4652,9 +4643,6 @@ impl<'a> DeclarationTransformerState<'a> {
             }
         }
         if !visible {
-            if std::env::var("TSC_DBG_DECL").is_ok() {
-                eprintln!("[decl-varstmt] input={:?} NOT VISIBLE", input);
-            }
             return None;
         }
 
@@ -4683,12 +4671,6 @@ impl<'a> DeclarationTransformerState<'a> {
         let nodes = v
             .visit_slice(cx, &input_nodes_vec)
             .unwrap_or_else(|| input_nodes_vec.clone());
-        if std::env::var("TSC_DBG_DECL").is_ok() {
-            eprintln!(
-                "[decl-varstmt] input={:?} decls_in={:?} decls_out={:?}",
-                input, input_nodes_vec, nodes
-            );
-        }
         if nodes.is_empty() {
             if !extra_imports.is_empty() {
                 return Some(
@@ -5277,9 +5259,6 @@ impl<'a> DeclarationTransformerState<'a> {
                 .resolver
                 .borrow()
                 .is_declaration_visible(import_clause, cx.nodes);
-            if std::env::var("TSC_DBG_TRACK").is_ok() {
-                eprintln!("[importDecl] decl={:?} clause={:?} visible={vis}", decl, import_clause);
-            }
             if vis {
                 visible_default_binding = cx.nodes[import_clause].name();
             }

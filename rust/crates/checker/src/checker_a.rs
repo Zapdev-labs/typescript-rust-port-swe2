@@ -1729,9 +1729,6 @@ impl Checker {
     ) {
         self.ctx = ctx;
         let __check_t = std::time::Instant::now();
-        if std::env::var("TSC_DBG_ALIAS").is_ok() {
-            eprintln!("[check] checker={:p} file={:?}", self as *const _, source_file);
-        }
         let __program = self.program.clone().expect("program");
         // PORT(borrowck): descendant checks take `nodes_mut`; hold the arena
         // `Ref` only to extract source-file metadata, then drop it.

@@ -197,9 +197,6 @@ pub(crate) fn set_original_shared(
             }
         }
         Some(&existing) if !allow_overwrite && existing != original => {
-            if std::env::var("TSC_DBG_ORIG").is_ok() {
-                eprintln!("[orig] node={node:?} existing={existing:?} new={original:?}");
-            }
             panic!("Original node already set.")
         }
         Some(_) if allow_overwrite => {

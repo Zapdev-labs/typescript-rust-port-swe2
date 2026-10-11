@@ -124,9 +124,6 @@ impl Checker {
             .is_visible;
         if is_visible == Tristate::Unknown {
             let visible = self.determine_if_declaration_is_visible(node);
-            if std::env::var("TSC_DBG_VIS").is_ok() {
-                eprintln!("[vis] node={:?} visible={}", node, visible);
-            }
             self.emit_resolver_links
                 .declaration_links
                 .get(node)

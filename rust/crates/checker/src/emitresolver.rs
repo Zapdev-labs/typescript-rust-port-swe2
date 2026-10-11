@@ -854,10 +854,6 @@ impl tsc_printer::EmitResolver for EmitResolver {
             && let Some(symbol) = c.get_symbol_of_declaration(node)
         {
             let alias_links_referenced = c.alias_symbol_links.get(symbol).referenced;
-            if std::env::var("TSC_DBG_ALIAS").is_ok() {
-                eprintln!("[alias] checker={:p} node={:?} symbol={:?} referenced={}",
-                    &*c, node, symbol, alias_links_referenced);
-            }
             if alias_links_referenced {
                 return true;
             }
