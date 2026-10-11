@@ -425,6 +425,16 @@ impl EmitResolver {
                         ok.then_some(name)
                     }
                 })),
+                get_kind_of_node: Some(Box::new({
+                    let c = c.clone();
+                    move |node| {
+                        let mut c = c.try_borrow_mut().ok()?;
+                        let __program = c.program.clone()?;
+                        let nodes =
+                            crate::printer_util::resolve_arena_for(&__program, &[], node);
+                        nodes.get(node.local_index() as usize).map(|n| n.kind)
+                    }
+                })),
             },
         )
     }

@@ -108,6 +108,11 @@ pub struct ReferenceResolverHooks<'a> {
     /// `GetElementAccessExpressionName` — returns `Some(name)` when the
     /// checker resolved a name (`(string, bool)` in Go).
     pub get_element_access_expression_name: Option<Box<dyn FnMut(NodeId) -> Option<String> + 'a>>,
+    /// PORT: resolves `id`'s kind when `id` is not in the working arena —
+    /// merged-symbol declarations can live in other files (the Go port
+    /// dereferences node pointers, which have no arena concept). The
+    /// checker wires this to its arena lookup.
+    pub get_kind_of_node: Option<Box<dyn FnMut(NodeId) -> Option<Kind> + 'a>>,
 }
 
 /// `type referenceResolver struct` — exported under the Go constructor's
@@ -320,6 +325,24 @@ impl<'a> ReferenceResolverImpl<'a> {
     }
 }
 
+impl<'a> ReferenceResolverImpl<'a> {
+    /// `id`'s kind — `nodes` may not be `id`'s arena (merged symbols can
+    /// span files); the checker hook resolves cross-arena lookups.
+    fn node_kind(&mut self, id: NodeId, nodes: &[Node]) -> Option<Kind> {
+        if nodes
+            .first()
+            .is_some_and(|n| n.id.file_index() == id.file_index())
+            && let Some(n) = nodes.get(id.local_index() as usize)
+        {
+            return Some(n.kind);
+        }
+        self.hooks
+            .get_kind_of_node
+            .as_mut()
+            .and_then(|hook| hook(id))
+    }
+}
+
 impl<'a> ReferenceResolver for ReferenceResolverImpl<'a> {
     /// `func (r *referenceResolver) GetReferencedExportContainer` — returns
     /// `SourceFile|ModuleDeclaration|EnumDeclaration`.
@@ -363,13 +386,16 @@ impl<'a> ReferenceResolver for ReferenceResolverImpl<'a> {
                 symbol = export_symbol;
             }
             if let Some(parent_symbol) = self.get_parent_of_symbol(Some(symbol), symbols) {
-                if symbols.borrow()[parent_symbol.index()]
-                    .flags
-                    .intersects(SymbolFlags::VALUE_MODULE)
-                    && symbols.borrow()[parent_symbol.index()]
-                        .value_declaration
-                        .is_some_and(|vd| nodes[vd].kind == Kind::SourceFile)
-                {
+                let parent_is_value_module_source_file = {
+                    let vd = symbols.borrow()[parent_symbol.index()].value_declaration;
+                    symbols.borrow()[parent_symbol.index()]
+                        .flags
+                        .intersects(SymbolFlags::VALUE_MODULE)
+                        && vd.is_some_and(|vd| {
+                            self.node_kind(vd, nodes) == Some(Kind::SourceFile)
+                        })
+                };
+                if parent_is_value_module_source_file {
                     let symbol_file =
                         symbols.borrow()[parent_symbol.index()].value_declaration.unwrap();
                     let reference_file = get_source_file_of_node(Some(node), nodes);
@@ -473,25 +499,27 @@ impl<'a> ReferenceResolver for ReferenceResolverImpl<'a> {
             };
             let symbol_declarations = symbols.borrow()[symbol.index()].declarations.clone();
             for &declaration in &symbol_declarations {
-                match nodes[declaration].kind {
-                    Kind::VariableDeclaration
-                    | Kind::Parameter
-                    | Kind::BindingElement
-                    | Kind::PropertyDeclaration
-                    | Kind::PropertyAssignment
-                    | Kind::ShorthandPropertyAssignment
-                    | Kind::EnumMember
-                    | Kind::ObjectLiteralExpression
-                    | Kind::FunctionDeclaration
-                    | Kind::FunctionExpression
-                    | Kind::ArrowFunction
-                    | Kind::ClassDeclaration
-                    | Kind::ClassExpression
-                    | Kind::EnumDeclaration
-                    | Kind::MethodDeclaration
-                    | Kind::GetAccessor
-                    | Kind::SetAccessor
-                    | Kind::ModuleDeclaration => {
+                match self.node_kind(declaration, nodes) {
+                    Some(
+                        Kind::VariableDeclaration
+                        | Kind::Parameter
+                        | Kind::BindingElement
+                        | Kind::PropertyDeclaration
+                        | Kind::PropertyAssignment
+                        | Kind::ShorthandPropertyAssignment
+                        | Kind::EnumMember
+                        | Kind::ObjectLiteralExpression
+                        | Kind::FunctionDeclaration
+                        | Kind::FunctionExpression
+                        | Kind::ArrowFunction
+                        | Kind::ClassDeclaration
+                        | Kind::ClassExpression
+                        | Kind::EnumDeclaration
+                        | Kind::MethodDeclaration
+                        | Kind::GetAccessor
+                        | Kind::SetAccessor
+                        | Kind::ModuleDeclaration,
+                    ) => {
                         declarations.push(declaration);
                     }
                     _ => {}
