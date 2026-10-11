@@ -43,10 +43,9 @@ use tsc_ast::diagnostic::{
 use tsc_ast::utilities::HasFileName;
 use tsc_ast::{
     ArenaCell, ArenaMut, CheckJsDirective, CommentDirectiveKind, FileReference, Node, NodeId,
-    SourceFileMetaData,
-    Symbol, is_check_js_enabled_for_file, is_external_module, is_external_or_commonjs_module,
-    is_plain_js_file, is_source_file_js, is_source_phase_import, is_string_literal,
-    is_string_literal_like, new_has_file_name,
+    SourceFileMetaData, Symbol, is_check_js_enabled_for_file, is_external_module,
+    is_external_or_commonjs_module, is_plain_js_file, is_source_file_js, is_source_phase_import,
+    is_string_literal, is_string_literal_like, new_has_file_name,
 };
 use tsc_checker::checker_core::Checker;
 use tsc_core::compileroptions::ResolutionMode;
@@ -1163,7 +1162,7 @@ impl Program {
                 result
             }
         };
-        filter_and_sort_diagnostics(result)
+        self.filter_and_sort_diagnostics(result)
     }
 
     /// `collectCheckerDiagnostics` — like `collectDiagnostics` but the
@@ -1183,9 +1182,9 @@ impl Program {
             let (c, done) = self.get_type_checker_for_file_exclusive(ctx.clone(), source_file);
             let result = collect(ctx, &c, source_file);
             done();
-            return filter_and_sort_diagnostics(result);
+            return self.filter_and_sort_diagnostics(result);
         }
-        filter_and_sort_diagnostics(
+        self.filter_and_sort_diagnostics(
             self.collect_checker_diagnostics_from_files(ctx, &self.source_file_ids, collect)
                 .into_iter()
                 .flatten()
@@ -1306,7 +1305,7 @@ impl Program {
         let mut result =
             FxHashMap::with_capacity_and_hasher(source_files.len(), Default::default());
         for (i, diags) in all_diags.into_iter().enumerate() {
-            result.insert(source_files[i], filter_and_sort_diagnostics(diags));
+            result.insert(source_files[i], self.filter_and_sort_diagnostics(diags));
         }
         result
     }
@@ -3979,7 +3978,42 @@ fn equal_check_js_directives(d1: Option<&CheckJsDirective>, d2: Option<&CheckJsD
         || (d1.is_some() && d2.is_some() && d1.unwrap().enabled == d2.unwrap().enabled)
 }
 
-/// `filterAndSortDiagnostics`.
+impl Program {
+    /// `filterAndSortDiagnostics`.
+    fn filter_and_sort_diagnostics(&self, diags: Vec<DiagnosticRef>) -> Vec<DiagnosticRef> {
+        sort_and_deduplicate_diagnostics(
+            diags
+                .into_iter()
+                .filter(|diag| {
+                    let d = lock_diagnostic(diag);
+                    let file = d.file();
+                    if !d.reports_unnecessary() || file.is_none() || !d.source().is_empty() {
+                        return true;
+                    }
+                    let file = file.unwrap();
+                    // `file.SpanMap()` in Go is a live read off the
+                    // `*SourceFile` — a `DiagnosticFile` snapshotted during
+                    // parse can predate `SetContentMapperInfo`, so prefer the
+                    // live node's map.
+                    let span_map = file.node.and_then(|node| {
+                        let nodes = self.arena_of(node);
+                        nodes[node].as_source_file().span_map()
+                    });
+                    let span_map = span_map.as_ref().or(file.span_map.as_ref());
+                    let Some(span_map) = span_map else {
+                        return true;
+                    };
+                    let (_, fidelity) =
+                        tsc_spanmap::SpanMap::virtual_to_original_span(Some(span_map), d.loc());
+                    fidelity != tsc_spanmap::Fidelity::None
+                })
+                .collect(),
+        )
+    }
+}
+
+/// `filterAndSortDiagnostics` — free-fn shim for non-Program callers that
+/// only have `DiagnosticFile` snapshots (no live span-map re-read).
 fn filter_and_sort_diagnostics(diags: Vec<DiagnosticRef>) -> Vec<DiagnosticRef> {
     sort_and_deduplicate_diagnostics(
         diags

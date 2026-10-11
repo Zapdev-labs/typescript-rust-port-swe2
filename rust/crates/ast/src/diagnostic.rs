@@ -98,6 +98,17 @@ pub struct DiagnosticFile {
     /// `file.SpanMap()` — `None` for unmapped files (Go's map is nil-safe,
     /// so `None` mirrors nil).
     pub span_map: Option<Arc<SpanMap>>,
+    /// `file.IsContentMapperSupplemental()` — `CanonicalSourceFile != nil`.
+    pub is_content_mapper_supplemental: bool,
+    /// `file.CanonicalSourceFile().FileName()` — the canonical file's name for
+    /// supplemental outputs (the NodeId is not dereferenceable cross-arena).
+    pub canonical_file_name: Option<RootedFilePath>,
+    /// `file.ContentMapper()` — the mapper identity (e.g. `mapper@1.0.0`).
+    pub content_mapper: Arc<str>,
+    /// Whether `ContentMapperInfo` had been attached when this snapshot was
+    /// taken — distinguishes a parse-time snapshot (stale) from a post-attach
+    /// one for the from_node cache.
+    attached_mapper_info: bool,
 }
 
 impl DiagnosticFile {
@@ -117,7 +128,14 @@ impl DiagnosticFile {
                 std::cell::RefCell::new(FxHashMap::default());
         }
         if let Some(f) = CACHE.with(|c| c.borrow().get(&node).cloned()) {
-            return f;
+            // A parse-time snapshot can predate `set_content_mapper_info`
+            // (attached when the loader applies the mapper's transform),
+            // leaving span_map/original_text/supplemental stale. Reuse the
+            // entry only when it was taken with the info already attached.
+            let d = nodes[node].as_source_file();
+            if f.attached_mapper_info || !d.is_content_mapped() {
+                return f;
+            }
         }
         let d = nodes[node].as_source_file();
         let f = DiagnosticFile {
@@ -127,6 +145,10 @@ impl DiagnosticFile {
             text: Arc::from(d.text()),
             original_text: Arc::from(d.original_text()),
             span_map: d.span_map(),
+            is_content_mapper_supplemental: d.canonical_source_file().is_some(),
+            canonical_file_name: d.canonical_file_name().cloned(),
+            content_mapper: Arc::from(d.content_mapper()),
+            attached_mapper_info: d.is_content_mapped(),
         };
         CACHE.with(|c| {
             let mut c = c.borrow_mut();

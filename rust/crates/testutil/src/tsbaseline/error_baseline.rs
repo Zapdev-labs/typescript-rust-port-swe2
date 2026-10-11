@@ -45,9 +45,8 @@ fn format_opts() -> FormattingOptions {
 struct ResolvedLocation {
     loc: TextRange,
     use_original: bool,
-    /// Kept for parity with `ASTDiagnostic::resolve`'s result; nothing in the
-    /// snapshot-only path consumes it yet.
-    #[allow(dead_code)]
+    /// The range is in virtual code with no corresponding original location —
+    /// `message_chain` appends the "virtual code" note for it.
     synthesized: bool,
 }
 
@@ -108,15 +107,31 @@ impl Diagnostic for SnapshotDiagnostic {
     /// arena `node` resolution).
     fn file<'s>(&'s self) -> Option<FileLike<'s>> {
         let file = self.diagnostic_file()?;
-        let file_name = file.file_name.clone();
-        if self.resolve().use_original {
-            return Some(FileLike::from_text(file_name, file.original_text));
+        let supplemental = file.is_content_mapper_supplemental;
+        let mut file_name = file.file_name.clone();
+        // `canonical.FileName()` — supplemental outputs render under the
+        // canonical file's name (`renamedFile` in Go).
+        if let Some(canonical) = &file.canonical_file_name {
+            file_name = canonical.clone();
         }
-        Some(FileLike::from_text_path_keyed(
-            file_name,
-            file.text,
-            file.path_key,
-        ))
+        if self.resolve().use_original {
+            return Some(
+                FileLike::from_text(file_name, file.original_text)
+                    .with_is_content_mapper_supplemental(supplemental),
+            );
+        }
+        if file_name != file.file_name {
+            // `&renamedFile{file, fileName}` — fresh pointer identity per
+            // `File()` call, file's own (virtual) text, canonical name.
+            return Some(
+                FileLike::from_text(file_name, file.text)
+                    .with_is_content_mapper_supplemental(supplemental),
+            );
+        }
+        Some(
+            FileLike::from_text_path_keyed(file_name, file.text, file.path_key)
+                .with_is_content_mapper_supplemental(supplemental),
+        )
     }
 
     fn pos(&self) -> i32 {
@@ -148,7 +163,7 @@ impl Diagnostic for SnapshotDiagnostic {
     }
 
     fn message_chain<'s>(&'s self) -> Vec<Box<dyn Diagnostic + 's>> {
-        lock_diagnostic(&self.diagnostic)
+        let mut result: Vec<Box<dyn Diagnostic + 's>> = lock_diagnostic(&self.diagnostic)
             .message_chain()
             .iter()
             .map(|c| {
@@ -156,7 +171,22 @@ impl Diagnostic for SnapshotDiagnostic {
                     diagnostic: c.clone(),
                 }) as Box<dyn Diagnostic>
             })
-            .collect()
+            .collect();
+        if self.resolve().synthesized {
+            // The diagnostic points into synthesized virtual code; make clear
+            // the shown location is not in the original file, and which
+            // content mapper produced it.
+            let mapper = lock_diagnostic(&self.diagnostic)
+                .file()
+                .map(|f| f.content_mapper.to_string())
+                .unwrap_or_default();
+            let note = tsc_ast::diagnostic::new_compiler_diagnostic(
+                &tsc_diagnostics::This_location_is_in_virtual_code_produced_by_the_content_mapper_0_and_has_no_corresponding_location_in_the_original_file,
+                &[mapper],
+            );
+            result.push(Box::new(SnapshotDiagnostic { diagnostic: note }));
+        }
+        result
     }
 
     fn related_information<'s>(&'s self) -> Vec<Box<dyn Diagnostic + 's>> {
@@ -557,13 +587,12 @@ fn iterate_error_baseline<D: Diagnostic>(
                 .is_some_and(|f| is_tsconfig_file(f.file_name().as_string()))
         })
         .count() as i64;
-    // `numContentMapperSupplementalDiagnostics` — Go checks
-    // `file.IsContentMapperSupplemental()` on the `*ast.SourceFile`; the
-    // `DiagnosticFile` snapshot does not carry the flag and we have no
-    // arena here, so this is always 0. Callers (verifyDiagnostics) filter
-    // content-mapped diagnostics into the content-mapper baseline before
-    // reaching us.
-    let num_content_mapper_supplemental_diagnostics = 0i64;
+    // `numContentMapperSupplementalDiagnostics` — `file.IsContentMapperSupplemental()`,
+    // surfaced on `FileLike` from the live node in `ASTDiagnostic::file`.
+    let num_content_mapper_supplemental_diagnostics = diagnostics
+        .iter()
+        .filter(|d| d.file().is_some_and(|f| f.is_content_mapper_supplemental()))
+        .count() as i64;
     // Verify we didn't miss any errors in total
     assert_eq!(
         total_errors_reported_in_non_library_non_tsconfig_files

@@ -311,10 +311,7 @@ fn compile_files_ex_inner(
         base_directory,
         harness_options.case_sensitivity,
     );
-    config
-        .parsed_config
-        .get_or_insert_with(Default::default)
-        .content_mappers = content_mappers.clone();
+    config.set_content_mappers(content_mappers.clone());
     config.config_file = config_file;
     *config.errors.lock().unwrap() = errors;
     let config = Arc::new(config);
@@ -1034,10 +1031,7 @@ fn compile_files_with_host(
         config.case_sensitivity(),
     );
     if let Some(parsed) = config.parsed_config.as_ref() {
-        pre_config
-            .parsed_config
-            .get_or_insert_with(Default::default)
-            .content_mappers = parsed.content_mappers.clone();
+        pre_config.set_content_mappers(parsed.content_mappers.clone());
     }
     pre_config.config_file = config.config_file.clone();
     *pre_config.errors.lock().unwrap() = config
@@ -1233,15 +1227,15 @@ fn new_compilation_result(
 
         // using the order from the inputs, populate the outputs
         for source_file in program.get_source_files() {
-            let (file_name, text, is_declaration_file) = {
+            let (file_name, text) = {
                 let nodes = program.program().arena_of(source_file);
                 let sf = nodes[source_file].as_source_file();
-                (
-                    sf.file_name().clone(),
-                    sf.text().to_string(),
-                    sf.is_declaration_file,
-                )
+                (sf.file_name().clone(), sf.text().to_string())
             };
+            // `!fileName.IsDeclarationFile()` — Go checks the *path*, not the
+            // node's `IsDeclarationFile` flag (the declaration transform flips
+            // that flag on the source file during emit).
+            let is_declaration_file = file_name.is_declaration_file();
             let file_name_string = file_name.as_string().to_string();
             let input = Arc::new(TestFile {
                 unit_name: file_name_string.clone(),

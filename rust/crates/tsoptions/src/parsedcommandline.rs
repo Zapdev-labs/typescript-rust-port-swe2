@@ -596,6 +596,18 @@ impl ParsedCommandLine {
         &self.content_mapper_extensions_cache
     }
 
+    /// `(p *ParsedCommandLine) SetContentMappers` — sets the parsed config's
+    /// content mappers and keeps the flattened extension cache in sync (Go
+    /// mutates `ParsedConfig.ContentMappers` directly and computes the
+    /// extension list on demand).
+    pub fn set_content_mappers(&mut self, mappers: Vec<Arc<Mapper>>) {
+        self.content_mapper_extensions_cache =
+            Self::compute_content_mapper_extensions(mappers.as_slice());
+        self.parsed_config
+            .get_or_insert_with(Default::default)
+            .content_mappers = mappers;
+    }
+
     fn compute_content_mapper_extensions(mappers: &[Arc<Mapper>]) -> Vec<String> {
         core::flat_map(mappers, |m| m.extensions.clone().unwrap_or_default())
     }

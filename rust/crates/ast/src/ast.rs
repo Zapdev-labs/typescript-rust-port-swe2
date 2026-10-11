@@ -1580,6 +1580,11 @@ pub struct ContentMapperSourceFileInfo {
     pub diagnostic_directives: Vec<MappedDiagnosticDirective>,
     pub supplemental_source_files: Vec<NodeId>,
     pub canonical_source_file: Option<NodeId>,
+    /// `CanonicalSourceFile().FileName()` — the canonical file's name,
+    /// snapshotted at attach time. `canonical_source_file` is a NodeId in
+    /// the *canonical* file's arena, which readers holding only this file's
+    /// arena cannot dereference.
+    pub canonical_file_name: Option<RootedFilePath>,
 }
 
 /// `type CommentRange struct`
@@ -1708,9 +1713,7 @@ impl NodeFactory<'_> {
                 // the same backing allocation (deep equality would wrongly
                 // reuse `node` and let writes like `IsDeclarationFile`
                 // mutate the original SourceFile).
-                statements
-                    .as_ref()
-                    .map(|l| l.nodes.as_ptr())
+                statements.as_ref().map(|l| l.nodes.as_ptr())
                     != d.statements.as_ref().map(|l| l.nodes.as_ptr())
                     || end_of_file_token != d.end_of_file_token,
                 d.parse_options.clone(),
@@ -1980,6 +1983,14 @@ impl SourceFile {
     /// `(node *SourceFile) IsContentMapperSupplemental()`.
     pub fn is_content_mapper_supplemental(&self) -> bool {
         self.canonical_source_file().is_some()
+    }
+
+    /// `CanonicalSourceFile().FileName()` — snapshotted at attach time since
+    /// `canonical_source_file` is not dereferenceable from this arena.
+    pub fn canonical_file_name(&self) -> Option<&RootedFilePath> {
+        self.content_mapper_info
+            .as_ref()
+            .and_then(|info| info.canonical_file_name.as_ref())
     }
 
     /// `(node *SourceFile) FileName()` — `parseOptions.FileName` (the
@@ -2937,10 +2948,7 @@ impl<T: ?Sized, F> ArenaRef<T, F>
 where
     F: for<'a> Fn(&'a Vec<Node>) -> &'a T,
 {
-    pub fn new(
-        arena: std::rc::Rc<Vec<Node>>,
-        f: F,
-    ) -> ArenaRef<T, F> {
+    pub fn new(arena: std::rc::Rc<Vec<Node>>, f: F) -> ArenaRef<T, F> {
         ArenaRef {
             arena,
             f,

@@ -238,6 +238,7 @@ pub fn parse_result(
             diagnostic_directives: result.diagnostic_directives.clone(),
             supplemental_source_files: files.supplemental.iter().map(|f| f.file).collect(),
             canonical_source_file: None,
+            canonical_file_name: None,
         });
     // `diagnostic.SetFile(sourceFile)` on each mapper diagnostic.
     for d in &result.diagnostics {
@@ -262,6 +263,15 @@ pub fn parse_result(
                 diagnostic_directives: supplemental.diagnostic_directives.clone(),
                 supplemental_source_files: Vec::new(),
                 canonical_source_file: Some(files.canonical.file),
+                // `canonical.FileName()` — resolved here where the canonical
+                // arena is in scope (the id is not dereferenceable from the
+                // supplemental arena).
+                canonical_file_name: Some(
+                    files.canonical.nodes[files.canonical.file]
+                        .as_source_file()
+                        .file_name()
+                        .clone(),
+                ),
             });
     }
     Ok(files)

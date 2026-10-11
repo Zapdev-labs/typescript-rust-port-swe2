@@ -269,8 +269,7 @@ impl<'p, 'w> Emitter<'p, 'w> {
             get_emit_module_format_of_file: Some(&get_module_format),
             symbols: Some(&**symbol_arena),
         };
-        for transformer in
-            get_script_transformers(&opts, source_file.expect("source file"), nodes)
+        for transformer in get_script_transformers(&opts, source_file.expect("source file"), nodes)
         {
             if let Some(file) = source_file {
                 source_file = transformer.transform_source_file(nodes, file);
@@ -538,19 +537,44 @@ impl<'p, 'w> Emitter<'p, 'w> {
             let span_map = nodes_mut[content_mapped_source].as_source_file().span_map();
             if emit_declaration_map {
                 if let Some(span_map) = span_map {
-                    // PORT(deferred): see file header — the Go handler swaps in
-                    // a `declarationMapSource` keyed on the original file name;
-                    // the Rust callback can only return `NodeId` sources, so
-                    // the virtual file stays in the map with mapped positions.
+                    // `originalSource := newDeclarationMapSource(contentMappedSource)` —
+                    // a synthetic `sourcemap.Source` keyed on the original file
+                    // carrying its pre-mapping text and line map.
+                    let (original_file_name, original_text) = {
+                        let sf = nodes_mut[content_mapped_source].as_source_file();
+                        (
+                            sf.original_file_name(&nodes_mut).clone(),
+                            sf.original_text().to_string(),
+                        )
+                    };
+                    let original_source = std::rc::Rc::new(tsc_printer::SyntheticSourceFile {
+                        line_map: tsc_core::core::compute_ecma_line_starts(&original_text).to_vec(),
+                        text: original_text,
+                        file_name: original_file_name,
+                    });
                     print_handlers.map_source_position = Some(Box::new(
-                        move |source: NodeId, pos: i32| -> (Option<NodeId>, Option<i32>) {
-                            let _ = &content_mapped_file_name;
+                        move |source_name: &tsc_tspath::RootedFilePath,
+                              source: tsc_printer::SourceMapSource,
+                              pos: i32|
+                              -> (
+                            Option<tsc_printer::SourceMapSource>,
+                            Option<i32>,
+                        ) {
+                            // `if source.FileName() != contentMappedSource.FileName()`
+                            if *source_name != content_mapped_file_name {
+                                return (Some(source), Some(pos));
+                            }
                             let mapped = tsc_spanmap::SpanMap::virtual_to_original_position_exact(
                                 Some(&span_map),
                                 pos,
                             );
                             match mapped {
-                                (pos, true) => (Some(source), Some(pos)),
+                                (pos, true) => (
+                                    Some(tsc_printer::SourceMapSource::Synthetic(
+                                        original_source.clone(),
+                                    )),
+                                    Some(pos),
+                                ),
                                 (_, false) => (None, None),
                             }
                         },

@@ -114,11 +114,9 @@ pub fn get_output_paths_for(
     paths
 }
 
-// PORT(deferred): `SourceFile.ContentMapper()` — the Rust SourceFile does not
-// yet carry `content_mapper_info` (contentmapper is deferred; see
-// ast/diagnostic.rs), so every file is treated as unmapped and this returns "".
-fn content_mapper(_file: &SourceFile) -> &'static str {
-    ""
+/// `sourceFile.ContentMapper()`.
+fn content_mapper(file: &SourceFile) -> &str {
+    file.content_mapper()
 }
 
 /// `ForEachEmittedFile`.

@@ -74,14 +74,56 @@ pub struct PrinterOptions {
     pub terminate_unterminated_literals: bool,
 }
 
+/// `sourcemap.Source` as seen by the printer — either an arena source file
+/// (`Node`) or a synthetic file entry such as the declaration-map original
+/// source (Go's `declarationMapSource`, a `sourcemap.Source` impl with only
+/// file name + text + line map).
+#[derive(Clone)]
+pub enum SourceMapSource {
+    Node(NodeId),
+    Synthetic(std::rc::Rc<SyntheticSourceFile>),
+}
+
+impl SourceMapSource {
+    /// `source.FileName()`.
+    pub fn file_name<'a>(&'a self, nodes: &'a [ast::Node]) -> &'a tsc_tspath::RootedFilePath {
+        match self {
+            Self::Node(id) => nodes[*id].as_source_file().file_name(),
+            Self::Synthetic(s) => &s.file_name,
+        }
+    }
+}
+
+/// Go's `declarationMapSource` — the original (pre-mapping) text of a
+/// content-mapped file, used as the `sourcemap.Source` for mapped positions.
+pub struct SyntheticSourceFile {
+    pub file_name: tsc_tspath::RootedFilePath,
+    pub text: String,
+    pub line_map: Vec<tsc_core::text::TextPos>,
+}
+
+impl PartialEq for SourceMapSource {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Node(a), Self::Node(b)) => a == b,
+            (Self::Synthetic(a), Self::Synthetic(b)) => std::rc::Rc::ptr_eq(a, b),
+            _ => false,
+        }
+    }
+}
+
 /// `MapSourcePosition` composes source-map positions before they reach the
-/// generator. Returning `None` emits a generated-only mapping.
-///
-/// PORT: returning the mapped `sourcemap::Source` as a trait object would
-/// require callers to fabricate trait objects; the callback borrows the
-/// `Source` it was given and returns an index into the source list instead —
-/// see `PORT(deferred)` on source-map emit.
-pub type MapSourcePosition<'a> = Box<dyn FnMut(NodeId, i32) -> (Option<NodeId>, Option<i32>) + 'a>;
+/// generator. The first argument is the in-flight source's `FileName()` —
+/// Go's handler compares it against the content-mapped file's name. Returning
+/// `None` for the mapped position emits a generated-only mapping.
+pub type MapSourcePosition<'a> = Box<
+    dyn FnMut(
+            &tsc_tspath::RootedFilePath,
+            SourceMapSource,
+            i32,
+        ) -> (Option<SourceMapSource>, Option<i32>)
+        + 'a,
+>;
 
 /// `type PrintHandlers struct`
 ///
@@ -229,7 +271,7 @@ pub struct Printer<'a> {
     /// `ownWriter EmitTextWriter` — a reusable writer for `Emit`.
     own_writer: Option<TextWriter>,
     /// `mostRecentSourceMapSourceIndex`
-    most_recent_source_map_source: Option<NodeId>,
+    most_recent_source_map_source: Option<SourceMapSource>,
     most_recent_source_map_source_index: i32,
 }
 
@@ -311,7 +353,7 @@ impl<'a> Printer<'a> {
     ) {
         let saved_current_source_file = self.current_source_file;
         let saved_source_map_source_index = self.most_recent_source_map_source_index;
-        let saved_most_recent_source_map_source = self.most_recent_source_map_source;
+        let saved_most_recent_source_map_source = self.most_recent_source_map_source.clone();
         let comments_disabled = self.options.remove_comments;
 
         let mut emitter = Emitter {
@@ -357,7 +399,7 @@ pub(crate) struct Emitter<'p, 'a> {
     /// `p.sourceMapGenerator`
     source_map_generator: Option<&'p mut sourcemap::Generator>,
     /// `p.sourceMapSource`
-    source_map_source: Option<NodeId>,
+    source_map_source: Option<SourceMapSource>,
     /// `p.sourceMapSourceIndex`
     source_map_source_index: i32,
     /// `p.sourceMapSourceIsJson`
@@ -473,7 +515,7 @@ impl<'p, 'a> Emitter<'p, 'a> {
                 .p
                 .emit_context
                 .get_external_helpers_module_name(self.p.nodes, source_file);
-            self.set_source_map_source(source_file);
+            self.set_source_map_source(SourceMapSource::Node(source_file));
         }
         // !!!
     }
@@ -1741,7 +1783,10 @@ impl<'p, 'a> Emitter<'p, 'a> {
                 let n = &self.p.nodes[node];
                 panic!(
                     "unexpected EntityName: {:?} node={:?} loc={:?} flags={:?} parent={:?} parent_kind={:?}",
-                    n.kind, node, n.loc, n.flags,
+                    n.kind,
+                    node,
+                    n.loc,
+                    n.flags,
                     parent,
                     parent.map(|p| self.p.nodes[p].kind)
                 )
@@ -8491,34 +8536,34 @@ impl<'p, 'a> Emitter<'p, 'a> {
     //
 
     /// `p.setSourceMapSource`
-    fn set_source_map_source(&mut self, source: NodeId) {
+    fn set_source_map_source(&mut self, source: SourceMapSource) {
         if self.source_maps_disabled {
             return;
         }
 
-        self.source_map_source = Some(source);
-        {
-            let (line_map, text) = {
-                let sf = self.p.nodes[source].as_source_file();
+        self.source_map_source = Some(source.clone());
+        let (line_map, text) = match &source {
+            SourceMapSource::Node(id) => {
+                let sf = self.p.nodes[*id].as_source_file();
                 (sf.ecma_line_map().to_vec(), sf.text().to_string())
-            };
-            self.source_map_line_char_cache = Some(LineCharacterCache {
-                line_map,
-                text,
-                cached_line: 0,
-                cached_pos: 0,
-                cached_char: 0,
-                has_cached: false,
-            });
-        }
-        if self.p.most_recent_source_map_source == Some(source) {
+            }
+            SourceMapSource::Synthetic(s) => (s.line_map.clone(), s.text.clone()),
+        };
+        self.source_map_line_char_cache = Some(LineCharacterCache {
+            line_map,
+            text,
+            cached_line: 0,
+            cached_pos: 0,
+            cached_char: 0,
+            has_cached: false,
+        });
+        if self.p.most_recent_source_map_source.as_ref() == Some(&source) {
             self.source_map_source_index = self.p.most_recent_source_map_source_index;
             return;
         }
 
-        self.source_map_source_is_json = self.p.nodes[source]
-            .as_source_file()
-            .file_name()
+        self.source_map_source_is_json = source
+            .file_name(self.p.nodes)
             .extension_is(tsc_tspath::EXTENSION_JSON);
         if self.source_map_source_is_json {
             return;
@@ -8526,13 +8571,16 @@ impl<'p, 'a> Emitter<'p, 'a> {
 
         if let Some(generator) = self.source_map_generator.as_mut() {
             self.source_map_source_index =
-                generator.add_source(self.p.nodes[source].as_source_file().file_name().clone());
+                generator.add_source(source.file_name(self.p.nodes).clone());
             if self.p.options.inline_sources {
+                let text = match &source {
+                    SourceMapSource::Node(id) => {
+                        self.p.nodes[*id].as_source_file().text().to_string()
+                    }
+                    SourceMapSource::Synthetic(s) => s.text.clone(),
+                };
                 generator
-                    .set_source_content(
-                        self.source_map_source_index,
-                        self.p.nodes[source].as_source_file().text(),
-                    )
+                    .set_source_content(self.source_map_source_index, &text)
                     .expect("SetSourceContent failed");
             }
         }
@@ -8553,10 +8601,16 @@ impl<'p, 'a> Emitter<'p, 'a> {
         }
 
         let mut pos = pos;
-        let source = self.source_map_source.unwrap();
+        let source = self.source_map_source.clone().unwrap();
         let mut source_index = self.source_map_source_index;
-        if let Some(map_source_position) = self.p.handlers.map_source_position.as_mut() {
-            let (mapped_source, mapped_pos) = map_source_position(source, pos);
+        let mut mapped_line_char_cache: Option<LineCharacterCache> = None;
+        if self.p.handlers.map_source_position.is_some() {
+            let source_file_name = source.file_name(self.p.nodes).clone();
+            let (mapped_source, mapped_pos) = self.p.handlers.map_source_position.as_mut().unwrap()(
+                &source_file_name,
+                source.clone(),
+                pos,
+            );
             if mapped_pos.is_none() {
                 let line = self.w().get_line();
                 let column = self.w().get_column();
@@ -8568,13 +8622,17 @@ impl<'p, 'a> Emitter<'p, 'a> {
                 return;
             }
             pos = mapped_pos.unwrap();
-            if mapped_source != Some(source) && mapped_source.is_some() {
-                let saved_source = self.source_map_source;
+            if mapped_source.is_some() && mapped_source != Some(source) {
+                let saved_source = self.source_map_source.clone();
                 let saved_source_index = self.source_map_source_index;
                 let saved_source_is_json = self.source_map_source_is_json;
                 let saved_line_char_cache = self.source_map_line_char_cache.take();
                 self.set_source_map_source(mapped_source.unwrap());
                 source_index = self.source_map_source_index;
+                // Go's `lineCharCache` local keeps pointing at the mapped
+                // source's cache while the printer's state is restored —
+                // the lookup below must use the mapped source's text.
+                mapped_line_char_cache = self.source_map_line_char_cache.take();
                 self.source_map_source = saved_source;
                 self.source_map_source_index = saved_source_index;
                 self.source_map_source_is_json = saved_source_is_json;
@@ -8582,9 +8640,9 @@ impl<'p, 'a> Emitter<'p, 'a> {
             }
         }
 
-        let (source_line, source_character) = self
-            .source_map_line_char_cache
+        let (source_line, source_character) = mapped_line_char_cache
             .as_mut()
+            .or(self.source_map_line_char_cache.as_mut())
             .expect("line char cache")
             .get_line_and_character(pos);
         let line = self.w().get_line();
@@ -8597,9 +8655,9 @@ impl<'p, 'a> Emitter<'p, 'a> {
     }
 
     /// `p.emitSourcePos`
-    fn emit_source_pos(&mut self, source: Option<NodeId>, pos: i32) {
+    fn emit_source_pos(&mut self, source: Option<SourceMapSource>, pos: i32) {
         if source != self.source_map_source {
-            let saved_source_map_source = self.source_map_source;
+            let saved_source_map_source = self.source_map_source.clone();
             let saved_source_map_source_index = self.source_map_source_index;
             let saved_source_map_line_char_cache = self.source_map_line_char_cache.take();
             if let Some(source) = source {
@@ -8634,7 +8692,7 @@ impl<'p, 'a> Emitter<'p, 'a> {
                     .text(),
                 loc.pos(),
             );
-            self.emit_source_pos(self.source_map_source, pos);
+            self.emit_source_pos(self.source_map_source.clone(), pos);
         }
 
         if emit_flags & EmitFlags::NO_NESTED_SOURCE_MAPS != EmitFlags::NONE {
@@ -8669,7 +8727,7 @@ impl<'p, 'a> Emitter<'p, 'a> {
             && emit_flags & EmitFlags::NO_TRAILING_SOURCE_MAP == EmitFlags::NONE
             && !ast::position_is_synthesized(loc.end())
         {
-            self.emit_source_pos(self.source_map_source, loc.end());
+            self.emit_source_pos(self.source_map_source.clone(), loc.end());
         }
     }
 
@@ -8705,7 +8763,7 @@ impl<'p, 'a> Emitter<'p, 'a> {
             );
         }
         if emit_flags & EmitFlags::NO_TOKEN_LEADING_SOURCE_MAPS == EmitFlags::NONE && pos >= 0 {
-            self.emit_source_pos(self.source_map_source, pos);
+            self.emit_source_pos(self.source_map_source.clone(), pos);
         }
 
         Some(SourceMapState {
@@ -8736,7 +8794,7 @@ impl<'p, 'a> Emitter<'p, 'a> {
                 pos = loc.end();
             }
             if pos >= 0 {
-                self.emit_source_pos(self.source_map_source, pos);
+                self.emit_source_pos(self.source_map_source.clone(), pos);
             }
         }
     }

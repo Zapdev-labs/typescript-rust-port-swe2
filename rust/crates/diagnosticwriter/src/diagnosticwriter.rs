@@ -105,6 +105,10 @@ pub struct FileLike<'a> {
     text: FileText<'a>,
     line_map: FileLineMap<'a>,
     key: FileKey,
+    /// `file.IsContentMapperSupplemental()` — set when the underlying source
+    /// file is an unnamed supplemental mapper output (has a canonical source
+    /// file). Read live off the node in `ASTDiagnostic::file`.
+    is_content_mapper_supplemental: bool,
 }
 
 impl<'a> FileLike<'a> {
@@ -119,7 +123,19 @@ impl<'a> FileLike<'a> {
             text,
             line_map,
             key,
+            is_content_mapper_supplemental: false,
         }
+    }
+
+    /// `IsContentMapperSupplemental()`.
+    pub fn is_content_mapper_supplemental(&self) -> bool {
+        self.is_content_mapper_supplemental
+    }
+
+    /// Marks this file as a content-mapper supplemental output.
+    pub fn with_is_content_mapper_supplemental(mut self, v: bool) -> Self {
+        self.is_content_mapper_supplemental = v;
+        self
     }
 
     /// `FileName()`.
@@ -331,7 +347,16 @@ impl<'a> ASTDiagnostic<'a> {
                 synthesized: false,
             };
         }
-        if let Some(span_map) = file.span_map.as_deref() {
+        // Go's `d.file` is a live `*SourceFile`: the loader attaches
+        // `ContentMapperInfo` (span map, original text) *after* parse, so a
+        // `DiagnosticFile` snapshotted during parsing can predate it. Read the
+        // span map from the live node when available, falling back to the
+        // snapshot.
+        let live_span_map = file
+            .node
+            .and_then(|node| self.nodes[node].as_source_file().span_map());
+        let span_map = live_span_map.as_deref().or(file.span_map.as_deref());
+        if let Some(span_map) = span_map {
             let (mapped, fidelity) = SpanMap::virtual_to_original_span(Some(span_map), loc);
             if fidelity.is_none() {
                 return ResolvedLocation {
@@ -361,9 +386,17 @@ impl<'a> Diagnostic for ASTDiagnostic<'a> {
     fn file<'s>(&'s self) -> Option<FileLike<'s>> {
         let file = self.diagnostic_file()?;
         let mut file_name = file.file_name.clone();
+        let mut supplemental = false;
         if let Some(node) = file.node {
-            if let Some(canonical) = self.nodes[node].as_source_file().canonical_source_file() {
-                file_name = self.nodes[canonical].as_source_file().file_name().clone();
+            let sf = self.nodes[node].as_source_file();
+            if sf.is_content_mapper_supplemental() {
+                supplemental = true;
+                // `canonical.FileName()` — the canonical NodeId lives in the
+                // canonical file's arena, not `self.nodes`, so use the name
+                // snapshotted when the mapper info was attached.
+                if let Some(canonical_name) = sf.canonical_file_name() {
+                    file_name = canonical_name.clone();
+                }
             }
         }
         if self.resolve().use_original {
@@ -379,7 +412,10 @@ impl<'a> Diagnostic for ASTDiagnostic<'a> {
                 FileText::Borrowed(t) => t,
                 FileText::Shared(t) => t.as_ref(),
             }));
-            return Some(FileLike::new(file_name, text, line_map, fresh_file_key()));
+            return Some(
+                FileLike::new(file_name, text, line_map, fresh_file_key())
+                    .with_is_content_mapper_supplemental(supplemental),
+            );
         }
         if file_name != file.file_name {
             // `&renamedFile{file: file, fileName: fileName}` — the
@@ -397,18 +433,24 @@ impl<'a> Diagnostic for ASTDiagnostic<'a> {
                     FileLineMap::Owned(compute_ecma_line_starts(&file.text)),
                 ),
             };
-            return Some(FileLike::new(file_name, text, line_map, fresh_file_key()));
+            return Some(
+                FileLike::new(file_name, text, line_map, fresh_file_key())
+                    .with_is_content_mapper_supplemental(supplemental),
+            );
         }
         // `return file` — the source file itself.
         match file.node {
             Some(node) => {
                 let source_file: &'a SourceFile = self.nodes[node].as_source_file();
-                Some(FileLike::new(
-                    file_name,
-                    FileText::Borrowed(source_file.text()),
-                    FileLineMap::Borrowed(source_file.ecma_line_map()),
-                    FileKey::Node(node),
-                ))
+                Some(
+                    FileLike::new(
+                        file_name,
+                        FileText::Borrowed(source_file.text()),
+                        FileLineMap::Borrowed(source_file.ecma_line_map()),
+                        FileKey::Node(node),
+                    )
+                    .with_is_content_mapper_supplemental(supplemental),
+                )
             }
             None => {
                 // A `DiagnosticFile` snapshot with no arena node — render
