@@ -298,6 +298,14 @@ impl EmitResolver {
                 let mut builder = new_node_builder(c, EmitContext::new());
                 if let Some(impl_) = builder.impl_.as_mut() {
                     impl_.e = self.emit_context.clone();
+                    // Rebind the factory hooks — they hold `Weak`s into the
+                    // `Rc<RefCell<EmitContext>>` `f` was built against; after
+                    // swapping `e` the old target is dropped and on_update /
+                    // on_clone would silently skip `setOriginal` + emit-node
+                    // copying.
+                    let fi = impl_.f.file_index();
+                    impl_.f = crate::nodebuilderimpl::new_nodebuilder_factory(&impl_.e);
+                    impl_.f.set_file_index(fi);
                 }
                 *nb = Some(builder);
             }
@@ -315,6 +323,10 @@ impl EmitResolver {
         let mut builder = new_node_builder(c, EmitContext::new());
         if let Some(impl_) = builder.impl_.as_mut() {
             impl_.e = self.emit_context.clone();
+            // See `node_builder` — rebind `f`'s hooks to the swapped `e`.
+            let fi = impl_.f.file_index();
+            impl_.f = crate::nodebuilderimpl::new_nodebuilder_factory(&impl_.e);
+            impl_.f.set_file_index(fi);
         }
         builder
     }
