@@ -511,6 +511,10 @@ impl TypeWriterWalker {
                         &mut nodes,
                         &symbols,
                     );
+                    tsc_checker::printer_util::install_foreign_comma_hook(
+                        &mut printer,
+                        file_checker.program.as_ref().expect("program"),
+                    );
                     printer.write(type_node, Some(self.current_source_file), &mut writer, None);
                 }
                 type_string = writer.get_text();

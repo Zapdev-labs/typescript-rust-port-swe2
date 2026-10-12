@@ -417,6 +417,10 @@ impl<'p, 'w> Emitter<'p, 'w> {
                 &mut nodes_mut,
                 &symbols,
             );
+            tsc_checker::printer_util::install_foreign_comma_hook_ref(
+                &mut printer,
+                host.program(),
+            );
 
             self.print_source_file(
                 host,
@@ -607,6 +611,10 @@ impl<'p, 'w> Emitter<'p, 'w> {
                 &mut emit_context_mut,
                 &mut nodes_mut,
                 &symbols,
+            );
+            tsc_checker::printer_util::install_foreign_comma_hook_ref(
+                &mut printer,
+                host.program(),
             );
             self.print_source_file(
                 host,

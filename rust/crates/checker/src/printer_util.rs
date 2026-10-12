@@ -212,6 +212,136 @@ pub fn checker_arena_view<'x>(
     arena_view(c.program.as_ref().expect("program"), work, fi)
 }
 
+/// Host hook for `PrintHandlers::original_list_has_trailing_comma`:
+/// correlates `children` (a list in the printer's emit arena) with the
+/// matching list on `original_parent`, a `most_original` node that lives in
+/// another file's arena (Go dereferences raw pointers instead of arena
+/// ids). Mirrors the `Kind` match in `Printer::has_trailing_comma`; where
+/// the local path compares `*children == *candidate` by id, the foreign
+/// path compares list `loc` — clones preserve the source range.
+///
+/// `children` ids cannot be dereferenced in the foreign arena, so when the
+/// match finds no candidate the local path's fallback —
+/// `children.has_trailing_comma(printer_nodes)` — is already known to be
+/// `true` (the caller checked it before reaching here).
+fn foreign_list_has_trailing_comma(
+    program: &dyn crate::checker_types::Program,
+    original_parent: NodeId,
+    parent_kind: tsc_ast::Kind,
+    children: &tsc_ast::NodeList,
+) -> Option<bool> {
+    let arena = program.nodes(original_parent.file_index());
+    if !buffer_resolves_id(&arena, original_parent) {
+        return None;
+    }
+    let pn = &arena[original_parent];
+    if pn.kind != parent_kind {
+        return Some(false);
+    }
+    let original_list: Option<tsc_ast::NodeList> = match pn.kind {
+        tsc_ast::Kind::ObjectLiteralExpression => pn.property_list().cloned(),
+        tsc_ast::Kind::ArrayLiteralExpression => pn.element_list().cloned(),
+        tsc_ast::Kind::CallExpression | tsc_ast::Kind::NewExpression => {
+            if pn
+                .type_argument_list()
+                .is_some_and(|ta| ta.loc == children.loc)
+            {
+                pn.type_argument_list().cloned()
+            } else if pn
+                .argument_list()
+                .is_some_and(|al| al.loc == children.loc)
+            {
+                pn.argument_list().cloned()
+            } else {
+                None
+            }
+        }
+        tsc_ast::Kind::Constructor
+        | tsc_ast::Kind::MethodDeclaration
+        | tsc_ast::Kind::GetAccessor
+        | tsc_ast::Kind::SetAccessor
+        | tsc_ast::Kind::FunctionDeclaration
+        | tsc_ast::Kind::FunctionExpression
+        | tsc_ast::Kind::ArrowFunction
+        | tsc_ast::Kind::FunctionType
+        | tsc_ast::Kind::ConstructorType
+        | tsc_ast::Kind::CallSignature
+        | tsc_ast::Kind::ConstructSignature => {
+            if pn
+                .type_parameter_list()
+                .is_some_and(|tp| tp.loc == children.loc)
+            {
+                pn.type_parameter_list().cloned()
+            } else if pn
+                .parameter_list()
+                .is_some_and(|pl| pl.loc == children.loc)
+            {
+                pn.parameter_list().cloned()
+            } else {
+                None
+            }
+        }
+        tsc_ast::Kind::ClassDeclaration
+        | tsc_ast::Kind::ClassExpression
+        | tsc_ast::Kind::InterfaceDeclaration
+        | tsc_ast::Kind::TypeAliasDeclaration
+        | tsc_ast::Kind::JSTypeAliasDeclaration => pn
+            .type_parameter_list()
+            .filter(|tp| tp.loc == children.loc)
+            .cloned(),
+        tsc_ast::Kind::ObjectBindingPattern | tsc_ast::Kind::ArrayBindingPattern => pn
+            .element_list()
+            .filter(|el| el.loc == children.loc)
+            .cloned(),
+        tsc_ast::Kind::NamedImports | tsc_ast::Kind::NamedExports => {
+            pn.element_list().cloned()
+        }
+        tsc_ast::Kind::ImportAttributes => pn.as_import_attributes().attributes.clone(),
+        _ => None,
+    };
+    match original_list {
+        Some(list) => Some(list.has_trailing_comma(&arena)),
+        // Kinds with no list candidates (or unmatched candidates) correlate
+        // to `children` itself in the local path — already known true.
+        None => Some(true),
+    }
+}
+
+/// Installs the foreign-arena trailing-comma hook on a freshly-created
+/// checker-side printer.
+pub fn install_foreign_comma_hook(
+    p: &mut Printer<'_>,
+    program: &std::rc::Rc<dyn crate::checker_types::Program>,
+) {
+    let program = program.clone();
+    p.handlers.original_list_has_trailing_comma =
+        Some(Box::new(move |original_parent, parent_kind, children| {
+            foreign_list_has_trailing_comma(
+                &*program,
+                original_parent,
+                parent_kind,
+                children,
+            )
+        }));
+}
+
+/// Borrowed-program variant of [`install_foreign_comma_hook`] for hosts
+/// that only hold `&Program` (e.g. the compiler emitter).
+pub fn install_foreign_comma_hook_ref<'a>(
+    p: &mut Printer<'a>,
+    program: &'a dyn crate::checker_types::Program,
+) {
+    p.handlers.original_list_has_trailing_comma =
+        Some(Box::new(move |original_parent, parent_kind, children| {
+            foreign_list_has_trailing_comma(
+                program,
+                original_parent,
+                parent_kind,
+                children,
+            )
+        }));
+}
+
 /// `createPrinterWithDefaults`.
 fn create_printer_with_defaults<'a>(
     emit_context: &'a mut EmitContext,
@@ -461,6 +591,7 @@ impl Checker {
         } else {
             create_printer_with_remove_comments(&mut emit_context, &mut nodes, &symbols)
         };
+        install_foreign_comma_hook(&mut p, &program);
         p.write(Some(type_node), source_file, &mut writer, None);
         drop(p);
         drop(symbols);
@@ -625,6 +756,7 @@ impl Checker {
                 &symbols,
             )
         };
+        install_foreign_comma_hook(&mut p, &program);
         p.write(entity, source_file, &mut writer, None); // TODO: GH#18217
         drop(p);
         drop(symbols);
@@ -708,6 +840,7 @@ impl Checker {
             &mut nodes,
             &symbols,
         );
+        install_foreign_comma_hook(&mut p, &program);
         let result = if flags.intersects(TypeFormatFlags::MULTILINE_OBJECT_LITERALS) {
             let mut writer = TextWriter::new("\n", 0);
             p.write(sig, source_file, &mut writer, None);
@@ -779,6 +912,7 @@ impl Checker {
         let source_file =
             enclosing_declaration.and_then(|d| ast::get_source_file_of_node(Some(d), &nodes));
         let mut p = create_printer_with_remove_comments(&mut emit_context, &mut nodes, &symbols);
+        install_foreign_comma_hook(&mut p, &program);
         p.write(predicate, source_file, &mut writer, None);
         drop(p);
         drop(symbols);
@@ -993,6 +1127,7 @@ impl Checker {
             .value_declaration
             .and_then(|d| ast::get_source_file_of_node(Some(d), &nodes));
         let mut p = create_printer_with_remove_comments(&mut emit_context, &mut nodes, &symbols);
+        install_foreign_comma_hook(&mut p, &program);
         let mut b = String::new();
         for (i, node) in nodes_out.iter().enumerate() {
             if i > 0 {
@@ -1059,6 +1194,7 @@ impl Checker {
         let source_file =
             enclosing_declaration.and_then(|d| ast::get_source_file_of_node(Some(d), &nodes));
         let mut p = create_printer_with_remove_comments(&mut emit_context, &mut nodes, &symbols);
+        install_foreign_comma_hook(&mut p, &program);
         let result = p.emit(Some(type_param_node), source_file);
         drop(p);
         drop(symbols);

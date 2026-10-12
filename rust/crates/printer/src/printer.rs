@@ -153,6 +153,13 @@ pub struct PrintHandlers<'a> {
     pub on_before_emit_token: Option<Box<dyn FnMut(Option<NodeId>) + 'a>>,
     /// `OnAfterEmitToken`
     pub on_after_emit_token: Option<Box<dyn FnMut(Option<NodeId>) + 'a>>,
+    /// Correlates `children` with the matching list on `original_parent`
+    /// when that node lives in another file's arena; returns whether the
+    /// original list has a trailing comma. `None` = the host could not
+    /// resolve the foreign node (Go dereferences raw pointers instead of
+    /// arena ids). Args: `(original_parent, parent_kind, children)`.
+    pub original_list_has_trailing_comma:
+        Option<Box<dyn FnMut(NodeId, Kind, &NodeList) -> Option<bool> + 'a>>,
 }
 
 /// `type detachedCommentsInfo struct`
@@ -7363,10 +7370,22 @@ impl<'p, 'a> Emitter<'p, 'a> {
         // `original_parent` may live in a different file arena than
         // `self.p.nodes` (e.g. node-builder clones carrying parse-node
         // `original` links into a scratch buffer). If the id doesn't resolve
-        // in this buffer we cannot correlate the list.
+        // in this buffer we cannot correlate the list — unless the host
+        // provided a foreign-arena correlation hook.
         if original_parent.local_index() as usize >= self.p.nodes.len()
             || self.p.nodes[original_parent].id != original_parent
         {
+            if let Some(f) = self
+                .p
+                .handlers
+                .original_list_has_trailing_comma
+                .as_mut()
+            {
+                let parent_kind = self.p.nodes[parent_node].kind;
+                if let Some(result) = f(original_parent, parent_kind, children) {
+                    return result;
+                }
+            }
             return false;
         }
 
