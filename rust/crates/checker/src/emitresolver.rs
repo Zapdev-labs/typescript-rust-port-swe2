@@ -1765,13 +1765,139 @@ impl tsc_printer::EmitResolver for EmitResolver {
         nodes: &[Node],
         _symbols: &[Symbol],
     ) -> bool {
-        if !ast::is_parse_tree_node(&nodes[declaration]) {
-            return false;
+        if let Some(mut c) = checker_try_lock(&self.checker) {
+            if !ast::is_parse_tree_node(&nodes[declaration]) {
+                return false;
+            }
+            return c.requires_adding_implicit_undefined(declaration, symbol, enclosing_declaration);
         }
-        let Some(mut c) = checker_try_lock(&self.checker) else {
+        // Locked path (`unsafe`): Go evaluates the real checker worker under
+        // the caller's held `checkerMu`. The parameter branch is computable
+        // from the AST alone (optionality, initializers, arity), except
+        // `declaredParameterTypeContainsUndefined` for annotated
+        // parameters, which needs `getTypeFromTypeNode` — fall back to
+        // `false` there rather than guess.
+        let orig = self
+            .emit_context
+            .borrow()
+            .most_original(Some(declaration))
+            .unwrap_or(declaration);
+        let Some(program) = self.program.clone() else {
             return false;
         };
-        c.requires_adding_implicit_undefined(declaration, symbol, enclosing_declaration)
+        let snap = program.nodes(orig.file_index());
+        let arena = if crate::printer_util::buffer_resolves_id(&snap, orig) {
+            crate::printer_util::ArenaView::Snapshot(snap)
+        } else {
+            crate::printer_util::resolve_arena_for(&program, nodes, orig)
+        };
+        let Some(node) = arena.get(orig.local_index() as usize) else {
+            return false;
+        };
+        if !ast::is_parse_tree_node(node) {
+            return false;
+        }
+        if !matches!(node.kind, ast::Kind::Parameter | ast::Kind::JSDocParameterTag) {
+            // PropertyDeclaration/PropertySignature/JSDocPropertyTag need
+            // `getTypeOfSymbol`; Go panics on any other kind.
+            return false;
+        }
+        if node.type_().is_some() {
+            // Cannot evaluate `declaredParameterTypeContainsUndefined`
+            // without the checker.
+            return false;
+        }
+        let strict_null_checks = self
+            .options
+            .get_strict_option_value(self.options.strict_null_checks);
+        // `c.isOptionalParameter` — the `?`-token and IIFE cases are pure
+        // AST; for initialized parameters the arity check reduces to
+        // `paramIndex >= minArgumentCount`, where `minArgumentCount` is the
+        // parameter count through the last required parameter (mirroring
+        // `getSignatureFromDeclaration`'s loop without building a
+        // signature).
+        let is_optional_parameter = |p: NodeId| -> bool {
+            let pnode = &arena[p];
+            if ast::is_parameter_declaration(pnode)
+                && pnode.question_token(&arena).is_some()
+            {
+                return true;
+            }
+            if !ast::is_parameter_declaration(pnode) {
+                return false;
+            }
+            let Some(parent) = pnode.parent else {
+                return false;
+            };
+            let params = arena[parent].parameters().unwrap_or(&[]);
+            let parameter_index =
+                params.iter().position(|&q| q == p).map(|i| i as i32).unwrap_or(-1);
+            if pnode.initializer().is_some() {
+                let iife = ast::get_immediately_invoked_function_expression(parent, &arena);
+                let iife_arg_count = iife
+                    .and_then(|i| arena[i].arguments())
+                    .map_or(0, |a| a.len()) as i32;
+                let mut min_argument_count = 0i32;
+                // Go's loop appends each non-`this` parameter to
+                // `parameters` before the optionality check; `emitted`
+                // tracks `len(parameters)` at each step.
+                let mut emitted = 0i32;
+                for (i, &param) in params.iter().enumerate() {
+                    let pnode = &arena[param];
+                    let is_this = i == 0
+                        && pnode
+                            .symbol()
+                            .is_some_and(|s| self.symbol_arena.borrow()[s.index()].name == "this");
+                    let optional = crate::utilities::is_optional_declaration(pnode, &arena)
+                        || pnode.initializer().is_some()
+                        || crate::utilities::is_rest_parameter(pnode, &arena)
+                        || (iife.is_some()
+                            && emitted > iife_arg_count
+                            && pnode.type_().is_none());
+                    if !is_this {
+                        emitted += 1;
+                    }
+                    if !optional {
+                        min_argument_count = emitted;
+                    }
+                }
+                return parameter_index >= min_argument_count;
+            }
+            if let Some(iife) = ast::get_immediately_invoked_function_expression(parent, &arena) {
+                return pnode.type_().is_none()
+                    && pnode.as_parameter_declaration().dot_dot_dot_token.is_none()
+                    && parameter_index
+                        >= arena[iife].arguments().map_or(0, |a| a.len()) as i32;
+            }
+            false
+        };
+        // `isRequiredInitializedParameter`
+        let required_initialized = strict_null_checks
+            && !is_optional_parameter(orig)
+            && node.initializer().is_some()
+            && (!ast::has_syntactic_modifier(
+                node,
+                ast::ModifierFlags::PARAMETER_PROPERTY_MODIFIER,
+            ) || enclosing_declaration.is_some_and(|d| {
+                let dsnap = program.nodes(d.file_index());
+                let darena = if crate::printer_util::buffer_resolves_id(&dsnap, d) {
+                    crate::printer_util::ArenaView::Snapshot(dsnap)
+                } else {
+                    crate::printer_util::resolve_arena_for(&program, &arena, d)
+                };
+                darena
+                    .get(d.local_index() as usize)
+                    .is_some_and(|dn| ast::is_function_like_declaration(Some(d), &darena))
+            }));
+        // `isOptionalUninitializedParameterProperty`
+        let optional_uninit_prop = strict_null_checks
+            && is_optional_parameter(orig)
+            && node.initializer().is_none()
+            && ast::has_syntactic_modifier(
+                node,
+                ast::ModifierFlags::PARAMETER_PROPERTY_MODIFIER,
+            );
+        required_initialized || optional_uninit_prop
     }
 
     /// `(r *EmitResolver) GetReferencedValueDeclarationUnsafe` — Go omits
