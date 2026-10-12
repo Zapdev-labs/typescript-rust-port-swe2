@@ -5521,4 +5521,20 @@ impl tsc_binder::nameresolver::NameResolverHost for Checker {
             within_deferred_context,
         );
     }
+
+    /// `GetDeclarationOfKind(symbol, kind) != nil` — the symbol's
+    /// declarations may live in another file's arena (merged symbols); each
+    /// is resolved through the arena that actually owns it.
+    fn nr_has_declaration_of_kind(
+        &mut self,
+        symbol: tsc_ast::ids::SymbolId,
+        kind: ast::Kind,
+        work: &[ast::Node],
+    ) -> bool {
+        let declarations = self.symbol_arena.borrow()[symbol.index()].declarations.clone();
+        let program = self.program.clone().expect("program");
+        declarations.iter().any(|&d| {
+            crate::printer_util::resolve_arena_for(&program, work, d)[d].kind == kind
+        })
+    }
 }

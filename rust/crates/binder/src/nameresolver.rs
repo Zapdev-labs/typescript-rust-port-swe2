@@ -111,6 +111,16 @@ pub trait NameResolverHost {
         associated_declaration_for_containing_initializer_or_binding_name: Option<NodeId>,
         within_deferred_context: bool,
     );
+    /// `GetDeclarationOfKind(symbol, kind) != nil` — resolved across arenas.
+    /// A merged symbol's declarations may live in another file's buffer
+    /// (Go follows raw pointers); `work` is the arena `nodes` the resolver
+    /// is walking.
+    fn nr_has_declaration_of_kind(
+        &mut self,
+        symbol: SymbolId,
+        kind: Kind,
+        work: &[Node],
+    ) -> bool;
 }
 
 pub struct NameResolver<'a> {
@@ -148,6 +158,22 @@ pub struct NameResolver<'a> {
 }
 
 impl<'a> NameResolver<'a> {
+    /// `GetDeclarationOfKind(symbol, kind) != nil` — routes through the host
+    /// when present so declarations living in another file's arena resolve
+    /// correctly; otherwise reads `nodes` directly.
+    fn has_declaration_of_kind(
+        &mut self,
+        symbol: SymbolId,
+        kind: Kind,
+        nodes: &[Node],
+        symbols: &RefCell<Vec<Symbol>>,
+    ) -> bool {
+        if let Some(h) = self.host.as_deref_mut() {
+            return h.nr_has_declaration_of_kind(symbol, kind, nodes);
+        }
+        get_declaration_of_kind(&symbols.borrow()[symbol.index()], kind, nodes).is_some()
+    }
+
     /// `func (r *NameResolver) Resolve(...) *ast.Symbol`
     #[allow(clippy::too_many_arguments)]
     pub fn resolve(
@@ -316,18 +342,17 @@ impl<'a> NameResolver<'a> {
                             if let Some(module_export) = module_exports.get(name).copied() {
                                 if symbols.borrow()[module_export.index()].flags
                                     == SymbolFlags::ALIAS
-                                    && (get_declaration_of_kind(
-                                        &symbols.borrow()[module_export.index()],
+                                    && (self.has_declaration_of_kind(
+                                        module_export,
                                         Kind::ExportSpecifier,
                                         nodes,
-                                    )
-                                    .is_some()
-                                        || get_declaration_of_kind(
-                                            &symbols.borrow()[module_export.index()],
-                                            Kind::NamespaceExport,
-                                            nodes,
-                                        )
-                                        .is_some())
+                                        symbols,
+                                    ) || self.has_declaration_of_kind(
+                                        module_export,
+                                        Kind::NamespaceExport,
+                                        nodes,
+                                        symbols,
+                                    ))
                                 {
                                     // break out of switch, continue loop
                                 } else {

@@ -2253,17 +2253,17 @@ impl Checker {
                             // the instantiated constraint for U is X, so we discard
                             // that inference.
                             let sources = type_parameters.clone();
-                            let targets: Vec<Box<dyn Fn(&mut Checker) -> TypeId>> = type_parameters
+                            let targets: Vec<std::rc::Rc<dyn Fn(&mut Checker) -> TypeId>> = type_parameters
                                 .iter()
                                 .enumerate()
                                 .map(|(index, _)| {
                                     let sources = sources.clone();
-                                    Box::new(move |c: &mut Checker| {
+                                    std::rc::Rc::new(move |c: &mut Checker| {
                                         c.get_effective_type_argument_at_index(
                                             parent, &sources, index,
                                         )
                                     })
-                                        as Box<dyn Fn(&mut Checker) -> TypeId>
+                                        as std::rc::Rc<dyn Fn(&mut Checker) -> TypeId>
                                 })
                                 .collect();
                             let mapper = new_deferred_type_mapper(self, type_parameters, targets);

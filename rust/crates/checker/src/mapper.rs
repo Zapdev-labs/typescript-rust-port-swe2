@@ -26,6 +26,7 @@
 //   `&TypeArena` — mirrored `is_this_type_parameter` lives in
 //   checker_core.rs pending utilities.go.
 
+use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 
 use tsc_core::core::map as core_map;
@@ -219,26 +220,28 @@ impl TypeMapperArena {
                 self.map(c, m2, t)
             }
             Action::DeferredTarget(i) => {
-                // The closure call needs `&mut c`; the arena guard is already
-                // dropped? No — we re-enter the guard here to fetch the
-                // target closure. Closures can't be cloned, so invoke under
-                // a short read guard: the closure receives `&mut Checker`
-                // which can safely allocate *types* but must not call back
-                // into `type_mappers.map` (RwLock read-reentrancy).
-                let guard = self.mappers.read().unwrap();
-                let mapper = &guard[m.index()];
-                match &mapper.data {
-                    TypeMapperData::Deferred(s) => s.targets[i](c),
-                    _ => unreachable!(),
-                }
+                // The closure receives `&mut Checker` and may allocate types
+                // *and* mappers — lift the `Rc` out under the read guard and
+                // invoke after dropping it (a held read guard would deadlock
+                // a nested `alloc` write).
+                let f = {
+                    let guard = self.mappers.read().unwrap();
+                    match &guard[m.index()].data {
+                        TypeMapperData::Deferred(s) => s.targets[i].clone(),
+                        _ => unreachable!(),
+                    }
+                };
+                f(c)
             }
             Action::Fn => {
-                let guard = self.mappers.read().unwrap();
-                let mapper = &guard[m.index()];
-                match &mapper.data {
-                    TypeMapperData::Function(s) => (s.f)(c, t),
-                    _ => unreachable!(),
-                }
+                let f = {
+                    let guard = self.mappers.read().unwrap();
+                    match &guard[m.index()].data {
+                        TypeMapperData::Function(s) => s.f.clone(),
+                        _ => unreachable!(),
+                    }
+                };
+                f(c, t)
             }
             Action::Inference(n, fixing) => {
                 // `InferenceTypeMapper.Map`.
@@ -493,15 +496,16 @@ pub fn new_array_to_single_type_mapper(
 pub struct DeferredTypeMapper {
     /// `sources`.
     pub sources: Vec<TypeId>,
-    /// `targets`.
-    pub targets: Vec<Box<dyn Fn(&mut Checker) -> TypeId>>,
+    /// `targets` — `Rc` so `map` can lift a closure out of the read guard
+    /// before invoking it (it may allocate new mappers).
+    pub targets: Vec<Rc<dyn Fn(&mut Checker) -> TypeId>>,
 }
 
 /// `newDeferredTypeMapper`.
 pub fn new_deferred_type_mapper(
     c: &mut Checker,
     sources: Vec<TypeId>,
-    targets: Vec<Box<dyn Fn(&mut Checker) -> TypeId>>,
+    targets: Vec<Rc<dyn Fn(&mut Checker) -> TypeId>>,
 ) -> TypeMapperId {
     c.type_mappers.alloc(TypeMapper {
         data: TypeMapperData::Deferred(DeferredTypeMapper { sources, targets }),
@@ -513,7 +517,8 @@ pub fn new_deferred_type_mapper(
 /// `type FunctionTypeMapper struct`.
 pub struct FunctionTypeMapper {
     /// `fn` — `func(*Type) *Type` gains the checker parameter (see header).
-    pub f: Box<dyn Fn(&mut Checker, TypeId) -> TypeId>,
+    /// `Rc` for the same read-guard-lift reason as `DeferredTypeMapper`.
+    pub f: Rc<dyn Fn(&mut Checker, TypeId) -> TypeId>,
 }
 
 /// `newFunctionTypeMapper`.
@@ -522,7 +527,7 @@ pub fn new_function_type_mapper(
     f: impl Fn(&mut Checker, TypeId) -> TypeId + 'static,
 ) -> TypeMapperId {
     c.type_mappers.alloc(TypeMapper {
-        data: TypeMapperData::Function(FunctionTypeMapper { f: Box::new(f) }),
+        data: TypeMapperData::Function(FunctionTypeMapper { f: Rc::new(f) }),
     })
 }
 

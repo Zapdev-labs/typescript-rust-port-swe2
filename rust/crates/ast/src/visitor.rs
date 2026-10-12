@@ -129,7 +129,14 @@ impl<'a> NodeVisitor<'a> {
         let node = node?;
         let visit = self.visit.as_ref()?;
         let mut visited = visit(self, cx, node);
+        // The lift check only applies to ids that resolve in `cx.nodes`. A
+        // visitor minting into a different arena space (e.g. the declaration
+        // builder's scratch-relocate pass, which returns destination-space
+        // ids for nodes not yet present in this buffer) would read an
+        // arbitrary node here — or index out of bounds.
         if let Some(id) = visited
+            && id.file_index() == node.file_index()
+            && (id.local_index() as usize) < cx.nodes.len()
             && cx.nodes[id].kind == Kind::SyntaxList
         {
             let children = &cx.nodes[id].as_syntax_list().children;
