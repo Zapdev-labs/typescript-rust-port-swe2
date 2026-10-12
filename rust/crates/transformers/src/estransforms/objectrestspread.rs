@@ -957,11 +957,10 @@ impl<'a> ObjectRestSpreadTransformer<'a> {
                     .update_block(cx.nodes, block, Some(statement_list), multi_line)
                     .unwrap_or(block);
             }
-            let decl_name = cx.nodes[decl].name();
             let updated_variable_declaration = ec
                 .borrow_mut()
                 .factory
-                .update_variable_declaration(cx.nodes, decl, decl_name, None, None, None)
+                .update_variable_declaration(cx.nodes, decl, Some(name), None, None, None)
                 .unwrap_or(decl);
             return ec
                 .borrow_mut()
