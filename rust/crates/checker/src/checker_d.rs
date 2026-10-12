@@ -84,7 +84,7 @@ use crate::checker_types::{
     ThisAssignmentDeclarationKind, TypeFacts, TypeSystemEntity, TypeSystemPropertyName,
     UnionReduction, get_indexed_access_key,
 };
-use crate::mapper::{self, TypeMapperId};
+use crate::mapper::{self, TypeMapperArena, TypeMapperId};
 use crate::types::{
     AccessFlags, ConditionalRoot, ConditionalType, ContextFlags, ElementFlags, ExternalEmitHelpers,
     IndexFlags, IndexInfoId, IntersectionType, LiteralType, ObjectFlags, SignatureId,
@@ -2702,7 +2702,7 @@ impl Checker {
             }
             if named_types_count + reduced_types.len() == type_set.len() {
                 for &t in &named_unions {
-                    insert_type(&self.types, self.symbol_arena.as_ref(), &mut reduced_types, t);
+                    insert_type(&self.types, self.symbol_arena.as_ref(), &self.type_mappers, &mut reduced_types, t);
                 }
                 origin = Some(self.new_union_type(ObjectFlags::NONE, reduced_types));
             }
@@ -2853,7 +2853,7 @@ impl Checker {
         if types.len() >= 2 {
             // Sort and deduplicate types
             let types_arena = &self.types;
-            types.sort_by(|&a, &b| crate::utilities::compare_types(types_arena, self.symbol_arena.as_ref(), a, b).cmp(&0));
+            types.sort_by(|&a, &b| crate::utilities::compare_types(types_arena, self.symbol_arena.as_ref(), &self.type_mappers, a, b).cmp(&0));
             let mut unique = 1;
             for i in 1..types.len() {
                 let t = types[i];
@@ -2927,7 +2927,7 @@ impl Checker {
             // && containsType(types, t.AsLiteralType().regularType)`).
             let fresh_redundant = is_fresh && {
                 let regular_type = self.types.clone().get(t).as_literal_type().regular_type;
-                regular_type.is_some_and(|r| contains_type(&self.types, self.symbol_arena.as_ref(), &types, r))
+                regular_type.is_some_and(|r| contains_type(&self.types, self.symbol_arena.as_ref(), &self.type_mappers, &types, r))
             };
             let remove = flags.intersects(
                 TypeFlags::STRING_LITERAL | TypeFlags::TEMPLATE_LITERAL | TypeFlags::STRING_MAPPING,
@@ -3068,7 +3068,7 @@ impl Checker {
                         0
                     };
                     if it[index] == type_variable {
-                        insert_type(&self.types, self.symbol_arena.as_ref(), &mut primitives, it[1 - index]);
+                        insert_type(&self.types, self.symbol_arena.as_ref(), &self.type_mappers, &mut primitives, it[1 - index]);
                     }
                 }
             }
@@ -3077,7 +3077,7 @@ impl Checker {
             let constraint = self.get_base_constraint_of_type(type_variable);
             if let Some(constraint) = constraint {
                 if every_type(self, constraint, |c: &mut Checker, t| {
-                    contains_type(&c.types, c.symbol_arena.as_ref(), &primitives, t)
+                    contains_type(&c.types, c.symbol_arena.as_ref(), &c.type_mappers, &primitives, t)
                 }) {
                     let mut i = types.len();
                     while i > 0 {
@@ -3107,13 +3107,13 @@ impl Checker {
                                 0
                             };
                             if it[index] == type_variable
-                                && contains_type(&self.types, self.symbol_arena.as_ref(), &primitives, it[1 - index])
+                                && contains_type(&self.types, self.symbol_arena.as_ref(), &self.type_mappers, &primitives, it[1 - index])
                             {
                                 types.remove(i);
                             }
                         }
                     }
-                    insert_type(&self.types, self.symbol_arena.as_ref(), &mut types, type_variable);
+                    insert_type(&self.types, self.symbol_arena.as_ref(), &self.type_mappers, &mut types, type_variable);
                 }
             }
         }
@@ -3762,7 +3762,7 @@ impl Checker {
             let __arena_u_types = self.types.clone();
             let u_types = __arena_u_types.get(u).types().to_vec();
             for t in u_types {
-                if insert_type(&self.types, self.symbol_arena.as_ref(), &mut checked, t) {
+                if insert_type(&self.types, self.symbol_arena.as_ref(), &self.type_mappers, &mut checked, t) {
                     if self.each_union_contains(&union_types, t) {
                         // undefinedType/missingType are always sorted first so we leverage that here
                         if t == self.undefined_type
@@ -3778,7 +3778,7 @@ impl Checker {
                             result[0] = self.missing_type;
                             continue;
                         }
-                        insert_type(&self.types, self.symbol_arena.as_ref(), &mut result, t);
+                        insert_type(&self.types, self.symbol_arena.as_ref(), &self.type_mappers, &mut result, t);
                     }
                 }
             }
@@ -3816,14 +3816,14 @@ impl Checker {
     ) -> bool {
         let __arena_types = self.types.clone();
         let types = __arena_types.get(union).types().to_vec();
-        if contains_type(&self.types, self.symbol_arena.as_ref(), &types, t) {
+        if contains_type(&self.types, self.symbol_arena.as_ref(), &self.type_mappers, &types, t) {
             return true;
         }
         if t == self.missing_type {
-            return contains_type(&self.types, self.symbol_arena.as_ref(), &types, self.undefined_type);
+            return contains_type(&self.types, self.symbol_arena.as_ref(), &self.type_mappers, &types, self.undefined_type);
         }
         if t == self.undefined_type {
-            return contains_type(&self.types, self.symbol_arena.as_ref(), &types, self.missing_type);
+            return contains_type(&self.types, self.symbol_arena.as_ref(), &self.type_mappers, &types, self.missing_type);
         }
         let __arena_t_flags = self.types.clone();
         let t_flags = __arena_t_flags.get(t).flags;
@@ -3838,7 +3838,7 @@ impl Checker {
         } else {
             None
         };
-        primitive.is_some_and(|p| contains_type(&self.types, self.symbol_arena.as_ref(), &types, p))
+        primitive.is_some_and(|p| contains_type(&self.types, self.symbol_arena.as_ref(), &self.type_mappers, &types, p))
     }
 
     /// `(c *Checker) getCrossProductIntersections` (checker.go:26964).
@@ -4168,6 +4168,7 @@ impl Checker {
                 && contains_type(
                     &self.types,
                     self.symbol_arena.as_ref(),
+                    &self.type_mappers,
                     self.types_handle().get(origin).types(),
                     target_type,
                 )
@@ -4179,7 +4180,7 @@ impl Checker {
         let types = __arena_types.get(t).types().to_vec();
         let arena = &self.types;
         if let Ok(i) = types
-            .binary_search_by(|&u| crate::utilities::compare_types(arena, self.symbol_arena.as_ref(), u, target_type).cmp(&0))
+            .binary_search_by(|&u| crate::utilities::compare_types(arena, self.symbol_arena.as_ref(), &self.type_mappers, u, target_type).cmp(&0))
         {
             if types.len() == 2 {
                 return types[1 - i];
@@ -4317,12 +4318,13 @@ pub(crate) fn every_contained_type(
 pub(crate) fn contains_type(
     arena: &TypeArena,
     symbols: &std::cell::RefCell<Vec<ast::Symbol>>,
+    mappers: &TypeMapperArena,
     types: &[TypeId],
     t: TypeId,
 ) -> bool {
     types
         .binary_search_by(|&u| {
-            crate::utilities::compare_types(arena, symbols, u, t).cmp(&0)
+            crate::utilities::compare_types(arena, symbols, mappers, u, t).cmp(&0)
         })
         .is_ok()
 }
@@ -4332,11 +4334,12 @@ pub(crate) fn contains_type(
 pub(crate) fn insert_type(
     arena: &TypeArena,
     symbols: &std::cell::RefCell<Vec<ast::Symbol>>,
+    mappers: &TypeMapperArena,
     types: &mut Vec<TypeId>,
     t: TypeId,
 ) -> bool {
     match types.binary_search_by(|&u| {
-        crate::utilities::compare_types(arena, symbols, u, t).cmp(&0)
+        crate::utilities::compare_types(arena, symbols, mappers, u, t).cmp(&0)
     }) {
         Err(i) => {
             types.insert(i, t);
@@ -5712,7 +5715,7 @@ __h5064_43, suggestion],
             &source_value,
             candidates_with_names,
             |t| t.1.as_str(),
-            |a, b| crate::utilities::compare_types(&self.types, self.symbol_arena.as_ref(), a.0, b.0),
+            |a, b| crate::utilities::compare_types(&self.types, self.symbol_arena.as_ref(), &self.type_mappers, a.0, b.0),
             1000,
         )
         .map(|(t, _)| t)
@@ -12066,8 +12069,8 @@ impl Checker {
                             None
                         };
                         if let Some(union_types) = union_types
-                            && contains_type(&self.types, self.symbol_arena.as_ref(), &union_types, self.regular_false_type)
-                            && contains_type(&self.types, self.symbol_arena.as_ref(), &union_types, self.regular_true_type)
+                            && contains_type(&self.types, self.symbol_arena.as_ref(), &self.type_mappers, &union_types, self.regular_false_type)
+                            && contains_type(&self.types, self.symbol_arena.as_ref(), &self.type_mappers, &union_types, self.regular_true_type)
                         {
                             let regular_false = self.regular_false_type;
                             let regular_true = self.regular_true_type;

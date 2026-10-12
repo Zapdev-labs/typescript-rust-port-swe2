@@ -150,6 +150,13 @@ impl TypeMapperArena {
         self.len() == 0
     }
 
+    /// Borrow a mapper's payload under a short read guard. The closure must
+    /// not re-enter the arena.
+    pub fn with_data<R>(&self, m: TypeMapperId, f: impl FnOnce(&TypeMapperData) -> R) -> R {
+        let guard = self.mappers.read().unwrap();
+        f(&guard[m.index()].data)
+    }
+
     /// `(m *TypeMapper) Map(t)` — `m.data.Map(t)`.
     ///
     /// PORT: takes `&mut Checker` because Composite/Deferred/Function/
