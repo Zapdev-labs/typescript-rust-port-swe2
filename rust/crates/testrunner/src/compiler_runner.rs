@@ -242,6 +242,23 @@ fn test_run_flag() -> String {
     args.find(|a| !a.starts_with('-')).unwrap_or_default()
 }
 
+/// `TSC_TEST_LIST` names a file containing one test basename per line; when
+/// set, only those files run. Lets callers sweep the suite in bounded chunks
+/// so a single process never accumulates state across thousands of tests.
+#[cfg(feature = "harness")]
+fn test_list_filter() -> Option<std::collections::HashSet<String>> {
+    let path = std::env::var("TSC_TEST_LIST").ok()?;
+    let contents = std::fs::read_to_string(&path)
+        .unwrap_or_else(|e| panic!("Could not read TSC_TEST_LIST {path}: {e}"));
+    Some(
+        contents
+            .lines()
+            .map(|l| l.trim().to_string())
+            .filter(|l| !l.is_empty())
+            .collect(),
+    )
+}
+
 // ---------------------------------------------------------------------------
 // Everything below requires `tsc_testutil::harnessutil` / `tsbaseline`, which
 // are still being ported — gated behind `feature = "harness"`.
@@ -258,6 +275,7 @@ impl Runner for CompilerBaselineRunner {
         self.clean_up_local();
         let files = self.enumerate_test_files();
         let filter = crate::compiler_test_filter::compiler_test_file_filter(&test_run_flag());
+        let list = test_list_filter();
         for filename in files {
             let base_name = tsc_tspath::get_base_file_name(&filename);
             if SKIPPED_TESTS.contains(&base_name.as_ref()) {
@@ -265,6 +283,11 @@ impl Runner for CompilerBaselineRunner {
             }
             if !filter(&base_name) {
                 continue;
+            }
+            if let Some(list) = &list {
+                if !list.contains(base_name.as_ref()) {
+                    continue;
+                }
             }
             self.run_test(&filename);
         }
@@ -826,7 +849,7 @@ impl CompilerTest {
                 let mut reversed = union_types.clone();
                 reversed.reverse();
                 reversed
-                    .sort_by(|a, b| tsc_checker::utilities::compare_types(&types, checker.symbol_arena.as_ref(), *a, *b).cmp(&0));
+                    .sort_by(|a, b| tsc_checker::utilities::compare_types(&types, checker.symbol_arena.as_ref(), &checker.type_mappers, *a, *b).cmp(&0));
                 assert_eq!(
                     reversed, union_types,
                     "compareTypes does not sort union types consistently"
@@ -837,7 +860,7 @@ impl CompilerTest {
                 for _ in 0..10 {
                     rng.shuffle(&mut shuffled);
                     shuffled.sort_by(|a, b| {
-                        tsc_checker::utilities::compare_types(&types, checker.symbol_arena.as_ref(), *a, *b).cmp(&0)
+                        tsc_checker::utilities::compare_types(&types, checker.symbol_arena.as_ref(), &checker.type_mappers, *a, *b).cmp(&0)
                     });
                     assert_eq!(
                         shuffled, union_types,
