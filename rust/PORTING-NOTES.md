@@ -1645,3 +1645,14 @@ and surviving ones are ordinary statement temps.
   depth cap. Suspect area: indexed-access / union-intersection reduction
   producing `any` in Go vs concrete expansion in ours, inside
   `TLShapePartial<ShapeWithDimensions<N>>` constraint expansion.
+
+## Test filtering (compiler_runner)
+- `TSC_TEST_FILTER` / `-test.run`-style patterns: `TestLocal/^name` anchors
+  to a filename prefix. The `^` must be on the second path component —
+  `^TestLocal/overshifts` leaves `overshifts` unanchored, and an
+  unanchored all-lowercase prefix falls back to `accept_all` (Go parity:
+  Go's harness does the same). Result: the ENTIRE suite runs in one
+  process — looks like a runaway (huge RSS, minutes of CPU) but isn't.
+- All-lowercase test names (overshifts, properties, commonSourceDirectory)
+  MUST be run as `TestLocal/^name` or they sweep the suite.
+

@@ -9401,12 +9401,12 @@ impl Checker {
                                 });
                                 let text = tsc_scanner::utilities::get_text_of_node(left, &nodes);
                                 let op_text = tsc_scanner::scanner::token_to_string(operator);
-                                let rem = num_value.remainder(tsc_jsnum::Number(32.0)).0;
+                                let rem = num_value.remainder(tsc_jsnum::Number(32.0));
                                 self.error_or_suggestion(
                                     is_enum_member,
                                     Some(error_node),
                                     &tsc_diagnostics::This_operation_can_be_simplified_This_shift_is_identical_to_0_1_2,
-                                    &[text.to_string(), op_text.to_string(), rem.to_string()],
+                                    &[text.to_string(), op_text.to_string(), rem.string()],
                                 );
                             }
                         }
