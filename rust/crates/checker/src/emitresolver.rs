@@ -109,6 +109,14 @@ pub struct EmitResolver {
     options: Rc<CompilerOptions>,
     /// `requestNodeBuilder`.
     request_node_builder: RefCell<Option<NodeBuilder<'static>>>,
+    /// `r.checker.symbolArena` — the inner `Rc` is borrowable even while the
+    /// outer `RefCell<Checker>` is `borrow_mut`'d (Go's `*Unsafe` variants
+    /// run under the caller's held `checkerMu`); the `_unsafe` fallbacks use
+    /// it.
+    symbol_arena: Rc<RefCell<Vec<Symbol>>>,
+    /// `r.checker.program` — same reason as `symbol_arena`: program-arena
+    /// snapshots must be reachable while the checker cell is locked.
+    program: Option<Rc<dyn crate::checker_types::Program>>,
     // `referenceResolver` is built per call — see `reference_resolver`.
     // `isValueAliasDeclaration`/`aliasMarkingVisitor` are plain methods —
     // see the header note.
@@ -125,12 +133,21 @@ pub fn new_emit_resolver(
     checker: Rc<RefCell<Checker>>,
     emit_context: Rc<RefCell<EmitContext>>,
 ) -> EmitResolver {
-    let options = checker.borrow().compiler_options.clone();
+    let (options, symbol_arena, program) = {
+        let c = checker.borrow();
+        (
+            c.compiler_options.clone(),
+            c.symbol_arena.clone(),
+            c.program.clone(),
+        )
+    };
     EmitResolver {
         checker,
         emit_context,
         options,
         request_node_builder: RefCell::new(None),
+        symbol_arena,
+        program,
     }
 }
 
@@ -616,13 +633,33 @@ impl EmitResolver {
         node: NodeId,
         nodes: &[Node],
     ) -> bool {
-        // node = r.emitContext.ParseNode(node)
-        if !ast::is_parse_tree_node(&nodes[node]) {
+        // node = r.emitContext.ParseNode(node) — the declaration transform
+        // hands us scratch-arena clones; map back to the parse-tree
+        // original and read the flag in the original's own arena (Go
+        // dereferences node pointers directly). Prefer the program arena
+        // over `nodes` (the emit working clone) so symbol/locals data is
+        // intact.
+        let orig = self
+            .emit_context
+            .borrow()
+            .most_original(Some(node))
+            .unwrap_or(node);
+        let __program = c.program.clone().expect("program");
+        let snap = __program.nodes(orig.file_index());
+        let arena = if crate::printer_util::buffer_resolves_id(&snap, orig) {
+            crate::printer_util::ArenaView::Snapshot(snap)
+        } else {
+            crate::printer_util::resolve_arena_for(&__program, nodes, orig)
+        };
+        let Some(orig_node) = arena.get(orig.local_index() as usize) else {
+            return false;
+        };
+        if !ast::is_parse_tree_node(orig_node) {
             return false;
         }
         // this is substantially different from strada, but so is expando
         // property checking
-        let props = get_properties_of_container_function_c(c, node);
+        let props = get_properties_of_container_function_c(c, orig);
         props.iter().any(|&p| {
             let value_declaration = c.symbol_arena.borrow()[p.index()].value_declaration;
             value_declaration.is_some_and(|d| {
@@ -1307,13 +1344,63 @@ impl tsc_printer::EmitResolver for EmitResolver {
     }
 
     /// `(r *EmitResolver) IsExpandoFunctionDeclarationUnsafe` — Go runs this
-    /// under the caller's held `checkerMu`; with `unsafe` forbidden, a live
-    /// `borrow_mut` degrades this to `false` (`PORT(deviation)`).
+    /// under the caller's held `checkerMu`. With `unsafe` forbidden the
+    /// checker cell can't be reborrowed while locked, so the locked path
+    /// approximates `getPropertiesOfContainerFunction` with the container
+    /// symbol's bound members/exports (expando properties are bound onto
+    /// the container symbol by the binder).
     fn is_expando_function_declaration_unsafe(&self, node: NodeId, nodes: &[Node]) -> bool {
-        let Some(mut c) = checker_try_lock(&self.checker) else {
+        let orig = self
+            .emit_context
+            .borrow()
+            .most_original(Some(node))
+            .unwrap_or(node);
+        let Some(program) = self.program.clone() else {
             return false;
         };
-        self.is_expando_function_declaration_impl(&mut c, node, nodes)
+        let snap = program.nodes(orig.file_index());
+        let arena = if crate::printer_util::buffer_resolves_id(&snap, orig) {
+            crate::printer_util::ArenaView::Snapshot(snap)
+        } else {
+            crate::printer_util::resolve_arena_for(&program, nodes, orig)
+        };
+        if let Some(mut c) = checker_try_lock(&self.checker) {
+            return self.is_expando_function_declaration_impl(&mut c, node, nodes);
+        }
+        // Locked path (`unsafe`): read the declaration's symbol and check
+        // whether any bound member/export resolves to an expando
+        // binary-expression declaration.
+        let Some(orig_node) = arena.get(orig.local_index() as usize) else {
+            return false;
+        };
+        if !ast::is_parse_tree_node(orig_node) {
+            return false;
+        }
+        let Some(symbol) = orig_node.symbol() else {
+            return false;
+        };
+        let symbol_arena = self.symbol_arena.borrow();
+        let s = &symbol_arena[symbol.index()];
+        let has_expando_prop = |p: SymbolId| {
+            symbol_arena[p.index()]
+                .value_declaration
+                .is_some_and(|d| {
+                    let dsnap = program.nodes(d.file_index());
+                    let darena = if crate::printer_util::buffer_resolves_id(&dsnap, d) {
+                        crate::printer_util::ArenaView::Snapshot(dsnap)
+                    } else {
+                        crate::printer_util::resolve_arena_for(&program, &arena, d)
+                    };
+                    darena
+                        .get(d.local_index() as usize)
+                        .is_some_and(|n| ast::is_binary_expression(n))
+                })
+        };
+        s.members
+            .values()
+            .chain(s.exports.values())
+            .copied()
+            .any(has_expando_prop)
     }
 
     /// `(r *EmitResolver) IsLiteralConstDeclaration`.
@@ -1659,15 +1746,43 @@ impl tsc_printer::EmitResolver for EmitResolver {
         node: NodeId,
         nodes: &[Node],
     ) -> Option<NodeId> {
-        if !ast::is_parse_tree_node(&nodes[node]) {
+        // Go: the `_unsafe` variant has no `IsParseTreeNode` gate (only the
+        // locked variant does) — scratch/transformed ids must still resolve.
+        // Declaration-transform clones reach us as scratch-arena ids: map
+        // to the parse-tree original and resolve in its own arena (the
+        // name-resolution walk reads `nodes[loc]` directly).
+        let orig = self
+            .emit_context
+            .borrow()
+            .most_original(Some(node))
+            .unwrap_or(node);
+        let Some(program) = self.program.clone() else {
             return None;
-        }
-        let symbols = {
-            let c = checker_try_lock(&self.checker)?;
-            std::cell::RefCell::new(clone_symbols(&c.symbol_arena.borrow()))
         };
-        self.reference_resolver()
-            .get_referenced_value_declaration(node, nodes, &symbols)
+        // Resolve in the program (parse-tree) arena: `nodes` may be the
+        // emit working clone, which lacks the locals/symbol data name
+        // resolution needs.
+        let snap = program.nodes(orig.file_index());
+        let arena = if crate::printer_util::buffer_resolves_id(&snap, orig) {
+            crate::printer_util::ArenaView::Snapshot(snap)
+        } else {
+            crate::printer_util::resolve_arena_for(&program, nodes, orig)
+        };
+        if let Some(c) = checker_try_lock(&self.checker) {
+            let symbols = std::cell::RefCell::new(clone_symbols(&c.symbol_arena.borrow()));
+            return self
+                .reference_resolver()
+                .get_referenced_value_declaration(orig, &arena, &symbols);
+        }
+        // Locked path (Go runs `_unsafe` under the caller's held
+        // `checkerMu`): the checker-aware resolver hooks can't run, so
+        // resolve with the unhooked binder resolver against the stored
+        // live symbol arena and the program arena.
+        let mut resolver = new_reference_resolver(
+            &self.options,
+            ReferenceResolverHooks::default(),
+        );
+        resolver.get_referenced_value_declaration(orig, &arena, &self.symbol_arena)
     }
 
     /// `(r *EmitResolver) CreateReturnTypeOfSignatureDeclaration`.

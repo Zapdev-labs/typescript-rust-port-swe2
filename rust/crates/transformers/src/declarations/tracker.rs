@@ -28,7 +28,7 @@ use std::fmt;
 use std::rc::Rc;
 
 use tsc_ast::diagnostic::{self, DiagnosticFile, DiagnosticRef};
-use tsc_ast::{self as ast, FindAncestorResult, Node, NodeId, Symbol, SymbolFlags, SymbolId};
+use tsc_ast::{self as ast, FindAncestorResult, Kind, Node, NodeId, Symbol, SymbolFlags, SymbolId};
 use tsc_nodebuilder::SymbolTracker;
 use tsc_printer::{EmitResolver, SymbolAccessibility, SymbolAccessibilityResult};
 
@@ -149,26 +149,40 @@ impl<'a> SymbolTrackerImpl<'a> {
 
     /// `(s *SymbolTrackerImpl) isBoundExpando`.
     fn is_bound_expando(&self, node: NodeId, nodes: &[Node]) -> bool {
-        let Some(n) = nodes.get(node.local_index() as usize) else {
+        // `node` (and the ids reachable from it) may be a scratch-arena
+        // clone minted during the emit transform — Go reads the parse-tree
+        // originals through pointers. Map to `most_original` and read
+        // every node through the arena-aware `resolve_node` so scratch
+        // ids and real-arena ids both resolve correctly.
+        let orig = {
+            let ec = self.resolver.borrow().emit_context().clone();
+            ec.borrow().most_original(Some(node)).unwrap_or(node)
+        };
+        let Some(n) = self.host.resolve_node(orig, nodes) else {
             return false;
         };
-        if !(ast::is_expando_property_declaration(Some(node), nodes)
-            && ast::is_property_access_expression(
-                &nodes[n
-                    .as_binary_expression()
-                    .left
-                    .expect("expando BinaryExpression.left")],
-            ))
+        if !(n.kind == Kind::BinaryExpression
+            && n.as_binary_expression().left.is_some_and(|l| {
+                self.host
+                    .resolve_node(l, nodes)
+                    .is_some_and(|ln| ast::is_property_access_expression(&ln))
+            }))
         {
             return false;
         }
         // Match transformExpandoAssignment: only an assignment rooted at an identifier (`f.x = ...`) can bind an expando
         // property; `this.x = ...`, `super.x = ...`, `f().x = ...` and the like have no referenced declaration.
-        let ns = ast::get_leftmost_access_expression(
-            nodes[node].as_binary_expression().left.unwrap(),
-            nodes,
-        );
-        if !ast::is_identifier(&nodes[ns]) {
+        let mut ns = n.as_binary_expression().left.unwrap();
+        while let Some(ns_node) = self.host.resolve_node(ns, nodes) {
+            if !ast::is_access_expression(&ns_node) {
+                break;
+            }
+            ns = ns_node.expression().unwrap();
+        }
+        let Some(ns_node) = self.host.resolve_node(ns, nodes) else {
+            return false;
+        };
+        if !ast::is_identifier(&ns_node) {
             return false;
         }
         let Some(ref_decl) = self
@@ -185,13 +199,22 @@ impl<'a> SymbolTrackerImpl<'a> {
 
     /// `(s *SymbolTrackerImpl) isChildOfBoundExpando`.
     fn is_child_of_bound_expando(&self, node: NodeId, nodes: &[Node]) -> bool {
-        ast::find_ancestor_or_quit(Some(node), nodes, &mut |n, nodes| {
-            if ast::is_source_file(n) || ast::is_block(n) {
-                return FindAncestorResult::Quit;
+        // Same cross-arena note as `is_bound_expando`: the ancestor walk
+        // must resolve ids in their own arena, not blindly index `nodes`.
+        let mut cur = Some(node);
+        while let Some(id) = cur {
+            let Some(n) = self.host.resolve_node(id, nodes) else {
+                return false;
+            };
+            if n.kind == Kind::SourceFile || n.kind == Kind::Block {
+                return false;
             }
-            ast::to_find_ancestor_result(self.is_bound_expando(n.id, nodes))
-        })
-        .is_some()
+            if self.is_bound_expando(id, nodes) {
+                return true;
+            }
+            cur = n.parent;
+        }
+        false
     }
 
     /// `(s *SymbolTrackerImpl) errorFallbackNode`.
