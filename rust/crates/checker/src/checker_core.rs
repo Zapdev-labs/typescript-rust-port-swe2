@@ -4942,6 +4942,11 @@ impl Checker {
         if !ty.object_flags.intersects(ObjectFlags::ANONYMOUS) {
             return false;
         }
+        if ty.object_flags.intersects(ObjectFlags::MEMBERS_RESOLVED)
+            && self.is_empty_resolved_type(t)
+        {
+            return true;
+        }
         let Some(symbol) = ty.symbol else {
             return false;
         };
@@ -4952,13 +4957,7 @@ impl Checker {
         {
             return false;
         }
-        if !self.get_members_of_symbol(symbol).is_empty() {
-            return false;
-        }
-        if ty.object_flags.intersects(ObjectFlags::MEMBERS_RESOLVED) {
-            return self.is_empty_resolved_type(t);
-        }
-        true
+        self.get_members_of_symbol(symbol).is_empty()
     }
 
     /// `(c *Checker) couldContainTypeVariablesWorker` (checker.go) —
