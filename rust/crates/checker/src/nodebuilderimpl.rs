@@ -97,6 +97,16 @@ pub struct SerializedTypeEntry {
     pub added_length: i32,
     /// `trackedSymbols`.
     pub tracked_symbols: Vec<TrackedSymbolArgs>,
+    /// Fingerprint of the cached node at insertion time. Go's entry is a
+    /// `*Node` pointer that stays valid for the checker run; ours may mint
+    /// into a scratch arena that is later dropped, and the id can then alias
+    /// an unrelated node in the current buffer. Verifying kind/pos/end on a
+    /// cache hit catches that staleness and forces a reserialize.
+    pub kind: Kind,
+    /// `pos` of the cached node.
+    pub pos: i32,
+    /// `end` of the cached node.
+    pub end: i32,
 }
 
 /// `type CompositeTypeCacheIdentity struct`.
@@ -3039,12 +3049,15 @@ impl<'a> NodeBuilderImpl<'a> {
             let mut raw_constraint_type_from_declaration = declaration.and_then(|d| {
                 let __program = c.program.clone().expect("program");
                 let dn = crate::printer_util::arena_view(&__program, nodes, (d).file_index());
-                dn[d]
+                let cn = dn[d]
                     .as_mapped_type_node()
                     .type_parameter
                     .and_then(|tp| dn[tp].as_type_parameter_declaration().constraint)
-                    .and_then(|cn| ast::is_type_reference_node(&dn[cn]).then_some(cn))
-                    .map(|cn| self.get_type_from_type_node(c, cn, false, nodes))
+                    // Go: `Constraint.Type()` — the node's `type` field (e.g.
+                    // the operand of `keyof T`), not the constraint node's own
+                    // resolved type.
+                    .and_then(|cn| dn[cn].type_());
+                cn.map(|cn| self.get_type_from_type_node(c, cn, false, nodes))
                     .flatten()
             });
             if let Some(raw) = raw_constraint_type_from_declaration {
@@ -3060,14 +3073,12 @@ impl<'a> NodeBuilderImpl<'a> {
                 .mapper;
             let original_constraint =
                 c.instantiate_type(raw_constraint_type_from_declaration, mapped_mapper);
-
             let original_constraint_node =
                 if !type_flags(c, original_constraint).intersects(TypeFlags::UNKNOWN) {
                     Some(self.type_to_type_node(c, nodes, original_constraint))
                 } else {
                     None
                 };
-
             let modifiers_node = c
                 .get_modifiers_type_from_mapped_type(t)
                 .map(|mt| self.type_to_type_node(c, nodes, mt));
@@ -4393,7 +4404,9 @@ impl<'a> NodeBuilderImpl<'a> {
             if index_info.value_type.is_none() {
                 type_node = Some(self.f.new_keyword_type_node(nodes, Kind::AnyKeyword));
             } else {
-                type_node = Some(self.type_to_type_node(c, nodes, index_info.value_type.unwrap()));
+                let vt = index_info.value_type.unwrap();
+                let tn = self.type_to_type_node(c, nodes, vt);
+                type_node = Some(tn);
             }
         }
         if index_info.value_type.is_none()
@@ -6625,18 +6638,30 @@ impl<'a> NodeBuilderImpl<'a> {
                     r.truncating,
                     r.added_length,
                     r.tracked_symbols.clone(),
+                    (r.kind, r.pos, r.end),
                 )
             });
-            if let Some((cached_node, truncating, added_length, tracked_symbols)) = hit {
+            if let Some((cached_node, truncating, added_length, tracked_symbols, fingerprint)) = hit
+            {
                 // The cached tree was minted into whatever buffer produced
                 // it — often a scratch arena that no longer exists (Go's
                 // heap keeps it alive; ours does not). Only reuse the entry
                 // when the whole subtree still resolves in `nodes` or in
                 // the node's home arena; otherwise fall through and
-                // reserialize the type.
+                // reserialize the type. The kind/pos/end fingerprint guards
+                // against ids that still resolve but now alias a different
+                // physical node.
+                let fingerprint_matches =
+                    |buf: &[ast::Node], n: NodeId| -> bool {
+                        let (kind, pos, end) = fingerprint;
+                        buf[n].kind == kind && buf[n].pos() == pos && buf[n].end() == end
+                    };
                 let reusable = match cached_node {
                     None => true,
-                    Some(n) if crate::printer_util::buffer_resolves_id(nodes, n) => {
+                    Some(n)
+                        if crate::printer_util::buffer_resolves_id(nodes, n)
+                            && fingerprint_matches(nodes, n) =>
+                    {
                         crate::printer_util::subtree_clonable_in(nodes, n)
                     }
                     Some(n) => {
@@ -6645,6 +6670,7 @@ impl<'a> NodeBuilderImpl<'a> {
                             .map(|rc| (*rc).clone())
                             .unwrap_or_else(|| program.nodes(n.file_index()).to_vec());
                         crate::printer_util::buffer_resolves_id(&src, n)
+                            && fingerprint_matches(&src, n)
                             && crate::printer_util::subtree_clonable_in(&src, n)
                     }
                 };
@@ -6739,11 +6765,34 @@ impl<'a> NodeBuilderImpl<'a> {
                 let links = self.links.get(enclosing);
                 links.serialized_types.insert(
                     key,
-                    SerializedTypeEntry {
-                        node: Some(result),
-                        truncating: self.ctx.truncating,
-                        added_length,
-                        tracked_symbols: self.ctx.tracked_symbols.borrow().clone(),
+                    {
+                        // `result` may live in `nodes` or in a still-live
+                        // scratch arena; fingerprint whichever buffer holds
+                        // it so a later hit can verify the id still names
+                        // the same physical node.
+                        let fp_buf: &[ast::Node] = nodes;
+                        let resolved = if crate::printer_util::buffer_resolves_id(fp_buf, result)
+                        {
+                            Some((fp_buf[result].kind, fp_buf[result].pos(), fp_buf[result].end()))
+                        } else {
+                            crate::printer_util::live_arena_lookup_for(result).and_then(|rc| {
+                                let buf: &[ast::Node] = &rc;
+                                crate::printer_util::buffer_resolves_id(buf, result).then(|| {
+                                    (buf[result].kind, buf[result].pos(), buf[result].end())
+                                })
+                            })
+                        };
+                        let (kind, pos, end) =
+                            resolved.unwrap_or((Kind::Unknown, i32::MIN, i32::MIN));
+                        SerializedTypeEntry {
+                            node: Some(result),
+                            truncating: self.ctx.truncating,
+                            added_length,
+                            tracked_symbols: self.ctx.tracked_symbols.borrow().clone(),
+                            kind,
+                            pos,
+                            end,
+                        }
                     },
                 );
             }

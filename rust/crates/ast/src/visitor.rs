@@ -167,7 +167,7 @@ impl<'a> NodeVisitor<'a> {
         let node = node?;
         let visit = self.visit.as_ref()?;
         let visited = visit(self, cx, node)?;
-        Some(self.lift_to_block(cx, visited))
+        Some(self.lift_to_block(cx, node, visited))
     }
 
     /// `v.VisitNodes` — visits a NodeList, possibly returning a new NodeList
@@ -234,7 +234,15 @@ impl<'a> NodeVisitor<'a> {
                     // finish prior loop
                     match visited {
                         None => {} // do nothing
-                        Some(id) if cx.nodes[id].kind == Kind::SyntaxList => {
+                        // Same arena guard as `visit_node`'s lift check: a
+                        // visitor minting into a different arena space must
+                        // not have its returned ids interpreted through
+                        // `cx.nodes`.
+                        Some(id)
+                            if id.file_index() == node.file_index()
+                                && (id.local_index() as usize) < cx.nodes.len()
+                                && cx.nodes[id].kind == Kind::SyntaxList =>
+                        {
                             let children = cx.nodes[id].as_syntax_list().children.clone();
                             updated.extend_from_slice(&children);
                         }
@@ -290,8 +298,9 @@ impl<'a> NodeVisitor<'a> {
             return hook(cx, node?, self);
         }
         if self.hooks.visit_node.is_some() {
+            let orig = node?;
             let hooked = self.visit_node_hooked(cx, node)?;
-            return Some(self.lift_to_block(cx, hooked));
+            return Some(self.lift_to_block(cx, orig, hooked));
         }
         self.visit_embedded_statement(cx, node)
     }
@@ -381,9 +390,19 @@ impl<'a> NodeVisitor<'a> {
     }
 
     /// `v.liftToBlock`
-    pub(crate) fn lift_to_block(&self, cx: &mut VisitorCx<'_, '_>, node: NodeId) -> NodeId {
+    /// `src` is the pre-visit node id used to constrain the SyntaxList lift
+    /// to ids that resolve in this arena (see `visit_node`'s lift guard).
+    pub(crate) fn lift_to_block(
+        &self,
+        cx: &mut VisitorCx<'_, '_>,
+        src: NodeId,
+        node: NodeId,
+    ) -> NodeId {
         let mut nodes: Vec<NodeId> = Vec::new();
-        if cx.nodes[node].kind == Kind::SyntaxList {
+        if node.file_index() == src.file_index()
+            && (node.local_index() as usize) < cx.nodes.len()
+            && cx.nodes[node].kind == Kind::SyntaxList
+        {
             nodes = cx.nodes[node].as_syntax_list().children.clone().into_vec();
         } else {
             nodes.push(node);
