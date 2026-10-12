@@ -313,12 +313,15 @@ impl<'a> NodeBuilder<'a> {
     }
 
     /// `SerializeTypeForDeclaration` — implements `NodeBuilderInterface`.
+    /// Go takes a nilable `symbol`; a `None` resolves through
+    /// `getTypeForVariableLikeDeclaration` (binding-pattern declarations) or
+    /// the error type.
     pub fn serialize_type_for_declaration(
         &mut self,
         c: &mut Checker,
         nodes: &mut Vec<ast::Node>,
         declaration: NodeId,
-        symbol: SymbolId,
+        symbol: Option<SymbolId>,
         enclosing_declaration: Option<NodeId>,
         flags: nodebuilder::Flags,
         internal_flags: nodebuilder::InternalFlags,
@@ -330,7 +333,7 @@ impl<'a> NodeBuilder<'a> {
             nodes,
             Some(declaration),
             None,
-            Some(symbol),
+            symbol,
             true,
         );
         self.exit_context(nodes, Some(result))

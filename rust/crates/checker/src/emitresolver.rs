@@ -1764,19 +1764,11 @@ impl tsc_printer::EmitResolver for EmitResolver {
         // Get type of the symbol if this is the valid symbol otherwise get
         // type at location.
         //
-        // PORT: Go passes `symbol` (possibly nil) into
-        // `SerializeTypeForDeclaration`, where a nil symbol resolves to the
-        // error type — serialized as `any`. The Rust API takes a
-        // non-`Option` `SymbolId`, so a missing symbol takes the same `any`
-        // fallback explicitly.
-        let Some(symbol) = c.get_symbol_of_declaration(declaration) else {
-            return Some(
-                self.emit_context
-                    .borrow_mut()
-                    .factory
-                    .new_keyword_type_node(nodes, ast::Kind::AnyKeyword),
-            );
-        };
+        // Go passes `symbol` (possibly nil) into `SerializeTypeForDeclaration`
+        // — a nil symbol takes the `getTypeForVariableLikeDeclaration`
+        // fallback (binding-pattern declarations have no `symbol`), not a
+        // hard `any`.
+        let symbol = c.get_symbol_of_declaration(declaration);
         self.node_builder_for(&c).serialize_type_for_declaration(
             &mut c,
             nodes,
