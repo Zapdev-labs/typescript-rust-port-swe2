@@ -3,8 +3,8 @@
 // Go `int` offsets become `usize` (offsets are non-negative byte/code-unit
 // positions; `usize` is the natural index type and matches Go's 64-bit `int`
 // range on 64-bit targets). `text` is `&[u8]` rather than `&str` because JS
-// source text can contain the lone-surrogate CESU-8/WTF-8 sentinel written by
-// `stringutil.EncodeJSStringRune`, which is not valid UTF-8.
+// source text can contain the lone-surrogate sentinel written by
+// `stringutil.EncodeJSStringRune`, which is encoded as a private-use sentinel (see stringutil::encode_js_string_rune).
 
 use tsc_stringutil::decode_js_string_rune;
 

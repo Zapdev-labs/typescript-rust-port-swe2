@@ -393,10 +393,11 @@ impl NodeFactory {
             };
             let left = self.create_expression_from_entity_name(nodes, left);
             let right_loc = nodes[right].loc;
+            let right_parent = nodes[right].parent;
             let right = self.inner.clone_node(nodes, right);
             nodes[right].loc = right_loc;
             // TODO(rbuckton): Does this need to be parented?
-            // PORT: parents are not tracked in the Rust AST.
+            nodes[right].parent = right_parent;
             let prop_access = self.inner.new_property_access_expression(
                 nodes,
                 Some(left),
@@ -407,8 +408,12 @@ impl NodeFactory {
             nodes[prop_access].loc = nodes[node].loc;
             return prop_access;
         }
+        let res_loc = nodes[node].loc;
+        let res_parent = nodes[node].parent;
         let res = self.inner.clone_node(nodes, node);
-        nodes[res].loc = nodes[node].loc;
+        nodes[res].loc = res_loc;
+        // TODO(rbuckton): Does this need to be parented?
+        nodes[res].parent = res_parent;
         res
     }
 

@@ -18,8 +18,8 @@
 //
 // PORT: strings returned by the scan helpers are `Vec<u8>` rather than
 // `String`/`&str`: Go strings hold arbitrary bytes, and lone UTF-16
-// surrogates are preserved via tsc-stringutil's CESU-8 sentinel encoding
-// (encode_js_string_rune/decode_js_string_rune), which is not valid UTF-8.
+// surrogates are preserved via tsc-stringutil's surrogate sentinel encoding
+// (encode_js_string_rune/decode_js_string_rune), which is encoded as a private-use sentinel (see stringutil::encode_js_string_rune).
 // Positions remain byte offsets into the UTF-8 source text, as in Go.
 
 // No non-test caller exists yet (scanner.rs is being ported in parallel), so
@@ -1668,8 +1668,8 @@ impl<'a> RegExpParser<'a> {
                 );
                 if !self.group_specifiers.is_empty() {
                     // PORT: Go's `maps.Keys(p.groupSpecifiers)` for the
-                    // suggestion candidates; group names may contain CESU-8
-                    // surrogate sentinels, hence the lossy conversion.
+                    // suggestion candidates; group names may contain surrogate
+                    // sentinels, hence the lossy conversion.
                     let name = String::from_utf8_lossy(&name).into_owned();
                     let candidates: Vec<String> = self
                         .group_specifiers
@@ -2062,7 +2062,7 @@ impl RegExpParser<'_> {
                         self.pos = saved_pos;
                     }
                 }
-                // Lone surrogate: encode as CESU-8 so it survives losslessly. In a
+                // Lone surrogate: encode as a surrogate sentinel so it survives losslessly. In a
                 // non-unicode regex this also lets scanClassRanges compare it numerically.
                 stringutil::encode_js_string_rune(code_point)
             }

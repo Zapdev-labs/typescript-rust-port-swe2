@@ -8,8 +8,8 @@
 //   `isConflictMarkerTrivia` are unrepresentable with `usize` (callers cannot
 //   pass them).
 // - `token_value` is `Vec<u8>` (Go `string`): cooked string/identifier values
-//   may carry lone UTF-16 surrogates encoded as CESU-8 sentinels via
-//   `stringutil::encode_js_string_rune`, which is not valid UTF-8. The same
+//   may carry lone UTF-16 surrogates encoded as surrogate sentinels via
+//   `stringutil::encode_js_string_rune`, which is encoded as a private-use sentinel (see stringutil::encode_js_string_rune). The same
 //   convention was already established by `regexp.rs`.
 // - `text` is `&'a str` (SPEC §5.6: source text is UTF-8). The invalid-UTF-8
 //   `File_appears_to_be_binary` path is retained for Go parity; it is
@@ -505,7 +505,7 @@ impl<'a> Scanner<'a> {
 
     /// `func (s *Scanner) TokenValue() string`
     ///
-    /// PORT: returns bytes — cooked values may contain CESU-8 sentinel bytes
+    /// PORT: returns bytes — cooked values may contain surrogate sentinel bytes
     /// for lone surrogates (see file header).
     pub fn token_value(&self) -> &[u8] {
         &self.token_value
@@ -2338,7 +2338,7 @@ impl<'a> Scanner<'a> {
                         self.pos = saved_pos;
                     }
                 }
-                // Lone surrogate: encode as CESU-8 so it survives losslessly. In a
+                // Lone surrogate: encode as a surrogate sentinel so it survives losslessly. In a
                 // non-unicode regex this also lets scanClassRanges compare it numerically.
                 stringutil::encode_js_string_rune(code_point)
             }

@@ -331,34 +331,27 @@ pub fn code_point_to_surrogate_pair(ch: i32) -> (i32, i32) {
     utf16::encode_rune(ch)
 }
 
-// A lone surrogate (U+D800–U+DFFF) cannot be represented in valid UTF-8, so
-// EncodeJSStringRune stores it as the 3-byte CESU-8/WTF-8 sentinel that UTF-8
-// would use for that code point if surrogates were encodable. unicode/utf8
-// and unicode/utf16 deliberately refuse to encode or decode surrogates, so
-// the byte math is spelled out here.
-//
-// Byte layout for a code point cp in U+D000–U+DFFF (lead nibble 0xD):
-//   byte0 = 0xE0 | (cp >> 12)          == 0xED
-//   byte1 = 0x80 | ((cp >> 6) & 0x3F)
-//   byte2 = 0x80 | (cp & 0x3F)
-const SURROGATE_UTF8_LEAD: u8 = 0xED; // byte0, shared by the whole U+D000–U+DFFF block
-const SURROGATE_UTF8_LEAD_BITS: i32 = 0xD000; // (surrogateUTF8Lead & 0x0F) << 12, byte0's decoded contribution
-const UTF8_CONT_MARKER: u8 = 0x80; // continuation byte marker / min value (10xxxxxx)
-const UTF8_CONT_MAX: u8 = 0xBF; // continuation byte max value
-const UTF8_CONT_MASK: u8 = 0x3F; // data bits carried by a continuation byte
-
-// byte1 bounds that pin the block down to the surrogate range U+D800–U+DFFF:
-// 0xD800 -> 0xA0, 0xDFFF -> 0xBF.
-const SURROGATE_UTF8_BYTE1_MIN: u8 = 0xA0;
-const SURROGATE_UTF8_BYTE1_MAX: u8 = 0xBF;
+// A lone surrogate (U+D800–U+DFFF) cannot be represented in valid UTF-8 —
+// and unlike Go `string`, Rust `String`/`str` enforce valid UTF-8, so the
+// CESU-8/WTF-8 sentinel Go uses cannot survive inside Rust strings (every
+// `from_utf8_lossy` would turn it into three U+FFFDs). EncodeJSStringRune
+// therefore stores a lone surrogate as the private-use sentinel code point
+// U+F0000 + (cp - 0xD800): a valid Unicode scalar in plane 15 private use
+// whose UTF-8 encoding is well-formed. It round-trips losslessly through
+// `String`, and DecodeJSStringRune maps it back to the surrogate code unit.
+// The collision case is literal U+F0000–U+F07FF text in the input, which is
+// vanishingly unlikely (a private-use plane) and accepted.
+const SURROGATE_SENTINEL_BASE: i32 = 0xF0000;
+const SURROGATE_SENTINEL_END: i32 = SURROGATE_SENTINEL_BASE + 0x7FF; // U+F0000–U+F07FF
+// First byte of the sentinel's 4-byte UTF-8 encoding (0xF3), for fast-path
+// byte scans.
+const SURROGATE_SENTINEL_LEAD: u8 = 0xF3;
 
 pub fn encode_js_string_rune(ch: i32) -> Vec<u8> {
     if is_surrogate(ch) {
-        return vec![
-            SURROGATE_UTF8_LEAD,
-            UTF8_CONT_MARKER | (((ch >> 6) & UTF8_CONT_MASK as i32) as u8),
-            UTF8_CONT_MARKER | ((ch & UTF8_CONT_MASK as i32) as u8),
-        ];
+        let mut v = Vec::new();
+        utf8::append_rune(&mut v, SURROGATE_SENTINEL_BASE + (ch - 0xD800));
+        return v;
     }
     // string(ch) — Go writes the UTF-8 encoding of U+FFFD for out-of-range runes.
     let mut v = Vec::new();
@@ -367,19 +360,11 @@ pub fn encode_js_string_rune(ch: i32) -> Vec<u8> {
 }
 
 pub fn decode_js_string_rune(s: &[u8]) -> (i32, usize) {
-    if s.len() >= 3
-        && s[0] == SURROGATE_UTF8_LEAD
-        && (SURROGATE_UTF8_BYTE1_MIN..=SURROGATE_UTF8_BYTE1_MAX).contains(&s[1])
-        && (UTF8_CONT_MARKER..=UTF8_CONT_MAX).contains(&s[2])
-    {
-        return (
-            SURROGATE_UTF8_LEAD_BITS
-                | (((s[1] & UTF8_CONT_MASK) as i32) << 6)
-                | (s[2] & UTF8_CONT_MASK) as i32,
-            3,
-        );
+    let (r, size) = utf8::decode_rune_in_string(s);
+    if (SURROGATE_SENTINEL_BASE..=SURROGATE_SENTINEL_END).contains(&r) {
+        return (r - SURROGATE_SENTINEL_BASE + 0xD800, size);
     }
-    utf8::decode_rune_in_string(s)
+    (r, size)
 }
 
 // CombineSurrogatePairs canonicalizes a JS-string value produced by
@@ -391,7 +376,7 @@ pub fn decode_js_string_rune(s: &[u8]) -> (i32, usize) {
 // until it meets its partner. Strings without a lone-surrogate sentinel (the
 // common case) are returned unchanged.
 pub fn combine_surrogate_pairs(s: &[u8]) -> Cow<'_, [u8]> {
-    if memchr::memchr(SURROGATE_UTF8_LEAD, s).is_none() {
+    if memchr::memchr(SURROGATE_SENTINEL_LEAD, s).is_none() {
         return Cow::Borrowed(s);
     }
     let mut b = Vec::with_capacity(s.len());
