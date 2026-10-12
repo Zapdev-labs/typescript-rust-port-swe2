@@ -404,7 +404,9 @@ fn compile_declaration_files(
                 CompilerOptions::default(),
                 Vec::new(),
                 Vec::new(),
-                config.base_directory().clone(),
+                // Go leaves `baseDirectory` unset on the synthetic tsconfig so
+                // `CompileFilesEx` falls back to the declaration current directory.
+                RootedDirectoryPath::default(),
                 config.case_sensitivity(),
             );
             c.parsed_config = Some(ParsedOptions {

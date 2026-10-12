@@ -429,11 +429,18 @@ impl<'a> NodeBuilderImpl<'a> {
     }
 
     /// `(b *NodeBuilderImpl) finalizeBoundary` (nodecopy.go).
+    ///
+    /// `diag_nodes`: the arena the tracked-symbol diagnostics resolve through.
+    /// Usually the same buffer as `nodes`; in the foreign-arena scratch path it
+    /// is the destination (emit) buffer, because the ids handed to
+    /// `track_symbol`/`handle_symbol_accessibility_error` — enclosing
+    /// declarations, captured diagnostic-context nodes — were minted there.
     fn finalize_boundary(
         &mut self,
         c: &mut Checker,
         bound: &Rc<RefCell<RecoveryBoundary<'a>>>,
         nodes: &mut Vec<ast::Node>,
+        diag_nodes: Option<&[ast::Node]>,
     ) -> bool {
         let (old_tracker, old_tracked, old_encountered_error, old_approximate_length, had_error) = {
             let b = bound.borrow();
@@ -460,7 +467,7 @@ impl<'a> NodeBuilderImpl<'a> {
         let tracked = std::mem::take(&mut bound.borrow_mut().tracked_symbols);
         for a in tracked {
             if let Some(tracker) = self.ctx.tracker.clone() {
-                let nodes_view: &[ast::Node] = nodes;
+                let nodes_view: &[ast::Node] = diag_nodes.unwrap_or(nodes);
                 tracker.borrow_mut().track_symbol(
                     a.symbol,
                     a.enclosing_declaration,
@@ -583,7 +590,7 @@ impl<'a> NodeBuilderImpl<'a> {
         };
         drop(visitor);
         drop(shared);
-        if !self.finalize_boundary(c, &bound, nodes) {
+        if !self.finalize_boundary(c, &bound, nodes, extra_live) {
             return None;
         }
         {

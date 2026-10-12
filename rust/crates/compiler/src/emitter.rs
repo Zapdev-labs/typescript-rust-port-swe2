@@ -677,13 +677,18 @@ impl<'p, 'w> Emitter<'p, 'w> {
                 });
             }
 
+            // `self.source_file`, not `source_file`: the transformed root is
+            // minted inside the checked-out arena, so reads via
+            // `emit_nodes` (which see the pre-transform clone) would index
+            // out of bounds. The source-map path only needs `file_name()`,
+            // which is identical on the original node.
             let source_mapping_url = self.get_source_mapping_url(
                 host,
                 map_options,
                 source_map_generator,
                 js_file_path,
                 source_map_file_path,
-                Some(source_file),
+                Some(self.source_file),
             );
 
             if !source_mapping_url.is_empty() {
