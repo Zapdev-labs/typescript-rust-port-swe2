@@ -651,7 +651,17 @@ impl<'p, 'w> Emitter<'p, 'w> {
             Some(tsc_sourcemap::Generator::new(
                 js_file_path.base_name(),
                 &get_source_root(map_options),
-                self.get_source_map_directory(host, map_options, js_file_path, Some(source_file)),
+                // `self.source_file`, not `source_file`: the transformed
+                // root is minted in the checked-out arena and is out of
+                // bounds for `emit_nodes` (same issue as below at
+                // `get_source_mapping_url`). Only `file_name()` is read,
+                // which is identical on the original node.
+                self.get_source_map_directory(
+                    host,
+                    map_options,
+                    js_file_path,
+                    Some(self.source_file),
+                ),
                 host.case_sensitivity(),
             ))
         } else {

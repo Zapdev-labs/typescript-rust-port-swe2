@@ -4479,9 +4479,13 @@ impl Checker {
                         duplicate_function_declaration = true;
                     }
                 } else if previous_declaration.is_some_and(|p| {
-                    nodes[p].parent == nodes[node].parent
-                        && nodes[p].end() != nodes[node].pos()
-                        && !nodes[p].flags.intersects(ast::NodeFlags::REPARSED)
+                    // `p` may live in a different file's arena than `node`
+                    // (symbol declarations span files); resolve it in its own
+                    // arena like Go's direct pointer access.
+                    let p_nodes = __program.nodes(p.file_index());
+                    p_nodes[p].parent == nodes[node].parent
+                        && p_nodes[p].end() != nodes[node].pos()
+                        && !p_nodes[p].flags.intersects(ast::NodeFlags::REPARSED)
                 }) {
                     self.report_implementation_expected_error(
                         previous_declaration.unwrap(),
