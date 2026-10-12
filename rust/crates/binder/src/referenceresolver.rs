@@ -161,6 +161,15 @@ pub fn new_reference_resolver<'a>(
 }
 
 impl<'a> ReferenceResolverImpl<'a> {
+    /// Overrides the resolver's `globals` table. `new_reference_resolver`
+    /// constructs an empty one; callers that know the program's live global
+    /// table (e.g. the emit resolver, which cannot reborrow the checker in
+    /// `*Unsafe` contexts) share it here so global-scope names resolve.
+    pub fn with_globals(mut self, globals: std::rc::Rc<std::cell::RefCell<SymbolTable>>) -> Self {
+        self.resolver.globals = globals;
+        self
+    }
+
     /// `func (r *referenceResolver) getResolvedSymbol`.
     fn get_resolved_symbol(&mut self, node: Option<NodeId>) -> Option<SymbolId> {
         if let Some(node) = node {

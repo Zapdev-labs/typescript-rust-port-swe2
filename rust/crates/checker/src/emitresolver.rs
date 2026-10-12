@@ -117,6 +117,10 @@ pub struct EmitResolver {
     /// `r.checker.program` — same reason as `symbol_arena`: program-arena
     /// snapshots must be reachable while the checker cell is locked.
     program: Option<Rc<dyn crate::checker_types::Program>>,
+    /// `r.checker.globals` — the program's live global symbol table; the
+    /// unhooked resolver used by the `_unsafe` fallbacks needs it to resolve
+    /// script-file (non-module) top-level names.
+    globals: Rc<RefCell<ast::SymbolTable>>,
     // `referenceResolver` is built per call — see `reference_resolver`.
     // `isValueAliasDeclaration`/`aliasMarkingVisitor` are plain methods —
     // see the header note.
@@ -133,12 +137,13 @@ pub fn new_emit_resolver(
     checker: Rc<RefCell<Checker>>,
     emit_context: Rc<RefCell<EmitContext>>,
 ) -> EmitResolver {
-    let (options, symbol_arena, program) = {
+    let (options, symbol_arena, program, globals) = {
         let c = checker.borrow();
         (
             c.compiler_options.clone(),
             c.symbol_arena.clone(),
             c.program.clone(),
+            c.globals.clone(),
         )
     };
     EmitResolver {
@@ -148,6 +153,7 @@ pub fn new_emit_resolver(
         request_node_builder: RefCell::new(None),
         symbol_arena,
         program,
+        globals,
     }
 }
 
@@ -1376,7 +1382,43 @@ impl tsc_printer::EmitResolver for EmitResolver {
         if !ast::is_parse_tree_node(orig_node) {
             return false;
         }
-        let Some(symbol) = orig_node.symbol() else {
+        // Locked path (`unsafe`): mirror the binder's
+        // `getInitializerSymbol` — expando property declarations are bound
+        // onto the function's own symbol for function declarations (and JS
+        // class declarations), or onto the function/arrow initializer's
+        // symbol for const variable declarations (and JS binary-expression
+        // declarations). `getPropertiesOfContainerFunction` then sees them
+        // through `getTypeOfSymbol`.
+        let carrier = if ast::is_function_declaration(orig_node)
+            || (ast::is_in_js_file(Some(orig), &arena)
+                && ast::is_class_declaration(orig_node))
+        {
+            orig_node.symbol()
+        } else if ast::is_variable_declaration(orig_node)
+            && (orig_node
+                .parent
+                .is_some_and(|p| arena[p].flags.intersects(ast::NodeFlags::CONST))
+                || ast::is_in_js_file(Some(orig), &arena))
+        {
+            let initializer = orig_node.initializer();
+            if ast::is_expando_initializer(orig_node, initializer, &arena) {
+                initializer.and_then(|i| arena[i].symbol())
+            } else {
+                None
+            }
+        } else if ast::is_binary_expression(orig_node)
+            && ast::is_in_js_file(Some(orig), &arena)
+        {
+            let initializer = orig_node.as_binary_expression().right;
+            if ast::is_expando_initializer(orig_node, initializer, &arena) {
+                initializer.and_then(|i| arena[i].symbol())
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+        let Some(symbol) = carrier else {
             return false;
         };
         let symbol_arena = self.symbol_arena.borrow();
@@ -1781,7 +1823,8 @@ impl tsc_printer::EmitResolver for EmitResolver {
         let mut resolver = new_reference_resolver(
             &self.options,
             ReferenceResolverHooks::default(),
-        );
+        )
+        .with_globals(self.globals.clone());
         resolver.get_referenced_value_declaration(orig, &arena, &self.symbol_arena)
     }
 
