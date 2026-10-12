@@ -457,6 +457,22 @@ impl<'a> NodeBuilderImpl<'a> {
         self.ctx.encountered_error = old_encountered_error;
         self.ctx.approximate_length = old_approximate_length;
 
+        // Tracked-symbol replays and deferred reports carry ids minted in
+        // either the working buffer (`nodes` — a scratch clone in the
+        // foreign-arena path) or the destination buffer (`diag_nodes`).
+        // Register both so `resolve_arena_for` can find ids in either space
+        // no matter which `nodes_view` a nested call receives. Domestic
+        // calls skip this: `nodes` is already the view every nested call
+        // resolves against.
+        let _g_nodes;
+        let _g_diag;
+        if diag_nodes.is_some() {
+            _g_nodes = Some(crate::printer_util::LiveArenaGuard::register(nodes));
+            _g_diag = diag_nodes.map(crate::printer_util::LiveArenaGuard::register);
+        } else {
+            _g_nodes = None;
+            _g_diag = None;
+        }
         let mut reports = std::mem::take(&mut bound.borrow_mut().deferred_reports);
         for f in reports.iter_mut() {
             f(nodes);
