@@ -11003,7 +11003,7 @@ impl Checker {
         // References are combinations of identifiers, parentheses, and property accesses.
         let node = ast::skip_outer_expressions(
             expr,
-            ast::outer_expression_kinds::TYPE_ASSERTIONS | ast::outer_expression_kinds::PARENTHESES,
+            ast::outer_expression_kinds::ASSERTIONS | ast::outer_expression_kinds::PARENTHESES,
             &nodes,
         );
         if nodes[node].kind != ast::Kind::Identifier && !ast::is_access_expression(&nodes[node]) {
