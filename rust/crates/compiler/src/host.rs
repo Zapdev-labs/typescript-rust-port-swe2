@@ -126,7 +126,10 @@ impl CompilerHost for BasicCompilerHost {
             &text,
             tsc_core::core::ensure_script_kind_from_file_name(&opts.file_name),
         );
-        Some(ParsedSourceFile { file, nodes })
+        Some(ParsedSourceFile {
+            file,
+            nodes: std::rc::Rc::new(nodes),
+        })
     }
 
     /// `(h *compilerHost) GetContentMappedSourceFiles`.

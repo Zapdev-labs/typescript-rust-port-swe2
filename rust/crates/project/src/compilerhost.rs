@@ -302,9 +302,13 @@ impl<B: CompilerHostBuilder, P: CompilerHostProject> CompilerHostTrait
             let mut files = transform_and_parse(parse_options, fh.content(), mapper, &project)?;
             // `files.Canonical.Hash = key.Hash`
             let canonical = &mut files.canonical;
-            canonical.nodes[canonical.file].as_source_file_mut().hash = key.hash;
+            let cf = canonical.file;
+            std::rc::Rc::get_mut(&mut canonical.nodes).unwrap()[cf]
+                .as_source_file_mut()
+                .hash = key.hash;
             for supplemental in &mut files.supplemental {
-                supplemental.nodes[supplemental.file]
+                let sf = supplemental.file;
+                std::rc::Rc::get_mut(&mut supplemental.nodes).unwrap()[sf]
                     .as_source_file_mut()
                     .hash = key.hash;
             }

@@ -219,7 +219,10 @@ pub fn new_parse_cache(options: RefCountCacheOptions) -> ParseCache {
         // appends into the program's global `Vec<Symbol>`, so binding is
         // deferred to `Program::bind_source_files`/`get_bind_diagnostics`,
         // which bind per-file arenas on demand.
-        Arc::new(Mutex::new(ParsedSourceFile { file, nodes }))
+        Arc::new(Mutex::new(ParsedSourceFile {
+            file,
+            nodes: std::rc::Rc::new(nodes),
+        }))
     })
 }
 

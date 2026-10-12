@@ -931,25 +931,20 @@ impl CompilerHost for CachedCompilerHost {
         let key = get_source_file_cache_key(opts, &text, script_kind);
         SOURCE_FILE_CACHE.with(|cache| {
             let mut cache = cache.borrow_mut();
-            // PORT: `ParsedSourceFile` doesn't implement `Clone`; cloning
-            // `Vec<Node>` is a shallow structural copy that still references
-            // arena slots, which is fine here because each parse produces a
-            // fresh arena.
             if let Some(cached) = cache.get(&key) {
+                // Share the cached arena; programs mutate through `ArenaCell`
+                // copy-on-write, so the canonical parse stays pristine.
                 return Some(ParsedSourceFile {
                     file: cached.file,
                     nodes: cached.nodes.clone(),
                 });
             }
             let (file, nodes) = tsc_parser::parse_source_file(opts.clone(), &text, script_kind);
-            let parsed = ParsedSourceFile { file, nodes };
-            cache.insert(
-                key,
-                ParsedSourceFile {
-                    file,
-                    nodes: parsed.nodes.clone(),
-                },
-            );
+            let parsed = ParsedSourceFile {
+                file,
+                nodes: std::rc::Rc::new(nodes),
+            };
+            cache.insert(key, parsed.clone());
             Some(parsed)
         })
     }

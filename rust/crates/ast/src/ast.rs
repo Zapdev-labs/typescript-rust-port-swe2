@@ -2751,9 +2751,9 @@ pub struct ArenaCell(
 );
 
 impl ArenaCell {
-    pub fn new(nodes: Vec<Node>) -> ArenaCell {
+    pub fn new(nodes: impl Into<std::rc::Rc<Vec<Node>>>) -> ArenaCell {
         ArenaCell(
-            std::cell::RefCell::new(std::rc::Rc::new(nodes)),
+            std::cell::RefCell::new(nodes.into()),
             std::cell::Cell::new(false),
             std::cell::Cell::new(0),
             std::cell::Cell::new(0),
