@@ -7296,7 +7296,7 @@ impl Relater {
                 .get(apparent)
                 .flags
                 .intersects(TypeFlags::STRUCTURED_TYPE)
-            && !crate::checker_d::some_type(c, source, |c: &mut Checker, t: TypeId| {
+            && !c.types_handle().get(source).types().iter().any(|&t| {
                 t == target
                     || c.types_handle()
                         .get(t)
