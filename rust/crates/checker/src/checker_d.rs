@@ -8192,12 +8192,12 @@ impl Checker {
         if helpers_module == self.unknown_symbol {
             return;
         }
-        if !(self
+        if self
             .source_file_links
             .get(source_file)
             .requested_external_emit_helpers
-            & helpers)
-            == helpers
+            & helpers
+            != helpers
         {
             let unchecked_helpers = helpers.without(
                 self.source_file_links

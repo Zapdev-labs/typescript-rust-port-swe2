@@ -8235,11 +8235,8 @@ impl Checker {
                                     .symbol()
                                     .and_then(|s| self.sym(s).value_declaration);
                                 value_declaration.is_some_and(|vd| {
-                                    Some(vd) == t_value_declaration
-                                        && nodes[vd].parent
-                                            == t_value_declaration
-                                                .map(|tvd| nodes[tvd].parent)
-                                                .unwrap_or_default()
+                                    let vd_nodes = __program.nodes(vd.file_index());
+                                    vd_nodes[vd].parent == t_value_declaration
                                 })
                             });
                             // PORT: Go compares
@@ -14851,10 +14848,13 @@ pub(crate) fn is_prototype_property(c: &Checker, symbol: SymbolId) -> bool {
 }
 
 /// `isConflictingPrivateProperty` (checker.go:22347).
+/// Return true for a synthetic property with multiple declarations, at least
+/// one of which is private.
 pub(crate) fn is_conflicting_private_property(c: &Checker, prop: SymbolId) -> bool {
-    let check_flags = c.sym(prop).check_flags;
-    check_flags.intersects(ast::checkflags::CheckFlags::CONTAINS_PRIVATE)
-        && !check_flags.intersects(ast::checkflags::CheckFlags::CONTAINS_STATIC)
+    let s = c.sym(prop);
+    s.value_declaration.is_none()
+        && s.check_flags
+            .intersects(ast::checkflags::CheckFlags::CONTAINS_PRIVATE)
 }
 
 /// `compareTypesEqual` (checker.go:28233) — out-of-range helper needed by
