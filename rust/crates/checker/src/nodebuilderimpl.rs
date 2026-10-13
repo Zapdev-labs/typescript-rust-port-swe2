@@ -6082,7 +6082,7 @@ impl<'a> NodeBuilderImpl<'a> {
             .flags
             .intersects(nodebuilder::Flags::GENERATE_NAMES_FOR_SHADOWED_TYPE_PARAMS)
             && root_is_distributive
-            && !type_flags(c, root_check_type.unwrap_or(TypeId::NONE))
+            && !type_flags(c, check_type.unwrap_or(TypeId::NONE))
                 .intersects(TypeFlags::TYPE_PARAMETER)
         {
             let new_param_symbol =
