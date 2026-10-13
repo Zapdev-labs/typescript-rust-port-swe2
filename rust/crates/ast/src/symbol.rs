@@ -51,25 +51,26 @@ pub fn symbol_is_static(s: &Symbol, nodes: &[crate::Node]) -> bool {
 /// `map[string]*Symbol` while keeping deterministic insertion order.
 pub type SymbolTable = OrderedMap<String, SymbolId>;
 
-/// Invalid UTF8 sequence, will never occur as IdentifierName.
-pub const INTERNAL_SYMBOL_NAME_PREFIX: &str = "\u{FE}";
+/// Not a valid identifier char and escapes to `\uFFFD` — Rust's UTF-8-safe
+/// equivalent of Go's invalid-UTF-8 `\xFE` marker byte.
+pub const INTERNAL_SYMBOL_NAME_PREFIX: &str = "\u{FFFD}";
 
-pub const INTERNAL_SYMBOL_NAME_CALL: &str = "\u{FE}call"; // Call signatures
-pub const INTERNAL_SYMBOL_NAME_CONSTRUCTOR: &str = "\u{FE}constructor"; // Constructor implementations
-pub const INTERNAL_SYMBOL_NAME_NEW: &str = "\u{FE}new"; // Constructor signatures
-pub const INTERNAL_SYMBOL_NAME_INDEX: &str = "\u{FE}index"; // Index signatures
-pub const INTERNAL_SYMBOL_NAME_EXPORT_STAR: &str = "\u{FE}export"; // Module export * declarations
-pub const INTERNAL_SYMBOL_NAME_GLOBAL: &str = "\u{FE}global"; // Global self-reference
-pub const INTERNAL_SYMBOL_NAME_MISSING: &str = "\u{FE}missing"; // Indicates missing symbol
-pub const INTERNAL_SYMBOL_NAME_TYPE: &str = "\u{FE}type"; // Anonymous type literal symbol
-pub const INTERNAL_SYMBOL_NAME_OBJECT: &str = "\u{FE}object"; // Anonymous object literal declaration
-pub const INTERNAL_SYMBOL_NAME_JSX_ATTRIBUTES: &str = "\u{FE}jsxAttributes"; // Anonymous JSX attributes object literal declaration
-pub const INTERNAL_SYMBOL_NAME_CLASS: &str = "\u{FE}class"; // Unnamed class expression
-pub const INTERNAL_SYMBOL_NAME_FUNCTION: &str = "\u{FE}function"; // Unnamed function expression
-pub const INTERNAL_SYMBOL_NAME_COMPUTED: &str = "\u{FE}computed"; // Computed property name declaration with dynamic name
-pub const INTERNAL_SYMBOL_NAME_ASSIGNMENT_DECLARATION: &str = "\u{FE}assignment"; // Assignment declarations
-pub const INTERNAL_SYMBOL_NAME_INSTANTIATION_EXPRESSION: &str = "\u{FE}instantiationExpression"; // Instantiation expressions
-pub const INTERNAL_SYMBOL_NAME_IMPORT_ATTRIBUTES: &str = "\u{FE}importAttributes";
+pub const INTERNAL_SYMBOL_NAME_CALL: &str = "\u{FFFD}call"; // Call signatures
+pub const INTERNAL_SYMBOL_NAME_CONSTRUCTOR: &str = "\u{FFFD}constructor"; // Constructor implementations
+pub const INTERNAL_SYMBOL_NAME_NEW: &str = "\u{FFFD}new"; // Constructor signatures
+pub const INTERNAL_SYMBOL_NAME_INDEX: &str = "\u{FFFD}index"; // Index signatures
+pub const INTERNAL_SYMBOL_NAME_EXPORT_STAR: &str = "\u{FFFD}export"; // Module export * declarations
+pub const INTERNAL_SYMBOL_NAME_GLOBAL: &str = "\u{FFFD}global"; // Global self-reference
+pub const INTERNAL_SYMBOL_NAME_MISSING: &str = "\u{FFFD}missing"; // Indicates missing symbol
+pub const INTERNAL_SYMBOL_NAME_TYPE: &str = "\u{FFFD}type"; // Anonymous type literal symbol
+pub const INTERNAL_SYMBOL_NAME_OBJECT: &str = "\u{FFFD}object"; // Anonymous object literal declaration
+pub const INTERNAL_SYMBOL_NAME_JSX_ATTRIBUTES: &str = "\u{FFFD}jsxAttributes"; // Anonymous JSX attributes object literal declaration
+pub const INTERNAL_SYMBOL_NAME_CLASS: &str = "\u{FFFD}class"; // Unnamed class expression
+pub const INTERNAL_SYMBOL_NAME_FUNCTION: &str = "\u{FFFD}function"; // Unnamed function expression
+pub const INTERNAL_SYMBOL_NAME_COMPUTED: &str = "\u{FFFD}computed"; // Computed property name declaration with dynamic name
+pub const INTERNAL_SYMBOL_NAME_ASSIGNMENT_DECLARATION: &str = "\u{FFFD}assignment"; // Assignment declarations
+pub const INTERNAL_SYMBOL_NAME_INSTANTIATION_EXPRESSION: &str = "\u{FFFD}instantiationExpression"; // Instantiation expressions
+pub const INTERNAL_SYMBOL_NAME_IMPORT_ATTRIBUTES: &str = "\u{FFFD}importAttributes";
 /// Export assignment symbol
 pub const INTERNAL_SYMBOL_NAME_EXPORT_EQUALS: &str = "export=";
 /// Default export symbol (technically not wholly internal, but included here for usability)

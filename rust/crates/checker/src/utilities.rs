@@ -1556,7 +1556,7 @@ pub(crate) fn pseudo_big_int_to_string(value: tsc_jsnum::PseudoBigInt) -> String
 /// `isLateBoundName` (utilities.go:1028).
 pub(crate) fn is_late_bound_name(name: &str) -> bool {
     // Go: `len(name) >= 2 && name[0] == '\xfe' && name[1] == '@'`.
-    name.starts_with("\u{FE}@")
+    name.starts_with("\u{FFFD}@")
 }
 
 /// `IsKnownSymbol` (utilities.go:1018).

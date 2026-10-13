@@ -380,6 +380,23 @@ fn symbol_name(c: &Checker, s: SymbolId) -> String {
     c.symbol_arena.borrow()[s.index()].name.clone()
 }
 
+/// `ast.SymbolName` — decodes private-identifier class element names from
+/// their declaration name node (`#context` rather than the internal
+/// `\u{FFFD}#id@#context` encoding).
+fn declaration_symbol_name(c: &Checker, s: SymbolId, nodes: &[ast::Node]) -> String {
+    let arena = c.symbol_arena.borrow();
+    let sym = &arena[s.index()];
+    let view = match sym.value_declaration {
+        Some(vd) => crate::printer_util::resolve_arena_for(
+            c.program.as_ref().expect("program"),
+            nodes,
+            vd,
+        ),
+        None => crate::printer_util::ArenaView::Working(nodes),
+    };
+    ast::symbol_name(sym, &view).into_owned()
+}
+
 /// `symbol.declarations` (cloned) read through the arena.
 fn symbol_declarations(c: &Checker, s: SymbolId) -> Vec<NodeId> {
     c.symbol_arena.borrow()[s.index()].declarations.clone()
@@ -5500,7 +5517,7 @@ impl<'a> NodeBuilderImpl<'a> {
                     tracker
                         .borrow_mut()
                         .report_private_in_base_of_class_expression(
-                            &symbol_name(c, property_symbol),
+                            &declaration_symbol_name(c, property_symbol, nodes),
                             nodes,
                         );
                 }
@@ -7751,7 +7768,7 @@ fn types_are_same_reference(c: &Checker, a: TypeId, b: TypeId) -> bool {
 /// utilities.go's copy lands.
 fn is_reserved_member_name(name: &str) -> bool {
     let mut chars = name.chars();
-    matches!(chars.next(), Some('\u{FE}'))
+    matches!(chars.next(), Some('\u{FFFD}'))
         && matches!(chars.next(), Some(c) if c != '@' && c != '#')
 }
 

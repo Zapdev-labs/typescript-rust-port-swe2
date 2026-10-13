@@ -758,7 +758,7 @@ impl Checker {
             let mut candidate_name = String::new();
             let raw_name = self.symbol_display_name(candidate);
             let flags = sym_flags(self, candidate);
-            if !raw_name.is_empty() && !raw_name.starts_with('"') && !raw_name.starts_with('\u{FE}')
+            if !raw_name.is_empty() && !raw_name.starts_with('"') && !raw_name.starts_with('\u{FFFD}')
             {
                 if flags.intersects(meaning) {
                     candidate_name = raw_name;

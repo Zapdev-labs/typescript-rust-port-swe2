@@ -6507,6 +6507,13 @@ impl Checker {
             let __arena_symbol = self.types.clone();
             let symbol = __arena_symbol.get(t).symbol.expect("interface symbol");
             let members = self.get_members_of_symbol(symbol);
+            {
+                let __arena___guard_d = self.types.clone();
+                let mut __guard_d = __arena___guard_d.get_mut(t);
+                let d = __guard_d.as_interface_type_mut().expect("interface type");
+                d.declared_members_resolved = true;
+                d.declared_members = members.clone();
+            }
             let declared_call_signatures =
                 self.get_signatures_of_symbol(members.get(ast::INTERNAL_SYMBOL_NAME_CALL).copied());
             let declared_construct_signatures =
@@ -6515,8 +6522,6 @@ impl Checker {
             let __arena___guard_d = self.types.clone();
             let mut __guard_d = __arena___guard_d.get_mut(t);
             let d = __guard_d.as_interface_type_mut().expect("interface type");
-            d.declared_members_resolved = true;
-            d.declared_members = members;
             d.declared_call_signatures = declared_call_signatures;
             d.declared_construct_signatures = declared_construct_signatures;
             d.declared_index_infos = declared_index_infos;
@@ -11678,7 +11683,7 @@ impl Checker {
                 };
                 if let Some(symbol) = symbol {
                     let name = self.sym(symbol).name.clone();
-                    if !name.is_empty() && !name.starts_with('\u{FE}') {
+                    if !name.is_empty() && !name.starts_with('\u{FFFD}') {
                         let name = self.symbol_to_string(symbol);
                         if !circular_type_names.contains(&name) {
                             circular_type_names.push(name);
@@ -14830,7 +14835,7 @@ pub(crate) fn is_thisless_type_parameter(node: NodeId, nodes: &[ast::Node]) -> b
 /// copy lands (mirrors `nodebuilderimpl.rs`).
 pub(crate) fn is_reserved_member_name(name: &str) -> bool {
     let mut chars = name.chars();
-    matches!(chars.next(), Some('\u{FE}'))
+    matches!(chars.next(), Some('\u{FFFD}'))
         && matches!(chars.next(), Some(c) if c != '@' && c != '#')
 }
 
