@@ -716,6 +716,25 @@ thread_local! {
         RefCell::new(FxHashMap::default());
 }
 
+// PORT: Go's `SyncMap` is unbounded, but `ParsedSourceFile` retains a whole
+// node arena per entry — across a full baseline suite that pins gigabytes of
+// ASTs and OOMs the host. Bound the cache; a miss only costs a re-parse.
+// Library files (`lib.*.d.ts`) are the hot shared parses, so eviction keeps
+// them and drops test-case files first.
+const SOURCE_FILE_CACHE_CAP: usize = 256;
+
+fn source_file_cache_evict_if_full(
+    cache: &mut FxHashMap<SourceFileCacheKey, ParsedSourceFile>,
+) {
+    if cache.len() < SOURCE_FILE_CACHE_CAP {
+        return;
+    }
+    cache.retain(|key, _| key.file_name.as_string().contains("/lib."));
+    if cache.len() >= SOURCE_FILE_CACHE_CAP {
+        cache.clear();
+    }
+}
+
 /// `type SourceFileCacheKey struct`.
 ///
 // PORT: `ast.SourceFileParseOptions` isn't `Hash`; the key flattens its
@@ -944,6 +963,7 @@ impl CompilerHost for CachedCompilerHost {
                 file,
                 nodes: std::rc::Rc::new(nodes),
             };
+            source_file_cache_evict_if_full(&mut cache);
             cache.insert(key, parsed.clone());
             Some(parsed)
         })
