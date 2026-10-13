@@ -2967,7 +2967,7 @@ pub fn create_module_not_found_chain(
             ],
         };
     }
-    if packages_map.contains_key(&package_name) {
+    if packages_map.get(&package_name).copied().unwrap_or(false) {
         return DiagnosticDetails {
             message: &diagnostics::If_the_0_package_actually_exposes_this_module_try_adding_a_new_declaration_d_ts_file_containing_declare_module_1,
             args: vec![package_name, module_reference.to_string()],
