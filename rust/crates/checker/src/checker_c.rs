@@ -608,7 +608,7 @@ impl Checker {
                     // It's not an error if the file with multiple `export *`s
                     // with duplicate names exports a member with that name
                     // itself
-                    if id == ast::INTERNAL_SYMBOL_NAME_EXPORT_STAR
+                    if id == ast::INTERNAL_SYMBOL_NAME_EXPORT_EQUALS
                         || s.exports_with_duplicate.is_empty()
                         || symbols.get(id).is_some()
                     {
