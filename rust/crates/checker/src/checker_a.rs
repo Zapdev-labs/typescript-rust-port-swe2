@@ -8824,33 +8824,33 @@ impl Checker {
                         );
                     }
                 }
-            }
-            // Go: `} else if exportDecl.ExportClause != nil` — the namespace
-            // export check is `if moduleSymbol != nil && hasExportAssignmentSymbol`
-            // paired with `else if exportDecl.ExportClause != nil`; the emit-
-            // helpers block follows both branches.
-            if self
-                .program
-                .as_ref()
-                .expect("program")
-                .get_emit_module_format_of_file(
-                    nodes[ast::get_source_file_of_node(Some(node), &nodes).expect("source file")]
+                // Go: the emit-helpers check lives inside the
+                // `export *`/`export * as ns` else-branch — `export { x }`
+                // declarations do not request helpers.
+                if self
+                    .program
+                    .as_ref()
+                    .expect("program")
+                    .get_emit_module_format_of_file(
+                        nodes[ast::get_source_file_of_node(Some(node), &nodes)
+                            .expect("source file")]
                         .as_source_file(),
-                )
-                == ModuleKind::CommonJS
-            {
-                if export_clause.is_some() {
-                    // export * as ns from "foo";
-                    self.check_external_emit_helpers(
-                        node,
-                        crate::types::ExternalEmitHelpers::IMPORT_STAR,
-                    );
-                } else {
-                    // export * from "foo"
-                    self.check_external_emit_helpers(
-                        node,
-                        crate::types::ExternalEmitHelpers::EXPORT_STAR,
-                    );
+                    )
+                    == ModuleKind::CommonJS
+                {
+                    if export_clause.is_some() {
+                        // export * as ns from "foo";
+                        self.check_external_emit_helpers(
+                            node,
+                            crate::types::ExternalEmitHelpers::IMPORT_STAR,
+                        );
+                    } else {
+                        // export * from "foo"
+                        self.check_external_emit_helpers(
+                            node,
+                            crate::types::ExternalEmitHelpers::EXPORT_STAR,
+                        );
+                    }
                 }
             }
         }
