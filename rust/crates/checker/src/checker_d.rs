@@ -11494,11 +11494,16 @@ impl Checker {
         let decl = self.current_node.map(|node| {
             let program = self.program.clone().expect("program");
             let mut arena = program.nodes_mut(node.file_index());
+            let old_file_index = self.factory.file_index();
+            self.factory.set_file_index(node.file_index());
             let type_node = self
                 .factory
                 .new_keyword_type_node(&mut arena, ast::Kind::AnyKeyword);
-            self.factory
-                .new_function_type_node(&mut arena, None, None, Some(type_node))
+            let decl = self
+                .factory
+                .new_function_type_node(&mut arena, None, None, Some(type_node));
+            self.factory.set_file_index(old_file_index);
+            decl
         });
         self.new_signature(
             crate::types::SignatureFlags::NONE,
