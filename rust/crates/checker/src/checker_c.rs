@@ -12388,11 +12388,16 @@ impl Checker {
             // mapper to the type parameters to produce the effective list of type arguments, and compute the
             // instantiation cache key from the type IDs of the type arguments.
             let mut type_arguments = Vec::with_capacity(root.outer_type_parameters.len());
+            // Go calls `mapper.Map` directly here (not `getMappedType`) —
+            // there is no `getNonDistributedTypeParameter` pre-mapping in
+            // `getConditionalTypeInstantiation`'s argument loop.
+            let mappers = self.type_mappers.clone();
             for tp in root.outer_type_parameters.clone() {
-                type_arguments.push(crate::mapper::get_mapped_type(self, tp, mapper));
+                type_arguments.push(mappers.map(self, mapper, tp));
             }
             let key = get_conditional_type_key(&type_arguments, alias.as_ref(), for_constraint);
-            if let Some(&result) = root.instantiations.get(&key) {
+            let cached = root.instantiations.read().unwrap().get(&key).copied();
+            if let Some(result) = cached {
                 return result;
             }
             let new_mapper = new_type_mapper(
@@ -12433,17 +12438,11 @@ impl Checker {
                     alias.clone(),
                 )
             };
-            {
-                let __arena_g = self.types.clone();
-                let mut g = __arena_g.get_mut(t);
-                let root = g
-                    .data
-                    .as_conditional_type_mut()
-                    .root
-                    .as_mut()
-                    .expect("conditional type root");
-                root.instantiations.insert(key, result);
-            }
+            // The map is shared across all roots cloned from the same
+            // declared conditional (`Arc`), so inserting on the local clone
+            // records the instantiation exactly like Go's write into the
+            // shared `*ConditionalRoot`.
+            root.instantiations.write().unwrap().insert(key, result);
             return result;
         }
         t

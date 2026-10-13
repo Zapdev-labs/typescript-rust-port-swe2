@@ -59,11 +59,13 @@
 //
 // `*ConditionalRoot` is `Box<ConditionalRoot>` inside `ConditionalType`
 // (types.rs). Go shares the `instantiations` map across conditionals that
-// share a root (tail recursion); the port clones roots value-wise — see
+// share a root (tail recursion); the port clones roots value-wise but keeps
+// the `instantiations` map shared via `Arc<RwLock<..>>` — see
 // `clone_conditional_root` and `get_tail_recursion_root`.
 
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::sync::Arc;
 
 use rustc_hash::{FxHashMap, FxHashSet};
 use tsc_ast::checkflags::CheckFlags;
@@ -674,17 +676,18 @@ impl Checker {
                     .intersects(TypeFlags::TYPE_PARAMETER),
                 infer_type_parameters: self.get_infer_type_parameters(node, &[]),
                 outer_type_parameters: outer_type_parameters.clone().unwrap_or_default(),
-                instantiations: FxHashMap::default(),
+                instantiations: Arc::new(std::sync::RwLock::new(FxHashMap::default())),
                 alias,
             };
             let resolved = self.get_conditional_type(&mut root, None, false, None);
             if let Some(outer_type_parameters) = &outer_type_parameters {
                 let key =
                     crate::checker_c::get_conditional_type_key(outer_type_parameters, None, false);
-                root.instantiations.insert(key, resolved);
+                root.instantiations.write().unwrap().insert(key, resolved);
                 // Write-through: Go shares `root` with `resolved`'s
-                // `AsConditionalType().root`; the port stores an owning
-                // `Box`, so mirror the insert on the stored copy.
+                // `AsConditionalType().root`; the port's roots share the
+                // `instantiations` map via `Rc`, so this mirrors the insert
+                // when `resolved` carries a cloned root.
                 if self
                     .types_handle()
                     .get(resolved)
@@ -694,7 +697,7 @@ impl Checker {
                     let __arena_g = self.types.clone();
                     let mut g = __arena_g.get_mut(resolved);
                     if let Some(stored) = as_conditional_type_mut(&mut g).root.as_mut() {
-                        stored.instantiations.insert(key, resolved);
+                        stored.instantiations.write().unwrap().insert(key, resolved);
                     }
                 }
             }

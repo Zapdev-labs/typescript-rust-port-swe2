@@ -2844,8 +2844,12 @@ pub struct ConditionalRoot {
     pub infer_type_parameters: Vec<TypeId>,
     /// `outerTypeParameters`.
     pub outer_type_parameters: Vec<TypeId>,
-    /// `instantiations`.
-    pub instantiations: FxHashMap<crate::checker_core::CacheHashKey, TypeId>,
+    /// `instantiations` — Go's `*ConditionalRoot` is shared by every
+    /// conditional derived from the same declared node, so all
+    /// instantiations record into one map. The port clones roots value-wise
+    /// (`clone_conditional_root`); the `Arc<RwLock<..>>` keeps the map
+    /// shared across those clones.
+    pub instantiations: Arc<RwLock<FxHashMap<crate::checker_core::CacheHashKey, TypeId>>>,
     /// `alias` — Go `*TypeAlias`, stored inline.
     pub alias: Option<TypeAlias>,
 }
