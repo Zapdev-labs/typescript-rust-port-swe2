@@ -2746,9 +2746,7 @@ impl Checker {
         let expr = ast::skip_parentheses(node, &nodes);
         match nodes[expr].kind {
             ast::Kind::NullKeyword => true,
-            ast::Kind::Identifier => {
-                self.get_resolved_symbol_or_nil(expr) == Some(self.undefined_symbol)
-            }
+            ast::Kind::Identifier => self.get_resolved_symbol(expr) == self.undefined_symbol,
             _ => false,
         }
     }
