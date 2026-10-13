@@ -9082,9 +9082,7 @@ impl Checker {
                 if !is_illegal_export_default_in_cjs
                     && !nodes[node].flags.intersects(ast::NodeFlags::AMBIENT)
                     && self.compiler_options.get_isolated_modules()
-                    && !self
-                        .get_symbol_flags(sym)
-                        .intersects(ast::SymbolFlags::VALUE)
+                    && !sym_flags(self, sym).intersects(ast::SymbolFlags::VALUE)
                 {
                     let non_local_meanings = self.get_symbol_flags_ex(
                         sym, false, /*excludeTypeOnlyMeanings*/
