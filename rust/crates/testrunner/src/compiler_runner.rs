@@ -849,7 +849,7 @@ impl CompilerTest {
                 let mut reversed = union_types.clone();
                 reversed.reverse();
                 reversed
-                    .sort_by(|a, b| tsc_checker::utilities::compare_types(&types, checker.symbol_arena.as_ref(), &checker.type_mappers, *a, *b).cmp(&0));
+                    .sort_by(|a, b| tsc_checker::utilities::compare_types(&types, checker.symbol_arena.as_ref(), &checker.type_mappers, checker.program.as_ref(), *a, *b).cmp(&0));
                 assert_eq!(
                     reversed, union_types,
                     "compareTypes does not sort union types consistently"
@@ -860,7 +860,7 @@ impl CompilerTest {
                 for _ in 0..10 {
                     rng.shuffle(&mut shuffled);
                     shuffled.sort_by(|a, b| {
-                        tsc_checker::utilities::compare_types(&types, checker.symbol_arena.as_ref(), &checker.type_mappers, *a, *b).cmp(&0)
+                        tsc_checker::utilities::compare_types(&types, checker.symbol_arena.as_ref(), &checker.type_mappers, checker.program.as_ref(), *a, *b).cmp(&0)
                     });
                     assert_eq!(
                         shuffled, union_types,

@@ -3267,7 +3267,7 @@ fn compare_types_and_depth(c: &mut Checker, t1: TypeId, t2: TypeId) -> i32 {
     if d1 != d2 {
         return d2 - d1; // Largest depth sorts first
     }
-    crate::utilities::compare_types(&c.types, c.symbol_arena.as_ref(), &c.type_mappers, t1, t2)
+    crate::utilities::compare_types(&c.types, c.symbol_arena.as_ref(), &c.type_mappers, c.program.as_ref(), t1, t2)
 }
 
 /// `getTypeDepth` (inference.go) — return the depth of the given type up to

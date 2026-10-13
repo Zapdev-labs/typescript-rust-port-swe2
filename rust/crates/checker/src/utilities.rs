@@ -797,16 +797,18 @@ pub fn compare_types(
     types: &TypeArena,
     symbols: &RefCell<Vec<ast::Symbol>>,
     mappers: &TypeMapperArena,
+    program: Option<&Rc<dyn crate::checker_types::Program>>,
     t1: TypeId,
     t2: TypeId,
 ) -> i32 {
-    compare_types_opt(types, symbols, mappers, Some(t1), Some(t2))
+    compare_types_opt(types, symbols, mappers, program, Some(t1), Some(t2))
 }
 
 fn compare_types_opt(
     types: &TypeArena,
     symbols: &RefCell<Vec<ast::Symbol>>,
     mappers: &TypeMapperArena,
+    program: Option<&Rc<dyn crate::checker_types::Program>>,
     t1: Option<TypeId>,
     t2: Option<TypeId>,
 ) -> i32 {
@@ -831,7 +833,7 @@ fn compare_types_opt(
     }
     // Order named types by name and, in the case of aliased types, by alias
     // type arguments.
-    let c = compare_type_names(types, symbols, mappers, t1, t2);
+    let c = compare_type_names(types, symbols, mappers, program, t1, t2);
     if c != 0 {
         return c;
     }
@@ -915,7 +917,7 @@ fn compare_types_opt(
                     // Tuple types have no associated symbol, instead we order
                     // by tuple element information.
                     let c = compare_tuple_types(
-                        types,
+                        program,
                         types.get(target1.unwrap()).as_tuple_type(),
                         types.get(target2.unwrap()).as_tuple_type(),
                     );
@@ -932,6 +934,7 @@ fn compare_types_opt(
                         types,
                         symbols,
                         mappers,
+                        program,
                         &types.get(t1).as_type_reference().resolved_type_arguments,
                         &types.get(t2).as_type_reference().resolved_type_arguments,
                     );
@@ -953,6 +956,7 @@ fn compare_types_opt(
                         types,
                         symbols,
                         mappers,
+                        program,
                         types.get(t1).as_object_type().mapper,
                         types.get(t2).as_object_type().mapper,
                     );
@@ -985,15 +989,15 @@ fn compare_types_opt(
                         let r = r.as_reverse_mapped_type();
                         (r.source, r.mapped_type, r.constraint_type)
                     };
-                    let c = compare_types_opt(types, symbols, mappers, source1, source2);
+                    let c = compare_types_opt(types, symbols, mappers, program, source1, source2);
                     if c != 0 {
                         return c;
                     }
-                    let c = compare_types_opt(types, symbols, mappers, mapped1, mapped2);
+                    let c = compare_types_opt(types, symbols, mappers, program, mapped1, mapped2);
                     if c != 0 {
                         return c;
                     }
-                    let c = compare_types_opt(types, symbols, mappers, constraint1, constraint2);
+                    let c = compare_types_opt(types, symbols, mappers, program, constraint1, constraint2);
                     if c != 0 {
                         return c;
                     }
@@ -1017,7 +1021,7 @@ fn compare_types_opt(
                         });
                     }
                 }
-                let c = compare_type_mappers(types, symbols, mappers, m1, m2);
+                let c = compare_type_mappers(types, symbols, mappers, program, m1, m2);
                 if c != 0 {
                     return c;
                 }
@@ -1035,7 +1039,7 @@ fn compare_types_opt(
             };
             match (o1, o2) {
                 (None, None) => {
-                    let c = compare_type_lists(types, symbols, mappers, &types1, &types2);
+                    let c = compare_type_lists(types, symbols, mappers, program, &types1, &types2);
                     if c != 0 {
                         return c;
                     }
@@ -1043,7 +1047,7 @@ fn compare_types_opt(
                 (None, Some(_)) => return 1,
                 (Some(_), None) => return -1,
                 (Some(o1), Some(o2)) => {
-                    let c = compare_types(types, symbols, mappers, o1, o2);
+                    let c = compare_types(types, symbols, mappers, program, o1, o2);
                     if c != 0 {
                         return c;
                     }
@@ -1053,7 +1057,7 @@ fn compare_types_opt(
         _ if flags.intersects(TypeFlags::INTERSECTION) => {
             // Intersections are ordered by their constituent type lists.
             let c =
-                compare_type_lists(types, symbols, mappers, types.get(t1).types(), types.get(t2).types());
+                compare_type_lists(types, symbols, mappers, program, types.get(t1).types(), types.get(t2).types());
             if c != 0 {
                 return c;
             }
@@ -1126,7 +1130,7 @@ fn compare_types_opt(
                 let t = t.as_index_type();
                 (t.target, t.index_flags)
             };
-            let c = compare_types_opt(types, symbols, mappers, target1, target2);
+            let c = compare_types_opt(types, symbols, mappers, program, target1, target2);
             if c != 0 {
                 return c;
             }
@@ -1146,11 +1150,11 @@ fn compare_types_opt(
                 let t = t.as_indexed_access_type();
                 (t.object_type, t.index_type)
             };
-            let c = compare_types_opt(types, symbols, mappers, object1, object2);
+            let c = compare_types_opt(types, symbols, mappers, program, object1, object2);
             if c != 0 {
                 return c;
             }
-            let c = compare_types_opt(types, symbols, mappers, index1, index2);
+            let c = compare_types_opt(types, symbols, mappers, program, index1, index2);
             if c != 0 {
                 return c;
             }
@@ -1170,7 +1174,7 @@ fn compare_types_opt(
             if c != 0 {
                 return c;
             }
-            let c = compare_type_mappers(types, symbols, mappers, mapper1, mapper2);
+            let c = compare_type_mappers(types, symbols, mappers, program, mapper1, mapper2);
             if c != 0 {
                 return c;
             }
@@ -1186,11 +1190,11 @@ fn compare_types_opt(
                 let t = t.as_substitution_type();
                 (t.base_type, t.constraint)
             };
-            let c = compare_types_opt(types, symbols, mappers, base1, base2);
+            let c = compare_types_opt(types, symbols, mappers, program, base1, base2);
             if c != 0 {
                 return c;
             }
-            let c = compare_types_opt(types, symbols, mappers, constraint1, constraint2);
+            let c = compare_types_opt(types, symbols, mappers, program, constraint1, constraint2);
             if c != 0 {
                 return c;
             }
@@ -1210,7 +1214,7 @@ fn compare_types_opt(
             if c != std::cmp::Ordering::Equal {
                 return c as i32;
             }
-            let c = compare_type_lists(types, symbols, mappers, &types1, &types2);
+            let c = compare_type_lists(types, symbols, mappers, program, &types1, &types2);
             if c != 0 {
                 return c;
             }
@@ -1218,7 +1222,7 @@ fn compare_types_opt(
         _ if flags.intersects(TypeFlags::STRING_MAPPING) => {
             let target1 = types.get(t1).as_string_mapping_type().target;
             let target2 = types.get(t2).as_string_mapping_type().target;
-            let c = compare_types_opt(types, symbols, mappers, target1, target2);
+            let c = compare_types_opt(types, symbols, mappers, program, target1, target2);
             if c != 0 {
                 return c;
             }
@@ -1247,6 +1251,7 @@ fn compare_type_names(
     types: &TypeArena,
     symbols: &RefCell<Vec<ast::Symbol>>,
     mappers: &TypeMapperArena,
+    program: Option<&Rc<dyn crate::checker_types::Program>>,
     t1: TypeId,
     t2: TypeId,
 ) -> i32 {
@@ -1257,6 +1262,7 @@ fn compare_type_names(
             types,
             symbols,
             mappers,
+            program,
             types
                 .get(t1)
                 .alias
@@ -1348,12 +1354,9 @@ pub(crate) fn get_object_type_name(t: &crate::types::Type) -> Option<SymbolId> {
     None
 }
 
-/// `compareTupleTypes` — `elementInfos` field order. PORT(approximation):
-/// `compareElementLabels` compares declaration `Name().Text()`; the label
-/// text needs the declaration's file arena, unreachable from `&TypeArena`,
-/// so labels are ordered by `NodeId` instead.
+/// `compareTupleTypes` — `elementInfos` field order.
 fn compare_tuple_types(
-    types: &TypeArena,
+    program: Option<&Rc<dyn crate::checker_types::Program>>,
     t1: &crate::types::TupleType,
     t2: &crate::types::TupleType,
 ) -> i32 {
@@ -1374,24 +1377,37 @@ fn compare_tuple_types(
     }
     for (i1, i2) in t1.element_infos.iter().zip(t2.element_infos.iter()) {
         // compareElementLabels: nil sorts first (unlike compareNodes).
-        let c = compare_element_labels(i1.labeled_declaration, i2.labeled_declaration);
+        let c = compare_element_labels(program, i1.labeled_declaration, i2.labeled_declaration);
         if c != 0 {
             return c;
         }
     }
-    let _ = types;
     0
 }
 
-/// `compareElementLabels` — `n1 == nil → -1` (labels sort before named).
-fn compare_element_labels(n1: Option<NodeId>, n2: Option<NodeId>) -> i32 {
+/// `compareElementLabels` — `n1 == nil → -1` (labels sort before named),
+/// then `strings.Compare(n1.Name().Text(), n2.Name().Text())`.
+fn compare_element_labels(
+    program: Option<&Rc<dyn crate::checker_types::Program>>,
+    n1: Option<NodeId>,
+    n2: Option<NodeId>,
+) -> i32 {
     if n1 == n2 {
         return 0;
     }
     let Some(n1) = n1 else { return -1 };
     let Some(n2) = n2 else { return 1 };
-    // PORT(approximation): Go compares `n1.Name().Text()`; see above.
-    n1.0.cmp(&n2.0) as i32
+    let label_text = |n: NodeId| -> Option<String> {
+        let nodes = program?.nodes(n.file_index());
+        let name = nodes[n].name()?;
+        Some(nodes[name].text(&nodes).into_owned())
+    };
+    match (label_text(n1), label_text(n2)) {
+        (Some(a), Some(b)) => a.cmp(&b) as i32,
+        // Fallback when the program is unavailable: keep the old NodeId
+        // ordering so sorting stays deterministic.
+        _ => n1.0.cmp(&n2.0) as i32,
+    }
 }
 
 /// `compareTypeLists`.
@@ -1399,6 +1415,7 @@ fn compare_type_lists(
     types: &TypeArena,
     symbols: &RefCell<Vec<ast::Symbol>>,
     mappers: &TypeMapperArena,
+    program: Option<&Rc<dyn crate::checker_types::Program>>,
     s1: &[TypeId],
     s2: &[TypeId],
 ) -> i32 {
@@ -1406,7 +1423,7 @@ fn compare_type_lists(
         return s1.len().cmp(&s2.len()) as i32;
     }
     for (&t1, &t2) in s1.iter().zip(s2.iter()) {
-        let c = compare_types(types, symbols, mappers, t1, t2);
+        let c = compare_types(types, symbols, mappers, program, t1, t2);
         if c != 0 {
             return c;
         }
@@ -1419,6 +1436,7 @@ fn compare_type_mappers(
     types: &TypeArena,
     symbols: &RefCell<Vec<ast::Symbol>>,
     mappers: &TypeMapperArena,
+    program: Option<&Rc<dyn crate::checker_types::Program>>,
     m1: Option<TypeMapperId>,
     m2: Option<TypeMapperId>,
 ) -> i32 {
@@ -1442,11 +1460,11 @@ fn compare_type_mappers(
                 TypeMapperData::Simple(s) => (s.source, s.target),
                 _ => unreachable!(),
             });
-            let c = compare_types(types, symbols, mappers, s1, s2);
+            let c = compare_types(types, symbols, mappers, program, s1, s2);
             if c != 0 {
                 return c;
             }
-            compare_types(types, symbols, mappers, t1, t2)
+            compare_types(types, symbols, mappers, program, t1, t2)
         }
         TypeMapperKind::Array => {
             let (src1, tgt1) = mappers.with_data(m1, |d| match d {
@@ -1457,11 +1475,11 @@ fn compare_type_mappers(
                 TypeMapperData::Array(s) => (s.sources.clone(), s.targets.clone()),
                 _ => unreachable!(),
             });
-            let c = compare_type_lists(types, symbols, mappers, &src1, &src2);
+            let c = compare_type_lists(types, symbols, mappers, program, &src1, &src2);
             if c != 0 {
                 return c;
             }
-            compare_type_lists(types, symbols, mappers, &tgt1, &tgt2)
+            compare_type_lists(types, symbols, mappers, program, &tgt1, &tgt2)
         }
         TypeMapperKind::Merged => {
             let (a1, b1) = mappers.with_data(m1, |d| match d {
@@ -1472,11 +1490,11 @@ fn compare_type_mappers(
                 TypeMapperData::Merged(s) => (s.m1, s.m2),
                 _ => unreachable!(),
             });
-            let c = compare_type_mappers(types, symbols, mappers, Some(a1), Some(a2));
+            let c = compare_type_mappers(types, symbols, mappers, program, Some(a1), Some(a2));
             if c != 0 {
                 return c;
             }
-            compare_type_mappers(types, symbols, mappers, Some(b1), Some(b2))
+            compare_type_mappers(types, symbols, mappers, program, Some(b1), Some(b2))
         }
         _ => 0,
     }
