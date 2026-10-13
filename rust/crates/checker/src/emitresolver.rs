@@ -1065,10 +1065,10 @@ impl tsc_printer::EmitResolver for EmitResolver {
         &self,
         node: NodeId,
         flags: ast::ModifierFlags,
-        _nodes: &[Node],
+        nodes: &[Node],
     ) -> ast::ModifierFlags {
         let mut c = checker_lock(&self.checker);
-        c.get_effective_declaration_flags(node, flags)
+        c.get_effective_declaration_flags_with(node, flags, nodes)
     }
 
     /// `(r *EmitResolver) GetTypeReferenceSerializationKind` — decorator

@@ -2792,8 +2792,8 @@ impl<'a> DeclarationTransformerState<'a> {
             )
         } else {
             // If a full signature type node is present, emit as a variable statement to reuse it
-            let mut ec = self.ec.borrow_mut();
             let sig_visited = v.visit_node(cx, sig);
+            let mut ec = self.ec.borrow_mut();
             let var_decl =
                 ec.factory
                     .new_variable_declaration(cx.nodes, func_name, None, sig_visited, None);
@@ -5500,8 +5500,8 @@ impl<'a> DeclarationTransformerState<'a> {
     ) -> NodeId {
         let type_node = cx.nodes[input].as_js_doc_nullable_type().type_;
         let replacement = {
-            let mut ec = self.ec.borrow_mut();
             let inner = v.visit_node(cx, type_node);
+            let mut ec = self.ec.borrow_mut();
             let null_lit = ec
                 .factory
                 .new_keyword_expression(cx.nodes, Kind::NullKeyword);
@@ -5553,8 +5553,8 @@ impl<'a> DeclarationTransformerState<'a> {
     ) -> NodeId {
         let type_node = cx.nodes[input].as_js_doc_optional_type().type_;
         let replacement = {
-            let mut ec = self.ec.borrow_mut();
             let inner = v.visit_node(cx, type_node);
+            let mut ec = self.ec.borrow_mut();
             let undefined = ec
                 .factory
                 .new_keyword_type_node(cx.nodes, Kind::UndefinedKeyword);

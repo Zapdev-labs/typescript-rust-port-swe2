@@ -4698,11 +4698,23 @@ impl Checker {
         &mut self,
         node: NodeId,
     ) -> ast::ModifierFlags {
+        let nodes = self.program_nodes(node);
+        self.get_combined_modifier_flags_in(node, &nodes)
+    }
+
+    /// `get_combined_modifier_flags_cached` against an explicit arena —
+    /// emitted-arena ids resolve against the caller's live buffer instead of
+    /// the program snapshot (see `get_effective_declaration_flags_with`).
+    pub(crate) fn get_combined_modifier_flags_in(
+        &mut self,
+        node: NodeId,
+        nodes: &[ast::Node],
+    ) -> ast::ModifierFlags {
         if self.last_get_combined_modifier_flags_node == Some(node) {
             return self.last_get_combined_modifier_flags_result;
         }
         self.last_get_combined_modifier_flags_node = Some(node);
-        let result = ast::get_combined_modifier_flags(node, &self.program_nodes(node));
+        let result = ast::get_combined_modifier_flags(node, nodes);
         self.last_get_combined_modifier_flags_result = result;
         self.last_get_combined_modifier_flags_result
     }

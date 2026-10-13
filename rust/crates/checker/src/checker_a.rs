@@ -4632,7 +4632,31 @@ impl Checker {
     ) -> ast::ModifierFlags {
         let __program = self.program.clone().expect("program");
         let nodes = __program.nodes((n).file_index());
-        let mut flags = self.get_combined_modifier_flags_cached(n);
+        self.get_effective_declaration_flags_in(n, flags_to_check, &nodes)
+    }
+
+    /// `getEffectiveDeclarationFlags` resolving `n`'s arena through
+    /// [`crate::printer_util::resolve_arena_for`] — the declaration transform
+    /// passes its emitted arena as `work`, so ids minted mid-transform
+    /// resolve against the live buffer rather than the program snapshot.
+    pub(crate) fn get_effective_declaration_flags_with(
+        &mut self,
+        n: NodeId,
+        flags_to_check: ast::ModifierFlags,
+        work: &[ast::Node],
+    ) -> ast::ModifierFlags {
+        let __program = self.program.clone().expect("program");
+        let nodes = crate::printer_util::resolve_arena_for(&__program, work, n);
+        self.get_effective_declaration_flags_in(n, flags_to_check, &nodes)
+    }
+
+    fn get_effective_declaration_flags_in(
+        &mut self,
+        n: NodeId,
+        flags_to_check: ast::ModifierFlags,
+        nodes: &[ast::Node],
+    ) -> ast::ModifierFlags {
+        let mut flags = self.get_combined_modifier_flags_in(n, nodes);
         // children of classes (even ambient classes) should not be marked as ambient or export
         // because those flags have no useful semantics there.
         let parent = nodes[n].parent;
