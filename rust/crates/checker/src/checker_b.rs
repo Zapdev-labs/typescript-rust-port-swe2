@@ -5665,10 +5665,10 @@ impl Checker {
                 result.push(applicable_signatures[i]);
             }
         }
-        // `core.SameMap` — preserves the original slice when nothing changed.
-        if result == applicable_signatures {
-            return signatures.to_vec();
-        }
+        // `core.SameMap` — preserves the input slice when nothing changed.
+        // The input here is `applicable_signatures` (already filtered), not
+        // `signatures` — returning the unfiltered list would make filtered-out
+        // non-generic signatures look applicable.
         result
     }
 
