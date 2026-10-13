@@ -4291,6 +4291,12 @@ impl Checker {
             .get_mut(t)
             .object_flags
             .insert(ObjectFlags::MEMBERS_RESOLVED);
+        // Members must be stored before get_named_members: it can re-enter
+        // member resolution (alias resolution checks expressions), and Go
+        // assigns `data.members` first so recursive lookups see the table.
+        if let Some(data) = self.types_handle().get_mut(t).data.as_structured_type_mut() {
+            data.members = members.clone();
+        }
         let __arena_symbol = self.types.clone();
         let symbol = __arena_symbol.get(t).symbol;
         let properties = self.get_named_members(&members, symbol);
@@ -4308,7 +4314,6 @@ impl Checker {
             .map(|&id| self.index_info_arena.get(id).clone())
             .collect();
         if let Some(data) = self.types_handle().get_mut(t).data.as_structured_type_mut() {
-            data.members = members;
             data.properties = properties;
             data.signatures = signatures;
             data.call_signature_count = call_signature_count;

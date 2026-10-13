@@ -131,6 +131,11 @@ pub struct UpdateDef {
     /// Sources for the rebuild call's args, in order. Each is `arg:<name>`
     /// (an update arg) or `node.<Expr>` (e.g. `node.Kind`).
     pub new_args: Vec<String>,
+    /// Extra `case KindX: return updateNode(f.NewY(...), ...)` arms when Go
+    /// switches on `node.Kind` inside the update (e.g.
+    /// `UpdateTypeAliasDeclaration` covers `JSTypeAliasDeclaration` too).
+    /// `(kind_name, new_fn)` pairs; the primary kinds use `new_fn`.
+    pub kind_news: Vec<(String, String)>,
 }
 
 #[derive(Debug, Clone)]
@@ -204,6 +209,10 @@ pub struct NodeDef {
     /// Kinds that produce this data variant. From `newNode(KindX, ...)` args
     /// or the `Is<Name>` switch for kind-parameterized constructors.
     pub kinds: Vec<String>,
+    /// Extra kinds that share this data variant in `visit_each_child` only —
+    /// e.g. `JSTypeAliasDeclaration` visits through `UpdateTypeAliasDeclaration`
+    /// but is *not* covered by `IsTypeAliasDeclaration`.
+    pub extra_visit_kinds: Vec<String>,
     /// Directly embedded bases, in order.
     pub bases: Vec<String>,
     /// Own (non-embedded) fields, in order.

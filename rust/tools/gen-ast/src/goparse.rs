@@ -805,6 +805,7 @@ fn parse_factory_fn(
             compares,
             new_fn,
             new_args,
+            kind_news: Vec::new(),
         });
         return Ok(());
     }

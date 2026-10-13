@@ -1780,6 +1780,7 @@ clone = [
 [[nodes]]
 name = "TypeAliasDeclaration"
 kinds = ["TypeAliasDeclaration"]
+extra_visit_kinds = ["JSTypeAliasDeclaration"]
 bases = ["TypeSyntaxBase", "StatementBase", "DeclarationBase", "ExportableBase", "ModifiersBase", "LocalsContainerBase"]
 is_fn = "IsTypeAliasDeclaration"
 facts_mode = "typescript"
@@ -1794,6 +1795,9 @@ news = [
     { name = "NewJSTypeAliasDeclaration", kind = "JSTypeAliasDeclaration", args = [{ name = "modifiers", ty = "modifier_list", field = "modifiers", go_ty = "*ModifierList" }, { name = "name", ty = "node", field = "name", go_ty = "*IdentifierNode" }, { name = "typeParameters", ty = "node_list", field = "type_parameters", go_ty = "*TypeParameterList" }, { name = "typeNode", ty = "node", field = "type_", go_ty = "*TypeNode" }] },
 ]
 update = { name = "UpdateTypeAliasDeclaration", args = [{ name = "modifiers", ty = "modifier_list" }, { name = "name", ty = "node" }, { name = "typeParameters", ty = "node_list" }, { name = "typeNode", ty = "node" }], compares = [{ lhs = "modifiers", field = "modifiers", op = "neq" }, { lhs = "name", field = "name", op = "neq" }, { lhs = "typeParameters", field = "type_parameters", op = "neq" }, { lhs = "typeNode", field = "type_", op = "neq" }], new_fn = "NewTypeAliasDeclaration", new_args = ["modifiers", "name", "typeParameters", "typeNode"] }
+update_kind_news = [
+    { kind = "JSTypeAliasDeclaration", new_fn = "NewJSTypeAliasDeclaration" },
+]
 for_each_child = [
     { op = "visitModifiers", field = "modifiers" },
     { op = "visit", field = "name" },
@@ -1923,6 +1927,7 @@ clone = [
 [[nodes]]
 name = "ImportDeclaration"
 kinds = ["ImportDeclaration"]
+extra_visit_kinds = ["JSImportDeclaration"]
 bases = ["StatementBase", "ModifiersBase", "CompositeBase", "DeclarationBase"]
 is_fn = "IsImportDeclaration"
 facts_mode = "generated"
@@ -1936,6 +1941,9 @@ news = [
     { name = "NewJSImportDeclaration", kind = "JSImportDeclaration", args = [{ name = "modifiers", ty = "modifier_list", field = "modifiers", go_ty = "*ModifierList" }, { name = "importClause", ty = "node", field = "import_clause", go_ty = "*ImportClauseNode" }, { name = "moduleSpecifier", ty = "node", field = "module_specifier", go_ty = "*Expression" }, { name = "attributes", ty = "node", field = "attributes", go_ty = "*ImportAttributesNode" }] },
 ]
 update = { name = "UpdateImportDeclaration", args = [{ name = "modifiers", ty = "modifier_list" }, { name = "importClause", ty = "node" }, { name = "moduleSpecifier", ty = "node" }, { name = "attributes", ty = "node" }], compares = [{ lhs = "modifiers", field = "modifiers", op = "neq" }, { lhs = "importClause", field = "import_clause", op = "neq" }, { lhs = "moduleSpecifier", field = "module_specifier", op = "neq" }, { lhs = "attributes", field = "attributes", op = "neq" }], new_fn = "NewImportDeclaration", new_args = ["modifiers", "importClause", "moduleSpecifier", "attributes"] }
+update_kind_news = [
+    { kind = "JSImportDeclaration", new_fn = "NewJSImportDeclaration" },
+]
 for_each_child = [
     { op = "visitModifiers", field = "modifiers" },
     { op = "visit", field = "import_clause" },

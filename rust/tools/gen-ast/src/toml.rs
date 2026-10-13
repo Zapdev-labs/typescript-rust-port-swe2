@@ -262,7 +262,8 @@ fn parse_value(
 fn parse_string(
     chars: &mut std::iter::Peekable<std::str::CharIndices<'_>>,
 ) -> Result<String, String> {
-    debug_assert_eq!(chars.next().map(|t| t.1), Some('"'));
+    let q = chars.next();
+    debug_assert_eq!(q.map(|t| t.1), Some('"'));
     let mut s = String::new();
     while let Some((_, c)) = chars.next() {
         match c {
@@ -284,7 +285,8 @@ fn parse_string(
 fn parse_inline_table(
     chars: &mut std::iter::Peekable<std::str::CharIndices<'_>>,
 ) -> Result<Value, String> {
-    debug_assert_eq!(chars.next().map(|t| t.1), Some('{'));
+    let b = chars.next();
+    debug_assert_eq!(b.map(|t| t.1), Some('{'));
     let mut t = BTreeMap::new();
     loop {
         skip_ws(chars);

@@ -13671,7 +13671,15 @@ impl NodeFactory<'_> {
             let a1 = name;
             let a2 = type_parameters;
             let a3 = type_node;
-            let updated = self.new_type_alias_declaration(nodes, a0, a1, a2, a3);
+            let updated = match nodes[node].kind {
+                Kind::TypeAliasDeclaration => {
+                    self.new_type_alias_declaration(nodes, a0, a1, a2, a3)
+                }
+                Kind::JSTypeAliasDeclaration => {
+                    self.new_js_type_alias_declaration(nodes, a0, a1, a2, a3)
+                }
+                kind => panic!("unexpected kind in UpdateTypeAliasDeclaration: {:?}", kind),
+            };
             return Some(crate::ast::update_node(
                 nodes,
                 updated,
@@ -13891,7 +13899,11 @@ impl NodeFactory<'_> {
             let a1 = import_clause;
             let a2 = module_specifier;
             let a3 = attributes;
-            let updated = self.new_import_declaration(nodes, a0, a1, a2, a3);
+            let updated = match nodes[node].kind {
+                Kind::ImportDeclaration => self.new_import_declaration(nodes, a0, a1, a2, a3),
+                Kind::JSImportDeclaration => self.new_js_import_declaration(nodes, a0, a1, a2, a3),
+                kind => panic!("unexpected kind in UpdateImportDeclaration: {:?}", kind),
+            };
             return Some(crate::ast::update_node(
                 nodes,
                 updated,
@@ -23178,7 +23190,7 @@ pub fn visit_each_child<'v>(
             cx.factory
                 .update_interface_declaration(cx.nodes, node, a0, a1, a2, a3, a4)
         }
-        Kind::TypeAliasDeclaration => {
+        Kind::TypeAliasDeclaration | Kind::JSTypeAliasDeclaration => {
             let a0 = v.visit_modifiers_hooked(
                 cx,
                 cx.nodes[node]
@@ -23223,7 +23235,7 @@ pub fn visit_each_child<'v>(
             let a0 = v.visit_nodes_hooked(cx, cx.nodes[node].as_module_block().statements.clone());
             cx.factory.update_module_block(cx.nodes, node, a0)
         }
-        Kind::ImportDeclaration => {
+        Kind::ImportDeclaration | Kind::JSImportDeclaration => {
             let a0 = v.visit_modifiers_hooked(
                 cx,
                 cx.nodes[node]

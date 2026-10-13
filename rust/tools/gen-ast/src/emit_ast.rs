@@ -810,10 +810,33 @@ impl<'a> Emitter<'a> {
         }
         let call_args: Vec<String> = (0..u.new_args.len()).map(|i| format!("a{i}")).collect();
         let new_fn = rust_name(&u.new_fn);
-        out.push_str(&format!(
-            "            let updated = self.{new_fn}(nodes, {});\n            return Some(crate::ast::update_node(nodes, updated, node, &mut self.hooks));\n        }}\n        None\n    }}\n\n",
-            call_args.join(", ")
-        ));
+        if u.kind_news.is_empty() {
+            out.push_str(&format!(
+                "            let updated = self.{new_fn}(nodes, {});\n            return Some(crate::ast::update_node(nodes, updated, node, &mut self.hooks));\n        }}\n        None\n    }}\n\n",
+                call_args.join(", ")
+            ));
+        } else {
+            // Go switches on `node.Kind` inside the update (e.g.
+            // `UpdateTypeAliasDeclaration` covers `JSTypeAliasDeclaration`).
+            let primary: Vec<String> =
+                n.kinds.iter().map(|k| format!("Kind::{k}")).collect();
+            out.push_str(&format!(
+                "            let updated = match nodes[node].kind {{\n                {} => self.{new_fn}(nodes, {}),\n",
+                primary.join(" | "),
+                call_args.join(", ")
+            ));
+            for (k, f) in &u.kind_news {
+                out.push_str(&format!(
+                    "                Kind::{k} => self.{}(nodes, {}),\n",
+                    rust_name(f),
+                    call_args.join(", ")
+                ));
+            }
+            out.push_str(&format!(
+                "                kind => panic!(\"unexpected kind in {}: {{:?}}\", kind),\n            }};\n            return Some(crate::ast::update_node(nodes, updated, node, &mut self.hooks));\n        }}\n        None\n    }}\n\n",
+                u.name
+            ));
+        }
     }
 
     fn emit_clone_dispatch(&self, out: &mut String) {
@@ -953,6 +976,7 @@ impl<'a> Emitter<'a> {
             let kinds = n
                 .kinds
                 .iter()
+                .chain(n.extra_visit_kinds.iter())
                 .map(|k| format!("Kind::{k}"))
                 .collect::<Vec<_>>()
                 .join(" | ");

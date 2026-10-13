@@ -198,6 +198,17 @@ fn write_update(out: &mut String, u: &UpdateDef) {
     line.push_str(&format!(", new_args = {}", str_array(&u.new_args)));
     line.push_str(" }\n");
     out.push_str(&line);
+    if !u.kind_news.is_empty() {
+        out.push_str("update_kind_news = [\n");
+        for (k, f) in &u.kind_news {
+            out.push_str(&format!(
+                "    {{ kind = {}, new_fn = {} }},\n",
+                toml::escape(k),
+                toml::escape(f)
+            ));
+        }
+        out.push_str("]\n");
+    }
 }
 
 fn write_visit_ops(out: &mut String, key: &str, ops: &[VisitOp]) {
@@ -341,6 +352,12 @@ fn write_node_body(out: &mut String, n: &NodeDef) {
     }
     if !n.kinds.is_empty() {
         out.push_str(&format!("kinds = {}\n", str_array(&n.kinds)));
+    }
+    if !n.extra_visit_kinds.is_empty() {
+        out.push_str(&format!(
+            "extra_visit_kinds = {}\n",
+            str_array(&n.extra_visit_kinds)
+        ));
     }
     if !n.bases.is_empty() {
         out.push_str(&format!("bases = {}\n", str_array(&n.bases)));
@@ -520,6 +537,7 @@ fn read_update(t: &std::collections::BTreeMap<String, Value>) -> Result<UpdateDe
             .ok_or("update missing new_fn")?
             .to_string(),
         new_args: get_strs(t, "new_args"),
+        kind_news: Vec::new(),
     })
 }
 
@@ -643,11 +661,25 @@ pub fn read_schema(doc: &Document) -> Result<Schema, String> {
             name: get_str(&t, "name").ok_or("node missing name")?.to_string(),
             rust_name: get_str(&t, "rust_name").map(|s| s.to_string()),
             kinds: get_strs(&t, "kinds"),
+            extra_visit_kinds: get_strs(&t, "extra_visit_kinds"),
             bases: get_strs(&t, "bases"),
             fields: read_fields(&t, "fields")?,
             news,
             update: match get_table(&t, "update") {
-                Some(u) => Some(read_update(u)?),
+                Some(u) => {
+                    let mut u = read_update(u)?;
+                    for k in get_tables(&t, "update_kind_news") {
+                        u.kind_news.push((
+                            get_str(k, "kind")
+                                .ok_or("update_kind_news missing kind")?
+                                .to_string(),
+                            get_str(k, "new_fn")
+                                .ok_or("update_kind_news missing new_fn")?
+                                .to_string(),
+                        ));
+                    }
+                    Some(u)
+                }
                 None => None,
             },
             for_each_child: read_visit_ops(&t, "for_each_child"),
