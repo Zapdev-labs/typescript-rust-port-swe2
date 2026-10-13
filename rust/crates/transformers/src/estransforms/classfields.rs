@@ -2464,7 +2464,7 @@ impl<'a> ClassFieldsTransformer<'a> {
         self: &Rc<Self>,
         ec: &Ec,
         cx: &mut VisitorCx<'_, '_>,
-        node: NodeId,
+        mut node: NodeId,
         discarded: bool,
     ) -> NodeId {
         if ast::is_destructuring_assignment(&cx.nodes[node], cx.nodes) {
@@ -2509,7 +2509,7 @@ impl<'a> ClassFieldsTransformer<'a> {
 
         if ast::is_assignment_expression(&cx.nodes[node], cx.nodes, false) {
             // 13.15.2 RS: Evaluation — see esdecorator.rs for the full comment.
-            let node = self.named_evaluation(ec, cx, node, false, "");
+            node = self.named_evaluation(ec, cx, node, false, "");
             debug_assert!(ast::is_assignment_expression(
                 &cx.nodes[node],
                 cx.nodes,
