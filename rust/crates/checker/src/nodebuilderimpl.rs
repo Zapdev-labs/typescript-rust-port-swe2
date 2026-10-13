@@ -8613,7 +8613,19 @@ impl Checker {
                 result.push(self.get_declared_type_of_symbol(symbol));
             }
         }
-        result.sort_by(|&a, &b| crate::checker_d::compare_type_ids(a, b).cmp(&0));
+        // Go: `slices.SortFunc(result, CompareTypes)` (checker.go:24303) —
+        // full type comparator, not raw type-id order.
+        result.sort_by(|&a, &b| {
+            crate::utilities::compare_types(
+                &self.types,
+                self.symbol_arena.as_ref(),
+                &self.type_mappers,
+                self.program.as_ref(),
+                a,
+                b,
+            )
+            .cmp(&0)
+        });
         result
     }
 
