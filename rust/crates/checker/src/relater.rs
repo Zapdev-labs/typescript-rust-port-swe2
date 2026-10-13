@@ -3305,8 +3305,11 @@ impl Checker {
         type_parameters: &[TypeId],
     ) -> Vec<VarianceFlags> {
         // `links.variances == nil` ↔ "no `variance_links` entry" (see header
-        // PORT note); `get` is reserved for stores.
-        if !symbol.is_some_and(|s| self.variance_links.has(&s)) {
+        // PORT note); `get` is reserved for stores. Go keys the store by the
+        // symbol pointer — `nil` (anonymous types) shares one entry — which
+        // `SymbolId::default()` reproduces.
+        let key = symbol.unwrap_or_default();
+        if !self.variance_links.has(&key) {
             let mut trace_args = TraceArgs::new();
             let mut pop_fn: Option<Box<dyn FnOnce() + Send>> = None;
             // Compute the id before taking the shared `tr` borrow — the call
@@ -3387,12 +3390,14 @@ impl Checker {
                     let type_with_super =
                         self.create_marker_type(symbol, tp, self.marker_super_type);
                     let type_with_sub = self.create_marker_type(symbol, tp, self.marker_sub_type);
+                    let r1 = self.is_type_assignable_to(type_with_sub, type_with_super);
+                    let r2 = self.is_type_assignable_to(type_with_super, type_with_sub);
                     variance = tsc_core::core::if_else(
-                        self.is_type_assignable_to(type_with_sub, type_with_super),
+                        r1,
                         VarianceFlags::COVARIANT,
                         VarianceFlags::default(),
                     ) | tsc_core::core::if_else(
-                        self.is_type_assignable_to(type_with_super, type_with_sub),
+                        r2,
                         VarianceFlags::CONTRAVARIANT,
                         VarianceFlags::default(),
                     );
@@ -3425,24 +3430,21 @@ impl Checker {
                 // If variance computation was restarted due to a circularity
                 // we may have already computed variances for this generic
                 // type. If so, we exit early.
-                if symbol.is_some_and(|s| {
-                    !self
-                        .variance_links
-                        .try_get(&s)
-                        .map(|l| l.variances.is_empty())
-                        .unwrap_or(true)
-                }) {
+                if self
+                    .variance_links
+                    .try_get(&symbol.unwrap_or_default())
+                    .map(|l| !l.variances.is_empty())
+                    .unwrap_or(false)
+                {
                     break;
                 }
                 variances[i] = variance;
             }
             // Store the results unless a restarted computation has already
             // stored them.
-            if let Some(s) = symbol {
-                let links = self.variance_links.get(s);
-                if links.variances.is_empty() {
-                    links.variances = variances;
-                }
+            let links = self.variance_links.get(symbol.unwrap_or_default());
+            if links.variances.is_empty() {
+                links.variances = variances;
             }
             self.variance_stack.pop();
             if self.variance_stack.is_empty() {
@@ -3481,8 +3483,9 @@ impl Checker {
             // Store an empty slice to mark that we can't compute variances
             // for this type. We treat type parameters as co-variant in this
             // case.
-            if let Some(s) = symbol {
-                self.variance_links.get(s).variances = Vec::new();
+            let links = self.variance_links.get(symbol.unwrap_or_default());
+            if links.variances.is_empty() {
+                links.variances = Vec::new();
             }
         }
         self.variance_links
