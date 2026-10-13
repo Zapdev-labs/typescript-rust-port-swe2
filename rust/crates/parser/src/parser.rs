@@ -7323,10 +7323,13 @@ impl<'a> Parser<'a> {
                             .new_jsx_closing_element(&mut self.nodes, Some(missing_identifier));
                         let new_closing_element =
                             self.finish_node_with_end(new_closing_element, end, end);
+                        // `lastChild.Children()` — the mismatched child's own
+                        // children, not the parent's `children` list.
+                        let last_children = self.nodes[last_child].children().cloned();
                         let new_last = self.factory.new_jsx_element(
                             &mut self.nodes,
                             last_opening,
-                            Some(children.clone()),
+                            last_children.clone(),
                             Some(new_closing_element),
                         );
                         let __h164 = self.nodes[last_opening.unwrap()].pos();
@@ -7335,8 +7338,10 @@ impl<'a> Parser<'a> {
                         if let Some(o) = last_opening {
                             self.nodes[o].parent = Some(new_last);
                         }
-                        for c in children.nodes.clone() {
-                            self.nodes[c].parent = Some(new_last);
+                        if let Some(lc) = &last_children {
+                            for c in lc.nodes.clone() {
+                                self.nodes[c].parent = Some(new_last);
+                            }
                         }
                         self.nodes[new_closing_element].parent = Some(new_last);
                         let mut new_nodes = children.nodes.clone();
