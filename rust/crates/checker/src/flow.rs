@@ -343,6 +343,30 @@ impl Checker {
         flow_container: Option<NodeId>,
         flow_node: Option<FlowNodeId>,
     ) -> TypeId {
+        self.get_flow_type_of_reference_ex_ctx(
+            reference,
+            declared_type,
+            initial_type,
+            flow_container,
+            flow_node,
+            None,
+        )
+    }
+
+    /// `getFlowTypeOfReferenceEx` with an explicit flow-graph file context.
+    /// When the caller supplies a `flow_node` captured from a node in a
+    /// different file than `reference` (e.g. `getNarrowedTypeOfSymbol`'s
+    /// binding-pattern pseudo-reference), `flow_context` names a node in the
+    /// file that owns the flow graph so `f.nodes` resolves the right arena.
+    pub(crate) fn get_flow_type_of_reference_ex_ctx(
+        &mut self,
+        reference: NodeId,
+        declared_type: TypeId,
+        initial_type: Option<TypeId>,
+        flow_container: Option<NodeId>,
+        flow_node: Option<FlowNodeId>,
+        flow_context: Option<NodeId>,
+    ) -> TypeId {
         if self.flow_analysis_disabled {
             return self.error_type;
         }
@@ -362,7 +386,7 @@ impl Checker {
         f.initial_type = Some(initial_type.unwrap_or(declared_type));
         f.flow_container = flow_container;
         f.shared_flow_start = self.shared_flows.len();
-        self.set_flow_context(&mut f, reference);
+        self.set_flow_context(&mut f, flow_context.unwrap_or(reference));
         self.flow_invocation_count += 1;
         let evolved_type = self.get_type_at_flow_node(&mut f, flow_node).ty();
         self.shared_flows.truncate(f.shared_flow_start);
@@ -371,8 +395,9 @@ impl Checker {
             .get(evolved_type)
             .object_flags
             .intersects(ObjectFlags::EVOLVING_ARRAY);
-        let __nodes_arena = f.nodes.clone().unwrap();
-        let nodes = __nodes_arena.snapshot();
+        // `reference` can be foreign to `f.nodes` (the flow-graph file) —
+        // resolve it in its own arena.
+        let nodes = self.program_nodes(reference);
         self.put_flow_state(f);
         // When the reference is 'x' in an 'x.length', 'x.push(value)', 'x.unshift(value)' or x[n] = value' operation,
         // we give type 'any[]' to 'x' instead of using the type determined by control flow analysis such that operations
@@ -499,11 +524,14 @@ impl Checker {
             } else if flags.intersects(FlowFlags::START) {
                 // Check if we should continue with the control flow of the containing function.
                 let container = f.flow_node(flow).node;
+                // `f.reference` can be foreign to the flow-graph arena —
+                // resolve it in its own arena.
+                let ref_nodes = self.program_nodes(f.reference());
                 if container.is_some()
                     && container != f.flow_container
-                    && !ast::is_property_access_expression(&f.nodes()[f.reference()])
-                    && !ast::is_element_access_expression(&f.nodes()[f.reference()])
-                    && !(f.nodes()[f.reference()].kind == Kind::ThisKeyword
+                    && !ast::is_property_access_expression(&ref_nodes[f.reference()])
+                    && !ast::is_element_access_expression(&ref_nodes[f.reference()])
+                    && !(ref_nodes[f.reference()].kind == Kind::ThisKeyword
                         && !ast::is_arrow_function(&f.nodes()[container.unwrap()]))
                 {
                     flow = f.nodes()[container.unwrap()]
@@ -547,7 +575,9 @@ impl Checker {
         // Assignments only narrow the computed type if the declared type is a union type. Thus, we
         // only need to evaluate the assigned type if the declared type is a union type.
         if self.is_matching_reference(&f.nodes(), f.reference(), node) {
-            if !self.is_reachable_flow_node(f.reference(), flow) {
+            // The flow graph lives in `f.file`'s arena — `f.reference` can
+            // be a foreign pseudo-reference.
+            if !self.is_reachable_flow_node(f.file.expect("FlowState.file unset"), flow) {
                 return FlowType {
                     t: Some(self.unreachable_never_type),
                     incomplete: false,
@@ -609,7 +639,7 @@ impl Checker {
         // reference 'x.y.z', we may be at an assignment to 'x.y' or 'x'. In that case,
         // return the declared type.
         if self.contains_matching_reference(&f.nodes(), f.reference(), node) {
-            if !self.is_reachable_flow_node(f.reference(), flow) {
+            if !self.is_reachable_flow_node(f.file.expect("FlowState.file unset"), flow) {
                 return FlowType {
                     t: Some(self.unreachable_never_type),
                     incomplete: false,
@@ -925,13 +955,16 @@ impl Checker {
                         let declaration =
                             self.symbol_arena.borrow()[symbol.index()].value_declaration;
                         if let Some(declaration) = declaration {
-                            if ast::is_variable_declaration(&f.nodes()[declaration])
-                                && f.nodes()[declaration].type_().is_none()
-                                && f.nodes()[declaration].initializer().is_some()
+                            // `declaration` can be foreign to the flow-graph
+                            // arena — resolve it in its own arena.
+                            let decl_nodes = self.program_nodes(declaration);
+                            if ast::is_variable_declaration(&decl_nodes[declaration])
+                                && decl_nodes[declaration].type_().is_none()
+                                && decl_nodes[declaration].initializer().is_some()
                                 && self.is_constant_reference(&f.nodes(), f.reference())
                             {
                                 self.inline_level += 1;
-                                let initializer = f.nodes()[declaration].initializer().unwrap();
+                                let initializer = decl_nodes[declaration].initializer().unwrap();
                                 let result = self.narrow_type(f, t, initializer, assume_true);
                                 self.inline_level -= 1;
                                 return result;
@@ -1081,8 +1114,11 @@ impl Checker {
             }
         }
         let contains_missing = self.contains_missing_type.clone();
+        // `f.reference` can be foreign to the flow-graph arena — resolve it
+        // in its own arena.
+        let ref_nodes = self.program_nodes(f.reference());
         if contains_missing.is_some_and(|f2| f2(self, t))
-            && ast::is_access_expression(&f.nodes()[f.reference()])
+            && ast::is_access_expression(&ref_nodes[f.reference()])
             && ast::is_property_access_expression(
                 &f.nodes()[f.nodes()[call_expression].expression().unwrap()],
             )
@@ -1091,8 +1127,8 @@ impl Checker {
             let candidate = self
                 .get_reference_candidate(&f.nodes(), f.nodes()[call_access].expression().unwrap());
             if self.is_matching_reference(
-                &f.nodes(),
-                f.nodes()[f.reference()].expression().unwrap(),
+                ref_nodes.as_slice(),
+                ref_nodes[f.reference()].expression().unwrap(),
                 candidate,
             ) && ast::is_identifier(&f.nodes()[f.nodes()[call_access].name().unwrap()])
                 && f.nodes()[f.nodes()[call_access].name().unwrap()].text(&f.nodes())
@@ -1104,7 +1140,7 @@ impl Checker {
             {
                 let argument = f.nodes()[call_expression].arguments().unwrap()[0];
                 let (accessed_name, ok) =
-                    self.get_accessed_property_name(&f.nodes(), f.reference());
+                    self.get_accessed_property_name(ref_nodes.as_slice(), f.reference());
                 if ok
                     && ast::is_string_literal_like(&f.nodes()[argument])
                     && accessed_name == f.nodes()[argument].text(&f.nodes())
@@ -1254,18 +1290,21 @@ impl Checker {
                 }
                 let target = self.get_reference_candidate(&f.nodes(), right_e.unwrap());
                 let contains_missing = self.contains_missing_type.clone();
+                // `f.reference` can be foreign to the flow-graph arena —
+                // resolve it in its own arena.
+                let ref_nodes = self.program_nodes(f.reference());
                 if contains_missing.is_some_and(|f2| f2(self, t))
-                    && ast::is_access_expression(&f.nodes()[f.reference()])
+                    && ast::is_access_expression(&ref_nodes[f.reference()])
                     && self.is_matching_reference(
-                        &f.nodes(),
-                        f.nodes()[f.reference()].expression().unwrap(),
+                        ref_nodes.as_slice(),
+                        ref_nodes[f.reference()].expression().unwrap(),
                         target,
                     )
                 {
                     let left_type = self.get_type_of_expression(left_e.unwrap());
                     if crate::utilities::is_type_usable_as_property_name(&self.types, left_type) {
                         let (accessed_name, ok) =
-                            self.get_accessed_property_name(&f.nodes(), f.reference());
+                            self.get_accessed_property_name(ref_nodes.as_slice(), f.reference());
                         if ok
                             && accessed_name
                                 == crate::utilities::get_property_name_from_type(
@@ -1581,6 +1620,15 @@ impl Checker {
         assume_true: bool,
         nodes: &[ast::Node],
     ) -> TypeId {
+        // `access` can be foreign to `nodes` (a declaration in the
+        // reference's file) — all `nodes` derefs below are on `access`.
+        let __foreign;
+        let nodes = if nodes.first().map(|n| n.id.file_index()) == Some(access.file_index()) {
+            nodes
+        } else {
+            __foreign = self.program_nodes(access);
+            __foreign.as_slice()
+        };
         if (operator == Kind::EqualsEqualsEqualsToken
             || operator == Kind::ExclamationEqualsEqualsToken)
             && self
@@ -1625,6 +1673,15 @@ impl Checker {
         nodes: &[ast::Node],
         narrow_type: &mut dyn FnMut(&mut Checker, TypeId) -> TypeId,
     ) -> TypeId {
+        // `access` can be foreign to `nodes` (a declaration in the
+        // reference's file) — all `nodes` derefs below are on `access`.
+        let __foreign;
+        let nodes = if nodes.first().map(|n| n.id.file_index()) == Some(access.file_index()) {
+            nodes
+        } else {
+            __foreign = self.program_nodes(access);
+            __foreign.as_slice()
+        };
         let (prop_name, ok) = self.get_accessed_property_name(nodes, access);
         if !ok {
             return t;
@@ -3004,9 +3061,13 @@ impl Checker {
         let reference = f.reference();
         let __nodes_arena = f.nodes.clone().expect("FlowState.nodes unset");
         let nodes = __nodes_arena.snapshot();
-        if ast::is_binding_pattern(&nodes[reference])
-            || ast::is_function_expression_or_arrow_function(&nodes[reference])
-            || ast::is_object_literal_method(reference, nodes.as_slice())
+        // `reference` and resolved `declaration`s can be foreign to the
+        // flow-graph arena (cross-file narrowing) — resolve them in their
+        // own arenas.
+        let ref_nodes = self.program_nodes(reference);
+        if ast::is_binding_pattern(&ref_nodes[reference])
+            || ast::is_function_expression_or_arrow_function(&ref_nodes[reference])
+            || ast::is_object_literal_method(reference, ref_nodes.as_slice())
         {
             // When the reference is a binding pattern or function or arrow
             // expression, we are narrowing a pseudo-reference in
@@ -3019,11 +3080,12 @@ impl Checker {
                 let declaration =
                     exported.and_then(|e| self.symbol_arena.borrow()[e.index()].value_declaration);
                 if let Some(declaration) = declaration {
-                    if (ast::is_binding_element(&nodes[declaration])
-                        || ast::is_parameter_declaration(&nodes[declaration]))
-                        && nodes[declaration].parent == Some(reference)
-                        && nodes[declaration].initializer().is_none()
-                        && !crate::utilities::has_dot_dot_dot_token(&nodes[declaration], &nodes)
+                    let decl_nodes = self.program_nodes(declaration);
+                    if (ast::is_binding_element(&decl_nodes[declaration])
+                        || ast::is_parameter_declaration(&decl_nodes[declaration]))
+                        && decl_nodes[declaration].parent == Some(reference)
+                        && decl_nodes[declaration].initializer().is_none()
+                        && !crate::utilities::has_dot_dot_dot_token(&decl_nodes[declaration], &decl_nodes)
                     {
                         return Some(declaration);
                     }
@@ -3040,15 +3102,22 @@ impl Checker {
             let symbol = self.get_resolved_symbol(expr);
             if self.is_constant_variable(symbol) {
                 let declaration = self.symbol_arena.borrow()[symbol.index()].value_declaration;
+                // `declaration` can be foreign to the flow-graph arena —
+                // resolve it in its own arena.
+                let decl_nodes = declaration.map(|d| self.program_nodes(d));
+                let dnodes: &[ast::Node] = decl_nodes
+                    .as_ref()
+                    .map(|v| v.as_slice())
+                    .unwrap_or(nodes.as_slice());
                 let initializer = declaration.and_then(|d| {
-                    get_candidate_variable_declaration_initializer(nodes.as_slice(), d)
+                    get_candidate_variable_declaration_initializer(dnodes, d)
                 });
                 // Given 'const x = obj.kind', allow 'x' as an alias for
                 // 'obj.kind'
                 if let Some(initializer) = initializer {
-                    if ast::is_access_expression(&nodes[initializer])
-                        && nodes[initializer].expression().is_some_and(|e| {
-                            self.is_matching_reference(nodes.as_slice(), reference, e)
+                    if ast::is_access_expression(&dnodes[initializer])
+                        && dnodes[initializer].expression().is_some_and(|e| {
+                            self.is_matching_reference(dnodes, reference, e)
                         })
                     {
                         return Some(initializer);
@@ -3057,18 +3126,18 @@ impl Checker {
                 // Given 'const { kind: x } = obj', allow 'x' as an alias for
                 // 'obj.kind'
                 if let Some(declaration) = declaration {
-                    if ast::is_binding_element(&nodes[declaration])
-                        && nodes[declaration].initializer().is_none()
+                    if ast::is_binding_element(&dnodes[declaration])
+                        && dnodes[declaration].initializer().is_none()
                     {
-                        let grand_parent = nodes[declaration].parent.and_then(|p| nodes[p].parent);
+                        let grand_parent = dnodes[declaration].parent.and_then(|p| dnodes[p].parent);
                         let initializer = grand_parent.and_then(|gp| {
-                            get_candidate_variable_declaration_initializer(nodes.as_slice(), gp)
+                            get_candidate_variable_declaration_initializer(dnodes, gp)
                         });
                         if let Some(initializer) = initializer {
-                            if (ast::is_identifier(&nodes[initializer])
-                                || ast::is_access_expression(&nodes[initializer]))
+                            if (ast::is_identifier(&dnodes[initializer])
+                                || ast::is_access_expression(&dnodes[initializer]))
                                 && self.is_matching_reference(
-                                    nodes.as_slice(),
+                                    dnodes,
                                     reference,
                                     initializer,
                                 )
@@ -3302,30 +3371,59 @@ impl Checker {
     }
 
     /// `(c *Checker) isMatchingReference` (flow.go).
+    ///
+    /// `nodes` is the flow-graph arena — either operand can be foreign to it
+    /// (a pseudo-reference or a node resolved into another file during
+    /// cross-file narrowing). Resolve each operand in its own arena and
+    /// delegate to [`Checker::is_matching_reference_ex`].
     pub(crate) fn is_matching_reference(
         &mut self,
         nodes: &[ast::Node],
         source: NodeId,
         target: NodeId,
     ) -> bool {
-        match nodes[target].kind {
+        let fi = nodes.first().map(|n| n.id.file_index());
+        if Some(source.file_index()) == fi && Some(target.file_index()) == fi {
+            return self.is_matching_reference_ex(nodes, source, nodes, target);
+        }
+        let snodes = (Some(source.file_index()) != fi).then(|| self.program_nodes(source));
+        let tnodes = (Some(target.file_index()) != fi).then(|| self.program_nodes(target));
+        self.is_matching_reference_ex(
+            snodes.as_ref().map(|v| v.as_slice()).unwrap_or(nodes),
+            source,
+            tnodes.as_ref().map(|v| v.as_slice()).unwrap_or(nodes),
+            target,
+        )
+    }
+
+    /// Two-arena `isMatchingReference` worker — `source` is read in
+    /// `snodes`, `target` in `tnodes` (AST children stay in their parent's
+    /// arena). Go dereferences raw node pointers; arena ids need the split.
+    fn is_matching_reference_ex(
+        &mut self,
+        snodes: &[ast::Node],
+        source: NodeId,
+        tnodes: &[ast::Node],
+        target: NodeId,
+    ) -> bool {
+        match tnodes[target].kind {
             Kind::ParenthesizedExpression | Kind::NonNullExpression => {
-                if let Some(e) = nodes[target].expression() {
-                    return self.is_matching_reference(nodes, source, e);
+                if let Some(e) = tnodes[target].expression() {
+                    return self.is_matching_reference_ex(snodes, source, tnodes, e);
                 }
             }
             Kind::BinaryExpression => {
-                let e = nodes[target].as_binary_expression();
-                if ast::is_assignment_expression(&nodes[target], nodes, false)
+                let e = tnodes[target].as_binary_expression();
+                if ast::is_assignment_expression(&tnodes[target], tnodes, false)
                     && e.left
-                        .is_some_and(|l| self.is_matching_reference(nodes, source, l))
+                        .is_some_and(|l| self.is_matching_reference_ex(snodes, source, tnodes, l))
                 {
                     return true;
                 }
                 if e.operator_token
-                    .is_some_and(|op| nodes[op].kind == Kind::CommaToken)
+                    .is_some_and(|op| tnodes[op].kind == Kind::CommaToken)
                     && e.right
-                        .is_some_and(|r| self.is_matching_reference(nodes, source, r))
+                        .is_some_and(|r| self.is_matching_reference_ex(snodes, source, tnodes, r))
                 {
                     return true;
                 }
@@ -3333,27 +3431,27 @@ impl Checker {
             }
             _ => {}
         }
-        match nodes[source].kind {
+        match snodes[source].kind {
             Kind::MetaProperty => {
-                return ast::is_meta_property(&nodes[target])
-                    && nodes[source].as_meta_property().keyword_token
-                        == nodes[target].as_meta_property().keyword_token
-                    && nodes[source]
+                return ast::is_meta_property(&tnodes[target])
+                    && snodes[source].as_meta_property().keyword_token
+                        == tnodes[target].as_meta_property().keyword_token
+                    && snodes[source]
                         .name()
-                        .map(|n| nodes[n].text(nodes).into_owned())
-                        == nodes[target]
+                        .map(|n| snodes[n].text(snodes).into_owned())
+                        == tnodes[target]
                             .name()
-                            .map(|n| nodes[n].text(nodes).into_owned());
+                            .map(|n| tnodes[n].text(tnodes).into_owned());
             }
             Kind::Identifier | Kind::PrivateIdentifier => {
-                if ast::is_this_in_type_query(source, nodes) {
-                    return nodes[target].kind == Kind::ThisKeyword;
+                if ast::is_this_in_type_query(source, snodes) {
+                    return tnodes[target].kind == Kind::ThisKeyword;
                 }
-                if ast::is_identifier(&nodes[target]) {
+                if ast::is_identifier(&tnodes[target]) {
                     return self.get_resolved_symbol(source) == self.get_resolved_symbol(target);
                 }
-                if ast::is_variable_declaration(&nodes[target])
-                    || ast::is_binding_element(&nodes[target])
+                if ast::is_variable_declaration(&tnodes[target])
+                    || ast::is_binding_element(&tnodes[target])
                 {
                     let src_sym = self.get_resolved_symbol(source);
                     let export = self.get_export_symbol_of_value_symbol_if_exported(Some(src_sym));
@@ -3361,39 +3459,39 @@ impl Checker {
                 }
                 return false;
             }
-            Kind::ThisKeyword => return nodes[target].kind == Kind::ThisKeyword,
-            Kind::SuperKeyword => return nodes[target].kind == Kind::SuperKeyword,
+            Kind::ThisKeyword => return tnodes[target].kind == Kind::ThisKeyword,
+            Kind::SuperKeyword => return tnodes[target].kind == Kind::SuperKeyword,
             Kind::NonNullExpression | Kind::ParenthesizedExpression | Kind::SatisfiesExpression => {
-                if let Some(e) = nodes[source].expression() {
-                    return self.is_matching_reference(nodes, e, target);
+                if let Some(e) = snodes[source].expression() {
+                    return self.is_matching_reference_ex(snodes, e, tnodes, target);
                 }
             }
             Kind::PropertyAccessExpression | Kind::ElementAccessExpression => {
-                let (source_property_name, ok) = self.get_accessed_property_name(nodes, source);
-                if ok && ast::is_access_expression(&nodes[target]) {
+                let (source_property_name, ok) = self.get_accessed_property_name(snodes, source);
+                if ok && ast::is_access_expression(&tnodes[target]) {
                     let (target_property_name, ok2) =
-                        self.get_accessed_property_name(nodes, target);
+                        self.get_accessed_property_name(tnodes, target);
                     if ok2 && target_property_name == source_property_name {
-                        let (se, te) = (nodes[source].expression(), nodes[target].expression());
+                        let (se, te) = (snodes[source].expression(), tnodes[target].expression());
                         if let (Some(se), Some(te)) = (se, te) {
-                            return self.is_matching_reference(nodes, se, te);
+                            return self.is_matching_reference_ex(snodes, se, tnodes, te);
                         }
                         return false;
                     }
                     return false;
                 }
-                if ast::is_element_access_expression(&nodes[source])
-                    && ast::is_element_access_expression(&nodes[target])
+                if ast::is_element_access_expression(&snodes[source])
+                    && ast::is_element_access_expression(&tnodes[target])
                 {
-                    let source_arg = nodes[source]
+                    let source_arg = snodes[source]
                         .as_element_access_expression()
                         .argument_expression;
-                    let target_arg = nodes[target]
+                    let target_arg = tnodes[target]
                         .as_element_access_expression()
                         .argument_expression;
                     if let (Some(source_arg), Some(target_arg)) = (source_arg, target_arg) {
-                        if ast::is_identifier(&nodes[source_arg])
-                            && ast::is_identifier(&nodes[target_arg])
+                        if ast::is_identifier(&snodes[source_arg])
+                            && ast::is_identifier(&tnodes[target_arg])
                         {
                             let symbol = self.get_resolved_symbol(source_arg);
                             if symbol == self.get_resolved_symbol(target_arg)
@@ -3402,9 +3500,9 @@ impl Checker {
                                         && !self.is_symbol_assigned(symbol)))
                             {
                                 let (se, te) =
-                                    (nodes[source].expression(), nodes[target].expression());
+                                    (snodes[source].expression(), tnodes[target].expression());
                                 if let (Some(se), Some(te)) = (se, te) {
-                                    return self.is_matching_reference(nodes, se, te);
+                                    return self.is_matching_reference_ex(snodes, se, tnodes, te);
                                 }
                                 return false;
                             }
@@ -3414,14 +3512,14 @@ impl Checker {
                 return false;
             }
             Kind::QualifiedName => {
-                if ast::is_access_expression(&nodes[target]) {
-                    let (target_property_name, ok) = self.get_accessed_property_name(nodes, target);
+                if ast::is_access_expression(&tnodes[target]) {
+                    let (target_property_name, ok) = self.get_accessed_property_name(tnodes, target);
                     if ok {
-                        let q = nodes[source].as_qualified_name();
-                        let right_text = q.right.map(|r| nodes[r].text(nodes).into_owned());
+                        let q = snodes[source].as_qualified_name();
+                        let right_text = q.right.map(|r| snodes[r].text(snodes).into_owned());
                         if right_text.as_deref() == Some(target_property_name.as_str()) {
-                            if let (Some(l), Some(te)) = (q.left, nodes[target].expression()) {
-                                return self.is_matching_reference(nodes, l, te);
+                            if let (Some(l), Some(te)) = (q.left, tnodes[target].expression()) {
+                                return self.is_matching_reference_ex(snodes, l, tnodes, te);
                             }
                         }
                     }
@@ -3430,12 +3528,12 @@ impl Checker {
                 return false;
             }
             Kind::BinaryExpression => {
-                let e = nodes[source].as_binary_expression();
+                let e = snodes[source].as_binary_expression();
                 return e
                     .operator_token
-                    .is_some_and(|op| nodes[op].kind == Kind::CommaToken)
+                    .is_some_and(|op| snodes[op].kind == Kind::CommaToken)
                     && e.right
-                        .is_some_and(|r| self.is_matching_reference(nodes, r, target));
+                        .is_some_and(|r| self.is_matching_reference_ex(snodes, r, tnodes, target));
             }
             _ => {}
         }
@@ -3582,6 +3680,15 @@ impl Checker {
         nodes: &[ast::Node],
         access: NodeId,
     ) -> (String, bool) {
+        // `access` can be foreign to `nodes` (a binding-element or parameter
+        // candidate in the reference's file) — resolve it in its own arena.
+        let __foreign;
+        let nodes = if nodes.first().map(|n| n.id.file_index()) == Some(access.file_index()) {
+            nodes
+        } else {
+            __foreign = self.program_nodes(access);
+            __foreign.as_slice()
+        };
         if ast::is_property_access_expression(&nodes[access]) {
             if let Some(name) = nodes[access].name() {
                 return (nodes[name].text(nodes).into_owned(), true);
@@ -3737,7 +3844,17 @@ impl Checker {
     }
 
     /// `(c *Checker) isConstantReference` (flow.go).
+    ///
+    /// `node` can be foreign to `nodes` (a pseudo-reference during
+    /// cross-file narrowing) — resolve it in its own arena.
     pub(crate) fn is_constant_reference(&mut self, nodes: &[ast::Node], node: NodeId) -> bool {
+        let __foreign;
+        let nodes = if nodes.first().map(|n| n.id.file_index()) == Some(node.file_index()) {
+            nodes
+        } else {
+            __foreign = self.program_nodes(node);
+            __foreign.as_slice()
+        };
         match nodes[node].kind {
             Kind::ThisKeyword => true,
             Kind::Identifier => {
@@ -3793,19 +3910,30 @@ impl Checker {
     }
 
     /// `(c *Checker) containsMatchingReference` (flow.go).
+    ///
+    /// `source` can be foreign to `nodes` (a pseudo-reference during
+    /// cross-file narrowing) — resolve the walk in its own arena.
+    /// `is_matching_reference` re-resolves `target` per-operand.
     pub(crate) fn contains_matching_reference(
         &mut self,
         nodes: &[ast::Node],
         source: NodeId,
         target: NodeId,
     ) -> bool {
+        let __foreign;
+        let snodes = if nodes.first().map(|n| n.id.file_index()) == Some(source.file_index()) {
+            nodes
+        } else {
+            __foreign = self.program_nodes(source);
+            __foreign.as_slice()
+        };
         let mut source = source;
-        while ast::is_access_expression(&nodes[source]) {
-            let Some(e) = nodes[source].expression() else {
+        while ast::is_access_expression(&snodes[source]) {
+            let Some(e) = snodes[source].expression() else {
                 return false;
             };
             source = e;
-            if self.is_matching_reference(nodes, source, target) {
+            if self.is_matching_reference(snodes, source, target) {
                 return true;
             }
         }

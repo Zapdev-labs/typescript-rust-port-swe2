@@ -12359,9 +12359,12 @@ impl Checker {
             {
                 let root_declaration = ast::get_root_declaration(declaration, &nodes);
                 let root_initializer = nodes[root_declaration].initializer();
+                // `location` can be in a different file than `declaration` —
+                // resolve it in its own arena for the descendant walk.
+                let loc_nodes = __program.nodes((location).file_index());
                 // Avoid declaration circularity without blocking binding defaults or nested callbacks.
                 let is_descendant_of_initializer = root_initializer.is_some()
-                    && ast::is_node_descendant_of(Some(location), root_initializer, &nodes)
+                    && ast::is_node_descendant_of(Some(location), root_initializer, &loc_nodes)
                     && self.get_control_flow_container(declaration)
                         == self.get_control_flow_container(location);
                 if !is_descendant_of_initializer {
@@ -12403,14 +12406,18 @@ impl Checker {
                                     && self.is_some_symbol_assigned(root_declaration))
                             {
                                 let pattern = nodes[declaration].parent.expect("binding parent");
+                                // The flow graph lives in `location`'s file;
+                                // the pattern is a pseudo-reference in the
+                                // declaration's file.
                                 let flow_node =
-                                    crate::flow::get_flow_node_of_node(&nodes, location);
-                                let narrowed_type = self.get_flow_type_of_reference_ex(
+                                    crate::flow::get_flow_node_of_node(&loc_nodes, location);
+                                let narrowed_type = self.get_flow_type_of_reference_ex_ctx(
                                     pattern,
                                     constraint,
                                     Some(constraint),
                                     None, /*flowContainer*/
                                     flow_node,
+                                    Some(location),
                                 );
                                 if self
                                     .types_handle()
@@ -12495,13 +12502,19 @@ impl Checker {
                         let any_param_assigned =
                             fn_params.iter().any(|&p| self.is_some_symbol_assigned(p));
                         if rest_is_union_of_tuples && !any_param_assigned {
-                            let flow_node = crate::flow::get_flow_node_of_node(&nodes, location);
-                            let narrowed_type = self.get_flow_type_of_reference_ex(
+                            // The flow graph lives in `location`'s file;
+                            // `fn_node` is a pseudo-reference in the
+                            // declaration's file.
+                            let loc_nodes = __program.nodes((location).file_index());
+                            let flow_node =
+                                crate::flow::get_flow_node_of_node(&loc_nodes, location);
+                            let narrowed_type = self.get_flow_type_of_reference_ex_ctx(
                                 fn_node,
                                 rest_type,
                                 Some(rest_type),
                                 None, /*flowContainer*/
                                 flow_node,
+                                Some(location),
                             );
                             let index = fn_params
                                 .iter()
