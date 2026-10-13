@@ -3765,20 +3765,25 @@ impl Checker {
                 return (name, true);
             }
         }
+        // The declaration can live in another file's arena (e.g. `a.key`
+        // resolving to a const in a.ts while `nodes` is b.ts's buffer) —
+        // read it in its own arena (Go's pointers carry their arena).
+        let __program = self.program.clone().expect("program");
+        let decl_nodes = __program.nodes((declaration).file_index());
         // We exclude binding elements because their initializers don't solely
         // determine their types and resolving full types can cause
         // circularities (see https://github.com/microsoft/TypeScript/issues/63192).
-        if crate::utilities::has_only_expression_initializer(&nodes[declaration])
-            && !ast::is_binding_element(&nodes[declaration])
+        if crate::utilities::has_only_expression_initializer(&decl_nodes[declaration])
+            && !ast::is_binding_element(&decl_nodes[declaration])
             && self.is_block_scoped_name_declared_before_use(declaration, node)
         {
-            if let Some(initializer) = nodes[declaration].initializer() {
+            if let Some(initializer) = decl_nodes[declaration].initializer() {
                 let initializer_type = self.get_type_of_expression(initializer);
                 return try_get_name_from_type(&self.types, initializer_type);
             }
-            if ast::is_enum_member(&nodes[declaration]) {
-                if let Some(name) = nodes[declaration].name() {
-                    let (text, ok) = ast::try_get_text_of_property_name(name, nodes);
+            if ast::is_enum_member(&decl_nodes[declaration]) {
+                if let Some(name) = decl_nodes[declaration].name() {
+                    let (text, ok) = ast::try_get_text_of_property_name(name, &decl_nodes);
                     return (text.unwrap_or_default(), ok);
                 }
             }
