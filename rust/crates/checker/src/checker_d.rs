@@ -832,9 +832,6 @@ impl Checker {
             };
             // We attempt to resolve the conditional type only when the check and extends types are non-generic
             if !check_type_deferred && !self.is_deferred_type(inferred_extends_type, check_tuples) {
-                let __h812_29 = self.get_permissive_instantiation(inferred_extends_type);
-                let __h811_29 = self.get_permissive_instantiation(check_type);
-
                 // Return falseType for a definitely false extends check. We check an instantiations of the two
                 // types with type parameters mapped to the wildcard type, the most permissive instantiations
                 // possible (the wildcard type is assignable to and from all types). If those are not related,
@@ -849,7 +846,16 @@ impl Checker {
                         .get(check_type)
                         .flags
                         .intersects(TypeFlags::ANY)
-                        || !self.is_type_assignable_to(__h811_29, __h812_29))
+                        || !{
+                            // Lazily computed only when checkType isn't `any`
+                            // (Go argument evaluation order: check, then
+                            // extends, then the call).
+                            let permissive_check =
+                                self.get_permissive_instantiation(check_type);
+                            let permissive_extends =
+                                self.get_permissive_instantiation(inferred_extends_type);
+                            self.is_type_assignable_to(permissive_check, permissive_extends)
+                        })
                 {
                     // Return union of trueType and falseType for 'any' since it matches anything. Furthermore, for a
                     // distributive conditional type applied to the constraint of a type variable, include trueType if
@@ -928,14 +934,18 @@ impl Checker {
                 // that has no constraint. This ensures that, for example, the type
                 //   type Foo<T extends { x: any }> = T extends { x: string } ? string : number
                 // doesn't immediately resolve to 'string' instead of being deferred.
-                let restrictive_check = self.get_restrictive_instantiation(check_type);
-                let restrictive_extends = self.get_restrictive_instantiation(inferred_extends_type);
                 if self
                     .types_handle()
                     .get(inferred_extends_type)
                     .flags
                     .intersects(TypeFlags::ANY_OR_UNKNOWN)
-                    || self.is_type_assignable_to(restrictive_check, restrictive_extends)
+                    || {
+                        let restrictive_check =
+                            self.get_restrictive_instantiation(check_type);
+                        let restrictive_extends =
+                            self.get_restrictive_instantiation(inferred_extends_type);
+                        self.is_type_assignable_to(restrictive_check, restrictive_extends)
+                    }
                 {
                     let true_type = self.get_type_from_type_node(cond_true.unwrap());
                     let true_mapper = combined_mapper.or(mapper);

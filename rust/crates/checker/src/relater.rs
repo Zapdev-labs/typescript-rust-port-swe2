@@ -7290,12 +7290,16 @@ impl Relater {
         source: TypeId,
         target: TypeId,
     ) -> bool {
-        let apparent = c.get_apparent_type(source);
-        c.types_handle()
+        if !c
+            .types_handle()
             .get(source)
             .flags
             .intersects(TypeFlags::INTERSECTION)
-            && c.types_handle()
+        {
+            return false;
+        }
+        let apparent = c.get_apparent_type(source);
+        c.types_handle()
                 .get(apparent)
                 .flags
                 .intersects(TypeFlags::STRUCTURED_TYPE)
