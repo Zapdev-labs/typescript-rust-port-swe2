@@ -1652,6 +1652,12 @@ pub trait Program: Host {
     fn options(&self) -> Rc<CompilerOptions>;
     /// `SourceFiles()` — `[]*ast.SourceFile` → source-file `NodeId`s.
     fn source_files(&self) -> Vec<NodeId>;
+    /// `fileIndexMap` — index of `source_file` in `SourceFiles()` (program
+    /// order). Used by `CompareTypes`'s node ordering (`c.compareNodes`).
+    /// Default: linear scan; implementors may override with a lookup map.
+    fn file_rank(&self, source_file: NodeId) -> Option<usize> {
+        self.source_files().iter().position(|&f| f == source_file)
+    }
     /// `BindSourceFiles()`.
     fn bind_source_files(&self);
     /// The program-global symbol arena (SPEC §5.2): `SymbolId` indexes this

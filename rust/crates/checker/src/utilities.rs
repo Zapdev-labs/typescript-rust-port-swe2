@@ -877,19 +877,25 @@ fn compare_types_opt(
                 // A single instantiation expression can produce multiple
                 // types for union constituents, so compare their source
                 // declarations before comparing the shared expression node.
-                let c = compare_node_ids(declaration1, declaration2);
+                let c = compare_node_ids(declaration1, declaration2, program);
                 if c != 0 {
                     return c;
                 }
                 let c = compare_node_ids(
                     types.get(t1).as_instantiation_expression_type().node,
                     types.get(t2).as_instantiation_expression_type().node,
+                    program,
                 );
                 if c != 0 {
                     return c;
                 }
             } else {
-                let c = compare_symbols(symbols, types.get(t1).symbol, types.get(t2).symbol);
+                let c = compare_symbols(
+                    symbols,
+                    program,
+                    types.get(t1).symbol,
+                    types.get(t2).symbol,
+                );
                 if c != 0 {
                     return c;
                 }
@@ -944,7 +950,7 @@ fn compare_types_opt(
                 } else {
                     // Deferred type references with the same target are
                     // ordered by the source location of the reference.
-                    let c = compare_node_ids(node1, node2);
+                    let c = compare_node_ids(node1, node2, program);
                     if c != 0 {
                         return c;
                     }
@@ -1068,7 +1074,12 @@ fn compare_types_opt(
         {
             // Enum members are ordered by their symbol (and thus their
             // declaration order).
-            let c = compare_symbols(symbols, types.get(t1).symbol, types.get(t2).symbol);
+            let c = compare_symbols(
+                symbols,
+                program,
+                types.get(t1).symbol,
+                types.get(t2).symbol,
+            );
             if c != 0 {
                 return c;
             }
@@ -1114,7 +1125,12 @@ fn compare_types_opt(
             }
         }
         _ if flags.intersects(TypeFlags::TYPE_PARAMETER) => {
-            let c = compare_symbols(symbols, types.get(t1).symbol, types.get(t2).symbol);
+            let c = compare_symbols(
+                symbols,
+                program,
+                types.get(t1).symbol,
+                types.get(t2).symbol,
+            );
             if c != 0 {
                 return c;
             }
@@ -1170,7 +1186,7 @@ fn compare_types_opt(
                 let t = t.as_conditional_type();
                 (t.root.as_ref().and_then(|r| r.node), t.mapper)
             };
-            let c = compare_node_ids(root1, root2);
+            let c = compare_node_ids(root1, root2, program);
             if c != 0 {
                 return c;
             }
@@ -1286,15 +1302,14 @@ fn compare_type_names(
     }
     // Keep distinct same-named declarations together before comparing
     // alias arguments or structure.
-    compare_symbols(symbols, Some(s1), Some(s2))
+    compare_symbols(symbols, program, Some(s1), Some(s2))
 }
 
-/// `compareSymbolsWorker` (checker/utilities.go) — declaration position,
-/// then name, then symbol id. `NodeId` ordering (`file_index << 44 |
-/// local_index`) approximates Go's `fileIndexMap[s]` + `Pos()` ordering —
-/// files are indexed in program order and nodes allocated in source order.
+/// `compareSymbolsWorker` (checker/utilities.go) — declaration position
+/// (program file order, then pos), then name, then symbol id.
 fn compare_symbols(
     symbols: &RefCell<Vec<ast::Symbol>>,
+    program: Option<&Rc<dyn crate::checker_types::Program>>,
     s1: Option<SymbolId>,
     s2: Option<SymbolId>,
 ) -> i32 {
@@ -1313,7 +1328,7 @@ fn compare_symbols(
     };
     match (decl1, decl2) {
         (Some(d1), Some(d2)) => {
-            let c = d1.0.cmp(&d2.0) as i32;
+            let c = compare_node_ids(Some(d1), Some(d2), program);
             if c != 0 {
                 return c;
             }
@@ -1500,17 +1515,41 @@ fn compare_type_mappers(
     }
 }
 
-/// `compareNodes`/`compareSymbols` fallback for `&TypeArena`-only callers —
-/// PORT(approximation): `NodeId` packs `file_index:20 | local_index:44`, so
-/// packed-id order approximates Go's `fileIndexMap` + `Pos()` order; nil
-/// sorts last, matching `compareNodes`.
-fn compare_node_ids(n1: Option<NodeId>, n2: Option<NodeId>) -> i32 {
+/// `compareNodes` (checker/utilities.go:392) — order by containing file's
+/// index in program order (`fileIndexMap`), then source position. Falls back
+/// to raw `NodeId` ordering when no program is available.
+fn compare_node_ids(
+    n1: Option<NodeId>,
+    n2: Option<NodeId>,
+    program: Option<&Rc<dyn crate::checker_types::Program>>,
+) -> i32 {
     if n1 == n2 {
         return 0;
     }
     let Some(n1) = n1 else { return 1 };
     let Some(n2) = n2 else { return -1 };
-    n1.0.cmp(&n2.0) as i32
+    let Some(program) = program else {
+        return n1.0.cmp(&n2.0) as i32;
+    };
+    let nodes = program.nodes(n1.file_index());
+    let s1 = ast::get_source_file_of_node(Some(n1), &nodes);
+    let nodes2 = program.nodes(n2.file_index());
+    let s2 = ast::get_source_file_of_node(Some(n2), &nodes2);
+    match (s1, s2) {
+        (Some(s1), Some(s2)) => {
+            if s1 != s2 {
+                let f1 = program.file_rank(s1).unwrap_or(0) as i64;
+                let f2 = program.file_rank(s2).unwrap_or(0) as i64;
+                // Order by index of file in the containing program
+                return (f1 - f2) as i32;
+            }
+            // In the same file, order by source position
+            nodes[n1].pos() - nodes[n2].pos()
+        }
+        // PORT(fallback): nodes without a resolvable source file keep the
+        // previous raw-`NodeId` ordering.
+        _ => n1.0.cmp(&n2.0) as i32,
+    }
 }
 
 /// Extract the `evaluator::Value::String` payload of a literal type.

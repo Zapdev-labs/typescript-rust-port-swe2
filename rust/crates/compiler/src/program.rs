@@ -254,6 +254,9 @@ pub struct Program {
 
     /// `NodeId`s of `processed.files` — the `[]*ast.SourceFile` slice.
     source_file_ids: Vec<NodeId>,
+    /// Lazily-built `fileIndexMap` — source-file `NodeId` → position in
+    /// `source_file_ids` (program order), for `Program::file_rank`.
+    file_rank_map: RefCell<Option<FxHashMap<NodeId, usize>>>,
     /// `file_index` → arena. `NodeId::file_index` is a global counter, not a
     /// position in `files`, so arenas are keyed by it.
     arenas: FxHashMap<u32, Rc<ArenaCell>>,
@@ -3675,6 +3678,7 @@ pub fn new_program(opts: ProgramOptions) -> Rc<Program> {
         packages_map: OnceCell::new(),
         pending_processing_diagnostics: RefCell::new(Vec::new()),
         source_file_ids,
+        file_rank_map: RefCell::new(None),
         arenas,
         last_arena: std::cell::RefCell::new(None),
     });
@@ -3933,6 +3937,7 @@ pub fn reuse_program(
             p.pending_processing_diagnostics.borrow().to_vec(),
         ),
         source_file_ids,
+        file_rank_map: RefCell::new(None),
         arenas,
         last_arena: std::cell::RefCell::new(None),
     });
@@ -4640,6 +4645,17 @@ impl tsc_checker::checker_types::Program for Program {
     }
     fn source_files(&self) -> Vec<NodeId> {
         self.source_files()
+    }
+    fn file_rank(&self, source_file: NodeId) -> Option<usize> {
+        let mut cache = self.file_rank_map.borrow_mut();
+        let map = cache.get_or_insert_with(|| {
+            self.source_file_ids
+                .iter()
+                .enumerate()
+                .map(|(i, &f)| (f, i))
+                .collect()
+        });
+        map.get(&source_file).copied()
     }
     fn bind_source_files(&self) {
         self.bind_source_files();
