@@ -8184,11 +8184,7 @@ impl tsc_outputpaths::OutputPathsHost for HostAdapter {
 
 impl tsc_modulespecifiers::ModuleSpecifierGenerationHost for HostAdapter {
     fn get_symlink_cache(&self) -> Option<&tsc_symlinks::KnownSymlinks> {
-        // `get_symlink_cache` borrows from the host; the trait-object can't
-        // return a borrow through the Rc, so this is a PORT(deferred) gap.
-        // Go's host returns the program's cache; the underlying call is
-        // nil-safe in modulespecifiers.
-        None
+        self.0.get_symlink_cache()
     }
     fn get_global_typings_cache_location(&self) -> tsc_tspath::RootedDirectoryPath {
         self.0.get_global_typings_cache_location()
