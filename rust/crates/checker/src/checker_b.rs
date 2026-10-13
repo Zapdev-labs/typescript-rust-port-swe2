@@ -15073,7 +15073,12 @@ impl Checker {
         }
 
         let importing_source_file =
-            ast::get_source_file_of_node(Some(location), &nodes).expect("source file");
+            crate::printer_util::get_source_file_of_node_resolved(
+                &__program,
+                live_nodes.unwrap_or(&[]),
+                Some(location),
+            )
+            .expect("source file");
         let context_specifier: Option<NodeId>;
         if ast::is_string_literal_like(&nodes[location])
             || nodes[location].parent.is_some_and(|p| {

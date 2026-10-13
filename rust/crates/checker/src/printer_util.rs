@@ -240,6 +240,34 @@ pub fn get_source_file_of_node_resolved(
     None
 }
 
+/// `find_ancestor` that tolerates cross-arena parent chains — see
+/// [`get_source_file_of_node_resolved`]. Each hop is re-resolved in its
+/// own arena before the callback runs.
+pub fn find_ancestor_resolved(
+    program: &std::rc::Rc<dyn crate::checker_types::Program>,
+    work: &[Node],
+    node: Option<NodeId>,
+    callback: &mut dyn FnMut(&Node, &[Node]) -> bool,
+) -> Option<NodeId> {
+    let mut node = node;
+    let mut hops = 0usize;
+    while let Some(n) = node {
+        hops += 1;
+        if hops > 4096 {
+            return None;
+        }
+        let nn = resolve_arena_for(program, work, n);
+        if !buffer_resolves_id(&nn, n) {
+            return None;
+        }
+        if callback(&nn[n], &nn) {
+            return Some(n);
+        }
+        node = nn[n].parent;
+    }
+    None
+}
+
 /// Host hook for `PrintHandlers::original_list_has_trailing_comma`:
 /// fetches `which` member list from `original_parent`, a `most_original`
 /// node that lives in another file's arena (Go dereferences raw pointers

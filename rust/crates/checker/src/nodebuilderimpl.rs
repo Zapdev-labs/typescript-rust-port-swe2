@@ -1889,8 +1889,7 @@ impl<'a> NodeBuilderImpl<'a> {
                     };
                     let enclosing_binding = self.ctx.enclosing_declaration.and_then(|e| {
                                                 let __program = c.program.clone().expect("program");
-                        let en = crate::printer_util::arena_view(&__program, nodes, (e).file_index());;
-                        ast::find_ancestor(Some(e), &en, &mut |n, nodes| {
+                        crate::printer_util::find_ancestor_resolved(&__program, nodes, Some(e), &mut |n, nodes| {
                             is_default_binding_context(n, nodes)
                         })
                     });

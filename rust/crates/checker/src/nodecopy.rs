@@ -740,11 +740,15 @@ impl<'a> NodeBuilderImpl<'a> {
         let mut enc = self.ctx.enclosing_declaration;
         while let Some(e) = enc {
             // Same NodeId-aliasing guard as `push_fake_scope`: a stale
-            // fake-scope link is only trusted when the node in the live
-            // buffer is actually a Block.
-            if nodes
-                .get(e.local_index() as usize)
-                .is_some_and(|n| n.kind == ast::Kind::Block)
+            // fake-scope link is only trusted when the node `e` resolves
+            // to (in whatever arena owns it) is actually a Block. The fake
+            // scope may live in a foreign arena — see `push_fake_scope`.
+            let e_is_block = {
+                let nn = c.program_nodes_live(e, nodes);
+                crate::printer_util::buffer_resolves_id(&nn, e)
+                    && nn[e].kind == ast::Kind::Block
+            };
+            if e_is_block
                 && self
                     .links
                     .try_get(&e)

@@ -109,17 +109,11 @@ impl<'a> NodeBuilder<'a> {
         let enclosing_file = match enclosing_declaration {
             Some(decl) => {
                 let __program = c.program.clone().expect("program");
-                let arena =
-                    crate::printer_util::resolve_arena_for(&__program, nodes, decl);
-                // While the caller's `nodes_mut` guard has the arena checked
-                // out, `program.nodes` reads the empty placeholder — the
-                // in-hand `nodes` buffer IS that arena's contents.
-                let read: &[ast::Node] = if arena.is_empty() && !nodes.is_empty() {
-                    nodes
-                } else {
-                    &arena
-                };
-                ast::get_source_file_of_node(Some(decl), read)
+                crate::printer_util::get_source_file_of_node_resolved(
+                    &__program,
+                    nodes,
+                    Some(decl),
+                )
             }
             None => None,
         };
