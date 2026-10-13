@@ -415,11 +415,13 @@ impl<'a> NameResolver<'a> {
                             if name_not_found_message.is_some()
                                 && self.compiler_options.get_isolated_modules()
                                 && !nodes[loc].flags.intersects(NodeFlags::AMBIENT)
+                                // PORT: `vd` can belong to another file's
+                                // arena (merged enum members) — indexing it
+                                // into `nodes` would read an unrelated node.
+                                // file_index equality is the same test Go
+                                // does via GetSourceFileOfNode.
                                 && symbols.borrow()[res.index()].value_declaration.is_some_and(
-                                    |vd| {
-                                        get_source_file_of_node(Some(loc), nodes)
-                                            != get_source_file_of_node(Some(vd), nodes)
-                                    },
+                                    |vd| vd.file_index() != loc.file_index(),
                                 )
                             {
                                 let isolated_modules_like_flag_name =

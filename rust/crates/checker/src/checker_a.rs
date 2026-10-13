@@ -11480,10 +11480,12 @@ impl Checker {
                         // Don't allow re-exporting an export that will be elided when `--isolatedModules` is set.
                         // The exception is that `import type { A } from './a'; export { A }` is allowed
                         // because single-file analysis can determine that the export should be dropped.
+                        // PORT: `type_only_alias` can belong to another
+                        // file's arena — indexing it into `nodes` would walk
+                        // the wrong parents. file_index equality is the same
+                        // test Go does via GetSourceFileOfNode.
                         if self.compiler_options.verbatim_module_syntax.is_true()
-                            || type_only_alias
-                                .and_then(|a| ast::get_source_file_of_node(Some(a), &nodes))
-                                != ast::get_source_file_of_node(Some(node), &nodes)
+                            || type_only_alias.is_none_or(|a| a.file_index() != node.file_index())
                         {
                             let name = nodes[node]
                                 .property_name_or_name()
