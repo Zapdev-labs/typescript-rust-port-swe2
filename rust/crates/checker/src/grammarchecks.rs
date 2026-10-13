@@ -2074,9 +2074,13 @@ impl Checker {
     pub(crate) fn check_grammar_interface_declaration(&mut self, node: NodeId) -> bool {
         let __program = self.program.clone().expect("program");
         let nodes = __program.nodes((node).file_index());
+        // PORT: Go reads `InterfaceDeclaration.HeritageClauses` directly —
+        // interfaces are not class-like in this AST (`class_like_data`
+        // only covers ClassDeclaration/ClassExpression).
         let heritage_clauses = nodes[node]
-            .class_like_data()
-            .and_then(|d| d.heritage_clauses.clone());
+            .as_interface_declaration()
+            .heritage_clauses
+            .clone();
         if let Some(heritage_clauses) = heritage_clauses {
             let mut seen_extends_clause = false;
             for heritage_clause_node in heritage_clauses.nodes().to_vec() {

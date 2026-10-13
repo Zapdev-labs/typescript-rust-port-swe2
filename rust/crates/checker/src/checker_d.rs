@@ -5481,11 +5481,11 @@ __h5064_43, suggestion],
                                     {
                                         let idx_str = self.type_to_string(index_type);
                                         let obj_str = self.type_to_string(object_type);
-                                        self.new_diagnostic_for_node(
+                                        Some(self.new_diagnostic_for_node(
                                             Some(access_expression),
                                             &tsc_diagnostics::Property_0_does_not_exist_on_type_1,
                                             &[format!("[{}]", idx_str), obj_str],
-                                        )
+                                        ))
                                     } else if index_flags.intersects(TypeFlags::UNIQUE_ES_SYMBOL) {
                                         let __arena_index_symbol = self.types.clone();
                                         let index_symbol =
@@ -5495,11 +5495,11 @@ __h5064_43, suggestion],
                                             Some(access_expression),
                                         );
                                         let obj_str2 = self.type_to_string(object_type);
-                                        self.new_diagnostic_for_node(
+                                        Some(self.new_diagnostic_for_node(
                                             Some(access_expression),
                                             &tsc_diagnostics::Property_0_does_not_exist_on_type_1,
                                             &[format!("[{}]", symbol_name), obj_str2],
-                                        )
+                                        ))
                                     } else if index_flags.intersects(TypeFlags::STRING_LITERAL)
                                         || index_flags.intersects(TypeFlags::NUMBER_LITERAL)
                                     {
@@ -5513,25 +5513,29 @@ __h5064_43, suggestion],
                                             .map(evaluator::any_to_string)
                                             .unwrap_or_default();
                                         let obj_str3 = self.type_to_string(object_type);
-                                        self.new_diagnostic_for_node(
+                                        Some(self.new_diagnostic_for_node(
                                             Some(access_expression),
                                             &tsc_diagnostics::Property_0_does_not_exist_on_type_1,
                                             &[value, obj_str3],
-                                        )
-                                    } else {
+                                        ))
+                                    } else if index_flags
+                                        .intersects(TypeFlags::NUMBER | TypeFlags::STRING)
+                                    {
                                         let idx_str2 = self.type_to_string(index_type);
                                         let obj_str4 = self.type_to_string(object_type);
-                                        self.new_diagnostic_for_node(
+                                        Some(self.new_diagnostic_for_node(
                                             Some(access_expression),
                                             &tsc_diagnostics::No_index_signature_with_a_parameter_of_type_0_was_found_on_type_1,
                                             &[idx_str2, obj_str4],
-                                        )
+                                        ))
+                                    } else {
+                                        None
                                     };
                                     let full_idx_str = self.type_to_string(full_index_type);
                                     let obj_str5 = self.type_to_string(object_type);
                                     let diagnostic = crate::utilities::new_diagnostic_chain_for_node(
                                         self,
-                                        Some(diagnostic),
+                                        diagnostic,
                                         access_expression,
                                         &tsc_diagnostics::Element_implicitly_has_an_any_type_because_expression_of_type_0_can_t_be_used_to_index_type_1,
                                         &[full_idx_str, obj_str5],
