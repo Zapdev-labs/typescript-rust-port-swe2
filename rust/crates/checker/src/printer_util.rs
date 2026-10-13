@@ -212,6 +212,34 @@ pub fn checker_arena_view<'x>(
     arena_view(c.program.as_ref().expect("program"), work, fi)
 }
 
+/// `get_source_file_of_node` that tolerates cross-arena parent chains.
+/// Fake scopes and scratch-clone node reuse mint nodes in one buffer whose
+/// `parent` points into a different file's arena (Go's shared heap follows
+/// the pointer transparently). Each hop is re-resolved in its own arena;
+/// corrupt or foreign chains bail instead of reading garbage nodes.
+pub fn get_source_file_of_node_resolved(
+    program: &std::rc::Rc<dyn crate::checker_types::Program>,
+    work: &[Node],
+    mut node: Option<NodeId>,
+) -> Option<NodeId> {
+    let mut hops = 0usize;
+    while let Some(n) = node {
+        hops += 1;
+        if hops > 4096 {
+            return None;
+        }
+        let nn = resolve_arena_for(program, work, n);
+        if !buffer_resolves_id(&nn, n) {
+            return None;
+        }
+        if nn[n].kind == ast::Kind::SourceFile {
+            return Some(n);
+        }
+        node = nn[n].parent;
+    }
+    None
+}
+
 /// Host hook for `PrintHandlers::original_list_has_trailing_comma`:
 /// fetches `which` member list from `original_parent`, a `most_original`
 /// node that lives in another file's arena (Go dereferences raw pointers

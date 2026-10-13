@@ -459,8 +459,11 @@ impl Checker {
     live_nodes: Option<&[Node]>) -> Vec<SymbolId> {
         let containing_file = {
             let __program = self.program.clone().expect("program");
-            let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), enclosing_declaration);
-            ast::get_source_file_of_node(Some(enclosing_declaration), &nn)
+            crate::printer_util::get_source_file_of_node_resolved(
+                &__program,
+                live_nodes.unwrap_or(&[]),
+                Some(enclosing_declaration),
+            )
         };
         let Some(containing_file) = containing_file else {
             return Vec::new();
@@ -1123,9 +1126,11 @@ impl Checker {
                 && !(is_umd_export_symbol(self, symbol_from_symbol_table, live_nodes)
                     && ctx.enclosing_declaration.is_some_and(|ed| {
                                                 let __program = self.program.clone().expect("program");
-                        let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), ed);;
-                        ast::get_source_file_of_node(Some(ed), &nn)
-                            .is_some_and(|sf| ast::is_external_module(nn[sf].as_source_file()))
+                        crate::printer_util::get_source_file_of_node_resolved(&__program, live_nodes.unwrap_or(&[]), Some(ed))
+                            .is_some_and(|sf| {
+                                let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), sf);
+                                ast::is_external_module(nn[sf].as_source_file())
+                            })
                     }))
                 // If `!useOnlyExternalAliasing`, we can use any type of alias to get the name
                 && (!ctx.use_only_external_aliasing
