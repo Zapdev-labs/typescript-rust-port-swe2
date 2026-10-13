@@ -4223,7 +4223,7 @@ impl Checker {
             }
         }
         let mut names: Vec<(String, SymbolId)> = Vec::new();
-        let mut seen: FxHashSet<String> = FxHashSet::default();
+        let mut positions: FxHashMap<String, usize> = FxHashMap::default();
         let siblings = self.get_siblings_of_context(context);
         for t in siblings {
             if is_object_literal_type(&self.types, t)
@@ -4235,7 +4235,12 @@ impl Checker {
             {
                 for prop in self.get_properties_of_type(t) {
                     let name = self.sym(prop).name.clone();
-                    if seen.insert(name.clone()) {
+                    // `OrderedMap.Set`: re-setting an existing name keeps its
+                    // insertion position but updates the value (last wins).
+                    if let Some(&i) = positions.get(&name) {
+                        names[i].1 = prop;
+                    } else {
+                        positions.insert(name.clone(), names.len());
                         names.push((name, prop));
                     }
                 }
