@@ -16942,9 +16942,9 @@ fn get_external_module_require_argument(node: NodeId, nodes: &[ast::Node]) -> Op
 /// `getModuleSpecifierFromNode` (checker.go:14484).
 pub(crate) fn get_module_specifier_from_node(node: NodeId, nodes: &[ast::Node]) -> Option<NodeId> {
     match nodes[node].kind {
-        ast::Kind::ImportDeclaration | ast::Kind::ExportDeclaration => {
-            nodes[node].module_specifier()
-        }
+        ast::Kind::ImportDeclaration
+        | ast::Kind::JSImportDeclaration
+        | ast::Kind::ExportDeclaration => nodes[node].module_specifier(),
         ast::Kind::ImportEqualsDeclaration => {
             let module_reference = nodes[node].as_import_equals_declaration().module_reference;
             if module_reference.is_some_and(|mr| ast::is_external_module_reference(&nodes[mr])) {
