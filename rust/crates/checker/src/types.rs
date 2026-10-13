@@ -43,7 +43,7 @@ use std::sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard};
 use rustc_hash::FxHashMap;
 use tsc_ast::symbolflags::SymbolFlags;
 use tsc_ast::{NodeId, SymbolId, SymbolTable};
-use tsc_collections::OrderedSet;
+use tsc_collections::{OrderedMap, OrderedSet};
 use tsc_core::options_generated::ScriptTarget;
 use tsc_core::tristate::Tristate;
 use tsc_evaluator as evaluator;
@@ -524,7 +524,7 @@ pub struct ModuleSymbolLinks {
     /// PORT: `map[string]*ast.Node` → `OrderedMap<String, NodeId>` — Go map
     /// iteration order is random, but the port prefers insertion-ordered
     /// maps anywhere order could conceivably reach output (SPEC §5.2).
-    pub type_only_export_star_map: tsc_ast::SymbolTable,
+    pub type_only_export_star_map: OrderedMap<String, NodeId>,
     /// `exportsChecked`.
     pub exports_checked: bool,
 }

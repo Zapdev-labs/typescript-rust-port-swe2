@@ -523,27 +523,24 @@ impl Checker {
 
     /// `(c *Checker) getExportsOfModuleWorker` (checker.go).
     ///
-    /// PORT: `map[string]*ast.Node` → `SymbolTable` storing
-    /// `SymbolId(node.0 as u32)` re-punned NodeIds — the
-    /// `ModuleSymbolLinks.typeOnlyExportStarMap` field is declared
-    /// `tsc_ast::SymbolTable` (see types.rs PORT note); readers must decode
-    /// with `NodeId(v.0 as u64)`.
+    /// PORT: `map[string]*ast.Node` → `OrderedMap<String, NodeId>`
+    /// (see types.rs PORT note).
     pub(crate) fn get_exports_of_module_worker(
         &mut self,
         module_symbol: SymbolId,
-    ) -> (SymbolTable, SymbolTable) {
+    ) -> (SymbolTable, OrderedMap<String, NodeId>) {
         let mut visited_symbols: Vec<SymbolId> = Vec::new();
         let mut non_type_only_names: Set<String> =
             Set::with_size_hint(self.sym(module_symbol).exports.size());
         // The ES6 spec permits export * declarations in a module to circularly
         // reference the module itself.
-        let mut type_only_export_star_map: SymbolTable = SymbolTable::new();
+        let mut type_only_export_star_map: OrderedMap<String, NodeId> = OrderedMap::new();
         #[allow(clippy::too_many_arguments)]
         fn visit(
             c: &mut Checker,
             visited_symbols: &mut Vec<SymbolId>,
             non_type_only_names: &mut Set<String>,
-            type_only_export_star_map: &mut SymbolTable,
+            type_only_export_star_map: &mut OrderedMap<String, NodeId>,
             symbol: Option<SymbolId>,
             export_star: Option<NodeId>,
             is_type_only: bool,
@@ -631,7 +628,7 @@ impl Checker {
                 let nodes = __program.nodes((export_star).file_index());
                 if nodes[export_star].is_type_only() {
                     for name in symbols.keys() {
-                        type_only_export_star_map.set(name.clone(), SymbolId(export_star.0 as u32));
+                        type_only_export_star_map.set(name.clone(), export_star);
                     }
                 }
             }

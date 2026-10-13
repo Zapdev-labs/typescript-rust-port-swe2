@@ -14192,15 +14192,12 @@ impl Checker {
             let exports = self.get_exports_of_symbol(symbol);
             let export_symbol = exports.get(name_text).copied();
             let resolved = export_symbol.map(|s| self.resolve_symbol_ex(s, dont_resolve_alias));
-            // `typeOnlyExportStarMap` stores `SymbolId(node.0 as u32)`
-            // re-punned NodeIds — decode per the checker_c PORT note.
             let export_star_declaration = self
                 .module_symbol_links
                 .get(symbol)
                 .type_only_export_star_map
                 .get(name_text)
-                .copied()
-                .map(|v| NodeId(v.0 as u64));
+                .copied();
             self.mark_symbol_of_alias_declaration_if_type_only(specifier, export_star_declaration);
             return resolved;
         }
