@@ -230,6 +230,27 @@ impl<'a> SymbolTrackerImpl<'a> {
             .or_else(|| self.error_fallback_node())
     }
 
+    /// PORT: Go resolves `errorLocation` node *pointers* in their own
+    /// arena; our `error_name_node`/`error_fallback_node` may carry a
+    /// `NodeId` minted by another file's emit context when a report
+    /// replays under a different working buffer. Indexing `nodes` by raw
+    /// index would read an unrelated node, so resolve the owning arena
+    /// first (mirroring pointer semantics).
+    fn location_arena<'x>(&self, location: NodeId, nodes: &'x [Node]) -> LocationArena<'x> {
+        if nodes
+            .get(location.local_index() as usize)
+            .is_some_and(|n| n.id == location)
+        {
+            LocationArena::Borrowed(nodes)
+        } else {
+            LocationArena::Owned(
+                self.host
+                    .arena_for(location.file_index(), nodes)
+                    .unwrap_or_else(|| std::rc::Rc::new(nodes.to_vec())),
+            )
+        }
+    }
+
     /// `(s *SymbolTrackerImpl) errorDeclarationNameWithFallback`.
     fn error_declaration_name_with_fallback(&self, nodes: &[Node]) -> String {
         if let Some(error_name_node) = self.state.borrow().error_name_node {
@@ -315,6 +336,21 @@ impl<'a> SymbolTrackerImpl<'a> {
     }
 }
 
+/// Arena resolved by [`SymbolTrackerImpl::location_arena`].
+enum LocationArena<'x> {
+    Borrowed(&'x [Node]),
+    Owned(std::rc::Rc<Vec<Node>>),
+}
+
+impl<'x> LocationArena<'x> {
+    fn as_slice(&self) -> &[Node] {
+        match self {
+            Self::Borrowed(s) => s,
+            Self::Owned(r) => r,
+        }
+    }
+}
+
 impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
     /// `(s *SymbolTrackerImpl) PopErrorFallbackNode`.
     fn pop_error_fallback_node(&mut self) {
@@ -329,6 +365,8 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
     /// `(s *SymbolTrackerImpl) ReportCyclicStructureError`.
     fn report_cyclic_structure_error(&mut self, nodes: &[Node]) {
         if let Some(location) = self.error_location() {
+            let arena = self.location_arena(location, nodes);
+            let nodes = arena.as_slice();
             let name = self.error_declaration_name_with_fallback(nodes);
             self.state.borrow_mut().add_diagnostic(create_diagnostic_for_node(
                 nodes,
@@ -342,6 +380,8 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
     /// `(s *SymbolTrackerImpl) ReportInaccessibleThisError`.
     fn report_inaccessible_this_error(&mut self, nodes: &[Node]) {
         if let Some(location) = self.error_location() {
+            let arena = self.location_arena(location, nodes);
+            let nodes = arena.as_slice();
             let name = self.error_declaration_name_with_fallback(nodes);
             self.state.borrow_mut().add_diagnostic(create_diagnostic_for_node(
                 nodes,
@@ -355,6 +395,8 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
     /// `(s *SymbolTrackerImpl) ReportInaccessibleUniqueSymbolError`.
     fn report_inaccessible_unique_symbol_error(&mut self, nodes: &[Node]) {
         if let Some(location) = self.error_location() {
+            let arena = self.location_arena(location, nodes);
+            let nodes = arena.as_slice();
             let name = self.error_declaration_name_with_fallback(nodes);
             self.state.borrow_mut().add_diagnostic(create_diagnostic_for_node(
                 nodes,
@@ -411,6 +453,8 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
         nodes: &[Node],
     ) {
         if let Some(location) = self.error_location() {
+            let arena = self.location_arena(location, nodes);
+            let nodes = arena.as_slice();
             let name = self.error_declaration_name_with_fallback(nodes);
             let diag = if !symbol_name.is_empty() {
                 create_diagnostic_for_node(
@@ -434,6 +478,8 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
     /// `(s *SymbolTrackerImpl) ReportNonSerializableProperty`.
     fn report_non_serializable_property(&mut self, property_name: &str, nodes: &[Node]) {
         if let Some(location) = self.error_location() {
+            let arena = self.location_arena(location, nodes);
+            let nodes = arena.as_slice();
             self.state.borrow_mut().add_diagnostic(create_diagnostic_for_node(
                 nodes,
                 Some(location),
@@ -457,23 +503,27 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
             .borrow();
         let primary_declaration =
             tsc_core::core::find(&symbols[parent_symbol.index()].declarations, |&d| {
-                ast::get_source_file_of_node(Some(d), nodes) == Some(containing_file)
+                let arena = self.location_arena(d, nodes);
+                ast::get_source_file_of_node(Some(d), arena.as_slice()) == Some(containing_file)
             });
         let augmenting_declarations =
             tsc_core::core::filter(&symbols[augmenting_symbol.index()].declarations, |&d| {
-                ast::get_source_file_of_node(Some(d), nodes) != Some(containing_file)
+                let arena = self.location_arena(d, nodes);
+                ast::get_source_file_of_node(Some(d), arena.as_slice()) != Some(containing_file)
             });
         if let Some(primary_declaration) = primary_declaration {
             if !augmenting_declarations.is_empty() {
                 for &augmentation in augmenting_declarations.iter() {
+                    let aug_arena = self.location_arena(augmentation, nodes);
                     let diag = create_diagnostic_for_node(
-                        nodes,
+                        aug_arena.as_slice(),
                         Some(augmentation),
                         &tsc_diagnostics::Declaration_augments_declaration_in_another_file_This_cannot_be_serialized,
                         &[] as &[String],
                     );
+                    let prim_arena = self.location_arena(primary_declaration, nodes);
                     let related = create_diagnostic_for_node(
-                        nodes,
+                        prim_arena.as_slice(),
                         Some(primary_declaration),
                         &tsc_diagnostics::This_is_the_declaration_being_augmented_Consider_moving_the_augmenting_declaration_into_the_same_file,
                         &[] as &[String],
@@ -488,6 +538,8 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
     /// `(s *SymbolTrackerImpl) ReportPrivateInBaseOfClassExpression`.
     fn report_private_in_base_of_class_expression(&mut self, property_name: &str, nodes: &[Node]) {
         if let Some(location) = self.error_location() {
+            let arena = self.location_arena(location, nodes);
+            let nodes = arena.as_slice();
             let diag = create_diagnostic_for_node(
                 nodes,
                 Some(location),
@@ -517,6 +569,8 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
     /// `(s *SymbolTrackerImpl) ReportTruncationError`.
     fn report_truncation_error(&mut self, nodes: &[Node]) {
         if let Some(location) = self.error_location() {
+            let arena = self.location_arena(location, nodes);
+            let nodes = arena.as_slice();
             self.state.borrow_mut().add_diagnostic(create_diagnostic_for_node(
                 nodes,
                 Some(location),

@@ -506,6 +506,12 @@ impl<'p> DeclarationEmitHost for BasicEmitHost<'p> {
             .get(id.local_index() as usize)
             .cloned()
     }
+    fn arena_for(&self, fi: u32, nodes: &[Node]) -> Option<std::rc::Rc<Vec<Node>>> {
+        if nodes.first().is_some_and(|n| n.id.file_index() == fi) {
+            return Some(std::rc::Rc::new(nodes.to_vec()));
+        }
+        Some(self.program.nodes(fi))
+    }
 }
 
 impl<'p> EmitHost for BasicEmitHost<'p> {

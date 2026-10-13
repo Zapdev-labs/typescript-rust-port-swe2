@@ -51,4 +51,10 @@ pub trait DeclarationEmitHost {
     /// PORT: resolves `id` into its own arena — referenced files live in
     /// the program arenas, not the emit working buffer (`nodes`).
     fn resolve_node(&self, id: NodeId, nodes: &[Node]) -> Option<Node>;
+
+    /// PORT: the arena owning file index `fi` — same resolution as
+    /// `resolve_node`, for multi-node lookups (source-file walks) where a
+    /// `NodeId` from another file's emit context must be followed like a
+    /// Go pointer. `None` mirrors `resolve_node` returning `None`.
+    fn arena_for(&self, fi: u32, nodes: &[Node]) -> Option<std::rc::Rc<Vec<Node>>>;
 }

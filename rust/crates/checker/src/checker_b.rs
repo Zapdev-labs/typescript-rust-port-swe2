@@ -16556,25 +16556,6 @@ impl Checker {
             live_nodes.unwrap_or(&[]),
             name.file_index(),
         );
-        if std::env::var("DBG_REN").is_ok()
-            && !matches!(
-                nodes[name].kind,
-                ast::Kind::Identifier
-                    | ast::Kind::QualifiedName
-                    | ast::Kind::PropertyAccessExpression
-            )
-        {
-            let prog_nodes = __program.nodes(name.file_index());
-            eprintln!(
-                "[ren] name={name:?} kind={:?} buflen={} first={:?} prog_len={} prog_kind={:?}\n{}",
-                nodes[name].kind,
-                nodes.len(),
-                nodes.first().map(|n| n.id),
-                prog_nodes.len(),
-                prog_nodes.get(name.local_index() as usize).map(|n| n.kind),
-                std::backtrace::Backtrace::force_capture()
-            );
-        }
         if ast::node_is_missing(Some(name), &nodes) {
             return None;
         }
