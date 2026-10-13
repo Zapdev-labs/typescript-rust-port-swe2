@@ -213,96 +213,26 @@ pub fn checker_arena_view<'x>(
 }
 
 /// Host hook for `PrintHandlers::original_list_has_trailing_comma`:
-/// correlates `children` (a list in the printer's emit arena) with the
-/// matching list on `original_parent`, a `most_original` node that lives in
-/// another file's arena (Go dereferences raw pointers instead of arena
-/// ids). Mirrors the `Kind` match in `Printer::has_trailing_comma`; where
-/// the local path compares `*children == *candidate` by id, the foreign
-/// path compares list `loc` — clones preserve the source range.
+/// fetches `which` member list from `original_parent`, a `most_original`
+/// node that lives in another file's arena (Go dereferences raw pointers
+/// instead of arena ids). The `which` selection — Go's `switch children {
+/// case parentNode.XList(): }` — was already made in the printer's arena,
+/// so synthesized `loc`s on cloned lists cannot corrupt the correlation.
 ///
-/// `children` ids cannot be dereferenced in the foreign arena, so when the
-/// match finds no candidate the local path's fallback —
-/// `children.has_trailing_comma(printer_nodes)` — is already known to be
-/// `true` (the caller checked it before reaching here).
+/// `Children` never reaches this hook (the printer returns the known-true
+/// `children` result itself); a missing list correlates to `children`
+/// like the local path's `originalList := children` fallback — known true.
 fn foreign_list_has_trailing_comma(
     program: &dyn crate::checker_types::Program,
     original_parent: NodeId,
-    parent_kind: tsc_ast::Kind,
-    children: &tsc_ast::NodeList,
+    which: printer::OriginalListKind,
 ) -> Option<bool> {
     let arena = program.nodes(original_parent.file_index());
     if !buffer_resolves_id(&arena, original_parent) {
         return None;
     }
-    let pn = &arena[original_parent];
-    if pn.kind != parent_kind {
-        return Some(false);
-    }
-    let original_list: Option<tsc_ast::NodeList> = match pn.kind {
-        tsc_ast::Kind::ObjectLiteralExpression => pn.property_list().cloned(),
-        tsc_ast::Kind::ArrayLiteralExpression => pn.element_list().cloned(),
-        tsc_ast::Kind::CallExpression | tsc_ast::Kind::NewExpression => {
-            if pn
-                .type_argument_list()
-                .is_some_and(|ta| ta.loc == children.loc)
-            {
-                pn.type_argument_list().cloned()
-            } else if pn
-                .argument_list()
-                .is_some_and(|al| al.loc == children.loc)
-            {
-                pn.argument_list().cloned()
-            } else {
-                None
-            }
-        }
-        tsc_ast::Kind::Constructor
-        | tsc_ast::Kind::MethodDeclaration
-        | tsc_ast::Kind::GetAccessor
-        | tsc_ast::Kind::SetAccessor
-        | tsc_ast::Kind::FunctionDeclaration
-        | tsc_ast::Kind::FunctionExpression
-        | tsc_ast::Kind::ArrowFunction
-        | tsc_ast::Kind::FunctionType
-        | tsc_ast::Kind::ConstructorType
-        | tsc_ast::Kind::CallSignature
-        | tsc_ast::Kind::ConstructSignature => {
-            if pn
-                .type_parameter_list()
-                .is_some_and(|tp| tp.loc == children.loc)
-            {
-                pn.type_parameter_list().cloned()
-            } else if pn
-                .parameter_list()
-                .is_some_and(|pl| pl.loc == children.loc)
-            {
-                pn.parameter_list().cloned()
-            } else {
-                None
-            }
-        }
-        tsc_ast::Kind::ClassDeclaration
-        | tsc_ast::Kind::ClassExpression
-        | tsc_ast::Kind::InterfaceDeclaration
-        | tsc_ast::Kind::TypeAliasDeclaration
-        | tsc_ast::Kind::JSTypeAliasDeclaration => pn
-            .type_parameter_list()
-            .filter(|tp| tp.loc == children.loc)
-            .cloned(),
-        tsc_ast::Kind::ObjectBindingPattern | tsc_ast::Kind::ArrayBindingPattern => pn
-            .element_list()
-            .filter(|el| el.loc == children.loc)
-            .cloned(),
-        tsc_ast::Kind::NamedImports | tsc_ast::Kind::NamedExports => {
-            pn.element_list().cloned()
-        }
-        tsc_ast::Kind::ImportAttributes => pn.as_import_attributes().attributes.clone(),
-        _ => None,
-    };
-    match original_list {
+    match printer::original_list_for_kind(&arena, original_parent, which) {
         Some(list) => Some(list.has_trailing_comma(&arena)),
-        // Kinds with no list candidates (or unmatched candidates) correlate
-        // to `children` itself in the local path — already known true.
         None => Some(true),
     }
 }
@@ -315,13 +245,8 @@ pub fn install_foreign_comma_hook(
 ) {
     let program = program.clone();
     p.handlers.original_list_has_trailing_comma =
-        Some(Box::new(move |original_parent, parent_kind, children| {
-            foreign_list_has_trailing_comma(
-                &*program,
-                original_parent,
-                parent_kind,
-                children,
-            )
+        Some(Box::new(move |original_parent, which| {
+            foreign_list_has_trailing_comma(&*program, original_parent, which)
         }));
 }
 
@@ -332,13 +257,8 @@ pub fn install_foreign_comma_hook_ref<'a>(
     program: &'a dyn crate::checker_types::Program,
 ) {
     p.handlers.original_list_has_trailing_comma =
-        Some(Box::new(move |original_parent, parent_kind, children| {
-            foreign_list_has_trailing_comma(
-                program,
-                original_parent,
-                parent_kind,
-                children,
-            )
+        Some(Box::new(move |original_parent, which| {
+            foreign_list_has_trailing_comma(program, original_parent, which)
         }));
 }
 

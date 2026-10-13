@@ -153,13 +153,52 @@ pub struct PrintHandlers<'a> {
     pub on_before_emit_token: Option<Box<dyn FnMut(Option<NodeId>) + 'a>>,
     /// `OnAfterEmitToken`
     pub on_after_emit_token: Option<Box<dyn FnMut(Option<NodeId>) + 'a>>,
-    /// Correlates `children` with the matching list on `original_parent`
-    /// when that node lives in another file's arena; returns whether the
-    /// original list has a trailing comma. `None` = the host could not
-    /// resolve the foreign node (Go dereferences raw pointers instead of
-    /// arena ids). Args: `(original_parent, parent_kind, children)`.
+    /// Correlates `which` member list on `original_parent` when that node
+    /// lives in another file's arena; returns whether the original list
+    /// has a trailing comma. `None` = the host could not resolve the
+    /// foreign node (Go dereferences raw pointers instead of arena ids).
+    /// Args: `(original_parent, which)`.
     pub original_list_has_trailing_comma:
-        Option<Box<dyn FnMut(NodeId, Kind, &NodeList) -> Option<bool> + 'a>>,
+        Option<Box<dyn FnMut(NodeId, OriginalListKind) -> Option<bool> + 'a>>,
+}
+
+/// Which member list an emitted `NodeList` corresponds to on its parent —
+/// the result of Go's `switch children { case parentNode.XList(): }`
+/// pointer comparisons in `p.hasTrailingComma`, computed in the printer's
+/// own arena so it also applies when the original node lives in a
+/// foreign file arena.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum OriginalListKind {
+    /// `originalList := children` — no parent list candidate matched.
+    Children,
+    PropertyList,
+    ElementList,
+    TypeArgumentList,
+    ArgumentList,
+    TypeParameterList,
+    ParameterList,
+    Attributes,
+}
+
+/// Fetches `which` member list from `parent` — the counterpart of the
+/// candidate selection in `Printer::has_trailing_comma`, usable on the
+/// original node's arena whether or not it is the printer's own.
+pub fn original_list_for_kind(
+    nodes: &[Node],
+    parent: NodeId,
+    which: OriginalListKind,
+) -> Option<NodeList> {
+    let pn = &nodes[parent];
+    match which {
+        OriginalListKind::Children => None,
+        OriginalListKind::PropertyList => pn.property_list().cloned(),
+        OriginalListKind::ElementList => pn.element_list().cloned(),
+        OriginalListKind::TypeArgumentList => pn.type_argument_list().cloned(),
+        OriginalListKind::ArgumentList => pn.argument_list().cloned(),
+        OriginalListKind::TypeParameterList => pn.type_parameter_list().cloned(),
+        OriginalListKind::ParameterList => pn.parameter_list().cloned(),
+        OriginalListKind::Attributes => pn.as_import_attributes().attributes.clone(),
+    }
 }
 
 /// `type detachedCommentsInfo struct`
@@ -7367,11 +7406,81 @@ impl<'p, 'a> Emitter<'p, 'a> {
             return true;
         }
 
+        // Go compares `children` to `parentNode`'s list accessors by
+        // pointer (`switch children { case parentNode.ElementList(): }`) to
+        // find which member list it is. The same comparison works on arena
+        // values — `children` is always one of `parent_node`'s own lists —
+        // and identifies which list to consult on the original node,
+        // whichever arena that original lives in.
+        let which = {
+            let pn = &self.p.nodes[parent_node];
+            let is = |list: Option<&NodeList>| list.is_some_and(|l| l == children);
+            match pn.kind {
+                Kind::ObjectLiteralExpression => OriginalListKind::PropertyList,
+                Kind::ArrayLiteralExpression | Kind::NamedImports | Kind::NamedExports => {
+                    OriginalListKind::ElementList
+                }
+                Kind::ObjectBindingPattern | Kind::ArrayBindingPattern => {
+                    if is(pn.element_list()) {
+                        OriginalListKind::ElementList
+                    } else {
+                        OriginalListKind::Children
+                    }
+                }
+                Kind::CallExpression | Kind::NewExpression => {
+                    if is(pn.type_argument_list()) {
+                        OriginalListKind::TypeArgumentList
+                    } else if is(pn.argument_list()) {
+                        OriginalListKind::ArgumentList
+                    } else {
+                        OriginalListKind::Children
+                    }
+                }
+                Kind::Constructor
+                | Kind::MethodDeclaration
+                | Kind::GetAccessor
+                | Kind::SetAccessor
+                | Kind::FunctionDeclaration
+                | Kind::FunctionExpression
+                | Kind::ArrowFunction
+                | Kind::FunctionType
+                | Kind::ConstructorType
+                | Kind::CallSignature
+                | Kind::ConstructSignature => {
+                    if is(pn.type_parameter_list()) {
+                        OriginalListKind::TypeParameterList
+                    } else if is(pn.parameter_list()) {
+                        OriginalListKind::ParameterList
+                    } else {
+                        OriginalListKind::Children
+                    }
+                }
+                Kind::ClassDeclaration
+                | Kind::ClassExpression
+                | Kind::InterfaceDeclaration
+                | Kind::TypeAliasDeclaration
+                | Kind::JSTypeAliasDeclaration => {
+                    if is(pn.type_parameter_list()) {
+                        OriginalListKind::TypeParameterList
+                    } else {
+                        OriginalListKind::Children
+                    }
+                }
+                Kind::ImportAttributes => OriginalListKind::Attributes,
+                _ => OriginalListKind::Children,
+            }
+        };
+        // `originalList := children` — when no candidate matched, Go uses
+        // `children` itself, whose result we already know is true.
+        if which == OriginalListKind::Children {
+            return true;
+        }
+
         // `original_parent` may live in a different file arena than
         // `self.p.nodes` (e.g. node-builder clones carrying parse-node
         // `original` links into a scratch buffer). If the id doesn't resolve
-        // in this buffer we cannot correlate the list — unless the host
-        // provided a foreign-arena correlation hook.
+        // in this buffer we cannot dereference the list — the host-provided
+        // foreign-arena hook resolves `which` there instead.
         if original_parent.local_index() as usize >= self.p.nodes.len()
             || self.p.nodes[original_parent].id != original_parent
         {
@@ -7380,11 +7489,9 @@ impl<'p, 'a> Emitter<'p, 'a> {
                 .handlers
                 .original_list_has_trailing_comma
                 .as_mut()
+                && let Some(result) = f(original_parent, which)
             {
-                let parent_kind = self.p.nodes[parent_node].kind;
-                if let Some(result) = f(original_parent, parent_kind, children) {
-                    return result;
-                }
+                return result;
             }
             return false;
         }
@@ -7394,79 +7501,10 @@ impl<'p, 'a> Emitter<'p, 'a> {
             return false;
         }
 
-        // find the respective node list on the original parent
-        let mut original_list: Option<&NodeList> = Some(children);
-        match self.p.nodes[original_parent].kind {
-            Kind::ObjectLiteralExpression => {
-                original_list = self.p.nodes[original_parent].property_list();
-            }
-            Kind::ArrayLiteralExpression => {
-                original_list = self.p.nodes[original_parent].element_list();
-            }
-            Kind::CallExpression | Kind::NewExpression => {
-                if let Some(ta) = self.p.nodes[parent_node].type_argument_list()
-                    && *children == *ta
-                {
-                    original_list = self.p.nodes[original_parent].type_argument_list();
-                } else if let Some(al) = self.p.nodes[parent_node].argument_list()
-                    && *children == *al
-                {
-                    original_list = self.p.nodes[original_parent].argument_list();
-                }
-            }
-            Kind::Constructor
-            | Kind::MethodDeclaration
-            | Kind::GetAccessor
-            | Kind::SetAccessor
-            | Kind::FunctionDeclaration
-            | Kind::FunctionExpression
-            | Kind::ArrowFunction
-            | Kind::FunctionType
-            | Kind::ConstructorType
-            | Kind::CallSignature
-            | Kind::ConstructSignature => {
-                if let Some(tp) = self.p.nodes[parent_node].type_parameter_list()
-                    && *children == *tp
-                {
-                    original_list = self.p.nodes[original_parent].type_parameter_list();
-                } else if let Some(pl) = self.p.nodes[parent_node].parameter_list()
-                    && *children == *pl
-                {
-                    original_list = self.p.nodes[original_parent].parameter_list();
-                }
-            }
-            Kind::ClassDeclaration
-            | Kind::ClassExpression
-            | Kind::InterfaceDeclaration
-            | Kind::TypeAliasDeclaration
-            | Kind::JSTypeAliasDeclaration => {
-                if let Some(tp) = self.p.nodes[parent_node].type_parameter_list()
-                    && *children == *tp
-                {
-                    original_list = self.p.nodes[original_parent].type_parameter_list();
-                }
-            }
-            Kind::ObjectBindingPattern | Kind::ArrayBindingPattern => {
-                if let Some(el) = self.p.nodes[parent_node].element_list()
-                    && *children == *el
-                {
-                    original_list = self.p.nodes[original_parent].element_list();
-                }
-            }
-            Kind::NamedImports | Kind::NamedExports => {
-                original_list = self.p.nodes[original_parent].element_list();
-            }
-            Kind::ImportAttributes => {
-                original_list = self.p.nodes[original_parent]
-                    .as_import_attributes()
-                    .attributes
-                    .as_ref();
-            }
-            _ => {}
-        }
-
         // if we have the original list, we can use it's result.
-        if let Some(original_list) = original_list {
+        if let Some(original_list) =
+            original_list_for_kind(self.p.nodes, original_parent, which)
+        {
             return original_list.has_trailing_comma(self.p.nodes);
         }
 
