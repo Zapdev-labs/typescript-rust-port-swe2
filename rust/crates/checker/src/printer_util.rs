@@ -677,8 +677,7 @@ impl Checker {
             .set_file_index(file_index);
         let mut nodes = tsc_ast::ast::ArenaCheckout::new(__arena_cell);
         let source_file = enclosing_declaration.and_then(|d| {
-            let arena = resolve_arena_for(&program, &nodes, d);
-            ast::get_source_file_of_node(Some(d), &arena)
+            get_source_file_of_node_resolved(&program, &nodes, Some(d))
         });
         // `builder = nodeBuilder.SymbolToNode` / `SymbolToEntityName` —
         // runs before the printer is created because the printer holds
