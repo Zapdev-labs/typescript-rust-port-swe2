@@ -358,6 +358,19 @@ impl<'a> NodeBuilderImpl<'a> {
         // We only ever need to look two declarations upward.
         debug_assert!(self.ctx.enclosing_declaration.is_some());
         let enclosing = self.ctx.enclosing_declaration.unwrap();
+        // Cross-arena guard: `enclosing` must live in the same arena as
+        // `nodes` (the buffer `self.f` mints into). During a scratch-arena
+        // reuse visit (`try_reuse_existing_node_helper` foreign branch)
+        // `enclosing` is a NodeId in the live destination buffer — indexing
+        // `nodes[enclosing]` would read an unrelated node, and storing it as
+        // `fake_scope.parent` would point the name resolver into a foreign
+        // file's scopes (a name then resolves where it must not). Go's
+        // `fakeScope.Parent = enclosingDeclaration` is a real pointer and
+        // cannot be expressed across arena buffers: mint the scope detached
+        // so resolution consults only the fake locals and globals — names
+        // that are merely not found fall back to serialization, which is
+        // the safe direction.
+        let enclosing_in_nodes = enclosing.file_index() == self.f.file_index();
         // PORT: Go's `links.Has(node)`/`links.Get(node)` key by node pointer,
         // so a `fakeScopeForSignatureDeclaration` match can only ever come
         // from the fake-scope Block itself. Here NodeIds alias across arena
@@ -370,7 +383,8 @@ impl<'a> NodeBuilderImpl<'a> {
             nodes.get(id.local_index() as usize)
         }
         let mut existing_fake_scope: Option<NodeId> = None;
-        if node_at(nodes, enclosing).is_some_and(|n| n.kind == Kind::Block)
+        if enclosing_in_nodes
+            && node_at(nodes, enclosing).is_some_and(|n| n.kind == Kind::Block)
             && self
                 .links
                 .try_get(&enclosing)
@@ -378,8 +392,10 @@ impl<'a> NodeBuilderImpl<'a> {
         {
             existing_fake_scope = Some(enclosing);
         }
-        if existing_fake_scope.is_none()
+        if enclosing_in_nodes
+            && existing_fake_scope.is_none()
             && let Some(parent) = node_at(nodes, enclosing).and_then(|n| n.parent)
+            && parent.file_index() == self.f.file_index()
             && node_at(nodes, parent).is_some_and(|n| n.kind == Kind::Block)
             && self
                 .links
@@ -452,7 +468,14 @@ impl<'a> NodeBuilderImpl<'a> {
             if let Some(data) = nodes[fake_scope].data.locals_container_data_mut() {
                 data.locals = locals;
             }
-            nodes[fake_scope].parent = Some(enclosing);
+            // A foreign `enclosing` cannot be resolved inside this arena —
+            // keep the scope detached rather than pointing `parent` at an
+            // id that indexes an unrelated node here (see guard above).
+            nodes[fake_scope].parent = if enclosing_in_nodes {
+                Some(enclosing)
+            } else {
+                None
+            };
             self.ctx.enclosing_declaration = Some(fake_scope);
             None
         }
