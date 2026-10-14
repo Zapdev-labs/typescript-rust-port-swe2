@@ -1656,3 +1656,31 @@ and surviving ones are ordinary statement temps.
 - All-lowercase test names (overshifts, properties, commonSourceDirectory)
   MUST be run as `TestLocal/^name` or they sweep the suite.
 
+
+## Known divergence — `Matching<T,U>` → `unknown` diagnostic provenance (deferred)
+- Tests: `reactReduxLikeDeferredInferenceAllowsAssignment`,
+  `circularlyConstrainedMappedTypeContainingConditionalNoInfiniteInstantiationDepth`.
+- Symptom: TS2344 elaboration reports `Type 'unknown' is not assignable to type
+  'Shared<TInjectedProps, GetProps<C>>'`; Go reports `Matching<TInjectedProps,
+  GetProps<C>>` (the distributive-constraint inst).
+- Root cause (verified): `hasNonCircularBaseConstraint(GetProps<C>)` returns
+  false in ours — `resolvedBaseConstraint` is permanently marked
+  `circularConstraintType` because `getApparentType(GetProps<C>)` is invoked
+  re-entrantly while `RBC(GetProps<C>)` is in-flight (via
+  `resolveMappedTypeMembers(WeakValidationMap<GetProps<C>>)` →
+  `getApparentType(modifiers)` during `inferTypes`→`isTypeIdenticalTo`→
+  `isEmptyObjectType` inside `RBC`'s own `computeBaseConstraint` → DCD →
+  `getConditionalTypeInstantiation` chain). The re-push fails the
+  `findResolutionCycleStartIndex` scan (bare `[outerRBC, GetProps]` stack) →
+  marks circular → distributive arm skipped → `unknown` stands.
+- Go avoids it: `RBC(GetProps<C>)` completes before the mapped members get
+  resolved (member resolution happens in a different window), OR its
+  re-push scan hits an intermediate in-flight resolution with a resolved
+  property (`typeResolutionHasProperty` → -1 → push succeeds → nested compute
+  returns the real constraint). All ported machinery is verified faithful
+  (pushTypeResolution, findResolutionCycleStartIndex, typeResolutionHasProperty,
+  resolutionStart scan floor, circular marking, upfront empty member set,
+  conditionalConstraintDepth). The divergence is emergent ordering — which
+  resolution context first forces `WeakValidationMap<GetProps<C>>` member
+  resolution. Fix requires tracing the check-order difference; deferred.
+- Repro: `/tmp/m8.ts` on remote (React/Redux-style Shared/Matching/GetProps).
