@@ -38,6 +38,10 @@ if [ "${1:-}" = "--train" ]; then
     PD="$(find "$HOME/.rustup/toolchains/"*/lib/rustlib/*/bin/llvm-profdata 2>/dev/null | head -1)"
     [ -n "$PD" ] || { echo "llvm-profdata not found: rustup component add llvm-tools"; exit 1; }
     "$PD" merge -o "$PGO_DATA_DIR/merged.profdata" "$PGO_DATA_DIR"/*.profraw
+    # Refresh the committed profile so later `--use` builds match.
+    mkdir -p pgo
+    gzip -c "$PGO_DATA_DIR/merged.profdata" > pgo/merged.profdata.gz
+    echo "==> wrote pgo/merged.profdata.gz"
 else
     gzip -dc pgo/merged.profdata.gz > "$PGO_DATA_DIR/merged.profdata"
 fi
