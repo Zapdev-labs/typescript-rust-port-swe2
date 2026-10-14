@@ -3440,55 +3440,65 @@ impl<'a> NodeBuilderImpl<'a> {
             return self.f.deep_clone_node(nodes, node);
         }
         let program = c.program.clone().expect("program");
-        // The checker may hold a shared `Ref` on the source file's arena
-        // when error reporting reaches the builder through the relater, so
-        // `borrow_mut` can fail — clone the arena instead (`borrow()`
-        // coexists with held `Ref`s). Prefer a registered live buffer:
-        // builder-minted trees can live in a working buffer that is newer
-        // than the program arena snapshot.
-        let mut src = crate::printer_util::live_arena_lookup_for(node)
-            .map(|rc| (*rc).clone())
-            .unwrap_or_else(|| program.nodes(node.file_index()).to_vec());
-        if !crate::printer_util::buffer_resolves_id(&src, node) {
+        // Resolve the foreign buffer WITHOUT cloning it — a registered
+        // live buffer first (builder-minted trees can live in a working
+        // buffer newer than the program snapshot), else the program
+        // arena's shared snapshot. The old path cloned the whole source
+        // arena (O(arena) memcpy + a padding `resize` of Node clones) per
+        // call; grafting copies only the subtree, then `deep_clone_node`
+        // runs same-buffer. Result is identical: the returned tree's
+        // `most_original` chain ends at the foreign source node.
+        let src_buf = crate::printer_util::live_arena_lookup_for(node)
+            .unwrap_or_else(|| program.nodes(node.file_index()));
+        let src: &[ast::Node] = &src_buf;
+        if !crate::printer_util::buffer_resolves_id(src, node)
+            || !crate::printer_util::subtree_clonable_in(src, node)
+        {
             // The tree was minted into a scratch buffer that no longer
             // exists — Go's heap would still hold it, but there is nothing
             // to clone here. Callers treat `None` as "unchanged".
             return None;
         }
-        // `src` must also physically contain every embedded child — the
-        // deep-clone visitor reads `cx.nodes[child]` for each descendant.
-        if !crate::printer_util::subtree_clonable_in(&src, node) {
-            return None;
-        }
-        // Clones mint ids as `(file_index, src.len())` — without
-        // padding, a short source arena mints locals that alias real
-        // `nodes` ids in the emit tables. Pad the scratch arena so minted
-        // locals start past `nodes.len()`. Mint with the SOURCE file
-        // index: a node's `file_index` must name the buffer it lives in
-        // (here `src`) for `arena_view` reads inside nested calls to
-        // resolve to the scratch buffer.
-        if src.len() < nodes.len() {
-            let filler = src[0].clone();
-            src.resize(nodes.len(), filler);
-        }
-        let tmp_base = src.len();
-        let dest_base = nodes.len();
-        let src_fi = node.file_index();
-        let saved_fi = self.f.file_index();
-        self.f.set_file_index(src_fi);
-        let next_epoch = self.ctx.epoch_counter.get() + 1;
-        self.ctx.epoch_counter.set(next_epoch);
-        let saved_epoch = self.ctx.nodes_epoch.replace(next_epoch);
-        let root = {
-            // While the clone runs on `src`, nested reads may hit ids in
-            // `nodes` — register it so `arena_view` resolves them live.
-            let live = nodes.as_slice();
-            let _live_guard = crate::printer_util::LiveArenaGuard::register(live);
-            self.f.deep_clone_node(&mut src, node)
+        let grafted = {
+            let mut memo = FxHashMap::default();
+            self.graft_foreign(nodes, src, node, &mut memo)
         };
-        self.f.set_file_index(saved_fi);
-        self.ctx.nodes_epoch.set(saved_epoch);
-        Some(self.relocate_cloned_tail(nodes, &mut src, tmp_base, dest_base, root?, src_fi))
+        self.f.deep_clone_node(nodes, grafted)
+    }
+
+    /// Grafts `id`'s subtree from `src` (a foreign arena) into `nodes`,
+    /// remapping all child `NodeId`s — same shape as
+    /// `DeclarationTransformer::graft_subtree`. Grafted nodes record the
+    /// foreign source as their `original` so `most_original` still reaches
+    /// the real declaration.
+    fn graft_foreign(
+        &mut self,
+        nodes: &mut Vec<ast::Node>,
+        src: &[ast::Node],
+        id: NodeId,
+        memo: &mut FxHashMap<NodeId, NodeId>,
+    ) -> NodeId {
+        if let Some(&g) = memo.get(&id) {
+            return g;
+        }
+        let mut n = src[id].clone();
+        let g = NodeId::new(self.f.file_index(), nodes.len() as u64);
+        n.id = g;
+        n.parent = None;
+        nodes.push(n);
+        memo.insert(id, g);
+        self.e.borrow().set_original_ex(g, id, false);
+        let mut data = nodes[g].data.clone();
+        data.map_node_ids(&mut |c| {
+            if !crate::printer_util::buffer_resolves_id(src, c) {
+                return c;
+            }
+            let gc = self.graft_foreign(nodes, src, c, memo);
+            nodes[gc].parent = Some(g);
+            gc
+        });
+        nodes[g].data = data;
+        g
     }
 
     /// `(b *NodeBuilderImpl) cloneBindingName`.
@@ -3515,6 +3525,15 @@ impl<'a> NodeBuilderImpl<'a> {
             // ids in the emit tables, then relocate the produced tail.
             let program = c.program.clone().expect("program");
             let mut src = program.nodes(node.file_index()).to_vec();
+            static CB_STATS: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+            if *CB_STATS.get_or_init(|| std::env::var("TSC_CLONE_STATS").is_ok())
+            {
+                eprintln!(
+                    "[bindclone] src_len={} nodes_len={}",
+                    src.len(),
+                    nodes.len()
+                );
+            }
             if src.len() < nodes.len() {
                 let filler = src[0].clone();
                 src.resize(nodes.len(), filler);
