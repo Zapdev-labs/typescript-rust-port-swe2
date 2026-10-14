@@ -675,14 +675,14 @@ impl Checker {
                     .intersects(TypeFlags::TYPE_PARAMETER),
                 infer_type_parameters: self.get_infer_type_parameters(node, &[]).into(),
                 outer_type_parameters: outer_type_parameters.clone().unwrap_or_default().into(),
-                instantiations: Arc::new(std::sync::RwLock::new(FxHashMap::default())),
+                instantiations: Rc::new(RefCell::new(FxHashMap::default())),
                 alias,
             };
             let resolved = self.get_conditional_type(&mut root, None, false, None);
             if let Some(outer_type_parameters) = &outer_type_parameters {
                 let key =
                     crate::checker_c::get_conditional_type_key(outer_type_parameters, None, false);
-                root.instantiations.write().unwrap().insert(key, resolved);
+                root.instantiations.borrow_mut().insert(key, resolved);
                 // Write-through: Go shares `root` with `resolved`'s
                 // `AsConditionalType().root`; the port's roots share the
                 // `instantiations` map via `Rc`, so this mirrors the insert
@@ -696,7 +696,7 @@ impl Checker {
                     let __arena_g = self.types.clone();
                     let mut g = __arena_g.get_mut(resolved);
                     if let Some(stored) = as_conditional_type_mut(&mut g).root.as_mut() {
-                        stored.instantiations.write().unwrap().insert(key, resolved);
+                        stored.instantiations.borrow_mut().insert(key, resolved);
                     }
                 }
             }

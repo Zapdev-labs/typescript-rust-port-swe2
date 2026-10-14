@@ -40,7 +40,7 @@
 use std::cell::UnsafeCell;
 use std::fmt;
 use std::rc::Rc;
-use std::sync::{Arc, RwLock};
+use std::cell::RefCell;
 
 use rustc_hash::FxHashMap;
 use tsc_ast::symbolflags::SymbolFlags;
@@ -2932,9 +2932,9 @@ pub struct ConditionalRoot {
     /// `instantiations` — Go's `*ConditionalRoot` is shared by every
     /// conditional derived from the same declared node, so all
     /// instantiations record into one map. The port clones roots value-wise
-    /// (`clone_conditional_root`); the `Arc<RwLock<..>>` keeps the map
-    /// shared across those clones.
-    pub instantiations: Arc<RwLock<FxHashMap<crate::checker_core::CacheHashKey, TypeId>>>,
+    /// (`clone_conditional_root`); the `Rc<RefCell<..>>` keeps the map
+    /// shared across those clones (single-threaded pipeline).
+    pub instantiations: Rc<RefCell<FxHashMap<crate::checker_core::CacheHashKey, TypeId>>>,
     /// `alias` — Go `*TypeAlias`, stored inline.
     pub alias: Option<TypeAlias>,
 }

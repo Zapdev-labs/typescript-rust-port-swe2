@@ -12243,7 +12243,7 @@ impl Checker {
                 type_arguments.push(mappers.map(self, mapper, tp));
             }
             let key = get_conditional_type_key(&type_arguments, alias.as_ref(), for_constraint);
-            let cached = root.instantiations.read().unwrap().get(&key).copied();
+            let cached = root.instantiations.borrow().get(&key).copied();
             if let Some(result) = cached {
                 return result;
             }
@@ -12289,7 +12289,7 @@ impl Checker {
             // declared conditional (`Arc`), so inserting on the local clone
             // records the instantiation exactly like Go's write into the
             // shared `*ConditionalRoot`.
-            root.instantiations.write().unwrap().insert(key, result);
+            root.instantiations.borrow_mut().insert(key, result);
             return result;
         }
         t
