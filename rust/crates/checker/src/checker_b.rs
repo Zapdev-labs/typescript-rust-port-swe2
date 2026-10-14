@@ -15044,10 +15044,10 @@ impl Checker {
         live_nodes: Option<&[ast::Node]>,
     ) -> Option<SymbolId> {
         let __program = self.program.clone().expect("program");
-        let nodes = crate::printer_util::arena_view(
+        let nodes = crate::printer_util::resolve_arena_for(
             &__program,
             live_nodes.unwrap_or(&[]),
-            (location).file_index(),
+            location,
         );
         if error_node.is_some() && module_reference.starts_with("@types/") {
             let without_at_type_prefix = &module_reference["@types/".len()..];
@@ -15079,10 +15079,17 @@ impl Checker {
                 Some(location),
             )
             .expect("source file");
+        let live = live_nodes.unwrap_or(&[]);
+        // `importing_source_file` can carry a foreign `file_index` (the
+        // enclosing chain crosses arenas via fake scopes / scratch clones) —
+        // index it through the arena that actually owns it.
+        let isf_nodes =
+            crate::printer_util::resolve_arena_for(&__program, live, importing_source_file);
         let context_specifier: Option<NodeId>;
         if ast::is_string_literal_like(&nodes[location])
             || nodes[location].parent.is_some_and(|p| {
-                ast::is_module_declaration(&nodes[p]) && nodes[p].name() == Some(location)
+                let pn = crate::printer_util::resolve_arena_for(&__program, live, p);
+                ast::is_module_declaration(&pn[p]) && pn[p].name() == Some(location)
             })
         {
             context_specifier = Some(location);
@@ -15100,61 +15107,82 @@ impl Checker {
                 ast::get_module_specifier_of_bare_or_accessed_require(location, &nodes);
         } else {
             let mut context = None;
-            let mut ancestor = ast::find_ancestor(Some(location), &nodes, &mut |n, nodes| {
-                ast::is_import_call(n, nodes)
-            });
+            let mut ancestor = crate::printer_util::find_ancestor_resolved(
+                &__program,
+                live,
+                Some(location),
+                &mut |n, nodes| ast::is_import_call(n, nodes),
+            );
             if let Some(a) = ancestor {
-                context = nodes[a].arguments().and_then(|args| args.first().copied());
+                let an = crate::printer_util::resolve_arena_for(&__program, live, a);
+                context = an[a].arguments().and_then(|args| args.first().copied());
             }
             if ancestor.is_none() {
-                ancestor = ast::find_ancestor(Some(location), &nodes, &mut |n, _| {
-                    ast::is_import_declaration(n) || ast::is_js_import_declaration(n)
-                });
+                ancestor = crate::printer_util::find_ancestor_resolved(
+                    &__program,
+                    live,
+                    Some(location),
+                    &mut |n, _| {
+                        ast::is_import_declaration(n) || ast::is_js_import_declaration(n)
+                    },
+                );
                 if let Some(a) = ancestor {
-                    context = nodes[a].module_specifier();
+                    let an = crate::printer_util::resolve_arena_for(&__program, live, a);
+                    context = an[a].module_specifier();
                 }
             }
             if ancestor.is_none() {
-                ancestor = ast::find_ancestor(Some(location), &nodes, &mut |n, _| {
-                    ast::is_export_declaration(n)
-                });
+                ancestor = crate::printer_util::find_ancestor_resolved(
+                    &__program,
+                    live,
+                    Some(location),
+                    &mut |n, _| ast::is_export_declaration(n),
+                );
                 if let Some(a) = ancestor {
-                    context = nodes[a].module_specifier();
+                    let an = crate::printer_util::resolve_arena_for(&__program, live, a);
+                    context = an[a].module_specifier();
                 }
             }
             if ancestor.is_none() {
-                ancestor = ast::find_ancestor(Some(location), &nodes, &mut |n, _| {
-                    ast::is_import_equals_declaration(n)
-                });
+                ancestor = crate::printer_util::find_ancestor_resolved(
+                    &__program,
+                    live,
+                    Some(location),
+                    &mut |n, _| ast::is_import_equals_declaration(n),
+                );
                 if let Some(a) = ancestor {
+                    let an = crate::printer_util::resolve_arena_for(&__program, live, a);
                     if let Some(module_reference) =
-                        nodes[a].as_import_equals_declaration().module_reference
-                        && nodes[module_reference].kind == ast::Kind::ExternalModuleReference
+                        an[a].as_import_equals_declaration().module_reference
+                        && an[module_reference].kind == ast::Kind::ExternalModuleReference
                     {
-                        context = nodes[module_reference].expression();
+                        context = an[module_reference].expression();
                     }
                 }
             }
             context_specifier = context;
         }
 
-        let mode = if context_specifier.is_some_and(|cs| ast::is_string_literal_like(&nodes[cs])) {
+        let mode = if context_specifier.is_some_and(|cs| {
+            let csn = crate::printer_util::resolve_arena_for(&__program, live, cs);
+            ast::is_string_literal_like(&csn[cs])
+        }) {
             self.program
                 .as_ref()
                 .expect("program")
                 .get_mode_for_usage_location(
-                    nodes[importing_source_file].as_source_file(),
+                    isf_nodes[importing_source_file].as_source_file(),
                     context_specifier.unwrap(),
                 )
         } else {
             self.program
                 .as_ref()
                 .expect("program")
-                .get_default_resolution_mode_for_file(nodes[importing_source_file].as_source_file())
+                .get_default_resolution_mode_for_file(isf_nodes[importing_source_file].as_source_file())
         };
 
         let resolved_module = self.program.as_ref().expect("program").get_resolved_module(
-            nodes[importing_source_file].as_source_file(),
+            isf_nodes[importing_source_file].as_source_file(),
             module_reference,
             mode,
         );
@@ -15164,7 +15192,7 @@ impl Checker {
             resolution_diagnostic = tsc_module::get_resolution_diagnostic(
                 self.compiler_options.as_ref(),
                 resolved_module.as_ref().unwrap(),
-                nodes[importing_source_file].as_source_file(),
+                isf_nodes[importing_source_file].as_source_file(),
             );
         }
 
@@ -15212,9 +15240,12 @@ impl Checker {
                 if resolved.resolved_using_ts_extension
                     && tsc_tspath::is_declaration_file_name(module_reference)
                 {
-                    if ast::find_ancestor(Some(location), &nodes, &mut |n, nodes| {
-                        ast::is_emittable_import(n, nodes)
-                    })
+                    if crate::printer_util::find_ancestor_resolved(
+                        &__program,
+                        live,
+                        Some(location),
+                        &mut |n, nodes| ast::is_emittable_import(n, nodes),
+                    )
                     .is_some()
                     {
                         let ts_extension =
@@ -15234,10 +15265,14 @@ impl Checker {
                     }
                 } else if resolved.resolved_using_ts_extension
                     && !self.compiler_options.allow_importing_ts_extensions_from(
-                        nodes[importing_source_file].as_source_file().file_name(),
+                        isf_nodes[importing_source_file].as_source_file().file_name(),
                     )
                 {
-                    if ast::find_ancestor(Some(location), &nodes, &mut |n, nodes| {
+                    if crate::printer_util::find_ancestor_resolved(
+                        &__program,
+                        live,
+                        Some(location),
+                        &mut |n, nodes| {
                         ast::is_emittable_import(n, nodes)
                     })
                     .is_some()
@@ -15288,7 +15323,7 @@ impl Checker {
                             .expect("program")
                             .case_sensitivity()
                             .relative_path_from_file(
-                                nodes[importing_source_file].as_source_file().file_name(),
+                                isf_nodes[importing_source_file].as_source_file().file_name(),
                                 &resolved.resolved_file_name,
                             )
                         {
@@ -15398,21 +15433,31 @@ impl Checker {
                             .as_ref()
                             .expect("program")
                             .get_default_resolution_mode_for_file(
-                                nodes[importing_source_file].as_source_file(),
+                                isf_nodes[importing_source_file].as_source_file(),
                             )
                             == ModuleKind::CommonJS
-                            && ast::find_ancestor(Some(location), &nodes, &mut |n, nodes| {
-                                ast::is_import_call(n, nodes)
-                            })
+                            && crate::printer_util::find_ancestor_resolved(
+                                &__program,
+                                live,
+                                Some(location),
+                                &mut |n, nodes| ast::is_import_call(n, nodes),
+                            )
                             .is_none())
-                            || ast::find_ancestor(Some(location), &nodes, &mut |n, _| {
-                                ast::is_import_equals_declaration(n)
-                            })
+                            || crate::printer_util::find_ancestor_resolved(
+                                &__program,
+                                live,
+                                Some(location),
+                                &mut |n, _| ast::is_import_equals_declaration(n),
+                            )
                             .is_some();
-                        let override_host =
-                            ast::find_ancestor(Some(location), &nodes, &mut |n, nodes| {
+                        let override_host = crate::printer_util::find_ancestor_resolved(
+                            &__program,
+                            live,
+                            Some(location),
+                            &mut |n, nodes| {
                                 ast::is_resolution_mode_override_host(Some(n.id), nodes)
-                            });
+                            },
+                        );
                         let __program = self.program.clone().expect("program");
                         let source_file_nodes = __program.nodes(source_file.file_index());
                         if is_sync_import
@@ -15424,12 +15469,17 @@ impl Checker {
                                     source_file_nodes[source_file].as_source_file(),
                                 )
                                 == ModuleKind::ESNext
-                            && !ast::has_resolution_mode_override(override_host, &nodes)
+                            && !override_host.is_some_and(|oh| {
+                                let ohn =
+                                    crate::printer_util::resolve_arena_for(&__program, live, oh);
+                                ast::has_resolution_mode_override(Some(oh), &ohn)
+                            })
                         {
-                            if ast::find_ancestor_kind(
+                            if crate::printer_util::find_ancestor_resolved(
+                                &__program,
+                                live,
                                 Some(location),
-                                ast::Kind::ImportEqualsDeclaration,
-                                &nodes,
+                                &mut |n, _| n.kind == ast::Kind::ImportEqualsDeclaration,
                             )
                             .is_some()
                             {
@@ -15442,7 +15492,7 @@ impl Checker {
                             } else {
                                 // CJS file resolving to an ESM file
                                 let mut diagnostic_details = None;
-                                let ext = nodes[importing_source_file]
+                                let ext = isf_nodes[importing_source_file]
                                     .as_source_file()
                                     .file_name()
                                     .extension();
@@ -15458,15 +15508,21 @@ impl Checker {
                                 }
 
                                 let message = if override_host.is_some_and(|oh| {
-                                    nodes[oh].kind == ast::Kind::ImportDeclaration
-                                        && nodes[oh]
+                                    let ohn = crate::printer_util::resolve_arena_for(
+                                        &__program, live, oh,
+                                    );
+                                    ohn[oh].kind == ast::Kind::ImportDeclaration
+                                        && ohn[oh]
                                             .import_clause()
-                                            .is_some_and(|ic| nodes[ic].is_type_only())
+                                            .is_some_and(|ic| ohn[ic].is_type_only())
                                 }) {
                                     &tsc_diagnostics::Type_only_import_of_an_ECMAScript_module_from_a_CommonJS_module_must_have_a_resolution_mode_attribute
-                                } else if override_host
-                                    .is_some_and(|oh| nodes[oh].kind == ast::Kind::ImportType)
-                                {
+                                } else if override_host.is_some_and(|oh| {
+                                    let ohn = crate::printer_util::resolve_arena_for(
+                                        &__program, live, oh,
+                                    );
+                                    ohn[oh].kind == ast::Kind::ImportType
+                                }) {
                                     &tsc_diagnostics::Type_import_of_an_ECMAScript_module_from_a_CommonJS_module_must_have_a_resolution_mode_attribute
                                 } else {
                                     &tsc_diagnostics::The_current_file_is_a_CommonJS_module_whose_imports_will_produce_require_calls_however_the_referenced_file_is_an_ECMAScript_module_and_cannot_be_imported_with_require_Consider_writing_a_dynamic_import_0_call_instead
@@ -15501,7 +15557,10 @@ impl Checker {
             }
             if let Some(error_node) = error_node
                 && module_not_found_error.is_some()
-                && !is_side_effect_import(error_node, &nodes)
+                && !is_side_effect_import(
+                    error_node,
+                    &crate::printer_util::resolve_arena_for(&__program, live, error_node),
+                )
             {
                 self.error(
                     Some(error_node),
@@ -15623,7 +15682,7 @@ impl Checker {
                 {
                     let mut suggested_ext = String::new();
                     if !tsc_tspath::has_trailing_directory_separator(module_reference) {
-                        let absolute_ref = nodes[importing_source_file]
+                        let absolute_ref = isf_nodes[importing_source_file]
                             .as_source_file()
                             .file_name()
                             .directory()
