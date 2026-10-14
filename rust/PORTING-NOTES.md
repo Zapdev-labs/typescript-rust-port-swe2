@@ -1764,3 +1764,19 @@ and surviving ones are ordinary statement temps.
   `get_type_from_type_node(a is T)` → `booleanType` fallback. Fixed by
   minting into the working buffer (parent link stays a foreign id; the
   resolver's new cross-arena walk handles it).
+
+## Fixed — program options validation (2026-10-14)
+- `esDecorators-emitDecoratorMetadata` (es2015/es2022/esnext): option
+  verification emitted TS5053 "cannot be specified *with*" when
+  `emitDecoratorMetadata` was set without `experimentalDecorators`; Go
+  emits TS5052 "cannot be specified *without*". Wrong diagnostic
+  constant; one-line fix.
+
+## Documented — crossProductUnionIntersectionRepeatedPropDeclarationsNoOOM1
+- `.types` diff only: Go prints `Partial<any>` in 16 positions where we
+  print the fully expanded `Partial<ComplexIntersection>` (~2× output).
+  The intersection `any`-absorption machinery is faithful
+  (`includes ANY → any_type` in `get_intersection_type_ex`) — the
+  constituent `N["props"]`-style indexed accesses resolve to `any`
+  earlier in Go, collapsing the intersection before printing. Emergent
+  ordering again — same class as `Matching`/largeTupleTypes. Deferred.

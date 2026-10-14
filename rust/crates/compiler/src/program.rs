@@ -2123,7 +2123,7 @@ impl Program {
             && options.experimental_decorators.is_false_or_unknown()
         {
             create_diagnostic_for_option_name!(
-                &diagnostics::Option_0_cannot_be_specified_with_option_1,
+                &diagnostics::Option_0_cannot_be_specified_without_specifying_option_1,
                 "emitDecoratorMetadata",
                 "experimentalDecorators"
             );
