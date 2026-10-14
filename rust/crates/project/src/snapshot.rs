@@ -34,9 +34,7 @@ use tsc_tspath::{PathKey, RootedDirectoryPath, RootedFilePath, RootedPath};
 use tsc_vfs::{Vfs, vfsmatch};
 
 use crate::ata::TypingsInfo;
-use crate::autoimport::{
-    AutoImportRegistry, RegistryChange, RegistryCloneHost, new_registry,
-};
+use crate::autoimport::new_auto_import_registry_clone_host;
 use crate::client::Client;
 use crate::configfileregistry::ConfigFileRegistry;
 use crate::filechange::FileChangeSummary;
@@ -95,8 +93,10 @@ pub struct Snapshot {
     pub project_collection: Rc<ProjectCollection>,
     /// `ConfigFileRegistry`.
     pub config_file_registry: ConfigFileRegistry,
-    /// `AutoImports`.
-    pub auto_imports: Option<Arc<AutoImportRegistry>>,
+    /// `AutoImports` — the `ls/autoimport` registry for this snapshot.
+    /// `Rc` matches the rest of the snapshot graph (see `project_collection`);
+    /// snapshots are cross-thread via `Fragile` like programs are.
+    pub auto_imports: Option<Rc<tsc_ls::autoimport::Registry>>,
     /// `autoImportsWatch`.
     pub(crate) auto_imports_watch:
         Option<Arc<WatchedFiles<NodeModulesDirectories>>>,
@@ -358,8 +358,8 @@ impl Snapshot {
     }
 
     /// `s.AutoImportRegistry`.
-    pub fn auto_import_registry(&self) -> Option<&Arc<AutoImportRegistry>> {
-        self.auto_imports.as_ref()
+    pub fn auto_import_registry(&self) -> Option<&tsc_ls::autoimport::Registry> {
+        self.auto_imports.as_deref()
     }
 
     /// `s.ID`.
@@ -729,14 +729,16 @@ impl Snapshot {
         let (project_collection, config_file_registry) =
             project_collection_builder.finalize(&logger);
 
-        let mut projects_with_new_program_structure: FxHashMap<crate::autoimport::ProjectId, bool> =
-            FxHashMap::default();
+        let mut projects_with_new_program_structure: std::collections::HashMap<
+            tsc_ls::autoimport::ProjectId,
+            bool,
+        > = std::collections::HashMap::new();
         for project in project_collection.projects() {
             if project.program_last_update == new_snapshot_id
                 && project.program_update_kind != ProgramUpdateKind::Cloned
             {
                 projects_with_new_program_structure.insert(
-                    project.id.clone(),
+                    tsc_ls::autoimport::ProjectId(Rc::from(project.id.as_str())),
                     project.program_update_kind == ProgramUpdateKind::NewFiles,
                 );
             }
@@ -782,12 +784,12 @@ impl Snapshot {
             None => self.user_preferences.clone(),
         };
 
-        let auto_import_host = crate::autoimport::new_auto_import_registry_clone_host(
+        let auto_import_host = Rc::new(crate::autoimport::new_auto_import_registry_clone_host(
             project_collection.clone(),
             store.parse_cache.clone(),
             fs.clone(),
-        );
-        let open_files: FxHashMap<PathKey, RootedFilePath> = overlays
+        ));
+        let open_files: std::collections::HashMap<PathKey, RootedFilePath> = overlays
             .iter()
             .map(|(path, overlay)| (path.clone(), overlay.file_name().clone()))
             .collect();
@@ -797,13 +799,15 @@ impl Snapshot {
             prepare_auto_imports = change.auto_imports.path_key(self.case_sensitivity());
             prepare_auto_imports_file_name = change.auto_imports.file_name();
         }
-        let old_auto_imports = self
-            .auto_imports
-            .clone()
-            .unwrap_or_else(|| new_registry(store.case_sensitivity, self.user_preferences.clone()));
+        let old_auto_imports = self.auto_imports.clone().unwrap_or_else(|| {
+            Rc::new(tsc_ls::autoimport::Registry::new(
+                store.case_sensitivity,
+                self.user_preferences.clone(),
+            ))
+        });
         let auto_imports_result = old_auto_imports.clone_registry(
             ctx,
-            RegistryChange {
+            tsc_ls::autoimport::registry::RegistryChange {
                 requested_file: prepare_auto_imports,
                 requested_file_name: prepare_auto_imports_file_name,
                 open_files,
@@ -813,8 +817,8 @@ impl Snapshot {
                 rebuilt_programs: projects_with_new_program_structure,
                 user_preferences: change.new_config.clone(),
             },
-            &auto_import_host,
-            &store.options.current_directory,
+            auto_import_host.clone() as Rc<dyn tsc_ls::autoimport::registry::RegistryCloneHost>,
+            store.options.current_directory.clone(),
             &logger.fork("UpdateAutoImports"),
         );
         let mut auto_imports_watch = None;
@@ -824,7 +828,7 @@ impl Snapshot {
                 .auto_imports_watch
                 .as_ref()
                 .map(|w| w.clone_with(new_registry.node_modules_directories()));
-            auto_imports = Some(new_registry);
+            auto_imports = Some(Rc::new(new_registry));
         }
 
         let (snapshot_fs, _) = fs.finalize();
@@ -884,7 +888,7 @@ impl Snapshot {
             }
         }
 
-        auto_import_host.dispose();
+        tsc_ls::autoimport::registry::RegistryCloneHost::dispose(&*auto_import_host);
 
         logger.logf(format_args!(
             "Finished cloning snapshot {} into snapshot {} in {:?}",

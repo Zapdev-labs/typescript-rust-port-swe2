@@ -1668,6 +1668,7 @@ dependencies = [
  "tsc-dirty",
  "tsc-json",
  "tsc-locale",
+ "tsc-ls",
  "tsc-lsconv",
  "tsc-lsproto",
  "tsc-lsutil",

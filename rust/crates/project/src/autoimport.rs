@@ -1,24 +1,17 @@
 // Ported from tsc/internal/project/autoimport.go @ ec47d33c23e464a17cdf2475632cba629bee8763
 //
-// PORT(blocked): `ls/autoimport` (the `Registry`/`RegistryCloneHost`/
-// `ProjectID` types this file plugs into) lives in the sibling `tsc-ls`
-// crate, which does not yet compile — see the disabled dependency in
-// Cargo.toml. `AutoImportRegistry`, `RegistryChange`, and
-// `RegistryCloneHost` below are local stand-ins with the Go signatures;
-// rewire them to `tsc_ls::autoimport` when it lands.
-// The filesystem plumbing (`AutoImportBuilderFs`,
-// `AutoImportRegistryCloneHost`) IS fully ported.
+// The registry machinery itself lives in `tsc_ls::autoimport`; this module
+// provides the snapshot-side clone host (`autoImportRegistryCloneHost`)
+// and the builder filesystem (`autoImportBuilderFS`).
 
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
-use rustc_hash::FxHashMap;
-use tsc_collections::{Set, SyncMap};
-use tsc_lsproto::DocumentUri;
-use tsc_lsutil::UserPreferences;
+use tsc_ast::ArenaCell;
+use tsc_collections::SyncMap;
+use tsc_ls::autoimport::registry::{ProjectId, RegistryCloneHost};
 use tsc_packagejson::{InfoCacheEntry, PackageDirectory, PackageJson};
-use tsc_project_logging::LogTree;
-use tsc_tspath::{CaseSensitivity, PathKey, RootedDirectoryPath, RootedFilePath};
+use tsc_tspath::{PathKey, RootedDirectoryPath, RootedFilePath};
 use tsc_vfs::Vfs;
 
 use crate::overlayfs::{FileHandle, FileHandleSource};
@@ -26,114 +19,6 @@ use crate::parsecache::{ParseCache, ParseCacheKey, new_parse_cache_key};
 use crate::project::Id;
 use crate::projectcollection::ProjectCollection;
 use crate::snapshotfs::{FileSource, SourceFs, SnapshotFsBuilder, new_source_fs};
-
-/// `autoimport.ProjectID` — Go `interface{ ... }` implemented by `ID`.
-pub type ProjectId = Id;
-
-/// `autoimport.RegistryChange`.
-#[derive(Default)]
-pub struct RegistryChange {
-    pub requested_file: PathKey,
-    pub requested_file_name: RootedFilePath,
-    pub open_files: FxHashMap<PathKey, RootedFilePath>,
-    pub changed: Set<DocumentUri>,
-    pub created: Set<DocumentUri>,
-    pub deleted: Set<DocumentUri>,
-    /// `RebuiltPrograms` maps from project ID to:
-    ///   - `true`: the program was rebuilt with a different set of file names
-    ///   - `false`: the program was rebuilt but the set of file names is
-    ///     unchanged
-    pub rebuilt_programs: FxHashMap<ProjectId, bool>,
-    pub user_preferences: Option<UserPreferences>,
-}
-
-/// `autoimport.Registry` — the auto-import completion index carried by
-/// snapshots.
-///
-/// PORT(blocked): this is a field-shell stand-in — `clone` preserves the
-/// registry's tracked inputs (case sensitivity, preferences, node_modules
-/// watch roots) but does NOT run the real indexing pipeline from
-// `ls/autoimport/registry.go` until `tsc-ls` compiles.
-pub struct AutoImportRegistry {
-    case_sensitivity: CaseSensitivity,
-    user_preferences: UserPreferences,
-    node_modules_directories: FxHashMap<PathKey, RootedDirectoryPath>,
-}
-
-/// `autoimport.NewRegistry`.
-pub fn new_registry(
-    case_sensitivity: CaseSensitivity,
-    preferences: UserPreferences,
-) -> Arc<AutoImportRegistry> {
-    Arc::new(AutoImportRegistry {
-        case_sensitivity,
-        user_preferences: preferences,
-        node_modules_directories: FxHashMap::default(),
-    })
-}
-
-/// `RegistryError` — Go `error` from `Registry.Clone`.
-pub type RegistryError = Box<dyn std::error::Error + Send + Sync>;
-
-impl AutoImportRegistry {
-    /// `r.NodeModulesDirectories()`.
-    pub fn node_modules_directories(&self) -> FxHashMap<PathKey, RootedDirectoryPath> {
-        self.node_modules_directories.clone()
-    }
-
-    /// `r.Clone`.
-    ///
-    /// PORT(blocked): preserves tracked state verbatim; the real
-    /// `registryBuilder` pipeline (watched packages, exports index,
-    // per-project program diffs) is pending the `tsc-ls` autoimport port.
-    pub fn clone_registry(
-        &self,
-        _ctx: &tsc_core::context::Context,
-        change: RegistryChange,
-        _host: &dyn RegistryCloneHost,
-        _current_directory: &RootedDirectoryPath,
-        _logger: &LogTree,
-    ) -> Result<Arc<AutoImportRegistry>, RegistryError> {
-        Ok(Arc::new(AutoImportRegistry {
-            case_sensitivity: self.case_sensitivity,
-            user_preferences: change
-                .user_preferences
-                .unwrap_or_else(|| self.user_preferences.clone()),
-            node_modules_directories: self.node_modules_directories.clone(),
-        }))
-    }
-}
-
-/// `autoimport.RegistryCloneHost` — the snapshot-side view the registry
-/// reads through while cloning.
-///
-/// PORT(blocked): local stand-in for the `tsc-ls` trait — `get_source_file`
-/// returns the parse-cache lease value (`Arc<Mutex<ParsedSourceFile>>`)
-// standing in for Go's `*ast.SourceFile`.
-pub trait RegistryCloneHost {
-    /// `FS()`.
-    fn fs(&self) -> Arc<dyn Vfs>;
-    /// `GetDefaultProject` — `None` is Go's `(nil, nil)`.
-    fn get_default_project(
-        &self,
-        path: &PathKey,
-    ) -> Option<(ProjectId, Rc<tsc_compiler::program::Program>)>;
-    /// `GetProgramForProject`.
-    fn get_program_for_project(
-        &self,
-        project_id: &ProjectId,
-    ) -> Option<Rc<tsc_compiler::program::Program>>;
-    /// `GetPackageJson`.
-    fn get_package_json(&self, file_name: &RootedFilePath) -> InfoCacheEntry;
-    /// `GetSourceFile`.
-    fn get_source_file(
-        &self,
-        file_name: &RootedFilePath,
-        path: &PathKey,
-    ) -> Option<Arc<Mutex<tsc_contentmapper::ParsedSourceFile>>>;
-    /// `Dispose`.
-    fn dispose(&self);
-}
 
 /// `autoImportBuilderFS` — a `FileSource` over the snapshot-FS builder that
 /// avoids long-term caching of files referenced only by auto-imports.
@@ -240,30 +125,33 @@ impl RegistryCloneHost for AutoImportRegistryCloneHost {
     }
 
     /// `GetDefaultProject`.
+    ///
+    /// PORT: `autoimport.ProjectID` is `ls::autoimport::ProjectId` — an
+    /// `Rc<str>` keyed by the project's `Id` string (Go's `fmt.Stringer`).
     fn get_default_project(
         &self,
         path: &PathKey,
     ) -> Option<(ProjectId, Rc<tsc_compiler::program::Program>)> {
         let project = self.project_collection.get_default_project(path)?;
         let program = project.get_program()?.clone();
-        Some((project.id.clone(), program))
+        Some((ProjectId(Rc::from(project.id.as_str())), program))
     }
 
-    /// `GetPackageJson`.
+    /// `GetPackageJson` — never nil in Go's implementation.
     ///
     /// !!! ref-counted shared cache — see the Go note; the package-json
     /// info cache is created per call here as in Go.
-    fn get_package_json(&self, file_name: &RootedFilePath) -> InfoCacheEntry {
+    fn get_package_json(&self, file_name: &RootedFilePath) -> Arc<InfoCacheEntry> {
         let fh = self.fs.get_file(file_name);
         let package_directory = file_name.directory();
         let cache_package_directory =
             PackageDirectory::new(package_directory.clone(), self.fs.case_sensitivity());
         let Some(fh) = fh else {
-            return InfoCacheEntry {
+            return Arc::new(InfoCacheEntry {
                 directory_exists: self.fs.directory_exists(&package_directory),
                 package_directory: cache_package_directory,
                 contents: None,
-            };
+            });
         };
         match tsc_packagejson::parse(fh.content().as_bytes()) {
             Err(_) => {
@@ -271,41 +159,44 @@ impl RegistryCloneHost for AutoImportRegistryCloneHost {
                 // built with a literal — default then set the public fields.
                 let mut contents = PackageJson::default();
                 contents.parseable = false;
-                InfoCacheEntry {
+                Arc::new(InfoCacheEntry {
                     directory_exists: true,
                     package_directory: cache_package_directory,
                     contents: Some(Arc::new(contents)),
-                }
+                })
             }
             Ok(fields) => {
                 let mut contents = PackageJson::default();
                 contents.fields = fields;
                 contents.parseable = true;
-                InfoCacheEntry {
+                Arc::new(InfoCacheEntry {
                     directory_exists: true,
                     package_directory: cache_package_directory,
                     contents: Some(Arc::new(contents)),
-                }
+                })
             }
         }
     }
 
-    /// `GetProgramForProject` — Go panics on a non-`ID` ProjectID; our
-    /// `ProjectId` IS `Id`, so the assertion is free.
+    /// `GetProgramForProject` — `ProjectId` is keyed by `Id`'s string form.
     fn get_program_for_project(
         &self,
         project_id: &ProjectId,
     ) -> Option<Rc<tsc_compiler::program::Program>> {
-        let project = self.project_collection.get_project(project_id)?;
+        let project = self
+            .project_collection
+            .get_project(&Id::from(project_id.0.as_ref()))?;
         project.get_program().cloned()
     }
 
-    /// `GetSourceFile`.
+    /// `GetSourceFile` — returns the file's root `NodeId` plus an
+    /// [`ArenaCell`] aliasing the parse-cache arena (Go shares the
+    /// `*ast.SourceFile`); `None` mirrors Go's nil `*ast.SourceFile`.
     fn get_source_file(
         &self,
         file_name: &RootedFilePath,
         path: &PathKey,
-    ) -> Option<Arc<Mutex<tsc_contentmapper::ParsedSourceFile>>> {
+    ) -> Option<(tsc_ast::NodeId, Rc<ArenaCell>)> {
         let fh = self.fs.get_file(file_name)?;
         let opts = tsc_ast::parseoptions::SourceFileParseOptions {
             file_name: fh.file_name().clone(),
@@ -315,7 +206,11 @@ impl RegistryCloneHost for AutoImportRegistryCloneHost {
         let key = new_parse_cache_key(opts, fh.hash(), fh.kind());
         let result = self.parse_cache.acquire(key.clone(), &fh);
         self.files.lock().unwrap().push(key);
-        Some(result)
+        let parsed = result.lock().unwrap();
+        Some((
+            parsed.file,
+            Rc::new(ArenaCell::from_shared(parsed.nodes.clone())),
+        ))
     }
 
     /// `Dispose` — releases the parse-cache references acquired through

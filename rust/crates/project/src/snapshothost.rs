@@ -21,7 +21,6 @@ use tsc_project_logging::Logger;
 use tsc_tspath::{CaseSensitivity, RootedDirectoryPath};
 use tsc_vfs::Vfs;
 
-use crate::autoimport::AutoImportRegistry;
 use crate::configfileregistry::ConfigFileRegistry;
 use crate::extendedconfigcache::{ExtendedConfigCache, new_extended_config_cache};
 use crate::filechange::FileChangeSummary;
@@ -270,7 +269,7 @@ impl SnapshotHost {
         config_file_registry: ConfigFileRegistry,
         compiler_options_for_inferred_projects: Option<Arc<CompilerOptions>>,
         user_preferences: tsc_lsutil::UserPreferences,
-        auto_imports: Option<Arc<AutoImportRegistry>>,
+        auto_imports: Option<Rc<tsc_ls::autoimport::Registry>>,
         auto_imports_watch: Option<Arc<WatchedFiles<NodeModulesDirectories>>>,
     ) -> Snapshot {
         let overlays = fs.fs.overlays();

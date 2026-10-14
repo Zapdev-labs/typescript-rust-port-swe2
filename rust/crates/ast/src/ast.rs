@@ -2910,6 +2910,20 @@ impl ArenaCell {
         )
     }
 
+    /// Adopts an already-shared `Rc<NodeArenaBuf>` by reference — unlike
+    /// [`ArenaCell::new`], which copies a shared buffer through
+    /// `From<Rc<NodeArenaBuf>>`. Used by read-only consumers (e.g. the
+    /// auto-import registry) that must observe the exact buffer a parse
+    /// cache or program holds (Go shares the `*ast.SourceFile` arena).
+    pub fn from_shared(buf: std::rc::Rc<NodeArenaBuf>) -> ArenaCell {
+        ArenaCell(
+            std::cell::RefCell::new(buf),
+            std::cell::Cell::new(0),
+            std::cell::Cell::new(0),
+            std::cell::Cell::new(0),
+        )
+    }
+
     /// Cheap read snapshot — an `Rc` clone of the shared buffer handle,
     /// never a held borrow. The snapshot observes in-place mutations and
     /// appends made after it was taken (Go shared-heap semantics).

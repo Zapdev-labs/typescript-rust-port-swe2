@@ -22,9 +22,7 @@ tsc-diagnostics = { path = "../diagnostics" }
 tsc-dirty = { path = "../dirty" }
 tsc-json = { path = "../json" }
 tsc-locale = { path = "../locale" }
-# PORT(blocked): tsc-ls does not yet compile (sibling port in progress);
-# re-enable when `cargo check -p tsc-ls` succeeds. Needed for autoimport.
-# tsc-ls = { path = "../ls" }
+tsc-ls = { path = "../ls" }
 tsc-lsconv = { path = "../lsconv" }
 tsc-lsproto = { path = "../lsproto" }
 tsc-lsutil = { path = "../lsutil" }
