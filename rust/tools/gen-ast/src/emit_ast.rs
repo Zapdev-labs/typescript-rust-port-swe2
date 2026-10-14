@@ -290,6 +290,74 @@ impl<'a> Emitter<'a> {
         out.push_str("}\n\n");
     }
 
+    /// Emits `map_node_ids` on every node/base struct plus a `NodeData`
+    /// dispatch. Each method rewrites only `NodeId`-typed fields (direct
+    /// children) through `f` — symbols, flow nodes, and other arenas are
+    /// untouched. Used to graft a subtree between arenas (Go pointer
+    /// semantics for cross-file nodes in the emit working buffer).
+    fn emit_map_node_ids(&self, out: &mut String) {
+        out.push_str(
+            "// ── cross-arena child-id remapping ──────────────────────────────\n\n/// Rewrites each direct child `NodeId` in the payload through `f`.\n/// `NodeId`-typed fields only — `SymbolId`/`FlowNodeId`/`Other` arena\n/// handles are left alone.\n",
+        );
+        let mut emit_one = |out: &mut String, name: &str, fields: &[Field]| {
+            let mut body = String::new();
+            for f in fields {
+                let n = &f.name;
+                match f.ty {
+                    FieldType::Embed => {
+                        if f.embed.as_deref() != Some("NodeBase")
+                            && f.embed.as_deref() != Some("NodeDefault")
+                        {
+                            body.push_str(&format!("        self.{n}.map_node_ids(f);\n"));
+                        }
+                    }
+                    FieldType::Node => {
+                        body.push_str(&format!("        self.{n} = self.{n}.map(|id| f(id));\n"))
+                    }
+                    FieldType::NodeList | FieldType::ModifierList => {
+                        body.push_str(&format!(
+                            "        if let Some(l) = &mut self.{n} {{\n            for id in l.nodes.iter_mut() {{\n                *id = f(*id);\n            }}\n        }}\n"
+                        ));
+                    }
+                    FieldType::NodeSlice => {
+                        body.push_str(&format!(
+                            "        for id in self.{n}.iter_mut() {{\n            *id = f(*id);\n        }}\n"
+                        ));
+                    }
+                    _ => {}
+                }
+            }
+            if body.is_empty() {
+                body.push_str("        let _ = f;\n");
+            }
+            out.push_str(&format!(
+                "impl {name} {{\n    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {{\n{body}    }}\n}}\n\n"
+            ));
+        };
+        for b in &self.schema.bases {
+            if b.name == "NodeBase" || b.name == "NodeDefault" {
+                continue;
+            }
+            emit_one(out, &b.name, &b.fields);
+        }
+        for n in &self.schema.nodes {
+            let mut fields = self.node_fields(n);
+            fields.retain(|f| {
+                f.embed.as_deref() != Some("NodeBase") && f.embed.as_deref() != Some("NodeDefault")
+            });
+            let name = self.variant_name(n);
+            emit_one(out, &name, &fields);
+        }
+        out.push_str(
+            "impl NodeData {\n    /// Rewrites each direct child `NodeId` in the payload through `f`.\n    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {\n        match self {\n",
+        );
+        for n in &self.schema.nodes {
+            let v = self.variant_name(n);
+            out.push_str(&format!("            NodeData::{v}(d) => d.map_node_ids(f),\n"));
+        }
+        out.push_str("        }\n    }\n}\n\n");
+    }
+
     // ── enum + dispatch ─────────────────────────────────────────────────
 
     fn variant_name(&self, node: &NodeDef) -> String {
@@ -331,6 +399,8 @@ impl<'a> Emitter<'a> {
             let name = self.variant_name(n);
             self.emit_struct(&mut out, &name, &fields);
         }
+
+        self.emit_map_node_ids(&mut out);
 
         // NodeData enum.
         out.push_str("/// `nodeData` — the payload enum; every variant is a\n");

@@ -854,21 +854,51 @@ impl<'a> DeclarationTransformerState<'a> {
             }
             let next = self.shared.borrow_mut().late_marked_statements.remove(0);
 
+            // `next` may live in another arena (an aliasing statement marked
+            // while emitting a module augmentation, e.g. a `declare module`
+            // in a declaration target's file — same file index, different
+            // local layout than the emit working buffer). Go follows the
+            // node pointer; the port resolves the owning arena — same-arena
+            // ids use the emit working buffer, foreign ids are grafted into
+            // it so every `cx.nodes` read inside
+            // `transform_top_level_declaration` lands correctly. The
+            // produced node is discarded in both cases (the replacement map
+            // is only consulted for statements in `statements`).
+            let same_arena = cx
+                .nodes
+                .get(next.local_index() as usize)
+                .is_some_and(|n| n.id == next);
+            let foreign = if same_arena {
+                None
+            } else {
+                self.host.arena_for(next.file_index(), cx.nodes)
+            };
             let save_needs_declare = self.needs_declare.get();
-            self.needs_declare.set(
-                cx.nodes[next]
-                    .parent
-                    .is_some_and(|p| ast::is_source_file(&cx.nodes[p])),
-            );
-
-            let result = self.transform_top_level_declaration(v, cx, next);
+            let result = if same_arena {
+                self.needs_declare.set(
+                    cx.nodes[next]
+                        .parent
+                        .is_some_and(|p| ast::is_source_file(&cx.nodes[p])),
+                );
+                self.transform_top_level_declaration(v, cx, next)
+            } else if let Some(foreign) = &foreign {
+                self.needs_declare.set(
+                    foreign[next]
+                        .parent
+                        .is_some_and(|p| ast::is_source_file(&foreign[p])),
+                );
+                let mut memo = HashMap::new();
+                let grafted = self.graft_subtree(cx, foreign, next, &mut memo);
+                self.transform_top_level_declaration(v, cx, grafted)
+            } else {
+                None
+            };
 
             self.needs_declare.set(save_needs_declare);
             let original = self.ec().most_original(Some(next)).unwrap_or(next);
-            let id = ast::get_node_id(&cx.nodes[original]);
             self.late_statement_replacement_map
                 .borrow_mut()
-                .insert(id, result);
+                .insert(original, result);
         }
 
         // And lastly, we need to get the final form of all those indetermine import declarations from before and add them to the output list
@@ -931,6 +961,40 @@ impl<'a> DeclarationTransformerState<'a> {
         }
 
         self.ec().factory.new_node_list(results)
+    }
+
+    /// Clones `id` and its entire subtree from `src` (a foreign arena)
+    /// into `cx.nodes`, remapping all child `NodeId`s — the port's answer
+    /// to Go reading a statement node through a raw pointer when it lives
+    /// in another file's arena (e.g. `declare module` in a .d.ts marked
+    /// late). Child `.parent` links point at the grafted parent; the
+    /// grafted root's `.parent` is `None` since its real parent is
+    /// unreachable from the emit buffer.
+    fn graft_subtree(
+        &self,
+        cx: &mut VisitorCx<'_, '_>,
+        src: &[Node],
+        id: NodeId,
+        memo: &mut HashMap<NodeId, NodeId>,
+    ) -> NodeId {
+        if let Some(&g) = memo.get(&id) {
+            return g;
+        }
+        let mut n = src[id].clone();
+        let g = NodeId::new(cx.factory.file_index(), cx.nodes.len() as u64);
+        n.id = g;
+        n.parent = None;
+        cx.nodes.push(n);
+        memo.insert(id, g);
+        self.ec().set_original(g, id);
+        let mut data = cx.nodes[g].data.clone();
+        data.map_node_ids(&mut |c| {
+            let gc = self.graft_subtree(cx, src, c, memo);
+            cx.nodes[gc].parent = Some(g);
+            gc
+        });
+        cx.nodes[g].data = data;
+        g
     }
 
     /// `(tx *DeclarationTransformer) getReferencedFiles` — handles path
@@ -3725,6 +3789,17 @@ impl<'a> DeclarationTransformerState<'a> {
         let Some(entity_name) = entity_name else {
             return;
         };
+        // The checker resolves `entity_name.file_index()` into a program
+        // arena — emit-buffer ids (grafted cross-arena clones and minted
+        // nodes) must be mapped back to their parse-tree originals first.
+        let entity_name = self
+            .ec()
+            .most_original(Some(entity_name))
+            .unwrap_or(entity_name);
+        let enclosing_declaration = self
+            .ec()
+            .most_original(enclosing_declaration)
+            .or(enclosing_declaration);
         let visibility_result = self.resolver.borrow().is_entity_name_visible(
             entity_name,
             enclosing_declaration,

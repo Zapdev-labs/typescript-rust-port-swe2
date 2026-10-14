@@ -2323,6 +2323,2244 @@ pub struct FlowReduceLabelData {
     pub antecedents: Option<FlowListId>,
 }
 
+// ── cross-arena child-id remapping ──────────────────────────────
+
+/// Rewrites each direct child `NodeId` in the payload through `f`.
+/// `NodeId`-typed fields only — `SymbolId`/`FlowNodeId`/`Other` arena
+/// handles are left alone.
+impl StatementBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.flow_node_base.map_node_ids(f);
+    }
+}
+
+impl IterationStatementBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.statement_base.map_node_ids(f);
+        self.statement = self.statement.map(|id| f(id));
+    }
+}
+
+impl ExpressionBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        let _ = f;
+    }
+}
+
+impl UnaryExpressionBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.expression_base.map_node_ids(f);
+    }
+}
+
+impl UpdateExpressionBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.unary_expression_base.map_node_ids(f);
+    }
+}
+
+impl LeftHandSideExpressionBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.update_expression_base.map_node_ids(f);
+    }
+}
+
+impl MemberExpressionBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.left_hand_side_expression_base.map_node_ids(f);
+    }
+}
+
+impl PrimaryExpressionBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.member_expression_base.map_node_ids(f);
+    }
+}
+
+impl TypeNodeBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_syntax_base.map_node_ids(f);
+    }
+}
+
+impl NodeWithTypeArgumentsBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_node_base.map_node_ids(f);
+        if let Some(l) = &mut self.type_arguments {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+    }
+}
+
+impl JSDocTypeBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_node_base.map_node_ids(f);
+    }
+}
+
+impl DeclarationBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        let _ = f;
+    }
+}
+
+impl ExportableBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        let _ = f;
+    }
+}
+
+impl ModifiersBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        if let Some(l) = &mut self.modifiers {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+    }
+}
+
+impl LocalsContainerBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.next_container = self.next_container.map(|id| f(id));
+    }
+}
+
+impl FlowNodeBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        let _ = f;
+    }
+}
+
+impl CompositeBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        let _ = f;
+    }
+}
+
+impl TypeSyntaxBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        let _ = f;
+    }
+}
+
+impl FunctionLikeBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.locals_container_base.map_node_ids(f);
+        if let Some(l) = &mut self.type_parameters {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+        if let Some(l) = &mut self.parameters {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+        self.type_ = self.type_.map(|id| f(id));
+        self.full_signature = self.full_signature.map(|id| f(id));
+    }
+}
+
+impl BodyBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.asterisk_token = self.asterisk_token.map(|id| f(id));
+        self.body = self.body.map(|id| f(id));
+    }
+}
+
+impl FunctionLikeWithBodyBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.function_like_base.map_node_ids(f);
+        self.body_base.map_node_ids(f);
+    }
+}
+
+impl ClassLikeBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.exportable_base.map_node_ids(f);
+        self.modifiers_base.map_node_ids(f);
+        self.locals_container_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.name = self.name.map(|id| f(id));
+        if let Some(l) = &mut self.type_parameters {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+        if let Some(l) = &mut self.heritage_clauses {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+        if let Some(l) = &mut self.members {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+    }
+}
+
+impl LiteralLikeNodeBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        let _ = f;
+    }
+}
+
+impl LiteralExpressionBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.primary_expression_base.map_node_ids(f);
+        self.literal_like_node_base.map_node_ids(f);
+    }
+}
+
+impl TemplateLiteralLikeNodeBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.literal_like_node_base.map_node_ids(f);
+    }
+}
+
+impl TypeElementBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        let _ = f;
+    }
+}
+
+impl ClassElementBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        let _ = f;
+    }
+}
+
+impl NamedMemberBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.modifiers_base.map_node_ids(f);
+        self.name = self.name.map(|id| f(id));
+        self.postfix_token = self.postfix_token.map(|id| f(id));
+    }
+}
+
+impl ObjectLiteralElementBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        let _ = f;
+    }
+}
+
+impl AccessorDeclarationBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_element_base.map_node_ids(f);
+        self.class_element_base.map_node_ids(f);
+        self.object_literal_element_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.named_member_base.map_node_ids(f);
+        self.function_like_with_body_base.map_node_ids(f);
+        self.flow_node_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+    }
+}
+
+impl FunctionOrConstructorTypeNodeBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_node_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.modifiers_base.map_node_ids(f);
+        self.function_like_base.map_node_ids(f);
+    }
+}
+
+impl UnionOrIntersectionTypeNodeBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_node_base.map_node_ids(f);
+        if let Some(l) = &mut self.types {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+    }
+}
+
+impl JSDocTagBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.tag_name = self.tag_name.map(|id| f(id));
+        if let Some(l) = &mut self.comment {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+    }
+}
+
+impl JSDocCommentBase {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        let _ = f;
+    }
+}
+
+impl Token {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        let _ = f;
+    }
+}
+
+impl Identifier {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.primary_expression_base.map_node_ids(f);
+        self.flow_node_base.map_node_ids(f);
+    }
+}
+
+impl PrivateIdentifier {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.primary_expression_base.map_node_ids(f);
+    }
+}
+
+impl QualifiedName {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.flow_node_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.left = self.left.map(|id| f(id));
+        self.right = self.right.map(|id| f(id));
+    }
+}
+
+impl ComputedPropertyName {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.composite_base.map_node_ids(f);
+        self.expression = self.expression.map(|id| f(id));
+    }
+}
+
+impl Decorator {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.composite_base.map_node_ids(f);
+        self.expression = self.expression.map(|id| f(id));
+    }
+}
+
+impl EmptyStatement {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.statement_base.map_node_ids(f);
+    }
+}
+
+impl IfStatement {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.statement_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.expression = self.expression.map(|id| f(id));
+        self.then_statement = self.then_statement.map(|id| f(id));
+        self.else_statement = self.else_statement.map(|id| f(id));
+    }
+}
+
+impl DoStatement {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.iteration_statement_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.expression = self.expression.map(|id| f(id));
+    }
+}
+
+impl WhileStatement {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.iteration_statement_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.expression = self.expression.map(|id| f(id));
+    }
+}
+
+impl ForStatement {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.iteration_statement_base.map_node_ids(f);
+        self.locals_container_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.initializer = self.initializer.map(|id| f(id));
+        self.condition = self.condition.map(|id| f(id));
+        self.incrementor = self.incrementor.map(|id| f(id));
+    }
+}
+
+impl ForInOrOfStatement {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.statement_base.map_node_ids(f);
+        self.locals_container_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.await_modifier = self.await_modifier.map(|id| f(id));
+        self.initializer = self.initializer.map(|id| f(id));
+        self.expression = self.expression.map(|id| f(id));
+        self.statement = self.statement.map(|id| f(id));
+    }
+}
+
+impl BreakStatement {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.statement_base.map_node_ids(f);
+        self.label = self.label.map(|id| f(id));
+    }
+}
+
+impl ContinueStatement {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.statement_base.map_node_ids(f);
+        self.label = self.label.map(|id| f(id));
+    }
+}
+
+impl ReturnStatement {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.statement_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.expression = self.expression.map(|id| f(id));
+    }
+}
+
+impl WithStatement {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.statement_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.expression = self.expression.map(|id| f(id));
+        self.statement = self.statement.map(|id| f(id));
+    }
+}
+
+impl SwitchStatement {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.statement_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.expression = self.expression.map(|id| f(id));
+        self.case_block = self.case_block.map(|id| f(id));
+    }
+}
+
+impl CaseBlock {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.locals_container_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        if let Some(l) = &mut self.clauses {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+    }
+}
+
+impl CaseOrDefaultClause {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.composite_base.map_node_ids(f);
+        self.expression = self.expression.map(|id| f(id));
+        if let Some(l) = &mut self.statements {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+    }
+}
+
+impl ThrowStatement {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.statement_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.expression = self.expression.map(|id| f(id));
+    }
+}
+
+impl TryStatement {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.statement_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.try_block = self.try_block.map(|id| f(id));
+        self.catch_clause = self.catch_clause.map(|id| f(id));
+        self.finally_block = self.finally_block.map(|id| f(id));
+    }
+}
+
+impl CatchClause {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.locals_container_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.variable_declaration = self.variable_declaration.map(|id| f(id));
+        self.block = self.block.map(|id| f(id));
+    }
+}
+
+impl DebuggerStatement {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.statement_base.map_node_ids(f);
+    }
+}
+
+impl LabeledStatement {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.statement_base.map_node_ids(f);
+        self.label = self.label.map(|id| f(id));
+        self.statement = self.statement.map(|id| f(id));
+    }
+}
+
+impl ExpressionStatement {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.statement_base.map_node_ids(f);
+        self.expression = self.expression.map(|id| f(id));
+    }
+}
+
+impl Block {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.statement_base.map_node_ids(f);
+        self.locals_container_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        if let Some(l) = &mut self.statements {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+    }
+}
+
+impl VariableStatement {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.statement_base.map_node_ids(f);
+        self.modifiers_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.declaration_list = self.declaration_list.map(|id| f(id));
+    }
+}
+
+impl VariableDeclaration {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.declaration_base.map_node_ids(f);
+        self.exportable_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.name = self.name.map(|id| f(id));
+        self.exclamation_token = self.exclamation_token.map(|id| f(id));
+        self.type_ = self.type_.map(|id| f(id));
+        self.initializer = self.initializer.map(|id| f(id));
+    }
+}
+
+impl VariableDeclarationList {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.composite_base.map_node_ids(f);
+        if let Some(l) = &mut self.declarations {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+    }
+}
+
+impl BindingPattern {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.composite_base.map_node_ids(f);
+        if let Some(l) = &mut self.elements {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+    }
+}
+
+impl ParameterDeclaration {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.declaration_base.map_node_ids(f);
+        self.modifiers_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.dot_dot_dot_token = self.dot_dot_dot_token.map(|id| f(id));
+        self.name = self.name.map(|id| f(id));
+        self.question_token = self.question_token.map(|id| f(id));
+        self.type_ = self.type_.map(|id| f(id));
+        self.initializer = self.initializer.map(|id| f(id));
+    }
+}
+
+impl BindingElement {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.declaration_base.map_node_ids(f);
+        self.exportable_base.map_node_ids(f);
+        self.flow_node_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.dot_dot_dot_token = self.dot_dot_dot_token.map(|id| f(id));
+        self.property_name = self.property_name.map(|id| f(id));
+        self.name = self.name.map(|id| f(id));
+        self.initializer = self.initializer.map(|id| f(id));
+    }
+}
+
+impl MissingDeclaration {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.statement_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.modifiers_base.map_node_ids(f);
+    }
+}
+
+impl FunctionDeclaration {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.statement_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.exportable_base.map_node_ids(f);
+        self.modifiers_base.map_node_ids(f);
+        self.function_like_with_body_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.name = self.name.map(|id| f(id));
+    }
+}
+
+impl ClassDeclaration {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.statement_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.class_like_base.map_node_ids(f);
+    }
+}
+
+impl ClassExpression {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.primary_expression_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.class_like_base.map_node_ids(f);
+    }
+}
+
+impl HeritageClause {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.composite_base.map_node_ids(f);
+        if let Some(l) = &mut self.types {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+    }
+}
+
+impl InterfaceDeclaration {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_syntax_base.map_node_ids(f);
+        self.statement_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.exportable_base.map_node_ids(f);
+        self.modifiers_base.map_node_ids(f);
+        self.name = self.name.map(|id| f(id));
+        if let Some(l) = &mut self.type_parameters {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+        if let Some(l) = &mut self.heritage_clauses {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+        if let Some(l) = &mut self.members {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+    }
+}
+
+impl TypeAliasDeclaration {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_syntax_base.map_node_ids(f);
+        self.statement_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.exportable_base.map_node_ids(f);
+        self.modifiers_base.map_node_ids(f);
+        self.locals_container_base.map_node_ids(f);
+        self.name = self.name.map(|id| f(id));
+        if let Some(l) = &mut self.type_parameters {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+        self.type_ = self.type_.map(|id| f(id));
+    }
+}
+
+impl EnumMember {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.declaration_base.map_node_ids(f);
+        self.named_member_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.initializer = self.initializer.map(|id| f(id));
+    }
+}
+
+impl EnumDeclaration {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.statement_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.exportable_base.map_node_ids(f);
+        self.modifiers_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.name = self.name.map(|id| f(id));
+        if let Some(l) = &mut self.members {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+    }
+}
+
+impl ModuleBlock {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.statement_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        if let Some(l) = &mut self.statements {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+    }
+}
+
+impl NotEmittedStatement {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.statement_base.map_node_ids(f);
+    }
+}
+
+impl NotEmittedTypeElement {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_element_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+    }
+}
+
+impl ImportDeclaration {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.statement_base.map_node_ids(f);
+        self.modifiers_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.import_clause = self.import_clause.map(|id| f(id));
+        self.module_specifier = self.module_specifier.map(|id| f(id));
+        self.attributes = self.attributes.map(|id| f(id));
+    }
+}
+
+impl ExternalModuleReference {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.expression = self.expression.map(|id| f(id));
+    }
+}
+
+impl NamespaceImport {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.declaration_base.map_node_ids(f);
+        self.exportable_base.map_node_ids(f);
+        self.name = self.name.map(|id| f(id));
+    }
+}
+
+impl NamedImports {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.composite_base.map_node_ids(f);
+        if let Some(l) = &mut self.elements {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+    }
+}
+
+impl ExportAssignment {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.statement_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.modifiers_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.type_ = self.type_.map(|id| f(id));
+        self.expression = self.expression.map(|id| f(id));
+    }
+}
+
+impl NamespaceExportDeclaration {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_syntax_base.map_node_ids(f);
+        self.statement_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.modifiers_base.map_node_ids(f);
+        self.name = self.name.map(|id| f(id));
+    }
+}
+
+impl NamespaceExport {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.declaration_base.map_node_ids(f);
+        self.name = self.name.map(|id| f(id));
+    }
+}
+
+impl NamedExports {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.composite_base.map_node_ids(f);
+        if let Some(l) = &mut self.elements {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+    }
+}
+
+impl ExportSpecifier {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.declaration_base.map_node_ids(f);
+        self.exportable_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.property_name = self.property_name.map(|id| f(id));
+        self.name = self.name.map(|id| f(id));
+    }
+}
+
+impl CallSignatureDeclaration {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_element_base.map_node_ids(f);
+        self.type_syntax_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.function_like_base.map_node_ids(f);
+    }
+}
+
+impl ConstructSignatureDeclaration {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_element_base.map_node_ids(f);
+        self.type_syntax_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.function_like_base.map_node_ids(f);
+    }
+}
+
+impl ConstructorDeclaration {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.class_element_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.modifiers_base.map_node_ids(f);
+        self.function_like_with_body_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+    }
+}
+
+impl GetAccessorDeclaration {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.accessor_declaration_base.map_node_ids(f);
+    }
+}
+
+impl SetAccessorDeclaration {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.accessor_declaration_base.map_node_ids(f);
+    }
+}
+
+impl IndexSignatureDeclaration {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_element_base.map_node_ids(f);
+        self.class_element_base.map_node_ids(f);
+        self.type_syntax_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.modifiers_base.map_node_ids(f);
+        self.function_like_base.map_node_ids(f);
+    }
+}
+
+impl MethodSignatureDeclaration {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_element_base.map_node_ids(f);
+        self.type_syntax_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.named_member_base.map_node_ids(f);
+        self.function_like_base.map_node_ids(f);
+    }
+}
+
+impl MethodDeclaration {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.class_element_base.map_node_ids(f);
+        self.object_literal_element_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.named_member_base.map_node_ids(f);
+        self.function_like_with_body_base.map_node_ids(f);
+        self.flow_node_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+    }
+}
+
+impl PropertySignatureDeclaration {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_element_base.map_node_ids(f);
+        self.type_syntax_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.named_member_base.map_node_ids(f);
+        self.type_ = self.type_.map(|id| f(id));
+        self.initializer = self.initializer.map(|id| f(id));
+    }
+}
+
+impl PropertyDeclaration {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.class_element_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.named_member_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.type_ = self.type_.map(|id| f(id));
+        self.initializer = self.initializer.map(|id| f(id));
+    }
+}
+
+impl SemicolonClassElement {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.class_element_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+    }
+}
+
+impl ClassStaticBlockDeclaration {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.class_element_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.modifiers_base.map_node_ids(f);
+        self.locals_container_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.body = self.body.map(|id| f(id));
+    }
+}
+
+impl OmittedExpression {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.expression_base.map_node_ids(f);
+    }
+}
+
+impl KeywordExpression {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.expression_base.map_node_ids(f);
+        self.flow_node_base.map_node_ids(f);
+    }
+}
+
+impl StringLiteral {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.literal_expression_base.map_node_ids(f);
+    }
+}
+
+impl NumericLiteral {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.literal_expression_base.map_node_ids(f);
+    }
+}
+
+impl BigIntLiteral {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.literal_expression_base.map_node_ids(f);
+    }
+}
+
+impl RegularExpressionLiteral {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.literal_expression_base.map_node_ids(f);
+    }
+}
+
+impl NoSubstitutionTemplateLiteral {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.expression_base.map_node_ids(f);
+        self.template_literal_like_node_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+    }
+}
+
+impl BinaryExpression {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.expression_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.modifiers_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.left = self.left.map(|id| f(id));
+        self.type_ = self.type_.map(|id| f(id));
+        self.operator_token = self.operator_token.map(|id| f(id));
+        self.right = self.right.map(|id| f(id));
+    }
+}
+
+impl PrefixUnaryExpression {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.update_expression_base.map_node_ids(f);
+        self.operand = self.operand.map(|id| f(id));
+    }
+}
+
+impl PostfixUnaryExpression {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.update_expression_base.map_node_ids(f);
+        self.operand = self.operand.map(|id| f(id));
+    }
+}
+
+impl YieldExpression {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.expression_base.map_node_ids(f);
+        self.asterisk_token = self.asterisk_token.map(|id| f(id));
+        self.expression = self.expression.map(|id| f(id));
+    }
+}
+
+impl ArrowFunction {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.expression_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.modifiers_base.map_node_ids(f);
+        self.function_like_with_body_base.map_node_ids(f);
+        self.flow_node_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.equals_greater_than_token = self.equals_greater_than_token.map(|id| f(id));
+    }
+}
+
+impl FunctionExpression {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.primary_expression_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.modifiers_base.map_node_ids(f);
+        self.function_like_with_body_base.map_node_ids(f);
+        self.flow_node_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.name = self.name.map(|id| f(id));
+    }
+}
+
+impl AsExpression {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.expression_base.map_node_ids(f);
+        self.expression = self.expression.map(|id| f(id));
+        self.type_ = self.type_.map(|id| f(id));
+    }
+}
+
+impl SatisfiesExpression {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.expression_base.map_node_ids(f);
+        self.expression = self.expression.map(|id| f(id));
+        self.type_ = self.type_.map(|id| f(id));
+    }
+}
+
+impl ConditionalExpression {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.expression_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.condition = self.condition.map(|id| f(id));
+        self.question_token = self.question_token.map(|id| f(id));
+        self.when_true = self.when_true.map(|id| f(id));
+        self.colon_token = self.colon_token.map(|id| f(id));
+        self.when_false = self.when_false.map(|id| f(id));
+    }
+}
+
+impl PropertyAccessExpression {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.member_expression_base.map_node_ids(f);
+        self.flow_node_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.expression = self.expression.map(|id| f(id));
+        self.question_dot_token = self.question_dot_token.map(|id| f(id));
+        self.name = self.name.map(|id| f(id));
+    }
+}
+
+impl ElementAccessExpression {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.member_expression_base.map_node_ids(f);
+        self.flow_node_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.expression = self.expression.map(|id| f(id));
+        self.question_dot_token = self.question_dot_token.map(|id| f(id));
+        self.argument_expression = self.argument_expression.map(|id| f(id));
+    }
+}
+
+impl CallExpression {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.left_hand_side_expression_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.expression = self.expression.map(|id| f(id));
+        self.question_dot_token = self.question_dot_token.map(|id| f(id));
+        if let Some(l) = &mut self.type_arguments {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+        if let Some(l) = &mut self.arguments {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+    }
+}
+
+impl NewExpression {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.primary_expression_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.expression = self.expression.map(|id| f(id));
+        if let Some(l) = &mut self.type_arguments {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+        if let Some(l) = &mut self.arguments {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+    }
+}
+
+impl MetaProperty {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.primary_expression_base.map_node_ids(f);
+        self.flow_node_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.name = self.name.map(|id| f(id));
+    }
+}
+
+impl NonNullExpression {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.left_hand_side_expression_base.map_node_ids(f);
+        self.expression = self.expression.map(|id| f(id));
+    }
+}
+
+impl SpreadElement {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.expression_base.map_node_ids(f);
+        self.expression = self.expression.map(|id| f(id));
+    }
+}
+
+impl TemplateExpression {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.primary_expression_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.head = self.head.map(|id| f(id));
+        if let Some(l) = &mut self.template_spans {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+    }
+}
+
+impl TemplateSpan {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.expression = self.expression.map(|id| f(id));
+        self.literal = self.literal.map(|id| f(id));
+    }
+}
+
+impl TaggedTemplateExpression {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.member_expression_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.tag = self.tag.map(|id| f(id));
+        self.question_dot_token = self.question_dot_token.map(|id| f(id));
+        if let Some(l) = &mut self.type_arguments {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+        self.template = self.template.map(|id| f(id));
+    }
+}
+
+impl ParenthesizedExpression {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.primary_expression_base.map_node_ids(f);
+        self.expression = self.expression.map(|id| f(id));
+    }
+}
+
+impl ArrayLiteralExpression {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.primary_expression_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        if let Some(l) = &mut self.elements {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+    }
+}
+
+impl ObjectLiteralExpression {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.primary_expression_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        if let Some(l) = &mut self.properties {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+    }
+}
+
+impl SpreadAssignment {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.object_literal_element_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.expression = self.expression.map(|id| f(id));
+    }
+}
+
+impl PropertyAssignment {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.object_literal_element_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.named_member_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.type_ = self.type_.map(|id| f(id));
+        self.initializer = self.initializer.map(|id| f(id));
+    }
+}
+
+impl ShorthandPropertyAssignment {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.object_literal_element_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.named_member_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.type_ = self.type_.map(|id| f(id));
+        self.equals_token = self.equals_token.map(|id| f(id));
+        self.object_assignment_initializer = self.object_assignment_initializer.map(|id| f(id));
+    }
+}
+
+impl DeleteExpression {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.unary_expression_base.map_node_ids(f);
+        self.expression = self.expression.map(|id| f(id));
+    }
+}
+
+impl TypeOfExpression {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.unary_expression_base.map_node_ids(f);
+        self.expression = self.expression.map(|id| f(id));
+    }
+}
+
+impl VoidExpression {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.unary_expression_base.map_node_ids(f);
+        self.expression = self.expression.map(|id| f(id));
+    }
+}
+
+impl AwaitExpression {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.unary_expression_base.map_node_ids(f);
+        self.expression = self.expression.map(|id| f(id));
+    }
+}
+
+impl TypeAssertion {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.unary_expression_base.map_node_ids(f);
+        self.type_ = self.type_.map(|id| f(id));
+        self.expression = self.expression.map(|id| f(id));
+    }
+}
+
+impl KeywordTypeNode {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_node_base.map_node_ids(f);
+    }
+}
+
+impl UnionTypeNode {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.union_or_intersection_type_node_base.map_node_ids(f);
+    }
+}
+
+impl IntersectionTypeNode {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.union_or_intersection_type_node_base.map_node_ids(f);
+    }
+}
+
+impl ConditionalTypeNode {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_node_base.map_node_ids(f);
+        self.locals_container_base.map_node_ids(f);
+        self.check_type = self.check_type.map(|id| f(id));
+        self.extends_type = self.extends_type.map(|id| f(id));
+        self.true_type = self.true_type.map(|id| f(id));
+        self.false_type = self.false_type.map(|id| f(id));
+    }
+}
+
+impl TypeOperatorNode {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_node_base.map_node_ids(f);
+        self.type_ = self.type_.map(|id| f(id));
+    }
+}
+
+impl InferTypeNode {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_node_base.map_node_ids(f);
+        self.type_parameter = self.type_parameter.map(|id| f(id));
+    }
+}
+
+impl ArrayTypeNode {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_node_base.map_node_ids(f);
+        self.element_type = self.element_type.map(|id| f(id));
+    }
+}
+
+impl IndexedAccessTypeNode {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_node_base.map_node_ids(f);
+        self.object_type = self.object_type.map(|id| f(id));
+        self.index_type = self.index_type.map(|id| f(id));
+    }
+}
+
+impl TypeReferenceNode {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.node_with_type_arguments_base.map_node_ids(f);
+        self.type_name = self.type_name.map(|id| f(id));
+    }
+}
+
+impl ExpressionWithTypeArguments {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.member_expression_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.expression = self.expression.map(|id| f(id));
+        if let Some(l) = &mut self.type_arguments {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+    }
+}
+
+impl LiteralTypeNode {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_node_base.map_node_ids(f);
+        self.literal = self.literal.map(|id| f(id));
+    }
+}
+
+impl ThisTypeNode {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_node_base.map_node_ids(f);
+    }
+}
+
+impl TypePredicateNode {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_node_base.map_node_ids(f);
+        self.asserts_modifier = self.asserts_modifier.map(|id| f(id));
+        self.parameter_name = self.parameter_name.map(|id| f(id));
+        self.type_ = self.type_.map(|id| f(id));
+    }
+}
+
+impl ImportAttribute {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.composite_base.map_node_ids(f);
+        self.name = self.name.map(|id| f(id));
+        self.value = self.value.map(|id| f(id));
+    }
+}
+
+impl ImportAttributes {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.composite_base.map_node_ids(f);
+        if let Some(l) = &mut self.attributes {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+    }
+}
+
+impl TypeQueryNode {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.node_with_type_arguments_base.map_node_ids(f);
+        self.expr_name = self.expr_name.map(|id| f(id));
+    }
+}
+
+impl MappedTypeNode {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_node_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.locals_container_base.map_node_ids(f);
+        self.readonly_token = self.readonly_token.map(|id| f(id));
+        self.type_parameter = self.type_parameter.map(|id| f(id));
+        self.name_type = self.name_type.map(|id| f(id));
+        self.question_token = self.question_token.map(|id| f(id));
+        self.type_ = self.type_.map(|id| f(id));
+        if let Some(l) = &mut self.members {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+    }
+}
+
+impl TypeLiteralNode {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_node_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        if let Some(l) = &mut self.members {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+    }
+}
+
+impl TupleTypeNode {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_node_base.map_node_ids(f);
+        if let Some(l) = &mut self.elements {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+    }
+}
+
+impl NamedTupleMember {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_node_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.dot_dot_dot_token = self.dot_dot_dot_token.map(|id| f(id));
+        self.name = self.name.map(|id| f(id));
+        self.question_token = self.question_token.map(|id| f(id));
+        self.type_ = self.type_.map(|id| f(id));
+    }
+}
+
+impl OptionalTypeNode {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_node_base.map_node_ids(f);
+        self.type_ = self.type_.map(|id| f(id));
+    }
+}
+
+impl RestTypeNode {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_node_base.map_node_ids(f);
+        self.type_ = self.type_.map(|id| f(id));
+    }
+}
+
+impl ParenthesizedTypeNode {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_node_base.map_node_ids(f);
+        self.type_ = self.type_.map(|id| f(id));
+    }
+}
+
+impl FunctionTypeNode {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.function_or_constructor_type_node_base.map_node_ids(f);
+    }
+}
+
+impl ConstructorTypeNode {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.function_or_constructor_type_node_base.map_node_ids(f);
+    }
+}
+
+impl TemplateHead {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.template_literal_like_node_base.map_node_ids(f);
+    }
+}
+
+impl TemplateMiddle {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.template_literal_like_node_base.map_node_ids(f);
+    }
+}
+
+impl TemplateTail {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.template_literal_like_node_base.map_node_ids(f);
+    }
+}
+
+impl TemplateLiteralTypeNode {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_node_base.map_node_ids(f);
+        self.head = self.head.map(|id| f(id));
+        if let Some(l) = &mut self.template_spans {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+    }
+}
+
+impl TemplateLiteralTypeSpan {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_node_base.map_node_ids(f);
+        self.type_ = self.type_.map(|id| f(id));
+        self.literal = self.literal.map(|id| f(id));
+    }
+}
+
+impl SyntheticExpression {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.expression_base.map_node_ids(f);
+        self.tuple_name_source = self.tuple_name_source.map(|id| f(id));
+    }
+}
+
+impl PartiallyEmittedExpression {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.left_hand_side_expression_base.map_node_ids(f);
+        self.expression = self.expression.map(|id| f(id));
+    }
+}
+
+impl JsxElement {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.primary_expression_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.opening_element = self.opening_element.map(|id| f(id));
+        if let Some(l) = &mut self.children {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+        self.closing_element = self.closing_element.map(|id| f(id));
+    }
+}
+
+impl JsxAttributes {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.primary_expression_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        if let Some(l) = &mut self.properties {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+    }
+}
+
+impl JsxNamespacedName {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.expression_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.namespace = self.namespace.map(|id| f(id));
+        self.name = self.name.map(|id| f(id));
+    }
+}
+
+impl JsxOpeningElement {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.expression_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.tag_name = self.tag_name.map(|id| f(id));
+        if let Some(l) = &mut self.type_arguments {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+        self.attributes = self.attributes.map(|id| f(id));
+    }
+}
+
+impl JsxSelfClosingElement {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.primary_expression_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.tag_name = self.tag_name.map(|id| f(id));
+        if let Some(l) = &mut self.type_arguments {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+        self.attributes = self.attributes.map(|id| f(id));
+    }
+}
+
+impl JsxFragment {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.primary_expression_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.opening_fragment = self.opening_fragment.map(|id| f(id));
+        if let Some(l) = &mut self.children {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+        self.closing_fragment = self.closing_fragment.map(|id| f(id));
+    }
+}
+
+impl JsxOpeningFragment {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.expression_base.map_node_ids(f);
+    }
+}
+
+impl JsxClosingFragment {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.expression_base.map_node_ids(f);
+    }
+}
+
+impl JsxAttribute {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.declaration_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.name = self.name.map(|id| f(id));
+        self.initializer = self.initializer.map(|id| f(id));
+    }
+}
+
+impl JsxSpreadAttribute {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.object_literal_element_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.expression = self.expression.map(|id| f(id));
+    }
+}
+
+impl JsxClosingElement {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.tag_name = self.tag_name.map(|id| f(id));
+    }
+}
+
+impl JsxExpression {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.expression_base.map_node_ids(f);
+        self.dot_dot_dot_token = self.dot_dot_dot_token.map(|id| f(id));
+        self.expression = self.expression.map(|id| f(id));
+    }
+}
+
+impl JsxText {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.expression_base.map_node_ids(f);
+        self.literal_like_node_base.map_node_ids(f);
+    }
+}
+
+impl SyntaxList {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        for id in self.children.iter_mut() {
+            *id = f(*id);
+        }
+    }
+}
+
+impl JSDoc {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        if let Some(l) = &mut self.comment {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+        if let Some(l) = &mut self.tags {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+    }
+}
+
+impl JSDocTypeExpression {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_node_base.map_node_ids(f);
+        self.type_ = self.type_.map(|id| f(id));
+    }
+}
+
+impl JSDocNonNullableType {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_type_base.map_node_ids(f);
+        self.type_ = self.type_.map(|id| f(id));
+    }
+}
+
+impl JSDocNullableType {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_type_base.map_node_ids(f);
+        self.type_ = self.type_.map(|id| f(id));
+    }
+}
+
+impl JSDocAllType {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_type_base.map_node_ids(f);
+    }
+}
+
+impl JSDocVariadicType {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_type_base.map_node_ids(f);
+        self.type_ = self.type_.map(|id| f(id));
+    }
+}
+
+impl JSDocOptionalType {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_type_base.map_node_ids(f);
+        self.type_ = self.type_.map(|id| f(id));
+    }
+}
+
+impl JSDocTypeTag {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_tag_base.map_node_ids(f);
+        self.type_expression = self.type_expression.map(|id| f(id));
+    }
+}
+
+impl JSDocUnknownTag {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_tag_base.map_node_ids(f);
+    }
+}
+
+impl JSDocTemplateTag {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_tag_base.map_node_ids(f);
+        self.constraint = self.constraint.map(|id| f(id));
+        if let Some(l) = &mut self.type_parameters {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+    }
+}
+
+impl JSDocReturnTag {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_tag_base.map_node_ids(f);
+        self.type_expression = self.type_expression.map(|id| f(id));
+    }
+}
+
+impl JSDocPublicTag {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_tag_base.map_node_ids(f);
+    }
+}
+
+impl JSDocPrivateTag {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_tag_base.map_node_ids(f);
+    }
+}
+
+impl JSDocProtectedTag {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_tag_base.map_node_ids(f);
+    }
+}
+
+impl JSDocReadonlyTag {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_tag_base.map_node_ids(f);
+    }
+}
+
+impl JSDocOverrideTag {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_tag_base.map_node_ids(f);
+    }
+}
+
+impl JSDocDeprecatedTag {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_tag_base.map_node_ids(f);
+    }
+}
+
+impl JSDocSeeTag {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_tag_base.map_node_ids(f);
+        self.name_expression = self.name_expression.map(|id| f(id));
+    }
+}
+
+impl JSDocImplementsTag {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_tag_base.map_node_ids(f);
+        self.class_name = self.class_name.map(|id| f(id));
+    }
+}
+
+impl JSDocAugmentsTag {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_tag_base.map_node_ids(f);
+        self.class_name = self.class_name.map(|id| f(id));
+    }
+}
+
+impl JSDocSatisfiesTag {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_tag_base.map_node_ids(f);
+        self.type_expression = self.type_expression.map(|id| f(id));
+    }
+}
+
+impl JSDocThrowsTag {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_tag_base.map_node_ids(f);
+        self.type_expression = self.type_expression.map(|id| f(id));
+    }
+}
+
+impl JSDocThisTag {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_tag_base.map_node_ids(f);
+        self.type_expression = self.type_expression.map(|id| f(id));
+    }
+}
+
+impl JSDocImportTag {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_tag_base.map_node_ids(f);
+        self.import_clause = self.import_clause.map(|id| f(id));
+        self.module_specifier = self.module_specifier.map(|id| f(id));
+        self.attributes = self.attributes.map(|id| f(id));
+    }
+}
+
+impl JSDocCallbackTag {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_tag_base.map_node_ids(f);
+        self.type_expression = self.type_expression.map(|id| f(id));
+        self.name = self.name.map(|id| f(id));
+    }
+}
+
+impl JSDocOverloadTag {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_tag_base.map_node_ids(f);
+        self.type_expression = self.type_expression.map(|id| f(id));
+    }
+}
+
+impl JSDocTypedefTag {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_tag_base.map_node_ids(f);
+        self.type_expression = self.type_expression.map(|id| f(id));
+        self.name = self.name.map(|id| f(id));
+    }
+}
+
+impl JSDocSignature {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_type_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.function_like_base.map_node_ids(f);
+    }
+}
+
+impl JSDocNameReference {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_node_base.map_node_ids(f);
+        self.name = self.name.map(|id| f(id));
+    }
+}
+
+impl ModuleDeclaration {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.statement_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.exportable_base.map_node_ids(f);
+        self.modifiers_base.map_node_ids(f);
+        self.locals_container_base.map_node_ids(f);
+        self.body_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.name = self.name.map(|id| f(id));
+        self.attributes = self.attributes.map(|id| f(id));
+    }
+}
+
+impl ImportEqualsDeclaration {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.statement_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.exportable_base.map_node_ids(f);
+        self.modifiers_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.name = self.name.map(|id| f(id));
+        self.module_reference = self.module_reference.map(|id| f(id));
+    }
+}
+
+impl ExportDeclaration {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.statement_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.modifiers_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.export_clause = self.export_clause.map(|id| f(id));
+        self.module_specifier = self.module_specifier.map(|id| f(id));
+        self.attributes = self.attributes.map(|id| f(id));
+    }
+}
+
+impl ImportTypeNode {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.node_with_type_arguments_base.map_node_ids(f);
+        self.argument = self.argument.map(|id| f(id));
+        self.attributes = self.attributes.map(|id| f(id));
+        self.qualifier = self.qualifier.map(|id| f(id));
+    }
+}
+
+impl ImportClause {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.declaration_base.map_node_ids(f);
+        self.exportable_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.name = self.name.map(|id| f(id));
+        self.named_bindings = self.named_bindings.map(|id| f(id));
+    }
+}
+
+impl ImportSpecifier {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.declaration_base.map_node_ids(f);
+        self.exportable_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        self.property_name = self.property_name.map(|id| f(id));
+        self.name = self.name.map(|id| f(id));
+    }
+}
+
+impl JSDocText {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_comment_base.map_node_ids(f);
+    }
+}
+
+impl JSDocLink {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_comment_base.map_node_ids(f);
+        self.name = self.name.map(|id| f(id));
+    }
+}
+
+impl JSDocLinkPlain {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_comment_base.map_node_ids(f);
+        self.name = self.name.map(|id| f(id));
+    }
+}
+
+impl JSDocLinkCode {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_comment_base.map_node_ids(f);
+        self.name = self.name.map(|id| f(id));
+    }
+}
+
+impl TypeParameterDeclaration {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.type_syntax_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        self.modifiers_base.map_node_ids(f);
+        self.name = self.name.map(|id| f(id));
+        self.constraint = self.constraint.map(|id| f(id));
+        self.expression = self.expression.map(|id| f(id));
+        self.default_type = self.default_type.map(|id| f(id));
+    }
+}
+
+impl SyntheticReferenceExpression {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.expression_base.map_node_ids(f);
+        self.expression = self.expression.map(|id| f(id));
+        self.this_arg = self.this_arg.map(|id| f(id));
+    }
+}
+
+impl JSDocTypeLiteral {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_type_base.map_node_ids(f);
+        self.declaration_base.map_node_ids(f);
+        for id in self.js_doc_property_tags.iter_mut() {
+            *id = f(*id);
+        }
+    }
+}
+
+impl JSDocParameterOrPropertyTag {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.js_doc_tag_base.map_node_ids(f);
+        self.name = self.name.map(|id| f(id));
+        self.type_expression = self.type_expression.map(|id| f(id));
+    }
+}
+
+impl SourceFile {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.declaration_base.map_node_ids(f);
+        self.locals_container_base.map_node_ids(f);
+        self.composite_base.map_node_ids(f);
+        if let Some(l) = &mut self.statements {
+            for id in l.nodes.iter_mut() {
+                *id = f(*id);
+            }
+        }
+        self.end_of_file_token = self.end_of_file_token.map(|id| f(id));
+        for id in self.imports.iter_mut() {
+            *id = f(*id);
+        }
+        for id in self.module_augmentations.iter_mut() {
+            *id = f(*id);
+        }
+        for id in self.reparsed_clones.iter_mut() {
+            *id = f(*id);
+        }
+        self.common_js_module_indicator = self.common_js_module_indicator.map(|id| f(id));
+        self.external_module_indicator = self.external_module_indicator.map(|id| f(id));
+    }
+}
+
+impl FlowSwitchClauseData {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        self.switch_statement = self.switch_statement.map(|id| f(id));
+    }
+}
+
+impl FlowReduceLabelData {
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        let _ = f;
+    }
+}
+
+impl NodeData {
+    /// Rewrites each direct child `NodeId` in the payload through `f`.
+    pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
+        match self {
+            NodeData::Token(d) => d.map_node_ids(f),
+            NodeData::Identifier(d) => d.map_node_ids(f),
+            NodeData::PrivateIdentifier(d) => d.map_node_ids(f),
+            NodeData::QualifiedName(d) => d.map_node_ids(f),
+            NodeData::ComputedPropertyName(d) => d.map_node_ids(f),
+            NodeData::Decorator(d) => d.map_node_ids(f),
+            NodeData::EmptyStatement(d) => d.map_node_ids(f),
+            NodeData::IfStatement(d) => d.map_node_ids(f),
+            NodeData::DoStatement(d) => d.map_node_ids(f),
+            NodeData::WhileStatement(d) => d.map_node_ids(f),
+            NodeData::ForStatement(d) => d.map_node_ids(f),
+            NodeData::ForInOrOfStatement(d) => d.map_node_ids(f),
+            NodeData::BreakStatement(d) => d.map_node_ids(f),
+            NodeData::ContinueStatement(d) => d.map_node_ids(f),
+            NodeData::ReturnStatement(d) => d.map_node_ids(f),
+            NodeData::WithStatement(d) => d.map_node_ids(f),
+            NodeData::SwitchStatement(d) => d.map_node_ids(f),
+            NodeData::CaseBlock(d) => d.map_node_ids(f),
+            NodeData::CaseOrDefaultClause(d) => d.map_node_ids(f),
+            NodeData::ThrowStatement(d) => d.map_node_ids(f),
+            NodeData::TryStatement(d) => d.map_node_ids(f),
+            NodeData::CatchClause(d) => d.map_node_ids(f),
+            NodeData::DebuggerStatement(d) => d.map_node_ids(f),
+            NodeData::LabeledStatement(d) => d.map_node_ids(f),
+            NodeData::ExpressionStatement(d) => d.map_node_ids(f),
+            NodeData::Block(d) => d.map_node_ids(f),
+            NodeData::VariableStatement(d) => d.map_node_ids(f),
+            NodeData::VariableDeclaration(d) => d.map_node_ids(f),
+            NodeData::VariableDeclarationList(d) => d.map_node_ids(f),
+            NodeData::BindingPattern(d) => d.map_node_ids(f),
+            NodeData::ParameterDeclaration(d) => d.map_node_ids(f),
+            NodeData::BindingElement(d) => d.map_node_ids(f),
+            NodeData::MissingDeclaration(d) => d.map_node_ids(f),
+            NodeData::FunctionDeclaration(d) => d.map_node_ids(f),
+            NodeData::ClassDeclaration(d) => d.map_node_ids(f),
+            NodeData::ClassExpression(d) => d.map_node_ids(f),
+            NodeData::HeritageClause(d) => d.map_node_ids(f),
+            NodeData::InterfaceDeclaration(d) => d.map_node_ids(f),
+            NodeData::TypeAliasDeclaration(d) => d.map_node_ids(f),
+            NodeData::EnumMember(d) => d.map_node_ids(f),
+            NodeData::EnumDeclaration(d) => d.map_node_ids(f),
+            NodeData::ModuleBlock(d) => d.map_node_ids(f),
+            NodeData::NotEmittedStatement(d) => d.map_node_ids(f),
+            NodeData::NotEmittedTypeElement(d) => d.map_node_ids(f),
+            NodeData::ImportDeclaration(d) => d.map_node_ids(f),
+            NodeData::ExternalModuleReference(d) => d.map_node_ids(f),
+            NodeData::NamespaceImport(d) => d.map_node_ids(f),
+            NodeData::NamedImports(d) => d.map_node_ids(f),
+            NodeData::ExportAssignment(d) => d.map_node_ids(f),
+            NodeData::NamespaceExportDeclaration(d) => d.map_node_ids(f),
+            NodeData::NamespaceExport(d) => d.map_node_ids(f),
+            NodeData::NamedExports(d) => d.map_node_ids(f),
+            NodeData::ExportSpecifier(d) => d.map_node_ids(f),
+            NodeData::CallSignatureDeclaration(d) => d.map_node_ids(f),
+            NodeData::ConstructSignatureDeclaration(d) => d.map_node_ids(f),
+            NodeData::ConstructorDeclaration(d) => d.map_node_ids(f),
+            NodeData::GetAccessorDeclaration(d) => d.map_node_ids(f),
+            NodeData::SetAccessorDeclaration(d) => d.map_node_ids(f),
+            NodeData::IndexSignatureDeclaration(d) => d.map_node_ids(f),
+            NodeData::MethodSignatureDeclaration(d) => d.map_node_ids(f),
+            NodeData::MethodDeclaration(d) => d.map_node_ids(f),
+            NodeData::PropertySignatureDeclaration(d) => d.map_node_ids(f),
+            NodeData::PropertyDeclaration(d) => d.map_node_ids(f),
+            NodeData::SemicolonClassElement(d) => d.map_node_ids(f),
+            NodeData::ClassStaticBlockDeclaration(d) => d.map_node_ids(f),
+            NodeData::OmittedExpression(d) => d.map_node_ids(f),
+            NodeData::KeywordExpression(d) => d.map_node_ids(f),
+            NodeData::StringLiteral(d) => d.map_node_ids(f),
+            NodeData::NumericLiteral(d) => d.map_node_ids(f),
+            NodeData::BigIntLiteral(d) => d.map_node_ids(f),
+            NodeData::RegularExpressionLiteral(d) => d.map_node_ids(f),
+            NodeData::NoSubstitutionTemplateLiteral(d) => d.map_node_ids(f),
+            NodeData::BinaryExpression(d) => d.map_node_ids(f),
+            NodeData::PrefixUnaryExpression(d) => d.map_node_ids(f),
+            NodeData::PostfixUnaryExpression(d) => d.map_node_ids(f),
+            NodeData::YieldExpression(d) => d.map_node_ids(f),
+            NodeData::ArrowFunction(d) => d.map_node_ids(f),
+            NodeData::FunctionExpression(d) => d.map_node_ids(f),
+            NodeData::AsExpression(d) => d.map_node_ids(f),
+            NodeData::SatisfiesExpression(d) => d.map_node_ids(f),
+            NodeData::ConditionalExpression(d) => d.map_node_ids(f),
+            NodeData::PropertyAccessExpression(d) => d.map_node_ids(f),
+            NodeData::ElementAccessExpression(d) => d.map_node_ids(f),
+            NodeData::CallExpression(d) => d.map_node_ids(f),
+            NodeData::NewExpression(d) => d.map_node_ids(f),
+            NodeData::MetaProperty(d) => d.map_node_ids(f),
+            NodeData::NonNullExpression(d) => d.map_node_ids(f),
+            NodeData::SpreadElement(d) => d.map_node_ids(f),
+            NodeData::TemplateExpression(d) => d.map_node_ids(f),
+            NodeData::TemplateSpan(d) => d.map_node_ids(f),
+            NodeData::TaggedTemplateExpression(d) => d.map_node_ids(f),
+            NodeData::ParenthesizedExpression(d) => d.map_node_ids(f),
+            NodeData::ArrayLiteralExpression(d) => d.map_node_ids(f),
+            NodeData::ObjectLiteralExpression(d) => d.map_node_ids(f),
+            NodeData::SpreadAssignment(d) => d.map_node_ids(f),
+            NodeData::PropertyAssignment(d) => d.map_node_ids(f),
+            NodeData::ShorthandPropertyAssignment(d) => d.map_node_ids(f),
+            NodeData::DeleteExpression(d) => d.map_node_ids(f),
+            NodeData::TypeOfExpression(d) => d.map_node_ids(f),
+            NodeData::VoidExpression(d) => d.map_node_ids(f),
+            NodeData::AwaitExpression(d) => d.map_node_ids(f),
+            NodeData::TypeAssertion(d) => d.map_node_ids(f),
+            NodeData::KeywordTypeNode(d) => d.map_node_ids(f),
+            NodeData::UnionTypeNode(d) => d.map_node_ids(f),
+            NodeData::IntersectionTypeNode(d) => d.map_node_ids(f),
+            NodeData::ConditionalTypeNode(d) => d.map_node_ids(f),
+            NodeData::TypeOperatorNode(d) => d.map_node_ids(f),
+            NodeData::InferTypeNode(d) => d.map_node_ids(f),
+            NodeData::ArrayTypeNode(d) => d.map_node_ids(f),
+            NodeData::IndexedAccessTypeNode(d) => d.map_node_ids(f),
+            NodeData::TypeReferenceNode(d) => d.map_node_ids(f),
+            NodeData::ExpressionWithTypeArguments(d) => d.map_node_ids(f),
+            NodeData::LiteralTypeNode(d) => d.map_node_ids(f),
+            NodeData::ThisTypeNode(d) => d.map_node_ids(f),
+            NodeData::TypePredicateNode(d) => d.map_node_ids(f),
+            NodeData::ImportAttribute(d) => d.map_node_ids(f),
+            NodeData::ImportAttributes(d) => d.map_node_ids(f),
+            NodeData::TypeQueryNode(d) => d.map_node_ids(f),
+            NodeData::MappedTypeNode(d) => d.map_node_ids(f),
+            NodeData::TypeLiteralNode(d) => d.map_node_ids(f),
+            NodeData::TupleTypeNode(d) => d.map_node_ids(f),
+            NodeData::NamedTupleMember(d) => d.map_node_ids(f),
+            NodeData::OptionalTypeNode(d) => d.map_node_ids(f),
+            NodeData::RestTypeNode(d) => d.map_node_ids(f),
+            NodeData::ParenthesizedTypeNode(d) => d.map_node_ids(f),
+            NodeData::FunctionTypeNode(d) => d.map_node_ids(f),
+            NodeData::ConstructorTypeNode(d) => d.map_node_ids(f),
+            NodeData::TemplateHead(d) => d.map_node_ids(f),
+            NodeData::TemplateMiddle(d) => d.map_node_ids(f),
+            NodeData::TemplateTail(d) => d.map_node_ids(f),
+            NodeData::TemplateLiteralTypeNode(d) => d.map_node_ids(f),
+            NodeData::TemplateLiteralTypeSpan(d) => d.map_node_ids(f),
+            NodeData::SyntheticExpression(d) => d.map_node_ids(f),
+            NodeData::PartiallyEmittedExpression(d) => d.map_node_ids(f),
+            NodeData::JsxElement(d) => d.map_node_ids(f),
+            NodeData::JsxAttributes(d) => d.map_node_ids(f),
+            NodeData::JsxNamespacedName(d) => d.map_node_ids(f),
+            NodeData::JsxOpeningElement(d) => d.map_node_ids(f),
+            NodeData::JsxSelfClosingElement(d) => d.map_node_ids(f),
+            NodeData::JsxFragment(d) => d.map_node_ids(f),
+            NodeData::JsxOpeningFragment(d) => d.map_node_ids(f),
+            NodeData::JsxClosingFragment(d) => d.map_node_ids(f),
+            NodeData::JsxAttribute(d) => d.map_node_ids(f),
+            NodeData::JsxSpreadAttribute(d) => d.map_node_ids(f),
+            NodeData::JsxClosingElement(d) => d.map_node_ids(f),
+            NodeData::JsxExpression(d) => d.map_node_ids(f),
+            NodeData::JsxText(d) => d.map_node_ids(f),
+            NodeData::SyntaxList(d) => d.map_node_ids(f),
+            NodeData::JSDoc(d) => d.map_node_ids(f),
+            NodeData::JSDocTypeExpression(d) => d.map_node_ids(f),
+            NodeData::JSDocNonNullableType(d) => d.map_node_ids(f),
+            NodeData::JSDocNullableType(d) => d.map_node_ids(f),
+            NodeData::JSDocAllType(d) => d.map_node_ids(f),
+            NodeData::JSDocVariadicType(d) => d.map_node_ids(f),
+            NodeData::JSDocOptionalType(d) => d.map_node_ids(f),
+            NodeData::JSDocTypeTag(d) => d.map_node_ids(f),
+            NodeData::JSDocUnknownTag(d) => d.map_node_ids(f),
+            NodeData::JSDocTemplateTag(d) => d.map_node_ids(f),
+            NodeData::JSDocReturnTag(d) => d.map_node_ids(f),
+            NodeData::JSDocPublicTag(d) => d.map_node_ids(f),
+            NodeData::JSDocPrivateTag(d) => d.map_node_ids(f),
+            NodeData::JSDocProtectedTag(d) => d.map_node_ids(f),
+            NodeData::JSDocReadonlyTag(d) => d.map_node_ids(f),
+            NodeData::JSDocOverrideTag(d) => d.map_node_ids(f),
+            NodeData::JSDocDeprecatedTag(d) => d.map_node_ids(f),
+            NodeData::JSDocSeeTag(d) => d.map_node_ids(f),
+            NodeData::JSDocImplementsTag(d) => d.map_node_ids(f),
+            NodeData::JSDocAugmentsTag(d) => d.map_node_ids(f),
+            NodeData::JSDocSatisfiesTag(d) => d.map_node_ids(f),
+            NodeData::JSDocThrowsTag(d) => d.map_node_ids(f),
+            NodeData::JSDocThisTag(d) => d.map_node_ids(f),
+            NodeData::JSDocImportTag(d) => d.map_node_ids(f),
+            NodeData::JSDocCallbackTag(d) => d.map_node_ids(f),
+            NodeData::JSDocOverloadTag(d) => d.map_node_ids(f),
+            NodeData::JSDocTypedefTag(d) => d.map_node_ids(f),
+            NodeData::JSDocSignature(d) => d.map_node_ids(f),
+            NodeData::JSDocNameReference(d) => d.map_node_ids(f),
+            NodeData::ModuleDeclaration(d) => d.map_node_ids(f),
+            NodeData::ImportEqualsDeclaration(d) => d.map_node_ids(f),
+            NodeData::ExportDeclaration(d) => d.map_node_ids(f),
+            NodeData::ImportTypeNode(d) => d.map_node_ids(f),
+            NodeData::ImportClause(d) => d.map_node_ids(f),
+            NodeData::ImportSpecifier(d) => d.map_node_ids(f),
+            NodeData::JSDocText(d) => d.map_node_ids(f),
+            NodeData::JSDocLink(d) => d.map_node_ids(f),
+            NodeData::JSDocLinkPlain(d) => d.map_node_ids(f),
+            NodeData::JSDocLinkCode(d) => d.map_node_ids(f),
+            NodeData::TypeParameterDeclaration(d) => d.map_node_ids(f),
+            NodeData::SyntheticReferenceExpression(d) => d.map_node_ids(f),
+            NodeData::JSDocTypeLiteral(d) => d.map_node_ids(f),
+            NodeData::JSDocParameterOrPropertyTag(d) => d.map_node_ids(f),
+            NodeData::SourceFile(d) => d.map_node_ids(f),
+            NodeData::FlowSwitchClauseData(d) => d.map_node_ids(f),
+            NodeData::FlowReduceLabelData(d) => d.map_node_ids(f),
+        }
+    }
+}
+
 /// `nodeData` — the payload enum; every variant is a
 /// generated or hand-authored node data struct.
 #[derive(Clone)]
