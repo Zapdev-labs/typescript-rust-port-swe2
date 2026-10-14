@@ -277,6 +277,11 @@ impl<'a> Parser<'a> {
             _ => NodeFlags::NONE,
         };
         self.scanner.set_text(self.source_text);
+        // Observed density is ~19 source bytes per node on typical code
+        // (~3.3 on pathological test inputs). Reserving len/12 up front
+        // eliminates nearly all arena-growth memcpy without grossly
+        // over-reserving on dense inputs.
+        self.nodes.reserve(source_text.len() / 12);
         let pending = Rc::clone(&self.pending_scan_errors);
         self.scanner.set_on_error(Some(
             move |message: &'static Message, pos: usize, length: usize, args: &[String]| {
