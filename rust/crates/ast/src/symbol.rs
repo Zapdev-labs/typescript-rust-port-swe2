@@ -114,6 +114,15 @@ impl SymbolArena {
         SymbolId(self.symbols.alloc(s) as u32)
     }
 
+    /// Scoped-thread parallel-bind protocol — see `ChunkedArena`.
+    pub fn enter_parallel(&self, extra_elements: usize) {
+        self.symbols.enter_parallel(extra_elements);
+    }
+    /// Scoped-thread parallel-bind protocol — see `ChunkedArena`.
+    pub fn exit_parallel(&self) {
+        self.symbols.exit_parallel();
+    }
+
     /// Shared-pointer access to a single symbol — the Go `s.field` read
     /// shape. A single pointer deref: no borrow flag, no refcount.
     #[inline]

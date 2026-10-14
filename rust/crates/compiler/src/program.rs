@@ -999,42 +999,146 @@ impl Program {
             == TS_TRUE
     }
 
-    /// `BindSourceFiles`.
+    /// `BindSourceFiles`. Go runs this on a `WorkGroup`; the port binds in
+    /// parallel on scoped threads when it can (see below), otherwise in
+    /// source-file order. Per-file binds append into the program-global
+    /// symbol arena so `SymbolId`s are program-wide (SPEC §5.2).
     pub fn bind_source_files(&self) {
-        // PORT: sequential — `Rc`/`RefCell` arenas are not `Send`.
-        // The global symbol arena is borrowed for the whole pass; per-file
-        // binds append so `SymbolId`s are program-wide (SPEC §5.2).
-        let mut symbols = self.symbols.clone();
-        for &file in &self.source_file_ids {
-            let needs_bind = {
+        let unbound: Vec<NodeId> = self
+            .source_file_ids
+            .iter()
+            .copied()
+            .filter(|&file| {
                 let nodes = self.arena_of(file);
                 !nodes[file].as_source_file().is_bound()
-            };
-            if needs_bind {
-                let trace_done = push(
-                    self.hosts.tracing.as_ref(),
-                    PHASE_BIND,
-                    "bindSourceFile",
-                    [(
-                        "path".to_string(),
-                        serde_json::Value::from(
-                            self.arena_of(file)[file]
-                                .as_source_file()
-                                .path_key()
-                                .as_string()
-                                .to_string(),
-                        ),
-                    )]
-                    .into_iter()
-                    .collect(),
-                    true,
-                );
-                let mut nodes = self.nodes_mut(file.file_index());
-                tsc_binder::binder::bind_source_file(&mut *nodes, file, &mut symbols);
-                drop(nodes);
-                trace_done();
+            })
+            .collect();
+        if unbound.is_empty() {
+            return;
+        }
+        let workers = if self.single_threaded()
+            || unbound.len() < 4
+            || self.hosts.tracing.is_some()
+            || std::env::var("TSC_NO_PAR_BIND").is_ok()
+        {
+            1
+        } else {
+            std::thread::available_parallelism()
+                .map(|n| n.get())
+                .unwrap_or(1)
+                .min(8)
+                .min(unbound.len())
+        };
+        if workers <= 1 {
+            self.bind_source_files_seq(&unbound);
+        } else {
+            self.bind_source_files_par(unbound, workers);
+        }
+    }
+
+    /// Sequential in-order bind — the single-threaded/traced path.
+    fn bind_source_files_seq(&self, unbound: &[NodeId]) {
+        let mut symbols = self.symbols.clone();
+        for &file in unbound {
+            let trace_done = push(
+                self.hosts.tracing.as_ref(),
+                PHASE_BIND,
+                "bindSourceFile",
+                [(
+                    "path".to_string(),
+                    serde_json::Value::from(
+                        self.arena_of(file)[file]
+                            .as_source_file()
+                            .path_key()
+                            .as_string()
+                            .to_string(),
+                    ),
+                )]
+                .into_iter()
+                .collect(),
+                true,
+            );
+            let mut nodes = self.nodes_mut(file.file_index());
+            tsc_binder::binder::bind_source_file(&mut *nodes, file, &mut symbols);
+            drop(nodes);
+            trace_done();
+        }
+    }
+
+    /// Scoped-thread bind — the same shape as Go's `WorkGroup` loop. Each
+    /// file's node arena is mutated exclusively by its worker; the only
+    /// shared write is `SymbolArena::alloc`, which `enter_parallel`
+    /// serializes (with the outer chunk Vec pre-reserved so lock-free
+    /// `get`/`get_mut` stay sound). `SymbolId` assignment order differs
+    /// from the sequential path, but `SymbolId`s are already
+    /// order-insensitive to consumers — same class of nondeterminism Go
+    /// has across its WorkGroup workers.
+    #[allow(unsafe_code)]
+    fn bind_source_files_par(&self, unbound: Vec<NodeId>, workers: usize) {
+        // A file cannot declare more symbols than it has nodes — the arena
+        // length is a safe upper bound for `enter_parallel`'s reserve.
+        let extra: usize = unbound
+            .iter()
+            .map(|&file| self.arena_of(file).len())
+            .sum();
+        self.symbols.enter_parallel(extra);
+
+        // LPT-balance by node count so one huge file doesn't strand a
+        // worker while others idle (same as the check/emit fork groups).
+        let mut sized: Vec<(usize, NodeId)> = unbound
+            .iter()
+            .map(|&file| (self.arena_of(file).len(), file))
+            .collect();
+        sized.sort_unstable_by(|a, b| b.0.cmp(&a.0));
+        let mut groups: Vec<Vec<NodeId>> = vec![Vec::new(); workers];
+        let mut loads = vec![0usize; workers];
+        for (size, file) in sized {
+            let g = loads
+                .iter()
+                .enumerate()
+                .min_by_key(|(_, l)| *l)
+                .map(|(i, _)| i)
+                .unwrap();
+            groups[g].push(file);
+            loads[g] += size;
+        }
+
+        /// Lets `&Program` cross the scoped-thread boundary. Sound here
+        /// because workers only mutate disjoint per-file node arenas plus
+        /// the parallel-mode symbol arena — every other access is read-only.
+        struct ProgRef<'a>(&'a Program);
+        unsafe impl Send for ProgRef<'_> {}
+        unsafe impl Sync for ProgRef<'_> {}
+
+        /// `thread::scope` propagates worker panics after joining; the
+        /// arena must still leave parallel mode and repair chunk lengths.
+        struct ExitPar<'a>(&'a tsc_ast::symbol::SymbolArena);
+        impl Drop for ExitPar<'_> {
+            fn drop(&mut self) {
+                self.0.exit_parallel();
             }
         }
+
+        let prog = ProgRef(self);
+        let prog = &prog;
+        let _exit = ExitPar(&self.symbols);
+        std::thread::scope(|s| {
+            for group in groups {
+                if group.is_empty() {
+                    continue;
+                }
+                s.spawn(move || {
+                    for file in group {
+                        let mut nodes = prog.0.nodes_mut(file.file_index());
+                        tsc_binder::binder::bind_source_file(
+                            &mut *nodes,
+                            file,
+                            &prog.0.symbols,
+                        );
+                    }
+                });
+            }
+        });
     }
 
     /// `Program::releaseCheckerPool` — PORT(addition): drops the program's
