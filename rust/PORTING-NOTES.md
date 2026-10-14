@@ -1684,3 +1684,27 @@ and surviving ones are ordinary statement temps.
   resolution context first forces `WeakValidationMap<GetProps<C>>` member
   resolution. Fix requires tracing the check-order difference; deferred.
 - Repro: `/tmp/m8.ts` on remote (React/Redux-style Shared/Matching/GetProps).
+
+## Known divergence — `largeTupleTypes` spurious TS2799 (deferred)
+- Test: `largeTupleTypes.ts` — ours emits `error TS2799` at 15:78; Go is clean.
+- Verified mechanism: the `GrowExp`/`GrowExpRev`/`Tuple` recursive-conditional
+  constraint walk doubles a concrete tuple each round
+  (`[...A,...A][N]` instantiated inside `get_conditional_type` →
+  `create_normalized_tuple_type` → 10k cap → TS2799).
+- Go materializes up to `spread 1024 + cur 1024` (2048 total) then the walk
+  terminates; ours reaches `spread 8192 + cur 8192` and trips the cap.
+- All ported machinery verified faithful: `computeBaseConstraint` (union /
+  indexed-access / conditional / substitution / generic-tuple arms),
+  `conditionalConstraintDepth` (max 1 in Go's whole run — nested conditional
+  arms don't accumulate), `getRecursionIdentity` (conditional instantiations
+  share `root.node` identity — dedup DOES fire in ours: `contains=true` at
+  stacklen 10-12 on root-node identities), `getResolvedBaseConstraint`
+  push/pop + stack append semantics, `getConstraintFromConditionalType`
+  (DCD→forConstraint-inst / DEF→union(true,false)), `getSimplifiedConditionalType`,
+  `getSubstitutionIntersection`, tuple normalizer.
+- The difference: our constraint walk pushes ~2 extra intermediate levels
+  (substitution/object identities) per doubling round vs Go, so the repeated
+  `root.node` identity collides at stacklen ~12 instead of ~10 — 2 extra
+  rounds = 4× = 2048→8192. RBC call volume: ours 3429 (727 conditional) vs
+  Go 1797 (47 conditional). Emergent ordering again — same class as the
+  `Matching` divergence; single spurious diagnostic. Deferred.
