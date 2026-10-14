@@ -730,7 +730,7 @@ fn test_program_hosts_and_factories() {
                 .get_source_file(&rooted_file_path_from_normalized("/src/index.ts"))
                 .expect("index.ts");
             let nodes = p.arena_of(f);
-            assert_eq!(nodes[f].as_source_file().text, expected_text);
+            assert_eq!(nodes[f].as_source_file().text.as_ref(), expected_text);
             drop(nodes);
             Rc::new(new_checker_pool_with_tracing(p, p.tracing())) as Rc<dyn CheckerPool>
         })),

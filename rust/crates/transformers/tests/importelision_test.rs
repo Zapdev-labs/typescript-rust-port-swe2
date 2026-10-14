@@ -285,13 +285,13 @@ impl FakeEmitResolver {
                 let q = nodes[entity].as_qualified_name();
                 let left = self.resolve_entity_name(q.left?, nodes, symbols)?;
                 let text = nodes[q.right?].text(nodes).into_owned();
-                symbols[left.index()].members.get(&text).copied()
+                symbols[left.index()].members.get(text.as_str()).copied()
             }
             Kind::PropertyAccessExpression => {
                 let left = nodes[entity].expression()?;
                 let left = self.resolve_entity_name(left, nodes, symbols)?;
                 let text = nodes[nodes[entity].name()?].text(nodes).into_owned();
-                symbols[left.index()].members.get(&text).copied()
+                symbols[left.index()].members.get(text.as_str()).copied()
             }
             _ => None,
         }
@@ -351,7 +351,7 @@ impl FakeEmitResolver {
                         _ => {
                             let name = nodes[decl].property_name_or_name()?;
                             let text = nodes[name].text(nodes).into_owned();
-                            msyms[file_sym.index()].exports.get(&text).copied()?
+                            msyms[file_sym.index()].exports.get(text.as_str()).copied()?
                         }
                     };
                     (mnodes, msyms, target)
@@ -367,7 +367,7 @@ impl FakeEmitResolver {
                         (
                             mnodes,
                             msyms,
-                            msyms[file_sym.index()].exports.get(&text).copied()?,
+                            msyms[file_sym.index()].exports.get(text.as_str()).copied()?,
                         )
                     } else {
                         let target = self.resolve_entity_name(name, nodes, symbols)?;

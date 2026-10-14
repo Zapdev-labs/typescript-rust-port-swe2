@@ -569,28 +569,31 @@ impl Checker {
     ) -> bool {
         let mut source = source;
         let mut target = target;
-        // One arena borrow for the fresh-literal and flag reads — the port's
-        // per-read `get_ref` would borrow once per access where Go derefs.
+        // Fresh-literal and flag reads — `get_ref` is a single pointer
+        // deref now (stable-address arena), matching Go's free `t.field`.
         let (source_flags, target_flags) = {
-            let v = self.types.borrow();
             let is_fresh = |t: TypeId| {
-                let ty = &v[t.index()];
+                let ty = self.types.get_ref(t);
                 ty.flags.intersects(TypeFlags::FRESHABLE)
                     && ty.as_literal_type().fresh_type == Some(t)
             };
             if is_fresh(source) {
-                source = v[source.index()]
+                source = self
+                    .types
+                    .get_ref(source)
                     .as_literal_type()
                     .regular_type()
                     .expect("fresh literal type has regularType");
             }
             if is_fresh(target) {
-                target = v[target.index()]
+                target = self
+                    .types
+                    .get_ref(target)
                     .as_literal_type()
                     .regular_type()
                     .expect("fresh literal type has regularType");
             }
-            (v[source.index()].flags, v[target.index()].flags)
+            (self.types.get_ref(source).flags, self.types.get_ref(target).flags)
         };
         if source == target {
             return true;
@@ -1376,7 +1379,6 @@ impl Checker {
         }
         if ty.flags.intersects(TypeFlags::INTERSECTION) {
             let types = ty.types_rc();
-            drop(ty);
             return types.iter().any(|&t| self.is_or_has_generic_conditional(t));
         }
         false
@@ -1990,7 +1992,6 @@ impl Checker {
     pub(crate) fn is_weak_type(&mut self, t: TypeId) -> bool {
         let ty = self.types.get_ref(t);
         let flags = ty.flags;
-        drop(ty);
         if flags.intersects(TypeFlags::OBJECT) {
             let resolved = self.resolve_structured_type_members(t);
             let resolved_ty = self.types.get_ref(resolved);
@@ -2000,7 +2001,6 @@ impl Checker {
             let no_members =
                 resolved_members.signatures.is_empty() && resolved_members.index_infos.is_empty();
             let properties = resolved_members.properties.clone();
-            drop(resolved_ty);
             return no_members
                 && !properties.is_empty()
                 && properties
@@ -2112,12 +2112,9 @@ pub(crate) fn is_excess_property_check_target(types: &crate::types::TypeArena, t
             .as_substitution_type()
             .base_type()
             .expect("substitution baseType");
-        drop(ty);
         if is_excess_property_check_target(types, base_type) {
             return true;
         }
-    } else {
-        drop(ty);
     }
     if flags.intersects(TypeFlags::UNION) {
         let constituents = types.get_ref(t).types_rc();
@@ -2150,7 +2147,6 @@ fn get_recursion_identity_target(c: &mut Checker, t: TypeId) -> TypeId {
     let ty = c.types.get_ref(t);
     if ty.flags.intersects(TypeFlags::INDEXED_ACCESS) {
         let object_type = ty.as_indexed_access_type().object_type;
-        drop(ty);
         return get_recursion_identity_target(c, object_type.unwrap());
     }
     // `declaration.is_some()` gates the mapped branch: `trace_record_type`
@@ -2164,17 +2160,13 @@ fn get_recursion_identity_target(c: &mut Checker, t: TypeId) -> TypeId {
     if ty.object_flags.contains(ObjectFlags::INSTANTIATED_MAPPED)
         && ty.as_mapped_type().declaration.is_some()
     {
-        drop(ty);
         let target = c.get_modifiers_type_from_mapped_type(t);
         if let Some(target) = target {
-            // Stage `target`'s symbol/types before the nested `types.get` —
-            // no read guard may be held across another arena read.
             let (has_symbol, constituents_have_symbol) = {
                 let tt = c.types.get_ref(target);
                 let has_symbol = tt.symbol.is_some();
                 let constituents_have_symbol = tt.flags.intersects(TypeFlags::INTERSECTION) && {
                     let types = tt.types_rc();
-                    drop(tt);
                     types
                         .iter()
                         .any(|&s| c.types.get_ref(s).symbol.is_some())
@@ -2892,7 +2884,6 @@ impl Checker {
                 u.key_property_name = name;
                 u.constituent_map = map;
             }
-            drop(g);
         }
         let name = self.types.get_ref(t).as_union_type().key_property_name.clone();
         if name == ast::symbol::INTERNAL_SYMBOL_NAME_MISSING {

@@ -47,7 +47,7 @@ fn test_decode_source_file_basic() {
         arena[decoded].as_source_file().file_name.as_string(),
         "/test.ts"
     );
-    assert_eq!(arena[decoded].as_source_file().text, "let x = 1;");
+    assert_eq!(arena[decoded].as_source_file().text.as_ref(), "let x = 1;");
     assert!(arena[decoded].as_source_file().statements.is_some());
     assert!(arena[decoded].as_source_file().end_of_file_token.is_some());
 }
@@ -145,7 +145,7 @@ fn test_decode_source_file_variable_declaration() {
     let decl = arena[declarations.nodes[0]].as_variable_declaration();
     let name = decl.name.unwrap();
     assert_eq!(arena[name].kind, Kind::Identifier);
-    assert_eq!(arena[name].as_identifier().text, "x");
+    assert_eq!(arena[name].as_identifier().text.as_ref(), "x");
     let initializer = decl.initializer.unwrap();
     assert_eq!(arena[initializer].kind, Kind::NumericLiteral);
     assert_eq!(arena[initializer].text(&arena), "1");
@@ -195,14 +195,14 @@ fn test_decode_source_file_function_declaration() {
         .nodes[0];
     let func_decl = arena[func].as_function_declaration();
     let name = func_decl.name.unwrap();
-    assert_eq!(arena[name].as_identifier().text, "add");
+    assert_eq!(arena[name].as_identifier().text.as_ref(), "add");
     let params = arena[func].parameters().unwrap();
     assert_eq!(params.len(), 2);
     assert!(arena[func].type_().is_some());
     assert!(arena[func].body().is_some());
 
     let param0 = arena[params[0]].as_parameter_declaration();
-    assert_eq!(arena[param0.name.unwrap()].as_identifier().text, "a");
+    assert_eq!(arena[param0.name.unwrap()].as_identifier().text.as_ref(), "a");
     assert!(param0.type_.is_some());
 }
 
@@ -228,7 +228,7 @@ fn test_decode_source_file_import_declaration() {
     let elements = named_imports.elements.as_ref().unwrap();
     assert_eq!(elements.nodes.len(), 1);
     let spec = arena[elements.nodes[0]].as_import_specifier();
-    assert_eq!(arena[spec.name.unwrap()].as_identifier().text, "bar");
+    assert_eq!(arena[spec.name.unwrap()].as_identifier().text.as_ref(), "bar");
 }
 
 #[test]
@@ -345,7 +345,7 @@ fn test_decode_source_file_class_declaration() {
         .class_like_base
         .name
         .unwrap();
-    assert_eq!(arena[name].as_identifier().text, "Foo");
+    assert_eq!(arena[name].as_identifier().text.as_ref(), "Foo");
     let members = arena[stmt].members().unwrap();
     assert_eq!(members.len(), 1);
     assert_eq!(arena[members[0]].kind, Kind::MethodDeclaration);
@@ -378,7 +378,7 @@ fn test_decode_nodes_subtree_round_trip() {
     assert_eq!(arena[decoded].kind, Kind::FunctionDeclaration);
     let func_decl = arena[decoded].as_function_declaration();
     let name = func_decl.name.unwrap();
-    assert_eq!(arena[name].as_identifier().text, "greet");
+    assert_eq!(arena[name].as_identifier().text.as_ref(), "greet");
     assert_eq!(arena[decoded].parameters().unwrap().len(), 1);
     assert!(arena[decoded].body().is_some());
 }

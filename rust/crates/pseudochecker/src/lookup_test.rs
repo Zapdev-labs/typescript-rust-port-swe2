@@ -53,7 +53,7 @@ fn expression_literal_kinds() {
 
     let undefined_expr = nodes
         .iter()
-        .find(|n| n.kind == Kind::Identifier && n.as_identifier().text == "undefined")
+        .find(|n| n.kind == Kind::Identifier && n.as_identifier().text.as_ref() == "undefined")
         .expect("undefined identifier")
         .id;
     assert_eq!(

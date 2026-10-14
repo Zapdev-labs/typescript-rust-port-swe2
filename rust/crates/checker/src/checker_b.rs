@@ -1489,7 +1489,6 @@ impl Checker {
                         if ty.symbol == Some(target) {
                             return true;
                         }
-                        drop(ty);
                         if self.type_has_protected_accessible_base(target, *intersection_member) {
                             return true;
                         }

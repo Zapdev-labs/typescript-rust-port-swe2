@@ -7,19 +7,18 @@
 // PORT notes (see SPEC.md §5.3/§5.4 for the arena rationale):
 //
 // - `*Type` becomes `TypeId`, an index into `TypeArena`
-//   (`Rc<RefCell<Vec<Rc<Type>>>>`). Go's pointer-identity comparisons
+//   (`Rc<UnsafeCell<Vec<Box<Type>>>>`). Go's pointer-identity comparisons
 //   (`t == s`, `map[*Type]*Type`) become `TypeId` equality/
 //   `HashMap<TypeId, _>` — TypeIds are per-checker-shard, matching Go where
 //   two checkers' `*Type` pointers never collide. `Type.checker *Checker`
 //   becomes `checker_shard: u16`; code that read `t.checker.X` takes the
 //   checker as an explicit parameter instead (§5.4 "t.checker
-//   eradication"). `TypeArena` uses `Rc`/`RefCell` because Go's checker is
-//   single-threaded and the port never moves a checker across threads; the
-//   tracer's recorded-type adapters still keep reading lazily-resolved
-//   fields after the checker hands them out. Accessors return cloned `Rc`s
-//   (`arena.get(id)`); write sites must not hold a `Ref`/`RefMut` across a
-//   `get_mut`/`alloc` (same-thread `RefCell` re-entry panics) — compute
-//   into locals, then store.
+//   eradication"). `TypeArena` uses `Rc`/`UnsafeCell` because Go's checker
+//   is single-threaded and the port never moves a checker across threads;
+//   each `Type` lives in a stable `Box` so `arena.get(id)` returns a
+//   `TypePtr` — a `Copy` pointer, the `t.field` read shape — and
+//   `get_mut(id)` a `TypeMutPtr` for in-place writes. Mutation is visible
+//   to all handles immediately (Go aliasing — no copy-on-write).
 // - `*Signature` → `SignatureId` into `SignatureArena` (`Vec<Signature>`).
 //   `*TypeMapper` → `TypeMapperId` into `TypeMapperArena` (mapper.rs).
 //   `*InferenceContext` → `InferenceContextId` into `Vec<InferenceContext>`
@@ -38,7 +37,7 @@
 //   nil) → `Option<tsc_evaluator::Value>` — the evaluator's `any`-analogue
 //   enum covers exactly those alternatives.
 
-use std::cell::{RefCell, RefMut};
+use std::cell::UnsafeCell;
 use std::fmt;
 use std::rc::Rc;
 use std::sync::{Arc, RwLock};
@@ -3390,114 +3389,124 @@ pub type StringLiteralType = TypeId;
 // TypeArena — the per-checker `Vec<Type>` store of SPEC §5.4.
 
 /// `TypeArena` is the per-checker-shard arena of `Type` elements; `TypeId`
-/// indexes it. `Rc<RefCell<..>>` because Go's checker is single-threaded —
+/// indexes it. `Rc<UnsafeCell<..>>` because Go's checker is single-threaded —
 /// the port never moves a checker (or its arena) across threads, and the
 /// tracer's `Send + Sync` bound that originally motivated `RwLock` is gone.
 /// `HashMap`-based intern tables for literal/intrinsic/union types live on
 /// the checker, not here (they're checker state in Go too).
 #[derive(Clone, Default)]
 pub struct TypeArena {
-    /// `Rc` so `tracer.rs`'s `TracedType` adapter can hold a share of the
-    /// arena post-hoc (Go's adapter holds the `*Type` heap pointer).
-    /// Elements are `Rc<Type>` so `get` hands out a cheap shared pointer
-    /// (Go's `*Type`) rather than deep-cloning the type — including its
-    /// member `IndexMap`s — on every read. `get_mut` copy-on-writes via
-    /// `Rc::make_mut`: in-place when unshared, a fresh copy when readers
-    /// hold a snapshot (snapshot holders then see the pre-write value).
-    types: Rc<RefCell<Vec<Rc<Type>>>>,
+    /// `Box` gives each `Type` a stable heap address; handles stay valid
+    /// across pushes (only the `Vec` buffer moves). Go semantics: mutation
+    /// is in place — readers see writes immediately (the old `Rc`
+    /// copy-on-write diverged from Go anyway).
+    types: Rc<UnsafeCell<Vec<Box<Type>>>>,
 }
 
-/// `TypeArena::get_mut` result — derefs to `Type` (mutable).
-pub struct TypeWriteGuard<'a> {
-    guard: RefMut<'a, Vec<Rc<Type>>>,
-    index: usize,
-}
+/// Shared handle to an arena-resident `Type` — Go's `*Type`. `Copy`, no
+/// refcounting; validity is the arena's lifetime.
+#[derive(Clone, Copy)]
+pub struct TypePtr(*const Type);
 
-impl std::ops::Deref for TypeWriteGuard<'_> {
+#[allow(unsafe_code)] // stable-address arena deref — see `TypeArena`
+impl std::ops::Deref for TypePtr {
     type Target = Type;
     #[inline]
     fn deref(&self) -> &Type {
-        &self.guard[self.index]
+        unsafe { &*self.0 }
     }
 }
 
-impl std::ops::DerefMut for TypeWriteGuard<'_> {
+impl TypePtr {
+    /// Go pointer-identity comparison (replaces `Rc::ptr_eq`).
+    pub fn ptr_eq(a: TypePtr, b: TypePtr) -> bool {
+        a.0 == b.0
+    }
+}
+
+/// Mutable handle — Go's `*Type` write shape. Interior mutation while
+/// other `TypePtr`s exist is legal (Go aliasing), matching checker code
+/// that writes caches/resolved fields on shared types.
+#[derive(Clone, Copy)]
+pub struct TypeMutPtr(*mut Type);
+
+#[allow(unsafe_code)] // stable-address arena deref — see `TypeArena`
+impl std::ops::Deref for TypeMutPtr {
+    type Target = Type;
+    #[inline]
+    fn deref(&self) -> &Type {
+        unsafe { &*self.0 }
+    }
+}
+
+#[allow(unsafe_code)] // stable-address arena deref — see `TypeArena`
+impl std::ops::DerefMut for TypeMutPtr {
     #[inline]
     fn deref_mut(&mut self) -> &mut Type {
-        Rc::make_mut(&mut self.guard[self.index])
+        unsafe { &mut *self.0 }
     }
 }
 
+#[allow(unsafe_code)] // arena internals reach through `UnsafeCell`
 impl TypeArena {
     /// Allocate a type in the arena, returning its `TypeId`.
     pub fn alloc(&self, t: Type) -> TypeId {
-        let mut types = self
-            .types
-            .try_borrow_mut()
-            .expect("DEADLOCK-PROBE: types.alloc while arena borrow held");
+        // SAFETY: single-threaded checker; the Vec may grow (moving the
+        // buffer) but each Box<Type> keeps a stable heap address, so
+        // outstanding TypePtr/TypeMutPtr/`&Type` handles stay valid.
+        let types = unsafe { &mut *self.types.get() };
         let id = TypeId(types.len() as u32);
-        types.push(Rc::new(t));
+        types.push(Box::new(t));
         id
     }
 
     /// Shared-pointer access to a single type — the Go `t.field` read shape.
-    /// Returns an `Rc<Type>` clone: a live `Ref`/`RefMut` held across
-    /// `get_mut`/`alloc` panics on same-thread `RefCell` re-entry, and the
-    /// checker is full of such call chains (Go reads the shared heap
-    /// freely). Reads under a held write guard still panic via
-    /// `try_borrow` — Go-legal reads-while-mutating must extract fields
-    /// before `get_mut`.
-    pub fn get(&self, id: TypeId) -> Rc<Type> {
-        self.types
-            .try_borrow()
-            .expect("DEADLOCK-PROBE: types.get while arena write borrow held")
-            [id.index()]
-        .clone()
+    /// A single pointer deref: no borrow flag, no refcount.
+    #[inline]
+    pub fn get(&self, id: TypeId) -> TypePtr {
+        // SAFETY: `id` was handed out by `alloc`, so `id.index()` is in
+        // bounds (elements are only ever pushed). The Box target address is
+        // stable across Vec growth.
+        unsafe {
+            debug_assert!(id.index() < (*self.types.get()).len());
+            TypePtr(&**(*self.types.get()).as_ptr().add(id.index()))
+        }
     }
 
-    /// Borrow-scoped read — zero refcount churn. The `Ref` is valid only
-    /// until the next `borrow_mut`/`alloc` on this arena: NEVER hold it
-    /// across a call that can mutate types (same rule as `get_mut`).
-    pub fn get_ref(&self, id: TypeId) -> std::cell::Ref<'_, Type> {
-        std::cell::Ref::map(
-            self.types
-                .try_borrow()
-                .expect("DEADLOCK-PROBE: types.get_ref while arena write borrow held"),
-            |v| &*v[id.index()],
-        )
-    }
-
-    /// Batched read access to the arena slice — one borrow-flag write for
-    /// many field reads (hot fns like `is_type_related_to` read several
-    /// types up front). The `Ref` must not outlive a `get_mut`/`alloc`.
-    pub fn borrow(&self) -> std::cell::Ref<'_, Vec<Rc<Type>>> {
-        self.types
-            .try_borrow()
-            .expect("DEADLOCK-PROBE: types.borrow while arena write borrow held")
+    /// `&Type` access — same deref as `get` without wrapping the pointer.
+    /// The reference stays valid across `alloc` (stable `Box` addresses);
+    /// it reads through any `get_mut` writes (Go semantics).
+    #[inline]
+    pub fn get_ref(&self, id: TypeId) -> &Type {
+        // SAFETY: same as `get`.
+        unsafe {
+            debug_assert!(id.index() < (*self.types.get()).len());
+            &**(*self.types.get()).as_ptr().add(id.index())
+        }
     }
 
     /// Write access to a single type — the Go `t.field = v` write shape.
-    /// Compute the value before calling (a nested `get`/`get_mut` on the
-    /// same arena panics while the guard is held). `Rc::make_mut` clones
-    /// the element iff `get` snapshots still share it.
-    pub fn get_mut(&self, id: TypeId) -> TypeWriteGuard<'_> {
-        TypeWriteGuard {
-            guard: self
-                .types
-                .try_borrow_mut()
-                .expect("DEADLOCK-PROBE: types.get_mut while arena borrow held"),
-            index: id.index(),
+    /// Mutates in place; existing `TypePtr`/`&Type` handles observe the
+    /// write (Go aliasing).
+    #[inline]
+    pub fn get_mut(&self, id: TypeId) -> TypeMutPtr {
+        // SAFETY: same as `get`. Interior mutation of a shared element is
+        // the port's Go-aliasing model — callers must not rely on stale
+        // field snapshots across a `get_mut`, same as in Go.
+        unsafe {
+            debug_assert!(id.index() < (*self.types.get()).len());
+            TypeMutPtr(&mut **(*self.types.get()).as_mut_ptr().add(id.index()))
         }
     }
 
     /// `len(types)`.
     pub fn len(&self) -> usize {
-        self.types.borrow().len()
+        unsafe { (*self.types.get()).len() }
     }
 
     /// `len(types) == 0`.
     pub fn is_empty(&self) -> bool {
-        self.types.borrow().is_empty()
+        unsafe { (*self.types.get()).is_empty() }
     }
 
     /// `(t *Type) TargetInterfaceType` —

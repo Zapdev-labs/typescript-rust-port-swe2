@@ -213,7 +213,6 @@ pub(crate) fn get_string_literal_types(
     let t_ref = type_checker.types.get(t);
     if t_ref.is_union() {
         let element_types = t_ref.types().to_vec();
-        drop(t_ref);
         let mut types = Vec::new();
         for element_type in element_types {
             types.extend(get_string_literal_types(

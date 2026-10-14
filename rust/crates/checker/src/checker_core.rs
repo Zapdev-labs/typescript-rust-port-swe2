@@ -520,7 +520,6 @@ fn get_recursion_identity_target(c: &mut Checker, t: TypeId) -> TypeId {
     let ty = c.types.get_ref(t);
     if ty.flags.intersects(TypeFlags::INDEXED_ACCESS) {
         let object_type = ty.as_indexed_access_type().object_type;
-        drop(ty);
         return get_recursion_identity_target(c, object_type.unwrap());
     }
     // `declaration.is_some()` gates the mapped branch: `trace_record_type`
@@ -534,17 +533,13 @@ fn get_recursion_identity_target(c: &mut Checker, t: TypeId) -> TypeId {
     if ty.object_flags.contains(ObjectFlags::INSTANTIATED_MAPPED)
         && ty.as_mapped_type().declaration.is_some()
     {
-        drop(ty);
         let target = c.get_modifiers_type_from_mapped_type(t);
         if let Some(target) = target {
-            // Stage `target`'s symbol/types before the nested `types.get` —
-            // no read guard may be held across another arena read.
             let (has_symbol, constituents_have_symbol) = {
                 let tt = c.types.get_ref(target);
                 let has_symbol = tt.symbol.is_some();
                 let constituents_have_symbol = tt.flags.intersects(TypeFlags::INTERSECTION) && {
                     let types = tt.types_rc();
-                    drop(tt);
                     types
                         .iter()
                         .any(|&s| c.types.get_ref(s).symbol.is_some())
@@ -560,9 +555,7 @@ fn get_recursion_identity_target(c: &mut Checker, t: TypeId) -> TypeId {
 }
 
 /// `getRecursionIdentityFromTarget` (relater.go). PORT(mirrored): `t.symbol`
-/// flag reads index the shared symbol arena. Reads are staged into locals —
-/// holding a `TypeArena` read guard across another `types.get` is a
-/// same-thread RwLock re-entry (deadlock if a writer is queued).
+/// flag reads index the shared symbol arena.
 fn get_recursion_identity_from_target(c: &mut Checker, t: TypeId) -> RecursionId {
     // Stage the fields Go reads off `t` before nested arena lookups.
     let (flags, object_flags, symbol, ref_node, cond_root_node) = {

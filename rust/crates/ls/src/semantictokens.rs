@@ -636,7 +636,6 @@ fn reclassify_by_type(
         let ty = c.types.get(typ);
         if ty.flags().intersects(TypeFlags::UNION) {
             let members = ty.types().to_vec();
-            drop(ty);
             if members.into_iter().any(|t| condition(c, t)) {
                 return true;
             }

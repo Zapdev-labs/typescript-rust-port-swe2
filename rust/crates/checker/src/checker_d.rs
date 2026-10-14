@@ -1635,7 +1635,6 @@ impl Checker {
         d.fixed_length = fixed_length;
         d.combined_flags = combined_flags;
         d.readonly = readonly;
-        drop(g);
         t
     }
 }
@@ -2769,7 +2768,6 @@ impl Checker {
                 let flags = ty.flags;
                 let object_flags = ty.object_flags;
                 let is_wildcard = t == self.wildcard_type;
-                drop(ty);
                 // We ignore 'never' types in unions
                 if !flags.intersects(TypeFlags::NEVER) {
                     includes |= flags & TypeFlags::INCLUDES_MASK;
@@ -2996,7 +2994,6 @@ impl Checker {
                     .union_or_intersection
                     .types
                     .clone();
-                drop(ty);
                 let index = if !self
                     .types_handle()
                     .get(it[0])
@@ -3028,7 +3025,6 @@ impl Checker {
                         .union_or_intersection
                         .types
                         .clone();
-                    drop(ty);
                     let index = if !self
                         .types_handle()
                         .get(it[0])
@@ -3066,7 +3062,6 @@ impl Checker {
                                 .union_or_intersection
                                 .types
                                 .clone();
-                            drop(ty);
                             let index = if !self
                                 .types_handle()
                                 .get(it[0])

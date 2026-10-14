@@ -10,7 +10,7 @@ fn generated_accessors_and_updates() {
 
     let ident = f.new_identifier(&mut nodes, "x");
     assert_eq!(nodes[ident].kind, Kind::Identifier);
-    assert_eq!(nodes[ident].as_identifier().text, "x");
+    assert_eq!(nodes[ident].as_identifier().text.as_ref(), "x");
     assert!(crate::ast_generated::is_identifier(&nodes[ident]));
 
     // Accessor on the wrong variant panics, matching Go's AsX on wrong kind.
