@@ -1921,3 +1921,17 @@ Real-world bench: `tsc --noEmit --strict` on the compiler fixture set
   back some single-thread wins; per-checker state (links, inference,
   relations) is already checker-local in Go's design.
 - Go also parses/binds files concurrently; our parser is sequential.
+
+## Performance — follow-on micro passes (2026-10-14, later)
+- `program.arenas` FxHashMap → `Vec<Option<Rc<ArenaCell>>>`: dense
+  file_index keys make nodes()/nodes_mut() an array read on
+  last_arena-cache misses (commit a9e9f04dfb).
+- Flow-graph walks: `flow_list`/`flow_node` derefs consolidated — one
+  lookup per element instead of .flow+.next / .node+.antecedent pairs
+  (each deref re-snapshots the arena + re-resolves bind_result);
+  `get_type_at_switch_clause` f.nodes() hoisted (~6x → 1 snapshot).
+- Profile is now flat: memcpy/Vec-write ~15%, SymbolTable/set hashing
+  ~12%, clone ~12%, link-store `get` ~14% cumulative — no single lever
+  over ~5% remains inside the check path. The remaining multi-file gap
+  vs Go (~3.9x on types.ts fixture, ~1.3x on single-file) is dominated
+  by Go's parallel checker pool (documented above).
