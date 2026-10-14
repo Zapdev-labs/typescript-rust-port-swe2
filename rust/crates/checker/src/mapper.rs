@@ -6,7 +6,7 @@
 // PORT notes:
 //
 // - `*TypeMapper` → `TypeMapperId` into `TypeMapperArena`
-//   (`Arc<RwLock<Vec<TypeMapper>>>`). The `Arc` lets `Checker::map_type`-style
+//   (`Rc<RefCell<Vec<TypeMapper>>>`). The `Rc` lets `Checker::map_type`-style
 //   call sites clone the arena handle so the mapper lookup does not hold a
 //   borrow on `c` while `Map` implementations call `&mut Checker` methods
 //   (Composite → `instantiateType`, Inference → `inferFromIntraExpressionSites`
@@ -27,7 +27,7 @@
 //   checker_core.rs pending utilities.go.
 
 use std::rc::Rc;
-use std::sync::{Arc, RwLock};
+use std::cell::RefCell;
 
 use tsc_core::core::map as core_map;
 
@@ -112,17 +112,19 @@ pub enum TypeMapperData {
 }
 
 /// `type TypeMapperArena` — arena of `TypeMapper` elements indexed by
-/// `TypeMapperId`. `Arc<RwLock<..>>` so mapper lookups can detach from a
+/// `TypeMapperId`. `Rc<RefCell<..>>` so mapper lookups can detach from a
 /// `&Checker` borrow before calling `&mut Checker` methods — see header.
+/// Single-threaded pipeline: `RefCell` borrow flags preserve the
+/// `RwLock::try_write` deadlock-probe semantics without atomic ops.
 #[derive(Clone)]
 pub struct TypeMapperArena {
-    mappers: Arc<RwLock<Vec<TypeMapper>>>,
+    mappers: Rc<RefCell<Vec<TypeMapper>>>,
 }
 
 impl Default for TypeMapperArena {
     fn default() -> Self {
         Self {
-            mappers: Arc::new(RwLock::new(Vec::new())),
+            mappers: Rc::new(RefCell::new(Vec::new())),
         }
     }
 }
@@ -133,8 +135,8 @@ impl TypeMapperArena {
     pub fn alloc(&self, m: TypeMapper) -> TypeMapperId {
         let mut mappers = self
             .mappers
-            .try_write()
-            .expect("DEADLOCK-PROBE: type_mappers.alloc called while a mapper lock is held");
+            .try_borrow_mut()
+            .expect("DEADLOCK-PROBE: type_mappers.alloc called while a mapper borrow is held");
         let id = TypeMapperId(mappers.len() as u32);
         mappers.push(m);
         id
@@ -142,7 +144,7 @@ impl TypeMapperArena {
 
     /// `len(mappers)`.
     pub fn len(&self) -> usize {
-        self.mappers.read().unwrap().len()
+        self.mappers.borrow().len()
     }
 
     /// `len(mappers) == 0`.
@@ -153,7 +155,7 @@ impl TypeMapperArena {
     /// Borrow a mapper's payload under a short read guard. The closure must
     /// not re-enter the arena.
     pub fn with_data<R>(&self, m: TypeMapperId, f: impl FnOnce(&TypeMapperData) -> R) -> R {
-        let guard = self.mappers.read().unwrap();
+        let guard = self.mappers.borrow();
         f(&guard[m.index()].data)
     }
 
@@ -179,7 +181,7 @@ impl TypeMapperArena {
         }
         let action;
         {
-            let guard = self.mappers.read().unwrap();
+            let guard = self.mappers.borrow();
             let mapper = &guard[m.index()];
             action = match &mapper.data {
                 TypeMapperData::Simple(s) => {
@@ -232,7 +234,7 @@ impl TypeMapperArena {
                 // invoke after dropping it (a held read guard would deadlock
                 // a nested `alloc` write).
                 let f = {
-                    let guard = self.mappers.read().unwrap();
+                    let guard = self.mappers.borrow();
                     match &guard[m.index()].data {
                         TypeMapperData::Deferred(s) => s.targets[i].clone(),
                         _ => unreachable!(),
@@ -242,7 +244,7 @@ impl TypeMapperArena {
             }
             Action::Fn => {
                 let f = {
-                    let guard = self.mappers.read().unwrap();
+                    let guard = self.mappers.borrow();
                     match &guard[m.index()].data {
                         TypeMapperData::Function(s) => s.f.clone(),
                         _ => unreachable!(),
@@ -283,7 +285,7 @@ impl TypeMapperArena {
     /// override return `TypeMapperKind::Unknown` (the `TypeMapperBase`
     /// default).
     pub fn kind(&self, m: TypeMapperId) -> TypeMapperKind {
-        let guard = self.mappers.read().unwrap();
+        let guard = self.mappers.borrow();
         match &guard[m.index()].data {
             TypeMapperData::Simple(_) => TypeMapperKind::Simple,
             TypeMapperData::Array(_) => TypeMapperKind::Array,
@@ -295,7 +297,7 @@ impl TypeMapperArena {
     /// `(m *TypeMapper) MapsThisOnly()` — `m.data.MapsThisOnly()`.
     /// PORT: `isThisTypeParameter` needs the type arena.
     pub fn maps_this_only(&self, types: &TypeArena, m: TypeMapperId) -> bool {
-        let guard = self.mappers.read().unwrap();
+        let guard = self.mappers.borrow();
         match &guard[m.index()].data {
             TypeMapperData::Simple(s) => is_this_type_parameter(types, s.source),
             TypeMapperData::Array(s) => {
