@@ -1153,7 +1153,7 @@ impl UsingDeclarationTransformer {
             if self.export_bindings.borrow().is_none() {
                 *self.export_bindings.borrow_mut() = Some(HashMap::new());
             }
-            let text = cx.nodes[name].as_identifier().text.clone();
+            let text = cx.nodes[name].as_identifier().text.to_string();
             if !self
                 .export_bindings
                 .borrow()

@@ -42,6 +42,9 @@ pub enum FieldType {
     StringSlice,
     /// `string` → `String`
     Str,
+    /// `string` → `Arc<str>` — shared immutable text; clone is a refcount
+    /// bump instead of an alloc + memcpy (Go shares string headers).
+    SharedStr,
     /// `bool` → `bool`
     Bool,
     /// `int` / `int32` → `i32`

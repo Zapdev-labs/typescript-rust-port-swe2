@@ -445,7 +445,7 @@ impl PseudoChecker {
             Kind::Identifier => {
                 // !!! TODO: in strada, this uses symbol information to ensure `node` refers to the global `undefined` symbol instead
                 // we should probably import `resolveName` and use it here to check for the same; but we have to setup some barebones pseudoglobals for that to work!
-                if nodes[node].as_identifier().text == "undefined" {
+                if nodes[node].as_identifier().text.as_ref() == "undefined" {
                     return pseudo_type_undefined();
                 }
                 new_pseudo_type_inferred(node, false)

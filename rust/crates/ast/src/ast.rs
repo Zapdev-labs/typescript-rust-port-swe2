@@ -583,28 +583,28 @@ impl Node {
     /// `n.Text()`
     pub fn text<'a>(&'a self, nodes: &'a [Node]) -> Cow<'a, str> {
         match self.kind {
-            Kind::Identifier => Cow::Borrowed(self.as_identifier().text.as_str()),
-            Kind::PrivateIdentifier => Cow::Borrowed(self.as_private_identifier().text.as_str()),
+            Kind::Identifier => Cow::Borrowed(self.as_identifier().text.as_ref()),
+            Kind::PrivateIdentifier => Cow::Borrowed(self.as_private_identifier().text.as_ref()),
             Kind::StringLiteral => Cow::Borrowed(
                 self.as_string_literal()
                     .literal_expression_base
                     .literal_like_node_base
                     .text
-                    .as_str(),
+                    .as_ref(),
             ),
             Kind::NumericLiteral => Cow::Borrowed(
                 self.as_numeric_literal()
                     .literal_expression_base
                     .literal_like_node_base
                     .text
-                    .as_str(),
+                    .as_ref(),
             ),
             Kind::BigIntLiteral => Cow::Borrowed(
                 self.as_big_int_literal()
                     .literal_expression_base
                     .literal_like_node_base
                     .text
-                    .as_str(),
+                    .as_ref(),
             ),
             Kind::MetaProperty => {
                 let name = self
@@ -618,28 +618,28 @@ impl Node {
                     .template_literal_like_node_base
                     .literal_like_node_base
                     .text
-                    .as_str(),
+                    .as_ref(),
             ),
             Kind::TemplateHead => Cow::Borrowed(
                 self.as_template_head()
                     .template_literal_like_node_base
                     .literal_like_node_base
                     .text
-                    .as_str(),
+                    .as_ref(),
             ),
             Kind::TemplateMiddle => Cow::Borrowed(
                 self.as_template_middle()
                     .template_literal_like_node_base
                     .literal_like_node_base
                     .text
-                    .as_str(),
+                    .as_ref(),
             ),
             Kind::TemplateTail => Cow::Borrowed(
                 self.as_template_tail()
                     .template_literal_like_node_base
                     .literal_like_node_base
                     .text
-                    .as_str(),
+                    .as_ref(),
             ),
             Kind::JsxNamespacedName => {
                 let d = self.as_jsx_namespaced_name();
@@ -653,7 +653,7 @@ impl Node {
                     .literal_expression_base
                     .literal_like_node_base
                     .text
-                    .as_str(),
+                    .as_ref(),
             ),
             Kind::JSDocText => Cow::Owned(self.as_js_doc_text().js_doc_comment_base.text.join("")),
             Kind::JSDocLink => Cow::Owned(self.as_js_doc_link().js_doc_comment_base.text.join("")),
@@ -784,17 +784,17 @@ impl Node {
                 .as_template_head()
                 .template_literal_like_node_base
                 .raw_text
-                .as_str(),
+                .as_ref(),
             Kind::TemplateMiddle => self
                 .as_template_middle()
                 .template_literal_like_node_base
                 .raw_text
-                .as_str(),
+                .as_ref(),
             Kind::TemplateTail => self
                 .as_template_tail()
                 .template_literal_like_node_base
                 .raw_text
-                .as_str(),
+                .as_ref(),
             _ => panic!("Unhandled case in Node.RawText: {}", self.kind_string()),
         }
     }
@@ -1919,7 +1919,7 @@ impl SourceFile {
     pub fn content_mapper(&self) -> &str {
         self.content_mapper_info
             .as_ref()
-            .map_or("", |info| info.content_mapper.as_str())
+            .map_or("", |info| info.content_mapper.as_ref())
     }
 
     /// `(node *SourceFile) IsContentMapperFailureStub()`.
@@ -1931,7 +1931,7 @@ impl SourceFile {
     pub fn content_mapper_transform_identity(&self) -> &str {
         self.content_mapper_info
             .as_ref()
-            .map_or("", |info| info.transform_identity.as_str())
+            .map_or("", |info| info.transform_identity.as_ref())
     }
 
     /// `(node *SourceFile) VirtualFileName()`.

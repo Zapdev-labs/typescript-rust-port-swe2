@@ -1813,17 +1813,17 @@ pub fn is_void_zero(node: &Node, nodes: &[Node]) -> bool {
 
 /// `IsExportsIdentifier(node)`.
 pub fn is_exports_identifier(node: &Node) -> bool {
-    is_identifier(node) && node.as_identifier().text == "exports"
+    is_identifier(node) && node.as_identifier().text.as_ref() == "exports"
 }
 
 /// `IsModuleIdentifier(node)`.
 pub fn is_module_identifier(node: &Node) -> bool {
-    is_identifier(node) && node.as_identifier().text == "module"
+    is_identifier(node) && node.as_identifier().text.as_ref() == "module"
 }
 
 /// `IsThisIdentifier(node)`.
 pub fn is_this_identifier(node: &Node) -> bool {
-    is_identifier(node) && node.as_identifier().text == "this"
+    is_identifier(node) && node.as_identifier().text.as_ref() == "this"
 }
 
 /// `IsThisParameter(parameter)`.

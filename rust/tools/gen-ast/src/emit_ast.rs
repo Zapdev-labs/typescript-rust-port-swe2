@@ -98,6 +98,7 @@ fn field_ty(f: &Field) -> String {
         FieldType::NodeSlice => "Box<[NodeId]>".into(),
         FieldType::StringSlice => "Box<[String]>".into(),
         FieldType::Str => "String".into(),
+        FieldType::SharedStr => "std::sync::Arc<str>".into(),
         FieldType::Bool => "bool".into(),
         FieldType::Int => "i32".into(),
         FieldType::Kind => "Kind".into(),
@@ -122,6 +123,7 @@ fn arg_ty(ty: FieldType, name: &str, rust_ty: Option<&str>) -> String {
         FieldType::NodeSlice => "&[NodeId]".into(),
         FieldType::StringSlice => "&[String]".into(),
         FieldType::Str => "&str".into(),
+        FieldType::SharedStr => "&str".into(),
         FieldType::Bool => "bool".into(),
         FieldType::Int => "i32".into(),
         FieldType::Kind => "Kind".into(),
@@ -796,7 +798,9 @@ impl<'a> Emitter<'a> {
                 }
             } else {
                 let expr = match a.ty {
-                    FieldType::Str => format!("{}.to_string()", rust_name(&a.name)),
+                    FieldType::Str | FieldType::SharedStr => {
+                        format!("{}.into()", rust_name(&a.name))
+                    }
                     FieldType::NodeSlice | FieldType::StringSlice => {
                         format!("{}.into()", rust_name(&a.name))
                     }
@@ -1020,7 +1024,10 @@ impl<'a> Emitter<'a> {
                     .map(|a| {
                         matches!(
                             a.ty,
-                            FieldType::Str | FieldType::NodeSlice | FieldType::StringSlice
+                            FieldType::Str
+                                | FieldType::SharedStr
+                                | FieldType::NodeSlice
+                                | FieldType::StringSlice
                         )
                     })
                     .collect()

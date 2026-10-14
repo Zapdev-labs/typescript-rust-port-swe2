@@ -211,7 +211,7 @@ impl Checker {
             let __program = self.program.clone().expect("program");
             let nodes = __program.nodes((location).file_index());
             let first = ast::get_first_identifier(entity, &nodes);
-            return nodes[first].as_identifier().text.clone();
+            return nodes[first].as_identifier().text.to_string();
         }
         String::new()
     }

@@ -1266,7 +1266,7 @@ impl<'a, 'c, 'h> MissingMemberFixer<'a, 'c, 'h> {
                 | Kind::BigIntLiteral
                 | Kind::NoSubstitutionTemplateLiteral => {
                     let l = n.literal_like_data()?;
-                    Plan::Literal(n.kind, l.text.clone(), l.token_flags)
+                    Plan::Literal(n.kind, l.text.to_string(), l.token_flags)
                 }
                 Kind::ComputedPropertyName => {
                     Plan::Computed(n.as_computed_property_name().expression)

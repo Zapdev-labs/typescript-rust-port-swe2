@@ -272,7 +272,7 @@ fn get_raw_literal(ec: &Ec, cx: &mut VisitorCx<'_, '_>, node: NodeId) -> NodeId 
         .template_literal_like_data()
         .expect("node has no template literal data")
         .raw_text
-        .clone();
+        .to_string();
     if text.is_empty() {
         let source_file = ast::get_source_file_of_node(Some(node), cx.nodes);
         text = tsc_scanner::utilities::get_source_text_of_node_from_source_file(

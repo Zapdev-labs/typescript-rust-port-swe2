@@ -182,7 +182,7 @@ pub struct ClassLikeBase {
 /// `type LiteralLikeNodeBase struct`.
 #[derive(Clone, Default)]
 pub struct LiteralLikeNodeBase {
-    pub text: String,
+    pub text: std::sync::Arc<str>,
     pub token_flags: TokenFlags,
 }
 
@@ -200,7 +200,7 @@ pub struct LiteralExpressionBase {
 pub struct TemplateLiteralLikeNodeBase {
     /// embedded `LiteralLikeNodeBase`
     pub literal_like_node_base: LiteralLikeNodeBase,
-    pub raw_text: String,
+    pub raw_text: std::sync::Arc<str>,
     pub template_flags: TokenFlags,
 }
 
@@ -291,7 +291,7 @@ pub struct Identifier {
     pub primary_expression_base: PrimaryExpressionBase,
     /// embedded `FlowNodeBase`
     pub flow_node_base: FlowNodeBase,
-    pub text: String,
+    pub text: std::sync::Arc<str>,
 }
 
 /// `type PrivateIdentifier struct`.
@@ -299,7 +299,7 @@ pub struct Identifier {
 pub struct PrivateIdentifier {
     /// embedded `PrimaryExpressionBase`
     pub primary_expression_base: PrimaryExpressionBase,
-    pub text: String,
+    pub text: std::sync::Arc<str>,
 }
 
 /// `type QualifiedName struct`.
@@ -14312,7 +14312,7 @@ impl NodeFactory<'_> {
     /// `NewIdentifier`.
     pub fn new_identifier(&mut self, nodes: &mut Vec<Node>, text: &str) -> NodeId {
         let mut data = Identifier::default();
-        data.text = text.to_string();
+        data.text = text.into();
         self.text_count += 1;
         self.new_node(nodes, Kind::Identifier, NodeData::Identifier(data))
     }
@@ -14320,7 +14320,7 @@ impl NodeFactory<'_> {
     /// `NewPrivateIdentifier`.
     pub fn new_private_identifier(&mut self, nodes: &mut Vec<Node>, text: &str) -> NodeId {
         let mut data = PrivateIdentifier::default();
-        data.text = text.to_string();
+        data.text = text.into();
         self.text_count += 1;
         self.new_node(
             nodes,
@@ -17293,7 +17293,7 @@ impl NodeFactory<'_> {
         token_flags: TokenFlags,
     ) -> NodeId {
         let mut data = StringLiteral::default();
-        data.literal_expression_base.literal_like_node_base.text = text.to_string();
+        data.literal_expression_base.literal_like_node_base.text = text.into();
         data.literal_expression_base
             .literal_like_node_base
             .token_flags = token_flags & TokenFlags::STRING_LITERAL_FLAGS;
@@ -17309,7 +17309,7 @@ impl NodeFactory<'_> {
         token_flags: TokenFlags,
     ) -> NodeId {
         let mut data = NumericLiteral::default();
-        data.literal_expression_base.literal_like_node_base.text = text.to_string();
+        data.literal_expression_base.literal_like_node_base.text = text.into();
         data.literal_expression_base
             .literal_like_node_base
             .token_flags = token_flags & TokenFlags::NUMERIC_LITERAL_FLAGS;
@@ -17325,7 +17325,7 @@ impl NodeFactory<'_> {
         token_flags: TokenFlags,
     ) -> NodeId {
         let mut data = BigIntLiteral::default();
-        data.literal_expression_base.literal_like_node_base.text = text.to_string();
+        data.literal_expression_base.literal_like_node_base.text = text.into();
         data.literal_expression_base
             .literal_like_node_base
             .token_flags = token_flags & TokenFlags::NUMERIC_LITERAL_FLAGS;
@@ -17341,7 +17341,7 @@ impl NodeFactory<'_> {
         token_flags: TokenFlags,
     ) -> NodeId {
         let mut data = RegularExpressionLiteral::default();
-        data.literal_expression_base.literal_like_node_base.text = text.to_string();
+        data.literal_expression_base.literal_like_node_base.text = text.into();
         data.literal_expression_base
             .literal_like_node_base
             .token_flags = token_flags & TokenFlags::REGULAR_EXPRESSION_LITERAL_FLAGS;
@@ -17363,7 +17363,7 @@ impl NodeFactory<'_> {
         let mut data = NoSubstitutionTemplateLiteral::default();
         data.template_literal_like_node_base
             .literal_like_node_base
-            .text = text.to_string();
+            .text = text.into();
         data.template_literal_like_node_base.template_flags =
             template_flags & TokenFlags::TEMPLATE_LITERAL_LIKE_FLAGS;
         self.text_count += 1;
@@ -19915,8 +19915,8 @@ impl NodeFactory<'_> {
         let mut data = TemplateHead::default();
         data.template_literal_like_node_base
             .literal_like_node_base
-            .text = text.to_string();
-        data.template_literal_like_node_base.raw_text = raw_text.to_string();
+            .text = text.into();
+        data.template_literal_like_node_base.raw_text = raw_text.into();
         data.template_literal_like_node_base.template_flags =
             template_flags & TokenFlags::TEMPLATE_LITERAL_LIKE_FLAGS;
         self.text_count += 1;
@@ -19934,8 +19934,8 @@ impl NodeFactory<'_> {
         let mut data = TemplateMiddle::default();
         data.template_literal_like_node_base
             .literal_like_node_base
-            .text = text.to_string();
-        data.template_literal_like_node_base.raw_text = raw_text.to_string();
+            .text = text.into();
+        data.template_literal_like_node_base.raw_text = raw_text.into();
         data.template_literal_like_node_base.template_flags =
             template_flags & TokenFlags::TEMPLATE_LITERAL_LIKE_FLAGS;
         self.text_count += 1;
@@ -19953,8 +19953,8 @@ impl NodeFactory<'_> {
         let mut data = TemplateTail::default();
         data.template_literal_like_node_base
             .literal_like_node_base
-            .text = text.to_string();
-        data.template_literal_like_node_base.raw_text = raw_text.to_string();
+            .text = text.into();
+        data.template_literal_like_node_base.raw_text = raw_text.into();
         data.template_literal_like_node_base.template_flags =
             template_flags & TokenFlags::TEMPLATE_LITERAL_LIKE_FLAGS;
         self.text_count += 1;
@@ -20599,7 +20599,7 @@ impl NodeFactory<'_> {
         contains_only_trivia_white_spaces: bool,
     ) -> NodeId {
         let mut data = JsxText::default();
-        data.literal_like_node_base.text = text.to_string();
+        data.literal_like_node_base.text = text.into();
         data.contains_only_trivia_white_spaces = contains_only_trivia_white_spaces;
         self.text_count += 1;
         self.new_node(nodes, Kind::JsxText, NodeData::JsxText(data))

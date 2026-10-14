@@ -653,7 +653,7 @@ fields = [
 [[bases]]
 name = "LiteralLikeNodeBase"
 fields = [
-    { name = "text", ty = "str", go_name = "Text" },
+    { name = "text", ty = "shared_str", go_name = "Text" },
     { name = "token_flags", ty = "token_flags", go_name = "TokenFlags" },
 ]
 
@@ -668,7 +668,7 @@ fields = [
 name = "TemplateLiteralLikeNodeBase"
 fields = [
     { name = "literal_like_node_base", ty = "embed", embed = "LiteralLikeNodeBase", go_name = "LiteralLikeNodeBase" },
-    { name = "raw_text", ty = "str", go_name = "RawText" },
+    { name = "raw_text", ty = "shared_str", go_name = "RawText" },
     { name = "template_flags", ty = "token_flags", go_name = "TemplateFlags" },
 ]
 
@@ -762,7 +762,7 @@ bases = ["PrimaryExpressionBase", "FlowNodeBase"]
 is_fn = "IsIdentifier"
 facts_mode = "custom"
 fields = [
-    { name = "text", ty = "str", go_name = "Text" },
+    { name = "text", ty = "shared_str", go_name = "Text" },
 ]
 news = [
     { name = "NewIdentifier", kind = "Identifier", args = [{ name = "text", ty = "str", field = "text", go_ty = "string" }], counts_text = true },
@@ -778,7 +778,7 @@ bases = ["PrimaryExpressionBase"]
 is_fn = "IsPrivateIdentifier"
 facts_mode = "custom"
 fields = [
-    { name = "text", ty = "str", go_name = "Text" },
+    { name = "text", ty = "shared_str", go_name = "Text" },
 ]
 news = [
     { name = "NewPrivateIdentifier", kind = "PrivateIdentifier", args = [{ name = "text", ty = "str", field = "text", go_ty = "string" }], counts_text = true },

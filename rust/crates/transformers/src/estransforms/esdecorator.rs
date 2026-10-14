@@ -5048,12 +5048,12 @@ fn get_helper_variable_name(
         && ast::is_identifier(&cx.nodes[name])
         && !transformer_utilities::is_generated_identifier(ec, name)
     {
-        declaration_name = cx.nodes[name].as_identifier().text.clone();
+        declaration_name = cx.nodes[name].as_identifier().text.to_string();
     } else if let Some(name) = name
         && ast::is_private_identifier(&cx.nodes[name])
         && !ec.has_auto_generate_info(Some(name))
     {
-        let text = cx.nodes[name].as_private_identifier().text.clone();
+        let text = &cx.nodes[name].as_private_identifier().text;
         if text.len() > 1 {
             declaration_name = text[1..].to_string();
         }
@@ -5073,7 +5073,7 @@ fn get_helper_variable_name(
             .literal_expression_base
             .literal_like_node_base
             .text
-            .clone();
+            .to_string();
     } else if ast::is_class_like(Some(node), cx.nodes) {
         declaration_name = "class".to_string();
     } else {
