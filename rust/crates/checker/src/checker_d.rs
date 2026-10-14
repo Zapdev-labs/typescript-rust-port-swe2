@@ -7078,7 +7078,7 @@ impl Checker {
             .flags
             .intersects(TypeFlags::UNION)
         {
-            let union_types: Vec<TypeId> = self.types.get_ref(index_type).types().to_vec();
+            let union_types = self.types.get_ref(index_type).types_rc();
             let types: Vec<TypeId> = union_types
                 .iter()
                 .map(|&t| {
@@ -7109,7 +7109,7 @@ impl Checker {
             || object_flags.intersects(TypeFlags::INTERSECTION)
                 && !self.should_defer_index_type(object_type, IndexFlags::NONE)
         {
-            let element_types: Vec<TypeId> = self.types.get_ref(object_type).types().to_vec();
+            let element_types = self.types.get_ref(object_type).types_rc();
             let types: Vec<TypeId> = element_types
                 .iter()
                 .map(|&t| {

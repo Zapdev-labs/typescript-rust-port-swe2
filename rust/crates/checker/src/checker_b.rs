@@ -1478,7 +1478,7 @@ impl Checker {
             .flags
             .intersects(TypeFlags::INTERSECTION)
         {
-            let types: Vec<TypeId> = self.types.get_ref(first_base).types().to_vec();
+            let types = self.types.get_ref(first_base).types_rc();
             let (mixin_flags, _) = self.find_mixins(&types);
             for (i, intersection_member) in types.iter().enumerate() {
                 // We want to ignore mixin ctors
@@ -11772,7 +11772,7 @@ impl Checker {
             return true;
         }
         if s_flags.intersects(TypeFlags::UNION_OR_INTERSECTION) {
-            let types: Vec<TypeId> = self.types.get_ref(s).types().to_vec();
+            let types = self.types.get_ref(s).types_rc();
             return types.iter().all(|&t| self.is_valid_spread_type(t));
         }
         false
@@ -11834,7 +11834,7 @@ impl Checker {
         {
             return t;
         }
-        let types: Vec<TypeId> = self.types.get_ref(t).types().to_vec();
+        let types = self.types.get_ref(t).types_rc();
         if types
             .iter()
             .all(|&s| self.is_empty_object_type_or_spreads_into_empty_object(s))
@@ -12134,7 +12134,7 @@ impl Checker {
             });
         }
         if flags.intersects(TypeFlags::UNION_OR_INTERSECTION) {
-            let types: Vec<TypeId> = self.types.get_ref(t).types().to_vec();
+            let types = self.types.get_ref(t).types_rc();
             return types
                 .iter()
                 .any(|&s| self.is_const_type_variable(Some(s), depth));
