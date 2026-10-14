@@ -2671,9 +2671,7 @@ impl Checker {
             .clone();
         let t2_infos = __guard_t2_infos.as_tuple_type().element_infos.clone();
         for (i, e) in t1_infos.iter().enumerate() {
-            if e.flags.intersects(ElementFlags::VARIABLE)
-                != t2_infos[i].flags.intersects(ElementFlags::VARIABLE)
-            {
+            if e.flags & ElementFlags::VARIABLE != t2_infos[i].flags & ElementFlags::VARIABLE {
                 return false;
             }
         }
