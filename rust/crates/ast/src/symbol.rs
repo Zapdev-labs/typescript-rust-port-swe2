@@ -18,7 +18,6 @@ use tsc_collections::OrderedMap;
 
 // Symbol
 
-#[derive(Default)]
 pub struct Symbol {
     pub flags: SymbolFlags,
     /// Non-zero only in transient symbols created by Checker
@@ -41,6 +40,29 @@ pub struct Symbol {
     // owning `Vec<Symbol>` is the id in this port.
     pub parent: Option<SymbolId>,
     pub export_symbol: Option<SymbolId>,
+}
+
+thread_local! {
+    /// Shared never-mutated empty `members`/`exports` — every
+    /// `Symbol::default()` starts with refcount-bumps of this instead of two
+    /// fresh `OrderedMap` allocations. `Rc::make_mut` detaches on first write.
+    static EMPTY_SYMBOL_TABLE: Rc<SymbolTable> = Rc::new(SymbolTable::default());
+}
+
+impl Default for Symbol {
+    fn default() -> Self {
+        EMPTY_SYMBOL_TABLE.with(|t| Symbol {
+            flags: SymbolFlags::default(),
+            check_flags: CheckFlags::default(),
+            name: Default::default(),
+            declarations: Vec::new(),
+            value_declaration: None,
+            members: t.clone(),
+            exports: t.clone(),
+            parent: None,
+            export_symbol: None,
+        })
+    }
 }
 
 impl Symbol {
