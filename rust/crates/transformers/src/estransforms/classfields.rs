@@ -4730,10 +4730,6 @@ impl<'a> ClassFieldsTransformer<'a> {
                         let initializer = initializer.unwrap_or_else(|| {
                             ec.borrow_mut().factory.new_void_zero_expression(cx.nodes)
                         });
-                        let receiver = self
-                            .txv(ec)
-                            .visit_node(cx, Some(receiver))
-                            .unwrap_or(receiver);
                         let set_ident = ec.borrow_mut().factory.new_identifier(cx.nodes, "set");
                         let args = ec
                             .borrow_mut()
