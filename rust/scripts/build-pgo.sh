@@ -38,6 +38,8 @@ else
 fi
 
 echo "==> optimized build"
-RUSTFLAGS="-Cprofile-use=$PGO_DATA_DIR/merged.profdata" \
+# -Ctarget-cpu=native: the PGO build is a local perf artifact anyway;
+# set PGO_TARGET_CPU=generic for a portable binary.
+RUSTFLAGS="-Cprofile-use=$PGO_DATA_DIR/merged.profdata -Ctarget-cpu=${PGO_TARGET_CPU:-native}" \
     cargo build --release --bin tsc --target-dir "$PGO_TARGET_DIR"
 echo "==> $PGO_TARGET_DIR/release/tsc"
