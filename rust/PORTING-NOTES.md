@@ -1907,3 +1907,17 @@ Real-world bench: `tsc --noEmit --strict` on the compiler fixture set
   shows exactly the 5 known divergences.
 - mimalloc is already the `tsc` binary's global allocator
   (commit fd49ddfc3b): ~3.8s → ~3.65s under load vs glibc malloc.
+
+## Performance — parallel checking is the remaining structural gap
+- Go's `checkerPool` distributes files across ~4 checkers on a work
+  group; the port runs `forEachCheckerGroupDo`/`for_each_checker_parallel`
+  sequentially because `Rc<RefCell<Checker>>`/`Rc`-based arenas are
+  not `Send` (checker_pool.rs header).
+- On multi-file programs this plausibly accounts for much of the
+  remaining wall-clock gap vs Go (types.ts fixture: Rust ~3.2s
+  PGO+native vs Go ~0.8s ≈ 3.9x; single-file condcheck ~1.3x).
+- Going parallel means `Arc<Mutex>`/`Send`-able arenas (NodeArenaBuf,
+  TypeArena, SymbolArena, SymbolTables) — a major refactor that trades
+  back some single-thread wins; per-checker state (links, inference,
+  relations) is already checker-local in Go's design.
+- Go also parses/binds files concurrently; our parser is sequential.
