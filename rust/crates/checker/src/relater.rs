@@ -3312,7 +3312,7 @@ impl Checker {
         let key = symbol.unwrap_or_default();
         if !self.variance_links.has(&key) {
             let mut trace_args = TraceArgs::new();
-            let mut pop_fn: Option<Box<dyn FnOnce() + Send>> = None;
+            let mut pop_fn: Option<Box<dyn FnOnce()>> = None;
             // Compute the id before taking the shared `tr` borrow — the call
             // needs `&mut self` while `tr` holds a shared borrow of
             // `self.tracer` for the whole `if let` scope.

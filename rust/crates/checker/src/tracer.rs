@@ -9,7 +9,8 @@
 // - `tracing *tracing.Tracing` → `Arc<tracing::Tracing>` (the Rust session
 //   is `Arc`-managed); `recorder tracing.Tracer` → `Arc<dyn
 //   tracing::Tracer>` (a `TypeTracer`).
-// - `Push` returns `Box<dyn FnOnce() + Send>` like `tracing::Tracing::push`.
+// - `Push` returns `Box<dyn FnOnce()>` like `tracing::Tracing::push` —
+//   single-threaded (Go's checker is), so no `Send`.
 //   Go's `temporarilyAddCheckerIndex` mutates the caller's `map[string]any`
 //   in place and the deferred pop re-reads the *same map* — the Rust tracing
 //   `push` takes `TraceArgs` by value, so the begin/end events capture the
@@ -17,8 +18,8 @@
 //   map is preserved exactly; post-push caller mutations would not be seen
 //   (call sites do not mutate between push and pop).
 // - `tracedTypeAdapter.checker *Checker` (used by `Pattern`,
-//   `RecursionIdentity`, `Display`) cannot be a `&mut Checker` — `TracedType`
-//   must be `Send + Sync` and recorded types outlive checker borrows. The
+//   `RecursionIdentity`, `Display`) cannot be a `&mut Checker` — recorded
+//   types outlive checker borrows. The
 //   port stores shareable handles (`TypeArena` clone, `pattern_for_type`
 //   `Arc`) and resolves `RecursionIdentity` eagerly in
 //   `Checker::trace_record_type` where `&mut Checker` is available —
@@ -29,6 +30,7 @@
 //   inside accessors have `recursion_identity: None` (Go resolves theirs
 //   lazily too; the port can't without `&mut Checker`).
 
+use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 
 use rustc_hash::FxHashMap;
@@ -71,7 +73,7 @@ impl Tracer {
     /// `(t *Tracer) RecordType` — records a type for later dumping. PORT:
     /// the adapter is built by `Checker::trace_record_type` (it needs `&mut
     /// Checker` for the recursion identity); this is the bare record step.
-    pub fn record_type(&self, t: Arc<dyn TracedType>) {
+    pub fn record_type(&self, t: Rc<dyn TracedType>) {
         self.recorder.record_type(t);
     }
 
@@ -86,7 +88,7 @@ impl Tracer {
         name: &str,
         args: &mut TraceArgs,
         separate_begin_and_end: bool,
-    ) -> Box<dyn FnOnce() + Send> {
+    ) -> Box<dyn FnOnce()> {
         if !separate_begin_and_end {
             return self.tracing.push(
                 phase,
@@ -140,7 +142,8 @@ impl Tracer {
 /// PORT: Go stores `t *Type` and `checker *Checker`. Here `t` is the arena
 /// id and `types`/`pattern_for_type` are `Arc`-shared handles into checker
 /// state; `recursion_identity` is computed eagerly by the checker before
-/// recording (see header). `Send + Sync` because all fields are.
+/// recording (see header). `!Send`/`!Sync` — `types` is `Rc<RefCell<..>>`,
+/// matching Go's single-threaded checker.
 pub struct TracedTypeAdapter {
     /// `a.t`.
     pub t: TypeId,
@@ -156,9 +159,9 @@ pub struct TracedTypeAdapter {
 impl TracedTypeAdapter {
     /// `wrapType` / `wrapTypes` — nested adapters share the arena handles
     /// and carry no precomputed recursion identity (see header).
-    fn wrap_type(&self, t: Option<TypeId>) -> Option<Arc<dyn TracedType>> {
-        t.map(|t| -> Arc<dyn TracedType> {
-            Arc::new(TracedTypeAdapter {
+    fn wrap_type(&self, t: Option<TypeId>) -> Option<Rc<dyn TracedType>> {
+        t.map(|t| -> Rc<dyn TracedType> {
+            Rc::new(TracedTypeAdapter {
                 t,
                 types: self.types.clone(),
                 pattern_for_type: self.pattern_for_type.clone(),
@@ -168,7 +171,7 @@ impl TracedTypeAdapter {
     }
 
     /// `wrapTypes`.
-    fn wrap_types(&self, types: &[TypeId]) -> Vec<Option<Arc<dyn TracedType>>> {
+    fn wrap_types(&self, types: &[TypeId]) -> Vec<Option<Rc<dyn TracedType>>> {
         if types.is_empty() {
             return Vec::new();
         }
@@ -210,7 +213,7 @@ impl TracedType for TracedTypeAdapter {
     }
 
     /// `AliasTypeArguments`.
-    fn alias_type_arguments(&self) -> Vec<Option<Arc<dyn TracedType>>> {
+    fn alias_type_arguments(&self) -> Vec<Option<Rc<dyn TracedType>>> {
         let args = {
             let __arena_ty = self.types.clone();
             let ty = __arena_ty.get(self.t);
@@ -236,7 +239,7 @@ impl TracedType for TracedTypeAdapter {
     }
 
     /// `UnionTypes`.
-    fn union_types(&self) -> Vec<Option<Arc<dyn TracedType>>> {
+    fn union_types(&self) -> Vec<Option<Rc<dyn TracedType>>> {
         let types = {
             let __arena_ty = self.types.clone();
             let ty = __arena_ty.get(self.t);
@@ -250,7 +253,7 @@ impl TracedType for TracedTypeAdapter {
     }
 
     /// `IntersectionTypes`.
-    fn intersection_types(&self) -> Vec<Option<Arc<dyn TracedType>>> {
+    fn intersection_types(&self) -> Vec<Option<Rc<dyn TracedType>>> {
         let types = {
             let __arena_ty = self.types.clone();
             let ty = __arena_ty.get(self.t);
@@ -267,7 +270,7 @@ impl TracedType for TracedTypeAdapter {
     }
 
     /// `IndexType`.
-    fn index_type(&self) -> Option<Arc<dyn TracedType>> {
+    fn index_type(&self) -> Option<Rc<dyn TracedType>> {
         let target = {
             let __arena_ty = self.types.clone();
             let ty = __arena_ty.get(self.t);
@@ -281,7 +284,7 @@ impl TracedType for TracedTypeAdapter {
     }
 
     /// `IndexedAccessObjectType`.
-    fn indexed_access_object_type(&self) -> Option<Arc<dyn TracedType>> {
+    fn indexed_access_object_type(&self) -> Option<Rc<dyn TracedType>> {
         let t = {
             let __arena_ty = self.types.clone();
             let ty = __arena_ty.get(self.t);
@@ -295,7 +298,7 @@ impl TracedType for TracedTypeAdapter {
     }
 
     /// `IndexedAccessIndexType`.
-    fn indexed_access_index_type(&self) -> Option<Arc<dyn TracedType>> {
+    fn indexed_access_index_type(&self) -> Option<Rc<dyn TracedType>> {
         let t = {
             let __arena_ty = self.types.clone();
             let ty = __arena_ty.get(self.t);
@@ -309,7 +312,7 @@ impl TracedType for TracedTypeAdapter {
     }
 
     /// `ConditionalCheckType`.
-    fn conditional_check_type(&self) -> Option<Arc<dyn TracedType>> {
+    fn conditional_check_type(&self) -> Option<Rc<dyn TracedType>> {
         let t = {
             let __arena_ty = self.types.clone();
             let ty = __arena_ty.get(self.t);
@@ -323,7 +326,7 @@ impl TracedType for TracedTypeAdapter {
     }
 
     /// `ConditionalExtendsType`.
-    fn conditional_extends_type(&self) -> Option<Arc<dyn TracedType>> {
+    fn conditional_extends_type(&self) -> Option<Rc<dyn TracedType>> {
         let t = {
             let __arena_ty = self.types.clone();
             let ty = __arena_ty.get(self.t);
@@ -337,7 +340,7 @@ impl TracedType for TracedTypeAdapter {
     }
 
     /// `ConditionalTrueType`.
-    fn conditional_true_type(&self) -> Option<Arc<dyn TracedType>> {
+    fn conditional_true_type(&self) -> Option<Rc<dyn TracedType>> {
         let t = {
             let __arena_ty = self.types.clone();
             let ty = __arena_ty.get(self.t);
@@ -351,7 +354,7 @@ impl TracedType for TracedTypeAdapter {
     }
 
     /// `ConditionalFalseType`.
-    fn conditional_false_type(&self) -> Option<Arc<dyn TracedType>> {
+    fn conditional_false_type(&self) -> Option<Rc<dyn TracedType>> {
         let t = {
             let __arena_ty = self.types.clone();
             let ty = __arena_ty.get(self.t);
@@ -365,7 +368,7 @@ impl TracedType for TracedTypeAdapter {
     }
 
     /// `SubstitutionBaseType`.
-    fn substitution_base_type(&self) -> Option<Arc<dyn TracedType>> {
+    fn substitution_base_type(&self) -> Option<Rc<dyn TracedType>> {
         let t = {
             let __arena_ty = self.types.clone();
             let ty = __arena_ty.get(self.t);
@@ -379,7 +382,7 @@ impl TracedType for TracedTypeAdapter {
     }
 
     /// `SubstitutionConstraintType`.
-    fn substitution_constraint_type(&self) -> Option<Arc<dyn TracedType>> {
+    fn substitution_constraint_type(&self) -> Option<Rc<dyn TracedType>> {
         let t = {
             let __arena_ty = self.types.clone();
             let ty = __arena_ty.get(self.t);
@@ -393,7 +396,7 @@ impl TracedType for TracedTypeAdapter {
     }
 
     /// `ReferenceTarget`.
-    fn reference_target(&self) -> Option<Arc<dyn TracedType>> {
+    fn reference_target(&self) -> Option<Rc<dyn TracedType>> {
         let t = {
             let __arena_ty = self.types.clone();
             let ty = __arena_ty.get(self.t);
@@ -409,7 +412,7 @@ impl TracedType for TracedTypeAdapter {
     }
 
     /// `ReferenceTypeArguments`.
-    fn reference_type_arguments(&self) -> Vec<Option<Arc<dyn TracedType>>> {
+    fn reference_type_arguments(&self) -> Vec<Option<Rc<dyn TracedType>>> {
         let args = {
             let __arena_ty = self.types.clone();
             let ty = __arena_ty.get(self.t);
@@ -437,7 +440,7 @@ impl TracedType for TracedTypeAdapter {
     }
 
     /// `ReverseMappedSourceType`.
-    fn reverse_mapped_source_type(&self) -> Option<Arc<dyn TracedType>> {
+    fn reverse_mapped_source_type(&self) -> Option<Rc<dyn TracedType>> {
         let t = {
             let __arena_ty = self.types.clone();
             let ty = __arena_ty.get(self.t);
@@ -453,7 +456,7 @@ impl TracedType for TracedTypeAdapter {
     }
 
     /// `ReverseMappedMappedType`.
-    fn reverse_mapped_mapped_type(&self) -> Option<Arc<dyn TracedType>> {
+    fn reverse_mapped_mapped_type(&self) -> Option<Rc<dyn TracedType>> {
         let t = {
             let __arena_ty = self.types.clone();
             let ty = __arena_ty.get(self.t);
@@ -469,7 +472,7 @@ impl TracedType for TracedTypeAdapter {
     }
 
     /// `ReverseMappedConstraintType`.
-    fn reverse_mapped_constraint_type(&self) -> Option<Arc<dyn TracedType>> {
+    fn reverse_mapped_constraint_type(&self) -> Option<Rc<dyn TracedType>> {
         let t = {
             let __arena_ty = self.types.clone();
             let ty = __arena_ty.get(self.t);
@@ -485,7 +488,7 @@ impl TracedType for TracedTypeAdapter {
     }
 
     /// `EvolvingArrayElementType`.
-    fn evolving_array_element_type(&self) -> Option<Arc<dyn TracedType>> {
+    fn evolving_array_element_type(&self) -> Option<Rc<dyn TracedType>> {
         let t = {
             let __arena_ty = self.types.clone();
             let ty = __arena_ty.get(self.t);
@@ -501,7 +504,7 @@ impl TracedType for TracedTypeAdapter {
     }
 
     /// `EvolvingArrayFinalType`.
-    fn evolving_array_final_type(&self) -> Option<Arc<dyn TracedType>> {
+    fn evolving_array_final_type(&self) -> Option<Rc<dyn TracedType>> {
         let t = {
             let __arena_ty = self.types.clone();
             let ty = __arena_ty.get(self.t);

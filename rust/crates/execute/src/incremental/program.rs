@@ -590,7 +590,7 @@ impl Program {
 }
 
 /// RAII guard calling the tracing end function — Go's `defer tr.Push(...)()`.
-struct TraceDone(Option<Box<dyn FnOnce() + Send>>);
+struct TraceDone(Option<Box<dyn FnOnce()>>);
 
 impl Drop for TraceDone {
     fn drop(&mut self) {

@@ -1709,7 +1709,7 @@ impl Checker {
 
 /// Drop guard standing in for Go's `defer tr.Push(...)()` — the returned
 /// closure runs at scope exit.
-struct TraceGuard(Option<Box<dyn FnOnce() + Send>>);
+struct TraceGuard(Option<Box<dyn FnOnce()>>);
 
 impl Drop for TraceGuard {
     fn drop(&mut self) {
@@ -12993,7 +12993,7 @@ impl Checker {
     /// `(c *Checker) checkExpressionEx` (checker.go).
     pub(crate) fn check_expression_ex(&mut self, node: NodeId, check_mode: CheckMode) -> TypeId {
         // `if tr := c.tracer; tr != nil { defer tr.Push(...)() }`
-        let trace_pop: Option<Box<dyn FnOnce() + Send>> = self.tracer.as_ref().map(|tr| {
+        let trace_pop: Option<Box<dyn FnOnce()>> = self.tracer.as_ref().map(|tr| {
             let __program = self.program.clone().expect("program");
             let nodes = __program.nodes((node).file_index());
             let mut args = tsc_tracing::TraceArgs::default();

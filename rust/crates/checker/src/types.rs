@@ -7,18 +7,19 @@
 // PORT notes (see SPEC.md §5.3/§5.4 for the arena rationale):
 //
 // - `*Type` becomes `TypeId`, an index into `TypeArena`
-//   (`RwLock<Vec<Type>>`). Go's pointer-identity comparisons (`t == s`,
-//   `map[*Type]*Type`) become `TypeId` equality/`HashMap<TypeId, _>` —
-//   TypeIds are per-checker-shard, matching Go where two checkers' `*Type`
-//   pointers never collide. `Type.checker *Checker` becomes
-//   `checker_shard: u16`; code that read `t.checker.X` takes the checker as
-//   an explicit parameter instead (§5.4 "t.checker eradication").
-//   `TypeArena` wraps the Vec in `RwLock` because `tracing::TracedType` is
-//   `Send + Sync` and the tracer's recorded-type adapters must keep reading
-//   lazily-resolved fields after the checker hands them out. Accessors take
-//   short-lived guards (`arena.get(id)`); write sites must not hold a read
-//   guard across a `get_mut`/`alloc` (same-thread RwLock recursion deadlocks)
-//   — compute into locals, then store.
+//   (`Rc<RefCell<Vec<Rc<Type>>>>`). Go's pointer-identity comparisons
+//   (`t == s`, `map[*Type]*Type`) become `TypeId` equality/
+//   `HashMap<TypeId, _>` — TypeIds are per-checker-shard, matching Go where
+//   two checkers' `*Type` pointers never collide. `Type.checker *Checker`
+//   becomes `checker_shard: u16`; code that read `t.checker.X` takes the
+//   checker as an explicit parameter instead (§5.4 "t.checker
+//   eradication"). `TypeArena` uses `Rc`/`RefCell` because Go's checker is
+//   single-threaded and the port never moves a checker across threads; the
+//   tracer's recorded-type adapters still keep reading lazily-resolved
+//   fields after the checker hands them out. Accessors return cloned `Rc`s
+//   (`arena.get(id)`); write sites must not hold a `Ref`/`RefMut` across a
+//   `get_mut`/`alloc` (same-thread `RefCell` re-entry panics) — compute
+//   into locals, then store.
 // - `*Signature` → `SignatureId` into `SignatureArena` (`Vec<Signature>`).
 //   `*TypeMapper` → `TypeMapperId` into `TypeMapperArena` (mapper.rs).
 //   `*InferenceContext` → `InferenceContextId` into `Vec<InferenceContext>`
@@ -37,8 +38,10 @@
 //   nil) → `Option<tsc_evaluator::Value>` — the evaluator's `any`-analogue
 //   enum covers exactly those alternatives.
 
+use std::cell::{RefCell, RefMut};
 use std::fmt;
-use std::sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard};
+use std::rc::Rc;
+use std::sync::{Arc, RwLock};
 
 use rustc_hash::FxHashMap;
 use tsc_ast::symbolflags::SymbolFlags;
@@ -3312,25 +3315,26 @@ pub type StringLiteralType = TypeId;
 // TypeArena — the per-checker `Vec<Type>` store of SPEC §5.4.
 
 /// `TypeArena` is the per-checker-shard arena of `Type` elements; `TypeId`
-/// indexes it. `RwLock` because `tracing::TracedType` is `Send + Sync` and
-/// recorded-type adapters outlive checker borrows — see the file header.
+/// indexes it. `Rc<RefCell<..>>` because Go's checker is single-threaded —
+/// the port never moves a checker (or its arena) across threads, and the
+/// tracer's `Send + Sync` bound that originally motivated `RwLock` is gone.
 /// `HashMap`-based intern tables for literal/intrinsic/union types live on
 /// the checker, not here (they're checker state in Go too).
 #[derive(Clone, Default)]
 pub struct TypeArena {
-    /// `Arc` so `tracer.rs`'s `Send + Sync` `TracedType` adapter can hold a
-    /// share of the arena post-hoc (Go's adapter holds the `*Type` heap
-    /// pointer). Elements are `Arc<Type>` so `get` hands out a cheap shared
-    /// pointer (Go's `*Type`) rather than deep-cloning the type — including
-    /// its member `IndexMap`s — on every read. `get_mut` copy-on-writes via
-    /// `Arc::make_mut`: in-place when unshared, a fresh copy when readers hold
-    /// a snapshot (snapshot holders then see the pre-write value).
-    types: Arc<RwLock<Vec<std::sync::Arc<Type>>>>,
+    /// `Rc` so `tracer.rs`'s `TracedType` adapter can hold a share of the
+    /// arena post-hoc (Go's adapter holds the `*Type` heap pointer).
+    /// Elements are `Rc<Type>` so `get` hands out a cheap shared pointer
+    /// (Go's `*Type`) rather than deep-cloning the type — including its
+    /// member `IndexMap`s — on every read. `get_mut` copy-on-writes via
+    /// `Rc::make_mut`: in-place when unshared, a fresh copy when readers
+    /// hold a snapshot (snapshot holders then see the pre-write value).
+    types: Rc<RefCell<Vec<Rc<Type>>>>,
 }
 
 /// `TypeArena::get_mut` result — derefs to `Type` (mutable).
 pub struct TypeWriteGuard<'a> {
-    guard: RwLockWriteGuard<'a, Vec<std::sync::Arc<Type>>>,
+    guard: RefMut<'a, Vec<Rc<Type>>>,
     index: usize,
 }
 
@@ -3345,7 +3349,7 @@ impl std::ops::Deref for TypeWriteGuard<'_> {
 impl std::ops::DerefMut for TypeWriteGuard<'_> {
     #[inline]
     fn deref_mut(&mut self) -> &mut Type {
-        std::sync::Arc::make_mut(&mut self.guard[self.index])
+        Rc::make_mut(&mut self.guard[self.index])
     }
 }
 
@@ -3354,48 +3358,50 @@ impl TypeArena {
     pub fn alloc(&self, t: Type) -> TypeId {
         let mut types = self
             .types
-            .try_write()
-            .expect("DEADLOCK-PROBE: types.alloc while arena lock held");
+            .try_borrow_mut()
+            .expect("DEADLOCK-PROBE: types.alloc while arena borrow held");
         let id = TypeId(types.len() as u32);
-        types.push(std::sync::Arc::new(t));
+        types.push(Rc::new(t));
         id
     }
 
     /// Shared-pointer access to a single type — the Go `t.field` read shape.
-    /// Returns an `Rc<Type>` clone: a live read guard held across `get_mut`/
-    /// `alloc` deadlocks same-thread `RwLock` recursion, and the checker is
-    /// full of such call chains (Go reads the shared heap freely). Reads
-    /// under a held write guard still panic via `try_read` — Go-legal
-    /// reads-while-mutating must extract fields before `get_mut`.
-    pub fn get(&self, id: TypeId) -> std::sync::Arc<Type> {
+    /// Returns an `Rc<Type>` clone: a live `Ref`/`RefMut` held across
+    /// `get_mut`/`alloc` panics on same-thread `RefCell` re-entry, and the
+    /// checker is full of such call chains (Go reads the shared heap
+    /// freely). Reads under a held write guard still panic via
+    /// `try_borrow` — Go-legal reads-while-mutating must extract fields
+    /// before `get_mut`.
+    pub fn get(&self, id: TypeId) -> Rc<Type> {
         self.types
-            .try_read()
-            .expect("DEADLOCK-PROBE: types.get while write lock held")[id.index()]
+            .try_borrow()
+            .expect("DEADLOCK-PROBE: types.get while arena write borrow held")
+            [id.index()]
         .clone()
     }
 
-    /// Write-locked access to a single type — the Go `t.field = v` write
-    /// shape. Compute the value before calling (a nested `get`/`get_mut` on
-    /// the same arena deadlocks while the guard is held). `Arc::make_mut`
-    /// clones the element iff `get` snapshots still share it.
+    /// Write access to a single type — the Go `t.field = v` write shape.
+    /// Compute the value before calling (a nested `get`/`get_mut` on the
+    /// same arena panics while the guard is held). `Rc::make_mut` clones
+    /// the element iff `get` snapshots still share it.
     pub fn get_mut(&self, id: TypeId) -> TypeWriteGuard<'_> {
         TypeWriteGuard {
             guard: self
                 .types
-                .try_write()
-                .expect("DEADLOCK-PROBE: types.get_mut while arena lock held"),
+                .try_borrow_mut()
+                .expect("DEADLOCK-PROBE: types.get_mut while arena borrow held"),
             index: id.index(),
         }
     }
 
     /// `len(types)`.
     pub fn len(&self) -> usize {
-        self.types.read().unwrap().len()
+        self.types.borrow().len()
     }
 
     /// `len(types) == 0`.
     pub fn is_empty(&self) -> bool {
-        self.types.read().unwrap().is_empty()
+        self.types.borrow().is_empty()
     }
 
     /// `(t *Type) TargetInterfaceType` —

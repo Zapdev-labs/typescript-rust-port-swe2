@@ -508,8 +508,8 @@ pub fn clear_cached_inferences(inferences: &mut [InferenceInfo]) {
 /// `getRecursionIdentity` (relater.go — deferred file; mirrored for
 /// tracer.rs). PORT(mirrored): `getRecursionIdentityTarget` calls the
 /// deferred `Checker::get_modifiers_type_from_mapped_type`, so this takes
-/// `c: &mut Checker` — the tracer routes it through a hook since
-/// `TracedType` must stay `Send + Sync`.
+/// `c: &mut Checker` — the `TracedType` adapter can't hold a checker
+/// borrow (recorded types outlive it).
 pub fn get_recursion_identity(c: &mut Checker, t: TypeId) -> RecursionId {
     let target = get_recursion_identity_target(c, t);
     get_recursion_identity_from_target(c, target)
@@ -658,7 +658,7 @@ fn get_recursion_identity_from_target(c: &mut Checker, t: TypeId) -> RecursionId
 /// - `*Relation` fields are `SharedRelation` (`Rc<RefCell<Relation>>`) —
 ///   `Relater::relation` aliases the same object, exactly like Go.
 /// - `pattern_for_type` (`map[*Type]*ast.Node`) is `Arc<RwLock<_>>` so the
-///   `Send + Sync` `TracedType` adapter can read it post-hoc.
+///   `TracedType` adapter can read it post-hoc.
 /// - `sync.Once` → `std::sync::Once`; `sync.Mutex` → `std::sync::Mutex<()>`.
 /// - Non-pointer Go fields that are always populated by `NewChecker`
 ///   (`*Type` sentinels, symbols, signatures, mappers) use bare ids —
@@ -944,7 +944,7 @@ pub struct Checker {
     /// regex-checking code; `'static` is the storage lifetime here.
     pub reg_exp_scanner: Option<Box<Scanner<'static>>>,
     /// `patternForType` (`map[*Type]*ast.Node`) — `Arc<RwLock>` so the
-    /// `Send + Sync` `TracedType` adapter can read it post-hoc.
+    /// `TracedType` adapter can read it post-hoc.
     pub pattern_for_type: Arc<RwLock<FxHashMap<TypeId, NodeId>>>,
     /// `contextFreeTypes` — `map[*ast.Node]*Type`.
     pub context_free_types: FxHashMap<NodeId, TypeId>,
@@ -2144,7 +2144,7 @@ impl Checker {
 
     /// `c.tracer.RecordType(t)` — Go's `wrapType` reads `t.checker` fields
     /// (`patternForType`, recursion identity, `TypeToString`) lazily at dump
-    /// time. The `Send + Sync` `TracedType` adapter can't hold `&mut
+    /// time. The `TracedType` adapter can't hold `&mut
     /// Checker`, so `RecursionIdentity` is resolved eagerly here (its inputs
     /// are creation-time fields — see tracer.rs header) and `Display`
     /// returns "" until `type_to_string` lands.
@@ -2161,8 +2161,8 @@ impl Checker {
         let pattern_for_type = self.pattern_for_type.clone();
         let _ = tracer;
         let recursion_identity = Some(get_recursion_identity(self, t).value);
-        let adapter: Arc<dyn tsc_tracing::TracedType> =
-            Arc::new(crate::tracer::TracedTypeAdapter {
+        let adapter: std::rc::Rc<dyn tsc_tracing::TracedType> =
+            std::rc::Rc::new(crate::tracer::TracedTypeAdapter {
                 t,
                 types,
                 pattern_for_type,

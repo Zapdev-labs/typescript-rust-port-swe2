@@ -53,8 +53,8 @@ pub fn symbol_is_static(s: &Symbol, nodes: &[crate::Node]) -> bool {
 /// `Arc<str>` clones are refcount bumps while `String` keys would
 /// alloc+memcpy per entry (member-table merges are check-time hot).
 /// `str` lookups work via `Equivalent`/`Borrow`. `Arc` (not `Rc`)
-/// because `Type`/`Symbol` cross threads in the checker's `Arc<Type>`
-/// arena and the tracer's `Send + Sync` adapters.
+/// for parity with earlier thread-safe handles; the refcount-bump
+/// clone cost vs `String` is the win that matters.
 pub type SymbolTable = OrderedMap<std::sync::Arc<str>, SymbolId>;
 
 /// Not a valid identifier char and escapes to `\uFFFD` — Rust's UTF-8-safe

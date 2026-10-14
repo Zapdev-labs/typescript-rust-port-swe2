@@ -25,6 +25,7 @@
 
 use std::collections::{BTreeMap, HashMap};
 use std::fmt;
+use std::rc::Rc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
@@ -41,9 +42,12 @@ use crate::xxh3::xxh3_64;
 /// `Tracer` is an interface for recording types during type checking.
 /// Each checker should have its own `Tracer` instance to avoid sharing types
 /// between checkers.
-pub trait Tracer: Send + Sync {
+///
+/// PORT: no `Send + Sync` — the checker's type arena is `Rc<RefCell<..>>`
+/// (Go's checker is single-threaded), so recorded types are `Rc` handles.
+pub trait Tracer {
     /// `RecordType` records a type for later dumping.
-    fn record_type(&self, t: Arc<dyn TracedType>);
+    fn record_type(&self, t: Rc<dyn TracedType>);
     /// `DumpTypes` writes all recorded types to disk. `nodes`/`symbols` are
     /// the checker's arenas — Go's `*ast.Node`/`*ast.Symbol` pointers carry
     /// their arena implicitly.
@@ -55,10 +59,13 @@ pub trait Tracer: Send + Sync {
 /// package without creating a circular dependency.
 ///
 /// Go's `TracedType` accessor results are interface values (nil-able), so
-/// type-returning accessors are `Option<Arc<dyn TracedType>>`. `*ast.Node`
+/// type-returning accessors are `Option<Rc<dyn TracedType>>`. `*ast.Node`
 /// results are `Option<NodeId>` into the `nodes` arena passed to
 /// `dump_types`; `*ast.Symbol` results are `Option<SymbolId>` into `symbols`.
-pub trait TracedType: Send + Sync {
+///
+/// PORT: no `Send + Sync` — recorded types hold `Rc` arena handles
+/// (single-threaded checker, like Go).
+pub trait TracedType {
     /// `Id()`.
     fn id(&self) -> u32;
     /// `FormatFlags()`.
@@ -70,49 +77,49 @@ pub trait TracedType: Send + Sync {
     /// `AliasSymbol()`.
     fn alias_symbol(&self) -> Option<SymbolId>;
     /// `AliasTypeArguments()` — elements are nil-able in Go.
-    fn alias_type_arguments(&self) -> Vec<Option<Arc<dyn TracedType>>>;
+    fn alias_type_arguments(&self) -> Vec<Option<Rc<dyn TracedType>>>;
 
     // Type-specific data accessors
     /// `IntrinsicName()`.
     fn intrinsic_name(&self) -> String;
     /// `UnionTypes()`.
-    fn union_types(&self) -> Vec<Option<Arc<dyn TracedType>>>;
+    fn union_types(&self) -> Vec<Option<Rc<dyn TracedType>>>;
     /// `IntersectionTypes()`.
-    fn intersection_types(&self) -> Vec<Option<Arc<dyn TracedType>>>;
+    fn intersection_types(&self) -> Vec<Option<Rc<dyn TracedType>>>;
     /// `IndexType()`.
-    fn index_type(&self) -> Option<Arc<dyn TracedType>>;
+    fn index_type(&self) -> Option<Rc<dyn TracedType>>;
     /// `IndexedAccessObjectType()`.
-    fn indexed_access_object_type(&self) -> Option<Arc<dyn TracedType>>;
+    fn indexed_access_object_type(&self) -> Option<Rc<dyn TracedType>>;
     /// `IndexedAccessIndexType()`.
-    fn indexed_access_index_type(&self) -> Option<Arc<dyn TracedType>>;
+    fn indexed_access_index_type(&self) -> Option<Rc<dyn TracedType>>;
     /// `ConditionalCheckType()`.
-    fn conditional_check_type(&self) -> Option<Arc<dyn TracedType>>;
+    fn conditional_check_type(&self) -> Option<Rc<dyn TracedType>>;
     /// `ConditionalExtendsType()`.
-    fn conditional_extends_type(&self) -> Option<Arc<dyn TracedType>>;
+    fn conditional_extends_type(&self) -> Option<Rc<dyn TracedType>>;
     /// `ConditionalTrueType()`.
-    fn conditional_true_type(&self) -> Option<Arc<dyn TracedType>>;
+    fn conditional_true_type(&self) -> Option<Rc<dyn TracedType>>;
     /// `ConditionalFalseType()`.
-    fn conditional_false_type(&self) -> Option<Arc<dyn TracedType>>;
+    fn conditional_false_type(&self) -> Option<Rc<dyn TracedType>>;
     /// `SubstitutionBaseType()`.
-    fn substitution_base_type(&self) -> Option<Arc<dyn TracedType>>;
+    fn substitution_base_type(&self) -> Option<Rc<dyn TracedType>>;
     /// `SubstitutionConstraintType()`.
-    fn substitution_constraint_type(&self) -> Option<Arc<dyn TracedType>>;
+    fn substitution_constraint_type(&self) -> Option<Rc<dyn TracedType>>;
     /// `ReferenceTarget()`.
-    fn reference_target(&self) -> Option<Arc<dyn TracedType>>;
+    fn reference_target(&self) -> Option<Rc<dyn TracedType>>;
     /// `ReferenceTypeArguments()`.
-    fn reference_type_arguments(&self) -> Vec<Option<Arc<dyn TracedType>>>;
+    fn reference_type_arguments(&self) -> Vec<Option<Rc<dyn TracedType>>>;
     /// `ReferenceNode()` — a `NodeId` in `nodes`.
     fn reference_node(&self) -> Option<NodeId>;
     /// `ReverseMappedSourceType()`.
-    fn reverse_mapped_source_type(&self) -> Option<Arc<dyn TracedType>>;
+    fn reverse_mapped_source_type(&self) -> Option<Rc<dyn TracedType>>;
     /// `ReverseMappedMappedType()`.
-    fn reverse_mapped_mapped_type(&self) -> Option<Arc<dyn TracedType>>;
+    fn reverse_mapped_mapped_type(&self) -> Option<Rc<dyn TracedType>>;
     /// `ReverseMappedConstraintType()`.
-    fn reverse_mapped_constraint_type(&self) -> Option<Arc<dyn TracedType>>;
+    fn reverse_mapped_constraint_type(&self) -> Option<Rc<dyn TracedType>>;
     /// `EvolvingArrayElementType()`.
-    fn evolving_array_element_type(&self) -> Option<Arc<dyn TracedType>>;
+    fn evolving_array_element_type(&self) -> Option<Rc<dyn TracedType>>;
     /// `EvolvingArrayFinalType()`.
-    fn evolving_array_final_type(&self) -> Option<Arc<dyn TracedType>>;
+    fn evolving_array_final_type(&self) -> Option<Rc<dyn TracedType>>;
     /// `IsTuple()`.
     fn is_tuple(&self) -> bool;
     /// `Pattern()` — a `NodeId` in `nodes`.
@@ -512,15 +519,14 @@ impl Tracing {
     ///
     /// Returns a function that should be called (typically deferred) to end
     /// the event. Each returned function is self-contained and does not
-    /// depend on a shared stack, making it safe for concurrent use across
-    /// threads.
+    /// depend on a shared stack.
     pub fn push(
         self: &Arc<Tracing>,
         phase: Phase,
         name: &str,
         args: TraceArgs,
         separate_begin_and_end: bool,
-    ) -> Box<dyn FnOnce() + Send> {
+    ) -> Box<dyn FnOnce()> {
         if !self.trace_started.load(Ordering::SeqCst) {
             return Box::new(|| {});
         }
@@ -730,7 +736,7 @@ pub fn push(
     name: &str,
     args: TraceArgs,
     separate_begin_and_end: bool,
-) -> Box<dyn FnOnce() + Send> {
+) -> Box<dyn FnOnce()> {
     match tr {
         Some(tr) => tr.push(phase, name, args, separate_begin_and_end),
         None => Box::new(|| {}),
@@ -883,7 +889,9 @@ pub struct TypeTracer {
     /// `checkerIndex`
     pub checker_index: i32,
     types_path: RootedFilePath,
-    types: Mutex<Vec<Arc<dyn TracedType>>>,
+    /// `Rc` elements — the trait object is `!Send` now (the checker's arena
+    /// is `Rc<RefCell<..>>`); the `Mutex` stays for the smallest diff.
+    types: Mutex<Vec<Rc<dyn TracedType>>>,
 }
 
 impl TypeTracer {
@@ -937,7 +945,7 @@ impl TypeTracer {
 
 impl Tracer for TypeTracer {
     /// `t.RecordType(typ)`
-    fn record_type(&self, typ: Arc<dyn TracedType>) {
+    fn record_type(&self, typ: Rc<dyn TracedType>) {
         self.types.lock().unwrap().push(typ);
     }
 
@@ -1273,7 +1281,7 @@ fn build_type_descriptor(
 }
 
 /// `mapTypeIds`
-fn map_type_ids(types: &[Option<Arc<dyn TracedType>>]) -> Vec<u32> {
+fn map_type_ids(types: &[Option<Rc<dyn TracedType>>]) -> Vec<u32> {
     if types.is_empty() {
         return Vec::new();
     }
