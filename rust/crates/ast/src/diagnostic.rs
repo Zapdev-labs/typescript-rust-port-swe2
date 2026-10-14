@@ -994,6 +994,245 @@ pub fn compare_diagnostics(d1: &DiagnosticRef, d2: &DiagnosticRef) -> i32 {
     compare_related_info(&v1.related_information, &v2.related_information)
 }
 
+// ---------------------------------------------------------------------------
+// PORT(addition): process-boundary wire codec for diagnostics.
+//
+// The fork-parallel checker pool (`checker_pool::try_fork_collect`) runs
+// `collect` for a checker's file group inside a forked child and ships the
+// results back over a pipe. The codec below is the whole contract: every
+// field on `Diagnostic`/`DiagnosticFile` is plain data except `message`,
+// which round-trips through `message_key` (re-resolved lazily by
+// `key_to_message` on first `localize` — identity and sort paths never
+// read `message` directly), plus the adhoc case where `code == -1` and the
+// text itself must cross. `DiagnosticFile` reduces to its `node` when one
+// is present — the parent rebuilds it via `DiagnosticFile::from_node`
+// against the same arena (fork children share the parent's address space
+// read-only, so `NodeId`s are identical on both sides).
+// ---------------------------------------------------------------------------
+
+mod wire {
+    use super::*;
+    use std::io::{self, Read, Write};
+
+    fn w_u8(w: &mut impl Write, v: u8) -> io::Result<()> {
+        w.write_all(&[v])
+    }
+    fn w_u32(w: &mut impl Write, v: u32) -> io::Result<()> {
+        w.write_all(&v.to_le_bytes())
+    }
+    fn w_i32(w: &mut impl Write, v: i32) -> io::Result<()> {
+        w.write_all(&v.to_le_bytes())
+    }
+    fn w_u64(w: &mut impl Write, v: u64) -> io::Result<()> {
+        w.write_all(&v.to_le_bytes())
+    }
+    fn w_str(w: &mut impl Write, v: &str) -> io::Result<()> {
+        w_u32(w, v.len() as u32)?;
+        w.write_all(v.as_bytes())
+    }
+
+    fn r_u8(r: &mut impl Read) -> io::Result<u8> {
+        let mut b = [0u8; 1];
+        r.read_exact(&mut b)?;
+        Ok(b[0])
+    }
+    fn r_u32(r: &mut impl Read) -> io::Result<u32> {
+        let mut b = [0u8; 4];
+        r.read_exact(&mut b)?;
+        Ok(u32::from_le_bytes(b))
+    }
+    fn r_i32(r: &mut impl Read) -> io::Result<i32> {
+        Ok(r_u32(r)? as i32)
+    }
+    fn r_u64(r: &mut impl Read) -> io::Result<u64> {
+        let mut b = [0u8; 8];
+        r.read_exact(&mut b)?;
+        Ok(u64::from_le_bytes(b))
+    }
+    fn r_str(r: &mut impl Read) -> io::Result<String> {
+        let len = r_u32(r)? as usize;
+        let mut buf = vec![0u8; len];
+        r.read_exact(&mut buf)?;
+        String::from_utf8(buf)
+            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))
+    }
+
+    /// Serialize `d` — recursive through `message_chain` /
+    /// `related_information`. `file.node` is the only file data that
+    /// crosses; a file without a node is reported via
+    /// `has_unresolvable_files` upstream (caller re-runs that file
+    /// sequentially rather than degrade the `DiagnosticFile`).
+    pub fn write_diagnostic(d: &DiagnosticRef, w: &mut impl Write) -> io::Result<()> {
+        let d = lock_diagnostic(d);
+        match &d.file {
+            Some(f) => {
+                w_u8(w, 1)?;
+                match f.node {
+                    Some(node) => {
+                        w_u8(w, 1)?;
+                        w_u64(w, node.0)?;
+                    }
+                    // Marker only — callers must not ship node-less files
+                    // (see module comment); the byte keeps the format
+                    // unambiguous if one sneaks through.
+                    None => w_u8(w, 0)?,
+                }
+            }
+            None => w_u8(w, 0)?,
+        }
+        w_i32(w, d.loc.pos())?;
+        w_i32(w, d.loc.end())?;
+        w_i32(w, d.code)?;
+        w_u8(w, d.category as u8)?;
+        w_str(w, &d.source)?;
+        w_str(w, d.message_key)?;
+        // `message` round-trips by key except adhoc (`code == -1`), whose
+        // text lives on the leaked `Message` itself.
+        if d.code == -1 {
+            match &d.message {
+                Some(m) => {
+                    w_u8(w, 1)?;
+                    w_str(w, m.text())?;
+                }
+                None => w_u8(w, 0)?,
+            }
+        }
+        w_str(w, &d.message_text)?;
+        w_u32(w, d.message_args.len() as u32)?;
+        for arg in &d.message_args {
+            w_str(w, arg)?;
+        }
+        w_u32(w, d.message_chain.len() as u32)?;
+        for chain in &d.message_chain {
+            write_diagnostic(chain, w)?;
+        }
+        w_u32(w, d.related_information.len() as u32)?;
+        for info in &d.related_information {
+            write_diagnostic(info, w)?;
+        }
+        let mut flags = 0u8;
+        if d.reports_unnecessary {
+            flags |= 1;
+        }
+        if d.reports_deprecated {
+            flags |= 2;
+        }
+        if d.skipped_on_no_emit {
+            flags |= 4;
+        }
+        w_u8(w, flags)?;
+        match &d.repopulate_info {
+            Some(info) => {
+                w_u8(w, 1)?;
+                w_i32(w, info.kind.0)?;
+                w_str(w, &info.module_reference)?;
+                w_i32(w, info.mode as i32)?;
+                w_str(w, &info.package_name)?;
+            }
+            None => w_u8(w, 0)?,
+        }
+        Ok(())
+    }
+
+    /// True when `d` (or anything it nests) references a
+    /// `DiagnosticFile` without a `node` — unresolvable post-fork.
+    pub fn has_unresolvable_files(d: &DiagnosticRef) -> bool {
+        let d = lock_diagnostic(d);
+        if d.file.as_ref().is_some_and(|f| f.node.is_none()) {
+            return true;
+        }
+        d.message_chain
+            .iter()
+            .chain(d.related_information.iter())
+            .any(has_unresolvable_files)
+    }
+
+    /// Rebuild one diagnostic. `resolve_file(node)` maps the file's
+    /// `NodeId` to a fresh `DiagnosticFile` (parent-side
+    /// `DiagnosticFile::from_node`).
+    pub fn read_diagnostic(
+        r: &mut impl Read,
+        resolve_file: &mut dyn FnMut(NodeId) -> Option<DiagnosticFile>,
+    ) -> io::Result<DiagnosticRef> {
+        let file = match r_u8(r)? {
+            1 => match r_u8(r)? {
+                1 => resolve_file(NodeId(r_u64(r)?)),
+                _ => None,
+            },
+            _ => None,
+        };
+        let pos = r_i32(r)?;
+        let end = r_i32(r)?;
+        let code = r_i32(r)?;
+        let category = match r_u8(r)? {
+            0 => Category::Warning,
+            1 => Category::Error,
+            2 => Category::Suggestion,
+            3 => Category::Message,
+            other => {
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    format!("bad diagnostic category {other}"),
+                ))
+            }
+        };
+        let source = r_str(r)?;
+        let message_key = r_str(r)?;
+        let mut message = None;
+        if code == -1 && r_u8(r)? == 1 {
+            message = Some(new_adhoc_message(r_str(r)?));
+        }
+        let message_text = r_str(r)?;
+        let arg_count = r_u32(r)? as usize;
+        let mut message_args = Vec::with_capacity(arg_count);
+        for _ in 0..arg_count {
+            message_args.push(r_str(r)?);
+        }
+        let chain_count = r_u32(r)? as usize;
+        let mut message_chain = Vec::with_capacity(chain_count);
+        for _ in 0..chain_count {
+            message_chain.push(read_diagnostic(r, resolve_file)?);
+        }
+        let related_count = r_u32(r)? as usize;
+        let mut related_information = Vec::with_capacity(related_count);
+        for _ in 0..related_count {
+            related_information.push(read_diagnostic(r, resolve_file)?);
+        }
+        let flags = r_u8(r)?;
+        let repopulate_info = if r_u8(r)? == 1 {
+            Some(RepopulateDiagnosticInfo {
+                kind: RepopulateDiagnosticKind(r_i32(r)?),
+                module_reference: r_str(r)?,
+                mode: ResolutionMode::try_from(r_i32(r)?).unwrap_or_default(),
+                package_name: r_str(r)?,
+            })
+        } else {
+            None
+        };
+        Ok(Arc::new(Mutex::new(Diagnostic {
+            file,
+            loc: TextRange::new(pos, end),
+            code,
+            category,
+            source,
+            message,
+            message_text,
+            // `Key` is `&'static` — the wire string is leaked like
+            // `new_adhoc_message` text (diagnostics are process-lifetime).
+            message_key: Box::leak(message_key.into_boxed_str()),
+            message_args,
+            message_chain,
+            related_information,
+            reports_unnecessary: flags & 1 != 0,
+            reports_deprecated: flags & 2 != 0,
+            skipped_on_no_emit: flags & 4 != 0,
+            repopulate_info,
+        })))
+    }
+}
+
+pub use wire::{has_unresolvable_files, read_diagnostic, write_diagnostic};
+
 #[cfg(test)]
 mod tests {
     // Ported from tsc/internal/ast/diagnostic_test.go @ ec47d33c23e464a17cdf2475632cba629bee8763

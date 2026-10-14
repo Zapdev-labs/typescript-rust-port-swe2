@@ -1216,7 +1216,25 @@ impl Program {
     ) -> Vec<Vec<DiagnosticRef>> {
         let mut diagnostics: Vec<Vec<DiagnosticRef>> = vec![Vec::new(); source_files.len()];
         let __collect_t = std::time::Instant::now();
-        if let Some(pool) = self.compiler_checker_pool.borrow().as_ref().cloned() {
+        let pool = self.compiler_checker_pool.borrow().as_ref().cloned();
+        #[cfg(unix)]
+        if let Some(pool) = pool.as_ref() {
+            // Fork-parallel check: each checker group runs in a COW-isolated
+            // child; `None` (or a partial group failure inside) falls back
+            // to the sequential path below.
+            if let Some(d) = pool.try_fork_collect(
+                ctx.clone(),
+                source_files,
+                self.single_threaded(),
+                collect,
+            ) {
+                if std::env::var("TSC_FILE_TIME").is_ok() {
+                    eprintln!("[collect-all-fork] {:?}", __collect_t.elapsed());
+                }
+                return d;
+            }
+        }
+        if let Some(pool) = pool {
             pool.for_each_checker_group_do(
                 ctx.clone(),
                 source_files,
@@ -4765,6 +4783,15 @@ impl CheckerPoolProgram for Program {
     /// `p.SingleThreaded()`.
     fn single_threaded(&self) -> bool {
         self.single_threaded()
+    }
+
+    /// Snapshot of `arenas` lengths — the fork-parallel check path uses
+    /// it to detect diagnostics that reference child-minted nodes.
+    fn arena_lengths(&self) -> Vec<Option<usize>> {
+        self.arenas
+            .iter()
+            .map(|c| c.as_ref().map(|c| c.snapshot().len()))
+            .collect()
     }
 }
 

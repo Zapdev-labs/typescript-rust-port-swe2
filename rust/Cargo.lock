@@ -1146,6 +1146,7 @@ dependencies = [
 name = "tsc-compiler"
 version = "0.0.0"
 dependencies = [
+ "libc",
  "rustc-hash",
  "serde_json",
  "tsc-ast",

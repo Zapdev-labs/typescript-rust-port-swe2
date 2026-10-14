@@ -37,6 +37,11 @@ use tsc_tracing::Tracing;
 pub trait CheckerPoolProgram: CheckerProgram + 'static {
     /// `p.SingleThreaded()`.
     fn single_threaded(&self) -> bool;
+    /// Per-`file_index` arena lengths at a point in time (None = absent).
+    /// The fork-parallel check path snapshots this before `fork` so a
+    /// diagnostic referencing a node minted after the fork (invisible to
+    /// the parent) can be detected.
+    fn arena_lengths(&self) -> Vec<Option<usize>>;
 }
 
 /// `func SortAndDeduplicateDiagnostics` (program.go). Kept in this module —
@@ -581,6 +586,278 @@ impl<P: CheckerPoolProgram> CompilerCheckerPool<P> {
     pub fn checker_count(&self) -> usize {
         self.checkers.borrow().len().max(self.checker_count)
     }
+
+    /// PORT(addition): run each checker group's `collect` in a *forked*
+    /// child process — parallel type checking without the `Rc`→`Arc`
+    /// refactor. `fork` clones the address space; each child gets
+    /// COW-private copies of the program/checker state, runs `collect` for
+    /// its group's files, and streams the diagnostics back over a pipe
+    /// (`tsc_ast::diagnostic::write_diagnostic`). The parent runs group 0
+    /// itself, reads children to EOF, `waitpid`s, and deserializes —
+    /// `NodeId`s inside children's diagnostics resolve parent-side because
+    /// the arenas are identical (child writes never escape COW).
+    ///
+    /// Returns `None` when forking is not applicable (single checker/file,
+    /// `singleThreaded`, `TSC_NO_FORK_CHECK`/`TSC_FILE_TIME` env, a pprof
+    /// dir configured — the pprof sampler thread must not survive fork),
+    /// or when a `pipe`/`fork` syscall fails — callers fall back to the
+    /// sequential path in that case. A child that crashes or produces a
+    /// diagnostics blob containing a node-less `DiagnosticFile` likewise
+    /// degrades: its group re-runs sequentially in the parent.
+    ///
+    /// SAFETY/fork contract:
+    /// - The child body runs between `fork` and `libc::_exit` — it must
+    ///   not run destructors of objects the parent will reuse (it doesn't:
+    ///   `Vec<DiagnosticRef>` writes into its own COW copies), must not
+    ///   take locks a dead sibling thread held (no threads run inside
+    ///   `collect`; the pprof sampler is gated out), and must not unwind
+    ///   past the child boundary (the `catch_unwind` + `_exit` does it).
+    /// - Children only ever `write()` to their pipe — no printf-path
+    ///   locks, no allocator-at-exit (`_exit` skips `atexit`/destructors).
+    #[cfg(unix)]
+    #[allow(unsafe_code)]
+    pub fn try_fork_collect(
+        &self,
+        ctx: Context,
+        files: &[NodeId],
+        single_threaded: bool,
+        collect: &mut dyn FnMut(Context, &Rc<RefCell<Checker>>, NodeId) -> Vec<DiagnosticRef>,
+    ) -> Option<Vec<Vec<DiagnosticRef>>> {
+        use tsc_ast::diagnostic::DiagnosticFile;
+        use tsc_ast::diagnostic::{has_unresolvable_files, read_diagnostic, write_diagnostic};
+
+        if single_threaded
+            || std::env::var("TSC_NO_FORK_CHECK").is_ok()
+            || std::env::var("TSC_FILE_TIME").is_ok()
+        {
+            return None;
+        }
+        self.create_checkers();
+        let checkers = self.checkers.borrow().clone();
+        if checkers.len() <= 1 || files.len() <= 1 {
+            return None;
+        }
+        let program = self.program.upgrade()?;
+        // The pprof profiler runs a sampler thread — a child forking from
+        // a multithreaded parent may inherit a held malloc/profiling lock.
+        if !program.options().pprof_dir.as_string().is_empty() {
+            return None;
+        }
+        // Arena lengths now = the node ids the parent can resolve after
+        // the fork. A child diagnostic pointing past this (into a node's
+        // scratch/synthetic pushes, or an arena absent pre-fork) can't be
+        // rebuilt parent-side — such blobs are flagged and the group
+        // re-runs sequentially.
+        let arena_lens = program.arena_lengths();
+
+        // Files grouped per checker index, file order preserved (stable —
+        // Go uses round-robin `fileAssociations` which is stable too).
+        let associations = self.file_associations.borrow();
+        let mut groups: Vec<Vec<(usize, NodeId)>> = vec![Vec::new(); checkers.len()];
+        for (i, &file) in files.iter().enumerate() {
+            let idx = associations
+                .get(&file)
+                .copied()
+                .unwrap_or(0)
+                .min(checkers.len() - 1);
+            groups[idx].push((i, file));
+        }
+        drop(associations);
+
+        let mut diagnostics: Vec<Vec<DiagnosticRef>> = vec![Vec::new(); files.len()];
+        // (pid, read_fd, group_index) — read ends stay open until drained.
+        let mut children: Vec<(libc::pid_t, libc::c_int, usize)> = Vec::new();
+
+        for (g, group) in groups.iter().enumerate().skip(1) {
+            if group.is_empty() {
+                continue;
+            }
+            let mut fds = [0 as libc::c_int; 2];
+            // SAFETY: `fds` points at valid storage.
+            if unsafe { libc::pipe(fds.as_mut_ptr()) } != 0 {
+                return None;
+            }
+            // SAFETY: preconditions per the doc contract — forked children
+            // below are confined to their own COW state plus one pipe.
+            let pid = unsafe { libc::fork() };
+            if pid < 0 {
+                unsafe {
+                    libc::close(fds[0]);
+                    libc::close(fds[1]);
+                }
+                // Keep groups already forked running; the failed group
+                // runs sequentially below.
+                continue;
+            }
+            if pid == 0 {
+                // ------- CHILD -------
+                // SAFETY: the read end is never used here.
+                unsafe { libc::close(fds[0]) };
+                let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                    let mut buf = Vec::new();
+                    let checker = &checkers[g];
+                    buf.extend_from_slice(&(group.len() as u32).to_le_bytes());
+                    let mut unresolvable = false;
+                    for &(i, file) in group {
+                        let diags = collect(ctx.clone(), checker, file);
+                        if !unresolvable
+                            && diags.iter().any(|d| {
+                                has_unresolvable_files(d)
+                                    || has_foreign_nodes(d, &arena_lens)
+                            })
+                        {
+                            unresolvable = true;
+                        }
+                        buf.extend_from_slice(&(i as u32).to_le_bytes());
+                        buf.extend_from_slice(&(diags.len() as u32).to_le_bytes());
+                        for d in &diags {
+                            let _ = write_diagnostic(d, &mut buf);
+                        }
+                    }
+                    // Trailer: 1 = cleanly reimportable, 0 = contains a
+                    // node-less DiagnosticFile — parent re-runs the group.
+                    buf.push(if unresolvable { 0 } else { 1 });
+                    let mut off = 0;
+                    while off < buf.len() {
+                        // SAFETY: `buf[off..]` is a valid byte range; `fds[1]`
+                        // is the live write end of this child's pipe.
+                        let n = unsafe {
+                            libc::write(
+                                fds[1],
+                                buf.as_ptr().add(off) as *const libc::c_void,
+                                buf.len() - off,
+                            )
+                        };
+                        if n <= 0 {
+                            break;
+                        }
+                        off += n as usize;
+                    }
+                }));
+                // SAFETY: `_exit` skips destructors/atexit — mandatory in
+                // the forked child (parent threads may hold stdio or
+                // allocator locks the child can never release).
+                unsafe { libc::_exit(0) };
+            }
+            unsafe { libc::close(fds[1]) };
+            children.push((pid, fds[0], g));
+        }
+
+        // Group 0 runs in the parent (matches the sequential path's
+        // first-checker-in-parent behavior).
+        for &(i, file) in &groups[0] {
+            diagnostics[i] = collect(ctx.clone(), &checkers[0], file);
+        }
+
+        let read_all = |fd: libc::c_int| -> Vec<u8> {
+            let mut out = Vec::new();
+            let mut chunk = [0u8; 1 << 16];
+            loop {
+                // SAFETY: `chunk` is a valid buffer and `fd` is a live
+                // read end until close.
+                let n = unsafe {
+                    libc::read(fd, chunk.as_mut_ptr() as *mut libc::c_void, chunk.len())
+                };
+                if n <= 0 {
+                    break;
+                }
+                out.extend_from_slice(&chunk[..n as usize]);
+            }
+            unsafe { libc::close(fd) };
+            out
+        };
+
+        let mut blobs: Vec<(usize, Option<Vec<u8>>)> = Vec::new();
+        for (pid, fd, g) in children {
+            let buf = read_all(fd);
+            let mut status: libc::c_int = 0;
+            // SAFETY: `status` points at valid storage; `pid` is our child.
+            let rc = unsafe { libc::waitpid(pid, &mut status, 0) };
+            let clean =
+                rc == pid && libc::WIFEXITED(status) && libc::WEXITSTATUS(status) == 0;
+            let blob = if clean && !buf.is_empty() { Some(buf) } else { None };
+            blobs.push((g, blob));
+        }
+
+        let mut resolve_file = |node: NodeId| -> Option<DiagnosticFile> {
+            let len = arena_lens
+                .get(node.file_index() as usize)
+                .copied()
+                .flatten()?;
+            if node.local_index() as usize >= len {
+                return None;
+            }
+            Some(DiagnosticFile::from_node(
+                node,
+                &program.nodes(node.file_index()),
+            ))
+        };
+
+        for (g, blob) in blobs {
+            let ok = blob
+                .as_ref()
+                .is_some_and(|b| *b.last().unwrap_or(&0) == 1);
+            if let Some(mut b) = blob.filter(|_| ok) {
+                b.pop(); // trailer byte
+                let mut cursor = std::io::Cursor::new(b);
+                let parsed: Option<()> = (|| {
+                    let count = r_u32_wire(&mut cursor).ok()?;
+                    for _ in 0..count {
+                        let i = r_u32_wire(&mut cursor).ok()? as usize;
+                        let n = r_u32_wire(&mut cursor).ok()? as usize;
+                        let mut diags = Vec::with_capacity(n);
+                        for _ in 0..n {
+                            diags.push(read_diagnostic(&mut cursor, &mut resolve_file).ok()?);
+                        }
+                        if i < diagnostics.len() {
+                            diagnostics[i] = diags;
+                        }
+                    }
+                    Some(())
+                })();
+                if parsed.is_some() {
+                    continue;
+                }
+            }
+            // Re-run this group in the parent (empty/corrupt/unresolvable
+            // blob or a crashed child) — diagnostics must not be lost.
+            for &(i, file) in &groups[g] {
+                diagnostics[i] = collect(ctx.clone(), &checkers[g], file);
+            }
+        }
+
+        Some(diagnostics)
+    }
+}
+
+/// Recursive walk: does any `DiagnosticFile::node` in `d` point outside
+/// the pre-fork arena snapshot (`arena_lens`)? Such nodes were minted in
+/// the child post-fork and cannot be resolved in the parent.
+#[cfg(unix)]
+fn has_foreign_nodes(d: &DiagnosticRef, arena_lens: &[Option<usize>]) -> bool {
+    let d = lock_diagnostic(d);
+    if let Some(node) = d.file().as_ref().and_then(|f| f.node) {
+        let in_snapshot = arena_lens
+            .get(node.file_index() as usize)
+            .copied()
+            .flatten()
+            .is_some_and(|len| (node.local_index() as usize) < len);
+        if !in_snapshot {
+            return true;
+        }
+    }
+    d.message_chain()
+        .iter()
+        .chain(d.related_information().iter())
+        .any(|n| has_foreign_nodes(n, arena_lens))
+}
+
+/// Read a wire-format u32 used by the diagnostic pipe protocol.
+#[cfg(unix)]
+fn r_u32_wire(r: &mut impl std::io::Read) -> std::io::Result<u32> {
+    let mut b = [0u8; 4];
+    r.read_exact(&mut b)?;
+    Ok(u32::from_le_bytes(b))
 }
 
 impl<P: CheckerPoolProgram> CheckerPool for CompilerCheckerPool<P> {

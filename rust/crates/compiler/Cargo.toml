@@ -37,5 +37,8 @@ tsc-vfs = { path = "../vfs" }
 rustc-hash = { workspace = true }
 serde_json = { workspace = true }
 
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
 [dev-dependencies]
 tsc-bundled = { path = "../bundled" }
