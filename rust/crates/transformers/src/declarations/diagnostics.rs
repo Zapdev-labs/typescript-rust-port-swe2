@@ -20,7 +20,7 @@ use tsc_ast::{self as ast, Kind, Node, NodeId, Symbol};
 use tsc_diagnostics::Message;
 use tsc_printer::{EmitResolver, SymbolAccessibility, SymbolAccessibilityResult};
 
-use crate::declarations::tracker::create_diagnostic_for_node;
+use crate::declarations::tracker::{create_diagnostic_for_node, SymbolTrackerSharedState};
 
 /// `type SymbolAccessibilityDiagnostic struct`.
 pub struct SymbolAccessibilityDiagnostic {
@@ -1018,9 +1018,55 @@ fn create_expression_error_ex(
 pub type GetIsolatedDeclarationError<'a> =
     Box<dyn Fn(NodeId, &[Node], &[Symbol]) -> DiagnosticRef + 'a>;
 
+/// A parameter diagnostic whose `addUndefined` verdict may have been
+/// computed by the degraded `RequiresAddingImplicitUndefinedUnsafe`
+/// fallback while the checker was already borrowed. Recomputed with the
+/// real checker when diagnostics are collected; the owning arena is
+/// resolved from `node.file_index()` at that point.
+pub(crate) struct DeferredParamDiag {
+    pub node: NodeId,
+    pub diag: DiagnosticRef,
+}
+
+/// The body of Go's `createParameterError` once `addUndefined` is known —
+/// shared by the eager (possibly degraded) path and the deferred recompute.
+pub(crate) fn build_param_diag(
+    node: NodeId,
+    nodes: &[Node],
+    add_undefined: bool,
+) -> DiagnosticRef {
+    if !add_undefined && nodes[node].initializer().is_some() {
+        return create_expression_error(nodes[node].initializer().unwrap(), nodes);
+    }
+    let mut message = get_error_by_declaration_kind(nodes[node].kind);
+    if add_undefined {
+        message = Some(&tsc_diagnostics::Declaration_emit_for_this_parameter_requires_implicitly_adding_undefined_to_its_type_This_is_not_supported_with_isolatedDeclarations);
+    }
+    let diag = create_diagnostic_for_node(
+        nodes,
+        Some(node),
+        message.expect("parameter error by declaration kind"),
+        &[] as &[String],
+    );
+    let target_str = nodes[node]
+        .name()
+        .map(|name| tsc_scanner::utilities::get_text_of_node(name, nodes))
+        .unwrap_or_default();
+    let related = create_diagnostic_for_node(
+        nodes,
+        Some(node),
+        get_related_suggestion_by_declaration_kind(nodes[node].kind)
+            .expect("related suggestion for parameter kind"),
+        &[target_str],
+    );
+    diag.lock().unwrap().add_related_info(Some(related));
+    diag
+}
+
 /// `createGetIsolatedDeclarationErrors(resolver)`.
 pub(crate) fn create_get_isolated_declaration_errors<'a>(
     resolver: Rc<RefCell<dyn EmitResolver + 'a>>,
+    state: Rc<RefCell<SymbolTrackerSharedState<'a>>>,
 ) -> GetIsolatedDeclarationError<'a> {
     let create_parameter_error = move |node: NodeId,
                                        nodes: &[Node],
@@ -1037,31 +1083,15 @@ pub(crate) fn create_get_isolated_declaration_errors<'a>(
         let add_undefined = resolver
             .borrow()
             .requires_adding_implicit_undefined_unsafe(node, None, None, nodes, symbols);
-        if !add_undefined && nodes[node].initializer().is_some() {
-            return create_expression_error(nodes[node].initializer().unwrap(), nodes);
-        }
-        let mut message = get_error_by_declaration_kind(nodes[node].kind);
-        if add_undefined {
-            message = Some(&tsc_diagnostics::Declaration_emit_for_this_parameter_requires_implicitly_adding_undefined_to_its_type_This_is_not_supported_with_isolatedDeclarations);
-        }
-        let diag = create_diagnostic_for_node(
-            nodes,
-            Some(node),
-            message.expect("parameter error by declaration kind"),
-            &[] as &[String],
-        );
-        let target_str = nodes[node]
-            .name()
-            .map(|name| tsc_scanner::utilities::get_text_of_node(name, nodes))
-            .unwrap_or_default();
-        let related = create_diagnostic_for_node(
-            nodes,
-            Some(node),
-            get_related_suggestion_by_declaration_kind(nodes[node].kind)
-                .expect("related suggestion for parameter kind"),
-            &[target_str],
-        );
-        diag.lock().unwrap().add_related_info(Some(related));
+        let diag = build_param_diag(node, nodes, add_undefined);
+        // `unsafe` returns a degraded `false` for annotated parameters while
+        // the checker is borrowed (annotated params need type resolution).
+        // Queue a recompute with the real checker; when the verdict already
+        // matched, the rebuild overwrites an identical diagnostic.
+        state.borrow_mut().deferred_param_diags.push(DeferredParamDiag {
+            node,
+            diag: diag.clone(),
+        });
         diag
     };
 

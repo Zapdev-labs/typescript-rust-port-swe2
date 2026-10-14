@@ -277,6 +277,7 @@ pub fn new_declaration_transformer<'a>(
         current_source_file: None,
         resolver: resolver.clone(),
         report_expando_function_errors: None,
+        deferred_param_diags: Vec::new(),
     }));
     let tracker = SymbolTrackerImpl::new(host.clone(), resolver.clone(), shared.clone(), symbols);
     // `context := resolver.EmitContext()` — the context shared with the
@@ -449,6 +450,38 @@ pub fn new_declaration_transformer<'a>(
 impl<'a> DeclarationTransformer<'a> {
     /// `(tx *DeclarationTransformer) GetDiagnostics`.
     pub fn get_diagnostics(&self) -> Vec<tsc_ast::diagnostic::DiagnosticRef> {
+        // Recompute parameter diagnostics whose `addUndefined` verdict came
+        // from the degraded `RequiresAddingImplicitUndefinedUnsafe` fallback
+        // (checker already borrowed inside the node builder). The checker is
+        // free here, so the real verdict is available; the rebuilt diagnostic
+        // overwrites the Arc's contents in place, preserving order.
+        let fixups = std::mem::take(
+            &mut self.state.shared.borrow_mut().deferred_param_diags,
+        );
+        for fixup in fixups {
+            let Some(nodes) = self.state.host.arena_for(fixup.node.file_index(), &[])
+            else {
+                continue;
+            };
+            let add_undefined = self
+                .state
+                .resolver
+                .borrow()
+                .requires_adding_implicit_undefined(
+                    fixup.node,
+                    None,
+                    None,
+                    &nodes,
+                    &[],
+                );
+            let correct = crate::declarations::diagnostics::build_param_diag(
+                fixup.node,
+                &nodes,
+                add_undefined,
+            );
+            *tsc_ast::diagnostic::lock_diagnostic(&fixup.diag) =
+                tsc_ast::diagnostic::lock_diagnostic(&correct).clone();
+        }
         self.state.shared.borrow().diagnostics.clone()
     }
 
@@ -3559,13 +3592,16 @@ impl<'a> DeclarationTransformerState<'a> {
             && !ast::is_binding_element(&cx.nodes[node])
             && type_annotation.is_some()
             && (!ast::is_parameter_declaration(&cx.nodes[node]) || {
-                let symbols = self.symbols.map(|s| s.borrow());
+                // Do NOT hold a `symbol_arena` borrow across this call — the
+                // resolver can mint new symbols while resolving the declared
+                // type (RefCell already borrowed). The `symbols` param is
+                // unused by the resolver.
                 !self.resolver.borrow().requires_adding_implicit_undefined(
                     node,
                     None,
                     self.enclosing_declaration.get(),
                     cx.nodes,
-                    symbols.as_deref().map(|v| v.as_slice()).unwrap_or(&[]),
+                    &[],
                 )
             })
         {

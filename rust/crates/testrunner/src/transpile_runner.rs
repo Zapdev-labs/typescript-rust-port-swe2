@@ -245,17 +245,26 @@ impl TranspileBaselineRunner {
                 {
                     diagnostic_file_name = file.file_name.as_string().to_string();
                 }
+                let wrapped: Vec<_> = output
+                    .diagnostics
+                    .iter()
+                    .map(|d| {
+                        let arena = tsc_ast::diagnostic::lock_diagnostic(d)
+                            .file()
+                            .and_then(|f| f.node)
+                            .and_then(|n| output.nodes.get(&n.file_index()));
+                        tsc_diagnosticwriter::wrap_ast_diagnostic(
+                            d.clone(),
+                            arena.map(|a| a.as_slice()).unwrap_or(&[]),
+                        )
+                    })
+                    .collect();
                 let error_baseline = tsc_testutil::tsbaseline::get_error_baseline(
                     &[harnessutil::TestFile {
                         unit_name: diagnostic_file_name.clone(),
                         content: unit.content.clone(),
                     }],
-                    &tsc_diagnosticwriter::wrap_ast_diagnostics(
-                        &output.diagnostics,
-                        // PORT: the transpile Output drops its node arena;
-                        // verify what tsbaseline needs when it lands.
-                        &[],
-                    ),
+                    &wrapped,
                     tsc_diagnosticwriter::compare_ast_diagnostics,
                     options.pretty.is_true(),
                 );

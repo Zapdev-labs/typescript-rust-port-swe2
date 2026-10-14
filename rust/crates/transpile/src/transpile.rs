@@ -50,6 +50,10 @@ pub struct Output {
     pub output_text: String,
     pub diagnostics: Vec<DiagnosticRef>,
     pub source_map_text: String,
+    /// Node arena snapshots keyed by `NodeId::file_index`, retained so
+    /// consumers can resolve `DiagnosticFile.node` handles (e.g.
+    /// `wrap_ast_diagnostic`) after the program is dropped.
+    pub nodes: FxHashMap<u32, Rc<Vec<tsc_ast::Node>>>,
 }
 
 /// `inputDirectory` is the synthetic current directory used to root the
@@ -248,9 +252,22 @@ fn transpile_worker(
 
     debug_assert!(*has_output_text.borrow(), "Output generation failed");
 
+    let mut nodes: FxHashMap<u32, Rc<Vec<tsc_ast::Node>>> = FxHashMap::default();
+    for d in &all_diagnostics {
+        if let Some(node) = tsc_ast::diagnostic::lock_diagnostic(d)
+            .file()
+            .and_then(|f| f.node)
+        {
+            nodes
+                .entry(node.file_index())
+                .or_insert_with(|| program.nodes(node.file_index()));
+        }
+    }
+
     Some(Output {
         output_text: output_text.into_inner(),
         diagnostics: all_diagnostics,
         source_map_text: source_map_text.into_inner(),
+        nodes,
     })
 }

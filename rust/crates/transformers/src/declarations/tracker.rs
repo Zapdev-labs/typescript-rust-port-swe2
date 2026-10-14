@@ -84,6 +84,11 @@ pub struct SymbolTrackerSharedState<'a> {
     /// `Rc` so call sites can clone it out and drop the state borrow before
     /// invoking — the callback itself mutably borrows the shared state.
     pub report_expando_function_errors: Option<Rc<dyn Fn(NodeId, &[Node]) + 'a>>,
+    /// Parameter diagnostics produced under a possibly degraded
+    /// `RequiresAddingImplicitUndefinedUnsafe` verdict. Go re-enters the
+    /// checker under the held lock; the port can't alias `&mut Checker`,
+    /// so these are recomputed with the real checker at `GetDiagnostics`.
+    pub deferred_param_diags: Vec<crate::declarations::diagnostics::DeferredParamDiag>,
 }
 
 impl<'a> SymbolTrackerSharedState<'a> {
@@ -136,6 +141,7 @@ impl<'a> SymbolTrackerImpl<'a> {
         SymbolTrackerImpl {
             get_isolated_declaration_error: create_get_isolated_declaration_errors(
                 resolver.clone(),
+                state.clone(),
             ),
             host,
             resolver,
