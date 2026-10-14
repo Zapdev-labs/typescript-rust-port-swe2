@@ -1260,6 +1260,7 @@ name = "tsc-execute"
 version = "0.0.0"
 dependencies = [
  "indexmap",
+ "mimalloc",
  "rustc-hash",
  "serde",
  "serde_json",

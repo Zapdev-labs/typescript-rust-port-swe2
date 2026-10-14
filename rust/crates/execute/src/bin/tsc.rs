@@ -19,6 +19,13 @@ use tsc_execute::{CommandLineResult, command_line};
 use tsc_tspath::{RootedDirectoryPath, rooted_directory_path_from_absolute};
 use tsc_vfs::vfs::Vfs;
 
+// The checker/parser workload is arena-allocation heavy (millions of
+// small `Node`/`Type` payloads + Vec growth); mimalloc's per-thread free
+// lists beat glibc malloc there by a wide margin — same choice the
+// testrunner makes.
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 /// `osSys` — the OS-backed `execute/tsc.System`.
 struct OsSys {
     writer: SharedWriter,
