@@ -47,6 +47,16 @@ where
         }
     }
 
+    /// Entry count — for verbose cache-statistics logging.
+    pub fn entry_count(&self) -> usize {
+        let mut n = 0;
+        self.entries.range(|_, _| {
+            n += 1;
+            true
+        });
+        n
+    }
+
     /// `Acquire` retrieves or creates a cache entry for the given identity and
     /// hash. If an entry exists with matching identity and hash, its refcount
     /// is incremented and the cached value is returned. Otherwise, parse() is

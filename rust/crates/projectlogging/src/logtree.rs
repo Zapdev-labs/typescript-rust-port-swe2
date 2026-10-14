@@ -95,6 +95,11 @@ impl LogTree {
         LogTree(None)
     }
 
+    /// `tree != nil` — true for a real (non-nil) tree.
+    pub fn is_some(&self) -> bool {
+        self.0.is_some()
+    }
+
     /// `NewLogTree(name)`.
     pub fn new_log_tree(name: String) -> LogTree {
         LogTree(Some(Arc::new_cyclic(|me| LogTreeInner {

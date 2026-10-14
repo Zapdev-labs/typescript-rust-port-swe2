@@ -129,7 +129,7 @@ fn to_file_system_watcher_key(w: &FileSystemWatcher) -> FileSystemWatcherKey {
 }
 
 /// `fileSystemWatcherGlobString`.
-fn file_system_watcher_glob_string(w: &FileSystemWatcher) -> String {
+pub(crate) fn file_system_watcher_glob_string(w: &FileSystemWatcher) -> String {
     if let Some(pattern) = &w.glob_pattern.pattern {
         return pattern.clone();
     }

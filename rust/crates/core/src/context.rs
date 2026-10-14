@@ -72,6 +72,7 @@ impl CancelState {
 
 /// The function type returned by [`Context::with_cancel`]; call it to cancel
 /// the returned context and all its descendants.
+#[derive(Clone)]
 pub struct CancelFunc(Arc<CancelState>);
 
 impl CancelFunc {
@@ -142,6 +143,37 @@ impl Context {
         while !self.is_cancelled() {
             guard = self.cancel.wait_cvar.wait(guard).unwrap();
         }
+    }
+
+    /// `select { <-ctx.Done(): / <-time.After(d): }` — waits until cancelled
+    /// or `d` elapses; returns `true` iff cancellation won.
+    pub fn wait_cancelled_timeout(&self, d: std::time::Duration) -> bool {
+        let mut guard = self.cancel.wait_lock.lock().unwrap();
+        while !self.is_cancelled() {
+            let (g, result) = self.cancel.wait_cvar.wait_timeout(guard, d).unwrap();
+            guard = g;
+            if result.timed_out() {
+                return self.is_cancelled();
+            }
+        }
+        true
+    }
+
+    /// `context.WithTimeout(parent, d)` — the child context is cancelled when
+    /// `d` elapses, when the parent is cancelled, or when the returned
+    /// `CancelFunc` runs, whichever is first. A timer thread performs the
+    /// deadline cancellation (Go's runtime timer); it exits immediately when
+    /// the context is cancelled by other means.
+    pub fn with_timeout(&self, d: std::time::Duration) -> (Context, CancelFunc) {
+        let (ctx, cancel) = self.with_cancel();
+        let timer_ctx = ctx.clone();
+        let timer_cancel = cancel.clone();
+        std::thread::spawn(move || {
+            if !timer_ctx.wait_cancelled_timeout(d) {
+                timer_cancel.cancel();
+            }
+        });
+        (ctx, cancel)
     }
 
     /// `context.WithValue(ctx, key, value)` — returns a new context whose

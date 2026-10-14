@@ -97,6 +97,11 @@ pub struct Snapshot {
     /// `Rc` matches the rest of the snapshot graph (see `project_collection`);
     /// snapshots are cross-thread via `Fragile` like programs are.
     pub auto_imports: Option<Rc<tsc_ls::autoimport::Registry>>,
+    /// Lazily-built empty registry backing `ls::Host::auto_import_registry`
+    /// when `auto_imports` is `None` (Go's nil would panic in the same call
+    /// path; an empty registry answers `false` to `IsPreparedForImportingFile`,
+    /// which is the correct "not prepared" signal).
+    pub(crate) auto_imports_fallback: std::cell::OnceCell<tsc_ls::autoimport::Registry>,
     /// `autoImportsWatch`.
     pub(crate) auto_imports_watch:
         Option<Arc<WatchedFiles<NodeModulesDirectories>>>,
@@ -165,7 +170,7 @@ impl Drop for CloneLogGuard<'_> {
 
 impl Snapshot {
     /// `s.contentMapperWatchState()`.
-    fn content_mapper_watch_state(&self) -> &(Vec<String>, Set<PathKey>) {
+    pub(crate) fn content_mapper_watch_state(&self) -> &(Vec<String>, Set<PathKey>) {
         self.content_mapper_watch_state.get_or_init(|| {
             let mut content_mapper_extensions =
                 self.config_file_registry.content_mappers().extensions;
@@ -1194,5 +1199,76 @@ impl SnapshotChange {
         self.projects = request.projects;
         self.project_tree = request.project_tree;
         self.auto_imports = request.auto_imports;
+    }
+}
+
+/// `var _ ls.Host = (*Snapshot)(nil)` — the language-service host view of a
+/// snapshot (`snapshot.go` implements the Go interface directly).
+impl tsc_ls::host::Host for Snapshot {
+    /// `CaseSensitivity`.
+    fn case_sensitivity(&self) -> tsc_tspath::CaseSensitivity {
+        self.case_sensitivity()
+    }
+
+    /// `ReadFile`.
+    fn read_file(&self, path: &RootedFilePath) -> Option<String> {
+        self.read_file(path)
+    }
+
+    /// `Converters`.
+    fn converters<'s>(&'s self) -> Converters<'s> {
+        self.converters()
+    }
+
+    /// `GetPreferences`.
+    fn get_preferences(&self, active_file: &str) -> UserPreferences {
+        self.get_preferences(active_file).clone()
+    }
+
+    /// `GetECMALineInfo` — `Rc` stands in for Go's shared `*ECMALineInfo`.
+    fn get_ecma_line_info(&self, file_name: &RootedFilePath) -> Option<Rc<EcmaLineInfo>> {
+        self.get_ecma_line_info(file_name).map(Rc::new)
+    }
+
+    /// `AutoImportRegistry` — falls back to a shared empty registry when the
+    /// clone pipeline hasn't produced one yet (see `auto_imports_fallback`).
+    fn auto_import_registry<'s>(&'s self) -> &'s tsc_ls::autoimport::Registry {
+        self.auto_imports.as_deref().unwrap_or_else(|| {
+            self.auto_imports_fallback.get_or_init(|| {
+                tsc_ls::autoimport::Registry::new(
+                    self.case_sensitivity(),
+                    self.user_preferences.clone(),
+                )
+            })
+        })
+    }
+
+    /// `ReadDirectory`.
+    fn read_directory(
+        &self,
+        path: &RootedDirectoryPath,
+        extensions: &[&str],
+        excludes: &[&str],
+        includes: &[&str],
+        depth: i64,
+    ) -> Vec<RootedFilePath> {
+        let excludes: Vec<String> = excludes.iter().map(|s| s.to_string()).collect();
+        let includes: Vec<String> = includes.iter().map(|s| s.to_string()).collect();
+        self.read_directory(path, extensions, &excludes, &includes, depth)
+    }
+
+    /// `GetDirectories`.
+    fn get_directories(&self, path: &RootedDirectoryPath) -> Vec<String> {
+        self.get_directories(path)
+    }
+
+    /// `DirectoryExists`.
+    fn directory_exists(&self, path: &RootedDirectoryPath) -> bool {
+        self.directory_exists(path)
+    }
+
+    /// `FileExists`.
+    fn file_exists(&self, path: &RootedFilePath) -> bool {
+        self.file_exists(path)
     }
 }

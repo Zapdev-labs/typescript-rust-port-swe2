@@ -293,6 +293,7 @@ impl SnapshotHost {
             }),
             config_file_registry,
             auto_imports,
+            auto_imports_fallback: std::cell::OnceCell::new(),
             auto_imports_watch,
             compiler_options_for_inferred_projects,
             inferred_project_content_mappers: Vec::new(),

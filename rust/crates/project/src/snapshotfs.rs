@@ -1134,7 +1134,7 @@ impl SnapshotFs {
 
 /// `isRelevantExtension` returns true if the given extension is a known
 /// TypeScript or JavaScript extension that can affect the project.
-fn is_relevant_extension(ext: &str) -> bool {
+pub(crate) fn is_relevant_extension(ext: &str) -> bool {
     matches!(
         ext,
         ".js" | ".jsx" | ".mjs" | ".cjs" | ".ts" | ".tsx" | ".mts" | ".cts" | ".json"

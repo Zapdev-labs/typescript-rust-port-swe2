@@ -24,6 +24,9 @@ use crate::compilerhost::ProjectCompilerHost;
 use crate::snapshot::ModuleResolverFactory;
 use crate::watch::{PatternsAndIgnored, WatchedFiles};
 
+/// `hr` — the log separator used by project/session logging.
+pub const HR: &str = "-----------------------------------------------";
+
 /// `inferredProjectName` — lowercase so canonicalization is a no-op
 /// regardless of case sensitivity.
 pub const INFERRED_PROJECT_NAME: &str = "/dev/null/inferred";
@@ -334,5 +337,136 @@ impl Project {
         self.program
             .as_ref()
             .is_some_and(|p| p.is_source_from_project_reference(path))
+    }
+
+    /// `p.DisplayName` — a short, human-readable name for the project,
+    /// relative to the given workspace root directory. For configured
+    /// projects, this is the config file path made relative; for inferred
+    /// projects, the last component of the project directory.
+    pub fn display_name(&self, cwd: &RootedDirectoryPath) -> String {
+        if self.kind == Kind::Inferred {
+            return self.project_directory.base_name().to_string();
+        }
+        let mut name = tsc_tspath::rooted_file_path_from_normalized(&self.id.0);
+        if self.kind == Kind::Configured {
+            name = self.config_file_name.clone();
+        }
+        if let Some(relative_path) = tsc_tspath::CaseSensitivity::CaseInsensitive
+            .relative_path_from_directory(cwd, &name)
+        {
+            return relative_path.as_string().to_string();
+        }
+        name.as_string().to_string()
+    }
+
+    /// `p.GetProjectDiagnostics` — program diagnostics combined with any
+    /// global diagnostics discovered during checking; reported on the
+    /// tsconfig.json file.
+    pub fn get_project_diagnostics(&self) -> Vec<tsc_ast::diagnostic::DiagnosticRef> {
+        let mut global_diags = Vec::new();
+        if let Some(pool) = &self.checker_pool {
+            global_diags = pool.get_global_diagnostics();
+        }
+        let mut all = Vec::new();
+        if let Some(program) = &self.program {
+            all.extend(program.get_config_file_parsing_diagnostics());
+            all.extend(program.get_program_diagnostics());
+        }
+        all.extend(global_diags);
+        tsc_compiler::checker_pool::sort_and_deduplicate_diagnostics(all)
+    }
+
+    /// `p.GetTypeAcquisition` — inferred/synthetic projects use default
+    /// settings; configured projects read their command line.
+    pub fn get_type_acquisition(&self) -> Option<tsc_core::options_generated::TypeAcquisition> {
+        if self.kind == Kind::Inferred || self.kind == Kind::Synthetic {
+            return Some(tsc_core::options_generated::TypeAcquisition {
+                enable: tsc_core::tristate::TS_TRUE,
+                include: None,
+                exclude: None,
+                disable_filename_based_type_acquisition: tsc_core::tristate::TS_FALSE,
+            });
+        }
+        self.command_line
+            .as_ref()
+            .and_then(|cl| cl.type_acquisition().cloned())
+    }
+
+    /// `p.GetUnresolvedImports`.
+    pub fn get_unresolved_imports(&self) -> Option<Set<String>> {
+        let program = self.program.as_ref()?;
+        Some(tsc_collections::new_set_from_items(
+            program.get_unresolved_imports().iter().cloned(),
+        ))
+    }
+
+    /// `p.ComputeTypingsInfo`.
+    pub fn compute_typings_info(&self) -> TypingsInfo {
+        TypingsInfo {
+            compiler_options: self
+                .command_line
+                .as_ref()
+                .and_then(|cl| cl.compiler_options().cloned())
+                .map(Arc::new)
+                .unwrap_or_default(),
+            type_acquisition: self
+                .get_type_acquisition()
+                .map(Arc::new)
+                .unwrap_or_default(),
+            unresolved_imports: self.get_unresolved_imports(),
+        }
+    }
+
+    /// `p.ShouldTriggerATA` — whether ATA should be triggered for this
+    /// project at `snapshot_id`.
+    pub fn should_trigger_ata(&self, snapshot_id: u64) -> bool {
+        if self.program.is_none() || self.command_line.is_none() {
+            return false;
+        }
+        let Some(type_acquisition) = self.get_type_acquisition() else {
+            return false;
+        };
+        if !type_acquisition.enable.is_true() {
+            return false;
+        }
+        if self.installed_typings_info.is_none()
+            || (self.program_last_update == snapshot_id
+                && self.program_update_kind == ProgramUpdateKind::NewFiles)
+        {
+            return true;
+        }
+        !self
+            .installed_typings_info
+            .as_ref()
+            .is_some_and(|info| info.equals(&self.compute_typings_info()))
+    }
+
+    /// `p.print` — logs the project header plus, when `write_file_names`,
+    /// the list of source files (Go's `writeFileExplanation` is a `// !!!`
+    /// no-op there too).
+    pub fn print(&self, write_file_names: bool, _write_file_explanation: bool) -> String {
+        let mut builder = String::new();
+        builder.push_str(&format!("\nProject '{}'\n", self.id));
+        match &self.program {
+            None => builder.push_str("\tFiles (0) NoProgram\n"),
+            Some(program) => {
+                let source_files = program.source_files();
+                builder.push_str(&format!("\tFiles ({})\n", source_files.len()));
+                if write_file_names {
+                    for source_file in source_files {
+                        let nodes = program.nodes(source_file.file_index());
+                        let file_name = nodes[source_file]
+                            .as_source_file()
+                            .file_name()
+                            .clone();
+                        builder.push_str("\t\t");
+                        builder.push_str(file_name.as_string());
+                        builder.push('\n');
+                    }
+                }
+            }
+        }
+        builder.push_str(HR);
+        builder
     }
 }

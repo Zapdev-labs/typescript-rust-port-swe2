@@ -41,6 +41,16 @@ where
         }
     }
 
+    /// Entry count — for verbose cache-statistics logging.
+    pub fn entry_count(&self) -> usize {
+        let mut n = 0;
+        self.entries.range(|_, _| {
+            n += 1;
+            true
+        });
+        n
+    }
+
     /// `(c *OwnerCache) LoadAndAcquire`.
     pub fn load_and_acquire(&self, identity: K, owner: u64, load_args: &LoadArgs) -> V {
         let (entry, loaded) = self.load_or_store_locked_entry(identity.clone());
