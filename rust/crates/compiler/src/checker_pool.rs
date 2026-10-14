@@ -834,7 +834,7 @@ impl<P: CheckerPoolProgram> CompilerCheckerPool<P> {
 /// the pre-fork arena snapshot (`arena_lens`)? Such nodes were minted in
 /// the child post-fork and cannot be resolved in the parent.
 #[cfg(unix)]
-fn has_foreign_nodes(d: &DiagnosticRef, arena_lens: &[Option<usize>]) -> bool {
+pub(crate) fn has_foreign_nodes(d: &DiagnosticRef, arena_lens: &[Option<usize>]) -> bool {
     let d = lock_diagnostic(d);
     if let Some(node) = d.file().as_ref().and_then(|f| f.node) {
         let in_snapshot = arena_lens

@@ -1014,42 +1014,42 @@ mod wire {
     use super::*;
     use std::io::{self, Read, Write};
 
-    fn w_u8(w: &mut impl Write, v: u8) -> io::Result<()> {
+    pub fn w_u8(w: &mut impl Write, v: u8) -> io::Result<()> {
         w.write_all(&[v])
     }
-    fn w_u32(w: &mut impl Write, v: u32) -> io::Result<()> {
+    pub fn w_u32(w: &mut impl Write, v: u32) -> io::Result<()> {
         w.write_all(&v.to_le_bytes())
     }
-    fn w_i32(w: &mut impl Write, v: i32) -> io::Result<()> {
+    pub fn w_i32(w: &mut impl Write, v: i32) -> io::Result<()> {
         w.write_all(&v.to_le_bytes())
     }
-    fn w_u64(w: &mut impl Write, v: u64) -> io::Result<()> {
+    pub fn w_u64(w: &mut impl Write, v: u64) -> io::Result<()> {
         w.write_all(&v.to_le_bytes())
     }
-    fn w_str(w: &mut impl Write, v: &str) -> io::Result<()> {
+    pub fn w_str(w: &mut impl Write, v: &str) -> io::Result<()> {
         w_u32(w, v.len() as u32)?;
         w.write_all(v.as_bytes())
     }
 
-    fn r_u8(r: &mut impl Read) -> io::Result<u8> {
+    pub fn r_u8(r: &mut impl Read) -> io::Result<u8> {
         let mut b = [0u8; 1];
         r.read_exact(&mut b)?;
         Ok(b[0])
     }
-    fn r_u32(r: &mut impl Read) -> io::Result<u32> {
+    pub fn r_u32(r: &mut impl Read) -> io::Result<u32> {
         let mut b = [0u8; 4];
         r.read_exact(&mut b)?;
         Ok(u32::from_le_bytes(b))
     }
-    fn r_i32(r: &mut impl Read) -> io::Result<i32> {
+    pub fn r_i32(r: &mut impl Read) -> io::Result<i32> {
         Ok(r_u32(r)? as i32)
     }
-    fn r_u64(r: &mut impl Read) -> io::Result<u64> {
+    pub fn r_u64(r: &mut impl Read) -> io::Result<u64> {
         let mut b = [0u8; 8];
         r.read_exact(&mut b)?;
         Ok(u64::from_le_bytes(b))
     }
-    fn r_str(r: &mut impl Read) -> io::Result<String> {
+    pub fn r_str(r: &mut impl Read) -> io::Result<String> {
         let len = r_u32(r)? as usize;
         let mut buf = vec![0u8; len];
         r.read_exact(&mut buf)?;
@@ -1231,7 +1231,11 @@ mod wire {
     }
 }
 
-pub use wire::{has_unresolvable_files, read_diagnostic, write_diagnostic};
+#[doc(hidden)]
+pub use wire::{
+    has_unresolvable_files, r_i32, r_str, r_u32, r_u64, r_u8, read_diagnostic, w_i32, w_str, w_u32,
+    w_u64, w_u8, write_diagnostic,
+};
 
 #[cfg(test)]
 mod tests {

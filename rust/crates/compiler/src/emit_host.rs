@@ -54,6 +54,135 @@ pub struct EmitResult {
     pub source_maps: Vec<SourceMapEmitResult>,
 }
 
+// ---------------------------------------------------------------------------
+// PORT(addition): wire codec for EmitResult — fork-parallel emit ships each
+// child's per-file EmitResult back over a pipe (see `Program::try_fork_emit`).
+// Everything is plain data; diagnostics reuse `tsc_ast::diagnostic`'s codec.
+// ---------------------------------------------------------------------------
+
+#[cfg(unix)]
+pub fn write_emit_result(r: &EmitResult, w: &mut impl std::io::Write) -> std::io::Result<()> {
+    use tsc_ast::diagnostic::{w_str, w_u32, w_u8, write_diagnostic};
+    w_u8(w, r.emit_skipped as u8)?;
+    w_u32(w, r.diagnostics.len() as u32)?;
+    for d in &r.diagnostics {
+        write_diagnostic(d, w)?;
+    }
+    w_u32(w, r.emitted_files.len() as u32)?;
+    for f in &r.emitted_files {
+        w_str(w, f)?;
+    }
+    w_u32(w, r.source_maps.len() as u32)?;
+    for sm in &r.source_maps {
+        w_u32(w, sm.input_source_file_names.len() as u32)?;
+        for n in &sm.input_source_file_names {
+            w_str(w, n)?;
+        }
+        let m = &sm.source_map;
+        tsc_ast::diagnostic::w_i32(w, m.version)?;
+        w_str(w, &m.file)?;
+        w_str(w, &m.source_root)?;
+        w_u32(w, m.sources.len() as u32)?;
+        for s in &m.sources {
+            w_str(w, s)?;
+        }
+        w_u32(w, m.names.len() as u32)?;
+        for n in &m.names {
+            w_str(w, n)?;
+        }
+        w_str(w, &m.mappings)?;
+        match &m.sources_content {
+            Some(contents) => {
+                w_u8(w, 1)?;
+                w_u32(w, contents.len() as u32)?;
+                for c in contents {
+                    match c {
+                        Some(c) => {
+                            w_u8(w, 1)?;
+                            w_str(w, c)?;
+                        }
+                        None => w_u8(w, 0)?,
+                    }
+                }
+            }
+            None => w_u8(w, 0)?,
+        }
+        w_str(w, &sm.generated_file)?;
+    }
+    Ok(())
+}
+
+#[cfg(unix)]
+pub fn read_emit_result(
+    r: &mut impl std::io::Read,
+    resolve_file: &mut dyn FnMut(NodeId) -> Option<tsc_ast::diagnostic::DiagnosticFile>,
+) -> std::io::Result<EmitResult> {
+    use tsc_ast::diagnostic::{r_i32, r_str, r_u32, r_u8, read_diagnostic};
+    let emit_skipped = r_u8(r)? != 0;
+    let diag_count = r_u32(r)? as usize;
+    let mut diagnostics = Vec::with_capacity(diag_count);
+    for _ in 0..diag_count {
+        diagnostics.push(read_diagnostic(r, resolve_file)?);
+    }
+    let file_count = r_u32(r)? as usize;
+    let mut emitted_files = Vec::with_capacity(file_count);
+    for _ in 0..file_count {
+        emitted_files.push(RootedFilePath::from(r_str(r)?));
+    }
+    let sm_count = r_u32(r)? as usize;
+    let mut source_maps = Vec::with_capacity(sm_count);
+    for _ in 0..sm_count {
+        let name_count = r_u32(r)? as usize;
+        let mut input_source_file_names = Vec::with_capacity(name_count);
+        for _ in 0..name_count {
+            input_source_file_names.push(r_str(r)?);
+        }
+        let version = r_i32(r)?;
+        let file = r_str(r)?;
+        let source_root = r_str(r)?;
+        let src_count = r_u32(r)? as usize;
+        let mut sources = Vec::with_capacity(src_count);
+        for _ in 0..src_count {
+            sources.push(r_str(r)?);
+        }
+        let names_count = r_u32(r)? as usize;
+        let mut names = Vec::with_capacity(names_count);
+        for _ in 0..names_count {
+            names.push(r_str(r)?);
+        }
+        let mappings = r_str(r)?;
+        let sources_content = if r_u8(r)? == 1 {
+            let count = r_u32(r)? as usize;
+            let mut contents = Vec::with_capacity(count);
+            for _ in 0..count {
+                contents.push(if r_u8(r)? == 1 { Some(r_str(r)?) } else { None });
+            }
+            Some(contents)
+        } else {
+            None
+        };
+        source_maps.push(SourceMapEmitResult {
+            input_source_file_names,
+            source_map: tsc_sourcemap::RawSourceMap {
+                version,
+                file,
+                source_root,
+                sources,
+                names,
+                mappings,
+                sources_content,
+            },
+            generated_file: r_str(r)?,
+        });
+    }
+    Ok(EmitResult {
+        emit_skipped,
+        diagnostics,
+        emitted_files,
+        source_maps,
+    })
+}
+
 /// `type SourceMapEmitResult struct`.
 pub struct SourceMapEmitResult {
     /// Input source file (which one can use on program to get the file),

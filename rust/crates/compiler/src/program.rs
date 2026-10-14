@@ -3046,6 +3046,23 @@ impl Program {
             force_js_emit,
         );
 
+        #[cfg(unix)]
+        if options.write_file.is_none() {
+            // Fork-parallel emit: children emit file groups and write
+            // outputs to disk themselves; `None` → sequential fallback.
+            if let Some(result) = self.try_fork_emit(
+                ctx.clone(),
+                &source_files,
+                options.emit_only,
+                options.force_emit,
+                force_dts_emit,
+                force_js_emit,
+            ) {
+                trace_done();
+                return result;
+            }
+        }
+
         let mut emitters: Vec<crate::emitter::Emitter<'_, '_>> =
             Vec::with_capacity(source_files.len());
         for source_file in source_files {
@@ -3069,6 +3086,244 @@ impl Program {
         let result = combine_emit_results(emitters.iter_mut().map(|e| e.emit_result()));
         trace_done();
         result
+    }
+
+    /// PORT(addition): fork-parallel counterpart of the sequential emit
+    /// loop — like `checker_pool::try_fork_collect`, each group of files
+    /// is emitted in a forked child (COW-private program/checker/printer
+    /// state) and `EmitResult`s stream back over a pipe. Children write
+    /// output files to disk themselves — only valid when `write_file`
+    /// is `None` (the default host writer), which the caller gates on.
+    /// `None` → caller falls back to the sequential loop; a crashed
+    /// child or unresolvable diagnostic re-runs its group in the parent.
+    #[cfg(unix)]
+    #[allow(unsafe_code)]
+    fn try_fork_emit(
+        &self,
+        ctx: Context,
+        source_files: &[NodeId],
+        emit_only: crate::emit_host::EmitOnly,
+        force_emit: bool,
+        force_dts_emit: bool,
+        force_js_emit: bool,
+    ) -> Option<EmitResult> {
+        use crate::checker_pool::has_foreign_nodes;
+        use crate::emit_host::{read_emit_result, write_emit_result};
+        use tsc_ast::diagnostic::{has_unresolvable_files, DiagnosticFile};
+
+        if self.single_threaded()
+            || std::env::var("TSC_NO_FORK_EMIT").is_ok()
+            || std::env::var("TSC_NO_FORK_CHECK").is_ok()
+            || std::env::var("TSC_FILE_TIME").is_ok()
+            || !self.options.pprof_dir.as_string().is_empty()
+        {
+            return None;
+        }
+        if source_files.len() <= 1 {
+            return None;
+        }
+        // Same worker budget as the checker pool (--checkers honored).
+        let workers = self
+            .compiler_checker_pool
+            .borrow()
+            .as_ref()
+            .map(|p| p.checker_count())
+            .unwrap_or(1)
+            .min(source_files.len());
+        if workers <= 1 {
+            return None;
+        }
+        let arena_lens = self.arena_lengths();
+
+        // Round-robin groups — emit has no file/checker affinity.
+        let mut groups: Vec<Vec<NodeId>> = vec![Vec::new(); workers];
+        for (i, &file) in source_files.iter().enumerate() {
+            groups[i % workers].push(file);
+        }
+
+        let emit_group = |group: &[NodeId]| -> Vec<EmitResult> {
+            let mut results = Vec::with_capacity(group.len());
+            for &file in group {
+                let mut emitter = crate::emitter::Emitter::new(
+                    file,
+                    emit_only,
+                    force_emit,
+                    None,
+                    self.hosts.tracing.clone(),
+                );
+                let (host, done) = BasicEmitHost::new(ctx.clone(), self, file);
+                emitter.set_host(host);
+                emitter.compute_paths(force_dts_emit, force_js_emit, force_emit);
+                emitter.emit();
+                done();
+                results.push(emitter.emit_result());
+            }
+            results
+        };
+
+        let mut children: Vec<(libc::pid_t, libc::c_int, usize)> = Vec::new();
+        let mut results: Vec<EmitResult> = Vec::new();
+
+        for (g, group) in groups.iter().enumerate().skip(1) {
+            if group.is_empty() {
+                continue;
+            }
+            let mut fds = [0 as libc::c_int; 2];
+            // SAFETY: `fds` points at valid storage.
+            if unsafe { libc::pipe(fds.as_mut_ptr()) } != 0 {
+                return None;
+            }
+            // SAFETY: see `try_fork_collect` — children only write their
+            // pipe and exit via `_exit`.
+            let pid = unsafe { libc::fork() };
+            if pid < 0 {
+                unsafe {
+                    libc::close(fds[0]);
+                    libc::close(fds[1]);
+                }
+                continue;
+            }
+            if pid == 0 {
+                // ------- CHILD -------
+                unsafe { libc::close(fds[0]) };
+                let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                    let mut buf = Vec::new();
+                    let mut unresolvable = false;
+                    let group_results = emit_group(group);
+                    for r in &group_results {
+                        if !unresolvable
+                            && r.diagnostics.iter().any(|d| {
+                                has_unresolvable_files(d)
+                                    || has_foreign_nodes(d, &arena_lens)
+                            })
+                        {
+                            unresolvable = true;
+                        }
+                        let _ = write_emit_result(r, &mut buf);
+                    }
+                    buf.push(if unresolvable { 0 } else { 1 });
+                    let mut off = 0;
+                    while off < buf.len() {
+                        // SAFETY: valid byte range, live pipe write end.
+                        let n = unsafe {
+                            libc::write(
+                                fds[1],
+                                buf.as_ptr().add(off) as *const libc::c_void,
+                                buf.len() - off,
+                            )
+                        };
+                        if n <= 0 {
+                            break;
+                        }
+                        off += n as usize;
+                    }
+                }));
+                // SAFETY: `_exit` — no destructors/atexit in a forked child.
+                unsafe { libc::_exit(0) };
+            }
+            unsafe { libc::close(fds[1]) };
+            children.push((pid, fds[0], g));
+        }
+
+        // Group 0 in the parent.
+        for r in emit_group(&groups[0]) {
+            results.push(r);
+        }
+
+        let read_all = |fd: libc::c_int| -> Vec<u8> {
+            let mut out = Vec::new();
+            let mut chunk = [0u8; 1 << 16];
+            loop {
+                // SAFETY: valid buffer, live read end.
+                let n = unsafe {
+                    libc::read(fd, chunk.as_mut_ptr() as *mut libc::c_void, chunk.len())
+                };
+                if n <= 0 {
+                    break;
+                }
+                out.extend_from_slice(&chunk[..n as usize]);
+            }
+            unsafe { libc::close(fd) };
+            out
+        };
+
+        let mut blobs: Vec<(usize, Option<Vec<u8>>)> = Vec::new();
+        for (pid, fd, g) in children {
+            let buf = read_all(fd);
+            let mut status: libc::c_int = 0;
+            // SAFETY: `status` valid; `pid` is our child.
+            let rc = unsafe { libc::waitpid(pid, &mut status, 0) };
+            let clean =
+                rc == pid && libc::WIFEXITED(status) && libc::WEXITSTATUS(status) == 0;
+            let blob = if clean && !buf.is_empty() { Some(buf) } else { None };
+            blobs.push((g, blob));
+        }
+
+        let mut resolve_file = |node: NodeId| -> Option<DiagnosticFile> {
+            let len = arena_lens
+                .get(node.file_index() as usize)
+                .copied()
+                .flatten()?;
+            if node.local_index() as usize >= len {
+                return None;
+            }
+            Some(DiagnosticFile::from_node(node, &self.nodes(node.file_index())))
+        };
+
+        let mut results_by_group: Vec<(usize, Vec<EmitResult>)> = Vec::new();
+        for (g, blob) in blobs {
+            let ok = blob
+                .as_ref()
+                .is_some_and(|b| *b.last().unwrap_or(&0) == 1);
+            if let Some(mut b) = blob.filter(|_| ok) {
+                b.pop(); // trailer
+                let mut cursor = std::io::Cursor::new(b);
+                let parsed: Option<Vec<EmitResult>> = (|| {
+                    let mut out = Vec::with_capacity(groups[g].len());
+                    for _ in 0..groups[g].len() {
+                        out.push(read_emit_result(&mut cursor, &mut resolve_file).ok()?);
+                    }
+                    Some(out)
+                })();
+                if let Some(rs) = parsed {
+                    results_by_group.push((g, rs));
+                    continue;
+                }
+            }
+            // Re-run this group in the parent — child crashed or its
+            // results can't cross the boundary (files it wrote are
+            // rewritten identically by the re-run).
+            results_by_group.push((g, emit_group(&groups[g])));
+        }
+
+        // Reassemble in input order: groups are round-robin interleaved
+        // (`groups[i % workers]`), so result for file i is group_results
+        // [i % workers][i / workers].
+        let mut group_results: Vec<std::collections::VecDeque<EmitResult>> =
+            Vec::with_capacity(workers);
+        // Parent group first.
+        let mut parent_iter = results.into_iter();
+        group_results.push(
+            (0..groups[0].len())
+                .map(|_| parent_iter.next().unwrap_or_default())
+                .collect(),
+        );
+        results_by_group.sort_by_key(|(g, _)| *g);
+        let mut by_g: FxHashMap<usize, Vec<EmitResult>> = results_by_group.into_iter().collect();
+        for g in 1..workers {
+            let rs = by_g.remove(&g).unwrap_or_default();
+            let mut q = std::collections::VecDeque::from(rs);
+            while q.len() < groups[g].len() {
+                q.push_back(EmitResult::default());
+            }
+            group_results.push(q);
+        }
+        let merged = (0..source_files.len()).map(|i| {
+            group_results[i % workers]
+                .pop_front()
+                .unwrap_or_default()
+        });
+        Some(combine_emit_results(merged))
     }
 
     /// `PathKeyForFileName`.
