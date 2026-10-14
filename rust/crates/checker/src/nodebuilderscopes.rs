@@ -359,16 +359,10 @@ impl<'a> NodeBuilderImpl<'a> {
         // We only ever need to look two declarations upward.
         debug_assert!(self.ctx.enclosing_declaration.is_some());
         let enclosing = self.ctx.enclosing_declaration.unwrap();
-        // Cross-arena guard: `enclosing` must physically resolve in
-        // `nodes` (the buffer `self.f` mints into) for the same-buffer
-        // reads below — `file_index` agreement alone is not enough, since
-        // scratch clones can share an index with the live buffer while
-        // being different storage. When it is foreign — a scratch-arena
-        // reuse visit where `enclosing` is a NodeId in the live
-        // destination buffer — the fake scope is minted into the
-        // enclosing declaration's own arena instead (see below), so
-        // `fake_scope.parent` stays a same-arena link exactly like Go's
-        // raw pointer.
+        // `enclosing` must physically resolve in `nodes` for the
+        // existing-scope reuse checks below — `file_index` agreement alone
+        // is not enough, since scratch clones can share an index with the
+        // live buffer while being different storage.
         let enclosing_in_nodes =
             crate::printer_util::buffer_resolves_id(nodes, enclosing);
         // PORT: Go's `links.Has(node)`/`links.Get(node)` key by node pointer,
@@ -460,45 +454,27 @@ impl<'a> NodeBuilderImpl<'a> {
             // Use a Block for this; the type of the node doesn't matter so
             // long as it has locals, and this is cheaper/easier than using a
             // function-ish Node.
-            if enclosing_in_nodes {
-                let empty_list = self.f.new_node_list([]);
-                let fake_scope = self.f.new_block(nodes, Some(empty_list), false);
-                self.links
-                    .get(fake_scope)
-                    .fake_scope_for_signature_declaration = Some(kind.to_string());
-                if let Some(data) = nodes[fake_scope].data.locals_container_data_mut() {
-                    data.locals = locals;
-                }
-                // `fakeScope.Parent = enclosingDeclaration`.
-                nodes[fake_scope].parent = Some(enclosing);
-                self.ctx.enclosing_declaration = Some(fake_scope);
-            } else {
-                // `enclosing` lives in a different arena (scratch-arena
-                // node reuse). Go's `fakeScope.Parent = enclosingDeclaration`
-                // is a raw pointer — valid across arenas — but single-buffer
-                // walkers (`resolveName`, ancestor walks) would misread a
-                // foreign NodeId stored on a node in `nodes`. Mint the scope
-                // into the enclosing declaration's own arena instead: the
-                // `parent` link stays same-arena and every enclosing-chain
-                // walk sees Go's real chain.
-                let enclosing_fi = enclosing.file_index();
-                let program = c.program.clone().expect("program");
-                let mut arena_mut = program.nodes_mut(enclosing_fi);
-                let old_fi = self.f.file_index();
-                self.f.set_file_index(enclosing_fi);
-                let empty_list = self.f.new_node_list([]);
-                let foreign_scope = self.f.new_block(&mut *arena_mut, Some(empty_list), false);
-                self.f.set_file_index(old_fi);
-                self.links
-                    .get(foreign_scope)
-                    .fake_scope_for_signature_declaration = Some(kind.to_string());
-                if let Some(data) = arena_mut[foreign_scope].data.locals_container_data_mut() {
-                    data.locals = locals;
-                }
-                arena_mut[foreign_scope].parent = Some(enclosing);
-                drop(arena_mut);
-                self.ctx.enclosing_declaration = Some(foreign_scope);
+            // Always mint into the working buffer — even when `enclosing`
+            // is foreign (scratch-arena node reuse). Minting into
+            // `program.nodes_mut(enclosing.file_index())` is wrong: when
+            // `enclosing` lives in a checked-out emit buffer the write
+            // lands in the stale clone left in the cell, and the minted id
+            // then aliases an unrelated node in the live buffer (the
+            // `inferingFromAny` `a is T` → `boolean` bug). `parent` may
+            // point at a foreign NodeId — Go's raw pointer — and the name
+            // resolver resolves parent chains cross-arena, so the walk
+            // still sees Go's real chain.
+            let empty_list = self.f.new_node_list([]);
+            let fake_scope = self.f.new_block(nodes, Some(empty_list), false);
+            self.links
+                .get(fake_scope)
+                .fake_scope_for_signature_declaration = Some(kind.to_string());
+            if let Some(data) = nodes[fake_scope].data.locals_container_data_mut() {
+                data.locals = locals;
             }
+            // `fakeScope.Parent = enclosingDeclaration`.
+            nodes[fake_scope].parent = Some(enclosing);
+            self.ctx.enclosing_declaration = Some(fake_scope);
             None
         }
     }

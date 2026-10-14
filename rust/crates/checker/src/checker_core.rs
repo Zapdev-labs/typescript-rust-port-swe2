@@ -5541,4 +5541,22 @@ impl tsc_binder::nameresolver::NameResolverHost for Checker {
             crate::printer_util::resolve_arena_for(&program, work, d)[d].kind == kind
         })
     }
+
+    /// Cross-arena arena fetch for the nameresolver's parent-chain walk —
+    /// mirrors [`crate::printer_util::resolve_arena_for`] semantics: the
+    /// returned buffer must actually own `id` (a scratch/live clone can
+    /// share the destination arena's `file_index` without owning `id`).
+    fn nr_arena_for(
+        &mut self,
+        id: NodeId,
+        work: &[ast::Node],
+    ) -> Option<std::rc::Rc<Vec<ast::Node>>> {
+        let program = self.program.clone().expect("program");
+        Some(
+            match crate::printer_util::resolve_arena_for(&program, work, id) {
+                crate::printer_util::ArenaView::Snapshot(rc) => rc,
+                crate::printer_util::ArenaView::Working(w) => std::rc::Rc::new(w.to_vec()),
+            },
+        )
+    }
 }

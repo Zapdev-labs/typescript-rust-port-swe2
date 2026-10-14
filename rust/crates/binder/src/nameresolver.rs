@@ -121,6 +121,13 @@ pub trait NameResolverHost {
         kind: Kind,
         work: &[Node],
     ) -> bool;
+    /// Resolve the arena owning `id` — used when the parent-chain walk
+    /// (or a declaration id) points into another file's buffer
+    /// (cross-file node reuse; Go follows raw pointers). `work` is the
+    /// arena the resolver is currently walking; the impl must return a
+    /// buffer where `id` actually resolves — a scratch/live clone can
+    /// share the destination arena's `file_index` without owning `id`.
+    fn nr_arena_for(&mut self, id: NodeId, work: &[Node]) -> Option<Rc<Vec<Node>>>;
 }
 
 pub struct NameResolver<'a> {
@@ -157,6 +164,56 @@ pub struct NameResolver<'a> {
     pub on_successfully_resolved_symbol: Option<OnSuccessfullyResolvedSymbolHook<'a>>,
 }
 
+/// True when `buf` physically owns `id` — `local_index` in bounds AND the
+/// stored node's own id matches (the embedded `file_index` distinguishes
+/// same-slot ids from different arenas).
+fn buffer_resolves(buf: &[Node], id: NodeId) -> bool {
+    (id.local_index() as usize) < buf.len() && buf[id].id == id
+}
+
+/// `nodes[id]` where `id` may live in another arena already fetched for
+/// the walk (ancestors crossed by a foreign `parent` hop). Searches
+/// `work`, `primary`, then `extra`; falls back to `work[id]` — same
+/// behavior (panic or stale read) as before for unfetched arenas.
+fn node_in<'x>(
+    work: &'x [Node],
+    primary: &'x [Node],
+    extra: &'x [Rc<Vec<Node>>],
+    id: NodeId,
+) -> &'x Node {
+    if buffer_resolves(work, id) {
+        return &work[id];
+    }
+    if buffer_resolves(primary, id) {
+        return &primary[id];
+    }
+    if let Some(rc) = extra.iter().find(|rc| buffer_resolves(rc, id)) {
+        return &rc[id];
+    }
+    &work[id]
+}
+
+/// The arena slice owning `id` — for helpers that take `nodes: &[Node]`
+/// and index it only with `id`'s siblings (e.g. ancestor chains).
+fn arena_in<'x>(
+    work: &'x [Node],
+    primary: &'x [Node],
+    extra: &'x [Rc<Vec<Node>>],
+    id: NodeId,
+) -> &'x [Node] {
+    if buffer_resolves(work, id) {
+        return work;
+    }
+    if buffer_resolves(primary, id) {
+        return primary;
+    }
+    extra
+        .iter()
+        .find(|rc| buffer_resolves(rc, id))
+        .map(|rc| rc.as_slice())
+        .unwrap_or(work)
+}
+
 impl<'a> NameResolver<'a> {
     /// `GetDeclarationOfKind(symbol, kind) != nil` — routes through the host
     /// when present so declarations living in another file's arena resolve
@@ -172,6 +229,40 @@ impl<'a> NameResolver<'a> {
             return h.nr_has_declaration_of_kind(symbol, kind, nodes);
         }
         get_declaration_of_kind(&symbols.borrow()[symbol.index()], kind, nodes).is_some()
+    }
+
+    /// `nodes[id]` where `id` may live outside `work` — the parent-chain
+    /// walk and merged declarations can reach into other files' arenas
+    /// (Go follows raw pointers). Searches `work`, `primary`, then the
+    /// prefetched `extra` arenas; on a miss it asks the host for the owning
+    /// arena (not cached — ancestor arenas are already prefetched, so this
+    /// is only hit by rare non-ancestor ids like foreign declarations).
+    /// Returns a clone so `extra` stays borrowed immutably. Unresolvable
+    /// ids fall back to `work[id]` — same behavior as before.
+    fn node_at(
+        &mut self,
+        work: &[Node],
+        primary: &[Node],
+        extra: &[Rc<Vec<Node>>],
+        id: NodeId,
+    ) -> Node {
+        if buffer_resolves(work, id) {
+            return work[id].clone();
+        }
+        if buffer_resolves(primary, id) {
+            return primary[id].clone();
+        }
+        if let Some(rc) = extra.iter().find(|rc| buffer_resolves(rc, id)) {
+            return rc[id].clone();
+        }
+        if let Some(h) = self.host.as_deref_mut() {
+            if let Some(rc) = h.nr_arena_for(id, primary) {
+                if buffer_resolves(&rc, id) {
+                    return rc[id].clone();
+                }
+            }
+        }
+        work[id].clone()
     }
 
     /// `func (r *NameResolver) Resolve(...) *ast.Symbol`
@@ -197,7 +288,52 @@ impl<'a> NameResolver<'a> {
         let mut within_deferred_context = false;
         let original_location = location; // needed for did-you-mean error reporting, which gathers candidates starting from the original location
         let name_is_const = name == "const";
+        // PORT(cross-arena): declaration-emit node reuse can parent a node
+        // into another file's arena; Go follows the pointer. Prefetch every
+        // arena on the ancestor chain so the loop's `nodes[loc]` reads and
+        // `last`/`p` reads resolve through `node_at`/the per-hop swap.
+        let primary: &[Node] = nodes;
+        let mut extra_arenas: Vec<Rc<Vec<Node>>> = Vec::new();
+        {
+            let mut cur = location;
+            let mut hops = 0usize;
+            while let Some(n) = cur {
+                hops += 1;
+                if hops > 1_000_000 {
+                    break;
+                }
+                let arena: &[Node] = if buffer_resolves(primary, n) {
+                    primary
+                } else {
+                    if !extra_arenas.iter().any(|rc| buffer_resolves(rc, n)) {
+                        match self
+                            .host
+                            .as_deref_mut()
+                            .and_then(|h| h.nr_arena_for(n, primary))
+                        {
+                            Some(rc) if buffer_resolves(&rc, n) => extra_arenas.push(rc),
+                            _ => break,
+                        }
+                    }
+                    match extra_arenas.iter().find(|rc| buffer_resolves(rc, n)) {
+                        Some(rc) => rc.as_slice(),
+                        None => break,
+                    }
+                };
+                cur = arena[n].parent;
+            }
+        }
         'loop_: while let Some(mut loc) = location {
+            // PORT(cross-arena): `loc` may live outside `primary` after a
+            // foreign parent hop — swap the walking arena.
+            let nodes: &[Node] = if buffer_resolves(primary, loc) {
+                primary
+            } else {
+                match extra_arenas.iter().position(|rc| buffer_resolves(rc, loc)) {
+                    Some(i) => extra_arenas[i].as_slice(),
+                    None => primary,
+                }
+            };
             if name_is_const && is_const_assertion(&nodes[loc], nodes) {
                 // `const` in an `as const` has no symbol, but issues no error because there is no *actual* lookup of the type
                 // (it refers to the constant type of the expression instead)
@@ -237,26 +373,26 @@ impl<'a> NameResolver<'a> {
                             let last = last_location.unwrap();
                             if meaning
                                 .intersects(symbols.borrow()[res.index()].flags & SymbolFlags::TYPE)
-                                && nodes[last].kind != Kind::JSDoc
+                                && node_in(nodes, primary, &extra_arenas, last).kind != Kind::JSDoc
                             {
                                 // type parameters are visible in parameter list, return type and type parameter list.
                                 // Synthetic fake scopes are added for signatures so type parameters are accessible from them.
                                 use_result = symbols.borrow()[res.index()]
                                     .flags
                                     .intersects(SymbolFlags::TYPE_PARAMETER)
-                                    && (nodes[last].flags.intersects(NodeFlags::SYNTHESIZED)
+                                    && (node_in(nodes, primary, &extra_arenas, last).flags.intersects(NodeFlags::SYNTHESIZED)
                                         || Some(last) == nodes[loc].type_()
-                                        || nodes[last].kind == Kind::Parameter
-                                        || nodes[last].kind == Kind::JSDocParameterTag
-                                        || nodes[last].kind == Kind::JSDocReturnTag
-                                        || nodes[last].kind == Kind::TypeParameter);
+                                        || node_in(nodes, primary, &extra_arenas, last).kind == Kind::Parameter
+                                        || node_in(nodes, primary, &extra_arenas, last).kind == Kind::JSDocParameterTag
+                                        || node_in(nodes, primary, &extra_arenas, last).kind == Kind::JSDocReturnTag
+                                        || node_in(nodes, primary, &extra_arenas, last).kind == Kind::TypeParameter);
                             }
                             if meaning.intersects(
                                 symbols.borrow()[res.index()].flags & SymbolFlags::VARIABLE,
                             ) {
                                 // expression inside parameter will lookup as normal variable scope when targeting es2015+
                                 if self.use_outer_variable_scope_in_parameter(
-                                    res, loc, last, nodes, symbols,
+                                    res, loc, last, nodes, primary, &extra_arenas, symbols,
                                 ) {
                                     use_result = false;
                                 } else if symbols.borrow()[res.index()]
@@ -267,8 +403,8 @@ impl<'a> NameResolver<'a> {
                                     // technically for parameter list case here we might mix parameters and variables declared in function,
                                     // however it is detected separately when checking initializers of parameters
                                     // to make sure that they reference no variables declared after them.
-                                    use_result = nodes[last].kind == Kind::Parameter
-                                        || nodes[last].flags.intersects(NodeFlags::SYNTHESIZED)
+                                    use_result = node_in(nodes, primary, &extra_arenas, last).kind == Kind::Parameter
+                                        || node_in(nodes, primary, &extra_arenas, last).flags.intersects(NodeFlags::SYNTHESIZED)
                                         || Some(last) == nodes[loc].type_()
                                             && symbols.borrow()[res.index()]
                                                 .value_declaration
@@ -453,9 +589,11 @@ impl<'a> NameResolver<'a> {
                     if !is_static(&nodes[loc]) {
                         if let Some(ctor) = nodes[loc]
                             .parent
-                            .and_then(|p| find_constructor_declaration(&nodes[p], nodes))
+                            .and_then(|p| find_constructor_declaration(node_in(nodes, primary, &extra_arenas, p), arena_in(nodes, primary, &extra_arenas, p)))
                         {
-                            if let Some(ctor_locals) = nodes[ctor].locals() {
+                            if let Some(ctor_locals) =
+                                node_in(nodes, primary, &extra_arenas, ctor).locals()
+                            {
                                 if self
                                     .lookup(
                                         ctor_locals,
@@ -495,7 +633,7 @@ impl<'a> NameResolver<'a> {
                                 result = None;
                                 skip_class_expression_name_check = true;
                             } else {
-                                if last_location.is_some_and(|l| is_static(&nodes[l])) {
+                                if last_location.is_some_and(|l| is_static(node_in(nodes, primary, &extra_arenas, l))) {
                                     // TypeScript 1.0 spec (April 2014): 3.4.1
                                     // The scope of a type parameter extends over the entire declaration with which the type
                                     // parameter list is associated, with the exception of static member declarations in classes.
@@ -528,11 +666,11 @@ impl<'a> NameResolver<'a> {
                     if last_location == nodes[loc].expression()
                         && nodes[loc]
                             .parent
-                            .is_some_and(|p| is_heritage_clause(&nodes[p]))
+                            .is_some_and(|p| is_heritage_clause(node_in(nodes, primary, &extra_arenas, p)))
                         && nodes[nodes[loc].parent.unwrap()].as_heritage_clause().token
                             == Kind::ExtendsKeyword
                     {
-                        if let Some(container) = nodes[loc].parent.and_then(|p| nodes[p].parent) {
+                        if let Some(container) = nodes[loc].parent.and_then(|p| node_in(nodes, primary, &extra_arenas, p).parent) {
                             if is_class_like(Some(container), nodes) {
                                 if let Some(container_symbol) =
                                     self.get_symbol_of_declaration(container, nodes)
@@ -566,9 +704,9 @@ impl<'a> NameResolver<'a> {
                 //       [foo<T>()]() { } // <-- Reference to T from class's own computed property
                 //   }
                 Kind::ComputedPropertyName => {
-                    let grandparent = nodes[loc].parent.and_then(|p| nodes[p].parent);
+                    let grandparent = nodes[loc].parent.and_then(|p| node_in(nodes, primary, &extra_arenas, p).parent);
                     if let Some(gp) = grandparent {
-                        if is_class_like(Some(gp), nodes) || is_interface_declaration(&nodes[gp]) {
+                        if is_class_like(Some(gp), nodes) || is_interface_declaration(node_in(nodes, primary, &extra_arenas, gp)) {
                             // A reference to this grandparent's type parameters would be an error
                             if let Some(gp_symbol) = self.get_symbol_of_declaration(gp, nodes) {
                                 result = self.lookup(
@@ -626,7 +764,7 @@ impl<'a> NameResolver<'a> {
                     //
                     if nodes[loc]
                         .parent
-                        .is_some_and(|p| nodes[p].kind == Kind::Parameter)
+                        .is_some_and(|p| node_in(nodes, primary, &extra_arenas, p).kind == Kind::Parameter)
                     {
                         loc = nodes[loc].parent.unwrap();
                     }
@@ -642,7 +780,7 @@ impl<'a> NameResolver<'a> {
                     //   @param(1 as T) // <-- T should resolve to the type alias outside of class C
                     //   class C<T> {}
                     if nodes[loc].parent.is_some_and(|p| {
-                        is_class_element(&nodes[p]) || nodes[p].kind == Kind::ClassDeclaration
+                        is_class_element(node_in(nodes, primary, &extra_arenas, p)) || node_in(nodes, primary, &extra_arenas, p).kind == Kind::ClassDeclaration
                     }) {
                         loc = nodes[loc].parent.unwrap();
                     }
@@ -652,7 +790,7 @@ impl<'a> NameResolver<'a> {
                     if last_location.is_some()
                         && (last_location == parameter_declaration.initializer
                             || last_location == parameter_declaration.name
-                                && last_location.is_some_and(|l| is_binding_pattern(&nodes[l])))
+                                && last_location.is_some_and(|l| is_binding_pattern(node_in(nodes, primary, &extra_arenas, l))))
                         && associated_declaration_for_containing_initializer_or_binding_name
                             .is_none()
                     {
@@ -665,7 +803,7 @@ impl<'a> NameResolver<'a> {
                     if last_location.is_some()
                         && (last_location == binding_element.initializer
                             || last_location == binding_element.name
-                                && last_location.is_some_and(|l| is_binding_pattern(&nodes[l])))
+                                && last_location.is_some_and(|l| is_binding_pattern(node_in(nodes, primary, &extra_arenas, l))))
                         && is_part_of_parameter_declaration(loc, nodes)
                         && associated_declaration_for_containing_initializer_or_binding_name
                             .is_none()
@@ -694,12 +832,12 @@ impl<'a> NameResolver<'a> {
                         && last_location == export_specifier.property_name
                         && nodes[loc]
                             .parent
-                            .and_then(|p| nodes[p].parent)
-                            .is_some_and(|pp| nodes[pp].module_specifier().is_some())
+                            .and_then(|p| node_in(nodes, primary, &extra_arenas, p).parent)
+                            .is_some_and(|pp| node_in(nodes, primary, &extra_arenas, pp).module_specifier().is_some())
                     {
-                        loc = nodes[nodes[loc].parent.unwrap()]
+                        loc = node_in(nodes, primary, &extra_arenas, nodes[loc].parent.unwrap())
                             .parent
-                            .and_then(|pp| nodes[pp].parent)
+                            .and_then(|pp| node_in(nodes, primary, &extra_arenas, pp).parent)
                             .expect("export specifier grandparent");
                     }
                 }
@@ -721,7 +859,7 @@ impl<'a> NameResolver<'a> {
         let referenced = is_use
             && result.is_some()
             && (last_self_reference_location.is_none()
-                || result != last_self_reference_location.and_then(|l| nodes[l].symbol()));
+                || result != last_self_reference_location.and_then(|l| node_in(nodes, primary, &extra_arenas, l).symbol()));
         if referenced {
             self.dispatch_symbol_referenced(result.unwrap(), meaning);
         }
@@ -736,14 +874,18 @@ impl<'a> NameResolver<'a> {
         }
         if result.is_none() {
             if let Some(original_location) = original_location {
-                if is_in_js_file(Some(original_location), nodes)
-                    && nodes[original_location].parent.is_some()
+                if is_in_js_file(
+                    Some(original_location),
+                    arena_in(nodes, primary, &extra_arenas, original_location),
+                ) && node_in(nodes, primary, &extra_arenas, original_location)
+                    .parent
+                    .is_some()
                 {
-                    let parent = nodes[original_location].parent.unwrap();
+                    let parent = node_in(nodes, primary, &extra_arenas, original_location).parent.unwrap();
                     if is_require_call(
-                        &nodes[parent],
+                        node_in(nodes, primary, &extra_arenas, parent),
                         false, /*requireStringLiteralLikeArgument*/
-                        nodes,
+                        arena_in(nodes, primary, &extra_arenas, parent),
                     ) {
                         return self.require_symbol;
                     }
@@ -826,20 +968,28 @@ impl<'a> NameResolver<'a> {
     }
 
     /// `func (r *NameResolver) useOuterVariableScopeInParameter`.
+    #[allow(clippy::too_many_arguments)]
     fn use_outer_variable_scope_in_parameter(
         &mut self,
         result: SymbolId,
         location: NodeId,
         last_location: NodeId,
         nodes: &[Node],
+        primary: &[Node],
+        extra: &[Rc<Vec<Node>>],
         symbols: &RefCell<Vec<Symbol>>,
     ) -> bool {
-        if is_parameter_declaration(&nodes[last_location]) {
-            if let Some(body) = nodes[location].body() {
+        if is_parameter_declaration(node_in(nodes, primary, extra, last_location)) {
+            if let Some(body) = node_in(nodes, primary, extra, location).body() {
                 if let Some(value_declaration) = symbols.borrow()[result.index()].value_declaration
                 {
-                    if nodes[value_declaration].pos() >= nodes[body].pos()
-                        && nodes[value_declaration].end() <= nodes[body].end()
+                    // `body` lives in `location`'s arena; `value_declaration`
+                    // may be a foreign merged declaration.
+                    let body_arena = arena_in(nodes, primary, extra, location);
+                    let value_declaration_node =
+                        self.node_at(nodes, primary, extra, value_declaration);
+                    if value_declaration_node.pos() >= body_arena[body].pos()
+                        && value_declaration_node.end() <= body_arena[body].end()
                     {
                         // check for several cases where we introduce temporaries that require moving the name/initializer of the parameter to the body
                         // - static field in a class expression
@@ -850,11 +1000,11 @@ impl<'a> NameResolver<'a> {
                         let mut declaration_requires_scope_change =
                             self.dispatch_get_requires_scope_change_cache(function_location);
                         if declaration_requires_scope_change == TS_UNKNOWN {
-                            declaration_requires_scope_change = if nodes[function_location]
+                            declaration_requires_scope_change = if body_arena[function_location]
                                 .parameters()
                                 .unwrap_or(&[])
                                 .iter()
-                                .any(|&param| self.requires_scope_change(param, nodes))
+                                .any(|&param| self.requires_scope_change(param, body_arena))
                             {
                                 TS_TRUE
                             } else {
