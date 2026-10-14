@@ -1935,3 +1935,23 @@ Real-world bench: `tsc --noEmit --strict` on the compiler fixture set
   over ~5% remains inside the check path. The remaining multi-file gap
   vs Go (~3.9x on types.ts fixture, ~1.3x on single-file) is dominated
   by Go's parallel checker pool (documented above).
+
+## Performance — fork-parallel checking (2026-10-14, latest)
+- `checker_pool::try_fork_collect` runs each checker group in a forked
+  child: COW-private program/checker state, diagnostics streamed back
+  over a pipe via a new wire codec (`tsc_ast::diagnostic::
+  write_diagnostic`/`read_diagnostic`). Parent runs group 0 inline,
+  reads children to EOF, waitpids, deserializes. This sidesteps the
+  Rc->Arc refactor the "structural gap" note above anticipated.
+- Safety rails: disabled under `singleThreaded`, `TSC_NO_FORK_CHECK`,
+  `TSC_FILE_TIME`, or `pprofDir` (sampler thread must not survive
+  fork). Children flag diagnostics whose `DiagnosticFile::node` lies
+  outside a pre-fork `arena_lengths` snapshot (post-fork scratch/
+  synthetic pushes) — the parent re-runs that group sequentially, as
+  it does for crashed children/corrupt blobs.
+- types.ts (--noEmit --strict): 3.45s -> 1.37s (~2.5x), ~1.9x of Go
+  0.73s. Diagnostics byte-identical fork vs sequential vs Go; decl
+  emit byte-identical. `--checkers 8/12` is slower (types.ts is the
+  critical path); default 4 matches Go.
+- Sequential `for_each_checker_group_do` remains the fallback and the
+  non-unix path.
