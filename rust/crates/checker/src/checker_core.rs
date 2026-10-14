@@ -517,8 +517,7 @@ pub fn get_recursion_identity(c: &mut Checker, t: TypeId) -> RecursionId {
 
 /// `getRecursionIdentityTarget` (relater.go). PORT(mirrored): see above.
 fn get_recursion_identity_target(c: &mut Checker, t: TypeId) -> TypeId {
-    let __arena_ty = c.types.clone();
-    let ty = __arena_ty.get_ref(t);
+    let ty = c.types.get_ref(t);
     if ty.flags.intersects(TypeFlags::INDEXED_ACCESS) {
         let object_type = ty.as_indexed_access_type().object_type;
         drop(ty);
@@ -541,15 +540,14 @@ fn get_recursion_identity_target(c: &mut Checker, t: TypeId) -> TypeId {
             // Stage `target`'s symbol/types before the nested `types.get` —
             // no read guard may be held across another arena read.
             let (has_symbol, constituents_have_symbol) = {
-                let __arena_tt = c.types.clone();
-                let tt = __arena_tt.get_ref(target);
+                let tt = c.types.get_ref(target);
                 let has_symbol = tt.symbol.is_some();
                 let constituents_have_symbol = tt.flags.intersects(TypeFlags::INTERSECTION) && {
                     let types = tt.types().to_vec();
                     drop(tt);
                     types
                         .iter()
-                        .any(|&s| c.types_handle().get_ref(s).symbol.is_some())
+                        .any(|&s| c.types.get_ref(s).symbol.is_some())
                 };
                 (has_symbol, constituents_have_symbol)
             };
@@ -568,8 +566,7 @@ fn get_recursion_identity_target(c: &mut Checker, t: TypeId) -> TypeId {
 fn get_recursion_identity_from_target(c: &mut Checker, t: TypeId) -> RecursionId {
     // Stage the fields Go reads off `t` before nested arena lookups.
     let (flags, object_flags, symbol, ref_node, cond_root_node) = {
-        let __arena_ty = c.types.clone();
-        let ty = __arena_ty.get_ref(t);
+        let ty = c.types.get_ref(t);
         let ref_node = if ty.object_flags.intersects(ObjectFlags::REFERENCE) {
             ty.data.as_type_reference().and_then(|r| r.node)
         } else {
@@ -594,7 +591,7 @@ fn get_recursion_identity_from_target(c: &mut Checker, t: TypeId) -> RecursionId
     // Object and array literals are known not to contain recursive
     // references and don't need a recursion identity.
     if flags.intersects(TypeFlags::OBJECT)
-        && !is_object_or_array_literal_type(&c.types_handle().get_ref(t))
+        && !is_object_or_array_literal_type(&c.types.get_ref(t))
     {
         if let Some(node) = ref_node {
             // Deferred type references are tracked through their associated
@@ -621,7 +618,7 @@ fn get_recursion_identity_from_target(c: &mut Checker, t: TypeId) -> RecursionId
             }
         }
         if is_tuple_type(&c.types, t) && !object_flags.intersects(ObjectFlags::FROM_TYPE_NODE) {
-            if let Some(target) = c.types_handle().get_ref(t).target() {
+            if let Some(target) = c.types.get_ref(t).target() {
                 return as_recursion_id_type(target);
             }
         }
@@ -1854,7 +1851,7 @@ impl Checker {
                 .as_mapped_type_mut()
                 .modifiers_type = Some(modifiers_type);
         }
-        self.types_handle().get_ref(t).as_mapped_type().modifiers_type
+        self.types.get_ref(t).as_mapped_type().modifiers_type
     }
 
     // `c.TypeToString` / `typeToString` are implemented in
@@ -1872,7 +1869,7 @@ impl Checker {
             t: TypeId,
             rest_symbol: SymbolId,
         ) -> Vec<String> {
-            let target = c.types_handle().get_ref(t).target().expect("tuple target");
+            let target = c.types.get_ref(t).target().expect("tuple target");
             let infos = c
                 .types_handle()
                 .get_ref(target)
@@ -1982,9 +1979,9 @@ impl Checker {
                 &parameters,
             )];
         }
-        let rest_flags = self.types_handle().get_ref(rest_type).flags;
+        let rest_flags = self.types.get_ref(rest_type).flags;
         if !skip_union_expanding && rest_flags.intersects(TypeFlags::UNION) {
-            let union_types = self.types_handle().get_ref(rest_type).types().to_vec();
+            let union_types = self.types.get_ref(rest_type).types().to_vec();
             if union_types.iter().all(|&t| is_tuple_type(&self.types, t)) {
                 return union_types
                     .iter()
@@ -2922,8 +2919,7 @@ impl Checker {
             if t == c.missing_type {
                 return true;
             }
-            let __arena_ty = c.types.clone();
-            let ty = __arena_ty.get_ref(t);
+            let ty = c.types.get_ref(t);
             ty.flags.intersects(TypeFlags::UNION) && ty.types().first() == Some(&c.missing_type)
         }));
         self.could_contain_type_variables = Some(Rc::new(|c: &mut Checker, t: TypeId| {
@@ -4181,8 +4177,7 @@ impl Checker {
             return non_widening_type;
         }
         let (flags, intrinsic_name) = {
-            let __arena_ty = self.types.clone();
-            let ty = __arena_ty.get_ref(non_widening_type);
+            let ty = self.types.get_ref(non_widening_type);
             (ty.flags, ty.as_intrinsic_type().intrinsic_name.clone())
         };
         let t = self.new_intrinsic_type(flags, &intrinsic_name);
@@ -4314,8 +4309,7 @@ impl Checker {
         if let Some(data) = self.types_handle().get_mut(t).data.as_structured_type_mut() {
             data.members = members.clone();
         }
-        let __arena_symbol = self.types.clone();
-        let symbol = __arena_symbol.get_ref(t).symbol;
+        let symbol = self.types.get_ref(t).symbol;
         let properties = self.get_named_members(&members, symbol);
         let (signatures, call_signature_count) = if !call_signatures.is_empty() {
             let mut sigs = call_signatures.to_vec();
@@ -4368,8 +4362,7 @@ impl Checker {
     ) -> ObjectFlags {
         let mut result = ObjectFlags::NONE;
         for &t in types {
-            let __arena_ty = self.types.clone();
-            let ty = __arena_ty.get_ref(t);
+            let ty = self.types.get_ref(t);
             if !ty.flags.intersects(exclude_kinds) {
                 result |= ty.object_flags;
             }
@@ -4540,15 +4533,13 @@ impl Checker {
 
     /// `(c *Checker) getRegularTypeOfLiteralType` (checker.go).
     pub fn get_regular_type_of_literal_type(&mut self, t: TypeId) -> TypeId {
-        let __arena_flags = self.types.clone();
-        let flags = __arena_flags.get_ref(t).flags;
+        let flags = self.types.get_ref(t).flags;
         if flags.intersects(TypeFlags::FRESHABLE) {
-            let __arena_ty = self.types.clone();
-            let ty = __arena_ty.get_ref(t);
+            let ty = self.types.get_ref(t);
             return ty.as_literal_type().regular_type.unwrap_or(t);
         }
         if flags.intersects(TypeFlags::UNION) {
-            if let Some(regular) = self.types_handle().get_ref(t).as_union_type().regular_type {
+            if let Some(regular) = self.types.get_ref(t).as_union_type().regular_type {
                 return regular;
             }
             let mapped = self.map_type(
@@ -4572,8 +4563,7 @@ impl Checker {
             .intersects(TypeFlags::FRESHABLE)
         {
             let (flags, value, fresh_type) = {
-                let __arena_ty = self.types.clone();
-                let ty = __arena_ty.get_ref(t);
+                let ty = self.types.get_ref(t);
                 let d = ty.as_literal_type();
                 (ty.flags, d.value.clone(), d.fresh_type)
             };
@@ -4581,8 +4571,7 @@ impl Checker {
                 return fresh;
             }
             let f = self.new_literal_type(flags, value, Some(t));
-            let __arena_sym = self.types.clone();
-            let sym = __arena_sym.get_ref(t).symbol;
+            let sym = self.types.get_ref(t).symbol;
             self.types_handle().get_mut(f).symbol = sym;
             if let TypeData::Literal(fd) = &mut self.types_handle().get_mut(f).data {
                 fd.fresh_type = Some(f);
@@ -4693,8 +4682,7 @@ impl Checker {
         {
             return t;
         }
-        let __arena_symbol = self.types.clone();
-        let symbol = __arena_symbol.get_ref(target).symbol;
+        let symbol = self.types.get_ref(target).symbol;
         let propagating = self.get_propagating_flags_of_types(type_arguments, TypeFlags::NONE);
         let t = self.new_object_type(ObjectFlags::REFERENCE | object_flags | propagating, symbol);
         if let TypeData::TypeReference(d) = &mut self.types_handle().get_mut(t).data {
@@ -4716,8 +4704,7 @@ impl Checker {
     /// `(c *Checker) cloneTypeReference` (checker.go).
     pub fn clone_type_reference(&mut self, source: TypeId) -> TypeId {
         let (symbol, object_flags, target, resolved_type_arguments) = {
-            let __arena_ty = self.types.clone();
-            let ty = __arena_ty.get_ref(source);
+            let ty = self.types.get_ref(source);
             let r = ty.as_type_reference();
             (
                 ty.symbol,
@@ -4808,8 +4795,7 @@ impl Checker {
     /// `(c *Checker) getTemplateLiteralType` (checker.go:29682).
     pub fn get_template_literal_type(&mut self, texts: &[String], types: &[TypeId]) -> TypeId {
         let union_index = types.iter().position(|&t| {
-            self.types_handle()
-                .get_ref(t)
+            self.types.get_ref(t)
                 .flags
                 .intersects(TypeFlags::NEVER | TypeFlags::UNION)
         });
@@ -4894,7 +4880,7 @@ impl Checker {
         state: &mut TemplateLiteralSpanState,
     ) -> bool {
         for (i, &t) in types.iter().enumerate() {
-            let flags = self.types_handle().get_ref(t).flags;
+            let flags = self.types.get_ref(t).flags;
             if flags.intersects(TypeFlags::LITERAL | TypeFlags::NULL | TypeFlags::UNDEFINED) {
                 let s = self.get_template_string_for_type(t);
                 state.sb.push_str(&s);
@@ -5005,8 +4991,7 @@ impl Checker {
         if !flags.intersects(TypeFlags::UNION_OR_INTERSECTION) {
             return false;
         }
-        let __arena_types = self.types.clone();
-        let types = __arena_types.get_ref(t).types().to_vec();
+        let types = self.types.get_ref(t).types().to_vec();
         types.iter().all(|&u| {
             let thunk = self
                 .is_string_index_signature_only_type
@@ -5078,7 +5063,7 @@ impl Checker {
         }
         let key = CachedTypeKey {
             kind: CachedTypeKind::RestrictiveTypeParameter,
-            type_id: self.types_handle().get_ref(t).id,
+            type_id: self.types.get_ref(t).id,
         };
         if let Some(&cached) = self.cached_types.get(&key) {
             return cached;

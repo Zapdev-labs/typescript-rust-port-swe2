@@ -98,19 +98,19 @@ fn sym_exports(c: &Checker, s: SymbolId) -> SymbolTable {
 /// `t.flags` — short-lived arena read guard.
 #[inline]
 fn tflags(c: &Checker, t: TypeId) -> TypeFlags {
-    c.types_handle().get_ref(t).flags
+    c.types.get_ref(t).flags
 }
 
 /// `t.objectFlags`.
 #[inline]
 fn tobject_flags(c: &Checker, t: TypeId) -> ObjectFlags {
-    c.types_handle().get_ref(t).object_flags
+    c.types.get_ref(t).object_flags
 }
 
 /// `t.symbol`.
 #[inline]
 fn tsymbol(c: &Checker, t: TypeId) -> Option<SymbolId> {
-    c.types_handle().get_ref(t).symbol
+    c.types.get_ref(t).symbol
 }
 
 /// `c.resolveName(...)` — invoke the binder name-resolver thunk.
@@ -2446,11 +2446,11 @@ impl Checker {
                         let mut args = tsc_tracing::TraceArgs::new();
                         args.insert(
                             "parent".to_string(),
-                            serde_json::Value::from(self.types_handle().get_ref(declared).id.0),
+                            serde_json::Value::from(self.types.get_ref(declared).id.0),
                         );
                         args.insert(
                             "id".to_string(),
-                            serde_json::Value::from(self.types_handle().get_ref(type_parameter).id.0),
+                            serde_json::Value::from(self.types.get_ref(type_parameter).id.0),
                         );
                         TraceGuard(Some(tr.push(
                             tsc_tracing::PHASE_CHECK_TYPES,
@@ -3503,8 +3503,7 @@ impl Checker {
         let members = nodes[node].members().unwrap_or(&[]).to_vec();
         self.check_source_elements(&members);
         let t = self.get_type_from_type_literal_or_function_or_constructor_type_node(node);
-        let __arena_symbol = self.types.clone();
-        let symbol = __arena_symbol.get_ref(t).symbol;
+        let symbol = self.types.get_ref(t).symbol;
         self.check_index_constraints(t, symbol, false /*isStaticIndex*/);
         self.check_type_for_duplicate_index_signatures(node);
         self.check_object_type_for_duplicate_declarations(node, false /*checkPrivateNames*/);
@@ -6319,9 +6318,7 @@ impl Checker {
         if let Some(accessibility_error) =
             self.get_constructor_accessibility_error(node, &signatures, ast::ModifierFlags::PRIVATE)
         {
-            let __arena_declaring_symbol = self.types.clone();
-            let declaring_symbol = __arena_declaring_symbol
-                .get_ref(accessibility_error.declaring_class)
+            let declaring_symbol = self.types.get_ref(accessibility_error.declaring_class)
                 .symbol
                 .unwrap_or(self.unknown_symbol);
             let name = self.get_fully_qualified_name(declaring_symbol, None);
@@ -6395,8 +6392,7 @@ impl Checker {
         if tflags(self, t).intersects(TypeFlags::OBJECT) {
             let resolved = self.resolve_structured_type_members(t);
             let (has_signatures, members, properties) = {
-                let __arena_st = self.types.clone();
-                let guard_st = __arena_st.get_ref(resolved);
+                let guard_st = self.types.get_ref(resolved);
                 let st = &guard_st.as_object_type().structured_type;
                 (
                     !st.signatures.is_empty(),
@@ -6469,8 +6465,7 @@ impl Checker {
                     // It is an error to inherit an abstract member without implementing it or being declared abstract.
                     // If there is no declaration for the derived class (as in the case of class expressions),
                     // then the class cannot be declared abstract.
-                    let __arena_t_symbol = self.types.clone();
-                    let t_symbol = __arena_t_symbol.get_ref(t).symbol;
+                    let t_symbol = self.types.get_ref(t).symbol;
                     let derived_class_decl = t_symbol.and_then(|s| {
                         sym_declarations(self, s).iter().copied().find(|&d| {
                             let __program = self.program.clone().expect("program");
@@ -6591,8 +6586,7 @@ impl Checker {
                                         .intersects(ast::NodeFlags::AMBIENT)
                                 })
                             {
-                                let __arena_t_symbol = self.types.clone();
-                                let t_symbol = __arena_t_symbol.get_ref(t).symbol;
+                                let t_symbol = self.types.get_ref(t).symbol;
                                 let constructor = t_symbol
                                     .and_then(|s| {
                                         sym_declarations(self, s).iter().copied().find(|&d| {
@@ -7174,8 +7168,7 @@ impl Checker {
         if index_infos.is_empty() {
             return;
         }
-        let __arena_t_symbol = self.types.clone();
-        let t_symbol = __arena_t_symbol.get_ref(t).symbol;
+        let t_symbol = self.types.get_ref(t).symbol;
         let mut interface_declaration: Option<NodeId> = None;
         if tobject_flags(self, t).intersects(ObjectFlags::INTERFACE) {
             interface_declaration = t_symbol.and_then(|s| {
@@ -7274,8 +7267,7 @@ impl Checker {
         if index_infos.is_empty() {
             return;
         }
-        let __arena_t_symbol = self.types.clone();
-        let t_symbol = __arena_t_symbol.get_ref(t).symbol;
+        let t_symbol = self.types.get_ref(t).symbol;
         let mut interface_declaration: Option<NodeId> = None;
         if tobject_flags(self, t).intersects(ObjectFlags::INTERFACE) {
             interface_declaration = t_symbol.and_then(|s| {
@@ -7384,7 +7376,7 @@ impl Checker {
                         // Bind first — a `for`-head temporary would hold the
                         // arena read guard for the whole loop body.
                         let distributed =
-                            self.types_handle().get_ref(param_type).distributed(param_type);
+                            self.types.get_ref(param_type).distributed(param_type);
                         for t in distributed {
                             index_signature_map
                                 .entry(t)
@@ -10243,8 +10235,7 @@ impl Checker {
             if tflags(self, array_type).intersects(TypeFlags::UNION) {
                 // After we remove all types that are StringLike, we will know if there was a string constituent
                 // based on whether the result of filter is a new array.
-                let __arena_array_types = self.types.clone();
-                let array_types = __arena_array_types.get_ref(array_type).types().to_vec();
+                let array_types = self.types.get_ref(array_type).types().to_vec();
                 let filtered_types: Vec<TypeId> = array_types
                     .iter()
                     .copied()
@@ -10443,8 +10434,7 @@ impl Checker {
     ) -> IterationTypes {
         let _ = no_cache; // caching handled by the caller
         if tflags(self, t).intersects(TypeFlags::UNION) {
-            let __arena_constituents = self.types.clone();
-            let constituents = __arena_constituents.get_ref(t).types().to_vec();
+            let constituents = self.types.get_ref(t).types().to_vec();
             let mut all_iteration_types: Vec<IterationTypes> =
                 Vec::with_capacity(constituents.len());
             for constituent in constituents {
@@ -10583,7 +10573,7 @@ impl Checker {
     /// `(c *Checker) isReferenceToType` (checker.go).
     pub(crate) fn is_reference_to_type(&mut self, t: TypeId, target: TypeId) -> bool {
         tobject_flags(self, t).intersects(ObjectFlags::REFERENCE)
-            && self.types_handle().get_ref(t).target() == Some(target)
+            && self.types.get_ref(t).target() == Some(target)
     }
 
     /// `(c *Checker) isReferenceToSomeType` (checker.go).
@@ -10899,28 +10889,23 @@ impl Checker {
         // `interface SpecialIterator extends Iterator<number> {}`, `SpecialIterator` is not a
         // reference to `Iterator`, but its `next` member derives exclusively from `Iterator`.
         if method_signatures.len() == 1
-            && method_type.is_some_and(|mt| self.types_handle().get_ref(mt).symbol.is_some())
+            && method_type.is_some_and(|mt| self.types.get_ref(mt).symbol.is_some())
         {
             let method_type = method_type.unwrap();
-            let __arena_method_type_symbol = self.types.clone();
-            let method_type_symbol = __arena_method_type_symbol.get_ref(method_type).symbol.unwrap();
+            let method_type_symbol = self.types.get_ref(method_type).symbol.unwrap();
             let get_global_generator_type =
                 resolver.get_global_generator_type.clone().expect("thunk");
             let global_generator_type = get_global_generator_type(self);
             let get_global_iterator_type =
                 resolver.get_global_iterator_type.clone().expect("thunk");
             let global_iterator_type = get_global_iterator_type(self);
-            let __arena_global_generator_symbol = self.types.clone();
-            let global_generator_symbol = __arena_global_generator_symbol
-                .get_ref(global_generator_type)
+            let global_generator_symbol = self.types.get_ref(global_generator_type)
                 .symbol;
             let is_generator_method = global_generator_symbol.is_some_and(|s| {
                 self.symbol_arena.borrow()[s.index()].members.get(method_name).copied()
                     == Some(method_type_symbol)
             });
-            let __arena_global_iterator_symbol = self.types.clone();
-            let global_iterator_symbol = __arena_global_iterator_symbol
-                .get_ref(global_iterator_type)
+            let global_iterator_symbol = self.types.get_ref(global_iterator_type)
                 .symbol;
             let is_iterator_method = !is_generator_method
                 && global_iterator_symbol.is_some_and(|s| {
@@ -11938,7 +11923,7 @@ impl Checker {
                         let tp_symbol = self
                             .get_symbol_of_declaration(type_parameters[i])
                             .unwrap_or(SymbolId::NONE);
-                        if self.types_handle().get_ref(t).symbol() == Some(tp_symbol) {
+                        if self.types.get_ref(t).symbol() == Some(tp_symbol) {
                             self.error(
                                 Some(node),
                                 &tsc_diagnostics::Type_parameter_defaults_can_only_reference_previously_declared_type_parameters,
@@ -13087,9 +13072,7 @@ impl Checker {
                     .symbol()
                     .is_some_and(|s| sym_flags(self, s).intersects(ast::SymbolFlags::CONST_ENUM))
             );
-            let __arena_const_enum_symbol = self.types.clone();
-            let const_enum_symbol = __arena_const_enum_symbol
-                .get_ref(t)
+            let const_enum_symbol = self.types.get_ref(t)
                 .symbol()
                 .expect("const enum symbol");
             if let Some(const_enum_declaration) = sym_value_declaration(self, const_enum_symbol) {
