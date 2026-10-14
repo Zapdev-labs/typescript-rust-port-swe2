@@ -8884,7 +8884,7 @@ impl<'p, 'a> Emitter<'p, 'a> {
         let Some(nodes) = nodes else {
             return;
         };
-        for &node in &nodes.nodes {
+        for &node in nodes.nodes.iter() {
             self.generate_names(Some(node));
         }
     }
@@ -9026,7 +9026,7 @@ impl<'p, 'a> Emitter<'p, 'a> {
         let Some(nodes) = nodes else {
             return;
         };
-        for &node in &nodes.nodes {
+        for &node in nodes.nodes.iter() {
             self.generate_member_names(Some(node));
         }
     }

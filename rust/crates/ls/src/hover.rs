@@ -2147,7 +2147,7 @@ fn get_call_or_new_expression(program: &Rc<Program>, node: NodeId) -> Option<Nod
 fn contains_typedef_tag(nodes: &[Node], jsdoc: NodeId) -> bool {
     if nodes[jsdoc].kind == Kind::JSDoc {
         if let Some(tags) = &nodes[jsdoc].as_js_doc().tags {
-            for &tag in &tags.nodes {
+            for &tag in tags.nodes.iter() {
                 if nodes[tag].kind == Kind::JSDocTypedefTag
                     || nodes[tag].kind == Kind::JSDocCallbackTag
                 {

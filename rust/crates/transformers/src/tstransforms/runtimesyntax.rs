@@ -1375,7 +1375,7 @@ impl<'a> RuntimeSyntaxTransformer<'a> {
         if !new_members.is_empty() {
             if let Some(members) = members.as_mut() {
                 new_members.extend_from_slice(&members.nodes);
-                members.nodes = new_members.into_boxed_slice();
+                members.nodes = new_members.into_boxed_slice().into();
                 members.loc = cx.nodes[node]
                     .member_list()
                     .map(|m| m.loc)

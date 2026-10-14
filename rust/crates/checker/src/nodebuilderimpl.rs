@@ -6329,7 +6329,7 @@ impl<'a> NodeBuilderImpl<'a> {
                         } else {
                             inner
                         };
-                        tuple_constituent_nodes.nodes[i] = self.f.new_named_tuple_member(
+                        std::rc::Rc::make_mut(&mut tuple_constituent_nodes.nodes)[i] = self.f.new_named_tuple_member(
                             nodes,
                             dot_dot_dot_token,
                             Some(label_id),
@@ -6343,11 +6343,11 @@ impl<'a> NodeBuilderImpl<'a> {
                         } else {
                             inner
                         };
-                        tuple_constituent_nodes.nodes[i] =
+                        std::rc::Rc::make_mut(&mut tuple_constituent_nodes.nodes)[i] =
                             self.f.new_rest_type_node(nodes, Some(type_node));
                     } else if flags.intersects(ElementFlags::OPTIONAL) {
                         let inner = tuple_constituent_nodes.nodes[i];
-                        tuple_constituent_nodes.nodes[i] =
+                        std::rc::Rc::make_mut(&mut tuple_constituent_nodes.nodes)[i] =
                             self.f.new_optional_type_node(nodes, Some(inner));
                     }
                 }

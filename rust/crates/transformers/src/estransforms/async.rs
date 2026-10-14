@@ -935,7 +935,7 @@ impl<'a> AsyncTransformer<'a> {
         } else if ast::is_binding_pattern(&cx.nodes[name]) {
             if let Some(elements) = &cx.nodes[name].as_binding_pattern().elements {
                 let elements = elements.nodes.clone();
-                for element in elements {
+                for element in elements.iter().copied() {
                     if !ast::is_omitted_expression(&cx.nodes[element]) {
                         self.record_declaration_name(cx, element, names);
                     }
@@ -980,7 +980,7 @@ impl<'a> AsyncTransformer<'a> {
 
         let mut variables: Vec<NodeId> = Vec::new();
         if let Some(decls) = &cx.nodes[node].as_variable_declaration_list().declarations {
-            for &decl in &decls.nodes {
+            for &decl in decls.nodes.iter() {
                 if cx.nodes[decl]
                     .as_variable_declaration()
                     .initializer
@@ -1027,7 +1027,7 @@ impl<'a> AsyncTransformer<'a> {
     fn hoist_variable_declaration_list(&self, ec: &Ec, cx: &mut VisitorCx<'_, '_>, node: NodeId) {
         if let Some(decls) = &cx.nodes[node].as_variable_declaration_list().declarations {
             let decls = decls.nodes.clone();
-            for decl in decls {
+            for decl in decls.iter().copied() {
                 self.hoist_variable(ec, cx, decl);
             }
         }
@@ -1043,7 +1043,7 @@ impl<'a> AsyncTransformer<'a> {
         } else if ast::is_binding_pattern(&cx.nodes[name]) {
             if let Some(elements) = &cx.nodes[name].as_binding_pattern().elements {
                 let elements = elements.nodes.clone();
-                for element in elements {
+                for element in elements.iter().copied() {
                     if !ast::is_omitted_expression(&cx.nodes[element]) {
                         self.hoist_variable(ec, cx, element);
                     }
@@ -1098,7 +1098,7 @@ impl<'a> AsyncTransformer<'a> {
         if ast::is_binding_pattern(&cx.nodes[name]) {
             if let Some(elements) = &cx.nodes[name].as_binding_pattern().elements {
                 let elements = elements.nodes.clone();
-                for element in elements {
+                for element in elements.iter().copied() {
                     if !ast::is_omitted_expression(&cx.nodes[element])
                         && self.collides_with_parameter_name(cx, element)
                     {

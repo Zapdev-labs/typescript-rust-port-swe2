@@ -859,7 +859,7 @@ impl<'a> ObjectRestSpreadTransformer<'a> {
                 .declarations
                 .as_mut()
                 .unwrap()
-                .nodes = decls.into_boxed_slice();
+                .nodes = decls.into_boxed_slice().into();
             f.new_variable_statement(cx.nodes, None, Some(declaration_list))
         };
         ec.borrow()

@@ -332,7 +332,7 @@ impl<'a, 'b, 'h> DocSymbolsState<'a, 'b, 'h> {
             let jsdocs = ast::js_doc(self.nodes, node, Some(self.file));
             for jsdoc in jsdocs {
                 if let Some(tag_list) = self.nodes[jsdoc].as_js_doc().tags.clone() {
-                    for tag in tag_list.nodes {
+                    for tag in tag_list.nodes.iter().copied() {
                         if ast::is_js_doc_typedef_tag(&self.nodes[tag])
                             || ast::is_js_doc_callback_tag(&self.nodes[tag])
                         {

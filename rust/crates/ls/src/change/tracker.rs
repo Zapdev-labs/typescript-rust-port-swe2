@@ -1313,7 +1313,7 @@ impl<'a, 'c> Tracker<'a, 'c> {
             tab_size = 4;
         }
 
-        for &member in &members.nodes {
+        for &member in members.nodes.iter() {
             if member == NodeId::NONE {
                 continue;
             }

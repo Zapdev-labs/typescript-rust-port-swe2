@@ -177,7 +177,7 @@ pub fn get_jsdoc_deprecated_tag(nodes: &mut Vec<ast::Node>, node: NodeId) -> Opt
     let jsdocs = ast::js_doc(nodes, node, None);
     for jsdoc in jsdocs {
         if let Some(tags) = &nodes[jsdoc].as_js_doc().tags {
-            for &tag in &tags.nodes {
+            for &tag in tags.nodes.iter() {
                 if ast::is_js_doc_deprecated_tag(&nodes[tag]) {
                     return Some(tag);
                 }

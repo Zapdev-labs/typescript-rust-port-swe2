@@ -193,7 +193,7 @@ fn get_call_hierarchy_declaration_reference_node(
     }
 
     if let Some(modifiers) = nodes[node].modifiers() {
-        for &mod_ in &modifiers.nodes {
+        for &mod_ in modifiers.nodes.iter() {
             if nodes[mod_].kind == Kind::DefaultKeyword {
                 return Some(mod_);
             }
@@ -247,7 +247,7 @@ fn get_call_hierarchy_item_name(
         && nodes[node].name().is_none()
     {
         if let Some(modifiers) = nodes[node].modifiers() {
-            for &mod_ in &modifiers.nodes {
+            for &mod_ in modifiers.nodes.iter() {
                 if nodes[mod_].kind == Kind::DefaultKeyword {
                     let source_file =
                         ast::get_source_file_of_node(Some(node), &nodes).unwrap_or(node);
@@ -1041,7 +1041,7 @@ fn collect_call_sites(
 
         Kind::ClassDeclaration | Kind::ClassExpression => {
             if let Some(modifiers) = nodes[node].modifiers() {
-                for &mod_ in &modifiers.nodes {
+                for &mod_ in modifiers.nodes.iter() {
                     collector.collect(Some(mod_), &nodes);
                 }
             }
@@ -1054,7 +1054,7 @@ fn collect_call_sites(
                 for &member in members {
                     if ast::can_have_modifiers(&nodes[member]) {
                         if let Some(member_modifiers) = nodes[member].modifiers() {
-                            for &mod_ in &member_modifiers.nodes {
+                            for &mod_ in member_modifiers.nodes.iter() {
                                 collector.collect(Some(mod_), &nodes);
                             }
                         }

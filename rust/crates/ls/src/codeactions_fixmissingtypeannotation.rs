@@ -1024,7 +1024,7 @@ impl<'a, 'c, 'h> IsolatedDeclarationsFixer<'a, 'c, 'h> {
         let cd = nodes[class_decl].as_class_declaration();
         let mut extends_clause: Option<NodeId> = None;
         if let Some(heritage_clauses) = &cd.class_like_base.heritage_clauses {
-            for &clause in &heritage_clauses.nodes {
+            for &clause in heritage_clauses.nodes.iter() {
                 if nodes[clause].as_heritage_clause().token == Kind::ExtendsKeyword {
                     extends_clause = Some(clause);
                     break;

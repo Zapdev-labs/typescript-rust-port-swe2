@@ -438,7 +438,7 @@ fn modifier_list_at(
         return None;
     }
     let nl = node_lists[ci].clone()?;
-    let mut ml = factory.new_modifier_list(arena, nl.nodes.clone());
+    let mut ml = factory.new_modifier_list(arena, nl.nodes.to_vec());
     ml.loc = nl.loc;
     Some(ml)
 }

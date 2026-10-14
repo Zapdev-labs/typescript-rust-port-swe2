@@ -9,6 +9,7 @@
 // `Vec<Node>` owned by a `SourceFile`.
 
 use std::borrow::Cow;
+use std::rc::Rc;
 use std::collections::hash_map::Entry;
 use std::sync::atomic::Ordering;
 use std::sync::{Arc, RwLock};
@@ -44,7 +45,7 @@ use crate::utilities::{
 #[derive(Clone, PartialEq, Default)]
 pub struct NodeList {
     pub loc: TextRange,
-    pub nodes: Box<[NodeId]>,
+    pub nodes: Rc<[NodeId]>,
     /// `missingListNodes` sentinel — `true` marks the parser's "missing"
     /// list (a bracketed list whose opening token was absent), produced by
     /// `Parser.createMissingList`. Go detects it by comparing the backing
@@ -56,7 +57,7 @@ pub struct NodeList {
 }
 
 impl NodeList {
-    pub fn new(nodes: impl Into<Box<[NodeId]>>) -> NodeList {
+    pub fn new(nodes: impl Into<Rc<[NodeId]>>) -> NodeList {
         NodeList {
             loc: TextRange::undefined(),
             nodes: nodes.into(),
@@ -93,6 +94,13 @@ impl NodeList {
         &self.nodes
     }
 
+    /// Shared handle to the child id slice — cloning bumps a refcount
+    /// instead of copying, so callers that must iterate while `nodes` is
+    /// mutably borrowed can hold this local instead of `.to_vec()`.
+    pub fn nodes_rc(&self) -> Rc<[NodeId]> {
+        self.nodes.clone()
+    }
+
     /// `HasTrailingComma` — whether the last element's end precedes the list's
     /// end (i.e. a trailing comma token follows it). Needs the node arena to
     /// resolve the final child.
@@ -124,7 +132,7 @@ impl NodeList {
 #[derive(Clone, PartialEq, Default)]
 pub struct ModifierList {
     pub loc: TextRange,
-    pub nodes: Box<[NodeId]>,
+    pub nodes: Rc<[NodeId]>,
     pub modifier_flags: ModifierFlags,
 }
 
@@ -308,7 +316,7 @@ impl<'a> NodeFactory<'a> {
     }
 
     /// `f.NewNodeList(nodes)`
-    pub fn new_node_list(&self, nodes: impl Into<Box<[NodeId]>>) -> NodeList {
+    pub fn new_node_list(&self, nodes: impl Into<Rc<[NodeId]>>) -> NodeList {
         NodeList::new(nodes)
     }
 
@@ -316,13 +324,13 @@ impl<'a> NodeFactory<'a> {
     pub fn new_modifier_list(
         &self,
         nodes: &[Node],
-        modifiers: impl Into<Box<[NodeId]>>,
+        modifiers: impl Into<Rc<[NodeId]>>,
     ) -> ModifierList {
         let modifiers = modifiers.into();
         let modifier_flags = crate::utilities::modifiers_to_flags(&modifiers, nodes);
         ModifierList {
             loc: TextRange::undefined(),
-            nodes: modifiers,
+            nodes: modifiers.into(),
             modifier_flags,
         }
     }

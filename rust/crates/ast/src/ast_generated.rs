@@ -2388,7 +2388,7 @@ impl NodeWithTypeArgumentsBase {
     pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
         self.type_node_base.map_node_ids(f);
         if let Some(l) = &mut self.type_arguments {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -2416,7 +2416,7 @@ impl ExportableBase {
 impl ModifiersBase {
     pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
         if let Some(l) = &mut self.modifiers {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -2451,12 +2451,12 @@ impl FunctionLikeBase {
     pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
         self.locals_container_base.map_node_ids(f);
         if let Some(l) = &mut self.type_parameters {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
         if let Some(l) = &mut self.parameters {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -2487,17 +2487,17 @@ impl ClassLikeBase {
         self.composite_base.map_node_ids(f);
         self.name = self.name.map(|id| f(id));
         if let Some(l) = &mut self.type_parameters {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
         if let Some(l) = &mut self.heritage_clauses {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
         if let Some(l) = &mut self.members {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -2575,7 +2575,7 @@ impl UnionOrIntersectionTypeNodeBase {
     pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
         self.type_node_base.map_node_ids(f);
         if let Some(l) = &mut self.types {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -2586,7 +2586,7 @@ impl JSDocTagBase {
     pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
         self.tag_name = self.tag_name.map(|id| f(id));
         if let Some(l) = &mut self.comment {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -2741,7 +2741,7 @@ impl CaseBlock {
         self.locals_container_base.map_node_ids(f);
         self.composite_base.map_node_ids(f);
         if let Some(l) = &mut self.clauses {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -2753,7 +2753,7 @@ impl CaseOrDefaultClause {
         self.composite_base.map_node_ids(f);
         self.expression = self.expression.map(|id| f(id));
         if let Some(l) = &mut self.statements {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -2814,7 +2814,7 @@ impl Block {
         self.locals_container_base.map_node_ids(f);
         self.composite_base.map_node_ids(f);
         if let Some(l) = &mut self.statements {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -2846,7 +2846,7 @@ impl VariableDeclarationList {
     pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
         self.composite_base.map_node_ids(f);
         if let Some(l) = &mut self.declarations {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -2857,7 +2857,7 @@ impl BindingPattern {
     pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
         self.composite_base.map_node_ids(f);
         if let Some(l) = &mut self.elements {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -2930,7 +2930,7 @@ impl HeritageClause {
     pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
         self.composite_base.map_node_ids(f);
         if let Some(l) = &mut self.types {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -2946,17 +2946,17 @@ impl InterfaceDeclaration {
         self.modifiers_base.map_node_ids(f);
         self.name = self.name.map(|id| f(id));
         if let Some(l) = &mut self.type_parameters {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
         if let Some(l) = &mut self.heritage_clauses {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
         if let Some(l) = &mut self.members {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -2973,7 +2973,7 @@ impl TypeAliasDeclaration {
         self.locals_container_base.map_node_ids(f);
         self.name = self.name.map(|id| f(id));
         if let Some(l) = &mut self.type_parameters {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -2999,7 +2999,7 @@ impl EnumDeclaration {
         self.composite_base.map_node_ids(f);
         self.name = self.name.map(|id| f(id));
         if let Some(l) = &mut self.members {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -3011,7 +3011,7 @@ impl ModuleBlock {
         self.statement_base.map_node_ids(f);
         self.composite_base.map_node_ids(f);
         if let Some(l) = &mut self.statements {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -3061,7 +3061,7 @@ impl NamedImports {
     pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
         self.composite_base.map_node_ids(f);
         if let Some(l) = &mut self.elements {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -3100,7 +3100,7 @@ impl NamedExports {
     pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
         self.composite_base.map_node_ids(f);
         if let Some(l) = &mut self.elements {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -3392,12 +3392,12 @@ impl CallExpression {
         self.expression = self.expression.map(|id| f(id));
         self.question_dot_token = self.question_dot_token.map(|id| f(id));
         if let Some(l) = &mut self.type_arguments {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
         if let Some(l) = &mut self.arguments {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -3410,12 +3410,12 @@ impl NewExpression {
         self.composite_base.map_node_ids(f);
         self.expression = self.expression.map(|id| f(id));
         if let Some(l) = &mut self.type_arguments {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
         if let Some(l) = &mut self.arguments {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -3451,7 +3451,7 @@ impl TemplateExpression {
         self.composite_base.map_node_ids(f);
         self.head = self.head.map(|id| f(id));
         if let Some(l) = &mut self.template_spans {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -3472,7 +3472,7 @@ impl TaggedTemplateExpression {
         self.tag = self.tag.map(|id| f(id));
         self.question_dot_token = self.question_dot_token.map(|id| f(id));
         if let Some(l) = &mut self.type_arguments {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -3492,7 +3492,7 @@ impl ArrayLiteralExpression {
         self.primary_expression_base.map_node_ids(f);
         self.composite_base.map_node_ids(f);
         if let Some(l) = &mut self.elements {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -3505,7 +3505,7 @@ impl ObjectLiteralExpression {
         self.declaration_base.map_node_ids(f);
         self.composite_base.map_node_ids(f);
         if let Some(l) = &mut self.properties {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -3650,7 +3650,7 @@ impl ExpressionWithTypeArguments {
         self.composite_base.map_node_ids(f);
         self.expression = self.expression.map(|id| f(id));
         if let Some(l) = &mut self.type_arguments {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -3691,7 +3691,7 @@ impl ImportAttributes {
     pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
         self.composite_base.map_node_ids(f);
         if let Some(l) = &mut self.attributes {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -3716,7 +3716,7 @@ impl MappedTypeNode {
         self.question_token = self.question_token.map(|id| f(id));
         self.type_ = self.type_.map(|id| f(id));
         if let Some(l) = &mut self.members {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -3728,7 +3728,7 @@ impl TypeLiteralNode {
         self.type_node_base.map_node_ids(f);
         self.declaration_base.map_node_ids(f);
         if let Some(l) = &mut self.members {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -3739,7 +3739,7 @@ impl TupleTypeNode {
     pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
         self.type_node_base.map_node_ids(f);
         if let Some(l) = &mut self.elements {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -3813,7 +3813,7 @@ impl TemplateLiteralTypeNode {
         self.type_node_base.map_node_ids(f);
         self.head = self.head.map(|id| f(id));
         if let Some(l) = &mut self.template_spans {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -3848,7 +3848,7 @@ impl JsxElement {
         self.composite_base.map_node_ids(f);
         self.opening_element = self.opening_element.map(|id| f(id));
         if let Some(l) = &mut self.children {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -3862,7 +3862,7 @@ impl JsxAttributes {
         self.declaration_base.map_node_ids(f);
         self.composite_base.map_node_ids(f);
         if let Some(l) = &mut self.properties {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -3884,7 +3884,7 @@ impl JsxOpeningElement {
         self.composite_base.map_node_ids(f);
         self.tag_name = self.tag_name.map(|id| f(id));
         if let Some(l) = &mut self.type_arguments {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -3898,7 +3898,7 @@ impl JsxSelfClosingElement {
         self.composite_base.map_node_ids(f);
         self.tag_name = self.tag_name.map(|id| f(id));
         if let Some(l) = &mut self.type_arguments {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -3912,7 +3912,7 @@ impl JsxFragment {
         self.composite_base.map_node_ids(f);
         self.opening_fragment = self.opening_fragment.map(|id| f(id));
         if let Some(l) = &mut self.children {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -3981,12 +3981,12 @@ impl SyntaxList {
 impl JSDoc {
     pub fn map_node_ids(&mut self, f: &mut dyn FnMut(NodeId) -> NodeId) {
         if let Some(l) = &mut self.comment {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
         if let Some(l) = &mut self.tags {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -4052,7 +4052,7 @@ impl JSDocTemplateTag {
         self.js_doc_tag_base.map_node_ids(f);
         self.constraint = self.constraint.map(|id| f(id));
         if let Some(l) = &mut self.type_parameters {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }
@@ -4329,7 +4329,7 @@ impl SourceFile {
         self.locals_container_base.map_node_ids(f);
         self.composite_base.map_node_ids(f);
         if let Some(l) = &mut self.statements {
-            for id in l.nodes.iter_mut() {
+            for id in std::rc::Rc::make_mut(&mut l.nodes).iter_mut() {
                 *id = f(*id);
             }
         }

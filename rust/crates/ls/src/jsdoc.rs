@@ -443,7 +443,7 @@ fn get_matching_jsdoc_tag(
     let nodes = program.arena_of(jsdoc);
     if nodes[jsdoc].kind == Kind::JSDoc {
         if let Some(tags) = nodes[jsdoc].as_js_doc().tags.as_ref() {
-            for &tag in &tags.nodes {
+            for &tag in tags.nodes.iter() {
                 if match_fn(&nodes, tag, name) {
                     return Some(tag);
                 }
@@ -481,7 +481,7 @@ fn get_jsdoc_parameter_tag_by_position(
     // Collect all @param tags in order
     let tags = nodes[jsdoc].as_js_doc().tags.as_ref()?;
     let mut param_tag_index = 0;
-    for &tag in &tags.nodes {
+    for &tag in tags.nodes.iter() {
         if nodes[tag].kind == Kind::JSDocParameterTag {
             if param_tag_index == param_index {
                 return Some(tag);

@@ -249,7 +249,7 @@ fn get_already_used_types_in_string_literal_union(
         return Vec::new();
     };
     let mut values = Vec::new();
-    for &type_node in &types_list.nodes {
+    for &type_node in types_list.nodes.iter() {
         if type_node != current
             && ast::is_literal_type_node(&nodes[type_node])
             && nodes[type_node]

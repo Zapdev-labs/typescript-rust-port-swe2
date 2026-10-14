@@ -3414,7 +3414,7 @@ fn find_originating_jsdoc_satisfies_tag(
         let mut first_satisfies_tag: Option<NodeId> = None;
         for js_doc in tsc_ast::eager_js_doc(nodes, cur, None) {
             if let Some(tags) = nodes[js_doc].as_js_doc().tags.clone() {
-                for &tag in &tags.nodes {
+                for &tag in tags.nodes.iter() {
                     if nodes[tag].kind != Kind::JSDocSatisfiesTag {
                         continue;
                     }

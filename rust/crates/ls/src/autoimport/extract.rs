@@ -224,7 +224,7 @@ impl SymbolExtractor {
             {
                 let c = self.checker.borrow();
                 let nodes = c.program_nodes(file);
-                for &statement in &statements {
+                for &statement in statements.iter() {
                     if tsc_ast::is_module_with_string_literal_name(&nodes[statement], &nodes)
                         && is_non_pattern_ambient_module_declaration(&nodes, file, statement)
                     {

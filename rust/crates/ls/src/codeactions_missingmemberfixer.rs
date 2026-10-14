@@ -583,7 +583,7 @@ impl<'a, 'c, 'h> MissingMemberFixer<'a, 'c, 'h> {
         if let Some(tps) = &type_parameters {
             if !tps.nodes.is_empty() {
                 let mut new_nodes: Vec<NodeId> = Vec::with_capacity(tps.nodes.len());
-                for &tp in &tps.nodes {
+                for &tp in tps.nodes.iter() {
                     if tp.is_none() {
                         continue;
                     }
@@ -636,7 +636,7 @@ impl<'a, 'c, 'h> MissingMemberFixer<'a, 'c, 'h> {
         let mut parameters = parameters_list;
         if let Some(params) = &parameters {
             let mut new_nodes: Vec<NodeId> = Vec::with_capacity(params.nodes.len());
-            for &p in &params.nodes {
+            for &p in params.nodes.iter() {
                 if p.is_none() {
                     continue;
                 }

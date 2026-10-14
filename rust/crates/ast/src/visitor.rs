@@ -209,7 +209,7 @@ impl<'a> NodeVisitor<'a> {
             let modifier_flags = crate::utilities::modifiers_to_flags(&result, cx.nodes);
             let list = ModifierList {
                 loc: nodes.loc,
-                nodes: result.into_boxed_slice(),
+                nodes: result.into(),
                 modifier_flags,
             };
             return Some(list);

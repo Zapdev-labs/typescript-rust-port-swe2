@@ -1734,7 +1734,7 @@ impl<'a> Parser<'a> {
             .is_some_and(|m| core::some(&m.nodes, |n| is_declare_modifier(&self.nodes[*n])));
         if is_ambient {
             let modifiers = modifiers.unwrap();
-            for &m in &modifiers.nodes {
+            for &m in modifiers.nodes.iter() {
                 self.nodes[m].flags |= NodeFlags::AMBIENT;
             }
             let save_context_flags = self.context_flags;
@@ -2746,7 +2746,7 @@ impl<'a> Parser<'a> {
         {
             self.check_js_syntax(result);
             if let Some(heritage_clauses) = &heritage_clauses {
-                for &clause in &heritage_clauses.nodes {
+                for &clause in heritage_clauses.nodes.iter() {
                     if self.nodes[clause].as_heritage_clause().token == Kind::ExtendsKeyword {
                         let types = self.nodes[clause]
                             .as_heritage_clause()
@@ -2945,7 +2945,7 @@ impl<'a> Parser<'a> {
                 .is_some_and(|m| core::some(&m.nodes, |n| is_declare_modifier(&self.nodes[*n])));
             if is_ambient {
                 let modifiers = modifiers.unwrap();
-                for &m in &modifiers.nodes {
+                for &m in modifiers.nodes.iter() {
                     self.nodes[m].flags |= NodeFlags::AMBIENT;
                 }
                 let save_context_flags = self.context_flags;
@@ -7344,15 +7344,15 @@ impl<'a> Parser<'a> {
                             self.nodes[o].parent = Some(new_last);
                         }
                         if let Some(lc) = &last_children {
-                            for c in lc.nodes.clone() {
+                            for c in lc.nodes.iter().copied() {
                                 self.nodes[c].parent = Some(new_last);
                             }
                         }
                         self.nodes[new_closing_element].parent = Some(new_last);
-                        let mut new_nodes = children.nodes.clone();
+                        let mut new_nodes = children.nodes.to_vec();
                         *new_nodes.last_mut().unwrap() = new_last;
                         let __h165 = TextRange::new(children.loc.pos(), self.nodes[new_last].end());
-                        children = self.new_node_list(__h165, new_nodes.to_vec());
+                        children = self.new_node_list(__h165, new_nodes);
                         closing_element = last_closing.unwrap();
                         let __h166 = self.factory.new_jsx_element(
                             &mut self.nodes,
