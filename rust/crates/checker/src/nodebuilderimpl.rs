@@ -3518,44 +3518,25 @@ impl<'a> NodeBuilderImpl<'a> {
         node: NodeId,
     ) -> NodeId {
         if node.file_index() != self.f.file_index() {
-            // `node` lives in another file's arena — run the visit on a
-            // scratch clone of it (`borrow()` clone, since checker
-            // ancestors may hold `Ref`s on that arena), pad past
-            // `nodes.len()` so scratch-minted ids can't alias real `nodes`
-            // ids in the emit tables, then relocate the produced tail.
+            // `node` lives in another file's arena — graft its subtree
+            // into `nodes` (O(subtree); the old path cloned the whole
+            // source arena + padded it) and run the visit same-buffer.
+            // `arena_view` reads of ungrafted foreign ids resolve through
+            // the live-arena registry or program arenas as before.
             let program = c.program.clone().expect("program");
-            let mut src = program.nodes(node.file_index()).to_vec();
-            static CB_STATS: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
-            if *CB_STATS.get_or_init(|| std::env::var("TSC_CLONE_STATS").is_ok())
+            let src_buf = crate::printer_util::live_arena_lookup_for(node)
+                .unwrap_or_else(|| program.nodes(node.file_index()));
+            let src: &[ast::Node] = &src_buf;
+            if !crate::printer_util::buffer_resolves_id(src, node)
+                || !crate::printer_util::subtree_clonable_in(src, node)
             {
-                eprintln!(
-                    "[bindclone] src_len={} nodes_len={}",
-                    src.len(),
-                    nodes.len()
-                );
+                return node;
             }
-            if src.len() < nodes.len() {
-                let filler = src[0].clone();
-                src.resize(nodes.len(), filler);
-            }
-            let tmp_base = src.len();
-            let dest_base = nodes.len();
-            // Mint scratch clones with the SOURCE file index so `arena_view`
-            // reads inside the visit resolve to `src` itself.
-            let src_fi = node.file_index();
-            let saved_fi = self.f.file_index();
-            self.f.set_file_index(src_fi);
-            let next_epoch = self.ctx.epoch_counter.get() + 1;
-            self.ctx.epoch_counter.set(next_epoch);
-            let saved_epoch = self.ctx.nodes_epoch.replace(next_epoch);
-            let root = {
-                let live = nodes.as_slice();
-                let _live_guard = crate::printer_util::LiveArenaGuard::register(live);
-                self.clone_binding_name_in_arena(c, &mut src, node)
+            let grafted = {
+                let mut memo = FxHashMap::default();
+                self.graft_foreign(nodes, src, node, &mut memo)
             };
-            self.f.set_file_index(saved_fi);
-            self.ctx.nodes_epoch.set(saved_epoch);
-            return self.relocate_cloned_tail(nodes, &mut src, tmp_base, dest_base, root, src_fi);
+            return self.clone_binding_name_in_arena(c, nodes, grafted);
         }
         self.clone_binding_name_in_arena(c, nodes, node)
     }
