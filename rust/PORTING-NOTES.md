@@ -1955,3 +1955,23 @@ Real-world bench: `tsc --noEmit --strict` on the compiler fixture set
   critical path); default 4 matches Go.
 - Sequential `for_each_checker_group_do` remains the fallback and the
   non-unix path.
+
+## Performance — Rc-shared child lists + emit fusion (2026-10-14, later)
+- `NodeList`/`ModifierList` children: `Box<[NodeId]>` -> `Rc<[NodeId]>`.
+  Clones are refcount bumps (Go shares the backing array on clone);
+  `map_node_ids` uses `Rc::make_mut` (refcount-1 fresh lists, free).
+- `Node::{properties,elements,members,statements,parameters,arguments,
+  type_arguments,type_parameters,comments,modifier_nodes}_rc` and
+  `NodeList::nodes_rc` return `Rc<[NodeId]>` handles so per-visit child
+  iteration no longer needs `.to_vec()` (was ~9% of check samples).
+- `emit()`: `try_fork_check_and_emit` fuses emit into the check fork
+  wave — each child checks its group then emits while checker state is
+  warm; `try_fork_emit` groups files LPT-style by node count like the
+  check wave. Multi-file decl emit ~550 -> ~340ms (Go ~307ms).
+- `ArenaAccess`: `type_to_string_ex`/symbol printers took an
+  `ArenaCheckout` per call — a full arena Vec clone (~11MB) each. The
+  new guard uses zero-copy `ArenaMut` when uncontended and falls back to
+  checkout only under a nested writer (diagnostic chains).
+- PGO: training now covers --noEmit checking and declaration emit;
+  committed profile refreshed (`pgo/merged.profdata.gz`). PGO+fork
+  types.ts ~1.1-1.2s vs Go ~0.73s; mproj decl emit ~311ms vs Go ~275ms.
