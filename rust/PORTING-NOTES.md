@@ -1804,3 +1804,31 @@ and surviving ones are ordinary statement temps.
   constituent `N["props"]`-style indexed accesses resolve to `any`
   earlier in Go, collapsing the intersection before printing. Emergent
   ordering again — same class as `Matching`/largeTupleTypes. Deferred.
+
+## Performance — allocation/sync-churn passes (2026-10-14)
+Profiled `conditionalTypeDiscriminatingLargeUnionRegularTypeFetchingSpeedReasonable`
+(Go check ~75ms). Three landed passes, each verified against the
+regression list (exactly the 5 documented divergences fail):
+- `sym_name_rc` cache: checker-hot `sym().name.clone()` sites in
+  relater.rs now clone an `Rc<str>` (refcount bump) instead of a
+  `String` (alloc+memcpy). ~24% of runtime had been `Vec<u8>`/`String`
+  clone in property-relation paths.
+- `SymbolTable = OrderedMap<Arc<str>, SymbolId>`: member/exports/locals
+  tables are cloned+extended during structured-member resolution; Go
+  shares the 16-byte string header, Rust `String` keys alloc+copy per
+  entry. `Arc<str>` (not `Rc`) — `Type` crossed threads via the old
+  `Arc<Type>` arena and tracer `Send + Sync` adapters at the time.
+  `&str` lookups unchanged (`Equivalent`/`Borrow`).
+- `TypeArena` `Arc<RwLock<Vec<Arc<Type>>>>` → `Rc<RefCell<Vec<Rc<Type>>>>`:
+  ~40% of runtime was atomic incr/decr + lock ops; nothing actually
+  moves a checker across threads (testrunner worker spawns before
+  checkers exist). Required relaxing `Tracer`/`TracedType` `Send+Sync`
+  bounds and `Arc<dyn TracedType>` → `Rc`. Bench: ~440ms → ~250ms.
+
+## Known gap — `--generateTrace` panic
+`trace_record_type` → `get_recursion_identity` →
+`get_modifiers_type_from_mapped_type` hits `.expect("mapped type
+declaration")` for `InstantiatedMapped` types (declaration is `None`;
+Go resolves through the instantiation target). `trace.json` header is
+written before the panic. PORT(deferred) — needs the instantiated-
+mapped declaration resolution ported; normal checking is unaffected.
