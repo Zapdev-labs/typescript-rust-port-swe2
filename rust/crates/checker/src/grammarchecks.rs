@@ -14,6 +14,7 @@
 // `utilities.rs`) by snake_case name — unresolved symbols are expected until
 // those land.
 
+use std::rc::Rc;
 use rustc_hash::FxHashMap;
 use tsc_ast::{self as ast, NodeId};
 use tsc_core::options_generated::{ModuleKind, ScriptTarget};
@@ -2455,10 +2456,10 @@ impl Checker {
         let __program = self.program.clone().expect("program");
         let nodes = __program.nodes((node).file_index());
         let attributes = nodes[node].attributes();
-        let properties: Vec<NodeId> = attributes
-            .and_then(|a| nodes[a].properties().map(|p| p.to_vec()))
+        let properties: Rc<[NodeId]> = attributes
+            .and_then(|a| nodes[a].properties_rc())
             .unwrap_or_default();
-        for attr_node in properties {
+        for attr_node in properties.iter().copied() {
             if nodes[attr_node].kind == ast::Kind::JsxSpreadAttribute {
                 continue;
             }

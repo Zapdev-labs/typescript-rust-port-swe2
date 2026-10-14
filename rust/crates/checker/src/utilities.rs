@@ -2161,16 +2161,16 @@ pub(crate) fn is_super_call(node: NodeId, nodes: &[ast::Node]) -> bool {
 }
 
 /// `getMembersOfDeclaration` (utilities.go:1140).
-pub(crate) fn get_members_of_declaration(node: &ast::Node) -> Vec<NodeId> {
+pub(crate) fn get_members_of_declaration(node: &ast::Node) -> Rc<[NodeId]> {
     match node.kind {
         ast::Kind::InterfaceDeclaration
         | ast::Kind::ClassDeclaration
         | ast::Kind::ClassExpression
-        | ast::Kind::TypeLiteral => node.members().map(|m| m.to_vec()).unwrap_or_default(),
+        | ast::Kind::TypeLiteral => node.members_rc().unwrap_or_default(),
         ast::Kind::ObjectLiteralExpression => {
-            node.properties().map(|p| p.to_vec()).unwrap_or_default()
+            node.properties_rc().unwrap_or_default()
         }
-        _ => Vec::new(),
+        _ => Rc::default(),
     }
 }
 

@@ -589,7 +589,7 @@ impl Checker {
         let jsx_children_property_name = self.get_jsx_element_children_property_name(jsx_namespace);
         let __program = self.program.clone().expect("program");
         let nodes = __program.nodes((node).file_index());
-        let properties = nodes[node].properties().unwrap_or(&[]).to_vec();
+        let properties = nodes[node].properties_rc().unwrap_or_default();
         let discriminant_properties: Vec<NodeId> = properties
             .iter()
             .copied()
@@ -662,9 +662,9 @@ impl Checker {
         let mut reported_error = false;
         let __program = self.program.clone().expect("program");
         let nodes = __program.nodes((node).file_index());
-        let props = nodes[node].properties().unwrap_or(&[]).to_vec();
+        let props = nodes[node].properties_rc().unwrap_or_default();
         let parent = nodes[node].parent;
-        for prop in props {
+        for prop in props.iter().copied() {
             let __program = self.program.clone().expect("program");
             let nodes = __program.nodes((prop).file_index());
             if !ast::is_jsx_spread_attribute(&nodes[prop]) {
@@ -1273,7 +1273,7 @@ impl Checker {
                 );
                 let __program = self.program.clone().expect("program");
                 let nodes = __program.nodes((node).file_index());
-                let type_arguments = nodes[node].type_arguments().unwrap_or(&[]).to_vec();
+                let type_arguments = nodes[node].type_arguments_rc().unwrap_or_default();
                 if !type_arguments.is_empty() {
                     self.check_source_elements(&type_arguments);
                     let source_file =
@@ -1603,8 +1603,8 @@ impl Checker {
             // symbol table of attributes property.
             let __program = self.program.clone().expect("program");
             let nodes = __program.nodes((attributes).file_index());
-            let props = nodes[attributes].properties().unwrap_or(&[]).to_vec();
-            for attribute_decl in props {
+            let props = nodes[attributes].properties_rc().unwrap_or_default();
+            for attribute_decl in props.iter().copied() {
                 let __program = self.program.clone().expect("program");
                 let nodes = __program.nodes((attribute_decl).file_index());
                 let member = nodes[attribute_decl].symbol();

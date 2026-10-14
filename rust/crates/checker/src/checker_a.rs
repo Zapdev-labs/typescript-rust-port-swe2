@@ -2016,8 +2016,8 @@ impl Checker {
 
         let parent = nodes[node].parent;
         if parent.is_some_and(|p| nodes[p].can_have_statements()) {
-            let statements: Vec<NodeId> =
-                nodes[parent.unwrap()].statements().unwrap_or(&[]).to_vec();
+            let statements: Rc<[NodeId]> =
+                nodes[parent.unwrap()].statements_rc().unwrap_or_default();
             if let Some(offset) = statements.iter().position(|&s| s == node) {
                 // Scan backwards to find the first unreachable unreported node;
                 // this may happen when producing region diagnostics where not all nodes
@@ -2673,8 +2673,8 @@ impl Checker {
             (
                 nodes[node].kind,
                 ast::get_function_flags(Some(&nodes[node])),
-                nodes[node].type_parameters().unwrap_or(&[]).to_vec(),
-                nodes[node].parameters().unwrap_or(&[]).to_vec(),
+                nodes[node].type_parameters_rc().unwrap_or_default(),
+                nodes[node].parameters_rc().unwrap_or_default(),
                 nodes[node].type_(),
                 ast::is_index_signature_declaration(&nodes[node]),
             )
@@ -3215,7 +3215,7 @@ impl Checker {
                 }
             }
         }
-        let type_arguments = nodes[node].type_arguments().unwrap_or(&[]).to_vec();
+        let type_arguments = nodes[node].type_arguments_rc().unwrap_or_default();
         self.check_source_elements(&type_arguments);
         if !(crate::utilities::is_const_type_reference(node, &nodes)
             && nodes[node]
@@ -3500,7 +3500,7 @@ impl Checker {
     pub(crate) fn check_type_literal(&mut self, node: NodeId) {
         let __program = self.program.clone().expect("program");
         let nodes = __program.nodes((node).file_index());
-        let members = nodes[node].members().unwrap_or(&[]).to_vec();
+        let members = nodes[node].members_rc().unwrap_or_default();
         self.check_source_elements(&members);
         let t = self.get_type_from_type_literal_or_function_or_constructor_type_node(node);
         let symbol = self.types.get_ref(t).symbol;
@@ -3708,8 +3708,8 @@ impl Checker {
         let nodes = __program.nodes((node).file_index());
         let mut seen_optional_element = false;
         let mut seen_rest_element = false;
-        let elements = nodes[node].elements().unwrap_or(&[]).to_vec();
-        for &e in &elements {
+        let elements = nodes[node].elements_rc().unwrap_or_default();
+        for &e in elements.iter() {
             let mut flags = self.get_tuple_element_flags(e);
             if flags.intersects(crate::types::ElementFlags::VARIADIC) {
                 let t = self.get_type_from_type_node(nodes[e].type_().expect("tuple element type"));
@@ -4832,11 +4832,11 @@ impl Checker {
         }
         if ast::is_function_or_module_block(&nodes[node], &nodes) {
             let save_flow_analysis_disabled = self.flow_analysis_disabled;
-            let statements = nodes[node].statements().unwrap_or(&[]).to_vec();
+            let statements = nodes[node].statements_rc().unwrap_or_default();
             self.check_source_elements(&statements);
             self.flow_analysis_disabled = save_flow_analysis_disabled;
         } else {
-            let statements = nodes[node].statements().unwrap_or(&[]).to_vec();
+            let statements = nodes[node].statements_rc().unwrap_or_default();
             self.check_source_elements(&statements);
         }
         if nodes[node].locals().is_some_and(|l| !l.is_empty()) {
@@ -5669,7 +5669,7 @@ impl Checker {
                     );
                 }
             }
-            let statements = nodes[clause].statements().unwrap_or(&[]).to_vec();
+            let statements = nodes[clause].statements_rc().unwrap_or_default();
             self.check_source_elements(&statements);
             if self
                 .compiler_options
@@ -5879,7 +5879,7 @@ impl Checker {
             );
         }
         self.check_class_like_declaration(node);
-        let members = nodes[node].members().unwrap_or(&[]).to_vec();
+        let members = nodes[node].members_rc().unwrap_or_default();
         self.check_source_elements(&members);
         self.check_constructor_declared_properties(node);
         self.register_for_unused_identifiers_check(node);
@@ -5912,7 +5912,7 @@ impl Checker {
         self.check_grammar_class_like_declaration(node);
         self.check_decorators(node);
         self.check_collisions_for_declaration_name(node, nodes[node].name());
-        let type_parameters = nodes[node].type_parameters().unwrap_or(&[]).to_vec();
+        let type_parameters = nodes[node].type_parameters_rc().unwrap_or_default();
         self.check_type_parameters(&type_parameters);
         self.check_exports_on_merged_declarations(node);
         let symbol = self.get_symbol_of_declaration(node).expect("class symbol");
@@ -7357,7 +7357,7 @@ impl Checker {
             let __program = self.program.clone().expect("program");
             let nodes = __program.nodes((declaration).file_index());
             if ast::is_index_signature_declaration(&nodes[declaration]) {
-                let parameters = nodes[declaration].parameters().unwrap_or(&[]).to_vec();
+                let parameters = nodes[declaration].parameters_rc().unwrap_or_default();
                 if parameters.len() == 1 {
                     if let Some(param_type_node) = nodes[parameters[0]].type_() {
                         let param_type = self.get_type_from_type_node(param_type_node);
@@ -7600,7 +7600,7 @@ impl Checker {
                 &["interface".to_string()],
             );
         }
-        let type_parameters = nodes[node].type_parameters().unwrap_or(&[]).to_vec();
+        let type_parameters = nodes[node].type_parameters_rc().unwrap_or_default();
         self.check_type_parameters(&type_parameters);
         if let Some(name) = nodes[node].name() {
             self.check_type_name_is_reserved(name, &tsc_diagnostics::Interface_name_cannot_be_0);
@@ -7671,7 +7671,7 @@ impl Checker {
             }
             self.check_type_reference_node(heritage_element);
         }
-        let members = nodes[node].members().unwrap_or(&[]).to_vec();
+        let members = nodes[node].members_rc().unwrap_or_default();
         self.check_source_elements(&members);
         self.check_class_or_interface_for_duplicate_index_signatures(node);
         self.register_for_unused_identifiers_check(node);
@@ -7757,7 +7757,7 @@ impl Checker {
         self.check_grammar_modifiers(node);
         self.check_collisions_for_declaration_name(node, nodes[node].name());
         self.check_exports_on_merged_declarations(node);
-        let members = nodes[node].members().unwrap_or(&[]).to_vec();
+        let members = nodes[node].members_rc().unwrap_or_default();
         self.check_source_elements(&members);
         if self.should_check_erasable_syntax(node)
             && !nodes[node].flags.intersects(ast::NodeFlags::AMBIENT)
@@ -7813,7 +7813,7 @@ impl Checker {
                 if dn[declaration].kind != ast::Kind::EnumDeclaration {
                     continue;
                 }
-                let members = dn[declaration].members().unwrap_or(&[]).to_vec();
+                let members = dn[declaration].members_rc().unwrap_or_default();
                 if members.is_empty() {
                     continue;
                 }
@@ -8022,8 +8022,8 @@ impl Checker {
                     || sym_flags(self, decl_symbol).intersects(ast::SymbolFlags::TRANSIENT);
                 if check_body {
                     if let Some(body) = nodes[node].body() {
-                        let statements = nodes[body].statements().unwrap_or(&[]).to_vec();
-                        for statement in statements {
+                        let statements = nodes[body].statements_rc().unwrap_or_default();
+                        for statement in statements.iter().copied() {
                             self.check_module_augmentation_element(statement);
                         }
                     }
@@ -9476,7 +9476,7 @@ impl Checker {
         }
         // For a binding pattern, check contained binding elements
         if ast::is_binding_pattern(&nodes[name]) {
-            let elements = nodes[name].elements().unwrap_or(&[]).to_vec();
+            let elements = nodes[name].elements_rc().unwrap_or_default();
             self.check_source_elements(&elements);
         }
         // For a parameter declaration with an initializer, error and exit if the containing function doesn't have a body

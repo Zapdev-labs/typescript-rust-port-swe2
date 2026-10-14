@@ -9377,7 +9377,7 @@ impl Checker {
             }
             ast::Kind::ArrayLiteralExpression => {
                 let t = self.get_apparent_type_of_contextual_type(parent, context_flags);
-                let elements = nodes[parent].elements().unwrap_or(&[]).to_vec();
+                let elements = nodes[parent].elements_rc().unwrap_or_default();
                 let element_index = ast::index_of_node(&elements, node, &nodes);
                 if element_index < 0 {
                     return None;
@@ -9504,7 +9504,7 @@ impl Checker {
         }
         if let Some(iife) = ast::get_immediately_invoked_function_expression(fn_, &nodes) {
             let args = self.get_effective_call_arguments(iife);
-            let parameters = nodes[fn_].parameters().unwrap_or(&[]).to_vec();
+            let parameters = nodes[fn_].parameters_rc().unwrap_or_default();
             let index_of_parameter =
                 parameters.iter().position(|&p| p == parameter).unwrap_or(0) as i32;
             if crate::utilities::has_dot_dot_dot_token(&nodes[parameter], &nodes) {
@@ -9533,7 +9533,7 @@ impl Checker {
             return t;
         }
         if let Some(contextual_signature) = self.get_contextual_signature(fn_) {
-            let parameters = nodes[fn_].parameters().unwrap_or(&[]).to_vec();
+            let parameters = nodes[fn_].parameters_rc().unwrap_or_default();
             let mut index = parameters.iter().position(|&p| p == parameter).unwrap_or(0) as i32;
             if ast::get_this_parameter(&nodes[fn_], &nodes).is_some() {
                 index -= 1;
@@ -10781,7 +10781,7 @@ impl Checker {
         if !self.array_literal_links.get(node).indices_computed {
             let __program = self.program.clone().expect("program");
             let nodes = __program.nodes((node).file_index());
-            let elements = nodes[node].elements().unwrap_or(&[]).to_vec();
+            let elements = nodes[node].elements_rc().unwrap_or_default();
             let mut first = -1i32;
             let mut last = -1i32;
             for (i, element) in elements.iter().enumerate() {
@@ -10863,7 +10863,7 @@ impl Checker {
                     } else if ast::get_this_parameter(&nodes[parent], &nodes) == Some(node) {
                         // fall out of match
                     } else {
-                        let parameters = nodes[parent].parameters().unwrap_or(&[]).to_vec();
+                        let parameters = nodes[parent].parameters_rc().unwrap_or_default();
                         let index = parameters.iter().position(|&p| p == node).unwrap() as i32
                             - if ast::get_this_parameter(&nodes[parent], &nodes).is_some() {
                                 1
@@ -11732,7 +11732,7 @@ impl Checker {
         if discriminated.is_none() {
             let __program = self.program.clone().expect("program");
             let nodes = __program.nodes((node).file_index());
-            let properties = nodes[node].properties().unwrap_or(&[]).to_vec();
+            let properties = nodes[node].properties_rc().unwrap_or_default();
             let discriminant_properties: Vec<NodeId> = properties
                 .iter()
                 .copied()
@@ -11801,7 +11801,7 @@ impl Checker {
         if !key_property_name.is_empty() {
             let __program = self.program.clone().expect("program");
             let nodes = __program.nodes((node).file_index());
-            let properties = nodes[node].properties().unwrap_or(&[]).to_vec();
+            let properties = nodes[node].properties_rc().unwrap_or_default();
             let prop_node = properties.iter().copied().find(|&p| {
                 nodes[p].symbol().is_some()
                     && ast::is_property_assignment(&nodes[p])

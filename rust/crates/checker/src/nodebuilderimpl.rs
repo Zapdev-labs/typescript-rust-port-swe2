@@ -8655,7 +8655,7 @@ impl Checker {
                 Kind::InterfaceDeclaration | Kind::ClassDeclaration | Kind::ClassExpression
             ) || crate::utilities::is_type_alias(&nn[node])
             {
-                let decls: Vec<NodeId> = nn[node].type_parameters().unwrap_or(&[]).to_vec();
+                let decls: Rc<[NodeId]> = nn[node].type_parameters_rc().unwrap_or_default();
                 types = self.append_type_parameters(types, &decls, nodes);
             }
         }
@@ -8697,7 +8697,7 @@ impl Checker {
                 return None;
             }
             let text = nn[type_name].text(&nn).into_owned();
-            let args: Vec<NodeId> = nn[node].type_arguments().unwrap_or(&[]).to_vec();
+            let args: Rc<[NodeId]> = nn[node].type_arguments_rc().unwrap_or_default();
             (true, text, args)
         };
         let _ = is_jsdoc;

@@ -15,6 +15,7 @@
 // `*ast.Node`/`*ast.SourceFile` → `NodeId` + the `nodes` arena parameter;
 // `*ast.Identifier`/`*ast.ExportSpecifier` similarly become `NodeId`s.
 
+use std::rc::Rc;
 use tsc_ast::{self as ast, NodeId, SymbolId};
 use tsc_core::text::TextPos;
 use tsc_debug as debug;
@@ -1336,7 +1337,7 @@ impl Checker {
     ) -> bool {
         let __program = self.program.clone().expect("program");
         let nodes = __program.nodes((obj).file_index());
-        let properties: Vec<NodeId> = nodes[obj].properties().unwrap_or(&[]).to_vec();
+        let properties: Rc<[NodeId]> = nodes[obj].properties_rc().unwrap_or_default();
         properties.iter().any(|&property| {
             let mut name_type: Option<TypeId> = None;
             if let Some(property_name) = nodes[property].name() {
@@ -1516,7 +1517,7 @@ impl Checker {
         let mut first_spread_index: i64 = -1;
         let mut last_spread_index: i64 = -1;
         let mut element_index: i64 = 0;
-        let elements: Vec<NodeId> = nodes[array_literal].elements().unwrap_or(&[]).to_vec();
+        let elements: Rc<[NodeId]> = nodes[array_literal].elements_rc().unwrap_or_default();
         for (i, &elem) in elements.iter().enumerate() {
             if i64::from(nodes[elem].pos()) < position {
                 element_index += 1;
@@ -1713,7 +1714,7 @@ impl Checker {
             let type_of_parent_object_literal = self
                 .get_type_of_assignment_pattern(node)
                 .unwrap_or(self.error_type);
-            let properties: Vec<NodeId> = nodes[node].properties().unwrap_or(&[]).to_vec();
+            let properties: Rc<[NodeId]> = nodes[node].properties_rc().unwrap_or_default();
             let property_index = properties.iter().position(|&p| p == parent).unwrap_or(0) as usize;
             return self.check_object_literal_destructuring_property_assignment(
                 node,
@@ -1734,7 +1735,7 @@ impl Checker {
             self.undefined_type,
             Some(parent),
         );
-        let elements: Vec<NodeId> = nodes[parent].elements().unwrap_or(&[]).to_vec();
+        let elements: Rc<[NodeId]> = nodes[parent].elements_rc().unwrap_or_default();
         let element_index = elements.iter().position(|&e| e == expr).unwrap_or(0) as usize;
         self.check_array_literal_destructuring_element_assignment(
             parent,

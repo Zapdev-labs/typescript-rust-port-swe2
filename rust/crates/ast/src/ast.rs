@@ -530,6 +530,12 @@ impl Node {
         self.parameter_list().map(|l| l.nodes())
     }
 
+    /// `parameters` as a shared handle — refcount bump instead of a slice copy
+    /// when the caller must outlive the `nodes` borrow.
+    pub fn parameters_rc(&self) -> Option<Rc<[NodeId]>> {
+        self.parameter_list().map(|l| l.nodes_rc())
+    }
+
     /// `n.data.ClassLikeData()`
     pub fn class_like_data(&self) -> Option<&ClassLikeBase> {
         self.data.class_like_data()
@@ -822,6 +828,12 @@ impl Node {
         self.argument_list().map(|l| l.nodes())
     }
 
+    /// `arguments` as a shared handle — refcount bump instead of a slice copy
+    /// when the caller must outlive the `nodes` borrow.
+    pub fn arguments_rc(&self) -> Option<Rc<[NodeId]>> {
+        self.argument_list().map(|l| l.nodes_rc())
+    }
+
     /// `n.TypeArgumentList()`
     pub fn type_argument_list(&self) -> Option<&NodeList> {
         match self.kind {
@@ -862,6 +874,12 @@ impl Node {
         self.type_argument_list().map(|l| l.nodes())
     }
 
+    /// `type_arguments` as a shared handle — refcount bump instead of a slice copy
+    /// when the caller must outlive the `nodes` borrow.
+    pub fn type_arguments_rc(&self) -> Option<Rc<[NodeId]>> {
+        self.type_argument_list().map(|l| l.nodes_rc())
+    }
+
     /// `n.TypeParameterList()`
     pub fn type_parameter_list(&self) -> Option<&NodeList> {
         match self.kind {
@@ -894,6 +912,12 @@ impl Node {
         self.type_parameter_list().map(|l| l.nodes())
     }
 
+    /// `type_parameters` as a shared handle — refcount bump instead of a slice copy
+    /// when the caller must outlive the `nodes` borrow.
+    pub fn type_parameters_rc(&self) -> Option<Rc<[NodeId]>> {
+        self.type_parameter_list().map(|l| l.nodes_rc())
+    }
+
     /// `n.MemberList()`
     pub fn member_list(&self) -> Option<&NodeList> {
         match self.kind {
@@ -910,6 +934,12 @@ impl Node {
     /// `n.Members()`
     pub fn members(&self) -> Option<&[NodeId]> {
         self.member_list().map(|l| l.nodes())
+    }
+
+    /// `members` as a shared handle — refcount bump instead of a slice copy
+    /// when the caller must outlive the `nodes` borrow.
+    pub fn members_rc(&self) -> Option<Rc<[NodeId]>> {
+        self.member_list().map(|l| l.nodes_rc())
     }
 
     /// `n.StatementList()`
@@ -931,6 +961,12 @@ impl Node {
     /// `n.Statements()`
     pub fn statements(&self) -> Option<&[NodeId]> {
         self.statement_list().map(|l| l.nodes())
+    }
+
+    /// `statements` as a shared handle — refcount bump instead of a slice copy
+    /// when the caller must outlive the `nodes` borrow.
+    pub fn statements_rc(&self) -> Option<Rc<[NodeId]>> {
+        self.statement_list().map(|l| l.nodes_rc())
     }
 
     /// `n.CanHaveStatements()`
@@ -956,6 +992,11 @@ impl Node {
     /// `n.ModifierNodes()`
     pub fn modifier_nodes(&self) -> Option<&[NodeId]> {
         self.modifiers().map(|m| m.nodes())
+    }
+
+    /// `modifier_nodes` as a shared handle.
+    pub fn modifier_nodes_rc(&self) -> Option<Rc<[NodeId]>> {
+        self.modifiers().map(|m| m.nodes.clone())
     }
 
     /// `n.Type()`
@@ -1250,6 +1291,12 @@ impl Node {
         self.comment_list().map(|l| l.nodes())
     }
 
+    /// `comments` as a shared handle — refcount bump instead of a slice copy
+    /// when the caller must outlive the `nodes` borrow.
+    pub fn comments_rc(&self) -> Option<Rc<[NodeId]>> {
+        self.comment_list().map(|l| l.nodes_rc())
+    }
+
     /// `n.Label()`
     pub fn label(&self) -> Option<NodeId> {
         match self.kind {
@@ -1342,6 +1389,12 @@ impl Node {
         self.property_list().map(|l| l.nodes())
     }
 
+    /// `properties` as a shared handle — refcount bump instead of a slice copy
+    /// when the caller must outlive the `nodes` borrow.
+    pub fn properties_rc(&self) -> Option<Rc<[NodeId]>> {
+        self.property_list().map(|l| l.nodes_rc())
+    }
+
     /// `n.ElementList()`
     pub fn element_list(&self) -> Option<&NodeList> {
         match self.kind {
@@ -1359,6 +1412,12 @@ impl Node {
     /// `n.Elements()`
     pub fn elements(&self) -> Option<&[NodeId]> {
         self.element_list().map(|l| l.nodes())
+    }
+
+    /// `elements` as a shared handle — refcount bump instead of a slice copy
+    /// when the caller must outlive the `nodes` borrow.
+    pub fn elements_rc(&self) -> Option<Rc<[NodeId]>> {
+        self.element_list().map(|l| l.nodes_rc())
     }
 
     /// `n.PostfixToken()`

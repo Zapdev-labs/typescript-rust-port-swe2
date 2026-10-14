@@ -217,7 +217,7 @@ impl Checker {
             for decl in declarations {
                 let __program = self.program.clone().expect("program");
                 let nodes = __program.nodes((decl).file_index());
-                for member in crate::utilities::get_members_of_declaration(&nodes[decl]) {
+                for member in crate::utilities::get_members_of_declaration(&nodes[decl]).iter().copied() {
                     if is_static == ast::has_static_modifier(&nodes[member]) {
                         if self.has_late_bindable_name(member) {
                             self.late_bind_member(
@@ -1307,7 +1307,7 @@ impl Checker {
         if ast::is_source_file(&nodes[declaration])
             && ast::is_json_source_file(nodes[declaration].as_source_file())
         {
-            let statements = nodes[declaration].statements().unwrap_or(&[]).to_vec();
+            let statements = nodes[declaration].statements_rc().unwrap_or_default();
             if statements.is_empty() {
                 return self.empty_object_type;
             }
@@ -1755,7 +1755,7 @@ impl Checker {
     pub(crate) fn pad_tuple_type(&mut self, t: TypeId, pattern: NodeId) -> TypeId {
         let __program = self.program.clone().expect("program");
         let nodes = __program.nodes((pattern).file_index());
-        let pattern_elements = nodes[pattern].elements().unwrap_or(&[]).to_vec();
+        let pattern_elements = nodes[pattern].elements_rc().unwrap_or_default();
         let __arena_target = self.types.clone();
         let target = __arena_target
             .target_tuple_type(t)
@@ -2414,7 +2414,7 @@ impl Checker {
     ) -> TypeId {
         let __program = self.program.clone().expect("program");
         let nodes = __program.nodes((node).file_index());
-        let type_arguments = nodes[node].type_arguments().unwrap_or(&[]).to_vec();
+        let type_arguments = nodes[node].type_arguments_rc().unwrap_or_default();
         if index < type_arguments.len() {
             return self.get_type_from_type_node(type_arguments[index]);
         }
@@ -2891,9 +2891,9 @@ impl Checker {
                         );
                         return self.error_type;
                     }
-                    let elements = nodes[pattern].elements().unwrap_or(&[]).to_vec();
+                    let elements = nodes[pattern].elements_rc().unwrap_or_default();
                     let mut literal_members: Vec<NodeId> = Vec::with_capacity(elements.len());
-                    for element in elements {
+                    for element in elements.iter().copied() {
                         if !crate::utilities::has_dot_dot_dot_token(&nodes[element], &nodes) {
                             if let Some(name) = nodes[element].property_name_or_name() {
                                 literal_members.push(name);
@@ -3251,8 +3251,8 @@ impl Checker {
             ObjectFlags::OBJECT_LITERAL | ObjectFlags::CONTAINS_OBJECT_OR_ARRAY_LITERAL;
         let __program = self.program.clone().expect("program");
         let nodes = __program.nodes((pattern).file_index());
-        let elements = nodes[pattern].elements().unwrap_or(&[]).to_vec();
-        for e in elements {
+        let elements = nodes[pattern].elements_rc().unwrap_or_default();
+        for e in elements.iter().copied() {
             let name = nodes[e].property_name_or_name().unwrap();
             if crate::utilities::has_dot_dot_dot_token(&nodes[e], &nodes) {
                 string_index_info = Some(self.new_index_info(
@@ -3310,7 +3310,7 @@ impl Checker {
     ) -> TypeId {
         let __program = self.program.clone().expect("program");
         let nodes = __program.nodes((pattern).file_index());
-        let elements = nodes[pattern].elements().unwrap_or(&[]).to_vec();
+        let elements = nodes[pattern].elements_rc().unwrap_or_default();
         let last_element = elements.last().copied();
         let rest_element = last_element.filter(|&e| {
             ast::is_binding_element(&nodes[e])
@@ -3882,7 +3882,7 @@ impl Checker {
                         tsc_scanner::utilities::identifier_to_keyword_kind(name);
                     let param_parent = nodes[declaration].parent.unwrap();
                     let parent_parameters =
-                        nodes[param_parent].parameters().unwrap_or(&[]).to_vec();
+                        nodes[param_parent].parameters_rc().unwrap_or_default();
                     if (ast::is_call_signature_declaration(&nodes[param_parent])
                         || ast::is_method_signature_declaration(&nodes[param_parent])
                         || ast::is_function_type_node(&nodes[param_parent]))
@@ -15597,7 +15597,7 @@ pub(crate) fn type_parameter_contains_reference(
             if return_type.is_none() && nodes[node].body().is_some() {
                 return true;
             }
-            let tps: Option<Vec<NodeId>> = nodes[node].type_parameters().map(|t| t.to_vec());
+            let tps: Option<Rc<[NodeId]>> = nodes[node].type_parameters_rc();
             if tps.is_some_and(|tps| {
                 tps.iter().any(|&n| {
                     type_parameter_contains_reference(c, tp, tp_is_this_type, tp_symbol, n)
@@ -15605,7 +15605,7 @@ pub(crate) fn type_parameter_contains_reference(
             }) {
                 return true;
             }
-            let params: Option<Vec<NodeId>> = nodes[node].parameters().map(|p| p.to_vec());
+            let params: Option<Rc<[NodeId]>> = nodes[node].parameters_rc();
             if params.is_some_and(|params| {
                 params.iter().any(|&n| {
                     type_parameter_contains_reference(c, tp, tp_is_this_type, tp_symbol, n)

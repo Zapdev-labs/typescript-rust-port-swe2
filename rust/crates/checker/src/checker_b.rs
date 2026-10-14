@@ -96,7 +96,7 @@ impl Checker {
     pub(crate) fn check_array_literal(&mut self, node: NodeId, check_mode: CheckMode) -> TypeId {
         let __program = self.program.clone().expect("program");
         let nodes = __program.nodes((node).file_index());
-        let elements: Vec<NodeId> = nodes[node].elements().unwrap_or(&[]).to_vec();
+        let elements: Rc<[NodeId]> = nodes[node].elements_rc().unwrap_or_default();
         let element_count = elements.len();
         let mut element_types: Vec<TypeId> = vec![self.error_type; element_count];
         let mut element_infos: Vec<TupleElementInfo> =
@@ -593,7 +593,7 @@ impl Checker {
         self.check_grammar_import_call_expression(node);
         let __program = self.program.clone().expect("program");
         let nodes = __program.nodes((node).file_index());
-        let args: Vec<NodeId> = nodes[node].arguments().unwrap_or(&[]).to_vec();
+        let args: Rc<[NodeId]> = nodes[node].arguments_rc().unwrap_or_default();
         if args.is_empty() {
             // No call arguments exist, so there are no child expressions to
             // check.
@@ -1035,8 +1035,8 @@ impl Checker {
         if nodes[expression].kind == ast::Kind::SuperKeyword {
             let super_type = self.check_super_expression(expression);
             if crate::utilities::is_type_any(&self.types, super_type) {
-                let args: Vec<NodeId> = nodes[node].arguments().unwrap_or(&[]).to_vec();
-                for arg in args {
+                let args: Rc<[NodeId]> = nodes[node].arguments_rc().unwrap_or_default();
+                for arg in args.iter().copied() {
                     // Still visit arguments so they get marked for
                     // visibility, etc.
                     self.check_expression(arg);
@@ -3986,7 +3986,7 @@ impl Checker {
             // This gets us diagnostics for the type arguments and marks them as referenced.
             let __program = self.program.clone().expect("program");
             let nodes = __program.nodes((node).file_index());
-            let type_arguments = nodes[node].type_arguments().map(|a| a.to_vec());
+            let type_arguments = nodes[node].type_arguments_rc();
             if let Some(type_arguments) = type_arguments {
                 self.check_source_elements(&type_arguments);
             }
@@ -4012,8 +4012,8 @@ impl Checker {
                 }
             }
             ast::Kind::CallExpression | ast::Kind::NewExpression => {
-                if let Some(arguments) = nodes[node].arguments().map(|a| a.to_vec()) {
-                    for argument in arguments {
+                if let Some(arguments) = nodes[node].arguments_rc() {
+                    for argument in arguments.iter().copied() {
                         self.check_expression(argument);
                     }
                 }
@@ -4346,8 +4346,8 @@ impl Checker {
         if will_transform_static_elements_of_decorated_class
             || will_transform_private_elements_or_class_static_blocks
         {
-            if let Some(members) = nodes[node].members().map(|m| m.to_vec()) {
-                for member in members {
+            if let Some(members) = nodes[node].members_rc() {
+                for member in members.iter().copied() {
                     if will_transform_static_elements_of_decorated_class
                         && ast::class_element_or_class_element_parameter_is_decorated(
                             false, member, node, &nodes,
@@ -4427,7 +4427,7 @@ impl Checker {
     pub(crate) fn check_class_expression_deferred(&mut self, node: NodeId) {
         let __program = self.program.clone().expect("program");
         let nodes = __program.nodes((node).file_index());
-        let members = nodes[node].members().map(|m| m.to_vec());
+        let members = nodes[node].members_rc();
         self.check_source_elements(members.as_deref().unwrap_or(&[]));
         self.check_constructor_declared_properties(node);
         self.register_for_unused_identifiers_check(node);
@@ -5396,8 +5396,8 @@ impl Checker {
         let mut has_collision = false;
         if ast::is_class_expression(&nodes[node]) {
             // ClassExpression names don't contribute to their containers, but do matter for any of their block-scoped members.
-            if let Some(members) = nodes[node].members().map(|m| m.to_vec()) {
-                for member in members {
+            if let Some(members) = nodes[node].members_rc() {
+                for member in members.iter().copied() {
                     if self
                         .node_links
                         .get(member)
@@ -5510,7 +5510,7 @@ impl Checker {
         self.check_grammar_expression_with_type_arguments(node);
         let __program = self.program.clone().expect("program");
         let nodes = __program.nodes((node).file_index());
-        let type_arguments = nodes[node].type_arguments().map(|a| a.to_vec());
+        let type_arguments = nodes[node].type_arguments_rc();
         self.check_source_elements(type_arguments.as_deref().unwrap_or(&[]));
         if ast::is_expression_with_type_arguments(&nodes[node]) {
             let parent =
