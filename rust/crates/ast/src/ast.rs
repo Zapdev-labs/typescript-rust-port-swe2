@@ -2853,15 +2853,21 @@ impl ArenaCell {
     /// In-place mutable access — see [`ArenaMut`]. The guard owns an `Rc`
     /// of this cell so it can outlive the lookup that produced it. Only one
     /// guard may be live per cell at a time.
+    #[allow(unsafe_code)] // shared-heap write — see `NodeArenaBuf`
     pub fn cow(self: &std::rc::Rc<Self>) -> ArenaMut {
         assert!(
             self.1.get() == 0,
             "ArenaCell: nested cow() while a writer guard is active"
         );
         self.1.set(1);
+        let work = self.0.borrow().clone();
+        // Headroom so check-time synthetic-node pushes don't realloc the
+        // shared buffer once per push (parse sizes the Vec ~exactly to the
+        // parsed node count; Go's heap has no growth step at all).
+        unsafe { &mut *work.0.get() }.reserve(4096);
         ArenaMut {
             cell: self.clone(),
-            work: self.0.borrow().clone(),
+            work,
             dirty: false,
             wgen: self.2.get(),
         }
