@@ -193,7 +193,7 @@ impl OsFs {
         }
         let file = options.open(path)?;
         let mut file = file;
-        file.write_all(content.as_bytes())?;
+        file.write_all(&crate::internal::faithful_bytes(content))?;
         Ok(())
     }
 

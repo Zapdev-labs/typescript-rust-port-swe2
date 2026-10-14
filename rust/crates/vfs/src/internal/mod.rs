@@ -173,9 +173,98 @@ fn decode_bytes(s: &[u8]) -> Option<String> {
         s
     };
 
-    // PORT: Go strings may hold arbitrary bytes; non-UTF-8 contents are
-    // decoded lossily here.
-    Some(String::from_utf8_lossy(s).into_owned())
+    // PORT: Go strings hold arbitrary bytes and preserve them verbatim when
+    // the emitter copies source text into its output. Rust `String` must be
+    // valid UTF-8, so each byte that fails Go's `utf8.DecodeRune` accept set
+    // is mapped to a supplementary-plane private-use marker (U+F0000 + byte).
+    // The marker occupies exactly one char per invalid byte — matching Go's
+    // one-rune-per-error advance — and `faithful_bytes` reverses the mapping
+    // wherever decoded text is written back to bytes.
+    Some(decode_utf8_faithful(s))
+}
+
+/// `utf8.DecodeRune` accept-set check: valid UTF-8 only — no overlongs,
+/// no surrogates, nothing above U+10FFFF. Returns `(char, len)` on success;
+/// `None` on any encoding error (Go returns `RuneError` and consumes 1 byte).
+fn decode_rune(s: &[u8]) -> Option<(char, usize)> {
+    let b0 = *s.first()?;
+    if b0 < 0x80 {
+        return Some((b0 as char, 1));
+    }
+    let (len, min, mut cp) = match b0 {
+        0xC2..=0xDF => (2usize, 0x80u32, (b0 & 0x1F) as u32),
+        0xE0..=0xEF => (3, 0x800, (b0 & 0x0F) as u32),
+        0xF0..=0xF4 => (4, 0x10000, (b0 & 0x07) as u32),
+        _ => return None,
+    };
+    if s.len() < len {
+        return None;
+    }
+    for &b in &s[1..len] {
+        if !(0x80..=0xBF).contains(&b) {
+            return None;
+        }
+        cp = (cp << 6) | (b & 0x3F) as u32;
+    }
+    if cp < min || cp > 0x10FFFF || (0xD800..=0xDFFF).contains(&cp) {
+        return None;
+    }
+    char::from_u32(cp).map(|c| (c, len))
+}
+
+/// First supplementary private-use plane (U+F0000–U+F00FF marks bytes 0x00–0xFF).
+/// No testdata or compiler-generated text uses this range.
+pub(crate) const FAITHFUL_MARKER_BASE: u32 = 0xF0000;
+
+/// Decodes `s` as UTF-8 the way Go's scanner sees it: every byte that is not
+/// part of a valid UTF-8 sequence becomes `U+F0000 + byte`, a reversible
+/// private-use marker, instead of U+FFFD.
+pub(crate) fn decode_utf8_faithful(s: &[u8]) -> String {
+    if std::str::from_utf8(s).is_ok() {
+        // Fast path: no invalid bytes, no markers to produce.
+        return String::from_utf8_lossy(s).into_owned();
+    }
+    let mut out = String::with_capacity(s.len());
+    let mut i = 0;
+    while i < s.len() {
+        match decode_rune(&s[i..]) {
+            Some((c, len)) => {
+                out.push(c);
+                i += len;
+            }
+            None => {
+                out.push(
+                    char::from_u32(FAITHFUL_MARKER_BASE + s[i] as u32)
+                        .expect("marker is a valid char"),
+                );
+                i += 1;
+            }
+        }
+    }
+    out
+}
+
+/// Reverses `decode_utf8_faithful` at a byte-sink boundary: marker chars
+/// become their original byte; everything else is plain UTF-8. Identical to
+/// `s.as_bytes()` when no markers are present (the common case).
+pub fn faithful_bytes(s: &str) -> Vec<u8> {
+    if !s
+        .chars()
+        .any(|c| (FAITHFUL_MARKER_BASE..FAITHFUL_MARKER_BASE + 0x100).contains(&(c as u32)))
+    {
+        return s.as_bytes().to_vec();
+    }
+    let mut out = Vec::with_capacity(s.len());
+    let mut buf = [0u8; 4];
+    for c in s.chars() {
+        let cp = c as u32;
+        if (FAITHFUL_MARKER_BASE..FAITHFUL_MARKER_BASE + 0x100).contains(&cp) {
+            out.push((cp - FAITHFUL_MARKER_BASE) as u8);
+        } else {
+            out.extend_from_slice(c.encode_utf8(&mut buf).as_bytes());
+        }
+    }
+    out
 }
 
 fn decode_utf16(s: &[u8], little_endian: bool) -> String {

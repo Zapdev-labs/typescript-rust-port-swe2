@@ -101,13 +101,14 @@ fn write_comparison(actual_content: &str, local: &Path, reference: &Path) -> Res
         }
     }
 
+    let actual_bytes = tsc_vfs::internal::faithful_bytes(actual_content);
     let mut expected: Vec<u8> = NO_CONTENT.as_bytes().to_vec();
     let mut found_expected = false;
     if let Ok(content) = fs::read(reference) {
         expected = content;
         found_expected = true;
     }
-    if expected == actual_content.as_bytes() && !(actual_content == NO_CONTENT && found_expected) {
+    if expected == actual_bytes && !(actual_content == NO_CONTENT && found_expected) {
         return Ok(());
     }
     if actual_content == NO_CONTENT {
@@ -125,7 +126,7 @@ fn write_comparison(actual_content: &str, local: &Path, reference: &Path) -> Res
         }
         return Ok(());
     }
-    if let Err(err) = fs::write(local, actual_content.as_bytes()) {
+    if let Err(err) = fs::write(local, &actual_bytes) {
         return Err(Error::wrap(
             format!(
                 "failed to write the local baseline file {}",
