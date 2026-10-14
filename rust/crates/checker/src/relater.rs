@@ -569,32 +569,32 @@ impl Checker {
     ) -> bool {
         let mut source = source;
         let mut target = target;
-        if crate::checker_d::is_fresh_literal_type(&self.types, source) {
-            source = self
-                .types_handle()
-                .get_ref(source)
-                .as_literal_type()
-                .regular_type()
-                .expect("fresh literal type has regularType");
-        }
-        if crate::checker_d::is_fresh_literal_type(&self.types, target) {
-            target = self
-                .types_handle()
-                .get_ref(target)
-                .as_literal_type()
-                .regular_type()
-                .expect("fresh literal type has regularType");
-        }
+        // One arena borrow for the fresh-literal and flag reads — the port's
+        // per-read `get_ref` would borrow once per access where Go derefs.
+        let (source_flags, target_flags) = {
+            let v = self.types.borrow();
+            let is_fresh = |t: TypeId| {
+                let ty = &v[t.index()];
+                ty.flags.intersects(TypeFlags::FRESHABLE)
+                    && ty.as_literal_type().fresh_type == Some(t)
+            };
+            if is_fresh(source) {
+                source = v[source.index()]
+                    .as_literal_type()
+                    .regular_type()
+                    .expect("fresh literal type has regularType");
+            }
+            if is_fresh(target) {
+                target = v[target.index()]
+                    .as_literal_type()
+                    .regular_type()
+                    .expect("fresh literal type has regularType");
+            }
+            (v[source.index()].flags, v[target.index()].flags)
+        };
         if source == target {
             return true;
         }
-        let (source_flags, target_flags) = {
-            let __arena_s = self.types.clone();
-            let s = __arena_s.get_ref(source);
-            let __arena_t = self.types.clone();
-            let t = __arena_t.get_ref(target);
-            (s.flags, t.flags)
-        };
         if !Rc::ptr_eq(relation, &self.identity_relation) {
             if Rc::ptr_eq(relation, &self.comparable_relation)
                 && !target_flags.intersects(TypeFlags::NEVER)
@@ -620,13 +620,6 @@ impl Checker {
                 }
             }
         }
-        let (source_flags, target_flags) = {
-            let __arena_s = self.types.clone();
-            let s = __arena_s.get_ref(source);
-            let __arena_t = self.types.clone();
-            let t = __arena_t.get_ref(target);
-            (s.flags, t.flags)
-        };
         if source_flags.intersects(TypeFlags::OBJECT) && target_flags.intersects(TypeFlags::OBJECT)
         {
             let (id, _) = crate::checker_c::get_relation_key(
