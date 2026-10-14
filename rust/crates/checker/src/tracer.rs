@@ -421,7 +421,7 @@ impl TracedType for TracedTypeAdapter {
             {
                 Vec::new()
             } else {
-                ty.as_type_reference().resolved_type_arguments.clone()
+                ty.as_type_reference().resolved_type_arguments.to_vec()
             }
         };
         self.wrap_types(&args)

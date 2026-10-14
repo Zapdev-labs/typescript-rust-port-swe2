@@ -4364,10 +4364,10 @@ impl Checker {
                 .map(|&clause| self.get_type_of_switch_clause(&nodes, clause))
                 .collect();
             let links = self.switch_statement_links.get(node);
-            links.switch_types = types.clone();
+            links.switch_types = types.into();
             links.switch_types_computed = true;
         }
-        self.switch_statement_links.get(node).switch_types.clone()
+        self.switch_statement_links.get(node).switch_types.to_vec()
     }
 
     /// `(c *Checker) getTypeOfSwitchClause` (flow.go).

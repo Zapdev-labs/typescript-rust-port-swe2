@@ -2527,7 +2527,7 @@ impl Checker {
                 if mapper.is_none() {
                     mapper = Some(crate::mapper::new_type_mapper(
                         self,
-                        type_parameters.clone(),
+                        type_parameters.to_vec(),
                         type_argument_types.clone(),
                     ));
                 }

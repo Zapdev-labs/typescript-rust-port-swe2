@@ -4503,7 +4503,7 @@ impl Checker {
             min_argument_count,
             resolved_min_argument_count: -1,
             declaration,
-            type_parameters,
+            type_parameters: type_parameters.into(),
             parameters,
             this_parameter,
             resolved_return_type,
@@ -4687,7 +4687,7 @@ impl Checker {
         let t = self.new_object_type(ObjectFlags::REFERENCE | object_flags | propagating, symbol);
         if let TypeData::TypeReference(d) = &mut self.types_handle().get_mut(t).data {
             d.object_type.target = Some(target);
-            d.resolved_type_arguments = type_arguments.to_vec();
+            d.resolved_type_arguments = type_arguments.into();
         }
         self.types_handle()
             .get_mut(target)

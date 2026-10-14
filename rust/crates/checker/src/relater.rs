@@ -5038,7 +5038,7 @@ impl Checker {
             let source_params = self.signature_arena.get(source).type_parameters.clone();
             let target_params = self.signature_arena.get(target).type_parameters.clone();
             let mapper =
-                crate::mapper::new_type_mapper(self, source_params.clone(), target_params.clone());
+                crate::mapper::new_type_mapper(self, source_params.to_vec(), target_params.to_vec());
             for i in 0..target_params_len {
                 let s = source_params[i];
                 let t = target_params[i];

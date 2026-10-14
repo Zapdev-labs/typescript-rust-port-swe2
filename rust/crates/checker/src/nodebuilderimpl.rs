@@ -3885,12 +3885,12 @@ impl<'a> NodeBuilderImpl<'a> {
                 .get(sig_target.unwrap())
                 .type_parameters
                 .clone();
-            for parameter in target_params {
+            for parameter in target_params.iter().copied() {
                 let instantiated = c.instantiate_type(parameter, sig_mapper);
                 type_parameters.push(self.type_to_type_node(c, nodes, instantiated));
             }
         } else {
-            for parameter in sig_type_parameters {
+            for parameter in sig_type_parameters.iter().copied() {
                 type_parameters.push(self.type_parameter_to_declaration(c, nodes, parameter));
             }
         }
@@ -6117,7 +6117,7 @@ impl<'a> NodeBuilderImpl<'a> {
             );
             let save_infer_type_parameters = std::mem::replace(
                 &mut self.ctx.infer_type_parameters,
-                root_infer_type_parameters.clone(),
+                root_infer_type_parameters.to_vec(),
             );
             let extends_instantiated =
                 c.instantiate_type(root_extends_type.unwrap_or(TypeId::NONE), Some(new_mapper));
@@ -6201,7 +6201,7 @@ impl<'a> NodeBuilderImpl<'a> {
         }
         let save_infer_type_parameters = std::mem::replace(
             &mut self.ctx.infer_type_parameters,
-            root_infer_type_parameters,
+            root_infer_type_parameters.to_vec(),
         );
         let extends_type_node =
             self.type_to_type_node(c, nodes, extends_type.unwrap_or(c.error_type));
@@ -8545,7 +8545,7 @@ impl Checker {
                         {
                             let tps = self.signature_arena.get(signature).type_parameters.clone();
                             if !tps.is_empty() {
-                                outer_type_parameters.extend(tps);
+                                outer_type_parameters.extend(tps.iter().copied());
                             }
                         }
                     }

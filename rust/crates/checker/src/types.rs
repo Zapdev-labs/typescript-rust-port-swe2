@@ -488,9 +488,9 @@ pub struct DeferredSymbolLinks {
     /// `parent` — source union/intersection of a deferred type.
     pub parent: Option<TypeId>,
     /// `constituents` — calculated list of constituents for a deferred type.
-    pub constituents: Vec<TypeId>,
+    pub constituents: Rc<[TypeId]>,
     /// `writeConstituents` — constituents of a deferred `writeType`.
-    pub write_constituents: Vec<TypeId>,
+    pub write_constituents: Rc<[TypeId]>,
 }
 
 // Links for alias symbols
@@ -574,7 +574,7 @@ pub struct TypeAliasLinks {
     pub declared_type: Option<TypeId>,
     /// `typeParameters` — type parameters of type alias (empty if
     /// non-generic).
-    pub type_parameters: Vec<TypeId>,
+    pub type_parameters: Rc<[TypeId]>,
     /// `instantiations` — instantiations of generic type alias (empty if
     /// non-generic).
     pub instantiations: FxHashMap<crate::checker_core::CacheHashKey, TypeId>,
@@ -627,7 +627,7 @@ pub struct SwitchStatementLinks {
     /// `witnessesComputed`.
     pub witnesses_computed: bool,
     /// `switchTypes`.
-    pub switch_types: Vec<TypeId>,
+    pub switch_types: Rc<[TypeId]>,
     /// `witnesses` — `Option` mirrors Go's nil `[]string` (a computed-but-
     /// invalid switch stores nil, distinct from "not computed" which is
     /// tracked by `witnesses_computed`).
@@ -839,7 +839,7 @@ pub struct TypeNodeLinks {
     pub resolved_type: Option<TypeId>,
     /// `outerTypeParameters` — outer type parameters of anonymous object
     /// type.
-    pub outer_type_parameters: Vec<TypeId>,
+    pub outer_type_parameters: Rc<[TypeId]>,
 }
 
 /// `type ComputedNameNodeLinks struct`.
@@ -1439,7 +1439,7 @@ pub struct TypeAlias {
     /// `symbol`.
     pub symbol: Option<SymbolId>,
     /// `typeArguments`.
-    pub type_arguments: Vec<TypeId>,
+    pub type_arguments: Rc<[TypeId]>,
 }
 
 impl TypeAlias {
@@ -2433,7 +2433,7 @@ pub struct TypeReference {
     /// deferred, else `None`.
     pub node: Option<NodeId>,
     /// `resolvedTypeArguments`.
-    pub resolved_type_arguments: Vec<TypeId>,
+    pub resolved_type_arguments: Rc<[TypeId]>,
 }
 
 // InterfaceType (when generic, serves as reference to instantiation of
@@ -2445,7 +2445,7 @@ pub struct InterfaceType {
     /// embedded `TypeReference`.
     pub type_reference: TypeReference,
     /// `allTypeParameters` — type parameters (outer + local + thisType).
-    pub all_type_parameters: Vec<TypeId>,
+    pub all_type_parameters: Rc<[TypeId]>,
     /// `outerTypeParameterCount` — count of outer type parameters.
     pub outer_type_parameter_count: usize,
     /// `thisType` — the "this" type (`None` if none).
@@ -2457,7 +2457,7 @@ pub struct InterfaceType {
     /// `resolvedBaseConstructorType`.
     pub resolved_base_constructor_type: Option<TypeId>,
     /// `resolvedBaseTypes`.
-    pub resolved_base_types: Vec<TypeId>,
+    pub resolved_base_types: Rc<[TypeId]>,
     /// `declaredMembers` — declared members.
     pub declared_members: SymbolTable,
     /// `declaredCallSignatures` — declared call signatures.
@@ -2919,9 +2919,9 @@ pub struct ConditionalRoot {
     /// `isDistributive`.
     pub is_distributive: bool,
     /// `inferTypeParameters`.
-    pub infer_type_parameters: Vec<TypeId>,
+    pub infer_type_parameters: Rc<[TypeId]>,
     /// `outerTypeParameters`.
-    pub outer_type_parameters: Vec<TypeId>,
+    pub outer_type_parameters: Rc<[TypeId]>,
     /// `instantiations` — Go's `*ConditionalRoot` is shared by every
     /// conditional derived from the same declared node, so all
     /// instantiations record into one map. The port clones roots value-wise
@@ -3041,7 +3041,7 @@ pub struct Signature {
     /// `declaration`.
     pub declaration: Option<NodeId>,
     /// `typeParameters`.
-    pub type_parameters: Vec<TypeId>,
+    pub type_parameters: Rc<[TypeId]>,
     /// `parameters`.
     pub parameters: Vec<SymbolId>,
     /// `thisParameter`.

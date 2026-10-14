@@ -2176,7 +2176,7 @@ where
                         let (p, tp) = {
                             let c = sh.c.borrow();
                             let s = c.signature_arena.get(sig);
-                            (s.parameters.clone(), s.type_parameters.clone())
+                            (s.parameters.clone(), s.type_parameters.to_vec())
                         };
                         params = Some(p.into_iter().map(Some).collect());
                         type_params = Some(tp);

@@ -182,7 +182,7 @@ impl Checker {
             panic!("Attempted to fetch type alias parameters for non-type-alias symbol")
         }
         self.get_declared_type_of_symbol(symbol);
-        self.type_alias_links.get(symbol).type_parameters.clone()
+        self.type_alias_links.get(symbol).type_parameters.to_vec()
     }
 }
 

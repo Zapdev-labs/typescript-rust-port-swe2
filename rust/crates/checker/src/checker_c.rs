@@ -2371,7 +2371,7 @@ impl Checker {
                 .flags
                 .intersects(ast::SymbolFlags::TYPE_ALIAS)
             {
-                let type_parameters = self.type_alias_links.get(symbol).type_parameters.clone();
+                let type_parameters = self.type_alias_links.get(symbol).type_parameters.to_vec();
                 if !type_parameters.is_empty() {
                     return Some(type_parameters);
                 }
@@ -2651,9 +2651,9 @@ impl Checker {
                     let mut g = __arena_g.get_mut(t);
                     let d = g.data.as_interface_type_mut().unwrap();
                     d.this_type = Some(this_type);
-                    d.all_type_parameters = all;
+                    d.all_type_parameters = all.into();
                     d.outer_type_parameter_count = outer_type_parameters.len();
-                    d.type_reference.resolved_type_arguments = d.type_parameters().to_vec();
+                    d.type_reference.resolved_type_arguments = d.type_parameters().into();
                 }
                 let key = get_type_list_key(
                     &self
@@ -5510,7 +5510,7 @@ impl Checker {
                     .as_interface_type()
                     .expect("interface type")
                     .resolved_base_types
-                    .clone();
+                    .to_vec();
             }
             let object_flags = self.types.get_ref(t).object_flags;
             let symbol = self.types.get_ref(t).symbol;
@@ -5520,7 +5520,7 @@ impl Checker {
                     .get_mut(t)
                     .as_interface_type_mut()
                     .expect("interface type")
-                    .resolved_base_types = vec![tuple_base];
+                    .resolved_base_types = vec![tuple_base].into();
             } else if let Some(symbol) = symbol
                 && self
                     .sym(symbol)
@@ -5575,7 +5575,7 @@ impl Checker {
             .as_interface_type()
             .expect("interface type")
             .resolved_base_types
-            .clone()
+            .to_vec()
     }
 
     /// `(c *Checker) getTupleBaseType` (checker.go:19602).
@@ -5712,7 +5712,7 @@ impl Checker {
             .get_mut(t)
             .as_interface_type_mut()
             .expect("interface type")
-            .resolved_base_types = vec![reduced_base_type];
+            .resolved_base_types = vec![reduced_base_type].into();
     }
 
     /// `(c *Checker) getInstantiatedConstructorsForTypeArguments`
@@ -5790,7 +5790,7 @@ impl Checker {
                 let new_return_signature = self.clone_signature(return_signature);
                 self.signature_arena
                     .get_mut(new_return_signature)
-                    .type_parameters = inferred_type_parameters.to_vec();
+                    .type_parameters = inferred_type_parameters.into();
                 let new_return_type = self.get_or_create_type_from_signature(new_return_signature);
                 self.types_handle()
                     .get_mut(new_return_type)
@@ -5824,7 +5824,7 @@ impl Checker {
             (
                 s.flags & SignatureFlags::PROPAGATING_FLAGS,
                 s.declaration,
-                s.type_parameters.clone(),
+                s.type_parameters.to_vec(),
                 s.this_parameter,
                 s.parameters.clone(),
                 s.min_argument_count,
@@ -6009,7 +6009,7 @@ impl Checker {
 
     /// `(c *Checker) getErasedSignature` (checker.go:19797).
     pub(crate) fn get_erased_signature(&mut self, signature: SignatureId) -> SignatureId {
-        let type_parameters = self.signature_arena.get(signature).type_parameters.clone();
+        let type_parameters = self.signature_arena.get(signature).type_parameters.to_vec();
         if type_parameters.is_empty() {
             return signature;
         }
@@ -6088,7 +6088,7 @@ impl Checker {
 
     /// `(c *Checker) getBaseSignature` (checker.go:19839).
     pub(crate) fn get_base_signature(&mut self, signature: SignatureId) -> SignatureId {
-        let type_parameters = self.signature_arena.get(signature).type_parameters.clone();
+        let type_parameters = self.signature_arena.get(signature).type_parameters.to_vec();
         if type_parameters.is_empty() {
             return signature;
         }
@@ -6248,12 +6248,17 @@ impl Checker {
                 if !self.is_error_type(base_type) {
                     if self.is_valid_base_type(base_type) {
                         if t != base_type && !self.has_base_type(base_type, Some(t)) {
-                            self.types_handle()
-                                .get_mut(t)
-                                .as_interface_type_mut()
-                                .expect("interface type")
-                                .resolved_base_types
-                                .push(base_type);
+                            {
+                                let __arena_g = self.types.clone();
+                                let mut g = __arena_g.get_mut(t);
+                                let d = g
+                                    .data
+                                    .as_interface_type_mut()
+                                    .expect("interface type");
+                                let mut base_types = d.resolved_base_types.to_vec();
+                                base_types.push(base_type);
+                                d.resolved_base_types = base_types.into();
+                            }
                         } else {
                             self.report_circular_base_type(declaration, t);
                         }
@@ -7014,7 +7019,7 @@ impl Checker {
         declaration: NodeId,
     ) -> Vec<TypeId> {
         if let Some(sig) = self.get_signature_of_full_signature_type(declaration) {
-            return self.signature_arena.get(sig).type_parameters.clone();
+            return self.signature_arena.get(sig).type_parameters.to_vec();
         }
         let mut result: Vec<TypeId> = Vec::new();
         let __program = self.program.clone().expect("program");
@@ -8474,7 +8479,7 @@ impl Checker {
                 .map(|tp| self.clone_type_parameter(tp))
                 .collect();
             let identity_mapper =
-                new_type_mapper(self, sig_type_parameters, fresh_type_parameters.clone());
+                new_type_mapper(self, sig_type_parameters.to_vec(), fresh_type_parameters.clone());
             // Go: `m = combineTypeMappers(identityMapper, m)` — a composite
             // with a nil m2 is equivalent to the first mapper alone.
             m = Some(match m {
@@ -8940,7 +8945,7 @@ impl Checker {
                     .to_vec();
                 {
                     let sig_ref = self.signature_arena.get_mut(sig);
-                    sig_ref.type_parameters = local_tps;
+                    sig_ref.type_parameters = local_tps.into();
                     sig_ref.resolved_return_type = Some(class_type);
                     if is_abstract {
                         sig_ref.flags |= SignatureFlags::ABSTRACT;
@@ -9657,7 +9662,7 @@ impl Checker {
         let mut param_mapper: Option<TypeMapperId> = None;
         if !left_tps.is_empty() && !right_tps.is_empty() {
             // We just use the type parameter defaults from the first signature.
-            param_mapper = Some(new_type_mapper(self, right_tps, left_tps));
+            param_mapper = Some(new_type_mapper(self, right_tps.to_vec(), left_tps.to_vec()));
         }
         let mut flags = (self.signature_arena.get(left).flags
             | self.signature_arena.get(right).flags)
@@ -9688,7 +9693,7 @@ impl Checker {
         let result = self.new_signature(
             flags,
             declaration,
-            type_params,
+            type_params.to_vec(),
             this_param,
             params,
             None,
@@ -10779,8 +10784,8 @@ impl Checker {
                 ast::checkflags::CheckFlags::DEFERRED_TYPE;
             let deferred = self.deferred_symbol_links.get(result);
             deferred.parent = Some(containing_type);
-            deferred.constituents = prop_types;
-            deferred.write_constituents = write_types.unwrap_or_default();
+            deferred.constituents = prop_types.into();
+            deferred.write_constituents = write_types.unwrap_or_default().into();
             return Some(result);
         }
         if is_union {
@@ -11445,7 +11450,7 @@ impl Checker {
             return t;
         }
         let could_contain = could_contain_type_variables_worker(self, t) || {
-            let alias_args: Vec<TypeId> = self
+            let alias_args = self
                 .types_handle()
                 .get_ref(t)
                 .alias
@@ -11675,7 +11680,7 @@ impl Checker {
                         .clone();
                     let new_type_arguments =
                         self.instantiate_types(&resolved_type_arguments, Some(m));
-                    if new_type_arguments == resolved_type_arguments {
+                    if new_type_arguments[..] == resolved_type_arguments[..] {
                         return t;
                     }
                     let __arena_target = self.types.clone();
@@ -11900,7 +11905,7 @@ impl Checker {
             .type_node_links
             .get(declaration)
             .outer_type_parameters
-            .clone();
+            .to_vec();
         if type_parameters.is_empty() {
             // The first time an anonymous type is instantiated we compute and store a list of the type
             // parameters that are in scope (and therefore potentially referenced). For type literals that
@@ -11942,7 +11947,8 @@ impl Checker {
                     }
                 }
             }
-            self.type_node_links.get(declaration).outer_type_parameters = type_parameters.clone();
+            self.type_node_links.get(declaration).outer_type_parameters =
+                type_parameters.clone().into();
         }
         if type_parameters.is_empty() {
             return t;
@@ -12219,7 +12225,7 @@ impl Checker {
             // there is no `getNonDistributedTypeParameter` pre-mapping in
             // `getConditionalTypeInstantiation`'s argument loop.
             let mappers = self.type_mappers.clone();
-            for tp in root.outer_type_parameters.clone() {
+            for tp in root.outer_type_parameters.iter().copied() {
                 type_arguments.push(mappers.map(self, mapper, tp));
             }
             let key = get_conditional_type_key(&type_arguments, alias.as_ref(), for_constraint);
@@ -12229,7 +12235,7 @@ impl Checker {
             }
             let new_mapper = new_type_mapper(
                 self,
-                root.outer_type_parameters.clone(),
+                root.outer_type_parameters.to_vec(),
                 type_arguments.clone(),
             );
             let check_type = root.check_type.expect("conditional root check type");
@@ -12621,7 +12627,7 @@ impl Checker {
     ) -> Option<TypeAlias> {
         alias.map(|alias| TypeAlias {
             symbol: alias.symbol,
-            type_arguments: self.instantiate_types(&alias.type_arguments, m),
+            type_arguments: self.instantiate_types(&alias.type_arguments, m).into(),
         })
     }
 
@@ -13804,7 +13810,7 @@ impl Checker {
                 .collect();
             let alias = TypeAlias {
                 symbol: Some(symbol),
-                type_arguments,
+                type_arguments: type_arguments.into(),
             };
             let key = get_alias_key(Some(&alias));
             if let Some(&error_type) = self.error_types.get(&key) {
@@ -13886,7 +13892,7 @@ impl Checker {
             }
             let new_alias = new_alias_symbol.map(|s| TypeAlias {
                 symbol: Some(s),
-                type_arguments: alias_type_arguments,
+                type_arguments: alias_type_arguments.into(),
             });
             let type_arguments = self.get_type_arguments_from_node(node);
             return self.get_type_alias_instantiation(symbol, &type_arguments, new_alias);
@@ -13918,7 +13924,7 @@ impl Checker {
                 }
             }
         }
-        let type_parameters = self.type_alias_links.get(symbol).type_parameters.clone();
+        let type_parameters = self.type_alias_links.get(symbol).type_parameters.to_vec();
         let key = get_type_alias_instantiation_key(type_arguments, alias.as_ref());
         if let Some(&instantiation) = self.type_alias_links.get(symbol).instantiations.get(&key) {
             return instantiation;
@@ -13976,7 +13982,7 @@ impl Checker {
         let symbol = self.get_alias_symbol_for_type_node(node)?;
         Some(TypeAlias {
             symbol: Some(symbol),
-            type_arguments: self.get_type_arguments_for_alias_symbol(Some(symbol)),
+            type_arguments: self.get_type_arguments_for_alias_symbol(Some(symbol)).into(),
         })
     }
 
@@ -14067,7 +14073,8 @@ impl Checker {
                 if !type_parameters.is_empty() {
                     // Initialize the instantiation cache for generic type aliases. The declared type corresponds to
                     // an instantiation of the type alias with the type parameters supplied as type arguments.
-                    self.type_alias_links.get(symbol).type_parameters = type_parameters.clone();
+                    self.type_alias_links.get(symbol).type_parameters =
+                        type_parameters.clone().into();
                     let key = get_type_list_key(&type_parameters);
                     self.type_alias_links
                         .get(symbol)
@@ -14155,7 +14162,7 @@ impl Checker {
                     UnionReduction::Literal,
                     Some(TypeAlias {
                         symbol: Some(symbol),
-                        type_arguments: Vec::new(),
+                        type_arguments: Vec::new().into(),
                     }),
                     None,
                 )
@@ -14762,7 +14769,7 @@ pub(crate) fn get_type_arguments(c: &mut Checker, t: TypeId) -> Vec<TypeId> {
             .get_ref(t)
             .as_type_reference()
             .resolved_type_arguments
-            .clone();
+            .to_vec();
     }
     let (target, node, mapper) = {
         let g = c.types.get_ref(t);
@@ -14843,7 +14850,7 @@ pub(crate) fn get_type_arguments(c: &mut Checker, t: TypeId) -> Vec<TypeId> {
                 .data
                 .as_type_reference_mut()
                 .expect("type reference")
-                .resolved_type_arguments = resolved;
+                .resolved_type_arguments = resolved.into();
         }
     } else {
         if c.types.get_ref(t)
@@ -14857,7 +14864,7 @@ pub(crate) fn get_type_arguments(c: &mut Checker, t: TypeId) -> Vec<TypeId> {
                 .data
                 .as_type_reference_mut()
                 .expect("type reference")
-                .resolved_type_arguments = errors;
+                .resolved_type_arguments = errors.into();
         }
         let error_node = node.or(c.current_node);
         if let Some(target) = target {
@@ -14881,7 +14888,7 @@ pub(crate) fn get_type_arguments(c: &mut Checker, t: TypeId) -> Vec<TypeId> {
     c.types.get_ref(t)
         .as_type_reference()
         .resolved_type_arguments
-        .clone()
+        .to_vec()
 }
 
 /// `(c *Checker) getTypeParameterFromMappedType` (checker.go:23158) —
@@ -15334,7 +15341,7 @@ fn write_generic_type_references(
             .as_type_reference()
             .map(|r| r.resolved_type_arguments.clone())
             .unwrap_or_default();
-        for t in resolved {
+        for t in resolved.iter().copied() {
             if c.types.get_ref(t)
                 .flags
                 .intersects(TypeFlags::TYPE_PARAMETER)

@@ -673,8 +673,8 @@ impl Checker {
                     .get(check_type)
                     .flags
                     .intersects(TypeFlags::TYPE_PARAMETER),
-                infer_type_parameters: self.get_infer_type_parameters(node, &[]),
-                outer_type_parameters: outer_type_parameters.clone().unwrap_or_default(),
+                infer_type_parameters: self.get_infer_type_parameters(node, &[]).into(),
+                outer_type_parameters: outer_type_parameters.clone().unwrap_or_default().into(),
                 instantiations: Arc::new(std::sync::RwLock::new(FxHashMap::default())),
                 alias,
             };
@@ -1018,7 +1018,7 @@ impl Checker {
                     .collect();
                 let new_root_mapper = mapper::new_type_mapper(
                     self,
-                    new_root.outer_type_parameters.clone(),
+                    new_root.outer_type_parameters.to_vec(),
                     type_arguments,
                 );
                 let mut new_check_type: Option<TypeId> = None;
@@ -1618,7 +1618,7 @@ impl Checker {
         d.interface_type.this_type = Some(this_type);
         let mut all = type_parameters.clone();
         all.push(this_type);
-        d.interface_type.all_type_parameters = all;
+        d.interface_type.all_type_parameters = all.into();
         let tp_key = crate::checker_types::get_type_list_key(d.interface_type.type_parameters());
         d.interface_type
             .type_reference
@@ -1627,7 +1627,7 @@ impl Checker {
             .insert(tp_key, t);
         d.interface_type.type_reference.object_type.target = Some(t);
         d.interface_type.type_reference.resolved_type_arguments =
-            d.interface_type.type_parameters().to_vec();
+            d.interface_type.type_parameters().into();
         d.interface_type.declared_members_resolved = true;
         d.interface_type.declared_members = members;
         d.element_infos = element_infos.to_vec();
@@ -4769,7 +4769,7 @@ impl Checker {
         if alias.is_none() {
             alias = node.and_then(|n| self.get_alias_for_type_node(n));
             if let (Some(a), Some(mapper)) = (alias.as_mut(), mapper) {
-                a.type_arguments = self.instantiate_types(&a.type_arguments, Some(mapper));
+                a.type_arguments = self.instantiate_types(&a.type_arguments, Some(mapper)).into();
             }
         }
         let symbol = self.types.get_ref(target).symbol;

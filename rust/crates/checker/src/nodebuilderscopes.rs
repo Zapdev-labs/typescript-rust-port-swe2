@@ -211,7 +211,7 @@ impl<'a> NodeBuilderImpl<'a> {
             let sig = c.signature_arena.get(signature);
             (
                 sig.declaration,
-                sig.type_parameters.clone(),
+                sig.type_parameters.to_vec(),
                 sig.parameters.clone(),
                 sig.mapper,
             )
