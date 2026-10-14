@@ -3380,6 +3380,18 @@ impl TypeArena {
         .clone()
     }
 
+    /// Borrow-scoped read — zero refcount churn. The `Ref` is valid only
+    /// until the next `borrow_mut`/`alloc` on this arena: NEVER hold it
+    /// across a call that can mutate types (same rule as `get_mut`).
+    pub fn get_ref(&self, id: TypeId) -> std::cell::Ref<'_, Type> {
+        std::cell::Ref::map(
+            self.types
+                .try_borrow()
+                .expect("DEADLOCK-PROBE: types.get_ref while arena write borrow held"),
+            |v| &*v[id.index()],
+        )
+    }
+
     /// Write access to a single type — the Go `t.field = v` write shape.
     /// Compute the value before calling (a nested `get`/`get_mut` on the
     /// same arena panics while the guard is held). `Rc::make_mut` clones
@@ -3411,11 +3423,11 @@ impl TypeArena {
     /// Panics like Go if the target is not an interface type... the Go code
     /// would panic on the nil/type-assertion paths too.
     pub fn target_interface_type(&self, t: TypeId) -> Option<TypeId> {
-        let target = self.get(t).as_type_reference().object_type.target?;
+        let target = self.get_ref(t).as_type_reference().object_type.target?;
         // Go asserts the target is an InterfaceType — check here so misuse
         // panics at the same point as Go's `AsInterfaceType()` on a non-nil
         // non-interface type would.
-        debug_assert!(self.get(target).as_interface_type().is_some());
+        debug_assert!(self.get_ref(target).as_interface_type().is_some());
         Some(target)
     }
 
@@ -3423,8 +3435,8 @@ impl TypeArena {
     /// `t.AsTypeReference().target.AsTupleType()`. Same arena shape as
     /// `target_interface_type`.
     pub fn target_tuple_type(&self, t: TypeId) -> Option<TypeId> {
-        let target = self.get(t).as_type_reference().object_type.target?;
-        debug_assert!(matches!(self.get(target).data, TypeData::Tuple(_)));
+        let target = self.get_ref(t).as_type_reference().object_type.target?;
+        debug_assert!(matches!(self.get_ref(target).data, TypeData::Tuple(_)));
         Some(target)
     }
 }
@@ -3483,7 +3495,7 @@ impl SignatureArena {
 
 /// `IsTypeAny` (checker/utilities.go:286).
 pub fn is_type_any(types: &TypeArena, t: TypeId) -> bool {
-    types.get(t).flags.intersects(TypeFlags::ANY)
+    types.get_ref(t).flags.intersects(TypeFlags::ANY)
 }
 
 /// `(c *Checker) isErrorType` (checker.go:27172). The `c` back-pointer only
@@ -3491,7 +3503,7 @@ pub fn is_type_any(types: &TypeArena, t: TypeId) -> bool {
 /// `"error"` — so the `&TypeArena`-only form tests `intrinsic_name` instead
 /// of pointer identity.
 pub fn is_error_type(types: &TypeArena, t: TypeId) -> bool {
-    let t = types.get(t);
+    let t = types.get_ref(t);
     t.flags.intersects(TypeFlags::ANY)
         && (t.alias.is_some()
             || matches!(&t.data, crate::types::TypeData::Intrinsic(i) if i.intrinsic_name == "error"))
@@ -3500,7 +3512,7 @@ pub fn is_error_type(types: &TypeArena, t: TypeId) -> bool {
 /// `isTypeUsableAsPropertyName` (checker/utilities.go:922).
 pub fn is_type_usable_as_property_name(types: &TypeArena, t: TypeId) -> bool {
     types
-        .get(t)
+        .get_ref(t)
         .flags
         .intersects(TypeFlags::STRING_OR_NUMBER_LITERAL_OR_UNIQUE)
 }
@@ -3508,7 +3520,7 @@ pub fn is_type_usable_as_property_name(types: &TypeArena, t: TypeId) -> bool {
 /// `isObjectLiteralType` (checker/utilities.go:867).
 pub fn is_object_literal_type(types: &TypeArena, t: TypeId) -> bool {
     types
-        .get(t)
+        .get_ref(t)
         .object_flags
         .intersects(ObjectFlags::OBJECT_LITERAL)
 }

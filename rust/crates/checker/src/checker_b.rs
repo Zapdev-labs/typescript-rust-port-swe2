@@ -66,7 +66,7 @@ impl Checker {
     /// `isTemplateLiteralContextualType` (checker.go:8210).
     pub(crate) fn is_template_literal_contextual_type(&mut self, t: TypeId) -> bool {
         let __arena_flags = self.types.clone();
-        let flags = __arena_flags.get(t).flags;
+        let flags = __arena_flags.get_ref(t).flags;
         flags.intersects(TypeFlags::STRING_LITERAL | TypeFlags::TEMPLATE_LITERAL)
             || flags.intersects(TypeFlags::INSTANTIABLE_NON_PRIMITIVE) && {
                 let base = self
@@ -111,7 +111,7 @@ impl Checker {
                 crate::checker_d::some_type(self, ct, |c: &mut Checker, t: TypeId| {
                     c.is_tuple_like_type(t)
                         || c.is_generic_mapped_type(t)
-                            && c.types_handle().get(t).as_mapped_type().name_type.is_none()
+                            && c.types_handle().get_ref(t).as_mapped_type().name_type.is_none()
                             && {
                                 let __arena___guard_target = c.types.clone();
                                 let __guard_target = __arena___guard_target.get(t).clone();
@@ -262,7 +262,7 @@ impl Checker {
     pub(crate) fn create_array_literal_type(&mut self, t: TypeId) -> TypeId {
         if !self
             .types_handle()
-            .get(t)
+            .get_ref(t)
             .object_flags
             .intersects(ObjectFlags::REFERENCE)
         {
@@ -270,7 +270,7 @@ impl Checker {
         }
         let key = CachedTypeKey {
             kind: CachedTypeKind::ArrayLiteralType,
-            type_id: self.types_handle().get(t).id,
+            type_id: self.types_handle().get_ref(t).id,
         };
         if let Some(&cached) = self.cached_types.get(&key) {
             return cached;
@@ -489,7 +489,7 @@ impl Checker {
     ) -> TypeId {
         if !self
             .types_handle()
-            .get(t)
+            .get_ref(t)
             .flags
             .intersects(TypeFlags::INDEXED_ACCESS)
         {
@@ -499,7 +499,7 @@ impl Checker {
         // type.
         let (object_type, index_type) = {
             let __arena_ty = self.types.clone();
-            let ty = __arena_ty.get(t);
+            let ty = __arena_ty.get_ref(t);
             let ia = ty.as_indexed_access_type();
             (
                 ia.object_type.expect("indexed access object type"),
@@ -583,7 +583,7 @@ impl Checker {
     ) -> Option<SymbolId> {
         let apparent = self.get_apparent_type(object_type);
         let __arena_distributed = self.types.clone();
-        let distributed = __arena_distributed.get(apparent).distributed(apparent);
+        let distributed = __arena_distributed.get_ref(apparent).distributed(apparent);
         for t in distributed {
             if let Some(prop) = self.get_property_of_type(t, property_name) {
                 return Some(prop);
@@ -1319,7 +1319,7 @@ impl Checker {
                 return self.resolve_error_call(node);
             }
             let __arena_symbol = self.types.clone();
-            let symbol = __arena_symbol.get(expression_type).symbol;
+            let symbol = __arena_symbol.get_ref(expression_type).symbol;
             if let Some(symbol) = symbol {
                 let value_decl = {
                     let arena = self.symbol_arena.borrow();
@@ -1478,17 +1478,17 @@ impl Checker {
         let first_base = base_types[0];
         if self
             .types_handle()
-            .get(first_base)
+            .get_ref(first_base)
             .flags
             .intersects(TypeFlags::INTERSECTION)
         {
-            let types: Vec<TypeId> = self.types_handle().get(first_base).types().to_vec();
+            let types: Vec<TypeId> = self.types_handle().get_ref(first_base).types().to_vec();
             let (mixin_flags, _) = self.find_mixins(&types);
             for (i, intersection_member) in types.iter().enumerate() {
                 // We want to ignore mixin ctors
                 if !mixin_flags.get(i).copied().unwrap_or(false) {
                     let __arena_ty = self.types.clone();
-                    let ty = __arena_ty.get(*intersection_member);
+                    let ty = __arena_ty.get_ref(*intersection_member);
                     if ty
                         .object_flags
                         .intersects(ObjectFlags::CLASS | ObjectFlags::INTERFACE)
@@ -1505,7 +1505,7 @@ impl Checker {
             }
             return false;
         }
-        if self.types_handle().get(first_base).symbol == Some(target) {
+        if self.types_handle().get_ref(first_base).symbol == Some(target) {
             return true;
         }
         self.type_has_protected_accessible_base(target, first_base)
@@ -2345,7 +2345,7 @@ impl Checker {
                 self.filter_type(t, &|c: &mut Checker, t: TypeId| accepts_void(&c.types, t));
             if self
                 .types_handle()
-                .get(filtered)
+                .get_ref(filtered)
                 .flags
                 .intersects(TypeFlags::NEVER)
             {
@@ -2493,7 +2493,7 @@ pub(crate) fn signature_has_literal_types(s: &Signature) -> bool {
 
 /// `acceptsVoid` (checker.go:9404).
 pub(crate) fn accepts_void(types: &crate::types::TypeArena, t: TypeId) -> bool {
-    types.get(t).flags.intersects(TypeFlags::VOID)
+    types.get_ref(t).flags.intersects(TypeFlags::VOID)
 }
 
 impl Checker {
@@ -2985,7 +2985,7 @@ impl Checker {
         if let Some(rest_type) = rest_type {
             if self
                 .types_handle()
-                .get(rest_type)
+                .get_ref(rest_type)
                 .flags
                 .intersects(TypeFlags::TYPE_PARAMETER)
             {
@@ -4098,12 +4098,12 @@ impl Checker {
         }
         if self
             .types_handle()
-            .get(apparent_type)
+            .get_ref(apparent_type)
             .flags
             .intersects(TypeFlags::UNION)
         {
             let __arena_types = self.types.clone();
-            let types = __arena_types.get(apparent_type).types().to_vec();
+            let types = __arena_types.get_ref(apparent_type).types().to_vec();
             let mut has_signatures = false;
             for constituent in types {
                 let signatures = self.get_signatures_of_type(constituent, kind);
@@ -4242,7 +4242,7 @@ impl Checker {
         kind: SignatureKind,
         diagnostic: &ast::diagnostic::DiagnosticRef,
     ) {
-        let Some(symbol) = self.types_handle().get(apparent_type).symbol else {
+        let Some(symbol) = self.types_handle().get_ref(apparent_type).symbol else {
             return;
         };
         let import_node = self.export_type_links.get(symbol).originating_import;
@@ -4781,7 +4781,7 @@ impl Checker {
         let t = self.get_apparent_type_of_contextual_type(node, ContextFlags::SIGNATURE)?;
         if !self
             .types_handle()
-            .get(t)
+            .get_ref(t)
             .flags
             .intersects(TypeFlags::UNION)
         {
@@ -4789,7 +4789,7 @@ impl Checker {
         }
         let mut signature_list: Vec<SignatureId> = Vec::new();
         let __arena_types = self.types.clone();
-        let types = __arena_types.get(t).types().to_vec();
+        let types = __arena_types.get_ref(t).types().to_vec();
         for current in types {
             if let Some(signature) = self.get_contextual_call_signature(current, node) {
                 if !signature_list.is_empty() {
@@ -5709,12 +5709,12 @@ impl Checker {
         non_applicable_type: &mut Option<TypeId>,
     ) -> TypeId {
         let __arena_flags = self.types.clone();
-        let flags = __arena_flags.get(t).flags;
+        let flags = __arena_flags.get_ref(t).flags;
         if flags.intersects(TypeFlags::OBJECT) {
             let resolved = self.resolve_structured_type_members(t);
             let __arena_resolved_call_signatures = self.types.clone();
             let resolved_call_signatures = __arena_resolved_call_signatures
-                .get(resolved)
+                .get_ref(resolved)
                 .data
                 .as_structured_type()
                 .expect("resolved structured type")
@@ -5722,7 +5722,7 @@ impl Checker {
                 .to_vec();
             let __arena_resolved_construct_signatures = self.types.clone();
             let resolved_construct_signatures = __arena_resolved_construct_signatures
-                .get(resolved)
+                .get_ref(resolved)
                 .data
                 .as_structured_type()
                 .expect("resolved structured type")
@@ -5750,11 +5750,11 @@ impl Checker {
                     ast::INTERNAL_SYMBOL_NAME_INSTANTIATION_EXPRESSION,
                 );
                 debug_assert!(
-                    self.types_handle().get(t).symbol.is_some(),
+                    self.types_handle().get_ref(t).symbol.is_some(),
                     "Instantiation expression source type must have a symbol"
                 );
                 let __arena_source_symbol = self.types.clone();
-                let source_symbol = __arena_source_symbol.get(t).symbol.unwrap();
+                let source_symbol = __arena_source_symbol.get_ref(t).symbol.unwrap();
                 let declarations = self.sym(source_symbol).declarations.clone();
                 self.sym_mut(symbol).declarations = declarations;
                 let result = self.new_object_type(
@@ -5812,7 +5812,7 @@ impl Checker {
             // `c.mapType(t, getInstantiatedType)` — the closure tracks the
             // aggregate flags on each constituent call.
             let __arena_types = self.types.clone();
-            let types = __arena_types.get(t).types().to_vec();
+            let types = __arena_types.get_ref(t).types().to_vec();
             let mut mapped = Vec::with_capacity(types.len());
             for constituent in types {
                 mapped.push(self.get_instantiated_type(
@@ -6063,7 +6063,7 @@ impl Checker {
         if self.strict_null_checks
             && !self
                 .types_handle()
-                .get(t)
+                .get_ref(t)
                 .flags
                 .intersects(TypeFlags::ANY_OR_UNKNOWN | TypeFlags::NEVER)
         {
@@ -6107,7 +6107,7 @@ impl Checker {
             && !self.is_error_type(awaited_type)
             && !self
                 .types_handle()
-                .get(operand_type)
+                .get_ref(operand_type)
                 .flags
                 .intersects(TypeFlags::ANY_OR_UNKNOWN)
         {
@@ -6357,7 +6357,7 @@ impl Checker {
         if let Some(rt) = return_type {
             if self
                 .types_handle()
-                .get(rt)
+                .get_ref(rt)
                 .flags
                 .intersects(TypeFlags::UNION)
             {
@@ -7118,7 +7118,7 @@ impl Checker {
                 if !is_unchecked_js && self.is_js_literal_type(left_type) {
                     return self.any_type;
                 }
-                if self.types_handle().get(left_type).symbol() == Some(self.global_this_symbol) {
+                if self.types_handle().get_ref(left_type).symbol() == Some(self.global_this_symbol) {
                     let global_symbol = self
                         .sym(self.global_this_symbol)
                         .exports
@@ -7597,17 +7597,17 @@ diag_name.clone(), __h7292_50],
         if !ast::is_private_identifier(&nodes[prop_node])
             && self
                 .types_handle()
-                .get(containing_type)
+                .get_ref(containing_type)
                 .flags
                 .intersects(TypeFlags::UNION)
             && !self
                 .types_handle()
-                .get(containing_type)
+                .get_ref(containing_type)
                 .flags
                 .intersects(TypeFlags::PRIMITIVE)
         {
             let __arena_subtypes = self.types.clone();
-            let subtypes = __arena_subtypes.get(containing_type).types().to_vec();
+            let subtypes = __arena_subtypes.get_ref(containing_type).types().to_vec();
             for subtype in subtypes {
                 if self.get_property_of_type(subtype, &prop_text).is_none()
                     && self
@@ -7761,7 +7761,7 @@ diag_name.clone(), __h7292_50],
     ) -> String {
         let __arena_container = self.types.clone();
         let container = __arena_container
-            .get(self.get_apparent_type(containing_type))
+            .get_ref(self.get_apparent_type(containing_type))
             .symbol();
         if let Some(container) = container {
             let container_name = self.sym(container).name.clone();
@@ -7885,7 +7885,7 @@ diag_name.clone(), __h7292_50],
 
 /// `hasCommonDomTypeName` (checker.go:11895).
 pub(crate) fn has_common_dom_type_name(c: &Checker, t: TypeId) -> bool {
-    let Some(symbol) = c.types_handle().get(t).symbol() else {
+    let Some(symbol) = c.types_handle().get_ref(t).symbol() else {
         return false;
     };
     let name = &c.sym(symbol).name;
@@ -8348,7 +8348,7 @@ impl Checker {
         }
         if self
             .types_handle()
-            .get(containing_type)
+            .get_ref(containing_type)
             .flags
             .intersects(TypeFlags::TYPE_PARAMETER)
         {
@@ -8356,7 +8356,7 @@ impl Checker {
             // the 'this' type
             if self
                 .types_handle()
-                .get(containing_type)
+                .get_ref(containing_type)
                 .as_type_parameter()
                 .is_this_type
             {
@@ -8421,7 +8421,7 @@ impl Checker {
             .containing_type
             .expect("ValueSymbolLinks.containingType");
         let __arena_types = self.types.clone();
-        let types = __arena_types.get(containing_type).types().to_vec();
+        let types = __arena_types.get_ref(containing_type).types().to_vec();
         for t in types {
             let name = self.sym(prop).name.clone();
             if let Some(p) = self.get_property_of_type(t, &name) {
@@ -8573,7 +8573,7 @@ impl Checker {
             //    parameter
             if self
                 .types_handle()
-                .get(tt)
+                .get_ref(tt)
                 .flags
                 .intersects(TypeFlags::TYPE_PARAMETER)
             {
@@ -8592,7 +8592,7 @@ impl Checker {
         if let Some(this_type) = this_type {
             if self
                 .types_handle()
-                .get(this_type)
+                .get_ref(this_type)
                 .object_flags
                 .intersects(ObjectFlags::CLASS_OR_INTERFACE | ObjectFlags::REFERENCE)
             {
@@ -9872,7 +9872,7 @@ impl Checker {
                 }
             }
             let __arena_symbol = self.types.clone();
-            let symbol = __arena_symbol.get(object_literal_type).symbol;
+            let symbol = __arena_symbol.get_ref(object_literal_type).symbol;
             let t = self.get_rest_type(object_literal_type, &non_rest_names, symbol);
             // PORT: clone the `*ast.NodeList` — the arena borrow ends before
             // the `&mut self` grammar check call.
@@ -10074,7 +10074,7 @@ impl Checker {
     /// function in checker.go owned by the checker_d range.
     fn every_type_is_tuple(&self, source_type: TypeId) -> bool {
         let __arena_t = self.types.clone();
-        let t = __arena_t.get(source_type);
+        let t = __arena_t.get_ref(source_type);
         if t.flags.intersects(TypeFlags::UNION) {
             t.as_union_type()
                 .union_or_intersection
@@ -10454,7 +10454,7 @@ impl Checker {
 
     /// `func (c *Checker) checkTruthinessOfType` (checker.go:13109).
     pub(crate) fn check_truthiness_of_type(&mut self, t: TypeId, node: NodeId) -> TypeId {
-        if self.types_handle().get(t).flags.intersects(TypeFlags::VOID) {
+        if self.types_handle().get_ref(t).flags.intersects(TypeFlags::VOID) {
             self.error(
                 Some(node),
                 &tsc_diagnostics::An_expression_of_type_void_cannot_be_tested_for_truthiness,
@@ -10887,7 +10887,7 @@ impl Checker {
                 && ast::get_containing_class(left, &nodes).is_some()
             {
                 let __arena_right_symbol = self.types.clone();
-                let right_symbol = __arena_right_symbol.get(right_type).symbol;
+                let right_symbol = __arena_right_symbol.get_ref(right_type).symbol;
                 let is_unchecked_js = self.is_unchecked_js_suggestion(
                     Some(left),
                     right_symbol,
@@ -10932,7 +10932,7 @@ impl Checker {
     pub(crate) fn has_empty_object_intersection(&mut self, t: TypeId) -> bool {
         let constituents: Vec<TypeId> = {
             let __arena_ty = self.types.clone();
-            let ty = __arena_ty.get(t);
+            let ty = __arena_ty.get_ref(t);
             if ty.flags.intersects(TypeFlags::UNION) {
                 ty.as_union_type().union_or_intersection.types.to_vec()
             } else {
@@ -11183,7 +11183,7 @@ impl Checker {
                     _ => self.check_object_literal_method(member_decl, check_mode),
                 };
                 object_flags |=
-                    self.types_handle().get(t).object_flags & ObjectFlags::PROPAGATING_FLAGS;
+                    self.types_handle().get_ref(t).object_flags & ObjectFlags::PROPAGATING_FLAGS;
                 let mut name_type: Option<TypeId> = None;
                 if let Some(computed) = computed_name_type
                     && crate::utilities::is_type_usable_as_property_name(&self.types, computed)
@@ -11543,12 +11543,12 @@ impl Checker {
     ) -> TypeId {
         if self
             .types_handle()
-            .get(left)
+            .get_ref(left)
             .flags
             .intersects(TypeFlags::ANY)
             || self
                 .types_handle()
-                .get(right)
+                .get_ref(right)
                 .flags
                 .intersects(TypeFlags::ANY)
         {
@@ -11556,12 +11556,12 @@ impl Checker {
         }
         if self
             .types_handle()
-            .get(left)
+            .get_ref(left)
             .flags
             .intersects(TypeFlags::UNKNOWN)
             || self
                 .types_handle()
-                .get(right)
+                .get_ref(right)
                 .flags
                 .intersects(TypeFlags::UNKNOWN)
         {
@@ -11569,7 +11569,7 @@ impl Checker {
         }
         if self
             .types_handle()
-            .get(left)
+            .get_ref(left)
             .flags
             .intersects(TypeFlags::NEVER)
         {
@@ -11577,7 +11577,7 @@ impl Checker {
         }
         if self
             .types_handle()
-            .get(right)
+            .get_ref(right)
             .flags
             .intersects(TypeFlags::NEVER)
         {
@@ -11586,7 +11586,7 @@ impl Checker {
         let left = self.try_merge_union_of_object_type_and_empty_object(left, readonly);
         if self
             .types_handle()
-            .get(left)
+            .get_ref(left)
             .flags
             .intersects(TypeFlags::UNION)
         {
@@ -11603,7 +11603,7 @@ impl Checker {
         let right = self.try_merge_union_of_object_type_and_empty_object(right, readonly);
         if self
             .types_handle()
-            .get(right)
+            .get_ref(right)
             .flags
             .intersects(TypeFlags::UNION)
         {
@@ -11617,7 +11617,7 @@ impl Checker {
             }
             return self.error_type;
         }
-        if self.types_handle().get(right).flags.intersects(
+        if self.types_handle().get_ref(right).flags.intersects(
             TypeFlags::BOOLEAN_LIKE
                 | TypeFlags::NUMBER_LIKE
                 | TypeFlags::BIG_INT_LIKE
@@ -11637,11 +11637,11 @@ impl Checker {
             // and the right type is '{ b: string }' we produce 'T & { a: string, b: string }'.
             if self
                 .types_handle()
-                .get(left)
+                .get_ref(left)
                 .flags
                 .intersects(TypeFlags::INTERSECTION)
             {
-                let types: Vec<TypeId> = self.types_handle().get(left).types().to_vec();
+                let types: Vec<TypeId> = self.types_handle().get_ref(left).types().to_vec();
                 let last_left = *types.last().expect("intersection constituents");
                 if self.is_non_generic_object_type(last_left)
                     && self.is_non_generic_object_type(right)
@@ -11783,7 +11783,7 @@ impl Checker {
         );
         let s = self.remove_definitely_falsy_types(mapped);
         let __arena_s_flags = self.types.clone();
-        let s_flags = __arena_s_flags.get(s).flags;
+        let s_flags = __arena_s_flags.get_ref(s).flags;
         if s_flags.intersects(
             TypeFlags::ANY
                 | TypeFlags::NON_PRIMITIVE
@@ -11793,7 +11793,7 @@ impl Checker {
             return true;
         }
         if s_flags.intersects(TypeFlags::UNION_OR_INTERSECTION) {
-            let types: Vec<TypeId> = self.types_handle().get(s).types().to_vec();
+            let types: Vec<TypeId> = self.types_handle().get_ref(s).types().to_vec();
             return types.iter().all(|&t| self.is_valid_spread_type(t));
         }
         false
@@ -11849,13 +11849,13 @@ impl Checker {
     ) -> TypeId {
         if !self
             .types_handle()
-            .get(t)
+            .get_ref(t)
             .flags
             .intersects(TypeFlags::UNION)
         {
             return t;
         }
-        let types: Vec<TypeId> = self.types_handle().get(t).types().to_vec();
+        let types: Vec<TypeId> = self.types_handle().get_ref(t).types().to_vec();
         if types
             .iter()
             .all(|&s| self.is_empty_object_type_or_spreads_into_empty_object(s))
@@ -11917,7 +11917,7 @@ impl Checker {
             }
         }
         let __arena_first_symbol = self.types.clone();
-        let first_symbol = __arena_first_symbol.get(first_type).symbol;
+        let first_symbol = __arena_first_symbol.get_ref(first_type).symbol;
         let index_infos = self.get_index_infos_of_type(first_type);
         let spread = self.new_anonymous_type(first_symbol, members, &[], &[], &index_infos);
         self.types_handle().get_mut(spread).object_flags |=
@@ -11983,7 +11983,7 @@ impl Checker {
     /// `func (c *Checker) isEmptyObjectTypeOrSpreadsIntoEmptyObject` (checker.go:13858).
     pub(crate) fn is_empty_object_type_or_spreads_into_empty_object(&mut self, t: TypeId) -> bool {
         self.is_empty_object_type(t)
-            || self.types_handle().get(t).flags.intersects(
+            || self.types_handle().get_ref(t).flags.intersects(
                 TypeFlags::NULL
                     | TypeFlags::UNDEFINED
                     | TypeFlags::BOOLEAN_LIKE
@@ -12144,9 +12144,9 @@ impl Checker {
             return false;
         }
         let __arena_flags = self.types.clone();
-        let flags = __arena_flags.get(t).flags;
+        let flags = __arena_flags.get_ref(t).flags;
         if flags.intersects(TypeFlags::TYPE_PARAMETER) {
-            let Some(symbol) = self.types_handle().get(t).symbol else {
+            let Some(symbol) = self.types_handle().get_ref(t).symbol else {
                 return false;
             };
             let declarations = self.sym(symbol).declarations.clone();
@@ -12157,7 +12157,7 @@ impl Checker {
             });
         }
         if flags.intersects(TypeFlags::UNION_OR_INTERSECTION) {
-            let types: Vec<TypeId> = self.types_handle().get(t).types().to_vec();
+            let types: Vec<TypeId> = self.types_handle().get_ref(t).types().to_vec();
             return types
                 .iter()
                 .any(|&s| self.is_const_type_variable(Some(s), depth));
@@ -12180,7 +12180,7 @@ impl Checker {
         }
         if self
             .types_handle()
-            .get(t)
+            .get_ref(t)
             .object_flags
             .intersects(ObjectFlags::MAPPED)
         {
@@ -12191,7 +12191,7 @@ impl Checker {
             let element_types = self.get_element_types(t);
             let element_infos: Vec<TupleElementInfo> = self
                 .types_handle()
-                .get(self.types_handle().target_tuple_type(t).unwrap())
+                .get_ref(self.types_handle().target_tuple_type(t).unwrap())
                 .as_tuple_type()
                 .element_infos
                 .to_vec();
@@ -12492,7 +12492,7 @@ impl Checker {
                         let rest_type = self.get_reduced_apparent_type(rest_inst);
                         let rest_is_union_of_tuples = {
                             let __arena_rt = self.types.clone();
-                            let rt = __arena_rt.get(rest_type);
+                            let rt = __arena_rt.get_ref(rest_type);
                             rt.flags.intersects(TypeFlags::UNION)
                                 && rt
                                     .types()
@@ -14696,7 +14696,7 @@ impl Checker {
         let nodes = __program.nodes((expression).file_index());
         if ast::is_class_expression(&nodes[expression]) {
             let t = self.check_expression_cached(expression);
-            return self.types_handle().get(t).symbol;
+            return self.types_handle().get_ref(t).symbol;
         }
         if !ast::is_entity_name(&nodes[expression])
             && !ast::is_entity_name_expression(&nodes[expression], &nodes)
@@ -16289,7 +16289,7 @@ impl Checker {
         if has_default_only && !self.is_error_type(t) {
             let key = CachedTypeKey {
                 kind: CachedTypeKind::DefaultOnlyType,
-                type_id: self.types_handle().get(t).id,
+                type_id: self.types_handle().get_ref(t).id,
             };
             if let Some(&cached) = self.cached_types.get(&key) {
                 return Some(cached);
@@ -16313,7 +16313,7 @@ impl Checker {
         if !self.is_error_type(t) {
             let key = CachedTypeKey {
                 kind: CachedTypeKind::SyntheticType,
-                type_id: self.types_handle().get(t).id,
+                type_id: self.types_handle().get_ref(t).id,
             };
             if let Some(&cached) = self.cached_types.get(&key) {
                 return cached;
@@ -16511,7 +16511,7 @@ impl Checker {
         let resolved_module_type = self.resolve_structured_type_members(module_type);
         let (members, index_infos) = {
             let __arena_guard = self.types.clone();
-            let guard = __arena_guard.get(resolved_module_type);
+            let guard = __arena_guard.get_ref(resolved_module_type);
             let resolved = guard.as_structured_type().expect("resolved module type");
             (resolved.members.clone(), resolved.index_infos.clone())
         };
