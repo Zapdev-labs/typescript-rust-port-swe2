@@ -1895,3 +1895,15 @@ Real-world bench: `tsc --noEmit --strict` on the compiler fixture set
   `infer_type_arguments` — real algorithm work at constant-factor
   overhead), `realloc`/Vec growth ~8%, `eq`/`equivalent` SymbolTable
   hash lookups ~7%.
+
+## Performance — PGO build (2026-10-14, later)
+- `pgo/merged.profdata.gz` holds a merged LLVM profile trained on the
+  checker-heavy compiler fixture; `scripts/build-pgo.sh` decompresses it
+  and builds `target-pgo/release/tsc` with `-Cprofile-use`.
+  `--train` regenerates the profile (needs `rustup component add
+  llvm-tools` for the version-matched `llvm-profdata`).
+- Measured: types.ts fixture 3.85s → 3.36s (~12%); condcheck
+  0.33s → 0.27s (~18%). Behavior-identical: regression list still
+  shows exactly the 5 known divergences.
+- mimalloc is already the `tsc` binary's global allocator
+  (commit fd49ddfc3b): ~3.8s → ~3.65s under load vs glibc malloc.
