@@ -1855,3 +1855,43 @@ mapped declaration resolution ported; normal checking is unaffected.
 ## Current bench (conditionalTypeDiscriminating…, --skipLibCheck)
 Go ~110ms total / ~75ms check; Rust ~165-175ms total. Parse gap on
 parserharness ~46ms vs Go ~23ms.
+
+## Performance — stable-address arenas (2026-10-14, later)
+Real-world bench: `tsc --noEmit --strict` on the compiler fixture set
+(~65k LOC pulled in via types.ts). Go ~0.64s check.
+- `Node` fat-tail boxing: 24 `NodeData` variants >128B boxed → `Node`
+  336→176B (~half arena bytes/memcpy). Common nodes stay inline.
+- `Type` fat-tail boxing: 10 `TypeData` variants ≥200B boxed → `Type`
+  552→144B; `Rc::make_mut` COW copies ~4x cheaper.
+- `get_ref` sweep #2: 160 `__arena___guard` double-clone sites (arena Rc
+  + element Rc per field read) collapsed to single `get_ref` borrows.
+- `Symbol::name` → `Arc<str>`: kills per-symbol string clones across
+  member resolution/LS (~120 call sites adapted).
+- `Rc<SymbolTable>`: `Symbol.members`/`exports`, `StructuredType
+  .members`, `InterfaceType.declared_members`, property caches,
+  `SourceFile.global_exports`, `LocalsContainerBase.locals` —
+  `IndexMap` deep clones (47% of the big-file profile) become Rc bumps;
+  writes via `Rc::make_mut`.
+- `Rc<[TypeId]>` for set-once TypeId lists: `resolved_type_arguments`,
+  `TypeAlias.type_arguments`, `all_type_parameters`,
+  `Signature.type_parameters`, `ConditionalRoot` inference lists, links
+  constituents — Type/Signature clones are now shallow.
+- `TypeArena` → `Rc<UnsafeCell<Vec<Box<Type>>>>` + `TypePtr`/`TypeMutPtr`
+  Copy handles (Go's `*Type`): no RefCell flag, no Rc inc/dec per read;
+  in-place mutation = Go shared-heap semantics. ~800 sites unchanged
+  via Deref.
+- `SymbolArena` → same shape + `SymbolPtr`/`SymbolMutPtr` (83 files).
+- `ArenaCell` node arena → `Rc<NodeArenaBuf(UnsafeCell<Vec<Node>>)>`:
+  killed the per-write COW of the whole `Vec<Node>` — `TSC_COW_STATS`
+  had measured 1184 clones × ~127k nodes = 150M node clones (~52%).
+  `ArenaMut` mutates in place; single-writer assert retained.
+- `resolve()` ancestor-arena prefetch → lazy fetch on foreign hops.
+- Result: 13.1s → 3.57s check on the fixture (~20x gap → ~5.6x);
+  condcheck bench ~1.0s → ~0.81s vs Go ~0.66s (~1.2x). Regression:
+  exactly the 5 known divergences on every pass; 299-test
+  declaration-emit slice clean.
+- Remaining flat profile: call-resolution machinery ~40%
+  (`resolve_call`/`choose_overload`/`is_signature_applicable`/
+  `infer_type_arguments` — real algorithm work at constant-factor
+  overhead), `realloc`/Vec growth ~8%, `eq`/`equivalent` SymbolTable
+  hash lookups ~7%.
