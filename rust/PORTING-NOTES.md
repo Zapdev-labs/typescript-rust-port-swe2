@@ -1745,3 +1745,22 @@ and surviving ones are ordinary statement temps.
 - Host memory: `test_local` can reach ~3-4G RSS per chunk under the 1GB
   debug-stack worker; run sequentially on memory-tight hosts —
   `systemd-oomd` kills cgroup'd sweeps proactively.
+
+## Fixed — cross-arena name resolution + fake-scope minting (2026-10-14)
+- `declarationMapCrossFileNodeReuse` /
+  `jsExportsImportedIntoTsxLosesTypeInfo`: `NameResolver::resolve` walked
+  parent chains in one buffer while `NodeId`s cross arenas — a foreign id
+  indexed out-of-bounds. Added `nr_arena_for` host hook +
+  `resolve_arena_for`-based per-hop arena resolution (complete `NodeId`,
+  not just `file_index` — scratch clones share indices).
+- `inferingFromAny` `.types`: `(a: any) => a is T` printed as
+  `(a: any) => boolean`. Root cause: `push_fake_scope`'s foreign-enclosing
+  path minted the fake `params` scope into
+  `program.nodes_mut(file_index)`, but under `arena_checkout` the cell
+  holds a stale clone — the minted Block id aliased an unrelated node in
+  the live buffer. Resolving `a` at the aliased `enclosing_declaration`
+  found the global `var a` instead of the signature param →
+  `track_existing_entity_name` marked the reuse unsafe →
+  `get_type_from_type_node(a is T)` → `booleanType` fallback. Fixed by
+  minting into the working buffer (parent link stays a foreign id; the
+  resolver's new cross-arena walk handles it).
