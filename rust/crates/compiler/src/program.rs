@@ -3202,15 +3202,35 @@ impl Program {
         }
         let arena_lens = self.arena_lengths();
 
-        // Round-robin groups — emit has no file/checker affinity.
-        let mut groups: Vec<Vec<NodeId>> = vec![Vec::new(); workers];
-        for (i, &file) in source_files.iter().enumerate() {
-            groups[i % workers].push(file);
+        // LPT-balanced groups by node count — same reasoning as the
+        // checker fork wave (`try_fork_collect`): a skewed group is the
+        // wall. Reassembly below is by original index, so emit order in
+        // the merged result stays source-file order.
+        let mut by_cost: Vec<(usize, NodeId, u64)> = source_files
+            .iter()
+            .enumerate()
+            .map(|(i, &f)| (i, f, self.nodes(f.file_index()).len() as u64))
+            .collect();
+        by_cost.sort_unstable_by(|a, b| b.2.cmp(&a.2));
+        let mut loads = vec![0u64; workers];
+        let mut groups: Vec<Vec<(usize, NodeId)>> = vec![Vec::new(); workers];
+        for (i, f, cost) in by_cost {
+            let g = loads
+                .iter()
+                .enumerate()
+                .min_by_key(|&(_, &l)| l)
+                .map(|(gi, _)| gi)
+                .unwrap_or(0);
+            groups[g].push((i, f));
+            loads[g] += cost;
+        }
+        for group in &mut groups {
+            group.sort_unstable_by_key(|&(i, _)| i);
         }
 
-        let emit_group = |group: &[NodeId]| -> Vec<EmitResult> {
+        let emit_group = |group: &[(usize, NodeId)]| -> Vec<EmitResult> {
             let mut results = Vec::with_capacity(group.len());
-            for &file in group {
+            for &(_, file) in group {
                 let mut emitter = crate::emitter::Emitter::new(
                     file,
                     emit_only,
@@ -3363,34 +3383,23 @@ impl Program {
             results_by_group.push((g, emit_group(&groups[g])));
         }
 
-        // Reassemble in input order: groups are round-robin interleaved
-        // (`groups[i % workers]`), so result for file i is group_results
-        // [i % workers][i / workers].
-        let mut group_results: Vec<std::collections::VecDeque<EmitResult>> =
-            Vec::with_capacity(workers);
-        // Parent group first.
-        let mut parent_iter = results.into_iter();
-        group_results.push(
-            (0..groups[0].len())
-                .map(|_| parent_iter.next().unwrap_or_default())
-                .collect(),
-        );
-        results_by_group.sort_by_key(|(g, _)| *g);
-        let mut by_g: FxHashMap<usize, Vec<EmitResult>> = results_by_group.into_iter().collect();
-        for g in 1..workers {
-            let rs = by_g.remove(&g).unwrap_or_default();
-            let mut q = std::collections::VecDeque::from(rs);
-            while q.len() < groups[g].len() {
-                q.push_back(EmitResult::default());
+        // Reassemble in input order — each group's results align with its
+        // (index, file) entries, so map back through `groups[g][k].0`.
+        let mut per_file: Vec<EmitResult> = (0..source_files.len())
+            .map(|_| EmitResult::default())
+            .collect();
+        let mut place = |g: usize, rs: Vec<EmitResult>| {
+            for (k, r) in rs.into_iter().enumerate() {
+                if let Some(&(i, _)) = groups[g].get(k) {
+                    per_file[i] = r;
+                }
             }
-            group_results.push(q);
+        };
+        place(0, results);
+        for (g, rs) in results_by_group {
+            place(g, rs);
         }
-        let merged = (0..source_files.len()).map(|i| {
-            group_results[i % workers]
-                .pop_front()
-                .unwrap_or_default()
-        });
-        Some(combine_emit_results(merged))
+        Some(combine_emit_results(per_file.into_iter()))
     }
 
     /// `PathKeyForFileName`.
