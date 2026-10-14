@@ -1375,7 +1375,7 @@ impl Checker {
             return true;
         }
         if ty.flags.intersects(TypeFlags::INTERSECTION) {
-            let types = ty.types().to_vec();
+            let types = ty.types_rc();
             drop(ty);
             return types.iter().any(|&t| self.is_or_has_generic_conditional(t));
         }
@@ -2017,7 +2017,7 @@ impl Checker {
             return self.is_weak_type(base_type);
         }
         if flags.intersects(TypeFlags::INTERSECTION) {
-            let types = self.types.get_ref(t).types().to_vec();
+            let types = self.types.get_ref(t).types_rc();
             return types.iter().all(|&t| self.is_weak_type(t));
         }
         false
@@ -2082,8 +2082,8 @@ impl Checker {
         if flags.intersects(TypeFlags::UNION_OR_INTERSECTION)
             && is_excess_property_check_target(&self.types, target_type)
         {
-            let types = self.types.get_ref(target_type).types().to_vec();
-            for t in types {
+            let types = self.types.get_ref(target_type).types_rc();
+            for t in (types).iter().copied() {
                 if self.is_known_property(t, name, is_comparing_jsx_attributes) {
                     return true;
                 }
@@ -2124,7 +2124,7 @@ pub(crate) fn is_excess_property_check_target(types: &crate::types::TypeArena, t
         drop(ty);
     }
     if flags.intersects(TypeFlags::UNION) {
-        let constituents = types.get_ref(t).types().to_vec();
+        let constituents = types.get_ref(t).types_rc();
         if constituents
             .iter()
             .any(|&t| is_excess_property_check_target(types, t))
@@ -2133,7 +2133,7 @@ pub(crate) fn is_excess_property_check_target(types: &crate::types::TypeArena, t
         }
     }
     if flags.intersects(TypeFlags::INTERSECTION) {
-        let constituents = types.get_ref(t).types().to_vec();
+        let constituents = types.get_ref(t).types_rc();
         if constituents
             .iter()
             .all(|&t| is_excess_property_check_target(types, t))
@@ -2177,7 +2177,7 @@ fn get_recursion_identity_target(c: &mut Checker, t: TypeId) -> TypeId {
                 let tt = c.types.get_ref(target);
                 let has_symbol = tt.symbol.is_some();
                 let constituents_have_symbol = tt.flags.intersects(TypeFlags::INTERSECTION) && {
-                    let types = tt.types().to_vec();
+                    let types = tt.types_rc();
                     drop(tt);
                     types
                         .iter()
@@ -2290,8 +2290,8 @@ pub(crate) fn has_matching_recursion_identity(
         .flags
         .intersects(TypeFlags::INTERSECTION)
     {
-        let types = c.types.get_ref(target).types().to_vec();
-        for t in types {
+        let types = c.types.get_ref(target).types_rc();
+        for t in (types).iter().copied() {
             if has_matching_recursion_identity(c, t, identity) {
                 return true;
             }
@@ -2320,8 +2320,8 @@ impl Checker {
                 .flags
                 .intersects(TypeFlags::INTERSECTION)
             {
-                let types = self.types.get_ref(target).types().to_vec();
-                for t in types {
+                let types = self.types.get_ref(target).types_rc();
+                for t in (types).iter().copied() {
                     if self.is_deeply_nested_type(t, stack, max_depth) {
                         return true;
                     }
@@ -2397,8 +2397,8 @@ impl Checker {
                 let s = self.types.get_ref(source);
                 (s.target(), s.alias.as_ref().and_then(|a| a.symbol))
             };
-            let targets = self.types.get_ref(union_target).types().to_vec();
-            for target in targets {
+            let targets = self.types.get_ref(union_target).types_rc();
+            for target in (targets).iter().copied() {
                 let (target_flags, target_object_flags) = {
                     let t = self.types.get_ref(target);
                     (t.flags, t.object_flags)
@@ -2438,7 +2438,7 @@ impl Checker {
         kind: SignatureKind,
     ) -> Option<TypeId> {
         if !self.get_signatures_of_type(source, kind).is_empty() {
-            let types = self.types.get_ref(union_target).types().to_vec();
+            let types = self.types.get_ref(union_target).types_rc();
             return core::find(&types, |&t| {
                 !self.get_signatures_of_type(t, kind).is_empty()
             });
@@ -2460,8 +2460,8 @@ impl Checker {
             .intersects(TypeFlags::PRIMITIVE | TypeFlags::INSTANTIABLE_PRIMITIVE)
         {
             let mut matching_count: i32 = 0;
-            let types = self.types.get_ref(union_target).types().to_vec();
-            for target in types {
+            let types = self.types.get_ref(union_target).types_rc();
+            for target in (types).iter().copied() {
                 if !self
                     .types_handle()
                     .get(target)
@@ -2497,7 +2497,7 @@ impl Checker {
                             .flags
                             .intersects(TypeFlags::UNION)
                         {
-                            let overlap_types = self.types.get_ref(overlap).types().to_vec();
+                            let overlap_types = self.types.get_ref(overlap).types_rc();
                             length = core::count_where(&overlap_types, |&t| {
                                 crate::checker_d::is_unit_type(&self.types, t)
                             });
@@ -2526,7 +2526,7 @@ impl Checker {
             .intersects(ObjectFlags::OBJECT_LITERAL)
             && crate::checker_d::some_type(self, union_target, |c, t| c.is_array_like_type(t))
         {
-            let types = self.types.get_ref(union_target).types().to_vec();
+            let types = self.types.get_ref(union_target).types_rc();
             return core::find(&types, |&t| !self.is_array_like_type(t));
         }
         None
@@ -2938,7 +2938,7 @@ impl Checker {
         let (types, is_primitive_union) = {
             let ty = self.types.get_ref(t);
             (
-                ty.types().to_vec(),
+                ty.types_rc(),
                 ty.object_flags.intersects(ObjectFlags::PRIMITIVE_UNION),
             )
         };
@@ -3050,7 +3050,7 @@ impl Checker {
         mut r: ErrorReporter<'_>,
         discriminator: &mut dyn Discriminator,
     ) -> TypeId {
-        let types = self.types.get_ref(target).types().to_vec();
+        let types = self.types.get_ref(target).types_rc();
         let mut include = vec![Ternary::default(); types.len()];
         for (i, &t) in types.iter().enumerate() {
             if !self
@@ -3210,7 +3210,7 @@ impl Checker {
             return false;
         }
         if flags.intersects(TypeFlags::UNION_OR_INTERSECTION) {
-            let types = self.types.get_ref(t).types().to_vec();
+            let types = self.types.get_ref(t).types_rc();
             return types
                 .iter()
                 .any(|&t| self.type_could_have_top_level_singleton_types(t));
@@ -5562,7 +5562,7 @@ impl Checker {
             (s.flags, t.flags)
         };
         if target_flags.intersects(TypeFlags::INTERSECTION) {
-            let types = self.types.get_ref(target).types().to_vec();
+            let types = self.types.get_ref(target).types_rc();
             return types.iter().all(|&t| {
                 t == self.empty_type_literal_type
                     || self.is_valid_type_for_template_literal_placeholder(
@@ -5874,7 +5874,7 @@ impl Relater {
             if source_flags.intersects(TypeFlags::DEFINITELY_NON_NULLABLE)
                 && target_flags.intersects(TypeFlags::UNION)
             {
-                let types = c.types.get_ref(target).types().to_vec();
+                let types = c.types.get_ref(target).types_rc();
                 let mut candidate: Option<TypeId> = None;
                 if types.len() == 2
                     && c.types_handle()
@@ -6335,9 +6335,9 @@ impl Checker {
     pub(crate) fn is_type_subset_of_union(&mut self, source: TypeId, target: TypeId) -> bool {
         let source_flags = self.types.get_ref(source).flags;
         if source_flags.intersects(TypeFlags::UNION) {
-            let source_types = self.types.get_ref(source).types().to_vec();
-            let target_types = self.types.get_ref(target).types().to_vec();
-            for t in source_types {
+            let source_types = self.types.get_ref(source).types_rc();
+            let target_types = self.types.get_ref(target).types_rc();
+            for t in (source_types).iter().copied() {
                 if !target_types.contains(&t) {
                     return false;
                 }
@@ -6487,11 +6487,11 @@ impl Relater {
         if Rc::ptr_eq(&self.relation(), &c.comparable_relation)
             && target_flags.intersects(TypeFlags::PRIMITIVE)
         {
-            let source_types = c.types.get_ref(source).types().to_vec();
+            let source_types = c.types.get_ref(source).types_rc();
             // `core::same_map` equivalent (needs `&mut Checker` inside the
             // mapper, which the std helper cannot borrow).
             let mut constraints = Vec::with_capacity(source_types.len());
-            for &t in &source_types {
+            for &t in (&source_types).iter() {
                 if c.types_handle()
                     .get(t)
                     .flags
@@ -6541,7 +6541,7 @@ impl Relater {
         intersection_state: IntersectionState,
     ) -> Ternary {
         let source_flags = c.types.get_ref(source).flags;
-        let source_types = c.types.get_ref(source).types().to_vec();
+        let source_types = c.types.get_ref(source).types_rc();
         if source_flags.intersects(TypeFlags::UNION) && source_types.contains(&target) {
             return Ternary::TRUE;
         }
@@ -6572,7 +6572,7 @@ impl Relater {
         intersection_state: IntersectionState,
     ) -> Ternary {
         let mut result = Ternary::TRUE;
-        let source_types = c.types.get_ref(source).types().to_vec();
+        let source_types = c.types.get_ref(source).types_rc();
         // We strip `undefined` from the target if the `source` trivially
         // doesn't contain it for our correspondence-checking fastpath since
         // `undefined` is frequently added by optionality and would otherwise
@@ -6672,7 +6672,7 @@ impl Relater {
         report_errors: bool,
         intersection_state: IntersectionState,
     ) -> Ternary {
-        let target_types = c.types.get_ref(target).types().to_vec();
+        let target_types = c.types.get_ref(target).types_rc();
         if c.types.get_ref(target)
             .flags
             .intersects(TypeFlags::UNION)
@@ -6743,7 +6743,7 @@ impl Relater {
                 }
             }
         }
-        for t in target_types {
+        for t in (target_types).iter().copied() {
             let related = self.is_related_to_ex(
                 c,
                 source,
@@ -6791,8 +6791,8 @@ impl Relater {
         intersection_state: IntersectionState,
     ) -> Ternary {
         let mut result = Ternary::TRUE;
-        let target_types = c.types.get_ref(target).types().to_vec();
-        for target_type in target_types {
+        let target_types = c.types.get_ref(target).types_rc();
+        for target_type in (target_types).iter().copied() {
             let related = self.is_related_to_ex(
                 c,
                 source,
@@ -6818,8 +6818,8 @@ impl Relater {
         target: TypeId,
     ) -> Ternary {
         let mut result = Ternary::TRUE;
-        let source_types = c.types.get_ref(source).types().to_vec();
-        for source_type in source_types {
+        let source_types = c.types.get_ref(source).types_rc();
+        for source_type in (source_types).iter().copied() {
             let related = self.type_related_to_some_type(
                 c,
                 source_type,
@@ -7106,9 +7106,9 @@ impl Relater {
                         && target_flags.intersects(TypeFlags::UNION))
             {
                 let source_types = if source_flags.intersects(TypeFlags::INTERSECTION) {
-                    c.types.get_ref(source).types().to_vec()
+                    c.types.get_ref(source).types_rc()
                 } else {
-                    vec![source]
+                    vec![source].into()
                 };
                 let constraint = c.get_effective_constraint_of_intersection(
                     &source_types,
@@ -9104,10 +9104,10 @@ impl Relater {
         // properties to one or more constituents of 'target'. If any
         // combination does not have a match then 'source' is not relatable.
         let mut matching_types: Vec<TypeId> = Vec::new();
-        let target_types = c.types.get_ref(target).types().to_vec();
+        let target_types = c.types.get_ref(target).types_rc();
         'combinations: for combination in &discriminant_combinations {
             let mut has_match = false;
-            'outer: for &t in &target_types {
+            'outer: for &t in target_types.iter() {
                 for i in 0..source_properties_filtered.len() {
                     let source_property = source_properties_filtered[i];
                     let target_property = {
@@ -10603,7 +10603,7 @@ impl Relater {
             .intersects(ObjectFlags::JSX_ATTRIBUTES)
             && target_flags.intersects(TypeFlags::INTERSECTION)
         {
-            let target_types = c.types.get_ref(target).types().to_vec();
+            let target_types = c.types.get_ref(target).types_rc();
             // `JsxNames.IntrinsicAttributes` / `.IntrinsicClassAttributes`
             // (jsx.go's `JsxNames` is a struct of string constants).
             let intrinsic_attributes = c.get_jsx_type("IntrinsicAttributes", self.error_node);
@@ -11131,7 +11131,7 @@ impl Checker {
             (ty.flags, ty.object_flags, ty.symbol)
         };
         if flags.intersects(TypeFlags::INTERSECTION) {
-            let types = self.types.get_ref(t).types().to_vec();
+            let types = self.types.get_ref(t).types_rc();
             return types
                 .iter()
                 .all(|&t| self.is_object_type_with_inferable_index(t));
@@ -11172,15 +11172,15 @@ impl Checker {
         let source_flags = self.types.get_ref(source).flags;
         let target_flags = self.types.get_ref(target).flags;
         if source_flags.intersects(TypeFlags::UNION) {
-            let types = self.types.get_ref(source).types().to_vec();
+            let types = self.types.get_ref(source).types_rc();
             return types.iter().all(|&t| self.is_type_derived_from(t, target));
         }
         if target_flags.intersects(TypeFlags::UNION) {
-            let types = self.types.get_ref(target).types().to_vec();
+            let types = self.types.get_ref(target).types_rc();
             return types.iter().any(|&t| self.is_type_derived_from(source, t));
         }
         if source_flags.intersects(TypeFlags::INTERSECTION) {
-            let types = self.types.get_ref(source).types().to_vec();
+            let types = self.types.get_ref(source).types_rc();
             return types.iter().any(|&t| self.is_type_derived_from(t, target));
         }
         if source_flags.intersects(TypeFlags::INSTANTIABLE_NON_PRIMITIVE) {

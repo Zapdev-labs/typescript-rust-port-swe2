@@ -1785,7 +1785,7 @@ impl Type {
     /// single-element case (Go returns `[]*Type{t}`).
     pub fn distributed(&self, self_id: TypeId) -> Vec<TypeId> {
         if self.flags.intersects(TypeFlags::UNION) {
-            return self.as_union_type().union_or_intersection.types.clone();
+            return self.as_union_type().union_or_intersection.types.to_vec();
         }
         if self.flags.intersects(TypeFlags::NEVER) {
             return Vec::new();
@@ -1844,6 +1844,22 @@ impl Type {
         }
         if self.flags.intersects(TypeFlags::TEMPLATE_LITERAL) {
             return &self.as_template_literal_type().types;
+        }
+        panic!("Unhandled case in Type.Types (flags={:?})", self.flags)
+    }
+
+    /// Shared handle to the constituent list — a refcount bump instead of
+    /// the `Vec` copy `types().to_vec()` paid per call.
+    pub fn types_rc(&self) -> Rc<[TypeId]> {
+        if self.flags.intersects(TypeFlags::UNION_OR_INTERSECTION) {
+            return self
+                .as_union_or_intersection_type()
+                .expect("Types on union/intersection")
+                .types
+                .clone();
+        }
+        if self.flags.intersects(TypeFlags::TEMPLATE_LITERAL) {
+            return self.as_template_literal_type().types.clone();
         }
         panic!("Unhandled case in Type.Types (flags={:?})", self.flags)
     }
@@ -2672,7 +2688,7 @@ pub struct UnionOrIntersectionType {
     /// embedded `StructuredType`.
     pub structured_type: StructuredType,
     /// `types`.
-    pub types: Vec<TypeId>,
+    pub types: Rc<[TypeId]>,
     /// `propertyCache`.
     pub property_cache: SymbolTable,
     /// `propertyCacheWithoutFunctionPropertyAugment`.
@@ -2685,6 +2701,12 @@ impl UnionOrIntersectionType {
     /// `(t *UnionOrIntersectionType) Types`.
     pub fn types(&self) -> &[TypeId] {
         &self.types
+    }
+
+    /// Shared handle to the constituent list — a refcount bump instead of
+    /// the `Vec` copy `types().to_vec()` paid per call.
+    pub fn types_rc(&self) -> Rc<[TypeId]> {
+        self.types.clone()
     }
 }
 
@@ -2825,13 +2847,18 @@ pub struct TemplateLiteralType {
     /// `texts` — always one element longer than `types`.
     pub texts: Vec<String>,
     /// `types` — always at least one element.
-    pub types: Vec<TypeId>,
+    pub types: Rc<[TypeId]>,
 }
 
 impl TemplateLiteralType {
     /// `(t *TemplateLiteralType) Texts`.
     pub fn texts(&self) -> &[String] {
         &self.texts
+    }
+
+    /// Shared constituent handle — see `UnionOrIntersectionType::types_rc`.
+    pub fn types_rc(&self) -> Rc<[TypeId]> {
+        self.types.clone()
     }
 
     /// `(t *TemplateLiteralType) Types`.

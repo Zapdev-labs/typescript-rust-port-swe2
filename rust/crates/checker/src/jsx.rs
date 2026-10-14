@@ -2017,7 +2017,7 @@ impl Checker {
             // If each member has some combination of new/call signatures;
             // make a union signature list for those
             let __arena_types = self.types.clone();
-            let types = __arena_types.get(apparent_elem_type).types().to_vec();
+            let types = __arena_types.get(apparent_elem_type).types_rc();
             let signature_lists: Vec<Vec<SignatureId>> = types
                 .iter()
                 .map(|&t| self.get_uninstantiated_jsx_signatures_of_type(t, caller))

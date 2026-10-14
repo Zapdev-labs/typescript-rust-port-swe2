@@ -207,8 +207,8 @@ impl Checker {
         {
             // When source and target are the same union or intersection type,
             // just relate each constituent type to itself.
-            let types = self.types.get_ref(source).types().to_vec();
-            for t in types {
+            let types = self.types.get_ref(source).types_rc();
+            for t in (types).iter().copied() {
                 self.infer_from_types(n, t, t);
             }
             return;
@@ -273,7 +273,7 @@ impl Checker {
             .flags
             .intersects(TypeFlags::INTERSECTION)
             && {
-                let ts = self.types.get_ref(target).types().to_vec();
+                let ts = self.types.get_ref(target).types_rc();
                 !core::every(&ts, |&t| self.is_non_generic_object_type(t))
             }
         {
@@ -583,13 +583,13 @@ impl Checker {
         } else if target_flags.intersects(TypeFlags::CONDITIONAL) {
             self.invoke_once(n, source, target, Self::infer_to_conditional_type);
         } else if target_flags.intersects(TypeFlags::UNION_OR_INTERSECTION) {
-            let targets = self.types.get_ref(target).types().to_vec();
+            let targets = self.types.get_ref(target).types_rc();
             self.infer_to_multiple_types(n, source, &targets, target_flags);
         } else if source_flags.intersects(TypeFlags::UNION) {
             // Source is a union or intersection type, infer from each
             // constituent type.
-            let sources = self.types.get_ref(source).types().to_vec();
-            for source_type in sources {
+            let sources = self.types.get_ref(source).types_rc();
+            for source_type in (sources).iter().copied() {
                 self.infer_from_types(n, source_type, target);
             }
         } else if target_flags.intersects(TypeFlags::TEMPLATE_LITERAL) {
@@ -2560,7 +2560,7 @@ impl Checker {
             .as_reverse_mapped_type()
             .constraint_type
             .expect("constraintType");
-        let origin_types = self.types.get_ref(origin).types().to_vec();
+        let origin_types = self.types.get_ref(origin).types_rc();
         let filtered = core::filter(&origin_types, |&t| t != constraint_type);
         let limited_constraint = self.get_intersection_type(&filtered);
         if limited_constraint != self.never_type {
@@ -2982,7 +2982,7 @@ impl Checker {
         }
         let flags = self.types.get_ref(t).flags;
         if flags.intersects(TypeFlags::UNION_OR_INTERSECTION) {
-            let types = self.types.get_ref(t).types().to_vec();
+            let types = self.types.get_ref(t).types_rc();
             return core::some(&types, |t| {
                 self.is_type_parameter_at_top_level(*t, tp, depth)
             });
@@ -3112,7 +3112,7 @@ impl Checker {
         for &t in types {
             let t_flags = self.types.get_ref(t).flags;
             if t_flags.intersects(TypeFlags::UNION) {
-                let constituents = self.types.get_ref(t).types().to_vec();
+                let constituents = self.types.get_ref(t).types_rc();
                 flags |= self.get_combined_type_flags(&constituents);
             } else {
                 flags |= t_flags;
@@ -3233,7 +3233,7 @@ fn get_type_depth(c: &mut Checker, t: TypeId, max_depth: i32) -> i32 {
                 ty.alias().map(|a| a.type_arguments.clone()),
                 ty.object_flags.intersects(ObjectFlags::REFERENCE),
                 if ty.flags.intersects(TypeFlags::UNION_OR_INTERSECTION) {
-                    Some(ty.types().to_vec())
+                    Some(ty.types_rc())
                 } else {
                     None
                 },

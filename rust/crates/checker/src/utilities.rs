@@ -1037,11 +1037,11 @@ fn compare_types_opt(
             // Unions are ordered by origin and then constituent type lists.
             let (o1, types1) = {
                 let u = types.get(t1);
-                (u.as_union_type().origin, u.types().to_vec())
+                (u.as_union_type().origin, u.types_rc())
             };
             let (o2, types2) = {
                 let u = types.get(t2);
-                (u.as_union_type().origin, u.types().to_vec())
+                (u.as_union_type().origin, u.types_rc())
             };
             match (o1, o2) {
                 (None, None) => {

@@ -811,7 +811,7 @@ impl Checker {
             let name = self.sym(symbol).name.clone();
             let containing_type = self.value_symbol_links.get(symbol).containing_type;
             let types = containing_type
-                .map(|t| self.types_handle().get(t).types().to_vec())
+                .map(|t| self.types_handle().get(t).types_rc())
                 .unwrap_or_default();
             return types
                 .iter()

@@ -1489,11 +1489,11 @@ pub fn get_union_key(
             let origin_flags = arena.get(origin).flags;
             if origin_flags.intersects(TypeFlags::UNION) {
                 b.write_byte(b'|');
-                let origin_types = arena.get(origin).types().to_vec();
+                let origin_types = arena.get(origin).types_rc();
                 b.write_types(&origin_types);
             } else if origin_flags.intersects(TypeFlags::INTERSECTION) {
                 b.write_byte(b'&');
-                let origin_types = arena.get(origin).types().to_vec();
+                let origin_types = arena.get(origin).types_rc();
                 b.write_types(&origin_types);
             } else if origin_flags.intersects(TypeFlags::INDEX) {
                 // origin type id alone is insufficient, as `keyof x` may

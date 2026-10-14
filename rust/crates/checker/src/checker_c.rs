@@ -1886,7 +1886,7 @@ impl Checker {
             return Some(base_constructor_type);
         }
         if flags.intersects(TypeFlags::INTERSECTION) {
-            let types = self.types.get_ref(base_constructor_type).types().to_vec();
+            let types = self.types.get_ref(base_constructor_type).types_rc();
             return core::find(&types, |&t| {
                 self.types_handle()
                     .get(t)
@@ -4074,7 +4074,7 @@ impl Checker {
                         widened_types: FxHashMap::default(),
                     }))
                 });
-                let types = self.types.get_ref(t).types().to_vec();
+                let types = self.types.get_ref(t).types_rc();
                 let widened_types = core::same_map(&types, |t| {
                     if self
                         .types_handle()
@@ -4098,7 +4098,7 @@ impl Checker {
                 };
                 result = Some(self.get_union_type_ex(&widened_types, union_reduction, None, None));
             } else if flags.intersects(TypeFlags::INTERSECTION) {
-                let types = self.types.get_ref(t).types().to_vec();
+                let types = self.types.get_ref(t).types_rc();
                 let widened_types = core::same_map(&types, |t| self.get_widened_type(*t));
                 result = Some(self.get_intersection_type(&widened_types));
             } else if self.is_array_or_tuple_type(t) {
@@ -4970,8 +4970,8 @@ impl Checker {
             .flags
             .intersects(TypeFlags::INTERSECTION);
         let is_union = self.types.get_ref(t).flags.intersects(TypeFlags::UNION);
-        let constituents = self.types.get_ref(t).types().to_vec();
-        for current in constituents {
+        let constituents = self.types.get_ref(t).types_rc();
+        for current in (constituents).iter().copied() {
             for prop in self.get_properties_of_type(current) {
                 let name = self.sym(prop).name.clone();
                 if !checked.contains(&name) {
@@ -6350,7 +6350,7 @@ impl Checker {
         flags.intersects(TypeFlags::OBJECT | TypeFlags::NON_PRIMITIVE | TypeFlags::ANY)
             && !self.is_generic_mapped_type(t)
             || flags.intersects(TypeFlags::INTERSECTION) && {
-                let elems = self.types.get_ref(t).types().to_vec();
+                let elems = self.types.get_ref(t).types_rc();
                 elems.iter().all(|&m| self.is_valid_base_type(m))
             }
     }
@@ -6430,7 +6430,7 @@ impl Checker {
             .flags
             .intersects(TypeFlags::INTERSECTION)
         {
-            let types = self.types.get_ref(t).types().to_vec();
+            let types = self.types.get_ref(t).types_rc();
             let new_types: Vec<TypeId> = types
                 .iter()
                 .copied()
@@ -6791,7 +6791,7 @@ impl Checker {
         flags.intersects(TypeFlags::STRING | TypeFlags::NUMBER | TypeFlags::ES_SYMBOL)
             || self.is_pattern_literal_type(t)
             || flags.intersects(TypeFlags::INTERSECTION) && !self.is_generic_type(t) && {
-                let elems = self.types.get_ref(t).types().to_vec();
+                let elems = self.types.get_ref(t).types_rc();
                 elems.iter().any(|&m| self.is_valid_index_key_type(m))
             }
     }
@@ -8164,11 +8164,11 @@ impl Checker {
                 .flags
                 .intersects(TypeFlags::UNION)
             {
-                let members = self.types.get_ref(t).types().to_vec();
+                let members = self.types.get_ref(t).types_rc();
                 if members.iter().any(|&m| self.is_empty_object_type(m)) {
                     error_reported = true;
                 } else {
-                    for s in members {
+                    for s in (members).iter().copied() {
                         error_reported = self.report_widening_errors_in_type(s) || error_reported;
                     }
                 }
@@ -9393,7 +9393,7 @@ impl Checker {
             // Similarly to getTypeFromIntersectionTypeNode, we preserve the special
             // string & {}, number & {}, and bigint & {} intersections that are used
             // to prevent subtype reduction in union types.
-            let types = self.types.get_ref(t).types().to_vec();
+            let types = self.types.get_ref(t).types_rc();
             if types.len() == 2
                 && self
                     .types_handle()
@@ -9427,9 +9427,9 @@ impl Checker {
         // The members and properties collections are empty for union types. To get
         // all properties of a union type use getPropertiesOfType (only the
         // language service uses this).
-        let types = self.types.get_ref(t).types().to_vec();
+        let types = self.types.get_ref(t).types_rc();
         let mut call_lists: Vec<Vec<SignatureId>> = Vec::with_capacity(types.len());
-        for &ty in &types {
+        for &ty in (&types).iter() {
             if ty == self.global_function_type {
                 call_lists.push(vec![self.unknown_signature]);
             } else {
@@ -9441,7 +9441,7 @@ impl Checker {
             call_signatures = self.get_array_member_call_signatures(t);
         }
         let mut construct_lists: Vec<Vec<SignatureId>> = Vec::with_capacity(types.len());
-        for &ty in &types {
+        for &ty in (&types).iter() {
             construct_lists.push(self.get_signatures_of_type(ty, SignatureKind::Construct));
         }
         let construct_signatures = self.get_union_signatures(&construct_lists);
@@ -9459,7 +9459,7 @@ impl Checker {
     pub(crate) fn get_array_member_call_signatures(&mut self, t: TypeId) -> Vec<SignatureId> {
         // Check if union is exclusively instantiations of a member of the global
         // Array or ReadonlyArray type.
-        let types = self.types.get_ref(t).types().to_vec();
+        let types = self.types.get_ref(t).types_rc();
         let mut member_name = String::new();
         for (i, &ty) in types.iter().enumerate() {
             let (object_flags, symbol) = {
@@ -9510,7 +9510,7 @@ impl Checker {
             }),
         );
         let mut readonly = false;
-        for &ty in &types {
+        for &ty in (&types).iter() {
             let ty_symbol = self.types.get_ref(ty).symbol;
             if let Some(s) = ty_symbol {
                 let p = { self.sym(s).parent };
@@ -9952,7 +9952,7 @@ impl Checker {
         let mut call_signatures: Vec<SignatureId> = Vec::new();
         let mut construct_signatures: Vec<SignatureId> = Vec::new();
         let mut index_infos: Vec<IndexInfoId> = Vec::new();
-        let types = self.types.get_ref(t).types().to_vec();
+        let types = self.types.get_ref(t).types_rc();
         let (mixin_flags, mixin_count) = self.find_mixins(&types);
         for (i, &ty) in types.iter().enumerate() {
             // When an intersection type contains mixin constructor types, the
@@ -11130,7 +11130,7 @@ impl Checker {
             let mut object_flags = self.types.get_ref(t).object_flags;
             if !object_flags.intersects(ObjectFlags::IS_NEVER_INTERSECTION_COMPUTED) {
                 object_flags |= ObjectFlags::IS_NEVER_INTERSECTION_COMPUTED;
-                let types = self.types.get_ref(t).types().to_vec();
+                let types = self.types.get_ref(t).types_rc();
                 let reduces = !self.is_mapping_of_same_object_type(&types)
                     && self.some_property_reduces_to_never(t);
                 if reduces {
@@ -11189,8 +11189,8 @@ impl Checker {
     pub(crate) fn some_property_reduces_to_never(&mut self, t: TypeId) -> bool {
         // Collect declaration counts for each property across all constituent types of the intersection.
         let mut counts: OrderedMap<String, usize> = OrderedMap::new();
-        let members = self.types.get_ref(t).types().to_vec();
-        for member in members {
+        let members = self.types.get_ref(t).types_rc();
+        for member in (members).iter().copied() {
             for prop in self.get_properties_of_type(member) {
                 let name = self.sym(prop).name.clone();
                 let count = counts.get(&name).copied().unwrap_or(0) + 1;
@@ -11216,12 +11216,12 @@ impl Checker {
 
     /// `(c *Checker) getReducedUnionType` (checker.go:22303).
     pub(crate) fn get_reduced_union_type(&mut self, union_type: TypeId) -> TypeId {
-        let types = self.types.get_ref(union_type).types().to_vec();
+        let types = self.types.get_ref(union_type).types_rc();
         let mut reduced_types: Vec<TypeId> = Vec::with_capacity(types.len());
-        for &t in &types {
+        for &t in (&types).iter() {
             reduced_types.push(self.get_reduced_type(t));
         }
-        if reduced_types == types {
+        if reduced_types == types[..] {
             return union_type;
         }
         let reduced = self.get_union_type_ex(&reduced_types, UnionReduction::Literal, None, None);
@@ -11766,7 +11766,7 @@ impl Checker {
                     }
                 }
             }
-            let types = self.types.get_ref(source).types().to_vec();
+            let types = self.types.get_ref(source).types_rc();
             let new_types = self.instantiate_types(&types, Some(m));
             let same_alias_symbol = {
                 let new_symbol = alias.as_ref().and_then(|a| a.symbol);
@@ -11778,7 +11778,7 @@ impl Checker {
                     .and_then(|a| a.symbol);
                 new_symbol == old_symbol
             };
-            if new_types == types && same_alias_symbol {
+            if new_types == types[..] && same_alias_symbol {
                 return t;
             }
             let alias = match alias {
@@ -12461,9 +12461,9 @@ impl Checker {
                 return self.instantiate_mapped_tuple_type(s, t, type_variable, m);
             }
             if self.is_array_or_tuple_or_intersection(s) {
-                let types = self.types.get_ref(s).types().to_vec();
+                let types = self.types.get_ref(s).types_rc();
                 let mut mapped = Vec::with_capacity(types.len());
-                for &e in &types {
+                for &e in (&types).iter() {
                     mapped.push(self.instantiate_mapped_type_constituent(
                         e,
                         t,
@@ -14816,7 +14816,7 @@ pub(crate) fn could_contain_type_variables_worker(c: &mut Checker, t: TypeId) ->
             && !flags.intersects(TypeFlags::ENUM_LITERAL)
             && !c.is_non_generic_top_level_type(t)
             && {
-                let members = c.types.get_ref(t).types().to_vec();
+                let members = c.types.get_ref(t).types_rc();
                 members
                     .iter()
                     .any(|&m| could_contain_type_variables_worker(c, m))

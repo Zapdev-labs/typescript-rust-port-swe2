@@ -7345,7 +7345,7 @@ impl<'a> NodeBuilderImpl<'a> {
                     .as_intersection_type()
                     .union_or_intersection
                     .types
-                    .clone()
+                    .to_vec()
             };
             if types.len() == 1 {
                 return Some(self.type_to_type_node(c, nodes, types[0]));

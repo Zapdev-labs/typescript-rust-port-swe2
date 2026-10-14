@@ -3335,7 +3335,7 @@ impl Checker {
         }
         if flags.intersects(TypeFlags::UNION) {
             let __arena_types = self.types.clone();
-            let types = __arena_types.get(element_type).types().to_vec();
+            let types = __arena_types.get(element_type).types_rc();
             let union = self.get_union_type_ex(&types, UnionReduction::Subtype, None, None);
             return self.create_array_type(union);
         }
@@ -5108,8 +5108,8 @@ impl Checker {
         // Otherwise, check if any constituent type of the source union is
         // assignable to the target type
         let __arena_types = self.types.clone();
-        let types = __arena_types.get(source).types().to_vec();
-        for t in types {
+        let types = __arena_types.get(source).types_rc();
+        for t in (types).iter().copied() {
             if self.is_type_assignable_to(t, target) {
                 return true;
             }

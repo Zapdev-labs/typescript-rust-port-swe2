@@ -4097,9 +4097,9 @@ impl Checker {
             .flags
             .intersects(TypeFlags::UNION)
         {
-            let types = self.types.get_ref(apparent_type).types().to_vec();
+            let types = self.types.get_ref(apparent_type).types_rc();
             let mut has_signatures = false;
-            for constituent in types {
+            for constituent in (types).iter().copied() {
                 let signatures = self.get_signatures_of_type(constituent, kind);
                 if !signatures.is_empty() {
                     has_signatures = true;
@@ -4782,8 +4782,8 @@ impl Checker {
             return self.get_contextual_call_signature(t, node);
         }
         let mut signature_list: Vec<SignatureId> = Vec::new();
-        let types = self.types.get_ref(t).types().to_vec();
-        for current in types {
+        let types = self.types.get_ref(t).types_rc();
+        for current in (types).iter().copied() {
             if let Some(signature) = self.get_contextual_call_signature(current, node) {
                 if !signature_list.is_empty() {
                     let first = signature_list[0];
@@ -5798,9 +5798,9 @@ impl Checker {
         } else if flags.intersects(TypeFlags::UNION) {
             // `c.mapType(t, getInstantiatedType)` — the closure tracks the
             // aggregate flags on each constituent call.
-            let types = self.types.get_ref(t).types().to_vec();
+            let types = self.types.get_ref(t).types_rc();
             let mut mapped = Vec::with_capacity(types.len());
-            for constituent in types {
+            for constituent in (types).iter().copied() {
                 mapped.push(self.get_instantiated_type(
                     node,
                     type_argument_nodes,
@@ -5821,7 +5821,7 @@ impl Checker {
                 .types
                 .clone();
             let mut mapped = Vec::with_capacity(types.len());
-            for constituent in types {
+            for constituent in (types).iter().copied() {
                 mapped.push(self.get_instantiated_type_part(
                     node,
                     type_argument_nodes,
@@ -7592,8 +7592,8 @@ diag_name.clone(), __h7292_50],
                 .flags
                 .intersects(TypeFlags::PRIMITIVE)
         {
-            let subtypes = self.types.get_ref(containing_type).types().to_vec();
-            for subtype in subtypes {
+            let subtypes = self.types.get_ref(containing_type).types_rc();
+            for subtype in (subtypes).iter().copied() {
                 if self.get_property_of_type(subtype, &prop_text).is_none()
                     && self
                         .get_applicable_index_info_for_name(subtype, &prop_text)
@@ -8405,8 +8405,8 @@ impl Checker {
             .get(prop)
             .containing_type
             .expect("ValueSymbolLinks.containingType");
-        let types = self.types.get_ref(containing_type).types().to_vec();
-        for t in types {
+        let types = self.types.get_ref(containing_type).types_rc();
+        for t in (types).iter().copied() {
             let name = self.sym(prop).name.clone();
             if let Some(p) = self.get_property_of_type(t, &name) {
                 if self.for_each_property(p, callback) {

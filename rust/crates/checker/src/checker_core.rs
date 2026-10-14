@@ -543,7 +543,7 @@ fn get_recursion_identity_target(c: &mut Checker, t: TypeId) -> TypeId {
                 let tt = c.types.get_ref(target);
                 let has_symbol = tt.symbol.is_some();
                 let constituents_have_symbol = tt.flags.intersects(TypeFlags::INTERSECTION) && {
-                    let types = tt.types().to_vec();
+                    let types = tt.types_rc();
                     drop(tt);
                     types
                         .iter()
@@ -1981,7 +1981,7 @@ impl Checker {
         }
         let rest_flags = self.types.get_ref(rest_type).flags;
         if !skip_union_expanding && rest_flags.intersects(TypeFlags::UNION) {
-            let union_types = self.types.get_ref(rest_type).types().to_vec();
+            let union_types = self.types.get_ref(rest_type).types_rc();
             if union_types.iter().all(|&t| is_tuple_type(&self.types, t)) {
                 return union_types
                     .iter()
@@ -4378,7 +4378,7 @@ impl Checker {
             object_flags,
             TypeData::Union(Box::new(crate::types::UnionType {
                 union_or_intersection: crate::types::UnionOrIntersectionType {
-                    types,
+                    types: types.into(),
                     ..Default::default()
                 },
                 ..Default::default()
@@ -4397,7 +4397,7 @@ impl Checker {
             object_flags,
             TypeData::Intersection(Box::new(crate::types::IntersectionType {
                 union_or_intersection: crate::types::UnionOrIntersectionType {
-                    types,
+                    types: types.into(),
                     ..Default::default()
                 },
                 ..Default::default()
@@ -4448,7 +4448,7 @@ impl Checker {
             ObjectFlags::NONE,
             TypeData::TemplateLiteral(crate::types::TemplateLiteralType {
                 texts,
-                types,
+                types: types.into(),
                 ..Default::default()
             }),
         )
@@ -4991,7 +4991,7 @@ impl Checker {
         if !flags.intersects(TypeFlags::UNION_OR_INTERSECTION) {
             return false;
         }
-        let types = self.types.get_ref(t).types().to_vec();
+        let types = self.types.get_ref(t).types_rc();
         types.iter().all(|&u| {
             let thunk = self
                 .is_string_index_signature_only_type
