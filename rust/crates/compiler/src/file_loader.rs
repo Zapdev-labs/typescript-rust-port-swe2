@@ -156,6 +156,10 @@ pub struct FileLoader {
     /// `contentMapperInitFailed` — `Arc::as_ptr` mapper identities.
     pub content_mapper_init_failed: RefCell<HashSet<usize>>,
     pub content_mapper_diagnostics: RefCell<Vec<DiagnosticRef>>,
+
+    /// PORT(addition): parse prefetch pool — `Some` while
+    /// `FilesParser::parse` runs; see `files_parser::ParsePrefetcher`.
+    pub parse_prefetch: RefCell<Option<Arc<crate::files_parser::ParsePrefetcher>>>,
 }
 
 /// `type redirectsFile struct` — a stand-in `HasFileName` for files deduplicated
@@ -311,6 +315,7 @@ pub fn process_all_program_files(opts: &ProgramOptions) -> (ProcessedFiles, Rc<R
         content_mapper_failures: RefCell::new(FxHashMap::default()),
         content_mapper_init_failed: RefCell::new(HashSet::new()),
         content_mapper_diagnostics: RefCell::new(Vec::new()),
+        parse_prefetch: RefCell::new(None),
     };
     loader.add_project_reference_tasks();
     // `loader.projectReferences.host` may have been replaced by the
@@ -724,6 +729,122 @@ impl FileLoader {
         }
     }
 
+    /// PORT(addition): start the parse prefetch pool (`ParsePrefetcher`)
+    /// — workers only call `host.get_source_file`, so every `RefCell`
+    /// access involved in building a request stays on this thread.
+    /// Returns the worker join handles; empty when prefetch is disabled.
+    pub(crate) fn start_parse_prefetch(&self) -> Vec<std::thread::JoinHandle<()>> {
+        let single_threaded = self
+            .opts
+            .config
+            .compiler_options()
+            .map(|o| o.single_threaded.is_true())
+            .unwrap_or(false);
+        if single_threaded || std::env::var("TSC_NO_PARSE_PREFETCH").is_ok() {
+            return Vec::new();
+        }
+        let prefetch = Arc::new(crate::files_parser::ParsePrefetcher::default());
+        *self.parse_prefetch.borrow_mut() = Some(prefetch.clone());
+        let workers = std::thread::available_parallelism()
+            .map(|n| n.get())
+            .unwrap_or(1)
+            .saturating_sub(1)
+            .clamp(1, 7);
+        (0..workers)
+            .map(|_| {
+                let prefetch = prefetch.clone();
+                let host = self.host.clone();
+                std::thread::spawn(move || prefetch.worker(&host))
+            })
+            .collect()
+    }
+
+    /// PORT(addition): drain and join the prefetch pool after `parse`.
+    pub(crate) fn stop_parse_prefetch(&self, handles: Vec<std::thread::JoinHandle<()>>) {
+        let prefetch = self.parse_prefetch.borrow_mut().take();
+        if let Some(prefetch) = prefetch {
+            prefetch.shutdown();
+        }
+        for handle in handles {
+            let _ = handle.join();
+        }
+    }
+
+    /// Queue a prefetch parse for `st` when it will need one — mirrors the
+    /// gate in `ParseTask::load` so nothing unsupported or pre-parsed is
+    /// fetched. All `FileLoader`/`RefCell` reads happen here on the main
+    /// thread; the worker only runs `host.get_source_file`.
+    pub(crate) fn prefetch_parse_task(&self, st: &ParseTask) {
+        let Some(prefetch) = self.parse_prefetch.borrow().clone() else {
+            return;
+        };
+        if st.loaded
+            || st.file.is_some()
+            || st.failed_lookup
+            || st.is_for_automatic_type_directive
+            || st.is_content_mapper_supplemental
+            || st.redirected_parse_task.is_some()
+        {
+            return;
+        }
+        let compiler_options = self
+            .opts
+            .config
+            .compiler_options()
+            .cloned()
+            .unwrap_or_default();
+        if st.normalized_file_path.has_extension()
+            && !compiler_options.allow_non_ts_extensions.is_true()
+            && !self.is_supported_extension(&st.path)
+        {
+            return;
+        }
+        if st.normalized_file_path.extension_is_one_of(
+            &self
+                .content_mapper_extensions
+                .iter()
+                .map(String::as_str)
+                .collect::<Vec<_>>(),
+        ) {
+            return;
+        }
+        let metadata = if st.lib_file.is_some() {
+            SourceFileMetaData {
+                implied_node_format: ModuleKind::CommonJS,
+                ..Default::default()
+            }
+        } else {
+            self.load_source_file_meta_data(&st.normalized_file_path)
+        };
+        let has_file_name =
+            tsc_ast::new_has_file_name(st.normalized_file_path.clone(), st.path.clone());
+        let options = self
+            .project_references
+            .borrow()
+            .get_compiler_options_for_file(&has_file_name);
+        let parse_options = SourceFileParseOptions {
+            file_name: st.normalized_file_path.clone(),
+            path_key: st.path.clone(),
+            external_module_indicator_options:
+                tsc_ast::parseoptions::get_external_module_indicator_options(
+                    &st.normalized_file_path,
+                    &options,
+                    &metadata,
+                ),
+        };
+        prefetch.enqueue(st.path.clone(), parse_options);
+    }
+
+    /// Queue prefetches for every sub-task `task` just produced.
+    pub(crate) fn prefetch_subtask_parses(&self, task: &ParseTask) {
+        if self.parse_prefetch.borrow().is_none() {
+            return;
+        }
+        for sub in task.sub_tasks.iter() {
+            self.prefetch_parse_task(&sub.borrow());
+        }
+    }
+
     /// `(p *fileLoader) parseSourceFile` — returns the canonical file plus
     /// its content-mapped supplementals (which `load` iterates as
     /// `file.SupplementalSourceFiles()`).
@@ -740,6 +861,17 @@ impl FileLoader {
             .collect(),
             true,
         );
+        // Parse prefetch hit — a worker already read+parsed this file.
+        // (`Some(inner)` = prefetched; `inner` carries the parse result,
+        // including `None` for unreadable files.)
+        if let Some(prefetch) = self.parse_prefetch.borrow().clone() {
+            if let Some(parsed) = prefetch.take(&t.path) {
+                return parsed.map(|f| LoadedFile {
+                    canonical: f.into(),
+                    supplemental: Vec::new(),
+                });
+            }
+        }
         let has_file_name =
             tsc_ast::new_has_file_name(t.normalized_file_path.clone(), t.path.clone());
         let options = self

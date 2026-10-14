@@ -16,10 +16,14 @@
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::rc::Rc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Condvar, Mutex};
+use std::time::{Duration, Instant};
 
 use rustc_hash::FxHashMap;
 
 use tsc_ast::diagnostic::DiagnosticRef;
+use tsc_ast::parseoptions::SourceFileParseOptions;
 use tsc_ast::utilities::HasFileName;
 use tsc_ast::{NodeId, SourceFileMetaData};
 use tsc_core::options_generated::ModuleKind;
@@ -42,6 +46,110 @@ use crate::file_loader::{
 };
 use crate::include_processor::FileIncludeData;
 use crate::processing_diagnostic::{IncludeExplainingDiagnostic, ProcessingDiagnostic};
+
+/// `ParsedSourceFile` moved across a worker→main thread boundary. This is
+/// sound here (and only here): each value is created entirely inside one
+/// worker's `host.get_source_file` call — arena, nodes, and every `Rc`
+/// inside are minted fresh — then moved wholesale into the results map
+/// and out exactly once on the main thread. No `Rc` inside ever has a
+/// second owner on another thread, so no refcount races are possible.
+struct SendParsed(Option<tsc_contentmapper::ParsedSourceFile>);
+#[allow(unsafe_code)]
+unsafe impl Send for SendParsed {}
+
+/// PORT(addition): parse prefetch pool — restores Go's parallel
+/// `filesParser.start` work for the one part that is embarrassingly
+/// parallel (read + parse of independent files). Requests are bundled on
+/// the main thread (all `FileLoader`/`RefCell` access stays main-only);
+/// workers only call `host.get_source_file`, which is `Send + Sync` and
+/// side-effect-free per file. `FileLoader::parse_source_file` consumes
+/// results via `take`, falling back to an inline parse on a miss.
+#[derive(Default)]
+pub struct ParsePrefetcher {
+    requests: Mutex<VecDeque<(PathKey, SourceFileParseOptions)>>,
+    request_cv: Condvar,
+    in_flight: Mutex<HashSet<PathKey>>,
+    results: Mutex<FxHashMap<PathKey, SendParsed>>,
+    result_cv: Condvar,
+    done: AtomicBool,
+}
+
+impl ParsePrefetcher {
+    /// Queue `path` for prefetch parsing unless it is already queued or
+    /// finished. Called on the main thread with fully-built options.
+    pub fn enqueue(&self, path: PathKey, opts: SourceFileParseOptions) {
+        if self.done.load(Ordering::Relaxed) {
+            return;
+        }
+        {
+            let mut in_flight = self.in_flight.lock().unwrap();
+            if !in_flight.insert(path.clone()) {
+                return;
+            }
+        }
+        self.requests.lock().unwrap().push_back((path, opts));
+        self.request_cv.notify_one();
+    }
+
+    /// Take the finished parse for `path`, waiting briefly when a worker
+    /// still has it in flight. `Some(r)` = prefetched (parse result `r`,
+    /// possibly `None` for an unreadable file); `None` = never queued or
+    /// not done in time — caller parses inline.
+    pub fn take(&self, path: &PathKey) -> Option<Option<tsc_contentmapper::ParsedSourceFile>> {
+        if !self.in_flight.lock().unwrap().contains(path) {
+            return None;
+        }
+        // Workers finish real files in ~ms; bound the wait so a slow or
+        // lost job falls back to an inline parse rather than stalling
+        // the loader.
+        let deadline = Instant::now() + Duration::from_millis(100);
+        let mut results = self.results.lock().unwrap();
+        loop {
+            if let Some(r) = results.remove(path) {
+                self.in_flight.lock().unwrap().remove(path);
+                return Some(r.0);
+            }
+            let remaining = deadline.saturating_duration_since(Instant::now());
+            if remaining.is_zero() {
+                return None;
+            }
+            let (guard, _timeout) = self.result_cv.wait_timeout(results, remaining).unwrap();
+            results = guard;
+        }
+    }
+
+    /// Worker loop: pull queued parses until shutdown drains the queue.
+    pub(crate) fn worker(&self, host: &Arc<dyn crate::host::CompilerHost>) {
+        loop {
+            let (path, opts) = {
+                let mut requests = self.requests.lock().unwrap();
+                loop {
+                    if let Some(job) = requests.pop_front() {
+                        break job;
+                    }
+                    if self.done.load(Ordering::Relaxed) {
+                        return;
+                    }
+                    requests = self.request_cv.wait(requests).unwrap();
+                }
+            };
+            let parsed = host.get_source_file(&opts);
+            self.results
+                .lock()
+                .unwrap()
+                .insert(path.clone(), SendParsed(parsed));
+            self.result_cv.notify_all();
+        }
+    }
+
+    /// Stop accepting requests, wake workers, and let them drain the
+    /// queue so no in-flight parse leaks past `parse`.
+    pub(crate) fn shutdown(&self) {
+        self.done.store(true, Ordering::Relaxed);
+        self.request_cv.notify_all();
+        self.result_cv.notify_all();
+    }
+}
 
 /// `type parseTask struct`.
 #[derive(Default)]
@@ -397,6 +505,10 @@ impl ParseTask {
                     ..Default::default()
                 })));
         }
+        // Kick parse prefetch for the sub-tasks this load just queued —
+        // workers overlap their parses with the sequential resolution
+        // work that follows (no-op when prefetch is disabled).
+        loader.prefetch_subtask_parses(&task.borrow());
         trace_done();
     }
 
@@ -422,6 +534,7 @@ impl ParseTask {
         for type_resolution in to_parse_type_refs {
             Self::add_sub_task(task, type_resolution, None);
         }
+        loader.prefetch_subtask_parses(&task.borrow());
         trace_done();
     }
 }
@@ -468,6 +581,13 @@ type Job<'a> = Box<dyn FnOnce() + 'a>;
 impl FilesParser {
     /// `(w *filesParser) parse`.
     pub fn parse(&self, loader: &FileLoader, tasks: Vec<Rc<RefCell<ParseTask>>>, depth: usize) {
+        let prefetch = loader.start_parse_prefetch();
+        // The root tasks are already known — warm the workers before the
+        // job queue drains (sub-tasks are enqueued from `load` as their
+        // parents resolve).
+        for task in tasks.iter() {
+            loader.prefetch_parse_task(&task.borrow());
+        }
         // `Rc` so queued `start` jobs can re-enqueue without capturing a
         // `&queue` borrow that would make the queue self-referential.
         let queue = Rc::new(RefCell::new(VecDeque::<Job>::new()));
@@ -477,6 +597,7 @@ impl FilesParser {
         while let Some(job) = { queue.borrow_mut().pop_front() } {
             job();
         }
+        loader.stop_parse_prefetch(prefetch);
     }
 
     /// `(w *filesParser) start`.
