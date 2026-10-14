@@ -1708,3 +1708,40 @@ and surviving ones are ordinary statement temps.
   rounds = 4× = 2048→8192. RBC call volume: ours 3429 (727 conditional) vs
   Go 1797 (47 conditional). Emergent ordering again — same class as the
   `Matching` divergence; single spurious diagnostic. Deferred.
+
+## Fixed — JS emit parity: private-name transforms (2026-10-13)
+- `privateNameWhenNotUseDefineForClassFieldsInEsNext` (es2020): classfields
+  visited the *synthetic* `this` receiver when building the WeakMap `.set`
+  call for private instance field initializers, letting
+  `visitThisExpression` substitute the outer class temp under stale
+  static-initializer context (`_Inner_foo.set(_a, 10)`). Go passes the
+  receiver to `createPrivateInstanceFieldInitializer` unvisited; fixed by
+  removing the `visit_node` on that receiver.
+- `privateWriteOnlyAccessorRead` (es2015): `visit_binary_expression` in
+  objectrestspread destructured `(d.left, d.operator_token, d.right)` into
+  `(left_in, right_in, operator_token)` — `right_in` bound the token node
+  and `operator_token` bound the right child. The CommaToken check always
+  failed, so synthetic comma expressions fell to `visit_each_child` and
+  `expression_result_is_unused` never propagated — raw `{ ...x } = {...}`
+  survived instead of `__rest` lowering. One-token fix.
+
+## Fixed — byte-faithful source text (invalid UTF-8)
+- `regexInvalidUtf8WithUnicodeFlag`: the only true invalid-UTF-8 testdata
+  file (raw `0x80` in a regex literal). `from_utf8_lossy` collapsed it to
+  U+FFFD; Go preserves the byte and re-emits it verbatim.
+- `decode_bytes` (vfs/internal) now maps each byte outside Go's
+  `utf8.DecodeRune` accept set to `U+F0000 + byte` — a reversible marker in
+  supplementary PUA (verified absent from all testdata; one char per
+  invalid byte matching Go's one-rune-per-error advance).
+- `faithful_bytes` reverses markers at byte sinks: `osvfs` file writes and
+  `baseline::write_comparison` (compare + local write). Lone-surrogate
+  tests (`loneSurrogateStringLiteralTypes`, `jsxNumericEntityLoneSurrogate`)
+  already pass via existing U+FFFD handling.
+
+## Test-harness behavior notes
+- `compiler_runner` collects per-test `[FAIL]`s and panics once at the end
+  with the full list; `TSC_TEST_FILTER` (pattern) and `TSC_TEST_LIST` (file
+  of basenames) bound runs. `test_local` needs `harness` feature.
+- Host memory: `test_local` can reach ~3-4G RSS per chunk under the 1GB
+  debug-stack worker; run sequentially on memory-tight hosts —
+  `systemd-oomd` kills cgroup'd sweeps proactively.
