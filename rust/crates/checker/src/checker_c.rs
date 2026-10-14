@@ -101,6 +101,25 @@ impl Checker {
         RefMut::map(self.symbol_arena.borrow_mut(), |a| &mut a[s.index()])
     }
 
+    /// `symbol.name` as a refcounted handle — hot paths only need `&str`
+    /// lookups, so this avoids the `String::clone` alloc+copy that
+    /// `sym(id).name.clone()` performs (profiling: ~24% of check time was
+    /// `Vec<u8>` clone churn). Cached per `SymbolId`; names never mutate
+    /// after creation. Deref `&name` coerces to `&str` at call sites.
+    #[inline]
+    pub(crate) fn sym_name_rc(&self, s: SymbolId) -> Rc<str> {
+        if let Some(Some(rc)) = self.sym_name_cache.borrow().get(s.index()) {
+            return rc.clone();
+        }
+        let rc: Rc<str> = self.symbol_arena.borrow()[s.index()].name.as_str().into();
+        let mut cache = self.sym_name_cache.borrow_mut();
+        if cache.len() <= s.index() {
+            cache.resize(s.index() + 1, None);
+        }
+        cache[s.index()] = Some(rc.clone());
+        rc
+    }
+
     /// `(k CacheHashKey) IsZero` (checker.go) — `impl` on the `ast::Uint128`
     /// alias is not allowed (foreign type), so it is a crate-private helper.
 

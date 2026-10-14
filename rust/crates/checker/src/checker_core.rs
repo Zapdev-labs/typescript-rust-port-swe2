@@ -859,6 +859,12 @@ pub struct Checker {
     /// `*ast.Symbol` pointer. Mutation during checking is rare; readers
     /// take short borrows.
     pub symbol_arena: Rc<RefCell<Vec<ast::Symbol>>>,
+    /// PORT perf: `Rc<str>` handles for `Symbol.name`, indexed by
+    /// `SymbolId`. `sym(id).name.clone()` allocates + copies per call; the
+    /// relation hot loops only need `&str` lookups, so hand out refcount
+    /// bumps instead. Names never mutate after symbol creation; transient
+    /// symbols just extend the vec.
+    pub sym_name_cache: RefCell<Vec<Option<Rc<str>>>>,
     /// `signatureArena` — `core.Arena[Signature]`.
     pub signature_arena: SignatureArena,
     /// `indexInfoArena` — `core.Arena[IndexInfo]`.
@@ -1482,6 +1488,7 @@ impl Checker {
             diagnostics: ast::diagnostic::DiagnosticsCollection::new(),
             suggestion_diagnostics: ast::diagnostic::DiagnosticsCollection::new(),
             symbol_arena: Rc::new(RefCell::new(Vec::new())),
+            sym_name_cache: RefCell::new(Vec::new()),
             signature_arena,
             index_info_arena,
             merged_symbols: FxHashMap::default(),

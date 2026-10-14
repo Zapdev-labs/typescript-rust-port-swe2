@@ -911,7 +911,7 @@ impl Checker {
             {
                 continue;
             }
-            let source_property_name = self.sym(source_property).name.clone();
+            let source_property_name = self.sym_name_rc(source_property);
             let target_property =
                 self.get_property_of_type(target_enum_type, &source_property_name);
             let target_is_enum_member = target_property
@@ -2053,7 +2053,7 @@ impl Checker {
         is_comparing_jsx_attributes: bool,
     ) -> bool {
         for prop in self.get_properties_of_type(source) {
-            let name = self.sym(prop).name.clone();
+            let name = self.sym_name_rc(prop);
             if self.is_known_property(target, &name, is_comparing_jsx_attributes) {
                 return true;
             }
@@ -2645,10 +2645,11 @@ impl Checker {
             if crate::utilities::is_static_private_identifier_property(self, target_prop) {
                 continue;
             }
-            let (target_flags, target_check_flags, target_name) = {
+            let (target_flags, target_check_flags) = {
                 let p = self.sym(target_prop);
-                (p.flags, p.check_flags, p.name.clone())
+                (p.flags, p.check_flags)
             };
+            let target_name = self.sym_name_rc(target_prop);
             if require_optional_properties
                 || !target_flags.intersects(ast::SymbolFlags::OPTIONAL)
                     && !target_check_flags.intersects(ast::checkflags::CheckFlags::PARTIAL)
@@ -2707,8 +2708,8 @@ pub(crate) fn exclude_properties(
     }
     let mut reduced: Option<Vec<SymbolId>> = None;
     for (i, &prop) in properties.iter().enumerate() {
-        let name = c.sym(prop).name.clone();
-        if !excluded_properties.has(&name) {
+        let name = c.sym_name_rc(prop);
+        if !excluded_properties.has(&*name) {
             if let Some(reduced) = reduced.as_mut() {
                 reduced.push(prop);
             }
@@ -2837,7 +2838,7 @@ impl Checker {
     ) -> Vec<SymbolId> {
         let mut result = Vec::new();
         for &source_property in source_properties {
-            let name = self.sym(source_property).name.clone();
+            let name = self.sym_name_rc(source_property);
             if self.is_discriminant_property(target, &name) {
                 result.push(source_property);
             }
@@ -6170,7 +6171,7 @@ impl Relater {
         for prop in c.get_properties_of_type(source) {
             let __arena_source_symbol = c.types.clone();
             let source_symbol = __arena_source_symbol.get(source).symbol;
-            let prop_name = c.sym(prop).name.clone();
+            let prop_name = c.sym_name_rc(prop);
             if should_check_as_excess_property(c, prop, source_symbol)
                 && !is_ignored_jsx_property(c, source, prop)
             {
@@ -9197,7 +9198,7 @@ impl Relater {
                 for i in 0..source_properties_filtered.len() {
                     let source_property = source_properties_filtered[i];
                     let target_property = {
-                        let name = c.sym(source_property).name.clone();
+                        let name = c.sym_name_rc(source_property);
                         c.get_property_of_type(t, &name)
                     };
                     let Some(target_property) = target_property else {
@@ -9584,7 +9585,7 @@ impl Relater {
         if crate::utilities::is_object_literal_type(&c.types, target) {
             let source_props = c.get_properties_of_type(source);
             for source_prop in exclude_properties(c, &source_props, excluded_properties) {
-                let name = c.sym(source_prop).name.clone();
+                let name = c.sym_name_rc(source_prop);
                 if c.get_property_of_object_type(target, &name).is_none() {
                     if report_errors {
                         let prop_str = c.symbol_to_string(source_prop);
@@ -9606,12 +9607,12 @@ impl Relater {
         let numeric_names_only = crate::checker_core::is_tuple_type(&c.types, source)
             && crate::checker_core::is_tuple_type(&c.types, target);
         for target_prop in exclude_properties(c, &properties, excluded_properties) {
-            let name = c.sym(target_prop).name.clone();
+            let name = c.sym_name_rc(target_prop);
             let target_prop_flags = c.sym(target_prop).flags;
             if !target_prop_flags.intersects(ast::SymbolFlags::PROTOTYPE)
                 && (!numeric_names_only
                     || crate::utilities::is_numeric_literal_name(&name)
-                    || name == "length")
+                    || &*name == "length")
                 && (!optionals_only || target_prop_flags.intersects(ast::SymbolFlags::OPTIONAL))
             {
                 if let Some(source_prop) = c.get_property_of_type(source, &name) {
@@ -10049,7 +10050,7 @@ impl Relater {
         }
         let mut result = Ternary::TRUE;
         for source_prop in source_properties {
-            let name = c.sym(source_prop).name.clone();
+            let name = c.sym_name_rc(source_prop);
             let Some(target_prop) = c.get_property_of_object_type(target, &name) else {
                 return Ternary::FALSE;
             };
