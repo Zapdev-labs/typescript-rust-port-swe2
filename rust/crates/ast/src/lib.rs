@@ -14,6 +14,7 @@ mod flagdef;
 pub mod ast;
 pub mod ast_generated;
 pub mod checkflags;
+pub mod chunked;
 pub mod deepclone;
 pub mod diagnostic;
 pub mod flow;

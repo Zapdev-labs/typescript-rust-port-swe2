@@ -3404,11 +3404,11 @@ pub type StringLiteralType = TypeId;
 /// the checker, not here (they're checker state in Go too).
 #[derive(Clone, Default)]
 pub struct TypeArena {
-    /// `Box` gives each `Type` a stable heap address; handles stay valid
-    /// across pushes (only the `Vec` buffer moves). Go semantics: mutation
-    /// is in place — readers see writes immediately (the old `Rc`
-    /// copy-on-write diverged from Go anyway).
-    types: Rc<UnsafeCell<Vec<Box<Type>>>>,
+    /// Chunked slab (`ChunkedArena` — `Rc<UnsafeCell<Chunked<T>>>`);
+    /// fixed-capacity inner Vecs give each `Type` a stable heap address, so
+    /// handles stay valid across pushes without a per-element `Box`. Go
+    /// semantics: mutation is in place — readers see writes immediately.
+    types: tsc_ast::chunked::ChunkedArena<Type>,
 }
 
 /// Shared handle to an arena-resident `Type` — Go's `*Type`. `Copy`, no
@@ -3459,13 +3459,7 @@ impl std::ops::DerefMut for TypeMutPtr {
 impl TypeArena {
     /// Allocate a type in the arena, returning its `TypeId`.
     pub fn alloc(&self, t: Type) -> TypeId {
-        // SAFETY: single-threaded checker; the Vec may grow (moving the
-        // buffer) but each Box<Type> keeps a stable heap address, so
-        // outstanding TypePtr/TypeMutPtr/`&Type` handles stay valid.
-        let types = unsafe { &mut *self.types.get() };
-        let id = TypeId(types.len() as u32);
-        types.push(Box::new(t));
-        id
+        TypeId(self.types.alloc(t) as u32)
     }
 
     /// Shared-pointer access to a single type — the Go `t.field` read shape.
@@ -3473,12 +3467,9 @@ impl TypeArena {
     #[inline]
     pub fn get(&self, id: TypeId) -> TypePtr {
         // SAFETY: `id` was handed out by `alloc`, so `id.index()` is in
-        // bounds (elements are only ever pushed). The Box target address is
-        // stable across Vec growth.
-        unsafe {
-            debug_assert!(id.index() < (*self.types.get()).len());
-            TypePtr(&**(*self.types.get()).as_ptr().add(id.index()))
-        }
+        // bounds (elements are only ever pushed). The slab element address
+        // is stable (inner Vecs never grow past capacity).
+        unsafe { TypePtr(self.types.get(id.index())) }
     }
 
     /// `&Type` access — same deref as `get` without wrapping the pointer.
@@ -3487,10 +3478,7 @@ impl TypeArena {
     #[inline]
     pub fn get_ref(&self, id: TypeId) -> &Type {
         // SAFETY: same as `get`.
-        unsafe {
-            debug_assert!(id.index() < (*self.types.get()).len());
-            &**(*self.types.get()).as_ptr().add(id.index())
-        }
+        unsafe { &*self.types.get(id.index()) }
     }
 
     /// Write access to a single type — the Go `t.field = v` write shape.
@@ -3501,20 +3489,17 @@ impl TypeArena {
         // SAFETY: same as `get`. Interior mutation of a shared element is
         // the port's Go-aliasing model — callers must not rely on stale
         // field snapshots across a `get_mut`, same as in Go.
-        unsafe {
-            debug_assert!(id.index() < (*self.types.get()).len());
-            TypeMutPtr(&mut **(*self.types.get()).as_mut_ptr().add(id.index()))
-        }
+        unsafe { TypeMutPtr(self.types.get_mut(id.index())) }
     }
 
     /// `len(types)`.
     pub fn len(&self) -> usize {
-        unsafe { (*self.types.get()).len() }
+        self.types.len()
     }
 
     /// `len(types) == 0`.
     pub fn is_empty(&self) -> bool {
-        unsafe { (*self.types.get()).is_empty() }
+        self.types.is_empty()
     }
 
     /// `(t *Type) TargetInterfaceType` —

@@ -6,10 +6,10 @@
 // order the Go port relies on via `collections.OrderedMap`.
 
 use crate::checkflags::CheckFlags;
+use crate::chunked::ChunkedArena;
 use crate::ids::{NodeId, SymbolId};
 use crate::symbolflags::SymbolFlags;
 use crate::{ModifierFlags, is_private_identifier_class_element_declaration};
-use std::cell::UnsafeCell;
 use std::ops::{Index, IndexMut};
 use std::rc::Rc;
 use std::sync::Arc;
@@ -52,17 +52,15 @@ impl Symbol {
 // SymbolArena — the program-global `Vec<Symbol>` store of SPEC §5.2.
 
 /// `SymbolArena` is the program-global arena of `Symbol` elements; `SymbolId`
-/// indexes it. Same shape as the checker's `TypeArena`: `Rc<UnsafeCell<..>>`
-/// because the pipeline is single-threaded, and `Box` gives each `Symbol` a
-/// stable heap address so `SymbolPtr` handles stay valid across pushes (only
-/// the `Vec` buffer moves). Go semantics: every `*ast.Symbol` lives on a
-/// shared heap and mutation is in place — readers see writes immediately.
+/// indexes it. Same shape as the checker's `TypeArena`: chunked slab
+/// (`ChunkedArena` — `Rc<UnsafeCell<Chunked<T>>>`) because the pipeline is
+/// single-threaded; fixed-capacity inner Vecs give each `Symbol` a stable
+/// heap address so `SymbolPtr` handles stay valid across pushes. Go
+/// semantics: every `*ast.Symbol` lives on a shared heap and mutation is in
+/// place — readers see writes immediately.
 #[derive(Clone, Default)]
 pub struct SymbolArena {
-    /// `Box` gives each `Symbol` a stable heap address; handles stay valid
-    /// across pushes (only the `Vec` buffer moves). Go shares `*Symbol`
-    /// freely between binder, checker, and emit.
-    symbols: Rc<UnsafeCell<Vec<Box<Symbol>>>>,
+    symbols: ChunkedArena<Symbol>,
 }
 
 /// Shared handle to an arena-resident `Symbol` — Go's `*Symbol`. `Copy`, no
@@ -113,13 +111,7 @@ impl std::ops::DerefMut for SymbolMutPtr {
 impl SymbolArena {
     /// Allocate a symbol in the arena, returning its `SymbolId`.
     pub fn alloc(&self, s: Symbol) -> SymbolId {
-        // SAFETY: single-threaded pipeline; the Vec may grow (moving the
-        // buffer) but each Box<Symbol> keeps a stable heap address, so
-        // outstanding SymbolPtr/SymbolMutPtr/`&Symbol` handles stay valid.
-        let symbols = unsafe { &mut *self.symbols.get() };
-        let id = SymbolId(symbols.len() as u32);
-        symbols.push(Box::new(s));
-        id
+        SymbolId(self.symbols.alloc(s) as u32)
     }
 
     /// Shared-pointer access to a single symbol — the Go `s.field` read
@@ -127,12 +119,9 @@ impl SymbolArena {
     #[inline]
     pub fn get(&self, id: SymbolId) -> SymbolPtr {
         // SAFETY: `id` was handed out by `alloc`, so `id.index()` is in
-        // bounds (elements are only ever pushed). The Box target address is
-        // stable across Vec growth.
-        unsafe {
-            debug_assert!(id.index() < (*self.symbols.get()).len());
-            SymbolPtr(&**(*self.symbols.get()).as_ptr().add(id.index()))
-        }
+        // bounds (elements are only ever pushed). The slab element address
+        // is stable (inner Vecs never grow past capacity).
+        unsafe { SymbolPtr(self.symbols.get(id.index())) }
     }
 
     /// `&Symbol` access — same deref as `get` without wrapping the pointer.
@@ -141,10 +130,7 @@ impl SymbolArena {
     #[inline]
     pub fn get_ref(&self, id: SymbolId) -> &Symbol {
         // SAFETY: same as `get`.
-        unsafe {
-            debug_assert!(id.index() < (*self.symbols.get()).len());
-            &**(*self.symbols.get()).as_ptr().add(id.index())
-        }
+        unsafe { &*self.symbols.get(id.index()) }
     }
 
     /// Write access to a single symbol — the Go `s.field = v` write shape.
@@ -155,27 +141,24 @@ impl SymbolArena {
         // SAFETY: same as `get`. Interior mutation of a shared element is
         // the port's Go-aliasing model — callers must not rely on stale
         // field snapshots across a `get_mut`, same as in Go.
-        unsafe {
-            debug_assert!(id.index() < (*self.symbols.get()).len());
-            SymbolMutPtr(&mut **(*self.symbols.get()).as_mut_ptr().add(id.index()))
-        }
+        unsafe { SymbolMutPtr(self.symbols.get_mut(id.index())) }
     }
 
     /// `len(symbols)`.
     pub fn len(&self) -> usize {
-        unsafe { (*self.symbols.get()).len() }
+        self.symbols.len()
     }
 
     /// Stable identity token for the arena's backing store — the port's
     /// answer to `(*Vec<Symbol>).as_ptr()` keys that distinguish which file's
     /// arena a `SymbolId` belongs to.
     pub fn arena_id(&self) -> usize {
-        Rc::as_ptr(&self.symbols) as usize
+        self.symbols.arena_id()
     }
 
     /// `len(symbols) == 0`.
     pub fn is_empty(&self) -> bool {
-        unsafe { (*self.symbols.get()).is_empty() }
+        self.symbols.is_empty()
     }
 
     /// Iteration over `&Symbol` handles. Index-based (not slice-based) so
@@ -215,9 +198,11 @@ impl SymbolArena {
     /// Build an arena from an owned `Vec<Symbol>` (detached snapshots, test
     /// scaffolding).
     pub fn from_vec(v: Vec<Symbol>) -> SymbolArena {
-        SymbolArena {
-            symbols: Rc::new(UnsafeCell::new(v.into_iter().map(Box::new).collect())),
+        let arena = SymbolArena::default();
+        for s in v {
+            arena.alloc(s);
         }
+        arena
     }
 
     /// Detached copy of the whole arena — mutations don't reach the shared
@@ -227,17 +212,14 @@ impl SymbolArena {
     }
 }
 
-#[allow(unsafe_code)] // `symbols[i]` reads reach through `UnsafeCell`
+#[allow(unsafe_code)] // `symbols[i]` reads reach through the slab
 impl Index<usize> for SymbolArena {
     type Output = Symbol;
     #[inline]
     fn index(&self, i: usize) -> &Symbol {
-        // SAFETY: callers index with ids handed out by `alloc` (only pushes
-        // grow the Vec); Box target addresses are stable across growth.
-        unsafe {
-            debug_assert!(i < (*self.symbols.get()).len());
-            &**(*self.symbols.get()).as_ptr().add(i)
-        }
+        // SAFETY: callers index with ids handed out by `alloc`; slab
+        // element addresses are stable across growth.
+        unsafe { &*self.symbols.get(i) }
     }
 }
 
@@ -249,16 +231,13 @@ impl Index<SymbolId> for SymbolArena {
     }
 }
 
-#[allow(unsafe_code)] // `symbols[i]` writes reach through `UnsafeCell`
+#[allow(unsafe_code)] // `symbols[i]` writes reach through the slab
 impl IndexMut<usize> for SymbolArena {
     #[inline]
     fn index_mut(&mut self, i: usize) -> &mut Symbol {
         // SAFETY: same as `Index`. Interior mutation of a shared element is
         // the port's Go-aliasing model.
-        unsafe {
-            debug_assert!(i < (*self.symbols.get()).len());
-            &mut **(*self.symbols.get()).as_mut_ptr().add(i)
-        }
+        unsafe { &mut *self.symbols.get_mut(i) }
     }
 }
 
@@ -288,11 +267,11 @@ impl<'a> Iterator for SymbolArenaIter<'a> {
         let i = self.next;
         self.next += 1;
         // SAFETY: `i < end <= len()` at iterator creation; elements are only
-        // ever pushed, so `i` stays in bounds and the Box target address is
-        // stable across Vec growth.
+        // ever pushed, so `i` stays in bounds and the slab element address
+        // is stable across growth.
         #[allow(unsafe_code)]
         unsafe {
-            Some(&**(*self.arena.symbols.get()).as_ptr().add(i))
+            Some(&*self.arena.symbols.get(i))
         }
     }
     #[inline]
