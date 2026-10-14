@@ -1174,7 +1174,7 @@ impl<'a> ObjectRestSpreadTransformer<'a> {
                 None,
             );
         }
-        let (left_in, right_in, operator_token) = {
+        let (left_in, operator_token, right_in) = {
             let d = cx.nodes[node].as_binary_expression();
             (d.left, d.operator_token, d.right)
         };
