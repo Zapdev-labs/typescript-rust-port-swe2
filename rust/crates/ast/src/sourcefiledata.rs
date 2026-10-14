@@ -11,8 +11,6 @@ use std::marker::PhantomData;
 use std::rc::Rc;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use rustc_hash::FxHashMap;
-
 use crate::ast::Node;
 use crate::ids::NodeId;
 
@@ -54,7 +52,11 @@ pub fn new_source_file_data_key<T: 'static>() -> SourceFileDataKey<T> {
 /// `ArenaCheckout` window.
 #[derive(Default, Clone)]
 pub struct SourceFileData {
-    cells: FxHashMap<u64, Rc<dyn Any + Send + Sync>>,
+    /// Index-addressed by `key.key` — keys are dense counter-issued u64s
+    /// (a few dozen statics process-wide), so a slot Vec gives O(1)
+    /// lookups without hashing; `bind_result` runs this on every
+    /// flow-node dereference.
+    cells: Vec<Option<Rc<dyn Any + Send + Sync>>>,
 }
 
 impl SourceFileData {
@@ -63,15 +65,22 @@ impl SourceFileData {
     /// makes impossible — the panic mirrors Go's failing
     /// `cell.(*sourceFileDataCell[T])` assertion.
     pub fn get<T: Send + Sync + 'static>(&self, key: &SourceFileDataKey<T>) -> Option<&T> {
-        self.cells.get(&key.key).map(|cell| {
-            cell.downcast_ref::<T>()
-                .expect("SourceFileData cell type mismatch")
-        })
+        self.cells
+            .get(key.key as usize)
+            .and_then(|cell| cell.as_ref())
+            .map(|cell| {
+                cell.downcast_ref::<T>()
+                    .expect("SourceFileData cell type mismatch")
+            })
     }
 
     /// The write half of `getDataCell` — stores the computed cell value.
     pub fn insert<T: Send + Sync + 'static>(&mut self, key: &SourceFileDataKey<T>, value: T) {
-        self.cells.insert(key.key, Rc::new(value));
+        let idx = key.key as usize;
+        if self.cells.len() <= idx {
+            self.cells.resize(idx + 1, None);
+        }
+        self.cells[idx] = Some(Rc::new(value));
     }
 
     /// Mutable access to a stored cell — used by `bind_result_mut` so the
@@ -81,15 +90,19 @@ impl SourceFileData {
         &mut self,
         key: &SourceFileDataKey<T>,
     ) -> Option<&mut T> {
-        self.cells.get_mut(&key.key).and_then(|cell| {
-            // `Rc::get_mut` yields `None` while a frozen arena copy shares the
-            // cell (`ArenaCheckout` window); callers get `None` rather than a
-            // panic so they can fall back instead of racing the checkout.
-            Rc::get_mut(cell).map(|any| {
-                any.downcast_mut::<T>()
-                    .expect("SourceFileData cell type mismatch")
+        self.cells
+            .get_mut(key.key as usize)
+            .and_then(|cell| cell.as_mut())
+            .and_then(|cell| {
+                // `Rc::get_mut` yields `None` while a frozen arena copy
+                // shares the cell (`ArenaCheckout` window); callers get
+                // `None` rather than a panic so they can fall back instead
+                // of racing the checkout.
+                Rc::get_mut(cell).map(|any| {
+                    any.downcast_mut::<T>()
+                        .expect("SourceFileData cell type mismatch")
+                })
             })
-        })
     }
 }
 
