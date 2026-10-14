@@ -42,6 +42,37 @@ pub trait CheckerPoolProgram: CheckerProgram + 'static {
     /// diagnostic referencing a node minted after the fork (invisible to
     /// the parent) can be detected.
     fn arena_lengths(&self) -> Vec<Option<usize>>;
+    /// PORT(addition): emit a single file inside the fused fork child —
+    /// `try_fork_check_and_emit` runs it after collecting the file's
+    /// checker diagnostics, reusing the child's warm COW checker state.
+    /// `self` is the child's private program copy. Only called on Unix;
+    /// default panics so non-`Program` implementors can't be reached.
+    #[cfg(unix)]
+    fn emit_one_forked(
+        &self,
+        ctx: Context,
+        file: NodeId,
+        emit_only: crate::emit_host::EmitOnly,
+        force_emit: bool,
+        force_dts_emit: bool,
+        force_js_emit: bool,
+    ) -> crate::emit_host::EmitResult {
+        let _ = (ctx, file, emit_only, force_emit, force_dts_emit, force_js_emit);
+        unimplemented!("emit_one_forked requires the concrete Program")
+    }
+}
+
+/// PORT(addition): emit parameters for the fused check+emit fork wave —
+/// see `CompilerCheckerPool::try_fork_check_and_emit`. `emit_files` is the
+/// already-resolved emit set (`get_source_files_to_emit`); each child
+/// emits the intersection of its check group with this set.
+#[derive(Clone)]
+pub struct ForkEmitPlan {
+    pub emit_only: crate::emit_host::EmitOnly,
+    pub force_emit: bool,
+    pub force_dts_emit: bool,
+    pub force_js_emit: bool,
+    pub emit_files: Vec<NodeId>,
 }
 
 /// `func SortAndDeduplicateDiagnostics` (program.go). Kept in this module —
@@ -847,6 +878,293 @@ impl<P: CheckerPoolProgram> CompilerCheckerPool<P> {
         }
 
         Some(diagnostics)
+    }
+
+    /// PORT(addition): fused check+emit fork wave for `tsc` emit runs.
+    /// Same orchestration as `try_fork_collect`, but each child *also*
+    /// emits its group's emit-plan files after collecting the file's
+    /// checker diagnostics — the child's COW checker state is already
+    /// warm, so the whole serial emit wave plus a second round of cold
+    /// caches disappears. Returns `(per-file diagnostics, EmitResult)`.
+    ///
+    /// `None` means "not applicable": same gates as `try_fork_collect`,
+    /// plus every `plan.emit_files` entry must be in `files` (emit files
+    /// ride along on the check group that checked them).
+    ///
+    /// Per-file wire record: `[u32 file_idx][u32 ndiag][diags][u8 did_emit]
+    /// [emit_result?]`; same trailer flag as `try_fork_collect`. A group
+    /// that fails or carries unresolvable data re-runs in the parent —
+    /// the re-emit rewrites identical outputs (see `try_fork_emit`).
+    #[cfg(unix)]
+    #[allow(unsafe_code)]
+    pub fn try_fork_check_and_emit(
+        &self,
+        ctx: Context,
+        files: &[NodeId],
+        single_threaded: bool,
+        collect: &mut dyn FnMut(Context, &Rc<RefCell<Checker>>, NodeId) -> Vec<DiagnosticRef>,
+        plan: &ForkEmitPlan,
+    ) -> Option<(Vec<Vec<DiagnosticRef>>, crate::emit_host::EmitResult)> {
+        use crate::emit_host::{EmitResult, read_emit_result, write_emit_result};
+        use tsc_ast::diagnostic::{DiagnosticFile, has_unresolvable_files, read_diagnostic, write_diagnostic};
+
+        if single_threaded
+            || std::env::var("TSC_NO_FORK_CHECK").is_ok()
+            || std::env::var("TSC_NO_FORK_EMIT").is_ok()
+            || std::env::var("TSC_FILE_TIME").is_ok()
+        {
+            return None;
+        }
+        self.create_checkers();
+        let checkers = self.checkers.borrow().clone();
+        if checkers.len() <= 1 || files.len() <= 1 {
+            return None;
+        }
+        let program = self.program.upgrade()?;
+        if !program.options().pprof_dir.as_string().is_empty() {
+            return None;
+        }
+        let emit_set: rustc_hash::FxHashSet<NodeId> =
+            plan.emit_files.iter().copied().collect();
+        if emit_set.is_empty() {
+            return None;
+        }
+        {
+            let check_set: rustc_hash::FxHashSet<NodeId> = files.iter().copied().collect();
+            if plan.emit_files.iter().any(|f| !check_set.contains(f)) {
+                return None;
+            }
+        }
+        let arena_lens = program.arena_lengths();
+
+        // Same LPT grouping as `try_fork_collect`.
+        let mut by_cost: Vec<(usize, NodeId, u64)> = files
+            .iter()
+            .enumerate()
+            .map(|(i, &f)| {
+                let cost = program.nodes(f.file_index()).len() as u64;
+                (i, f, cost)
+            })
+            .collect();
+        by_cost.sort_unstable_by(|a, b| b.2.cmp(&a.2));
+        let mut loads = vec![0u64; checkers.len()];
+        let mut groups: Vec<Vec<(usize, NodeId)>> = vec![Vec::new(); checkers.len()];
+        for (i, file, cost) in by_cost {
+            let g = loads
+                .iter()
+                .enumerate()
+                .min_by_key(|&(_, &l)| l)
+                .map(|(gi, _)| gi)
+                .unwrap_or(0);
+            groups[g].push((i, file));
+            loads[g] += cost;
+        }
+        for group in &mut groups {
+            group.sort_unstable_by_key(|&(i, _)| i);
+        }
+
+        let emit_one = |file: NodeId| -> EmitResult {
+            program.emit_one_forked(
+                ctx.clone(),
+                file,
+                plan.emit_only,
+                plan.force_emit,
+                plan.force_dts_emit,
+                plan.force_js_emit,
+            )
+        };
+
+        let mut diagnostics: Vec<Vec<DiagnosticRef>> = vec![Vec::new(); files.len()];
+        let mut emit_results: FxHashMap<NodeId, EmitResult> = FxHashMap::default();
+        let mut children: Vec<(libc::pid_t, libc::c_int, usize)> = Vec::new();
+
+        for (g, group) in groups.iter().enumerate().skip(1) {
+            if group.is_empty() {
+                continue;
+            }
+            let mut fds = [0 as libc::c_int; 2];
+            // SAFETY: `fds` points at valid storage.
+            if unsafe { libc::pipe(fds.as_mut_ptr()) } != 0 {
+                return None;
+            }
+            // SAFETY: fork contract identical to `try_fork_collect`.
+            let pid = unsafe { libc::fork() };
+            if pid < 0 {
+                unsafe {
+                    libc::close(fds[0]);
+                    libc::close(fds[1]);
+                }
+                continue;
+            }
+            if pid == 0 {
+                // ------- CHILD -------
+                // SAFETY: the read end is never used here.
+                unsafe { libc::close(fds[0]) };
+                let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                    let mut buf = Vec::new();
+                    let checker = &checkers[g];
+                    buf.extend_from_slice(&(group.len() as u32).to_le_bytes());
+                    let mut unresolvable = false;
+                    for &(i, file) in group {
+                        let diags = collect(ctx.clone(), checker, file);
+                        if !unresolvable
+                            && diags.iter().any(|d| {
+                                has_unresolvable_files(d)
+                                    || has_foreign_nodes(d, &arena_lens)
+                            })
+                        {
+                            unresolvable = true;
+                        }
+                        buf.extend_from_slice(&(i as u32).to_le_bytes());
+                        buf.extend_from_slice(&(diags.len() as u32).to_le_bytes());
+                        for d in &diags {
+                            let _ = write_diagnostic(d, &mut buf);
+                        }
+                        if emit_set.contains(&file) {
+                            let r = emit_one(file);
+                            if !unresolvable
+                                && r.diagnostics.iter().any(|d| {
+                                    has_unresolvable_files(d)
+                                        || has_foreign_nodes(d, &arena_lens)
+                                })
+                            {
+                                unresolvable = true;
+                            }
+                            buf.push(1);
+                            let _ = write_emit_result(&r, &mut buf);
+                        } else {
+                            buf.push(0);
+                        }
+                    }
+                    buf.push(if unresolvable { 0 } else { 1 });
+                    let mut off = 0;
+                    while off < buf.len() {
+                        // SAFETY: `buf[off..]` valid; `fds[1]` is the live
+                        // write end of this child's pipe.
+                        let n = unsafe {
+                            libc::write(
+                                fds[1],
+                                buf.as_ptr().add(off) as *const libc::c_void,
+                                buf.len() - off,
+                            )
+                        };
+                        if n <= 0 {
+                            break;
+                        }
+                        off += n as usize;
+                    }
+                }));
+                // SAFETY: `_exit` — no destructors/atexit in a forked child.
+                unsafe { libc::_exit(0) };
+            }
+            unsafe { libc::close(fds[1]) };
+            children.push((pid, fds[0], g));
+        }
+
+        // Group 0 in the parent.
+        for &(i, file) in &groups[0] {
+            diagnostics[i] = collect(ctx.clone(), &checkers[0], file);
+            if emit_set.contains(&file) {
+                emit_results.insert(file, emit_one(file));
+            }
+        }
+
+        let read_all = |fd: libc::c_int| -> Vec<u8> {
+            let mut out = Vec::new();
+            let mut chunk = [0u8; 1 << 16];
+            loop {
+                // SAFETY: valid buffer, live read end.
+                let n = unsafe {
+                    libc::read(fd, chunk.as_mut_ptr() as *mut libc::c_void, chunk.len())
+                };
+                if n <= 0 {
+                    break;
+                }
+                out.extend_from_slice(&chunk[..n as usize]);
+            }
+            unsafe { libc::close(fd) };
+            out
+        };
+
+        let mut blobs: Vec<(usize, Option<Vec<u8>>)> = Vec::new();
+        for (pid, fd, g) in children {
+            let buf = read_all(fd);
+            let mut status: libc::c_int = 0;
+            // SAFETY: `status` valid; `pid` is our child.
+            let rc = unsafe { libc::waitpid(pid, &mut status, 0) };
+            let clean =
+                rc == pid && libc::WIFEXITED(status) && libc::WEXITSTATUS(status) == 0;
+            let blob = if clean && !buf.is_empty() { Some(buf) } else { None };
+            blobs.push((g, blob));
+        }
+
+        let mut resolve_file = |node: NodeId| -> Option<DiagnosticFile> {
+            let len = arena_lens
+                .get(node.file_index() as usize)
+                .copied()
+                .flatten()?;
+            if node.local_index() as usize >= len {
+                return None;
+            }
+            Some(DiagnosticFile::from_node(
+                node,
+                &program.nodes(node.file_index()),
+            ))
+        };
+
+        for (g, blob) in blobs {
+            let ok = blob
+                .as_ref()
+                .is_some_and(|b| *b.last().unwrap_or(&0) == 1);
+            if let Some(mut b) = blob.filter(|_| ok) {
+                b.pop(); // trailer byte
+                let mut cursor = std::io::Cursor::new(b);
+                let parsed: Option<()> = (|| {
+                    let count = r_u32_wire(&mut cursor).ok()? as usize;
+                    for _ in 0..count {
+                        let i = r_u32_wire(&mut cursor).ok()? as usize;
+                        let n = r_u32_wire(&mut cursor).ok()? as usize;
+                        let mut diags = Vec::with_capacity(n);
+                        for _ in 0..n {
+                            diags.push(read_diagnostic(&mut cursor, &mut resolve_file).ok()?);
+                        }
+                        let emitted = {
+                            let mut b1 = [0u8; 1];
+                            std::io::Read::read_exact(&mut cursor, &mut b1).ok()?;
+                            b1[0]
+                        };
+                        if i < diagnostics.len() {
+                            diagnostics[i] = diags;
+                        }
+                        if emitted == 1 {
+                            let r = read_emit_result(&mut cursor, &mut resolve_file).ok()?;
+                            if i < files.len() {
+                                emit_results.insert(files[i], r);
+                            }
+                        }
+                    }
+                    Some(())
+                })();
+                if parsed.is_some() {
+                    continue;
+                }
+            }
+            // Re-run this group in the parent — see `try_fork_collect`.
+            for &(i, file) in &groups[g] {
+                diagnostics[i] = collect(ctx.clone(), &checkers[g], file);
+                if emit_set.contains(&file) {
+                    emit_results.insert(file, emit_one(file));
+                }
+            }
+        }
+
+        // Merge emit results in `plan.emit_files` order.
+        let merged = crate::program::combine_emit_results(
+            plan.emit_files
+                .iter()
+                .map(|f| emit_results.remove(f).unwrap_or_default()),
+        );
+        Some((diagnostics, merged))
     }
 }
 

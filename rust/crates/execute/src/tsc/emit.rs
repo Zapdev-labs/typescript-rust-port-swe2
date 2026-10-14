@@ -106,6 +106,33 @@ pub fn emit_files_and_report_errors(input: &mut EmitInput<'_>) -> CompileAndEmit
     let times_for_check = result_times.clone();
     let take_nested = input.take_nested_emit_time.take();
 
+    // PORT(addition): fused check+emit fork wave. When the upcoming
+    // `emit()` will run with the default write path and can't be skipped
+    // by options, park the emit plan — the all-files semantic-check fork
+    // wave then emits each file inside its check child, reusing warm COW
+    // checker state (`Program::set_fork_emit_plan` →
+    // `CompilerCheckerPool::try_fork_check_and_emit`).
+    #[cfg(unix)]
+    {
+        let options = program_like.options();
+        if input.write_file.is_none()
+            // Incremental programs emit buildinfo inside their diagnostics
+            // pass (`take_nested_emit_time`); leave their collect alone.
+            && take_nested.is_none()
+            && options.list_files_only.is_false_or_unknown()
+            && options.no_emit != tsc_core::tristate::TS_TRUE
+            && options.no_emit_on_error != tsc_core::tristate::TS_TRUE
+        {
+            input.program.set_fork_emit_plan(tsc_compiler::checker_pool::ForkEmitPlan {
+                emit_only: tsc_compiler::emit_host::EmitOnly::All,
+                force_emit: false,
+                force_dts_emit: false,
+                force_js_emit: false,
+                emit_files: Vec::new(),
+            });
+        }
+    }
+
     let mut all_diagnostics = get_diagnostics_of_any_program(
         &ctx,
         program_like,

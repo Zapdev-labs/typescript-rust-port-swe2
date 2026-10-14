@@ -232,6 +232,15 @@ pub struct Program {
     /// `sourceFilesToEmit` + `sourceFilesToEmitOnce`.
     source_files_to_emit: RefCell<Option<Rc<Vec<NodeId>>>>,
 
+    /// PORT(addition): fused check+emit fork state — see
+    /// `CompilerCheckerPool::try_fork_check_and_emit`. The `tsc` driver
+    /// parks `Pending` before diagnostics collection when the upcoming
+    /// `emit()` will run with the default write path; the all-files
+    /// semantic collect consumes it, runs the fused wave, and parks
+    /// `Done` for `emit()` to pick up.
+    #[cfg(unix)]
+    fork_fuse: RefCell<Option<ForkFuse>>,
+
     /// `unresolvedImports lazyValue`.
     unresolved_imports: OnceCell<Rc<HashSet<String>>>,
     /// `knownSymlinks lazyValue`.
@@ -266,6 +275,17 @@ pub struct Program {
     /// called per node access and overwhelmingly stay within one file, so a
     /// 1-entry cache skips the map lookup on the hot path.
     last_arena: std::cell::RefCell<Option<(u32, Rc<ArenaCell>)>>,
+}
+
+/// PORT(addition): fused check+emit fork state machine — see
+/// `CompilerCheckerPool::try_fork_check_and_emit`.
+#[cfg(unix)]
+pub(crate) enum ForkFuse {
+    /// Driver parked an emit plan before diagnostics collection; the next
+    /// all-files semantic collect consumes it into a fused wave.
+    Pending(crate::checker_pool::ForkEmitPlan),
+    /// The fused wave completed; `emit()` returns this result verbatim.
+    Done(EmitResult),
 }
 
 impl std::ops::Deref for Program {
@@ -1217,6 +1237,30 @@ impl Program {
         let mut diagnostics: Vec<Vec<DiagnosticRef>> = vec![Vec::new(); source_files.len()];
         let __collect_t = std::time::Instant::now();
         let pool = self.compiler_checker_pool.borrow().as_ref().cloned();
+        #[cfg(unix)]
+        // Scrutinee temporaries live for the whole `if let` block — bind
+        // the take first so the inner `borrow_mut` below doesn't panic.
+        let pending_fuse = self.fork_fuse.borrow_mut().take();
+        if let Some(ForkFuse::Pending(mut plan)) = pending_fuse {
+            // Fused check+emit — only for the all-files collect wave the
+            // driver just kicked off (subset/incremental collects never
+            // carry emit work; the plan is consumed either way).
+            plan.emit_files =
+                self.get_source_files_to_emit(None, plan.force_dts_emit, plan.force_js_emit);
+            if let Some(pool) = pool.as_ref()
+                && source_files.len() == self.source_file_ids.len()
+                && let Some((diags, emit_result)) = pool.try_fork_check_and_emit(
+                    ctx.clone(),
+                    source_files,
+                    self.single_threaded(),
+                    collect,
+                    &plan,
+                )
+            {
+                *self.fork_fuse.borrow_mut() = Some(ForkFuse::Done(emit_result));
+                return diags;
+            }
+        }
         #[cfg(unix)]
         if let Some(pool) = pool.as_ref() {
             // Fork-parallel check: each checker group runs in a COW-isolated
@@ -3015,6 +3059,18 @@ impl Program {
         }
     }
 
+    /// PORT(addition): park an emit plan for the fused check+emit fork
+    /// wave (`CompilerCheckerPool::try_fork_check_and_emit`). Called by
+    /// the `tsc` driver before diagnostics collection when the upcoming
+    /// `emit()` qualifies — default write path, emit actually proceeds.
+    /// The next all-files collect consumes it one-shot; if that collect
+    /// never runs (earlier-phase diagnostics present), `emit()` clears
+    /// the stale plan and emits normally.
+    #[cfg(unix)]
+    pub fn set_fork_emit_plan(&self, plan: crate::checker_pool::ForkEmitPlan) {
+        *self.fork_fuse.borrow_mut() = Some(ForkFuse::Pending(plan));
+    }
+
     /// `Emit`.
     pub fn emit(&self, ctx: Context, options: &mut EmitOptions<'_>) -> EmitResult {
         let trace_done = push(
@@ -3024,6 +3080,17 @@ impl Program {
             Default::default(),
             true,
         );
+
+        #[cfg(unix)]
+        match self.fork_fuse.borrow_mut().take() {
+            // Fused wave already emitted — return the merged result.
+            Some(ForkFuse::Done(result)) => {
+                trace_done();
+                return result;
+            }
+            // A `Pending` plan's collect never ran — emit normally.
+            Some(ForkFuse::Pending(_)) | None => {}
+        }
 
         if !options.force_emit && options.emit_only != crate::emit_host::EmitOnly::BuilderSignature
         {
@@ -3961,6 +4028,8 @@ pub fn new_program(opts: ProgramOptions) -> Rc<Program> {
         has_emit_blocking_diagnostics: RefCell::new(HashSet::new()),
         content_mapper_option_diagnostics: RefCell::new(Vec::new()),
         source_files_to_emit: RefCell::new(None),
+        #[cfg(unix)]
+        fork_fuse: RefCell::new(None),
         unresolved_imports: OnceCell::new(),
         known_symlinks: OnceCell::new(),
         package_names: OnceCell::new(),
@@ -4222,6 +4291,8 @@ pub fn reuse_program(
             p.content_mapper_option_diagnostics.borrow().clone(),
         ),
         source_files_to_emit: RefCell::new(None),
+        #[cfg(unix)]
+        fork_fuse: RefCell::new(None),
         unresolved_imports: OnceCell::new(),
         known_symlinks: OnceCell::new(),
         package_names: OnceCell::new(),
@@ -5047,6 +5118,33 @@ impl CheckerPoolProgram for Program {
             .iter()
             .map(|c| c.as_ref().map(|c| c.snapshot().len()))
             .collect()
+    }
+
+    /// Emit one file inside the fused fork child — identical to the
+    /// per-file body of `try_fork_emit`'s `emit_group`.
+    #[cfg(unix)]
+    fn emit_one_forked(
+        &self,
+        ctx: Context,
+        file: NodeId,
+        emit_only: crate::emit_host::EmitOnly,
+        force_emit: bool,
+        force_dts_emit: bool,
+        force_js_emit: bool,
+    ) -> EmitResult {
+        let mut emitter = crate::emitter::Emitter::new(
+            file,
+            emit_only,
+            force_emit,
+            None,
+            self.hosts.tracing.clone(),
+        );
+        let (host, done) = BasicEmitHost::new(ctx.clone(), self, file);
+        emitter.set_host(host);
+        emitter.compute_paths(force_dts_emit, force_js_emit, force_emit);
+        emitter.emit();
+        done();
+        emitter.emit_result()
     }
 }
 
