@@ -4243,21 +4243,21 @@ impl Checker {
         symbol: Option<SymbolId>,
     ) -> TypeId {
         let data = if object_flags.intersects(ObjectFlags::CLASS_OR_INTERFACE) {
-            TypeData::InterfaceType(crate::types::InterfaceType::default())
+            TypeData::InterfaceType(Box::default())
         } else if object_flags.intersects(ObjectFlags::TUPLE) {
-            TypeData::Tuple(crate::types::TupleType::default())
+            TypeData::Tuple(Box::default())
         } else if object_flags.intersects(ObjectFlags::REFERENCE) {
-            TypeData::TypeReference(crate::types::TypeReference::default())
+            TypeData::TypeReference(Box::default())
         } else if object_flags.intersects(ObjectFlags::MAPPED) {
-            TypeData::Mapped(crate::types::MappedType::default())
+            TypeData::Mapped(Box::default())
         } else if object_flags.intersects(ObjectFlags::REVERSE_MAPPED) {
-            TypeData::ReverseMapped(crate::types::ReverseMappedType::default())
+            TypeData::ReverseMapped(Box::default())
         } else if object_flags.intersects(ObjectFlags::EVOLVING_ARRAY) {
-            TypeData::EvolvingArray(crate::types::EvolvingArrayType::default())
+            TypeData::EvolvingArray(Box::default())
         } else if object_flags.intersects(ObjectFlags::INSTANTIATION_EXPRESSION_TYPE) {
-            TypeData::InstantiationExpression(crate::types::InstantiationExpressionType::default())
+            TypeData::InstantiationExpression(Box::default())
         } else if object_flags.intersects(ObjectFlags::ANONYMOUS) {
-            TypeData::Object(crate::types::ObjectType::default())
+            TypeData::Object(Box::default())
         } else {
             panic!("Unhandled case in newObjectType")
         };
@@ -4376,13 +4376,13 @@ impl Checker {
         self.new_type(
             TypeFlags::UNION,
             object_flags,
-            TypeData::Union(crate::types::UnionType {
+            TypeData::Union(Box::new(crate::types::UnionType {
                 union_or_intersection: crate::types::UnionOrIntersectionType {
                     types,
                     ..Default::default()
                 },
                 ..Default::default()
-            }),
+            })),
         )
     }
 
@@ -4395,13 +4395,13 @@ impl Checker {
         self.new_type(
             TypeFlags::INTERSECTION,
             object_flags,
-            TypeData::Intersection(crate::types::IntersectionType {
+            TypeData::Intersection(Box::new(crate::types::IntersectionType {
                 union_or_intersection: crate::types::UnionOrIntersectionType {
                     types,
                     ..Default::default()
                 },
                 ..Default::default()
-            }),
+            })),
         )
     }
 

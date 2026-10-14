@@ -1944,25 +1944,25 @@ pub enum TypeData {
     UniqueESSymbol(UniqueESSymbolType),
     /// `*ObjectType` (anonymous object types — `ObjectFlagsAnonymous` and
     /// friends).
-    Object(ObjectType),
+    Object(Box<ObjectType>),
     /// `*TypeReference`.
-    TypeReference(TypeReference),
+    TypeReference(Box<TypeReference>),
     /// `*InterfaceType`.
-    InterfaceType(InterfaceType),
+    InterfaceType(Box<InterfaceType>),
     /// `*TupleType`.
-    Tuple(TupleType),
+    Tuple(Box<TupleType>),
     /// `*InstantiationExpressionType`.
-    InstantiationExpression(InstantiationExpressionType),
+    InstantiationExpression(Box<InstantiationExpressionType>),
     /// `*MappedType`.
-    Mapped(MappedType),
+    Mapped(Box<MappedType>),
     /// `*ReverseMappedType`.
-    ReverseMapped(ReverseMappedType),
+    ReverseMapped(Box<ReverseMappedType>),
     /// `*EvolvingArrayType`.
-    EvolvingArray(EvolvingArrayType),
+    EvolvingArray(Box<EvolvingArrayType>),
     /// `*UnionType`.
-    Union(UnionType),
+    Union(Box<UnionType>),
     /// `*IntersectionType`.
-    Intersection(IntersectionType),
+    Intersection(Box<IntersectionType>),
     /// `*TypeParameter`.
     TypeParameter(TypeParameter),
     /// `*IndexType`.
