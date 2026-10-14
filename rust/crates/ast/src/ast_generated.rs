@@ -2337,8 +2337,8 @@ pub enum NodeData {
     IfStatement(IfStatement),
     DoStatement(DoStatement),
     WhileStatement(WhileStatement),
-    ForStatement(ForStatement),
-    ForInOrOfStatement(ForInOrOfStatement),
+    ForStatement(Box<ForStatement>),
+    ForInOrOfStatement(Box<ForInOrOfStatement>),
     BreakStatement(BreakStatement),
     ContinueStatement(ContinueStatement),
     ReturnStatement(ReturnStatement),
@@ -2360,12 +2360,12 @@ pub enum NodeData {
     ParameterDeclaration(ParameterDeclaration),
     BindingElement(BindingElement),
     MissingDeclaration(MissingDeclaration),
-    FunctionDeclaration(FunctionDeclaration),
-    ClassDeclaration(ClassDeclaration),
-    ClassExpression(ClassExpression),
+    FunctionDeclaration(Box<FunctionDeclaration>),
+    ClassDeclaration(Box<ClassDeclaration>),
+    ClassExpression(Box<ClassExpression>),
     HeritageClause(HeritageClause),
-    InterfaceDeclaration(InterfaceDeclaration),
-    TypeAliasDeclaration(TypeAliasDeclaration),
+    InterfaceDeclaration(Box<InterfaceDeclaration>),
+    TypeAliasDeclaration(Box<TypeAliasDeclaration>),
     EnumMember(EnumMember),
     EnumDeclaration(EnumDeclaration),
     ModuleBlock(ModuleBlock),
@@ -2380,18 +2380,18 @@ pub enum NodeData {
     NamespaceExport(NamespaceExport),
     NamedExports(NamedExports),
     ExportSpecifier(ExportSpecifier),
-    CallSignatureDeclaration(CallSignatureDeclaration),
-    ConstructSignatureDeclaration(ConstructSignatureDeclaration),
-    ConstructorDeclaration(ConstructorDeclaration),
-    GetAccessorDeclaration(GetAccessorDeclaration),
-    SetAccessorDeclaration(SetAccessorDeclaration),
-    IndexSignatureDeclaration(IndexSignatureDeclaration),
-    MethodSignatureDeclaration(MethodSignatureDeclaration),
-    MethodDeclaration(MethodDeclaration),
+    CallSignatureDeclaration(Box<CallSignatureDeclaration>),
+    ConstructSignatureDeclaration(Box<ConstructSignatureDeclaration>),
+    ConstructorDeclaration(Box<ConstructorDeclaration>),
+    GetAccessorDeclaration(Box<GetAccessorDeclaration>),
+    SetAccessorDeclaration(Box<SetAccessorDeclaration>),
+    IndexSignatureDeclaration(Box<IndexSignatureDeclaration>),
+    MethodSignatureDeclaration(Box<MethodSignatureDeclaration>),
+    MethodDeclaration(Box<MethodDeclaration>),
     PropertySignatureDeclaration(PropertySignatureDeclaration),
     PropertyDeclaration(PropertyDeclaration),
     SemicolonClassElement(SemicolonClassElement),
-    ClassStaticBlockDeclaration(ClassStaticBlockDeclaration),
+    ClassStaticBlockDeclaration(Box<ClassStaticBlockDeclaration>),
     OmittedExpression(OmittedExpression),
     KeywordExpression(KeywordExpression),
     StringLiteral(StringLiteral),
@@ -2403,8 +2403,8 @@ pub enum NodeData {
     PrefixUnaryExpression(PrefixUnaryExpression),
     PostfixUnaryExpression(PostfixUnaryExpression),
     YieldExpression(YieldExpression),
-    ArrowFunction(ArrowFunction),
-    FunctionExpression(FunctionExpression),
+    ArrowFunction(Box<ArrowFunction>),
+    FunctionExpression(Box<FunctionExpression>),
     AsExpression(AsExpression),
     SatisfiesExpression(SatisfiesExpression),
     ConditionalExpression(ConditionalExpression),
@@ -2432,7 +2432,7 @@ pub enum NodeData {
     KeywordTypeNode(KeywordTypeNode),
     UnionTypeNode(UnionTypeNode),
     IntersectionTypeNode(IntersectionTypeNode),
-    ConditionalTypeNode(ConditionalTypeNode),
+    ConditionalTypeNode(Box<ConditionalTypeNode>),
     TypeOperatorNode(TypeOperatorNode),
     InferTypeNode(InferTypeNode),
     ArrayTypeNode(ArrayTypeNode),
@@ -2445,15 +2445,15 @@ pub enum NodeData {
     ImportAttribute(ImportAttribute),
     ImportAttributes(ImportAttributes),
     TypeQueryNode(TypeQueryNode),
-    MappedTypeNode(MappedTypeNode),
+    MappedTypeNode(Box<MappedTypeNode>),
     TypeLiteralNode(TypeLiteralNode),
     TupleTypeNode(TupleTypeNode),
     NamedTupleMember(NamedTupleMember),
     OptionalTypeNode(OptionalTypeNode),
     RestTypeNode(RestTypeNode),
     ParenthesizedTypeNode(ParenthesizedTypeNode),
-    FunctionTypeNode(FunctionTypeNode),
-    ConstructorTypeNode(ConstructorTypeNode),
+    FunctionTypeNode(Box<FunctionTypeNode>),
+    ConstructorTypeNode(Box<ConstructorTypeNode>),
     TemplateHead(TemplateHead),
     TemplateMiddle(TemplateMiddle),
     TemplateTail(TemplateTail),
@@ -2502,9 +2502,9 @@ pub enum NodeData {
     JSDocCallbackTag(JSDocCallbackTag),
     JSDocOverloadTag(JSDocOverloadTag),
     JSDocTypedefTag(JSDocTypedefTag),
-    JSDocSignature(JSDocSignature),
+    JSDocSignature(Box<JSDocSignature>),
     JSDocNameReference(JSDocNameReference),
-    ModuleDeclaration(ModuleDeclaration),
+    ModuleDeclaration(Box<ModuleDeclaration>),
     ImportEqualsDeclaration(ImportEqualsDeclaration),
     ExportDeclaration(ExportDeclaration),
     ImportTypeNode(ImportTypeNode),
@@ -2518,10 +2518,6 @@ pub enum NodeData {
     SyntheticReferenceExpression(SyntheticReferenceExpression),
     JSDocTypeLiteral(JSDocTypeLiteral),
     JSDocParameterOrPropertyTag(JSDocParameterOrPropertyTag),
-    // PORT: `Box`ed — `SourceFile` is 1KiB while the next-largest variant is
-    // ~300B; inline it would make every `Node` pay ~1KiB per arena
-    // push/clone/move (Go keeps payloads behind pointers). Regeneration
-    // preserves this via `BOXED_NODE_VARIANTS` in tools/gen-ast.
     SourceFile(Box<SourceFile>),
     FlowSwitchClauseData(FlowSwitchClauseData),
     FlowReduceLabelData(FlowReduceLabelData),
@@ -12353,7 +12349,11 @@ impl NodeFactory<'_> {
         data.condition = condition;
         data.incrementor = incrementor;
         data.iteration_statement_base.statement = statement;
-        self.new_node(nodes, Kind::ForStatement, NodeData::ForStatement(data))
+        self.new_node(
+            nodes,
+            Kind::ForStatement,
+            NodeData::ForStatement(Box::new(data)),
+        )
     }
 
     /// `UpdateForStatement` — `None` when nothing changed (Go returned the
@@ -12405,7 +12405,7 @@ impl NodeFactory<'_> {
         data.initializer = initializer;
         data.expression = expression;
         data.statement = statement;
-        self.new_node(nodes, kind, NodeData::ForInOrOfStatement(data))
+        self.new_node(nodes, kind, NodeData::ForInOrOfStatement(Box::new(data)))
     }
 
     /// `UpdateForInOrOfStatement` — `None` when nothing changed (Go returned the
@@ -13334,7 +13334,7 @@ impl NodeFactory<'_> {
         self.new_node(
             nodes,
             Kind::FunctionDeclaration,
-            NodeData::FunctionDeclaration(data),
+            NodeData::FunctionDeclaration(Box::new(data)),
         )
     }
 
@@ -13409,7 +13409,7 @@ impl NodeFactory<'_> {
         self.new_node(
             nodes,
             Kind::ClassDeclaration,
-            NodeData::ClassDeclaration(data),
+            NodeData::ClassDeclaration(Box::new(data)),
         )
     }
 
@@ -13469,7 +13469,7 @@ impl NodeFactory<'_> {
         self.new_node(
             nodes,
             Kind::ClassExpression,
-            NodeData::ClassExpression(data),
+            NodeData::ClassExpression(Box::new(data)),
         )
     }
 
@@ -13569,7 +13569,7 @@ impl NodeFactory<'_> {
         self.new_node(
             nodes,
             Kind::InterfaceDeclaration,
-            NodeData::InterfaceDeclaration(data),
+            NodeData::InterfaceDeclaration(Box::new(data)),
         )
     }
 
@@ -13627,7 +13627,7 @@ impl NodeFactory<'_> {
         self.new_node(
             nodes,
             Kind::TypeAliasDeclaration,
-            NodeData::TypeAliasDeclaration(data),
+            NodeData::TypeAliasDeclaration(Box::new(data)),
         )
     }
 
@@ -13648,7 +13648,7 @@ impl NodeFactory<'_> {
         self.new_node(
             nodes,
             Kind::JSTypeAliasDeclaration,
-            NodeData::TypeAliasDeclaration(data),
+            NodeData::TypeAliasDeclaration(Box::new(data)),
         )
     }
 
@@ -14264,7 +14264,7 @@ impl NodeFactory<'_> {
         self.new_node(
             nodes,
             Kind::CallSignature,
-            NodeData::CallSignatureDeclaration(data),
+            NodeData::CallSignatureDeclaration(Box::new(data)),
         )
     }
 
@@ -14314,7 +14314,7 @@ impl NodeFactory<'_> {
         self.new_node(
             nodes,
             Kind::ConstructSignature,
-            NodeData::ConstructSignatureDeclaration(data),
+            NodeData::ConstructSignatureDeclaration(Box::new(data)),
         )
     }
 
@@ -14376,7 +14376,7 @@ impl NodeFactory<'_> {
         self.new_node(
             nodes,
             Kind::Constructor,
-            NodeData::ConstructorDeclaration(data),
+            NodeData::ConstructorDeclaration(Box::new(data)),
         )
     }
 
@@ -14467,7 +14467,7 @@ impl NodeFactory<'_> {
         self.new_node(
             nodes,
             Kind::GetAccessor,
-            NodeData::GetAccessorDeclaration(data),
+            NodeData::GetAccessorDeclaration(Box::new(data)),
         )
     }
 
@@ -14579,7 +14579,7 @@ impl NodeFactory<'_> {
         self.new_node(
             nodes,
             Kind::SetAccessor,
-            NodeData::SetAccessorDeclaration(data),
+            NodeData::SetAccessorDeclaration(Box::new(data)),
         )
     }
 
@@ -14665,7 +14665,7 @@ impl NodeFactory<'_> {
         self.new_node(
             nodes,
             Kind::IndexSignature,
-            NodeData::IndexSignatureDeclaration(data),
+            NodeData::IndexSignatureDeclaration(Box::new(data)),
         )
     }
 
@@ -14721,7 +14721,7 @@ impl NodeFactory<'_> {
         self.new_node(
             nodes,
             Kind::MethodSignature,
-            NodeData::MethodSignatureDeclaration(data),
+            NodeData::MethodSignatureDeclaration(Box::new(data)),
         )
     }
 
@@ -14798,7 +14798,7 @@ impl NodeFactory<'_> {
         self.new_node(
             nodes,
             Kind::MethodDeclaration,
-            NodeData::MethodDeclaration(data),
+            NodeData::MethodDeclaration(Box::new(data)),
         )
     }
 
@@ -15000,7 +15000,7 @@ impl NodeFactory<'_> {
         self.new_node(
             nodes,
             Kind::ClassStaticBlockDeclaration,
-            NodeData::ClassStaticBlockDeclaration(data),
+            NodeData::ClassStaticBlockDeclaration(Box::new(data)),
         )
     }
 
@@ -15354,7 +15354,11 @@ impl NodeFactory<'_> {
             .full_signature = full_signature;
         data.equals_greater_than_token = equals_greater_than_token;
         data.function_like_with_body_base.body_base.body = body;
-        self.new_node(nodes, Kind::ArrowFunction, NodeData::ArrowFunction(data))
+        self.new_node(
+            nodes,
+            Kind::ArrowFunction,
+            NodeData::ArrowFunction(Box::new(data)),
+        )
     }
 
     /// `UpdateArrowFunction` — `None` when nothing changed (Go returned the
@@ -15437,7 +15441,7 @@ impl NodeFactory<'_> {
         self.new_node(
             nodes,
             Kind::FunctionExpression,
-            NodeData::FunctionExpression(data),
+            NodeData::FunctionExpression(Box::new(data)),
         )
     }
 
@@ -16710,7 +16714,7 @@ impl NodeFactory<'_> {
         self.new_node(
             nodes,
             Kind::ConditionalType,
-            NodeData::ConditionalTypeNode(data),
+            NodeData::ConditionalTypeNode(Box::new(data)),
         )
     }
 
@@ -17236,7 +17240,11 @@ impl NodeFactory<'_> {
         data.question_token = question_token;
         data.type_ = type_node;
         data.members = members;
-        self.new_node(nodes, Kind::MappedType, NodeData::MappedTypeNode(data))
+        self.new_node(
+            nodes,
+            Kind::MappedType,
+            NodeData::MappedTypeNode(Box::new(data)),
+        )
     }
 
     /// `UpdateMappedTypeNode` — `None` when nothing changed (Go returned the
@@ -17536,7 +17544,11 @@ impl NodeFactory<'_> {
         data.function_or_constructor_type_node_base
             .function_like_base
             .type_ = type_node;
-        self.new_node(nodes, Kind::FunctionType, NodeData::FunctionTypeNode(data))
+        self.new_node(
+            nodes,
+            Kind::FunctionType,
+            NodeData::FunctionTypeNode(Box::new(data)),
+        )
     }
 
     /// `UpdateFunctionTypeNode` — `None` when nothing changed (Go returned the
@@ -17604,7 +17616,7 @@ impl NodeFactory<'_> {
         self.new_node(
             nodes,
             Kind::ConstructorType,
-            NodeData::ConstructorTypeNode(data),
+            NodeData::ConstructorTypeNode(Box::new(data)),
         )
     }
 
@@ -19600,7 +19612,11 @@ impl NodeFactory<'_> {
         data.function_like_base.type_parameters = type_parameters;
         data.function_like_base.parameters = parameters;
         data.function_like_base.type_ = type_node;
-        self.new_node(nodes, Kind::JSDocSignature, NodeData::JSDocSignature(data))
+        self.new_node(
+            nodes,
+            Kind::JSDocSignature,
+            NodeData::JSDocSignature(Box::new(data)),
+        )
     }
 
     /// `UpdateJSDocSignature` — `None` when nothing changed (Go returned the
@@ -19693,7 +19709,7 @@ impl NodeFactory<'_> {
         self.new_node(
             nodes,
             Kind::ModuleDeclaration,
-            NodeData::ModuleDeclaration(data),
+            NodeData::ModuleDeclaration(Box::new(data)),
         )
     }
 

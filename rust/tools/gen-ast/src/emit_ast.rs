@@ -21,12 +21,41 @@ pub struct Emitter<'a> {
     base_map: BTreeMap<&'a str, &'a BaseDef>,
 }
 
-/// `NodeData` variants emitted behind `Box<T>`: inline, `SourceFile`
-/// (~1KiB) is ~3x the next-largest variant — every `Node` arena
-/// push/clone/move would pay it (Go keeps payloads behind pointers).
-/// `&Box<T>` coerces to `&T` at all generated match sites, so only the
-/// enum line and construction sites change.
-const BOXED_NODE_VARIANTS: &[&str] = &["SourceFile"];
+/// `NodeData` variants emitted behind `Box<T>`: everything larger than
+/// 128B. The fat tail is entirely declaration/signature payloads
+/// (FunctionDeclaration 296B, ClassDeclaration 248B, …) while the hot
+/// common nodes stay small and inline (Identifier 32B, PropertyAccess
+/// 64B, BinaryExpression 112B). Boxing the tail shrinks `Node` from
+/// 336B to ~176B, halving arena push/clone/move traffic — Go keeps all
+/// payloads behind pointers. `&Box<T>` coerces to `&T` at all generated
+/// match sites, so only the enum line and construction sites change.
+const BOXED_NODE_VARIANTS: &[&str] = &[
+    "SourceFile",
+    "SetAccessorDeclaration",
+    "MethodDeclaration",
+    "GetAccessorDeclaration",
+    "FunctionDeclaration",
+    "FunctionExpression",
+    "ArrowFunction",
+    "ConstructorDeclaration",
+    "ClassDeclaration",
+    "MethodSignatureDeclaration",
+    "ClassExpression",
+    "ModuleDeclaration",
+    "IndexSignatureDeclaration",
+    "FunctionTypeNode",
+    "ConstructorTypeNode",
+    "TypeAliasDeclaration",
+    "MappedTypeNode",
+    "JSDocSignature",
+    "ConstructSignatureDeclaration",
+    "CallSignatureDeclaration",
+    "InterfaceDeclaration",
+    "ForStatement",
+    "ForInOrOfStatement",
+    "ClassStaticBlockDeclaration",
+    "ConditionalTypeNode",
+];
 
 /// `SubtreeContainsTypeScript` → `SubtreeFacts::CONTAINS_TYPE_SCRIPT`.
 fn facts_const(name: &str) -> String {
@@ -717,13 +746,18 @@ impl<'a> Emitter<'a> {
         } else {
             rust_name(c.kind_arg.as_deref().unwrap_or("kind"))
         };
+        let data_expr = if BOXED_NODE_VARIANTS.contains(&v.as_str()) {
+            "Box::new(data)".to_string()
+        } else {
+            "data".to_string()
+        };
         if c.post.is_empty() {
             out.push_str(&format!(
-                "        self.new_node(nodes, {kind_expr}, NodeData::{v}(data))\n"
+                "        self.new_node(nodes, {kind_expr}, NodeData::{v}({data_expr}))\n"
             ));
         } else {
             out.push_str(&format!(
-                "        let node = self.new_node(nodes, {kind_expr}, NodeData::{v}(data));\n"
+                "        let node = self.new_node(nodes, {kind_expr}, NodeData::{v}({data_expr}));\n"
             ));
             for p in &c.post {
                 match p {
