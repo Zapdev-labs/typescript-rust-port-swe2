@@ -533,7 +533,7 @@ impl Checker {
             .expect("NodeBuilder without impl")
             .f
             .set_file_index(file_index);
-        let mut nodes = tsc_ast::ast::ArenaCheckout::new(__arena_cell);
+        let mut nodes = tsc_ast::ast::ArenaAccess::new(&__arena_cell);
         self.serialization_level += 1;
         let type_node = node_builder.type_to_type_node(
             self,
@@ -675,7 +675,7 @@ impl Checker {
             .expect("NodeBuilder without impl")
             .f
             .set_file_index(file_index);
-        let mut nodes = tsc_ast::ast::ArenaCheckout::new(__arena_cell);
+        let mut nodes = tsc_ast::ast::ArenaAccess::new(&__arena_cell);
         let source_file = enclosing_declaration.and_then(|d| {
             get_source_file_of_node_resolved(&program, &nodes, Some(d))
         });
@@ -788,7 +788,7 @@ impl Checker {
             .expect("NodeBuilder without impl")
             .f
             .set_file_index(file_index);
-        let mut nodes = tsc_ast::ast::ArenaCheckout::new(__arena_cell);
+        let mut nodes = tsc_ast::ast::ArenaAccess::new(&__arena_cell);
         let sig = node_builder.signature_to_signature_declaration(
             self,
             &mut nodes,
@@ -865,7 +865,7 @@ impl Checker {
             .expect("NodeBuilder without impl")
             .f
             .set_file_index(file_index);
-        let mut nodes = tsc_ast::ast::ArenaCheckout::new(__arena_cell);
+        let mut nodes = tsc_ast::ast::ArenaAccess::new(&__arena_cell);
         let predicate = node_builder.type_predicate_to_type_predicate_node(
             self,
             &mut nodes,
@@ -999,7 +999,7 @@ impl Checker {
             .expect("NodeBuilder without impl")
             .f
             .set_file_index(file_index);
-        let mut nodes = tsc_ast::ast::ArenaCheckout::new(__arena_cell);
+        let mut nodes = tsc_ast::ast::ArenaAccess::new(&__arena_cell);
         node_builder.type_to_type_node(
             self,
             &mut nodes,
@@ -1029,7 +1029,7 @@ impl Checker {
             .expect("NodeBuilder without impl")
             .f
             .set_file_index(file_index);
-        let mut nodes = tsc_ast::ast::ArenaCheckout::new(__arena_cell);
+        let mut nodes = tsc_ast::ast::ArenaAccess::new(&__arena_cell);
         let result = node_builder.signature_to_signature_declaration(
             self,
             &mut nodes,
@@ -1079,7 +1079,7 @@ impl Checker {
             .expect("NodeBuilder without impl")
             .f
             .set_file_index(file_index);
-        let mut nodes = tsc_ast::ast::ArenaCheckout::new(__arena_cell);
+        let mut nodes = tsc_ast::ast::ArenaAccess::new(&__arena_cell);
         let nodes_out = node_builder.expand_symbol_for_hover(self, &mut nodes, symbol, meaning);
         if nodes_out.is_empty() {
             drop(nodes);
@@ -1140,7 +1140,7 @@ impl Checker {
             .expect("NodeBuilder without impl")
             .f
             .set_file_index(file_index);
-        let mut nodes = tsc_ast::ast::ArenaCheckout::new(__arena_cell);
+        let mut nodes = tsc_ast::ast::ArenaAccess::new(&__arena_cell);
         let type_param_node = node_builder.type_parameter_to_declaration(
             self,
             &mut nodes,
@@ -1202,7 +1202,7 @@ impl Checker {
             .expect("NodeBuilder without impl")
             .f
             .set_file_index(file_index);
-        let mut nodes = tsc_ast::ast::ArenaCheckout::new(__arena_cell);
+        let mut nodes = tsc_ast::ast::ArenaAccess::new(&__arena_cell);
         let type_node = node_builder.type_to_type_node(
             self,
             &mut nodes,
@@ -1239,7 +1239,7 @@ impl Checker {
             .expect("NodeBuilder without impl")
             .f
             .set_file_index(file_index);
-        let mut nodes = tsc_ast::ast::ArenaCheckout::new(__arena_cell);
+        let mut nodes = tsc_ast::ast::ArenaAccess::new(&__arena_cell);
         node_builder.type_to_type_node(
             self,
             &mut nodes,
@@ -1269,7 +1269,7 @@ impl Checker {
             .expect("NodeBuilder without impl")
             .f
             .set_file_index(file_index);
-        let mut nodes = tsc_ast::ast::ArenaCheckout::new(__arena_cell);
+        let mut nodes = tsc_ast::ast::ArenaAccess::new(&__arena_cell);
         node_builder.type_predicate_to_type_predicate_node(
             self,
             &mut nodes,

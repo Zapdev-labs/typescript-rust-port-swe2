@@ -2855,22 +2855,30 @@ impl ArenaCell {
     /// guard may be live per cell at a time.
     #[allow(unsafe_code)] // shared-heap write — see `NodeArenaBuf`
     pub fn cow(self: &std::rc::Rc<Self>) -> ArenaMut {
-        assert!(
-            self.1.get() == 0,
-            "ArenaCell: nested cow() while a writer guard is active"
-        );
+        self.try_cow()
+            .expect("ArenaCell: nested cow() while a writer guard is active")
+    }
+
+    /// Non-panicking [`ArenaCell::cow`] — `None` while another writer
+    /// guard is live, for callers that can fall back to [`ArenaCheckout`]
+    /// (see [`ArenaAccess`]).
+    #[allow(unsafe_code)] // shared-heap write — see `NodeArenaBuf`
+    pub fn try_cow(self: &std::rc::Rc<Self>) -> Option<ArenaMut> {
+        if self.1.get() != 0 {
+            return None;
+        }
         self.1.set(1);
         let work = self.0.borrow().clone();
         // Headroom so check-time synthetic-node pushes don't realloc the
         // shared buffer once per push (parse sizes the Vec ~exactly to the
         // parsed node count; Go's heap has no growth step at all).
         unsafe { &mut *work.0.get() }.reserve(4096);
-        ArenaMut {
+        Some(ArenaMut {
             cell: self.clone(),
             work,
             dirty: false,
             wgen: self.2.get(),
-        }
+        })
     }
 
     /// Replaces the arena contents (construction/restore paths). Existing
@@ -3019,11 +3027,21 @@ pub struct ArenaCheckout {
 impl ArenaCheckout {
     /// Checks the arena out: clones its contents into a private working
     /// `Vec`.
+    ///
+    /// A live [`ArenaMut`] writer is tolerated: the clone snapshots the
+    /// buffer mid-flight (single-threaded — the clone sees a consistent
+    /// instant), and the checkout's drop `set()` becomes last-writer-wins
+    /// against the guard's in-place writes — the same clobber semantics
+    /// two nested checkouts already have. Needed because `ArenaAccess`
+    /// hands the zero-copy writer to the outermost `type_to_string`-
+    /// style call, leaving this the nested-fallback path.
     pub fn new(arena: std::rc::Rc<ArenaCell>) -> ArenaCheckout {
-        assert!(
-            arena.1.get() == 0,
-            "ArenaCell: ArenaCheckout while a cow() writer guard is active"
-        );
+        if std::env::var("TSC_ARENA_DBG").is_ok() && arena.1.get() != 0 {
+            eprintln!(
+                "[arena] ArenaCheckout while a cow() writer guard is active\n{}",
+                std::backtrace::Backtrace::force_capture()
+            );
+        }
         let wgen = arena.2.get();
         let work = arena.0.borrow().as_slice().to_vec();
         arena.3.set(arena.3.get() + 1);
@@ -3058,5 +3076,53 @@ impl Drop for ArenaCheckout {
         }
         self.arena.3.set(self.arena.3.get().saturating_sub(1));
         self.arena.set(std::mem::take(&mut self.work));
+    }
+}
+
+/// `ArenaAccess` — `&mut Vec<Node>` guard that prefers the zero-copy
+/// in-place [`ArenaMut`] writer and falls back to the copy-in/copy-out
+/// [`ArenaCheckout`] when another writer guard is already live (e.g.
+/// nested `type_to_string` while a builder's checkout is held). The
+/// checkout's full-arena clone made every guarded call O(arena); hot
+/// paths that checkout per-call (diagnostic type serialization) pay it
+/// repeatedly. `Deref`/`DerefMut` to `Vec<Node>` matches both guards, so
+/// it's a drop-in for `ArenaCheckout::new`.
+///
+/// Semantics match the fallback exactly for the two possible outcomes:
+/// uncontended, minted nodes land in the shared buffer (in place —
+/// more Go-faithful than the checkout's replace-on-drop); contended, the
+/// private copy + `set` clobber means last-writer-wins as before.
+pub enum ArenaAccess {
+    Mut(ArenaMut),
+    Checkout(ArenaCheckout),
+}
+
+impl ArenaAccess {
+    /// `try_cow` first — `ArenaCheckout` only when a writer is live.
+    pub fn new(arena: &std::rc::Rc<ArenaCell>) -> ArenaAccess {
+        match arena.try_cow() {
+            Some(m) => ArenaAccess::Mut(m),
+            None => ArenaAccess::Checkout(ArenaCheckout::new(arena.clone())),
+        }
+    }
+}
+
+impl std::ops::Deref for ArenaAccess {
+    type Target = Vec<Node>;
+
+    fn deref(&self) -> &Vec<Node> {
+        match self {
+            ArenaAccess::Mut(m) => m,
+            ArenaAccess::Checkout(c) => c,
+        }
+    }
+}
+
+impl std::ops::DerefMut for ArenaAccess {
+    fn deref_mut(&mut self) -> &mut Vec<Node> {
+        match self {
+            ArenaAccess::Mut(m) => m,
+            ArenaAccess::Checkout(c) => c,
+        }
     }
 }
