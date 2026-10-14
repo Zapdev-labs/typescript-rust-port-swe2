@@ -650,19 +650,39 @@ impl<P: CheckerPoolProgram> CompilerCheckerPool<P> {
         // re-runs sequentially.
         let arena_lens = program.arena_lengths();
 
-        // Files grouped per checker index, file order preserved (stable —
-        // Go uses round-robin `fileAssociations` which is stable too).
-        let associations = self.file_associations.borrow();
+        // Files grouped per checker index, file order preserved within
+        // each group. PORT(divergence): Go assigns files to checkers
+        // round-robin via `fileAssociations`; the fork wall time is the
+        // slowest *group*, so we LPT-balance groups by per-file node
+        // count instead — one giant file would otherwise strand its
+        // group as the critical path while siblings idle. Diagnostics
+        // are per-file deterministic regardless of which checker runs
+        // them (Go's own parallel pool relies on that), and the parent
+        // reassembles by original file index, so output is unchanged.
+        let mut by_cost: Vec<(usize, NodeId, u64)> = files
+            .iter()
+            .enumerate()
+            .map(|(i, &f)| {
+                let cost = program.nodes(f.file_index()).len() as u64;
+                (i, f, cost)
+            })
+            .collect();
+        by_cost.sort_unstable_by(|a, b| b.2.cmp(&a.2));
+        let mut loads = vec![0u64; checkers.len()];
         let mut groups: Vec<Vec<(usize, NodeId)>> = vec![Vec::new(); checkers.len()];
-        for (i, &file) in files.iter().enumerate() {
-            let idx = associations
-                .get(&file)
-                .copied()
-                .unwrap_or(0)
-                .min(checkers.len() - 1);
-            groups[idx].push((i, file));
+        for (i, file, cost) in by_cost {
+            let g = loads
+                .iter()
+                .enumerate()
+                .min_by_key(|&(_, &l)| l)
+                .map(|(gi, _)| gi)
+                .unwrap_or(0);
+            groups[g].push((i, file));
+            loads[g] += cost;
         }
-        drop(associations);
+        for group in &mut groups {
+            group.sort_unstable_by_key(|&(i, _)| i);
+        }
 
         let mut diagnostics: Vec<Vec<DiagnosticRef>> = vec![Vec::new(); files.len()];
         // (pid, read_fd, group_index) — read ends stay open until drained.
