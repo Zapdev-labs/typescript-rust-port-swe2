@@ -471,7 +471,7 @@ impl SymbolExtractor {
                             && let Some(target_module_id) = self.get_module_id_for_symbol(parent)
                         {
                             export.target = ExportID {
-                                export_name: reexported_name,
+                                export_name: reexported_name.to_string(),
                                 module_id: target_module_id,
                             };
                         }
@@ -655,7 +655,7 @@ impl SymbolExtractor {
 
         let mut export = Export {
             export_id: ExportID {
-                export_name: symbol_name.clone(),
+                export_name: symbol_name.to_string(),
                 module_id: module_id.clone(),
             },
             module_file_name: module_file_name.clone(),
@@ -669,7 +669,7 @@ impl SymbolExtractor {
         if syntax == ExportSyntax::Umd {
             export.export_id.export_name =
                 tsc_ast::symbol::INTERNAL_SYMBOL_NAME_EXPORT_EQUALS.to_string();
-            export.local_name = symbol_name.clone();
+            export.local_name = symbol_name.to_string();
         }
 
         let mut target_symbol: Option<SymbolId> = None;
@@ -743,7 +743,7 @@ impl SymbolExtractor {
                     }
                 }
                 export.target = ExportID {
-                    export_name: target_name,
+                    export_name: target_name.to_string(),
                     module_id: target_module_id,
                 };
             }
@@ -754,8 +754,8 @@ impl SymbolExtractor {
             export.script_element_kind_modifiers = modifiers;
         }
 
-        if symbol_name == tsc_ast::symbol::INTERNAL_SYMBOL_NAME_DEFAULT
-            || symbol_name == tsc_ast::symbol::INTERNAL_SYMBOL_NAME_EXPORT_EQUALS
+        if symbol_name.as_ref() == tsc_ast::symbol::INTERNAL_SYMBOL_NAME_DEFAULT
+            || symbol_name.as_ref() == tsc_ast::symbol::INTERNAL_SYMBOL_NAME_EXPORT_EQUALS
         {
             let mut named_symbol = symbol;
             if let Some(s) = self.local_symbol_for_export_default(named_symbol) {
@@ -953,7 +953,7 @@ impl SymbolExtractor {
             ExportSyntax::Equals => {
                 let is_export_equals = {
                     let c = self.checker.borrow();
-                    c.symbol_arena.borrow()[symbol.index()].name
+                    c.symbol_arena.borrow()[symbol.index()].name.as_ref()
                         == tsc_ast::symbol::INTERNAL_SYMBOL_NAME_EXPORT_EQUALS
                 };
                 if is_export_equals {

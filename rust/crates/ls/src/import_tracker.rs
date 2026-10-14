@@ -883,7 +883,7 @@ fn get_searches_from_direct_imports(
 
     let is_name_match = |name: &str| -> bool {
         // Use name of "default" even in `export =` case because we may have allowSyntheticDefaultImports
-        name == export_symbol_name
+        name == export_symbol_name.as_ref()
             || (export_kind != ExportKind::Named
                 && name == ast::symbol::INTERNAL_SYMBOL_NAME_DEFAULT)
     };
@@ -954,7 +954,7 @@ fn get_searches_from_direct_imports(
                     let nodes = program.nodes(name.file_index());
                     nodes[name].text(&nodes).into_owned()
                 };
-                if !is_for_rename || name_text == export_symbol_name {
+                if !is_for_rename || name_text == export_symbol_name.as_ref() {
                     // Search locally for `bar`.
                     if let Some(name) = name {
                         let symbol = checker.get_symbol_at_location_api(name);
@@ -1005,7 +1005,7 @@ fn get_searches_from_direct_imports(
             if let Some(qualifier) = import_type.qualifier {
                 let first_identifier = ast::get_first_identifier(qualifier, &nodes);
                 let text = nodes[first_identifier].text(&nodes).into_owned();
-                if text == export_symbol_name {
+                if text == export_symbol_name.as_ref() {
                     single_references.push(first_identifier);
                 }
             } else if export_kind == ExportKind::ExportEquals {
@@ -1145,7 +1145,7 @@ pub(crate) fn get_import_or_export_symbol(
         let name = checker.symbol_arena.borrow()[imported_symbol.index()]
             .name
             .clone();
-        if name == "export=" {
+        if name.as_ref() == "export=" {
             get_export_equals_local_symbol(program, imported_symbol, checker)?
         } else {
             imported_symbol
@@ -1157,7 +1157,7 @@ pub(crate) fn get_import_or_export_symbol(
     let imported_name = symbol_name_no_default(program, checker, imported_symbol);
     if imported_name.is_empty()
         || imported_name == ast::symbol::INTERNAL_SYMBOL_NAME_DEFAULT
-        || imported_name == symbol_name
+        || imported_name == symbol_name.as_ref()
     {
         return Some(ImportExportSymbol {
             kind: ImpExpKind::Import,
@@ -1524,7 +1524,7 @@ fn symbol_name_no_default(
     let (name, declarations) = {
         let arena = checker.symbol_arena.borrow();
         let sym = &arena[symbol.index()];
-        (sym.name.clone(), sym.declarations.clone())
+        (sym.name.to_string(), sym.declarations.clone())
     };
     if name != ast::symbol::INTERNAL_SYMBOL_NAME_DEFAULT {
         return name;

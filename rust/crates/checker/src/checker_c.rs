@@ -111,7 +111,7 @@ impl Checker {
         if let Some(Some(rc)) = self.sym_name_cache.borrow().get(s.index()) {
             return rc.clone();
         }
-        let rc: Rc<str> = self.symbol_arena.borrow()[s.index()].name.as_str().into();
+        let rc: Rc<str> = self.symbol_arena.borrow()[s.index()].name.as_ref().into();
         let mut cache = self.sym_name_cache.borrow_mut();
         if cache.len() <= s.index() {
             cache.resize(s.index() + 1, None);
@@ -687,15 +687,15 @@ impl Checker {
             let original_exports = self.sym(original_module).exports.clone();
             for symbol in original_exports.values().copied() {
                 let name = self.sym(symbol).name.clone();
-                if name == ast::INTERNAL_SYMBOL_NAME_EXPORT_EQUALS
-                    || name == ast::INTERNAL_SYMBOL_NAME_EXPORT_STAR
+                if name.as_ref() == ast::INTERNAL_SYMBOL_NAME_EXPORT_EQUALS
+                    || name.as_ref() == ast::INTERNAL_SYMBOL_NAME_EXPORT_STAR
                 {
                     continue;
                 }
                 let flags = self.get_symbol_flags(symbol);
                 if flags.intersects(ast::SymbolFlags::TYPE | ast::SymbolFlags::NAMESPACE)
                     && !flags.intersects(ast::SymbolFlags::VALUE)
-                    && exports.get(name.as_str()).is_none()
+                    && exports.get(name.as_ref()).is_none()
                 {
                     exports.set(name.into(), symbol);
                 }
@@ -1314,7 +1314,7 @@ impl Checker {
             .flags
             .intersects(ast::SymbolFlags::MODULE_EXPORTS)
         {
-            if self.sym(symbol).name == "exports" {
+            if self.sym(symbol).name.as_ref() == "exports" {
                 let decl_symbol = nodes[declaration].symbol().unwrap();
                 let resolved = self.resolve_external_module_symbol(Some(decl_symbol), false);
                 return self.get_type_of_symbol(resolved.expect("resolved external module"));
@@ -1538,7 +1538,7 @@ impl Checker {
                 return Some(t);
             }
             // Use contextual parameter type if one is available
-            let t = if self.sym(nodes[declaration].symbol().unwrap()).name
+            let t = if self.sym(nodes[declaration].symbol().unwrap()).name.as_ref()
                 == ast::INTERNAL_SYMBOL_NAME_THIS
             {
                 self.get_contextual_this_parameter_type(fn_)
@@ -4143,7 +4143,7 @@ impl Checker {
         if let Some(context) = &context {
             for prop in self.get_properties_of_context(context) {
                 let name = self.sym(prop).name.clone();
-                if members.get(name.as_str()).is_none() {
+                if members.get(name.as_ref()).is_none() {
                     let undefined_prop = self.get_undefined_property(prop);
                     members.set(name.into(), undefined_prop);
                 }
@@ -4237,11 +4237,11 @@ impl Checker {
                     let name = self.sym(prop).name.clone();
                     // `OrderedMap.Set`: re-setting an existing name keeps its
                     // insertion position but updates the value (last wins).
-                    if let Some(&i) = positions.get(&name) {
+                    if let Some(&i) = positions.get(name.as_ref()) {
                         names[i].1 = prop;
                     } else {
-                        positions.insert(name.clone(), names.len());
-                        names.push((name, prop));
+                        positions.insert(name.to_string(), names.len());
+                        names.push((name.to_string(), prop));
                     }
                 }
             }
@@ -4284,7 +4284,7 @@ impl Checker {
     /// `(c *Checker) getUndefinedProperty` (checker.go:18895).
     pub(crate) fn get_undefined_property(&mut self, prop: SymbolId) -> SymbolId {
         let name = self.sym(prop).name.clone();
-        if let Some(&cached) = self.undefined_properties.get(&name) {
+        if let Some(&cached) = self.undefined_properties.get(name.as_ref()) {
             return cached;
         }
         let undefined_or_missing_type = self.undefined_or_missing_type;
@@ -4292,7 +4292,7 @@ impl Checker {
         self.symbol_arena.borrow_mut()[result.index()]
             .flags
             .insert(ast::SymbolFlags::OPTIONAL);
-        self.undefined_properties.insert(name, result);
+        self.undefined_properties.insert(name.to_string(), result);
         result
     }
 
@@ -4974,8 +4974,8 @@ impl Checker {
         for current in (constituents).iter().copied() {
             for prop in self.get_properties_of_type(current) {
                 let name = self.sym(prop).name.clone();
-                if !checked.contains(&name) {
-                    checked.insert(name.clone());
+                if !checked.contains(name.as_ref()) {
+                    checked.insert(name.to_string());
                     if let Some(combined_prop) = self.get_property_of_union_or_intersection_type(
                         t,
                         &name,
@@ -6456,7 +6456,7 @@ impl Checker {
         for &base in base_symbols {
             if !crate::utilities::is_static_private_identifier_property(self, base) {
                 let base_name = self.symbol_arena.borrow()[base.index()].name.clone();
-                let existing = symbols.get(base_name.as_str()).copied();
+                let existing = symbols.get(base_name.as_ref()).copied();
                 if existing.is_none_or(|s| {
                     !self.symbol_arena.borrow()[s.index()]
                         .flags
@@ -6925,7 +6925,7 @@ impl Checker {
             }
             if i == 0
                 && param_symbol.is_some_and(|ps| {
-                    self.symbol_arena.borrow()[ps.index()].name == ast::INTERNAL_SYMBOL_NAME_THIS
+                    self.symbol_arena.borrow()[ps.index()].name.as_ref() == ast::INTERNAL_SYMBOL_NAME_THIS
                 })
             {
                 has_this_parameter = true;
@@ -9476,8 +9476,8 @@ impl Checker {
                 return Vec::new();
             }
             if i == 0 {
-                member_name = self.sym(symbol).name.clone();
-            } else if member_name != self.sym(symbol).name {
+                member_name = self.sym(symbol).name.to_string();
+            } else if member_name != self.sym(symbol).name.as_ref() {
                 return Vec::new();
             }
         }
@@ -11193,8 +11193,8 @@ impl Checker {
         for member in (members).iter().copied() {
             for prop in self.get_properties_of_type(member) {
                 let name = self.sym(prop).name.clone();
-                let count = counts.get(&name).copied().unwrap_or(0) + 1;
-                counts.set(name, count);
+                let count = counts.get(name.as_ref()).copied().unwrap_or(0) + 1;
+                counts.set(name.to_string(), count);
             }
         }
         // Check if any property appears in more than one constituent type and reduces to 'never'.
@@ -14157,7 +14157,7 @@ impl Checker {
                         .insert(key, t);
                 }
                 if t == self.intrinsic_marker_type
-                    && self.sym(symbol).name == "BuiltinIteratorReturn"
+                    && self.sym(symbol).name.as_ref() == "BuiltinIteratorReturn"
                 {
                     t = self.get_builtin_iterator_return_type();
                 }
@@ -15163,7 +15163,7 @@ pub(crate) fn get_symbol_path(c: &Checker, symbol: SymbolId) -> String {
     };
     match parent {
         Some(parent) => format!("{}.{}", get_symbol_path(c, parent), name),
-        None => name,
+        None => name.to_string(),
     }
 }
 

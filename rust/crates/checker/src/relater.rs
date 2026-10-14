@@ -2733,7 +2733,7 @@ impl Discriminator for TypeDiscriminator {
 
     /// `(d *TypeDiscriminator) name`.
     fn name(&mut self, c: &mut Checker, index: usize) -> String {
-        c.sym(self.props[index]).name.clone()
+        c.sym(self.props[index]).name.to_string()
     }
 
     /// `(d *TypeDiscriminator) matches`.
@@ -2982,7 +2982,7 @@ impl Checker {
                 for p in self.get_properties_of_type(t) {
                     let ty = self.get_type_of_symbol(p);
                     if crate::checker_d::is_unit_type(&self.types, ty) {
-                        return self.sym(p).name.clone();
+                        return self.sym(p).name.to_string();
                     }
                 }
             }
@@ -4554,7 +4554,7 @@ impl Checker {
         let param_count = parameters_len - tsc_core::core::if_else(has_rest, 1usize, 0usize);
         if pos < param_count {
             let param = self.signature_arena.get(signature).parameters[pos];
-            return self.sym(param).name.clone();
+            return self.sym(param).name.to_string();
         }
         let rest_parameter = self.signature_arena.get(signature).parameters[param_count];
         let rest_type = self.get_type_of_symbol(rest_parameter);
@@ -4566,7 +4566,7 @@ impl Checker {
             let info = __guard_info.as_tuple_type().element_infos[pos - param_count].clone();
             return self.get_tuple_element_label(info, Some(rest_parameter), pos - param_count);
         }
-        self.sym(rest_parameter).name.clone()
+        self.sym(rest_parameter).name.to_string()
     }
 
     /// `(c *Checker) getTupleElementLabel`.
@@ -4600,7 +4600,7 @@ impl Checker {
         }
         let root_name = rest_symbol
             .map(|s| self.sym(s).name.clone())
-            .unwrap_or_else(|| "arg".to_string());
+            .unwrap_or_else(|| "arg".into());
         format!("{}_{}", root_name, index)
     }
 
@@ -4881,7 +4881,7 @@ impl Checker {
         let parameters = self.signature_arena.get(signature).parameters.clone();
         let index = parameters
             .iter()
-            .position(|&p| self.sym(p).name == name)
+            .position(|&p| self.sym(p).name.as_ref() == name)
             .map(|i| i as i32)
             .unwrap_or(-1);
         self.new_type_predicate(kind, name, index, t)
@@ -9085,7 +9085,7 @@ impl Relater {
                     .get(source_property_type)
                     .distributed(source_property_type),
             );
-            excluded_properties.add(c.sym(source_property).name.clone());
+            excluded_properties.add(c.sym(source_property).name.to_string());
         }
         // Build the cartesian product
         let mut discriminant_combinations: Vec<Vec<TypeId>> = Vec::with_capacity(num_combinations);

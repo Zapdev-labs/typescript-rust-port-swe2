@@ -1444,7 +1444,7 @@ impl<'a> QuickInfoState<'a> {
                         sym.parent.map(|p| arena[p.index()].flags),
                     )
                 };
-                if name == ast::INTERNAL_SYMBOL_NAME_EXPORT_EQUALS
+                if name.as_ref() == ast::INTERNAL_SYMBOL_NAME_EXPORT_EQUALS
                     && parent_flags.is_some_and(|f| f.intersects(SymbolFlags::MODULE))
                 {
                     self.dpw.write("exports");

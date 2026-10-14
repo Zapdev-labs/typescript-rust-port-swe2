@@ -278,7 +278,7 @@ impl<'a> Binder<'a> {
         self.symbol_count += 1;
         self.symbols.push(Symbol {
             flags,
-            name,
+            name: name.into(),
             ..Default::default()
         });
         SymbolId((self.symbols.len() - 1) as u32)

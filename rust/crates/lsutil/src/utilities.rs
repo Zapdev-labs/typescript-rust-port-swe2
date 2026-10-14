@@ -208,7 +208,7 @@ pub fn module_symbol_to_valid_identifier(symbol: &ast::Symbol, force_capitalize:
     if let Some(ambient_module_name) =
         ast::try_get_ambient_module_name_from_symbol_name(&module_name)
     {
-        module_name = ambient_module_name;
+        module_name = ambient_module_name.into();
     }
     module_specifier_to_valid_identifier(&module_name, force_capitalize)
 }

@@ -621,7 +621,7 @@ impl Checker {
                 }
                 let element = nodes[node].parent.and_then(|p| nodes[p].parent);
                 let s_name = self.sym(s).name.clone();
-                if s_name == jsx_children_property_name
+                if s_name.as_ref() == jsx_children_property_name
                     && element.is_some_and(|e| ast::is_jsx_element(&nodes[e]))
                 {
                     let element_children: Vec<NodeId> = element
@@ -631,7 +631,7 @@ impl Checker {
                         return false;
                     }
                 }
-                !self.sym(node_symbol.unwrap()).members.has(s_name.as_str())
+                !self.sym(node_symbol.unwrap()).members.has(s_name.as_ref())
                     && self.is_discriminant_property(contextual_type, &s_name)
             })
             .collect();
@@ -1157,11 +1157,11 @@ impl Checker {
             "for" => properties
                 .iter()
                 .copied()
-                .find(|&x| self.sym(x).name == "htmlFor"),
+                .find(|&x| self.sym(x).name.as_ref() == "htmlFor"),
             "class" => properties
                 .iter()
                 .copied()
-                .find(|&x| self.sym(x).name == "className"),
+                .find(|&x| self.sym(x).name.as_ref() == "className"),
             _ => None,
         };
         if jsx_specific.is_some() {
@@ -1215,7 +1215,7 @@ impl Checker {
             self.source_file_links.get(file).jsx_fragment_type = Some(t);
             return t;
         };
-        if self.sym(jsx_factory_symbol).name == REACT_NAMES.fragment {
+        if self.sym(jsx_factory_symbol).name.as_ref() == REACT_NAMES.fragment {
             let t = self.get_type_of_symbol(jsx_factory_symbol);
             self.source_file_links.get(file).jsx_fragment_type = Some(t);
             return t;
@@ -2378,7 +2378,7 @@ impl Checker {
                     return String::new();
                 }
                 if properties.len() == 1 {
-                    return self.sym(properties[0]).name.clone();
+                    return self.sym(properties[0]).name.to_string();
                 }
                 let declarations = self.sym(sym).declarations.clone();
                 if properties.len() > 1 && !declarations.is_empty() {

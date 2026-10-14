@@ -56,7 +56,7 @@ fn sym_flags(c: &Checker, s: SymbolId) -> ast::SymbolFlags {
 /// `symbol.Name`.
 #[inline]
 fn sym_name(c: &Checker, s: SymbolId) -> String {
-    c.symbol_arena.borrow()[s.index()].name.clone()
+    c.symbol_arena.borrow()[s.index()].name.to_string()
 }
 
 /// `symbol.Declarations` (cloned — Go shares the slice).
@@ -3542,10 +3542,10 @@ impl Checker {
                 } else {
                     &mut *instance_names
                 };
-                let state = *names.get(&name).unwrap_or(&0);
+                let state = *names.get(name.as_ref()).unwrap_or(&0);
                 if state == 0 {
                     // On first occurrence just record the kind
-                    names.insert(name, kind);
+                    names.insert(name.to_string(), kind);
                 } else if state == 1 || (state == 2 && kind != 2) {
                     // Error on second property or combination of property and accessor
                     c.report_duplicate_member_errors(
@@ -3556,7 +3556,7 @@ impl Checker {
                         &tsc_diagnostics::Duplicate_identifier_0,
                     );
                     // Record that errors have been reported
-                    names.insert(name, 3);
+                    names.insert(name.to_string(), 3);
                 }
             }
         }

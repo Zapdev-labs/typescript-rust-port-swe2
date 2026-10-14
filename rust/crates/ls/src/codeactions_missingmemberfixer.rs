@@ -880,7 +880,7 @@ impl<'a, 'c, 'h> MissingMemberFixer<'a, 'c, 'h> {
             let names: Vec<String> = s
                 .parameters()
                 .iter()
-                .map(|&p| cb.symbol_arena.borrow()[p.index()].name.clone())
+                .map(|&p| cb.symbol_arena.borrow()[p.index()].name.to_string())
                 .collect();
             (s.parameters().len(), s.has_rest_parameter(), names)
         };

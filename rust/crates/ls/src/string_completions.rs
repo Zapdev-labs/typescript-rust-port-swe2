@@ -1129,9 +1129,9 @@ impl LanguageService<'_> {
                 let uniques: Vec<SymbolId> = exports
                     .into_iter()
                     .filter(|&e| {
-                        symbols[e.index()].name.as_str()
+                        symbols[e.index()].name.as_ref()
                             != ast::symbol::INTERNAL_SYMBOL_NAME_DEFAULT
-                            && !existing.has(&symbols[e.index()].name)
+                            && !existing.has(symbols[e.index()].name.as_ref())
                     })
                     .collect();
                 drop(symbols);
@@ -1280,7 +1280,11 @@ impl LanguageService<'_> {
                             symbols: from_properties
                                 .symbols
                                 .into_iter()
-                                .filter(|s| !already_used_types.contains(&symbols[s.index()].name))
+                                .filter(|s| {
+                                    !already_used_types
+                                        .iter()
+                                        .any(|v| v.as_str() == symbols[s.index()].name.as_ref())
+                                })
                                 .collect(),
                             has_index_signature: from_properties.has_index_signature,
                         }),
@@ -3101,7 +3105,7 @@ impl LanguageService<'_> {
         if let Some(properties) = &completion.from_properties {
             for &symbol in &properties.symbols {
                 let symbol_name = program.symbols.borrow()[symbol.index()].name.clone();
-                if symbol_name == name {
+                if symbol_name.as_ref() == name {
                     return self.create_completion_details_for_symbol(
                         item, symbol, checker, location, position, doc_format,
                     );

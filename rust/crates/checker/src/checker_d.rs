@@ -263,7 +263,7 @@ impl Checker {
     /// `symbol.Name` — clone of the symbol's name string.
     #[inline]
     pub(crate) fn sym_name(&self, s: SymbolId) -> String {
-        self.symbol_arena.borrow()[s.index()].name.clone()
+        self.symbol_arena.borrow()[s.index()].name.to_string()
     }
 
     /// `*InferenceContext` dereference (`self.inference_contexts[id]`).
@@ -5574,7 +5574,7 @@ __h5064_43, suggestion],
         if let Some(symbol) =
             self.get_spelling_suggestion_for_name(name, properties, ast::SymbolFlags::VALUE)
         {
-            return self.sym(symbol).name.clone();
+            return self.sym(symbol).name.to_string();
         }
         String::new()
     }
@@ -11832,7 +11832,7 @@ impl Checker {
                 .filter(|&s| {
                     let symbol_name = self.sym(s).name.clone();
                     self.sym(s).flags.intersects(ast::SymbolFlags::OPTIONAL)
-                        && !member_names.contains(&symbol_name)
+                        && !member_names.contains(symbol_name.as_ref())
                         && self.is_discriminant_property(contextual_type, &symbol_name)
                 })
                 .collect();
@@ -11868,7 +11868,7 @@ impl Checker {
                     && ast::is_property_assignment(&nodes[p])
                     && nodes[p]
                         .symbol()
-                        .is_some_and(|s| self.sym(s).name == key_property_name)
+                        .is_some_and(|s| self.sym(s).name.as_ref() == key_property_name)
                     && nodes[p]
                         .initializer()
                         .is_some_and(|i| self.is_possibly_discriminant_value(i))
@@ -12243,9 +12243,9 @@ impl crate::relater::Discriminator for ObjectLiteralDiscriminator {
             let prop = self.props[index];
             let __program = c.program.clone().expect("program");
             let nodes = __program.nodes((prop).file_index());
-            return c.sym(nodes[prop].symbol().unwrap()).name.clone();
+            return c.sym(nodes[prop].symbol().unwrap()).name.to_string();
         }
-        c.sym(self.members[index - self.props.len()]).name.clone()
+        c.sym(self.members[index - self.props.len()]).name.to_string()
     }
 
     /// `(d *ObjectLiteralDiscriminator) matches` (checker.go:31279).
@@ -14249,7 +14249,7 @@ impl Checker {
                 ast::Kind::Identifier => {
                     let text = nodes[node].text(nodes).into_owned();
                     let arguments_name = c.sym(c.arguments_symbol).name.clone();
-                    if text != arguments_name {
+                    if text != arguments_name.as_ref() {
                         return false;
                     }
                     return c.get_resolved_symbol(node) == c.arguments_symbol;

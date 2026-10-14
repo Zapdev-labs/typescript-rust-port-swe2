@@ -473,11 +473,11 @@ fn get_missing_members(
             }
             let name = program.symbols.borrow()[symbol.index()].name.clone();
             if let Some(members) = &class_members {
-                if members.contains_key(&name) {
+                if members.contains_key(name.as_ref()) {
                     continue;
                 }
             }
-            if inherited_members.contains_key(&name) || seen_members.contains_key(&name) {
+            if inherited_members.contains_key(name.as_ref()) || seen_members.contains_key(name.as_ref()) {
                 continue;
             }
             let flags = tsc_checker::utilities::get_declaration_modifier_flags_from_symbol(
@@ -485,7 +485,7 @@ fn get_missing_members(
                 symbol,
             );
             if !flags.intersects(ModifierFlags::PRIVATE) {
-                seen_members.insert(name, symbol);
+                seen_members.insert(name.to_string(), symbol);
                 missing_members.push(symbol);
             }
         }
@@ -523,7 +523,7 @@ fn get_inherited_members(
         );
         if !flags.intersects(ModifierFlags::PRIVATE) {
             let name = program.symbols.borrow()[symbol.index()].name.clone();
-            inherited_members.insert(name, symbol);
+            inherited_members.insert(name.to_string(), symbol);
         }
     }
     inherited_members

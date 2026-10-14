@@ -458,7 +458,7 @@ impl<'a> NameResolver<'a> {
                                 );
                                 if local_symbol.is_some()
                                     && symbols.borrow()[res.index()].flags.intersects(meaning)
-                                    && symbols.borrow()[local_symbol.unwrap().index()].name == name
+                                    && symbols.borrow()[local_symbol.unwrap().index()].name.as_ref() == name
                                 {
                                     break 'loop_;
                                 }
@@ -1260,7 +1260,7 @@ impl<'a> NameResolver<'a> {
         if self.arguments_symbol.is_none() {
             let mut arena = symbols.borrow_mut();
             arena.push(Symbol {
-                name: "arguments".to_string(),
+                name: "arguments".into(),
                 flags: SymbolFlags::PROPERTY | SymbolFlags::TRANSIENT,
                 ..Default::default()
             });

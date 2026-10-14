@@ -239,7 +239,7 @@ fn copy_symbol_to_table(
         // We will copy all symbols regardless of reserved names because
         // symbolsToArray will check whether the key is a reserved name and
         // it will not copy symbols with reserved names to the array.
-        if !symbols.has(id.as_str()) {
+        if !symbols.has(id.as_ref()) {
             symbols.set(id.into(), symbol);
         }
     }
@@ -278,7 +278,7 @@ fn copy_locally_visible_export_symbols(
             ast::get_declaration_of_kind(&sym, ast::Kind::ExportSpecifier, nodes).is_some()
                 || ast::get_declaration_of_kind(&sym, ast::Kind::NamespaceExport, nodes).is_some()
         };
-        if !has_export_decl && c.sym(symbol).name != ast::symbol::INTERNAL_SYMBOL_NAME_DEFAULT {
+        if !has_export_decl && c.sym(symbol).name.as_ref() != ast::symbol::INTERNAL_SYMBOL_NAME_DEFAULT {
             copy_symbol_to_table(c, symbols, symbol, meaning);
         }
     }
@@ -575,7 +575,7 @@ impl Checker {
             let augmented_props = self.get_augmented_properties_of_type(member_type);
             for p in augmented_props {
                 let name = self.sym(p).name.clone();
-                if !props.has(name.as_str()) {
+                if !props.has(name.as_ref()) {
                     let prop = self.create_union_or_intersection_property(union_type, &name, false);
                     // May be undefined if the property is private
                     if let Some(prop) = prop {
@@ -663,7 +663,7 @@ impl Checker {
         if let Some(function_type) = function_type {
             for p in self.get_properties_of_type(function_type) {
                 let name = self.sym(p).name.clone();
-                if !props_by_name.has(name.as_str()) {
+                if !props_by_name.has(name.as_ref()) {
                     props_by_name.set(name.into(), p);
                 }
             }
@@ -1086,7 +1086,7 @@ impl Checker {
             if !ast::is_identifier(&nodes[token]) {
                 continue;
             }
-            if nodes[token].text(&nodes) != identifier_text {
+            if nodes[token].text(&nodes) != identifier_text.as_ref() {
                 continue;
             }
             let ref_symbol = self.get_symbol_at_location_api(token);

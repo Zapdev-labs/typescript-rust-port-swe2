@@ -169,7 +169,7 @@ fn sym_fields(
         sym.flags,
         sym.declarations.clone(),
         sym.parent,
-        sym.name.clone(),
+        sym.name.to_string(),
         sym.export_symbol,
         sym.exports.clone(),
         sym.members.clone(),

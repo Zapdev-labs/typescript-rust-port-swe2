@@ -3168,7 +3168,7 @@ impl Checker {
     /// `(c *Checker) mergeGlobalSymbol` (checker.go).
     pub fn merge_global_symbol(&mut self, symbol: SymbolId) {
         let name = self.symbol_arena.borrow()[symbol.index()].name.clone();
-        let global_symbol = self.globals.borrow().get(name.as_str()).copied();
+        let global_symbol = self.globals.borrow().get(name.as_ref()).copied();
         let merged = match global_symbol {
             Some(global_symbol) => self.merge_symbol(global_symbol, symbol, false),
             None => self.get_merged_symbol(symbol),
@@ -3483,7 +3483,7 @@ impl Checker {
         for module in &pattern_ambient_modules {
             if let Some(module_symbol) = module.symbol {
                 let name = self.sym(module_symbol).name.clone();
-                if self.globals.borrow().get(name.as_str()).is_some() {
+                if self.globals.borrow().get(name.as_ref()).is_some() {
                     let merged = self.get_merged_symbol(module_symbol);
                     self.globals.borrow_mut().set(name.into(), merged);
                 }
@@ -3498,7 +3498,7 @@ impl Checker {
         let name = self.symbol_arena.borrow()[self.undefined_symbol.index()]
             .name
             .clone();
-        let target_symbol = self.globals.borrow().get(name.as_str()).copied();
+        let target_symbol = self.globals.borrow().get(name.as_ref()).copied();
         if let Some(target_symbol) = target_symbol {
             let declarations = self.symbol_arena.borrow()[target_symbol.index()]
                 .declarations
@@ -3971,7 +3971,7 @@ impl Checker {
                 let nodes = __program.nodes((d).file_index());
                 ast::symbol::symbol_name(sym, &nodes).into_owned()
             }
-            None => sym.name.clone(),
+            None => sym.name.to_string(),
         }
     }
 
@@ -4091,7 +4091,7 @@ impl Checker {
         let id = SymbolId(arena.len() as u32);
         arena.push(ast::Symbol {
             flags: flags | ast::SymbolFlags::TRANSIENT,
-            name: name.to_string(),
+            name: name.into(),
             ..Default::default()
         });
         id

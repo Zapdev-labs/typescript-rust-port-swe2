@@ -269,7 +269,7 @@ pub(crate) fn get_default_like_export_name_from_declaration(
                 sa[parent.index()].is_external_module()
             };
             if !parent_sym_is_external {
-                return c.symbol_arena.borrow()[parent.index()].name.clone();
+                return c.symbol_arena.borrow()[parent.index()].name.to_string();
             }
         }
     }

@@ -9,6 +9,8 @@ use crate::checkflags::CheckFlags;
 use crate::ids::{NodeId, SymbolId};
 use crate::symbolflags::SymbolFlags;
 use crate::{ModifierFlags, is_private_identifier_class_element_declaration};
+use std::sync::Arc;
+
 use tsc_collections::OrderedMap;
 
 // Symbol
@@ -18,7 +20,9 @@ pub struct Symbol {
     pub flags: SymbolFlags,
     /// Non-zero only in transient symbols created by Checker
     pub check_flags: CheckFlags,
-    pub name: String,
+    /// `Arc<str>` — Go shares the header on `symbol.Name`; `.name.clone()`
+    /// sites become refcount bumps.
+    pub name: Arc<str>,
     pub declarations: Vec<NodeId>,
     pub value_declaration: Option<NodeId>,
     pub members: SymbolTable,
@@ -95,7 +99,7 @@ pub fn symbol_name<'a>(symbol: &'a Symbol, nodes: &'a [crate::Node]) -> std::bor
     {
         return nodes[name.local_index() as usize].text(nodes);
     }
-    std::borrow::Cow::Borrowed(symbol.name.as_str())
+    std::borrow::Cow::Borrowed(symbol.name.as_ref())
 }
 
 /// `EscapeAllInternalSymbolNames` replaces internal symbol name markers ("\xFE") with "__".

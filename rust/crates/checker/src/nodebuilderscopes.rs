@@ -298,14 +298,14 @@ impl<'a> NodeBuilderImpl<'a> {
                             // param list for some reason.
                             if let Some(original_param) = original_param {
                                 additions.push((
-                                    c.symbol_arena.borrow()[original_param.index()].name.clone(),
+                                    c.symbol_arena.borrow()[original_param.index()].name.to_string(),
                                     original_param,
                                 ));
                             }
                         } else if !collect_binding_pattern_symbols(c, nodes, param, &mut additions)
                         {
                             additions
-                                .push((c.symbol_arena.borrow()[param.index()].name.clone(), param));
+                                .push((c.symbol_arena.borrow()[param.index()].name.to_string(), param));
                         }
                     }
                 }
@@ -560,7 +560,7 @@ pub(crate) fn collect_binding_pattern_symbols(
         // omitted expressions are now parsed as nameless binding patterns
         // and also have no symbol
         if let Some(symbol) = symbol {
-            additions.push((c.symbol_arena.borrow()[symbol.index()].name.clone(), symbol));
+            additions.push((c.symbol_arena.borrow()[symbol.index()].name.to_string(), symbol));
         }
     }
 

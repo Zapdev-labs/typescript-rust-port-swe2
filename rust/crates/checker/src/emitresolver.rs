@@ -1847,7 +1847,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
                     let is_this = i == 0
                         && pnode
                             .symbol()
-                            .is_some_and(|s| self.symbol_arena.borrow()[s.index()].name == "this");
+                            .is_some_and(|s| self.symbol_arena.borrow()[s.index()].name.as_ref() == "this");
                     let optional = crate::utilities::is_optional_declaration(pnode, &arena)
                         || pnode.initializer().is_some()
                         || crate::utilities::is_rest_parameter(pnode, &arena)

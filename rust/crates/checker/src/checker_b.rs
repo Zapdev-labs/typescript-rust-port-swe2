@@ -7751,7 +7751,7 @@ diag_name.clone(), __h7292_50],
         if let Some(container) = container {
             let container_name = self.sym(container).name.clone();
             let feature_map = crate::utilities::get_feature_map();
-            if let Some(type_features) = feature_map.get(&container_name) {
+            if let Some(type_features) = feature_map.get(container_name.as_ref()) {
                 for entry in type_features {
                     if entry.props.iter().any(|p| p == missing_property) {
                         return entry.lib.clone();
@@ -7873,7 +7873,7 @@ pub(crate) fn has_common_dom_type_name(c: &Checker, t: TypeId) -> bool {
     let Some(symbol) = c.types.get_ref(t).symbol() else {
         return false;
     };
-    let name = &c.sym(symbol).name;
+    let name: &str = &c.sym(symbol).name;
     name == "EventTarget"
         || name == "Node"
         || name == "Element"
@@ -11490,9 +11490,9 @@ impl Checker {
                 && !right_check_flags.intersects(ast::checkflags::CheckFlags::PARTIAL)
             {
                 let right_name = self.sym(right).name.clone();
-                if let Some(&left) = props.get(right_name.as_str()) {
+                if let Some(&left) = props.get(right_name.as_ref()) {
                     let value_declaration = self.sym(left).value_declaration;
-                    let left_name = self.sym(left).name.clone();
+                    let left_name = self.sym(left).name.to_string();
                     if let Some(diagnostic) = self.error(
                         value_declaration,
                         &tsc_diagnostics::X_0_is_specified_more_than_once_so_this_usage_will_be_overwritten,
@@ -11649,7 +11649,7 @@ impl Checker {
             if crate::utilities::get_declaration_modifier_flags_from_symbol(self, right_prop)
                 .intersects(ast::ModifierFlags::PRIVATE | ast::ModifierFlags::PROTECTED)
             {
-                skipped_private_members.insert(right_name);
+                skipped_private_members.insert(right_name.to_string());
             } else if self.is_spreadable_property(right_prop) {
                 let spread_symbol = self.get_spread_symbol(right_prop, readonly);
                 members.set(right_name.into(), spread_symbol);
@@ -11659,12 +11659,12 @@ impl Checker {
         let left_props: Vec<SymbolId> = self.get_properties_of_type(left).to_vec();
         for left_prop in left_props {
             let left_name = self.sym(left_prop).name.clone();
-            if skipped_private_members.contains(&left_name)
+            if skipped_private_members.contains(left_name.as_ref())
                 || !self.is_spreadable_property(left_prop)
             {
                 continue;
             }
-            if let Some(&right_prop) = members.get(left_name.as_str()) {
+            if let Some(&right_prop) = members.get(left_name.as_ref()) {
                 let right_type = self.get_type_of_symbol(right_prop);
                 if self
                     .sym(right_prop)
@@ -13333,7 +13333,7 @@ impl Checker {
             (s.flags, s.name.clone())
         };
         if !flags.intersects(ast::SymbolFlags::CLASS_MEMBER)
-            || name != ast::symbol::INTERNAL_SYMBOL_NAME_COMPUTED
+            || name.as_ref() != ast::symbol::INTERNAL_SYMBOL_NAME_COMPUTED
         {
             return symbol;
         }
@@ -13761,7 +13761,7 @@ impl Checker {
         let node_symbol_name = node_symbol.map(|s| self.sym(s).name.clone());
         let exports_has_named = node_symbol_name
             .as_ref()
-            .is_some_and(|name| self.sym(module_symbol).exports.get(name.as_str()).is_some());
+            .is_some_and(|name| self.sym(module_symbol).exports.get(name.as_ref()).is_some());
         if exports_has_named {
             let module_name = self.symbol_to_string(module_symbol);
             let sym_name = node_symbol
@@ -16634,7 +16634,7 @@ impl Checker {
                         )
                         .map(|s| self.get_merged_symbol(s));
                         if let Some(alias) = alias
-                            && self.sym(alias).name
+                            && self.sym(alias).name.as_ref()
                                 == ast::symbol::INTERNAL_SYMBOL_NAME_EXPORT_EQUALS
                         {
                             // resolve typedefs exported from commonjs, stored on the module symbol

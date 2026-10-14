@@ -434,7 +434,7 @@ fn get_fixes_info_for_umd_import(
     for fix in view.get_fixes(&export, false, is_valid_type_only_use_site, None) {
         result.push(FixInfo {
             fix,
-            symbol_name: umd_symbol_name.clone(),
+            symbol_name: umd_symbol_name.to_string(),
             error_identifier_text: error_identifier_text.clone(),
             is_jsx_namespace_fix: false,
         });

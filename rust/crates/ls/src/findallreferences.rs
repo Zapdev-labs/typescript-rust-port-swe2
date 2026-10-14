@@ -2591,7 +2591,7 @@ impl<'h> LanguageService<'h> {
             let s = &arena.borrow()[symbol.index()];
             (s.name.clone(), s.parent, s.flags)
         };
-        if symbol_name == ast::symbol::INTERNAL_SYMBOL_NAME_EXPORT_EQUALS {
+        if symbol_name.as_ref() == ast::symbol::INTERNAL_SYMBOL_NAME_EXPORT_EQUALS {
             let Some(symbol_parent) = symbol_parent else {
                 return Vec::new();
             };
@@ -3709,7 +3709,7 @@ fn get_referenced_symbols_for_symbol(
             let s = &arena.borrow()[symbol.index()];
             (
                 n_kind == Some(Kind::DefaultKeyword),
-                s.name == ast::symbol::INTERNAL_SYMBOL_NAME_DEFAULT,
+                s.name.as_ref() == ast::symbol::INTERNAL_SYMBOL_NAME_DEFAULT,
                 s.parent,
             )
         };
@@ -3922,7 +3922,7 @@ impl RefState {
                     Some(nodes) => {
                         ast::symbol_name(&symbols.borrow()[s.index()], &nodes).into_owned()
                     }
-                    None => symbols.borrow()[s.index()].name.clone(),
+                    None => symbols.borrow()[s.index()].name.to_string(),
                 }
             };
             text = ast::try_get_ambient_module_name_from_symbol_name(&symbol_name)

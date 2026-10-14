@@ -377,7 +377,7 @@ fn symbol_check_flags(c: &Checker, s: SymbolId) -> ast::checkflags::CheckFlags {
 
 /// `symbol.name` (cloned) read through the arena.
 fn symbol_name(c: &Checker, s: SymbolId) -> String {
-    c.symbol_arena.borrow()[s.index()].name.clone()
+    c.symbol_arena.borrow()[s.index()].name.to_string()
 }
 
 /// `ast.SymbolName` — decodes private-identifier class element names from

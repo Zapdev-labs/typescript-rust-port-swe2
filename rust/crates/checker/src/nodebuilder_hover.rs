@@ -54,7 +54,7 @@ fn symbol_flags(c: &Checker, s: SymbolId) -> SymbolFlags {
 
 /// `symbol.name` (cloned) read through the arena.
 fn symbol_name(c: &Checker, s: SymbolId) -> String {
-    c.symbol_arena.borrow()[s.index()].name.clone()
+    c.symbol_arena.borrow()[s.index()].name.to_string()
 }
 
 /// `symbol.declarations` (cloned) read through the arena.

@@ -721,8 +721,8 @@ fn get_name_for_exported_symbol(
             ..Default::default()
         }
     };
-    if sym_shim.name == ast::INTERNAL_SYMBOL_NAME_EXPORT_EQUALS
-        || sym_shim.name == ast::INTERNAL_SYMBOL_NAME_DEFAULT
+    if sym_shim.name.as_ref() == ast::INTERNAL_SYMBOL_NAME_EXPORT_EQUALS
+        || sym_shim.name.as_ref() == ast::INTERNAL_SYMBOL_NAME_DEFAULT
     {
         // Names for default exports:
         // - export default foo => foo
@@ -749,7 +749,7 @@ fn get_name_for_exported_symbol(
         };
         return lsutil::module_symbol_to_valid_identifier(&parent_shim, prefer_capitalized);
     }
-    sym_shim.name
+    sym_shim.name.to_string()
 }
 
 /// `replaceFirstIdentifierOfEntityName`.

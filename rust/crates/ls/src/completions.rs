@@ -2062,13 +2062,13 @@ impl<'a, 'h> CompletionDataBuilder<'a, 'h> {
 
         let mut existing_member_names: Set<String> = Set::default();
         for member in &existing_members {
-            existing_member_names.add(self.program.symbols.borrow()[member.index()].name.clone());
+            existing_member_names.add(self.program.symbols.borrow()[member.index()].name.to_string());
         }
 
         let new_members: Vec<SymbolId> = members
             .into_iter()
             .filter(|member| {
-                !existing_member_names.has(&self.program.symbols.borrow()[member.index()].name)
+                !existing_member_names.has(self.program.symbols.borrow()[member.index()].name.as_ref())
             })
             .collect();
         self.symbols.extend(new_members);
@@ -2311,7 +2311,7 @@ impl<'a, 'h> CompletionDataBuilder<'a, 'h> {
                     let m = &symbols[member.index()];
                     (m.name.clone(), m.flags.intersects(SymbolFlags::OPTIONAL))
                 };
-                if spread_member_names.has(&member_name) {
+                if spread_member_names.has(member_name.as_ref()) {
                     self.symbol_to_sort_text_map.insert(
                         member,
                         sort_text::MEMBER_DECLARED_BY_SPREAD_ASSIGNMENT.to_string(),
@@ -4916,7 +4916,7 @@ fn filter_object_members_list(
     let filtered_symbols: Vec<SymbolId> = contextual_member_symbols
         .iter()
         .copied()
-        .filter(|m| !existing_member_names.has(&program.symbols.borrow()[m.index()].name))
+        .filter(|m| !existing_member_names.has(program.symbols.borrow()[m.index()].name.as_ref()))
         .collect();
 
     (filtered_symbols, members_declared_by_spread_assignment)
@@ -4957,7 +4957,7 @@ fn set_member_declared_by_spread_assignment(
         _ => Vec::new(),
     };
     for property in properties {
-        members.add(program.symbols.borrow()[property.index()].name.clone());
+        members.add(program.symbols.borrow()[property.index()].name.to_string());
     }
 }
 
@@ -5251,7 +5251,7 @@ fn filter_class_members_list(
                         let nodes = program.arena_of(decl);
                         ast::symbol_name(symbol, &nodes).to_string()
                     }
-                    None => symbol.name.clone(),
+                    None => symbol.name.to_string(),
                 }
             };
             !existing_member_names.has(&name)
@@ -5416,7 +5416,7 @@ fn filter_jsx_attributes(
         symbols
             .iter()
             .copied()
-            .filter(|a| !existing_names.has(&program.symbols.borrow()[a.index()].name))
+            .filter(|a| !existing_names.has(program.symbols.borrow()[a.index()].name.as_ref()))
             .collect(),
         members_declared_by_spread_assignment,
     )
@@ -6434,7 +6434,7 @@ fn get_completion_entry_display_name_for_symbol(
         let (name, value_declaration) = {
             let symbols = program.symbols.borrow();
             let s = &symbols[symbol.index()];
-            (s.name.clone(), s.value_declaration)
+            (s.name.to_string(), s.value_declaration)
         };
         let _ = value_declaration;
         name
