@@ -1692,7 +1692,11 @@ impl NodeFactory<'_> {
             end_of_file_token,
             ..Default::default()
         };
-        self.new_node(nodes, Kind::SourceFile, NodeData::SourceFile(data))
+        self.new_node(
+            nodes,
+            Kind::SourceFile,
+            NodeData::SourceFile(Box::new(data)),
+        )
     }
 
     /// `f.UpdateSourceFile` — `None` when nothing changed. Mirrors

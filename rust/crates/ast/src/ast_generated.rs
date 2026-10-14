@@ -2518,7 +2518,11 @@ pub enum NodeData {
     SyntheticReferenceExpression(SyntheticReferenceExpression),
     JSDocTypeLiteral(JSDocTypeLiteral),
     JSDocParameterOrPropertyTag(JSDocParameterOrPropertyTag),
-    SourceFile(SourceFile),
+    // PORT: `Box`ed — `SourceFile` is 1KiB while the next-largest variant is
+    // ~300B; inline it would make every `Node` pay ~1KiB per arena
+    // push/clone/move (Go keeps payloads behind pointers). Regeneration
+    // preserves this via `BOXED_NODE_VARIANTS` in tools/gen-ast.
+    SourceFile(Box<SourceFile>),
     FlowSwitchClauseData(FlowSwitchClauseData),
     FlowReduceLabelData(FlowReduceLabelData),
 }

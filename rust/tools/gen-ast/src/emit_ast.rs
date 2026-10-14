@@ -21,6 +21,13 @@ pub struct Emitter<'a> {
     base_map: BTreeMap<&'a str, &'a BaseDef>,
 }
 
+/// `NodeData` variants emitted behind `Box<T>`: inline, `SourceFile`
+/// (~1KiB) is ~3x the next-largest variant — every `Node` arena
+/// push/clone/move would pay it (Go keeps payloads behind pointers).
+/// `&Box<T>` coerces to `&T` at all generated match sites, so only the
+/// enum line and construction sites change.
+const BOXED_NODE_VARIANTS: &[&str] = &["SourceFile"];
+
 /// `SubtreeContainsTypeScript` → `SubtreeFacts::CONTAINS_TYPE_SCRIPT`.
 fn facts_const(name: &str) -> String {
     let short = name.strip_prefix("Subtree").unwrap_or(name);
@@ -302,7 +309,11 @@ impl<'a> Emitter<'a> {
         out.push_str("#[derive(Clone)]\npub enum NodeData {\n");
         for n in &self.schema.nodes {
             let v = self.variant_name(n);
-            out.push_str(&format!("    {v}({v}),\n"));
+            if BOXED_NODE_VARIANTS.contains(&v.as_str()) {
+                out.push_str(&format!("    {v}(Box<{v}>),\n"));
+            } else {
+                out.push_str(&format!("    {v}({v}),\n"));
+            }
         }
         out.push_str("}\n\n");
 
