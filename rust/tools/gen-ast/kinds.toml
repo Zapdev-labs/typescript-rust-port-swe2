@@ -5834,7 +5834,7 @@ facts_mode = "generated"
 fields = [
     { name = "file_name", ty = "other", go_name = "fileName", optional = true, rust_ty = "tsc_tspath::RootedFilePath" },
     { name = "parse_options", ty = "other", go_name = "parseOptions", optional = true, rust_ty = "crate::parseoptions::SourceFileParseOptions" },
-    { name = "text", ty = "str", optional = true },
+    { name = "text", ty = "other", optional = true, rust_ty = "std::sync::Arc<str>" },
     { name = "content_mapper_info", ty = "other", go_name = "contentMapperInfo", optional = true, rust_ty = "Option<Box<crate::ast::ContentMapperSourceFileInfo>>" },
     { name = "statements", ty = "node_list", optional = true },
     { name = "end_of_file_token", ty = "node", go_name = "endOfFileToken", optional = true },

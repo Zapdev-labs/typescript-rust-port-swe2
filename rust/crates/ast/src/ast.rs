@@ -1687,7 +1687,7 @@ impl NodeFactory<'_> {
         let data = SourceFile {
             file_name: opts.file_name.clone(),
             parse_options: opts.clone(),
-            text: text.to_string(),
+            text: text.into(),
             statements,
             end_of_file_token,
             ..Default::default()

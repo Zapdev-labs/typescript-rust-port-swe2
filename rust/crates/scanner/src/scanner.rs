@@ -3314,7 +3314,7 @@ pub fn get_shebang(text: &str) -> &str {
 /// `func GetScannerForSourceFile(sourceFile *ast.SourceFile, pos int) *Scanner`
 pub fn get_scanner_for_source_file<'a>(source_file: &'a SourceFile, pos: usize) -> Scanner<'a> {
     let mut s = Scanner::<'a>::new();
-    s.text = source_file.text.as_str();
+    s.text = &source_file.text;
     s.pos = pos;
     s.end = s.text.len();
     s.language_variant = source_file.language_variant;

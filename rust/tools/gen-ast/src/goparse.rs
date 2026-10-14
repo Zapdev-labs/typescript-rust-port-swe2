@@ -1372,7 +1372,10 @@ fn push_source_file(schema: &mut Schema) {
                 FieldType::Other,
                 Some("crate::parseoptions::SourceFileParseOptions"),
             ),
-            field("text", FieldType::Str, None),
+            // `Arc<str>` rather than `String`: `sf.text.clone()` runs on
+            // hot paths (lazy JSDoc parses, scanner re-entry) — Go shares
+            // the string header; a refcount bump keeps the port honest.
+            field("text", FieldType::Other, Some("std::sync::Arc<str>")),
             field(
                 "contentMapperInfo",
                 FieldType::Other,

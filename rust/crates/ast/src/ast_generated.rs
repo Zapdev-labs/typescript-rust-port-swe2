@@ -2263,7 +2263,7 @@ pub struct SourceFile {
     pub composite_base: CompositeBase,
     pub file_name: tsc_tspath::RootedFilePath,
     pub parse_options: crate::parseoptions::SourceFileParseOptions,
-    pub text: String,
+    pub text: std::sync::Arc<str>,
     pub content_mapper_info: Option<Box<crate::ast::ContentMapperSourceFileInfo>>,
     pub statements: Option<NodeList>,
     pub end_of_file_token: Option<NodeId>,

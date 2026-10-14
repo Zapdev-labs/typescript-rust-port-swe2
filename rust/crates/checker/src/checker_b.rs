@@ -9118,7 +9118,7 @@ impl Checker {
                             .unwrap_or_default(),
                     )
                 } else {
-                    (String::new(), Default::default())
+                    ("".into(), Default::default())
                 };
                 let start = tsc_scanner::scanner::skip_trivia(&file_text, nodes[node].pos());
                 let loc = tsc_core::text::TextRange::new(start, expr_pos);
