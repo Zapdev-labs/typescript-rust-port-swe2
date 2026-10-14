@@ -2,6 +2,7 @@
 
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::sync::Arc;
 
 use tsc_ast::diagnostic::{DiagnosticRef, lock_diagnostic};
 use tsc_ast::ids::NodeId;
@@ -21,6 +22,7 @@ use tsc_tspath::{PathKey, RootedFilePath, to_rooted_file_path};
 
 use crate::incremental::program::Program;
 use crate::incremental::snapshot::{
+    compute_hash,
     BuildInfoDiagnosticWithFileName, DiagnosticsOrBuildInfoDiagnosticsWithFileName, FileInfo,
     Snapshot, get_file_emit_kind, get_pending_emit_kind_with_options, repopulate_diagnostic_chain,
 };
@@ -168,9 +170,12 @@ impl ToProgramSnapshot<'_> {
                     .skip_default_lib_check
                     .is_true();
 
-        for &file in self.program.source_files_slice() {
+        let files: Vec<NodeId> = self.program.source_files_slice().to_vec();
+        let mut versions = self.compute_file_versions(&files);
+        for (i, &file) in files.iter().enumerate() {
             self.compute_file_change(
                 file,
+                std::mem::take(&mut versions[i]),
                 can_copy_semantic_diagnostics,
                 can_copy_emit_signatures,
                 copy_declaration_file_diagnostics,
@@ -179,33 +184,92 @@ impl ToProgramSnapshot<'_> {
         }
     }
 
-    /// The body of the Go `wg.Queue` closure inside `computeProgramFileChanges`.
-    fn compute_file_change(
-        &mut self,
-        file: NodeId,
-        can_copy_semantic_diagnostics: bool,
-        can_copy_emit_signatures: bool,
-        copy_declaration_file_diagnostics: bool,
-        copy_lib_file_diagnostics: bool,
-    ) {
-        let (version_text, is_declaration_file) = {
+    /// Version strings for every file — the dominant cost of
+    /// `computeProgramFileChanges`. Go queues one `wg.Queue` job per file;
+    /// the Rust `WorkGroup` requires `Send` closures and the compiler
+    /// program is `Rc`-based, so the body stays sequential, but the
+    /// xxh3 hash itself runs on scoped worker threads over `Arc<str>`
+    /// text handles (content-mapped files pre-render their
+    /// `original\0identity` version text instead).
+    fn compute_file_versions(&self, files: &[NodeId]) -> Vec<String> {
+        enum HashIn {
+            Shared(Arc<str>),
+            Owned(String),
+        }
+        let mut inputs: Vec<HashIn> = Vec::with_capacity(files.len());
+        for &file in files {
             let nodes = self.program.arena_of(file);
             let sf = nodes[file].as_source_file();
-            let version_text = if !sf.content_mapper().is_empty() {
-                format!(
+            if !sf.content_mapper().is_empty() {
+                inputs.push(HashIn::Owned(format!(
                     "{}\x00{}",
                     sf.original_text(),
                     sf.content_mapper_info
                         .as_ref()
                         .map(|info| info.transform_identity.as_str())
                         .unwrap_or_default()
-                )
+                )));
             } else {
-                sf.text().to_string()
-            };
-            (version_text, sf.is_declaration_file)
+                inputs.push(HashIn::Shared(sf.text.clone()));
+            }
+        }
+        let hash_with_text = self.snapshot.hash_with_text;
+        let hash_of = |input: &HashIn| -> String {
+            match input {
+                HashIn::Shared(text) => compute_hash(text, hash_with_text),
+                HashIn::Owned(text) => compute_hash(text, hash_with_text),
+            }
         };
-        let version = self.snapshot.compute_hash(&version_text);
+        let workers = if self.program.single_threaded() || inputs.len() < 16 {
+            1
+        } else {
+            std::thread::available_parallelism()
+                .map(|n| n.get())
+                .unwrap_or(4)
+                .min(8)
+        };
+        let mut versions: Vec<String> = Vec::with_capacity(inputs.len());
+        versions.resize_with(inputs.len(), String::new);
+        if workers <= 1 {
+            for (v, input) in versions.iter_mut().zip(inputs.iter()) {
+                *v = hash_of(input);
+            }
+        } else {
+            let chunk = inputs.len().div_ceil(workers);
+            std::thread::scope(|s| {
+                let mut remaining: &mut [String] = &mut versions;
+                let mut start = 0usize;
+                while start < inputs.len() {
+                    let end = (start + chunk).min(inputs.len());
+                    let (head, tail) = remaining.split_at_mut(end - start);
+                    remaining = tail;
+                    let slice = &inputs[start..end];
+                    s.spawn(move || {
+                        for (v, input) in head.iter_mut().zip(slice.iter()) {
+                            *v = hash_of(input);
+                        }
+                    });
+                    start = end;
+                }
+            });
+        }
+        versions
+    }
+
+    /// The body of the Go `wg.Queue` closure inside `computeProgramFileChanges`.
+    fn compute_file_change(
+        &mut self,
+        file: NodeId,
+        version: String,
+        can_copy_semantic_diagnostics: bool,
+        can_copy_emit_signatures: bool,
+        copy_declaration_file_diagnostics: bool,
+        copy_lib_file_diagnostics: bool,
+    ) {
+        let is_declaration_file = {
+            let nodes = self.program.arena_of(file);
+            nodes[file].as_source_file().is_declaration_file
+        };
         let file_path_key = {
             let nodes = self.program.arena_of(file);
             nodes[file].as_source_file().path_key().clone()
@@ -216,11 +280,12 @@ impl ToProgramSnapshot<'_> {
             .implied_node_format;
         let affects_global_scope = file_affects_global_scope(self.program, file);
         let mut signature = String::new();
-        let new_references = get_referenced_files(self.program, file);
+        let new_references = get_referenced_files(self.program, file).map(Rc::new);
         if new_references.is_some() {
+            // Go stores the *Set pointer — clone the Rc, not the set.
             self.snapshot
                 .referenced_map
-                .store_references(file_path_key.clone(), new_references.clone().map(Rc::new));
+                .store_references(file_path_key.clone(), new_references.clone());
         }
         if let Some(old_program) = self.old_program {
             if let Some(old_file_info) = old_program.snapshot.file_infos.load(&file_path_key) {
@@ -240,7 +305,7 @@ impl ToProgramSnapshot<'_> {
                 {
                     self.snapshot.add_file_to_change_set(file_path_key.clone());
                 } else if !Set::equals(
-                    new_references.as_ref(),
+                    new_references.as_deref(),
                     old_program
                         .snapshot
                         .referenced_map
