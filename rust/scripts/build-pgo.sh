@@ -29,6 +29,11 @@ if [ "${1:-}" = "--train" ]; then
     # still exercises the code paths.
     "$TSC" --noEmit --strict --ignoreConfig \
         ../tsc/testdata/fixtures/compiler/types.ts >/dev/null 2>&1 || true
+    # Emit path (fused check+emit fork wave on Unix).
+    TRAIN_EMIT="$(mktemp -d)"
+    "$TSC" --declaration --strict --ignoreConfig --outDir "$TRAIN_EMIT" \
+        ../tsc/testdata/fixtures/compiler/types.ts >/dev/null 2>&1 || true
+    rm -rf "$TRAIN_EMIT"
 
     PD="$(find "$HOME/.rustup/toolchains/"*/lib/rustlib/*/bin/llvm-profdata 2>/dev/null | head -1)"
     [ -n "$PD" ] || { echo "llvm-profdata not found: rustup component add llvm-tools"; exit 1; }
