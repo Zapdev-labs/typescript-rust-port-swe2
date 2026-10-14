@@ -404,7 +404,7 @@ fn get_comment_owner_info_worker(
                         .as_variable_declaration_list()
                         .declarations
                         .as_ref()
-                        .map(|l| l.nodes().to_vec())
+                        .map(|l| l.nodes_rc())
                 })
                 .unwrap_or_default();
             if declarations.len() == 1 {

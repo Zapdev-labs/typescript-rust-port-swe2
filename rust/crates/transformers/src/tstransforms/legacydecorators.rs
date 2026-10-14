@@ -359,7 +359,7 @@ pub(crate) fn child_is_decorated_no_parent(
     match nodes[node].kind {
         Kind::ClassDeclaration | Kind::ClassExpression => nodes[node]
             .member_list()
-            .map(|m| m.nodes().to_vec())
+            .map(|m| m.nodes_rc())
             .unwrap_or_default()
             .iter()
             .any(|&m| {
@@ -392,7 +392,7 @@ fn is_decorated_class_element(
 fn get_decorated_class_elements(node: NodeId, is_static: bool, nodes: &[Node]) -> Vec<NodeId> {
     let members = nodes[node]
         .member_list()
-        .map(|m| m.nodes().to_vec())
+        .map(|m| m.nodes_rc())
         .unwrap_or_default();
     if members.is_empty() {
         return Vec::new();
@@ -1155,9 +1155,9 @@ impl<'a> LegacyDecoratorsTransformer<'a> {
         let class_node = ec.borrow().most_original(Some(node));
         let members = cx.nodes[node]
             .member_list()
-            .map(|m| m.nodes().to_vec())
+            .map(|m| m.nodes_rc())
             .unwrap_or_default();
-        for member in members {
+        for member in members.iter().copied() {
             if cx.nodes[member].for_each_child(cx.nodes, &mut |child| {
                 is_or_contains_static_self_reference(self, ec, cx.nodes, class_node, child)
             }) {

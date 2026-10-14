@@ -983,9 +983,9 @@ fn get_switch_case_default_occurrences(
         .as_case_block()
         .clauses
         .as_ref()
-        .map(|c| c.nodes().to_vec())
+        .map(|c| c.nodes_rc())
         .unwrap_or_default();
-    for clause in clauses {
+    for clause in clauses.iter().copied() {
         let clause_token = {
             let mut nodes_mut = program.nodes_mut(source_file.file_index());
             get_first_token(&mut nodes_mut, clause, source_file)
