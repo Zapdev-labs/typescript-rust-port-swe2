@@ -1008,9 +1008,7 @@ impl Checker {
                     .expect("getTailRecursionRoot: nil root"),
             );
             if !new_root.outer_type_parameters.is_empty() {
-                let __arena___guard_cond_mapper = self.types.clone();
-                let __guard_cond_mapper = __arena___guard_cond_mapper.get(new_type).clone();
-                let cond_mapper = __guard_cond_mapper.as_conditional_type().mapper;
+                let cond_mapper = self.types.get_ref(new_type).as_conditional_type().mapper;
                 let type_param_mapper = self.combine_type_mappers(cond_mapper, new_mapper.unwrap());
                 let mappers = self.type_mappers.clone();
                 let type_arguments: Vec<TypeId> = new_root
@@ -1654,11 +1652,7 @@ impl Checker {
         no_reductions: bool,
     ) -> Option<TypeId> {
         let length = self.get_type_reference_arity(t) - end_skip_count;
-        let __arena___guard_element_infos = self.types.clone();
-        let __guard_element_infos = __arena___guard_element_infos
-            .get(self.types_handle().target_tuple_type(t).unwrap())
-            .clone();
-        let element_infos = __guard_element_infos.as_tuple_type().element_infos.clone();
+        let element_infos = self.types.get_ref(self.types_handle().target_tuple_type(t).unwrap()).as_tuple_type().element_infos.clone();
         if index < length {
             let type_arguments = self.get_type_arguments(t);
             let mut element_types = Vec::new();
@@ -1688,11 +1682,7 @@ impl Checker {
 
     /// `(c *Checker) getRestTypeOfTupleType` (checker.go:25385).
     pub(crate) fn get_rest_type_of_tuple_type(&mut self, t: TypeId) -> Option<TypeId> {
-        let __arena___guard_fixed_length = self.types.clone();
-        let __guard_fixed_length = __arena___guard_fixed_length
-            .get(self.types_handle().target_tuple_type(t).unwrap())
-            .clone();
-        let fixed_length = __guard_fixed_length.as_tuple_type().fixed_length;
+        let fixed_length = self.types.get_ref(self.types_handle().target_tuple_type(t).unwrap()).as_tuple_type().fixed_length;
         self.get_element_type_of_slice_of_tuple_type(t, fixed_length, 0, false, false)
     }
 
@@ -4001,9 +3991,7 @@ impl Checker {
         // non-generic pattern literal placeholders.
         let flags = self.types.get_ref(t).flags;
         if flags.intersects(TypeFlags::TEMPLATE_LITERAL) {
-            let __arena___guard_tl_types = self.types.clone();
-            let __guard_tl_types = __arena___guard_tl_types.get(t).clone();
-            let tl_types = __guard_tl_types.as_template_literal_type().types.clone();
+            let tl_types = self.types.get_ref(t).as_template_literal_type().types.clone();
             return core::every(&tl_types, |&u| self.is_pattern_literal_placeholder_type(u));
         }
         if flags.intersects(TypeFlags::STRING_MAPPING) {
@@ -4332,9 +4320,7 @@ impl Checker {
         let t_flags = self.types.get_ref(t).flags;
         let t_object_flags = self.types.get_ref(t).object_flags;
         if self.is_no_infer_type(t) {
-            let __arena___guard_base_type = self.types.clone();
-            let __guard_base_type = __arena___guard_base_type.get(t).clone();
-            let base_type = __guard_base_type
+            let base_type = self.types.get_ref(t)
                 .as_substitution_type()
                 .base_type
                 .expect("substitution base_type");
@@ -4664,9 +4650,7 @@ impl Checker {
     ) -> TypeId {
         let type_parameter = self.get_type_parameter_from_mapped_type(t);
         let constraint_type = self.get_constraint_type_from_mapped_type(t);
-        let __arena___guard_mapped_target = self.types.clone();
-        let __guard_mapped_target = __arena___guard_mapped_target.get(t).clone();
-        let mapped_target = __guard_mapped_target
+        let mapped_target = self.types.get_ref(t)
             .as_mapped_type()
             .object_type
             .target
@@ -4676,9 +4660,7 @@ impl Checker {
             // no mapping and no filtering required, just quickly bail to returning the constraint in the common case
             return constraint_type.unwrap_or(TypeId::NONE);
         }
-        let __arena___guard_t_mapper = self.types.clone();
-        let __guard_t_mapper = __arena___guard_t_mapper.get(t).clone();
-        let t_mapper = __guard_t_mapper.as_mapped_type().object_type.mapper;
+        let t_mapper = self.types.get_ref(t).as_mapped_type().object_type.mapper;
         let mut key_types: Vec<TypeId> = Vec::new();
         // `addMemberForKeyType` closure.
         let mut add_member_for_key_type = |c: &mut Checker, key_type: TypeId| {
@@ -5267,9 +5249,7 @@ __h4858_35],
                                 .flags
                                 .intersects(TypeFlags::STRING_LITERAL | TypeFlags::NUMBER_LITERAL)
                         {
-                            let __arena___guard_value = self.types.clone();
-                            let __guard_value = __arena___guard_value.get(index_type).clone();
-                            let value = __guard_value
+                            let value = self.types.get_ref(index_type)
                                 .as_literal_type()
                                 .value
                                 .as_ref()
@@ -5438,10 +5418,7 @@ __h5064_43, suggestion],
                                     } else if index_flags.intersects(TypeFlags::STRING_LITERAL)
                                         || index_flags.intersects(TypeFlags::NUMBER_LITERAL)
                                     {
-                                        let __arena___guard_value = self.types.clone();
-                                        let __guard_value =
-                                            __arena___guard_value.get(index_type).clone();
-                                        let value = __guard_value
+                                        let value = self.types.get_ref(index_type)
                                             .as_literal_type()
                                             .value
                                             .as_ref()
@@ -5501,9 +5478,7 @@ __h5064_43, suggestion],
             if self.program_nodes(index_node)[index_node].kind != ast::Kind::BigIntLiteral
                 && index_flags.intersects(TypeFlags::STRING_LITERAL | TypeFlags::NUMBER_LITERAL)
             {
-                let __arena___guard_value = self.types.clone();
-                let __guard_value = __arena___guard_value.get(index_type).clone();
-                let value = __guard_value
+                let value = self.types.get_ref(index_type)
                     .as_literal_type()
                     .value
                     .as_ref()
@@ -5927,9 +5902,7 @@ __h5064_43, suggestion],
         // examine all object type members.
         let flags = self.types.get_ref(t).flags;
         if flags.intersects(TypeFlags::UNION_OR_INTERSECTION) && {
-            let __arena___guard_candidates = self.types.clone();
-            let __guard_candidates = __arena___guard_candidates.get(t).clone();
-            let candidates = __guard_candidates
+            let candidates = self.types.get_ref(t)
                 .as_union_or_intersection_type()
                 .map(|u| u.types.clone())
                 .unwrap_or_default();
@@ -5938,9 +5911,7 @@ __h5064_43, suggestion],
             return true;
         }
         if flags.intersects(TypeFlags::SUBSTITUTION) && !self.is_no_infer_type(t) && {
-            let __arena___guard_base = self.types.clone();
-            let __guard_base = __arena___guard_base.get(t).clone();
-            let base = __guard_base.as_substitution_type().base_type.unwrap();
+            let base = self.types.get_ref(t).as_substitution_type().base_type.unwrap();
             self.is_no_infer_target_type(base)
         } {
             return true;
@@ -6152,9 +6123,7 @@ __h5064_43, suggestion],
             return self.no_constraint_type;
         }
         if flags.intersects(TypeFlags::INDEX) {
-            let __arena___guard_target = self.types.clone();
-            let __guard_target = __arena___guard_target.get(t).clone();
-            let target = __guard_target.as_index_type().target.unwrap();
+            let target = self.types.get_ref(t).as_index_type().target.unwrap();
             if self.is_generic_mapped_type(target) {
                 let mapped_type = target;
                 if self.get_name_type_from_mapped_type(mapped_type).is_some()
@@ -6178,9 +6147,7 @@ __h5064_43, suggestion],
                 }
             }
             if constraints.len() == types.len() {
-                let __arena___guard_texts = self.types.clone();
-                let __guard_texts = __arena___guard_texts.get(t).clone();
-                let texts = __guard_texts.as_template_literal_type().texts.clone();
+                let texts = self.types.get_ref(t).as_template_literal_type().texts.clone();
                 return self.get_template_literal_type(&texts, &constraints);
             }
             return self.string_type;
@@ -6196,9 +6163,8 @@ __h5064_43, suggestion],
         }
         if flags.intersects(TypeFlags::INDEXED_ACCESS) {
             let (object_type, index_type, access_flags) = {
-                let __arena___guard_iat = self.types.clone();
-                let __guard_iat = __arena___guard_iat.get(t).clone();
-                let iat = __guard_iat.as_indexed_access_type();
+                let __iat_guard = self.types.get(t);
+                let iat = __iat_guard.as_indexed_access_type();
                 (
                     iat.object_type.unwrap(),
                     iat.index_type.unwrap(),
@@ -6250,10 +6216,7 @@ __h5064_43, suggestion],
             // We substitute constraints for variadic elements only when the constraints are array types or
             // non-variadic tuple types as we want to avoid further (possibly unbounded) recursion.
             let element_types = self.get_element_types(t);
-            let __arena___guard_element_infos = self.types.clone();
-            let __guard_element_infos = __arena___guard_element_infos
-                .get(self.types_handle().target_tuple_type(t).unwrap());
-            let element_infos = __guard_element_infos.as_tuple_type().element_infos.clone();
+            let element_infos = self.types.get_ref(self.types_handle().target_tuple_type(t).unwrap()).as_tuple_type().element_infos.clone();
             let __guard_readonly = self.types.get_ref(self.types_handle().target_tuple_type(t).unwrap())
                 .clone();
             let readonly = __guard_readonly.as_tuple_type().readonly;
@@ -6632,10 +6595,7 @@ impl Checker {
         rest_symbol: Option<SymbolId>,
     ) -> Vec<SymbolId> {
         let element_types = self.get_type_arguments(rest_type);
-        let __arena___guard_element_infos = self.types.clone();
-        let __guard_element_infos = __arena___guard_element_infos
-            .get(self.types_handle().target_tuple_type(rest_type).unwrap());
-        let element_infos = __guard_element_infos.as_tuple_type().element_infos.clone();
+        let element_infos = self.types.get_ref(self.types_handle().target_tuple_type(rest_type).unwrap()).as_tuple_type().element_infos.clone();
         let associated_names =
             self.get_uniq_associated_names_from_tuple_type(rest_type, rest_symbol);
         let mut expanded: Vec<SymbolId> = self.signature_arena.get(signature).parameters
@@ -6672,11 +6632,7 @@ impl Checker {
         t: TypeId,
         rest_symbol: Option<SymbolId>,
     ) -> Vec<String> {
-        let __arena___guard_element_infos = self.types.clone();
-        let __guard_element_infos = __arena___guard_element_infos
-            .get(self.types_handle().target_tuple_type(t).unwrap())
-            .clone();
-        let element_infos = __guard_element_infos.as_tuple_type().element_infos.clone();
+        let element_infos = self.types.get_ref(self.types_handle().target_tuple_type(t).unwrap()).as_tuple_type().element_infos.clone();
         let mut names = vec![String::new(); element_infos.len()];
         let mut counters: FxHashMap<String, i32> = FxHashMap::default();
         for (i, info) in element_infos.iter().enumerate() {
@@ -7355,9 +7311,7 @@ impl Checker {
                 return None;
             }
         }
-        let __arena___guard_type_parameters = self.types.clone();
-        let __guard_type_parameters = __arena___guard_type_parameters.get(target).clone();
-        let type_parameters = __guard_type_parameters
+        let type_parameters = self.types.get_ref(target)
             .as_interface_type()
             .map(|i| i.type_parameters().to_vec())
             .unwrap_or_default();
@@ -9202,13 +9156,9 @@ impl Checker {
     ) -> TypeId {
         let type_parameter = self.get_type_parameter_from_mapped_type(object_type);
         let mapper = crate::mapper::new_simple_type_mapper(self, type_parameter.unwrap(), index);
-        let __arena___guard_object_mapper = self.types.clone();
-        let __guard_object_mapper = __arena___guard_object_mapper.get(object_type).clone();
-        let object_mapper = __guard_object_mapper.as_mapped_type().object_type.mapper;
+        let object_mapper = self.types.get_ref(object_type).as_mapped_type().object_type.mapper;
         let template_mapper = self.combine_type_mappers(object_mapper, mapper);
-        let __arena___guard_target = self.types.clone();
-        let __guard_target = __arena___guard_target.get(object_type).clone();
-        let target = __guard_target
+        let target = self.types.get_ref(object_type)
             .as_mapped_type()
             .object_type
             .target
@@ -9775,9 +9725,7 @@ impl Checker {
         if crate::checker_core::is_tuple_type(&self.types, t) {
             let __arena_target = self.types.clone();
             let target = __arena_target.target_tuple_type(t).unwrap();
-            let __arena___guard_element_infos = self.types.clone();
-            let __guard_element_infos = __arena___guard_element_infos.get(target).clone();
-            let element_infos = __guard_element_infos.as_tuple_type().element_infos.clone();
+            let element_infos = self.types.get_ref(target).as_tuple_type().element_infos.clone();
             let __h9178_47 = self.get_element_types(t);
 
             return self.create_tuple_type_ex(&__h9178_47, &element_infos, false);
@@ -10559,9 +10507,8 @@ impl Checker {
                     let __arena_target = c.types.clone();
                     let target = __arena_target.target_tuple_type(t).unwrap();
                     let (fixed_length, element_infos, combined_flags) = {
-                        let __arena___guard_tt = c.types.clone();
-                        let __guard_tt = __arena___guard_tt.get(target).clone();
-                        let tt = __guard_tt.as_tuple_type();
+                        let __tt_guard = c.types.get(target);
+                        let tt = __tt_guard.as_tuple_type();
                         (tt.fixed_length, tt.element_infos.clone(), tt.combined_flags)
                     };
                     // If index is before any spread element and within the fixed part of the contextual tuple type, return
@@ -11582,9 +11529,7 @@ impl Checker {
             .get_constraint_type_from_mapped_type(t)
             .unwrap_or(self.error_type);
         // special case for conditional types pretending to be negated types
-        let __arena___guard_name_type = self.types.clone();
-        let __guard_name_type = __arena___guard_name_type.get(t).clone();
-        let name_type = __guard_name_type.as_mapped_type().name_type;
+        let name_type = self.types.get_ref(t).as_mapped_type().name_type;
         if name_type.is_some_and(|nt| self.is_excluded_mapped_property_name(nt, property_name_type))
             || self.is_excluded_mapped_property_name(constraint, property_name_type)
         {
@@ -11606,9 +11551,8 @@ impl Checker {
         let flags = self.types.get_ref(t).flags;
         if flags.intersects(TypeFlags::CONDITIONAL) {
             let (_false_type, check_type, extends_type) = {
-                let __arena___guard_ct = self.types.clone();
-                let __guard_ct = __arena___guard_ct.get(t).clone();
-                let ct = __guard_ct.as_conditional_type();
+                let __ct_guard = self.types.get(t);
+                let ct = __ct_guard.as_conditional_type();
                 (
                     ct.resolved_false_type.expect("conditional falseType"),
                     ct.check_type.expect("conditional checkType"),
@@ -13095,9 +13039,7 @@ impl Checker {
             .flags
             .intersects(TypeFlags::INTERSECTION)
         {
-            let __arena___guard_parts = self.types.clone();
-            let __guard_parts = __arena___guard_parts.get(t).clone();
-            let parts = __guard_parts
+            let parts = self.types.get_ref(t)
                 .as_intersection_type()
                 .union_or_intersection
                 .types
@@ -13125,9 +13067,7 @@ impl Checker {
             .flags
             .intersects(TypeFlags::INTERSECTION)
         {
-            let __arena___guard_parts = self.types.clone();
-            let __guard_parts = __arena___guard_parts.get(t).clone();
-            let parts = __guard_parts
+            let parts = self.types.get_ref(t)
                 .as_intersection_type()
                 .union_or_intersection
                 .types
@@ -13227,9 +13167,7 @@ impl Checker {
             .flags
             .intersects(TypeFlags::SUBSTITUTION)
         {
-            let __arena___guard_base = self.types.clone();
-            let __guard_base = __arena___guard_base.get(t).clone();
-            let base = __guard_base.as_substitution_type().base_type;
+            let base = self.types.get_ref(t).as_substitution_type().base_type;
             return self.get_actual_type_variable(base.unwrap());
         }
         if self
@@ -13959,9 +13897,7 @@ impl Checker {
         if ast::is_part_of_type_node(node, &nodes) {
             let type_from_type_node = self.get_type_from_type_node(node);
             if let Some(class_type) = class_type {
-                let __arena___guard_this_type = self.types.clone();
-                let __guard_this_type = __arena___guard_this_type.get(class_type).clone();
-                let this_type = __guard_this_type
+                let this_type = self.types.get_ref(class_type)
                     .as_interface_type()
                     .and_then(|i| i.this_type)
                     .unwrap();
@@ -13985,9 +13921,7 @@ impl Checker {
             let class_type = class_type.unwrap();
             let base_type = self.get_base_types(class_type).first().copied();
             if let Some(base_type) = base_type {
-                let __arena___guard_this_type = self.types.clone();
-                let __guard_this_type = __arena___guard_this_type.get(class_type).clone();
-                let this_type = __guard_this_type
+                let this_type = self.types.get_ref(class_type)
                     .as_interface_type()
                     .and_then(|i| i.this_type)
                     .unwrap();
@@ -14112,9 +14046,7 @@ impl Checker {
                     .flags
                     .intersects(TypeFlags::INTERSECTION)
                 {
-                    let __arena___guard_parts = c.types.clone();
-                    let __guard_parts = __arena___guard_parts.get(t).clone();
-                    let parts = __guard_parts
+                    let parts = c.types.get_ref(t)
                         .as_intersection_type()
                         .union_or_intersection
                         .types

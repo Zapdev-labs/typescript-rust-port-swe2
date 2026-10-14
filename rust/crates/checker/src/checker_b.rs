@@ -112,9 +112,7 @@ impl Checker {
                         || c.is_generic_mapped_type(t)
                             && c.types.get_ref(t).as_mapped_type().name_type.is_none()
                             && {
-                                let __arena___guard_target = c.types.clone();
-                                let __guard_target = __arena___guard_target.get(t).clone();
-                                let target = __guard_target
+                                let target = c.types.get_ref(t)
                                     .as_mapped_type()
                                     .object_type
                                     .target
@@ -5813,9 +5811,7 @@ impl Checker {
             }
             return self.get_union_type(&mapped);
         } else if flags.intersects(TypeFlags::INTERSECTION) {
-            let __arena___guard_types = self.types.clone();
-            let __guard_types = __arena___guard_types.get(t).clone();
-            let types = __guard_types
+            let types = self.types.get_ref(t)
                 .as_intersection_type()
                 .union_or_intersection
                 .types
@@ -12140,9 +12136,7 @@ impl Checker {
                 .any(|&s| self.is_const_type_variable(Some(s), depth));
         }
         if flags.intersects(TypeFlags::INDEXED_ACCESS) {
-            let __arena___guard_object_type = self.types.clone();
-            let __guard_object_type = __arena___guard_object_type.get(t).clone();
-            let object_type = __guard_object_type.as_indexed_access_type().object_type;
+            let object_type = self.types.get_ref(t).as_indexed_access_type().object_type;
             return self.is_const_type_variable(object_type, depth + 1);
         }
         if flags.intersects(TypeFlags::CONDITIONAL) {
@@ -12150,9 +12144,7 @@ impl Checker {
             return self.is_const_type_variable(constraint, depth + 1);
         }
         if flags.intersects(TypeFlags::SUBSTITUTION) {
-            let __arena___guard_base_type = self.types.clone();
-            let __guard_base_type = __arena___guard_base_type.get(t).clone();
-            let base_type = __guard_base_type.as_substitution_type().base_type;
+            let base_type = self.types.get_ref(t).as_substitution_type().base_type;
             return self.is_const_type_variable(base_type, depth);
         }
         if self

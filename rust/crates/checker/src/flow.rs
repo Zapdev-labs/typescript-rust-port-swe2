@@ -3271,11 +3271,7 @@ impl Checker {
         let cf_type = self.get_context_free_type_of_expression(node);
         let base = self.get_base_type_of_literal_type(cf_type);
         let new_element_type = self.get_regular_type_of_object_literal(base);
-        let __arena___guard_element_type = self.types.clone();
-        let __guard_element_type = __arena___guard_element_type
-            .get(evolving_array_type)
-            .clone();
-        let element_type = __guard_element_type
+        let element_type = self.types.get_ref(evolving_array_type)
             .as_evolving_array_type()
             .element_type
             .unwrap_or(self.never_type);
@@ -3308,9 +3304,7 @@ impl Checker {
             .final_array_type
             .is_none()
         {
-            let __arena___guard_element_type = self.types.clone();
-            let __guard_element_type = __arena___guard_element_type.get(t).clone();
-            let element_type = __guard_element_type
+            let element_type = self.types.get_ref(t)
                 .as_evolving_array_type()
                 .element_type
                 .unwrap_or(self.never_type);

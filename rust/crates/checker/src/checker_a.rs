@@ -4951,9 +4951,7 @@ impl Checker {
             }
         {
             // EnumLiteral type at condition with known value is always truthy or always falsy, likely an error
-            let __arena___guard_value = self.types.clone();
-            let __guard_value = __arena___guard_value.get(t).clone();
-            let value = __guard_value.as_literal_type().value.clone();
+            let value = self.types.get_ref(t).as_literal_type().value.clone();
             let arg = tsc_core::core::if_else(
                 evaluator::is_truthy(value.as_ref().expect("literal value")),
                 "true",
@@ -5919,9 +5917,7 @@ impl Checker {
         self.check_exports_on_merged_declarations(node);
         let symbol = self.get_symbol_of_declaration(node).expect("class symbol");
         let class_type = self.get_declared_type_of_symbol(symbol);
-        let __arena___guard_this_type = self.types.clone();
-        let __guard_this_type = __arena___guard_this_type.get(class_type).clone();
-        let this_type = __guard_this_type
+        let this_type = self.types.get_ref(class_type)
             .as_interface_type()
             .and_then(|i| i.this_type);
         let type_with_this = self.get_type_with_this_argument(class_type, None, false);
@@ -6208,9 +6204,7 @@ impl Checker {
                 return;
             }
             let t = self.get_declared_type_of_symbol(symbol);
-            let __arena___guard_target_parameters = self.types.clone();
-            let __guard_target_parameters = __arena___guard_target_parameters.get(t).clone();
-            let target_parameters = __guard_target_parameters
+            let target_parameters = self.types.get_ref(t)
                 .as_interface_type()
                 .map(|i| i.local_type_parameters().to_vec())
                 .unwrap_or_default();
@@ -6413,9 +6407,7 @@ impl Checker {
                 return result;
             }
         } else if tflags(self, t).intersects(TypeFlags::INTERSECTION) {
-            let __arena___guard_types = self.types.clone();
-            let __guard_types = __arena___guard_types.get(t).clone();
-            let types = __guard_types
+            let types = self.types.get_ref(t)
                 .as_intersection_type()
                 .union_or_intersection
                 .types
@@ -6802,9 +6794,7 @@ impl Checker {
         if base_type_node.is_some() {
             let base_types = self.get_base_types(t);
             if let Some(&first) = base_types.first() {
-                let __arena___guard_this_arg = self.types.clone();
-                let __guard_this_arg = __arena___guard_this_arg.get(t).clone();
-                let this_arg = __guard_this_arg
+                let this_arg = self.types.get_ref(t)
                     .as_interface_type()
                     .and_then(|i| i.this_type);
                 base_with_this = Some(self.get_type_with_this_argument(first, this_arg, false));
@@ -6903,9 +6893,7 @@ impl Checker {
         if ast::get_class_extends_heritage_element(&nodes[node], &nodes).is_some() {
             let base_types = self.get_base_types(t);
             if let Some(&first) = base_types.first() {
-                let __arena___guard_this_arg = self.types.clone();
-                let __guard_this_arg = __arena___guard_this_arg.get(t).clone();
-                let this_arg = __guard_this_arg
+                let this_arg = self.types.get_ref(t)
                     .as_interface_type()
                     .and_then(|i| i.this_type);
                 base_with_this = Some(self.get_type_with_this_argument(first, this_arg, false));
@@ -7701,9 +7689,7 @@ impl Checker {
         }
         let mut seen: FxHashMap<String, (SymbolId, TypeId)> = FxHashMap::default();
         let resolved_t = self.resolve_declared_members(t);
-        let __arena___guard_declared = self.types.clone();
-        let __guard_declared = __arena___guard_declared.get(resolved_t).clone();
-        let declared = __guard_declared
+        let declared = self.types.get_ref(resolved_t)
             .as_interface_type()
             .expect("interface type")
             .declared_members
@@ -7714,9 +7700,7 @@ impl Checker {
             }
         }
         let mut identical = true;
-        let __arena___guard_this_type = self.types.clone();
-        let __guard_this_type = __arena___guard_this_type.get(t).clone();
-        let this_type = __guard_this_type
+        let this_type = self.types.get_ref(t)
             .as_interface_type()
             .and_then(|i| i.this_type);
         for base in base_types {
@@ -13648,9 +13632,7 @@ impl Checker {
             }
             return self.get_base_constructor_type_of_class(class_type);
         }
-        let __arena___guard_this_type = self.types.clone();
-        let __guard_this_type = __arena___guard_this_type.get(class_type).clone();
-        let this_type = __guard_this_type
+        let this_type = self.types.get_ref(class_type)
             .as_interface_type()
             .and_then(|i| i.this_type);
         self.get_type_with_this_argument(base_class_type, this_type, false)
