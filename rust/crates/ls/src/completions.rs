@@ -7,7 +7,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use tsc_ast::{ArenaMut, Kind, ModifierFlags, Node, NodeFlags, NodeId, SymbolFlags, SymbolId, self as ast};
+use tsc_ast::{Kind, ModifierFlags, Node, NodeFlags, NodeId, SymbolFlags, SymbolId, self as ast};
 use tsc_checker::checker_core::Checker;
 use tsc_checker::types::{ContextFlags, TypeId};
 use tsc_collections::Set;
@@ -1627,7 +1627,7 @@ impl<'a, 'h> CompletionDataBuilder<'a, 'h> {
         // For a computed property with an accessible name like `Symbol.iterator`,
         // we'll add a completion for the *name* `Symbol` instead of for the property.
         // If this is e.g. [Symbol.iterator], add a completion for `Symbol`.
-        let declarations = self.program.symbols.borrow()[symbol.index()]
+        let declarations = self.program.symbols.get_ref(symbol)
             .declarations
             .clone();
         let computed_property_name = tsc_core::core::first_non_nil(&declarations, |decl| {
@@ -1665,7 +1665,7 @@ impl<'a, 'h> CompletionDataBuilder<'a, 'h> {
                         sort_text::GLOBALS_OR_KEYWORDS.to_string(),
                     );
                     let (module_symbol, first_accessible_symbol_name) = {
-                        let symbols = self.program.symbols.borrow();
+                        let symbols = self.program.symbols.clone();
                         (
                             symbols[first_accessible_symbol.index()].parent,
                             symbols[first_accessible_symbol.index()].name.clone(),
@@ -1853,7 +1853,7 @@ impl<'a, 'h> CompletionDataBuilder<'a, 'h> {
             if let Some(symbol) = symbol {
                 let symbol = checker_rc.borrow_mut().skip_alias(symbol);
                 if let Some(symbol) = symbol {
-                    let symbol_flags = self.program.symbols.borrow()[symbol.index()].flags;
+                    let symbol_flags = self.program.symbols.get_ref(symbol).flags;
                     if symbol_flags.intersects(SymbolFlags::MODULE | SymbolFlags::ENUM) {
                         let value_access_node = if is_import_type {
                             node
@@ -1869,9 +1869,8 @@ impl<'a, 'h> CompletionDataBuilder<'a, 'h> {
                             let is_valid_access = {
                                 let mut c = checker_rc.borrow_mut();
                                 let exported_flags =
-                                    self.program.symbols.borrow()[exported_symbol.index()].flags;
-                                let exported_declarations = self.program.symbols.borrow()
-                                    [exported_symbol.index()]
+                                    self.program.symbols.get_ref(exported_symbol).flags;
+                                let exported_declarations = self.program.symbols.get_ref(exported_symbol)
                                 .declarations
                                 .clone();
                                 if is_namespace_name {
@@ -1893,7 +1892,7 @@ impl<'a, 'h> CompletionDataBuilder<'a, 'h> {
                                         &self.program,
                                     ) || c.is_valid_property_access(
                                         value_access_node,
-                                        &self.program.symbols.borrow()[exported_symbol.index()]
+                                        &self.program.symbols.get_ref(exported_symbol)
                                             .name,
                                     )
                                 } else if is_type_location || self.inside_jsdoc_tag_type_expression
@@ -1907,7 +1906,7 @@ impl<'a, 'h> CompletionDataBuilder<'a, 'h> {
                                 } else {
                                     c.is_valid_property_access(
                                         value_access_node,
-                                        &self.program.symbols.borrow()[exported_symbol.index()]
+                                        &self.program.symbols.get_ref(exported_symbol)
                                             .name,
                                     )
                                 }
@@ -1920,7 +1919,7 @@ impl<'a, 'h> CompletionDataBuilder<'a, 'h> {
                         // If the module is merged with a value, we must get the type of the class and add its properties (for inherited static methods).
                         let has_non_module_decl = {
                             let nodes = self.nodes();
-                            let declarations = self.program.symbols.borrow()[symbol.index()]
+                            let declarations = self.program.symbols.get_ref(symbol)
                                 .declarations
                                 .clone();
                             tsc_core::core::some(&declarations, |decl| {
@@ -2062,13 +2061,13 @@ impl<'a, 'h> CompletionDataBuilder<'a, 'h> {
 
         let mut existing_member_names: Set<String> = Set::default();
         for member in &existing_members {
-            existing_member_names.add(self.program.symbols.borrow()[member.index()].name.to_string());
+            existing_member_names.add(self.program.symbols.get_ref(*member).name.to_string());
         }
 
         let new_members: Vec<SymbolId> = members
             .into_iter()
             .filter(|member| {
-                !existing_member_names.has(self.program.symbols.borrow()[member.index()].name.as_ref())
+                !existing_member_names.has(self.program.symbols.get_ref(*member).name.as_ref())
             })
             .collect();
         self.symbols.extend(new_members);
@@ -2307,7 +2306,7 @@ impl<'a, 'h> CompletionDataBuilder<'a, 'h> {
             for member in &filtered_members {
                 let member = *member;
                 let (member_name, member_is_optional) = {
-                    let symbols = self.program.symbols.borrow();
+                    let symbols = self.program.symbols.clone();
                     let m = &symbols[member.index()];
                     (m.name.clone(), m.flags.intersects(SymbolFlags::OPTIONAL))
                 };
@@ -2594,7 +2593,7 @@ impl<'a, 'h> CompletionDataBuilder<'a, 'h> {
         let uniques: Vec<SymbolId> = exports
             .into_iter()
             .filter(|&symbol| {
-                let symbols = self.program.symbols.borrow();
+                let symbols = self.program.symbols.clone();
                 let name = ast::symbol_name(&symbols[symbol.index()], &self.nodes()).to_string();
                 name != ast::INTERNAL_SYMBOL_NAME_DEFAULT && !existing.has(&name)
             })
@@ -2658,7 +2657,7 @@ impl<'a, 'h> CompletionDataBuilder<'a, 'h> {
             c.get_apparent_properties(t)
                 .into_iter()
                 .filter(|&symbol| {
-                    let symbols = self.program.symbols.borrow();
+                    let symbols = self.program.symbols.clone();
                     let name =
                         ast::symbol_name(&symbols[symbol.index()], &self.nodes()).to_string();
                     !existing.has(&name)
@@ -2711,7 +2710,7 @@ impl<'a, 'h> CompletionDataBuilder<'a, 'h> {
         };
         let local_exports: Vec<String> = local_symbol
             .map(|ls| {
-                self.program.symbols.borrow()[ls.index()]
+                self.program.symbols.get_ref(ls)
                     .exports
                     .keys()
                     .map(|k| k.to_string())
@@ -2909,7 +2908,7 @@ impl<'a, 'h> CompletionDataBuilder<'a, 'h> {
             for index in start..self.symbols.len() {
                 let symbol = self.symbols[index];
                 let declaration = {
-                    let symbols = self.program.symbols.borrow();
+                    let symbols = self.program.symbols.clone();
                     symbols[symbol.index()].value_declaration
                 };
                 if let Some(declaration) = declaration {
@@ -2996,7 +2995,7 @@ impl<'a, 'h> CompletionDataBuilder<'a, 'h> {
         // Set sort texts.
         for &symbol in &filtered_symbols {
             let (symbol_name, symbol_is_optional) = {
-                let symbols = self.program.symbols.borrow();
+                let symbols = self.program.symbols.clone();
                 let s = &symbols[symbol.index()];
                 (
                     ast::symbol_name(s, &self.nodes()).to_string(),
@@ -3119,7 +3118,7 @@ impl<'a, 'h> CompletionDataBuilder<'a, 'h> {
         // `core.CheckEachDefined` — `Vec<SymbolId>` cannot contain nil.
         for index in symbols_start..self.symbols.len() {
             let symbol = self.symbols[index];
-            let declarations = self.program.symbols.borrow()[symbol.index()]
+            let declarations = self.program.symbols.get_ref(symbol)
                 .declarations
                 .clone();
             let is_arguments = {
@@ -3134,7 +3133,7 @@ impl<'a, 'h> CompletionDataBuilder<'a, 'h> {
                 self.symbol_to_sort_text_map
                     .insert(symbol, sort_text::GLOBALS_OR_KEYWORDS.to_string());
             }
-            let symbol_has_value_flag = self.program.symbols.borrow()[symbol.index()]
+            let symbol_has_value_flag = self.program.symbols.get_ref(symbol)
                 .flags
                 .intersects(SymbolFlags::VALUE);
             if type_only_alias_needs_promotion && !symbol_has_value_flag {
@@ -3660,7 +3659,7 @@ fn symbol_can_be_referenced_at_type_location(
     // Since an alias can be merged with a local declaration, we need to test both the alias and its target.
     // This code used to just test the result of `skipAlias`, but that would ignore any locally introduced meanings.
     non_alias_can_be_referenced_at_type_location(symbol, type_checker, seen_modules, program) || {
-        let export_symbol = program.symbols.borrow()[symbol.index()]
+        let export_symbol = program.symbols.get_ref(symbol)
             .export_symbol
             .unwrap_or(symbol);
         type_checker
@@ -3683,7 +3682,7 @@ fn non_alias_can_be_referenced_at_type_location(
     seen_modules: &mut Set<SymbolId>,
     program: &Program,
 ) -> bool {
-    let flags = program.symbols.borrow()[symbol.index()].flags;
+    let flags = program.symbols.get_ref(symbol).flags;
     if flags.intersects(SymbolFlags::TYPE) || type_checker.is_unknown_symbol(Some(symbol)) {
         return true;
     }
@@ -3747,7 +3746,7 @@ fn get_first_symbol_in_chain(
     if let Some(first) = chain.first() {
         return Some(*first);
     }
-    let parent = program.symbols.borrow()[symbol.index()].parent;
+    let parent = program.symbols.get_ref(symbol).parent;
     if let Some(parent) = parent {
         if is_module_symbol(program, parent) {
             return Some(symbol);
@@ -3759,7 +3758,7 @@ fn get_first_symbol_in_chain(
 
 /// `isModuleSymbol`.
 fn is_module_symbol(program: &Program, symbol: SymbolId) -> bool {
-    let declarations = program.symbols.borrow()[symbol.index()]
+    let declarations = program.symbols.get_ref(symbol)
         .declarations
         .clone();
     tsc_core::core::some(&declarations, |decl| {
@@ -3782,7 +3781,7 @@ fn get_nullable_symbol_origin_info_kind(
 
 /// `isStaticProperty`.
 fn is_static_property(program: &Program, symbol: SymbolId) -> bool {
-    let value_declaration = program.symbols.borrow()[symbol.index()].value_declaration;
+    let value_declaration = program.symbols.get_ref(symbol).value_declaration;
     value_declaration.is_some_and(|vd| {
         let nodes = program.arena_of(vd);
         nodes[vd].modifier_flags().intersects(ModifierFlags::STATIC)
@@ -4057,7 +4056,7 @@ fn get_recommended_completion(
         let symbol = type_checker.types.get(*t).symbol;
         // Don't make a recommended completion for an abstract class.
         symbol.and_then(|symbol| {
-            let flags = program.symbols.borrow()[symbol.index()].flags;
+            let flags = program.symbols.get_ref(symbol).flags;
             if flags.intersects(SymbolFlags::ENUM_MEMBER | SymbolFlags::ENUM | SymbolFlags::CLASS)
                 && !is_abstract_constructor_symbol(program, symbol)
             {
@@ -4071,12 +4070,12 @@ fn get_recommended_completion(
 
 /// `isAbstractConstructorSymbol`.
 fn is_abstract_constructor_symbol(program: &Program, symbol: SymbolId) -> bool {
-    let flags = program.symbols.borrow()[symbol.index()].flags;
+    let flags = program.symbols.get_ref(symbol).flags;
     if flags.intersects(SymbolFlags::CLASS) {
         // `get_class_like_declaration_of_symbol` reads `&Symbol` plus the
         // arena of the symbol's declarations.
         let declaration = {
-            let symbols = program.symbols.borrow();
+            let symbols = program.symbols.clone();
             let s = &symbols[symbol.index()];
             ast::get_class_like_declaration_of_symbol_with(s, |d| {
                 ast::is_class_like(Some(d), &program.arena_of(d))
@@ -4170,7 +4169,7 @@ fn is_deprecated(symbol: SymbolId, type_checker: &mut Checker, program: &Program
     let Some(aliased) = type_checker.skip_alias(symbol) else {
         return false;
     };
-    let declarations = program.symbols.borrow()[aliased.index()]
+    let declarations = program.symbols.get_ref(aliased)
         .declarations
         .clone();
     !declarations.is_empty()
@@ -4527,7 +4526,7 @@ pub(crate) fn get_constraint_of_type_argument_property(
                 nodes[reparsed].symbol()
             };
             if let Some(symbol) = symbol {
-                let name = program.symbols.borrow()[symbol.index()].name.clone();
+                let name = program.symbols.get_ref(symbol).name.clone();
                 return type_checker.get_type_of_property_of_contextual_type(t, &name);
             }
 
@@ -4758,7 +4757,7 @@ pub(crate) fn get_properties_for_object_expression(
     // function f<T>(x: T) {}
     // f({ abc/**/: "" }) // `abc` is a member of `T` but only because it declares itself
     let has_declaration_other_than_self = |member: SymbolId| -> bool {
-        let declarations = program.symbols.borrow()[member.index()]
+        let declarations = program.symbols.get_ref(member)
             .declarations
             .clone();
         if declarations.is_empty() {
@@ -4916,7 +4915,7 @@ fn filter_object_members_list(
     let filtered_symbols: Vec<SymbolId> = contextual_member_symbols
         .iter()
         .copied()
-        .filter(|m| !existing_member_names.has(program.symbols.borrow()[m.index()].name.as_ref()))
+        .filter(|m| !existing_member_names.has(program.symbols.get_ref(*m).name.as_ref()))
         .collect();
 
     (filtered_symbols, members_declared_by_spread_assignment)
@@ -4957,7 +4956,7 @@ fn set_member_declared_by_spread_assignment(
         _ => Vec::new(),
     };
     for property in properties {
-        members.add(program.symbols.borrow()[property.index()].name.to_string());
+        members.add(program.symbols.get_ref(property).name.to_string());
     }
 }
 
@@ -5237,14 +5236,14 @@ fn filter_class_members_list(
         .copied()
         .filter(|&property_symbol| {
             let (declarations, value_declaration) = {
-                let symbols = program.symbols.borrow();
+                let symbols = program.symbols.clone();
                 (
                     symbols[property_symbol.index()].declarations.clone(),
                     symbols[property_symbol.index()].value_declaration,
                 )
             };
             let name = {
-                let symbols = program.symbols.borrow();
+                let symbols = program.symbols.clone();
                 let symbol = &symbols[property_symbol.index()];
                 match value_declaration.or_else(|| declarations.first().copied()) {
                     Some(decl) => {
@@ -5416,7 +5415,7 @@ fn filter_jsx_attributes(
         symbols
             .iter()
             .copied()
-            .filter(|a| !existing_names.has(program.symbols.borrow()[a.index()].name.as_ref()))
+            .filter(|a| !existing_names.has(program.symbols.get_ref(*a).name.as_ref()))
             .collect(),
         members_declared_by_spread_assignment,
     )
@@ -6007,7 +6006,7 @@ fn is_recommended_completion_match(
     if local_symbol == recommended_completion {
         return true;
     }
-    let flags = program.symbols.borrow()[local_symbol.index()].flags;
+    let flags = program.symbols.get_ref(local_symbol).flags;
     flags.intersects(SymbolFlags::EXPORT_VALUE)
         && type_checker.get_export_symbol_of_symbol(local_symbol) == recommended_completion
 }
@@ -6163,7 +6162,7 @@ fn is_class_like_member_completion(
         return false;
     }
     let member_flags = SymbolFlags::CLASS_MEMBER & SymbolFlags::ENUM_MEMBER_EXCLUDES;
-    let symbol_flags = program.symbols.borrow()[symbol.index()].flags;
+    let symbol_flags = program.symbols.get_ref(symbol).flags;
     symbol_flags.intersects(member_flags)
         && (ast::is_class_like(Some(location), &nodes)
             || (nodes[location].parent.is_some()
@@ -6195,7 +6194,7 @@ fn symbol_appears_to_be_type_only(
     let aliased = type_checker.skip_alias(symbol).unwrap_or(symbol);
     let flags = combined_local_and_export_symbol_flags(&program.symbols, aliased);
     let declarations_empty_or_not_in_js = {
-        let symbols = program.symbols.borrow();
+        let symbols = program.symbols.clone();
         let declarations = &symbols[symbol.index()].declarations;
         declarations.is_empty()
             || !declarations.first().is_some_and(|d| {
@@ -6209,10 +6208,10 @@ fn symbol_appears_to_be_type_only(
 
 /// `symbol.CombinedLocalAndExportSymbolFlags()`.
 fn combined_local_and_export_symbol_flags(
-    symbols: &Rc<RefCell<Vec<tsc_ast::Symbol>>>,
+    symbols: &tsc_ast::SymbolArena,
     s: SymbolId,
 ) -> SymbolFlags {
-    let arena = symbols.borrow();
+    let arena = symbols.clone();
     let sym = &arena[s.index()];
     let mut flags = sym.flags;
     if let Some(export_symbol) = sym.export_symbol {
@@ -6231,7 +6230,7 @@ fn should_include_symbol(
     type_checker: &mut Checker,
 ) -> bool {
     let (mut all_flags, symbol_value_declaration, symbol_declarations, symbol_parent) = {
-        let symbols = program.symbols.borrow();
+        let symbols = program.symbols.clone();
         let s = &symbols[symbol.index()];
         (
             s.flags,
@@ -6376,7 +6375,7 @@ fn should_include_symbol(
     }
 
     all_flags |= combined_local_and_export_symbol_flags(&program.symbols, symbol_origin);
-    if program.symbols.borrow()[symbol.index()]
+    if program.symbols.get_ref(symbol)
         .flags
         .intersects(SymbolFlags::ALIAS)
     {
@@ -6432,7 +6431,7 @@ fn get_completion_entry_display_name_for_symbol(
         origin.unwrap().symbol_name().to_string()
     } else {
         let (name, value_declaration) = {
-            let symbols = program.symbols.borrow();
+            let symbols = program.symbols.clone();
             let s = &symbols[symbol.index()];
             (s.name.to_string(), s.value_declaration)
         };
@@ -6442,7 +6441,7 @@ fn get_completion_entry_display_name_for_symbol(
     if name.is_empty() ||
         // If the symbol is external module, don't show it in the completion list
         // (i.e declare module "http" { const x; } | // <= request completion here, "http" should not be there)
-        program.symbols.borrow()[symbol.index()]
+        program.symbols.get_ref(symbol)
             .flags
             .intersects(SymbolFlags::MODULE)
             && starts_with_quote(&name)
@@ -6461,7 +6460,7 @@ fn get_completion_entry_display_name_for_symbol(
     let (is_identifier_text, is_private_identifier_decl) = {
         (
             tsc_scanner::utilities::is_identifier_text(&name, variant),
-            program.symbols.borrow()[symbol.index()]
+            program.symbols.get_ref(symbol)
                 .value_declaration
                 .is_some_and(|vd| {
                     let nodes = program.arena_of(vd);
@@ -6472,7 +6471,7 @@ fn get_completion_entry_display_name_for_symbol(
     if is_identifier_text || is_private_identifier_decl {
         return (name, false);
     }
-    if program.symbols.borrow()[symbol.index()]
+    if program.symbols.get_ref(symbol)
         .flags
         .intersects(SymbolFlags::ALIAS)
     {
@@ -8409,7 +8408,7 @@ fn get_js_doc_param_annotation(
                         // !!! snippet p
                         emit_ctx.set_emit_flags(type_node, tsc_printer::EmitFlags::SINGLE_LINE);
                         let mut nodes = program.nodes_mut(file.file_index());
-                        let symbols = program.symbols.borrow();
+                        let symbols = program.symbols.clone();
                         let mut p = tsc_printer::Printer::new(
                             tsc_printer::PrinterOptions {
                                 remove_comments: true,
@@ -8857,10 +8856,10 @@ pub(crate) struct ObjectLiteralMethodSymbol {
 
 /// `isObjectLiteralMethodSymbol`.
 fn is_object_literal_method_symbol(
-    symbols: &RefCell<Vec<tsc_ast::Symbol>>,
+    symbols: &tsc_ast::SymbolArena,
     symbol: SymbolId,
 ) -> bool {
-    symbols.borrow()[symbol.index()]
+    symbols.get_ref(symbol)
         .flags
         .intersects(SymbolFlags::PROPERTY | SymbolFlags::METHOD)
 }
@@ -9042,7 +9041,7 @@ impl LanguageService<'_> {
                 });
                 data.symbols.retain(|&symbol| {
                     let value_declaration =
-                        program.symbols.borrow()[symbol.index()].value_declaration;
+                        program.symbols.get_ref(symbol).value_declaration;
                     let is_enum_member = value_declaration.is_some_and(|vd| {
                         let nodes = program.nodes(vd.file_index());
                         ast::is_enum_member(&nodes[vd])
@@ -9311,7 +9310,7 @@ impl LanguageService<'_> {
             let should_shadow_later_symbols = (origin.is_none()
                 || origin.is_some_and(|o| origin_is_type_only_alias(Some(o))))
                 && !{
-                    let symbols = program.symbols.borrow();
+                    let symbols = program.symbols.clone();
                     let s = &symbols[symbol.index()];
                     s.parent.is_none()
                         && !tsc_core::core::some(&s.declarations, |d| {

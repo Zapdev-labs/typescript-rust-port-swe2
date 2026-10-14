@@ -12,7 +12,7 @@
 //   - `enclosingClasses` is `RefCell<Vec<NodeId>>` (Go's `[]*ast.ClassDeclaration`
 //     stack — push/pop around the decorated-class transform).
 //   - `referenceResolver` is `Option<Rc<RefCell<dyn ReferenceResolver>>>` and
-//     `symbols` is `opts.symbols` (`&'a RefCell<Vec<Symbol>>`, the binder
+//     `symbols` is `opts.symbols` (`&'a SymbolArena`, the binder
 //     symbol arena) — the same convention as `estransforms/classfields.rs`.
 //     `GetReferencedValueDeclaration` on a Go nil interface would panic; the
 //     port `.expect()`s at the same call sites.
@@ -35,8 +35,7 @@ use std::rc::Rc;
 use tsc_ast::visitor::{NodeVisitor, VisitFn, VisitorCx};
 use tsc_ast::{
     self as ast, Kind, ModifierFlags, ModifierList, Node, NodeFlags, NodeId, NodeList,
-    SubtreeFacts, Symbol,
-};
+    SubtreeFacts, SymbolArena, };
 use tsc_binder::referenceresolver::ReferenceResolver;
 use tsc_core::compileroptions::EMPTY_COMPILER_OPTIONS;
 use tsc_core::core::some;
@@ -67,7 +66,7 @@ pub struct LegacyDecoratorsTransformer<'a> {
     reference_resolver: Option<Rc<RefCell<dyn ReferenceResolver + 'a>>>,
     /// `opts.Symbols` — the binder symbol arena `ReferenceResolver` methods
     /// index into (see `crate::chain::TransformOptions::symbols`).
-    symbols: Option<&'a RefCell<Vec<Symbol>>>,
+    symbols: Option<&'a SymbolArena>,
     /// `classAliases map[*ast.Node]*ast.Node` — a map that keeps track of
     /// aliases created for classes with decorators to avoid issues with the
     /// double-binding behavior of classes. `None` mirrors Go's nil map.

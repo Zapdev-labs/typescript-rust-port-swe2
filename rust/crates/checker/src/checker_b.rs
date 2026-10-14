@@ -418,7 +418,7 @@ impl Checker {
         let e = ast::skip_parentheses(expr, &nodes);
         if ast::is_identifier(&nodes[e]) {
             let symbol = self.get_resolved_symbol(e);
-            if self.symbol_arena.borrow()[symbol.index()]
+            if self.symbol_arena.get_ref(symbol)
                 .flags
                 .intersects(ast::SymbolFlags::VARIABLE)
             {
@@ -1316,7 +1316,7 @@ impl Checker {
             let symbol = self.types.get_ref(expression_type).symbol;
             if let Some(symbol) = symbol {
                 let value_decl = {
-                    let arena = self.symbol_arena.borrow();
+                    let arena = self.symbol_arena.clone();
                     let __program = self.program.clone().expect("program");
                     ast::get_class_like_declaration_of_symbol_with(
                         &arena[symbol.index()],
@@ -1418,7 +1418,7 @@ impl Checker {
                 let parent_nodes = __program.nodes((parent).file_index());
                 let symbol = parent_nodes[parent].symbol().expect("parent symbol");
                 drop(parent_nodes);
-                let arena = self.symbol_arena.borrow();
+                let arena = self.symbol_arena.clone();
                 ast::get_class_like_declaration_of_symbol_with(
                     &arena[symbol.index()],
                     |d| ast::is_class_like(Some(d), &__program.nodes(d.file_index())),
@@ -16076,7 +16076,7 @@ impl Checker {
     ) -> Option<SymbolId> {
         let mut symbol = self.resolve_external_module_symbol(module_symbol, true);
         let is_non_local = {
-            let arena = self.symbol_arena.borrow();
+            let arena = self.symbol_arena.clone();
             ast::is_non_local_alias(
                 symbol.map(|s| &arena[s.index()]),
                 ast::SymbolFlags::VALUE | ast::SymbolFlags::TYPE | ast::SymbolFlags::NAMESPACE,

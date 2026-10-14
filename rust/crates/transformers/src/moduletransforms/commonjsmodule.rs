@@ -24,7 +24,7 @@ use std::cell::{Cell, Ref, RefCell, RefMut};
 use std::rc::{Rc, Weak};
 
 use tsc_ast::visitor::{NodeVisitor, VisitorCx};
-use tsc_ast::{self as ast, Kind, Node, NodeId, SubtreeFacts, Symbol};
+use tsc_ast::{self as ast, Kind, Node, NodeId, SubtreeFacts, SymbolArena};
 use tsc_binder::referenceresolver::ReferenceResolver;
 use tsc_collections::Set;
 use tsc_core::options_generated::{CompilerOptions, ModuleKind, ScriptTarget};
@@ -80,7 +80,7 @@ struct CommonJsModuleTransformer<'a> {
     compiler_options: &'a CompilerOptions,
     resolver: Option<Rc<RefCell<dyn ReferenceResolver + 'a>>>,
     get_emit_module_format_of_file: Option<&'a GetEmitModuleFormatOfFile<'a>>,
-    symbols: Option<&'a RefCell<Vec<Symbol>>>,
+    symbols: Option<&'a SymbolArena>,
     module_kind: ModuleKind,
     language_version: ScriptTarget,
     /// `currentSourceFile`
@@ -216,15 +216,9 @@ impl<'a> CommonJsModuleTransformer<'a> {
             .borrow_mut()
     }
 
-    fn symbols(&self) -> RefMut<'_, Vec<Symbol>> {
-        self.symbols
-            .expect("opts.symbols (the binder symbol arena) is required alongside opts.Resolver")
-            .borrow_mut()
-    }
-
     fn with_symbols<R>(
         &self,
-        f: impl FnOnce(&std::cell::RefCell<Vec<Symbol>>) -> R,
+        f: impl FnOnce(&SymbolArena) -> R,
     ) -> R {
         f(self.symbols
             .expect("opts.symbols (the binder symbol arena) is required alongside opts.Resolver"))

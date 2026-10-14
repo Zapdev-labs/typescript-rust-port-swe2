@@ -257,13 +257,13 @@ impl Checker {
     /// `symbol.Flags` — read via the checker's symbol arena.
     #[inline]
     pub(crate) fn sym_flags(&self, s: SymbolId) -> ast::SymbolFlags {
-        self.symbol_arena.borrow()[s.index()].flags
+        self.symbol_arena.get_ref(s).flags
     }
 
     /// `symbol.Name` — clone of the symbol's name string.
     #[inline]
     pub(crate) fn sym_name(&self, s: SymbolId) -> String {
-        self.symbol_arena.borrow()[s.index()].name.to_string()
+        self.symbol_arena.get_ref(s).name.to_string()
     }
 
     /// `*InferenceContext` dereference (`self.inference_contexts[id]`).
@@ -296,7 +296,7 @@ impl Checker {
         symbol: SymbolId,
         location: NodeId,
     ) -> evaluator::Result {
-        let declaration = self.symbol_arena.borrow()[symbol.index()].value_declaration;
+        let declaration = self.symbol_arena.get_ref(symbol).value_declaration;
         if declaration.is_none() || declaration == Some(location) {
             let name = self.symbol_to_string(symbol);
             self.error(
@@ -1297,7 +1297,7 @@ impl Checker {
                             let immediate_module_symbol = self
                                 .resolve_external_module_symbol(Some(inner_module_symbol), true);
                             if let Some(immediate) = immediate_module_symbol {
-                                let decls = self.symbol_arena.borrow()[immediate.index()]
+                                let decls = self.symbol_arena.get_ref(immediate)
                                     .declarations
                                     .clone();
                                 if core::some(&decls, |&d| {
@@ -1306,7 +1306,7 @@ impl Checker {
                                     ast::get_assignment_declaration_kind(d, &d_nodes)
                                         == ast::JsDeclarationKind::ModuleExports
                                 }) {
-                                    let parent = self.symbol_arena.borrow()[immediate.index()]
+                                    let parent = self.symbol_arena.get_ref(immediate)
                                         .parent
                                         .unwrap_or(SymbolId::NONE);
                                     let exports = self.get_exports_of_symbol(parent);
@@ -1565,7 +1565,7 @@ impl Checker {
                     );
                     self.value_symbol_links.get(property).resolved_type = Some(type_parameter);
                     // `valueSymbolLinks.get(property).tupleLabelDeclaration = elementInfos[i].labeledDeclaration`
-                    let name = self.symbol_arena.borrow()[property.index()].name.clone();
+                    let name = self.symbol_arena.get_ref(property).name.clone();
                     members.set(name.into(), property);
                 }
             }
@@ -1590,7 +1590,7 @@ impl Checker {
             self.value_symbol_links.get(length_symbol).resolved_type =
                 Some(self.get_union_type(&literal_types));
         }
-        let length_name = self.symbol_arena.borrow()[length_symbol.index()]
+        let length_name = self.symbol_arena.get_ref(length_symbol)
             .name
             .clone();
         members.set(length_name.into(), length_symbol);
@@ -2680,7 +2680,7 @@ impl Checker {
             }
             if named_types_count + reduced_types.len() == type_set.len() {
                 for &t in &named_unions {
-                    insert_type(&self.types, self.symbol_arena.as_ref(), &self.type_mappers, self.program.as_ref(), &mut reduced_types, t);
+                    insert_type(&self.types, &self.symbol_arena, &self.type_mappers, self.program.as_ref(), &mut reduced_types, t);
                 }
                 origin = Some(self.new_union_type(ObjectFlags::NONE, reduced_types));
             }
@@ -2828,7 +2828,7 @@ impl Checker {
         if types.len() >= 2 {
             // Sort and deduplicate types
             let types_arena = &self.types;
-            types.sort_by(|&a, &b| crate::utilities::compare_types(types_arena, self.symbol_arena.as_ref(), &self.type_mappers, self.program.as_ref(), a, b).cmp(&0));
+            types.sort_by(|&a, &b| crate::utilities::compare_types(types_arena, &self.symbol_arena, &self.type_mappers, self.program.as_ref(), a, b).cmp(&0));
             let mut unique = 1;
             for i in 1..types.len() {
                 let t = types[i];
@@ -2899,7 +2899,7 @@ impl Checker {
             // && containsType(types, t.AsLiteralType().regularType)`).
             let fresh_redundant = is_fresh && {
                 let regular_type = self.types.clone().get(t).as_literal_type().regular_type;
-                regular_type.is_some_and(|r| contains_type(&self.types, self.symbol_arena.as_ref(), &self.type_mappers, self.program.as_ref(), &types, r))
+                regular_type.is_some_and(|r| contains_type(&self.types, &self.symbol_arena, &self.type_mappers, self.program.as_ref(), &types, r))
             };
             let remove = flags.intersects(
                 TypeFlags::STRING_LITERAL | TypeFlags::TEMPLATE_LITERAL | TypeFlags::STRING_MAPPING,
@@ -3036,7 +3036,7 @@ impl Checker {
                         0
                     };
                     if it[index] == type_variable {
-                        insert_type(&self.types, self.symbol_arena.as_ref(), &self.type_mappers, self.program.as_ref(), &mut primitives, it[1 - index]);
+                        insert_type(&self.types, &self.symbol_arena, &self.type_mappers, self.program.as_ref(), &mut primitives, it[1 - index]);
                     }
                 }
             }
@@ -3045,7 +3045,7 @@ impl Checker {
             let constraint = self.get_base_constraint_of_type(type_variable);
             if let Some(constraint) = constraint {
                 if every_type(self, constraint, |c: &mut Checker, t| {
-                    contains_type(&c.types, c.symbol_arena.as_ref(), &c.type_mappers, c.program.as_ref(), &primitives, t)
+                    contains_type(&c.types, &c.symbol_arena, &c.type_mappers, c.program.as_ref(), &primitives, t)
                 }) {
                     let mut i = types.len();
                     while i > 0 {
@@ -3073,13 +3073,13 @@ impl Checker {
                                 0
                             };
                             if it[index] == type_variable
-                                && contains_type(&self.types, self.symbol_arena.as_ref(), &self.type_mappers, self.program.as_ref(), &primitives, it[1 - index])
+                                && contains_type(&self.types, &self.symbol_arena, &self.type_mappers, self.program.as_ref(), &primitives, it[1 - index])
                             {
                                 types.remove(i);
                             }
                         }
                     }
-                    insert_type(&self.types, self.symbol_arena.as_ref(), &self.type_mappers, self.program.as_ref(), &mut types, type_variable);
+                    insert_type(&self.types, &self.symbol_arena, &self.type_mappers, self.program.as_ref(), &mut types, type_variable);
                 }
             }
         }
@@ -3719,7 +3719,7 @@ impl Checker {
         for &u in &union_types {
             let u_types = self.types.get_ref(u).types_rc();
             for t in (u_types).iter().copied() {
-                if insert_type(&self.types, self.symbol_arena.as_ref(), &self.type_mappers, self.program.as_ref(), &mut checked, t) {
+                if insert_type(&self.types, &self.symbol_arena, &self.type_mappers, self.program.as_ref(), &mut checked, t) {
                     if self.each_union_contains(&union_types, t) {
                         // undefinedType/missingType are always sorted first so we leverage that here
                         if t == self.undefined_type
@@ -3735,7 +3735,7 @@ impl Checker {
                             result[0] = self.missing_type;
                             continue;
                         }
-                        insert_type(&self.types, self.symbol_arena.as_ref(), &self.type_mappers, self.program.as_ref(), &mut result, t);
+                        insert_type(&self.types, &self.symbol_arena, &self.type_mappers, self.program.as_ref(), &mut result, t);
                     }
                 }
             }
@@ -3772,14 +3772,14 @@ impl Checker {
         match_symbol: bool,
     ) -> bool {
         let types = self.types.get_ref(union).types_rc();
-        if contains_type(&self.types, self.symbol_arena.as_ref(), &self.type_mappers, self.program.as_ref(), &types, t) {
+        if contains_type(&self.types, &self.symbol_arena, &self.type_mappers, self.program.as_ref(), &types, t) {
             return true;
         }
         if t == self.missing_type {
-            return contains_type(&self.types, self.symbol_arena.as_ref(), &self.type_mappers, self.program.as_ref(), &types, self.undefined_type);
+            return contains_type(&self.types, &self.symbol_arena, &self.type_mappers, self.program.as_ref(), &types, self.undefined_type);
         }
         if t == self.undefined_type {
-            return contains_type(&self.types, self.symbol_arena.as_ref(), &self.type_mappers, self.program.as_ref(), &types, self.missing_type);
+            return contains_type(&self.types, &self.symbol_arena, &self.type_mappers, self.program.as_ref(), &types, self.missing_type);
         }
         let t_flags = self.types.get_ref(t).flags;
         let primitive: Option<TypeId> = if t_flags.intersects(TypeFlags::STRING_LITERAL) {
@@ -3793,7 +3793,7 @@ impl Checker {
         } else {
             None
         };
-        primitive.is_some_and(|p| contains_type(&self.types, self.symbol_arena.as_ref(), &self.type_mappers, self.program.as_ref(), &types, p))
+        primitive.is_some_and(|p| contains_type(&self.types, &self.symbol_arena, &self.type_mappers, self.program.as_ref(), &types, p))
     }
 
     /// `(c *Checker) getCrossProductIntersections` (checker.go:26964).
@@ -4107,7 +4107,7 @@ impl Checker {
                 .intersects(TypeFlags::UNION)
                 && contains_type(
                     &self.types,
-                    self.symbol_arena.as_ref(),
+                    &self.symbol_arena,
                     &self.type_mappers,
                     self.program.as_ref(),
                     self.types.get_ref(origin).types(),
@@ -4120,7 +4120,7 @@ impl Checker {
         let types = self.types.get_ref(t).types_rc();
         let arena = &self.types;
         if let Ok(i) = types
-            .binary_search_by(|&u| crate::utilities::compare_types(arena, self.symbol_arena.as_ref(), &self.type_mappers, self.program.as_ref(), u, target_type).cmp(&0))
+            .binary_search_by(|&u| crate::utilities::compare_types(arena, &self.symbol_arena, &self.type_mappers, self.program.as_ref(), u, target_type).cmp(&0))
         {
             if types.len() == 2 {
                 return types[1 - i];
@@ -4252,7 +4252,7 @@ pub(crate) fn every_contained_type(
 /// search by `CompareTypes` — needs the type and symbol arenas.
 pub(crate) fn contains_type(
     arena: &TypeArena,
-    symbols: &std::cell::RefCell<Vec<ast::Symbol>>,
+    symbols: &ast::SymbolArena,
     mappers: &TypeMapperArena,
     program: Option<&Rc<dyn crate::checker_types::Program>>,
     types: &[TypeId],
@@ -4269,7 +4269,7 @@ pub(crate) fn contains_type(
 /// element was inserted (Go returns `(slice, bool)`; the port mutates).
 pub(crate) fn insert_type(
     arena: &TypeArena,
-    symbols: &std::cell::RefCell<Vec<ast::Symbol>>,
+    symbols: &ast::SymbolArena,
     mappers: &TypeMapperArena,
     program: Option<&Rc<dyn crate::checker_types::Program>>,
     types: &mut Vec<TypeId>,
@@ -4449,7 +4449,7 @@ impl Checker {
                     t = Some(self.get_string_literal_type("default"));
                 } else {
                     let value_declaration =
-                        self.symbol_arena.borrow()[prop.index()].value_declaration;
+                        self.symbol_arena.get_ref(prop).value_declaration;
                     if let Some(vd) = value_declaration {
                         let __program = self.program.clone().expect("program");
                         let nodes = __program.nodes((vd).file_index());
@@ -4459,7 +4459,7 @@ impl Checker {
                     }
                     if t.is_none() && !crate::utilities::is_known_symbol(&mut *self, prop) {
                         let sym_name = {
-                            let arena = self.symbol_arena.borrow();
+                            let arena = self.symbol_arena.clone();
                             let nodes = program_nodes_for_symbol(self, prop);
                             ast::symbol::symbol_name(&arena[prop.index()], &nodes).into_owned()
                         };
@@ -5625,7 +5625,7 @@ __h5064_43, suggestion],
             &source_value,
             candidates_with_names,
             |t| t.1.as_str(),
-            |a, b| crate::utilities::compare_types(&self.types, self.symbol_arena.as_ref(), &self.type_mappers, self.program.as_ref(), a.0, b.0),
+            |a, b| crate::utilities::compare_types(&self.types, &self.symbol_arena, &self.type_mappers, self.program.as_ref(), a.0, b.0),
             1000,
         )
         .map(|(t, _)| t)
@@ -11913,8 +11913,8 @@ impl Checker {
                             None
                         };
                         if let Some(union_types) = union_types
-                            && contains_type(&self.types, self.symbol_arena.as_ref(), &self.type_mappers, self.program.as_ref(), &union_types, self.regular_false_type)
-                            && contains_type(&self.types, self.symbol_arena.as_ref(), &self.type_mappers, self.program.as_ref(), &union_types, self.regular_true_type)
+                            && contains_type(&self.types, &self.symbol_arena, &self.type_mappers, self.program.as_ref(), &union_types, self.regular_false_type)
+                            && contains_type(&self.types, &self.symbol_arena, &self.type_mappers, self.program.as_ref(), &union_types, self.regular_true_type)
                         {
                             let regular_false = self.regular_false_type;
                             let regular_true = self.regular_true_type;

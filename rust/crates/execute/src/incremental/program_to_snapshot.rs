@@ -453,7 +453,7 @@ impl ToProgramSnapshot<'_> {
 fn file_affects_global_scope(program: &CompilerProgram, file: NodeId) -> bool {
     {
         let mut nodes = program.nodes_mut(file.file_index());
-        let mut symbols = program.symbols.borrow_mut();
+        let mut symbols = program.symbols.clone();
         tsc_binder::binder::bind_source_file(&mut nodes, file, &mut symbols);
     }
     let nodes = program.arena_of(file);
@@ -496,7 +496,7 @@ fn add_referenced_files_from_symbol(
     let Some(symbol) = symbol else {
         return;
     };
-    let declarations = program.symbols.borrow()[symbol.index()]
+    let declarations = program.symbols.get_ref(symbol)
         .declarations
         .clone();
     for declaration in declarations {

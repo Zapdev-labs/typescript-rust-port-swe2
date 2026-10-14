@@ -1,6 +1,6 @@
 // Ported from tsc/internal/ast/symbol.go @ ec47d33c23e464a17cdf2475632cba629bee8763
 //
-// Symbol shell. Symbols are stored in a `Vec<Symbol>` owned by the binder;
+// Symbol shell. Symbols are stored in a `SymbolArena` shared program-wide;
 // references use `SymbolId`. `SymbolTable` is an insertion-ordered map
 // (`tsc_collections::OrderedMap`), preserving the deterministic iteration
 // order the Go port relies on via `collections.OrderedMap`.
@@ -9,6 +9,9 @@ use crate::checkflags::CheckFlags;
 use crate::ids::{NodeId, SymbolId};
 use crate::symbolflags::SymbolFlags;
 use crate::{ModifierFlags, is_private_identifier_class_element_declaration};
+use std::cell::UnsafeCell;
+use std::ops::{Index, IndexMut};
+use std::rc::Rc;
 use std::sync::Arc;
 
 use tsc_collections::OrderedMap;
@@ -38,6 +41,256 @@ impl Symbol {
         self.flags.intersects(SymbolFlags::MODULE) && is_ambient_module_symbol_name(&self.name)
     }
 }
+
+// SymbolArena — the program-global `Vec<Symbol>` store of SPEC §5.2.
+
+/// `SymbolArena` is the program-global arena of `Symbol` elements; `SymbolId`
+/// indexes it. Same shape as the checker's `TypeArena`: `Rc<UnsafeCell<..>>`
+/// because the pipeline is single-threaded, and `Box` gives each `Symbol` a
+/// stable heap address so `SymbolPtr` handles stay valid across pushes (only
+/// the `Vec` buffer moves). Go semantics: every `*ast.Symbol` lives on a
+/// shared heap and mutation is in place — readers see writes immediately.
+#[derive(Clone, Default)]
+pub struct SymbolArena {
+    /// `Box` gives each `Symbol` a stable heap address; handles stay valid
+    /// across pushes (only the `Vec` buffer moves). Go shares `*Symbol`
+    /// freely between binder, checker, and emit.
+    symbols: Rc<UnsafeCell<Vec<Box<Symbol>>>>,
+}
+
+/// Shared handle to an arena-resident `Symbol` — Go's `*Symbol`. `Copy`, no
+/// refcounting; validity is the arena's lifetime.
+#[derive(Clone, Copy)]
+pub struct SymbolPtr(*const Symbol);
+
+#[allow(unsafe_code)] // stable-address arena deref — see `SymbolArena`
+impl std::ops::Deref for SymbolPtr {
+    type Target = Symbol;
+    #[inline]
+    fn deref(&self) -> &Symbol {
+        unsafe { &*self.0 }
+    }
+}
+
+impl SymbolPtr {
+    /// Go pointer-identity comparison (replaces `Rc::ptr_eq`).
+    pub fn ptr_eq(a: SymbolPtr, b: SymbolPtr) -> bool {
+        a.0 == b.0
+    }
+}
+
+/// Mutable handle — Go's `*Symbol` write shape. Interior mutation while
+/// other `SymbolPtr`s exist is legal (Go aliasing), matching binder/checker
+/// code that writes flags/parent/members on shared symbols.
+#[derive(Clone, Copy)]
+pub struct SymbolMutPtr(*mut Symbol);
+
+#[allow(unsafe_code)] // stable-address arena deref — see `SymbolArena`
+impl std::ops::Deref for SymbolMutPtr {
+    type Target = Symbol;
+    #[inline]
+    fn deref(&self) -> &Symbol {
+        unsafe { &*self.0 }
+    }
+}
+
+#[allow(unsafe_code)] // stable-address arena deref — see `SymbolArena`
+impl std::ops::DerefMut for SymbolMutPtr {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Symbol {
+        unsafe { &mut *self.0 }
+    }
+}
+
+#[allow(unsafe_code)] // arena internals reach through `UnsafeCell`
+impl SymbolArena {
+    /// Allocate a symbol in the arena, returning its `SymbolId`.
+    pub fn alloc(&self, s: Symbol) -> SymbolId {
+        // SAFETY: single-threaded pipeline; the Vec may grow (moving the
+        // buffer) but each Box<Symbol> keeps a stable heap address, so
+        // outstanding SymbolPtr/SymbolMutPtr/`&Symbol` handles stay valid.
+        let symbols = unsafe { &mut *self.symbols.get() };
+        let id = SymbolId(symbols.len() as u32);
+        symbols.push(Box::new(s));
+        id
+    }
+
+    /// Shared-pointer access to a single symbol — the Go `s.field` read
+    /// shape. A single pointer deref: no borrow flag, no refcount.
+    #[inline]
+    pub fn get(&self, id: SymbolId) -> SymbolPtr {
+        // SAFETY: `id` was handed out by `alloc`, so `id.index()` is in
+        // bounds (elements are only ever pushed). The Box target address is
+        // stable across Vec growth.
+        unsafe {
+            debug_assert!(id.index() < (*self.symbols.get()).len());
+            SymbolPtr(&**(*self.symbols.get()).as_ptr().add(id.index()))
+        }
+    }
+
+    /// `&Symbol` access — same deref as `get` without wrapping the pointer.
+    /// The reference stays valid across `alloc` (stable `Box` addresses);
+    /// it reads through any `get_mut` writes (Go semantics).
+    #[inline]
+    pub fn get_ref(&self, id: SymbolId) -> &Symbol {
+        // SAFETY: same as `get`.
+        unsafe {
+            debug_assert!(id.index() < (*self.symbols.get()).len());
+            &**(*self.symbols.get()).as_ptr().add(id.index())
+        }
+    }
+
+    /// Write access to a single symbol — the Go `s.field = v` write shape.
+    /// Mutates in place; existing `SymbolPtr`/`&Symbol` handles observe the
+    /// write (Go aliasing).
+    #[inline]
+    pub fn get_mut(&self, id: SymbolId) -> SymbolMutPtr {
+        // SAFETY: same as `get`. Interior mutation of a shared element is
+        // the port's Go-aliasing model — callers must not rely on stale
+        // field snapshots across a `get_mut`, same as in Go.
+        unsafe {
+            debug_assert!(id.index() < (*self.symbols.get()).len());
+            SymbolMutPtr(&mut **(*self.symbols.get()).as_mut_ptr().add(id.index()))
+        }
+    }
+
+    /// `len(symbols)`.
+    pub fn len(&self) -> usize {
+        unsafe { (*self.symbols.get()).len() }
+    }
+
+    /// Stable identity token for the arena's backing store — the port's
+    /// answer to `(*Vec<Symbol>).as_ptr()` keys that distinguish which file's
+    /// arena a `SymbolId` belongs to.
+    pub fn arena_id(&self) -> usize {
+        Rc::as_ptr(&self.symbols) as usize
+    }
+
+    /// `len(symbols) == 0`.
+    pub fn is_empty(&self) -> bool {
+        unsafe { (*self.symbols.get()).is_empty() }
+    }
+
+    /// Iteration over `&Symbol` handles. Index-based (not slice-based) so
+    /// `alloc` during iteration can't invalidate the iterator; the end index
+    /// is a snapshot, matching the old `Ref`-guard iteration scope.
+    pub fn iter(&self) -> SymbolArenaIter<'_> {
+        SymbolArenaIter {
+            arena: self,
+            next: 0,
+            end: self.len(),
+        }
+    }
+
+    /// Field-by-field copy into a plain `Vec<Symbol>` (`Symbol` is not
+    /// `Clone`). Used by emit paths that need a detached snapshot of the
+    /// arena to hand to the binder resolver.
+    pub fn to_vec(&self) -> Vec<Symbol> {
+        self.iter()
+            .map(|s| Symbol {
+                flags: s.flags,
+                check_flags: s.check_flags,
+                name: s.name.clone(),
+                declarations: s.declarations.clone(),
+                value_declaration: s.value_declaration,
+                members: s.members.clone(),
+                exports: s.exports.clone(),
+                parent: s.parent,
+                export_symbol: s.export_symbol,
+            })
+            .collect()
+    }
+
+    /// Build an arena from an owned `Vec<Symbol>` (detached snapshots, test
+    /// scaffolding).
+    pub fn from_vec(v: Vec<Symbol>) -> SymbolArena {
+        SymbolArena {
+            symbols: Rc::new(UnsafeCell::new(v.into_iter().map(Box::new).collect())),
+        }
+    }
+
+    /// Detached copy of the whole arena — mutations don't reach the shared
+    /// store (the emit resolver's unhooked-resolver snapshot path).
+    pub fn snapshot(&self) -> SymbolArena {
+        SymbolArena::from_vec(self.to_vec())
+    }
+}
+
+#[allow(unsafe_code)] // `symbols[i]` reads reach through `UnsafeCell`
+impl Index<usize> for SymbolArena {
+    type Output = Symbol;
+    #[inline]
+    fn index(&self, i: usize) -> &Symbol {
+        // SAFETY: callers index with ids handed out by `alloc` (only pushes
+        // grow the Vec); Box target addresses are stable across growth.
+        unsafe {
+            debug_assert!(i < (*self.symbols.get()).len());
+            &**(*self.symbols.get()).as_ptr().add(i)
+        }
+    }
+}
+
+impl Index<SymbolId> for SymbolArena {
+    type Output = Symbol;
+    #[inline]
+    fn index(&self, id: SymbolId) -> &Symbol {
+        &self[id.index()]
+    }
+}
+
+#[allow(unsafe_code)] // `symbols[i]` writes reach through `UnsafeCell`
+impl IndexMut<usize> for SymbolArena {
+    #[inline]
+    fn index_mut(&mut self, i: usize) -> &mut Symbol {
+        // SAFETY: same as `Index`. Interior mutation of a shared element is
+        // the port's Go-aliasing model.
+        unsafe {
+            debug_assert!(i < (*self.symbols.get()).len());
+            &mut **(*self.symbols.get()).as_mut_ptr().add(i)
+        }
+    }
+}
+
+impl IndexMut<SymbolId> for SymbolArena {
+    #[inline]
+    fn index_mut(&mut self, id: SymbolId) -> &mut Symbol {
+        &mut self[id.index()]
+    }
+}
+
+/// Index-based `&Symbol` iterator for `SymbolArena::iter` — snapshots `end`
+/// at creation; `alloc` mid-iteration can't invalidate the yielded refs
+/// (Box targets are stable).
+pub struct SymbolArenaIter<'a> {
+    arena: &'a SymbolArena,
+    next: usize,
+    end: usize,
+}
+
+impl<'a> Iterator for SymbolArenaIter<'a> {
+    type Item = &'a Symbol;
+    #[inline]
+    fn next(&mut self) -> Option<&'a Symbol> {
+        if self.next >= self.end {
+            return None;
+        }
+        let i = self.next;
+        self.next += 1;
+        // SAFETY: `i < end <= len()` at iterator creation; elements are only
+        // ever pushed, so `i` stays in bounds and the Box target address is
+        // stable across Vec growth.
+        #[allow(unsafe_code)]
+        unsafe {
+            Some(&**(*self.arena.symbols.get()).as_ptr().add(i))
+        }
+    }
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (self.end - self.next, Some(self.end - self.next))
+    }
+}
+
+impl ExactSizeIterator for SymbolArenaIter<'_> {}
 
 /// Ported from `(s *Symbol).IsStatic`. Needs the node arena to inspect the
 /// value declaration's modifier flags.

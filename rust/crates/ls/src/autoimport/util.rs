@@ -15,7 +15,6 @@ use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
 use tsc_ast::Kind;
-use tsc_ast::ast::Node;
 use tsc_ast::symbol::Symbol;
 use tsc_ast::{NodeId, SymbolId};
 use tsc_checker::checker_core::Checker;
@@ -83,7 +82,7 @@ pub(crate) fn get_source_file_of_module(
 ) -> Option<NodeId> {
     let declaration = {
         let c = ch.borrow();
-        let sa = c.symbol_arena.borrow();
+        let sa = c.symbol_arena.clone();
         let sym = &sa[module.index()];
         match sym.value_declaration {
             Some(d) => Some(d),
@@ -101,7 +100,7 @@ pub(crate) fn try_get_module_id_and_file_name_of_module_symbol(
 ) -> Option<(ModuleID, RootedFilePath)> {
     let decl = {
         let c = ch.borrow();
-        let sa = c.symbol_arena.borrow();
+        let sa = c.symbol_arena.clone();
         let sym = &sa[symbol.index()];
         if !sym.is_external_module() {
             return None;
@@ -247,7 +246,7 @@ pub(crate) fn get_default_like_export_name_from_declaration(
         // "export { ~ as default }"
         if tsc_ast::is_export_specifier(&nodes[d]) {
             let is_alias = nodes[d].symbol().is_some_and(|s| {
-                c.symbol_arena.borrow()[s.index()].flags == tsc_ast::symbolflags::SymbolFlags::ALIAS
+                c.symbol_arena.get_ref(s).flags == tsc_ast::symbolflags::SymbolFlags::ALIAS
             });
             if is_alias && nodes[d].property_name().is_some() {
                 let property_name = nodes[d].property_name().unwrap();
@@ -265,11 +264,11 @@ pub(crate) fn get_default_like_export_name_from_declaration(
         }
         if let Some(parent) = symbol.parent {
             let parent_sym_is_external = {
-                let sa = c.symbol_arena.borrow();
+                let sa = c.symbol_arena.clone();
                 sa[parent.index()].is_external_module()
             };
             if !parent_sym_is_external {
-                return c.symbol_arena.borrow()[parent.index()].name.to_string();
+                return c.symbol_arena.get_ref(parent).name.to_string();
             }
         }
     }

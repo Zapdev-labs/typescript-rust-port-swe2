@@ -9,7 +9,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::Arc;
 
-use tsc_ast::{self as ast, Node, NodeId, Symbol};
+use tsc_ast::{self as ast, Node, NodeId, SymbolArena};
 use tsc_binder::referenceresolver::ReferenceResolver;
 use tsc_collections::{MultiMap, OrderedSet, Set};
 use tsc_core::options_generated::{CompilerOptions, ModuleKind};
@@ -46,7 +46,7 @@ struct ExternalModuleInfoCollector<'a, 'b> {
     compiler_options: &'a CompilerOptions,
     emit_context: &'b Rc<RefCell<EmitContext>>,
     resolver: Option<&'b Rc<RefCell<dyn ReferenceResolver + 'a>>>,
-    symbols: Option<&'b RefCell<Vec<Symbol>>>,
+    symbols: Option<&'b SymbolArena>,
     unique_exports: Set<String>,
     has_export_default: bool,
     output: ExternalModuleInfo,
@@ -62,7 +62,7 @@ pub fn collect_external_module_info<'a>(
     compiler_options: &'a CompilerOptions,
     emit_context: &Rc<RefCell<EmitContext>>,
     resolver: Option<&Rc<RefCell<dyn ReferenceResolver + 'a>>>,
-    symbols: Option<&RefCell<Vec<Symbol>>>,
+    symbols: Option<&SymbolArena>,
     nodes: &mut Vec<Node>,
 ) -> ExternalModuleInfo {
     let mut c = ExternalModuleInfoCollector {
@@ -86,15 +86,9 @@ impl<'a, 'b> ExternalModuleInfoCollector<'a, 'b> {
             .borrow_mut()
     }
 
-    fn symbols(&self) -> std::cell::RefMut<'_, Vec<Symbol>> {
-        self.symbols
-            .expect("opts.symbols (the binder symbol arena) is required alongside opts.Resolver")
-            .borrow_mut()
-    }
-
     fn with_symbols<R>(
         &self,
-        f: impl FnOnce(&std::cell::RefCell<Vec<Symbol>>) -> R,
+        f: impl FnOnce(&SymbolArena) -> R,
     ) -> R {
         f(self.symbols
             .expect("opts.symbols (the binder symbol arena) is required alongside opts.Resolver"))

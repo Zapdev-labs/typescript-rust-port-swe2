@@ -9,7 +9,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use rustc_hash::FxHashMap;
-use tsc_ast::{ArenaCell, Kind, Node, NodeId, SymbolId, self as ast};
+use tsc_ast::{ArenaCell, Kind, NodeId, SymbolId, self as ast};
 use tsc_checker::checker_core::Checker;
 use tsc_compiler::program::Program;
 use tsc_core::context::Context;
@@ -712,7 +712,7 @@ fn get_name_for_exported_symbol(
     // helpers re-borrow it.
     let sym_shim = {
         let c = ch.borrow();
-        let sa = c.symbol_arena.borrow();
+        let sa = c.symbol_arena.clone();
         let sym = &sa[symbol.index()];
         ast::symbol::Symbol {
             name: sym.name.clone(),
@@ -738,7 +738,7 @@ fn get_name_for_exported_symbol(
             .expect("Expected exported symbol to have module symbol as parent");
         let parent_shim = {
             let c = ch.borrow();
-            let sa = c.symbol_arena.borrow();
+            let sa = c.symbol_arena.clone();
             let p = &sa[parent.index()];
             ast::symbol::Symbol {
                 name: p.name.clone(),

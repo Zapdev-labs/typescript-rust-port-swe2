@@ -11,7 +11,7 @@
 // it, so it returns an empty slice; callers that need files use
 // `emit_source_files`.
 
-use std::cell::{Ref, RefCell};
+use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::Arc;
 
@@ -385,7 +385,7 @@ pub fn get_declaration_diagnostics(
         emit_resolver,
         PrinterEmitHost::options(&**host),
         RootedFilePath::default(),
-        Some(&*symbol_arena),
+        Some(&symbol_arena),
     );
     let mut nodes_mut = host.emit_nodes_mut(file.file_index());
     transform.transform_source_file(&mut *nodes_mut, file);

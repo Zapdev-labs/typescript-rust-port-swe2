@@ -4,7 +4,7 @@
 //
 // - `*ast.Symbol`/`*ast.Node`/`*checker.Signature`/`*checker.Type` are
 //   `SymbolId`/`NodeId`/`SignatureId`/`TypeId`. Symbol fields are read via
-//   `c.symbol_arena.borrow()` (the checker's shared symbol arena); node
+//   `c.symbol_arena.get_ref(id)` (the checker's shared symbol arena); node
 //   fields via `program.nodes(id.file_index())` snapshots — a node's owning
 //   arena may differ from the hover file's arena, so `arena_of` is used at
 //   every dereference.
@@ -214,7 +214,7 @@ impl<'h> LanguageService<'h> {
                     // shows the icon for whatever `x` actually is (const, function, ...) rather than a
                     // generic alias icon. GetSymbolModifiers already accounts for the alias target itself.
                     let mut icon_symbol = symbol;
-                    if checker.borrow().symbol_arena.borrow()[symbol.index()]
+                    if checker.borrow().symbol_arena.get_ref(symbol)
                         .flags
                         .intersects(SymbolFlags::ALIAS)
                     {
@@ -525,7 +525,7 @@ fn documentation_from_alias(
     let Some(symbol) = symbol else {
         return String::new();
     };
-    if !c.borrow().symbol_arena.borrow()[symbol.index()]
+    if !c.borrow().symbol_arena.get_ref(symbol)
         .flags
         .intersects(SymbolFlags::ALIAS)
     {
@@ -542,7 +542,7 @@ fn documentation_from_alias(
 
     let mut candidates = vec![aliased_symbol];
     if let Some(export_symbol) =
-        c.borrow().symbol_arena.borrow()[aliased_symbol.index()].export_symbol
+        c.borrow().symbol_arena.get_ref(aliased_symbol).export_symbol
     {
         candidates.push(export_symbol);
     }
@@ -550,7 +550,7 @@ fn documentation_from_alias(
     for candidate in candidates {
         let (value_declaration, first_declaration) = {
             let arena = c.borrow().symbol_arena.clone();
-            let arena = arena.borrow();
+            let arena = arena.clone();
             let sym = &arena[candidate.index()];
             (sym.value_declaration, sym.declarations.first().copied())
         };
@@ -598,13 +598,13 @@ fn documentation_from_root_symbols(
     for root_symbol in root_symbols {
         let mut declarations = {
             let arena = c.borrow().symbol_arena.clone();
-            let arena = arena.borrow();
+            let arena = arena.clone();
             arena[root_symbol.index()].declarations.clone()
         };
         if declarations.is_empty() {
             if let Some(value_declaration) = {
                 let arena = c.borrow().symbol_arena.clone();
-                arena.borrow()[root_symbol.index()].value_declaration
+                arena.get_ref(root_symbol).value_declaration
             } {
                 declarations = vec![value_declaration];
             }
@@ -912,7 +912,7 @@ fn print_node_classified(
     id_to_symbol: Option<&FxHashMap<NodeId, SymbolId>>,
 ) {
     let symbol_arena = c.borrow().symbol_arena.clone();
-    let symbols = symbol_arena.borrow();
+    let symbols = symbol_arena.clone();
     let mut p = Printer::new(
         PrinterOptions {
             new_line: NewLineKind::LF,
@@ -933,19 +933,19 @@ impl<'a> QuickInfoState<'a> {
     }
 
     fn sym_flags(&self, symbol: SymbolId) -> SymbolFlags {
-        self.c.borrow().symbol_arena.borrow()[symbol.index()].flags
+        self.c.borrow().symbol_arena.get_ref(symbol).flags
     }
 
     fn sym_check_flags(&self, symbol: SymbolId) -> CheckFlags {
-        self.c.borrow().symbol_arena.borrow()[symbol.index()].check_flags
+        self.c.borrow().symbol_arena.get_ref(symbol).check_flags
     }
 
     fn sym_value_declaration(&self, symbol: SymbolId) -> Option<NodeId> {
-        self.c.borrow().symbol_arena.borrow()[symbol.index()].value_declaration
+        self.c.borrow().symbol_arena.get_ref(symbol).value_declaration
     }
 
     fn sym_declarations(&self, symbol: SymbolId) -> Vec<NodeId> {
-        self.c.borrow().symbol_arena.borrow()[symbol.index()]
+        self.c.borrow().symbol_arena.get_ref(symbol)
             .declarations
             .clone()
     }
@@ -1437,7 +1437,7 @@ impl<'a> QuickInfoState<'a> {
                 }
                 let (name, parent_flags) = {
                     let arena = self.c.borrow().symbol_arena.clone();
-                    let arena = arena.borrow();
+                    let arena = arena.clone();
                     let sym = &arena[symbol.index()];
                     (
                         sym.name.clone(),
@@ -1485,7 +1485,7 @@ impl<'a> QuickInfoState<'a> {
                     .get(t)
                     .symbol()
                     .is_some_and(|s| {
-                        self.c.borrow().symbol_arena.borrow()[s.index()]
+                        self.c.borrow().symbol_arena.get_ref(s)
                             .flags
                             .intersects(SymbolFlags::TYPE_PARAMETER)
                     });
@@ -1658,7 +1658,7 @@ impl<'a> QuickInfoState<'a> {
                 self.write_type_classified(cons, self.container, TYPE_FORMAT_FLAGS);
             }
             // Show context: "in ClassName<T>" or "in funcName<T>(...)"
-            let parent_symbol = self.c.borrow().symbol_arena.borrow()[symbol.index()].parent;
+            let parent_symbol = self.c.borrow().symbol_arena.get_ref(symbol).parent;
             if let Some(parent_symbol) = parent_symbol {
                 // Class/Interface type parameter.
                 self.dpw.write_keyword(" in ");
@@ -1946,7 +1946,7 @@ fn get_declaration_of_kind_any(
     symbol: SymbolId,
     kind: Kind,
 ) -> Option<NodeId> {
-    let declarations = c.borrow().symbol_arena.borrow()[symbol.index()]
+    let declarations = c.borrow().symbol_arena.get_ref(symbol)
         .declarations
         .clone();
     declarations
@@ -2456,7 +2456,7 @@ fn get_declarations_from_location(
                 != c.borrow().get_unknown_symbol()
             {
                 let arena = c.borrow().symbol_arena.clone();
-                arena.borrow()[shorthand_symbol.index()].declarations.clone()
+                arena.get_ref(shorthand_symbol).declarations.clone()
             } else {
                 Vec::new()
             };
@@ -2495,7 +2495,7 @@ fn get_declarations_from_location(
                         {
                             let arena = c.borrow().symbol_arena.clone();
                             result.extend(
-                                arena.borrow()[prop.index()].declarations.iter().copied(),
+                                arena.get_ref(prop).declarations.iter().copied(),
                             );
                         }
                     }
@@ -2510,7 +2510,7 @@ fn get_declarations_from_location(
         let mut symbol = symbol;
         {
             let arena = c.borrow().symbol_arena.clone();
-            let arena = arena.borrow();
+            let arena = arena.clone();
             let flags = arena[symbol.index()].flags;
             if flags.intersects(SymbolFlags::CLASS)
                 && !flags.intersects(SymbolFlags::FUNCTION | SymbolFlags::VARIABLE)
@@ -2528,7 +2528,7 @@ fn get_declarations_from_location(
                 }
             }
         }
-        if c.borrow().symbol_arena.borrow()[symbol.index()]
+        if c.borrow().symbol_arena.get_ref(symbol)
             .flags
             .intersects(SymbolFlags::ALIAS)
         {
@@ -2543,7 +2543,7 @@ fn get_declarations_from_location(
         }
         let declarations = {
             let arena = c.borrow().symbol_arena.clone();
-            arena.borrow()[symbol.index()].declarations.clone()
+            arena.get_ref(symbol).declarations.clone()
         };
         if !declarations.is_empty() {
             return declarations;
@@ -2587,7 +2587,7 @@ fn get_declarations_from_object_literal_element(
         .get_property_symbols_from_contextual_type(element, contextual_type, false /*unionSymbolOk*/);
     {
         let arena = c.borrow().symbol_arena.clone();
-        let arena = arena.borrow();
+        let arena = arena.clone();
         let found = properties.iter().any(|&p| {
             arena[p.index()].value_declaration.is_some_and(|vd| {
                 let nodes = program.arena_of(vd);
@@ -2618,7 +2618,7 @@ fn get_declarations_from_object_literal_element(
     let mut result = Vec::new();
     {
         let arena = c.borrow().symbol_arena.clone();
-        let arena = arena.borrow();
+        let arena = arena.clone();
         for prop in properties {
             result.extend(arena[prop.index()].declarations.iter().copied());
         }

@@ -28,7 +28,7 @@ use std::fmt;
 use std::rc::Rc;
 
 use tsc_ast::diagnostic::{self, DiagnosticFile, DiagnosticRef};
-use tsc_ast::{self as ast, FindAncestorResult, Kind, Node, NodeId, Symbol, SymbolFlags, SymbolId};
+use tsc_ast::{self as ast, Kind, Node, NodeId, SymbolArena, SymbolFlags, SymbolId};
 use tsc_nodebuilder::SymbolTracker;
 use tsc_printer::{EmitResolver, SymbolAccessibility, SymbolAccessibilityResult};
 
@@ -126,7 +126,7 @@ pub struct SymbolTrackerImpl<'a> {
     // pointers arrives as the `nodes: &[Node]` parameter on the
     // `SymbolTracker` trait methods — see `tsc-nodebuilder::SymbolTracker`.
     /// The live bound symbol arena (`TransformOptions::symbols`).
-    symbols: Option<&'a RefCell<Vec<Symbol>>>,
+    symbols: Option<&'a SymbolArena>,
 }
 
 impl<'a> SymbolTrackerImpl<'a> {
@@ -136,7 +136,7 @@ impl<'a> SymbolTrackerImpl<'a> {
         host: Rc<dyn DeclarationEmitHost + 'a>,
         resolver: Rc<RefCell<dyn EmitResolver + 'a>>,
         state: Rc<RefCell<SymbolTrackerSharedState<'a>>>,
-        symbols: Option<&'a RefCell<Vec<Symbol>>>,
+        symbols: Option<&'a SymbolArena>,
     ) -> SymbolTrackerImpl<'a> {
         SymbolTrackerImpl {
             get_isolated_declaration_error: create_get_isolated_declaration_errors(
@@ -443,8 +443,7 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
                 // expando props get an error when their host is visited by the above, this prevents a follow-on error on a non-inferrable expression
                 let symbols = self
                     .symbols
-                    .expect("SymbolTrackerImpl requires TransformOptions::symbols")
-                    .borrow();
+                    .expect("SymbolTrackerImpl requires TransformOptions::symbols");
                 let diag = (self.get_isolated_declaration_error)(node, nodes, &symbols);
                 self.state.borrow_mut().add_diagnostic(diag);
             }
@@ -505,8 +504,7 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
     ) {
         let symbols = self
             .symbols
-            .expect("SymbolTrackerImpl requires TransformOptions::symbols")
-            .borrow();
+            .expect("SymbolTrackerImpl requires TransformOptions::symbols");
         let primary_declaration =
             tsc_core::core::find(&symbols[parent_symbol.index()].declarations, |&d| {
                 let arena = self.location_arena(d, nodes);
@@ -604,8 +602,7 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
         {
             let symbols = self
                 .symbols
-                .expect("SymbolTrackerImpl requires TransformOptions::symbols")
-                .borrow();
+                .expect("SymbolTrackerImpl requires TransformOptions::symbols");
             if symbols[symbol.index()]
                 .flags
                 .intersects(SymbolFlags::TYPE_PARAMETER)

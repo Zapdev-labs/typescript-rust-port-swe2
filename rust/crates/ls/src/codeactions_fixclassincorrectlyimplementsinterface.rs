@@ -457,7 +457,7 @@ fn get_missing_members(
     let class_members: Option<FxHashMap<String, SymbolId>> = {
         let nodes = program.nodes(class_declaration.file_index());
         nodes[class_declaration].symbol().map(|s| {
-            let members = &program.symbols.borrow()[s.index()].members;
+            let members = &program.symbols.get_ref(s).members;
             members.entries().map(|(k, &v)| (k.to_string(), v)).collect()
         })
     };
@@ -471,7 +471,7 @@ fn get_missing_members(
             if symbol.is_none() {
                 continue;
             }
-            let name = program.symbols.borrow()[symbol.index()].name.clone();
+            let name = program.symbols.get_ref(symbol).name.clone();
             if let Some(members) = &class_members {
                 if members.contains_key(name.as_ref()) {
                     continue;
@@ -522,7 +522,7 @@ fn get_inherited_members(
             symbol,
         );
         if !flags.intersects(ModifierFlags::PRIVATE) {
-            let name = program.symbols.borrow()[symbol.index()].name.clone();
+            let name = program.symbols.get_ref(symbol).name.clone();
             inherited_members.insert(name.to_string(), symbol);
         }
     }

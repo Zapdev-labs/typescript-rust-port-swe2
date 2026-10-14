@@ -298,14 +298,14 @@ impl<'a> NodeBuilderImpl<'a> {
                             // param list for some reason.
                             if let Some(original_param) = original_param {
                                 additions.push((
-                                    c.symbol_arena.borrow()[original_param.index()].name.to_string(),
+                                    c.symbol_arena.get_ref(original_param).name.to_string(),
                                     original_param,
                                 ));
                             }
                         } else if !collect_binding_pattern_symbols(c, nodes, param, &mut additions)
                         {
                             additions
-                                .push((c.symbol_arena.borrow()[param.index()].name.to_string(), param));
+                                .push((c.symbol_arena.get_ref(param).name.to_string(), param));
                         }
                     }
                 }
@@ -560,11 +560,11 @@ pub(crate) fn collect_binding_pattern_symbols(
         // omitted expressions are now parsed as nameless binding patterns
         // and also have no symbol
         if let Some(symbol) = symbol {
-            additions.push((c.symbol_arena.borrow()[symbol.index()].name.to_string(), symbol));
+            additions.push((c.symbol_arena.get_ref(symbol).name.to_string(), symbol));
         }
     }
 
-    let declarations = c.symbol_arena.borrow()[param.index()].declarations.clone();
+    let declarations = c.symbol_arena.get_ref(param).declarations.clone();
     for d in declarations {
         // `d` may be declared in another file's arena (e.g. a lib parameter
         // symbol) — view it through the right arena rather than the caller's

@@ -213,10 +213,7 @@ impl SymbolAndEntries {
             return Some(node);
         }
         if let Some(symbol) = definition.symbol {
-            return checker
-                .borrow()
-                .symbol_arena
-                .borrow()[symbol.index()]
+            return checker.borrow().symbol_arena.get_ref(symbol)
             .declarations
             .first()
             .copied();
@@ -629,11 +626,11 @@ fn skip_past_export_or_import_specifier_or_union(
         }
     }
     // If the symbol is declared as part of a declaration like `{ type: "a" } | { type: "b" }`, use the property on the union type to get more references.
-    let declarations = checker.borrow().symbol_arena.borrow()[symbol.index()]
+    let declarations = checker.borrow().symbol_arena.get_ref(symbol)
         .declarations
         .clone();
-    let symbol_flags = checker.borrow().symbol_arena.borrow()[symbol.index()].flags;
-    let symbol_name = checker.borrow().symbol_arena.borrow()[symbol.index()]
+    let symbol_flags = checker.borrow().symbol_arena.get_ref(symbol).flags;
+    let symbol_name = checker.borrow().symbol_arena.get_ref(symbol)
         .name
         .clone();
     declarations.iter().copied().find_map(|decl| {
@@ -673,7 +670,7 @@ fn get_symbol_scope(symbol: SymbolId, checker: &RefCell<Checker>, program: &Rc<P
     // then named references are limited to its own scope.
     let (value_declaration, declarations, flags, parent) = {
         let arena = checker.borrow().symbol_arena.clone();
-        let s = &arena.borrow()[symbol.index()];
+        let s = arena.get_ref(symbol);
         (s.value_declaration, s.declarations.clone(), s.flags, s.parent)
     };
     if let Some(value_declaration) = value_declaration {
@@ -730,7 +727,7 @@ fn get_symbol_scope(symbol: SymbolId, checker: &RefCell<Checker>, program: &Rc<P
             if !tsc_checker::utilities::is_external_module_symbol(parent, &c) {
                 false
             } else {
-                let parent_vd = c.symbol_arena.borrow()[parent.index()].value_declaration;
+                let parent_vd = c.symbol_arena.get_ref(parent).value_declaration;
                 match parent_vd {
                     Some(vd) => {
                         let nodes = program.nodes(vd.file_index());
@@ -888,7 +885,7 @@ impl<'h> LanguageService<'h> {
             done();
             return None;
         };
-        let declarations = checker.borrow().symbol_arena.borrow()[symbol.index()]
+        let declarations = checker.borrow().symbol_arena.get_ref(symbol)
             .declarations
             .clone();
         drop(checker);
@@ -1019,7 +1016,7 @@ impl<'h> LanguageService<'h> {
             .expect("definition symbol");
         let declarations = {
             let (checker, done) = program.get_type_checker(ctx.clone());
-            let declarations = checker.borrow().symbol_arena.borrow()[symbol.index()]
+            let declarations = checker.borrow().symbol_arena.get_ref(symbol)
                 .declarations
                 .clone();
             drop(checker);
@@ -1864,7 +1861,7 @@ fn is_declaration_of_symbol(
     let Some(source) = source else {
         return false;
     };
-    program.symbols.borrow()[target.index()]
+    program.symbols.get_ref(target)
         .declarations
         .contains(&source)
 }
@@ -2037,10 +2034,7 @@ impl<'h> LanguageService<'h> {
 
                 // Get the definition node
                 let node = {
-                    let declarations = self
-                        .program
-                        .symbols
-                        .borrow()[symbol.index()]
+                    let declarations = self.program.symbols.get_ref(symbol)
                     .declarations
                     .clone();
                     if let Some(decl) = declarations.first().copied() {
@@ -2361,7 +2355,7 @@ impl<'h> LanguageService<'h> {
             let e = entry.borrow();
             if let Some(definition) = &e.definition {
                 if let Some(symbol) = definition.symbol {
-                    let declarations = self.program.symbols.borrow()[symbol.index()]
+                    let declarations = self.program.symbols.get_ref(symbol)
                         .declarations
                         .clone();
                     for decl in declarations {
@@ -2588,7 +2582,7 @@ impl<'h> LanguageService<'h> {
 
         let (symbol_name, symbol_parent, symbol_flags) = {
             let arena = checker.borrow().symbol_arena.clone();
-            let s = &arena.borrow()[symbol.index()];
+            let s = arena.get_ref(symbol);
             (s.name.clone(), s.parent, s.flags)
         };
         if symbol_name.as_ref() == ast::symbol::INTERNAL_SYMBOL_NAME_EXPORT_EQUALS {
@@ -2758,7 +2752,7 @@ impl<'h> LanguageService<'h> {
     ) -> Option<Vec<Rc<RefCell<SymbolAndEntries>>>> {
         let (symbol_flags, declarations) = {
             let arena = checker.borrow().symbol_arena.clone();
-            let s = &arena.borrow()[symbol.index()];
+            let s = arena.get_ref(symbol);
             (s.flags, s.declarations.clone())
         };
         if symbol_flags & SymbolFlags::MODULE == SymbolFlags::NONE || declarations.is_empty() {
@@ -2777,7 +2771,7 @@ impl<'h> LanguageService<'h> {
         };
         let export_equals = {
             let arena = checker.borrow().symbol_arena.clone();
-            arena.borrow()[symbol.index()]
+            arena.get_ref(symbol)
                 .exports
                 .get(ast::symbol::INTERNAL_SYMBOL_NAME_EXPORT_EQUALS)
                 .copied()
@@ -2792,7 +2786,7 @@ impl<'h> LanguageService<'h> {
             source_files_set,
         );
         let export_equals_is_alias = export_equals.is_some_and(|ee| {
-            checker.borrow().symbol_arena.borrow()[ee.index()]
+            checker.borrow().symbol_arena.get_ref(ee)
                 .flags
                 .intersects(SymbolFlags::ALIAS)
         });
@@ -2829,7 +2823,7 @@ impl<'h> LanguageService<'h> {
         source_files_set: &Rc<Set<RootedFilePath>>,
     ) -> Vec<Rc<RefCell<SymbolAndEntries>>> {
         debug_assert!(
-            checker.borrow().symbol_arena.borrow()[symbol.index()]
+            checker.borrow().symbol_arena.get_ref(symbol)
                 .value_declaration
                 .is_some()
         );
@@ -2909,7 +2903,7 @@ impl<'h> LanguageService<'h> {
         }
 
         // Add references to the module declarations themselves
-        let declarations = checker.borrow().symbol_arena.borrow()[symbol.index()]
+        let declarations = checker.borrow().symbol_arena.get_ref(symbol)
             .declarations
             .clone();
         for decl in &declarations {
@@ -2938,11 +2932,11 @@ impl<'h> LanguageService<'h> {
         // Handle export equals declarations
         let exported_decls = {
             let arena = checker.borrow().symbol_arena.clone();
-            arena.borrow()[symbol.index()]
+            arena.get_ref(symbol)
                 .exports
                 .get(ast::symbol::INTERNAL_SYMBOL_NAME_EXPORT_EQUALS)
                 .copied()
-                .map(|ee| arena.borrow()[ee.index()].declarations.clone())
+                .map(|ee| arena.get_ref(ee).declarations.clone())
                 .unwrap_or_default()
         };
         for decl in exported_decls {
@@ -3665,7 +3659,7 @@ fn get_referenced_symbols_for_symbol(
     );
 
     let export_specifier = if is_for_rename_with_prefix_and_suffix_text(&options) {
-        let declarations = checker.borrow().symbol_arena.borrow()[symbol.index()]
+        let declarations = checker.borrow().symbol_arena.get_ref(symbol)
             .declarations
             .clone();
         declarations.iter().copied().find(|&d| {
@@ -3706,7 +3700,7 @@ fn get_referenced_symbols_for_symbol(
                 nodes[n].kind
             });
             let arena = checker.borrow().symbol_arena.clone();
-            let s = &arena.borrow()[symbol.index()];
+            let s = arena.get_ref(symbol);
             (
                 n_kind == Some(Kind::DefaultKeyword),
                 s.name.as_ref() == ast::symbol::INTERNAL_SYMBOL_NAME_DEFAULT,
@@ -3890,7 +3884,7 @@ impl RefState {
         if text.is_empty() {
             let s = {
                 let symbols = self.checker.borrow().symbol_arena.clone();
-                let decls = symbols.borrow()[symbol.index()].declarations.clone();
+                let decls = symbols.get_ref(symbol).declarations.clone();
                 let nodes = decls
                     .first()
                     .map(|d| self.program.nodes(d.file_index()));
@@ -3898,11 +3892,11 @@ impl RefState {
                     tsc_binder::nameresolver::get_local_symbol_for_export_default(
                         symbol,
                         nodes,
-                        &symbols.borrow(),
+                        &symbols,
                     )
                 });
                 local.or_else(|| {
-                    let decls2 = symbols.borrow()[symbol.index()].declarations.clone();
+                    let decls2 = symbols.get_ref(symbol).declarations.clone();
                     let nodes2 = decls2
                         .first()
                         .map(|d| self.program.nodes(d.file_index()));
@@ -3914,15 +3908,15 @@ impl RefState {
             let s = s.unwrap_or(symbol);
             let symbol_name = {
                 let symbols = self.checker.borrow().symbol_arena.clone();
-                let decls = symbols.borrow()[s.index()].declarations.clone();
+                let decls = symbols.get_ref(s).declarations.clone();
                 let nodes = decls
                     .first()
                     .map(|d| self.program.nodes(d.file_index()));
                 match nodes {
                     Some(nodes) => {
-                        ast::symbol_name(&symbols.borrow()[s.index()], &nodes).into_owned()
+                        ast::symbol_name(symbols.get_ref(s), &nodes).into_owned()
                     }
-                    None => symbols.borrow()[s.index()].name.to_string(),
+                    None => symbols.get_ref(s).name.to_string(),
                 }
             };
             text = ast::try_get_ambient_module_name_from_symbol_name(&symbol_name)
@@ -4643,7 +4637,7 @@ impl RefState {
     /// `searchForImportedSymbol` — go to the symbol we imported from and find
     /// references for it.
     fn search_for_imported_symbol(&self, symbol: SymbolId) {
-        let declarations = self.checker.borrow().symbol_arena.borrow()[symbol.index()]
+        let declarations = self.checker.borrow().symbol_arena.get_ref(symbol)
             .declarations
             .clone();
         for declaration in declarations {
@@ -4767,7 +4761,7 @@ impl RefState {
     fn get_reference_for_shorthand_property(&self, reference_symbol: SymbolId, search: &RefSearch) {
         let (flags, value_declaration) = {
             let arena = self.checker.borrow().symbol_arena.clone();
-            let s = &arena.borrow()[reference_symbol.index()];
+            let s = arena.get_ref(reference_symbol);
             (s.flags, s.value_declaration)
         };
         if flags & SymbolFlags::TRANSIENT != SymbolFlags::NONE || value_declaration.is_none() {
@@ -4861,11 +4855,7 @@ impl RefState {
                 if let Some(search_sym) = search_sym {
                     if search.includes(search_sym) {
                         if root_symbol.is_some() {
-                            let check_flags = self
-                                .checker
-                                .borrow()
-                                .symbol_arena
-                                .borrow()[sym.index()]
+                            let check_flags = self.checker.borrow().symbol_arena.get_ref(sym)
                             .check_flags;
                             if check_flags & CheckFlags::SYNTHETIC
                                 == CheckFlags::NONE
@@ -4881,11 +4871,7 @@ impl RefState {
             },
             &mut |root_symbol| {
                 !( !search.parents.is_empty() && {
-                    let root_parent = self
-                        .checker
-                        .borrow()
-                        .symbol_arena
-                        .borrow()[root_symbol.index()]
+                    let root_parent = self.checker.borrow().symbol_arena.get_ref(root_symbol)
                     .parent;
                     !search.parents.iter().any(|&parent| {
                         root_parent.is_some_and(|rp| self.explicitly_inherits_from(rp, parent))
@@ -4927,10 +4913,10 @@ impl RefState {
                 // Add symbol of properties/methods of the same name in base classes and implemented interfaces definitions
                 let (root_parent, root_name, root_parent_flags) = {
                     let arena = state.checker.borrow().symbol_arena.clone();
-                    let rp = arena.borrow()[root_symbol.index()].parent;
-                    let name = arena.borrow()[root_symbol.index()].name.clone();
+                    let rp = arena.get_ref(root_symbol).parent;
+                    let name = arena.get_ref(root_symbol).name.clone();
                     let flags = rp
-                        .map(|p| arena.borrow()[p.index()].flags)
+                        .map(|p| arena.get_ref(p).flags)
                         .unwrap_or(SymbolFlags::NONE);
                     (rp, name, flags)
                 };
@@ -5054,7 +5040,7 @@ impl RefState {
 
         let (value_declaration, symbol_flags, symbol_name) = {
             let arena = self.checker.borrow().symbol_arena.clone();
-            let s = &arena.borrow()[symbol.index()];
+            let s = arena.get_ref(symbol);
             (s.value_declaration, s.flags, s.name.clone())
         };
         if let Some(value_declaration) = value_declaration {
@@ -5073,10 +5059,10 @@ impl RefState {
                     )
                 };
                 debug_assert!(
-                    self.checker.borrow().symbol_arena.borrow()[param_prop1.index()].flags
+                    self.checker.borrow().symbol_arena.get_ref(param_prop1).flags
                         & SymbolFlags::FUNCTION_SCOPED_VARIABLE
                         != SymbolFlags::NONE
-                        && self.checker.borrow().symbol_arena.borrow()[param_prop2.index()].flags
+                        && self.checker.borrow().symbol_arena.get_ref(param_prop2).flags
                             & SymbolFlags::CLASS_MEMBER
                             != SymbolFlags::NONE,
                     "GetSymbolsOfParameterPropertyDeclaration must return (parameter, member) pair"
@@ -5095,12 +5081,12 @@ impl RefState {
         let export_specifier = {
             let arena = self.checker.borrow().symbol_arena.clone();
             let nodes = {
-                let decls = arena.borrow()[symbol.index()].declarations.clone();
+                let decls = arena.get_ref(symbol).declarations.clone();
                 decls.first().map(|d| self.program.nodes(d.file_index()))
             };
             nodes.and_then(|nodes| {
                 ast::get_declaration_of_kind(
-                    &arena.borrow()[symbol.index()],
+                    arena.get_ref(symbol),
                     Kind::ExportSpecifier,
                     &nodes,
                 )
@@ -5208,7 +5194,7 @@ impl RefState {
         // Set to false initially to prevent infinite recursion
         self.inherits_from_cache.borrow_mut().insert(key, false);
 
-        let declarations = self.checker.borrow().symbol_arena.borrow()[symbol.index()]
+        let declarations = self.checker.borrow().symbol_arena.get_ref(symbol)
             .declarations
             .clone();
 
@@ -5241,7 +5227,7 @@ fn get_reference_entries_for_shorthand_property_assignment(
     let Some(ref_symbol) = ref_symbol else {
         return;
     };
-    let value_declaration = checker.borrow().symbol_arena.borrow()[ref_symbol.index()]
+    let value_declaration = checker.borrow().symbol_arena.get_ref(ref_symbol)
         .value_declaration;
     let Some(value_declaration) = value_declaration else {
         return;
@@ -5252,7 +5238,7 @@ fn get_reference_entries_for_shorthand_property_assignment(
     let Some(shorthand_symbol) = shorthand_symbol else {
         return;
     };
-    let declarations = checker.borrow().symbol_arena.borrow()[shorthand_symbol.index()]
+    let declarations = checker.borrow().symbol_arena.get_ref(shorthand_symbol)
         .declarations
         .clone();
     for declaration in declarations {
@@ -5282,7 +5268,7 @@ fn try_get_class_by_extending_identifier(node: NodeId, nodes: &[Node]) -> Option
 
 /// `getClassConstructorSymbol`.
 fn get_class_constructor_symbol(class_symbol: SymbolId, checker: &RefCell<Checker>) -> Option<SymbolId> {
-    checker.borrow().symbol_arena.borrow()[class_symbol.index()]
+    checker.borrow().symbol_arena.get_ref(class_symbol)
         .members
         .get(ast::symbol::INTERNAL_SYMBOL_NAME_CONSTRUCTOR)
         .copied()
@@ -5305,7 +5291,7 @@ fn find_own_constructor_references(
 ) {
     let constructor_symbol = get_class_constructor_symbol(class_symbol, checker);
     if let Some(constructor_symbol) = constructor_symbol {
-        let declarations = checker.borrow().symbol_arena.borrow()[constructor_symbol.index()]
+        let declarations = checker.borrow().symbol_arena.get_ref(constructor_symbol)
             .declarations
             .clone();
         for decl in declarations {
@@ -5326,14 +5312,14 @@ fn find_own_constructor_references(
 
     let export_members: Vec<SymbolId> = {
         let arena = checker.borrow().symbol_arena.clone();
-        arena.borrow()[class_symbol.index()]
+        arena.get_ref(class_symbol)
             .exports
             .values()
             .copied()
             .collect()
     };
     for member in export_members {
-        let decl = checker.borrow().symbol_arena.borrow()[member.index()].value_declaration;
+        let decl = checker.borrow().symbol_arena.get_ref(member).value_declaration;
         if let Some(decl) = decl {
             let is_method = {
                 let nodes = program.nodes(decl.file_index());
@@ -5375,7 +5361,7 @@ fn find_super_constructor_accesses(
     let Some(constructor_symbol) = constructor_symbol else {
         return;
     };
-    let declarations = checker.borrow().symbol_arena.borrow()[constructor_symbol.index()]
+    let declarations = checker.borrow().symbol_arena.get_ref(constructor_symbol)
         .declarations
         .clone();
     for decl in declarations {

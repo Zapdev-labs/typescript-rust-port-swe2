@@ -7,10 +7,9 @@
 // checker's shared symbol arena plus the program (needed to read the first
 // declaration's node `Kind`, which may live in a different file arena).
 
-use std::cell::RefCell;
 use std::rc::Rc;
 
-use tsc_ast::{Kind, Symbol, SymbolFlags, SymbolId};
+use tsc_ast::{Kind, SymbolArena, SymbolFlags, SymbolId};
 use tsc_checker::checker_core::Checker;
 use tsc_compiler::program::Program;
 use tsc_core::core::UTF16Offset;
@@ -35,7 +34,7 @@ pub(crate) struct DisplayPartsWriter {
     /// Shared symbol arena used to implement `classificationForSymbol`
     /// (`c.symbol_arena`). PORT: Go's `WriteSymbol` receives a symbol pointer;
     /// the port receives `SymbolId`, so the writer keeps arena access.
-    symbols: Rc<RefCell<Vec<Symbol>>>,
+    symbols: SymbolArena,
     /// Program used to read `symbol.Declarations[0].Kind` in the owning
     /// file's node arena.
     program: Rc<Program>,
@@ -279,7 +278,7 @@ impl DisplayPartsWriter {
             return lsproto::ClassificationTypeName::Text;
         };
         let flags = {
-            let arena = self.symbols.borrow();
+            let arena = self.symbols.clone();
             arena[symbol.index()].flags
         };
         if flags.intersects(SymbolFlags::VARIABLE) {
@@ -334,7 +333,7 @@ impl DisplayPartsWriter {
     /// declaration is a parameter.
     fn is_first_declaration_of_symbol_parameter(&self, symbol: SymbolId) -> bool {
         let declaration = {
-            let arena = self.symbols.borrow();
+            let arena = self.symbols.clone();
             arena[symbol.index()].declarations.first().copied()
         };
         let Some(declaration) = declaration else {

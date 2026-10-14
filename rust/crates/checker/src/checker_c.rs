@@ -33,7 +33,7 @@
 // - `*ast.Node` → `NodeId`/`Option<NodeId>`; node payload access goes through
 //   `self.program_nodes(id)` (the per-file `Vec<ast::Node>` arena).
 // - `*ast.Symbol` → `SymbolId`; fields read/mutated through
-//   `self.symbol_arena.borrow()[s.index()]` / `borrow_mut()`.
+//   `self.symbol_arena.get_ref(s)` / `borrow_mut()`.
 // - `*Type` → `TypeId`; `self.types_handle().get(t)` / `get_mut(t)` guards.
 //   `*Signature` → `SignatureId` (`self.signature_arena`),
 //   `*IndexInfo` → `IndexInfoId` (`self.index_info_arena`),
@@ -49,7 +49,7 @@
 //   `self.<snake_case>(...)` / `crate::<module>::<snake_case>(...)` and are
 //   expected `E0599`/`unresolved` until those files land — see the report.
 
-use std::cell::{Ref, RefCell, RefMut};
+use std::cell::RefCell;
 use std::rc::Rc;
 
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -89,16 +89,16 @@ use crate::types::{
 impl Checker {
     // PORT: symbol arena accessors — `symbol.Field` reads/writes in Go.
     // `pub(crate)` so sibling checker files can share the idiom.
-    /// `symbol.Field` — short read borrow of the symbol arena.
+    /// `symbol.Field` — shared handle into the symbol arena (Go `*Symbol`).
     #[inline]
-    pub(crate) fn sym(&self, s: SymbolId) -> Ref<'_, ast::Symbol> {
-        Ref::map(self.symbol_arena.borrow(), |a| &a[s.index()])
+    pub(crate) fn sym(&self, s: SymbolId) -> ast::SymbolPtr {
+        self.symbol_arena.get(s)
     }
 
-    /// `symbol.Field = v` — short write borrow of the symbol arena.
+    /// `symbol.Field = v` — mutable handle into the symbol arena.
     #[inline]
-    pub(crate) fn sym_mut(&self, s: SymbolId) -> RefMut<'_, ast::Symbol> {
-        RefMut::map(self.symbol_arena.borrow_mut(), |a| &mut a[s.index()])
+    pub(crate) fn sym_mut(&self, s: SymbolId) -> ast::SymbolMutPtr {
+        self.symbol_arena.get_mut(s)
     }
 
     /// `symbol.name` as a refcounted handle — hot paths only need `&str`
@@ -111,7 +111,7 @@ impl Checker {
         if let Some(Some(rc)) = self.sym_name_cache.borrow().get(s.index()) {
             return rc.clone();
         }
-        let rc: Rc<str> = self.symbol_arena.borrow()[s.index()].name.as_ref().into();
+        let rc: Rc<str> = self.symbol_arena.get_ref(s).name.as_ref().into();
         let mut cache = self.sym_name_cache.borrow_mut();
         if cache.len() <= s.index() {
             cache.resize(s.index() + 1, None);
@@ -488,7 +488,7 @@ impl Checker {
         if symbol_flags.intersects(ast::SymbolFlags::VALUE) {
             let __program = self.program.clone().expect("program");
             tsc_binder::binder::set_value_declaration(
-                &mut self.symbol_arena.borrow_mut(),
+                &self.symbol_arena,
                 symbol,
                 member,
                 &|id| {
@@ -797,7 +797,7 @@ impl Checker {
             };
             let mut target = self.get_target_of_alias_declaration(node);
             let is_non_local = {
-                let arena = self.symbol_arena.borrow();
+                let arena = self.symbol_arena.clone();
                 ast::is_non_local_alias(
                     target.map(|t| &arena[t.index()]),
                     ast::SymbolFlags::VALUE | ast::SymbolFlags::TYPE | ast::SymbolFlags::NAMESPACE,
@@ -1508,7 +1508,7 @@ impl Checker {
                 let getter = {
                     let parent_symbol = self.get_symbol_of_declaration(fn_);
                     parent_symbol.and_then(|s| {
-                        let arena = self.symbol_arena.borrow();
+                        let arena = self.symbol_arena.clone();
                         ast::get_declaration_of_kind(
                             &arena[s.index()],
                             ast::Kind::GetAccessor,
@@ -4274,7 +4274,7 @@ impl Checker {
         }
         let undefined_or_missing_type = self.undefined_or_missing_type;
         let result = self.create_symbol_with_type(Some(prop), Some(undefined_or_missing_type));
-        self.symbol_arena.borrow_mut()[result.index()]
+        self.symbol_arena.get_mut(result)
             .flags
             .insert(ast::SymbolFlags::OPTIONAL);
         self.undefined_properties.insert(name.to_string(), result);
@@ -6225,7 +6225,7 @@ impl Checker {
     pub(crate) fn resolve_base_types_of_interface(&mut self, t: TypeId) {
         let symbol = self.types.get_ref(t).symbol;
         let Some(symbol) = symbol else { return };
-        let declarations = self.symbol_arena.borrow()[symbol.index()]
+        let declarations = self.symbol_arena.get_ref(symbol)
             .declarations
             .clone();
         for declaration in declarations {
@@ -6433,10 +6433,10 @@ impl Checker {
     ) {
         for &base in base_symbols {
             if !crate::utilities::is_static_private_identifier_property(self, base) {
-                let base_name = self.symbol_arena.borrow()[base.index()].name.clone();
+                let base_name = self.symbol_arena.get_ref(base).name.clone();
                 let existing = symbols.get(base_name.as_ref()).copied();
                 if existing.is_none_or(|s| {
-                    !self.symbol_arena.borrow()[s.index()]
+                    !self.symbol_arena.get_ref(s)
                         .flags
                         .intersects(ast::SymbolFlags::VALUE)
                 }) {
@@ -6504,7 +6504,7 @@ impl Checker {
         let mut readonly_computed_number_property = true;
         let mut readonly_computed_symbol_property = true;
         let mut property_symbols: Vec<SymbolId> = Vec::new();
-        let declarations = self.symbol_arena.borrow()[index_symbol.index()]
+        let declarations = self.symbol_arena.get_ref(index_symbol)
             .declarations
             .clone();
         for declaration in declarations {
@@ -6659,7 +6659,7 @@ impl Checker {
             {
                 prop_types.push(self.get_type_of_symbol(prop));
                 if self.is_symbol_with_computed_name(prop) {
-                    let decls = self.symbol_arena.borrow()[prop.index()]
+                    let decls = self.symbol_arena.get_ref(prop)
                         .declarations
                         .clone();
                     if let Some(&first) = decls.first() {
@@ -6686,7 +6686,7 @@ impl Checker {
         if crate::utilities::is_known_symbol(self, symbol) {
             return true;
         }
-        let decls = self.symbol_arena.borrow()[symbol.index()]
+        let decls = self.symbol_arena.get_ref(symbol)
             .declarations
             .clone();
         if !decls.is_empty() {
@@ -6705,11 +6705,11 @@ impl Checker {
     /// `(c *Checker) isSymbolWithNumericName` (checker.go:20149).
     pub(crate) fn is_symbol_with_numeric_name(&mut self, symbol: SymbolId) -> bool {
         if crate::utilities::is_numeric_literal_name(
-            &self.symbol_arena.borrow()[symbol.index()].name,
+            &self.symbol_arena.get_ref(symbol).name,
         ) {
             return true;
         }
-        let decls = self.symbol_arena.borrow()[symbol.index()]
+        let decls = self.symbol_arena.get_ref(symbol)
             .declarations
             .clone();
         if !decls.is_empty() {
@@ -6724,7 +6724,7 @@ impl Checker {
 
     /// `(c *Checker) isSymbolWithComputedName` (checker.go:20159).
     pub(crate) fn is_symbol_with_computed_name(&mut self, symbol: SymbolId) -> bool {
-        let decls = self.symbol_arena.borrow()[symbol.index()]
+        let decls = self.symbol_arena.get_ref(symbol)
             .declarations
             .clone();
         if !decls.is_empty() {
@@ -6788,7 +6788,7 @@ impl Checker {
             return Vec::new();
         };
         let mut result: Vec<SignatureId> = Vec::new();
-        let declarations = self.symbol_arena.borrow()[symbol.index()]
+        let declarations = self.symbol_arena.get_ref(symbol)
             .declarations
             .clone();
         for i in 0..declarations.len() {
@@ -6876,14 +6876,14 @@ impl Checker {
             // Include parameter symbol instead of property symbol in the
             // signature.
             if param_symbol.is_some_and(|ps| {
-                self.symbol_arena.borrow()[ps.index()]
+                self.symbol_arena.get_ref(ps)
                     .flags
                     .intersects(ast::SymbolFlags::PROPERTY)
             }) && !nodes[param]
                 .name()
                 .is_some_and(|n| ast::is_binding_pattern(&nodes[n]))
             {
-                let name = self.symbol_arena.borrow()[param_symbol.unwrap().index()]
+                let name = self.symbol_arena.get_ref(param_symbol.unwrap())
                     .name
                     .clone();
                 drop(nodes);
@@ -6901,7 +6901,7 @@ impl Checker {
             }
             if i == 0
                 && param_symbol.is_some_and(|ps| {
-                    self.symbol_arena.borrow()[ps.index()].name.as_ref() == ast::INTERNAL_SYMBOL_NAME_THIS
+                    self.symbol_arena.get_ref(ps).name.as_ref() == ast::INTERNAL_SYMBOL_NAME_THIS
                 })
             {
                 has_this_parameter = true;
@@ -6945,7 +6945,7 @@ impl Checker {
                 let nodes = __program.nodes((declaration).file_index());
                 // `ast::get_declaration_of_kind(&Symbol, kind, nodes)` needs an
                 // owned symbol clone because the arena lives in a `RefCell`.
-                let sym_ref = self.symbol_arena.borrow();
+                let sym_ref = self.symbol_arena.clone();
                 ast::get_declaration_of_kind(&sym_ref[s.index()], other_kind, &nodes)
             });
             if let Some(other) = other {
@@ -7289,7 +7289,7 @@ impl Checker {
             let other = self.get_symbol_of_declaration(declaration).and_then(|s| {
                 let __program = self.program.clone().expect("program");
                 let nodes = __program.nodes((declaration).file_index());
-                let declarations = self.symbol_arena.borrow()[s.index()].declarations.clone();
+                let declarations = self.symbol_arena.get_ref(s).declarations.clone();
                 declarations
                     .iter()
                     .copied()
@@ -8836,16 +8836,16 @@ impl Checker {
             )
         };
         let result = self.new_symbol(flags, &name);
-        self.symbol_arena.borrow_mut()[result.index()].check_flags =
+        self.symbol_arena.get_mut(result).check_flags =
             ast::checkflags::CheckFlags::INSTANTIATED
                 | check_flags
                     & (ast::checkflags::CheckFlags::READONLY
                         | ast::checkflags::CheckFlags::LATE
                         | ast::checkflags::CheckFlags::OPTIONAL_PARAMETER
                         | ast::checkflags::CheckFlags::REST_PARAMETER);
-        self.symbol_arena.borrow_mut()[result.index()].declarations = declarations;
-        self.symbol_arena.borrow_mut()[result.index()].parent = parent;
-        self.symbol_arena.borrow_mut()[result.index()].value_declaration = value_declaration;
+        self.symbol_arena.get_mut(result).declarations = declarations;
+        self.symbol_arena.get_mut(result).parent = parent;
+        self.symbol_arena.get_mut(result).value_declaration = value_declaration;
         {
             let result_links = self.value_symbol_links.get(result);
             result_links.target = Some(symbol);
@@ -9046,7 +9046,7 @@ impl Checker {
                                 },
                             &prop_name,
                         );
-                        c.symbol_arena.borrow_mut()[prop.index()].check_flags = late_flag
+                        c.symbol_arena.get_mut(prop).check_flags = late_flag
                             | ast::checkflags::CheckFlags::MAPPED
                             | if is_readonly {
                                 ast::checkflags::CheckFlags::READONLY
@@ -9068,7 +9068,7 @@ impl Checker {
                             c.mapped_symbol_links.get(prop).synthetic_origin = Some(modifiers_prop);
                             if should_link_prop_declarations {
                                 let declarations = c.sym(modifiers_prop).declarations.clone();
-                                c.symbol_arena.borrow_mut()[prop.index()].declarations =
+                                c.symbol_arena.get_mut(prop).declarations =
                                     declarations;
                             }
                         }
@@ -10694,7 +10694,7 @@ impl Checker {
                     .symbol()
                     .map(|decl_symbol| self.sym(decl_symbol).parent);
                 if let Some(parent) = parent {
-                    self.symbol_arena.borrow_mut()[clone.index()].parent = parent;
+                    self.symbol_arena.get_mut(clone).parent = parent;
                 }
             }
             let write_type = self.get_write_type_of_symbol(single_prop);
@@ -10761,16 +10761,16 @@ impl Checker {
             name,
             check_flags | synthetic_flag,
         );
-        self.symbol_arena.borrow_mut()[result.index()].declarations = declarations;
+        self.symbol_arena.get_mut(result).declarations = declarations;
         if !has_non_uniform_value_declaration && first_value_declaration.is_some() {
-            self.symbol_arena.borrow_mut()[result.index()].value_declaration =
+            self.symbol_arena.get_mut(result).value_declaration =
                 first_value_declaration;
             // Inherit information about parent type.
             let __program = self.program.clone().expect("program");
             let nodes = __program.nodes((first_value_declaration.unwrap()).file_index());
             if let Some(decl_symbol) = nodes[first_value_declaration.unwrap()].symbol() {
                 let parent = self.sym(decl_symbol).parent;
-                self.symbol_arena.borrow_mut()[result.index()].parent = parent;
+                self.symbol_arena.get_mut(result).parent = parent;
             }
         }
         {
@@ -10780,7 +10780,7 @@ impl Checker {
         }
         if prop_types.len() > 2 {
             // When `propTypes` has the potential to explode in size when normalized, defer normalization until absolutely needed
-            self.symbol_arena.borrow_mut()[result.index()].check_flags |=
+            self.symbol_arena.get_mut(result).check_flags |=
                 ast::checkflags::CheckFlags::DEFERRED_TYPE;
             let deferred = self.deferred_symbol_links.get(result);
             deferred.parent = Some(containing_type);

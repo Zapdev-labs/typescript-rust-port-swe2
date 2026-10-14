@@ -29,7 +29,7 @@
 //   - `binder.ReferenceResolver`/`printer.EmitResolver` methods take the node
 //     and symbol arenas explicitly. Transforms reach the binder's symbol
 //     arena through `TransformOptions::symbols`
-//     (`Option<&'a RefCell<Vec<Symbol>>>`), passed by the caller alongside
+//     (`Option<&'a SymbolArena>`), passed by the caller alongside
 //     `resolver`.
 
 pub mod importelision;

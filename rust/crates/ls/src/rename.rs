@@ -11,7 +11,7 @@
 // - `RenameInfo.FileToRename`/`NewFileName` are `Option<RootedPath>` for Go's
 //   `tspath.RootedPath` "" sentinel.
 // - `symbol.Declarations`/`symbol.Parent`/`symbol.Flags` are read through
-//   `checker.symbol_arena.borrow()[symbol.index()]`; declaration nodes may
+//   `checker.symbol_arena.get_ref(symbol)`; declaration nodes may
 //   live in any file's arena.
 
 use std::cell::RefCell;
@@ -375,7 +375,7 @@ impl<'h> LanguageService<'h> {
 
         // Only allow a symbol to be renamed if it actually has at least one
         // declaration.
-        if checker.borrow().symbol_arena.borrow()[symbol.index()]
+        if checker.borrow().symbol_arena.get_ref(symbol)
             .declarations
             .is_empty()
         {
@@ -439,7 +439,7 @@ impl<'h> LanguageService<'h> {
         checker: &Rc<RefCell<Checker>>,
         program: &Rc<Program>,
     ) -> Option<&'static Message> {
-        let declarations = checker.borrow().symbol_arena.borrow()[symbol.index()]
+        let declarations = checker.borrow().symbol_arena.get_ref(symbol)
             .declarations
             .clone();
         for declaration in &declarations {
@@ -455,10 +455,10 @@ impl<'h> LanguageService<'h> {
         {
             let nodes = program.nodes(source_file.file_index());
             if ast::is_identifier(&nodes[node]) && nodes[node].text(&nodes) == "default" {
-                let parent_is_module = checker.borrow().symbol_arena.borrow()[symbol.index()]
+                let parent_is_module = checker.borrow().symbol_arena.get_ref(symbol)
                     .parent
                     .is_some_and(|parent| {
-                        checker.borrow().symbol_arena.borrow()[parent.index()]
+                        checker.borrow().symbol_arena.get_ref(parent)
                             .flags
                             .intersects(SymbolFlags::MODULE)
                     });
@@ -511,7 +511,7 @@ impl<'h> LanguageService<'h> {
             ));
         }
 
-        let declarations = checker.borrow().symbol_arena.borrow()[module_symbol.index()]
+        let declarations = checker.borrow().symbol_arena.get_ref(module_symbol)
             .declarations
             .clone();
         let module_source_file = declarations.iter().copied().find(|&d| {
@@ -685,7 +685,7 @@ impl<'h> LanguageService<'h> {
                     }
                 };
                 if original_symbol.is_some_and(|symbol| {
-                    checker.borrow().symbol_arena.borrow()[symbol.index()]
+                    checker.borrow().symbol_arena.get_ref(symbol)
                         .declarations
                         .contains(&parent.expect("parent"))
                 }) {
@@ -802,14 +802,14 @@ fn would_rename_in_other_node_modules(
 ) -> Option<&'static Message> {
     let mut sym = symbol;
     {
-        let symbol_flags = checker.borrow().symbol_arena.borrow()[sym.index()].flags;
+        let symbol_flags = checker.borrow().symbol_arena.get_ref(sym).flags;
         if !preferences
             .provide_prefix_and_suffix_text_for_rename
             .is_true_or_unknown()
             && symbol_flags.intersects(SymbolFlags::ALIAS)
         {
             let declarations =
-                checker.borrow().symbol_arena.borrow()[sym.index()].declarations.clone();
+                checker.borrow().symbol_arena.get_ref(sym).declarations.clone();
             let import_specifier = declarations.iter().copied().find(|&d| {
                 let nodes = program.nodes(d.file_index());
                 ast::is_import_specifier(&nodes[d])
@@ -831,7 +831,7 @@ fn would_rename_in_other_node_modules(
         }
     }
 
-    let declarations = checker.borrow().symbol_arena.borrow()[sym.index()]
+    let declarations = checker.borrow().symbol_arena.get_ref(sym)
         .declarations
         .clone();
     if declarations.is_empty() {

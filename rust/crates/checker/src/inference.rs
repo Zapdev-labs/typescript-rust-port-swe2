@@ -2398,7 +2398,7 @@ impl Checker {
                 check_flags,
             );
             let prop_declarations = self.sym(prop).declarations.clone();
-            self.symbol_arena.borrow_mut()[inferred_prop.index()].declarations = prop_declarations;
+            self.symbol_arena.get_mut(inferred_prop).declarations = prop_declarations;
             let name_type = self.value_symbol_links.get(prop).name_type;
             self.value_symbol_links.get(inferred_prop).name_type = name_type;
             let property_type = self.get_type_of_symbol(prop);
@@ -2651,7 +2651,7 @@ impl Checker {
                     let s = self.sym(symbol);
                     (s.declarations.clone(), s.value_declaration)
                 };
-                let mut arena = self.symbol_arena.borrow_mut();
+                let mut arena = self.symbol_arena.clone();
                 arena[literal_prop.index()].declarations = declarations;
                 arena[literal_prop.index()].value_declaration = value_declaration;
             }
@@ -3127,7 +3127,7 @@ impl Checker {
     /// port needs the type/symbol/node arenas, so it's a method.
     pub(crate) fn has_type_parameter_default(&self, tp: TypeId) -> bool {
         if let Some(symbol) = self.types.get_ref(tp).symbol {
-            let declarations = self.symbol_arena.borrow()[symbol.index()]
+            let declarations = self.symbol_arena.get_ref(symbol)
                 .declarations
                 .clone();
             for d in declarations {
@@ -3165,7 +3165,7 @@ fn compare_types_and_depth(c: &mut Checker, t1: TypeId, t2: TypeId) -> i32 {
     if d1 != d2 {
         return d2 - d1; // Largest depth sorts first
     }
-    crate::utilities::compare_types(&c.types, c.symbol_arena.as_ref(), &c.type_mappers, c.program.as_ref(), t1, t2)
+    crate::utilities::compare_types(&c.types, &c.symbol_arena, &c.type_mappers, c.program.as_ref(), t1, t2)
 }
 
 /// `getTypeDepth` (inference.go) — return the depth of the given type up to

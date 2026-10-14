@@ -201,7 +201,7 @@ impl Named for Export {
 /// `SymbolToExport`.
 pub fn symbol_to_export(symbol: SymbolId, ch: &Rc<RefCell<Checker>>) -> Option<Rc<Export>> {
     let symbol_arena = ch.borrow().symbol_arena.clone();
-    let parent = symbol_arena.borrow()[symbol.index()].parent;
+    let parent = symbol_arena.get_ref(symbol).parent;
     if let Some(parent) = parent
         && tsc_checker::utilities::is_external_module_symbol(parent, &ch.borrow())
     {
@@ -212,7 +212,7 @@ pub fn symbol_to_export(symbol: SymbolId, ch: &Rc<RefCell<Checker>>) -> Option<R
     }
 
     let declaration = {
-        let sa = symbol_arena.borrow();
+        let sa = symbol_arena.clone();
         sa[symbol.index()].declarations.first().copied()
     }?;
     let file = {
@@ -259,7 +259,7 @@ pub fn symbol_to_export(symbol: SymbolId, ch: &Rc<RefCell<Checker>>) -> Option<R
             return Some(export);
         }
     }
-    let symbol_name = symbol_arena.borrow()[symbol.index()].name.clone();
+    let symbol_name = symbol_arena.get_ref(symbol).name.clone();
     try_get_module_export(
         &symbol_name,
         target,
@@ -307,7 +307,7 @@ fn extract_first_export(
 ) -> Option<Rc<Export>> {
     let symbol_name = {
         let sa = ch.borrow().symbol_arena.clone();
-        let sa = sa.borrow();
+        let sa = sa.clone();
         sa[symbol.index()].name.clone()
     };
     let mut exports: Vec<Rc<Export>> = Vec::new();

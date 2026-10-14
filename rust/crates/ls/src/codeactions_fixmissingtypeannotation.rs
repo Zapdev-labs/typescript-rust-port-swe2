@@ -411,7 +411,7 @@ impl<'a, 'c, 'h> IsolatedDeclarationsFixer<'a, 'c, 'h> {
         let mut new_properties: Vec<NodeId> = Vec::new();
         for &symbol in &elements {
             let (sym_name, has_var_decl) = {
-                let symbols = self.program.symbols.borrow();
+                let symbols = self.program.symbols.clone();
                 let has_var_decl = symbols[symbol.index()]
                     .value_declaration
                     .is_some_and(|d| {
@@ -2264,7 +2264,7 @@ impl<'a, 'c, 'h> IsolatedDeclarationsFixer<'a, 'c, 'h> {
         if sym.is_none() {
             return;
         }
-        let symbols = self.program.symbols.borrow();
+        let symbols = self.program.symbols.clone();
         let Some(module_symbol) = symbols[sym.index()].parent else {
             return;
         };
@@ -2455,7 +2455,7 @@ fn type_param_has_default(ch: &Checker, tp: TypeId) -> bool {
         return false;
     };
     let symbol_arena = ch.program.as_ref().expect("program").symbols();
-    let symbols = symbol_arena.borrow();
+    let symbols = symbol_arena.clone();
     for &decl in &symbols[sym.index()].declarations {
         let nodes = ch.program.as_ref().expect("program").nodes(decl.file_index());
         if ast::is_type_parameter_declaration(&nodes[decl])
@@ -2541,7 +2541,7 @@ fn find_expando_function(
     }
 
     let properties = ch.borrow_mut().get_properties_of_type(target_type);
-    let symbols = program.symbols.borrow();
+    let symbols = program.symbols.clone();
     let nodes = program.nodes(node.file_index());
     let mut found = false;
     for p in &properties {
@@ -2629,7 +2629,7 @@ fn type_to_string_for_diag(
     ct.emit_context
         .set_emit_flags(type_node, saved_flags | EmitFlags::SINGLE_LINE);
     let symbol_arena = c.borrow().symbol_arena.clone();
-    let symbols = symbol_arena.borrow();
+    let symbols = symbol_arena.clone();
     let mut p = Printer::new(
         PrinterOptions {
             new_line: NewLineKind::LF,

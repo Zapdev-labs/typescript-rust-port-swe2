@@ -527,7 +527,7 @@ impl<'h> LanguageService<'h> {
         if ast::can_have_symbol(&nodes[decl]) {
             if let Some(symbol) = nodes[decl].symbol() {
                 let declarations = {
-                    let symbols = self.program.symbols.borrow();
+                    let symbols = self.program.symbols.clone();
                     symbols[symbol.index()].declarations.clone()
                 };
                 for d in declarations {

@@ -47,6 +47,7 @@ fn check_emit(
         .expect("transformed SourceFile");
 
     let mut emit_context = emit_context.borrow_mut();
+    let symbols = tsc_ast::SymbolArena::default();
     let mut printer = Printer::new(
         PrinterOptions {
             new_line: NewLineKind::LF,
@@ -55,7 +56,7 @@ fn check_emit(
         PrintHandlers::default(),
         &mut emit_context,
         &mut nodes,
-        &[],
+        &symbols,
     );
     let text = printer.emit_source_file(file);
     let actual = text.strip_suffix('\n').unwrap_or(&text);

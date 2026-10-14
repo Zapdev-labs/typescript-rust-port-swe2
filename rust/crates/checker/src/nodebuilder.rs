@@ -417,7 +417,7 @@ impl<'a> NodeBuilder<'a> {
         self.propagate_verbosity_out();
 
         // Simplify declarations by applying original modifiers.
-        let declarations = c.symbol_arena.borrow()[symbol.index()].declarations.clone();
+        let declarations = c.symbol_arena.get_ref(symbol).declarations.clone();
         let mut result = Vec::with_capacity(hover_nodes.len());
         for node in hover_nodes {
             match nodes[node].kind {

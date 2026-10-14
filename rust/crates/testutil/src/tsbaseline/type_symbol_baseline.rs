@@ -497,7 +497,7 @@ impl TypeWriterWalker {
                 // !!! TODO: port underline printer, memoize
                 let mut writer = printer::TextWriter::new("", 0);
                 let symbols = file_checker.symbol_arena.clone();
-                let symbols = symbols.borrow();
+                let symbols = symbols.clone();
                 {
                     let emit_context_cell = builder.emit_context();
                     let mut emit_context = emit_context_cell.borrow_mut();
@@ -547,7 +547,7 @@ impl TypeWriterWalker {
             ),
         ));
         let mut count = 0;
-        let declarations = file_checker.symbol_arena.borrow()[symbol.index()]
+        let declarations = file_checker.symbol_arena.get_ref(symbol)
             .declarations
             .clone();
         for &declaration in &declarations {

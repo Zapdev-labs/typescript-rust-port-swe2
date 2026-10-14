@@ -38,7 +38,7 @@ use std::sync::LazyLock;
 
 use tsc_ast::checkflags::CheckFlags;
 use tsc_ast::diagnostic::DiagnosticRef;
-use tsc_ast::{ArenaCell, FlowFlags, FlowListId, FlowNode, FlowNodeId, Kind, NodeId, SymbolId, self as ast};
+use tsc_ast::{FlowFlags, FlowListId, FlowNode, FlowNodeId, Kind, NodeId, SymbolId, self as ast};
 
 use crate::checker_core::{CacheHashKey, CheckMode, Checker};
 use crate::checker_types::{
@@ -953,7 +953,7 @@ impl Checker {
                     let symbol = self.get_resolved_symbol(expr);
                     if self.is_constant_variable(symbol) {
                         let declaration =
-                            self.symbol_arena.borrow()[symbol.index()].value_declaration;
+                            self.symbol_arena.get_ref(symbol).value_declaration;
                         if let Some(declaration) = declaration {
                             // `declaration` can be foreign to the flow-graph
                             // arena — resolve it in its own arena.
@@ -2148,7 +2148,7 @@ impl Checker {
             return t;
         };
         let (class_symbol, value_declaration) = {
-            let arena = self.symbol_arena.borrow();
+            let arena = self.symbol_arena.clone();
             (
                 arena[symbol.index()].parent,
                 arena[symbol.index()].value_declaration,
@@ -2211,7 +2211,7 @@ impl Checker {
     ) -> bool {
         if let Some(prop) = self.get_property_of_type(t, prop_name) {
             let (flags, check_flags) = {
-                let arena = self.symbol_arena.borrow();
+                let arena = self.symbol_arena.clone();
                 (arena[prop.index()].flags, arena[prop.index()].check_flags)
             };
             return flags.intersects(ast::SymbolFlags::OPTIONAL)
@@ -3078,7 +3078,7 @@ impl Checker {
                 let symbol = self.get_resolved_symbol(expr);
                 let exported = self.get_export_symbol_of_value_symbol_if_exported(Some(symbol));
                 let declaration =
-                    exported.and_then(|e| self.symbol_arena.borrow()[e.index()].value_declaration);
+                    exported.and_then(|e| self.symbol_arena.get_ref(e).value_declaration);
                 if let Some(declaration) = declaration {
                     let decl_nodes = self.program_nodes(declaration);
                     if (ast::is_binding_element(&decl_nodes[declaration])
@@ -3101,7 +3101,7 @@ impl Checker {
         } else if ast::is_identifier(&nodes[expr]) {
             let symbol = self.get_resolved_symbol(expr);
             if self.is_constant_variable(symbol) {
-                let declaration = self.symbol_arena.borrow()[symbol.index()].value_declaration;
+                let declaration = self.symbol_arena.get_ref(symbol).value_declaration;
                 // `declaration` can be foreign to the flow-graph arena —
                 // resolve it in its own arena.
                 let decl_nodes = declaration.map(|d| self.program_nodes(d));
@@ -3745,13 +3745,13 @@ impl Checker {
             return (String::new(), false);
         };
         if !(self.is_constant_variable(symbol)
-            || self.symbol_arena.borrow()[symbol.index()]
+            || self.symbol_arena.get_ref(symbol)
                 .flags
                 .intersects(ast::SymbolFlags::ENUM_MEMBER))
         {
             return (String::new(), false);
         }
-        let Some(declaration) = self.symbol_arena.borrow()[symbol.index()].value_declaration else {
+        let Some(declaration) = self.symbol_arena.get_ref(symbol).value_declaration else {
             return (String::new(), false);
         };
         if let Some(t) = self.try_get_type_from_type_node(declaration) {
@@ -3867,7 +3867,7 @@ impl Checker {
                 {
                     return true;
                 }
-                self.symbol_arena.borrow()[symbol.index()]
+                self.symbol_arena.get_ref(symbol)
                     .value_declaration
                     .is_some_and(|d| {
                         let __program = self.program.clone().expect("program");
@@ -4589,7 +4589,7 @@ impl Checker {
         symbol: SymbolId,
         diagnostic: Option<DiagnosticRef>,
     ) -> Option<TypeId> {
-        let symbol_flags = self.symbol_arena.borrow()[symbol.index()].flags;
+        let symbol_flags = self.symbol_arena.get_ref(symbol).flags;
         if symbol_flags.intersects(
             ast::SymbolFlags::FUNCTION
                 | ast::SymbolFlags::METHOD
@@ -4599,7 +4599,7 @@ impl Checker {
             return Some(self.get_type_of_symbol(symbol));
         }
         if symbol_flags.intersects(ast::SymbolFlags::VARIABLE | ast::SymbolFlags::PROPERTY) {
-            if self.symbol_arena.borrow()[symbol.index()]
+            if self.symbol_arena.get_ref(symbol)
                 .check_flags
                 .intersects(CheckFlags::MAPPED)
             {
@@ -4613,7 +4613,7 @@ impl Checker {
                     }
                 }
             }
-            let declaration = self.symbol_arena.borrow()[symbol.index()].value_declaration;
+            let declaration = self.symbol_arena.get_ref(symbol).value_declaration;
             if let Some(declaration) = declaration {
                 let __program = self.program.clone().expect("program");
                 let nodes = __program.nodes((declaration).file_index());
@@ -5150,7 +5150,7 @@ impl Checker {
         symbol: SymbolId,
         constructor: NodeId,
     ) -> Option<TypeId> {
-        let symbol_name = self.symbol_arena.borrow()[symbol.index()].name.clone();
+        let symbol_name = self.symbol_arena.get_ref(symbol).name.clone();
         let private_name = symbol_name
             .starts_with(&format!("{}#", ast::symbol::INTERNAL_SYMBOL_NAME_PREFIX))
             .then(|| symbol_name[symbol_name.find('@').map(|i| i + 1).unwrap_or(0)..].to_string());
@@ -5205,7 +5205,7 @@ impl Checker {
         if self.no_implicit_any
             && (flow_type == self.auto_type || flow_type == self.auto_array_type)
         {
-            let declaration = self.symbol_arena.borrow()[symbol.index()].value_declaration;
+            let declaration = self.symbol_arena.get_ref(symbol).value_declaration;
             let args = [
                 self.symbol_to_string(symbol),
                 self.type_to_string(flow_type),
@@ -5231,7 +5231,7 @@ impl Checker {
         symbol: SymbolId,
         static_blocks: &[NodeId],
     ) -> Option<TypeId> {
-        let symbol_name = self.symbol_arena.borrow()[symbol.index()].name.clone();
+        let symbol_name = self.symbol_arena.get_ref(symbol).name.clone();
         let private_name = symbol_name
             .starts_with(&format!("{}#", ast::symbol::INTERNAL_SYMBOL_NAME_PREFIX))
             .then(|| symbol_name[symbol_name.find('@').map(|i| i + 1).unwrap_or(0)..].to_string());
@@ -5285,7 +5285,7 @@ impl Checker {
             if self.no_implicit_any
                 && (flow_type == self.auto_type || flow_type == self.auto_array_type)
             {
-                let declaration = self.symbol_arena.borrow()[symbol.index()].value_declaration;
+                let declaration = self.symbol_arena.get_ref(symbol).value_declaration;
                 let args = [
                     self.symbol_to_string(symbol),
                     self.type_to_string(flow_type),
@@ -5586,7 +5586,7 @@ impl Checker {
 
     /// `(c *Checker) ensureAssignmentsMarked` (flow.go).
     pub(crate) fn ensure_assignments_marked(&mut self, symbol: SymbolId) {
-        let value_declaration = self.symbol_arena.borrow()[symbol.index()].value_declaration;
+        let value_declaration = self.symbol_arena.get_ref(symbol).value_declaration;
         let Some(value_declaration) = value_declaration else {
             return;
         };
@@ -5665,7 +5665,7 @@ impl Checker {
                             .last_assignment_pos;
                         if last_assignment_pos == 0 || last_assignment_pos != i32::MAX {
                             let value_declaration =
-                                self.symbol_arena.borrow()[symbol.index()].value_declaration;
+                                self.symbol_arena.get_ref(symbol).value_declaration;
                             let referencing_function = ast::find_ancestor(
                                 Some(node),
                                 &nodes,

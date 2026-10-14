@@ -135,7 +135,7 @@ impl<'a, 'c, 'h> MissingMemberFixer<'a, 'c, 'h> {
         preserve_optional: PreserveOptionalFlags,
         abstract_: bool,
     ) -> Vec<NodeId> {
-        let declarations = self.program.symbols.borrow()[symbol.index()]
+        let declarations = self.program.symbols.get_ref(symbol)
             .declarations
             .clone();
         let declaration = declarations.first().copied();
@@ -151,7 +151,7 @@ impl<'a, 'c, 'h> MissingMemberFixer<'a, 'c, 'h> {
             )
         };
         let signature_only = ambient || abstract_;
-        let optional = self.program.symbols.borrow()[symbol.index()]
+        let optional = self.program.symbols.get_ref(symbol)
             .flags
             .intersects(SymbolFlags::OPTIONAL);
         let kind = declaration.map_or(Kind::PropertySignature, |d| {
@@ -880,7 +880,7 @@ impl<'a, 'c, 'h> MissingMemberFixer<'a, 'c, 'h> {
             let names: Vec<String> = s
                 .parameters()
                 .iter()
-                .map(|&p| cb.symbol_arena.borrow()[p.index()].name.to_string())
+                .map(|&p| cb.symbol_arena.get_ref(p).name.to_string())
                 .collect();
             (s.parameters().len(), s.has_rest_parameter(), names)
         };
@@ -1064,7 +1064,7 @@ impl<'a, 'c, 'h> MissingMemberFixer<'a, 'c, 'h> {
         }
         let mut cb = self.checker.borrow_mut();
         let symbol = cb.get_export_symbol_of_symbol(symbol);
-        if cb.symbol_arena.borrow()[symbol.index()].parent.is_none() {
+        if cb.symbol_arena.get_ref(symbol).parent.is_none() {
             return None;
         }
         Some(symbol)
@@ -1155,7 +1155,7 @@ impl<'a, 'c, 'h> MissingMemberFixer<'a, 'c, 'h> {
         source_file: NodeId,
     ) -> Option<NodeId> {
         let (is_mapped, symbol_name) = {
-            let symbols = self.program.symbols.borrow();
+            let symbols = self.program.symbols.clone();
             let s = &symbols[symbol.index()];
             (s.check_flags.intersects(CheckFlags::MAPPED), s.name.clone())
         };

@@ -420,7 +420,7 @@ fn get_fixes_info_for_umd_import(
 
     let mut result: Vec<FixInfo> = Vec::new();
     let umd_symbol_name = {
-        let symbols = program.symbols.borrow();
+        let symbols = program.symbols.clone();
         symbols[umd_symbol.index()].name.clone()
     };
     let error_identifier_text = {
@@ -507,7 +507,7 @@ fn is_umd_export_symbol(
         return false;
     }
     let first_decl = {
-        let symbols = program.symbols.borrow();
+        let symbols = program.symbols.clone();
         symbols[symbol.index()].declarations.first().copied()
     };
     let Some(first_decl) = first_decl else {
@@ -787,7 +787,7 @@ fn needs_jsx_namespace_fix(
         return true;
     };
     let (has_type_only_decl, no_value_flags) = {
-        let symbols = program.symbols.borrow();
+        let symbols = program.symbols.clone();
         let decls = symbols[namespace_symbol.index()].declarations.clone();
         let flags = symbols[namespace_symbol.index()].flags;
         let has_type_only = decls.iter().any(|&d| {

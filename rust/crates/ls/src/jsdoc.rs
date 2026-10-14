@@ -3,7 +3,7 @@
 // PORT notes:
 //
 // - `*ast.Symbol`/`*ast.Node` are `SymbolId`/`NodeId`. Symbol fields are read
-//   via `c.symbol_arena.borrow()`; node fields via `program.arena_of(id)`
+//   via `c.symbol_arena.get_ref(id)`; node fields via `program.arena_of(id)`
 //   snapshots because a declaration may live in another file's arena.
 // - `node.JSDoc(nil)` → `ast::js_doc(&mut nodes, node, file)`, which can
 //   trigger lazy JSDoc parsing and therefore needs a mutable arena guard
@@ -47,7 +47,7 @@ pub fn get_symbol_documentation_comment(
     };
     let declarations = {
         let arena = c.borrow().symbol_arena.clone();
-        arena.borrow()[symbol.index()].declarations.clone()
+        arena.get_ref(symbol).declarations.clone()
     };
     let mut parts: Vec<String> = Vec::new();
     let mut seen: Set<NodeId> = Set::new();
@@ -86,7 +86,7 @@ pub fn get_symbol_js_doc_tags(
     let symbol = symbol?;
     let declarations = {
         let arena = c.borrow().symbol_arena.clone();
-        arena.borrow()[symbol.index()].declarations.clone()
+        arena.get_ref(symbol).declarations.clone()
     };
     let mut infos: Vec<JSDocTagInfo> = Vec::new();
     let mut seen: Set<NodeId> = Set::new();
@@ -328,7 +328,7 @@ pub(crate) fn get_jsdoc_or_tag(
                 if let Some(prop) = c.borrow_mut().get_property_of_type(object_type, &text) {
                     let prop_declarations = {
                         let arena = c.borrow().symbol_arena.clone();
-                        arena.borrow()[prop.index()].declarations.clone()
+                        arena.get_ref(prop).declarations.clone()
                     };
                     for d in prop_declarations {
                         if let Some(jsdoc) = get_jsdoc(program, d) {
@@ -352,7 +352,7 @@ pub(crate) fn get_jsdoc_or_tag(
         {
             let first_signature = {
                 let arena = c.borrow().symbol_arena.clone();
-                arena.borrow()[symbol.index()]
+                arena.get_ref(symbol)
                     .declarations
                     .iter()
                     .copied()
@@ -375,7 +375,7 @@ pub(crate) fn get_jsdoc_or_tag(
             let is_static = ast::has_static_modifier(&nodes[node]);
             let symbol_name = {
                 let arena = c.borrow().symbol_arena.clone();
-                arena.borrow()[symbol.index()].name.clone()
+                arena.get_ref(symbol).name.clone()
             };
             if let Some(parent_symbol) = nodes[parent].symbol() {
                 let class_type = c.borrow_mut().get_declared_type_of_symbol(parent_symbol);
@@ -421,7 +421,7 @@ fn jsdoc_from_base_prop(
     let prop = prop?;
     let value_declaration = {
         let arena = c.borrow().symbol_arena.clone();
-        arena.borrow()[prop.index()].value_declaration
+        arena.get_ref(prop).value_declaration
     }?;
     if !seen_symbols.add_if_absent(prop) {
         return None;

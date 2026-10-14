@@ -4,7 +4,7 @@ use rustc_hash::FxHashMap;
 use tsc_ast::ast::Node;
 use tsc_ast::ast_generated::{is_module_declaration, is_source_file};
 use tsc_ast::ids::{NodeId, SymbolId};
-use tsc_ast::symbol::{INTERNAL_SYMBOL_NAME_EXPORT_EQUALS, Symbol};
+use tsc_ast::symbol::{INTERNAL_SYMBOL_NAME_EXPORT_EQUALS, Symbol, SymbolArena};
 use tsc_ast::symbolflags::SymbolFlags;
 use tsc_ast::utilities::{
     find_ancestor, get_source_file_of_node, is_external_module_augmentation,
@@ -49,7 +49,7 @@ pub fn get_module_specifiers<S, H, C>(
     user_preferences: &UserPreferences,
     options: &ModuleSpecifierOptions,
     for_auto_imports: bool,
-    symbols: &[Symbol],
+    symbols: &SymbolArena,
     nodes: &[Node],
     resolve: crate::types::NodeResolver,
 ) -> ModuleSpecifiersResult
@@ -83,7 +83,7 @@ pub fn get_module_specifiers_with_info<S, H, C>(
     user_preferences: &UserPreferences,
     options: &ModuleSpecifierOptions,
     for_auto_imports: bool,
-    symbols: &[Symbol],
+    symbols: &SymbolArena,
     nodes: &[Node],
     resolve: crate::types::NodeResolver,
 ) -> ModuleSpecifiersResult
@@ -223,7 +223,7 @@ fn source_file_of_module(
 fn try_get_module_name_from_ambient_module<C: CheckerShape>(
     module_symbol: SymbolId,
     checker: &C,
-    symbols: &[Symbol],
+    symbols: &SymbolArena,
     nodes: &[Node],
     resolve: crate::types::NodeResolver,
 ) -> AmbientModuleInfo {

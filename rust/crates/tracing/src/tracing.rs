@@ -15,7 +15,7 @@
 // - `*ast.Node` is `NodeId` and `*ast.Symbol` is `SymbolId`; both are
 //   arena-relative. Go's `DumpTypes()`/`getLocation` reach the checker's
 //   arenas through pointers, so `dump_types`/`build_type_descriptor` take
-//   `nodes: &[Node]`/`symbols: &[Symbol]` and `stop_tracing` takes a `dump`
+//   `nodes: &[Node]`/`symbols: &SymbolArena` and `stop_tracing` takes a `dump`
 //   callback supplying them (Go's `StopTracing` calls `tracer.DumpTypes()`
 //   with no arguments).
 // - `TracedType.RecursionIdentity() any` (a `map[any]int` key in Go) becomes
@@ -33,7 +33,7 @@ use std::time::{Duration, Instant};
 use serde::{Deserialize, Serialize};
 use tsc_ast::symbol::escape_all_internal_symbol_names;
 use tsc_ast::utilities::get_source_file_of_node;
-use tsc_ast::{Node, NodeId, Symbol, SymbolId};
+use tsc_ast::{Node, NodeId, SymbolArena, SymbolId};
 use tsc_tspath::{CaseSensitivity, RootedDirectoryPath, RootedFilePath};
 use tsc_vfs::Vfs;
 
@@ -51,7 +51,7 @@ pub trait Tracer {
     /// `DumpTypes` writes all recorded types to disk. `nodes`/`symbols` are
     /// the checker's arenas — Go's `*ast.Node`/`*ast.Symbol` pointers carry
     /// their arena implicitly.
-    fn dump_types(&self, nodes: &[Node], symbols: &[Symbol]) -> Result<(), Error>;
+    fn dump_types(&self, nodes: &[Node], symbols: &SymbolArena) -> Result<(), Error>;
 }
 
 /// `TracedType` is an interface that represents a type that can be traced.
@@ -906,7 +906,7 @@ impl TypeTracer {
     /// `nodes`/`symbols` are the checker's arenas; Go's `DumpTypes` reaches
     /// them through the `*ast.Node`/`*ast.Symbol` pointers returned by
     /// `TracedType` accessors.
-    pub fn dump_types(&self, nodes: &[Node], symbols: &[Symbol]) -> Result<(), Error> {
+    pub fn dump_types(&self, nodes: &[Node], symbols: &SymbolArena) -> Result<(), Error> {
         // Copy the types slice under lock, then release so `display()` calls
         // during `build_type_descriptor` don't deadlock when they create new
         // types.
@@ -950,7 +950,7 @@ impl Tracer for TypeTracer {
     }
 
     /// `t.DumpTypes()` — see `TypeTracer::dump_types`.
-    fn dump_types(&self, nodes: &[Node], symbols: &[Symbol]) -> Result<(), Error> {
+    fn dump_types(&self, nodes: &[Node], symbols: &SymbolArena) -> Result<(), Error> {
         TypeTracer::dump_types(self, nodes, symbols)
     }
 }
@@ -1126,7 +1126,7 @@ fn build_type_descriptor(
     typ: &dyn TracedType,
     recursion_identity_map: &mut HashMap<RecursionIdentity, i32>,
     nodes: &[Node],
-    symbols: &[Symbol],
+    symbols: &SymbolArena,
 ) -> TypeDescriptor {
     let symbol = typ.symbol();
     let alias_symbol = typ.alias_symbol();

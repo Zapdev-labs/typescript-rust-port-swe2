@@ -17,7 +17,7 @@ use tsc_tspath::{PathKey, RootedFilePath};
 
 use crate::binder::{bind_result, bind_source_file};
 
-fn parse_and_bind(source: &str, file_name: &str) -> (NodeId, Vec<Node>, Vec<tsc_ast::Symbol>) {
+fn parse_and_bind(source: &str, file_name: &str) -> (NodeId, Vec<Node>, tsc_ast::SymbolArena) {
     let file_name = RootedFilePath::from(file_name);
     let opts = SourceFileParseOptions {
         file_name,
@@ -25,8 +25,8 @@ fn parse_and_bind(source: &str, file_name: &str) -> (NodeId, Vec<Node>, Vec<tsc_
         ..Default::default()
     };
     let (file, mut nodes) = parse_source_file(opts, source, ScriptKind::Ts);
-    let mut symbols = Vec::new();
-    bind_source_file(&mut nodes, file, &mut symbols);
+    let symbols = tsc_ast::SymbolArena::default();
+    bind_source_file(&mut nodes, file, &symbols);
     (file, nodes, symbols)
 }
 
@@ -66,7 +66,7 @@ fn bind_declares_symbols_and_module_indicator() {
 fn bind_is_idempotent() {
     let (file, mut nodes, _symbols) = parse_and_bind("export const a = 1;", "/src/a.ts");
     let result_ptr = bind_result(&nodes, file).expect("bind result") as *const _;
-    bind_source_file(&mut nodes, file, &mut Vec::new());
+    bind_source_file(&mut nodes, file, &tsc_ast::SymbolArena::default());
     assert_eq!(
         bind_result(&nodes, file).expect("bind result") as *const _,
         result_ptr,

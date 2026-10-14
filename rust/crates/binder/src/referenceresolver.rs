@@ -18,7 +18,7 @@
 use tsc_ast::ast::Node;
 use tsc_ast::ids::{NodeId, SymbolId};
 use tsc_ast::kind_generated::Kind;
-use tsc_ast::symbol::{Symbol, SymbolTable};
+use tsc_ast::symbol::{SymbolArena, SymbolTable};
 use tsc_ast::symbolflags::SymbolFlags;
 use tsc_ast::utilities::*;
 use tsc_core::options_generated::CompilerOptions;
@@ -36,28 +36,28 @@ pub trait ReferenceResolver {
         node: NodeId,
         prefix_locals: bool,
         nodes: &[Node],
-        symbols: &std::cell::RefCell<Vec<Symbol>>,
+        symbols: &SymbolArena,
     ) -> Option<NodeId>;
 
     fn get_referenced_import_declaration(
         &mut self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &std::cell::RefCell<Vec<Symbol>>,
+        symbols: &SymbolArena,
     ) -> Option<NodeId>;
 
     fn get_referenced_value_declaration(
         &mut self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &std::cell::RefCell<Vec<Symbol>>,
+        symbols: &SymbolArena,
     ) -> Option<NodeId>;
 
     fn get_referenced_value_declarations(
         &mut self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &std::cell::RefCell<Vec<Symbol>>,
+        symbols: &SymbolArena,
     ) -> Vec<NodeId>;
 
     fn get_element_access_expression_name(&mut self, expression: Option<NodeId>) -> String;
@@ -66,7 +66,7 @@ pub trait ReferenceResolver {
         &mut self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &std::cell::RefCell<Vec<Symbol>>,
+        symbols: &SymbolArena,
     ) -> Option<NodeId>;
 
     /// PORT: resolves `id` to a cloned `Node` — checks `nodes` first (the
@@ -195,13 +195,13 @@ impl<'a> ReferenceResolverImpl<'a> {
     fn get_parent_of_symbol(
         &mut self,
         symbol: Option<SymbolId>,
-        symbols: &std::cell::RefCell<Vec<Symbol>>,
+        symbols: &SymbolArena,
     ) -> Option<SymbolId> {
         if let Some(symbol) = symbol {
             if let Some(hook) = self.hooks.get_parent_of_symbol.as_mut() {
                 return hook(symbol);
             }
-            return symbols.borrow()[symbol.index()].parent;
+            return symbols.get_ref(symbol).parent;
         }
         None
     }
@@ -227,7 +227,7 @@ impl<'a> ReferenceResolverImpl<'a> {
         reference: NodeId,
         start_in_declaration_container: bool,
         nodes: &[Node],
-        symbols: &std::cell::RefCell<Vec<Symbol>>,
+        symbols: &SymbolArena,
     ) -> Option<SymbolId> {
         let resolved_symbol = self.get_resolved_symbol(Some(reference));
         if resolved_symbol.is_some() {
@@ -268,7 +268,7 @@ impl<'a> ReferenceResolverImpl<'a> {
         &mut self,
         symbol: Option<SymbolId>,
         nodes: &[Node],
-        symbols: &std::cell::RefCell<Vec<Symbol>>,
+        symbols: &SymbolArena,
     ) -> bool {
         if let Some(symbol) = symbol {
             if let Some(hook) = self.hooks.get_type_only_alias_declaration.as_mut() {
@@ -306,9 +306,9 @@ impl<'a> ReferenceResolverImpl<'a> {
         &mut self,
         symbol: SymbolId,
         nodes: &[Node],
-        symbols: &std::cell::RefCell<Vec<Symbol>>,
+        symbols: &SymbolArena,
     ) -> Option<NodeId> {
-        symbols.borrow()[symbol.index()]
+        symbols.get_ref(symbol)
             .declarations
             .iter()
             .rev()
@@ -320,7 +320,7 @@ impl<'a> ReferenceResolverImpl<'a> {
     fn get_export_symbol_of_value_symbol_if_exported(
         &mut self,
         symbol: Option<SymbolId>,
-        symbols: &std::cell::RefCell<Vec<Symbol>>,
+        symbols: &SymbolArena,
     ) -> Option<SymbolId> {
         if let Some(mut symbol) = symbol {
             if let Some(hook) = self
@@ -330,12 +330,12 @@ impl<'a> ReferenceResolverImpl<'a> {
             {
                 return hook(symbol);
             }
-            if symbols.borrow()[symbol.index()]
+            if symbols.get_ref(symbol)
                 .flags
                 .intersects(SymbolFlags::EXPORT_VALUE)
-                && symbols.borrow()[symbol.index()].export_symbol.is_some()
+                && symbols.get_ref(symbol).export_symbol.is_some()
             {
-                symbol = symbols.borrow()[symbol.index()].export_symbol.unwrap();
+                symbol = symbols.get_ref(symbol).export_symbol.unwrap();
             }
             return self.get_merged_symbol(Some(symbol));
         }
@@ -387,7 +387,7 @@ impl<'a> ReferenceResolver for ReferenceResolverImpl<'a> {
         node: NodeId,
         prefix_locals: bool,
         nodes: &[Node],
-        symbols: &std::cell::RefCell<Vec<Symbol>>,
+        symbols: &SymbolArena,
     ) -> Option<NodeId> {
         // When resolving the export for the name of a module or enum
         // declaration, we need to start resolution at the declaration's container.
@@ -400,20 +400,20 @@ impl<'a> ReferenceResolver for ReferenceResolverImpl<'a> {
         if let Some(mut symbol) =
             self.get_referenced_value_symbol(node, start_in_declaration_container, nodes, symbols)
         {
-            if symbols.borrow()[symbol.index()]
+            if symbols.get_ref(symbol)
                 .flags
                 .intersects(SymbolFlags::EXPORT_VALUE)
             {
                 // If we reference an exported entity within the same module declaration, then whether
                 // we prefix depends on the kind of entity. SymbolFlags.ExportHasLocal encompasses all the
                 // kinds that we do NOT prefix.
-                let export_symbol_id = symbols.borrow()[symbol.index()].export_symbol;
+                let export_symbol_id = symbols.get_ref(symbol).export_symbol;
                 let export_symbol = self.get_merged_symbol(export_symbol_id)?;
                 if !prefix_locals
-                    && symbols.borrow()[export_symbol.index()]
+                    && symbols.get_ref(export_symbol)
                         .flags
                         .intersects(SymbolFlags::EXPORT_HAS_LOCAL)
-                    && !symbols.borrow()[export_symbol.index()]
+                    && !symbols.get_ref(export_symbol)
                         .flags
                         .intersects(SymbolFlags::VARIABLE)
                 {
@@ -423,8 +423,8 @@ impl<'a> ReferenceResolver for ReferenceResolverImpl<'a> {
             }
             if let Some(parent_symbol) = self.get_parent_of_symbol(Some(symbol), symbols) {
                 let parent_is_value_module_source_file = {
-                    let vd = symbols.borrow()[parent_symbol.index()].value_declaration;
-                    symbols.borrow()[parent_symbol.index()]
+                    let vd = symbols.get_ref(parent_symbol).value_declaration;
+                    symbols.get_ref(parent_symbol)
                         .flags
                         .intersects(SymbolFlags::VALUE_MODULE)
                         && vd.is_some_and(|vd| {
@@ -433,7 +433,7 @@ impl<'a> ReferenceResolver for ReferenceResolverImpl<'a> {
                 };
                 if parent_is_value_module_source_file {
                     let symbol_file =
-                        symbols.borrow()[parent_symbol.index()].value_declaration.unwrap();
+                        symbols.get_ref(parent_symbol).value_declaration.unwrap();
                     let reference_file = get_source_file_of_node(Some(node), nodes);
                     // If `node` accesses an export and that export isn't in the same file, then symbol is a namespace export, so return nil.
                     let symbol_is_umd_export = Some(symbol_file) != reference_file;
@@ -474,7 +474,7 @@ impl<'a> ReferenceResolver for ReferenceResolverImpl<'a> {
         &mut self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &std::cell::RefCell<Vec<Symbol>>,
+        symbols: &SymbolArena,
     ) -> Option<NodeId> {
         if let Some(symbol) = self.get_referenced_value_symbol(
             node, false, /*startInDeclarationContainer*/
@@ -483,7 +483,7 @@ impl<'a> ReferenceResolver for ReferenceResolverImpl<'a> {
             // We should only get the declaration of an alias if there isn't a local value
             // declaration for the symbol
             let is_non_local = {
-                let arena = symbols.borrow();
+                let arena = symbols.clone();
                 is_non_local_alias(
                     Some(&arena[symbol.index()]),
                     SymbolFlags::VALUE, /*excludes*/
@@ -503,7 +503,7 @@ impl<'a> ReferenceResolver for ReferenceResolverImpl<'a> {
         &mut self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &std::cell::RefCell<Vec<Symbol>>,
+        symbols: &SymbolArena,
     ) -> Option<NodeId> {
         if let Some(symbol) = self.get_referenced_value_symbol(
             node, false, /*startInDeclarationContainer*/
@@ -511,7 +511,7 @@ impl<'a> ReferenceResolver for ReferenceResolverImpl<'a> {
         ) {
             return self
                 .get_export_symbol_of_value_symbol_if_exported(Some(symbol), symbols)
-                .and_then(|s| symbols.borrow()[s.index()].value_declaration);
+                .and_then(|s| symbols.get_ref(s).value_declaration);
         }
         None
     }
@@ -521,7 +521,7 @@ impl<'a> ReferenceResolver for ReferenceResolverImpl<'a> {
         &mut self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &std::cell::RefCell<Vec<Symbol>>,
+        symbols: &SymbolArena,
     ) -> Vec<NodeId> {
         let mut declarations = Vec::new();
         if let Some(symbol) = self.get_referenced_value_symbol(
@@ -533,7 +533,7 @@ impl<'a> ReferenceResolver for ReferenceResolverImpl<'a> {
             else {
                 return declarations;
             };
-            let symbol_declarations = symbols.borrow()[symbol.index()].declarations.clone();
+            let symbol_declarations = symbols.get_ref(symbol).declarations.clone();
             for &declaration in &symbol_declarations {
                 match self.node_kind(declaration, nodes) {
                     Some(
@@ -582,7 +582,7 @@ impl<'a> ReferenceResolver for ReferenceResolverImpl<'a> {
         &mut self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &std::cell::RefCell<Vec<Symbol>>,
+        symbols: &SymbolArena,
     ) -> Option<NodeId> {
         // member references are `this.something` or `this[something]`, so should always simply have a resolved symbol
         let mut s = self.get_resolved_symbol(Some(node));
@@ -592,7 +592,7 @@ impl<'a> ReferenceResolver for ReferenceResolverImpl<'a> {
         }
         s?;
         self.get_export_symbol_of_value_symbol_if_exported(s, symbols)
-            .and_then(|sym| symbols.borrow()[sym.index()].value_declaration)
+            .and_then(|sym| symbols.get_ref(sym).value_declaration)
     }
 
     /// `resolve_node` — `nodes` is checked first (the caller's working

@@ -9,7 +9,7 @@ use tsc_ast::ast::Node;
 use tsc_ast::ids::NodeId;
 use tsc_ast::kind_generated::Kind;
 use tsc_ast::parseoptions::SourceFileParseOptions;
-use tsc_ast::symbol::Symbol;
+use tsc_ast::symbol::SymbolArena;
 use tsc_ast::utilities::set_parent_in_children;
 use tsc_core::scriptkind::ScriptKind;
 use tsc_parser::parse_source_file;
@@ -38,7 +38,7 @@ fn find_first(nodes: &[Node], kind: Kind) -> NodeId {
 fn expression_literal_kinds() {
     let (_file, nodes) = parse("null; undefined; true;");
     let ch = PseudoChecker::new(true, false);
-    let symbols: &[Symbol] = &[];
+    let symbols = SymbolArena::default();
 
     let null_expr = nodes
         .iter()
@@ -79,7 +79,7 @@ fn numeric_literal_maybe_const_location() {
     let (_file, nodes) = parse("let x = 42;");
     let ch = PseudoChecker::new(true, false);
     let lit = find_first(&nodes, Kind::NumericLiteral);
-    let t = ch.get_type_of_expression(lit, &nodes, &[]);
+    let t = ch.get_type_of_expression(lit, &nodes, &SymbolArena::default());
     assert_eq!(t.kind(), PseudoTypeKind::MaybeConstLocation);
     let mc = t.as_pseudo_type_maybe_const_location();
     assert_eq!(mc.const_type.kind(), PseudoTypeKind::NumericLiteral);
@@ -93,7 +93,7 @@ fn array_literal_const_context() {
     let ch = PseudoChecker::new(true, false);
     let arr = find_first(&nodes, Kind::ArrayLiteralExpression);
     assert!(!is_in_const_context(arr, &nodes));
-    let t = ch.get_type_of_expression(arr, &nodes, &[]);
+    let t = ch.get_type_of_expression(arr, &nodes, &SymbolArena::default());
     assert_eq!(t.kind(), PseudoTypeKind::Inferred);
     assert_eq!(t.as_pseudo_type_inferred().error_nodes, vec![arr]);
 
@@ -101,7 +101,7 @@ fn array_literal_const_context() {
     let (_file, nodes) = parse("let a = [1, 2] as const;");
     let arr = find_first(&nodes, Kind::ArrayLiteralExpression);
     assert!(is_in_const_context(arr, &nodes));
-    let t = ch.get_type_of_expression(arr, &nodes, &[]);
+    let t = ch.get_type_of_expression(arr, &nodes, &SymbolArena::default());
     assert_eq!(t.kind(), PseudoTypeKind::Tuple);
     assert_eq!(t.as_pseudo_type_tuple().elements.len(), 2);
     // Elements keep their `MaybeConstLocation` wrappers; the const/regular
@@ -123,7 +123,7 @@ fn object_literal_in_const_context() {
     let ch = PseudoChecker::new(true, false);
     let obj = find_first(&nodes, Kind::ObjectLiteralExpression);
     assert!(is_in_const_context(obj, &nodes));
-    let t = ch.get_type_of_expression(obj, &nodes, &[]);
+    let t = ch.get_type_of_expression(obj, &nodes, &SymbolArena::default());
     assert_eq!(t.kind(), PseudoTypeKind::ObjectLiteral);
     let elements = &t.as_pseudo_type_object_literal().elements;
     assert_eq!(elements.len(), 2);
@@ -146,7 +146,7 @@ fn object_literal_with_spread_errors() {
         .expect("second object literal")
         .id;
     let spread = find_first(&nodes, Kind::SpreadAssignment);
-    let t = ch.get_type_of_expression(obj, &nodes, &[]);
+    let t = ch.get_type_of_expression(obj, &nodes, &SymbolArena::default());
     assert_eq!(t.kind(), PseudoTypeKind::Inferred);
     assert_eq!(t.as_pseudo_type_inferred().error_nodes, vec![spread]);
 }
@@ -156,7 +156,7 @@ fn arrow_function_single_call_signature() {
     let (_file, nodes) = parse("const f = (a: number, b = 1) => true;");
     let ch = PseudoChecker::new(true, false);
     let arrow = find_first(&nodes, Kind::ArrowFunction);
-    let t = ch.get_type_of_expression(arrow, &nodes, &[]);
+    let t = ch.get_type_of_expression(arrow, &nodes, &SymbolArena::default());
     assert_eq!(t.kind(), PseudoTypeKind::SingleCallSignature);
     let sig = t.as_pseudo_type_single_call_signature();
     assert_eq!(sig.parameters.len(), 2);
@@ -185,10 +185,10 @@ fn function_declaration_return_type() {
         .map(|n| n.id)
         .collect();
     // Annotated return type → Direct.
-    let t = ch.get_return_type_of_signature(fns[0], &nodes, &[]);
+    let t = ch.get_return_type_of_signature(fns[0], &nodes, &SymbolArena::default());
     assert_eq!(t.kind(), PseudoTypeKind::Direct);
     // Unannotated, single return → pseudotype of the expression.
-    let t = ch.get_return_type_of_signature(fns[1], &nodes, &[]);
+    let t = ch.get_return_type_of_signature(fns[1], &nodes, &SymbolArena::default());
     assert_eq!(t.kind(), PseudoTypeKind::MaybeConstLocation);
     assert_eq!(
         t.as_pseudo_type_maybe_const_location().const_type.kind(),
@@ -210,7 +210,7 @@ fn type_assertion_and_as_expression() {
         })
         .expect("as const expression")
         .id;
-    let t = ch.get_type_of_expression(as_const, &nodes, &[]);
+    let t = ch.get_type_of_expression(as_const, &nodes, &SymbolArena::default());
     // `s` is an identifier → Inferred.
     assert_eq!(t.kind(), PseudoTypeKind::Inferred);
 
@@ -221,7 +221,7 @@ fn type_assertion_and_as_expression() {
         .find(|n| n.id != as_const)
         .expect("as any expression")
         .id;
-    let t = ch.get_type_of_expression(as_any, &nodes, &[]);
+    let t = ch.get_type_of_expression(as_any, &nodes, &SymbolArena::default());
     assert_eq!(t.kind(), PseudoTypeKind::Direct);
 }
 
@@ -233,7 +233,7 @@ fn declaration_without_symbol_is_no_result() {
     let (_file, nodes) = parse("let x = 42;");
     let ch = PseudoChecker::new(true, false);
     let decl = find_first(&nodes, Kind::VariableDeclaration);
-    let t = ch.get_type_of_declaration(decl, &nodes, &[]);
+    let t = ch.get_type_of_declaration(decl, &nodes, &SymbolArena::default());
     assert_eq!(t.kind(), PseudoTypeKind::NoResult);
 }
 
@@ -247,9 +247,9 @@ fn parameter_and_property_declarations() {
         .map(|n| n.id)
         .collect();
     // Annotated property → Direct.
-    let t = ch.get_type_of_declaration(props[0], &nodes, &[]);
+    let t = ch.get_type_of_declaration(props[0], &nodes, &SymbolArena::default());
     assert_eq!(t.kind(), PseudoTypeKind::Direct);
     // `q = 3` — initializer; MaybeConstLocation since not contextually typed.
-    let t = ch.get_type_of_declaration(props[1], &nodes, &[]);
+    let t = ch.get_type_of_declaration(props[1], &nodes, &SymbolArena::default());
     assert_eq!(t.kind(), PseudoTypeKind::MaybeConstLocation);
 }

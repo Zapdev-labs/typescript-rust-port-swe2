@@ -16,7 +16,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use tsc_ast::diagnostic::DiagnosticRef;
-use tsc_ast::{self as ast, Kind, Node, NodeId, Symbol};
+use tsc_ast::{self as ast, Kind, Node, NodeId, SymbolArena};
 use tsc_diagnostics::Message;
 use tsc_printer::{EmitResolver, SymbolAccessibility, SymbolAccessibilityResult};
 
@@ -794,7 +794,7 @@ fn add_parent_declaration_related_info(node: NodeId, diag: &DiagnosticRef, nodes
 }
 
 /// `createAccessorTypeError(node)`.
-fn create_accessor_type_error(node: NodeId, nodes: &[Node], symbols: &[Symbol]) -> DiagnosticRef {
+fn create_accessor_type_error(node: NodeId, nodes: &[Node], symbols: &SymbolArena) -> DiagnosticRef {
     let declarations = nodes[node]
         .symbol()
         .map(|s| symbols[s.index()].declarations.clone())
@@ -1016,7 +1016,7 @@ fn create_expression_error_ex(
 /// `getIsolatedDeclarationError`). Threaded the `nodes`/`symbols` arenas Go
 /// reads through pointers.
 pub type GetIsolatedDeclarationError<'a> =
-    Box<dyn Fn(NodeId, &[Node], &[Symbol]) -> DiagnosticRef + 'a>;
+    Box<dyn Fn(NodeId, &[Node], &SymbolArena) -> DiagnosticRef + 'a>;
 
 /// A parameter diagnostic whose `addUndefined` verdict may have been
 /// computed by the degraded `RequiresAddingImplicitUndefinedUnsafe`
@@ -1070,7 +1070,7 @@ pub(crate) fn create_get_isolated_declaration_errors<'a>(
 ) -> GetIsolatedDeclarationError<'a> {
     let create_parameter_error = move |node: NodeId,
                                        nodes: &[Node],
-                                       symbols: &[Symbol]|
+                                       symbols: &SymbolArena|
           -> DiagnosticRef {
         if nodes[node]
             .parent
@@ -1096,7 +1096,7 @@ pub(crate) fn create_get_isolated_declaration_errors<'a>(
     };
 
     Box::new(
-        move |node: NodeId, nodes: &[Node], symbols: &[Symbol]| -> DiagnosticRef {
+        move |node: NodeId, nodes: &[Node], symbols: &SymbolArena| -> DiagnosticRef {
             let heritage_clause =
                 ast::find_ancestor(Some(node), nodes, &mut |n, _| ast::is_heritage_clause(n));
             if heritage_clause.is_some() {

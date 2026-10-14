@@ -43,7 +43,7 @@ use tsc_ast::symbol::{
     INTERNAL_SYMBOL_NAME_EXPORT_STAR, INTERNAL_SYMBOL_NAME_FUNCTION, INTERNAL_SYMBOL_NAME_GLOBAL,
     INTERNAL_SYMBOL_NAME_INDEX, INTERNAL_SYMBOL_NAME_JSX_ATTRIBUTES, INTERNAL_SYMBOL_NAME_MISSING,
     INTERNAL_SYMBOL_NAME_NEW, INTERNAL_SYMBOL_NAME_OBJECT, INTERNAL_SYMBOL_NAME_PREFIX,
-    INTERNAL_SYMBOL_NAME_TYPE, Symbol, symbol_name,
+    INTERNAL_SYMBOL_NAME_TYPE, Symbol, SymbolArena, symbol_name,
 };
 use tsc_ast::symbolflags::SymbolFlags;
 use tsc_ast::utilities::*;
@@ -119,7 +119,7 @@ enum SymbolTableDest {
 /// key registry is the extension point for data owned outside `tsc-ast`).
 ///
 /// PORT: symbols are NOT stored here — Go's `b.symbolArena` is the program's
-/// shared `Vec<Symbol>` (SPEC §5.2), borrowed by the binder for the duration
+/// shared `SymbolArena` (SPEC §5.2), cloned by the binder for the duration
 /// of the bind so `SymbolId`s are globally unique.
 #[derive(Clone)]
 pub struct BindResult {
@@ -184,11 +184,11 @@ pub struct Binder<'a> {
     seen_parse_error: bool,
     symbol_count: i32,
     not_const_enum_only_modules: Set<SymbolId>,
-    /// `b.symbolArena` — in the port this is a mutable borrow of the
-    /// program's global symbol arena (SPEC §5.2): `SymbolId` is an index into
-    /// a single `Vec<Symbol>` shared by every bound file and every `Checker`,
-    /// standing in for Go's pointer-identity `*ast.Symbol` heap.
-    symbols: &'a mut Vec<Symbol>,
+    /// `b.symbolArena` — a handle on the program's global `SymbolArena`
+    /// (SPEC §5.2): `SymbolId` is an index into a single arena shared by
+    /// every bound file and every `Checker`, standing in for Go's
+    /// pointer-identity `*ast.Symbol` heap.
+    symbols: SymbolArena,
     /// `b.flowNodeArena`
     flow_nodes: Vec<FlowNode>,
     /// `b.flowListArena`
@@ -205,7 +205,7 @@ pub struct Binder<'a> {
 /// `symbols` is the program-global symbol arena (SPEC §5.2); the binder
 /// appends to it so `SymbolId`s are valid program-wide, mirroring Go where
 /// binder-allocated `*ast.Symbol`s live on the shared heap.
-pub fn bind_source_file(nodes: &mut Vec<Node>, file: NodeId, symbols: &mut Vec<Symbol>) {
+pub fn bind_source_file(nodes: &mut Vec<Node>, file: NodeId, symbols: &SymbolArena) {
     // This is constructed this way to make the compiler "out-line" the function,
     // avoiding most work in the common case where the file has already been bound.
     if !nodes[file]
@@ -217,9 +217,13 @@ pub fn bind_source_file(nodes: &mut Vec<Node>, file: NodeId, symbols: &mut Vec<S
     }
 }
 
-fn bind_source_file_worker(nodes: &mut Vec<Node>, file: NodeId, symbols: &mut Vec<Symbol>) {
+fn bind_source_file_worker<'a>(
+    nodes: &'a mut Vec<Node>,
+    file: NodeId,
+    symbols: &'a SymbolArena,
+) {
     tsc_ast::ast::bind_once(nodes, file, |nodes| {
-        let mut b = Binder::new(nodes, file, symbols);
+        let mut b = Binder::new(nodes, file, symbols.clone());
         b.unreachable_flow = b.new_flow_node(tsc_ast::FlowFlags::UNREACHABLE);
         b.bind(Some(file));
         b.bind_deferred_expando_assignments();
@@ -235,7 +239,7 @@ fn bind_source_file_worker(nodes: &mut Vec<Node>, file: NodeId, symbols: &mut Ve
 }
 
 impl<'a> Binder<'a> {
-    fn new(nodes: &'a mut Vec<Node>, file: NodeId, symbols: &'a mut Vec<Symbol>) -> Binder<'a> {
+    fn new(nodes: &'a mut Vec<Node>, file: NodeId, symbols: SymbolArena) -> Binder<'a> {
         Binder {
             nodes,
             file,
@@ -276,12 +280,11 @@ impl<'a> Binder<'a> {
 
     fn new_symbol(&mut self, flags: SymbolFlags, name: String) -> SymbolId {
         self.symbol_count += 1;
-        self.symbols.push(Symbol {
+        self.symbols.alloc(Symbol {
             flags,
             name: name.into(),
             ..Default::default()
-        });
-        SymbolId((self.symbols.len() - 1) as u32)
+        })
     }
 
     /// `SymbolTableDest` resolution — `symbolTable[name]` read.
@@ -1586,7 +1589,7 @@ impl<'a> Binder<'a> {
             );
             if self.nodes[node].as_export_assignment().is_export_equals {
                 // Ensure export assignments have a ValueDeclaration set.
-                set_value_declaration(self.symbols, symbol, node, &|id| self.nodes[id].clone());
+                set_value_declaration(&self.symbols, symbol, node, &|id| self.nodes[id].clone());
             }
         }
     }
@@ -1813,7 +1816,7 @@ impl<'a> Binder<'a> {
                 flags,
                 SymbolFlags::NONE,
             );
-            set_value_declaration(self.symbols, symbol, node, &|id| self.nodes[id].clone());
+            set_value_declaration(&self.symbols, symbol, node, &|id| self.nodes[id].clone());
         }
     }
 
@@ -1926,7 +1929,7 @@ impl<'a> Binder<'a> {
 
     /// `getInitializerSymbol` — reads `symbol` via the arena (`&[Symbol]` view).
     fn get_initializer_symbol(&self, symbol: SymbolId) -> Option<SymbolId> {
-        get_initializer_symbol(self.symbols, symbol, self.nodes)
+        get_initializer_symbol(&self.symbols, symbol, self.nodes)
     }
 
     fn bind_this_property_assignment(&mut self, node: NodeId) {
@@ -4030,13 +4033,13 @@ impl<'a> Binder<'a> {
             self.not_const_enum_only_modules.add(symbol);
         }
         if symbol_flags.intersects(SymbolFlags::VALUE) {
-            set_value_declaration(self.symbols, symbol, node, &|id| self.nodes[id].clone());
+            set_value_declaration(&self.symbols, symbol, node, &|id| self.nodes[id].clone());
         }
     }
 
     /// `SetValueDeclaration` — exported in Go for the checker.
     pub fn set_value_declaration_exported(&mut self, symbol: SymbolId, node: NodeId) {
-        set_value_declaration(self.symbols, symbol, node, &|id| self.nodes[id].clone())
+        set_value_declaration(&self.symbols, symbol, node, &|id| self.nodes[id].clone())
     }
 
     fn error_on_node(
@@ -4261,7 +4264,7 @@ fn get_parent_of_property_assignment(node: NodeId, nodes: &[Node]) -> NodeId {
 
 /// `func getInitializerSymbol` — a free function in Go.
 fn get_initializer_symbol(
-    symbols: &[Symbol],
+    symbols: &SymbolArena,
     symbol: SymbolId,
     nodes: &[Node],
 ) -> Option<SymbolId> {
@@ -4383,7 +4386,7 @@ fn is_function_symbol(symbol: &Symbol, nodes: &[Node]) -> bool {
 /// single `&[Node]` slice cannot cover both files. Callers pass a per-file
 /// arena lookup (`nodes[id].clone()` or `program.nodes(id.file_index())`).
 pub fn set_value_declaration(
-    symbols: &mut Vec<Symbol>,
+    symbols: &SymbolArena,
     symbol: SymbolId,
     node: NodeId,
     node_at: &dyn Fn(NodeId) -> Node,
@@ -4399,7 +4402,7 @@ pub fn set_value_declaration(
     {
         // Non-assignment declarations take precedence over assignment declarations and
         // non-namespace declarations take precedence over namespace declarations.
-        symbols[symbol.index()].value_declaration = Some(node);
+        symbols.get_mut(symbol).value_declaration = Some(node);
     }
 }
 

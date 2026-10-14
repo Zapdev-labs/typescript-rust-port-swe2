@@ -6,7 +6,7 @@
 // `resolver` parameters take `&dyn EmitResolver` — the same trait the
 // checker-side emit resolver implements.
 
-use tsc_ast::{self as ast, Kind, ModifierFlags, Node, NodeId};
+use tsc_ast::{self as ast, Kind, ModifierFlags, Node, NodeId, SymbolArena};
 use tsc_printer::EmitContext;
 use tsc_printer::EmitResolver;
 
@@ -206,7 +206,7 @@ pub(crate) fn is_private_method_type_parameter(
 pub(crate) fn should_emit_function_properties(
     input: NodeId,
     nodes: &[Node],
-    symbols: &[ast::Symbol],
+    symbols: &SymbolArena,
 ) -> bool {
     if nodes[input]
         .as_function_declaration()

@@ -367,24 +367,24 @@ pub fn new_node_builder_impl<'a>(
 
 /// `symbol.flags` read through the arena.
 fn symbol_flags(c: &Checker, s: SymbolId) -> SymbolFlags {
-    c.symbol_arena.borrow()[s.index()].flags
+    c.symbol_arena.get_ref(s).flags
 }
 
 /// `symbol.checkFlags` read through the arena.
 fn symbol_check_flags(c: &Checker, s: SymbolId) -> ast::checkflags::CheckFlags {
-    c.symbol_arena.borrow()[s.index()].check_flags
+    c.symbol_arena.get_ref(s).check_flags
 }
 
 /// `symbol.name` (cloned) read through the arena.
 fn symbol_name(c: &Checker, s: SymbolId) -> String {
-    c.symbol_arena.borrow()[s.index()].name.to_string()
+    c.symbol_arena.get_ref(s).name.to_string()
 }
 
 /// `ast.SymbolName` — decodes private-identifier class element names from
 /// their declaration name node (`#context` rather than the internal
 /// `\u{FFFD}#id@#context` encoding).
 fn declaration_symbol_name(c: &Checker, s: SymbolId, nodes: &[ast::Node]) -> String {
-    let arena = c.symbol_arena.borrow();
+    let arena = c.symbol_arena.clone();
     let sym = &arena[s.index()];
     let view = match sym.value_declaration {
         Some(vd) => crate::printer_util::resolve_arena_for(
@@ -399,22 +399,22 @@ fn declaration_symbol_name(c: &Checker, s: SymbolId, nodes: &[ast::Node]) -> Str
 
 /// `symbol.declarations` (cloned) read through the arena.
 fn symbol_declarations(c: &Checker, s: SymbolId) -> Vec<NodeId> {
-    c.symbol_arena.borrow()[s.index()].declarations.clone()
+    c.symbol_arena.get_ref(s).declarations.clone()
 }
 
 /// `symbol.parent` read through the arena.
 fn symbol_parent(c: &Checker, s: SymbolId) -> Option<SymbolId> {
-    c.symbol_arena.borrow()[s.index()].parent
+    c.symbol_arena.get_ref(s).parent
 }
 
 /// `symbol.valueDeclaration` read through the arena.
 fn symbol_value_declaration(c: &Checker, s: SymbolId) -> Option<NodeId> {
-    c.symbol_arena.borrow()[s.index()].value_declaration
+    c.symbol_arena.get_ref(s).value_declaration
 }
 
 /// `symbol.exports` (cloned) read through the arena.
 fn symbol_exports(c: &Checker, s: SymbolId) -> ast::SymbolTable {
-    c.symbol_arena.borrow()[s.index()].exports.clone()
+    c.symbol_arena.get_ref(s).exports.clone()
 }
 
 /// `ast.GetSymbolId` — the arena index *is* the id.
@@ -429,7 +429,7 @@ fn get_node_id(n: NodeId) -> NodeId {
 
 /// `ast.SymbolName` — the *escaped* writeable name of a symbol.
 fn ast_symbol_name(c: &Checker, s: SymbolId) -> String {
-    ast::symbol::escape_symbol_name(&c.symbol_arena.borrow()[s.index()].name).into_owned()
+    ast::symbol::escape_symbol_name(&c.symbol_arena.get_ref(s).name).into_owned()
 }
 
 /// `t.flags` / `t.objectFlags` / `t.symbol` / `t.alias` reads.
@@ -1364,7 +1364,7 @@ impl<'a> NodeBuilderImpl<'a> {
                             .borrow_mut()
                             .report_likely_unsafe_import_required_error(
                                 old_specifier_result.specifier.as_string(),
-                                &c.symbol_arena.borrow()[symbol.index()].name,
+                                &c.symbol_arena.get_ref(symbol).name,
                                 nodes,
                             );
                     }
@@ -2400,7 +2400,7 @@ impl<'a> NodeBuilderImpl<'a> {
         let __program = c.program.clone().expect("program");
         let file_nodes = crate::printer_util::arena_view(&__program, nodes, (context_file).file_index());
         let symbol_arena = c.symbol_arena.clone();
-        let symbol_arena_ref = symbol_arena.borrow();
+        let symbol_arena_ref = symbol_arena.clone();
         let checker_adapter = CheckerShapeAdapter::new(&mut *c);
         // Node ids the specifier machinery dereferences may live in other
         // files' arenas — Go's single global heap hid this. `resolve`
@@ -4206,7 +4206,7 @@ impl<'a> NodeBuilderImpl<'a> {
                     let pt = {
                         let __program = c.program.clone().expect("program");
                         let decl_nodes = crate::printer_util::arena_view(&__program, nodes, (declaration).file_index());
-                        let symbols = c.symbol_arena.borrow();
+                        let symbols = c.symbol_arena.clone();
                         self.pc
                             .get_return_type_of_signature(declaration, &decl_nodes, &symbols)
                     };
@@ -4587,7 +4587,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 let remove = symbol.map(|s| self.add_symbol_type_to_context(s, t));
                 let __program = c.program.clone().expect("program");
                 let decl_nodes = crate::printer_util::arena_view(&__program, nodes, (declaration).file_index());
-                let symbols = c.symbol_arena.borrow();
+                let symbols = c.symbol_arena.clone();
                 let mut pt = if is_accessor_decl {
                     self.pc
                         .get_type_of_accessor(declaration, &decl_nodes, &symbols)
@@ -4613,7 +4613,7 @@ impl<'a> NodeBuilderImpl<'a> {
                     // type for the rest.
                     let __program = c.program.clone().expect("program");
                     let dn = crate::printer_util::arena_view(&__program, nodes, (annotated_decl).file_index());
-                    let symbols = c.symbol_arena.borrow();
+                    let symbols = c.symbol_arena.clone();
                     pt = self
                         .pc
                         .get_type_of_declaration(annotated_decl, &dn, &symbols);
@@ -7778,7 +7778,7 @@ fn is_private_identifier_symbol(c: &Checker, symbol: SymbolId) -> bool {
     if symbol == SymbolId::NONE {
         return false;
     }
-    c.symbol_arena.borrow()[symbol.index()]
+    c.symbol_arena.get_ref(symbol)
         .name
         .starts_with(&(ast::symbol::INTERNAL_SYMBOL_NAME_PREFIX.to_string() + "#"))
 }
@@ -8148,7 +8148,7 @@ fn get_declaration_of_kind_of_symbol(c: &Checker, symbol: SymbolId, kind: Kind,
 fn get_source_file_of_module_symbol(c: &Checker, symbol: SymbolId,
         nodes: &[ast::Node],) -> Option<NodeId> {
     let (value_declaration, declarations) = {
-        let arena = c.symbol_arena.borrow();
+        let arena = c.symbol_arena.clone();
         let s = &arena[symbol.index()];
         (s.value_declaration, s.declarations.clone())
     };
@@ -8619,7 +8619,7 @@ impl Checker {
         result.sort_by(|&a, &b| {
             crate::utilities::compare_types(
                 &self.types,
-                self.symbol_arena.as_ref(),
+                &self.symbol_arena,
                 &self.type_mappers,
                 self.program.as_ref(),
                 a,

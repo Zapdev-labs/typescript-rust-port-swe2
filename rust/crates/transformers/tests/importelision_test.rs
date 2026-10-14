@@ -26,7 +26,7 @@
 //!
 //! `Symbol` is not `Clone`, so name resolution runs `NameResolver::resolve`
 //! against a field-wise scratch copy of the bound symbol arena
-//! (`resolve` needs `&mut Vec<Symbol>` only to append transient
+//! (`resolve` needs `&SymbolArena` only to append transient
 //! `arguments`/`require` symbols; `SymbolId`s index identically into the
 //! scratch and real arenas).
 
@@ -37,7 +37,8 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use tsc_ast::symbol::{INTERNAL_SYMBOL_NAME_DEFAULT, INTERNAL_SYMBOL_NAME_EXPORT_EQUALS};
 use tsc_ast::symbolflags::SymbolFlags;
 use tsc_ast::{
-    self as ast, Kind, ModifierFlags, Node, NodeFlags, NodeId, Symbol, SymbolId, SymbolTable,
+    self as ast, Kind, ModifierFlags, Node, NodeFlags, NodeId, Symbol, SymbolArena, SymbolId,
+    SymbolTable,
 };
 use tsc_binder::binder::bind_source_file;
 use tsc_binder::nameresolver::NameResolver;
@@ -66,7 +67,7 @@ struct BoundFile {
 
 /// `(SymbolId, arena)` result of an alias chain; `None` plays Go's
 /// `unknownSymbol` (unresolved module/name — conservatively a value).
-type Resolved<'a> = Option<(&'a [Node], &'a [Symbol], SymbolId)>;
+type Resolved<'a> = Option<(&'a [Node], &'a SymbolArena, SymbolId)>;
 
 struct FakeEmitResolver {
     /// Owned separately from the `EmitContext` handed to the transforms;
@@ -74,30 +75,13 @@ struct FakeEmitResolver {
     emit_context: Rc<RefCell<EmitContext>>,
     compiler_options: CompilerOptions,
     /// Shared `Symbol` arena for all bound files (SPEC §5.2 — `SymbolId`s
-    /// are program-wide; the test binds every file into one `Vec`).
-    symbols: Vec<Symbol>,
+    /// are program-wide; the test binds every file into one arena).
+    symbols: SymbolArena,
     /// Module specifier text → bound external module file.
     modules: FxHashMap<String, BoundFile>,
     /// `aliasSymbolLinks.referenced` — main-file `SymbolId`s marked by
     /// `mark_linked_references_recursively`.
     referenced: RefCell<FxHashSet<SymbolId>>,
-}
-
-fn clone_symbols(symbols: &[Symbol]) -> Vec<Symbol> {
-    symbols
-        .iter()
-        .map(|s| Symbol {
-            flags: s.flags,
-            check_flags: s.check_flags,
-            name: s.name.clone(),
-            declarations: s.declarations.clone(),
-            value_declaration: s.value_declaration,
-            members: s.members.clone(),
-            exports: s.exports.clone(),
-            parent: s.parent,
-            export_symbol: s.export_symbol,
-        })
-        .collect()
 }
 
 /// `isConstEnumOrConstEnumOnlyModule`.
@@ -107,7 +91,7 @@ fn is_const_enum_or_const_enum_only_module(s: &Symbol) -> bool {
 }
 
 /// `getExportSymbolOfValueSymbolIfExported` (no checker merging).
-fn export_symbol_of_value_symbol_if_exported(symbols: &[Symbol], symbol: SymbolId) -> SymbolId {
+fn export_symbol_of_value_symbol_if_exported(symbols: &SymbolArena, symbol: SymbolId) -> SymbolId {
     let s = &symbols[symbol.index()];
     if s.flags.intersects(SymbolFlags::EXPORT_VALUE) && s.export_symbol.is_some() {
         s.export_symbol.unwrap()
@@ -120,7 +104,7 @@ fn export_symbol_of_value_symbol_if_exported(symbols: &[Symbol], symbol: SymbolI
 fn declaration_of_alias_symbol(
     symbol: SymbolId,
     nodes: &[Node],
-    symbols: &[Symbol],
+    symbols: &SymbolArena,
 ) -> Option<NodeId> {
     symbols[symbol.index()]
         .declarations
@@ -227,8 +211,12 @@ fn enclosing_module_specifier(nodes: &[Node], decl: NodeId) -> Option<NodeId> {
 impl FakeEmitResolver {
     /// The shared `Symbol` arena (program-wide `SymbolId`s — `nodes`/`file`
     /// are accepted only to keep call sites readable).
-    fn symbols_of<'a>(&'a self, _nodes: &'a [Node], _file: NodeId) -> Option<&'a [Symbol]> {
-        Some(self.symbols.as_slice())
+    fn symbols_of<'a>(
+        &'a self,
+        _nodes: &'a [Node],
+        _file: NodeId,
+    ) -> Option<&'a SymbolArena> {
+        Some(&self.symbols)
     }
 
     /// `resolveName` — runs the binder `NameResolver` over a scratch copy of
@@ -239,9 +227,9 @@ impl FakeEmitResolver {
         name: &str,
         meaning: SymbolFlags,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
     ) -> Option<SymbolId> {
-        let scratch = std::cell::RefCell::new(clone_symbols(symbols));
+        let scratch = symbols.snapshot();
         let mut resolver = NameResolver {
             host: None,
             for_suggestion: false,
@@ -274,7 +262,7 @@ impl FakeEmitResolver {
         &self,
         entity: NodeId,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
     ) -> Option<SymbolId> {
         match nodes[entity].kind {
             Kind::Identifier => {
@@ -303,7 +291,7 @@ impl FakeEmitResolver {
         &'a self,
         specifier: Option<NodeId>,
         nodes: &[Node],
-    ) -> Option<(&'a [Node], &'a [Symbol], SymbolId)> {
+    ) -> Option<(&'a [Node], &'a SymbolArena, SymbolId)> {
         let text = nodes[specifier?].text(nodes).into_owned();
         let bound = self.modules.get(&text)?;
         let symbols = self.symbols_of(&bound.nodes, bound.file)?;
@@ -317,7 +305,7 @@ impl FakeEmitResolver {
     fn resolve_alias<'a>(
         &'a self,
         mut nodes: &'a [Node],
-        mut symbols: &'a [Symbol],
+        mut symbols: &'a SymbolArena,
         mut symbol: SymbolId,
     ) -> Resolved<'a> {
         let mut seen: FxHashSet<(usize, SymbolId)> = FxHashSet::default();
@@ -404,7 +392,7 @@ impl FakeEmitResolver {
 
     /// `getTypeOnlyAliasDeclaration` default walk (mirrors
     /// `referenceResolver.isTypeOnlyAliasDeclaration`).
-    fn is_type_only_alias(&self, symbol: SymbolId, nodes: &[Node], symbols: &[Symbol]) -> bool {
+    fn is_type_only_alias(&self, symbol: SymbolId, nodes: &[Node], symbols: &SymbolArena) -> bool {
         let mut node = declaration_of_alias_symbol(symbol, nodes, symbols);
         while let Some(n) = node {
             match nodes[n].kind {
@@ -430,7 +418,7 @@ impl FakeEmitResolver {
     fn symbol_flags_ex(
         &self,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
         symbol: SymbolId,
         exclude_type_only_meanings: bool,
         exclude_local_meanings: bool,
@@ -451,8 +439,8 @@ impl FakeEmitResolver {
             };
             let target = export_symbol_of_value_symbol_if_exported(ts, target);
             if ts[target.index()].flags.intersects(SymbolFlags::ALIAS) {
-                let symbol_key = (symbols.as_ptr() as usize, symbol);
-                let target_key = (ts.as_ptr() as usize, target);
+                let symbol_key = (symbols.arena_id(), symbol);
+                let target_key = (ts.arena_id(), target);
                 if target_key == symbol_key || seen.contains(&target_key) {
                     break;
                 }
@@ -473,7 +461,7 @@ impl FakeEmitResolver {
     fn is_alias_resolved_to_value(
         &self,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
         symbol: Option<SymbolId>,
         exclude_type_only_values: bool,
     ) -> bool {
@@ -500,7 +488,7 @@ impl FakeEmitResolver {
         &self,
         location: NodeId,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
     ) {
         if ast::is_this_in_type_query(location, nodes) {
             return;
@@ -523,7 +511,7 @@ impl FakeEmitResolver {
         symbol: SymbolId,
         location: NodeId,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
     ) {
         if is_in_type_query(location, nodes) {
             return;
@@ -554,7 +542,7 @@ impl FakeEmitResolver {
         &self,
         symbol: SymbolId,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
     ) {
         if !self.referenced.borrow_mut().insert(symbol) {
             return;
@@ -582,7 +570,7 @@ impl FakeEmitResolver {
     }
 
     /// `markExportAsReferenced`.
-    fn mark_export_as_referenced(&self, node: NodeId, nodes: &[Node], symbols: &[Symbol]) {
+    fn mark_export_as_referenced(&self, node: NodeId, nodes: &[Node], symbols: &SymbolArena) {
         let Some(symbol) = nodes[node].symbol() else {
             return;
         };
@@ -601,7 +589,7 @@ impl FakeEmitResolver {
 
     /// `markPropertyAliasReferenced` (the const-enum property lookup arm is
     /// omitted — no const enums appear in this table).
-    fn mark_property_alias_referenced(&self, location: NodeId, nodes: &[Node], symbols: &[Symbol]) {
+    fn mark_property_alias_referenced(&self, location: NodeId, nodes: &[Node], symbols: &SymbolArena) {
         if is_part_of_import_equals_module_reference(location, nodes) {
             return;
         }
@@ -627,7 +615,7 @@ impl FakeEmitResolver {
         &self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
     ) {
         let Some(id) = nodes[node].expression() else {
             return;
@@ -646,7 +634,7 @@ impl FakeEmitResolver {
         &self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
     ) {
         if ast::has_syntactic_modifier(&nodes[node], ModifierFlags::EXPORT) {
             self.mark_export_as_referenced(node, nodes, symbols);
@@ -673,7 +661,7 @@ impl FakeEmitResolver {
         &self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
     ) {
         let export_decl = nodes[node].parent.and_then(|p| nodes[p].parent);
         let Some(export_decl) = export_decl else {
@@ -732,7 +720,7 @@ impl FakeEmitResolver {
     /// `markLinkedReferences` with `ReferenceHintUnspecified` (the
     /// `EmitDecoratorMetadata`-gated decorator arm and the JSX arm are
     /// omitted — no case in this table sets them).
-    fn mark_linked_references(&self, node: NodeId, nodes: &[Node], symbols: &[Symbol]) {
+    fn mark_linked_references(&self, node: NodeId, nodes: &[Node], symbols: &SymbolArena) {
         if nodes[node].flags.intersects(NodeFlags::AMBIENT)
             && nodes[node].kind != Kind::PropertySignature
             && nodes[node].kind != Kind::PropertyDeclaration
@@ -881,7 +869,7 @@ impl FakeEmitResolver {
     }
 
     /// The `MarkLinkedReferencesRecursively` visitor body.
-    fn mark_visit(&self, node: NodeId, nodes: &[Node], symbols: &[Symbol]) {
+    fn mark_visit(&self, node: NodeId, nodes: &[Node], symbols: &SymbolArena) {
         match nodes[node].kind {
             // These are deferred and marked in a chain when referenced.
             Kind::ImportEqualsDeclaration
@@ -908,7 +896,7 @@ impl ReferenceResolver for FakeEmitResolver {
         _node: NodeId,
         _prefix_locals: bool,
         _nodes: &[Node],
-        _symbols: &std::cell::RefCell<Vec<Symbol>>,
+        _symbols: &SymbolArena,
     ) -> Option<NodeId> {
         unimplemented!("unused by ImportElisionTransformer")
     }
@@ -917,7 +905,7 @@ impl ReferenceResolver for FakeEmitResolver {
         &mut self,
         _node: NodeId,
         _nodes: &[Node],
-        _symbols: &std::cell::RefCell<Vec<Symbol>>,
+        _symbols: &SymbolArena,
     ) -> Option<NodeId> {
         unimplemented!("unused by ImportElisionTransformer")
     }
@@ -926,7 +914,7 @@ impl ReferenceResolver for FakeEmitResolver {
         &mut self,
         _node: NodeId,
         _nodes: &[Node],
-        _symbols: &std::cell::RefCell<Vec<Symbol>>,
+        _symbols: &SymbolArena,
     ) -> Option<NodeId> {
         unimplemented!("unused by ImportElisionTransformer")
     }
@@ -935,7 +923,7 @@ impl ReferenceResolver for FakeEmitResolver {
         &mut self,
         _node: NodeId,
         _nodes: &[Node],
-        _symbols: &std::cell::RefCell<Vec<Symbol>>,
+        _symbols: &SymbolArena,
     ) -> Vec<NodeId> {
         unimplemented!("unused by ImportElisionTransformer")
     }
@@ -948,7 +936,7 @@ impl ReferenceResolver for FakeEmitResolver {
         &mut self,
         _node: NodeId,
         _nodes: &[Node],
-        _symbols: &std::cell::RefCell<Vec<Symbol>>,
+        _symbols: &SymbolArena,
     ) -> Option<NodeId> {
         unimplemented!("unused by ImportElisionTransformer")
     }
@@ -1159,7 +1147,7 @@ impl EmitResolver for FakeEmitResolver {
         _meaning: SymbolFlags,
         _should_compute_alias_to_mark_visible: bool,
         _nodes: &[Node],
-        _symbols: &[Symbol],
+        _symbols: &SymbolArena,
     ) -> SymbolAccessibilityResult {
         unimplemented!("unused by ImportElisionTransformer")
     }
@@ -1191,7 +1179,7 @@ impl EmitResolver for FakeEmitResolver {
         _symbol: Option<SymbolId>,
         _enclosing_declaration: Option<NodeId>,
         _nodes: &[Node],
-        _symbols: &[Symbol],
+        _symbols: &SymbolArena,
     ) -> bool {
         unimplemented!("unused by ImportElisionTransformer")
     }
@@ -1244,7 +1232,7 @@ impl EmitResolver for FakeEmitResolver {
         &self,
         _node: NodeId,
         _nodes: &[Node],
-        _symbols: &[Symbol],
+        _symbols: &SymbolArena,
     ) -> Vec<SymbolId> {
         unimplemented!("unused by ImportElisionTransformer")
     }
@@ -1255,7 +1243,7 @@ impl EmitResolver for FakeEmitResolver {
         _symbol: Option<SymbolId>,
         _enclosing_declaration: Option<NodeId>,
         _nodes: &[Node],
-        _symbols: &[Symbol],
+        _symbols: &SymbolArena,
     ) -> bool {
         unimplemented!("unused by ImportElisionTransformer")
     }
@@ -1363,15 +1351,15 @@ fn check_emit(
 ) -> Result<(), String> {
     let (file, mut nodes) = parsetestutil::parse_typescript(input, jsx);
     parsetestutil::check_diagnostics(&nodes, file).map_err(|e| format!("{title}: {e}"))?;
-    let mut symbols = Vec::new();
-    bind_source_file(&mut nodes, file, &mut symbols);
+    let symbols = SymbolArena::default();
+    bind_source_file(&mut nodes, file, &symbols);
 
     let mut modules = FxHashMap::default();
     if !other.is_empty() {
         let (other_file, mut other_nodes) = parsetestutil::parse_typescript(other, jsx);
         parsetestutil::check_diagnostics(&other_nodes, other_file)
             .map_err(|e| format!("{title} (other): {e}"))?;
-        bind_source_file(&mut other_nodes, other_file, &mut symbols);
+        bind_source_file(&mut other_nodes, other_file, &symbols);
         modules.insert(
             "other".to_string(),
             BoundFile {
@@ -1386,7 +1374,7 @@ fn check_emit(
     let resolver: Rc<RefCell<FakeEmitResolver>> = Rc::new(RefCell::new(FakeEmitResolver {
         emit_context: Rc::new(RefCell::new(EmitContext::new())),
         compiler_options: CompilerOptions::default(),
-        symbols,
+        symbols: symbols.clone(),
         modules,
         referenced: RefCell::new(FxHashSet::default()),
     }));
@@ -1416,7 +1404,7 @@ fn check_emit(
         PrintHandlers::default(),
         &mut emit_context,
         &mut nodes,
-        &[],
+        &symbols,
     );
     let text = printer.emit_source_file(file);
     let actual = text.strip_suffix('\n').unwrap_or(&text);

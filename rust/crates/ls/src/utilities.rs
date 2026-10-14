@@ -96,7 +96,7 @@ pub(crate) fn get_non_module_symbol_of_merged_module_symbol(
     symbol: SymbolId,
 ) -> Option<SymbolId> {
     let (declarations, flags) = {
-        let symbols = program.symbols.borrow();
+        let symbols = program.symbols.clone();
         let s = &symbols[symbol.index()];
         (s.declarations.clone(), s.flags)
     };
@@ -686,7 +686,7 @@ pub(crate) fn is_right_side_of_property_access(node: NodeId, nodes: &[Node]) -> 
 
 /// `isStaticSymbol`.
 pub(crate) fn is_static_symbol(program: &Program, symbol: SymbolId) -> bool {
-    let value_declaration = program.symbols.borrow()[symbol.index()].value_declaration;
+    let value_declaration = program.symbols.get_ref(symbol).value_declaration;
     let Some(value_declaration) = value_declaration else {
         return false;
     };
@@ -1458,7 +1458,7 @@ pub(crate) fn get_intersecting_meaning_from_declarations(
     };
 
     let meaning = get_meaning_from_location(nodes, node);
-    let declarations = program.symbols.borrow()[symbol.index()]
+    let declarations = program.symbols.get_ref(symbol)
         .declarations
         .clone();
     if declarations.is_empty() {
@@ -1533,7 +1533,7 @@ pub(crate) fn get_parent_symbols_of_property_access(
     if !is_right_side {
         return Vec::new();
     }
-    let symbol_parent = ch.symbol_arena.borrow()[symbol.index()].parent;
+    let symbol_parent = ch.symbol_arena.get_ref(symbol).parent;
     let Some(lhs_expr) = lhs_expr else {
         return Vec::new();
     };
@@ -1561,7 +1561,7 @@ pub(crate) fn get_parent_symbols_of_property_access(
     tsc_core::core::map_non_nil(&possible_symbols, |t| {
         let sym = ch.types.get(*t).symbol;
         sym.filter(|s| {
-            ch.symbol_arena.borrow()[s.index()].flags
+            ch.symbol_arena.get_ref(*s).flags
                 & (SymbolFlags::CLASS | SymbolFlags::INTERFACE)
                 != SymbolFlags::NONE
         })
@@ -1592,13 +1592,13 @@ pub(crate) fn get_property_symbols_from_base_types(
         //      interface C extends C {
         //          /*findRef*/propName: string;
         //      }
-        let flags = checker.symbol_arena.borrow()[symbol.index()].flags;
+        let flags = checker.symbol_arena.get_ref(symbol).flags;
         if flags & (SymbolFlags::CLASS | SymbolFlags::INTERFACE) == SymbolFlags::NONE
             || !seen.add_if_absent(symbol)
         {
             return None;
         }
-        let declarations = checker.symbol_arena.borrow()[symbol.index()]
+        let declarations = checker.symbol_arena.get_ref(symbol)
             .declarations
             .clone();
         for declaration in declarations {
@@ -1662,7 +1662,7 @@ pub(crate) fn get_property_symbol_of_object_binding_pattern_without_property_nam
     symbol: SymbolId,
     checker: &mut Checker,
 ) -> Option<SymbolId> {
-    let declarations = checker.symbol_arena.borrow()[symbol.index()]
+    let declarations = checker.symbol_arena.get_ref(symbol)
         .declarations
         .clone();
     let binding_element = declarations.iter().copied().find(|&d| {
@@ -1826,7 +1826,7 @@ pub(crate) fn new_case_clause_tracker(
             let symbol =
                 type_checker.get_symbol_at_location_api(clause_expression.expect("expression"));
             let value_declaration = symbol
-                .and_then(|s| type_checker.symbol_arena.borrow()[s.index()].value_declaration);
+                .and_then(|s| type_checker.symbol_arena.get_ref(s).value_declaration);
             let is_enum_member = value_declaration.is_some_and(|vd| {
                 let program = type_checker.program.clone().expect("program");
                 let nodes = program.nodes(vd.file_index());

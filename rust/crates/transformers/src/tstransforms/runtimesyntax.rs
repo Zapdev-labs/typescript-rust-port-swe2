@@ -14,7 +14,7 @@
 //     nil-interface panic.
 //   - `ReferenceResolver` methods take `&mut Vec<Symbol>` — the file's bound
 //     symbol arena is threaded through `TransformOptions::symbols`
-//     (`Option<&'a RefCell<Vec<Symbol>>>`), matching `legacydecorators.rs`
+//     (`Option<&'a SymbolArena>`), matching `legacydecorators.rs`
 //     (see the module PORT note).
 
 use std::cell::{Cell, RefCell};
@@ -23,8 +23,7 @@ use std::rc::{Rc, Weak};
 use rustc_hash::FxHashMap;
 use tsc_ast::visitor::{NodeVisitor, VisitorCx};
 use tsc_ast::{
-    self as ast, Kind, ModifierFlags, Node, NodeFlags, NodeId, NodeList, SubtreeFacts, Symbol,
-};
+    self as ast, Kind, ModifierFlags, Node, NodeFlags, NodeId, NodeList, SubtreeFacts, SymbolArena, };
 use tsc_binder::referenceresolver::ReferenceResolver;
 use tsc_core::compileroptions::EMPTY_COMPILER_OPTIONS;
 use tsc_core::core::{coalesce, find};
@@ -68,7 +67,7 @@ pub struct RuntimeSyntaxTransformer<'a> {
     emit_resolver: Option<Rc<RefCell<dyn EmitResolver + 'a>>>,
     /// Bound `Symbol` arena for `ReferenceResolver` calls, threaded through
     /// `TransformOptions::symbols` — see the module PORT note.
-    symbols: Option<&'a RefCell<Vec<Symbol>>>,
+    symbols: Option<&'a SymbolArena>,
     /// `Weak` self-reference used to build the destructuring-flattening
     /// assignment callback (`Box<CreateAssignmentCallback>` cannot capture
     /// `&self`).

@@ -216,7 +216,7 @@ pub fn new_parse_cache(options: RefCountCacheOptions) -> ParseCache {
         nodes[file].as_source_file_mut().hash = fh.hash();
         // PORT: Go ran `binder.BindSourceFile(file)` here, marking the cached
         // file as already-bound for reuse across snapshots. The Rust binder
-        // appends into the program's global `Vec<Symbol>`, so binding is
+        // appends into the program's global `SymbolArena`, so binding is
         // deferred to `Program::bind_source_files`/`get_bind_diagnostics`,
         // which bind per-file arenas on demand.
         Arc::new(Mutex::new(ParsedSourceFile {

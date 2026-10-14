@@ -4,7 +4,7 @@
 //
 // - `*ast.Symbol`/`*ast.Node`/`*checker.Signature`/`*checker.Type` are
 //   `SymbolId`/`NodeId`/`SignatureId`/`TypeId`. Symbol fields are read via
-//   `checker.symbol_arena.borrow()`; node fields via `program.nodes(...)`
+//   `checker.symbol_arena.get_ref(id)`; node fields via `program.nodes(...)`
 //   snapshots.
 // - `lsproto.Location`/`Range` do not implement `Hash`, so the Go
 //   `collections.Set[lsproto.Location]` dedup in `combineDefinitionResponses`
@@ -149,7 +149,7 @@ impl<'h> LanguageService<'h> {
             if let Some(sym) =
                 get_symbol_for_overridden_member(&mut checker.borrow_mut(), node, &nodes)
             {
-                let declarations = checker.borrow().symbol_arena.borrow()[sym.index()]
+                let declarations = checker.borrow().symbol_arena.get_ref(sym)
                     .declarations
                     .clone();
                 drop(nodes);
@@ -373,9 +373,9 @@ impl<'h> LanguageService<'h> {
         if !declarations.is_empty() {
             return Some(declarations);
         }
-        let flags = checker.borrow().symbol_arena.borrow()[symbol.index()].flags;
+        let flags = checker.borrow().symbol_arena.get_ref(symbol).flags;
         if !flags.intersects(SymbolFlags::VALUE) && flags.intersects(SymbolFlags::TYPE) {
-            let declarations = checker.borrow().symbol_arena.borrow()[symbol.index()]
+            let declarations = checker.borrow().symbol_arena.get_ref(symbol)
                 .declarations
                 .clone();
             return Some(declarations);
@@ -642,7 +642,7 @@ pub(crate) fn get_declarations_from_location(
                 != c.borrow().get_unknown_symbol()
             {
                 let arena = c.borrow().symbol_arena.clone();
-                arena.borrow()[shorthand_symbol.index()].declarations.clone()
+                arena.get_ref(shorthand_symbol).declarations.clone()
             } else {
                 Vec::new()
             };
@@ -683,7 +683,7 @@ pub(crate) fn get_declarations_from_location(
                         {
                             let arena = c.borrow().symbol_arena.clone();
                             result.extend(
-                                arena.borrow()[prop.index()].declarations.iter().copied(),
+                                arena.get_ref(prop).declarations.iter().copied(),
                             );
                         }
                     }
@@ -698,7 +698,7 @@ pub(crate) fn get_declarations_from_location(
         let mut symbol = symbol;
         {
             let arena = c.borrow().symbol_arena.clone();
-            let arena = arena.borrow();
+            let arena = arena.clone();
             let flags = arena[symbol.index()].flags;
             if flags.intersects(SymbolFlags::CLASS)
                 && !flags.intersects(SymbolFlags::FUNCTION | SymbolFlags::VARIABLE)
@@ -716,7 +716,7 @@ pub(crate) fn get_declarations_from_location(
                 }
             }
         }
-        if c.borrow().symbol_arena.borrow()[symbol.index()]
+        if c.borrow().symbol_arena.get_ref(symbol)
             .flags
             .intersects(SymbolFlags::ALIAS)
         {
@@ -731,7 +731,7 @@ pub(crate) fn get_declarations_from_location(
         }
         let declarations = {
             let arena = c.borrow().symbol_arena.clone();
-            arena.borrow()[symbol.index()].declarations.clone()
+            arena.get_ref(symbol).declarations.clone()
         };
         if !declarations.is_empty() {
             return declarations;
@@ -776,7 +776,7 @@ pub(crate) fn get_declarations_from_object_literal_element(
     );
     {
         let arena = c.borrow().symbol_arena.clone();
-        let arena = arena.borrow();
+        let arena = arena.clone();
         let found = properties.iter().any(|&p| {
             arena[p.index()].value_declaration.is_some_and(|vd| {
                 let nodes = program.arena_of(vd);
@@ -811,7 +811,7 @@ pub(crate) fn get_declarations_from_object_literal_element(
     let mut result = Vec::new();
     {
         let arena = c.borrow().symbol_arena.clone();
-        let arena = arena.borrow();
+        let arena = arena.clone();
         for prop in properties {
             result.extend(arena[prop.index()].declarations.iter().copied());
         }
@@ -885,7 +885,7 @@ fn symbol_matches_signature(
         return true;
     }
     if let Some(called_symbol) = called_symbol {
-        let called_parent = checker.borrow().symbol_arena.borrow()[called_symbol.index()].parent;
+        let called_parent = checker.borrow().symbol_arena.get_ref(called_symbol).parent;
         if called_parent == Some(symbol) {
             return true;
         }
@@ -951,7 +951,7 @@ fn get_type_of_symbol_at_location(
     // the return type instead since go-to-definition takes you to the
     // function anyway.
     let t_symbol = c.borrow().types.get(t).symbol();
-    let symbol_value_declaration = c.borrow().symbol_arena.borrow()[symbol.index()]
+    let symbol_value_declaration = c.borrow().symbol_arena.get_ref(symbol)
         .value_declaration;
     let inferred = t_symbol == Some(symbol)
         || t_symbol.is_some_and(|ts| {
@@ -959,7 +959,7 @@ fn get_type_of_symbol_at_location(
                 let vd_nodes = program.arena_of(vd);
                 ast::is_variable_declaration(&vd_nodes[vd])
                     && vd_nodes[vd].initializer()
-                        == c.borrow().symbol_arena.borrow()[ts.index()].value_declaration
+                        == c.borrow().symbol_arena.get_ref(ts).value_declaration
             })
         });
     if inferred {
@@ -977,7 +977,7 @@ fn get_declarations_from_type(c: &Rc<RefCell<Checker>>, t: TypeId) -> Vec<NodeId
     for t in c.borrow().types.get(t).distributed(t) {
         if let Some(symbol) = c.borrow().types.get(t).symbol() {
             let arena = c.borrow().symbol_arena.clone();
-            for decl in arena.borrow()[symbol.index()].declarations.iter().copied() {
+            for decl in arena.get_ref(symbol).declarations.iter().copied() {
                 if !result.contains(&decl) {
                     result.push(decl);
                 }

@@ -24,7 +24,7 @@ use std::sync::Arc;
 
 use tsc_ast::diagnostic::{DiagnosticRef, DiagnosticsCollection, new_compiler_diagnostic};
 use tsc_ast::utilities::HasFileName;
-use tsc_ast::{ArenaCell, Node, NodeId, is_in_js_file};
+use tsc_ast::{Node, NodeId, is_in_js_file};
 use tsc_binder::referenceresolver::ReferenceResolver;
 use tsc_core::languagevariant::LanguageVariant;
 use tsc_core::options_generated::{CompilerOptions, ModuleKind, NewLineKind};
@@ -179,7 +179,7 @@ impl<'p, 'w> Emitter<'p, 'w> {
         emit_resolver: &Rc<RefCell<tsc_checker::emitresolver::EmitResolver>>,
         source_file: NodeId,
         declaration_file_path: &RootedFilePath,
-        symbol_arena: &'a Rc<RefCell<Vec<tsc_ast::Symbol>>>,
+        symbol_arena: &'a tsc_ast::SymbolArena,
         nodes: &[Node],
     ) -> [DeclarationTransformerKind<'a>; 2] {
         let force_dts_emit = self.emit_only == EmitOnly::BuilderSignature
@@ -190,7 +190,7 @@ impl<'p, 'w> Emitter<'p, 'w> {
                 emit_resolver.clone(),
                 host.options(),
                 declaration_file_path.clone(),
-                Some(&**symbol_arena),
+                Some(symbol_arena),
             )),
             DeclarationTransformerKind::Supplemental(SupplementalReferencesTransformer::new(
                 host.clone(),
@@ -209,7 +209,7 @@ impl<'p, 'w> Emitter<'p, 'w> {
         emit_context: &Rc<RefCell<EmitContext>>,
         emit_resolver: &Rc<RefCell<tsc_checker::emitresolver::EmitResolver>>,
         source_file: NodeId,
-        symbol_arena: &'a Rc<RefCell<Vec<tsc_ast::Symbol>>>,
+        symbol_arena: &'a tsc_ast::SymbolArena,
         nodes: &mut Vec<Node>,
     ) -> Option<NodeId> {
         let trace_done = push(
@@ -267,7 +267,7 @@ impl<'p, 'w> Emitter<'p, 'w> {
             resolver: Some(reference_resolver),
             emit_resolver: Some(emit_resolver.clone()),
             get_emit_module_format_of_file: Some(&get_module_format),
-            symbols: Some(&**symbol_arena),
+            symbols: Some(symbol_arena),
         };
         for transformer in get_script_transformers(&opts, source_file.expect("source file"), nodes)
         {
@@ -286,7 +286,7 @@ impl<'p, 'w> Emitter<'p, 'w> {
         emit_resolver: &Rc<RefCell<tsc_checker::emitresolver::EmitResolver>>,
         source_file: NodeId,
         declaration_file_path: &RootedFilePath,
-        symbol_arena: &'a Rc<RefCell<Vec<tsc_ast::Symbol>>>,
+        symbol_arena: &'a tsc_ast::SymbolArena,
         nodes: &mut Vec<Node>,
     ) -> (Option<NodeId>, Vec<DiagnosticRef>) {
         let trace_done = push(
@@ -406,7 +406,7 @@ impl<'p, 'w> Emitter<'p, 'w> {
 
             // create a printer to print the nodes
             let mut emit_context_mut = emit_context.borrow_mut();
-            let symbols = symbol_arena.borrow();
+            let symbols = symbol_arena.clone();
             let mut writer = self.take_writer();
             // Compute before `Printer` takes the `&mut` arena borrow.
             let should_emit_source_maps = should_emit_source_maps(options, source_file, &nodes_mut);
@@ -587,7 +587,7 @@ impl<'p, 'w> Emitter<'p, 'w> {
             }
 
             let mut emit_context_mut = emit_context.borrow_mut();
-            let symbols = symbol_arena.borrow();
+            let symbols = symbol_arena.clone();
 
             let declaration_map_options = CompilerOptions {
                 source_map: if emit_declaration_map {
@@ -1008,7 +1008,7 @@ impl<'a> ReferenceResolver for EmitResolverAsReference<'a> {
         node: NodeId,
         prefix_locals: bool,
         nodes: &[Node],
-        symbols: &std::cell::RefCell<Vec<tsc_ast::Symbol>>,
+        symbols: &tsc_ast::SymbolArena,
     ) -> Option<NodeId> {
         self.0
             .borrow_mut()
@@ -1018,7 +1018,7 @@ impl<'a> ReferenceResolver for EmitResolverAsReference<'a> {
         &mut self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &std::cell::RefCell<Vec<tsc_ast::Symbol>>,
+        symbols: &tsc_ast::SymbolArena,
     ) -> Option<NodeId> {
         self.0
             .borrow_mut()
@@ -1028,7 +1028,7 @@ impl<'a> ReferenceResolver for EmitResolverAsReference<'a> {
         &mut self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &std::cell::RefCell<Vec<tsc_ast::Symbol>>,
+        symbols: &tsc_ast::SymbolArena,
     ) -> Option<NodeId> {
         self.0
             .borrow_mut()
@@ -1038,7 +1038,7 @@ impl<'a> ReferenceResolver for EmitResolverAsReference<'a> {
         &mut self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &std::cell::RefCell<Vec<tsc_ast::Symbol>>,
+        symbols: &tsc_ast::SymbolArena,
     ) -> Vec<NodeId> {
         self.0
             .borrow_mut()
@@ -1053,7 +1053,7 @@ impl<'a> ReferenceResolver for EmitResolverAsReference<'a> {
         &mut self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &std::cell::RefCell<Vec<tsc_ast::Symbol>>,
+        symbols: &tsc_ast::SymbolArena,
     ) -> Option<NodeId> {
         self.0
             .borrow_mut()

@@ -2,7 +2,7 @@
 // ec47d33c23e464a17cdf2475632cba629bee8763.
 //
 // PORT(global): `*ast.Symbol` is `SymbolId` resolved through the owning
-// `symbols: &RefCell<Vec<Symbol>>` arena (the crate-wide convention — for a
+// `symbols: &SymbolArena` arena (the crate-wide convention — for a
 // checker this is `checker.symbol_arena`). `typeChecker *checker.Checker` is
 // `Option<&mut Checker>` since several services methods are `&mut self`.
 // `ast.IsDeprecatedDeclaration` is not ported in tsc-ast (jsdocCache), so the
@@ -10,12 +10,10 @@
 // is_deprecated_declaration_with_cached_flags`, a line-for-line copy of the
 // Go ast helper, with `nodes` mutable for lazy JSDoc resolution.
 
-use std::cell::RefCell;
 
 use tsc_ast::checkflags::CheckFlags;
 use tsc_ast::{
-    self as ast, FindAncestorResult, Kind, ModifierFlags, Node, NodeFlags, NodeId, Symbol,
-    SymbolFlags, SymbolId,
+    self as ast, FindAncestorResult, Kind, ModifierFlags, Node, NodeFlags, NodeId,     SymbolArena, SymbolFlags, SymbolId,
 };
 use tsc_checker::checker_core::Checker;
 use tsc_collections::Set;
@@ -239,10 +237,10 @@ pub const FILE_EXTENSION_KIND_MODIFIERS: ScriptElementKindModifier = ScriptEleme
 /// `symbol.CombinedLocalAndExportSymbolFlags()` — needs the symbol arena
 /// because `export_symbol` is a `SymbolId`, not a pointer.
 fn combined_local_and_export_symbol_flags(
-    symbols: &RefCell<Vec<Symbol>>,
+    symbols: &SymbolArena,
     s: SymbolId,
 ) -> SymbolFlags {
-    let arena = symbols.borrow();
+    let arena = symbols.clone();
     let sym = &arena[s.index()];
     let mut flags = sym.flags;
     if let Some(export_symbol) = sym.export_symbol {
@@ -257,7 +255,7 @@ pub fn get_symbol_kind(
     symbol: SymbolId,
     location: NodeId,
     nodes: &[Node],
-    symbols: &RefCell<Vec<Symbol>>,
+    symbols: &SymbolArena,
 ) -> ScriptElementKind {
     let mut type_checker = type_checker;
     let result = get_symbol_kind_of_constructor_property_method_accessor_function_or_var(
@@ -273,7 +271,7 @@ pub fn get_symbol_kind(
     let flags = combined_local_and_export_symbol_flags(symbols, symbol);
     if flags.intersects(SymbolFlags::CLASS) {
         let decl = ast::get_declaration_of_kind(
-            &symbols.borrow()[symbol.index()],
+            symbols.get_ref(symbol),
             Kind::ClassExpression,
             nodes,
         );
@@ -313,7 +311,7 @@ fn get_symbol_kind_of_constructor_property_method_accessor_function_or_var(
     symbol: SymbolId,
     location: NodeId,
     nodes: &[Node],
-    symbols: &RefCell<Vec<Symbol>>,
+    symbols: &SymbolArena,
 ) -> ScriptElementKind {
     let roots: Vec<SymbolId> = match type_checker.as_deref_mut() {
         Some(tc) => tc.get_root_symbols(symbol),
@@ -324,7 +322,7 @@ fn get_symbol_kind_of_constructor_property_method_accessor_function_or_var(
     // still has a call signature, as opposed to e.g.
     // `{ [K in keyof I]: number }`.
     if roots.len() == 1
-        && symbols.borrow()[roots[0].index()]
+        && symbols.get_ref(roots[0])
             .flags
             .intersects(SymbolFlags::METHOD)
         && match type_checker.as_deref_mut() {
@@ -356,7 +354,7 @@ fn get_symbol_kind_of_constructor_property_method_accessor_function_or_var(
 
     let flags = combined_local_and_export_symbol_flags(symbols, symbol);
     let (check_flags, declarations, value_declaration, parent) = {
-        let arena = symbols.borrow();
+        let arena = symbols.clone();
         let sym = &arena[symbol.index()];
         (
             sym.check_flags,
@@ -418,7 +416,7 @@ fn get_symbol_kind_of_constructor_property_method_accessor_function_or_var(
             // (property/accessors/variables), it is labeled as property
             let mut union_property_kind = ScriptElementKind::Unknown;
             for &root_symbol in &roots {
-                if symbols.borrow()[root_symbol.index()]
+                if symbols.get_ref(root_symbol)
                     .flags
                     .intersects(SymbolFlags::PROPERTY_OR_ACCESSOR | SymbolFlags::VARIABLE)
                 {
@@ -512,7 +510,7 @@ pub fn get_symbol_modifiers(
     type_checker: Option<&mut Checker>,
     symbol: Option<SymbolId>,
     nodes: &mut Vec<Node>,
-    symbols: &RefCell<Vec<Symbol>>,
+    symbols: &SymbolArena,
 ) -> ScriptElementKindModifier {
     let Some(symbol) = symbol else {
         return ScriptElementKindModifier::NONE;
@@ -520,7 +518,7 @@ pub fn get_symbol_modifiers(
     let mut type_checker = type_checker;
 
     let mut modifiers = get_normalized_symbol_modifiers(&mut type_checker, symbol, nodes, symbols);
-    if symbols.borrow()[symbol.index()]
+    if symbols.get_ref(symbol)
         .flags
         .intersects(SymbolFlags::ALIAS)
         && type_checker.is_some()
@@ -537,7 +535,7 @@ pub fn get_symbol_modifiers(
                 get_normalized_symbol_modifiers(&mut type_checker, resolved, nodes, symbols);
         }
     }
-    if symbols.borrow()[symbol.index()]
+    if symbols.get_ref(symbol)
         .flags
         .intersects(SymbolFlags::OPTIONAL)
     {
@@ -552,10 +550,10 @@ fn get_normalized_symbol_modifiers(
     type_checker: &mut Option<&mut Checker>,
     symbol: SymbolId,
     nodes: &mut Vec<Node>,
-    symbols: &RefCell<Vec<Symbol>>,
+    symbols: &SymbolArena,
 ) -> ScriptElementKindModifier {
     let mut modifier_set = ScriptElementKindModifier::NONE;
-    let declarations = symbols.borrow()[symbol.index()].declarations.clone();
+    let declarations = symbols.get_ref(symbol).declarations.clone();
     if !declarations.is_empty() {
         let declaration = declarations[0];
         let rest = &declarations[1..];

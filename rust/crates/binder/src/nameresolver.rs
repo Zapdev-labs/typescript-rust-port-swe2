@@ -16,7 +16,7 @@
 // lookups or `Rc<RefCell<SymbolTable>>` for `globals` so the checker's live
 // global table is shared (Go shares the map header). Because the node and
 // symbol arenas are needed by nearly every helper, `resolve` takes them as
-// parameters (`nodes: &[Node]`, `symbols: &RefCell<Vec<Symbol>>` — interior
+// parameters (`nodes: &[Node]`, `symbols: &SymbolArena` — interior
 // mutable so host callbacks may consult the same arena transiently).
 
 use std::cell::RefCell;
@@ -28,7 +28,7 @@ use tsc_ast::ids::{NodeId, SymbolId};
 use tsc_ast::kind_generated::Kind;
 use tsc_ast::modifierflags::ModifierFlags;
 use tsc_ast::nodeflags::NodeFlags;
-use tsc_ast::symbol::{INTERNAL_SYMBOL_NAME_DEFAULT, Symbol, SymbolTable};
+use tsc_ast::symbol::{INTERNAL_SYMBOL_NAME_DEFAULT, Symbol, SymbolArena, SymbolTable};
 use tsc_ast::symbolflags::SymbolFlags;
 use tsc_ast::utilities::*;
 use tsc_core::options_generated::CompilerOptions;
@@ -223,12 +223,12 @@ impl<'a> NameResolver<'a> {
         symbol: SymbolId,
         kind: Kind,
         nodes: &[Node],
-        symbols: &RefCell<Vec<Symbol>>,
+        symbols: &SymbolArena,
     ) -> bool {
         if let Some(h) = self.host.as_deref_mut() {
             return h.nr_has_declaration_of_kind(symbol, kind, nodes);
         }
-        get_declaration_of_kind(&symbols.borrow()[symbol.index()], kind, nodes).is_some()
+        get_declaration_of_kind(symbols.get_ref(symbol), kind, nodes).is_some()
     }
 
     /// `nodes[id]` where `id` may live outside `work` — the parent-chain
@@ -276,7 +276,7 @@ impl<'a> NameResolver<'a> {
         is_use: bool,
         exclude_globals: bool,
         nodes: &[Node],
-        symbols: &RefCell<Vec<Symbol>>,
+        symbols: &SymbolArena,
     ) -> Option<SymbolId> {
         let mut result: Option<SymbolId> = None;
         let mut location = location;
@@ -372,12 +372,12 @@ impl<'a> NameResolver<'a> {
                             // at a higher level than type parameters would normally be
                             let last = last_location.unwrap();
                             if meaning
-                                .intersects(symbols.borrow()[res.index()].flags & SymbolFlags::TYPE)
+                                .intersects(symbols.get_ref(res).flags & SymbolFlags::TYPE)
                                 && node_in(nodes, primary, &extra_arenas, last).kind != Kind::JSDoc
                             {
                                 // type parameters are visible in parameter list, return type and type parameter list.
                                 // Synthetic fake scopes are added for signatures so type parameters are accessible from them.
-                                use_result = symbols.borrow()[res.index()]
+                                use_result = symbols.get_ref(res)
                                     .flags
                                     .intersects(SymbolFlags::TYPE_PARAMETER)
                                     && (node_in(nodes, primary, &extra_arenas, last).flags.intersects(NodeFlags::SYNTHESIZED)
@@ -388,14 +388,14 @@ impl<'a> NameResolver<'a> {
                                         || node_in(nodes, primary, &extra_arenas, last).kind == Kind::TypeParameter);
                             }
                             if meaning.intersects(
-                                symbols.borrow()[res.index()].flags & SymbolFlags::VARIABLE,
+                                symbols.get_ref(res).flags & SymbolFlags::VARIABLE,
                             ) {
                                 // expression inside parameter will lookup as normal variable scope when targeting es2015+
                                 if self.use_outer_variable_scope_in_parameter(
                                     res, loc, last, nodes, primary, &extra_arenas, symbols,
                                 ) {
                                     use_result = false;
-                                } else if symbols.borrow()[res.index()]
+                                } else if symbols.get_ref(res)
                                     .flags
                                     .intersects(SymbolFlags::FUNCTION_SCOPED_VARIABLE)
                                 {
@@ -406,7 +406,7 @@ impl<'a> NameResolver<'a> {
                                     use_result = node_in(nodes, primary, &extra_arenas, last).kind == Kind::Parameter
                                         || node_in(nodes, primary, &extra_arenas, last).flags.intersects(NodeFlags::SYNTHESIZED)
                                         || Some(last) == nodes[loc].type_()
-                                            && symbols.borrow()[res.index()]
+                                            && symbols.get_ref(res)
                                                 .value_declaration
                                                 .is_some_and(|vd| {
                                                     find_ancestor(
@@ -441,7 +441,7 @@ impl<'a> NameResolver<'a> {
                         // fallthrough to bottom
                     } else if let Some(module_symbol) = self.get_symbol_of_declaration(loc, nodes) {
                         let module_exports =
-                            symbols.borrow()[module_symbol.index()].exports.clone();
+                            symbols.get_ref(module_symbol).exports.clone();
                         if is_source_file(&nodes[loc])
                             || is_module_declaration(&nodes[loc])
                                 && nodes[loc].flags.intersects(NodeFlags::AMBIENT)
@@ -454,11 +454,11 @@ impl<'a> NameResolver<'a> {
                                 let local_symbol = get_local_symbol_for_export_default(
                                     res,
                                     nodes,
-                                    &symbols.borrow()[..],
+                                    symbols,
                                 );
                                 if local_symbol.is_some()
-                                    && symbols.borrow()[res.index()].flags.intersects(meaning)
-                                    && symbols.borrow()[local_symbol.unwrap().index()].name.as_ref() == name
+                                    && symbols.get_ref(res).flags.intersects(meaning)
+                                    && symbols.get_ref(local_symbol.unwrap()).name.as_ref() == name
                                 {
                                     break 'loop_;
                                 }
@@ -476,7 +476,7 @@ impl<'a> NameResolver<'a> {
                             //        an alias. If we used &, we'd be throwing out symbols that have non alias aspects,
                             //        which is not the desired behavior.
                             if let Some(module_export) = module_exports.get(name).copied() {
-                                if symbols.borrow()[module_export.index()].flags
+                                if symbols.get_ref(module_export).flags
                                     == SymbolFlags::ALIAS
                                     && (self.has_declaration_of_kind(
                                         module_export,
@@ -542,7 +542,7 @@ impl<'a> NameResolver<'a> {
                 Kind::EnumDeclaration => {
                     if let Some(enum_symbol) = self.get_symbol_of_declaration(loc, nodes) {
                         result = self.lookup(
-                            &symbols.borrow()[enum_symbol.index()].exports.clone(),
+                            &symbols.get_ref(enum_symbol).exports.clone(),
                             name,
                             meaning & SymbolFlags::ENUM_MEMBER,
                             symbols,
@@ -556,7 +556,7 @@ impl<'a> NameResolver<'a> {
                                 // into `nodes` would read an unrelated node.
                                 // file_index equality is the same test Go
                                 // does via GetSourceFileOfNode.
-                                && symbols.borrow()[res.index()].value_declaration.is_some_and(
+                                && symbols.get_ref(res).value_declaration.is_some_and(
                                     |vd| vd.file_index() != loc.file_index(),
                                 )
                             {
@@ -568,7 +568,7 @@ impl<'a> NameResolver<'a> {
                                     };
                                 let qualified = format!(
                                     "{}.{}",
-                                    symbols.borrow()[enum_symbol.index()].name,
+                                    symbols.get_ref(enum_symbol).name,
                                     name
                                 );
                                 self.error(
@@ -617,7 +617,7 @@ impl<'a> NameResolver<'a> {
                     let mut skip_class_expression_name_check = false;
                     if let Some(location_symbol) = self.get_symbol_of_declaration(loc, nodes) {
                         result = self.lookup(
-                            &symbols.borrow()[location_symbol.index()].members.clone(),
+                            &symbols.get_ref(location_symbol).members.clone(),
                             name,
                             meaning & SymbolFlags::TYPE,
                             symbols,
@@ -627,7 +627,7 @@ impl<'a> NameResolver<'a> {
                                 res,
                                 loc,
                                 nodes,
-                                &symbols.borrow()[..],
+                                symbols,
                             ) {
                                 // ignore type parameters not declared in this container
                                 result = None;
@@ -676,7 +676,7 @@ impl<'a> NameResolver<'a> {
                                     self.get_symbol_of_declaration(container, nodes)
                                 {
                                     result = self.lookup(
-                                        &symbols.borrow()[container_symbol.index()].members.clone(),
+                                        &symbols.get_ref(container_symbol).members.clone(),
                                         name,
                                         meaning & SymbolFlags::TYPE,
                                         symbols,
@@ -710,7 +710,7 @@ impl<'a> NameResolver<'a> {
                             // A reference to this grandparent's type parameters would be an error
                             if let Some(gp_symbol) = self.get_symbol_of_declaration(gp, nodes) {
                                 result = self.lookup(
-                                    &symbols.borrow()[gp_symbol.index()].members.clone(),
+                                    &symbols.get_ref(gp_symbol).members.clone(),
                                     name,
                                     meaning & SymbolFlags::TYPE,
                                     symbols,
@@ -938,7 +938,7 @@ impl<'a> NameResolver<'a> {
         name: &str,
         meaning: SymbolFlags,
         nodes: &[Node],
-        symbols: &RefCell<Vec<Symbol>>,
+        symbols: &SymbolArena,
         result: &mut Option<SymbolId>,
     ) {
         if name == INTERNAL_SYMBOL_NAME_DEFAULT {
@@ -956,7 +956,7 @@ impl<'a> NameResolver<'a> {
                     .as_source_file()
                     .common_js_module_indicator
                     .is_some()
-                && !symbols.borrow()[res.index()]
+                && !symbols.get_ref(res)
                     .flags
                     .intersects(SymbolFlags::TYPE)
             {
@@ -977,11 +977,11 @@ impl<'a> NameResolver<'a> {
         nodes: &[Node],
         primary: &[Node],
         extra: &[Rc<Vec<Node>>],
-        symbols: &RefCell<Vec<Symbol>>,
+        symbols: &SymbolArena,
     ) -> bool {
         if is_parameter_declaration(node_in(nodes, primary, extra, last_location)) {
             if let Some(body) = node_in(nodes, primary, extra, location).body() {
-                if let Some(value_declaration) = symbols.borrow()[result.index()].value_declaration
+                if let Some(value_declaration) = symbols.get_ref(result).value_declaration
                 {
                     // `body` lives in `location`'s arena; `value_declaration`
                     // may be a foreign merged declaration.
@@ -1114,7 +1114,7 @@ impl<'a> NameResolver<'a> {
         symbols_table: &SymbolTable,
         name: &str,
         meaning: SymbolFlags,
-        symbol_arena: &RefCell<Vec<Symbol>>,
+        symbol_arena: &SymbolArena,
     ) -> Option<SymbolId> {
         if let Some(host) = self.host.as_deref_mut() {
             let suggestion = self.for_suggestion;
@@ -1126,7 +1126,7 @@ impl<'a> NameResolver<'a> {
         // Default implementation does not support following aliases or merged symbols
         if meaning != SymbolFlags::NONE {
             if let Some(symbol) = symbols_table.get(name) {
-                if symbol_arena.borrow()[symbol.index()]
+                if symbol_arena.get_ref(*symbol)
                     .flags
                     .intersects(meaning)
                 {
@@ -1254,17 +1254,15 @@ impl<'a> NameResolver<'a> {
     }
 
     /// `func (r *NameResolver) argumentsSymbol` — synthesizes the transient
-    /// `arguments` symbol. PORT: needs `&RefCell<Vec<Symbol>>` because symbol
+    /// `arguments` symbol. PORT: needs `&SymbolArena` because symbol
     /// identity is `SymbolId` into the arena.
-    fn arguments_symbol(&mut self, symbols: &RefCell<Vec<Symbol>>) -> SymbolId {
+    fn arguments_symbol(&mut self, symbols: &SymbolArena) -> SymbolId {
         if self.arguments_symbol.is_none() {
-            let mut arena = symbols.borrow_mut();
-            arena.push(Symbol {
+            self.arguments_symbol = Some(symbols.alloc(Symbol {
                 name: "arguments".into(),
                 flags: SymbolFlags::PROPERTY | SymbolFlags::TRANSIENT,
                 ..Default::default()
-            });
-            self.arguments_symbol = Some(SymbolId((arena.len() - 1) as u32));
+            }));
         }
         self.arguments_symbol.unwrap()
     }
@@ -1274,7 +1272,7 @@ impl<'a> NameResolver<'a> {
 pub fn get_local_symbol_for_export_default(
     symbol: SymbolId,
     nodes: &[Node],
-    symbols: &[Symbol],
+    symbols: &SymbolArena,
 ) -> Option<SymbolId> {
     if !is_export_default_symbol(&symbols[symbol.index()], nodes) {
         return None;
@@ -1329,7 +1327,7 @@ fn is_type_parameter_symbol_declared_in_container(
     symbol: SymbolId,
     container: NodeId,
     nodes: &[Node],
-    symbols: &[Symbol],
+    symbols: &SymbolArena,
 ) -> bool {
     for &decl in &symbols[symbol.index()].declarations {
         // `nodes` is the container's arena — a declaration in a different

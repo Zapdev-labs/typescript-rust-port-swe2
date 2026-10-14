@@ -3,7 +3,7 @@
 // PORT: Go `*ast.Node` parameters/returns become `NodeId` (or `Option<NodeId>`
 // where Go passes/returns nil). The node arena `nodes: &[Node]` resolves ids;
 // methods that dereference `*ast.Symbol` (for `.Declarations`) additionally
-// take the symbol arena `symbols: &[Symbol]`, which the binder owns. Go
+// take the symbol arena `symbols: &SymbolArena`, which the binder owns. Go
 // `slices.Index`/`slices.Backward` and `int` arithmetic are preserved so that
 // `-1` "not found" and `lastRequired-1 == -1` behave identically.
 
@@ -20,7 +20,7 @@ use tsc_ast::ids::NodeId;
 use tsc_ast::kind_generated::Kind;
 use tsc_ast::modifierflags::ModifierFlags;
 use tsc_ast::nodeflags::NodeFlags;
-use tsc_ast::symbol::Symbol;
+use tsc_ast::symbol::SymbolArena;
 use tsc_ast::utilities::{
     AllAccessorDeclarations, JsDeclarationKind, find_ancestor, for_each_return_statement,
     get_all_accessor_declarations_for_declaration, get_assignment_declaration_kind, has_modifier,
@@ -40,7 +40,7 @@ impl PseudoChecker {
         &self,
         signature_node: NodeId,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
     ) -> PseudoTypeRef {
         match nodes[signature_node].kind {
             Kind::GetAccessor => self.get_type_of_accessor(signature_node, nodes, symbols),
@@ -71,7 +71,7 @@ impl PseudoChecker {
         &self,
         accessor: NodeId,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
     ) -> PseudoTypeRef {
         self.type_from_accessor(accessor, nodes, symbols)
     }
@@ -81,7 +81,7 @@ impl PseudoChecker {
         &self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
     ) -> PseudoTypeRef {
         self.type_from_expression(node, nodes, symbols)
     }
@@ -91,7 +91,7 @@ impl PseudoChecker {
         &self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
     ) -> PseudoTypeRef {
         match nodes[node].kind {
             Kind::Parameter => self.type_from_parameter(node, nodes, symbols),
@@ -136,7 +136,7 @@ impl PseudoChecker {
         &self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
     ) -> PseudoTypeRef {
         if let Some(annotation) = nodes[node].type_() {
             return new_pseudo_type_direct(annotation);
@@ -173,7 +173,7 @@ impl PseudoChecker {
         &self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
     ) -> PseudoTypeRef {
         if let Some(t) = nodes[node].type_() {
             return new_pseudo_type_direct(t);
@@ -214,7 +214,7 @@ impl PseudoChecker {
         &self,
         declaration: NodeId,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
     ) -> PseudoTypeRef {
         let decl = nodes[declaration].as_variable_declaration();
         if let Some(t) = decl.type_ {
@@ -252,7 +252,7 @@ impl PseudoChecker {
         &self,
         accessor: NodeId,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
     ) -> PseudoTypeRef {
         // `accessor.DeclarationData().Symbol.Declarations` — Go nil-panics on a
         // symbol-less accessor.
@@ -355,7 +355,7 @@ impl PseudoChecker {
         &self,
         fn_: NodeId,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
     ) -> PseudoTypeRef {
         if is_function_like(Some(fn_), nodes) {
             // !!! TODO: support ripping return type off of .FullSignature
@@ -374,7 +374,7 @@ impl PseudoChecker {
         &self,
         fn_: NodeId,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
     ) -> PseudoTypeRef {
         let mut candidate_expr: Option<NodeId> = None;
         if !node_is_missing(nodes[fn_].body(), nodes) {
@@ -430,7 +430,7 @@ impl PseudoChecker {
         &self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
     ) -> PseudoTypeRef {
         match nodes[node].kind {
             Kind::OmittedExpression => pseudo_type_undefined(),
@@ -533,7 +533,7 @@ impl PseudoChecker {
         &self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
     ) -> PseudoTypeRef {
         let error_nodes = self.can_get_type_from_object_literal(node, nodes);
         if !error_nodes.is_empty() {
@@ -615,7 +615,7 @@ impl PseudoChecker {
         accessor: NodeId,
         name: Option<NodeId>,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
     ) -> Option<PseudoObjectElement> {
         // TODO: node preservation for late-bound accessor pairs?
         // `accessor.Symbol().Declarations` — Go nil-panics without a symbol.
@@ -731,7 +731,7 @@ impl PseudoChecker {
         &self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
     ) -> PseudoTypeRef {
         let error_nodes = self.can_get_type_from_array_literal(node, nodes);
         if !error_nodes.is_empty() {
@@ -805,7 +805,7 @@ impl PseudoChecker {
         expression: NodeId,
         type_node: NodeId,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
     ) -> PseudoTypeRef {
         if is_const_type_reference(&nodes[type_node], nodes) {
             return self.type_from_expression(expression, nodes, symbols);
@@ -818,7 +818,7 @@ impl PseudoChecker {
         &self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
     ) -> PseudoTypeRef {
         let data = nodes[node]
             .function_like_data()
@@ -852,7 +852,7 @@ impl PseudoChecker {
         &self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
     ) -> PseudoTypeRef {
         // `node.Parent` — a parameter always has a function-like parent; Go
         // nil-panics otherwise.
@@ -886,7 +886,7 @@ impl PseudoChecker {
         self_idx: i32,
         last_required: i32,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
     ) -> PseudoTypeRef {
         let parent = nodes[node]
             .parent
@@ -940,7 +940,7 @@ impl PseudoChecker {
         &self,
         nodes_list: Option<&NodeList>,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
     ) -> Vec<PseudoParameter> {
         let Some(nodes_list) = nodes_list else {
             return Vec::new();

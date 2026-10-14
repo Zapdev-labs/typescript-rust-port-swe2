@@ -87,7 +87,7 @@ impl fmt::Debug for NodeId {
     }
 }
 
-/// Indexes into the `Vec<Symbol>` owned by a binder scope table.
+/// Indexes into the program-global `SymbolArena`.
 #[derive(Clone, Copy, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[repr(transparent)]
 pub struct SymbolId(pub u32);

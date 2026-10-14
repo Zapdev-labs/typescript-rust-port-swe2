@@ -25,7 +25,6 @@ use std::rc::Rc;
 use std::sync::Arc;
 
 use tsc_ast::parseoptions::SourceFileParseOptions;
-use tsc_ast::symbol::Symbol;
 use tsc_ast::{self as ast, Kind, ModifierFlags, Node, NodeId};
 use tsc_checker::checker_core::Checker;
 use tsc_compiler::program::Program;
@@ -58,7 +57,7 @@ struct ParsedSourceFile {
     file: NodeId,
     nodes: RefCell<Vec<Node>>,
     #[allow(dead_code)]
-    symbols: RefCell<Vec<Symbol>>,
+    symbols: ast::SymbolArena,
 }
 
 /// `type sourceDefResolutionHost struct` — implements `module.ResolutionHost`.
@@ -429,12 +428,12 @@ impl<'a, 'h> SourceDefResolver<'a, 'h> {
                 // so the file name here may not have a recognized extension.
                 ensure_script_kind_from_file_name(file_name),
             );
-            let mut symbols = Vec::new();
-            tsc_binder::binder::bind_source_file(&mut nodes, file, &mut symbols);
+            let symbols = ast::SymbolArena::default();
+            tsc_binder::binder::bind_source_file(&mut nodes, file, &symbols);
             Rc::new(ParsedSourceFile {
                 file,
                 nodes: RefCell::new(nodes),
-                symbols: RefCell::new(symbols),
+                symbols,
             })
         });
         if let Some(p) = &parsed {
@@ -1119,7 +1118,7 @@ fn get_source_def_checker_info_worker(
             drop(nodes);
             let t = c.borrow_mut().get_type_at_location(left);
             if let Some(prop) = c.borrow_mut().get_property_of_type(t, &text) {
-                declarations = c.borrow().symbol_arena.borrow()[prop.index()]
+                declarations = c.borrow().symbol_arena.get_ref(prop)
                     .declarations
                     .clone();
             }
@@ -1158,7 +1157,7 @@ fn get_source_def_checker_info_worker(
         }
     }
     if let Some(sym) = c.borrow_mut().get_symbol_at_location_api(resolve_node) {
-        let decls = c.borrow().symbol_arena.borrow()[sym.index()]
+        let decls = c.borrow().symbol_arena.get_ref(sym)
             .declarations
             .clone();
         for d in decls {

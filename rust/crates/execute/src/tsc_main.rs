@@ -101,7 +101,7 @@ fn stop_tracing(sys: &Arc<dyn System>, tr: Option<&Arc<Tracing>>, program: &Rc<P
         .as_ref()
         .map(|r| r.as_slice())
         .unwrap_or(empty_nodes);
-    let symbols = program.symbols.borrow();
+    let symbols = program.symbols.clone();
     let result = tr.stop_tracing(|tracer| {
         std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             tracer.dump_types(nodes, &symbols)

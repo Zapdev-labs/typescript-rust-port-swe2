@@ -337,8 +337,7 @@ fn get_importers_for_export(
     let mut mark_seen_direct_import = crate::utilities::node_seen_tracker();
     let mut mark_seen_indirect_user = crate::utilities::node_seen_tracker();
     let is_available_through_global = {
-        let value_declaration = checker.symbol_arena.borrow()
-            [export_info.exporting_module_symbol.index()]
+        let value_declaration = checker.symbol_arena.get_ref(export_info.exporting_module_symbol)
         .value_declaration;
         match value_declaration {
             Some(vd) => {
@@ -381,7 +380,7 @@ fn get_importers_for_export(
         };
         let module_symbol = checker.get_merged_symbol(module_symbol);
         debug_assert!(
-            checker.symbol_arena.borrow()[module_symbol.index()]
+            checker.symbol_arena.get_ref(module_symbol)
                 .flags
                 .intersects(SymbolFlags::MODULE)
         );
@@ -765,8 +764,7 @@ fn get_importers_for_export(
         source_files.to_vec()
     } else {
         // Module augmentations may use this module's exports without importing it.
-        let declarations = checker.symbol_arena.borrow()
-            [export_info.exporting_module_symbol.index()]
+        let declarations = checker.symbol_arena.get_ref(export_info.exporting_module_symbol)
         .declarations
         .clone();
         for decl in declarations {
@@ -877,7 +875,7 @@ fn get_searches_from_direct_imports(
     let mut import_searches: Vec<LocationAndSymbol> = Vec::new();
     let mut single_references: Vec<NodeId> = Vec::new();
 
-    let export_symbol_name = checker.symbol_arena.borrow()[export_symbol.index()]
+    let export_symbol_name = checker.symbol_arena.get_ref(export_symbol)
         .name
         .clone();
 
@@ -1119,7 +1117,7 @@ pub(crate) fn get_import_or_export_symbol(
         return None;
     }
     let (symbol_flags, symbol_name) = {
-        let arena = checker.symbol_arena.borrow();
+        let arena = checker.symbol_arena.clone();
         let sym = &arena[symbol.index()];
         (sym.flags, sym.name.clone())
     };
@@ -1142,7 +1140,7 @@ pub(crate) fn get_import_or_export_symbol(
     };
     // Similarly, skip past the symbol for 'export ='
     let imported_symbol = {
-        let name = checker.symbol_arena.borrow()[imported_symbol.index()]
+        let name = checker.symbol_arena.get_ref(imported_symbol)
             .name
             .clone();
         if name.as_ref() == "export=" {
@@ -1191,7 +1189,7 @@ fn get_export_assignment_export(
 ) -> Option<ImportExportSymbol> {
     let ex_symbol = nodes[ex].symbol()?;
     let exporting_module_symbol =
-        checker.symbol_arena.borrow()[ex_symbol.index()].parent?;
+        checker.symbol_arena.get_ref(ex_symbol).parent?;
     let export_kind = if nodes[ex].as_export_assignment().is_export_equals {
         ExportKind::ExportEquals
     } else {
@@ -1246,7 +1244,7 @@ fn get_export(
     coming_from_export: bool,
 ) -> Option<ImportExportSymbol> {
     let nodes = program.nodes(node.file_index());
-    let export_symbol = checker.symbol_arena.borrow()[symbol.index()].export_symbol;
+    let export_symbol = checker.symbol_arena.get_ref(symbol).export_symbol;
     let parent = nodes[node].parent?;
     let grandparent = nodes[parent].parent;
     if let Some(export_symbol) = export_symbol {
@@ -1255,7 +1253,7 @@ fn get_export(
             // So check that we are at the declaration.
             let in_binary_and_declared = grandparent.is_some_and(|gp| {
                 ast::is_binary_expression(&nodes[gp])
-                    && checker.symbol_arena.borrow()[symbol.index()]
+                    && checker.symbol_arena.get_ref(symbol)
                         .declarations
                         .contains(&parent)
             });
@@ -1340,7 +1338,7 @@ pub(crate) fn get_export_info(
     c: &mut Checker,
 ) -> Option<ExportInfo> {
     // Parent can be nil if an `export` is not at the top-level (which is a compile error).
-    let parent = c.symbol_arena.borrow()[export_symbol.index()].parent;
+    let parent = c.symbol_arena.get_ref(export_symbol).parent;
     if let Some(parent) = parent {
         let exporting_module_symbol = c.get_merged_symbol(parent);
         // `export` may appear in a namespace. In that case, just rely on global search.
@@ -1433,7 +1431,7 @@ fn skip_export_specifier_symbol(
     checker: &mut Checker,
 ) -> Option<SymbolId> {
     // For `export { foo } from './bar", there's nothing to skip, because it does not create a new alias. But `export { foo } does.
-    let declarations = checker.symbol_arena.borrow()[symbol.index()]
+    let declarations = checker.symbol_arena.get_ref(symbol)
         .declarations
         .clone();
     for declaration in declarations {
@@ -1491,13 +1489,13 @@ fn get_export_equals_local_symbol(
     imported_symbol: SymbolId,
     checker: &mut Checker,
 ) -> Option<SymbolId> {
-    if checker.symbol_arena.borrow()[imported_symbol.index()]
+    if checker.symbol_arena.get_ref(imported_symbol)
         .flags
         .intersects(SymbolFlags::ALIAS)
     {
         return checker.get_immediate_aliased_symbol(imported_symbol);
     }
-    let decl = checker.symbol_arena.borrow()[imported_symbol.index()].value_declaration;
+    let decl = checker.symbol_arena.get_ref(imported_symbol).value_declaration;
     let decl = decl.expect("value declaration");
     let nodes = program.nodes(decl.file_index());
     if ast::is_export_assignment(&nodes[decl]) {
@@ -1522,7 +1520,7 @@ fn symbol_name_no_default(
     symbol: SymbolId,
 ) -> String {
     let (name, declarations) = {
-        let arena = checker.symbol_arena.borrow();
+        let arena = checker.symbol_arena.clone();
         let sym = &arena[symbol.index()];
         (sym.name.to_string(), sym.declarations.clone())
     };
@@ -1550,7 +1548,7 @@ pub(crate) fn find_module_references(
     checker: &mut Checker,
 ) -> Vec<ModuleReference> {
     let mut refs: Vec<ModuleReference> = Vec::new();
-    let search_source_file = checker.symbol_arena.borrow()[search_module_symbol.index()]
+    let search_source_file = checker.symbol_arena.get_ref(search_module_symbol)
         .value_declaration;
 
     for &referencing_file in source_files {

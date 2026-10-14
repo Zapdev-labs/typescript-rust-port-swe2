@@ -13,12 +13,11 @@
 // `IsFileLevelUniqueNameInCurrentFile`.
 
 use rustc_hash::FxHashMap;
-use tsc_ast::{self as ast, Kind, Node, NodeId, Symbol};
+use tsc_ast::{self as ast, Kind, Node, NodeId, SymbolArena};
 use tsc_collections::Set;
 
 use crate::emit_context::{AutoGenerateId, Shared, get_node_for_generated_name_worker};
 use tsc_core::options_generated::ScriptTarget;
-use tsc_scanner::scanner;
 
 use crate::emit_flags::{EmitFlags, GeneratedIdentifierFlags};
 use crate::factory::format_generated_name;
@@ -198,7 +197,7 @@ fn next_container(nodes: &[Node], node: NodeId) -> Option<NodeId> {
 }
 
 /// `isUniqueLocalName`
-fn is_unique_local_name(name: &str, container: NodeId, nodes: &[Node], symbols: &[Symbol]) -> bool {
+fn is_unique_local_name(name: &str, container: NodeId, nodes: &[Node], symbols: &SymbolArena) -> bool {
     let mut node = Some(container);
     while let Some(n) = node
         && ast::is_node_descendant_of(Some(n), Some(container), nodes)
@@ -902,7 +901,7 @@ mod tests {
             PrintHandlers::default(),
             &mut f.ec,
             &mut f.nodes,
-            &[],
+            Box::leak(Box::new(SymbolArena::default())),
         )
     }
 

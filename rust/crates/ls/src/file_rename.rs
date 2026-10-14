@@ -806,7 +806,7 @@ fn is_ambient_module_symbol(program: &Program, symbol: Option<SymbolId>) -> bool
         return false;
     };
     let declarations = {
-        let symbols = program.symbols.borrow();
+        let symbols = program.symbols.clone();
         symbols[symbol.index()].declarations.clone()
     };
     declarations.iter().any(|&decl| {

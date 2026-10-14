@@ -185,7 +185,7 @@ impl SymbolExtractor {
         if !file_name.as_string().is_empty() && self.realpath.is_some() {
             let decl = {
                 let c = self.checker.borrow();
-                let sa = c.symbol_arena.borrow();
+                let sa = c.symbol_arena.clone();
                 get_non_augmentation_declaration(&sa[symbol.index()], &c)
             };
             if let Some(decl) = decl {
@@ -229,7 +229,7 @@ impl SymbolExtractor {
                         && is_non_pattern_ambient_module_declaration(&nodes, file, statement)
                     {
                         let decl_sym = nodes[statement].symbol().unwrap();
-                        export_count += c.symbol_arena.borrow()[decl_sym.index()].exports.size();
+                        export_count += c.symbol_arena.get_ref(decl_sym).exports.size();
                         ambient_decls.push((statement, nodes[statement].name().unwrap()));
                     }
                 }
@@ -275,7 +275,7 @@ impl SymbolExtractor {
                 let sym = nodes[decl]
                     .symbol()
                     .expect("module declaration has no symbol");
-                count += c.symbol_arena.borrow()[sym.index()].exports.size();
+                count += c.symbol_arena.get_ref(sym).exports.size();
             }
             (
                 sf.file_name().clone(),
@@ -288,7 +288,7 @@ impl SymbolExtractor {
         let module_id = self.get_module_id(&file_name, &path_key);
         let file_exports: Vec<(String, SymbolId)> = {
             let c = self.checker.borrow();
-            c.symbol_arena.borrow()[file_symbol.index()]
+            c.symbol_arena.get_ref(file_symbol)
                 .exports
                 .entries()
                 .map(|(k, v)| (k.to_string(), *v))
@@ -363,7 +363,7 @@ impl SymbolExtractor {
         };
         let exports_of: Vec<(String, SymbolId)> = {
             let c = self.checker.borrow();
-            c.symbol_arena.borrow()[sym.index()]
+            c.symbol_arena.get_ref(sym)
                 .exports
                 .entries()
                 .map(|(k, v)| (k.to_string(), *v))
@@ -386,7 +386,7 @@ impl SymbolExtractor {
     ) {
         {
             let c = self.checker.borrow();
-            let sa = c.symbol_arena.borrow();
+            let sa = c.symbol_arena.clone();
             if should_ignore_symbol(&sa[symbol.index()]) {
                 return;
             }
@@ -396,7 +396,7 @@ impl SymbolExtractor {
             let checker_lease = CheckerLease::new(self.checker.clone());
             let (parent, parent_exports) = {
                 let c = self.checker.borrow();
-                let sa = c.symbol_arena.borrow();
+                let sa = c.symbol_arena.clone();
                 let parent = sa[symbol.index()]
                     .parent
                     .expect("export star has no parent");
@@ -425,7 +425,7 @@ impl SymbolExtractor {
                         .unwrap_or(-1);
                     let ignore = {
                         let c = self.checker.borrow();
-                        let sa = c.symbol_arena.borrow();
+                        let sa = c.symbol_arena.clone();
                         should_ignore_symbol(&sa[named_export.index()])
                     };
                     if idx >= 0 || ignore {
@@ -451,21 +451,21 @@ impl SymbolExtractor {
                 {
                     let reexported_parent = {
                         let c = self.checker.borrow();
-                        c.symbol_arena.borrow()[reexported_symbol.index()].parent
+                        c.symbol_arena.get_ref(reexported_symbol).parent
                     };
                     let ch = checker_lease.get_checker();
                     // `GetMergedSymbol(nil)` → `nil`; `Option::map`.
                     let parent = reexported_parent.map(|p| ch.borrow_mut().get_merged_symbol(p));
                     let reexported_name = {
                         let c = self.checker.borrow();
-                        c.symbol_arena.borrow()[reexported_symbol.index()]
+                        c.symbol_arena.get_ref(reexported_symbol)
                             .name
                             .clone()
                     };
                     if let Some(parent) = parent {
                         let is_external = {
                             let c = self.checker.borrow();
-                            c.symbol_arena.borrow()[parent.index()].is_external_module()
+                            c.symbol_arena.get_ref(parent).is_external_module()
                         };
                         if is_external
                             && let Some(target_module_id) = self.get_module_id_for_symbol(parent)
@@ -485,7 +485,7 @@ impl SymbolExtractor {
 
         let syntax = {
             let c = self.checker.borrow();
-            let sa = c.symbol_arena.borrow();
+            let sa = c.symbol_arena.clone();
             get_syntax(&sa[symbol.index()], &c)
         };
         let checker_lease = CheckerLease::new(self.checker.clone());
@@ -503,14 +503,14 @@ impl SymbolExtractor {
         if let Some(target) = target {
             let target_is_namespace = {
                 let c = self.checker.borrow();
-                c.symbol_arena.borrow()[target.index()]
+                c.symbol_arena.get_ref(target)
                     .flags
                     .intersects(SymbolFlags::NAMESPACE)
             };
             if syntax == ExportSyntax::Equals && target_is_namespace {
                 let inner: Vec<(String, SymbolId)> = {
                     let c = self.checker.borrow();
-                    c.symbol_arena.borrow()[target.index()]
+                    c.symbol_arena.get_ref(target)
                         .exports
                         .entries()
                         .map(|(k, v)| (k.to_string(), *v))
@@ -538,7 +538,7 @@ impl SymbolExtractor {
         } else if syntax == ExportSyntax::CommonJSModuleExports {
             let decls = {
                 let c = self.checker.borrow();
-                c.symbol_arena.borrow()[symbol.index()].declarations.clone()
+                c.symbol_arena.get_ref(symbol).declarations.clone()
             };
             let expression = {
                 let c = self.checker.borrow();
@@ -576,7 +576,7 @@ impl SymbolExtractor {
                     if eligible && let Some(prop_name) = prop_name {
                         let text = nodes[prop_name].text(&nodes).to_string();
                         let member = nodes[expression].symbol().and_then(|s| {
-                            self.checker.borrow().symbol_arena.borrow()[s.index()]
+                            self.checker.borrow().symbol_arena.get_ref(s)
                                 .members
                                 .get(text.as_str())
                                 .copied()
@@ -620,7 +620,7 @@ impl SymbolExtractor {
     ) -> (Option<Export>, Option<SymbolId>) {
         let (symbol_name, symbol_flags, symbol_declarations, combined_flags, is_type_only_decls) = {
             let c = self.checker.borrow();
-            let sa = c.symbol_arena.borrow();
+            let sa = c.symbol_arena.clone();
             let sym = &sa[symbol.index()];
             if should_ignore_symbol(sym) {
                 return (None, None);
@@ -678,7 +678,7 @@ impl SymbolExtractor {
             if let Some(target) = target_symbol {
                 let (target_decls, target_check_flags, target_flags, target_name, target_parent) = {
                     let c = self.checker.borrow();
-                    let sa = c.symbol_arena.borrow();
+                    let sa = c.symbol_arena.clone();
                     let t = &sa[target.index()];
                     (
                         t.declarations.clone(),
@@ -697,7 +697,7 @@ impl SymbolExtractor {
                     if let Some(mapped_decl) = mapped_decl {
                         let mapped_decls = {
                             let c = self.checker.borrow();
-                            c.symbol_arena.borrow()[mapped_decl.index()]
+                            c.symbol_arena.get_ref(mapped_decl)
                                 .declarations
                                 .clone()
                         };
@@ -736,7 +736,7 @@ impl SymbolExtractor {
                 if let Some(parent) = parent {
                     let is_external = {
                         let c = self.checker.borrow();
-                        c.symbol_arena.borrow()[parent.index()].is_external_module()
+                        c.symbol_arena.get_ref(parent).is_external_module()
                     };
                     if is_external && let Some(id) = self.get_module_id_for_symbol(parent) {
                         target_module_id = id;
@@ -763,7 +763,7 @@ impl SymbolExtractor {
             }
             export.local_name = {
                 let c = self.checker.borrow();
-                let sa = c.symbol_arena.borrow();
+                let sa = c.symbol_arena.clone();
                 get_default_like_export_name_from_declaration(
                     &sa[named_symbol.index()],
                     &self.checker,
@@ -780,7 +780,7 @@ impl SymbolExtractor {
                     named_symbol = s;
                 }
                 let c = self.checker.borrow();
-                let sa = c.symbol_arena.borrow();
+                let sa = c.symbol_arena.clone();
                 export.local_name = get_default_like_export_name_from_declaration(
                     &sa[named_symbol.index()],
                     &self.checker,
@@ -848,7 +848,7 @@ impl SymbolExtractor {
     /// span file arenas, so each is read in its own).
     fn local_symbol_for_export_default(&self, symbol: SymbolId) -> Option<SymbolId> {
         let c = self.checker.borrow();
-        let decls = c.symbol_arena.borrow()[symbol.index()].declarations.clone();
+        let decls = c.symbol_arena.get_ref(symbol).declarations.clone();
         if decls.is_empty() {
             return None;
         }
@@ -881,7 +881,7 @@ impl SymbolExtractor {
         if let Some(target) = target_symbol {
             let decls = {
                 let c = self.checker.borrow();
-                c.symbol_arena.borrow()[target.index()].declarations.clone()
+                c.symbol_arena.get_ref(target).declarations.clone()
             };
             if let Some(&decl) = decls.first() {
                 let c = self.checker.borrow();
@@ -909,7 +909,7 @@ impl SymbolExtractor {
     ) -> Option<SymbolId> {
         {
             let c = self.checker.borrow();
-            let sa = c.symbol_arena.borrow();
+            let sa = c.symbol_arena.clone();
             if !tsc_ast::is_non_local_alias(Some(&sa[symbol.index()]), SymbolFlags::NONE) {
                 return Some(symbol);
             }
@@ -921,7 +921,7 @@ impl SymbolExtractor {
             ExportSyntax::Named => {
                 let decl = {
                     let c = self.checker.borrow();
-                    let sa = c.symbol_arena.borrow();
+                    let sa = c.symbol_arena.clone();
                     get_declaration_of_kind_any(
                         &sa[symbol.index()].declarations,
                         Kind::ExportSpecifier,
@@ -953,7 +953,7 @@ impl SymbolExtractor {
             ExportSyntax::Equals => {
                 let is_export_equals = {
                     let c = self.checker.borrow();
-                    c.symbol_arena.borrow()[symbol.index()].name.as_ref()
+                    c.symbol_arena.get_ref(symbol).name.as_ref()
                         == tsc_ast::symbol::INTERNAL_SYMBOL_NAME_EXPORT_EQUALS
                 };
                 if is_export_equals {
@@ -1000,7 +1000,7 @@ impl SymbolExtractor {
                 &symbols_rc,
             ) {
                 let is_non_local = {
-                    let sa = symbols_rc.borrow();
+                    let sa = &symbols_rc;
                     tsc_ast::is_non_local_alias(Some(&sa[local.index()]), SymbolFlags::NONE)
                 };
                 if !is_non_local {
@@ -1029,7 +1029,7 @@ impl SymbolExtractor {
     ) {
         let decl = {
             let c = self.checker.borrow();
-            let sa = c.symbol_arena.borrow();
+            let sa = c.symbol_arena.clone();
             get_declaration_of_kind_any(
                 &sa[symbol.index()].declarations,
                 Kind::ExportAssignment,

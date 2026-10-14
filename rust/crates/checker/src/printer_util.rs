@@ -37,7 +37,7 @@
 
 use rustc_hash::FxHashMap;
 
-use tsc_ast::{self as ast, Node, NodeId, Symbol, SymbolId};
+use tsc_ast::{self as ast, Node, NodeId, SymbolArena, SymbolId};
 use tsc_core::tristate::Tristate;
 use tsc_evaluator as evaluator;
 use tsc_nodebuilder as nodebuilder;
@@ -322,7 +322,7 @@ pub fn install_foreign_comma_hook_ref<'a>(
 fn create_printer_with_defaults<'a>(
     emit_context: &'a mut EmitContext,
     nodes: &'a mut Vec<Node>,
-    symbols: &'a [Symbol],
+    symbols: &'a SymbolArena,
 ) -> Printer<'a> {
     Printer::new(
         PrinterOptions::default(),
@@ -337,7 +337,7 @@ fn create_printer_with_defaults<'a>(
 fn create_printer_with_remove_comments<'a>(
     emit_context: &'a mut EmitContext,
     nodes: &'a mut Vec<Node>,
-    symbols: &'a [Symbol],
+    symbols: &'a SymbolArena,
 ) -> Printer<'a> {
     Printer::new(
         PrinterOptions {
@@ -355,7 +355,7 @@ fn create_printer_with_remove_comments<'a>(
 fn create_printer_with_remove_comments_omit_trailing_semicolon<'a>(
     emit_context: &'a mut EmitContext,
     nodes: &'a mut Vec<Node>,
-    symbols: &'a [Symbol],
+    symbols: &'a SymbolArena,
 ) -> Printer<'a> {
     Printer::new(
         PrinterOptions {
@@ -374,7 +374,7 @@ fn create_printer_with_remove_comments_omit_trailing_semicolon<'a>(
 fn create_printer_with_remove_comments_omit_trailing_semicolon_never_ascii_escape<'a>(
     emit_context: &'a mut EmitContext,
     nodes: &'a mut Vec<Node>,
-    symbols: &'a [Symbol],
+    symbols: &'a SymbolArena,
 ) -> Printer<'a> {
     Printer::new(
         PrinterOptions {
@@ -394,7 +394,7 @@ fn create_printer_with_remove_comments_omit_trailing_semicolon_never_ascii_escap
 fn create_printer_with_remove_comments_never_ascii_escape<'a>(
     emit_context: &'a mut EmitContext,
     nodes: &'a mut Vec<Node>,
-    symbols: &'a [Symbol],
+    symbols: &'a SymbolArena,
 ) -> Printer<'a> {
     Printer::new(
         PrinterOptions {
@@ -556,7 +556,7 @@ impl Checker {
             .clone();
         let mut emit_context = emit_context_cell.borrow_mut();
         let symbol_arena = self.symbol_arena.clone();
-        let symbols = symbol_arena.borrow();
+        let symbols = symbol_arena.clone();
         let source_file =
             enclosing_declaration.and_then(|d| ast::get_source_file_of_node(Some(d), &nodes));
         // The unresolved type gets a synthesized comment on `any` to hint to
@@ -713,7 +713,7 @@ impl Checker {
             .clone();
         let mut emit_context = emit_context_cell.borrow_mut();
         let symbol_arena = self.symbol_arena.clone();
-        let symbols = symbol_arena.borrow();
+        let symbols = symbol_arena.clone();
         // add neverAsciiEscape for GH#39027
         let enclosing_is_source_file = enclosing_declaration.is_some_and(|d| {
             resolve_arena_for(&program, &nodes, d)[d].kind == ast::Kind::SourceFile
@@ -807,7 +807,7 @@ impl Checker {
             .clone();
         let mut emit_context = emit_context_cell.borrow_mut();
         let symbol_arena = self.symbol_arena.clone();
-        let symbols = symbol_arena.borrow();
+        let symbols = symbol_arena.clone();
         let source_file =
             enclosing_declaration.and_then(|d| ast::get_source_file_of_node(Some(d), &nodes));
         let mut p = create_printer_with_remove_comments_omit_trailing_semicolon_never_ascii_escape(
@@ -883,7 +883,7 @@ impl Checker {
             .clone();
         let mut emit_context = emit_context_cell.borrow_mut();
         let symbol_arena = self.symbol_arena.clone();
-        let symbols = symbol_arena.borrow();
+        let symbols = symbol_arena.clone();
         let source_file =
             enclosing_declaration.and_then(|d| ast::get_source_file_of_node(Some(d), &nodes));
         let mut p = create_printer_with_remove_comments(&mut emit_context, &mut nodes, &symbols);
@@ -1096,7 +1096,7 @@ impl Checker {
             .clone();
         let mut emit_context = emit_context_cell.borrow_mut();
         let symbol_arena = self.symbol_arena.clone();
-        let symbols = symbol_arena.borrow();
+        let symbols = symbol_arena.clone();
         let source_file = self
             .sym(symbol)
             .value_declaration
@@ -1165,7 +1165,7 @@ impl Checker {
             .clone();
         let mut emit_context = emit_context_cell.borrow_mut();
         let symbol_arena = self.symbol_arena.clone();
-        let symbols = symbol_arena.borrow();
+        let symbols = symbol_arena.clone();
         let source_file =
             enclosing_declaration.and_then(|d| ast::get_source_file_of_node(Some(d), &nodes));
         let mut p = create_printer_with_remove_comments(&mut emit_context, &mut nodes, &symbols);

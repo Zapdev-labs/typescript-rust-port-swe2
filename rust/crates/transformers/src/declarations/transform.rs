@@ -52,8 +52,7 @@ use std::rc::Rc;
 
 use tsc_ast::visitor::{NodeVisitor, VisitorCx};
 use tsc_ast::{
-    self as ast, FileReference, Kind, ModifierFlags, Node, NodeFlags, NodeId, NodeList, Symbol,
-    SymbolFlags, TokenFlags,
+    self as ast, FileReference, Kind, ModifierFlags, Node, NodeFlags, NodeId, NodeList, SymbolArena,     SymbolFlags, TokenFlags,
 };
 use tsc_core::core;
 use tsc_core::languagevariant::LanguageVariant;
@@ -189,7 +188,7 @@ struct DeclarationTransformerState<'a> {
     /// The live bound symbol arena — `TransformOptions::symbols`; every
     /// checker-side helper that Go reaches through `node.Symbol()`
     /// needs it.
-    symbols: Option<&'a RefCell<Vec<Symbol>>>,
+    symbols: Option<&'a SymbolArena>,
 
     /// `needsDeclare`.
     needs_declare: Cell<bool>,
@@ -265,7 +264,7 @@ pub fn new_declaration_transformer<'a>(
     declaration_file_path: RootedFilePath,
     // `TransformOptions::symbols` — required by the tracker for
     // isolated-declaration errors and by the expando paths below.
-    symbols: Option<&'a RefCell<Vec<Symbol>>>,
+    symbols: Option<&'a SymbolArena>,
 ) -> DeclarationTransformer<'a> {
     let shared = Rc::new(RefCell::new(SymbolTrackerSharedState {
         late_marked_statements: Vec::new(),
@@ -339,10 +338,10 @@ pub fn new_declaration_transformer<'a>(
             let props = resolver.borrow().get_properties_of_container_function(
                 node,
                 nodes,
-                &symbols.borrow(),
+                symbols,
             );
             for p in props {
-                let value_declaration = symbols.borrow()[p.index()].value_declaration;
+                let value_declaration = symbols.get_ref(p).value_declaration;
                 // `value_declaration` lives in its program arena, not the emit
                 // working buffer — resolve through the host.
                 let decl_node =
@@ -472,7 +471,7 @@ impl<'a> DeclarationTransformer<'a> {
                     None,
                     None,
                     &nodes,
-                    &[],
+                    &ast::SymbolArena::default(),
                 );
             let correct = crate::declarations::diagnostics::build_param_diag(
                 fixup.node,
@@ -766,12 +765,12 @@ impl<'a> DeclarationTransformerState<'a> {
         if ast::is_external_or_commonjs_module(cx.nodes[node].as_source_file()) {
             if ast::is_in_js_file(Some(node), cx.nodes) {
                 if let Some((symbol, symbols)) = cx.nodes[node].symbol().zip(self.symbols) {
-                    if let Some(export_equals) = symbols.borrow()[symbol.index()]
+                    if let Some(export_equals) = symbols.get_ref(symbol)
                         .exports
                         .get(ast::symbol::INTERNAL_SYMBOL_NAME_EXPORT_EQUALS)
                     {
                         let declarations =
-                            symbols.borrow()[export_equals.index()].declarations.clone();
+                            symbols.get_ref(*export_equals).declarations.clone();
                         if declarations.len() > 1 {
                             for decl in declarations {
                                 self.shared.borrow_mut().add_diagnostic(
@@ -2349,7 +2348,7 @@ impl<'a> DeclarationTransformerState<'a> {
         cx: &mut VisitorCx<'_, '_>,
     ) -> Option<NodeId> {
         if let (Some(symbol), Some(symbols)) = (cx.nodes[input].symbol(), self.symbols) {
-            let declarations = symbols.borrow()[symbol.index()].declarations.clone();
+            let declarations = symbols.get_ref(symbol).declarations.clone();
             if !declarations.is_empty() && declarations[0] != input {
                 return None;
             }
@@ -2950,7 +2949,7 @@ impl<'a> DeclarationTransformerState<'a> {
 fn is_commonjs_alias_export(
     node: NodeId,
     nodes: &[Node],
-    symbols: Option<&RefCell<Vec<Symbol>>>,
+    symbols: Option<&SymbolArena>,
 ) -> bool {
     if ast::is_binary_expression(&nodes[node])
         && nodes[node]
@@ -2959,7 +2958,7 @@ fn is_commonjs_alias_export(
             .is_some_and(|r| ast::is_identifier(&nodes[r]))
     {
         if let (Some(symbol), Some(symbols)) = (nodes[node].symbol(), symbols) {
-            return symbols.borrow()[symbol.index()].declarations.len() == 1;
+            return symbols.get_ref(symbol).declarations.len() == 1;
         }
     }
     false
@@ -3665,7 +3664,7 @@ impl<'a> DeclarationTransformerState<'a> {
                     None,
                     self.enclosing_declaration.get(),
                     cx.nodes,
-                    &[],
+                    &ast::SymbolArena::default(),
                 )
             })
         {
@@ -5838,7 +5837,7 @@ impl<'a> DeclarationTransformerState<'a> {
             return;
         };
         let symbol_has_assignment_flag = self.symbols.is_some_and(|symbols| {
-            symbols.borrow()[symbol.index()]
+            symbols.get_ref(symbol)
                 .flags
                 .intersects(SymbolFlags::ASSIGNMENT)
         });
@@ -5929,7 +5928,7 @@ impl<'a> DeclarationTransformerState<'a> {
         }
 
         if ast::is_function_declaration(&cx.nodes[declaration])
-            && !should_emit_function_properties(declaration, cx.nodes, &symbols.borrow())
+            && !should_emit_function_properties(declaration, cx.nodes, symbols)
         {
             return;
         }

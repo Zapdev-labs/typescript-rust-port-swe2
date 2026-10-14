@@ -21,6 +21,7 @@ fn check_emit(title: &str, input: &str, expected: &str, jsx: bool) -> Result<(),
     let (file, mut nodes) = parse_source_file(opts, input, script_kind);
 
     let mut emit_context = EmitContext::new();
+    let symbols = tsc_ast::SymbolArena::default();
     let mut printer = Printer::new(
         PrinterOptions {
             new_line: NewLineKind::LF,
@@ -29,7 +30,7 @@ fn check_emit(title: &str, input: &str, expected: &str, jsx: bool) -> Result<(),
         PrintHandlers::default(),
         &mut emit_context,
         &mut nodes,
-        &[],
+        &symbols,
     );
     let text = printer.emit_source_file(file);
     let actual = text.strip_suffix('\n').unwrap_or(&text);

@@ -5,13 +5,13 @@
 // `Rc<ArenaCell>`); `nodes()` returns a `Ref` through a raw-pointer
 // borrow — see the safety note there.
 
-use std::cell::{Ref, RefCell, RefMut};
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::Arc;
 
 use rustc_hash::FxHashMap;
-use tsc_ast::symbol::Symbol;
+use tsc_ast::symbol::SymbolArena;
 use tsc_ast::utilities::HasFileName;
 use tsc_ast::{ArenaCell, NodeId, ast};
 use tsc_collections::SyncMap;
@@ -20,7 +20,7 @@ use tsc_core::options_generated::{CompilerOptions, ModuleKind};
 use tsc_module::resolver::DefaultResolver;
 use tsc_module::{ModeAwareCache, ModeAwareCacheKey, ResolvedModule};
 use tsc_tsoptions::parsedcommandline::{ParsedCommandLine, SourceOutputAndProjectReference};
-use tsc_tspath::{CaseSensitivity, PathKey, RootedDirectoryPath, RootedFilePath, RootedPath};
+use tsc_tspath::{CaseSensitivity, PathKey, RootedDirectoryPath, RootedFilePath};
 
 use crate::autoimport::registry::RegistryCloneHost;
 use crate::autoimport::util::PathAndFileName;
@@ -47,7 +47,7 @@ pub(crate) struct AliasResolver {
 
     /// The program-global symbol arena (`symbols()`); the binder appends to
     /// it for every file loaded through `get_source_file`.
-    symbols: Rc<RefCell<Vec<Symbol>>>,
+    symbols: SymbolArena,
     /// `file_index -> arena`. Append-only: entries are never removed or
     /// replaced, so each `RefCell`'s heap address is stable for the life of
     /// the resolver (required for the `nodes()` borrow below).
@@ -89,14 +89,14 @@ pub(crate) fn new_alias_resolver(
             no_check: tsc_core::tristate::Tristate::True,
             ..Default::default()
         }),
-        symbols: Rc::new(RefCell::new(Vec::new())),
+        symbols: SymbolArena::default(),
         arenas: RefCell::new(arenas),
         leaked_arenas: RefCell::new(HashMap::new()),
     });
     // Bind root files eagerly (Go's `binder.BindSourceFile(file)`).
     for (file, arena) in root_files {
         let mut nodes = arena.cow();
-        let mut symbols = resolver.symbols.borrow_mut();
+        let mut symbols = resolver.symbols.clone();
         tsc_binder::binder::bind_source_file(&mut nodes, file, &mut symbols);
     }
     resolver
@@ -114,7 +114,7 @@ impl AliasResolver {
         {
             let arena = self.arenas.borrow()[&file.file_index()].clone();
             let mut nodes = arena.cow();
-            let mut symbols = self.symbols.borrow_mut();
+            let mut symbols = self.symbols.clone();
             tsc_binder::binder::bind_source_file(&mut nodes, file, &mut symbols);
         }
         Some(file)
@@ -266,7 +266,7 @@ impl tsc_checker::checker_types::Program for AliasResolver {
     fn bind_source_files(&self) {}
 
     /// The program-global symbol arena.
-    fn symbols(&self) -> Rc<RefCell<Vec<Symbol>>> {
+    fn symbols(&self) -> SymbolArena {
         self.symbols.clone()
     }
 

@@ -6,7 +6,7 @@
 //   Where committed call sites pass `&Node` and the body only needs the
 //   node's own fields, the parameter is `node: &ast::Node`.
 // - `*ast.Symbol` → `SymbolId` (`Option<SymbolId>` for nil); symbol fields
-//   are read through `c.symbol_arena.borrow()[s.index()]`.
+//   are read through `c.symbol_arena.get_ref(s)`.
 // - `*Type` → `TypeId` (`Option<TypeId>` for nil); type fields are read
 //   through the `types.get(t)` guard on `crate::types::TypeArena`.
 // - `*TypeMapper` → `crate::mapper::TypeMapperId`.
@@ -21,7 +21,7 @@
 // `isTupleType` (checker.go), `ValueToString` (checker_core::value_to_string).
 //
 // PORT(approximation) — `compare_types` takes `&TypeArena` plus the symbol
-// arena (`&RefCell<Vec<ast::Symbol>>`); node ordering uses `NodeId`
+// arena (`&ast::SymbolArena`); node ordering uses `NodeId`
 // ordering (`file_index << 44 | local_index`, which approximates Go's
 // `fileIndexMap[s]` + `Pos()` order because files are indexed in program
 // order and nodes are allocated in source order), and the instantiation-
@@ -29,7 +29,6 @@
 // the OBJECT branch).
 
 use rustc_hash::FxHashMap;
-use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::OnceLock;
 
@@ -163,7 +162,7 @@ pub(crate) fn has_readonly_modifier(node: &ast::Node) -> bool {
 /// the symbol arena plus the declaration's node arena for
 /// `IsPrivateIdentifierClassElementDeclaration`/`IsStatic`).
 pub(crate) fn is_static_private_identifier_property(c: &Checker, s: SymbolId) -> bool {
-    let value_declaration = c.symbol_arena.borrow()[s.index()].value_declaration;
+    let value_declaration = c.symbol_arena.get_ref(s).value_declaration;
     let Some(decl) = value_declaration else {
         return false;
     };
@@ -406,7 +405,7 @@ pub(crate) fn can_have_locals(node: &ast::Node) -> bool {
 
 /// `isShorthandAmbientModuleSymbol` — needs the declaration's arena.
 pub(crate) fn is_shorthand_ambient_module_symbol(c: &Checker, module_symbol: SymbolId) -> bool {
-    let value_declaration = c.symbol_arena.borrow()[module_symbol.index()].value_declaration;
+    let value_declaration = c.symbol_arena.get_ref(module_symbol).value_declaration;
     match value_declaration {
         Some(decl) => {
             let __program = c.program.clone().expect("program");
@@ -517,7 +516,7 @@ pub(crate) fn is_syntactic_default(node: &ast::Node) -> bool {
 
 /// `hasExportAssignmentSymbol` — needs the symbol arena for `.exports`.
 pub(crate) fn has_export_assignment_symbol(c: &Checker, module_symbol: SymbolId) -> bool {
-    c.symbol_arena.borrow()[module_symbol.index()]
+    c.symbol_arena.get_ref(module_symbol)
         .exports
         .get(ast::symbol::INTERNAL_SYMBOL_NAME_EXPORT_EQUALS)
         .is_some()
@@ -642,7 +641,7 @@ impl Checker {
                 let mut declaration_file: Option<NodeId> = None;
                 if let Some(suggestion) = suggestion {
                     let declarations = {
-                        self.symbol_arena.borrow()[suggestion.index()]
+                        self.symbol_arena.get_ref(suggestion)
                             .declarations
                             .clone()
                     };
@@ -654,7 +653,7 @@ impl Checker {
                     }
                 }
                 let suggestion_has_no_extends_or_decorators = suggestion.is_none_or(|s| {
-                    let value_declaration = self.symbol_arena.borrow()[s.index()].value_declaration;
+                    let value_declaration = self.symbol_arena.get_ref(s).value_declaration;
                     value_declaration.is_none_or(|vd| {
                         let __program = self.program.clone().expect("program");
                         let vd_nodes = __program.nodes((vd).file_index());
@@ -675,7 +674,7 @@ impl Checker {
                     }
                 })) && !(exclude_classes
                     && suggestion.is_some_and(|s| {
-                        self.symbol_arena.borrow()[s.index()]
+                        self.symbol_arena.get_ref(s)
                             .flags
                             .intersects(ast::SymbolFlags::CLASS)
                     })
@@ -795,7 +794,7 @@ impl Checker {
 /// `CompareTypes` (checker/utilities.go) — `-1`/`0`/`1` ordering on types.
 pub fn compare_types(
     types: &TypeArena,
-    symbols: &RefCell<Vec<ast::Symbol>>,
+    symbols: &ast::SymbolArena,
     mappers: &TypeMapperArena,
     program: Option<&Rc<dyn crate::checker_types::Program>>,
     t1: TypeId,
@@ -806,7 +805,7 @@ pub fn compare_types(
 
 fn compare_types_opt(
     types: &TypeArena,
-    symbols: &RefCell<Vec<ast::Symbol>>,
+    symbols: &ast::SymbolArena,
     mappers: &TypeMapperArena,
     program: Option<&Rc<dyn crate::checker_types::Program>>,
     t1: Option<TypeId>,
@@ -868,7 +867,7 @@ fn compare_types_opt(
                 && object_flags2.intersects(ObjectFlags::INSTANTIATION_EXPRESSION_TYPE)
             {
                 let (declaration1, declaration2) = {
-                    let syms = symbols.borrow();
+                    let syms = symbols.clone();
                     let decl = |s: Option<SymbolId>| {
                         s.and_then(|s| syms[s.index()].declarations.first().copied())
                     };
@@ -1265,7 +1264,7 @@ fn get_sort_order_flags(flags: TypeFlags) -> u32 {
 /// aliased types, by alias type arguments.
 fn compare_type_names(
     types: &TypeArena,
-    symbols: &RefCell<Vec<ast::Symbol>>,
+    symbols: &ast::SymbolArena,
     mappers: &TypeMapperArena,
     program: Option<&Rc<dyn crate::checker_types::Program>>,
     t1: TypeId,
@@ -1294,7 +1293,7 @@ fn compare_type_names(
     let Some(s1) = s1 else { return 1 };
     let Some(s2) = s2 else { return -1 };
     let c = {
-        let syms = symbols.borrow();
+        let syms = symbols.clone();
         syms[s1.index()].name.cmp(&syms[s2.index()].name) as i32
     };
     if c != 0 {
@@ -1308,7 +1307,7 @@ fn compare_type_names(
 /// `compareSymbolsWorker` (checker/utilities.go) — declaration position
 /// (program file order, then pos), then name, then symbol id.
 fn compare_symbols(
-    symbols: &RefCell<Vec<ast::Symbol>>,
+    symbols: &ast::SymbolArena,
     program: Option<&Rc<dyn crate::checker_types::Program>>,
     s1: Option<SymbolId>,
     s2: Option<SymbolId>,
@@ -1319,7 +1318,7 @@ fn compare_symbols(
     let Some(s1) = s1 else { return 1 };
     let Some(s2) = s2 else { return -1 };
     let (decl1, decl2, name_ord) = {
-        let syms = symbols.borrow();
+        let syms = symbols.clone();
         (
             syms[s1.index()].declarations.first().copied(),
             syms[s2.index()].declarations.first().copied(),
@@ -1428,7 +1427,7 @@ fn compare_element_labels(
 /// `compareTypeLists`.
 fn compare_type_lists(
     types: &TypeArena,
-    symbols: &RefCell<Vec<ast::Symbol>>,
+    symbols: &ast::SymbolArena,
     mappers: &TypeMapperArena,
     program: Option<&Rc<dyn crate::checker_types::Program>>,
     s1: &[TypeId],
@@ -1449,7 +1448,7 @@ fn compare_type_lists(
 /// `compareTypeMappers`.
 fn compare_type_mappers(
     types: &TypeArena,
-    symbols: &RefCell<Vec<ast::Symbol>>,
+    symbols: &ast::SymbolArena,
     mappers: &TypeMapperArena,
     program: Option<&Rc<dyn crate::checker_types::Program>>,
     m1: Option<TypeMapperId>,
@@ -1600,7 +1599,7 @@ pub(crate) fn is_late_bound_name(name: &str) -> bool {
 
 /// `IsKnownSymbol` (utilities.go:1018).
 pub fn is_known_symbol(c: &Checker, s: SymbolId) -> bool {
-    is_late_bound_name(&c.symbol_arena.borrow()[s.index()].name)
+    is_late_bound_name(&c.symbol_arena.get_ref(s).name)
 }
 
 /// `isRestParameter` (checker.go:28326) — `param.AsParameterDeclaration().DotDotDotToken != nil`.
@@ -1846,7 +1845,7 @@ pub(crate) fn get_declaration_modifier_flags_from_symbol_ex(
     is_write: bool,
 ) -> ast::ModifierFlags {
     let (check_flags, symbol_flags, value_declaration, declarations, parent) = {
-        let arena = c.symbol_arena.borrow();
+        let arena = c.symbol_arena.clone();
         let sym = &arena[s.index()];
         (
             sym.check_flags,
@@ -1902,7 +1901,7 @@ pub(crate) fn get_declaration_modifier_flags_from_symbol_ex(
         let nodes = __program.nodes((declaration).file_index());
         let flags = ast::get_combined_modifier_flags(declaration, &nodes);
         let parent_is_class = parent.is_some_and(|p| {
-            c.symbol_arena.borrow()[p.index()]
+            c.symbol_arena.get_ref(p)
                 .flags
                 .intersects(ast::SymbolFlags::CLASS)
         });
@@ -2235,7 +2234,7 @@ pub(crate) fn get_declarations_of_kind(
     symbol: SymbolId,
     kind: ast::Kind,
 ) -> Vec<NodeId> {
-    let declarations = c.symbol_arena.borrow()[symbol.index()].declarations.clone();
+    let declarations = c.symbol_arena.get_ref(symbol).declarations.clone();
     declarations
         .into_iter()
         .filter(|&d| {
@@ -3094,7 +3093,7 @@ impl Checker {
     /// `checker_types::Program::nodes`).
     pub fn program_nodes_for_symbol(&self, s: SymbolId) -> std::rc::Rc<Vec<ast::Node>> {
         let declaration = {
-            let arena = self.symbol_arena.borrow();
+            let arena = self.symbol_arena.clone();
             let symbol = &arena[s.index()];
             symbol
                 .value_declaration

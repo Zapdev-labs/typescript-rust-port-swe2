@@ -37,7 +37,7 @@ pub fn print_and_position_node(
         handlers,
         emit_context,
         nodes,
-        &[],
+        &tsc_ast::SymbolArena::default(),
     )
     .write(Some(node), source_file, &mut writer, None);
 

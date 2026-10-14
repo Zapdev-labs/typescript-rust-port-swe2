@@ -382,7 +382,7 @@ impl<'a> AffectedFilesHandler<'a> {
             nodes[affected_file].symbol()
         };
         if let Some(symbol) = affected_symbol {
-            let exports: Vec<SymbolId> = program.symbols.borrow()[symbol.index()]
+            let exports: Vec<SymbolId> = program.symbols.get_ref(symbol)
                 .exports
                 .values()
                 .copied()
@@ -390,7 +390,7 @@ impl<'a> AffectedFilesHandler<'a> {
             let mut type_checker: Option<(Rc<RefCell<tsc_checker::checker_core::Checker>>, _)> =
                 None;
             for exported in exports {
-                if program.symbols.borrow()[exported.index()]
+                if program.symbols.get_ref(exported)
                     .flags
                     .contains(SymbolFlags::CONST_ENUM)
                 {
@@ -415,11 +415,11 @@ impl<'a> AffectedFilesHandler<'a> {
                 if aliased == exported {
                     continue;
                 }
-                if program.symbols.borrow()[aliased.index()]
+                if program.symbols.get_ref(aliased)
                     .flags
                     .contains(SymbolFlags::CONST_ENUM)
                 {
-                    let declared_in_affected_file = program.symbols.borrow()[aliased.index()]
+                    let declared_in_affected_file = program.symbols.get_ref(aliased)
                         .declarations
                         .iter()
                         .any(|&d| {

@@ -2230,7 +2230,7 @@ fn get_recursion_identity_from_target(c: &mut Checker, t: TypeId) -> RecursionId
             // resolution of AST type nodes (since such type nodes cannot be
             // the source of generative recursion without first being
             // instantiated).
-            let sym_is_class = c.symbol_arena.borrow()[symbol.index()]
+            let sym_is_class = c.symbol_arena.get_ref(symbol)
                 .flags
                 .intersects(ast::SymbolFlags::CLASS);
             if !(object_flags.intersects(ObjectFlags::ANONYMOUS) && sym_is_class)

@@ -328,7 +328,7 @@ impl<'h> LanguageService<'h> {
                 if let Some(mut symbol) = symbol {
                     // Resolve aliases
                     {
-                        let symbols = program.symbols.borrow();
+                        let symbols = program.symbols.clone();
                         if symbols[symbol.index()].flags.intersects(SymbolFlags::ALIAS) {
                             drop(symbols);
                             symbol = ch.get_aliased_symbol(symbol).unwrap_or(symbol);
@@ -362,7 +362,7 @@ impl<'h> LanguageService<'h> {
 
                         // Get the value declaration to check modifiers
                         let (value_declaration, declarations, symbol_flags) = {
-                            let symbols = program.symbols.borrow();
+                            let symbols = program.symbols.clone();
                             let s = &symbols[symbol.index()];
                             (
                                 s.value_declaration,
@@ -549,7 +549,7 @@ fn classify_symbol(
     meaning: ast::SemanticMeaning,
 ) -> Option<TokenType> {
     let (flags, value_declaration, declarations) = {
-        let symbols = program.symbols.borrow();
+        let symbols = program.symbols.clone();
         let s = &symbols[symbol.index()];
         (s.flags, s.value_declaration, s.declarations.clone())
     };

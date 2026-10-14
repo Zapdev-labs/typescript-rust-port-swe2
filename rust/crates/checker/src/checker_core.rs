@@ -601,7 +601,7 @@ fn get_recursion_identity_from_target(c: &mut Checker, t: TypeId) -> RecursionId
             // resolution of AST type nodes (since such type nodes cannot be
             // the source of generative recursion without first being
             // instantiated).
-            let sym_is_class = c.symbol_arena.borrow()[symbol.index()]
+            let sym_is_class = c.symbol_arena.get_ref(symbol)
                 .flags
                 .intersects(ast::SymbolFlags::CLASS);
             if !(object_flags.intersects(ObjectFlags::ANONYMOUS) && sym_is_class)
@@ -858,7 +858,7 @@ pub struct Checker {
     /// `symbol.flags` through it — Go reads the flag through the
     /// `*ast.Symbol` pointer. Mutation during checking is rare; readers
     /// take short borrows.
-    pub symbol_arena: Rc<RefCell<Vec<ast::Symbol>>>,
+    pub symbol_arena: ast::SymbolArena,
     /// PORT perf: `Rc<str>` handles for `Symbol.name`, indexed by
     /// `SymbolId`. `sym(id).name.clone()` allocates + copies per call; the
     /// relation hot loops only need `&str` lookups, so hand out refcount
@@ -1487,7 +1487,7 @@ impl Checker {
             properties_types: FxHashMap::default(),
             diagnostics: ast::diagnostic::DiagnosticsCollection::new(),
             suggestion_diagnostics: ast::diagnostic::DiagnosticsCollection::new(),
-            symbol_arena: Rc::new(RefCell::new(Vec::new())),
+            symbol_arena: ast::SymbolArena::default(),
             sym_name_cache: RefCell::new(Vec::new()),
             signature_arena,
             index_info_arena,
@@ -2233,13 +2233,13 @@ fn count_global_symbols(
 /// `createSymbolTable` (utilities.go).
 pub fn create_symbol_table(
     symbols: &[SymbolId],
-    symbol_arena: &RefCell<Vec<ast::Symbol>>,
+    symbol_arena: &ast::SymbolArena,
 ) -> SymbolTable {
     if symbols.is_empty() {
         return SymbolTable::new();
     }
     let mut result = SymbolTable::with_size_hint(symbols.len());
-    let arena = symbol_arena.borrow();
+    let arena = symbol_arena.clone();
     for &symbol in symbols {
         result.set(arena[symbol.index()].name.clone().into(), symbol);
     }
@@ -2358,8 +2358,8 @@ impl Checker {
         // `globals` itself is now `Rc<RefCell<SymbolTable>>`; callers that
         // need live sharing go through `globals`, not `exports`.
         let globals = c.globals.borrow().clone();
-        c.symbol_arena.borrow_mut()[c.global_this_symbol.index()].exports = globals;
-        let name = c.symbol_arena.borrow()[c.global_this_symbol.index()]
+        c.symbol_arena.get_mut(c.global_this_symbol).exports = globals;
+        let name = c.symbol_arena.get_ref(c.global_this_symbol)
             .name
             .clone();
         c.globals.borrow_mut().set(name.into(), c.global_this_symbol);
@@ -2793,7 +2793,7 @@ impl Checker {
         if type_parameter_count != arity as usize {
             if report_errors {
                 let decl = {
-                    let arena = self.symbol_arena.borrow();
+                    let arena = self.symbol_arena.clone();
                     arena[symbol.index()]
                         .declarations
                         .iter()
@@ -2826,7 +2826,7 @@ impl Checker {
             report_errors.then_some(&tsc_diagnostics::Cannot_find_global_type_0),
         );
         if let Some(symbol) = symbol {
-            let flags = self.symbol_arena.borrow()[symbol.index()].flags;
+            let flags = self.symbol_arena.get_ref(symbol).flags;
             if flags.intersects(ast::SymbolFlags::CLASS | ast::SymbolFlags::INTERFACE) {
                 let t = self.get_declared_type_of_symbol(symbol);
                 let __arena_type_parameter_count = self.types.clone();
@@ -2867,7 +2867,7 @@ impl Checker {
     /// `getGlobalTypeDeclaration` (checker.go) — a checker method here for the
     /// node arena.
     pub fn get_global_type_declaration(&self, symbol: SymbolId) -> Option<NodeId> {
-        let declarations = self.symbol_arena.borrow()[symbol.index()]
+        let declarations = self.symbol_arena.get_ref(symbol)
             .declarations
             .clone();
         for declaration in declarations {
@@ -3023,8 +3023,7 @@ impl Checker {
                 // declare its own `globalThis`.
                 if let Some(locals) = file_node.locals() {
                     if let Some(&file_global_this_symbol) = locals.get("globalThis") {
-                        let declarations = self.symbol_arena.borrow()
-                            [file_global_this_symbol.index()]
+                        let declarations = self.symbol_arena.get_ref(file_global_this_symbol)
                         .declarations
                         .clone();
                         for d in declarations {
@@ -3041,7 +3040,7 @@ impl Checker {
                     // to be resolved.
                     for (_, &symbol) in locals.entries() {
                         let (flags, name) = {
-                            let arena = self.symbol_arena.borrow();
+                            let arena = self.symbol_arena.clone();
                             (
                                 arena[symbol.index()].flags,
                                 arena[symbol.index()].name.clone(),
@@ -3151,7 +3150,7 @@ impl Checker {
         // `globalThisSymbol.exports` was snapshotted before the merges above;
         // Go shares `c.globals`'s map header so post-merge lookups (e.g.
         // `globalThis.IteratorObject`) see augmentation members. Re-sync here.
-        self.symbol_arena.borrow_mut()[self.global_this_symbol.index()].exports =
+        self.symbol_arena.get_mut(self.global_this_symbol).exports =
             self.globals.borrow().clone();
         if std::env::var("TSC_FILE_TIME").is_ok() {
             eprintln!("[init-checker] {:?}", __init_t.elapsed());
@@ -3160,7 +3159,7 @@ impl Checker {
 
     /// `(c *Checker) mergeGlobalSymbol` (checker.go).
     pub fn merge_global_symbol(&mut self, symbol: SymbolId) {
-        let name = self.symbol_arena.borrow()[symbol.index()].name.clone();
+        let name = self.symbol_arena.get_ref(symbol).name.clone();
         let global_symbol = self.globals.borrow().get(name.as_ref()).copied();
         let merged = match global_symbol {
             Some(global_symbol) => self.merge_symbol(global_symbol, symbol, false),
@@ -3178,7 +3177,7 @@ impl Checker {
     ) -> SymbolId {
         let mut target = target;
         let (target_flags, source_flags) = {
-            let arena = self.symbol_arena.borrow();
+            let arena = self.symbol_arena.clone();
             (arena[target.index()].flags, arena[source.index()].flags)
         };
         if !target_flags.intersects(crate::checker_b::get_excluded_symbol_flags(source_flags))
@@ -3227,7 +3226,7 @@ impl Checker {
             let source_value_declaration = self.sym(source).value_declaration;
             if let Some(value_declaration) = source_value_declaration {
                 let __program = self.program.clone().expect("program");
-                let mut arena = self.symbol_arena.borrow_mut();
+                let mut arena = self.symbol_arena.clone();
                 tsc_binder::binder::set_value_declaration(
                     &mut arena,
                     target,
@@ -3239,14 +3238,14 @@ impl Checker {
                 );
             }
             let source_declarations = self.sym(source).declarations.clone();
-            self.symbol_arena.borrow_mut()[target.index()]
+            self.symbol_arena.get_mut(target)
                 .declarations
                 .extend(source_declarations);
             let source_members = self.sym(source).members.clone();
             if !source_members.is_empty() {
                 let mut target_members = self.sym(target).members.clone();
                 self.merge_symbol_table(&mut target_members, &source_members, unidirectional, None);
-                self.symbol_arena.borrow_mut()[target.index()].members = target_members;
+                self.symbol_arena.get_mut(target).members = target_members;
             }
             let source_exports = self.sym(source).exports.clone();
             if !source_exports.is_empty() {
@@ -3257,7 +3256,7 @@ impl Checker {
                     unidirectional,
                     Some(target),
                 );
-                self.symbol_arena.borrow_mut()[target.index()].exports = target_exports;
+                self.symbol_arena.get_mut(target).exports = target_exports;
             }
             if !unidirectional {
                 self.record_merged_symbol(target, source);
@@ -3488,12 +3487,12 @@ impl Checker {
     /// `(c *Checker) addUndefinedToGlobalsOrErrorOnRedeclaration`
     /// (checker.go).
     pub fn add_undefined_to_globals_or_error_on_redeclaration(&mut self) {
-        let name = self.symbol_arena.borrow()[self.undefined_symbol.index()]
+        let name = self.symbol_arena.get_ref(self.undefined_symbol)
             .name
             .clone();
         let target_symbol = self.globals.borrow().get(name.as_ref()).copied();
         if let Some(target_symbol) = target_symbol {
-            let declarations = self.symbol_arena.borrow()[target_symbol.index()]
+            let declarations = self.symbol_arena.get_ref(target_symbol)
                 .declarations
                 .clone();
             for declaration in declarations {
@@ -3697,7 +3696,7 @@ impl Checker {
             is_use,
             exclude_globals,
             &nodes,
-            symbol_arena.as_ref(),
+            &symbol_arena,
         )
     }
 
@@ -3956,7 +3955,7 @@ impl Checker {
     /// `ast.SymbolName(symbol)` — the port's `symbol::symbol_name` needs
     /// the value declaration's node arena.
     pub fn symbol_display_name(&self, symbol: SymbolId) -> String {
-        let arena = self.symbol_arena.borrow();
+        let arena = self.symbol_arena.clone();
         let sym = &arena[symbol.index()];
         match sym.value_declaration {
             Some(d) => {
@@ -3976,7 +3975,7 @@ impl Checker {
         let Some(s1) = s1 else { return 1 };
         let Some(s2) = s2 else { return -1 };
         let (d1, d2, n1, n2) = {
-            let arena = self.symbol_arena.borrow();
+            let arena = self.symbol_arena.clone();
             let s1 = &arena[s1.index()];
             let s2 = &arena[s2.index()];
             (
@@ -4080,9 +4079,7 @@ impl Checker {
     /// `(c *Checker) newSymbol` (checker.go).
     pub fn new_symbol(&mut self, flags: ast::SymbolFlags, name: &str) -> SymbolId {
         self.symbol_count += 1;
-        let mut arena = self.symbol_arena.borrow_mut();
-        let id = SymbolId(arena.len() as u32);
-        arena.push(ast::Symbol {
+        let id = self.symbol_arena.alloc(ast::Symbol {
             flags: flags | ast::SymbolFlags::TRANSIENT,
             name: name.into(),
             ..Default::default()
@@ -4098,7 +4095,7 @@ impl Checker {
         check_flags: ast::checkflags::CheckFlags,
     ) -> SymbolId {
         let result = self.new_symbol(flags, name);
-        self.symbol_arena.borrow_mut()[result.index()].check_flags = check_flags;
+        self.symbol_arena.get_mut(result).check_flags = check_flags;
         result
     }
 
@@ -4751,12 +4748,12 @@ impl Checker {
                 "meta",
                 ast::checkflags::CheckFlags::READONLY,
             );
-            self.symbol_arena.borrow_mut()[meta_property_symbol.index()].parent = Some(symbol);
+            self.symbol_arena.get_mut(meta_property_symbol).parent = Some(symbol);
             self.value_symbol_links
                 .get(meta_property_symbol)
                 .resolved_type = Some(import_meta_type);
             let members = create_symbol_table(&[meta_property_symbol], &self.symbol_arena);
-            self.symbol_arena.borrow_mut()[symbol.index()].members = members.clone();
+            self.symbol_arena.get_mut(symbol).members = members.clone();
             self.deferred_global_import_meta_expression_type =
                 Some(self.new_anonymous_type(Some(symbol), members, &[], &[], &[]));
         }
@@ -5530,7 +5527,7 @@ impl tsc_binder::nameresolver::NameResolverHost for Checker {
         kind: ast::Kind,
         work: &[ast::Node],
     ) -> bool {
-        let declarations = self.symbol_arena.borrow()[symbol.index()].declarations.clone();
+        let declarations = self.symbol_arena.get_ref(symbol).declarations.clone();
         let program = self.program.clone().expect("program");
         declarations.iter().any(|&d| {
             crate::printer_util::resolve_arena_for(&program, work, d)[d].kind == kind

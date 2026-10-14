@@ -9,7 +9,6 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
-use std::sync::Arc;
 
 use tsc_ast::ast::{NodeFactory, NodeFactoryHooks};
 use tsc_ast::{self as ast, Kind, Node, NodeId, SymbolId};
@@ -529,7 +528,7 @@ fn get_ambient_module_name(
 ) -> String {
     // `getNonAugmentationDeclaration` — each declaration's arena is fetched
     // from its own `file_index`.
-    let declarations = program.symbols().borrow()[symbol.index()]
+    let declarations = program.symbols().get_ref(symbol)
         .declarations
         .clone();
     for declaration in declarations {
@@ -546,7 +545,7 @@ fn get_ambient_module_name(
         }
         break;
     }
-    let name = program.symbols().borrow()[symbol.index()].name.clone();
+    let name = program.symbols().get_ref(symbol).name.clone();
     String::from_utf8_lossy(tsc_stringutil::strip_quotes(name.as_bytes())).into_owned()
 }
 
@@ -1124,7 +1123,7 @@ impl LanguageService<'_> {
                     }
                     set
                 };
-                let symbols = program.symbols.borrow();
+                let symbols = program.symbols.clone();
                 let uniques: Vec<SymbolId> = exports
                     .into_iter()
                     .filter(|&e| {
@@ -1155,7 +1154,7 @@ impl LanguageService<'_> {
                         .into_iter()
                         .filter(|&s| {
                             let value_declaration =
-                                program.symbols.borrow()[s.index()].value_declaration;
+                                program.symbols.get_ref(s).value_declaration;
                             value_declaration.is_none_or(|d| {
                                 let nodes = program.arena_of(d);
                                 !ast::is_private_identifier_class_element_declaration(
@@ -1273,7 +1272,7 @@ impl LanguageService<'_> {
                     get_already_used_types_in_string_literal_union(grandparent, parent, &nodes)
                 };
                 if let Some(from_properties) = result.from_properties {
-                    let symbols = program.symbols.borrow();
+                    let symbols = program.symbols.clone();
                     return Some(StringLiteralCompletions {
                         from_properties: Some(CompletionsFromProperties {
                             symbols: from_properties
@@ -2892,7 +2891,7 @@ fn string_literal_completions_from_properties(
         .get_apparent_properties(t)
         .into_iter()
         .filter(|&s| {
-            let value_declaration = program.symbols().borrow()[s.index()].value_declaration;
+            let value_declaration = program.symbols().get_ref(s).value_declaration;
             value_declaration.is_none_or(|d| {
                 let nodes = program.nodes(d.file_index());
                 !ast::is_private_identifier_class_element_declaration(&nodes[d], &nodes)
@@ -3103,7 +3102,7 @@ impl LanguageService<'_> {
         }
         if let Some(properties) = &completion.from_properties {
             for &symbol in &properties.symbols {
-                let symbol_name = program.symbols.borrow()[symbol.index()].name.clone();
+                let symbol_name = program.symbols.get_ref(symbol).name.clone();
                 if symbol_name.as_ref() == name {
                     return self.create_completion_details_for_symbol(
                         item, symbol, checker, location, position, doc_format,

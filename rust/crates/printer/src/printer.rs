@@ -15,9 +15,6 @@
 // `NodeId` replaces `*ast.Node`; `Option<NodeId>`/`Option<NodeList>` replace
 // nil pointers and nil lists.
 
-use std::borrow::Cow;
-use std::collections::hash_map::Entry;
-use std::fmt::Write as _;
 use std::ops::{Deref, DerefMut};
 
 use rustc_hash::FxHashMap;
@@ -39,16 +36,14 @@ use tsc_stringutil as stringutil;
 
 use crate::emit_context::{EmitContext, SnippetElement, SnippetKind, SynthesizedComment};
 use crate::emit_flags::EmitFlags;
-use crate::emit_helpers::{EmitHelper, UniqueNameFn, compare_emit_helpers};
+use crate::emit_helpers::{UniqueNameFn, compare_emit_helpers};
 use crate::emit_text_writer::EmitTextWriter;
 use crate::name_generator::NameGenerator;
 use crate::semicolon_writer::get_trailing_semicolon_deferring_writer;
 use crate::text_writer::{TextWriter, get_default_indent_size, get_indent_string};
 use crate::utilities::{
-    self as util, GET_LITERAL_TEXT_FLAGS_ALLOW_NUMERIC_SEPARATOR,
-    GET_LITERAL_TEXT_FLAGS_JSX_ATTRIBUTE_ESCAPE, GET_LITERAL_TEXT_FLAGS_NEVER_ASCII_ESCAPE,
-    GET_LITERAL_TEXT_FLAGS_NONE, GET_LITERAL_TEXT_FLAGS_TERMINATE_UNTERMINATED_LITERALS,
-    GetLiteralTextFlags, QuoteChar, greatest_end,
+    self as util, GET_LITERAL_TEXT_FLAGS_NEVER_ASCII_ESCAPE, GET_LITERAL_TEXT_FLAGS_NONE,
+    GET_LITERAL_TEXT_FLAGS_TERMINATE_UNTERMINATED_LITERALS, GetLiteralTextFlags, greatest_end,
 };
 
 /// `type PrinterOptions struct`
@@ -305,7 +300,7 @@ pub struct Printer<'a> {
     pub(crate) nodes: &'a mut Vec<Node>,
     /// The binder-owned symbol arena used by name generation's
     /// `isUniqueLocalName`.
-    pub(crate) symbols: &'a [ast::Symbol],
+    pub(crate) symbols: &'a ast::SymbolArena,
     /// `currentSourceFile *ast.SourceFile` — the `NodeId` of the SourceFile
     /// node.
     pub(crate) current_source_file: Option<NodeId>,
@@ -331,7 +326,7 @@ impl<'a> Printer<'a> {
         handlers: PrintHandlers<'a>,
         emit_context: &'a mut EmitContext,
         nodes: &'a mut Vec<Node>,
-        symbols: &'a [ast::Symbol],
+        symbols: &'a ast::SymbolArena,
     ) -> Printer<'a> {
         // wire up name generator
         let name_generator = NameGenerator {

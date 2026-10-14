@@ -28,7 +28,7 @@
 // `verify_compiler_options` iterates files directly and calls
 // `get_output_paths_for` with each file's own arena.
 
-use std::cell::{OnceCell, Ref, RefCell, RefMut};
+use std::cell::{OnceCell, RefCell};
 use std::collections::HashSet;
 use std::io::Write;
 use std::rc::Rc;
@@ -43,7 +43,7 @@ use tsc_ast::diagnostic::{
 use tsc_ast::utilities::HasFileName;
 use tsc_ast::{
     ArenaCell, ArenaMut, CheckJsDirective, CommentDirectiveKind, FileReference, Node, NodeId,
-    SourceFileMetaData, Symbol, is_check_js_enabled_for_file, is_external_module,
+    SourceFileMetaData, SymbolArena, is_check_js_enabled_for_file, is_external_module,
     is_external_or_commonjs_module, is_plain_js_file, is_source_file_js, is_source_phase_import,
     is_string_literal, is_string_literal_like, new_has_file_name,
 };
@@ -206,7 +206,7 @@ pub struct Program {
     /// no explicit arena: binder- and checker-allocated `*ast.Symbol`s share
     /// pointer identity on the heap. Here every `SymbolId` indexes this one
     /// `Vec<ast::Symbol>`; `Checker::symbol_arena` aliases it via `Rc`.
-    pub symbols: Rc<RefCell<Vec<Symbol>>>,
+    pub symbols: SymbolArena,
 
     /// `processedFiles` (embedded in Go).
     pub processed: ProcessedFiles,
@@ -972,7 +972,7 @@ impl Program {
         // PORT: sequential — `Rc`/`RefCell` arenas are not `Send`.
         // The global symbol arena is borrowed for the whole pass; per-file
         // binds append so `SymbolId`s are program-wide (SPEC §5.2).
-        let mut symbols = self.symbols.borrow_mut();
+        let mut symbols = self.symbols.clone();
         for &file in &self.source_file_ids {
             let needs_bind = {
                 let nodes = self.arena_of(file);
@@ -1271,7 +1271,7 @@ impl Program {
     ) -> Vec<DiagnosticRef> {
         if let Some(source_file) = source_file {
             let mut nodes = self.nodes_mut(source_file.file_index());
-            let mut symbols = self.symbols.borrow_mut();
+            let mut symbols = self.symbols.clone();
             tsc_binder::binder::bind_source_file(&mut *nodes, source_file, &mut symbols);
         } else {
             self.bind_source_files();
@@ -3662,7 +3662,7 @@ pub fn new_program(opts: ProgramOptions) -> Rc<Program> {
         include_processor: IncludeProcessor::default(),
         module_resolution_error: None,
         case_sensitivity,
-        symbols: Rc::new(RefCell::new(Vec::new())),
+        symbols: SymbolArena::default(),
         processed,
         uses_uri_style_node_core_modules: Tristate::default(),
         common_source_directory: OnceCell::new(),
@@ -4660,7 +4660,7 @@ impl tsc_checker::checker_types::Program for Program {
     fn bind_source_files(&self) {
         self.bind_source_files();
     }
-    fn symbols(&self) -> Rc<RefCell<Vec<Symbol>>> {
+    fn symbols(&self) -> SymbolArena {
         self.symbols.clone()
     }
     fn file_exists(&self, file_name: &RootedFilePath) -> bool {

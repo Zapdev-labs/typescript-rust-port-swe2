@@ -50,49 +50,49 @@ use crate::types::{
 /// `symbol.Flags` — read via the checker's symbol arena.
 #[inline]
 fn sym_flags(c: &Checker, s: SymbolId) -> ast::SymbolFlags {
-    c.symbol_arena.borrow()[s.index()].flags
+    c.symbol_arena.get_ref(s).flags
 }
 
 /// `symbol.Name`.
 #[inline]
 fn sym_name(c: &Checker, s: SymbolId) -> String {
-    c.symbol_arena.borrow()[s.index()].name.to_string()
+    c.symbol_arena.get_ref(s).name.to_string()
 }
 
 /// `symbol.Declarations` (cloned — Go shares the slice).
 #[inline]
 fn sym_declarations(c: &Checker, s: SymbolId) -> Vec<NodeId> {
-    c.symbol_arena.borrow()[s.index()].declarations.clone()
+    c.symbol_arena.get_ref(s).declarations.clone()
 }
 
 /// `symbol.ValueDeclaration`.
 #[inline]
 fn sym_value_declaration(c: &Checker, s: SymbolId) -> Option<NodeId> {
-    c.symbol_arena.borrow()[s.index()].value_declaration
+    c.symbol_arena.get_ref(s).value_declaration
 }
 
 /// `symbol.Parent`.
 #[inline]
 fn sym_parent(c: &Checker, s: SymbolId) -> Option<SymbolId> {
-    c.symbol_arena.borrow()[s.index()].parent
+    c.symbol_arena.get_ref(s).parent
 }
 
 /// `symbol.ExportSymbol`.
 #[inline]
 fn sym_export_symbol(c: &Checker, s: SymbolId) -> Option<SymbolId> {
-    c.symbol_arena.borrow()[s.index()].export_symbol
+    c.symbol_arena.get_ref(s).export_symbol
 }
 
 /// `symbol.Members` (cloned — `SymbolTable` is an ordered map).
 #[inline]
 fn sym_members(c: &Checker, s: SymbolId) -> SymbolTable {
-    c.symbol_arena.borrow()[s.index()].members.clone()
+    c.symbol_arena.get_ref(s).members.clone()
 }
 
 /// `symbol.Exports` (cloned).
 #[inline]
 fn sym_exports(c: &Checker, s: SymbolId) -> SymbolTable {
-    c.symbol_arena.borrow()[s.index()].exports.clone()
+    c.symbol_arena.get_ref(s).exports.clone()
 }
 
 /// `t.flags` — short-lived arena read guard.
@@ -3106,7 +3106,7 @@ impl Checker {
             let symbol = self.get_symbol_of_declaration(node);
             let (getter, setter) = symbol
                 .map(|s| {
-                    let arena = self.symbol_arena.borrow();
+                    let arena = self.symbol_arena.clone();
                     (
                         ast::get_declaration_of_kind(
                             &arena[s.index()],
@@ -3535,8 +3535,8 @@ impl Checker {
             is_static: bool,
         ) {
             let Some(symbol) = symbol else { return };
-            if c.symbol_arena.borrow()[symbol.index()].declarations.len() > 1 {
-                let name = c.symbol_arena.borrow()[symbol.index()].name.clone();
+            if c.symbol_arena.get_ref(symbol).declarations.len() > 1 {
+                let name = c.symbol_arena.get_ref(symbol).name.clone();
                 let names = if is_static {
                     &mut *static_names
                 } else {
@@ -3823,7 +3823,7 @@ impl Checker {
         let symbol =
             self.get_symbol_of_declaration(type_parameter_declaration_node.expect("typeParameter"));
         if let Some(symbol) = symbol {
-            if self.symbol_arena.borrow()[symbol.index()]
+            if self.symbol_arena.get_ref(symbol)
                 .declarations
                 .len()
                 > 1
@@ -5814,7 +5814,7 @@ impl Checker {
                     for (caught_name, _local) in node_locals.entries() {
                         if let Some(block_local) = block_locals.get(caught_name) {
                             let (value_declaration, flags) = {
-                                let arena = self.symbol_arena.borrow();
+                                let arena = self.symbol_arena.clone();
                                 (
                                     arena[block_local.index()].value_declaration,
                                     arena[block_local.index()].flags,
@@ -6189,7 +6189,7 @@ impl Checker {
     ///
     /// Check that type parameter lists are identical across multiple declarations
     pub(crate) fn check_type_parameter_lists_identical(&mut self, symbol: SymbolId) {
-        if self.symbol_arena.borrow()[symbol.index()]
+        if self.symbol_arena.get_ref(symbol)
             .declarations
             .len()
             == 1
@@ -6520,7 +6520,7 @@ impl Checker {
                 {
                     // property/accessor is overridden with property/accessor
                     let base_check_flags = {
-                        let arena = self.symbol_arena.borrow();
+                        let arena = self.symbol_arena.clone();
                         arena[base.index()].check_flags
                     };
                     if base_check_flags.intersects(ast::checkflags::CheckFlags::MAPPED)
@@ -6742,7 +6742,7 @@ impl Checker {
         base: SymbolId,
         base_declaration_flags: ast::ModifierFlags,
     ) -> bool {
-        let check_flags = self.symbol_arena.borrow()[base.index()].check_flags;
+        let check_flags = self.symbol_arena.get_ref(base).check_flags;
         let declarations = sym_declarations(self, base);
         if check_flags.intersects(ast::checkflags::CheckFlags::SYNTHETIC) {
             return declarations
@@ -6756,7 +6756,7 @@ impl Checker {
 
     /// `isPrototypeProperty` (checker.go) — pure predicate on a symbol.
     fn is_prototype_symbol(&self, symbol: SymbolId) -> bool {
-        let arena = self.symbol_arena.borrow();
+        let arena = self.symbol_arena.clone();
         let s = &arena[symbol.index()];
         s.flags.intersects(ast::SymbolFlags::METHOD)
             || s.check_flags
@@ -6938,7 +6938,7 @@ impl Checker {
         let nodes = __program.nodes((node).file_index());
         let is_js = ast::is_in_js_file(Some(node), &nodes);
         let member_value_declaration = {
-            let arena = self.symbol_arena.borrow();
+            let arena = self.symbol_arena.clone();
             arena[member.index()].value_declaration
         };
         if member_has_override_modifier
@@ -9187,7 +9187,7 @@ impl Checker {
             return;
         }
         {
-            let export_equals_symbol = self.symbol_arena.borrow()[module_symbol.index()]
+            let export_equals_symbol = self.symbol_arena.get_ref(module_symbol)
                 .exports
                 .get(ast::INTERNAL_SYMBOL_NAME_EXPORT_EQUALS)
                 .copied();
@@ -10886,14 +10886,14 @@ impl Checker {
             let global_generator_symbol = self.types.get_ref(global_generator_type)
                 .symbol;
             let is_generator_method = global_generator_symbol.is_some_and(|s| {
-                self.symbol_arena.borrow()[s.index()].members.get(method_name).copied()
+                self.symbol_arena.get_ref(s).members.get(method_name).copied()
                     == Some(method_type_symbol)
             });
             let global_iterator_symbol = self.types.get_ref(global_iterator_type)
                 .symbol;
             let is_iterator_method = !is_generator_method
                 && global_iterator_symbol.is_some_and(|s| {
-                    self.symbol_arena.borrow()[s.index()].members.get(method_name).copied()
+                    self.symbol_arena.get_ref(s).members.get(method_name).copied()
                         == Some(method_type_symbol)
                 });
             if is_generator_method || is_iterator_method {
@@ -11260,7 +11260,7 @@ impl Checker {
         // in order to prevent collisions with declarations that were exported from the current module (they still contribute to local names).
         let export_symbol = {
             let arena = self.symbol_arena.clone();
-            arena.borrow()[symbol.index()]
+            arena.get_ref(symbol)
                 .export_symbol
                 .unwrap_or(symbol)
         };
@@ -11285,8 +11285,7 @@ impl Checker {
                     .and_then(|sf| nodes[sf].symbol())
                 {
                     let export_name = nodes[error_node].text(&nodes).to_string();
-                    if let Some(already_exported_symbol) = self.symbol_arena.borrow()
-                        [source_symbol.index()]
+                    if let Some(already_exported_symbol) = self.symbol_arena.get_ref(source_symbol)
                     .exports
                     .get(export_name.as_str())
                     .copied()
@@ -11691,7 +11690,7 @@ impl Checker {
             // However, symbol might contain other declarations that are exported.
             symbol = self.get_symbol_of_declaration(node);
             if symbol.is_none_or(|s| {
-                self.symbol_arena.borrow()[s.index()]
+                self.symbol_arena.get_ref(s)
                     .export_symbol
                     .is_none()
             }) {
@@ -12141,7 +12140,7 @@ impl Checker {
         for local in locals {
             let reference_kinds = self.symbol_reference_links.get(local).reference_kinds;
             let local_flags = sym_flags(self, local);
-            let export_symbol = self.symbol_arena.borrow()[local.index()].export_symbol;
+            let export_symbol = self.symbol_arena.get_ref(local).export_symbol;
             if (local_flags.intersects(ast::SymbolFlags::TYPE_PARAMETER)
                 && (!local_flags.intersects(ast::SymbolFlags::VARIABLE)
                     || reference_kinds.intersects(ast::SymbolFlags::VARIABLE)))
@@ -12430,7 +12429,7 @@ impl Checker {
             let __program = self.program.clone().expect("program");
             let nodes = __program.nodes((node).file_index());
             crate::utilities::all_declarations_in_same_source_file(
-                &self.symbol_arena.borrow()[s.index()],
+                self.symbol_arena.get_ref(s),
                 &nodes,
             )
         }) {

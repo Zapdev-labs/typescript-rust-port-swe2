@@ -365,7 +365,7 @@ fn get_text_of_call_hierarchy_name(
     // `printer.NewPrinter(PrinterOptions{RemoveComments: true})` + `p.Write`.
     let mut emit_context = EmitContext::new();
     let mut nodes = program.nodes_mut(source_node.file_index());
-    let symbols = program.symbols.borrow();
+    let symbols = program.symbols.clone();
     let mut writer = get_single_line_string_writer();
     {
         let mut p = Printer::new(
@@ -500,7 +500,7 @@ fn find_implementation(
             drop(nodes);
             let symbol = get_symbol_of_call_hierarchy_declaration(c, program, node);
             if let Some(symbol) = symbol {
-                let value_declaration = c.borrow().symbol_arena.borrow()[symbol.index()]
+                let value_declaration = c.borrow().symbol_arena.get_ref(symbol)
                     .value_declaration;
                 if let Some(vd) = value_declaration {
                     let vd_nodes = program.nodes(vd.file_index());
@@ -534,7 +534,7 @@ fn find_all_initial_declarations(
     let symbol = get_symbol_of_call_hierarchy_declaration(c, program, node)?;
     let declarations = {
         let arena = c.borrow().symbol_arena.clone();
-        let arena = arena.borrow();
+        let arena = arena.clone();
         let symbol = &arena[symbol.index()];
         if symbol.declarations.is_empty() {
             return None;
@@ -742,7 +742,7 @@ fn resolve_call_hierarchy_declaration(
         if !following_symbol {
             let symbol = c.borrow_mut().get_symbol_at_location_api(loc);
             if let Some(mut symbol) = symbol {
-                if c.borrow().symbol_arena.borrow()[symbol.index()]
+                if c.borrow().symbol_arena.get_ref(symbol)
                     .flags
                     .intersects(ast::SymbolFlags::ALIAS)
                 {
@@ -750,7 +750,7 @@ fn resolve_call_hierarchy_declaration(
                         symbol = aliased;
                     }
                 }
-                let value_declaration = c.borrow().symbol_arena.borrow()[symbol.index()]
+                let value_declaration = c.borrow().symbol_arena.get_ref(symbol)
                     .value_declaration;
                 if let Some(vd) = value_declaration {
                     following_symbol = true;

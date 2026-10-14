@@ -37,7 +37,7 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 use tsc_ast::visitor::{NodeVisitor, VisitorCx};
-use tsc_ast::{self as ast, Kind, NodeId, NodeList, Symbol};
+use tsc_ast::{self as ast, Kind, NodeId, NodeList, SymbolArena};
 use tsc_binder::referenceresolver::ReferenceResolver;
 use tsc_collections::OrderedMap;
 use tsc_core::languagevariant::LanguageVariant;
@@ -63,7 +63,7 @@ pub struct JsxTransformer<'a> {
     /// (PORT: Go's emit-resolver interface embeds the reference resolver;
     /// see header note).
     resolver: Option<Rc<RefCell<dyn ReferenceResolver + 'a>>>,
-    symbols: Option<&'a RefCell<Vec<Symbol>>>,
+    symbols: Option<&'a SymbolArena>,
     ec: Ec,
 
     import_specifier: RefCell<String>,

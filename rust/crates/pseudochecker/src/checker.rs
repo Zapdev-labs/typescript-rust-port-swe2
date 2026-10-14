@@ -16,7 +16,7 @@
 /// `type PseudoChecker struct`.
 ///
 /// PORT: methods take the node arena (`nodes: &[Node]`) and, where the Go
-/// code dereferences `*ast.Symbol`, the symbol arena (`symbols: &[Symbol]`)
+/// code dereferences `*ast.Symbol`, the symbol arena (`symbols: &SymbolArena`)
 /// explicitly — Go's pointer graph gives implicit access to both.
 pub struct PseudoChecker {
     /// `strictNullChecks`.

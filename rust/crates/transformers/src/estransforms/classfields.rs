@@ -16,7 +16,7 @@ use std::rc::Rc;
 use tsc_ast::visitor::{NodeVisitor, VisitFn, VisitorCx};
 use tsc_ast::{
     self as ast, Kind, ModifierFlags, ModifierList, NodeFlags, NodeId, NodeList, SubtreeFacts,
-    Symbol, TokenFlags,
+    SymbolArena, TokenFlags,
 };
 use tsc_binder::referenceresolver::ReferenceResolver;
 use tsc_core::languagevariant::LanguageVariant;
@@ -148,7 +148,7 @@ enum Cb {
 pub(crate) struct ClassFieldsTransformer<'a> {
     compiler_options: Option<&'a CompilerOptions>,
     resolver: Option<Rc<RefCell<dyn ReferenceResolver + 'a>>>,
-    symbols: Option<&'a RefCell<Vec<Symbol>>>,
+    symbols: Option<&'a SymbolArena>,
 
     // Computed configuration flags
     should_transform_initializers_using_set: Cell<bool>,
@@ -2865,7 +2865,7 @@ impl<'a> ClassFieldsTransformer<'a> {
         fn check<'r>(
             nodes: &[tsc_ast::Node],
             resolver: &Rc<RefCell<dyn ReferenceResolver + 'r>>,
-            symbols: &RefCell<Vec<Symbol>>,
+            symbols: &SymbolArena,
             class_original: NodeId,
             class_name: Option<NodeId>,
             n: NodeId,

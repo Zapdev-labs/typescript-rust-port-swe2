@@ -4,14 +4,14 @@
 // questions during emit. Implemented by the checker-side emit resolver.
 //
 // PORT: Go's `*ast.Node` parameters become `NodeId` plus the node arena
-// (`&[Node]`) and symbol arena (`&mut Vec<Symbol>`) parameters, matching the
+// (`&[Node]`) and symbol arena (`&SymbolArena`) parameters, matching the
 // convention used by `binder::ReferenceResolver` in this workspace.
 // `GetConstantValue(node) any` becomes `Option<tsc_evaluator::Value>`.
 
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use tsc_ast::{self as ast, Node, NodeId, Symbol};
+use tsc_ast::{self as ast, Node, NodeId, SymbolArena};
 use tsc_binder::referenceresolver::ReferenceResolver;
 use tsc_evaluator::Value;
 use tsc_nodebuilder::{Flags, InternalFlags, SymbolTracker};
@@ -145,7 +145,7 @@ pub trait EmitResolver: ReferenceResolver {
         meaning: ast::SymbolFlags,
         should_compute_alias_to_mark_visible: bool,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
     ) -> SymbolAccessibilityResult;
     /// `IsEntityNameVisible(entityName *ast.Node, enclosingDeclaration *ast.Node) SymbolAccessibilityResult` — previously SymbolVisibilityResult in strada - ErrorModuleName never set
     fn is_entity_name_visible(
@@ -167,7 +167,7 @@ pub trait EmitResolver: ReferenceResolver {
         symbol: Option<ast::SymbolId>,
         enclosing_declaration: Option<NodeId>,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
     ) -> bool;
     /// `IsDeclarationVisible(node *ast.Node) bool`
     fn is_declaration_visible(&self, node: NodeId, nodes: &[Node]) -> bool;
@@ -199,7 +199,7 @@ pub trait EmitResolver: ReferenceResolver {
         &self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
     ) -> Vec<ast::SymbolId>;
     /// `RequiresAddingImplicitUndefinedUnsafe(node *ast.Node, symbol *ast.Symbol, enclosingDeclaration *ast.Node) bool`
     fn requires_adding_implicit_undefined_unsafe(
@@ -208,7 +208,7 @@ pub trait EmitResolver: ReferenceResolver {
         symbol: Option<ast::SymbolId>,
         enclosing_declaration: Option<NodeId>,
         nodes: &[Node],
-        symbols: &[Symbol],
+        symbols: &SymbolArena,
     ) -> bool;
     /// `GetReferencedValueDeclarationUnsafe(node *ast.IdentifierNode) *ast.Declaration`
     fn get_referenced_value_declaration_unsafe(

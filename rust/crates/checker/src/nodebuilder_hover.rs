@@ -49,37 +49,37 @@ fn symbol_flags(c: &Checker, s: SymbolId) -> SymbolFlags {
     if s == SymbolId::NONE {
         return SymbolFlags::NONE;
     }
-    c.symbol_arena.borrow()[s.index()].flags
+    c.symbol_arena.get_ref(s).flags
 }
 
 /// `symbol.name` (cloned) read through the arena.
 fn symbol_name(c: &Checker, s: SymbolId) -> String {
-    c.symbol_arena.borrow()[s.index()].name.to_string()
+    c.symbol_arena.get_ref(s).name.to_string()
 }
 
 /// `symbol.declarations` (cloned) read through the arena.
 fn symbol_declarations(c: &Checker, s: SymbolId) -> Vec<NodeId> {
-    c.symbol_arena.borrow()[s.index()].declarations.clone()
+    c.symbol_arena.get_ref(s).declarations.clone()
 }
 
 /// `symbol.parent` read through the arena.
 fn symbol_parent(c: &Checker, s: SymbolId) -> Option<SymbolId> {
-    c.symbol_arena.borrow()[s.index()].parent
+    c.symbol_arena.get_ref(s).parent
 }
 
 /// `symbol.valueDeclaration` read through the arena.
 fn symbol_value_declaration(c: &Checker, s: SymbolId) -> Option<NodeId> {
-    c.symbol_arena.borrow()[s.index()].value_declaration
+    c.symbol_arena.get_ref(s).value_declaration
 }
 
 /// `symbol.exports` (cloned) read through the arena.
 fn symbol_exports(c: &Checker, s: SymbolId) -> ast::SymbolTable {
-    c.symbol_arena.borrow()[s.index()].exports.clone()
+    c.symbol_arena.get_ref(s).exports.clone()
 }
 
 /// `ast.SymbolName` — the *escaped* writeable name of a symbol.
 fn ast_symbol_name(c: &Checker, s: SymbolId) -> String {
-    ast::symbol::escape_symbol_name(&c.symbol_arena.borrow()[s.index()].name).into_owned()
+    ast::symbol::escape_symbol_name(&c.symbol_arena.get_ref(s).name).into_owned()
 }
 
 /// `t.symbol` read through the type arena.

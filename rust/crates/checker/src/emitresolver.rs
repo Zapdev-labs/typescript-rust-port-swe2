@@ -46,7 +46,7 @@ use std::cell::{RefCell, RefMut};
 use std::rc::Rc;
 
 use rustc_hash::FxHashSet;
-use tsc_ast::{self as ast, Node, NodeId, Symbol, SymbolId};
+use tsc_ast::{self as ast, Node, NodeId, Symbol, SymbolArena, SymbolId};
 use tsc_binder::referenceresolver::{
     ReferenceResolver, ReferenceResolverHooks, ReferenceResolverImpl, new_reference_resolver,
 };
@@ -113,7 +113,7 @@ pub struct EmitResolver {
     /// outer `RefCell<Checker>` is `borrow_mut`'d (Go's `*Unsafe` variants
     /// run under the caller's held `checkerMu`); the `_unsafe` fallbacks use
     /// it.
-    symbol_arena: Rc<RefCell<Vec<Symbol>>>,
+    symbol_arena: SymbolArena,
     /// `r.checker.program` — same reason as `symbol_arena`: program-arena
     /// snapshots must be reachable while the checker cell is locked.
     program: Option<Rc<dyn crate::checker_types::Program>>,
@@ -220,28 +220,6 @@ pub(crate) fn is_const_enum_or_const_enum_only_module(s: &Symbol) -> bool {
     // non-nil here, so the flag test is the whole predicate.
     s.flags.intersects(ast::SymbolFlags::CONST_ENUM)
         || s.flags.intersects(ast::SymbolFlags::CONST_ENUM_ONLY_MODULE)
-}
-
-/// Field-by-field clone of the symbol arena — `Symbol` is not `Clone` but
-/// every field is (same spelling as `importelision_test::clone_symbols`).
-/// Used by `get_referenced_value_declaration_unsafe`, which must hand the
-/// binder resolver a `&mut Vec<Symbol>` while leaving the live arena's
-/// `RefCell` unborrowed for the resolver hooks.
-fn clone_symbols(symbols: &[Symbol]) -> Vec<Symbol> {
-    symbols
-        .iter()
-        .map(|s| Symbol {
-            flags: s.flags,
-            check_flags: s.check_flags,
-            name: s.name.clone(),
-            declarations: s.declarations.clone(),
-            value_declaration: s.value_declaration,
-            members: s.members.clone(),
-            exports: s.exports.clone(),
-            parent: s.parent,
-            export_symbol: s.export_symbol,
-        })
-        .collect()
 }
 
 /// The checker-body of `GetPropertiesOfContainerFunction` — takes the
@@ -422,12 +400,7 @@ impl EmitResolver {
                         c.try_borrow_mut()
                             .ok()
                             .and_then(|mut c| c.get_parent_of_symbol(symbol))
-                            .or_else(|| {
-                                symbol_arena
-                                    .try_borrow()
-                                    .ok()
-                                    .and_then(|s| s.get(symbol.index()).and_then(|s| s.parent))
-                            })
+                            .or_else(|| symbol_arena.get_ref(symbol).parent)
                     }
                 })),
                 get_symbol_of_declaration: Some(Box::new({
@@ -561,7 +534,7 @@ impl EmitResolver {
             }
 
             let mut next_symbol: Option<SymbolId> = None;
-            let declarations = c.symbol_arena.borrow()[symbol.index()].declarations.clone();
+            let declarations = c.symbol_arena.get_ref(symbol).declarations.clone();
             for declaration in declarations {
                 c.emit_resolver_links
                     .declaration_links
@@ -667,7 +640,7 @@ impl EmitResolver {
         // property checking
         let props = get_properties_of_container_function_c(c, orig);
         props.iter().any(|&p| {
-            let value_declaration = c.symbol_arena.borrow()[p.index()].value_declaration;
+            let value_declaration = c.symbol_arena.get_ref(p).value_declaration;
             value_declaration.is_some_and(|d| {
                 let __program = c.program.clone().expect("program");
                 let arena = crate::printer_util::resolve_arena_for(&__program, nodes, d);
@@ -748,7 +721,7 @@ impl EmitResolver {
         let Some(symbol) = symbol else {
             return false;
         };
-        let value_declaration = c.symbol_arena.borrow()[symbol.index()].value_declaration;
+        let value_declaration = c.symbol_arena.get_ref(symbol).value_declaration;
         if let Some(value_declaration) = value_declaration {
             // Ensures cjs export assignment is setup, since this symbol may
             // point at, and merge with, the file itself. If we don't, the
@@ -780,7 +753,7 @@ impl EmitResolver {
         .intersects(ast::SymbolFlags::VALUE)
             && (c.compiler_options.should_preserve_const_enums()
                 || !target.is_some_and(|t| {
-                    let arena = c.symbol_arena.borrow();
+                    let arena = c.symbol_arena.clone();
                     is_const_enum_or_const_enum_only_module(&arena[t.index()])
                 }))
     }
@@ -794,7 +767,7 @@ impl ReferenceResolver for EmitResolver {
         node: NodeId,
         prefix_locals: bool,
         nodes: &[Node],
-        symbols: &std::cell::RefCell<Vec<Symbol>>,
+        symbols: &SymbolArena,
     ) -> Option<NodeId> {
         if !ast::is_parse_tree_node(&nodes[node]) {
             return None;
@@ -814,7 +787,7 @@ impl ReferenceResolver for EmitResolver {
         &mut self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &std::cell::RefCell<Vec<Symbol>>,
+        symbols: &SymbolArena,
     ) -> Option<NodeId> {
         let _ = symbols;
         let mut c = checker_lock(&self.checker);
@@ -824,7 +797,7 @@ impl ReferenceResolver for EmitResolver {
 
         let symbol = c.get_referenced_value_or_alias_symbol(node, Some(nodes));
         let is_non_local_alias = {
-            let arena = c.symbol_arena.borrow();
+            let arena = c.symbol_arena.clone();
             ast::is_non_local_alias(symbol.map(|s| &arena[s.index()]), ast::SymbolFlags::VALUE)
         };
         if is_non_local_alias
@@ -846,7 +819,7 @@ impl ReferenceResolver for EmitResolver {
         &mut self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &std::cell::RefCell<Vec<Symbol>>,
+        symbols: &SymbolArena,
     ) -> Option<NodeId> {
         if !ast::is_parse_tree_node(&nodes[node]) {
             return None;
@@ -860,7 +833,7 @@ impl ReferenceResolver for EmitResolver {
         &mut self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &std::cell::RefCell<Vec<Symbol>>,
+        symbols: &SymbolArena,
     ) -> Vec<NodeId> {
         if !ast::is_parse_tree_node(&nodes[node]) {
             return Vec::new();
@@ -892,7 +865,7 @@ impl ReferenceResolver for EmitResolver {
         &mut self,
         node: NodeId,
         nodes: &[Node],
-        symbols: &std::cell::RefCell<Vec<Symbol>>,
+        symbols: &SymbolArena,
     ) -> Option<NodeId> {
         if !ast::is_parse_tree_node(&nodes[node]) {
             return None;
@@ -943,7 +916,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
                     .intersects(ast::SymbolFlags::VALUE)
                 && (c.compiler_options.should_preserve_const_enums()
                     || !is_const_enum_or_const_enum_only_module(
-                        &c.symbol_arena.borrow()[target.index()],
+                        c.symbol_arena.get_ref(target),
                     ))
             {
                 return true;
@@ -1103,7 +1076,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
             );
 
             if let Some(root_value_symbol) = root_value_symbol {
-                let declarations = c.symbol_arena.borrow()[root_value_symbol.index()]
+                let declarations = c.symbol_arena.get_ref(root_value_symbol)
                     .declarations
                     .clone();
                 if !declarations.is_empty() {
@@ -1122,7 +1095,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
         );
         let mut resolved_value_symbol = value_symbol;
         if let Some(value_symbol) = value_symbol
-            && c.symbol_arena.borrow()[value_symbol.index()]
+            && c.symbol_arena.get_ref(value_symbol)
                 .flags
                 .intersects(ast::SymbolFlags::ALIAS)
         {
@@ -1146,7 +1119,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
         );
         let mut resolved_type_symbol = type_symbol;
         if let Some(type_symbol) = type_symbol
-            && c.symbol_arena.borrow()[type_symbol.index()]
+            && c.symbol_arena.get_ref(type_symbol)
                 .flags
                 .intersects(ast::SymbolFlags::ALIAS)
         {
@@ -1315,7 +1288,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
         meaning: ast::SymbolFlags,
         should_compute_alias_to_mark_visible: bool,
         _nodes: &[Node],
-        _symbols: &[Symbol],
+        _symbols: &SymbolArena,
     ) -> SymbolAccessibilityResult {
         let Some(mut c) = checker_try_lock(&self.checker) else {
             return SymbolAccessibilityResult::default();
@@ -1421,7 +1394,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
         let Some(symbol) = carrier else {
             return false;
         };
-        let symbol_arena = self.symbol_arena.borrow();
+        let symbol_arena = self.symbol_arena.clone();
         let s = &symbol_arena[symbol.index()];
         let has_expando_prop = |p: SymbolId| {
             symbol_arena[p.index()]
@@ -1471,7 +1444,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
         symbol: Option<SymbolId>,
         enclosing_declaration: Option<NodeId>,
         nodes: &[Node],
-        _symbols: &[Symbol],
+        _symbols: &SymbolArena,
     ) -> bool {
         if !ast::is_parse_tree_node(&nodes[declaration]) {
             return false;
@@ -1529,7 +1502,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
         for s in exports.values() {
             let merged = c.get_merged_symbol(*s);
             if merged != *s {
-                let declarations = c.symbol_arena.borrow()[merged.index()].declarations.clone();
+                let declarations = c.symbol_arena.get_ref(merged).declarations.clone();
                 if !declarations.is_empty() {
                     for d in declarations {
                         let __program = c.program.clone().expect("program");
@@ -1679,7 +1652,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
         let Some(symbol) = c.get_symbol_of_declaration(node) else {
             return false;
         };
-        c.symbol_arena.borrow()[symbol.index()]
+        c.symbol_arena.get_ref(symbol)
             .check_flags
             .intersects(ast::checkflags::CheckFlags::LATE)
     }
@@ -1705,22 +1678,22 @@ impl tsc_printer::EmitResolver for EmitResolver {
         let Some(s) = c.get_symbol_of_declaration(node) else {
             return false;
         };
-        let Some(parent) = c.symbol_arena.borrow()[s.index()].parent else {
+        let Some(parent) = c.symbol_arena.get_ref(s).parent else {
             return false;
         };
-        let s_name = c.symbol_arena.borrow()[s.index()].name.clone();
+        let s_name = c.symbol_arena.get_ref(s).name.clone();
         let parent_type = c.get_declared_type_of_symbol(parent);
         for base in c.get_base_types(parent_type) {
             let Some(base_prop) = c.get_property_of_type(base, &s_name) else {
                 continue;
             };
-            let base_prop_flags = c.symbol_arena.borrow()[base_prop.index()].flags;
+            let base_prop_flags = c.symbol_arena.get_ref(base_prop).flags;
             if base_prop_flags.intersects(
                 ast::SymbolFlags::ACCESSOR | ast::SymbolFlags::METHOD | ast::SymbolFlags::FUNCTION,
             ) {
                 return true;
             }
-            let s_flags = c.symbol_arena.borrow()[s.index()].flags;
+            let s_flags = c.symbol_arena.get_ref(s).flags;
             if c.is_readonly_symbol(base_prop) == c.is_readonly_symbol(s)
                 && s_flags.intersects(ast::SymbolFlags::OPTIONAL)
                     == base_prop_flags.intersects(ast::SymbolFlags::OPTIONAL)
@@ -1746,7 +1719,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
         &self,
         node: NodeId,
         _nodes: &[Node],
-        _symbols: &[Symbol],
+        _symbols: &SymbolArena,
     ) -> Vec<SymbolId> {
         let Some(mut c) = checker_try_lock(&self.checker) else {
             return Vec::new();
@@ -1763,7 +1736,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
         symbol: Option<SymbolId>,
         enclosing_declaration: Option<NodeId>,
         nodes: &[Node],
-        _symbols: &[Symbol],
+        _symbols: &SymbolArena,
     ) -> bool {
         if let Some(mut c) = checker_try_lock(&self.checker) {
             if !ast::is_parse_tree_node(&nodes[declaration]) {
@@ -1847,7 +1820,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
                     let is_this = i == 0
                         && pnode
                             .symbol()
-                            .is_some_and(|s| self.symbol_arena.borrow()[s.index()].name.as_ref() == "this");
+                            .is_some_and(|s| self.symbol_arena.get_ref(s).name.as_ref() == "this");
                     let optional = crate::utilities::is_optional_declaration(pnode, &arena)
                         || pnode.initializer().is_some()
                         || crate::utilities::is_rest_parameter(pnode, &arena)
@@ -1937,7 +1910,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
             crate::printer_util::resolve_arena_for(&program, nodes, orig)
         };
         if let Some(c) = checker_try_lock(&self.checker) {
-            let symbols = std::cell::RefCell::new(clone_symbols(&c.symbol_arena.borrow()));
+            let symbols = c.symbol_arena.snapshot();
             return self
                 .reference_resolver()
                 .get_referenced_value_declaration(orig, &arena, &symbols);

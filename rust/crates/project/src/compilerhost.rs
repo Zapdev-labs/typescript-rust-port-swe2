@@ -313,7 +313,7 @@ impl<B: CompilerHostBuilder, P: CompilerHostProject> CompilerHostTrait
                     .hash = key.hash;
             }
             // PORT: Go ran `binder.BindSourceFile` on each file here. The Rust
-            // binder appends into the program's global `Vec<Symbol>`, so
+            // binder appends into the program's global `SymbolArena`, so
             // binding is deferred to the program — see the PORT note in
             // `new_parse_cache`.
             Ok::<_, ContentMapperError>(files)

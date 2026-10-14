@@ -1665,7 +1665,7 @@ pub trait Program: Host {
     /// `Checker` aliases it as `symbol_arena` so binder ids and
     /// checker-created (merged/instantiated) symbols share one id space,
     /// mirroring Go's `*ast.Symbol` pointer identity on the heap.
-    fn symbols(&self) -> Rc<RefCell<Vec<ast::Symbol>>>;
+    fn symbols(&self) -> ast::SymbolArena;
     /// `FileExists(fileName)`.
     fn file_exists(&self, file_name: &RootedFilePath) -> bool;
     /// `GetSourceFileForResolvedModule(resolved)`.

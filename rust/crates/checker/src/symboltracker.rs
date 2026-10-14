@@ -45,7 +45,7 @@ pub struct SymbolTrackerImpl<'a> {
     pub reported_diagnostic: Rc<Cell<bool>>,
     /// The shared symbol arena — `TrackSymbol` reads `symbol.Flags` to skip
     /// type parameters; Go reads through the `*ast.Symbol` pointer.
-    pub symbols: Rc<RefCell<Vec<ast::Symbol>>>,
+    pub symbols: ast::SymbolArena,
     /// `inner`.
     pub inner: Option<Rc<RefCell<dyn SymbolTracker + 'a>>>,
     /// `DisableTrackSymbol` — exported field in Go.
@@ -57,7 +57,7 @@ pub struct SymbolTrackerImpl<'a> {
 pub fn new_symbol_tracker_impl<'a>(
     context: &NodeBuilderContext<'a>,
     tracker: Option<Rc<RefCell<dyn SymbolTracker + 'a>>>,
-    symbols: Rc<RefCell<Vec<ast::Symbol>>>,
+    symbols: ast::SymbolArena,
 ) -> SymbolTrackerImpl<'a> {
     // Go peels nested `*SymbolTrackerImpl` wrappers here; see the header
     // note for why that loop is omitted.
@@ -95,7 +95,7 @@ impl<'a> SymbolTracker for SymbolTrackerImpl<'a> {
             }
             // Skip recording type parameters as they don't contribute to
             // late painted statements.
-            let is_type_parameter = self.symbols.borrow()[symbol.index()]
+            let is_type_parameter = self.symbols.get_ref(symbol)
                 .flags
                 .intersects(SymbolFlags::TYPE_PARAMETER);
             if !is_type_parameter {
