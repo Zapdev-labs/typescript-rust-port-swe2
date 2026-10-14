@@ -8489,16 +8489,12 @@ impl Relater {
                     // If the source has infer type parameters, we instantiate
                     // them in the context of the target
                     let ctx = {
-                        // `r.isRelatedToWorker` — a `TypeComparer` bound to a
-                        // relater sharing this relation's cache (Go binds the
-                        // same `*Relater`; the port gives the closure its own
-                        // relater on the same `SharedRelation`, which also
-                        // satisfies the `'static` bound).
-                        let relation = self.relation();
-                        let cell = std::cell::RefCell::new(Relater {
-                            relation: Some(relation),
-                            ..Relater::default()
-                        });
+                        // `r.isRelatedToWorker` — a `TypeComparer` bound to the
+                        // live `*Relater` in Go; the port gives the closure a
+                        // snapshot so the in-flight recursion stacks,
+                        // expanding flags, and maybe-keys carry over (the
+                        // `SharedRelation` cache is `Rc`-shared either way).
+                        let cell = std::cell::RefCell::new(self.snapshot());
                         let compare: Box<crate::types::TypeComparer<'static>> =
                             Box::new(move |c: &mut Checker, s, t, re| {
                                 cell.borrow_mut().is_related_to_worker(c, s, t, re)

@@ -1687,27 +1687,51 @@ and surviving ones are ordinary statement temps.
 
 ## Known divergence — `largeTupleTypes` spurious TS2799 (deferred)
 - Test: `largeTupleTypes.ts` — ours emits `error TS2799` at 15:78; Go is clean.
+  Minimal repros: `Exclude<[...Tuple<any,1>], [...Tuple<any,2>]>` (concrete!)
+  already trips it — no generics needed.
 - Verified mechanism: the `GrowExp`/`GrowExpRev`/`Tuple` recursive-conditional
   constraint walk doubles a concrete tuple each round
   (`[...A,...A][N]` instantiated inside `get_conditional_type` →
   `create_normalized_tuple_type` → 10k cap → TS2799).
 - Go materializes up to `spread 1024 + cur 1024` (2048 total) then the walk
   terminates; ours reaches `spread 8192 + cur 8192` and trips the cap.
-- All ported machinery verified faithful: `computeBaseConstraint` (union /
-  indexed-access / conditional / substitution / generic-tuple arms),
-  `conditionalConstraintDepth` (max 1 in Go's whole run — nested conditional
-  arms don't accumulate), `getRecursionIdentity` (conditional instantiations
-  share `root.node` identity — dedup DOES fire in ours: `contains=true` at
-  stacklen 10-12 on root-node identities), `getResolvedBaseConstraint`
-  push/pop + stack append semantics, `getConstraintFromConditionalType`
-  (DCD→forConstraint-inst / DEF→union(true,false)), `getSimplifiedConditionalType`,
-  `getSubstitutionIntersection`, tuple normalizer.
-- The difference: our constraint walk pushes ~2 extra intermediate levels
-  (substitution/object identities) per doubling round vs Go, so the repeated
-  `root.node` identity collides at stacklen ~12 instead of ~10 — 2 extra
-  rounds = 4× = 2048→8192. RBC call volume: ours 3429 (727 conditional) vs
-  Go 1797 (47 conditional). Emergent ordering again — same class as the
-  `Matching` divergence; single spurious diagnostic. Deferred.
+- All ported machinery verified faithful end-to-end:
+  `computeBaseConstraint` (union / indexed-access / conditional /
+  substitution / generic-tuple arms), `conditionalConstraintDepth` (max 1 in
+  Go's whole run), `getRecursionIdentity` (conditional instantiations share
+  `root.node` identity — dedup DOES fire in ours), `getResolvedBaseConstraint`
+  push/pop + stack semantics, `getConstraintFromConditionalType`
+  (DCD→forConstraint-inst / DEF→union(true,false)), `getDefault`→
+  `getInferredTrueType` (uses `combinedMapper` arm correctly),
+  `getSimplifiedConditionalType`, `getSubstitutionIntersection`,
+  `isDeeplyNestedType` (identity-match + id-monotonicity + depth cap +
+  intersection special-case), `getRelationKey`/`writeGenericTypeReferences`
+  (structural keys, depth-4 limit, constrained-flag), `getConditionalTypeKey`,
+  conditional instantiation interning (Arc-shared map per root),
+  union/typeref interning, `checkIndexedAccessIndexType`, marker types,
+  `shouldDeferIndexedAccessType`, `ExpandingFlags` semantics (BOTH → MAYBE),
+  source/target stack push/pop, 10-deep conditional bailout, 100-stack
+  backstop, maybe-keys membership.
+- Relater-side trace comparison on `ltt14`:
+  - `recursiveTypeRelatedTo` entries: ours 1962 vs Go 991; identical first
+    pair `(869,868)` then immediate ordering divergence — Go's
+    `checkIndexedAccessIndexType` relation (src 1758→union 1766) runs EARLY,
+    ours runs the GrowExp expansion first and that relation LAST.
+  - `hasNonCircularBaseConstraint` reached from the worker: ours 167 vs Go 5
+    fresh-stack conditional entries (~107 vs ~5 distinct conditional ids).
+  - 200/207 common (src,tgt) pairs return TRUE in ours vs MAYBE in Go — ours
+    is succeeding on pairs Go hedges, i.e. our relation is more eager.
+  - Root-cause hypothesis: relation ORDER differs (check-sequence or
+    resolution eagerness), so in-flight stack contents at each gate differ;
+    leaf results cascade. Not a missing guard — every guard fires in ours,
+    just on different stack contents.
+- Fidelity fix applied: `structured_type_related_to`'s infer-params compare
+  closure now uses `self.snapshot()` (was `Relater::default()`) so in-flight
+  recursion stacks/expanding-flags/maybe-keys carry into inference-driven
+  relations, matching Go's `r.isRelatedToWorker` binding to the live
+  `*Relater`. Counts unchanged — plausible contributor, not the trigger.
+- Deferred: single spurious diagnostic; the divergence is emergent
+  relation-order, likely shared with `Matching`/crossProduct classes.
 
 ## Fixed — JS emit parity: private-name transforms (2026-10-13)
 - `privateNameWhenNotUseDefineForClassFieldsInEsNext` (es2020): classfields
