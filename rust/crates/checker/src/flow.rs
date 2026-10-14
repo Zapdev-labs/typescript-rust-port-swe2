@@ -2678,20 +2678,27 @@ impl Checker {
         let mut bypass_flow: Option<FlowNodeId> = None;
         let mut list = antecedents;
         while let Some(l) = list {
-            let antecedent = f.flow_list(l).flow.expect("antecedent flow");
-            if bypass_flow.is_none()
-                && f.flow_node(antecedent)
-                    .flags
-                    .intersects(FlowFlags::SWITCH_CLAUSE)
-                && {
-                    let node = f.flow_node(antecedent).node.expect("switch clause node");
+            // One lookup per list element — `flow` and `next` are Copy.
+            let (l_flow, l_next) = {
+                let fl = f.flow_list(l);
+                (fl.flow, fl.next)
+            };
+            let antecedent = l_flow.expect("antecedent flow");
+            if bypass_flow.is_none() && {
+                // `flags`/`node` are Copy — single `flow_node` lookup.
+                let (flags, node) = {
+                    let fn_ = f.flow_node(antecedent);
+                    (fn_.flags, fn_.node)
+                };
+                flags.intersects(FlowFlags::SWITCH_CLAUSE) && {
+                    let node = node.expect("switch clause node");
                     SwitchClauseData::of(&f.nodes(), node).is_empty()
                 }
-            {
+            } {
                 // The antecedent is the bypass branch of a potentially
                 // exhaustive switch statement.
                 bypass_flow = Some(antecedent);
-                list = f.flow_list(l).next;
+                list = l_next;
                 continue;
             }
             let flow_type = self.get_type_at_flow_node(f, antecedent);
@@ -2720,7 +2727,7 @@ impl Checker {
             if flow_type.incomplete {
                 seen_incomplete = true;
             }
-            list = f.flow_list(l).next;
+            list = l_next;
         }
         if let Some(bypass_flow) = bypass_flow {
             let flow_type = self.get_type_at_flow_node(f, bypass_flow);
