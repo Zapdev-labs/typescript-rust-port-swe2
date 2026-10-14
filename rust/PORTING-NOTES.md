@@ -1832,3 +1832,26 @@ declaration")` for `InstantiatedMapped` types (declaration is `None`;
 Go resolves through the instantiation target). `trace.json` header is
 written before the panic. PORT(deferred) — needs the instantiated-
 mapped declaration resolution ported; normal checking is unaffected.
+
+## Performance — follow-on passes (2026-10-14, cont.)
+- `TypeArena::get_ref` (`Ref<'_, Type>` via `Ref::map`): 604 transient
+  `types.get` sites converted — drops the Rc inc/dec pair per read.
+  Stored handles/cross-mutation spans keep `get`. Bench ~250ms → ~215ms.
+- `TypeArena::borrow()` + fused reads in `is_type_related_to`: one
+  borrow-flag write for the fresh-literal/flag prologue (~6 borrows → 1),
+  plus `#[inline]` on `Type`/`TypeData` `as_*` downcasts.
+- `NodeData::SourceFile` → `Box<SourceFile>`: `size_of::<Node>()` was
+  1056B (one 1016B variant dominates a ~180-variant enum; Go keeps
+  payloads behind pointers). Now ~336B. parserharness 73ms → ~46ms;
+  check bench ~215ms → ~165-175ms. `gen-ast` preserves via
+  `BOXED_NODE_VARIANTS`.
+- `--generateTrace` construction-window panic fixed:
+  `get_recursion_identity_target`'s INSTANTIATED_MAPPED branch now gates
+  on `declaration.is_some()` — the eager trace resolves identity inside
+  `new_object_type` before `instantiate_anonymous_type` copies
+  declaration/target/mapper (Go reads lazily at dump). Residual:
+  `types_2.json` dump hits a cross-arena NodeId (caught → warning).
+
+## Current bench (conditionalTypeDiscriminating…, --skipLibCheck)
+Go ~110ms total / ~75ms check; Rust ~165-175ms total. Parse gap on
+parserharness ~46ms vs Go ~23ms.
