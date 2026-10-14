@@ -257,9 +257,11 @@ pub struct Program {
     /// Lazily-built `fileIndexMap` — source-file `NodeId` → position in
     /// `source_file_ids` (program order), for `Program::file_rank`.
     file_rank_map: RefCell<Option<FxHashMap<NodeId, usize>>>,
-    /// `file_index` → arena. `NodeId::file_index` is a global counter, not a
-    /// position in `files`, so arenas are keyed by it.
-    arenas: FxHashMap<u32, Rc<ArenaCell>>,
+    /// `file_index` → arena. `NodeId::file_index` is a global counter, so
+    /// the table is sparse in principle but dense in practice — a Vec
+    /// indexed by it replaces a hashmap probe with an array read on the
+    /// very hot `nodes()`/`nodes_mut()` paths.
+    arenas: Vec<Option<Rc<ArenaCell>>>,
     /// Last-resolved `(file_index, arena)` — `nodes()`/`nodes_mut()` are
     /// called per node access and overwhelmingly stay within one file, so a
     /// 1-entry cache skips the map lookup on the hot path.
@@ -525,11 +527,17 @@ impl Program {
         }
         let cell = self
             .arenas
-            .get(&file_index)
+            .get(file_index as usize)
+            .and_then(|c| c.as_ref())
             .unwrap_or_else(|| {
                 panic!(
                     "unknown file_index {file_index} (arenas: {:?})",
-                    self.arenas.keys().collect::<Vec<_>>()
+                    self.arenas
+                        .iter()
+                        .enumerate()
+                        .filter(|(_, c)| c.is_some())
+                        .map(|(i, _)| i as u32)
+                        .collect::<Vec<_>>()
                 )
             })
             .clone();
@@ -557,10 +565,15 @@ impl Program {
     /// files were parsed) may not be present. Falls back to any registered
     /// arena — synthetic builder nodes only need a writable arena.
     pub fn nodes_handle_or_fallback(&self, file_index: u32) -> (u32, Rc<ArenaCell>) {
-        if let Some(cell) = self.arenas.get(&file_index) {
+        if let Some(cell) = self.arenas.get(file_index as usize).and_then(|c| c.as_ref()) {
             return (file_index, cell.clone());
         }
-        let (&k, cell) = self.arenas.iter().next().expect("program has no arenas");
+        let (k, cell) = self
+            .arenas
+            .iter()
+            .enumerate()
+            .find_map(|(k, c)| c.as_ref().map(|c| (k as u32, c)))
+            .expect("program has no arenas");
         (k, cell.clone())
     }
 
@@ -3640,10 +3653,13 @@ pub fn new_program(opts: ProgramOptions) -> Rc<Program> {
     let case_sensitivity = opts.hosts.host.fs().case_sensitivity();
     let (processed, resolution_data) = process_all_program_files(&opts);
     let source_file_ids: Vec<NodeId> = processed.files.iter().map(|f| f.file).collect();
-    let mut arenas: FxHashMap<u32, Rc<ArenaCell>> =
-        FxHashMap::with_capacity_and_hasher(processed.files.len(), Default::default());
+    let mut arenas: Vec<Option<Rc<ArenaCell>>> = Vec::new();
     for file in &processed.files {
-        arenas.insert(file.file.file_index(), file.nodes.clone());
+        let idx = file.file.file_index() as usize;
+        if idx >= arenas.len() {
+            arenas.resize_with(idx + 1, || None);
+        }
+        arenas[idx] = Some(file.nodes.clone());
     }
     let p = Rc::new(Program {
         options: Rc::new(
@@ -3888,12 +3904,16 @@ pub fn reuse_program(
 
     let source_file_ids: Vec<NodeId> = processed.files.iter().map(|f| f.file).collect();
     let mut arenas = p.arenas.clone();
-    arenas.insert(
-        new_file_value.file.file_index(),
-        new_file_value.nodes.clone(),
-    );
+    let mut set_arena = |file_index: u32, cell: Rc<ArenaCell>| {
+        let idx = file_index as usize;
+        if idx >= arenas.len() {
+            arenas.resize_with(idx + 1, || None);
+        }
+        arenas[idx] = Some(cell);
+    };
+    set_arena(new_file_value.file.file_index(), new_file_value.nodes.clone());
     for supplemental in &new_supplemental_files {
-        arenas.insert(supplemental.file.file_index(), supplemental.nodes.clone());
+        set_arena(supplemental.file.file_index(), supplemental.nodes.clone());
     }
 
     let result = Rc::new(Program {
