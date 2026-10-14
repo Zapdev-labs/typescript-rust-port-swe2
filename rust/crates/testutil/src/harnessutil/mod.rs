@@ -961,7 +961,7 @@ impl CompilerHost for CachedCompilerHost {
             let (file, nodes) = tsc_parser::parse_source_file(opts.clone(), &text, script_kind);
             let parsed = ParsedSourceFile {
                 file,
-                nodes: std::rc::Rc::new(nodes),
+                nodes: std::rc::Rc::new(tsc_ast::NodeArenaBuf::new(nodes)),
             };
             source_file_cache_evict_if_full(&mut cache);
             cache.insert(key, parsed.clone());

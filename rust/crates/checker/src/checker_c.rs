@@ -163,8 +163,10 @@ impl Checker {
         )
     }
 
-    /// `(c *Checker) getExportsOfSymbol` (checker.go).
-    pub(crate) fn get_exports_of_symbol(&mut self, symbol: SymbolId) -> SymbolTable {
+    /// `(c *Checker) getExportsOfSymbol` (checker.go). `Rc` — the table is
+    /// shared out of `sym.exports` / `resolvedExports` instead of copied
+    /// (Go map-header semantics).
+    pub(crate) fn get_exports_of_symbol(&mut self, symbol: SymbolId) -> Rc<SymbolTable> {
         let flags = self.sym(symbol).flags;
         if flags.intersects(ast::SymbolFlags::LATE_BINDING_CONTAINER) {
             return self.get_resolved_members_or_exports_of_symbol(
@@ -189,7 +191,7 @@ impl Checker {
         &mut self,
         symbol: SymbolId,
         resolution_kind: MembersOrExportsResolutionKind,
-    ) -> SymbolTable {
+    ) -> Rc<SymbolTable> {
         let kind_index = resolution_kind as usize;
         if self.members_and_exports_links.get(symbol).0[kind_index].is_empty() {
             let is_static = resolution_kind == MembersOrExportsResolutionKind::ResolvedExports;
@@ -203,6 +205,12 @@ impl Checker {
                 self.sym(symbol).exports.clone()
             };
             self.members_and_exports_links.get(symbol).0[kind_index] = early_symbols.clone();
+            // PORT: `early_symbols` is an `Rc` shared with `sym.members`/
+            // `sym.exports` (or the resolved-exports cache) — Go caches the
+            // same map header here too. `combine_symbol_tables` never
+            // mutates `first`/`second`, so a later `Rc::make_mut` write on
+            // `sym.*` detaches the symbol's handle and leaves this cached
+            // snapshot intact — same visibility the old deep clone gave.
             // fill in any as-yet-unresolved late-bound members.
             let mut late_symbols: SymbolTable = SymbolTable::new();
             let declarations = self.sym(symbol).declarations.clone();
@@ -251,7 +259,7 @@ impl Checker {
             }
             let combined = self.combine_symbol_tables(
                 std::mem::take(&mut early_symbols),
-                std::mem::take(&mut late_symbols),
+                Rc::new(std::mem::take(&mut late_symbols)),
             );
             self.members_and_exports_links.get(symbol).0[kind_index] = combined;
         }
@@ -501,7 +509,8 @@ impl Checker {
 
     /// `(c *Checker) getMembersOfSymbol` (checker.go) — gets a SymbolTable
     /// containing both the early- and late-bound members of a symbol.
-    pub(crate) fn get_members_of_symbol(&mut self, symbol: SymbolId) -> SymbolTable {
+    /// `Rc` — shared handle; refcount bump, not a table copy.
+    pub(crate) fn get_members_of_symbol(&mut self, symbol: SymbolId) -> Rc<SymbolTable> {
         if self
             .sym(symbol)
             .flags
@@ -521,7 +530,7 @@ impl Checker {
     /// `get_resolved_members_or_exports_of_symbol`). A computed-but-empty
     /// result recomputes; `getExportsOfModuleWorker` is side-effect free on
     /// diagnostics when its result is empty.
-    pub(crate) fn get_exports_of_module(&mut self, module_symbol: SymbolId) -> SymbolTable {
+    pub(crate) fn get_exports_of_module(&mut self, module_symbol: SymbolId) -> Rc<SymbolTable> {
         if self
             .module_symbol_links
             .get(module_symbol)
@@ -547,7 +556,7 @@ impl Checker {
     pub(crate) fn get_exports_of_module_worker(
         &mut self,
         module_symbol: SymbolId,
-    ) -> (SymbolTable, OrderedMap<String, NodeId>) {
+    ) -> (Rc<SymbolTable>, OrderedMap<String, NodeId>) {
         let mut visited_symbols: Vec<SymbolId> = Vec::new();
         let mut non_type_only_names: Set<String> =
             Set::with_size_hint(self.sym(module_symbol).exports.size());
@@ -563,7 +572,7 @@ impl Checker {
             symbol: Option<SymbolId>,
             export_star: Option<NodeId>,
             is_type_only: bool,
-        ) -> Option<SymbolTable> {
+        ) -> Option<Rc<SymbolTable>> {
             if !is_type_only && let Some(symbol) = symbol {
                 // Add non-type-only names before checking if we've visited
                 // this module, because we might have visited it via an
@@ -615,7 +624,7 @@ impl Checker {
                     );
                     c.extend_export_symbols(
                         &mut nested_symbols,
-                        exported_symbols.as_ref(),
+                        exported_symbols.as_deref(),
                         Some(&mut lookup_table),
                         Some(node),
                     );
@@ -640,7 +649,12 @@ impl Checker {
                         c.add_diagnostic(&diagnostic);
                     }
                 }
-                c.extend_export_symbols(&mut symbols, Some(&nested_symbols), None, None);
+                c.extend_export_symbols(
+                    Rc::make_mut(&mut symbols),
+                    Some(&nested_symbols),
+                    None,
+                    None,
+                );
             }
             if let Some(export_star) = export_star {
                 let __program = c.program.clone().expect("program");
@@ -697,7 +711,7 @@ impl Checker {
                     && !flags.intersects(ast::SymbolFlags::VALUE)
                     && exports.get(name.as_ref()).is_none()
                 {
-                    exports.set(name.into(), symbol);
+                    Rc::make_mut(&mut exports).set(name.into(), symbol);
                 }
             }
         }
@@ -5382,7 +5396,7 @@ impl Checker {
         type_arguments: &[TypeId],
     ) {
         let mut mapper: Option<TypeMapperId> = None;
-        let mut members: SymbolTable;
+        let mut members: Rc<SymbolTable>;
         let mut call_signatures: Vec<SignatureId>;
         let mut construct_signatures: Vec<SignatureId>;
         let mut index_infos: Vec<IndexInfoId>;
@@ -5418,7 +5432,7 @@ impl Checker {
                 type_parameters.to_vec(),
                 type_arguments.to_vec(),
             ));
-            members = self.instantiate_symbol_table(&declared_members, mapper);
+            members = Rc::new(self.instantiate_symbol_table(&declared_members, mapper));
             call_signatures = self.instantiate_signatures(&declared_call_signatures, mapper);
             construct_signatures =
                 self.instantiate_signatures(&declared_construct_signatures, mapper);
@@ -5430,9 +5444,9 @@ impl Checker {
         }
         let base_types = self.get_base_types(source);
         if !base_types.is_empty() {
-            if !instantiated {
-                members = members.clone();
-            }
+            // When `!instantiated`, `members` shares the `declared_members`
+            // table; `Rc::make_mut` in `add_inherited_members` detaches it
+            // before the first write (replacing the old eager `members.clone()`).
             let this_argument = type_arguments.last().copied();
             for base_type in base_types {
                 let mut instantiated_base_type = base_type;
@@ -5445,7 +5459,7 @@ impl Checker {
                     );
                 }
                 let base_props = self.get_properties_of_type(instantiated_base_type);
-                self.add_inherited_members(&mut members, &base_props);
+                self.add_inherited_members(Rc::make_mut(&mut members), &base_props);
                 call_signatures.extend(
                     self.get_signatures_of_type(instantiated_base_type, SignatureKind::Call),
                 );
@@ -8609,7 +8623,7 @@ impl Checker {
                     vars_only.set(name.into(), p);
                 }
             }
-            members = vars_only;
+            members = Rc::new(vars_only);
         }
         let mut base_constructor_index_info: Option<IndexInfoId> = None;
         self.set_structured_type_members(t, members.clone(), &[], &[], &[]);
@@ -8621,7 +8635,7 @@ impl Checker {
                 .intersects(TypeFlags::OBJECT | TypeFlags::INTERSECTION | TypeFlags::TYPE_VARIABLE)
             {
                 let base_props = self.get_properties_of_type(base_constructor_type);
-                self.add_inherited_members(&mut members, &base_props);
+                self.add_inherited_members(Rc::make_mut(&mut members), &base_props);
                 self.set_structured_type_members(t, members.clone(), &[], &[], &[]);
             } else if base_constructor_type == self.any_type {
                 base_constructor_index_info = Some(self.any_base_type_index_info);
@@ -10418,9 +10432,9 @@ impl Checker {
                     .as_union_or_intersection_type_mut()
                     .expect("union or intersection type");
                 let cache = if skip_object_function_property_augment {
-                    &mut d.property_cache_without_function_property_augment
+                    Rc::make_mut(&mut d.property_cache_without_function_property_augment)
                 } else {
-                    &mut d.property_cache
+                    Rc::make_mut(&mut d.property_cache)
                 };
                 cache.set(name.into(), prop);
             }
@@ -10439,7 +10453,7 @@ impl Checker {
                     .as_union_or_intersection_type_mut()
                     .expect("union or intersection type");
                 if !d.property_cache.has(name) {
-                    d.property_cache.set(name.into(), prop);
+                    Rc::make_mut(&mut d.property_cache).set(name.into(), prop);
                 }
             }
         }

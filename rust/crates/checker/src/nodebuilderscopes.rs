@@ -111,9 +111,13 @@ impl ScopeUndo {
     /// `undo()`.
     fn restore(mut self, nodes: &mut Vec<ast::Node>) {
         let detached_fallback;
+        // PORT: `Rc::make_mut` on a shared `locals` table (node cloned after
+        // binding) detaches before undo writes instead of mutating through
+        // Go's shared map header — the clone keeps the pre-`pushFakeScope`
+        // contents, which is what undo restores anyway.
         let locals: &mut ast::SymbolTable =
             match nodes[self.fake_scope].data.locals_container_data_mut() {
-                Some(d) => &mut d.locals,
+                Some(d) => std::rc::Rc::make_mut(&mut d.locals),
                 None => {
                     detached_fallback = self.detached.get_or_insert_with(Default::default);
                     detached_fallback
@@ -406,8 +410,12 @@ impl<'a> NodeBuilderImpl<'a> {
         if let Some(scope) = existing_fake_scope {
             match nodes[scope].data.locals_container_data_mut() {
                 Some(d) => {
+                    // PORT: writes into a (possibly node-clone-shared)
+                    // `locals` table detach via `Rc::make_mut` rather than
+                    // mutating through Go's shared map header. The undo
+                    // record restores by name, so detaching is equivalent.
                     apply_additions(
-                        &mut d.locals,
+                        std::rc::Rc::make_mut(&mut d.locals),
                         &additions,
                         &mut new_locals,
                         &mut old_locals,
@@ -470,7 +478,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 .get(fake_scope)
                 .fake_scope_for_signature_declaration = Some(kind.to_string());
             if let Some(data) = nodes[fake_scope].data.locals_container_data_mut() {
-                data.locals = locals;
+                data.locals = locals.into();
             }
             // `fakeScope.Parent = enclosingDeclaration`.
             nodes[fake_scope].parent = Some(enclosing);

@@ -14,7 +14,7 @@
 //   - `*ast.SourceFile` → the SourceFile node's `NodeId`; `ref` is borrowed
 //     from the SourceFile's `referenced_files` slice.
 
-use tsc_ast::{FileReference, Node, NodeId};
+use tsc_ast::{FileReference, Node, NodeArenaBuf, NodeId};
 use tsc_outputpaths::OutputPaths;
 use tsc_tspath::CaseSensitivity;
 
@@ -56,5 +56,5 @@ pub trait DeclarationEmitHost {
     /// `resolve_node`, for multi-node lookups (source-file walks) where a
     /// `NodeId` from another file's emit context must be followed like a
     /// Go pointer. `None` mirrors `resolve_node` returning `None`.
-    fn arena_for(&self, fi: u32, nodes: &[Node]) -> Option<std::rc::Rc<Vec<Node>>>;
+    fn arena_for(&self, fi: u32, nodes: &[Node]) -> Option<std::rc::Rc<NodeArenaBuf>>;
 }

@@ -852,7 +852,7 @@ impl<'a, 'c> Tracker<'a, 'c> {
     /// PORT(addition): borrow `file`'s arena without re-registering — for
     /// read-only inspections in `finish_*` where the arena handle is already
     /// recorded.
-    pub(crate) fn nodes_of(&self, file: NodeId) -> Rc<Vec<Node>> {
+    pub(crate) fn nodes_of(&self, file: NodeId) -> Rc<ast::NodeArenaBuf> {
         self.arena_handles[&(file.file_index() as u32)].snapshot()
     }
 

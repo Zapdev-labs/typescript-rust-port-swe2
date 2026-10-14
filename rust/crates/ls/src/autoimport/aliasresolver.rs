@@ -392,7 +392,7 @@ impl tsc_checker::checker_types::Program for AliasResolver {
 
     /// Arena snapshot for a file index. Arenas are registered lazily by
     /// `get_source_file` and are append-only.
-    fn nodes(&self, file_index: u32) -> Rc<Vec<ast::Node>> {
+    fn nodes(&self, file_index: u32) -> Rc<ast::NodeArenaBuf> {
         self.leaked_arena(file_index).snapshot()
     }
 

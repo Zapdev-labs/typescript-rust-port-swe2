@@ -221,7 +221,7 @@ pub fn new_parse_cache(options: RefCountCacheOptions) -> ParseCache {
         // which bind per-file arenas on demand.
         Arc::new(Mutex::new(ParsedSourceFile {
             file,
-            nodes: std::rc::Rc::new(nodes),
+            nodes: std::rc::Rc::new(tsc_ast::NodeArenaBuf::new(nodes)),
         }))
     })
 }

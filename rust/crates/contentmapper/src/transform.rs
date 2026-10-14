@@ -22,7 +22,6 @@ use std::rc::Rc;
 use std::sync::Arc;
 
 use tsc_ast as ast;
-use tsc_ast::Node;
 use tsc_ast::NodeId;
 use tsc_ast::ast_generated::SourceFile;
 use tsc_ast::diagnostic::{DiagnosticFile, DiagnosticRef, lock_diagnostic};
@@ -59,8 +58,9 @@ pub struct ParsedSourceFile {
     /// `SourceFile.Nodes` — the arena that owns `file` and its descendants.
     /// `Rc` so parse caches can share the canonical arena with every program
     /// that loads the file (Go shares the `*ast.SourceFile`); program-side
-    /// mutation goes through `ArenaCell` copy-on-write.
-    pub nodes: Rc<Vec<Node>>,
+    /// mutation goes through `ArenaCell`, which clones a shared buffer on
+    /// attach so the cached parse stays pristine.
+    pub nodes: Rc<tsc_ast::NodeArenaBuf>,
 }
 
 impl ParsedSourceFile {
@@ -172,9 +172,9 @@ pub fn parse_result(
     let script_kind = tsc_core::core::get_script_kind_from_file_name(&virtual_file_name);
     let (file, nodes) =
         parser::parse_source_file(canonical_parse_options.clone(), &result.text, script_kind);
-    let mut canonical = ParsedSourceFile {
+    let canonical = ParsedSourceFile {
         file,
-        nodes: Rc::new(nodes),
+        nodes: Rc::new(tsc_ast::NodeArenaBuf::new(nodes)),
     };
     if !result.diagnostics.is_empty() {
         // The runner produces diagnostics without a source file (it doesn't
@@ -183,7 +183,7 @@ pub fn parse_result(
         let mut diags = canonical.source_file().diagnostics().to_vec();
         diags.extend(result.diagnostics.iter().cloned());
         let f = canonical.file;
-        Rc::get_mut(&mut canonical.nodes).unwrap()[f]
+        tsc_ast::NodeArenaBuf::get_mut(&canonical.nodes)[f]
             .as_source_file_mut()
             .set_diagnostics(diags);
     }
@@ -230,7 +230,7 @@ pub fn parse_result(
         );
         files.supplemental.push(ParsedSourceFile {
             file,
-            nodes: Rc::new(nodes),
+            nodes: Rc::new(tsc_ast::NodeArenaBuf::new(nodes)),
         });
     }
     let mapper_identity = mapper.identity();
@@ -238,7 +238,7 @@ pub fn parse_result(
     // file handles below so their `original_text` snapshots the input
     // content (Go's live `*SourceFile` sees it through `OriginalText()`).
     let canonical_file = files.canonical.file;
-    Rc::get_mut(&mut files.canonical.nodes).unwrap()[canonical_file]
+    tsc_ast::NodeArenaBuf::get_mut(&files.canonical.nodes)[canonical_file]
         .as_source_file_mut()
         .set_content_mapper_info(ast::ContentMapperSourceFileInfo {
             content_mapper: mapper_identity.clone(),
@@ -264,7 +264,7 @@ pub fn parse_result(
         let file = &mut files.supplemental[i];
         let virtual_file_name = file.source_file().file_name().clone();
         let fid = file.file;
-        Rc::get_mut(&mut file.nodes).unwrap()[fid]
+        tsc_ast::NodeArenaBuf::get_mut(&file.nodes)[fid]
             .as_source_file_mut()
             .set_content_mapper_info(ast::ContentMapperSourceFileInfo {
                 content_mapper: mapper_identity.clone(),

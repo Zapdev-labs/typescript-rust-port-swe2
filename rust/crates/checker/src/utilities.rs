@@ -3091,7 +3091,7 @@ impl Checker {
     ///
     /// PORT: returns an `Rc` snapshot of the shared arena (see
     /// `checker_types::Program::nodes`).
-    pub fn program_nodes_for_symbol(&self, s: SymbolId) -> std::rc::Rc<Vec<ast::Node>> {
+    pub fn program_nodes_for_symbol(&self, s: SymbolId) -> std::rc::Rc<ast::NodeArenaBuf> {
         let declaration = {
             let arena = self.symbol_arena.clone();
             let symbol = &arena[s.index()];

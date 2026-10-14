@@ -128,7 +128,7 @@ impl CompilerHost for BasicCompilerHost {
         );
         Some(ParsedSourceFile {
             file,
-            nodes: std::rc::Rc::new(nodes),
+            nodes: std::rc::Rc::new(tsc_ast::NodeArenaBuf::new(nodes)),
         })
     }
 

@@ -304,18 +304,30 @@ impl<'a> Binder<'a> {
     }
 
     /// `SymbolTableDest` resolution — `symbolTable[name] = symbol` write.
+    /// `Rc::make_mut`: during binding each table is singly owned (no symbol
+    /// clones exist yet), so this is an in-place write; if a table is ever
+    /// shared with a node/symbol clone it detaches (copy-on-write) rather
+    /// than mutating through Go's shared map header.
     fn table_set(&mut self, dest: SymbolTableDest, name: impl Into<Arc<str>>, symbol: SymbolId) {
         let table = match dest {
             SymbolTableDest::Locals(n) => {
-                &mut self.nodes[n]
-                    .data
-                    .locals_container_data_mut()
-                    .expect("GetLocals on node without LocalsContainerData")
-                    .locals
+                std::rc::Rc::make_mut(
+                    &mut self.nodes[n]
+                        .data
+                        .locals_container_data_mut()
+                        .expect("GetLocals on node without LocalsContainerData")
+                        .locals,
+                )
             }
-            SymbolTableDest::Exports(s) => &mut self.symbols[s.index()].exports,
-            SymbolTableDest::Members(s) => &mut self.symbols[s.index()].members,
-            SymbolTableDest::GlobalExports => &mut self.file_data_mut().global_exports,
+            SymbolTableDest::Exports(s) => {
+                std::rc::Rc::make_mut(&mut self.symbols[s.index()].exports)
+            }
+            SymbolTableDest::Members(s) => {
+                std::rc::Rc::make_mut(&mut self.symbols[s.index()].members)
+            }
+            SymbolTableDest::GlobalExports => {
+                std::rc::Rc::make_mut(&mut self.file_data_mut().global_exports)
+            }
         };
         table.set(name.into(), symbol);
     }
@@ -1771,8 +1783,7 @@ impl<'a> Binder<'a> {
         );
         self.add_declaration_to_symbol(type_literal_symbol, node, SymbolFlags::TYPE_LITERAL);
         let symbol_name = self.symbols[symbol.index()].name.clone();
-        self.symbols[type_literal_symbol.index()]
-            .members
+        std::rc::Rc::make_mut(&mut self.symbols[type_literal_symbol.index()].members)
             .set(symbol_name.into(), symbol);
     }
 
@@ -1858,8 +1869,7 @@ impl<'a> Binder<'a> {
                 .map(|(name, sym)| (name.clone(), *sym))
                 .collect();
             for (name, symbol) in promoted {
-                self.symbols[export_equals.index()]
-                    .exports
+                std::rc::Rc::make_mut(&mut self.symbols[export_equals.index()].exports)
                     .set(name, symbol);
                 self.symbols[export_equals.index()].flags |= SymbolFlags::NAMESPACE_MODULE;
             }
@@ -2683,8 +2693,7 @@ impl<'a> Binder<'a> {
                 self.symbols[exports_property.index()].value_declaration =
                     self.symbols[symbol.index()].value_declaration;
                 self.symbols[exports_property.index()].parent = Some(symbol);
-                self.symbols[symbol.index()]
-                    .members
+                std::rc::Rc::make_mut(&mut self.symbols[symbol.index()].members)
                     .set(Arc::from("exports"), exports_property);
             }
             self.table_set(locals, name.to_string(), symbol);

@@ -1726,19 +1726,17 @@ pub trait Program: Host {
     /// `NodeId::file_index` — not part of Go's `Program` interface (Go
     /// derefs `*ast.Node` directly).
     ///
-    /// Returns a cheap `Rc` snapshot of the program's shared per-file arena —
-    /// no `RefCell` borrow is held, so snapshots never block `nodes_mut`.
-    /// Snapshots observe the arena as of the call; mutations made afterwards
-    /// are invisible to the snapshot (Go slice holders see element writes —
-    /// see `ast::ArenaCell` for the divergence note). Re-snapshot for fresh
-    /// reads.
-    fn nodes(&self, file_index: u32) -> Rc<Vec<ast::Node>>;
+    /// Returns a cheap `Rc` handle to the program's shared per-file arena —
+    /// no `RefCell` borrow is held, so handles never block `nodes_mut`.
+    /// The handle observes in-place mutations and appends made afterwards
+    /// (Go shared-heap semantics — see `ast::ArenaCell`).
+    fn nodes(&self, file_index: u32) -> Rc<ast::NodeArenaBuf>;
     /// `nodes_mut` — mutable arena access for synthetic-node creation
     /// (factory-created synthetic expressions, flow nodes).
     ///
-    /// Returns a copy-on-write [`ast::ArenaMut`] guard: the first mutation
-    /// clones the arena iff snapshots still share it; `Drop` writes back.
-    /// Never panics on held read snapshots.
+    /// Returns an [`ast::ArenaMut`] guard that mutates the shared buffer in
+    /// place — every live snapshot observes the writes. Only one guard may
+    /// be live per arena.
     fn nodes_mut(&self, file_index: u32) -> tsc_ast::ast::ArenaMut;
     /// PORT(addition): the arena cell handle itself — for caches
     /// (`FlowState::nodes`) that must keep a long-lived alias into the arena

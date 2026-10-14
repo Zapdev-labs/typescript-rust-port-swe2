@@ -6,11 +6,10 @@
 //   `*ast.Symbol` → `SymbolId`; `*checker.Signature` → `SignatureId`.
 // - Go's `f.changeTracker.NodeFactory` is `Tracker::node_factory(file)` here,
 //   bound to the file arena. Factory calls run inside short `nodes_mut`
-//   (copy-on-write) guard scopes minting into the file's arena; a `nodes`
-//   snapshot is held on the fixer so every `cow()` is COW-mode and
-//   incidental `program.nodes()` reads keep seeing the pre-mutation arena.
-//   Guards are always dropped before tracker calls so the tracker reads a
-//   live arena (its `borrow_nodes` snapshots the cell).
+//   (`ArenaMut`) guard scopes minting into the file's arena — writes land
+//   in place, visible to every `nodes` snapshot handle. Guards are always
+//   dropped before tracker calls so the tracker reads a live arena (its
+//   `borrow_nodes` snapshots the cell handle).
 // - `Checker::type_to_type_node_ex` consumes the `id_to_symbol` map, so the
 //   Go call that shares `idToSymbol` with
 //   `autoimport.TryGetAutoImportableReferenceFromTypeNode` is reproduced by
@@ -323,12 +322,11 @@ struct IsolatedDeclarationsFixer<'a, 'c, 'h> {
     ctx: &'a Context,
     source_file: NodeId,
     program: &'a Rc<Program>,
-    /// Held snapshot — keeps every `nodes_mut`/`borrow_nodes` COW-mode so
-    /// incidental `program.nodes()` reads (checker, tracker) see a live
-    /// arena. May be stale w.r.t. builder-minted nodes; fresh reads go
-    /// through a guard.
+    /// Held arena handle — aliases the shared buffer, so `nodes_mut`/
+    /// `borrow_nodes` writes and incidental `program.nodes()` reads all
+    /// observe the live arena (Go shared-heap semantics).
     #[allow(dead_code)]
-    nodes: Rc<Vec<Node>>,
+    nodes: Rc<ast::NodeArenaBuf>,
     checker: &'a Rc<RefCell<Checker>>,
     change_tracker: &'a mut Tracker<'c, 'h>,
     locale: Locale,
@@ -2394,7 +2392,7 @@ enum SpreadKind {
 
 /// `nodes_snapshot` — small helper for a fresh arena snapshot.
 #[allow(dead_code)]
-fn nodes_snapshot<'p>(program: &'p Rc<Program>, source_file: NodeId) -> Rc<Vec<Node>> {
+fn nodes_snapshot<'p>(program: &'p Rc<Program>, source_file: NodeId) -> Rc<ast::NodeArenaBuf> {
     program.nodes(source_file.file_index())
 }
 

@@ -412,8 +412,8 @@ fn symbol_value_declaration(c: &Checker, s: SymbolId) -> Option<NodeId> {
     c.symbol_arena.get_ref(s).value_declaration
 }
 
-/// `symbol.exports` (cloned) read through the arena.
-fn symbol_exports(c: &Checker, s: SymbolId) -> ast::SymbolTable {
+/// `symbol.exports` — shared `Rc` handle (refcount bump) read through the arena.
+fn symbol_exports(c: &Checker, s: SymbolId) -> Rc<ast::SymbolTable> {
     c.symbol_arena.get_ref(s).exports.clone()
 }
 
@@ -1492,7 +1492,7 @@ impl<'a> NodeBuilderImpl<'a> {
                         sym_name = name;
                     } else {
                         let mut results: FxHashMap<SymbolId, String> = FxHashMap::default();
-                        for (ex_name, &ex) in &exports {
+                        for (ex_name, &ex) in &*exports {
                             if c.get_symbol_if_same_reference(ex, symbol).is_some()
                                 && !crate::utilities::is_late_bound_name(ex_name)
                                 && ex_name.as_ref()
@@ -2413,7 +2413,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 match crate::printer_util::arena_view(&resolve_program, resolve_nodes, fi) {
                     crate::printer_util::ArenaView::Snapshot(rc) => rc,
                     crate::printer_util::ArenaView::Working(s) => {
-                        std::rc::Rc::new(s.to_vec())
+                        std::rc::Rc::new(ast::NodeArenaBuf::new(s.to_vec()))
                     }
                 },
             )

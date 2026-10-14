@@ -341,8 +341,9 @@ pub(crate) fn get_jsdoc_or_tag(
     }
     let nodes = program.arena_of(node);
     let symbol = nodes[node].symbol();
-    // PORT: `nodes` is an immutable `Rc<Vec<Node>>` snapshot — holding it
-    // across checker calls is safe (only `nodes_mut` guards conflict).
+    // PORT: `nodes` is a shared `Rc<NodeArenaBuf>` handle — it reads the
+    // live arena, so holding it across checker calls is safe (its element
+    // reads re-resolve through the shared buffer).
     if let (Some(symbol), Some(parent)) = (symbol, nodes[node].parent) {
         if ast::is_function_declaration(&nodes[node])
             || ast::is_method_declaration(&nodes[node])

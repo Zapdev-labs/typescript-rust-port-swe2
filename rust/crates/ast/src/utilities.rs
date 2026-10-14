@@ -60,21 +60,23 @@ pub fn get_symbol_table(data: &mut SymbolTable) -> &mut SymbolTable {
     data
 }
 
-/// `GetMembers(symbol)`.
+/// `GetMembers(symbol)`. `Rc::make_mut` — copy-on-write if the table is
+/// shared with a symbol clone (Go map-reference semantics would mutate the
+/// shared table; see `// PORT:` notes on the merge sites).
 pub fn get_members(symbol: &mut Symbol) -> &mut SymbolTable {
-    get_symbol_table(&mut symbol.members)
+    get_symbol_table(std::rc::Rc::make_mut(&mut symbol.members))
 }
 
 /// `GetExports(symbol)`.
 pub fn get_exports(symbol: &mut Symbol) -> &mut SymbolTable {
-    get_symbol_table(&mut symbol.exports)
+    get_symbol_table(std::rc::Rc::make_mut(&mut symbol.exports))
 }
 
 /// `GetLocals(node)`.
 pub fn get_locals(node: &mut Node) -> Option<&mut SymbolTable> {
     node.data
         .locals_container_data_mut()
-        .map(|data| &mut data.locals)
+        .map(|data| std::rc::Rc::make_mut(&mut data.locals))
 }
 
 /// `NodeIsMissing(node)`.

@@ -454,9 +454,10 @@ impl TypeWriterWalker {
                     | TypeFormatFlags::ALLOW_UNIQUE_ES_SYMBOL_TYPE
                     | TypeFormatFlags::GENERATE_NAMES_FOR_SHADOWED_TYPE_PARAMS;
                 let parent = prog.nodes(file_index)[node].parent;
-                // `arena_checkout` (not `nodes_mut`): the builder reads the
-                // arena re-entrantly through `program.nodes`, which an
-                // exclusive `nodes_mut` checkout would render empty.
+                // `arena_checkout` (not `nodes_mut`): the builder needs a
+                // private `&mut Vec<Node>` it can hand to `type_to_type_node`
+                // while nested calls re-read the arena re-entrantly through
+                // `program.nodes` — a live `ArenaMut` asserts a single writer.
                 let mut nodes = prog.arena_checkout(file_index);
                 let mut type_node = builder.type_to_type_node(
                     &mut file_checker,

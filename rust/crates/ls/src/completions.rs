@@ -1575,11 +1575,11 @@ impl<'a, 'h> CompletionDataBuilder<'a, 'h> {
 
     /// Arena accessor for a node that may live in any file
     /// (`program.arena_of`).
-    fn arena(&self, node: NodeId) -> std::rc::Rc<Vec<Node>> {
+    fn arena(&self, node: NodeId) -> std::rc::Rc<ast::NodeArenaBuf> {
         self.program.arena_of(node)
     }
 
-    fn nodes(&self) -> std::rc::Rc<Vec<Node>> {
+    fn nodes(&self) -> std::rc::Rc<ast::NodeArenaBuf> {
         self.program.nodes(self.file.file_index())
     }
 

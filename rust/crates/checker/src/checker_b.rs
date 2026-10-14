@@ -13032,12 +13032,14 @@ impl Checker {
         let nodes = __program.nodes((source_file).file_index());
         !nodes[source_file].as_source_file().diagnostics().is_empty()
     }
-    /// `func (c *Checker) combineSymbolTables` (checker.go:14367).
+    /// `func (c *Checker) combineSymbolTables` (checker.go:14367). `Rc` —
+    /// `first` is the shared early-members table; the empty-table fast
+    /// paths return the shared handle with no copy.
     pub(crate) fn combine_symbol_tables(
         &mut self,
-        first: ast::SymbolTable,
-        second: ast::SymbolTable,
-    ) -> ast::SymbolTable {
+        first: Rc<ast::SymbolTable>,
+        second: Rc<ast::SymbolTable>,
+    ) -> Rc<ast::SymbolTable> {
         if first.is_empty() {
             return second;
         }
@@ -13047,7 +13049,7 @@ impl Checker {
         let mut combined = ast::SymbolTable::default();
         self.merge_symbol_table(&mut combined, &first, false, None);
         self.merge_symbol_table(&mut combined, &second, false, None);
-        combined
+        Rc::new(combined)
     }
 
     /// `func (c *Checker) mergeSymbolTable` (checker.go:14380). PORT:
@@ -13229,6 +13231,9 @@ impl Checker {
     }
 
     /// `func (c *Checker) cloneSymbol` (checker.go:14608).
+    /// PORT: `members`/`exports` are `Rc`-shared with the source symbol —
+    /// the first `Rc::make_mut` write on either side detaches, preserving
+    /// the independence the previous deep `.clone()` gave the clone.
     pub(crate) fn clone_symbol(&mut self, symbol: SymbolId) -> SymbolId {
         let (flags, name, parent, value_declaration, members, exports, declarations) = {
             let s = self.sym(symbol);
@@ -14143,6 +14148,10 @@ impl Checker {
                 s.exports.clone(),
             )
         };
+        // PORT: `type_members`/`value_exports` are `Rc`-shared with the
+        // source symbols — the first `Rc::make_mut` write on either side
+        // detaches, preserving the independence the previous deep `.clone()`
+        // gave the combined symbol.
         let (type_flags, type_declarations, type_parent, type_members) = {
             let s = self.sym(type_symbol);
             (s.flags, s.declarations.clone(), s.parent, s.members.clone())
@@ -16470,6 +16479,9 @@ impl Checker {
         let result = self.new_symbol(flags, &name);
         self.sym_mut(result).declarations = declarations;
         self.sym_mut(result).value_declaration = value_declaration;
+        // PORT: `members`/`exports` are `Rc`-shared with the source symbol —
+        // the first `Rc::make_mut` write on either side detaches (see
+        // `clone_symbol`).
         self.sym_mut(result).members = members;
         self.sym_mut(result).exports = exports;
         self.sym_mut(result).parent = parent;

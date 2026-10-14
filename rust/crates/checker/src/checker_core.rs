@@ -2358,7 +2358,7 @@ impl Checker {
         // `globals` itself is now `Rc<RefCell<SymbolTable>>`; callers that
         // need live sharing go through `globals`, not `exports`.
         let globals = c.globals.borrow().clone();
-        c.symbol_arena.get_mut(c.global_this_symbol).exports = globals;
+        c.symbol_arena.get_mut(c.global_this_symbol).exports = globals.into();
         let name = c.symbol_arena.get_ref(c.global_this_symbol)
             .name
             .clone();
@@ -3151,7 +3151,7 @@ impl Checker {
         // Go shares `c.globals`'s map header so post-merge lookups (e.g.
         // `globalThis.IteratorObject`) see augmentation members. Re-sync here.
         self.symbol_arena.get_mut(self.global_this_symbol).exports =
-            self.globals.borrow().clone();
+            self.globals.borrow().clone().into();
         if std::env::var("TSC_FILE_TIME").is_ok() {
             eprintln!("[init-checker] {:?}", __init_t.elapsed());
         }
@@ -3243,15 +3243,24 @@ impl Checker {
                 .extend(source_declarations);
             let source_members = self.sym(source).members.clone();
             if !source_members.is_empty() {
+                // `Rc::make_mut` detaches the shared handle before merging —
+                // same copy the old value-clone paid, so `source`/`target`
+                // never observe each other's tables (Go merged into a fresh
+                // or the target's map; see `// PORT:` on `Symbol::members`).
                 let mut target_members = self.sym(target).members.clone();
-                self.merge_symbol_table(&mut target_members, &source_members, unidirectional, None);
+                self.merge_symbol_table(
+                    Rc::make_mut(&mut target_members),
+                    &source_members,
+                    unidirectional,
+                    None,
+                );
                 self.symbol_arena.get_mut(target).members = target_members;
             }
             let source_exports = self.sym(source).exports.clone();
             if !source_exports.is_empty() {
                 let mut target_exports = self.sym(target).exports.clone();
                 self.merge_symbol_table(
-                    &mut target_exports,
+                    Rc::make_mut(&mut target_exports),
                     &source_exports,
                     unidirectional,
                     Some(target),
@@ -3859,7 +3868,7 @@ impl Checker {
     /// guard borrows `*self` — where the arena must stay live across a
     /// `&mut self` call, clone the program handle into a local first:
     /// `let program = self.program.clone().unwrap(); let nodes = program.nodes(i);`.
-    pub fn program_nodes(&self, node: NodeId) -> std::rc::Rc<Vec<ast::Node>> {
+    pub fn program_nodes(&self, node: NodeId) -> std::rc::Rc<ast::NodeArenaBuf> {
         self.program
             .as_ref()
             .expect("program")
@@ -4257,11 +4266,12 @@ impl Checker {
     }
 
     /// `(c *Checker) newAnonymousType` (checker.go). `members` is the
-    /// SymbolTable value (empty for Go's nil).
+    /// SymbolTable value (empty for Go's nil). `Rc` — callers hand in
+    /// shared tables (`sym.members` clones are refcount bumps).
     pub fn new_anonymous_type(
         &mut self,
         symbol: Option<SymbolId>,
-        members: SymbolTable,
+        members: impl Into<Rc<SymbolTable>>,
         call_signatures: &[SignatureId],
         construct_signatures: &[SignatureId],
         index_infos: &[IndexInfoId],
@@ -4284,11 +4294,12 @@ impl Checker {
     pub fn set_structured_type_members(
         &mut self,
         t: TypeId,
-        members: SymbolTable,
+        members: impl Into<Rc<SymbolTable>>,
         call_signatures: &[SignatureId],
         construct_signatures: &[SignatureId],
         index_infos: &[IndexInfoId],
     ) {
+        let members: Rc<SymbolTable> = members.into();
         self.types_handle()
             .get_mut(t)
             .object_flags
@@ -4752,7 +4763,8 @@ impl Checker {
             self.value_symbol_links
                 .get(meta_property_symbol)
                 .resolved_type = Some(import_meta_type);
-            let members = create_symbol_table(&[meta_property_symbol], &self.symbol_arena);
+            let members: Rc<SymbolTable> =
+                Rc::new(create_symbol_table(&[meta_property_symbol], &self.symbol_arena));
             self.symbol_arena.get_mut(symbol).members = members.clone();
             self.deferred_global_import_meta_expression_type =
                 Some(self.new_anonymous_type(Some(symbol), members, &[], &[], &[]));
@@ -5542,12 +5554,14 @@ impl tsc_binder::nameresolver::NameResolverHost for Checker {
         &mut self,
         id: NodeId,
         work: &[ast::Node],
-    ) -> Option<std::rc::Rc<Vec<ast::Node>>> {
+    ) -> Option<std::rc::Rc<ast::NodeArenaBuf>> {
         let program = self.program.clone().expect("program");
         Some(
             match crate::printer_util::resolve_arena_for(&program, work, id) {
                 crate::printer_util::ArenaView::Snapshot(rc) => rc,
-                crate::printer_util::ArenaView::Working(w) => std::rc::Rc::new(w.to_vec()),
+                crate::printer_util::ArenaView::Working(w) => {
+                    std::rc::Rc::new(ast::NodeArenaBuf::new(w.to_vec()))
+                }
             },
         )
     }

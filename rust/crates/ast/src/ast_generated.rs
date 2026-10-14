@@ -7,6 +7,7 @@
 #![allow(clippy::pedantic)]
 
 use std::cell::Cell;
+use std::rc::Rc;
 
 use crate::ast::{ModifierList, Node, NodeFactory, NodeList, Visitor};
 use crate::ids::{FlowListId, FlowNodeId, NodeId, SymbolId};
@@ -114,7 +115,7 @@ pub struct ModifiersBase {
 /// `type LocalsContainerBase struct`.
 #[derive(Clone, Default)]
 pub struct LocalsContainerBase {
-    pub locals: SymbolTable,
+    pub locals: Rc<SymbolTable>,
     pub next_container: Option<NodeId>,
 }
 
@@ -2298,7 +2299,7 @@ pub struct SourceFile {
     pub bind_diagnostics: Vec<crate::diagnostic::DiagnosticRef>,
     pub symbol_count: i32,
     pub pattern_ambient_modules: Box<[crate::ast::PatternAmbientModule]>,
-    pub global_exports: SymbolTable,
+    pub global_exports: Rc<SymbolTable>,
     pub ecma_line_map: std::sync::OnceLock<Vec<tsc_core::text::TextPos>>,
     pub hash: crate::ast::Uint128,
     pub token_cache: rustc_hash::FxHashMap<crate::ast::TokenCacheKey, NodeId>,

@@ -17,7 +17,7 @@
 // - `handleCrossProject`'s `symbolAndEntriesToIncomingCalls` parameter
 //   (`params *incomingEntry`) is unused by the callee in Go, so the closure
 //   here does not carry it.
-// - All `program.nodes(file_index)` snapshots are `Rc<Vec<Node>>`, so the
+// - All `program.nodes(file_index)` snapshots are `Rc<NodeArenaBuf>`, so the
 //   file-arena of each visited node is fetched locally at every step (nodes
 //   from other files — e.g. `symbol.value_declaration` — use their own arena).
 

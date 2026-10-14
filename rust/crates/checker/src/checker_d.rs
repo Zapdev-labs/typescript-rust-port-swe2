@@ -106,7 +106,7 @@ use crate::types::{
 pub(crate) fn program_nodes_for_symbol(
     c: &Checker,
     symbol: SymbolId,
-) -> std::rc::Rc<Vec<ast::Node>> {
+) -> std::rc::Rc<ast::NodeArenaBuf> {
     let decl = {
         let sym = c.sym(symbol);
         sym.value_declaration
@@ -1629,7 +1629,7 @@ impl Checker {
         d.interface_type.type_reference.resolved_type_arguments =
             d.interface_type.type_parameters().into();
         d.interface_type.declared_members_resolved = true;
-        d.interface_type.declared_members = members;
+        d.interface_type.declared_members = members.into();
         d.element_infos = element_infos.to_vec();
         d.min_length = min_length;
         d.fixed_length = fixed_length;

@@ -143,6 +143,8 @@ pub(crate) fn get_qualified_left_meaning(right_meaning: SymbolFlags) -> SymbolFl
 // `*Checker` accessibility queries (symbolaccessibility.go).
 // ----------------------------------------------------------------------------
 
+use std::rc::Rc;
+
 use tsc_ast::{self as ast, Node};
 use tsc_ast::{Kind, SymbolTable};
 use tsc_printer::{SymbolAccessibility, SymbolAccessibilityResult};
@@ -161,8 +163,8 @@ fn sym_fields(
     Option<SymbolId>,
     String,
     Option<SymbolId>,
-    SymbolTable,
-    SymbolTable,
+    Rc<SymbolTable>,
+    Rc<SymbolTable>,
 ) {
     let sym = c.sym(s);
     (
@@ -607,7 +609,7 @@ impl Checker {
             }
             let exports = self.get_exports_of_symbol(container);
             let mut pairs: Vec<(SymbolId, SymbolId)> = Vec::new();
-            for (_, &exported) in &exports {
+            for (_, &exported) in &*exports {
                 pairs.push((self.get_resolved_target(exported), container));
             }
             let export_equals = self
@@ -891,7 +893,7 @@ impl Checker {
             return Some(quick);
         }
         let mut candidates: Vec<SymbolId> = Vec::new();
-        for (_, &exported) in &exports {
+        for (_, &exported) in &*exports {
             if self
                 .get_symbol_if_same_reference(exported, symbol)
                 .is_some()
@@ -1461,7 +1463,7 @@ impl Checker {
                     if let Some(sym) = self.get_symbol_of_declaration(loc) {
                         let members = self.sym(sym).members.clone();
                         let mut table: Option<SymbolTable> = None;
-                        for (key, &member_symbol) in &members {
+                        for (key, &member_symbol) in &*members {
                             if sym_fields(self, member_symbol)
                                 .0
                                 .intersects(ast::SymbolFlags::TYPE & !ast::SymbolFlags::ASSIGNMENT)

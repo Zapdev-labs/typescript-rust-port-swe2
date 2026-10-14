@@ -83,15 +83,15 @@ fn sym_export_symbol(c: &Checker, s: SymbolId) -> Option<SymbolId> {
     c.symbol_arena.get_ref(s).export_symbol
 }
 
-/// `symbol.Members` (cloned — `SymbolTable` is an ordered map).
+/// `symbol.Members` — shared `Rc` handle (refcount bump, not a table copy).
 #[inline]
-fn sym_members(c: &Checker, s: SymbolId) -> SymbolTable {
+fn sym_members(c: &Checker, s: SymbolId) -> Rc<SymbolTable> {
     c.symbol_arena.get_ref(s).members.clone()
 }
 
-/// `symbol.Exports` (cloned).
+/// `symbol.Exports` — shared `Rc` handle.
 #[inline]
-fn sym_exports(c: &Checker, s: SymbolId) -> SymbolTable {
+fn sym_exports(c: &Checker, s: SymbolId) -> Rc<SymbolTable> {
     c.symbol_arena.get_ref(s).exports.clone()
 }
 

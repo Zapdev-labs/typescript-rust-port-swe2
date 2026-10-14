@@ -28,8 +28,15 @@ pub struct Symbol {
     pub name: Arc<str>,
     pub declarations: Vec<NodeId>,
     pub value_declaration: Option<NodeId>,
-    pub members: SymbolTable,
-    pub exports: SymbolTable,
+    /// `Rc<SymbolTable>` — Go shares `map[string]*Symbol` headers on struct
+    /// copies; `members.clone()`/`exports.clone()` sites (checker merge and
+    /// lookup paths) become refcount bumps instead of deep `OrderedMap`
+    /// copies. `Rc::make_mut` gives copy-on-write for the rare writes.
+    /// PORT: Go map-reference semantics would let a clone observe later
+    /// writes through the shared map; `Rc::make_mut` detaches instead —
+    /// sites relying on shared-mutation visibility are marked `// PORT:`.
+    pub members: Rc<SymbolTable>,
+    pub exports: Rc<SymbolTable>,
     // Go stores a lazily-assigned `id atomic.Uint64`; the slot index in the
     // owning `Vec<Symbol>` is the id in this port.
     pub parent: Option<SymbolId>,
@@ -184,7 +191,11 @@ impl SymbolArena {
 
     /// Field-by-field copy into a plain `Vec<Symbol>` (`Symbol` is not
     /// `Clone`). Used by emit paths that need a detached snapshot of the
-    /// arena to hand to the binder resolver.
+    /// arena to hand to the binder resolver. `members`/`exports` are
+    /// `Rc`-shared with the live arena (Go map-header copy): reads see the
+    /// same entries, and `Rc::make_mut` detaches on the first write, so the
+    /// "mutations don't reach the shared store" guarantee of `snapshot`
+    /// still holds.
     pub fn to_vec(&self) -> Vec<Symbol> {
         self.iter()
             .map(|s| Symbol {

@@ -57,7 +57,7 @@ use crate::types::{
 /// checked-out working buffer. Deref/Index resolve through the slice
 /// either way, so `view[id]`/`view.len()` work unchanged.
 pub enum ArenaView<'x> {
-    Snapshot(std::rc::Rc<Vec<Node>>),
+    Snapshot(std::rc::Rc<ast::NodeArenaBuf>),
     Working(&'x [Node]),
 }
 
@@ -81,7 +81,7 @@ thread_local! {
     /// may hit node ids belonging to *either* buffer (Go follows raw
     /// pointers). Because the registered buffer is immutably borrowed for
     /// the whole scope it cannot change, so a snapshot `Rc` is faithful.
-    static LIVE_ARENAS: std::cell::RefCell<Vec<std::rc::Rc<Vec<Node>>>> =
+    static LIVE_ARENAS: std::cell::RefCell<Vec<std::rc::Rc<ast::NodeArenaBuf>>> =
         const { std::cell::RefCell::new(Vec::new()) };
 }
 
@@ -97,7 +97,7 @@ impl LiveArenaGuard {
     pub fn register(nodes: &[Node]) -> Self {
         LIVE_ARENAS.with(|r| {
             r.borrow_mut()
-                .push(std::rc::Rc::new(nodes.to_vec()))
+                .push(std::rc::Rc::new(ast::NodeArenaBuf::new(nodes.to_vec())))
         });
         LiveArenaGuard
     }
@@ -111,7 +111,7 @@ impl Drop for LiveArenaGuard {
     }
 }
 
-fn live_arena_lookup(fi: u32) -> Option<std::rc::Rc<Vec<Node>>> {
+fn live_arena_lookup(fi: u32) -> Option<std::rc::Rc<ast::NodeArenaBuf>> {
     LIVE_ARENAS.with(|r| {
         r.borrow()
             .iter()
@@ -127,7 +127,7 @@ pub(crate) fn buffer_resolves_id(buf: &[Node], id: NodeId) -> bool {
     (id.local_index() as usize) < buf.len() && buf[id].id == id
 }
 
-pub(crate) fn live_arena_lookup_for(id: NodeId) -> Option<std::rc::Rc<Vec<Node>>> {
+pub(crate) fn live_arena_lookup_for(id: NodeId) -> Option<std::rc::Rc<ast::NodeArenaBuf>> {
     LIVE_ARENAS.with(|r| {
         r.borrow()
             .iter()

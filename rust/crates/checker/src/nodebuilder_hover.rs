@@ -72,8 +72,8 @@ fn symbol_value_declaration(c: &Checker, s: SymbolId) -> Option<NodeId> {
     c.symbol_arena.get_ref(s).value_declaration
 }
 
-/// `symbol.exports` (cloned) read through the arena.
-fn symbol_exports(c: &Checker, s: SymbolId) -> ast::SymbolTable {
+/// `symbol.exports` — shared `Rc` handle (refcount bump) read through the arena.
+fn symbol_exports(c: &Checker, s: SymbolId) -> std::rc::Rc<ast::SymbolTable> {
     c.symbol_arena.get_ref(s).exports.clone()
 }
 

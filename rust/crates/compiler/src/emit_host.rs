@@ -16,7 +16,7 @@ use std::rc::Rc;
 use std::sync::Arc;
 
 use tsc_ast::utilities::HasFileName;
-use tsc_ast::{FileReference, Node, NodeId, SourceFile};
+use tsc_ast::{FileReference, Node, NodeArenaBuf, NodeId, SourceFile};
 use tsc_checker::checker_core::Checker;
 use tsc_core::compileroptions::ResolutionMode;
 use tsc_core::options_generated::{CompilerOptions, ModuleKind};
@@ -165,7 +165,7 @@ pub trait EmitHost: PrinterEmitHost + DeclarationEmitHost {
     ) -> Rc<RefCell<tsc_checker::emitresolver::EmitResolver>>;
 
     /// Arena access for `NodeId`s owned by the program's files.
-    fn emit_nodes(&self, file_index: u32) -> Rc<Vec<Node>>;
+    fn emit_nodes(&self, file_index: u32) -> Rc<NodeArenaBuf>;
     /// Mutable arena access (transforms, synthetic imports). Returns an
     /// [`crate::program::ArenaCheckout`] guard — the arena is checked out so
     /// checker callbacks can keep reading during the visit.
@@ -243,7 +243,7 @@ pub trait SourceFileMayBeEmittedHost {
     fn smbe_base_directory(&self) -> RootedDirectoryPath;
     fn smbe_case_sensitivity(&self) -> CaseSensitivity;
     fn smbe_source_files(&self) -> Vec<NodeId>;
-    fn smbe_nodes(&self, file_index: u32) -> Rc<Vec<Node>>;
+    fn smbe_nodes(&self, file_index: u32) -> Rc<NodeArenaBuf>;
 }
 
 /// `sourceFileMayBeEmitted`.
@@ -506,9 +506,9 @@ impl<'p> DeclarationEmitHost for BasicEmitHost<'p> {
             .get(id.local_index() as usize)
             .cloned()
     }
-    fn arena_for(&self, fi: u32, nodes: &[Node]) -> Option<std::rc::Rc<Vec<Node>>> {
+    fn arena_for(&self, fi: u32, nodes: &[Node]) -> Option<std::rc::Rc<NodeArenaBuf>> {
         if nodes.first().is_some_and(|n| n.id.file_index() == fi) {
-            return Some(std::rc::Rc::new(nodes.to_vec()));
+            return Some(std::rc::Rc::new(NodeArenaBuf::new(nodes.to_vec())));
         }
         Some(self.program.nodes(fi))
     }
@@ -581,7 +581,7 @@ impl<'p> EmitHost for BasicEmitHost<'p> {
             emit_context,
         )))
     }
-    fn emit_nodes(&self, file_index: u32) -> Rc<Vec<Node>> {
+    fn emit_nodes(&self, file_index: u32) -> Rc<NodeArenaBuf> {
         self.program.nodes(file_index)
     }
     fn emit_nodes_mut(&self, file_index: u32) -> crate::program::ArenaCheckout {
@@ -615,7 +615,7 @@ impl<'p> SourceFileMayBeEmittedHost for BasicEmitHost<'p> {
     fn smbe_source_files(&self) -> Vec<NodeId> {
         self.program.source_files()
     }
-    fn smbe_nodes(&self, file_index: u32) -> Rc<Vec<Node>> {
+    fn smbe_nodes(&self, file_index: u32) -> Rc<NodeArenaBuf> {
         self.program.nodes(file_index)
     }
 }

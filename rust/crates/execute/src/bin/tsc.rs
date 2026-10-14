@@ -197,14 +197,6 @@ fn run_main() -> i32 {
     let sys: Arc<dyn System> = new_system();
     let testing: Option<Arc<dyn CommandLineTesting>> = None;
     let result: CommandLineResult = command_line(&ctx, &sys, args, testing);
-    if std::env::var("TSC_COW_STATS").is_ok() {
-        use std::sync::atomic::Ordering::Relaxed;
-        eprintln!(
-            "[cow] clones={} elems={}",
-            tsc_ast::ast::COW_CLONES.load(Relaxed),
-            tsc_ast::ast::COW_ELEMS.load(Relaxed),
-        );
-    }
     result.status as i32
 }
 

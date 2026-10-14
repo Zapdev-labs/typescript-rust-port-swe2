@@ -1,11 +1,11 @@
 // Ported from tsc/internal/ls/organizeimports.go @ ec47d33c23e464a17cdf2475632cba629bee8763
 //
 // PORT: Go mutates a shared `[]*ast.Node` graph. Here factory calls mint
-// nodes in a `nodes_mut` (copy-on-write) guard for the file's arena; a
-// `nodes` snapshot is held for the duration so `cow()` never checks out
-// the buffer and incidental `program.nodes()` reads (checker, tracker)
-// keep seeing the pre-mutation arena. The guard is dropped before any
-// tracker node operation so the tracker always snapshots a live arena.
+// nodes in a `nodes_mut` (`ArenaMut`) guard for the file's arena — writes
+// land in place and are visible to every `nodes` snapshot handle
+// (checker, tracker incidental `program.nodes()` reads). The guard is
+// dropped before any tracker node operation (`borrow_nodes` asserts one
+// live writer per arena).
 // `removeUnusedImports` is split into a checker phase and a factory
 // phase: `Checker::is_declaration_used` calls `program.nodes_mut`
 // internally, so no arena guard may be alive while it runs.
@@ -13,7 +13,7 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 use rustc_hash::FxHashMap;
-use tsc_ast::{Kind, Node, NodeFactory, NodeFactoryHooks, NodeId, SubtreeFacts};
+use tsc_ast::{Kind, Node, NodeFactory, NodeFactoryHooks, NodeId, SubtreeFacts, self as ast};
 use tsc_compiler::program::Program;
 use tsc_core::context::Context;
 use tsc_core::options_generated::JsxEmit;
@@ -241,7 +241,7 @@ fn organize_imports_worker(
     should_combine: bool,
     should_remove: bool,
     source_file: NodeId,
-    nodes: &Rc<Vec<Node>>,
+    nodes: &Rc<ast::NodeArenaBuf>,
     change_tracker: &mut Tracker<'_, '_>,
 ) {
     if old_import_decls.is_empty() {
@@ -423,7 +423,7 @@ fn remove_unused_imports(
     program: &Rc<Program>,
     old_imports: &[NodeId],
     source_file: NodeId,
-    nodes: &Rc<Vec<Node>>,
+    nodes: &Rc<ast::NodeArenaBuf>,
     change_tracker: &mut Tracker<'_, '_>,
 ) -> Vec<NodeId> {
     let compiler_options = program.options();
@@ -711,7 +711,7 @@ fn get_import_attributes_key(nodes: &[Node], attributes: Option<NodeId>) -> Stri
 
 /// `groupByNewlineContiguous` groups declarations by blank lines between them.
 fn group_by_newline_contiguous(
-    nodes: &Rc<Vec<Node>>,
+    nodes: &Rc<ast::NodeArenaBuf>,
     source_file: NodeId,
     decls: &[NodeId],
 ) -> Vec<Vec<NodeId>> {
@@ -1276,7 +1276,7 @@ fn try_get_named_binding_elements(nodes: &[Node], named_import: NodeId) -> Optio
 
 /// `getTopLevelExportGroups`.
 fn get_top_level_export_groups(
-    nodes: &Rc<Vec<Node>>,
+    nodes: &Rc<ast::NodeArenaBuf>,
     source_file: NodeId,
 ) -> Vec<Vec<NodeId>> {
     let mut top_level_export_groups: Vec<Vec<NodeId>> = Vec::new();

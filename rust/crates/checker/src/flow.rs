@@ -170,7 +170,7 @@ impl FlowState {
     /// Returns an `Rc` snapshot of the shared arena — snapshots never pin a
     /// borrow, so `&mut FlowState` use while a snapshot is live is fine.
     /// Re-call for post-mutation reads.
-    pub fn nodes(&self) -> Rc<Vec<ast::Node>> {
+    pub fn nodes(&self) -> Rc<ast::NodeArenaBuf> {
         self.nodes
             .as_ref()
             .expect("FlowState.nodes unset")

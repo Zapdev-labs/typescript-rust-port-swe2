@@ -105,7 +105,10 @@ fn field_ty(f: &Field) -> String {
         FieldType::TokenFlags => "TokenFlags".into(),
         FieldType::NodeFlags => "NodeFlags".into(),
         FieldType::Symbol => "Option<SymbolId>".into(),
-        FieldType::SymbolTable => "SymbolTable".into(),
+        // `Rc` — node-data clones share the table like Go's map-header
+        // copies instead of deep-cloning the `OrderedMap` (writes go
+        // through `Rc::make_mut`).
+        FieldType::SymbolTable => "Rc<SymbolTable>".into(),
         FieldType::FlowNode => "Option<FlowNodeId>".into(),
         FieldType::FlowList => "Option<FlowListId>".into(),
         FieldType::AtomicU32 => "Cell<u32>".into(),
@@ -376,7 +379,8 @@ impl<'a> Emitter<'a> {
              // Rust, so most default lints are silenced here.\n\
              #![allow(clippy::all)]\n\
              #![allow(clippy::pedantic)]\n\n\
-             use std::cell::Cell;\n\n\
+             use std::cell::Cell;\n\
+             use std::rc::Rc;\n\n\
              use crate::ast::{ModifierList, Node, NodeFactory, NodeList, Visitor};\n\
              use crate::ids::{FlowListId, FlowNodeId, NodeId, SymbolId};\n\
              use crate::kind_generated::Kind;\n\

@@ -22,7 +22,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use tsc_ast::ast::Node;
+use tsc_ast::ast::{Node, NodeArenaBuf};
 use tsc_ast::ast_generated::*;
 use tsc_ast::ids::{NodeId, SymbolId};
 use tsc_ast::kind_generated::Kind;
@@ -127,7 +127,7 @@ pub trait NameResolverHost {
     /// arena the resolver is currently walking; the impl must return a
     /// buffer where `id` actually resolves — a scratch/live clone can
     /// share the destination arena's `file_index` without owning `id`.
-    fn nr_arena_for(&mut self, id: NodeId, work: &[Node]) -> Option<Rc<Vec<Node>>>;
+    fn nr_arena_for(&mut self, id: NodeId, work: &[Node]) -> Option<Rc<NodeArenaBuf>>;
 }
 
 pub struct NameResolver<'a> {
@@ -178,7 +178,7 @@ fn buffer_resolves(buf: &[Node], id: NodeId) -> bool {
 fn node_in<'x>(
     work: &'x [Node],
     primary: &'x [Node],
-    extra: &'x [Rc<Vec<Node>>],
+    extra: &'x [Rc<NodeArenaBuf>],
     id: NodeId,
 ) -> &'x Node {
     if buffer_resolves(work, id) {
@@ -198,7 +198,7 @@ fn node_in<'x>(
 fn arena_in<'x>(
     work: &'x [Node],
     primary: &'x [Node],
-    extra: &'x [Rc<Vec<Node>>],
+    extra: &'x [Rc<NodeArenaBuf>],
     id: NodeId,
 ) -> &'x [Node] {
     if buffer_resolves(work, id) {
@@ -243,7 +243,7 @@ impl<'a> NameResolver<'a> {
         &mut self,
         work: &[Node],
         primary: &[Node],
-        extra: &[Rc<Vec<Node>>],
+        extra: &[Rc<NodeArenaBuf>],
         id: NodeId,
     ) -> Node {
         if buffer_resolves(work, id) {
@@ -293,7 +293,7 @@ impl<'a> NameResolver<'a> {
         // arena on the ancestor chain so the loop's `nodes[loc]` reads and
         // `last`/`p` reads resolve through `node_at`/the per-hop swap.
         let primary: &[Node] = nodes;
-        let mut extra_arenas: Vec<Rc<Vec<Node>>> = Vec::new();
+        let mut extra_arenas: Vec<Rc<NodeArenaBuf>> = Vec::new();
         {
             let mut cur = location;
             let mut hops = 0usize;
@@ -976,7 +976,7 @@ impl<'a> NameResolver<'a> {
         last_location: NodeId,
         nodes: &[Node],
         primary: &[Node],
-        extra: &[Rc<Vec<Node>>],
+        extra: &[Rc<NodeArenaBuf>],
         symbols: &SymbolArena,
     ) -> bool {
         if is_parameter_declaration(node_in(nodes, primary, extra, last_location)) {

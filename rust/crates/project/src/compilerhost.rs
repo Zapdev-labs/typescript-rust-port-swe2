@@ -301,14 +301,13 @@ impl<B: CompilerHostBuilder, P: CompilerHostProject> CompilerHostTrait
         let files = cache.acquire_or_error(key.clone(), || {
             let mut files = transform_and_parse(parse_options, fh.content(), mapper, &project)?;
             // `files.Canonical.Hash = key.Hash`
-            let canonical = &mut files.canonical;
-            let cf = canonical.file;
-            std::rc::Rc::get_mut(&mut canonical.nodes).unwrap()[cf]
+            let cf = files.canonical.file;
+            tsc_ast::NodeArenaBuf::get_mut(&files.canonical.nodes)[cf]
                 .as_source_file_mut()
                 .hash = key.hash;
-            for supplemental in &mut files.supplemental {
+            for supplemental in &files.supplemental {
                 let sf = supplemental.file;
-                std::rc::Rc::get_mut(&mut supplemental.nodes).unwrap()[sf]
+                tsc_ast::NodeArenaBuf::get_mut(&supplemental.nodes)[sf]
                     .as_source_file_mut()
                     .hash = key.hash;
             }

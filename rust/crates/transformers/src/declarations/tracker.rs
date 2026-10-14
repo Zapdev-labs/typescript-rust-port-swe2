@@ -252,7 +252,9 @@ impl<'a> SymbolTrackerImpl<'a> {
             LocationArena::Owned(
                 self.host
                     .arena_for(location.file_index(), nodes)
-                    .unwrap_or_else(|| std::rc::Rc::new(nodes.to_vec())),
+                    .unwrap_or_else(|| {
+                        std::rc::Rc::new(ast::NodeArenaBuf::new(nodes.to_vec()))
+                    }),
             )
         }
     }
@@ -345,7 +347,7 @@ impl<'a> SymbolTrackerImpl<'a> {
 /// Arena resolved by [`SymbolTrackerImpl::location_arena`].
 enum LocationArena<'x> {
     Borrowed(&'x [Node]),
-    Owned(std::rc::Rc<Vec<Node>>),
+    Owned(std::rc::Rc<ast::NodeArenaBuf>),
 }
 
 impl<'x> LocationArena<'x> {

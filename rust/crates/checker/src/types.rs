@@ -517,8 +517,10 @@ pub struct AliasSymbolLinks {
 #[derive(Clone, Default)]
 pub struct ModuleSymbolLinks {
     /// `resolvedExports` — resolved exports of module or combined early- and
-    /// late-bound static members of a class.
-    pub resolved_exports: SymbolTable,
+    /// late-bound static members of a class. `Rc` — `getExportsOfModule`
+    /// hands this table out on every call; refcount bump instead of a deep
+    /// `OrderedMap` copy.
+    pub resolved_exports: Rc<SymbolTable>,
     /// `typeOnlyExportStarMap` — set on a module symbol when some of its
     /// exports were resolved through a `export type * from "mod"`
     /// declaration.
@@ -658,9 +660,11 @@ pub enum MembersOrExportsResolutionKind {
 }
 
 /// `type MembersAndExportsLinks [2]ast.SymbolTable` — indexed by
-/// `MembersOrExportsResolutionKind`.
+/// `MembersOrExportsResolutionKind`. `Rc` — `getResolvedMembersOrExports`
+/// returns the stored table on every call; refcount bump instead of a deep
+/// `OrderedMap` copy.
 #[derive(Clone, Default)]
-pub struct MembersAndExportsLinks(pub [SymbolTable; 2]);
+pub struct MembersAndExportsLinks(pub [Rc<SymbolTable>; 2]);
 
 // Links for synthetic spread properties
 
@@ -2335,8 +2339,10 @@ pub struct ConstrainedType {
 pub struct StructuredType {
     /// embedded `ConstrainedType`.
     pub constrained_type: ConstrainedType,
-    /// `members`.
-    pub members: SymbolTable,
+    /// `members`. `Rc` — `setStructuredTypeMembers` stores and
+    /// `getMembers`-family lookups share the table (Go map-header copies);
+    /// `Rc::make_mut` copies on write.
+    pub members: Rc<SymbolTable>,
     /// `properties`.
     pub properties: Vec<SymbolId>,
     /// `signatures` — signatures (call + construct).
@@ -2457,8 +2463,9 @@ pub struct InterfaceType {
     pub resolved_base_constructor_type: Option<TypeId>,
     /// `resolvedBaseTypes`.
     pub resolved_base_types: Rc<[TypeId]>,
-    /// `declaredMembers` — declared members.
-    pub declared_members: SymbolTable,
+    /// `declaredMembers` — declared members. `Rc` — shared on
+    /// `InterfaceType` clones; `Rc::make_mut` copies on write.
+    pub declared_members: Rc<SymbolTable>,
     /// `declaredCallSignatures` — declared call signatures.
     pub declared_call_signatures: Vec<SignatureId>,
     /// `declaredConstructSignatures` — declared construct signatures.
@@ -2688,10 +2695,11 @@ pub struct UnionOrIntersectionType {
     pub structured_type: StructuredType,
     /// `types`.
     pub types: Rc<[TypeId]>,
-    /// `propertyCache`.
-    pub property_cache: SymbolTable,
+    /// `propertyCache`. `Rc` — shared on type clones; `Rc::make_mut`
+    /// copies on write.
+    pub property_cache: Rc<SymbolTable>,
     /// `propertyCacheWithoutFunctionPropertyAugment`.
-    pub property_cache_without_function_property_augment: SymbolTable,
+    pub property_cache_without_function_property_augment: Rc<SymbolTable>,
     /// `resolvedProperties`.
     pub resolved_properties: Vec<SymbolId>,
 }

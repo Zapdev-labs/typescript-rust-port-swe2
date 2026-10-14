@@ -19,7 +19,7 @@ use tsc_tspath::{ModuleSpecifier, PathKey, RootedDirectoryPath, RootedFilePath};
 /// `slice[id]`/`slice.len()` work unchanged.
 pub enum ArenaSlice<'x> {
     Primary(&'x [tsc_ast::Node]),
-    Fetched(std::rc::Rc<Vec<tsc_ast::Node>>),
+    Fetched(std::rc::Rc<tsc_ast::NodeArenaBuf>),
 }
 
 impl std::ops::Deref for ArenaSlice<'_> {
@@ -37,7 +37,8 @@ impl std::ops::Deref for ArenaSlice<'_> {
 /// node ids that live in a different file's arena than `nodes` (Go's
 /// single heap read them through raw pointers; the port stores nodes
 /// per-file).
-pub type NodeResolver<'a> = &'a dyn Fn(u32) -> Option<std::rc::Rc<Vec<tsc_ast::Node>>>;
+pub type NodeResolver<'a> =
+    &'a dyn Fn(u32) -> Option<std::rc::Rc<tsc_ast::NodeArenaBuf>>;
 
 /// Pick the slice holding `fi`'s nodes: `nodes` when it is that arena
 /// (its first node's `file_index` matches), otherwise `resolve(fi)`.

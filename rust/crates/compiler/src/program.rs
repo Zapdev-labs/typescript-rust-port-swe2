@@ -42,8 +42,8 @@ use tsc_ast::diagnostic::{
 };
 use tsc_ast::utilities::HasFileName;
 use tsc_ast::{
-    ArenaCell, ArenaMut, CheckJsDirective, CommentDirectiveKind, FileReference, Node, NodeId,
-    SourceFileMetaData, SymbolArena, is_check_js_enabled_for_file, is_external_module,
+    ArenaCell, ArenaMut, CheckJsDirective, CommentDirectiveKind, FileReference, Node, NodeArenaBuf,
+    NodeId, SourceFileMetaData, SymbolArena, is_check_js_enabled_for_file, is_external_module,
     is_external_or_commonjs_module, is_plain_js_file, is_source_file_js, is_source_phase_import,
     is_string_literal, is_string_literal_like, new_has_file_name,
 };
@@ -537,13 +537,12 @@ impl Program {
         cell
     }
 
-    pub fn nodes(&self, file_index: u32) -> Rc<Vec<Node>> {
+    pub fn nodes(&self, file_index: u32) -> Rc<NodeArenaBuf> {
         self.arena_cell(file_index).snapshot()
     }
 
-    /// Inherent mutable arena access — copy-on-write via [`ArenaMut`]: the
-    /// first mutation clones the arena iff snapshots still share it; `Drop`
-    /// writes back. Never panics on a held read snapshot.
+    /// Inherent mutable arena access via [`ArenaMut`] — the guard mutates
+    /// the shared buffer in place; every live snapshot observes the writes.
     pub fn nodes_mut(&self, file_index: u32) -> ArenaMut {
         self.arena_cell(file_index).cow()
     }
@@ -566,7 +565,7 @@ impl Program {
     }
 
     /// Arena snapshot for a `NodeId`'s owning file.
-    pub fn arena_of(&self, file: NodeId) -> Rc<Vec<Node>> {
+    pub fn arena_of(&self, file: NodeId) -> Rc<NodeArenaBuf> {
         self.nodes(file.file_index())
     }
 
@@ -4726,7 +4725,7 @@ impl tsc_checker::checker_types::Program for Program {
     fn common_source_directory(&self) -> RootedDirectoryPath {
         self.common_source_directory()
     }
-    fn nodes(&self, file_index: u32) -> Rc<Vec<Node>> {
+    fn nodes(&self, file_index: u32) -> Rc<NodeArenaBuf> {
         Program::nodes(self, file_index)
     }
     fn nodes_mut(&self, file_index: u32) -> ArenaMut {
@@ -4769,7 +4768,7 @@ impl SourceFileMayBeEmittedHost for Program {
     fn smbe_source_files(&self) -> Vec<NodeId> {
         self.source_files()
     }
-    fn smbe_nodes(&self, file_index: u32) -> Rc<Vec<Node>> {
+    fn smbe_nodes(&self, file_index: u32) -> Rc<NodeArenaBuf> {
         self.nodes(file_index)
     }
 }
