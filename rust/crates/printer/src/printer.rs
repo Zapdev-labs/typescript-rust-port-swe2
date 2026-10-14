@@ -488,7 +488,7 @@ impl<'p, 'a> DerefMut for Emitter<'p, 'a> {
 /// optimized for monotonically increasing positions during source-map emit.
 pub(crate) struct LineCharacterCache {
     line_map: Vec<TextPos>,
-    text: String,
+    text: std::sync::Arc<str>,
     cached_line: i32,
     cached_pos: i32,
     cached_char: i32,
@@ -497,7 +497,7 @@ pub(crate) struct LineCharacterCache {
 
 impl LineCharacterCache {
     /// `newLineCharacterCache(source)`
-    fn new(line_map: Vec<TextPos>, text: String) -> Self {
+    fn new(line_map: Vec<TextPos>, text: std::sync::Arc<str>) -> Self {
         LineCharacterCache {
             line_map,
             text,
@@ -1035,7 +1035,9 @@ impl<'p, 'a> Emitter<'p, 'a> {
         let Some(sf) = self.p.current_source_file else {
             return;
         };
-        let text = self.p.nodes[sf].as_source_file().text().to_string();
+        // `text` is `Arc<str>` — clone is a refcount bump, not a copy of
+        // the whole file (which `.to_string()` did once per comment).
+        let text = self.p.nodes[sf].as_source_file().text.clone();
         let line_map = self.p.nodes[sf].as_source_file().ecma_line_map().to_vec();
         self.write_comment_range_worker(&text, &line_map, comment.kind, comment.text_range);
     }
@@ -1338,10 +1340,10 @@ impl<'p, 'a> Emitter<'p, 'a> {
         let Some(sf) = self.p.current_source_file else {
             return false;
         };
-        let text = self.p.nodes[sf].as_source_file().text().to_string();
-        !scanner::get_trailing_comment_ranges(&self.p.emit_context.factory, &text, pos + 1)
+        let text = self.p.nodes[sf].as_source_file().text();
+        !scanner::get_trailing_comment_ranges(&self.p.emit_context.factory, text, pos + 1)
             .is_empty()
-            || !scanner::get_leading_comment_ranges(&self.p.emit_context.factory, &text, pos + 1)
+            || !scanner::get_leading_comment_ranges(&self.p.emit_context.factory, text, pos + 1)
                 .is_empty()
     }
 
@@ -8246,13 +8248,12 @@ impl<'p, 'a> Emitter<'p, 'a> {
         }
 
         let source_file = self.p.current_source_file.unwrap();
-        let text = self.p.nodes[source_file]
-            .as_source_file()
-            .text()
-            .to_string();
+        // `text` borrows the emit arena — the comment scan only needs
+        // immutable `self` borrows (should_write_comment), so no copy.
+        let text = self.p.nodes[source_file].as_source_file().text();
         let mut comments: Vec<CommentRange> = Vec::new();
         for comment in
-            scanner::get_leading_comment_ranges(&self.p.emit_context.factory.inner, &text, pos)
+            scanner::get_leading_comment_ranges(&self.p.emit_context.factory.inner, text, pos)
         {
             if self.should_write_comment(comment)
                 && Self::should_emit_comment_if_triple_slash(
@@ -8333,13 +8334,10 @@ impl<'p, 'a> Emitter<'p, 'a> {
         }
 
         let source_file = self.p.current_source_file.unwrap();
-        let text = self.p.nodes[source_file]
-            .as_source_file()
-            .text()
-            .to_string();
+        let text = self.p.nodes[source_file].as_source_file().text();
         let mut comments: Vec<CommentRange> = Vec::new();
         for comment in
-            scanner::get_trailing_comment_ranges(&self.p.emit_context.factory.inner, &text, pos)
+            scanner::get_trailing_comment_ranges(&self.p.emit_context.factory.inner, text, pos)
         {
             if self.should_write_comment(comment) {
                 comments.push(comment);
@@ -8367,13 +8365,10 @@ impl<'p, 'a> Emitter<'p, 'a> {
         }
 
         let source_file = self.p.current_source_file.unwrap();
-        let text = self.p.nodes[source_file]
-            .as_source_file()
-            .text()
-            .to_string();
+        let text = self.p.nodes[source_file].as_source_file().text();
         let mut comments: Vec<CommentRange> = Vec::new();
         for comment in
-            scanner::get_trailing_comment_ranges(&self.p.emit_context.factory.inner, &text, pos)
+            scanner::get_trailing_comment_ranges(&self.p.emit_context.factory.inner, text, pos)
         {
             comments.push(comment);
         }
@@ -8424,9 +8419,11 @@ impl<'p, 'a> Emitter<'p, 'a> {
     fn emit_detached_comments(&mut self, text_range: TextRange) -> Option<DetachedCommentsInfo> {
         let source_file = self.p.current_source_file?;
 
+        // `text`/`line_map` borrow the emit arena — both are last used
+        // before the `&mut self` emit calls, so no copies are needed.
         let (text, line_map) = {
             let sf = self.p.nodes[source_file].as_source_file();
-            (sf.text().to_string(), sf.ecma_line_map().to_vec())
+            (sf.text(), sf.ecma_line_map())
         };
 
         let mut leading_comments: Vec<CommentRange> = Vec::new();
@@ -8597,9 +8594,11 @@ impl<'p, 'a> Emitter<'p, 'a> {
         let (line_map, text) = match &source {
             SourceMapSource::Node(id) => {
                 let sf = self.p.nodes[*id].as_source_file();
-                (sf.ecma_line_map().to_vec(), sf.text().to_string())
+                (sf.ecma_line_map().to_vec(), sf.text.clone())
             }
-            SourceMapSource::Synthetic(s) => (s.line_map.clone(), s.text.clone()),
+            SourceMapSource::Synthetic(s) => {
+                (s.line_map.clone(), s.text.as_str().into())
+            }
         };
         self.source_map_line_char_cache = Some(LineCharacterCache {
             line_map,
@@ -8625,14 +8624,17 @@ impl<'p, 'a> Emitter<'p, 'a> {
             self.source_map_source_index =
                 generator.add_source(source.file_name(self.p.nodes).clone());
             if self.p.options.inline_sources {
+                // `set_source_content` stores its own copy — pass the
+                // arena borrow straight through (was a full-file
+                // `.to_string()` on every source-map source).
                 let text = match &source {
                     SourceMapSource::Node(id) => {
-                        self.p.nodes[*id].as_source_file().text().to_string()
+                        self.p.nodes[*id].as_source_file().text()
                     }
-                    SourceMapSource::Synthetic(s) => s.text.clone(),
+                    SourceMapSource::Synthetic(s) => s.text.as_str(),
                 };
                 generator
-                    .set_source_content(self.source_map_source_index, &text)
+                    .set_source_content(self.source_map_source_index, text)
                     .expect("SetSourceContent failed");
             }
         }

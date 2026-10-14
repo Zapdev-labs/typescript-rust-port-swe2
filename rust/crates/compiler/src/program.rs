@@ -2629,7 +2629,9 @@ impl Program {
             directives_by_line.insert(line, directive.clone());
         }
         let line_starts = tsc_scanner::scanner::get_ecma_line_starts(sf);
-        let text = sf.text().to_string();
+        // `Arc<str>` clone — cheap handle materialization for use after
+        // `nodes` drops (was a full `.to_string()` copy of the source).
+        let text = sf.text.clone();
         drop(nodes);
         let mut filtered: Vec<DiagnosticRef> = Vec::with_capacity(diags.len());
         for diagnostic in diags {

@@ -1151,13 +1151,13 @@ impl Checker {
                 if nodes[node].arguments().is_some_and(|a| a.len() == 1) {
                     let source_file = ast::get_source_file_of_node(Some(node), &nodes)
                         .expect("resolveCallExpression: no source file");
-                    let text = nodes[source_file].as_source_file().text().to_string();
+                    let text = nodes[source_file].as_source_file().text();
                     let options = tsc_scanner::scanner::SkipTriviaOptions {
                         stop_after_line_break: true,
                         ..Default::default()
                     };
                     let pos = tsc_scanner::scanner::skip_trivia_ex(
-                        &text,
+                        text,
                         nodes[expression].end(),
                         Some(&options),
                     ) - 1;
@@ -3729,9 +3729,9 @@ impl Checker {
             end += 1;
         }
         let file_text = source_file
-            .map(|sf| nodes[sf].as_source_file().text().to_string())
+            .map(|sf| nodes[sf].as_source_file().text())
             .unwrap_or_default();
-        pos = tsc_scanner::scanner::skip_trivia(&file_text, pos);
+        pos = tsc_scanner::scanner::skip_trivia(file_text, pos);
         if end < pos {
             end = pos;
         }
@@ -3883,10 +3883,10 @@ impl Checker {
         let source_file = ast::get_source_file_of_node(Some(node), &nodes);
         let type_argument_list = nodes[node].type_argument_list();
         let file_text = source_file
-            .map(|sf| nodes[sf].as_source_file().text().to_string())
+            .map(|sf| nodes[sf].as_source_file().text())
             .unwrap_or_default();
         let loc = tsc_core::text::TextRange::new(
-            tsc_scanner::scanner::skip_trivia(&file_text, type_argument_list.unwrap().loc.pos()),
+            tsc_scanner::scanner::skip_trivia(file_text, type_argument_list.unwrap().loc.pos()),
             type_argument_list.unwrap().loc.end(),
         );
         let diagnostic;
@@ -5598,10 +5598,10 @@ impl Checker {
         if let Some(error_type) = error_type {
             let source_file = ast::get_source_file_of_node(Some(node), &nodes);
             let file_text = source_file
-                .map(|sf| nodes[sf].as_source_file().text().to_string())
+                .map(|sf| nodes[sf].as_source_file().text())
                 .unwrap_or_default();
             let loc = tsc_core::text::TextRange::new(
-                tsc_scanner::scanner::skip_trivia(&file_text, type_arguments.unwrap().loc.pos()),
+                tsc_scanner::scanner::skip_trivia(file_text, type_arguments.unwrap().loc.pos()),
                 type_arguments.unwrap().loc.end(),
             );
             let error_string = self.type_to_string(error_type);
