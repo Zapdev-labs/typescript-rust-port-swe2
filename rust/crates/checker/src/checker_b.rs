@@ -7122,7 +7122,7 @@ impl Checker {
                     let global_symbol = self
                         .sym(self.global_this_symbol)
                         .exports
-                        .get(&right_text)
+                        .get(right_text.as_str())
                         .copied();
                     if global_symbol.is_some_and(|gs| {
                         self.sym(gs)
@@ -7447,10 +7447,10 @@ impl Checker {
             let symbol = nodes[class].symbol().expect("class symbol");
             let name =
                 tsc_binder::binder::get_symbol_name_for_private_identifier(symbol, prop_name);
-            if let Some(&prop) = self.sym(symbol).members.get(&name) {
+            if let Some(&prop) = self.sym(symbol).members.get(name.as_str()) {
                 return Some(prop);
             }
-            if let Some(&prop) = self.sym(symbol).exports.get(&name) {
+            if let Some(&prop) = self.sym(symbol).exports.get(name.as_str()) {
                 return Some(prop);
             }
             containing_class = ast::get_containing_class(class, &nodes);
@@ -11254,7 +11254,7 @@ impl Checker {
                 self.value_symbol_links.get(prop).target = member;
                 member = Some(prop);
                 if let Some(table) = all_properties_table.as_mut() {
-                    table.set(member_name.clone(), prop);
+                    table.set(member_name.clone().into(), prop);
                 }
                 if contextual_type.is_some()
                     && check_mode.intersects(CheckMode::INFERENTIAL)
@@ -11366,7 +11366,7 @@ impl Checker {
                 }
             } else {
                 let member = member.expect("object literal member symbol");
-                properties_table.set(self.sym(member).name.clone(), member);
+                properties_table.set(self.sym(member).name.clone().into(), member);
             }
             properties_array.push(member.expect("object literal member symbol"));
         }
@@ -11510,7 +11510,7 @@ impl Checker {
                 && !right_check_flags.intersects(ast::checkflags::CheckFlags::PARTIAL)
             {
                 let right_name = self.sym(right).name.clone();
-                if let Some(&left) = props.get(&right_name) {
+                if let Some(&left) = props.get(right_name.as_str()) {
                     let value_declaration = self.sym(left).value_declaration;
                     let left_name = self.sym(left).name.clone();
                     if let Some(diagnostic) = self.error(
@@ -11672,7 +11672,7 @@ impl Checker {
                 skipped_private_members.insert(right_name);
             } else if self.is_spreadable_property(right_prop) {
                 let spread_symbol = self.get_spread_symbol(right_prop, readonly);
-                members.set(right_name, spread_symbol);
+                members.set(right_name.into(), spread_symbol);
             }
         }
 
@@ -11684,7 +11684,7 @@ impl Checker {
             {
                 continue;
             }
-            if let Some(&right_prop) = members.get(&left_name) {
+            if let Some(&right_prop) = members.get(left_name.as_str()) {
                 let right_type = self.get_type_of_symbol(right_prop);
                 if self
                     .sym(right_prop)
@@ -11725,11 +11725,11 @@ impl Checker {
                     self.sym_mut(result).declarations = declarations;
                     let name_type = self.value_symbol_links.get(left_prop).name_type;
                     self.value_symbol_links.get(result).name_type = name_type;
-                    members.set(left_name.clone(), result);
+                    members.set(left_name.clone().into(), result);
                 }
             } else {
                 let spread_symbol = self.get_spread_symbol(left_prop, readonly);
-                members.set(left_name, spread_symbol);
+                members.set(left_name.into(), spread_symbol);
             }
         }
         // `core.SameMap(indexInfos, f)` — maps each info through
@@ -11913,7 +11913,7 @@ impl Checker {
                 let name_type = self.value_symbol_links.get(prop).name_type;
                 self.value_symbol_links.get(result).name_type = name_type;
                 self.mapped_symbol_links.get(result).synthetic_origin = Some(prop);
-                members.set(prop_name, result);
+                members.set(prop_name.into(), result);
             }
         }
         let __arena_first_symbol = self.types.clone();
@@ -13785,7 +13785,7 @@ impl Checker {
         let node_symbol_name = node_symbol.map(|s| self.sym(s).name.clone());
         let exports_has_named = node_symbol_name
             .as_ref()
-            .is_some_and(|name| self.sym(module_symbol).exports.get(name).is_some());
+            .is_some_and(|name| self.sym(module_symbol).exports.get(name.as_str()).is_some());
         if exports_has_named {
             let module_name = self.symbol_to_string(module_symbol);
             let sym_name = node_symbol
@@ -14502,7 +14502,7 @@ impl Checker {
             let vn = __program.nodes((vd).file_index());
             vn[vd]
                 .locals()
-                .and_then(|locals| locals.get(&name_text).copied())
+                .and_then(|locals| locals.get(name_text.as_str()).copied())
         });
         if let Some(local_symbol) = local_symbol {
             if let Some(exported_equals_symbol) = exports
@@ -16463,7 +16463,7 @@ impl Checker {
         let target = self.resolve_symbol(symbol);
         self.alias_symbol_links.get(new_symbol).alias_target = Some(target);
         member_table.set(
-            ast::symbol::INTERNAL_SYMBOL_NAME_DEFAULT.to_string(),
+            ast::symbol::INTERNAL_SYMBOL_NAME_DEFAULT.into(),
             new_symbol,
         );
         let anonymous_symbol = match anonymous_symbol {

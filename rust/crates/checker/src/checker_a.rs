@@ -5829,7 +5829,7 @@ impl Checker {
                                 self.grammar_error_on_node(
                                     value_declaration.expect("value declaration"),
                                     &tsc_diagnostics::Cannot_redeclare_identifier_0_in_catch_clause,
-                                    &[caught_name.clone()],
+                                    &[caught_name.to_string()],
                                 );
                             }
                         }
@@ -8584,7 +8584,7 @@ impl Checker {
 
                 let resolved = self.get_regular_type_of_literal_type(__h8212_59);
                 self.value_symbol_links.get(member).resolved_type = Some(resolved);
-                members.set(member_name, member);
+                members.set(member_name.into(), member);
             }
             let t = self.new_anonymous_type(Some(symbol), members, &[], &[], &[]);
             self.types_handle().get_mut(t).object_flags |=
@@ -9243,7 +9243,7 @@ impl Checker {
             // Checks for export * conflicts
             let exports = self.get_exports_of_module(module_symbol);
             for (id, symbol) in exports.entries() {
-                if id == ast::INTERNAL_SYMBOL_NAME_EXPORT_STAR {
+                if id.as_ref() == ast::INTERNAL_SYMBOL_NAME_EXPORT_STAR {
                     continue;
                 }
                 let symbol = *symbol;
@@ -9286,7 +9286,7 @@ impl Checker {
                             self.error(
                                 Some(declaration),
                                 &tsc_diagnostics::Cannot_redeclare_exported_variable_0,
-                                &[id.clone()],
+                                &[id.to_string()],
                             );
                         }
                     }
@@ -9304,7 +9304,7 @@ impl Checker {
     ) -> bool {
         let exports = sym_exports(self, module_symbol);
         let entries: Vec<(String, SymbolId)> =
-            exports.entries().map(|(k, &v)| (k.clone(), v)).collect();
+            exports.entries().map(|(k, &v)| (k.to_string(), v)).collect();
         for (name, symbol) in entries {
             if name != ast::INTERNAL_SYMBOL_NAME_EXPORT_EQUALS
                 && self.get_symbol_flags(symbol).intersects(kind)
@@ -11319,7 +11319,7 @@ impl Checker {
                     if let Some(already_exported_symbol) = self.symbol_arena.borrow()
                         [source_symbol.index()]
                     .exports
-                    .get(&export_name)
+                    .get(export_name.as_str())
                     .copied()
                     {
                         if already_exported_symbol == target {

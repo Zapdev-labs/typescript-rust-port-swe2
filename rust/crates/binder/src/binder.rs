@@ -23,6 +23,7 @@
 // PORT: Go's `binderPool`/`getBinder`/`putBinder` `sync.Pool` recycling is an
 // allocation optimization; `Binder::new` keeps identical semantics.
 
+use std::sync::Arc;
 use std::sync::LazyLock;
 use std::sync::atomic::Ordering;
 
@@ -300,7 +301,7 @@ impl<'a> Binder<'a> {
     }
 
     /// `SymbolTableDest` resolution — `symbolTable[name] = symbol` write.
-    fn table_set(&mut self, dest: SymbolTableDest, name: String, symbol: SymbolId) {
+    fn table_set(&mut self, dest: SymbolTableDest, name: impl Into<Arc<str>>, symbol: SymbolId) {
         let table = match dest {
             SymbolTableDest::Locals(n) => {
                 &mut self.nodes[n]
@@ -313,7 +314,7 @@ impl<'a> Binder<'a> {
             SymbolTableDest::Members(s) => &mut self.symbols[s.index()].members,
             SymbolTableDest::GlobalExports => &mut self.file_data_mut().global_exports,
         };
-        table.set(name, symbol);
+        table.set(name.into(), symbol);
     }
 
     fn file_data_mut(&mut self) -> &mut SourceFile {
@@ -1769,7 +1770,7 @@ impl<'a> Binder<'a> {
         let symbol_name = self.symbols[symbol.index()].name.clone();
         self.symbols[type_literal_symbol.index()]
             .members
-            .set(symbol_name, symbol);
+            .set(symbol_name.into(), symbol);
     }
 
     fn add_late_bound_assignment_declaration_to_symbol(&mut self, node: NodeId, symbol: SymbolId) {
@@ -1842,11 +1843,11 @@ impl<'a> Binder<'a> {
             .get(INTERNAL_SYMBOL_NAME_EXPORT_EQUALS)
             .copied()
         {
-            let promoted: Vec<(String, SymbolId)> = self.symbols[module_symbol.index()]
+            let promoted: Vec<(Arc<str>, SymbolId)> = self.symbols[module_symbol.index()]
                 .exports
                 .entries()
                 .filter(|(name, sym)| {
-                    *name != INTERNAL_SYMBOL_NAME_EXPORT_EQUALS
+                    &***name != INTERNAL_SYMBOL_NAME_EXPORT_EQUALS
                         && self.symbols[sym.index()]
                             .flags
                             .intersects(SymbolFlags::TYPE | SymbolFlags::NAMESPACE)
@@ -2681,7 +2682,7 @@ impl<'a> Binder<'a> {
                 self.symbols[exports_property.index()].parent = Some(symbol);
                 self.symbols[symbol.index()]
                     .members
-                    .set("exports".to_string(), exports_property);
+                    .set(Arc::from("exports"), exports_property);
             }
             self.table_set(locals, name.to_string(), symbol);
         }

@@ -49,7 +49,13 @@ pub fn symbol_is_static(s: &Symbol, nodes: &[crate::Node]) -> bool {
 
 /// `SymbolTable` is an ordered map from name to `SymbolId`, mirroring
 /// `map[string]*Symbol` while keeping deterministic insertion order.
-pub type SymbolTable = OrderedMap<String, SymbolId>;
+/// Keys are `Arc<str>`: Go shares the string header on map copy/extend;
+/// `Arc<str>` clones are refcount bumps while `String` keys would
+/// alloc+memcpy per entry (member-table merges are check-time hot).
+/// `str` lookups work via `Equivalent`/`Borrow`. `Arc` (not `Rc`)
+/// because `Type`/`Symbol` cross threads in the checker's `Arc<Type>`
+/// arena and the tracer's `Send + Sync` adapters.
+pub type SymbolTable = OrderedMap<std::sync::Arc<str>, SymbolId>;
 
 /// Not a valid identifier char and escapes to `\uFFFD` — Rust's UTF-8-safe
 /// equivalent of Go's invalid-UTF-8 `\xFE` marker byte.

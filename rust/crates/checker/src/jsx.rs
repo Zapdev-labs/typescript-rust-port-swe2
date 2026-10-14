@@ -631,7 +631,7 @@ impl Checker {
                         return false;
                     }
                 }
-                !self.sym(node_symbol.unwrap()).members.has(&s_name)
+                !self.sym(node_symbol.unwrap()).members.has(s_name.as_str())
                     && self.is_discriminant_property(contextual_type, &s_name)
             })
             .collect();
@@ -1633,9 +1633,9 @@ impl Checker {
                         links.resolved_type = Some(expr_type);
                         links.target = Some(member);
                     }
-                    attributes_table.set(member_name.clone(), attribute_symbol);
+                    attributes_table.set(member_name.clone().into(), attribute_symbol);
                     if let Some(table) = all_attributes_table.as_mut() {
-                        table.set(member_name.clone(), attribute_symbol);
+                        table.set(member_name.clone().into(), attribute_symbol);
                     }
                     let attr_name = nodes[attribute_decl]
                         .name()
@@ -1826,7 +1826,7 @@ impl Checker {
                         .symbol = Some(children_prop_symbol);
                 }
                 let mut child_prop_map = ast::SymbolTable::new();
-                child_prop_map.set(jsx_children_property_name.clone(), children_prop_symbol);
+                child_prop_map.set(jsx_children_property_name.clone().into(), children_prop_symbol);
                 let propagating =
                     self.get_propagating_flags_of_types(&child_types, TypeFlags::NONE);
                 let anon =

@@ -2533,7 +2533,7 @@ impl Checker {
                 links.mapped_type = Some(mapped_type);
                 links.constraint_type = Some(links_constraint_type);
             }
-            members.set(prop_name, inferred_prop);
+            members.set(prop_name.into(), inferred_prop);
         }
         self.set_structured_type_members(t, members, &[], &[], &index_infos);
     }
@@ -2750,7 +2750,7 @@ impl Checker {
                 arena[literal_prop.index()].declarations = declarations;
                 arena[literal_prop.index()].value_declaration = value_declaration;
             }
-            members.set(name, literal_prop);
+            members.set(name.into(), literal_prop);
         }
         let mut index_infos: Vec<IndexInfoId> = Vec::new();
         if self

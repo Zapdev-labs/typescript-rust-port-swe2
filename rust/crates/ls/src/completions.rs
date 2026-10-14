@@ -2714,7 +2714,7 @@ impl<'a, 'h> CompletionDataBuilder<'a, 'h> {
                 self.program.symbols.borrow()[ls.index()]
                     .exports
                     .keys()
-                    .cloned()
+                    .map(|k| k.to_string())
                     .collect()
             })
             .unwrap_or_default();
@@ -2725,7 +2725,7 @@ impl<'a, 'h> CompletionDataBuilder<'a, 'h> {
                 .map(|locals| {
                     locals
                         .entries()
-                        .map(|(name, symbol)| (name.clone(), *symbol))
+                        .map(|(name, symbol)| (name.to_string(), *symbol))
                         .collect()
                 })
                 .unwrap_or_default()

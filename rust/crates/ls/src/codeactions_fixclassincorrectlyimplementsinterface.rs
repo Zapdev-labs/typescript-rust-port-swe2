@@ -458,7 +458,7 @@ fn get_missing_members(
         let nodes = program.nodes(class_declaration.file_index());
         nodes[class_declaration].symbol().map(|s| {
             let members = &program.symbols.borrow()[s.index()].members;
-            members.entries().map(|(k, &v)| (k.clone(), v)).collect()
+            members.entries().map(|(k, &v)| (k.to_string(), v)).collect()
         })
     };
 

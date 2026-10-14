@@ -1573,7 +1573,7 @@ impl Checker {
                     self.value_symbol_links.get(property).resolved_type = Some(type_parameter);
                     // `valueSymbolLinks.get(property).tupleLabelDeclaration = elementInfos[i].labeledDeclaration`
                     let name = self.symbol_arena.borrow()[property.index()].name.clone();
-                    members.set(name, property);
+                    members.set(name.into(), property);
                 }
             }
         }
@@ -1600,7 +1600,7 @@ impl Checker {
         let length_name = self.symbol_arena.borrow()[length_symbol.index()]
             .name
             .clone();
-        members.set(length_name, length_symbol);
+        members.set(length_name.into(), length_symbol);
         let t = self.new_object_type(ObjectFlags::TUPLE | ObjectFlags::REFERENCE, None);
         // `d := t.AsTupleType()`
         let this_type = self.new_type_parameter(None);
@@ -5391,7 +5391,7 @@ __h4858_35],
                         && self
                             .sym(self.global_this_symbol)
                             .exports
-                            .get(&prop_name)
+                            .get(prop_name.as_str())
                             .is_some_and(|s| {
                                 self.sym(*s)
                                     .flags
@@ -7573,7 +7573,7 @@ impl Checker {
                 property
             };
             let name = self.sym(property).name.clone();
-            members.set(name, property);
+            members.set(name.into(), property);
         }
         members
     }
@@ -11351,9 +11351,9 @@ impl Checker {
             return override_type;
         }
         let mut members = SymbolTable::new();
-        members.set("name".to_string(), self.new_property("name", name_type));
+        members.set("name".into(), self.new_property("name", name_type));
         members.set(
-            "private".to_string(),
+            "private".into(),
             self.new_property(
                 "private",
                 if is_private {
@@ -11364,7 +11364,7 @@ impl Checker {
             ),
         );
         members.set(
-            "static".to_string(),
+            "static".into(),
             self.new_property(
                 "static",
                 if is_static {
@@ -11943,7 +11943,13 @@ impl Checker {
                 .collect();
             let member_names: FxHashSet<String> = nodes[node]
                 .symbol()
-                .map(|s| self.sym(s).members.keys().cloned().collect())
+                .map(|s| {
+                    self.sym(s)
+                        .members
+                        .keys()
+                        .map(|k| k.to_string())
+                        .collect()
+                })
                 .unwrap_or_default();
             let discriminant_members: Vec<SymbolId> = self
                 .get_properties_of_type(contextual_type)

@@ -2241,7 +2241,7 @@ pub fn create_symbol_table(
     let mut result = SymbolTable::with_size_hint(symbols.len());
     let arena = symbol_arena.borrow();
     for &symbol in symbols {
-        result.set(arena[symbol.index()].name.clone(), symbol);
+        result.set(arena[symbol.index()].name.clone().into(), symbol);
     }
     result
 }
@@ -2362,7 +2362,7 @@ impl Checker {
         let name = c.symbol_arena.borrow()[c.global_this_symbol.index()]
             .name
             .clone();
-        c.globals.borrow_mut().set(name, c.global_this_symbol);
+        c.globals.borrow_mut().set(name.into(), c.global_this_symbol);
         c.resolve_name = Some(c.create_name_resolver());
         c.resolve_name_for_symbol_suggestion = Some(c.create_name_resolver_for_suggestion());
         // Type/cache maps — empty by `Checker::empty()` (Go `make(map)`).
@@ -3162,12 +3162,12 @@ impl Checker {
     /// `(c *Checker) mergeGlobalSymbol` (checker.go).
     pub fn merge_global_symbol(&mut self, symbol: SymbolId) {
         let name = self.symbol_arena.borrow()[symbol.index()].name.clone();
-        let global_symbol = self.globals.borrow().get(&name).copied();
+        let global_symbol = self.globals.borrow().get(name.as_str()).copied();
         let merged = match global_symbol {
             Some(global_symbol) => self.merge_symbol(global_symbol, symbol, false),
             None => self.get_merged_symbol(symbol),
         };
-        self.globals.borrow_mut().set(name, merged);
+        self.globals.borrow_mut().set(name.into(), merged);
     }
 
     /// `(c *Checker) mergeSymbol` (checker.go) — symbol merging.
@@ -3386,9 +3386,9 @@ impl Checker {
                     // moduleName will be a StringLiteral since this is not `declare global`.
                     let text = nodes[module_name].text(&nodes).into_owned();
                     self.pattern_ambient_module_augmentations
-                        .set(text.clone(), merged);
+                        .set(text.clone().into(), merged);
                     self.pattern_ambient_module_augmentation_targets
-                        .set(text, main_module);
+                        .set(text.into(), main_module);
                 } else {
                     let main_module_exports_star = self
                         .sym(main_module)
@@ -3477,9 +3477,9 @@ impl Checker {
         for module in &pattern_ambient_modules {
             if let Some(module_symbol) = module.symbol {
                 let name = self.sym(module_symbol).name.clone();
-                if self.globals.borrow().get(&name).is_some() {
+                if self.globals.borrow().get(name.as_str()).is_some() {
                     let merged = self.get_merged_symbol(module_symbol);
-                    self.globals.borrow_mut().set(name, merged);
+                    self.globals.borrow_mut().set(name.into(), merged);
                 }
             }
         }
@@ -3492,7 +3492,7 @@ impl Checker {
         let name = self.symbol_arena.borrow()[self.undefined_symbol.index()]
             .name
             .clone();
-        let target_symbol = self.globals.borrow().get(&name).copied();
+        let target_symbol = self.globals.borrow().get(name.as_str()).copied();
         if let Some(target_symbol) = target_symbol {
             let declarations = self.symbol_arena.borrow()[target_symbol.index()]
                 .declarations
@@ -3510,7 +3510,7 @@ impl Checker {
                 }
             }
         } else {
-            self.globals.borrow_mut().set(name, self.undefined_symbol);
+            self.globals.borrow_mut().set(name.into(), self.undefined_symbol);
         }
     }
 
@@ -3833,7 +3833,7 @@ impl Checker {
                                 .intersects(ast::SymbolFlags::ENUM)
                         {
                             let name = nodes[argument].text(&nodes).into_owned();
-                            let member = self.sym(root_symbol).exports.get(&name).copied();
+                            let member = self.sym(root_symbol).exports.get(name.as_str()).copied();
                             if let Some(member) = member {
                                 if let Some(location) = location {
                                     return self.evaluate_enum_member(expr, member, location);

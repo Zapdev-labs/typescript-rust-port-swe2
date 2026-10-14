@@ -885,7 +885,7 @@ impl Checker {
         }
         let exports = self.get_exports_of_symbol(container);
         let (_, _, _, sym_name, ..) = sym_fields(self, symbol);
-        if let Some(&quick) = exports.get(&sym_name)
+        if let Some(&quick) = exports.get(sym_name.as_str())
             && self.get_symbol_if_same_reference(quick, symbol).is_some()
         {
             return Some(quick);
@@ -1083,7 +1083,7 @@ impl Checker {
         let ctx_symbol = ctx.symbol.unwrap_or(SymbolId::NONE);
         let ctx_name = sym_fields(self, ctx_symbol).3;
         // If symbol is directly available by its name in the symbol table
-        let res = symbols.get(&ctx_name).copied();
+        let res = symbols.get(ctx_name.as_str()).copied();
         if let Some(res) = res
             && self.is_accessible(
                 ctx,
@@ -1341,7 +1341,7 @@ impl Checker {
             enclosing_declaration,
             |c2, symbol_table, _id, _ignore, _local, _scope| {
                 // If symbol of this name is not available in the symbol table we are ok
-                let Some(res) = symbol_table.get(&name).copied() else {
+                let Some(res) = symbol_table.get(name.as_str()).copied() else {
                     return false;
                 };
                 let mut symbol_from_symbol_table = c2.get_merged_symbol(res);
@@ -1543,7 +1543,7 @@ impl Checker {
             return None;
         }
         let mut table = SymbolTable::default();
-        table.set(name_text, class_symbol);
+        table.set(name_text.into(), class_symbol);
         self.class_expression_name_tables
             .insert(location, table.clone());
         Some(table)

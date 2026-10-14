@@ -1485,7 +1485,7 @@ impl<'a> NodeBuilderImpl<'a> {
                     let name = symbol_name(c, symbol);
                     if name != ast::symbol::INTERNAL_SYMBOL_NAME_EXPORT_EQUALS
                         && !crate::utilities::is_late_bound_name(&name)
-                        && exports.get(&name).is_some_and(|&res| {
+                        && exports.get(name.as_str()).is_some_and(|&res| {
                             c.get_symbol_if_same_reference(res, symbol).is_some()
                         })
                     {
@@ -1495,7 +1495,8 @@ impl<'a> NodeBuilderImpl<'a> {
                         for (ex_name, &ex) in &exports {
                             if c.get_symbol_if_same_reference(ex, symbol).is_some()
                                 && !crate::utilities::is_late_bound_name(ex_name)
-                                && ex_name != ast::symbol::INTERNAL_SYMBOL_NAME_EXPORT_EQUALS
+                                && ex_name.as_ref()
+                                    != ast::symbol::INTERNAL_SYMBOL_NAME_EXPORT_EQUALS
                             {
                                 results.insert(ex, ex_name.to_string());
                                 // must collect all results and sort them -
@@ -1568,7 +1569,7 @@ impl<'a> NodeBuilderImpl<'a> {
             if !members.is_empty() {
                 let name = symbol_name(c, symbol);
                 if members
-                    .get(&name)
+                    .get(name.as_str())
                     .is_some_and(|&m| c.get_symbol_if_same_reference(m, symbol).is_some())
                 {
                     // Should use an indexed access

@@ -291,7 +291,7 @@ impl SymbolExtractor {
             c.symbol_arena.borrow()[file_symbol.index()]
                 .exports
                 .entries()
-                .map(|(k, v)| (k.clone(), *v))
+                .map(|(k, v)| (k.to_string(), *v))
                 .collect()
         };
         let mut exports = Vec::with_capacity(file_exports.len() + augmentation_export_count);
@@ -366,7 +366,7 @@ impl SymbolExtractor {
             c.symbol_arena.borrow()[sym.index()]
                 .exports
                 .entries()
-                .map(|(k, v)| (k.clone(), *v))
+                .map(|(k, v)| (k.to_string(), *v))
                 .collect()
         };
         for (name, symbol) in exports_of {
@@ -417,7 +417,7 @@ impl SymbolExtractor {
             // processed separately; we want to add only the ones that come
             // from the star.
             for (name, named_export) in parent_exports {
-                if name != tsc_ast::symbol::INTERNAL_SYMBOL_NAME_EXPORT_STAR {
+                if name.as_ref() != tsc_ast::symbol::INTERNAL_SYMBOL_NAME_EXPORT_STAR {
                     let idx = all_exports
                         .iter()
                         .position(|s| *s == named_export)
@@ -513,7 +513,7 @@ impl SymbolExtractor {
                     c.symbol_arena.borrow()[target.index()]
                         .exports
                         .entries()
-                        .map(|(k, v)| (k.clone(), *v))
+                        .map(|(k, v)| (k.to_string(), *v))
                         .collect()
                 };
                 exports.reserve(inner.len());

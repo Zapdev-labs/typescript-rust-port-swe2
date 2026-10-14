@@ -299,7 +299,7 @@ impl Checker {
                 let symbol_flags = self.sym(nodes[decl].symbol().unwrap()).flags;
                 // Get or add a late-bound symbol for the member. This allows
                 // us to merge late-bound accessor declarations.
-                let mut late_symbol = match late_symbols.get(&member_name).copied() {
+                let mut late_symbol = match late_symbols.get(member_name.as_str()).copied() {
                     Some(s) => s,
                     None => {
                         let s = self.new_symbol_ex(
@@ -307,13 +307,13 @@ impl Checker {
                             &member_name,
                             ast::checkflags::CheckFlags::LATE,
                         );
-                        late_symbols.set(member_name.clone(), s);
+                        late_symbols.set(member_name.clone().into(), s);
                         s
                     }
                 };
                 // Report an error if there's a symbol declaration with the
                 // same name and conflicting flags.
-                let early_symbol = early_symbols.get(&member_name).copied();
+                let early_symbol = early_symbols.get(member_name.as_str()).copied();
                 if self
                     .sym(late_symbol)
                     .flags
@@ -404,7 +404,7 @@ impl Checker {
                         index_symbol
                     }
                 };
-                late_symbols.set(ast::INTERNAL_SYMBOL_NAME_INDEX.to_string(), index_symbol);
+                late_symbols.set(ast::INTERNAL_SYMBOL_NAME_INDEX.into(), index_symbol);
                 index_symbol
             }
         };
@@ -570,7 +570,7 @@ impl Checker {
                 // 'export type *', and visiting again with 'export *' will
                 // override the type-onlyness of its exports.
                 for name in c.sym(symbol).exports.keys() {
-                    non_type_only_names.add(name.clone());
+                    non_type_only_names.add(name.to_string());
                 }
             }
             let Some(symbol) = symbol else {
@@ -626,7 +626,7 @@ impl Checker {
                     // itself
                     if id == ast::INTERNAL_SYMBOL_NAME_EXPORT_EQUALS
                         || s.exports_with_duplicate.is_empty()
-                        || symbols.get(id).is_some()
+                        || symbols.get(id.as_str()).is_some()
                     {
                         continue;
                     }
@@ -647,7 +647,7 @@ impl Checker {
                 let nodes = __program.nodes((export_star).file_index());
                 if nodes[export_star].is_type_only() {
                     for name in symbols.keys() {
-                        type_only_export_star_map.set(name.clone(), export_star);
+                        type_only_export_star_map.set(name.to_string(), export_star);
                     }
                 }
             }
@@ -695,9 +695,9 @@ impl Checker {
                 let flags = self.get_symbol_flags(symbol);
                 if flags.intersects(ast::SymbolFlags::TYPE | ast::SymbolFlags::NAMESPACE)
                     && !flags.intersects(ast::SymbolFlags::VALUE)
-                    && exports.get(&name).is_none()
+                    && exports.get(name.as_str()).is_none()
                 {
-                    exports.set(name, symbol);
+                    exports.set(name.into(), symbol);
                 }
             }
         }
@@ -732,14 +732,14 @@ impl Checker {
             None
         };
         let source: Vec<(String, SymbolId)> =
-            source.entries().map(|(k, &v)| (k.clone(), v)).collect();
+            source.entries().map(|(k, &v)| (k.to_string(), v)).collect();
         for (id, source_symbol) in source {
             if id == ast::INTERNAL_SYMBOL_NAME_DEFAULT {
                 continue;
             }
-            let target_symbol = target.get(&id).copied();
+            let target_symbol = target.get(id.as_str()).copied();
             if target_symbol.is_none() {
-                target.set(id.clone(), source_symbol);
+                target.set(id.clone().into(), source_symbol);
                 if let (Some(table), Some(text)) = (lookup_table.as_deref_mut(), &specifier_text) {
                     table.insert(
                         id,
@@ -1699,7 +1699,7 @@ impl Checker {
         let mut members = SymbolTable::new();
         for prop in self.get_properties_of_object_type(t) {
             let name = self.sym(prop).name.clone();
-            members.set(name, prop);
+            members.set(name.into(), prop);
         }
         for e in missing_elements {
             let name = self.get_property_name_from_binding_element(e);
@@ -1712,7 +1712,7 @@ impl Checker {
                 true,  /*reportErrors*/
             );
             self.value_symbol_links.get(symbol).resolved_type = Some(resolved);
-            members.set(name, symbol);
+            members.set(name.into(), symbol);
         }
         let index_infos = self.get_index_infos_of_type(t);
         let __arena_symbol = self.types.clone();
@@ -3119,7 +3119,7 @@ impl Checker {
         for prop in spreadable_properties {
             let name = self.sym(prop).name.clone();
             let spread = self.get_spread_symbol(prop, false /*readonly*/);
-            members.set(name, spread);
+            members.set(name.into(), spread);
         }
         let index_infos = self.get_index_infos_of_type(source);
         let result = self.new_anonymous_type(symbol, members, &[], &[], &index_infos);
@@ -3290,7 +3290,7 @@ impl Checker {
             let symbol = self.new_symbol(flags, &text);
             let t = self.get_type_from_binding_element(e, include_pattern_in_type, report_errors);
             self.value_symbol_links.get(symbol).resolved_type = Some(t);
-            members.set(text, symbol);
+            members.set(text.into(), symbol);
         }
         let index_infos: Vec<IndexInfoId> =
             string_index_info.map(|id| vec![id]).unwrap_or_default();
@@ -4155,14 +4155,14 @@ impl Checker {
         for prop in self.get_properties_of_object_type(t) {
             let name = self.sym(prop).name.clone();
             let widened = self.get_widened_property(prop, context.clone());
-            members.set(name, widened);
+            members.set(name.into(), widened);
         }
         if let Some(context) = &context {
             for prop in self.get_properties_of_context(context) {
                 let name = self.sym(prop).name.clone();
-                if members.get(&name).is_none() {
+                if members.get(name.as_str()).is_none() {
                     let undefined_prop = self.get_undefined_property(prop);
-                    members.set(name, undefined_prop);
+                    members.set(name.into(), undefined_prop);
                 }
             }
         }
@@ -6505,13 +6505,13 @@ impl Checker {
         for &base in base_symbols {
             if !crate::utilities::is_static_private_identifier_property(self, base) {
                 let base_name = self.symbol_arena.borrow()[base.index()].name.clone();
-                let existing = symbols.get(&base_name).copied();
+                let existing = symbols.get(base_name.as_str()).copied();
                 if existing.is_none_or(|s| {
                     !self.symbol_arena.borrow()[s.index()]
                         .flags
                         .intersects(ast::SymbolFlags::VALUE)
                 }) {
-                    symbols.set(base_name, base);
+                    symbols.set(base_name.into(), base);
                 }
             }
         }
@@ -8685,7 +8685,7 @@ impl Checker {
                         }))
                 {
                     let name = self.sym(p).name.clone();
-                    vars_only.set(name, p);
+                    vars_only.set(name.into(), p);
                 }
             }
             members = vars_only;
@@ -8810,7 +8810,7 @@ impl Checker {
         for &symbol in symbols {
             let name = self.sym(symbol).name.clone();
             let inst = self.instantiate_symbol(symbol, m);
-            result.set(name, inst);
+            result.set(name.into(), inst);
         }
         result
     }
@@ -9085,7 +9085,7 @@ impl Checker {
                 if crate::utilities::is_type_usable_as_property_name(&c.types, prop_name_type) {
                     let prop_name =
                         crate::utilities::get_property_name_from_type(&c.types, prop_name_type);
-                    if let Some(&existing_prop) = members.get(&prop_name) {
+                    if let Some(&existing_prop) = members.get(prop_name.as_str()) {
                         // String enum members from separate enums with identical values
                         // are distinct types with the same property name.
                         let old_name_type = c.value_symbol_links.get(existing_prop).name_type;
@@ -9160,7 +9160,7 @@ impl Checker {
                                     declarations;
                             }
                         }
-                        members.set(prop_name, prop);
+                        members.set(prop_name.into(), prop);
                     }
                 } else if c.is_valid_index_key_type(prop_name_type)
                     || c.types_handle()
@@ -10544,7 +10544,7 @@ impl Checker {
                 } else {
                     &mut d.property_cache
                 };
-                cache.set(name.to_string(), prop);
+                cache.set(name.into(), prop);
             }
             // Propagate an entry from the non-augmented cache to the augmented
             // cache unless the property is partial.
@@ -10561,7 +10561,7 @@ impl Checker {
                     .as_union_or_intersection_type_mut()
                     .expect("union or intersection type");
                 if !d.property_cache.has(name) {
-                    d.property_cache.set(name.to_string(), prop);
+                    d.property_cache.set(name.into(), prop);
                 }
             }
         }

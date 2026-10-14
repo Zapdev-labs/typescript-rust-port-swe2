@@ -5956,7 +5956,7 @@ impl<'a> DeclarationTransformerState<'a> {
             .data
             .locals_container_data_mut()
         {
-            container_data.locals.set(local_name_text, symbol);
+            container_data.locals.set(local_name_text.into(), symbol);
         }
 
         let old_enclosing = self.enclosing_declaration.get();

@@ -240,7 +240,7 @@ fn copy_symbol_to_table(
         // symbolsToArray will check whether the key is a reserved name and
         // it will not copy symbols with reserved names to the array.
         if !symbols.has(id.as_str()) {
-            symbols.set(id, symbol);
+            symbols.set(id.into(), symbol);
         }
     }
 }
@@ -579,7 +579,7 @@ impl Checker {
                     let prop = self.create_union_or_intersection_property(union_type, &name, false);
                     // May be undefined if the property is private
                     if let Some(prop) = prop {
-                        props.set(name, prop);
+                        props.set(name.into(), prop);
                     }
                 }
             }
@@ -664,7 +664,7 @@ impl Checker {
             for p in self.get_properties_of_type(function_type) {
                 let name = self.sym(p).name.clone();
                 if !props_by_name.has(name.as_str()) {
-                    props_by_name.set(name, p);
+                    props_by_name.set(name.into(), p);
                 }
             }
         }

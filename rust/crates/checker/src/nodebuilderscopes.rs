@@ -125,7 +125,7 @@ impl ScopeUndo {
         for s in &self.old_locals {
             match s.old_symbol {
                 Some(old) => {
-                    locals.set(s.name.clone(), old);
+                    locals.set(s.name.clone().into(), old);
                 }
                 None => {
                     locals.delete(s.name.as_str());
@@ -505,7 +505,7 @@ fn apply_additions(
                 }),
             }
         }
-        locals.set(name.clone(), *symbol);
+        locals.set(name.clone().into(), *symbol);
     }
 }
 
