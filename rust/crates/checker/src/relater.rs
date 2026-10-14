@@ -2182,7 +2182,17 @@ fn get_recursion_identity_target(c: &mut Checker, t: TypeId) -> TypeId {
         drop(ty);
         return get_recursion_identity_target(c, object_type.unwrap());
     }
-    if ty.object_flags.contains(ObjectFlags::INSTANTIATED_MAPPED) {
+    // `declaration.is_some()` gates the mapped branch: `trace_record_type`
+    // fires inside `new_object_type` before `instantiate_anonymous_type`
+    // copies `declaration`/`target`/`mapper` onto the fresh type, so a
+    // mid-construction INSTANTIATED_MAPPED type reaches us with `None`.
+    // Go never sees that window — its `RecursionIdentity` read is lazy
+    // (dump-time). Fall through to the type-identity default instead of
+    // calling `get_modifiers_type_from_mapped_type`, which caches
+    // `modifiers_type` on the type and must never run half-constructed.
+    if ty.object_flags.contains(ObjectFlags::INSTANTIATED_MAPPED)
+        && ty.as_mapped_type().declaration.is_some()
+    {
         drop(ty);
         let target = c.get_modifiers_type_from_mapped_type(t);
         if let Some(target) = target {
