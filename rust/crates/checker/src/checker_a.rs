@@ -1741,7 +1741,7 @@ impl Checker {
                     .as_source_file()
                     .statements
                     .as_ref()
-                    .map(|l| l.nodes().to_vec())
+                    .map(|l| l.nodes_rc())
                     .unwrap_or_default(),
                 ast::is_external_or_commonjs_module(nodes[source_file].as_source_file()),
             )
@@ -3864,13 +3864,13 @@ impl Checker {
     pub(crate) fn check_template_literal_type(&mut self, node: NodeId) {
         let __program = self.program.clone().expect("program");
         let nodes = __program.nodes((node).file_index());
-        let spans: Vec<NodeId> = nodes[node]
+        let spans: Rc<[NodeId]> = nodes[node]
             .as_template_literal_type_node()
             .template_spans
             .as_ref()
-            .map(|l| l.nodes().to_vec())
+            .map(|l| l.nodes_rc())
             .unwrap_or_default();
-        for span in spans {
+        for span in spans.iter().copied() {
             let ty = nodes[span].type_();
             self.check_source_element(ty);
             let t = self.get_type_from_type_node(ty.expect("span type"));
@@ -5234,11 +5234,11 @@ impl Checker {
         //   and Expr must be an expression of type Any, an object type, or a type parameter type.
         if ast::is_variable_declaration_list(&nodes[initializer.expect("for-in initializer")]) {
             let initializer = initializer.unwrap();
-            let declarations: Vec<NodeId> = nodes[initializer]
+            let declarations: Rc<[NodeId]> = nodes[initializer]
                 .as_variable_declaration_list()
                 .declarations
                 .as_ref()
-                .map(|l| l.nodes().to_vec())
+                .map(|l| l.nodes_rc())
                 .unwrap_or_default();
             if !declarations.is_empty()
                 && nodes[declarations[0]]
@@ -5633,16 +5633,16 @@ impl Checker {
         let expression_type =
             self.check_expression(nodes[node].expression().expect("switch expression"));
         let case_block = nodes[node].as_switch_statement().case_block;
-        let clauses: Vec<NodeId> = case_block
+        let clauses: Rc<[NodeId]> = case_block
             .and_then(|cb| {
                 nodes[cb]
                     .as_case_block()
                     .clauses
                     .as_ref()
-                    .map(|l| l.nodes().to_vec())
+                    .map(|l| l.nodes_rc())
             })
             .unwrap_or_default();
-        for clause in clauses {
+        for clause in clauses.iter().copied() {
             // Grammar check for duplicate default clauses, skip if we already report duplicate default clause
             if ast::is_default_clause(&nodes[clause]) && !has_duplicate_default_clause {
                 if first_default_clause.is_none() {
@@ -8145,11 +8145,11 @@ impl Checker {
                             .as_variable_declaration_list()
                             .declarations
                             .as_ref()
-                            .map(|l| l.nodes().to_vec())
+                            .map(|l| l.nodes_rc())
                             .unwrap_or_default()
                     })
                     .unwrap_or_default();
-                for decl in decls {
+                for decl in decls.iter().copied() {
                     self.check_module_augmentation_element(decl);
                 }
             }
@@ -8537,17 +8537,17 @@ impl Checker {
                 ast::INTERNAL_SYMBOL_NAME_IMPORT_ATTRIBUTES,
             );
             let mut members: ast::SymbolTable = ast::SymbolTable::default();
-            let attributes: Vec<NodeId> = {
+            let attributes: Rc<[NodeId]> = {
                 let __program = self.program.clone().expect("program");
                 let nodes = __program.nodes((node).file_index());
                 nodes[node]
                     .as_import_attributes()
                     .attributes
                     .as_ref()
-                    .map(|l| l.nodes().to_vec())
+                    .map(|l| l.nodes_rc())
                     .unwrap_or_default()
             };
-            for attribute in attributes {
+            for attribute in attributes.iter().copied() {
                 let __program = self.program.clone().expect("program");
                 let an = __program.nodes((attribute).file_index());
                 let member_name = an[attribute]
@@ -9349,7 +9349,7 @@ impl Checker {
             .as_variable_declaration_list()
             .declarations
             .as_ref()
-            .map(|l| l.nodes().to_vec())
+            .map(|l| l.nodes_rc())
             .unwrap_or_default();
         self.check_source_elements(&decls);
     }
@@ -10069,7 +10069,7 @@ fn has_type_json_import_attribute(node: NodeId, nodes: &[ast::Node]) -> bool {
         .as_import_attributes()
         .attributes
         .as_ref()
-        .map(|l| l.nodes().to_vec())
+        .map(|l| l.nodes_rc())
         .unwrap_or_default()
         .iter()
         .any(|&attr| {

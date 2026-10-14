@@ -1763,9 +1763,9 @@ impl Checker {
     pub(crate) fn check_grammar_index_signature_parameters(&mut self, node: NodeId) -> bool {
         let __program = self.program.clone().expect("program");
         let nodes = __program.nodes((node).file_index());
-        let param_nodes: Vec<NodeId> = nodes[node]
+        let param_nodes: Rc<[NodeId]> = nodes[node]
             .parameter_list()
-            .map(|p| p.nodes().to_vec())
+            .map(|p| p.nodes_rc())
             .unwrap_or_default();
 
         if param_nodes.is_empty() {
@@ -2014,7 +2014,7 @@ impl Checker {
         {
             let __program = self.program.clone().expect("program");
             let nodes = __program.nodes((node).file_index());
-            for heritage_clause_node in heritage_clauses.nodes().to_vec() {
+            for heritage_clause_node in heritage_clauses.nodes_rc().iter().copied() {
                 let token = nodes[heritage_clause_node].as_heritage_clause().token;
                 if token == ast::Kind::ExtendsKeyword {
                     if seen_extends_clause {
@@ -2037,7 +2037,7 @@ impl Checker {
                         .as_heritage_clause()
                         .types
                         .as_ref()
-                        .map(|t| t.nodes().to_vec())
+                        .map(|t| t.nodes_rc())
                         .unwrap_or_default();
                     if type_nodes.len() > 1 {
                         return self.grammar_error_on_first_token(
@@ -2084,7 +2084,7 @@ impl Checker {
             .clone();
         if let Some(heritage_clauses) = heritage_clauses {
             let mut seen_extends_clause = false;
-            for heritage_clause_node in heritage_clauses.nodes().to_vec() {
+            for heritage_clause_node in heritage_clauses.nodes_rc().iter().copied() {
                 let token = nodes[heritage_clause_node].as_heritage_clause().token;
 
                 match token {
@@ -4460,13 +4460,13 @@ impl Checker {
         let mut has_error = false;
         let __program = self.program.clone().expect("program");
         let nodes = __program.nodes((node).file_index());
-        let attributes: Vec<NodeId> = nodes[node]
+        let attributes: Rc<[NodeId]> = nodes[node]
             .as_import_attributes()
             .attributes
             .as_ref()
-            .map(|a| a.nodes().to_vec())
+            .map(|a| a.nodes_rc())
             .unwrap_or_default();
-        for attribute in attributes {
+        for attribute in attributes.iter().copied() {
             let value = nodes[attribute].as_import_attribute().value.expect("value");
             if ast::is_string_literal(&nodes[value]) {
                 continue;
@@ -4488,11 +4488,11 @@ impl Checker {
     ) -> bool {
         let __program = self.program.clone().expect("program");
         let nodes = __program.nodes((named_bindings).file_index());
-        let elements: Vec<NodeId> = nodes[named_bindings]
+        let elements: Rc<[NodeId]> = nodes[named_bindings]
             .element_list()
-            .map(|l| l.nodes().to_vec())
+            .map(|l| l.nodes_rc())
             .unwrap_or_default();
-        for specifier in elements {
+        for specifier in elements.iter().copied() {
             let specifier_is_type_only = nodes[specifier].is_type_only();
             let message = if nodes[specifier].kind == ast::Kind::ImportSpecifier {
                 &diagnostics::The_type_modifier_cannot_be_used_on_a_named_import_when_import_type_is_used_on_its_import_statement
@@ -4626,11 +4626,11 @@ impl Checker {
     pub(crate) fn check_grammar_import_attributes_type(&mut self, attributes: NodeId) -> bool {
         let __program = self.program.clone().expect("program");
         let nodes = __program.nodes((attributes).file_index());
-        let members = nodes[attributes].member_list().map(|m| m.nodes().to_vec());
+        let members = nodes[attributes].member_list().map(|m| m.nodes_rc());
         let Some(members) = members else {
             return false;
         };
-        for member in members {
+        for member in members.iter().copied() {
             if nodes[member].kind != ast::Kind::PropertySignature {
                 return self.grammar_error_on_node(
                     member,

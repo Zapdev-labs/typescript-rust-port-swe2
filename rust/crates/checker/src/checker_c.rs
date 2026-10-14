@@ -13533,13 +13533,13 @@ impl Checker {
                         .union_or_intersection_type_node_base
                         .types
                         .as_ref()
-                        .map(|l| l.nodes().to_vec()),
+                        .map(|l| l.nodes_rc()),
                     _ => nodes[node]
                         .as_intersection_type_node()
                         .union_or_intersection_type_node_base
                         .types
                         .as_ref()
-                        .map(|l| l.nodes().to_vec()),
+                        .map(|l| l.nodes_rc()),
                 }
                 .unwrap_or_default();
                 types.iter().any(|&t| self.may_resolve_type_alias(t))

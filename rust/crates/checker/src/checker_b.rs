@@ -5574,7 +5574,7 @@ impl Checker {
             return cached;
         }
         let type_argument_nodes = type_arguments
-            .map(|l| l.nodes().to_vec())
+            .map(|l| l.nodes_rc())
             .unwrap_or_default();
         let mut has_some_applicable_signature = false;
         let mut non_applicable_type: Option<TypeId> = None;

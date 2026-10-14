@@ -541,9 +541,9 @@ pub(crate) fn collect_binding_pattern_symbols(
             .as_binding_pattern()
             .elements
             .as_ref()
-            .map(|l| l.nodes().to_vec())
+            .map(|l| l.nodes_rc())
             .unwrap_or_default();
-        for e in elements {
+        for e in elements.iter().copied() {
             match nodes[e].kind {
                 Kind::OmittedExpression => return,
                 Kind::BindingElement => bind_element(c, nodes, e, additions),

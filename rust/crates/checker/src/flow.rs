@@ -2522,7 +2522,7 @@ impl Checker {
         };
         let __program = self.program.clone().expect("program");
         let nodes = __program.nodes((switch_statement).file_index());
-        let clauses: Vec<NodeId> = nodes[switch_statement]
+        let clauses: Rc<[NodeId]> = nodes[switch_statement]
             .as_switch_statement()
             .case_block
             .map(|cb| {
@@ -2530,7 +2530,7 @@ impl Checker {
                     .as_case_block()
                     .clauses
                     .as_ref()
-                    .map(|c| c.nodes().to_vec())
+                    .map(|c| c.nodes_rc())
                     .unwrap_or_default()
             })
             .unwrap_or_default();
@@ -2578,7 +2578,7 @@ impl Checker {
         data: SwitchClauseData,
     ) -> TypeId {
         let switch_statement = data.switch_statement.expect("switch statement");
-        let clauses: Vec<NodeId> = f.nodes()[switch_statement]
+        let clauses: Rc<[NodeId]> = f.nodes()[switch_statement]
             .as_switch_statement()
             .case_block
             .map(|cb| {
@@ -2586,7 +2586,7 @@ impl Checker {
                     .as_case_block()
                     .clauses
                     .as_ref()
-                    .map(|c| c.nodes().to_vec())
+                    .map(|c| c.nodes_rc())
                     .unwrap_or_default()
             })
             .unwrap_or_default();
@@ -4327,7 +4327,7 @@ impl Checker {
         if !self.switch_statement_links.get(node).witnesses_computed {
             let __program = self.program.clone().expect("program");
             let nodes = __program.nodes((node).file_index());
-            let clauses: Vec<NodeId> = nodes[node]
+            let clauses: Rc<[NodeId]> = nodes[node]
                 .as_switch_statement()
                 .case_block
                 .map(|cb| {
@@ -4335,7 +4335,7 @@ impl Checker {
                         .as_case_block()
                         .clauses
                         .as_ref()
-                        .map(|c| c.nodes().to_vec())
+                        .map(|c| c.nodes_rc())
                         .unwrap_or_default()
                 })
                 .unwrap_or_default();
@@ -4386,7 +4386,7 @@ impl Checker {
         if !self.switch_statement_links.get(node).switch_types_computed {
             let __program = self.program.clone().expect("program");
             let nodes = __program.nodes((node).file_index());
-            let clauses: Vec<NodeId> = nodes[node]
+            let clauses: Rc<[NodeId]> = nodes[node]
                 .as_switch_statement()
                 .case_block
                 .map(|cb| {
@@ -4394,7 +4394,7 @@ impl Checker {
                         .as_case_block()
                         .clauses
                         .as_ref()
-                        .map(|c| c.nodes().to_vec())
+                        .map(|c| c.nodes_rc())
                         .unwrap_or_default()
                 })
                 .unwrap_or_default();
