@@ -289,46 +289,28 @@ impl<'a> NameResolver<'a> {
         let original_location = location; // needed for did-you-mean error reporting, which gathers candidates starting from the original location
         let name_is_const = name == "const";
         // PORT(cross-arena): declaration-emit node reuse can parent a node
-        // into another file's arena; Go follows the pointer. Prefetch every
-        // arena on the ancestor chain so the loop's `nodes[loc]` reads and
-        // `last`/`p` reads resolve through `node_at`/the per-hop swap.
+        // into another file's arena; Go follows the pointer. Foreign arenas
+        // are fetched lazily at the first unresolvable hop — the common case
+        // (every ancestor in `primary`) pays nothing.
         let primary: &[Node] = nodes;
         let mut extra_arenas: Vec<Rc<NodeArenaBuf>> = Vec::new();
-        {
-            let mut cur = location;
-            let mut hops = 0usize;
-            while let Some(n) = cur {
-                hops += 1;
-                if hops > 1_000_000 {
-                    break;
-                }
-                let arena: &[Node] = if buffer_resolves(primary, n) {
-                    primary
-                } else {
-                    if !extra_arenas.iter().any(|rc| buffer_resolves(rc, n)) {
-                        match self
-                            .host
-                            .as_deref_mut()
-                            .and_then(|h| h.nr_arena_for(n, primary))
-                        {
-                            Some(rc) if buffer_resolves(&rc, n) => extra_arenas.push(rc),
-                            _ => break,
-                        }
-                    }
-                    match extra_arenas.iter().find(|rc| buffer_resolves(rc, n)) {
-                        Some(rc) => rc.as_slice(),
-                        None => break,
-                    }
-                };
-                cur = arena[n].parent;
-            }
-        }
         'loop_: while let Some(mut loc) = location {
             // PORT(cross-arena): `loc` may live outside `primary` after a
             // foreign parent hop — swap the walking arena.
             let nodes: &[Node] = if buffer_resolves(primary, loc) {
                 primary
             } else {
+                if !extra_arenas.iter().any(|rc| buffer_resolves(rc, loc)) {
+                    if let Some(rc) = self
+                        .host
+                        .as_deref_mut()
+                        .and_then(|h| h.nr_arena_for(loc, primary))
+                    {
+                        if buffer_resolves(&rc, loc) {
+                            extra_arenas.push(rc);
+                        }
+                    }
+                }
                 match extra_arenas.iter().position(|rc| buffer_resolves(rc, loc)) {
                     Some(i) => extra_arenas[i].as_slice(),
                     None => primary,
