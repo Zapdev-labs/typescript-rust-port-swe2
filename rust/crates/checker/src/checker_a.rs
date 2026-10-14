@@ -8497,7 +8497,7 @@ impl Checker {
         }
         let is_type_only = ast::is_exclusively_type_only_import_or_export(declaration, &nodes)
             || ast::is_import_type_node(&nodes[declaration]);
-        let override_ = self.get_resolution_mode_override(node, !is_type_only);
+        let override_ = self.get_resolution_mode_override(node, is_type_only);
         if is_type_only {
             return; // Other grammar checks do not apply to type-only imports with import attributes
         }
