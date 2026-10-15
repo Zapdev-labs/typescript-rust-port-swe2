@@ -667,6 +667,12 @@ impl Vfs for OverlayFs {
     fn realpath(&self, path: &RootedPath) -> RootedPath {
         self.host.realpath(path)
     }
+
+    /// `as_concrete` — `fs.(*overlayFS)` assertions (e.g. the api
+    /// requestfilesystem's `baseFS.(project.LayeredFileSystem)`).
+    fn as_concrete(&self) -> Option<&dyn Any> {
+        Some(self)
+    }
 }
 
 /// `overlayFileInfo`.

@@ -9,6 +9,8 @@ license.workspace = true
 workspace = true
 
 [dependencies]
+rustc-hash = { workspace = true }
+serde = { workspace = true }
 serde_json = { workspace = true }
 tsc-apiencoder = { path = "../apiencoder" }
 tsc-ast = { path = "../ast" }

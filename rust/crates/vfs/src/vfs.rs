@@ -57,6 +57,15 @@ pub trait Vfs: Send + Sync {
     fn as_fs_with_sys(&self) -> Option<&dyn crate::iovfs::FsWithSys> {
         None
     }
+
+    /// PORT: general `fs.(ConcreteType)` assertions (e.g.
+    /// `fs.(*requestFileSystem)` in the api layer) — implementors that can be
+    /// the target of an interface assertion return `Some(self)`. Distinct
+    /// from `as_fs_with_sys` (which unwraps to the *inner* system handle)
+    /// and from `LayeredFileSystem::as_any` (different signature).
+    fn as_concrete(&self) -> Option<&dyn std::any::Any> {
+        None
+    }
 }
 
 #[derive(Clone, Default, Debug, PartialEq, Eq)]
