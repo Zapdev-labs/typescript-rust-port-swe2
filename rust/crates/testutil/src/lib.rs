@@ -25,6 +25,11 @@ pub mod fixtures;
 pub mod fsbaselineutil;
 pub mod harnessutil;
 pub mod jstest;
+// PORT(deferred): `lsptestutil` drives `tsc_lsp::Server`, which is still a
+// skeleton being ported in parallel; gated behind the `lsp` feature (same
+// pattern as tsc-testrunner's `harness` gate) until it lands.
+#[cfg(feature = "lsp")]
+pub mod lsptestutil;
 pub mod parsetestutil;
 pub mod race;
 pub mod stringtestutil;

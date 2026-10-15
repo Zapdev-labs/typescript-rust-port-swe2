@@ -8,6 +8,13 @@ license.workspace = true
 [lints]
 workspace = true
 
+[features]
+# `lsp` gates `lsptestutil`, which calls `tsc_lsp::Server` (still a skeleton
+# being ported in parallel). Off by default so the crate compiles today;
+# enable it once the lsp port lands.
+default = []
+lsp = []
+
 [dependencies]
 tsc-ast = { path = "../ast" }
 tsc-bundled = { path = "../bundled" }
@@ -20,7 +27,10 @@ tsc-diagnosticwriter = { path = "../diagnosticwriter" }
 tsc-diagnostics = { path = "../diagnostics" }
 tsc-ipc = { path = "../ipc" }
 tsc-json = { path = "../json" }
+tsc-jsonrpc = { path = "../jsonrpc" }
 tsc-locale = { path = "../locale" }
+tsc-lsp = { path = "../lsp" }
+tsc-lsproto = { path = "../lsproto" }
 tsc-nodebuilder = { path = "../nodebuilder" }
 tsc-outputpaths = { path = "../outputpaths" }
 tsc-parser = { path = "../parser" }

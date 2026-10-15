@@ -59,6 +59,22 @@ pub struct FsDiffer {
 }
 
 impl FsDiffer {
+    /// `&FSDiffer{FS: fs, WrittenFiles: writtenFiles}` — zero-value baseline
+    /// (`serializedDiff` starts nil, `defaultLibs` nil) as constructed in
+    /// fourslash `newStateBaseline`.
+    pub fn new(
+        fs: Arc<dyn Vfs>,
+        default_libs: Option<DefaultLibsFn>,
+        written_files: Arc<SyncSet<RootedFilePath>>,
+    ) -> FsDiffer {
+        FsDiffer {
+            fs,
+            default_libs,
+            written_files,
+            serialized_diff: None,
+        }
+    }
+
     /// SerializedDiff returns the last snapshot produced by [FsDiffer::baseline_fs_with_diff].
     pub fn serialized_diff(&self) -> Option<&Snapshot> {
         self.serialized_diff.as_ref()

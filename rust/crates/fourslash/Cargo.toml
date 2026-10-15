@@ -17,6 +17,7 @@ tsc-core = { path = "../core" }
 tsc-debug = { path = "../debug" }
 tsc-diagnostics = { path = "../diagnostics" }
 tsc-diagnosticwriter = { path = "../diagnosticwriter" }
+tsc-execute = { path = "../execute" }
 tsc-json = { path = "../json" }
 tsc-jsonrpc = { path = "../jsonrpc" }
 tsc-locale = { path = "../locale" }
@@ -28,6 +29,10 @@ tsc-lsutil = { path = "../lsutil" }
 tsc-project = { path = "../project" }
 tsc-spanmap = { path = "../spanmap" }
 tsc-stringutil = { path = "../stringutil" }
+tsc-testrunner = { path = "../testrunner" }
 tsc-testutil = { path = "../testutil" }
 tsc-tspath = { path = "../tspath" }
 tsc-vfs = { path = "../vfs" }
+rustc-hash = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
