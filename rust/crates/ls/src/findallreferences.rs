@@ -174,7 +174,7 @@ pub(crate) enum EntryKind {
 }
 
 /// `type ReferenceEntry struct`.
-pub(crate) struct ReferenceEntry {
+pub struct ReferenceEntry {
     /// `kind`.
     pub(crate) kind: EntryKind,
     /// `node`.
