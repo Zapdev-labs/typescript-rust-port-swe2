@@ -472,8 +472,7 @@ impl Snapshot {
     /// `s.Clone` derives the next immutable snapshot from this one.
     ///
     /// PORT: `fs`/`overlays`/`client` are `Option`s of Go's nil-able
-    /// parameters. The `ProjectCollectionBuilder` calls are sibling stubs
-    /// (`unimplemented!`) until `projectcollectionbuilder.go` is ported.
+    /// parameters.
     pub fn clone(
         self: &Arc<Self>,
         ctx: &Context,
@@ -1181,6 +1180,9 @@ pub struct SnapshotChange {
 }
 
 /// `ATAStateChange` — a change to a project's ATA state.
+/// `Clone` — Go passes the `map[ID]ATAStateChange` by reference, letting
+/// `APIUpdate` reuse it for the host-changes fallback snapshot.
+#[derive(Clone)]
 pub struct AtaStateChange {
     /// `TypingsInfo` — the new typings info for the project.
     pub typings_info: Option<TypingsInfo>,

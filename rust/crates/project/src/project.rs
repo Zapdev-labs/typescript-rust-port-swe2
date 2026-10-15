@@ -1,12 +1,9 @@
 // Ported from tsc/internal/project/project.go @ ec47d33c23e464a17cdf2475632cba629bee8763
-// PORT(skeleton): pending full port.
 //
-// PORT(sibling): `project.go` is owned by the sibling session/project
-// worker. The project-ID types, `Kind`, `ProgramUpdateKind`, `PendingReload`,
-// and the `Project` field shell below are the minimum required by owned
-// infrastructure (configfileregistry.rs, projectcollection.rs,
-// snapshot.rs, compilerhost.rs). Project behavior (program creation,
-// diagnostics, ATA, language service) is NOT ported here.
+// Project-ID types, `Kind`, `ProgramUpdateKind`, `PendingReload`, the
+// `Project` fields, and its lifecycle: constructors, `clone_project`,
+// `set_command_line`, `clone_watchers`, `create_program`, potential
+// project references, and typings accessors.
 
 use std::cell::RefCell;
 use std::rc::Rc;

@@ -1,11 +1,8 @@
 // Ported from tsc/internal/project/session.go @ ec47d33c23e464a17cdf2475632cba629bee8763
-// PORT(skeleton): pending full port.
 //
-// PORT(sibling): the session-level types below are declared here because
-// owned infrastructure (snapshothost.rs, snapshot.rs,
-// configfileregistrybuilder.rs, compilerhost.rs) names them. The sibling
-// session worker owns the rest of session.go (Session, watchers, client
-// plumbing) and should reconcile these definitions.
+// `Session` and its lifecycle: file events, snapshot updates, schedulers
+// (diagnostics refresh, idle, warm auto-import, telemetry), watchers,
+// ATA triggering, language-service accessors, and diagnostics publish.
 
 use std::rc::Rc;
 use std::sync::Arc;
@@ -263,7 +260,9 @@ struct ContentMapperRegistration {
 pub struct Session {
     /// Go embeds `*SnapshotHost` — a `Deref` impl provides the same
     /// pass-through member access.
-    host: Arc<SnapshotHost>,
+    /// `pub(crate)` — `api.rs`'s `TryAdoptSnapshotInBackground` calls
+    /// `s.RetainSnapshot` (same-package access in Go).
+    pub(crate) host: Arc<SnapshotHost>,
     options: Arc<SessionOptions>,
     logger: Arc<dyn Logger>,
     /// `backgroundCtx`/`backgroundCancel` — the session-scoped context all
@@ -296,7 +295,9 @@ pub struct Session {
     /// `snapshot` under `snapshotMu`.
     snapshot: RwLock<Option<Arc<Snapshot>>>,
     /// `snapshotUpdateMu` — serializes snapshot updates.
-    snapshot_update_mu: Mutex<()>,
+    /// `pub(crate)` — `api.rs`'s `APIUpdate` shares the package's private
+    /// fields like Go's same-package access.
+    pub(crate) snapshot_update_mu: Mutex<()>,
 
     /// `scheduledSnapshotUpdateCancel`/`Generation` under
     /// `scheduledSnapshotUpdateMu`.
@@ -884,7 +885,8 @@ impl Session {
     }
 
     /// `s.cancelScheduledSnapshotUpdate`.
-    fn cancel_scheduled_snapshot_update(&self) {
+    /// `pub(crate)` — `api.rs` (same package in Go).
+    pub(crate) fn cancel_scheduled_snapshot_update(&self) {
         let mut scheduled = self.scheduled_snapshot_update.lock().unwrap();
         if let Some(cancel) = scheduled.cancel.take() {
             cancel.cancel();
@@ -1636,7 +1638,8 @@ impl Session {
     }
 
     /// `s.tryAdoptSnapshotChangeInBackground`.
-    fn try_adopt_snapshot_change_in_background(
+    /// `pub(crate)` — `api.rs` (same package in Go).
+    pub(crate) fn try_adopt_snapshot_change_in_background(
         self: &Arc<Self>,
         base_snapshot: &Arc<Snapshot>,
         new_snapshot: &Arc<Snapshot>,
@@ -1855,7 +1858,8 @@ impl Session {
     }
 
     /// `s.flushChanges` — drains all pending state under their locks.
-    fn flush_changes(
+    /// `pub(crate)` — `api.rs` (same package in Go).
+    pub(crate) fn flush_changes(
         &self,
         ctx: &Context,
     ) -> (

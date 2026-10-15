@@ -1,12 +1,11 @@
 // Ported from tsc/internal/project/projectcollection.go @ ec47d33c23e464a17cdf2475632cba629bee8763
-// PORT(skeleton): pending full port.
 //
-// PORT(sibling): `projectcollection.go` is owned by the sibling
-// session/project worker. The collection below carries the Go struct's
-// fields plus the read-only accessors the snapshot layer calls
-// (`projects`, `synthetic_projects`, `get_default_project`,
-// `get_language_service_projects_containing_file`, `get_project`). The
-// mutation APIs and session integration are the sibling's to fill in.
+// `ProjectCollection` carries the Go struct's fields plus the read-only
+// accessors the snapshot layer calls (`projects`, `synthetic_projects`,
+// `get_default_project`, `get_language_service_projects_containing_file`,
+// `get_project`). Mutation happens on
+// `projectcollectionbuilder.rs`'s builder; `shallow_clone` + `finalize`
+// produce the next collection.
 
 use std::rc::Rc;
 use std::sync::{Arc, OnceLock};
