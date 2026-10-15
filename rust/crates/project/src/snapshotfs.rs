@@ -1174,7 +1174,10 @@ fn has_open_file_within(
 pub struct SourceFs {
     tracking: AtomicBool,
     missing_directories: SyncSet<PathKey>,
-    seen_files: SyncMap<PathKey, RootedFilePath>,
+    /// `seenFiles` — `RwLock<Arc<SyncMap>>` so the program-clone path can
+    /// transplant a previous host's seen set
+    /// (`project.host.sourceFS.seenFiles = oldHost.sourceFS.seenFiles`).
+    seen_files: RwLock<Arc<SyncMap<PathKey, RootedFilePath>>>,
     source: RwLock<Arc<dyn FileSource>>,
     case_sensitivity: CaseSensitivity,
 }
@@ -1184,7 +1187,7 @@ pub fn new_source_fs(tracking: bool, source: Arc<dyn FileSource>) -> SourceFs {
     SourceFs {
         tracking: AtomicBool::new(tracking),
         missing_directories: SyncSet::default(),
-        seen_files: SyncMap::new(),
+        seen_files: RwLock::new(Arc::new(SyncMap::new())),
         case_sensitivity: source.fs().case_sensitivity(),
         source: RwLock::new(source),
     }
@@ -1212,20 +1215,30 @@ impl SourceFs {
         if !self.tracking.load(Ordering::SeqCst) {
             return;
         }
-        self.seen_files.store(
+        self.seen_files.read().unwrap().store(
             self.case_sensitivity.path_key(&file_name.as_path()),
             file_name.clone(),
         );
     }
 
+    /// `fs.seenFiles` — the shared seen-files set (Go `*SyncMap` field).
+    pub fn seen_files(&self) -> Arc<SyncMap<PathKey, RootedFilePath>> {
+        self.seen_files.read().unwrap().clone()
+    }
+
+    /// `fs.seenFiles = other.seenFiles` — the program-clone transplant.
+    pub fn set_seen_files(&self, seen_files: Arc<SyncMap<PathKey, RootedFilePath>>) {
+        *self.seen_files.write().unwrap() = seen_files;
+    }
+
     /// `SeenFile`.
     pub fn seen_file(&self, path: &PathKey) -> bool {
-        self.seen_files.load(path).is_some()
+        self.seen_files.read().unwrap().load(path).is_some()
     }
 
     /// `SeenFileOrMissingParentDirectory`.
     pub fn seen_file_or_missing_parent_directory(&self, path: &PathKey) -> bool {
-        if self.seen_files.load(path).is_some() {
+        if self.seen_files.read().unwrap().load(path).is_some() {
             return true;
         }
         if !self.missing_directories.is_empty() {

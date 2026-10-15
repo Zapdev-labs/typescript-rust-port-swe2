@@ -269,6 +269,114 @@ fn update_min(a: &AtomicI64, candidate: i64) -> bool {
 }
 
 // Ported from tsc/internal/core/bfs_test.go @ ec47d33c23e464a17cdf2475632cba629bee8763
+/// Sequential `BreadthFirstSearchParallelEx` — identical result semantics
+/// (the parallel version's scheduling cannot change the outcome: the
+/// lowest-index goal wins, and jobs are dequeued in deterministic index
+/// order). Exists for callers whose `visit`/`neighbors` closures capture
+/// non-`Sync` state (e.g. the project builder's `Rc`-based project graph).
+pub fn breadth_first_search_ex<K, N>(
+    start: N,
+    neighbors: &dyn Fn(N) -> Vec<N>,
+    visit: &dyn Fn(N) -> (bool, bool),
+    options: BreadthFirstSearchOptions<'_, K, N>,
+    get_key: &dyn Fn(&N) -> K,
+) -> BreadthFirstSearchResult<N>
+where
+    K: Eq + std::hash::Hash,
+    N: Clone,
+{
+    let owned_visited;
+    let visited = match options.visited {
+        Some(v) => v,
+        None => {
+            owned_visited = SyncSet::new();
+            &owned_visited
+        }
+    };
+
+    let mut arena: Vec<BreadthFirstSearchJob<N>> = Vec::new();
+    let mut fallback: Option<u32> = None;
+
+    let create_path = |job: Option<u32>, arena: &[BreadthFirstSearchJob<N>]| {
+        let mut path = Vec::new();
+        let mut job = job;
+        while let Some(j) = job {
+            let job_ref = &arena[j as usize];
+            path.push(job_ref.node.clone());
+            job = job_ref.parent;
+        }
+        Some(path)
+    };
+
+    let mut level_index = 0usize;
+    arena.push(BreadthFirstSearchJob {
+        node: start,
+        parent: None,
+    });
+    let mut level = OrderedMap::from_list([MapEntry {
+        key: get_key(&arena[0].node),
+        value: 0,
+    }]);
+    while level.size() > 0 {
+        let _ = level_index;
+        if let Some(preprocess_level) = options.preprocess_level {
+            preprocess_level(&mut BreadthFirstSearchLevel {
+                jobs: &mut level,
+                arena: &arena,
+            });
+        }
+        let job_ids: Vec<u32> = level.values().copied().collect();
+        let fallback_is_none = fallback.is_none();
+        let mut goal: Option<u32> = None;
+        let mut fallback_candidate: Option<u32> = None;
+        let mut next_jobs: OrderedMap<K, u32> = OrderedMap::new();
+        for &j in &job_ids {
+            if goal.is_some() {
+                break;
+            }
+            if !visited.add_if_absent(get_key(&arena[j as usize].node)) {
+                continue;
+            }
+            let (is_result, stop) = visit(arena[j as usize].node.clone());
+            if is_result {
+                if stop {
+                    goal = Some(j);
+                    break;
+                }
+                if fallback_is_none && fallback_candidate.is_none() {
+                    fallback_candidate = Some(j);
+                }
+            }
+            for child in neighbors(arena[j as usize].node.clone()) {
+                let key = get_key(&child);
+                if !next_jobs.has(&key) {
+                    let job_id = arena.len() as u32;
+                    arena.push(BreadthFirstSearchJob {
+                        node: child,
+                        parent: Some(j),
+                    });
+                    next_jobs.set(key, job_id);
+                }
+            }
+        }
+        if let Some(j) = goal {
+            return BreadthFirstSearchResult {
+                stopped: true,
+                path: create_path(Some(j), &arena),
+            };
+        }
+        if fallback.is_none() {
+            fallback = fallback_candidate;
+        }
+        level = next_jobs;
+        level_index += 1;
+    }
+    BreadthFirstSearchResult {
+        stopped: false,
+        path: create_path(fallback, &arena),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

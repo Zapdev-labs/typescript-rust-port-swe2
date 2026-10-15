@@ -1,5 +1,6 @@
 // Ported from tsc/internal/project/compilerhost.go @ ec47d33c23e464a17cdf2475632cba629bee8763
 
+use std::rc::Rc;
 use std::sync::{Arc, Mutex, OnceLock};
 
 use tsc_ast::parseoptions::SourceFileParseOptions;
@@ -34,7 +35,7 @@ use crate::snapshotfs::{SnapshotFs, SourceFs, new_source_fs};
 /// `PORT(sibling)`: the view of `*Project` that `compilerHost` needs —
 /// `configFilePath`, `ID()`, and `getCommandLineWithTypingsFiles()`.
 /// The sibling session/project worker implements this on `Project`.
-pub trait CompilerHostProject: Send + Sync {
+pub trait CompilerHostProject: Send + Sync + 'static {
     /// `project.configFilePath`.
     fn config_file_path(&self) -> &PathKey;
     /// `project.ID()`.
@@ -48,21 +49,22 @@ pub trait CompilerHostProject: Send + Sync {
 /// config-file registry builder, ctx, and content mapper host.
 /// The sibling session/project worker implements this on
 /// `ProjectCollectionBuilder`.
-pub trait CompilerHostBuilder: Send + Sync {
+pub trait CompilerHostBuilder: Send + Sync + 'static {
     /// `builder.sessionOptions`.
     fn session_options(&self) -> &SessionOptions;
     /// `builder.fs` — the `*snapshotFsBuilder` as a `FileSource`.
     fn fs(&self) -> Arc<dyn FileSource>;
-    /// `builder.parseCache`.
-    fn parse_cache(&self) -> &ParseCache;
+    /// `builder.parseCache` — handle clone (`Rc<ParseCache>` is a shared
+    /// cache, like Go's pointer field).
+    fn parse_cache(&self) -> Rc<ParseCache>;
     /// `builder.contentMappedParseCache`.
-    fn content_mapped_parse_cache(&self) -> &ContentMappedParseCache;
+    fn content_mapped_parse_cache(&self) -> Rc<ContentMappedParseCache>;
     /// `builder.configFileRegistryBuilder`.
-    fn config_file_registry_builder(&self) -> &Arc<ConfigFileRegistryBuilder>;
+    fn config_file_registry_builder(&self) -> Arc<ConfigFileRegistryBuilder>;
     /// `builder.ctx`.
-    fn ctx(&self) -> &Context;
+    fn ctx(&self) -> Context;
     /// `builder.contentMapperHost`.
-    fn content_mapper_host(&self) -> Option<&Arc<dyn tsc_contentmapper::Host>>;
+    fn content_mapper_host(&self) -> Option<Arc<dyn tsc_contentmapper::Host>>;
 }
 
 /// `PORT(sibling)`: the operations the snapshot/project layers perform on
@@ -77,6 +79,20 @@ pub trait ProjectCompilerHost: Send + Sync {
     fn source_fs(&self) -> &Arc<SourceFs>;
     /// `project.host.FS()` — the tracked source filesystem as `vfs.FS`.
     fn fs(&self) -> &Arc<dyn Vfs>;
+    /// `project.host` as `compiler.CompilerHost` — the same `Arc` handed to
+    /// `NewProgram`/`UpdateProgram`.
+    fn compiler_host(&self) -> Arc<dyn CompilerHostTrait>;
+    /// `project.host.sessionOptions`.
+    fn session_options(&self) -> &SessionOptions;
+    /// `project.host.builder.parseCache` — handle clone for
+    /// `CreateProgram`'s refcount fixups.
+    fn parse_cache(&self) -> Rc<ParseCache>;
+    /// `project.host.builder.contentMappedParseCache`.
+    fn content_mapped_parse_cache(&self) -> Rc<ContentMappedParseCache>;
+    /// `project.host.builder.ctx`.
+    fn builder_ctx(&self) -> Context;
+    /// `project.host.ContentMapperProject()`.
+    fn content_mapper_project(&self) -> Option<Arc<dyn tsc_contentmapper::Project>>;
 }
 
 /// `var _ compiler.CompilerHost = (*compilerHost)(nil)`
@@ -177,7 +193,7 @@ impl<B: CompilerHostBuilder, P: CompilerHostProject> CompilerHostWrapper<B, P> {
     }
 
     /// `ContentMapperProject`.
-    fn content_mapper_project_impl(&self) -> Option<Arc<dyn Project>> {
+    pub(crate) fn content_mapper_project_impl(&self) -> Option<Arc<dyn Project>> {
         self.content_mapper_project
             .get_or_init(|| {
                 let builder = self.builder.lock().unwrap();
@@ -208,19 +224,70 @@ impl<B: CompilerHostBuilder, P: CompilerHostProject> CompilerHostWrapper<B, P> {
     }
 }
 
+/// `Project.host`'s erased handle — owns the `Arc<CompilerHostWrapper>` so
+/// `compiler_host()` can hand the same `Arc` to `NewProgram`/`UpdateProgram`.
+pub struct ProjectHostHandle<B: CompilerHostBuilder, P: CompilerHostProject> {
+    /// The concrete host; `Arc` so `compiler_host()` can share it.
+    pub wrapper: Arc<CompilerHostWrapper<B, P>>,
+}
+
+impl<B: CompilerHostBuilder, P: CompilerHostProject> ProjectHostHandle<B, P> {
+    /// `newCompilerHost(project, builder, logger)` — wraps a freshly built
+    /// wrapper for `Project.host` storage.
+    pub fn new(wrapper: Arc<CompilerHostWrapper<B, P>>) -> ProjectHostHandle<B, P> {
+        ProjectHostHandle { wrapper }
+    }
+}
+
 /// `var _ ProjectCompilerHost = (*compilerHost)(nil)` — the view
 /// `Project.host` stores to erase the `B`/`P` generics.
 impl<B: CompilerHostBuilder, P: CompilerHostProject> ProjectCompilerHost
-    for CompilerHostWrapper<B, P>
+    for ProjectHostHandle<B, P>
 {
     fn freeze(&self, snapshot_fs: Arc<SnapshotFs>, config_file_registry: ConfigFileRegistry) {
-        CompilerHostWrapper::freeze(self, snapshot_fs, config_file_registry)
+        self.wrapper.freeze(snapshot_fs, config_file_registry)
     }
     fn source_fs(&self) -> &Arc<SourceFs> {
-        &self.source_fs
+        self.wrapper.source_fs()
     }
     fn fs(&self) -> &Arc<dyn Vfs> {
-        &self.fs_vfs
+        self.wrapper.fs_vfs()
+    }
+    fn compiler_host(&self) -> Arc<dyn CompilerHostTrait> {
+        self.wrapper.clone()
+    }
+    fn session_options(&self) -> &SessionOptions {
+        &self.wrapper.session_options
+    }
+    fn parse_cache(&self) -> Rc<ParseCache> {
+        self.wrapper
+            .builder
+            .lock()
+            .unwrap()
+            .as_ref()
+            .expect("builder after freeze")
+            .parse_cache()
+    }
+    fn content_mapped_parse_cache(&self) -> Rc<ContentMappedParseCache> {
+        self.wrapper
+            .builder
+            .lock()
+            .unwrap()
+            .as_ref()
+            .expect("builder after freeze")
+            .content_mapped_parse_cache()
+    }
+    fn builder_ctx(&self) -> Context {
+        self.wrapper
+            .builder
+            .lock()
+            .unwrap()
+            .as_ref()
+            .expect("builder after freeze")
+            .ctx()
+    }
+    fn content_mapper_project(&self) -> Option<Arc<dyn tsc_contentmapper::Project>> {
+        self.wrapper.content_mapper_project_impl()
     }
 }
 
@@ -283,7 +350,7 @@ impl<B: CompilerHostBuilder, P: CompilerHostProject> CompilerHostTrait
         };
         let builder_guard = self.builder.lock().unwrap();
         let builder = builder_guard.as_ref().unwrap();
-        let diagnostic_locale = from_context(builder.ctx());
+        let diagnostic_locale = from_context(&builder.ctx());
         let identity = project.identity(mapper).map_err(|e| {
             ContentMapperError::Transform(TransformError::new(
                 TransformErrorKind::Project,
