@@ -24,6 +24,7 @@ use tsc_json as json;
 use tsc_jsonrpc as jsonrpc;
 
 use crate::{
+    ResponsePayload,
     AsyncConn, Error, Handler, IoClose, Message, Protocol, new_async_conn, new_json_rpc_protocol,
 };
 
@@ -102,7 +103,7 @@ impl Handler for NoOpHandler {
         _ctx: &Context,
         _method: &str,
         _params: Option<json::Value>,
-    ) -> Result<Option<json::Value>, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<Option<ResponsePayload>, Box<dyn std::error::Error + Send + Sync>> {
         Ok(None)
     }
 
@@ -148,7 +149,7 @@ impl Protocol for QueuedProtocol {
     fn write_response(
         &self,
         _id: Option<&jsonrpc::ID>,
-        _result: Option<json::Value>,
+        _result: Option<ResponsePayload>,
     ) -> Result<(), Error> {
         match &self.response_err {
             Some(e) => Err(e.clone()),
@@ -180,7 +181,7 @@ impl Handler for BlockingHandler {
         _ctx: &Context,
         _method: &str,
         _params: Option<json::Value>,
-    ) -> Result<Option<json::Value>, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<Option<ResponsePayload>, Box<dyn std::error::Error + Send + Sync>> {
         let _ = self.started.send(());
         self.release.wait();
         Ok(None)
@@ -208,7 +209,7 @@ impl Handler for ContextHandler {
         ctx: &Context,
         _method: &str,
         _params: Option<json::Value>,
-    ) -> Result<Option<json::Value>, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<Option<ResponsePayload>, Box<dyn std::error::Error + Send + Sync>> {
         ctx.wait_cancelled();
         Err(Box::new(Error::ContextCanceled))
     }
@@ -302,7 +303,7 @@ impl Protocol for FailingResponseProtocol {
     fn write_response(
         &self,
         _id: Option<&jsonrpc::ID>,
-        _result: Option<json::Value>,
+        _result: Option<ResponsePayload>,
     ) -> Result<(), Error> {
         match &self.response_err {
             Some(e) => Err(e.clone()),

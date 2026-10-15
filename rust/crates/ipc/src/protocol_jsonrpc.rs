@@ -122,12 +122,18 @@ impl<R: io::Read + Send, W: io::Write + Send> Protocol for JsonRpcProtocol<R, W>
     fn write_response(
         &self,
         id: Option<&jsonrpc::ID>,
-        result: Option<json::Value>,
+        result: Option<crate::ResponsePayload>,
     ) -> Result<(), Error> {
         // Go: `if result == nil { result = json.Value("null") }` — a nil
         // `any` still produces an explicit `"result":null`.
         let result = match result {
-            Some(r) => Some(r),
+            Some(crate::ResponsePayload::Json(r)) => Some(r),
+            // `json.Marshal(api.RawBinary)` — Go marshals `[]byte` as a
+            // base64 string. Unreached today: `UseBinaryResponses` is only
+            // set on the msgpack path.
+            Some(crate::ResponsePayload::Binary(b)) => {
+                Some(crate::marshal_params(&base64_std_encode(&b))?)
+            }
             None => Some(crate::marshal_params(&serde_json::Value::Null)?),
         };
         let msg = jsonrpc::ResponseMessage::<json::Value> {
@@ -155,4 +161,33 @@ impl<R: io::Read + Send, W: io::Write + Send> Protocol for JsonRpcProtocol<R, W>
         let data = json::marshal(&msg, &[])?;
         Ok(self.writer.lock().unwrap().write(&data)?)
     }
+}
+
+/// `base64.StdEncoding.EncodeToString` — the alphabet `encoding/json` uses
+/// when marshaling `[]byte`. (`tsc-sourcemap`'s port is not a dependency of
+/// this crate.) Exported for `LoggingProtocol`-style wrappers that must
+/// render `ResponsePayload::Binary` the way `json.Marshal` would.
+pub fn base64_std_encode(data: &[u8]) -> String {
+    const ALPHABET: &[u8; 64] =
+        b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let mut out = String::with_capacity(data.len().div_ceil(3) * 4);
+    for chunk in data.chunks(3) {
+        let b0 = chunk[0] as u32;
+        let b1 = *chunk.get(1).unwrap_or(&0) as u32;
+        let b2 = *chunk.get(2).unwrap_or(&0) as u32;
+        let n = (b0 << 16) | (b1 << 8) | b2;
+        out.push(ALPHABET[(n >> 18) as usize & 63] as char);
+        out.push(ALPHABET[(n >> 12) as usize & 63] as char);
+        out.push(if chunk.len() > 1 {
+            ALPHABET[(n >> 6) as usize & 63] as char
+        } else {
+            '='
+        });
+        out.push(if chunk.len() > 2 {
+            ALPHABET[n as usize & 63] as char
+        } else {
+            '='
+        });
+    }
+    out
 }

@@ -13,7 +13,7 @@ use tsc_json as json;
 use tsc_jsonrpc as jsonrpc;
 
 use crate::conn_async_test::NoOpHandler;
-use crate::{Error, Handler, Message, Protocol, SyncConn};
+use crate::{Error, Handler, Message, Protocol, ResponsePayload, SyncConn};
 
 /// `syncFailingResponseProtocol` — returns one message then `io.EOF`;
 /// writes fail with `responseErr`.
@@ -46,7 +46,7 @@ impl Protocol for SyncFailingResponseProtocol {
     fn write_response(
         &self,
         _id: Option<&jsonrpc::ID>,
-        _result: Option<json::Value>,
+        _result: Option<ResponsePayload>,
     ) -> Result<(), Error> {
         match &self.response_err {
             Some(e) => Err(e.clone()),
@@ -75,7 +75,7 @@ impl Handler for PanicHandler {
         _ctx: &Context,
         _method: &str,
         _params: Option<json::Value>,
-    ) -> Result<Option<json::Value>, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<Option<ResponsePayload>, Box<dyn std::error::Error + Send + Sync>> {
         panic!("handler panic")
     }
 

@@ -9,6 +9,7 @@ license.workspace = true
 workspace = true
 
 [dependencies]
+serde_json = { workspace = true }
 tsc-apiencoder = { path = "../apiencoder" }
 tsc-ast = { path = "../ast" }
 tsc-astnav = { path = "../astnav" }

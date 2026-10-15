@@ -27,6 +27,8 @@ use tsc_core::context::Context;
 use tsc_json as json;
 use tsc_jsonrpc::ReadError;
 
+use crate::ResponsePayload;
+
 /// `var ( ErrConnClosed; ErrRequestTimeout )` plus every error shape this
 /// package produces. The Go sentinels are unit variants:
 /// `ErrConnClosed` → [`Error::ConnClosed`], `ErrRequestTimeout` →
@@ -187,14 +189,15 @@ pub trait IoClose: Send + Sync {
 /// `type Handler interface` — processes incoming API requests and
 /// notifications.
 pub trait Handler: Send + Sync {
-    /// `HandleRequest(ctx, method, params) (any, error)` — the result is raw
-    /// JSON; `None` produces a `null` result like a nil `any`.
+    /// `HandleRequest(ctx, method, params) (any, error)` — `None` produces a
+    /// `null` result like a nil `any`; `ResponsePayload::Binary` is the
+    /// `api.RawBinary` case.
     fn handle_request(
         &self,
         ctx: &Context,
         method: &str,
         params: Option<json::Value>,
-    ) -> Result<Option<json::Value>, Box<dyn std::error::Error + Send + Sync>>;
+    ) -> Result<Option<ResponsePayload>, Box<dyn std::error::Error + Send + Sync>>;
 
     /// `HandleNotification(ctx, method, params) error` — the return value is
     /// discarded by the connection, as in Go.

@@ -122,7 +122,8 @@ impl SyncConn {
                 })?;
                 let write_res = {
                     let _g = self.mu.lock().unwrap();
-                    self.protocol.write_response(msg.id.as_ref(), Some(result))
+                    self.protocol
+                        .write_response(msg.id.as_ref(), Some(result.into()))
                 };
                 write_res.map_err(|e| {
                     Error::wrapped(

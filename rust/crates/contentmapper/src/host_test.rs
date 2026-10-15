@@ -210,8 +210,8 @@ fn params_of<T: DeserializeOwned + Default>(
 /// `return result, nil` — marshal a handler response.
 fn respond<T: Serialize>(
     value: &T,
-) -> std::result::Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
-    Ok(ipc::marshal_params(value).ok())
+) -> std::result::Result<Option<ipc::ResponsePayload>, Box<dyn std::error::Error + Send + Sync>> {
+    Ok(ipc::marshal_params(value).ok().map(ipc::ResponsePayload::Json))
 }
 
 fn raw_json(s: &str) -> Value {
@@ -242,7 +242,7 @@ impl Handler for FakeMapper {
         _ctx: &Context,
         method: &str,
         params: Option<Value>,
-    ) -> std::result::Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> std::result::Result<Option<ipc::ResponsePayload>, Box<dyn std::error::Error + Send + Sync>> {
         match method {
             METHOD_INITIALIZE => respond(&InitializeResult {
                 position_encoding: PositionEncoding::UTF8,
@@ -305,7 +305,7 @@ impl Handler for ResponseMapper {
         _ctx: &Context,
         method: &str,
         params: Option<Value>,
-    ) -> std::result::Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> std::result::Result<Option<ipc::ResponsePayload>, Box<dyn std::error::Error + Send + Sync>> {
         match method {
             METHOD_INITIALIZE => respond(&InitializeResult {
                 position_encoding: PositionEncoding::UTF8,
@@ -313,7 +313,7 @@ impl Handler for ResponseMapper {
             }),
             METHOD_TRANSFORM => {
                 let p = params_of::<TransformParams>(&params)?;
-                Ok(Some((self.response)(&p)))
+                Ok(Some(((self.response)(&p)).into()))
             }
             _ => Err(format!("unexpected method {method}").into()),
         }
@@ -341,7 +341,7 @@ impl Handler for UnicodeMapper {
         _ctx: &Context,
         method: &str,
         params: Option<Value>,
-    ) -> std::result::Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> std::result::Result<Option<ipc::ResponsePayload>, Box<dyn std::error::Error + Send + Sync>> {
         match method {
             METHOD_INITIALIZE => {
                 let p = params_of::<InitializeParams>(&params)?;
@@ -440,7 +440,7 @@ impl Handler for InvalidDiagnosticMapper {
         _ctx: &Context,
         method: &str,
         _params: Option<Value>,
-    ) -> std::result::Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> std::result::Result<Option<ipc::ResponsePayload>, Box<dyn std::error::Error + Send + Sync>> {
         match method {
             METHOD_INITIALIZE => respond(&InitializeResult {
                 position_encoding: self.encoding.clone(),
@@ -489,7 +489,7 @@ impl Handler for NoOpProjectMapper {
         ctx: &Context,
         method: &str,
         params: Option<Value>,
-    ) -> std::result::Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> std::result::Result<Option<ipc::ResponsePayload>, Box<dyn std::error::Error + Send + Sync>> {
         match method {
             METHOD_OPEN_PROJECT => respond(&OpenProjectResult::default()),
             METHOD_CLOSE_PROJECT => Ok(None),
@@ -702,7 +702,7 @@ impl Handler for RecordingMapper {
         _ctx: &Context,
         method: &str,
         params: Option<Value>,
-    ) -> std::result::Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> std::result::Result<Option<ipc::ResponsePayload>, Box<dyn std::error::Error + Send + Sync>> {
         match method {
             METHOD_INITIALIZE => {
                 let p = params_of::<InitializeParams>(&params)?;
@@ -837,7 +837,7 @@ impl Handler for BlockingMapper {
         ctx: &Context,
         method: &str,
         params: Option<Value>,
-    ) -> std::result::Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> std::result::Result<Option<ipc::ResponsePayload>, Box<dyn std::error::Error + Send + Sync>> {
         if method == METHOD_TRANSFORM {
             // `close(m.started)` then `<-m.proceed`
             if let Some(tx) = self.started.lock().unwrap().take() {
@@ -1071,13 +1071,13 @@ fn test_host_closes_process_when_read_loop_fails() {
                 protocol
                     .write_response(
                         message.id.as_ref(),
-                        Some(
+                        Some(ipc::ResponsePayload::Json(
                             ipc::marshal_params(&InitializeResult {
                                 position_encoding: PositionEncoding::UTF8,
                                 diagnostic_source: "mapper".into(),
                             })
                             .unwrap(),
-                        ),
+                        )),
                     )
                     .unwrap();
                 io::Write::write_all(&mut &*server, b"oops\n").unwrap();

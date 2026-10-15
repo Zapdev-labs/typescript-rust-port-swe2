@@ -721,14 +721,23 @@ impl Protocol for LoggingProtocol {
     fn write_response(
         &self,
         id: Option<&jsonrpc::ID>,
-        result: Option<Value>,
+        result: Option<ipc::ResponsePayload>,
     ) -> std::result::Result<(), ipc::Error> {
+        let log_result = match &result {
+            // `msg.Result` logs the `any` marshaled like `json.Marshal` —
+            // `[]byte` becomes a base64 string.
+            Some(ipc::ResponsePayload::Binary(b)) => Some(ipc::marshal_params(
+                &ipc::base64_std_encode(b),
+            )?),
+            Some(ipc::ResponsePayload::Json(v)) => Some(v.clone()),
+            None => None,
+        };
         self.log(
             "send",
             &jsonrpc::ResponseMessage::<Value> {
                 jsonrpc: jsonrpc::JSONRPCVersion,
                 id: id.cloned(),
-                result: result.clone(),
+                result: log_result,
                 error: None,
             },
         );
@@ -2334,7 +2343,10 @@ impl Handler for RejectHandler {
         _ctx: &Context,
         method: &str,
         _params: Option<Value>,
-    ) -> std::result::Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> std::result::Result<
+        Option<ipc::ResponsePayload>,
+        Box<dyn std::error::Error + Send + Sync>,
+    > {
         Err(format!("content mapper sent an unexpected request: {method}").into())
     }
 
