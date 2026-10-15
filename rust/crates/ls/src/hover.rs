@@ -393,7 +393,7 @@ impl<'h> LanguageService<'h> {
     }
 
     /// `documentationLocationMapper`.
-    fn documentation_location_mapper(
+    pub(crate) fn documentation_location_mapper(
         &self,
         feature: Feature,
     ) -> impl Fn(NodeId, TextRange) -> (lsproto::Location, Fidelity) + '_ {

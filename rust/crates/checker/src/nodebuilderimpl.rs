@@ -8631,8 +8631,9 @@ impl Checker {
     }
 
     /// `(c *Checker) getLocalTypeParametersOfClassOrInterfaceOrTypeAlias`
-    /// (checker.go).
-    pub(crate) fn get_local_type_parameters_of_class_or_interface_or_type_alias(
+    /// (checker.go). `pub` for `ls::signaturehelp` (Go exports this via
+    /// `GetLocalTypeParametersOfClassOrInterfaceOrTypeAlias`).
+    pub fn get_local_type_parameters_of_class_or_interface_or_type_alias(
         &mut self,
         symbol: SymbolId,
             nodes: &[ast::Node],) -> Vec<TypeId> {

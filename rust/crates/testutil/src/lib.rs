@@ -18,8 +18,10 @@ use std::sync::OnceLock;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::{env, fs, panic, process};
 
+pub mod autoimporttestutil;
 pub mod baseline;
 pub mod contentmappertest;
+pub mod emittestutil;
 pub mod filefixture;
 pub mod fixtures;
 pub mod fsbaselineutil;
@@ -31,6 +33,7 @@ pub mod jstest;
 #[cfg(feature = "lsp")]
 pub mod lsptestutil;
 pub mod parsetestutil;
+pub mod projecttestutil;
 pub mod race;
 pub mod stringtestutil;
 pub mod tsbaseline;

@@ -13,7 +13,7 @@ workspace = true
 # being ported in parallel). Off by default so the crate compiles today;
 # enable it once the lsp port lands.
 default = []
-lsp = []
+lsp = ["dep:tsc-lsp"]
 
 [dependencies]
 tsc-ast = { path = "../ast" }
@@ -25,16 +25,20 @@ tsc-contentmapper = { path = "../contentmapper" }
 tsc-core = { path = "../core" }
 tsc-diagnosticwriter = { path = "../diagnosticwriter" }
 tsc-diagnostics = { path = "../diagnostics" }
+tsc-glob = { path = "../glob" }
 tsc-ipc = { path = "../ipc" }
 tsc-json = { path = "../json" }
 tsc-jsonrpc = { path = "../jsonrpc" }
 tsc-locale = { path = "../locale" }
-tsc-lsp = { path = "../lsp" }
+tsc-lsconv = { path = "../lsconv" }
+tsc-lsp = { path = "../lsp", optional = true }
 tsc-lsproto = { path = "../lsproto" }
 tsc-nodebuilder = { path = "../nodebuilder" }
 tsc-outputpaths = { path = "../outputpaths" }
 tsc-parser = { path = "../parser" }
 tsc-printer = { path = "../printer" }
+tsc-project = { path = "../project" }
+tsc-project-logging = { path = "../projectlogging" }
 tsc-repo = { path = "../repo" }
 tsc-scanner = { path = "../scanner" }
 tsc-sourcemap = { path = "../sourcemap" }

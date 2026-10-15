@@ -20,7 +20,7 @@ pub use clientmock::ClientMock;
 pub use npmexecutormock::NpmExecutorMock;
 
 use std::collections::BTreeMap;
-use std::sync::{Arc, LazyLock, MutexGuard, OnceLock};
+use std::sync::{Arc, LazyLock, OnceLock};
 
 use rustc_hash::FxHashMap;
 use tsc_bundled as bundled;
@@ -486,8 +486,3 @@ where
         session_utils,
     )
 }
-
-// Keep the MutexGuard import referenced by the mock accessor docs honest for
-// callers that search this module for the calls-guard type.
-#[allow(dead_code)]
-type CallsGuard<'a> = MutexGuard<'a, clientmock::Calls>;
