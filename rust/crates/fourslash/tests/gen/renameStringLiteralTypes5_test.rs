@@ -14,7 +14,7 @@ fn rename_string_literal_types5() {
 declare const fn: <K extends keyof T>(p: K) => void
 
 fn("Prop 1"/**/)"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_rename(None, "");
 	});
 }

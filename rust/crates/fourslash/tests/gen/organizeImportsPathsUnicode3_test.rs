@@ -12,17 +12,17 @@ import * as À from "./À";
 import * as A from "./A";
 
 console.log(A, À, B);"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_organize_imports(r#"import * as A from "./A";
 import * as À from "./À";
 import * as B from "./B";
 
-console.log(A, À, B);"#, tsc_lsproto::CODE_ACTION_KIND_SOURCE_ORGANIZE_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::TS_FALSE, organize_imports_collation: tsc_lsutil::ORGANIZE_IMPORTS_COLLATION_UNICODE, organize_imports_accent_collation: tsc_core::TS_FALSE, ..Default::default() });
+console.log(A, À, B);"#, tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::TS_FALSE, organize_imports_collation: tsc_lsutil::OrganizeImportsCollation::UNICODE, organize_imports_accent_collation: tsc_core::TS_FALSE, ..Default::default() }));
 		f.verify_organize_imports(r#"import * as A from "./A";
 import * as À from "./À";
 import * as B from "./B";
 
-console.log(A, À, B);"#, tsc_lsproto::CODE_ACTION_KIND_SOURCE_ORGANIZE_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::TS_FALSE, organize_imports_collation: tsc_lsutil::ORGANIZE_IMPORTS_COLLATION_UNICODE, organize_imports_accent_collation: tsc_core::TS_TRUE, ..Default::default() });
+console.log(A, À, B);"#, tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::TS_FALSE, organize_imports_collation: tsc_lsutil::OrganizeImportsCollation::UNICODE, organize_imports_accent_collation: tsc_core::TS_TRUE, ..Default::default() }));
 	});
 }
 

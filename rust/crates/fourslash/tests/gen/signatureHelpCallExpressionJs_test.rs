@@ -19,7 +19,7 @@ function someOptional(x, y) { arguments; }
 someOptional(/*2*/);
 someOptional(1, 2, 3);
 someOptional(); // no error here; x and y are optional in JS";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
 		f.go_to_marker("1");
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "allOptional(...args: any[]): void", parameter_count: 1, parameter_name: "args", parameter_span: "...args: any[]", is_variadic: true, is_variadic_set: true, ..Default::default() });

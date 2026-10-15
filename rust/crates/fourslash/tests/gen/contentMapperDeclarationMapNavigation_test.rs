@@ -34,7 +34,7 @@ export declare const component: ComponentProps;
 import { component } from "component";
 /*use*/component.label;
 "#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
 		f.verify_baseline_go_to_definition(true, "use");
 		f.verify_baseline_find_all_references("use");

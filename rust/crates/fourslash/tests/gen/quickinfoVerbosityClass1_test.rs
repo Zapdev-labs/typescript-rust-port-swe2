@@ -59,7 +59,7 @@ fn quickinfo_verbosity_class1() {
     };
     const k/*k1*/ = new klass();
 }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_hover_with_verbosity(vec![("f1", vec![0, 1]), ("f2", vec![0, 1, 2]), ("f3", vec![0, 1]), ("b1", vec![0, 1]), ("f4", vec![0, 1]), ("n1", vec![0, 1]), ("k1", vec![0, 1]), ("B", vec![0, 1])].into_iter().collect::<FxHashMap<_, _>>());
 	});
 }

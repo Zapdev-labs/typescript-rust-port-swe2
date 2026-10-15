@@ -10,7 +10,7 @@ fn semantic_classification_class_expression_method() {
 		let content = r"var x = class C {
   equals(other: C) { return this == other; }
 };";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_semantic_tokens(vec![tsc_fourslash::SemanticToken { type: "class.declaration", text: "x", ..Default::default() }, tsc_fourslash::SemanticToken { type: "class.declaration", text: "C", ..Default::default() }, tsc_fourslash::SemanticToken { type: "method.declaration", text: "equals", ..Default::default() }, tsc_fourslash::SemanticToken { type: "parameter.declaration", text: "other", ..Default::default() }, tsc_fourslash::SemanticToken { type: "class", text: "C", ..Default::default() }, tsc_fourslash::SemanticToken { type: "parameter", text: "other", ..Default::default() }]);
 	});
 }

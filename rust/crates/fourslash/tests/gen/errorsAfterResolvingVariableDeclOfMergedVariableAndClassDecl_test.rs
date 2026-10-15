@@ -16,7 +16,7 @@ fn errors_after_resolving_variable_decl_of_merged_variable_and_class_decl() {
         export var /*1*/C = M.C;
     }
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
 		f.go_to_marker("1");
 		f.backspace(1);

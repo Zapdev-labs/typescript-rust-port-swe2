@@ -55,7 +55,7 @@ function Test() {
         </div>
     </div>
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_linked_editing(vec![("0", None)].into_iter().collect::<FxHashMap<_, _>>());
 		f.verify_baseline_linked_editing();
 	});

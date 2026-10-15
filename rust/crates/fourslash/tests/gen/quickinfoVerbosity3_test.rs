@@ -38,7 +38,7 @@ import { f } from "./a";
 // @Filename: c.ts
  class c5b { public foo() { } }
  namespace c5b/*5*/ { export var y = 2; }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_hover_with_verbosity(vec![("1", vec![0, 1]), ("2", vec![0, 1, 2]), ("3", vec![0, 1]), ("4", vec![0, 1, 2]), ("5", vec![0, 1, 2])].into_iter().collect::<FxHashMap<_, _>>());
 	});
 }

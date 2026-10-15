@@ -14,7 +14,7 @@ fn formatting_space_before_function_paren() {
 /*5*/function tmpl <T> () { }
 /*6*/var f = function*() { };
 /*7*/function* g () { }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut opts333 = f.get_options();
 		opts333.format_code_settings.insert_space_before_function_parenthesis = tsc_core::TS_TRUE;
 		f.configure(opts333);

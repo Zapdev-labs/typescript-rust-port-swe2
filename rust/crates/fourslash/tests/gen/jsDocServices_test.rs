@@ -15,7 +15,7 @@ fn js_doc_services() {
 function f([|[|/*def*/{| "contextRangeIndex": 1 |}foo|]: I|]) {
     return /*use2*/[|foo|];
 }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("use");
 		f.verify_quick_info_is("(parameter) foo: I", "I pity the foo");
 		f.verify_baseline_find_all_references("use", "def", "use2");

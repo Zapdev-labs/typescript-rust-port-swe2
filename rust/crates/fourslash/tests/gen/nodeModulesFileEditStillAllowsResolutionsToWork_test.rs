@@ -16,7 +16,7 @@ export const x = 1;
 // @Filename: /index.ts
 import * as mod from "#foo";
 /**/"##;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("");
 		f.insert("mod.x");
 		f.verify_no_errors();

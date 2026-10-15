@@ -10,7 +10,7 @@ fn quick_info_js_doc_tags2() {
 		let content = r"// @Filename: quickInfoJsDocTags2.ts
 /** Doc   */
 const /**/x = 0;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("", "const x: 0", "Doc");
 	});
 }

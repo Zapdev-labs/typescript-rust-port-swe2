@@ -9,7 +9,7 @@ fn format_if_with_empty_condition() {
 	run_test(|t| {
 		let content = r"if () {
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut opts123 = f.get_options();
 		opts123.format_code_settings.place_open_brace_on_new_line_for_control_blocks = tsc_core::TS_TRUE;
 		f.configure(opts123);

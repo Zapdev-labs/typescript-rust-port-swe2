@@ -22,10 +22,10 @@ fn js_doc_tags_with_hyphen() {
 const product = {
     /*3*/
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "(property) high-top: boolean", "some-comments");
 		f.verify_quick_info_at("2", "type Product = {\n    title: string;\n    \"high-top\": boolean;\n}", "");
-		f.verify_completions(vec!["3"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["\"high-top\""], ..Default::default() }, ..Default::default() });
+		f.verify_completions(vec!["3"], Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["\"high-top\""], ..Default::default() }), ..Default::default() }));
 	});
 }
 

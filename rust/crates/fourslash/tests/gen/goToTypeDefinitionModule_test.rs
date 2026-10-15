@@ -15,7 +15,7 @@ var m: typeof M;
 // @Filename: module3.ts
 /*reference1*/M;
 /*reference2*/m;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_type_definition("reference1", "reference2");
 	});
 }

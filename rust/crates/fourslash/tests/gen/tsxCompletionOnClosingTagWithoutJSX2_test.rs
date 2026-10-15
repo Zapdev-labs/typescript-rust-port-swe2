@@ -11,9 +11,9 @@ fn tsx_completion_on_closing_tag_without_jsx2() {
 var x1 = <div>
    <h1> Hello world </ /*2*/>
    </ /*1*/>";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_completions("1", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec!["div"], ..Default::default() }, ..Default::default() });
-		f.verify_completions("2", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec!["h1"], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_completions("1", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["div"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("2", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["h1"], ..Default::default() }), ..Default::default() }));
 	});
 }
 

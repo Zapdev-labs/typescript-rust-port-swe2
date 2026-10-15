@@ -11,7 +11,7 @@ fn get_edits_for_file_rename_sub_dir() {
 
 // @Filename: /src/old.ts
 import a from "./foo/a";"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_will_rename_files_edits("/src/old.ts", "/src/dir/new.ts", vec![("/src/dir/new.ts", r#"import a from "../foo/a";"#)].into_iter().collect::<FxHashMap<_, _>>(), None);
 	});
 }

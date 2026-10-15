@@ -29,8 +29,8 @@ export declare const x: number;
 import {} from "unified";
 // @Filename: /index.js
 x/**/"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_import_fix_module_specifiers("", vec!["unified", "unified/types/ts3.444/index.js"], &tsc_lsutil::UserPreferences { import_module_specifier_ending: "js", auto_import_entrypoint_directory_search: tsc_core::TS_TRUE, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_import_fix_module_specifiers("", vec!["unified", "unified/types/ts3.444/index.js"], Some(tsc_lsutil::UserPreferences { import_module_specifier_ending: "js", auto_import_entrypoint_directory_search: tsc_core::TS_TRUE, ..Default::default() }));
 	});
 }
 

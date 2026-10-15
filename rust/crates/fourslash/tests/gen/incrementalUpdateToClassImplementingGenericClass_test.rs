@@ -19,7 +19,7 @@ class Animal2 extends Animal<string> {
     /*1*/get name2() { return this.name; }
 }
 var a = new Animal2('eprst');"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("1");
 		f.verify_no_errors();
 		f.insert("//");

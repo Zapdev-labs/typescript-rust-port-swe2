@@ -13,7 +13,7 @@ fn code_fix_infer_from_usage_callback_parameter7() {
 // @filename: /foo.js
 /** @type {(x: number) => number} */
 const foo = x => x + 1;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_code_fix_not_available();
 	});
 }

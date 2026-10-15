@@ -18,7 +18,7 @@ function stringExample(e: StringExample) {
     console.log(e./*property*/property);
     console.log(e./*string*/anything); 
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("property", "(property) StringExample.property: number", "Something specific");
 		f.verify_quick_info_at("string", "(index) StringExample[string]: any", "Something generic");
 	});

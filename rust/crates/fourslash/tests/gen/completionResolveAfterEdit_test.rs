@@ -19,7 +19,7 @@ declare const u: I;
 // @filename: 1.ts
 /*b*/
 ";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("a");
 		let mut completions = f.get_completions(None);
 		if completions == None || completions.items.len() == 0 {
@@ -45,8 +45,8 @@ export const u = 1;
 // @filename: 1.ts
 [|import u/*a*/|]
 ";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_completions("a", &tsc_fourslash::CompletionsExpectedList { item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "u", insert_text: Some(r#"import { u } from "./a";"#.into()), data: &tsc_lsproto::CompletionItemData { auto_import: &tsc_lsproto::AutoImportFix { module_specifier: "./a", ..Default::default() }, ..Default::default() }, text_edit: &tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: &tsc_lsproto::TextEdit { new_text: r#"import { u } from "./a";"#, range: f.ranges()[0].ls_range, ..Default::default() }, ..Default::default() }, additional_text_edits: tsc_fourslash::NO_TEXT_EDITS, ..Default::default() }], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_completions("a", Some(tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "u", insert_text: Some((r#"import { u } from "./a";"#).into()), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./a", ..Default::default() }), ..Default::default() }), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: r#"import { u } from "./a";"#, range: f.ranges()[0].ls_range, ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::NO_TEXT_EDITS, ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }
 

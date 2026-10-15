@@ -11,7 +11,7 @@ fn code_fix_spelling_case_weight2() {
 		let content = r"let ABCDEFGHI = 1;
 let abcdefghij = 1;
 [|abcdefghi|]";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_range_after_code_fix(r"ABCDEFGHI", false, 0, 0);
 	});
 }

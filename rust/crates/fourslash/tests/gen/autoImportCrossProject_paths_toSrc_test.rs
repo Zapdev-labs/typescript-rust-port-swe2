@@ -41,7 +41,7 @@ import "./sub/folder";
 export const dep1 = 0;
 // @Filename: /home/src/workspaces/project/packages/dep/src/sub/folder/index.ts
 export const dep2 = 0;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
 		f.go_to_marker("1");
 		f.verify_import_fix_at_position(vec![r#"import { dep1 } from "dep";

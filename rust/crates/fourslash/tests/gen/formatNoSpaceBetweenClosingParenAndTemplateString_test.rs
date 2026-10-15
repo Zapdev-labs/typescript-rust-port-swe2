@@ -10,7 +10,7 @@ fn format_no_space_between_closing_paren_and_template_string() {
 		let content = r"foo() " + "`" + r"abc" + "`" + r";
 bar()" + "`" + r"def" + "`" + r";
 baz()" + "`" + r"a${x}b" + "`" + r";";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.format_document("");
 		f.verify_current_file_content("foo()`abc`;\nbar()`def`;\nbaz()`a${x}b`;");
 	});

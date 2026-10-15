@@ -9,8 +9,8 @@ fn rename_module_exports_properties1() {
 	run_test(|t| {
 		let content = r#"[|class [|{| "contextRangeIndex": 0 |}A|] {}|]
 module.exports = { [|A|] }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_baseline_rename(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::TS_TRUE, ..Default::default() }, f.ranges()[1], f.ranges()[2]);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_baseline_rename(Some(tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::TS_TRUE, ..Default::default() }), f.ranges()[1], f.ranges()[2]);
 	});
 }
 

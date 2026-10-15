@@ -19,7 +19,7 @@ fn references_for_modifiers() {
 }|]
 [|/*asyncModifier*/async function fn() {}|]
 [|/*exportModifier*/export /*defaultModifier*/default class C2 {}|]";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("declareModifier", "abstractModifier", "staticModifier", "readonlyModifier", "publicModifier", "protectedModifier", "privateModifier", "constModifier", "asyncModifier", "exportModifier", "defaultModifier");
 	});
 }

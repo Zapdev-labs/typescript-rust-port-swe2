@@ -15,8 +15,8 @@ fn completions_js_doc_import_tag_empty_module_specifier1() {
 export type MyUnion = string | number;
 // @filename: index.js
 /** @import { MyUnion } from "/**/" */"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_completions("", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec!["pkg"], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["pkg"], ..Default::default() }), ..Default::default() }));
 	});
 }
 

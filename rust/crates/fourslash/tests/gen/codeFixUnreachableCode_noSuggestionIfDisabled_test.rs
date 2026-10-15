@@ -9,7 +9,7 @@ fn code_fix_unreachable_code_no_suggestion_if_disabled() {
 	run_test(|t| {
 		let content = r"// @allowUnreachableCode: true
 if (false) [|0;|]";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_suggestion_diagnostics(None);
 	});
 }

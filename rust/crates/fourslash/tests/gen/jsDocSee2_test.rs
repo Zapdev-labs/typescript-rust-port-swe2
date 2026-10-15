@@ -21,7 +21,7 @@ const e = ""
 const f = ""
 /** @see d@{/*use7*/[|fff|]} partial reference */
 const g = """#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_definition(true, "use1", "use2", "use3", "use4", "use5", "use6", "use7");
 	});
 }

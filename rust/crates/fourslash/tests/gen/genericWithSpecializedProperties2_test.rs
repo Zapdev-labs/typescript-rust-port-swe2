@@ -17,7 +17,7 @@ var /*2*/y = f.y;
 var f2: Foo<number>;
 var /*3*/x2 = f2.x; 
 var /*4*/y2 = f2.y; ";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "var x: Foo<string>", "");
 		f.verify_quick_info_at("2", "var y: Foo<number>", "");
 		f.verify_quick_info_at("3", "var x2: Foo<string>", "");

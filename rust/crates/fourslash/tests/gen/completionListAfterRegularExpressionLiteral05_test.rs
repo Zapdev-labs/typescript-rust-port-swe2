@@ -9,7 +9,7 @@ fn completion_list_after_regular_expression_literal05() {
 	run_test(|t| {
 		let content = r"let v = 100;
 let x = /absidey/g/**/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_completions("", None);
 	});
 }

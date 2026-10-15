@@ -22,7 +22,7 @@ type G<T> = {
 	[K in keyof T]: T[K] & Apple
 };
 const z: G/*G*/<Bar> = { banana: 'hello', apple: true };";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_hover_with_verbosity(vec![("x", vec![0, 1]), ("y", vec![0]), ("F", vec![0, 1]), ("G", vec![0, 1])].into_iter().collect::<FxHashMap<_, _>>());
 	});
 }

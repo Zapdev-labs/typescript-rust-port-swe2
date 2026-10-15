@@ -11,7 +11,7 @@ fn format_v8_directive() {
 		let content = r"// @Filename: foo.js
 function foo() {}
 /*1*/%PrepareFunctionForOptimization(foo)/*2*/;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.format_selection("1", "2");
 	});
 }

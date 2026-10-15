@@ -17,8 +17,8 @@ import "./decorators";
 export declare function customElement(name: string): any;
 // @Filename: /a.ts
 customElement/**/"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_import_fix_module_specifiers("", vec!["lit/decorators.js"], &tsc_lsutil::UserPreferences { import_module_specifier_ending: "js", auto_import_entrypoint_directory_search: tsc_core::TS_TRUE, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_import_fix_module_specifiers("", vec!["lit/decorators.js"], Some(tsc_lsutil::UserPreferences { import_module_specifier_ending: "js", auto_import_entrypoint_directory_search: tsc_core::TS_TRUE, ..Default::default() }));
 	});
 }
 

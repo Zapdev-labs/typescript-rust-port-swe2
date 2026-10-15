@@ -24,7 +24,7 @@ namespace M {
     namespace M1.M2 {
     }
 }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_semantic_tokens(vec![tsc_fourslash::SemanticToken { type: "namespace.declaration", text: "M", ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.declaration.local", text: "v", ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.declaration.local", text: "s", ..Default::default() }, tsc_fourslash::SemanticToken { type: "class.declaration", text: "C", ..Default::default() }, tsc_fourslash::SemanticToken { type: "typeParameter.declaration", text: "T", ..Default::default() }, tsc_fourslash::SemanticToken { type: "enum.declaration", text: "E", ..Default::default() }, tsc_fourslash::SemanticToken { type: "interface.declaration", text: "I", ..Default::default() }, tsc_fourslash::SemanticToken { type: "namespace.declaration", text: "M1", ..Default::default() }, tsc_fourslash::SemanticToken { type: "namespace.declaration", text: "M2", ..Default::default() }]);
 	});
 }

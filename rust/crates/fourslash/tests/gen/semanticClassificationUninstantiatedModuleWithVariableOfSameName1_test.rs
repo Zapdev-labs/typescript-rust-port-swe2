@@ -14,7 +14,7 @@ fn semantic_classification_uninstantiated_module_with_variable_of_same_name1() {
 }
 
 var M = { I: 10 };";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_semantic_tokens(vec![tsc_fourslash::SemanticToken { type: "variable", text: "M", ..Default::default() }, tsc_fourslash::SemanticToken { type: "interface.declaration", text: "I", ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.declaration", text: "M", ..Default::default() }, tsc_fourslash::SemanticToken { type: "property.declaration", text: "I", ..Default::default() }]);
 	});
 }

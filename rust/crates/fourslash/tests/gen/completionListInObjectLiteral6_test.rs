@@ -19,8 +19,8 @@ fn(foo, {
 fn({ a: "a", b: "b" }, {
     /*2*/
 })"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_completions(vec!["1", "2"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec![&tsc_lsproto::CompletionItem { label: "on_a?", insert_text: Some("on_a".into()), filter_text: Some("on_a".into()), sort_text: Some(tsc_ls::SORT_TEXT_OPTIONAL_MEMBER.to_string().into()), ..Default::default() }, &tsc_lsproto::CompletionItem { label: "on_b?", insert_text: Some("on_b".into()), filter_text: Some("on_b".into()), sort_text: Some(tsc_ls::SORT_TEXT_OPTIONAL_MEMBER.to_string().into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_completions(vec!["1", "2"], Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "on_a?", insert_text: Some(("on_a").into()), filter_text: Some(("on_a").into()), sort_text: Some((tsc_ls::SORT_TEXT_OPTIONAL_MEMBER.to_string()).into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "on_b?", insert_text: Some(("on_b").into()), filter_text: Some(("on_b").into()), sort_text: Some((tsc_ls::SORT_TEXT_OPTIONAL_MEMBER.to_string()).into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -33,7 +33,7 @@ var /*9*/cc = _(aa).map(/*10*/x => x.length);
 var /*11*/dd = aa.map(/*12*/x => x.length);
 
 var e = a.map(x => x./*13*/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "var b: number[]", "");
 		f.verify_quick_info_at("2", "(parameter) x: string", "");
 		f.verify_quick_info_at("3", "var c: number[]", "");
@@ -46,7 +46,7 @@ var e = a.map(x => x./*13*/";
 		f.verify_quick_info_at("10", "(parameter) x: any", "");
 		f.verify_quick_info_at("11", "var dd: any[]", "");
 		f.verify_quick_info_at("12", "(parameter) x: any", "");
-		f.verify_completions("13", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["length"], excludes: vec!["toFixed"], ..Default::default() }, ..Default::default() });
+		f.verify_completions("13", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["length"], excludes: vec!["toFixed"], ..Default::default() }), ..Default::default() }));
 	});
 }
 

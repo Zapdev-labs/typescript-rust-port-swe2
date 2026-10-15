@@ -9,8 +9,8 @@ fn completion_list_after_string_literal_type_with_no_substitution_template_liter
 	run_test(|t| {
 		let content = r"let count: 'one' | 'two';
 count = " + "`" + r"[|/**/|]" + "`" + r"";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_completions("", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec![&tsc_lsproto::CompletionItem { label: "one", text_edit: &tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: &tsc_lsproto::TextEdit { new_text: "one", range: f.ranges()[0].ls_range, ..Default::default() }, ..Default::default() }, ..Default::default() }, &tsc_lsproto::CompletionItem { label: "two", text_edit: &tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: &tsc_lsproto::TextEdit { new_text: "two", range: f.ranges()[0].ls_range, ..Default::default() }, ..Default::default() }, ..Default::default() }], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "one", text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "one", range: f.ranges()[0].ls_range, ..Default::default() }), ..Default::default() }), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "two", text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "two", range: f.ranges()[0].ls_range, ..Default::default() }), ..Default::default() }), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }
 

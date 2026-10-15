@@ -22,7 +22,7 @@ fn go_to_definition_modifiers() {
 }
 
 exp/*exportFunction*/ort function foo/*foo*/() { }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_definition(true, "export", "A", "private", "z", "readonly", "x", "async", "a", "override", "b", "public1", "public2", "multipleModifiers", "c", "exportFunction", "foo");
 	});
 }

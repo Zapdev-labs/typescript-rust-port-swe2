@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn import_fix_before_indented_import() {
 	run_test(|t| {
-		let (mut f, _done) = tsc_fourslash::new_fourslash_with_options(&mut *t, r#"// @Filename: /aaa.ts
+		let mut f = tsc_fourslash::new_fourslash_with_options(t_name(), "", r#"// @Filename: /aaa.ts
 export const helper = 1;
 
 // @Filename: /dep.ts
@@ -17,19 +17,19 @@ export const existing = 2;
 // header
   import { existing } from "./dep";
   const value = help/**/;
-"#, &tsc_fourslash::FourslashOptions { ..Default::default() });
-		f.verify_apply_code_action_from_completion(Some("".into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "helper", source: "./aaa", description: r#"Add import from "./aaa""#, new_file_content: Some(r#"// header
+"#, Some(tsc_fourslash::FourslashOptions { ..Default::default() }));
+		f.verify_apply_code_action_from_completion(Some(("").into()), Some(tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "helper", source: "./aaa", description: r#"Add import from "./aaa""#, new_file_content: Some((r#"// header
   import { helper } from "./aaa";
   import { existing } from "./dep";
   const value = help;
-"#.into()), ..Default::default() });
+"#).into()), ..Default::default() }));
 	});
 }
 
 #[test]
 fn import_fix_after_indented_import() {
 	run_test(|t| {
-		let (mut f, _done) = tsc_fourslash::new_fourslash_with_options(&mut *t, r#"// @Filename: /aaa.ts
+		let mut f = tsc_fourslash::new_fourslash_with_options(t_name(), "", r#"// @Filename: /aaa.ts
 export const existing = 2;
 
 // @Filename: /zzz.ts
@@ -39,27 +39,27 @@ export const helper = 1;
 // header
   import { existing } from "./aaa";
   const value = help/**/;
-"#, &tsc_fourslash::FourslashOptions { ..Default::default() });
-		f.verify_apply_code_action_from_completion(Some("".into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "helper", source: "./zzz", description: r#"Add import from "./zzz""#, new_file_content: Some(r#"// header
+"#, Some(tsc_fourslash::FourslashOptions { ..Default::default() }));
+		f.verify_apply_code_action_from_completion(Some(("").into()), Some(tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "helper", source: "./zzz", description: r#"Add import from "./zzz""#, new_file_content: Some((r#"// header
   import { existing } from "./aaa";
   import { helper } from "./zzz";
   const value = help;
-"#.into()), ..Default::default() });
+"#).into()), ..Default::default() }));
 	});
 }
 
 #[test]
 fn import_fix_before_indented_import_with_carriage_returns() {
 	run_test(|t| {
-		let (mut f, _done) = tsc_fourslash::new_fourslash_with_options(&mut *t, r"// @Filename: /aaa.ts
+		let mut f = tsc_fourslash::new_fourslash_with_options(t_name(), "", r"// @Filename: /aaa.ts
 export const helper = 1;
 
 // @Filename: /dep.ts
 export const existing = 2;
 
 // @Filename: /main.ts
-" + "// header\r  import { existing } from \"./dep\";\r  const value = help/**/;\r", &tsc_fourslash::FourslashOptions { ..Default::default() });
-		f.verify_apply_code_action_from_completion(Some("".into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "helper", source: "./aaa", description: r#"Add import from "./aaa""#, new_file_content: Some("// header\r  import { helper } from \"./aaa\";\n  import { existing } from \"./dep\";\r  const value = help;\r".into()), ..Default::default() });
+" + "// header\r  import { existing } from \"./dep\";\r  const value = help/**/;\r", Some(tsc_fourslash::FourslashOptions { ..Default::default() }));
+		f.verify_apply_code_action_from_completion(Some(("").into()), Some(tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "helper", source: "./aaa", description: r#"Add import from "./aaa""#, new_file_content: Some(("// header\r  import { helper } from \"./aaa\";\n  import { existing } from \"./dep\";\r  const value = help;\r").into()), ..Default::default() }));
 	});
 }
 

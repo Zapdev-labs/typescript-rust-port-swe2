@@ -11,7 +11,7 @@ fn semantic_modern_classification_functions() {
   return foo(Math.abs(p1))
 }
 " + "`" + r"/${window.location}" + "`" + r#".split("/").forEach(s => foo(s));"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_semantic_tokens(vec![tsc_fourslash::SemanticToken { type: "function.declaration", text: "foo", ..Default::default() }, tsc_fourslash::SemanticToken { type: "parameter.declaration", text: "p1", ..Default::default() }, tsc_fourslash::SemanticToken { type: "function", text: "foo", ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.defaultLibrary", text: "Math", ..Default::default() }, tsc_fourslash::SemanticToken { type: "method.defaultLibrary", text: "abs", ..Default::default() }, tsc_fourslash::SemanticToken { type: "parameter", text: "p1", ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.defaultLibrary", text: "window", ..Default::default() }, tsc_fourslash::SemanticToken { type: "property.defaultLibrary", text: "location", ..Default::default() }, tsc_fourslash::SemanticToken { type: "method.defaultLibrary", text: "split", ..Default::default() }, tsc_fourslash::SemanticToken { type: "method.defaultLibrary", text: "forEach", ..Default::default() }, tsc_fourslash::SemanticToken { type: "parameter.declaration", text: "s", ..Default::default() }, tsc_fourslash::SemanticToken { type: "function", text: "foo", ..Default::default() }, tsc_fourslash::SemanticToken { type: "parameter", text: "s", ..Default::default() }]);
 	});
 }

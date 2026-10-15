@@ -25,8 +25,8 @@ var foo3 = require("m/*require0*/
 export var x = 9;
 // @Filename: some/other/path.ts
 export var y = 10;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_completions(f.markers(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec!["module1", "module2"], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_completions(f.markers(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["module1", "module2"], ..Default::default() }), ..Default::default() }));
 	});
 }
 

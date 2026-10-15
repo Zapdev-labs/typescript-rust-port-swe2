@@ -14,7 +14,7 @@ fn find_all_references_js_require_destructuring1() {
 module.exports = { x: 1 };
 // @Filename: /Y.js
 const { /*1*/x: { y } } = require("./X");"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("1");
 	});
 }

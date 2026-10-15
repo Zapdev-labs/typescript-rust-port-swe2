@@ -29,7 +29,7 @@ class Foo {
         console.log(th/*6*/is);
     }
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("0", "this", "");
 		f.verify_quick_info_at("1", "this: void", "");
 		f.verify_quick_info_at("2", "this: this", "");

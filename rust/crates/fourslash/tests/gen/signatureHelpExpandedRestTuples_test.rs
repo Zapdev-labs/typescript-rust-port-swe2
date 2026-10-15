@@ -14,7 +14,7 @@ fn signature_help_expanded_rest_tuples() {
 complex(/*1*/);
 complex("ok", "ok", /*2*/);
 complex("ok", "ok", e => void e, {}, /*3*/);"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("1");
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "complex(item: string, another: string): void", parameter_count: 2, parameter_name: "item", parameter_span: "item: string", overloads_count: 3, is_variadic: false, is_variadic_set: true, ..Default::default() });
 		f.go_to_marker("2");

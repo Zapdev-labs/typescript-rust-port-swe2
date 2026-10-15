@@ -13,7 +13,7 @@ namespace multiM {
     /*1*/export class c { }
 }
 ";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("1");
 		f.delete_at_caret(18);
 		f.go_to_eof();

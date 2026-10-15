@@ -14,7 +14,7 @@ export declare function Component(): void;
 // @Filename: /home/src/workspaces/project/index.ts
 Component/**/
 // @link: /home/src/workspaces/project/node_modules/.pnpm/@types+react@17.0.7/node_modules/@types/react -> /home/src/workspaces/project/node_modules/@types/react"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
 		f.go_to_marker("");
 		f.verify_import_fix_at_position(vec![r#"import { Component } from "react";

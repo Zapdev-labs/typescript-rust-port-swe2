@@ -15,7 +15,7 @@ function other2<T extends Date>(arg: T) {
     var b: { [x: string]: T };
     var /*1*/r2 = foo(b); // just shows T
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "(local var) r2: {\n    [x: string]: T;\n}", "");
 	});
 }

@@ -10,13 +10,13 @@ fn completions_in_map_constructor_no_crash() {
 		let content1 = r"const m = new Map([
     [/*a*/'0', ['0', false]],
 ]);";
-		let (mut f1, mut done1) = tsc_fourslash::new_fourslash(&mut *t, None, content1);
-		f1.verify_completions(&mut *t, "a", &tsc_fourslash::CompletionsExpectedList { item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { ..Default::default() }, ..Default::default() });
+		let mut f1 = tsc_fourslash::new_fourslash(t_name(), "", None, content1);
+		f1.verify_completions(&mut *t, "a", Some(tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { ..Default::default() }), ..Default::default() }));
 		let content2 = r"const m = new Map([
     ['0', ['0', false]]/*b*/,
 ]);";
-		let (mut f2, mut done2) = tsc_fourslash::new_fourslash(&mut *t, None, content2);
-		f2.verify_completions(&mut *t, "b", &tsc_fourslash::CompletionsExpectedList { item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { ..Default::default() }, ..Default::default() });
+		let mut f2 = tsc_fourslash::new_fourslash(t_name(), "", None, content2);
+		f2.verify_completions(&mut *t, "b", Some(tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { ..Default::default() }), ..Default::default() }));
 	});
 }
 

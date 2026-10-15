@@ -20,7 +20,7 @@ if (t./*t3*/type === "a") {
 } else {
     t./*t5*/type;
 }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("t0", "t1", "t3", "t4", "t5", "t2", "p0", "p1", "p2");
 	});
 }

@@ -8,7 +8,7 @@ use tsc_fourslash::*;
 fn syntactic_classifications_for_of_keyword2() {
 	run_test(|t| {
 		let content = r"for (var of in of) { }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_semantic_tokens(vec![tsc_fourslash::SemanticToken { type: "variable.declaration", text: "of", ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable", text: "of", ..Default::default() }]);
 	});
 }

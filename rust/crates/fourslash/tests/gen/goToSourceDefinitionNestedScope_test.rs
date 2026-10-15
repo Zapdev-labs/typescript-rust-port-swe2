@@ -21,7 +21,7 @@ function unrelated() {
 // @Filename: /home/src/workspaces/project/index.ts
 import { /*importHelper*/helper } from "pkg";
 helper/*usage*/();"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_source_definition("importHelper", "usage");
 	});
 }
@@ -43,7 +43,7 @@ function factory() {
 // @Filename: /home/src/workspaces/project/index.ts
 import { /*importWidget*/Widget } from "pkg";
 new Widget();"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_source_definition("importWidget");
 	});
 }

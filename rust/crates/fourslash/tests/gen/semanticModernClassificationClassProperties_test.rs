@@ -13,7 +13,7 @@ fn semantic_modern_classification_class_properties() {
   get z() : number { return this.x + this.y; }
   set a(v: number) { }
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_semantic_tokens(vec![tsc_fourslash::SemanticToken { type: "class.declaration", text: "A", ..Default::default() }, tsc_fourslash::SemanticToken { type: "property.declaration", text: "y", ..Default::default() }, tsc_fourslash::SemanticToken { type: "parameter.declaration", text: "x", ..Default::default() }, tsc_fourslash::SemanticToken { type: "parameter.declaration", text: "_y", ..Default::default() }, tsc_fourslash::SemanticToken { type: "property", text: "y", ..Default::default() }, tsc_fourslash::SemanticToken { type: "parameter", text: "_y", ..Default::default() }, tsc_fourslash::SemanticToken { type: "property.declaration", text: "z", ..Default::default() }, tsc_fourslash::SemanticToken { type: "property", text: "x", ..Default::default() }, tsc_fourslash::SemanticToken { type: "property", text: "y", ..Default::default() }, tsc_fourslash::SemanticToken { type: "property.declaration", text: "a", ..Default::default() }, tsc_fourslash::SemanticToken { type: "parameter.declaration", text: "v", ..Default::default() }]);
 	});
 }

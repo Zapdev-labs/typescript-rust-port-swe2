@@ -10,7 +10,7 @@ fn semantic_classification_class_expression() {
 		let content = r"var x = class /*0*/C {}
 class /*1*/C {}
 class /*2*/D extends class /*3*/B{} { }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_semantic_tokens(vec![tsc_fourslash::SemanticToken { type: "class.declaration", text: "x", ..Default::default() }, tsc_fourslash::SemanticToken { type: "class.declaration", text: "C", ..Default::default() }, tsc_fourslash::SemanticToken { type: "class.declaration", text: "C", ..Default::default() }, tsc_fourslash::SemanticToken { type: "class.declaration", text: "D", ..Default::default() }, tsc_fourslash::SemanticToken { type: "class.declaration", text: "B", ..Default::default() }]);
 	});
 }

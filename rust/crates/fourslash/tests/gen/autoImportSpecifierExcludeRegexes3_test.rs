@@ -23,9 +23,9 @@ export function add(a: number, b: number) {}
 export * from "./utils";
 // @Filename: /src/index.ts
 add/**/"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_import_fix_module_specifiers("", vec!["pkg", "pkg/utils"], None);
-		f.verify_import_fix_module_specifiers("", vec!["pkg/utils"], &tsc_lsutil::UserPreferences { auto_import_specifier_exclude_regexes: vec!["^pkg$"], ..Default::default() });
+		f.verify_import_fix_module_specifiers("", vec!["pkg/utils"], Some(tsc_lsutil::UserPreferences { auto_import_specifier_exclude_regexes: vec!["^pkg$"], ..Default::default() }));
 	});
 }
 

@@ -11,7 +11,7 @@ fn rename_file_package_json() {
 import brushPackageJson from './visx-brush//*rename*/package.json';
 // @Filename: /src/visx-brush/package.json
 { "name": "brush" }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_rename("rename", "package2.json", vec![("/src/example.ts", r"import brushPackageJson from './visx-brush/package2.json';"), ("/src/visx-brush/package2.json", r#"{ "name": "brush" }"#)].into_iter().collect::<FxHashMap<_, _>>());
 	});
 }
@@ -25,7 +25,7 @@ fn rename_file_empty_and_dot_stems() {
 export declare const value: number;
 // @Filename: /src/main.ts
 import { value } from ".//*rename*/%s.js";"#, file_name, tspath.remove_file_extension(file_name));
-				let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+				let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 				f.verify_no_errors();
 				let mut extension = ".ts";
 				if tspath.is_declaration_file_name(file_name) {

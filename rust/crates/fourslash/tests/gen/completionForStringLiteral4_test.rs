@@ -21,11 +21,11 @@ function f(p1, p2, p3, p4, p5) {
     return p1 + p2 + p3 + p4 + p5 + '.';
 }
 f/*1*/('literal', 'literal', "[|o/*2*/ther1|]", 12);"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("1");
 		f.verify_quick_info_exists();
 		f.verify_quick_info_is("function f(p1: \"literal\", p2: \"literal\", p3: \"other1\" | \"other2\", p4: \"literal\" | number, p5: 12 | true): string", "I am documentation");
-		f.verify_completions("2", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec![&tsc_lsproto::CompletionItem { label: "other1", text_edit: &tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: &tsc_lsproto::TextEdit { new_text: "other1", range: f.ranges()[0].ls_range, ..Default::default() }, ..Default::default() }, ..Default::default() }, &tsc_lsproto::CompletionItem { label: "other2", text_edit: &tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: &tsc_lsproto::TextEdit { new_text: "other2", range: f.ranges()[0].ls_range, ..Default::default() }, ..Default::default() }, ..Default::default() }], ..Default::default() }, ..Default::default() });
+		f.verify_completions("2", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "other1", text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "other1", range: f.ranges()[0].ls_range, ..Default::default() }), ..Default::default() }), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "other2", text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "other2", range: f.ranges()[0].ls_range, ..Default::default() }), ..Default::default() }), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }
 

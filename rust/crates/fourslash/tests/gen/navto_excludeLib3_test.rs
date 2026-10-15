@@ -9,8 +9,8 @@ fn navto_exclude_lib3() {
 	run_test(|t| {
 		let content = r"// @filename: /index.ts
 function [|parseInt|](s: string): number {}";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_workspace_symbol(vec![tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "parseInt", preferences: None, exact: Some(vec![tsc_lsproto::SymbolInformation { name: "parseInt", kind: tsc_lsproto::SYMBOL_KIND_FUNCTION, location: f.ranges()[0].ls_location(), ..Default::default() }].into()), ..Default::default() }]);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_workspace_symbol(vec![tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "parseInt", preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "parseInt", kind: tsc_lsproto::SYMBOL_KIND_FUNCTION, location: f.ranges()[0].ls_location(), ..Default::default() }]).into()), ..Default::default() }]);
 	});
 }
 

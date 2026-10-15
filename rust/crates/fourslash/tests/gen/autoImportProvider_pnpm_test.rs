@@ -18,7 +18,7 @@ export declare function autorun(): void;
 // @Filename: /home/src/workspaces/project/index.ts
 autorun/**/
 // @link: /home/src/workspaces/project/node_modules/.pnpm/mobx@6.0.4/node_modules/mobx -> /home/src/workspaces/project/node_modules/mobx"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
 		f.go_to_marker("");
 		f.verify_import_fix_at_position(vec![r#"import { autorun } from "mobx";

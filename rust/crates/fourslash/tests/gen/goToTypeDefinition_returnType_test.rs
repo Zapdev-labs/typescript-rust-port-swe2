@@ -40,7 +40,7 @@ function /*f8Def*/f8(ij: any): any { return ij; }
 /*f6*/f6();
 /*f7*/f7();
 /*f8*/f8();";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_type_definition("f0", "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8");
 	});
 }

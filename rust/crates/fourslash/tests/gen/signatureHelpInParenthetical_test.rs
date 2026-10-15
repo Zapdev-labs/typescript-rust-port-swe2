@@ -9,7 +9,7 @@ fn signature_help_in_parenthetical() {
 	run_test(|t| {
 		let content = r"class base { constructor (public n: number, public y: string) { } }
 (new base(/**/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("");
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "n", ..Default::default() });
 		f.insert("0, ");

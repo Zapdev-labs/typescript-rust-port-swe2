@@ -14,7 +14,7 @@ interface A {
 function foo(x: A) {
     x.f/*1*/oo
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_document_highlights(None, "1");
 		f.go_to_marker("0");
 		f.insert("\n");

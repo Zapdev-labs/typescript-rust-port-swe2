@@ -14,7 +14,7 @@ export function f1() {}
 export var v1 = 5;
 // @Filename: tripleSlashReference.ts
 var x = 5;/*dummy*/"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_import_fix_at_position(vec![r#"/// <reference path="./tripleSlashReference.ts" />
 
 import { f1 } from "./Module";

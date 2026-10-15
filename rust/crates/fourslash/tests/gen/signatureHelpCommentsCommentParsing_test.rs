@@ -208,7 +208,7 @@ jsDocCommentAlignmentTest3(/*47*/"hello",/*48*/1, /*49*/2);
 /**/
 class NoQuickInfoClass {
 }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_signature_help();
 	});
 }

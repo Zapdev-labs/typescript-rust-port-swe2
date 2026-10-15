@@ -11,8 +11,8 @@ fn js_doc_snippet_completion_for_function() {
 function abcdef(x, y) { }
 ";
 		let mut capabilities = tsc_fourslash::get_default_capabilities();
-		capabilities.text_document.completion.completion_item.snippet_support = Some(true.into());
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, capabilities, content);
+		capabilities.text_document.completion.completion_item.snippet_support = Some((true).into());
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", capabilities, content);
 		f.go_to_marker("completion");
 		f.insert("/**");
 		let mut list = f.get_completions(None);
@@ -20,11 +20,11 @@ function abcdef(x, y) { }
 		assert.equal(&mut *t, list.items.len(), 1);
 		let mut item = list.items[0];
 		assert.equal(&mut *t, item.label, "/** */");
-		assert.deep_equal(&mut *t, item.kind, Some(tsc_lsproto::COMPLETION_ITEM_KIND_TEXT.into()));
-		assert.deep_equal(&mut *t, item.detail, Some("JSDoc comment".into()));
-		assert.deep_equal(&mut *t, item.sort_text, Some("\x00".into()));
-		assert.deep_equal(&mut *t, item.commit_characters, &vec![]);
-		assert.deep_equal(&mut *t, item.insert_text_format, Some(tsc_lsproto::INSERT_TEXT_FORMAT_SNIPPET.into()));
+		assert.deep_equal(&mut *t, item.kind, Some((tsc_lsproto::CompletionItemKind::TEXT).into()));
+		assert.deep_equal(&mut *t, item.detail, Some(("JSDoc comment").into()));
+		assert.deep_equal(&mut *t, item.sort_text, Some(("\x00").into()));
+		assert.deep_equal(&mut *t, item.commit_characters, Some(vec![]));
+		assert.deep_equal(&mut *t, item.insert_text_format, Some((tsc_lsproto::InsertTextFormat::SNIPPET).into()));
 		assert.assert(&mut *t, item.text_edit != None);
 		assert.assert(&mut *t, item.text_edit.insert_replace_edit != None);
 		assert.equal(&mut *t, item.text_edit.insert_replace_edit.new_text, "/**\n * $0\n * @param x ${1}\n * @param y ${2}\n */");
@@ -40,8 +40,8 @@ fn js_doc_snippet_completion_for_return() {
 function abcdef(x) { return x; }
 ";
 		let mut capabilities = tsc_fourslash::get_default_capabilities();
-		capabilities.text_document.completion.completion_item.snippet_support = Some(true.into());
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, capabilities, content);
+		capabilities.text_document.completion.completion_item.snippet_support = Some((true).into());
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", capabilities, content);
 		f.go_to_marker("completion");
 		f.insert("/**");
 		let mut list = f.get_completions(None);
@@ -56,8 +56,8 @@ fn js_doc_snippet_completion_preserves_crlf() {
 	run_test(|t| {
 		let content = "/*completion*/ */\r\nfunction abcdef(x) { return x; }\r\n";
 		let mut capabilities = tsc_fourslash::get_default_capabilities();
-		capabilities.text_document.completion.completion_item.snippet_support = Some(true.into());
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, capabilities, content);
+		capabilities.text_document.completion.completion_item.snippet_support = Some((true).into());
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", capabilities, content);
 		f.go_to_marker("completion");
 		f.insert("/**");
 		let mut user_preferences = tsc_lsutil::new_default_user_preferences();
@@ -77,8 +77,8 @@ fn js_doc_snippet_completion_respects_generate_return_preference() {
 function abcdef(x) { return x; }
 ";
 		let mut capabilities = tsc_fourslash::get_default_capabilities();
-		capabilities.text_document.completion.completion_item.snippet_support = Some(true.into());
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, capabilities, content);
+		capabilities.text_document.completion.completion_item.snippet_support = Some((true).into());
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", capabilities, content);
 		f.go_to_marker("completion");
 		f.insert("/**");
 		let mut user_preferences = tsc_lsutil::new_default_user_preferences();
@@ -96,7 +96,7 @@ fn js_doc_snippet_completion_respects_enabled_preference() {
 		let content = r"/*completion*/ */
 function abcdef(x) { }
 ";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("completion");
 		f.insert("/**");
 		let mut user_preferences = tsc_lsutil::new_default_user_preferences();
@@ -118,8 +118,8 @@ class C {
 }
 ";
 		let mut capabilities = tsc_fourslash::get_default_capabilities();
-		capabilities.text_document.completion.completion_item.snippet_support = Some(true.into());
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, capabilities, content);
+		capabilities.text_document.completion.completion_item.snippet_support = Some((true).into());
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", capabilities, content);
 		f.go_to_marker("completion");
 		f.insert("/**");
 		let mut list = f.get_completions(None);
@@ -135,7 +135,7 @@ fn js_doc_snippet_completion_not_in_non_empty_comment() {
 		let content = r"/** text /*completion*/ */
 function abcdef(x) { }
 ";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_completions("completion", None);
 	});
 }

@@ -14,7 +14,7 @@ fn get_edits_for_file_rename_js_rename() {
 export const a = 1;
 // @Filename: /b.ts
 import { a } from ".//*rename*/a.js";"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_rename("rename", "c.js", vec![("/c.ts", r"export const a = 1;"), ("/b.ts", r#"import { a } from "./c.js";"#)].into_iter().collect::<FxHashMap<_, _>>());
 	});
 }

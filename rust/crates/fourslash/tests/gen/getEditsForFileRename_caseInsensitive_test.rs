@@ -12,7 +12,7 @@ fn get_edits_for_file_rename_case_insensitive() {
 export const a = 0;
 // @Filename: /b.ts
 import { a } from "./A";"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_will_rename_files_edits("/a.ts", "/eh.ts", vec![("/b.ts", r#"import { a } from "./eh";"#)].into_iter().collect::<FxHashMap<_, _>>(), None);
 	});
 }

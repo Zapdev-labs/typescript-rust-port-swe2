@@ -24,7 +24,7 @@ import { x as x1 } from "./index";
 import { x as x2 } from "./index.js";
 import { y } from "./jsx.jsx";
 import { j } from "./j.jonah.json";"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
 		f.verify_will_rename_files_edits("/a.js", "/b.js", vec![].into_iter().collect::<FxHashMap<_, _>>(), None);
 		f.verify_will_rename_files_edits("/b.js", "/src/b.js", vec![("/src/b.js", r#"import { x as x0 } from "..";

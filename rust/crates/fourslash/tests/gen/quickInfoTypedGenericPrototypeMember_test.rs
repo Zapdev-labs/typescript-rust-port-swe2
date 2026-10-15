@@ -12,7 +12,7 @@ fn quick_info_typed_generic_prototype_member() {
 }
 var /*1*/x = new C<any>(); // Quick Info for x is C<any>
 var /*2*/y = C.prototype; // Quick Info for y is C<{}>";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "var x: C<any>", "");
 		f.verify_quick_info_at("2", "var y: C<any>", "");
 	});

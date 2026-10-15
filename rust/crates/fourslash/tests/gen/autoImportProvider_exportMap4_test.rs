@@ -37,10 +37,10 @@ export function fooFromIndex(): void;
 export function fooFromLol(): void;
 // @Filename: /home/src/workspaces/project/src/foo.ts
 fooFrom/**/"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
 		f.go_to_marker("");
-		f.verify_completions("", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "fooFromIndex", data: &tsc_lsproto::CompletionItemData { auto_import: &tsc_lsproto::AutoImportFix { module_specifier: "dependency", ..Default::default() }, ..Default::default() }, sort_text: Some(tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string().into()), additional_text_edits: tsc_fourslash::ANY_TEXT_EDITS, ..Default::default() }], excludes: vec!["fooFromLol"], ..Default::default() }, ..Default::default() });
+		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "fooFromIndex", data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "dependency", ..Default::default() }), ..Default::default() }), sort_text: Some((tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string()).into()), additional_text_edits: tsc_fourslash::any_text_edits, ..Default::default() })], excludes: vec!["fooFromLol"], ..Default::default() }), ..Default::default() }));
 	});
 }
 

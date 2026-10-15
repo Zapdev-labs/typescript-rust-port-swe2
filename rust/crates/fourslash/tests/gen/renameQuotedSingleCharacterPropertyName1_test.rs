@@ -8,7 +8,7 @@ use tsc_fourslash::*;
 fn rename_quoted_single_character_property_name1() {
 	run_test(|t| {
 		let content = "" + "\n" + "const obj = {\n" + "  \"'\"/**/: 1,\n" + "}\n";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_rename(None, "");
 	});
 }

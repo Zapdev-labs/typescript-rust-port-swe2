@@ -10,10 +10,10 @@ fn augmented_types_class3_fourslash() {
 		let content = r"class c/*1*/5b { public foo() { } }
 namespace c/*2*/5b { export var y = 2; } // should be ok
 /*3*/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "class c5b\nnamespace c5b", "");
 		f.verify_quick_info_at("2", "class c5b\nnamespace c5b", "");
-		f.verify_completions("3", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "c5b", detail: Some("class c5b\nnamespace c5b".into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
+		f.verify_completions("3", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "c5b", detail: Some(("class c5b\nnamespace c5b").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }
 

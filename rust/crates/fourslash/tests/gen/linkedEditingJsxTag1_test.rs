@@ -20,7 +20,7 @@ const jsx2 = (
         <//*13start*/d/*13*/iv/*13end*/>
     <//*14start*/d/*14*/iv/*14end*/>
 );/*d*/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut linked_cursors1 = vec![tsc_lsproto::Range { start: f.marker_by_name("0").ls_position, end: f.marker_by_name("2").ls_position, ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("5").ls_position, end: f.marker_by_name("7").ls_position, ..Default::default() }];
 		let mut linked_cursors2 = vec![tsc_lsproto::Range { start: f.marker_by_name("9start").ls_position, end: f.marker_by_name("9end").ls_position, ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("14start").ls_position, end: f.marker_by_name("14end").ls_position, ..Default::default() }];
 		let mut linked_cursors3 = vec![tsc_lsproto::Range { start: f.marker_by_name("10start").ls_position, end: f.marker_by_name("10end").ls_position, ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("13start").ls_position, end: f.marker_by_name("13end").ls_position, ..Default::default() }];

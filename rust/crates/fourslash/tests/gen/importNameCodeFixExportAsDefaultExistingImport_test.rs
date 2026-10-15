@@ -15,7 +15,7 @@ export { v4 as default };
 export const v1 = 5;
 export const v2 = 5;
 export const v3 = 5;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_import_fix_at_position(vec![r"v4, { v1, v2, v3 }"], None);
 	});
 }

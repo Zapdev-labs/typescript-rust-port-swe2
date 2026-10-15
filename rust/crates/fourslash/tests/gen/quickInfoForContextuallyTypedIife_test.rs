@@ -14,7 +14,7 @@ fn quick_info_for_contextually_typed_iife() {
     var v: number = x/*8*/;
     return q; })({ q: 13, qq: 12 }, 1, { p: 14 });
 ((a/*9*/, b/*10*/, c/*11*/) => [a/*12*/,b/*13*/,c/*14*/])("foo", 101, false);"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "(parameter) q: number", "");
 		f.verify_quick_info_at("2", "(parameter) qq: number", "");
 		f.verify_quick_info_at("3", "(parameter) x: number", "");

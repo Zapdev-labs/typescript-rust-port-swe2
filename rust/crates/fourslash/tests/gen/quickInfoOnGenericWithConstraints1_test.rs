@@ -9,7 +9,7 @@ fn quick_info_on_generic_with_constraints1() {
 	run_test(|t| {
 		return /* skip: "Known failing fourslash test" */;
 		let content = r"interface Fo/*1*/o<T/*2*/T extends Date> {}";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "interface Foo<TT extends Date>", "");
 		f.verify_quick_info_at("2", "(type parameter) TT in Foo<TT extends Date>", "");
 	});

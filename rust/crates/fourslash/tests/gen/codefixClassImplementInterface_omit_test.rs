@@ -17,7 +17,7 @@ interface Two extends Omit<One, "a"> {
 }
 
 class TwoStore implements Two {[| |]}"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'Two'", new_file_content: r#"interface One {
     a: number;
     b: string;

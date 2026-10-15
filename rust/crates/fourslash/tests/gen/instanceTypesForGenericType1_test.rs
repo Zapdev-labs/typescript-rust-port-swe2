@@ -13,7 +13,7 @@ fn instance_types_for_generic_type1() {
         this./*1*/self = /*2*/this;  // self and this are both of type G<T>
     }
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "(property) G<T>.self: G<T>", "");
 		f.verify_quick_info_at("2", "this: this", "");
 	});

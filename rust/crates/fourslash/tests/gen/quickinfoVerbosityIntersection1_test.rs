@@ -23,7 +23,7 @@ fn quickinfo_verbosity_intersection1() {
     type Never = Foo & Bar;
     const obj/*o3*/: Never = { a: "" };
 }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_hover_with_verbosity(vec![("o1", vec![0, 1]), ("o2", vec![0]), ("o3", vec![0])].into_iter().collect::<FxHashMap<_, _>>());
 	});
 }

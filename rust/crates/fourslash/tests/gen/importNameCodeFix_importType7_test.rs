@@ -17,7 +17,7 @@ import {
     type SomePig,
 } from "./exports.js";
 new SomePig/**/"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("");
 		f.verify_import_fix_at_position(vec![r#"import {
     SomePig,
@@ -28,17 +28,17 @@ new SomePig"#], None);
     SomePig,
     type SomeInterface,
 } from "./exports.js";
-new SomePig"#], &tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::ORGANIZE_IMPORTS_TYPE_ORDER_LAST, ..Default::default() });
+new SomePig"#], Some(tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::LAST, ..Default::default() }));
 		f.verify_import_fix_at_position(vec![r#"import {
     type SomeInterface,
     SomePig,
 } from "./exports.js";
-new SomePig"#], &tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::ORGANIZE_IMPORTS_TYPE_ORDER_INLINE, ..Default::default() });
+new SomePig"#], Some(tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::INLINE, ..Default::default() }));
 		f.verify_import_fix_at_position(vec![r#"import {
     type SomeInterface,
     SomePig,
 } from "./exports.js";
-new SomePig"#], &tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::ORGANIZE_IMPORTS_TYPE_ORDER_FIRST, ..Default::default() });
+new SomePig"#], Some(tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::FIRST, ..Default::default() }));
 	});
 }
 

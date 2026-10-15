@@ -18,7 +18,7 @@ function f(): Promise<Apple> {
 const g/*g*/ = f;
 const u/*u*/: Map<string, Apple> = new Map;
 type Foo<T> = Promise/*p*/<T>;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_hover_with_verbosity(vec![("g", vec![0, 1]), ("u", vec![0, 1]), ("p", vec![0])].into_iter().collect::<FxHashMap<_, _>>());
 	});
 }

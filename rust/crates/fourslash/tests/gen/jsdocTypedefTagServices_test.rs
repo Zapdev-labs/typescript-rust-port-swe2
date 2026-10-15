@@ -18,7 +18,7 @@ fn jsdoc_typedef_tag_services() {
  * @type {[|/*use*/Product|]}
  */
 const product = null;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("use", "type Product = {\n    title: string;\n}", "Doc comment");
 		f.verify_baseline_find_all_references("use", "def");
 		f.verify_baseline_rename(None, to_any(f.ranges().slice));

@@ -12,9 +12,9 @@ fn completion_list_in_template_literal_parts1() {
 /*0*/" + "`" + r"  $ { ${/*1*/ 10/*2*/ + 1.1/*3*/ /*4*/} 12312" + "`" + r"/*5*/
 
 /*6*/" + "`" + r"asdasd${/*7*/ 2 + 1.1 /*8*/} 12312 {";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_completions(vec!["1", "7"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: COMPLETION_GLOBALS, ..Default::default() }, ..Default::default() });
-		f.verify_completions(vec!["2", "3", "4", "5", "6", "8"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: COMPLETION_GLOBALS, ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_completions(vec!["1", "7"], Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: COMPLETION_GLOBALS, ..Default::default() }), ..Default::default() }));
+		f.verify_completions(vec!["2", "3", "4", "5", "6", "8"], Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: COMPLETION_GLOBALS, ..Default::default() }), ..Default::default() }));
 	});
 }
 

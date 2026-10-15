@@ -21,7 +21,7 @@ fn references_for_expression_keywords() {
 "x" /*in*/in C;
 undefined /*instanceof*/instanceof C;
 undefined /*as*/as C;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("new", "void", "typeof", "yield", "await", "in", "instanceof", "as", "delete");
 	});
 }

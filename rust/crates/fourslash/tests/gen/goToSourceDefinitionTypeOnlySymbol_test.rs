@@ -22,7 +22,7 @@ export function create(config) { return config; }
 import { /*importConfig*/Config, create } from "pkg";
 const c: Config = { name: "test", value: 1 };
 create(c);"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_source_definition("importConfig");
 	});
 }
@@ -44,7 +44,7 @@ export function create(config) { return config; }
 import { Config, create } from "pkg";
 const c: /*usageSite*/Config = { name: "test" };
 create(c);"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_source_definition("usageSite");
 	});
 }
@@ -62,7 +62,7 @@ export function /*targetCreate*/create() {}
 // @Filename: /home/src/workspaces/project/index.ts
 import { /*importCreate*/create } from "pkg";
 create();"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_source_definition("importCreate");
 	});
 }

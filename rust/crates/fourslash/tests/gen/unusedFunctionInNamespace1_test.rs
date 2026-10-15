@@ -14,7 +14,7 @@ fn unused_function_in_namespace1() {
   function function1() {
   }/*1*/
 } |]";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_range_after_code_fix(r"namespace greeter {
    // some legit comments
 }", false, 0, 0);

@@ -15,7 +15,7 @@ fn find_references_across_multiple_projects() {
 //@Filename: c.ts
 /// <reference path="a.ts" />
 /*4*/x++;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("1", "2", "3", "4");
 	});
 }

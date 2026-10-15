@@ -17,8 +17,8 @@ foo({
     hello: true,
     /**/
 });";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_completions("", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec![&tsc_lsproto::CompletionItem { label: "world?", insert_text: Some("world".into()), filter_text: Some("world".into()), kind: Some(tsc_lsproto::COMPLETION_ITEM_KIND_FIELD.into()), sort_text: Some(tsc_ls::SORT_TEXT_OPTIONAL_MEMBER.to_string().into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "world?", insert_text: Some(("world").into()), filter_text: Some(("world").into()), kind: Some((tsc_lsproto::CompletionItemKind::FIELD).into()), sort_text: Some((tsc_ls::SORT_TEXT_OPTIONAL_MEMBER.to_string()).into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }
 

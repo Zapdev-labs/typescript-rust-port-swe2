@@ -10,7 +10,7 @@ fn quick_info_function_keyword() {
 		return /* skip: "Known failing fourslash test" */;
 		let content = r"[1].forEach(fu/*1*/nction() {});
 [1].map(x =/*2*/> x + 1);";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "(local function)(): void", "");
 		f.verify_quick_info_at("2", "function(x: number): number", "");
 	});

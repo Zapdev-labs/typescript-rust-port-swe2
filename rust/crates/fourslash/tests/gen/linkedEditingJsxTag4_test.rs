@@ -21,7 +21,7 @@ const jsx = (
       </*15*/p />
    <//*16*/div>
 );";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut linked_cursors = vec![tsc_lsproto::Range { start: f.marker_by_name("0").ls_position, end: f.marker_by_name("1").ls_position, ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("6").ls_position, end: f.marker_by_name("7").ls_position, ..Default::default() }];
 		f.verify_linked_editing(vec![("0", linked_cursors), ("1", linked_cursors), ("2", None), ("3", None), ("4", None), ("5", None), ("6", linked_cursors), ("10", None), ("11", None), ("12", None), ("13", None), ("14", None), ("15", None), ("16", None)].into_iter().collect::<FxHashMap<_, _>>());
 	});

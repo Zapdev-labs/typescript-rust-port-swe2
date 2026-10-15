@@ -21,7 +21,7 @@ declare module "b" {
     [|import { [|{| "contextRangeIndex": 9 |}P|] as /*Q*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 9 |}Q|] } from "a";|]
     export const y: typeof [|Q|].x;
 }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
 		f.verify_baseline_find_all_references("N", "O", "P", "Q");
 		f.verify_baseline_rename_at_ranges_with_text(None, "N", "O", "P", "Q");

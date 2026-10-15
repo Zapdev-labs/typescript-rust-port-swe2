@@ -16,7 +16,7 @@ export interface I {
 // @Filename: /C.ts
 import { I } from "./I";
 export class C implements I {}"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/C.ts");
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'I'", new_file_content: r#"import { I, J } from "./I";
 export class C implements I {

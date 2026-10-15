@@ -23,7 +23,7 @@ var y = /*4*/[|f|]();
 [|namespace /*5*/[|{| "contextRangeIndex": 7 |}f|] {
     var local = 100;
 }|]"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 |r| {
 			return r.marker == None || r.marker.data["inComment"] == None;
 		}		f.verify_baseline_rename(None, to_any(tsc_core::filter(f.get_ranges_by_text().get("f"), )));

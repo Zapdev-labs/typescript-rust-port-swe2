@@ -11,7 +11,7 @@ fn formatting_readonly() {
   readonly    property1: {};/*1*/
   public readonly   property2: {};/*2*/
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.format_document("");
 		f.go_to_marker("1");
 		f.verify_current_line_content(r"    readonly property1: {};");

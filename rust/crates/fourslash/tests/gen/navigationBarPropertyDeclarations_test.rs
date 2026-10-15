@@ -39,7 +39,7 @@ fn navigation_bar_property_declarations() {
 
     public [1 + 1] = 1;
 }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_document_symbol();
 	});
 }

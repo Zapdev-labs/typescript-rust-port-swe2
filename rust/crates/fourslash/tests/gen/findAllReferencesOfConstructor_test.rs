@@ -39,7 +39,7 @@ class E implements C {
 import * as a from "./a";
 new a.C();
 class d extends a.C { constructor() { super(); }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("0", "1", "2");
 	});
 }

@@ -21,7 +21,7 @@ const jsx3 = (
     <>/*7*/
     </>
 );/*e*/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut start_range = f.marker_by_name("0").ls_position;
 		let mut end_range = f.marker_by_name("3").ls_position;
 		let mut linked_cursors1 = vec![tsc_lsproto::Range { start: start_range, end: start_range, ..Default::default() }, tsc_lsproto::Range { start: end_range, end: end_range, ..Default::default() }];

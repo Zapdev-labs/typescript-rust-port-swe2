@@ -23,7 +23,7 @@ import fs from 'fs';
 const path = require('path');
 
 new Blah";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("addToExisting.js");
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Update import from \"./blah\"", new_file_content: r"const { Named2 } = require('./blah')
 import Blah, { Named1 } from './blah'

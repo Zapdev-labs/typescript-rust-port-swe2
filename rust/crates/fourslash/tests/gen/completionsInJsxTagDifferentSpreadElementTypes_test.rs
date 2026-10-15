@@ -52,7 +52,7 @@ export function ComponentNumber(props: number) {
     return <SomeComponent {...props} /*number*//>;
 }
 ";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 |marker, index| {
 			f.verify_completions(marker, None);
 		}		f.go_to_each_marker(None, );

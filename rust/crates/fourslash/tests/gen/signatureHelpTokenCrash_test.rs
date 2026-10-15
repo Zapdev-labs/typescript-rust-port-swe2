@@ -17,9 +17,9 @@ foo((/*1*/
 /** This is a JSDoc comment */
 foo/** More comments*/((/*2*/
 ";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_signature_help_with_cases(&tsc_fourslash::SignatureHelpCase { marker_input: "1", expected: None, context: &tsc_lsproto::SignatureHelpContext { is_retrigger: false, trigger_character: Some("(".into()), trigger_kind: tsc_lsproto::SIGNATURE_HELP_TRIGGER_KIND_TRIGGER_CHARACTER, ..Default::default() }, ..Default::default() });
-		f.verify_signature_help_with_cases(&tsc_fourslash::SignatureHelpCase { marker_input: "2", expected: None, context: &tsc_lsproto::SignatureHelpContext { is_retrigger: false, trigger_character: Some("(".into()), trigger_kind: tsc_lsproto::SIGNATURE_HELP_TRIGGER_KIND_TRIGGER_CHARACTER, ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_signature_help_with_cases(Some(tsc_fourslash::SignatureHelpCase { marker_input: "1", expected: None, context: Some(tsc_lsproto::SignatureHelpContext { is_retrigger: false, trigger_character: Some(("(").into()), trigger_kind: tsc_lsproto::SignatureHelpTriggerKind::TRIGGER_CHARACTER, ..Default::default() }), ..Default::default() }));
+		f.verify_signature_help_with_cases(Some(tsc_fourslash::SignatureHelpCase { marker_input: "2", expected: None, context: Some(tsc_lsproto::SignatureHelpContext { is_retrigger: false, trigger_character: Some(("(").into()), trigger_kind: tsc_lsproto::SignatureHelpTriggerKind::TRIGGER_CHARACTER, ..Default::default() }), ..Default::default() }));
 	});
 }
 

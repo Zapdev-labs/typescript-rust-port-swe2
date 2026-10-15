@@ -8,7 +8,7 @@ use tsc_fourslash::*;
 fn completion_list_new_identifier_binding_element() {
 	run_test(|t| {
 		let content = r"var { x:html/*1*/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_completions("1", None);
 	});
 }

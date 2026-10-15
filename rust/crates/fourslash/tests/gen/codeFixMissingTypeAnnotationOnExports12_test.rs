@@ -13,7 +13,7 @@ function foo() {
     return { x: 1, y: 1 };
 }
 export const { x, y } = foo();";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Extract binding expressions to variable", new_file_content: r"function foo() {
     return { x: 1, y: 1 };
 }

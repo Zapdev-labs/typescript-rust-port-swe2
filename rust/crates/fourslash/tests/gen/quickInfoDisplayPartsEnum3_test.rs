@@ -25,7 +25,7 @@ var /*20*/eInstance1: /*21*/constE;
 /*22*/eInstance1 = /*23*/constE[/*24*/"e1"];
 /*25*/eInstance1 = /*26*/constE[/*27*/"e2"];
 /*28*/eInstance1 = /*29*/constE[/*30*/'e3'];"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_hover();
 	});
 }

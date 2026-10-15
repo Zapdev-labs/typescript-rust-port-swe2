@@ -22,10 +22,10 @@ var x; x./*1*/;
 var x1; x1./*2*/;
 /** @type {T.People} */
 var x1; x1./*3*/;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.verify_completions(vec!["1", "3"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["charAt", "toExponential"], ..Default::default() }, ..Default::default() });
-		f.verify_completions("2", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "age", sort_text: Some(tsc_ls::SORT_TEXT_JAVASCRIPT_IDENTIFIERS.to_string().into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
+		f.verify_completions(vec!["1", "3"], Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["charAt", "toExponential"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("2", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "age", sort_text: Some((tsc_ls::SORT_TEXT_JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }
 

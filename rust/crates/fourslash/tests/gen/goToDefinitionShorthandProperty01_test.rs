@@ -14,7 +14,7 @@ declare var /*valueDeclaration3*/id;
 var obj = {[|/*valueDefinition1*/name|], [|/*valueDefinition2*/id|]};
 obj.[|/*valueReference1*/name|];
 obj.[|/*valueReference2*/id|];"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_definition(true, "valueDefinition1", "valueDefinition2", "valueReference1", "valueReference2");
 	});
 }

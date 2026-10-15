@@ -18,7 +18,7 @@ class C3 extends Array<string>{
 
 class C4 extends Number{
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.format_document("");
 		f.verify_current_file_content(r"class C1 implements Array<string> {
 }

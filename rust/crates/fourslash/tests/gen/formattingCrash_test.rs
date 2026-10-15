@@ -9,7 +9,7 @@ fn formatting_crash() {
 	run_test(|t| {
 		let content = r"/**/module Default{ 
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut opts131 = f.get_options();
 		opts131.format_code_settings.place_open_brace_on_new_line_for_functions = tsc_core::TS_TRUE;
 		f.configure(opts131);

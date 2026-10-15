@@ -10,7 +10,7 @@ fn format_on_enter_open_brace_add_new_line() {
 		let content = r"if(true) {/*0*/}
 if(false)/*1*/{
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut opts148 = f.get_options();
 		opts148.format_code_settings.place_open_brace_on_new_line_for_control_blocks = tsc_core::TS_TRUE;
 		f.configure(opts148);

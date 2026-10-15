@@ -10,7 +10,7 @@ fn quick_info_for_destructuring_shorthand_initializer() {
 		let content = r"let a = '';
 let b: string;
 ({b = /**/a} = {b: 'b'});";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("", "let a: string", "");
 	});
 }

@@ -10,7 +10,7 @@ fn signature_help_optional_call2() {
 		let content = r"// @strict: false
 declare const fnTest: undefined | ((str: string, num: number) => void);
 fnTest?.(/*1*/);";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("1");
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "fnTest(str: string, num: number): void", parameter_count: 2, parameter_name: "str", parameter_span: "str: string", ..Default::default() });
 	});

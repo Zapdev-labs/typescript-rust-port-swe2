@@ -12,11 +12,11 @@ export default function foo() {}
 // @Filename: /b.ts
 import f_o_o from "./a";
 f/**/;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_completions("", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "foo", data: &tsc_lsproto::CompletionItemData { auto_import: &tsc_lsproto::AutoImportFix { module_specifier: "./a", ..Default::default() }, ..Default::default() }, detail: Some("function foo(): void".into()), kind: Some(tsc_lsproto::COMPLETION_ITEM_KIND_FUNCTION.into()), additional_text_edits: tsc_fourslash::ANY_TEXT_EDITS, sort_text: Some(tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string().into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
-		f.verify_apply_code_action_from_completion(Some("".into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "foo", source: "./a", description: "Add import from \"./a\"", new_file_content: Some(r#"import foo from "./a";
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "foo", data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./a", ..Default::default() }), ..Default::default() }), detail: Some(("function foo(): void").into()), kind: Some((tsc_lsproto::CompletionItemKind::FUNCTION).into()), additional_text_edits: tsc_fourslash::any_text_edits, sort_text: Some((tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_apply_code_action_from_completion(Some(("").into()), Some(tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "foo", source: "./a", description: "Add import from \"./a\"", new_file_content: Some((r#"import foo from "./a";
 import f_o_o from "./a";
-f;"#.into()), ..Default::default() });
+f;"#).into()), ..Default::default() }));
 	});
 }
 

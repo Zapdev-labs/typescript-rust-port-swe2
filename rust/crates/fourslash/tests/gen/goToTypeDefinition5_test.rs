@@ -11,7 +11,7 @@ fn go_to_type_definition5() {
 let Foo: /*definition*/unresolved;
 type Foo = { x: string };
 /*reference*/Foo;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_type_definition("reference");
 	});
 }

@@ -25,7 +25,7 @@ fn format_simulating_script_blocks() {
             var f = 1;
         /*end1*/
 /* END EXTERNAL SOURCE */"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut opts640 = f.get_options();
 		opts640.format_code_settings.base_indent_size = 12;
 		f.configure(opts640);

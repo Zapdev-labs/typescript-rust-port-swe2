@@ -44,7 +44,7 @@ var /*20*/r6b = _.map<Collection<number>, number>(c3, rf2);
 var /*21*/r7a = _.map<A, A>(c4, (/*7*/x: A) => { return x.foo() });
 var /*22*/r7b = _.map<A, A>(c4, rf3);
 var /*23*/r8a = _.map</*error1*/B/*error2*/, string>(c5, (/*8*/x) => { return x.foo() });";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "(parameter) x: number", "");
 		f.verify_quick_info_at("2", "(parameter) x: Collection<number>", "");
 		f.verify_quick_info_at("3", "(parameter) x: A", "");

@@ -18,7 +18,7 @@ function Bar<T extends {prop: number}>(arg: T) {
     let a2 = <ComponentSpecific1 {...arg} ignore-prop={10} />;  // U is number
     let a3 = <Component/*2*/Specific {...arg} prop="hello" />;   // U is "hello"
 }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "function ComponentSpecific<number>(l: {\n    prop: number;\n}): JSX.Element", "");
 		f.verify_quick_info_at("2", "function ComponentSpecific<never>(l: {\n    prop: never;\n}): JSX.Element", "");
 	});

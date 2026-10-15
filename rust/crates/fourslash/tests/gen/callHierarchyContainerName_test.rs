@@ -42,7 +42,7 @@ namespace Foo {
 namespace Foo.Bar {
   const sameName = () => new Foo.C();
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("");
 		f.verify_baseline_call_hierarchy();
 	});

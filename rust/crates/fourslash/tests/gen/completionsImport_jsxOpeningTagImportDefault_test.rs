@@ -15,14 +15,14 @@ export default function (props: any) {}
 export function Index() {
     return <Component/**/
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("");
-		f.verify_completions("", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "Component", data: &tsc_lsproto::CompletionItemData { auto_import: &tsc_lsproto::AutoImportFix { module_specifier: "./component", ..Default::default() }, ..Default::default() }, additional_text_edits: tsc_fourslash::ANY_TEXT_EDITS, sort_text: Some(tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string().into()), ..Default::default() }], excludes: vec!["component"], ..Default::default() }, ..Default::default() });
-		f.verify_apply_code_action_from_completion(Some("".into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "Component", source: "./component", description: "Add import from \"./component\"", new_file_content: Some(r#"import Component from "./component";
+		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "Component", data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./component", ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::any_text_edits, sort_text: Some((tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() })], excludes: vec!["component"], ..Default::default() }), ..Default::default() }));
+		f.verify_apply_code_action_from_completion(Some(("").into()), Some(tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "Component", source: "./component", description: "Add import from \"./component\"", new_file_content: Some((r#"import Component from "./component";
 
 export function Index() {
     return <Component
-}"#.into()), ..Default::default() });
+}"#).into()), ..Default::default() }));
 	});
 }
 

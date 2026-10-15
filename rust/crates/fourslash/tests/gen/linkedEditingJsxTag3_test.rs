@@ -16,7 +16,7 @@ fn linked_editing_jsx_tag3() {
      /*10*/ </p>/*11*/
    /*12*/</div>
 /*13*/)/*14*/;/*15*/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_linked_editing(vec![("0", None), ("1", None), ("2", None), ("3", None), ("4", None), ("5", None), ("6", None), ("7", None), ("8", None), ("9", None), ("10", None), ("11", None), ("12", None), ("13", None), ("14", None), ("15", None)].into_iter().collect::<FxHashMap<_, _>>());
 	});
 }

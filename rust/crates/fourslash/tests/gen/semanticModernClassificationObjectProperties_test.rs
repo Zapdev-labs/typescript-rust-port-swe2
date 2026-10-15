@@ -10,7 +10,7 @@ fn semantic_modern_classification_object_properties() {
 		let content = r"let x = 1, y = 1;
 const a1 = { e: 1 };
 var a2 = { x };";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_semantic_tokens(vec![tsc_fourslash::SemanticToken { type: "variable.declaration", text: "x", ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.declaration", text: "y", ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.declaration.readonly", text: "a1", ..Default::default() }, tsc_fourslash::SemanticToken { type: "property.declaration", text: "e", ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.declaration", text: "a2", ..Default::default() }, tsc_fourslash::SemanticToken { type: "property.declaration", text: "x", ..Default::default() }]);
 	});
 }

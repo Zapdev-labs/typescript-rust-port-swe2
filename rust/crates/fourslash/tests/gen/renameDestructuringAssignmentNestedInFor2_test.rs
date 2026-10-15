@@ -22,7 +22,7 @@ for ([|{ skills: { [|{| "contextRangeIndex": 4 |}primary|]: primaryA, secondary:
 for ([|{ skills: { [|{| "contextRangeIndex": 6 |}primary|], secondary } } = multiRobot|], i = 0; i < 1; i++) {
     [|primary|];
 }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
 		f.verify_baseline_rename(None, f.ranges()[1], f.ranges()[5], f.ranges()[3], f.ranges()[7], f.ranges()[8]);
 	});

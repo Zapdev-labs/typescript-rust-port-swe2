@@ -23,7 +23,7 @@ let { /*2*/targetProperty }: SomeType = { /*3*/targetProperty: 42 };
 let { /*5*/targetProperty: /*6*/alias_1 }: SomeType = { targetProperty: 42 };
 
 let { x: { /*7*/targetProperty: /*8*/{} } }: { x: SomeType } = { x: { targetProperty: 42 } };";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_definition(true, f.marker_names());
 	});
 }
@@ -37,7 +37,7 @@ interface SomeType {
 }
 
 let { .../*1*/rest }: SomeType = { targetProperty: 42 };";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_definition(true, f.marker_names());
 	});
 }

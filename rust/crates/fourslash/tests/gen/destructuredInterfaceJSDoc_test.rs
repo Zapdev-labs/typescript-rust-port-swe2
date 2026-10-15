@@ -21,7 +21,7 @@ declare const fubar: FooBar;
 
 const {/*1*/foo, /*2*/bar, /*3*/baz: /*4*/biz} = fubar;
 ";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_hover();
 	});
 }
@@ -41,7 +41,7 @@ declare const fubar: FooBar;
 
 const {foo: /*1*/myFoo, bar: /*2*/myBar} = fubar;
 ";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_hover();
 	});
 }
@@ -65,7 +65,7 @@ const {
     /** Comment on baz destructuring. */ /*2*/baz
 } = foo;
 ";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_hover();
 	});
 }

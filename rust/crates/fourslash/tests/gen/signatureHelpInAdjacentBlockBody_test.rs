@@ -10,11 +10,11 @@ fn signature_help_in_adjacent_block_body() {
 		let content = r"declare function foo(...args);
 
 foo(() => {/*1*/}/*2*/)";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("1");
-		f.verify_signature_help_present(&tsc_lsproto::SignatureHelpContext { trigger_kind: tsc_lsproto::SIGNATURE_HELP_TRIGGER_KIND_INVOKED, ..Default::default() });
+		f.verify_signature_help_present(Some(tsc_lsproto::SignatureHelpContext { trigger_kind: tsc_lsproto::SignatureHelpTriggerKind::INVOKED, ..Default::default() }));
 		f.go_to_marker("2");
-		f.verify_signature_help_present(&tsc_lsproto::SignatureHelpContext { trigger_kind: tsc_lsproto::SIGNATURE_HELP_TRIGGER_KIND_INVOKED, ..Default::default() });
+		f.verify_signature_help_present(Some(tsc_lsproto::SignatureHelpContext { trigger_kind: tsc_lsproto::SignatureHelpTriggerKind::INVOKED, ..Default::default() }));
 	});
 }
 

@@ -27,7 +27,7 @@ function test2<T extends A>(arg: T | B) {}
 test2({
   foo/*2*/: 2,
 });";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_definition(true, "1", "2");
 	});
 }

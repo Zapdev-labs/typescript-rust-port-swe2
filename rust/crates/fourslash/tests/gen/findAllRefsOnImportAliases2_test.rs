@@ -14,7 +14,7 @@ fn find_all_refs_on_import_aliases2() {
 var c = new /*c2_1*/[|C2|]();
 //@Filename: c.ts
 [|export { /*class2*/[|{| "contextRangeIndex": 6 |}Class|] as /*c3*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 6 |}C3|] } from "./a";|]"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("class0", "class1", "class2", "c2_0", "c2_1", "c3");
 		f.verify_baseline_rename_at_ranges_with_text(None, "Class", "C2", "C3");
 	});

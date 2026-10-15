@@ -10,7 +10,7 @@ fn signature_help_rest_args3() {
 		let content = r"// @target: esnext
 // @lib: esnext
 const layers = Object.assign({}, /*1*/...[]);";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_signature_help();
 	});
 }

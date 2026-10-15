@@ -12,7 +12,7 @@ fn get_edits_for_file_rename_resolve_json_module() {
 import text from "./message.json";
 // @Filename: /message.json
 {}"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_will_rename_files_edits("/a.ts", "/src/a.ts", vec![("/src/a.ts", r#"import text from "../message.json";"#)].into_iter().collect::<FxHashMap<_, _>>(), None);
 	});
 }

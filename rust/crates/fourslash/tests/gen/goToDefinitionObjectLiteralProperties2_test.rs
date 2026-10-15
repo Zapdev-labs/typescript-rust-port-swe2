@@ -26,7 +26,7 @@ const result = fn({
 
 // this one shouldn't go to the constraint type
 result.foo/*5*/;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_definition(true, "1", "2", "3", "4", "5");
 	});
 }

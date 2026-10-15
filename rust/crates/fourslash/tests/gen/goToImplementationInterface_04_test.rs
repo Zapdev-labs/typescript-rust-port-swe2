@@ -21,7 +21,7 @@ class Bar {
 
     constructor(public f: Foo = [|function(a) {}|] ) {}
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_implementation("interface_definition");
 	});
 }

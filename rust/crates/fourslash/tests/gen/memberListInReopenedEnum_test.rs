@@ -17,8 +17,8 @@ fn member_list_in_reopened_enum() {
     }
     var x = E./*1*/
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_completions("1", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec![&tsc_lsproto::CompletionItem { label: "A", detail: Some("(enum member) E.A = 0".into()), ..Default::default() }, &tsc_lsproto::CompletionItem { label: "B", detail: Some("(enum member) E.B = 1".into()), ..Default::default() }, &tsc_lsproto::CompletionItem { label: "C", detail: Some("(enum member) E.C = 0".into()), ..Default::default() }, &tsc_lsproto::CompletionItem { label: "D", detail: Some("(enum member) E.D = 1".into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_completions("1", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "A", detail: Some(("(enum member) E.A = 0").into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "B", detail: Some(("(enum member) E.B = 1").into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "C", detail: Some(("(enum member) E.C = 0").into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "D", detail: Some(("(enum member) E.D = 1").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -15,14 +15,14 @@ export default 0;
 // @Filename: /src/b.ts
 def/*0*/
 fooB/*1*/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("0");
-		f.verify_completions("0", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_plus(vec![], true), ..Default::default() }, ..Default::default() });
-		f.verify_completions("1", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "fooBar", data: &tsc_lsproto::CompletionItemData { auto_import: &tsc_lsproto::AutoImportFix { module_specifier: "./foo-bar", ..Default::default() }, ..Default::default() }, detail: Some("(property) default: 0".into()), kind: Some(tsc_lsproto::COMPLETION_ITEM_KIND_FIELD.into()), additional_text_edits: tsc_fourslash::ANY_TEXT_EDITS, sort_text: Some(tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string().into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
-		f.verify_apply_code_action_from_completion(Some("1".into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "fooBar", source: "./foo-bar", description: "Add import from \"./foo-bar\"", new_file_content: Some(r#"import fooBar from "./foo-bar"
+		f.verify_completions("0", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_plus(vec![], true), ..Default::default() }), ..Default::default() }));
+		f.verify_completions("1", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "fooBar", data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./foo-bar", ..Default::default() }), ..Default::default() }), detail: Some(("(property) default: 0").into()), kind: Some((tsc_lsproto::CompletionItemKind::FIELD).into()), additional_text_edits: tsc_fourslash::any_text_edits, sort_text: Some((tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_apply_code_action_from_completion(Some(("1").into()), Some(tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "fooBar", source: "./foo-bar", description: "Add import from \"./foo-bar\"", new_file_content: Some((r#"import fooBar from "./foo-bar"
 
 def
-fooB"#.into()), ..Default::default() });
+fooB"#).into()), ..Default::default() }));
 	});
 }
 

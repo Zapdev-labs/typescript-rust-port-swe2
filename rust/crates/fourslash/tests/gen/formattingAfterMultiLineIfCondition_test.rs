@@ -13,7 +13,7 @@ fn formatting_after_multi_line_if_condition() {
 /*comment*/     // This is a comment
      foo.toString();
  /**/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("");
 		f.insert("}");
 		f.go_to_marker("comment");

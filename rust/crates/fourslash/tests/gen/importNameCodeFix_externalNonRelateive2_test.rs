@@ -28,7 +28,7 @@ export const utils = 0;
 export const shared = 0;
 // @Filename: /home/src/workspaces/project/shared/data.ts
 shared/*external2external*/"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
 		let mut opts839 = f.get_options();
 		opts839.format_code_settings.new_line_character = "\n";
@@ -36,15 +36,15 @@ shared/*external2external*/"#;
 		f.go_to_marker("internal2external");
 		f.verify_import_fix_at_position(vec![r#"import { shared } from "shared/constants";
 
-shared"#], &tsc_lsutil::UserPreferences { import_module_specifier_preference: "project-relative", ..Default::default() });
+shared"#], Some(tsc_lsutil::UserPreferences { import_module_specifier_preference: "project-relative", ..Default::default() }));
 		f.go_to_marker("internal2internal");
 		f.verify_import_fix_at_position(vec![r#"import { utils } from "./utils";
 
-utils"#], &tsc_lsutil::UserPreferences { import_module_specifier_preference: "project-relative", ..Default::default() });
+utils"#], Some(tsc_lsutil::UserPreferences { import_module_specifier_preference: "project-relative", ..Default::default() }));
 		f.go_to_marker("external2external");
 		f.verify_import_fix_at_position(vec![r#"import { shared } from "./constants";
 
-shared"#], &tsc_lsutil::UserPreferences { import_module_specifier_preference: "project-relative", ..Default::default() });
+shared"#], Some(tsc_lsutil::UserPreferences { import_module_specifier_preference: "project-relative", ..Default::default() }));
 	});
 }
 

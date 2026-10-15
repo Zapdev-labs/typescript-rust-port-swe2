@@ -13,7 +13,7 @@ fn jsdoc_typedef_tag_semantic_meaning1() {
 /*1*/const /*2*/T = 1;
 /** @type {/*3*/T} */
 const n = /*4*/T;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("1", "2", "3", "4");
 	});
 }

@@ -16,7 +16,7 @@ foo(123/*1*/,)
 foo(""/*2*/, ""/*3*/)
 foo(123/*4*/, ""/*5*/, )
 foo(123/*6*/, ""/*7*/, ""/*8*/)"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("1");
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "foo(args_0: number, args_1: string, args_2: string): void", parameter_count: 3, parameter_name: "args_0", parameter_span: "args_0: number", overloads_count: 2, override_selected_item_index: 1, is_variadic: false, is_variadic_set: true, ..Default::default() });
 		f.go_to_marker("2");

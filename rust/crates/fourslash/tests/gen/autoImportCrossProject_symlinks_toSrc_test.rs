@@ -33,7 +33,7 @@ import "./sub/folder";
 // @Filename: /home/src/workspaces/project/packages/dep/src/sub/folder/index.ts
 export const dep = 0;
 // @link: /home/src/workspaces/project/packages/dep -> /home/src/workspaces/project/packages/app/node_modules/dep"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.configure(tsc_lsutil::UserPreferences { auto_import_entrypoint_directory_search: tsc_core::TS_TRUE, ..Default::default() });
 		f.mark_test_as_strada_server();
 		f.go_to_marker("");

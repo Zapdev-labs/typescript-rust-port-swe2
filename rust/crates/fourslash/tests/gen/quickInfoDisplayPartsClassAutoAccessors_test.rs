@@ -36,7 +36,7 @@ y = /*7g*/cInstance./*8g*/publicProperty;
 y = /*9g*/c./*10g*/staticProperty;
 /*7s*/cInstance./*8s*/publicProperty = y;
 /*9s*/c./*10s*/staticProperty = y;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_hover();
 	});
 }

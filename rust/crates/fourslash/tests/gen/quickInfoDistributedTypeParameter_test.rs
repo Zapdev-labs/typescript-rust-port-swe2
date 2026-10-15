@@ -13,7 +13,7 @@ fn quick_info_distributed_type_parameter() {
         : T/*falseType*/;
 
 type NonDistributed<T> = [T/*nonDistributed*/] extends [unknown] ? T : never;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("check", "(type parameter) (distributed) T in type Conditional<T>", "");
 		f.verify_quick_info_at("extends", "(type parameter) (distributed) T in type Conditional<T>", "");
 		f.verify_quick_info_at("trueType", "(type parameter) (distributed) T in type Conditional<T>", "");

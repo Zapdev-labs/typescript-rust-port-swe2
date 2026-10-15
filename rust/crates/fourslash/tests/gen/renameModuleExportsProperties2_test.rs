@@ -9,7 +9,7 @@ fn rename_module_exports_properties2() {
 	run_test(|t| {
 		let content = r#"[|class [|{| "contextRangeIndex": 0 |}A|] {}|]
 module.exports = { B: [|A|] }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_rename(None, f.ranges()[1], f.ranges()[2]);
 	});
 }

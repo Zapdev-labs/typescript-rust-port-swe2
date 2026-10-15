@@ -14,7 +14,7 @@ function /*functionOverloadDefinition*/functionOverload() {}
 [|/*functionOverloadReference1*/functionOverload|](123);
 [|/*functionOverloadReference2*/functionOverload|]("123");
 [|/*brokenOverload*/functionOverload|]({});"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_definition(true, "functionOverloadReference1", "functionOverloadReference2", "brokenOverload", "functionOverload1");
 	});
 }

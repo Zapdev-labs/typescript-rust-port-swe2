@@ -15,7 +15,7 @@ interface Comparer {
    <T extends Comparable<T>>(x: T, y: T): T;
 }
 var max2: Comparer = (x/*1*/x, y/*2*/y) => { return x/*3*/x.compareTo(y/*4*/y) };";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "(parameter) xx: T extends Comparable<T>", "");
 		f.verify_quick_info_at("2", "(parameter) yy: T extends Comparable<T>", "");
 		f.verify_quick_info_at("3", "(parameter) xx: T extends Comparable<T>", "");

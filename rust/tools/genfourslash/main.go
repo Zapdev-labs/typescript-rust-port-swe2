@@ -380,12 +380,18 @@ func (tr *translator) emitStmt(s ast.Stmt) {
 			return
 		}
 		if st.Tok == token.DEFINE && len(st.Rhs) == 1 {
-			// `f, done := fourslash.NewFourslash(...)` — drop the done binding
+			// `f, done := fourslash.NewFourslash(...)` — done is a Drop-guard;
+			// the port returns just FourslashTest.
 			var names []string
 			for _, l := range st.Lhs {
 				names = append(names, rustIdent(tr.expr(l)))
 			}
-			fmt.Fprintf(&tr.out, "%slet (%s) = %s;\n", tr.indent(), strings.Join(mutNames(names), ", "), tr.expr(st.Rhs[0]))
+			rhs := tr.expr(st.Rhs[0])
+			if strings.HasPrefix(rhs, "tsc_fourslash::new_fourslash") && len(names) == 2 {
+				fmt.Fprintf(&tr.out, "%slet mut %s = %s;\n", tr.indent(), names[0], rhs)
+				return
+			}
+			fmt.Fprintf(&tr.out, "%slet (%s) = %s;\n", tr.indent(), strings.Join(mutNames(names), ", "), rhs)
 			return
 		}
 		note(tr.fset, s, "multi-assign %d = %d", len(st.Lhs), len(st.Rhs))
@@ -543,6 +549,9 @@ func (tr *translator) expr(e ast.Expr) string {
 	case *ast.UnaryExpr:
 		switch x.Op {
 		case token.AND:
+			if _, ok := x.X.(*ast.CompositeLit); ok {
+				return "Some(" + tr.expr(x.X) + ")"
+			}
 			return "&" + tr.expr(x.X)
 		case token.NOT:
 			return "!" + tr.expr(x.X)
@@ -624,6 +633,17 @@ func rustRawString(s string) string {
 	return "\"" + strings.ReplaceAll(s, "\"", "\\\"") + "\""
 }
 
+// snakeNames: Go package-level identifiers that are vars/fns/types used in
+// value position — they keep snake_case rather than SCREAMING_SNAKE consts.
+var snakeNames = map[string]bool{
+	"Ignored": true, "DefaultCommitCharacters": true, "AnyTextEdits": true,
+	"NewFourslash": true, "NewFourslashWithOptions": true,
+	"GetDefaultCapabilities": true, "GetDefaultCapabilitiesWithOptions": true,
+	"NewDefaultUserPreferences": true, "Dedent": true, "RecoverAndFail": true,
+	"RunFourslash": true, "NewLSPClient": true, "ClientCapabilitiesOptions": true,
+	"FourslashOptions": true,
+}
+
 // rustIdent maps a Go identifier to its Rust form.
 func rustIdent(name string) string {
 	switch name {
@@ -637,8 +657,9 @@ func rustIdent(name string) string {
 		return "_done"
 	}
 	if len(name) > 0 && unicode.IsUpper(rune(name[0])) {
-		// could be a package-level Go const (e.g. TSTrue) or a type —
-		// value-position consts use SCREAMING_SNAKE here.
+		if snakeNames[name] {
+			return snake(name)
+		}
 		return screaming(name)
 	}
 	return snake(name)
@@ -651,14 +672,47 @@ func (tr *translator) selector(x *ast.SelectorExpr) string {
 		if path == "" {
 			return pkg + "." + x.Sel.Name // fmt/testing handled in call()
 		}
-		// package-level member: type names stay CamelCase, values go SCREAMING.
+		// package-level member: type names stay CamelCase; Go enum consts
+		// `TypeNameVariant` map to `Type::VARIANT`; vars/fns -> snake.
 		name := x.Sel.Name
 		if isTypeName(name) {
 			return path + "::" + name
 		}
+		if snakeNames[name] {
+			return path + "::" + snake(name)
+		}
+		if t, v, ok := enumConst(name); ok {
+			return path + "::" + t + "::" + screaming(v)
+		}
 		return path + "::" + screaming(name)
 	}
 	return tr.expr(x.X) + "." + snake(x.Sel.Name)
+}
+
+// enumConst splits `TypeNameVariant` Go enum constants into
+// (`TypeName`, `Variant`) when the longest registered enum-type prefix matches.
+var enumTypes = []string{
+	"OrganizeImportsCollation", "OrganizeImportsCaseFirst",
+	"OrganizeImportsTypeOrder", "OrganizeImportsSort", "OrganizeImportsModuleSpecifiers",
+	"QuotePreference", "JsxAttributeCompletionStyle", "IncludeInlayParameterNameHints",
+	"CompletionItemKind", "CompletionItemKindStrings", "MarkupKind",
+	"DiagnosticTag", "DocumentHighlightKind", "SymbolDisplayPartKind",
+	"SemanticTokenTypes", "SemanticTokenModifiers", "InsertTextFormat",
+	"CompletionTriggerKind", "SignatureHelpTriggerKind", "CodeActionKind",
+	"ScriptKind", "ScriptTarget", "ModuleKind", "ModuleResolutionKind",
+	"ImportAttributeKind", "TextSpanKind", "DisplayPartKind",
+}
+
+func enumConst(name string) (string, string, bool) {
+	for _, t := range enumTypes {
+		if strings.HasPrefix(name, t) && len(name) > len(t) {
+			v := name[len(t):]
+			if v != "" && unicode.IsUpper(rune(v[0])) {
+				return t, v, true
+			}
+		}
+	}
+	return "", "", false
 }
 
 func isTypeName(name string) bool {
@@ -714,6 +768,12 @@ func (tr *translator) call(c *ast.CallExpr) string {
 			}
 			return path + "::" + snake(sel.Sel.Name) + "(" + tr.args(c.Args, 0) + ")"
 
+		case pkg == "fourslash" && sel.Sel.Name == "NewFourslash":
+			return "tsc_fourslash::new_fourslash(t_name(), \"\", " +
+				tr.expr(c.Args[1]) + ", " + tr.expr(c.Args[2]) + ")"
+		case pkg == "fourslash" && sel.Sel.Name == "NewFourslashWithOptions":
+			return "tsc_fourslash::new_fourslash_with_options(t_name(), \"\", " +
+				tr.expr(c.Args[1]) + ", " + tr.expr(c.Args[2]) + ")"
 		case tr.imports[pkg] != "":
 			// package function call
 			return tr.imports[pkg] + "::" + snake(sel.Sel.Name) + "(" + tr.args(c.Args, 0) + ")"
@@ -732,7 +792,7 @@ func (tr *translator) call(c *ast.CallExpr) string {
 		case "string":
 			return tr.expr(c.Args[0]) + ".to_string()"
 		case "new":
-			return "Some(" + tr.expr(c.Args[0]) + ".into())"
+			return "Some((" + tr.expr(c.Args[0]) + ").into())"
 		case "int", "int32", "int64", "uint", "uint32", "uint64", "byte", "rune", "float64":
 			return "(" + tr.args(c.Args, 0) + ") as " + goIntRust(id.Name)
 		case "cap":

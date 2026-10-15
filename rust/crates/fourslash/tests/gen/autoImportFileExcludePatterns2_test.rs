@@ -20,9 +20,9 @@ export { Button } from "./components";
 export * from "./main";
 // @Filename: /i-hate-index-files.ts
 Button/**/"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_completions("", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_plus(vec![&tsc_lsproto::CompletionItem { label: "Button", data: &tsc_lsproto::CompletionItemData { auto_import: &tsc_lsproto::AutoImportFix { module_specifier: "./lib/main", ..Default::default() }, ..Default::default() }, additional_text_edits: tsc_fourslash::ANY_TEXT_EDITS, sort_text: Some(tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string().into()), ..Default::default() }], false), ..Default::default() }, user_preferences: &tsc_lsutil::UserPreferences { auto_import_file_exclude_patterns: vec!["/**/index.*"], ..Default::default() }, ..Default::default() });
-		f.verify_import_fix_module_specifiers("", vec!["./lib/main", "./lib/components/button/Button"], &tsc_lsutil::UserPreferences { auto_import_file_exclude_patterns: vec!["/**/index.*"], ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_plus(vec![Some(tsc_lsproto::CompletionItem { label: "Button", data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./lib/main", ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::any_text_edits, sort_text: Some((tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() })], false), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { auto_import_file_exclude_patterns: vec!["/**/index.*"], ..Default::default() }), ..Default::default() }));
+		f.verify_import_fix_module_specifiers("", vec!["./lib/main", "./lib/components/button/Button"], Some(tsc_lsutil::UserPreferences { auto_import_file_exclude_patterns: vec!["/**/index.*"], ..Default::default() }));
 	});
 }
 

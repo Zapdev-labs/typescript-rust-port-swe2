@@ -13,7 +13,7 @@ function f(a: number, [|...rest |]){
     a;
     rest.push(22);
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_range_after_code_fix(r"...rest: number[]", false, 0, 0);
 	});
 }

@@ -9,9 +9,9 @@ fn organize_imports9() {
 	run_test(|t| {
 		let content = r#"import { a as a, b, c, d as d, e as e } from "foo";
 a(b, d);"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_organize_imports(r#"import { a, b, d } from "foo";
-a(b, d);"#, tsc_lsproto::CODE_ACTION_KIND_SOURCE_ORGANIZE_IMPORTS_TS, None);
+a(b, d);"#, tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
 	});
 }
 

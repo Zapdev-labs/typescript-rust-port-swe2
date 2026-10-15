@@ -17,7 +17,7 @@ export let o = {
         ...c
     ]
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Extract to variable and replace with 'newLocal as typeof newLocal'", new_file_content: r"let c: string[] = [];
 const newLocal = Math.random() ? [] : [
     ...c

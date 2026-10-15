@@ -13,7 +13,7 @@ fn references_for_string_literal_property_names2() {
 
 var x: Foo;
 x./*3*/blah;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("1", "2", "3");
 	});
 }

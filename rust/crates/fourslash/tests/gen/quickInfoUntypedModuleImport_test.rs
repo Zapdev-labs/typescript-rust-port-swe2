@@ -14,7 +14,7 @@ fn quick_info_untyped_module_import() {
 // @Filename: a.ts
 import /*foo*/foo from /*fooModule*/"foo";
 /*fooCall*/foo();"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("a.ts");
 		f.verify_number_of_errors_in_current_file(0);
 		f.go_to_marker("fooModule");

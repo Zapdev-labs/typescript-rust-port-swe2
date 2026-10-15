@@ -14,7 +14,7 @@ f1/*0*/();|]
 export function f1() {}
 // @Filename: module2.ts
 export var v2 = 6;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_import_fix_at_position(vec![r#"import { f1 } from "./module1";
 import { v2 } from "./module2";
 

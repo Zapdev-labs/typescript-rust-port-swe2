@@ -26,8 +26,8 @@ fn auto_import_paths() {
 bar/**/
 // @Filename: /package2/file1.js
 export const bar = 0;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_import_fix_module_specifiers("", vec!["package2/file1"], &tsc_lsutil::UserPreferences { import_module_specifier_preference: "shortest", ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_import_fix_module_specifiers("", vec!["package2/file1"], Some(tsc_lsutil::UserPreferences { import_module_specifier_preference: "shortest", ..Default::default() }));
 	});
 }
 

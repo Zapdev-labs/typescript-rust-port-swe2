@@ -27,7 +27,7 @@ var aaa: any[];
 var b/*4*/bb = _.map(aaa, xx => xx.length); // should be any[]
 var c/*5*/cc = _(aaa).map(xx => xx.length);  // Should not error, should be any[]
 var d/*6*/dd = aaa.map(xx => xx.length);     // should not error, should be any[]";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
 		f.verify_quick_info_at("1", "var bb: number[]", "");
 		f.verify_quick_info_at("2", "var cc: number[]", "");

@@ -9,7 +9,7 @@ fn generic_function_signature_help2() {
 	run_test(|t| {
 		let content = r"var f = <T>(a: T) => a;
 f(/**/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("");
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f(a: unknown): unknown", ..Default::default() });
 	});

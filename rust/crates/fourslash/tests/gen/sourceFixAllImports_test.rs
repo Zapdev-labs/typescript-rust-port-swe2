@@ -14,7 +14,7 @@ export const b: number = 2;
 // @Filename: /main.ts
 a;
 b;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/main.ts");
 		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport", new_file_content: r#"import { a } from "./a";
 import { b } from "./b";
@@ -34,7 +34,7 @@ export const b: number = 2;
 // @Filename: /main.ts
 a;
 b;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/main.ts");
 		f.verify_source_fix_all(r#"import { a } from "./a";
 import { b } from "./b";

@@ -26,7 +26,7 @@ export {};
 A/*parent*/
 // @Filename: /src/index.ts
 export * from "./a.js";"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_import_fix_module_specifiers("sibling", vec!["./a.js", "./index.js", "../index.js"], None);
 		f.verify_import_fix_module_specifiers("parent", vec!["../foo/a.js", "../foo/index.js", "../index.js"], None);
 	});

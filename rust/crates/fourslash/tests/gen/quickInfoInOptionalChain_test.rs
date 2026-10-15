@@ -25,7 +25,7 @@ interface Foo2 { bar?: { baz: { qwe: string } } };
 declare const foo2: Foo2;
 
 if (foo2.b/*4*/ar?.b/*5*/az.q/*6*/we) {}"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "(property) A.arr: string[]", "");
 		f.verify_quick_info_at("2", "(property) Foo.bar: {\n    baz: string;\n}", "");
 		f.verify_quick_info_at("3", "(property) baz: string | undefined", "");

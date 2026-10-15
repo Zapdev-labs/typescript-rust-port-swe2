@@ -21,8 +21,8 @@ fn path_completions_package_json_exports_wildcard11() {
 export {};
 // @Filename: /main.ts
 import { } from "repo//**/";"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_completions("", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec![&tsc_lsproto::CompletionItem { label: "card.js", kind: Some(tsc_lsproto::COMPLETION_ITEM_KIND_FILE.into()), detail: Some("card.js".into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "card.js", kind: Some((tsc_lsproto::CompletionItemKind::FILE).into()), detail: Some(("card.js").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }
 

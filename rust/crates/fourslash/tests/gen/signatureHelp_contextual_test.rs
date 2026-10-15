@@ -29,7 +29,7 @@ type Cb = () => void;
 const cb: Cb = (/*contextualTypeAlias*/)
 
 const cb2: () => void = (/*contextualFunctionType*/)";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("takesObj0");
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "m(n: number, s: string): void", parameter_count: 2, parameter_name: "n", parameter_span: "n: number", ..Default::default() });
 		f.go_to_marker("takesObj1");

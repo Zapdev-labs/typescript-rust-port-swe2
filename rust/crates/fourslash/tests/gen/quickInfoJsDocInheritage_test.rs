@@ -111,7 +111,7 @@ new Drived3()./*21*/foo1;
 new Drived3()./*22*/foo2;
 new Drived4()./*23*/foo1;
 new Drived4()./*24*/foo2;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_hover();
 	});
 }

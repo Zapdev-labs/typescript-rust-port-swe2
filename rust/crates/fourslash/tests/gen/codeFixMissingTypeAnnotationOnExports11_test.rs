@@ -14,7 +14,7 @@ function mixin<T extends new (...a: any) => any>(ctor: T): T {
 }
 class Point2D { x = 0; y = 0; }
 export class Point3D extends mixin(Point2D) {  z = 0; }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Extract base class to variable", new_file_content: r"function mixin<T extends new (...a: any) => any>(ctor: T): T {
     return ctor;
 }

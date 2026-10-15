@@ -10,7 +10,7 @@ fn smart_selection_template_strings() {
 		let content = r"" + "`" + r"a /*1*/b ${
   '/*2*/c'
 } d" + "`" + r"";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_selection_ranges();
 	});
 }

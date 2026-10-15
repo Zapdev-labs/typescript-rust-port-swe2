@@ -32,7 +32,7 @@ export const All = [
   ...End,
   1,
 ] as const;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add annotation of type '[...typeof All_Part1_1, ...typeof Start, ...typeof All_Part3, ...typeof All_Part4, ...typeof End, ...typeof All_Part6]'", new_file_content: r#"const Start = [
   'A',
   'B',

@@ -13,7 +13,7 @@ fn edit_lambda_arg_to_type_parameter1() {
     }
 }
 /*2*/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("1");
 		f.backspace(6);
 		f.insert("T");

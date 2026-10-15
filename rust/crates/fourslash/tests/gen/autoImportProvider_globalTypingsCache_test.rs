@@ -25,9 +25,9 @@ fn auto_import_provider_global_typings_cache() {
  export const BrowserRouterFromJs = () => null;
 // @Filename: /home/src/workspaces/project/index.js
 BrowserRouter/**/"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.verify_completions("", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_in_js_plus(vec![&tsc_lsproto::CompletionItem { label: "BrowserRouterFromDts", data: &tsc_lsproto::CompletionItemData { auto_import: &tsc_lsproto::AutoImportFix { module_specifier: "react-router-dom", ..Default::default() }, ..Default::default() }, additional_text_edits: tsc_fourslash::ANY_TEXT_EDITS, sort_text: Some(tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string().into()), ..Default::default() }], false), ..Default::default() }, ..Default::default() });
+		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_in_js_plus(vec![Some(tsc_lsproto::CompletionItem { label: "BrowserRouterFromDts", data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "react-router-dom", ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::any_text_edits, sort_text: Some((tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() })], false), ..Default::default() }), ..Default::default() }));
 	});
 }
 

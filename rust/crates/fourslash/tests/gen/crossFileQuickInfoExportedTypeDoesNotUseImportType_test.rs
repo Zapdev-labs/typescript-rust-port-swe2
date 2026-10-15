@@ -18,7 +18,7 @@ export function foob(): {
 // @Filename: a.ts
 import { foob } from "./b";
 const thing/*1*/ = foob(/*2*/);"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "const thing: {\n    x: B;\n    y: B;\n}", "");
 		f.go_to_marker("2");
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "foob(): { x: B; y: B; }", ..Default::default() });

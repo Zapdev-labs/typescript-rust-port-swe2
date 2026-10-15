@@ -15,7 +15,7 @@ var /*4*/y = function () {
 (function /*5*/foo1() {
     /*6*/foo1();
 })();";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_hover();
 	});
 }

@@ -9,7 +9,7 @@ fn find_all_refs_enum_member() {
 	run_test(|t| {
 		let content = r"enum E { /*1*/A, B }
 const e: E./*2*/A = E./*3*/A;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("1", "2", "3");
 	});
 }

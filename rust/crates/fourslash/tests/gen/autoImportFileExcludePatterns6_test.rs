@@ -26,12 +26,12 @@ export { Event };
 // @Filename: /src/vs/workbench/canImport.ts
 import { Event } from '../event/event';
 export { Event };";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'Parts'", new_file_content: r"import { Event } from './canImport';
 import { Parts } from './parts';
 export class EditorParts implements Parts {
     options: Event;
-}", index: 0, user_preferences: &tsc_lsutil::UserPreferences { auto_import_file_exclude_patterns: vec!["src/vs/workbench/workbench.ts"], ..Default::default() }, ..Default::default() });
+}", index: 0, user_preferences: Some(tsc_lsutil::UserPreferences { auto_import_file_exclude_patterns: vec!["src/vs/workbench/workbench.ts"], ..Default::default() }), ..Default::default() });
 	});
 }
 

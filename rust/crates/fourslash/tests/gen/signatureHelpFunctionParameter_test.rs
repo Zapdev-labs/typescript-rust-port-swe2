@@ -10,7 +10,7 @@ fn signature_help_function_parameter() {
 		let content = r#"function parameterFunction(callback: (a: number, b: string) => void) {
     callback(/*parameterFunction1*/5, /*parameterFunction2*/"");
 }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("parameterFunction1");
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "callback(a: number, b: string): void", parameter_count: 2, parameter_name: "a", parameter_span: "a: number", ..Default::default() });
 		f.go_to_marker("parameterFunction2");

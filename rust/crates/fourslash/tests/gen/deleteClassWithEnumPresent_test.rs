@@ -9,7 +9,7 @@ fn delete_class_with_enum_present() {
 	run_test(|t| {
 		let content = r"enum Foo { a, b, c }
 /**/class Bar { }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("");
 		f.delete_at_caret(13);
 		f.verify_baseline_document_symbol();

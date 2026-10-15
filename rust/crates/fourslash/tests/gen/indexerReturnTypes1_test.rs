@@ -67,7 +67,7 @@ var /*13*/r13 = ty[1];
 var /*14*/r14 = ty['1'];
 var /*15*/r15 = ty2[1];
 var /*16*/r16 = ty2['1'];";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "var r1: Date", "");
 		f.verify_quick_info_at("2", "var r2: Date", "");
 		f.verify_quick_info_at("3", "var r3: RegExp", "");

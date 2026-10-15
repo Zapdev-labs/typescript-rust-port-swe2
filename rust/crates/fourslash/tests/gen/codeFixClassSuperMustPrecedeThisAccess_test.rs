@@ -18,7 +18,7 @@ class C extends Base{
     |]}
     m() { this.a; } // avoid unused 'a'
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_range_after_code_fix(r"
         super();
         this.a = 12;

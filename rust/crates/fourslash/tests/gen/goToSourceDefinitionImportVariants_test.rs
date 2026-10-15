@@ -19,7 +19,7 @@ exports./*target*/helper = function() { return "ok"; };
 // @Filename: /home/src/workspaces/project/index.js
 const { /*importName*/helper } = require("pkg");
 helper/*usage*/();"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_source_definition("importName", "usage");
 	});
 }
@@ -41,7 +41,7 @@ async function main() {
     const mod = await import("pkg");
     mod./*usage*/dynHelper();
 }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_source_definition("usage");
 	});
 }

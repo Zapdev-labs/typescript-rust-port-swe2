@@ -22,7 +22,7 @@ namespace Module1.SubModule {
 namespace Module1 {
     export var z = 0;
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("file1");
 		f.verify_baseline_document_symbol();
 		f.go_to_marker("file2");

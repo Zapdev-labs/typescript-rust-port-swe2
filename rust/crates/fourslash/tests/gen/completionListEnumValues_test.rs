@@ -19,9 +19,9 @@ x./*variableOfEnumType*/;
 
 function foo(): Colors { return null; }
 foo()./*callOfEnumReturnType*/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_completions("enumVariable", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec!["Green", "Red"], ..Default::default() }, ..Default::default() });
-		f.verify_completions(vec!["variableOfEnumType", "callOfEnumReturnType"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec!["toExponential", "toFixed", "toLocaleString", "toPrecision", "toString", "valueOf"], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_completions("enumVariable", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["Green", "Red"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions(vec!["variableOfEnumType", "callOfEnumReturnType"], Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["toExponential", "toFixed", "toLocaleString", "toPrecision", "toString", "valueOf"], ..Default::default() }), ..Default::default() }));
 	});
 }
 

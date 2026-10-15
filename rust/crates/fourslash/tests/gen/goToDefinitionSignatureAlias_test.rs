@@ -40,7 +40,7 @@ new [|/*newMyComponent2*/MyComponent2|]();
 declare const /*MyComponent3*/MyComponent3: ComponentClass2;
 <[|/*jsxMyComponent3*/MyComponent3|] />;
 new [|/*newMyComponent3*/MyComponent3|]();";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
 		f.verify_baseline_go_to_definition(true, "useF", "useG", "useH", "useI", "useIFn", "useJ", "useM", "useMFn", "jsxMyComponent", "newMyComponent", "jsxMyComponent2", "newMyComponent2", "jsxMyComponent3", "newMyComponent3");
 	});

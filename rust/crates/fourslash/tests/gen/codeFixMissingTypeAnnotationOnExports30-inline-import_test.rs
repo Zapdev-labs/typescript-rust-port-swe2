@@ -19,7 +19,7 @@ import { getPerson } from "./person-code";
 export const exp = {
   person: getPerson()
 };"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/code.ts");
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add satisfies and an inline type assertion with 'Person'", new_file_content: r#"import { getPerson, Person } from "./person-code";
 export const exp = {

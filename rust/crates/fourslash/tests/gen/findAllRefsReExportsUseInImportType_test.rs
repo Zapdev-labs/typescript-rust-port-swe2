@@ -17,14 +17,14 @@ fn find_all_refs_re_exports_use_in_import_type() {
 export type fullType = /*foo3*/[|foo|]./*full1*/[|Full|];
 type namespaceImport = typeof import('./foo/types');
 type fullType2 = import('./foo/types')./*foo4*/[|foo|]./*full2*/[|Full|];"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
 		f.verify_baseline_find_all_references("full0", "full1", "full2", "foo0", "foo1", "foo2", "foo3", "foo4");
 		f.verify_baseline_rename(None, f.ranges()[1], f.ranges()[9], f.ranges()[11]);
 		f.verify_baseline_rename(None, f.ranges()[3]);
 		f.verify_baseline_rename(None, f.ranges()[5], f.ranges()[10]);
 		f.verify_baseline_rename(None, f.ranges()[7], f.ranges()[8]);
-		f.verify_baseline_rename(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::TS_FALSE, ..Default::default() }, f.ranges()[7], f.ranges()[8], f.ranges()[10], f.ranges()[3], f.ranges()[5]);
+		f.verify_baseline_rename(Some(tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::TS_FALSE, ..Default::default() }), f.ranges()[7], f.ranges()[8], f.ranges()[10], f.ranges()[3], f.ranges()[5]);
 	});
 }
 

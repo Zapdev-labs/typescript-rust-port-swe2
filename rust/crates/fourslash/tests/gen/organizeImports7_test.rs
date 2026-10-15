@@ -15,7 +15,7 @@ import * as somethingElse from "anotherpath";
 
 something;
 somethingElse;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_organize_imports(r#"import * as somethingElse from "anotherpath";
 import * as something from "path"; /**
  * some comment here
@@ -23,7 +23,7 @@ import * as something from "path"; /**
  */
 
 something;
-somethingElse;"#, tsc_lsproto::CODE_ACTION_KIND_SOURCE_ORGANIZE_IMPORTS_TS, None);
+somethingElse;"#, tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
 	});
 }
 

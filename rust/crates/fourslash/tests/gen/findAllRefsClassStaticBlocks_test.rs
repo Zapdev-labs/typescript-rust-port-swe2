@@ -15,7 +15,7 @@ fn find_all_refs_class_static_blocks() {
     static y;
     [|[|/*classStaticBocks3*/static|] {}|]
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("classStaticBocks1", "classStaticBocks2", "classStaticBocks3");
 	});
 }

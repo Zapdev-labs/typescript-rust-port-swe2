@@ -12,7 +12,7 @@ fn code_fix_spelling5() {
 export const fooooooooo = 1;
 // @Filename: f2.ts
 import {[|fooooooooa|]} from "./f1"; fooooooooa;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("f2.ts");
 		f.verify_range_after_code_fix(r"fooooooooo", false, 0, 0);
 	});

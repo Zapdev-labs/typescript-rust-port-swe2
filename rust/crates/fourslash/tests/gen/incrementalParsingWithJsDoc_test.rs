@@ -12,7 +12,7 @@ fn incremental_parsing_with_js_doc() {
 import c from 'c';|]
 [|/** @internal */|]
 export class LanguageIdentifier[| { }|]";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_outlining_spans();
 		f.go_to_marker("");
 		f.backspace(1);

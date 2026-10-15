@@ -19,7 +19,7 @@ str(1, /*a*/)
 
 declare function f<T>(a: T): T;
 f(2, /*b*/);"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_signature_help();
 	});
 }

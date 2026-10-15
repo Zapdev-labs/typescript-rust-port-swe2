@@ -10,8 +10,8 @@ fn completion_filter_text4() {
 		let content = r"declare const x: [number, number];
 x[|.|]/**/;
 ";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_completions("", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "0", kind: Some(tsc_lsproto::COMPLETION_ITEM_KIND_FIELD.into()), sort_text: Some(tsc_ls::SORT_TEXT_LOCATION_PRIORITY.to_string().into()), insert_text: Some("[0]".into()), filter_text: Some(".0".into()), text_edit: &tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: &tsc_lsproto::TextEdit { new_text: "[0]", range: f.ranges()[0].ls_range, ..Default::default() }, ..Default::default() }, ..Default::default() }], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "0", kind: Some((tsc_lsproto::CompletionItemKind::FIELD).into()), sort_text: Some((tsc_ls::SORT_TEXT_LOCATION_PRIORITY.to_string()).into()), insert_text: Some(("[0]").into()), filter_text: Some((".0").into()), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "[0]", range: f.ranges()[0].ls_range, ..Default::default() }), ..Default::default() }), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }
 

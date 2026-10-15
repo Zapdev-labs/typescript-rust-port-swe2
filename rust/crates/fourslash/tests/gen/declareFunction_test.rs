@@ -9,8 +9,8 @@ fn declare_function() {
 	run_test(|t| {
 		let content = r"// @filename: index.ts
 declare function";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_workspace_symbol(vec![tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "", preferences: None, exact: Some(vec![].into()), ..Default::default() }]);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_workspace_symbol(vec![tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "", preferences: None, exact: Some((vec![]).into()), ..Default::default() }]);
 	});
 }
 

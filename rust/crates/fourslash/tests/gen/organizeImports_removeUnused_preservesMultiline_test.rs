@@ -14,14 +14,14 @@ fn organize_imports_remove_unused_preserves_multiline() {
 } from "module";
 
 export { a, b, c };"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_organize_imports(r#"import {
     a,
     b,
     c,
 } from "module";
 
-export { a, b, c };"#, tsc_lsproto::CODE_ACTION_KIND_SOURCE_REMOVE_UNUSED_IMPORTS_TS, None);
+export { a, b, c };"#, tsc_lsproto::CodeActionKind::SOURCE_REMOVE_UNUSED_IMPORTS_TS, None);
 	});
 }
 
@@ -35,13 +35,13 @@ fn organize_imports_remove_unused_preserves_multiline_with_removal() {
 } from "module";
 
 export { a, c };"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_organize_imports(r#"import {
     a,
     c
 } from "module";
 
-export { a, c };"#, tsc_lsproto::CODE_ACTION_KIND_SOURCE_REMOVE_UNUSED_IMPORTS_TS, None);
+export { a, c };"#, tsc_lsproto::CodeActionKind::SOURCE_REMOVE_UNUSED_IMPORTS_TS, None);
 	});
 }
 
@@ -55,9 +55,9 @@ fn organize_imports_remove_unused_uses_language_service_format_options() {
 } from "module";
 
 export { a, c };"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut preferences = tsc_lsutil::parse_user_preferences(vec![("editor", vec![("tabSize", 2), ("insertSpaces", false)].into_iter().collect::<FxHashMap<_, _>>())].into_iter().collect::<FxHashMap<_, _>>());
-		f.verify_organize_imports("import {\n\ta,\n\tc\n} from \"module\";\n\nexport { a, c };", tsc_lsproto::CODE_ACTION_KIND_SOURCE_REMOVE_UNUSED_IMPORTS_TS, &preferences);
+		f.verify_organize_imports("import {\n\ta,\n\tc\n} from \"module\";\n\nexport { a, c };", tsc_lsproto::CodeActionKind::SOURCE_REMOVE_UNUSED_IMPORTS_TS, &preferences);
 	});
 }
 

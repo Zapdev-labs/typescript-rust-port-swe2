@@ -15,7 +15,7 @@ fn js_doc_property_description4() {
 function multipleExample(e: MultipleExample) {
     console.log(e./*multiple*/anything);
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("multiple", "(index) MultipleExample[string | number | symbol]: string", "Something generic");
 	});
 }

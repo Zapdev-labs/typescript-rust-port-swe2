@@ -13,7 +13,7 @@ fn generic_function_return_type() {
 }
 var /*2*/r = foo(/*1*/1, "");
 var /*4*/r2 = r(/*3*/"");"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("1");
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "foo(x: number, y: string): (a: string) => number", ..Default::default() });
 		f.verify_quick_info_at("2", "var r: (a: string) => number", "");

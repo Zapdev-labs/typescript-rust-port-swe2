@@ -16,8 +16,8 @@ function foo(x: number): number;
 function foo(x: any): any {
     return x;
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_completions("a", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "foo", kind: Some(tsc_lsproto::COMPLETION_ITEM_KIND_FUNCTION.into()), sort_text: Some(tsc_ls::SORT_TEXT_LOCATION_PRIORITY.to_string().into()), detail: Some("function foo(x: string): string\nfunction foo(x: number): number".into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_completions("a", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "foo", kind: Some((tsc_lsproto::CompletionItemKind::FUNCTION).into()), sort_text: Some((tsc_ls::SORT_TEXT_LOCATION_PRIORITY.to_string()).into()), detail: Some(("function foo(x: string): string\nfunction foo(x: number): number").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }
 

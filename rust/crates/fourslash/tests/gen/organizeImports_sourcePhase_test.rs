@@ -10,10 +10,10 @@ fn organize_imports_source_phase_imports_are_not_coalesced() {
 		let content = r#"import source b from "lib";
 import source a from "lib";
 a; b;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_organize_imports(r#"import source a from "lib";
 import source b from "lib";
-a; b;"#, tsc_lsproto::CODE_ACTION_KIND_SOURCE_SORT_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::ORGANIZE_IMPORTS_SORT_ORDINAL_IGNORE_CASE, ..Default::default() });
+a; b;"#, tsc_lsproto::CodeActionKind::SOURCE_SORT_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE, ..Default::default() }));
 	});
 }
 
@@ -24,10 +24,10 @@ fn organize_imports_source_and_evaluation_phase_imports_are_not_coalesced() {
 import source b from "lib";
 import { a } from "lib";
 a; b; c;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_organize_imports(r#"import source b from "lib";
 import { a, c } from "lib";
-a; b; c;"#, tsc_lsproto::CODE_ACTION_KIND_SOURCE_SORT_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::ORGANIZE_IMPORTS_SORT_ORDINAL_IGNORE_CASE, ..Default::default() });
+a; b; c;"#, tsc_lsproto::CodeActionKind::SOURCE_SORT_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE, ..Default::default() }));
 	});
 }
 
@@ -74,8 +74,8 @@ import * as o from "lib";
 				expected: &'static str,
 			}
 			run_subtest(&mut t, test.name, |t| {
-				let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, test.content);
-				f.verify_organize_imports(test.expected + "\n", tsc_lsproto::CODE_ACTION_KIND_SOURCE_SORT_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::ORGANIZE_IMPORTS_SORT_AUTO, ..Default::default() });
+				let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, test.content);
+				f.verify_organize_imports(test.expected + "\n", tsc_lsproto::CodeActionKind::SOURCE_SORT_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::AUTO, ..Default::default() }));
 			});
 		}
 	});

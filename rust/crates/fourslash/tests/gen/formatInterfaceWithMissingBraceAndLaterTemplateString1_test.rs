@@ -23,7 +23,7 @@ const ResourceCard: React.FC<Props> = (props) => {
 
 export default ResourceCard
 ";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.format_document("");
 		f.verify_current_file_content(r"interface Props {
     iconOnly?: boolean

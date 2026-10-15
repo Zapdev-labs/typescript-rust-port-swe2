@@ -19,7 +19,7 @@ export function /*target*/original() { return "ok"; }
 // @Filename: /home/src/workspaces/project/index.ts
 import { original as renamed } from "pkg";
 renamed/*usage*/();"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_source_definition("usage");
 	});
 }
@@ -37,7 +37,7 @@ export function /*target*/helper() { return "ok"; }
 // @Filename: /home/src/workspaces/project/index.ts
 import * as ns from "pkg";
 ns./*usage*/helper();"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_source_definition("usage");
 	});
 }

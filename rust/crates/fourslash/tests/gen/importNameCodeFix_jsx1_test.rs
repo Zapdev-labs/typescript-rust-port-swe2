@@ -20,7 +20,7 @@ import { React } from "react";
 // @Filename: /d.tsx
 import { Foo } from "./Foo";
 <Foo />;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/a.tsx");
 		f.verify_import_fix_at_position(vec![], None);
 		f.go_to_file("/c.tsx");

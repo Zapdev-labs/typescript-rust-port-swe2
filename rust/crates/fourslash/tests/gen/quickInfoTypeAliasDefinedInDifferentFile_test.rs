@@ -14,7 +14,7 @@ export function f(x: X): void {}
 // @Filename: /b.ts
 import { f } from "./a";
 /**/f({ x: 1 });"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("", "(alias) f(x: X): void\nimport f", "");
 	});
 }

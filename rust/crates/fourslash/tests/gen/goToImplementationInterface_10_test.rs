@@ -19,7 +19,7 @@ export class [|C|] implements B {
 	bar = true;
 }
 export class [|D|] extends C { }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_implementation("def");
 	});
 }

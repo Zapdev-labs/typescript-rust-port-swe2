@@ -14,7 +14,7 @@ fn formatting_void() {
 /*5*/  void    a    ;
 /*6*/  void        (0);
 /*7*/  b=void(c=1,d=2);";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.format_document("");
 		f.go_to_marker("1");
 		f.verify_current_line_content(r"var x: () => void;");

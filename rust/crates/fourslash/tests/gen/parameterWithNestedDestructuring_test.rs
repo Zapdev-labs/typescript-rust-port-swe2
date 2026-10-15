@@ -10,7 +10,7 @@ fn parameter_with_nested_destructuring() {
 		let content = r"[[{ a: 'hello', b: [1] }]]
   .map(([{ a, b: [c] }]) => /*1*/a + /*2*/c);
 function f([[/*3*/a]]: [[string]], { b1: { /*4*/b2 } }: { b1: { b2: string; } }) {}";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "(parameter) a: string", "");
 		f.verify_quick_info_at("2", "(parameter) c: number", "");
 		f.verify_quick_info_at("3", "(parameter) a: string", "");

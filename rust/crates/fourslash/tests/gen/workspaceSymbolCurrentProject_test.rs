@@ -20,12 +20,12 @@ export function [|fromA|]() {}
 // @Filename: /home/projects/b/index.ts
 export function [|fromB|]() {}
 ";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/home/projects/a/index.ts");
 		let mut all_open_projects = tsc_lsutil::new_default_user_preferences();
 		let mut current_project = tsc_lsutil::new_default_user_preferences();
 		current_project.workspace_symbols_scope = tsc_lsutil::WORKSPACE_SYMBOLS_SCOPE_CURRENT_PROJECT;
-		f.verify_workspace_symbol(vec![tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "from", preferences: &all_open_projects, exact: Some(vec![tsc_lsproto::SymbolInformation { name: "fromA", kind: tsc_lsproto::SYMBOL_KIND_FUNCTION, location: f.ranges()[0].ls_location(), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "fromB", kind: tsc_lsproto::SYMBOL_KIND_FUNCTION, location: f.ranges()[1].ls_location(), ..Default::default() }].into()), ..Default::default() }, tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "from", preferences: &current_project, exact: Some(vec![tsc_lsproto::SymbolInformation { name: "fromA", kind: tsc_lsproto::SYMBOL_KIND_FUNCTION, location: f.ranges()[0].ls_location(), ..Default::default() }].into()), ..Default::default() }]);
+		f.verify_workspace_symbol(vec![tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "from", preferences: &all_open_projects, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "fromA", kind: tsc_lsproto::SYMBOL_KIND_FUNCTION, location: f.ranges()[0].ls_location(), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "fromB", kind: tsc_lsproto::SYMBOL_KIND_FUNCTION, location: f.ranges()[1].ls_location(), ..Default::default() }]).into()), ..Default::default() }, tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "from", preferences: &current_project, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "fromA", kind: tsc_lsproto::SYMBOL_KIND_FUNCTION, location: f.ranges()[0].ls_location(), ..Default::default() }]).into()), ..Default::default() }]);
 	});
 }
 

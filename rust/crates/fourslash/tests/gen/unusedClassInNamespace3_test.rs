@@ -23,7 +23,7 @@ fn unused_class_in_namespace3() {
 
     }
 } |]";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_range_after_code_fix(r"namespace Validation {
     class c1 {
     }

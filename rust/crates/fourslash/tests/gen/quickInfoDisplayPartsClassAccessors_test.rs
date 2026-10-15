@@ -42,7 +42,7 @@ y = /*9*/cInstance./*10*/publicProperty;
 y = /*11*/c./*12*/staticProperty;
 /*9s*/cInstance./*10s*/publicProperty = y;
 /*11s*/c./*12s*/staticProperty = y;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_hover();
 	});
 }

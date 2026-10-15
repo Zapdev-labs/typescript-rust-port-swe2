@@ -23,7 +23,7 @@ declare const C: {
 new C</*C0*/;
 new C<number, /*C1*/;
 new C<number, string, /*C2*/;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("f0");
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f<T extends number>(): void", parameter_name: "T", parameter_span: "T extends number", overloads_count: 3, ..Default::default() });
 		f.go_to_marker("f1");

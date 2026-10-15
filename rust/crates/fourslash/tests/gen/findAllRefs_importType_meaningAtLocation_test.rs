@@ -13,7 +13,7 @@ fn find_all_refs_import_type_meaning_at_location() {
 // @Filename: /b.ts
 const x: import("./a")./*5*/T = 0;
 const x: typeof import("./a")./*6*/T = 0;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("1", "2", "3", "4", "5", "6");
 	});
 }

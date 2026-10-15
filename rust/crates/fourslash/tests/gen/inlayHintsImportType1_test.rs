@@ -13,9 +13,9 @@ fn inlay_hints_import_type1() {
 module.exports.a = 1
 // @Filename: /b.js
 const a = require('./a');";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/b.js");
-		f.verify_baseline_inlay_hints(None, &tsc_lsutil::UserPreferences { include_inlay_variable_type_hints: tsc_core::TS_TRUE, ..Default::default() });
+		f.verify_baseline_inlay_hints(None, Some(tsc_lsutil::UserPreferences { include_inlay_variable_type_hints: tsc_core::TS_TRUE, ..Default::default() }));
 	});
 }
 

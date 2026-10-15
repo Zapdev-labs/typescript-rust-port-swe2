@@ -20,9 +20,9 @@ class DecoratorBase {
 class DecoratorSub extends DecoratorBase {
     @decorator protected /**/
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_completions("", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "foo", insert_text: Some("protected foo(a: string): string;\nprotected foo(a: number): number;\n@decorator\nprotected foo(a: any) {\n}".into()), filter_text: Some("foo".into()), sort_text: Some(tsc_ls::SORT_TEXT_LOCATION_PRIORITY.to_string().into()), additional_text_edits: tsc_fourslash::ANY_TEXT_EDITS, data: &tsc_lsproto::CompletionItemData { source: "ClassMemberSnippet/", ..Default::default() }, ..Default::default() }], ..Default::default() }, user_preferences: &tsc_lsutil::UserPreferences { include_completions_with_class_member_snippets: tsc_core::TS_TRUE, ..Default::default() }, ..Default::default() });
-		f.verify_apply_code_action_from_completion(Some("".into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { user_preferences: &tsc_lsutil::UserPreferences { include_completions_with_class_member_snippets: tsc_core::TS_TRUE, ..Default::default() }, name: "foo", source: "ClassMemberSnippet/", description: "Update modifiers of 'foo'", new_file_content: Some(r"declare function decorator(...args: any[]): any;
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "foo", insert_text: Some(("protected foo(a: string): string;\nprotected foo(a: number): number;\n@decorator\nprotected foo(a: any) {\n}").into()), filter_text: Some(("foo").into()), sort_text: Some((tsc_ls::SORT_TEXT_LOCATION_PRIORITY.to_string()).into()), additional_text_edits: tsc_fourslash::any_text_edits, data: Some(tsc_lsproto::CompletionItemData { source: "ClassMemberSnippet/", ..Default::default() }), ..Default::default() })], ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { include_completions_with_class_member_snippets: tsc_core::TS_TRUE, ..Default::default() }), ..Default::default() }));
+		f.verify_apply_code_action_from_completion(Some(("").into()), Some(tsc_fourslash::ApplyCodeActionFromCompletionOptions { user_preferences: Some(tsc_lsutil::UserPreferences { include_completions_with_class_member_snippets: tsc_core::TS_TRUE, ..Default::default() }), name: "foo", source: "ClassMemberSnippet/", description: "Update modifiers of 'foo'", new_file_content: Some((r"declare function decorator(...args: any[]): any;
 class DecoratorBase {
     protected foo(a: string): string;
     protected foo(a: number): number;
@@ -32,7 +32,7 @@ class DecoratorBase {
 }
 class DecoratorSub extends DecoratorBase {
     
-}".into()), ..Default::default() });
+}").into()), ..Default::default() }));
 	});
 }
 

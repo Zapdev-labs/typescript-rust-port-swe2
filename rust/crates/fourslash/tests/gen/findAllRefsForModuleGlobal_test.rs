@@ -13,7 +13,7 @@ export const x = 0;
 /// <reference types="foo" />
 import { x } from "/*1*/foo";
 declare module "foo" {}"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
 		f.verify_baseline_find_all_references("1");
 	});

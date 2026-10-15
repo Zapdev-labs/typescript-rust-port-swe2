@@ -10,7 +10,7 @@ fn document_highlights_invalid_global_this() {
 		let content = r"declare global {
     export { globalThis as [|global|] }
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_document_highlights(None, to_any(f.ranges()));
 	});
 }

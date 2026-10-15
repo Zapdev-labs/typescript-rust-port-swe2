@@ -24,10 +24,10 @@ export const i: I;
 // @Filename: /user.ts
 import { i } from "./a";
 i[|./**/|];"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_completions("", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec!["n", &tsc_lsproto::CompletionItem { label: "publicSym", insert_text: Some("[publicSym]".into()), data: &tsc_lsproto::CompletionItemData { auto_import: &tsc_lsproto::AutoImportFix { module_specifier: "./a", ..Default::default() }, ..Default::default() }, sort_text: Some(tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string().into()), additional_text_edits: tsc_fourslash::ANY_TEXT_EDITS, text_edit: &tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: &tsc_lsproto::TextEdit { new_text: "[publicSym]", range: f.ranges()[0].ls_range, ..Default::default() }, ..Default::default() }, ..Default::default() }], ..Default::default() }, ..Default::default() });
-		f.verify_apply_code_action_from_completion(Some("".into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "publicSym", source: "./a", description: "Update import from \"./a\"", new_file_content: Some(r#"import { i, publicSym } from "./a";
-i.;"#.into()), ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["n", Some(tsc_lsproto::CompletionItem { label: "publicSym", insert_text: Some(("[publicSym]").into()), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./a", ..Default::default() }), ..Default::default() }), sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), additional_text_edits: tsc_fourslash::any_text_edits, text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "[publicSym]", range: f.ranges()[0].ls_range, ..Default::default() }), ..Default::default() }), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_apply_code_action_from_completion(Some(("").into()), Some(tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "publicSym", source: "./a", description: "Update import from \"./a\"", new_file_content: Some((r#"import { i, publicSym } from "./a";
+i.;"#).into()), ..Default::default() }));
 	});
 }
 

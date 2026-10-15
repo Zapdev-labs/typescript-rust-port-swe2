@@ -11,7 +11,7 @@ fn formatting_in_comment() {
 foo(              ); // /*1*/
 }
 function foo() {       var x;       } // /*2*/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("1");
 		f.insert(";");
 		f.verify_current_line_content(r"foo(              ); // ;");

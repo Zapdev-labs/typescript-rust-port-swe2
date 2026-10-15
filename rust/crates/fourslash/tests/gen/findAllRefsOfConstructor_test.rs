@@ -23,7 +23,7 @@ const b = new B("b");
 const c = new C();
 const d = new D("d");
 const e = new E();"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
 		f.verify_baseline_find_all_references("aCtr", "cCtr");
 	});

@@ -11,7 +11,7 @@ fn code_fix_missing_type_annotation_on_exports8() {
 // @declaration: true
 function foo() {return 42;}
 export const g = function () { return foo(); };";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_code_fix_available(vec!["Add return type 'number'"]);
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add return type 'number'", new_file_content: r"function foo() {return 42;}
 export const g = function (): number { return foo(); };", index: 0, ..Default::default() });

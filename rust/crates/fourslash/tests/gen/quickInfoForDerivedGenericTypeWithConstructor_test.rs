@@ -19,7 +19,7 @@ class B2<T> extends A<T> {
 }
 var /*1*/b: B<number>;
 var /*2*/b2: B<number>;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "var b: B<number>", "");
 		f.verify_quick_info_at("2", "var b2: B<number>", "");
 	});

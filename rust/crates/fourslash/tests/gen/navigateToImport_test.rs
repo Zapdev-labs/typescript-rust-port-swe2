@@ -13,8 +13,8 @@ export function [|foo|]() {}
 export function [|bar|]() {}
 // @Filename: user.ts
 import {foo, bar as [|baz|]} from './library';";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_workspace_symbol(vec![tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "foo", preferences: None, exact: Some(vec![tsc_lsproto::SymbolInformation { name: "foo", kind: tsc_lsproto::SYMBOL_KIND_FUNCTION, location: f.ranges()[0].ls_location(), ..Default::default() }].into()), ..Default::default() }, tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "bar", preferences: None, exact: Some(vec![tsc_lsproto::SymbolInformation { name: "bar", kind: tsc_lsproto::SYMBOL_KIND_FUNCTION, location: f.ranges()[1].ls_location(), ..Default::default() }].into()), ..Default::default() }, tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "baz", preferences: None, exact: Some(vec![tsc_lsproto::SymbolInformation { name: "baz", kind: tsc_lsproto::SYMBOL_KIND_VARIABLE, location: f.ranges()[2].ls_location(), ..Default::default() }].into()), ..Default::default() }]);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_workspace_symbol(vec![tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "foo", preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "foo", kind: tsc_lsproto::SYMBOL_KIND_FUNCTION, location: f.ranges()[0].ls_location(), ..Default::default() }]).into()), ..Default::default() }, tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "bar", preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "bar", kind: tsc_lsproto::SYMBOL_KIND_FUNCTION, location: f.ranges()[1].ls_location(), ..Default::default() }]).into()), ..Default::default() }, tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "baz", preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "baz", kind: tsc_lsproto::SYMBOL_KIND_VARIABLE, location: f.ranges()[2].ls_location(), ..Default::default() }]).into()), ..Default::default() }]);
 	});
 }
 

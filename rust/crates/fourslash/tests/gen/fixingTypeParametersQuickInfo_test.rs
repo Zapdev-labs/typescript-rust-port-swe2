@@ -10,7 +10,7 @@ fn fixing_type_parameters_quick_info() {
 		let content = r"// @strict: false
 declare function f<T>(x: T, y: (p: T) => T, z: (p: T) => T): T;
 var /*1*/result = /*2*/f(0, /*3*/x => null, /*4*/x => x.blahblah);";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "var result: number", "");
 		f.verify_quick_info_at("2", "function f<number>(x: number, y: (p: number) => number, z: (p: number) => number): number", "");
 		f.verify_quick_info_at("3", "(parameter) x: number", "");

@@ -33,7 +33,7 @@ const m/*m*/: TreeNode<number> = {
     right: undefined,
     orange: { name: "orange" },
 }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_hover_with_verbosity(vec![("N", vec![0]), ("n", vec![0, 1]), ("t", vec![0, 1]), ("m", vec![0, 1, 2])].into_iter().collect::<FxHashMap<_, _>>());
 	});
 }

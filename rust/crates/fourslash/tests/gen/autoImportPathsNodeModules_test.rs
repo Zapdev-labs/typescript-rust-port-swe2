@@ -28,7 +28,7 @@ fn auto_import_paths_node_modules() {
 export class Dialog {}
 // @Filename: ts/main.ts
 Dialog/**/"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_import_fix_module_specifiers("", vec!["WoltLabSuite/Core/Component/Dialog"], None);
 	});
 }

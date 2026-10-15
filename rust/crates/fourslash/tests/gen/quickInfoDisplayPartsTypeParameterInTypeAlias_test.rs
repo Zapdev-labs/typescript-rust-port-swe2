@@ -9,7 +9,7 @@ fn quick_info_display_parts_type_parameter_in_type_alias() {
 	run_test(|t| {
 		let content = r"type /*0*/List</*1*/T> = /*2*/T[]
 type /*3*/List2</*4*/T extends string> = /*5*/T[];";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_hover();
 	});
 }

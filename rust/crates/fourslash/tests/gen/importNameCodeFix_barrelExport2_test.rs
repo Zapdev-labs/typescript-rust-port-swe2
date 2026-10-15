@@ -28,9 +28,9 @@ export function util() { return "util"; }
 export { A } from "../foo/a";
 // @Filename: /proj/src/index.ts
 export * from "./a";"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_import_fix_module_specifiers("sibling", vec!["proj/foo/a", "proj/src/utils", "proj", "proj/foo"], &tsc_lsutil::UserPreferences { import_module_specifier_preference: "non-relative", ..Default::default() });
-		f.verify_import_fix_module_specifiers("parent", vec!["proj/foo", "proj/foo/a", "proj/src/utils", "proj"], &tsc_lsutil::UserPreferences { import_module_specifier_preference: "non-relative", ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_import_fix_module_specifiers("sibling", vec!["proj/foo/a", "proj/src/utils", "proj", "proj/foo"], Some(tsc_lsutil::UserPreferences { import_module_specifier_preference: "non-relative", ..Default::default() }));
+		f.verify_import_fix_module_specifiers("parent", vec!["proj/foo", "proj/foo/a", "proj/src/utils", "proj"], Some(tsc_lsutil::UserPreferences { import_module_specifier_preference: "non-relative", ..Default::default() }));
 	});
 }
 

@@ -13,7 +13,7 @@ fn find_all_refs_with_leading_underscore_names1() {
 
 var x: Foo;
 x./*3*/_bar;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("1", "2", "3");
 	});
 }

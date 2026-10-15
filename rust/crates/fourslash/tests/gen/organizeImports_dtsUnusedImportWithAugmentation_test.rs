@@ -18,14 +18,14 @@ declare module 'styled-components' {
 // @Filename: /node_modules/styled-components/index.d.ts
 export interface Keyframes {}
 export interface ThemedStyledComponentsModule {}";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_organize_imports(r"import 'styled-components';
 
 declare module 'styled-components' {
     interface ThemedStyledComponentsModule {
         keyframes(): Keyframes;
     }
-}", tsc_lsproto::CODE_ACTION_KIND_SOURCE_ORGANIZE_IMPORTS_TS, None);
+}", tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
 	});
 }
 

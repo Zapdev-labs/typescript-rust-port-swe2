@@ -15,8 +15,8 @@ fn rename_rest_binding_element() {
 function foo([|{ a, ...[|{| "contextRangeIndex": 0 |}rest|] }: I|]) {
     [|rest|];
 }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_baseline_rename(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::TS_TRUE, ..Default::default() }, f.ranges()[1]);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_baseline_rename(Some(tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::TS_TRUE, ..Default::default() }), f.ranges()[1]);
 	});
 }
 

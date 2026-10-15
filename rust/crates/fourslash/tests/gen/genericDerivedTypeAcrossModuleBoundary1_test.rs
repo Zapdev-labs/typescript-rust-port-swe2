@@ -19,7 +19,7 @@ namespace N {
 var n = new N.D1();
 var /*1*/n2 = new N.D2<number>();
 var /*2*/n3 = new N.D2();";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "var n2: N.D2<number>", "");
 		f.verify_quick_info_at("2", "var n3: N.D2<unknown>", "");
 	});

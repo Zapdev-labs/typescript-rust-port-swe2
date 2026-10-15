@@ -14,7 +14,7 @@ fn js_doc_property_description5() {
 function multiple1Example(e: Multiple1Example) {
     console.log(e./*multiple1*/anything);
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("multiple1", "any", "");
 	});
 }

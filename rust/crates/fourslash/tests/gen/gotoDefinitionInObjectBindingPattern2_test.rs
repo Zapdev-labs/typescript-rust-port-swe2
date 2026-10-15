@@ -9,7 +9,7 @@ fn goto_definition_in_object_binding_pattern2() {
 	run_test(|t| {
 		let content = r"var p0 = ({a/*1*/a}) => {console.log(aa)};
 function f2({ [|a/*a1*/1|], [|b/*b1*/1|] }: { /*a1_dest*/a1: number, /*b1_dest*/b1: number } = { a1: 0, b1: 0 }) {}";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_definition(true, "1", "a1", "b1");
 	});
 }

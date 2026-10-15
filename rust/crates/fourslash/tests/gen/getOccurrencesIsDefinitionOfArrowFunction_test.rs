@@ -9,7 +9,7 @@ fn get_occurrences_is_definition_of_arrow_function() {
 	run_test(|t| {
 		let content = r"/*1*/var /*2*/f = x => x + 1;
 /*3*/f(12);";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("1", "2", "3");
 	});
 }

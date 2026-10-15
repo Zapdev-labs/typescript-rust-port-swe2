@@ -12,7 +12,7 @@ fn unreachable_statement_node_reuse() {
 	return;
 }
 function abc() { }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_number_of_errors_in_current_file(1);
 		f.go_to_marker("a");
 		f.insert(" ");

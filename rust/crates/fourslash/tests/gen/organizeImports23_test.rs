@@ -15,7 +15,7 @@ import {
 } from 'a';
 type x = bc | Bc;
 console.log(abc, Abc, I, R, M);";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_organize_imports(r"import {
     I,
     M,
@@ -23,7 +23,7 @@ console.log(abc, Abc, I, R, M);";
 } from 'a';
 import { abc, Abc, type bc, type Bc } from 'b';
 type x = bc | Bc;
-console.log(abc, Abc, I, R, M);", tsc_lsproto::CODE_ACTION_KIND_SOURCE_ORGANIZE_IMPORTS_TS, None);
+console.log(abc, Abc, I, R, M);", tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
 		f.verify_organize_imports(r"import {
     I,
     M,
@@ -31,7 +31,7 @@ console.log(abc, Abc, I, R, M);", tsc_lsproto::CODE_ACTION_KIND_SOURCE_ORGANIZE_
 } from 'a';
 import { abc, Abc, type bc, type Bc } from 'b';
 type x = bc | Bc;
-console.log(abc, Abc, I, R, M);", tsc_lsproto::CODE_ACTION_KIND_SOURCE_ORGANIZE_IMPORTS_TS, None);
+console.log(abc, Abc, I, R, M);", tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
 	});
 }
 

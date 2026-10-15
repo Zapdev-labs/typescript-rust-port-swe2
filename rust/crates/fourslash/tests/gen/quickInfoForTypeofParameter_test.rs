@@ -12,7 +12,7 @@ fn quick_info_for_typeof_parameter() {
     var y/*ref1*/1: string;
     var x: typeof y/*ref2*/1;
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("ref1", "(local var) y1: string", "");
 		f.verify_quick_info_at("ref2", "(local var) y1: string", "");
 	});

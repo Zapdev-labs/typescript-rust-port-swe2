@@ -18,9 +18,9 @@ var f: IFoo;
 var f2: IFoo2;
 f./*1*/; // completion here shows bar with return type is any
 f2./*2*/ // here bar has return type any, but bar2 is Foo2";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_completions("1", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec![&tsc_lsproto::CompletionItem { label: "bar", detail: Some("(method) IFoo.bar(): IFoo".into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
-		f.verify_completions("2", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec![&tsc_lsproto::CompletionItem { label: "bar", detail: Some("(method) IFoo.bar(): IFoo".into()), ..Default::default() }, &tsc_lsproto::CompletionItem { label: "bar2", detail: Some("(method) IFoo2.bar2(): IFoo2".into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_completions("1", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "bar", detail: Some(("(method) IFoo.bar(): IFoo").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("2", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "bar", detail: Some(("(method) IFoo.bar(): IFoo").into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "bar2", detail: Some(("(method) IFoo2.bar2(): IFoo2").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }
 

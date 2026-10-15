@@ -8,7 +8,7 @@ use tsc_fourslash::*;
 fn squiggle_illegal_class_extension() {
 	run_test(|t| {
 		let content = r"class Foo extends /*1*/Bar/*2*/ { }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_error_exists_between_markers("1", "2");
 		f.verify_number_of_errors_in_current_file(1);
 	});

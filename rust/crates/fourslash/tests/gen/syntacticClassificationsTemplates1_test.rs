@@ -12,7 +12,7 @@ var x = {
     p1: " + "`" + r"hello world" + "`" + r",
     p2: " + "`" + r"goodbye ${0} cruel ${0} world" + "`" + r",
 };";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_semantic_tokens(vec![tsc_fourslash::SemanticToken { type: "variable.declaration", text: "v", ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.declaration", text: "x", ..Default::default() }, tsc_fourslash::SemanticToken { type: "property.declaration", text: "p1", ..Default::default() }, tsc_fourslash::SemanticToken { type: "property.declaration", text: "p2", ..Default::default() }]);
 	});
 }

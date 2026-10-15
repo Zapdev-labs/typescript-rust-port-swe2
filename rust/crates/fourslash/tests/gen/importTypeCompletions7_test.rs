@@ -14,9 +14,9 @@ declare namespace Foo {}
 export = Foo;
 // @Filename: /test.ts
 [|import F/**/|]";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/test.ts");
-		f.verify_completions("", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec![&tsc_lsproto::CompletionItem { label: "Foo", insert_text: Some("import Foo from \"./foo\";".into()), data: &tsc_lsproto::CompletionItemData { auto_import: &tsc_lsproto::AutoImportFix { module_specifier: "./foo", ..Default::default() }, ..Default::default() }, text_edit: &tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: &tsc_lsproto::TextEdit { new_text: "import Foo from \"./foo\";", range: f.ranges()[0].ls_range, ..Default::default() }, ..Default::default() }, ..Default::default() }, &tsc_lsproto::CompletionItem { label: "type", sort_text: Some(tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string().into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
+		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "Foo", insert_text: Some(("import Foo from \"./foo\";").into()), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./foo", ..Default::default() }), ..Default::default() }), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "import Foo from \"./foo\";", range: f.ranges()[0].ls_range, ..Default::default() }), ..Default::default() }), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "type", sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }
 

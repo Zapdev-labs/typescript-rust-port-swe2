@@ -32,7 +32,7 @@ function q<T extends { name: string }>(x: T): T["name"] {
 }
 
 foof/*4*/(o => ({ value: o.name, func: x => 'foo' }), new Error(), "name");"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "(parameter) o: Error", "");
 		f.verify_quick_info_at("2", "(parameter) o: Error", "");
 		f.verify_quick_info_at("3", "function foof<T, \"name\">(settings: (row: T) => {\n    value: T[\"name\"];\n    func?: Function;\n}, obj: T, key: \"name\"): \"name\"", "");

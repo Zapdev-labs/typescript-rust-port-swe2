@@ -19,7 +19,7 @@ class B3 extends B2 {
         super(/*indirectSuperCall*/3);
     }
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("indirectSuperCall");
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "B2(n: number): B2", parameter_count: 1, parameter_name: "n", parameter_span: "n: number", overloads_count: 2, ..Default::default() });
 	});

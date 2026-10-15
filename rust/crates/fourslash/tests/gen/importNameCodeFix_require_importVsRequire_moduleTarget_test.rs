@@ -14,7 +14,7 @@ fn import_name_code_fix_require_import_vs_require_module_target() {
 export const x = 0;
 // @Filename: index.js
 x";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("index.js");
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add import from \"./a\"", new_file_content: r#"import { x } from "./a";
 

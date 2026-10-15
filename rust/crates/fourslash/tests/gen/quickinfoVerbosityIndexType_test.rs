@@ -20,7 +20,7 @@ function fn1<T extends T1>(obj: T, key: keyof T, k2: keyof T1) {
 	}
 	return key;
 }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_hover_with_verbosity(vec![("x1", vec![0, 1]), ("x2", vec![0]), ("k2", vec![0, 1]), ("key", vec![0])].into_iter().collect::<FxHashMap<_, _>>());
 	});
 }

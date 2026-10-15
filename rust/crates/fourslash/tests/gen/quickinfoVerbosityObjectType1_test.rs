@@ -14,7 +14,7 @@ type BarType = Sym | boolean;
 type Obj = { foo: FooType, bar: BarType, str: Str };
 const obj1/*o1*/: Obj = { foo: 1, bar: true, str: "3"};
 const obj2/*o2*/: { foo: FooType, bar: BarType, str: Str } = { foo: 1, bar: true, str: "3"};"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_hover_with_verbosity(vec![("o1", vec![0, 1, 2, 3]), ("o2", vec![0, 1, 2])].into_iter().collect::<FxHashMap<_, _>>());
 	});
 }

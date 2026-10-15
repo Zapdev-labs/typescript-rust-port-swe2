@@ -10,7 +10,7 @@ fn formatting_object_literal() {
 		let content = r#"var clear = {
 "a": 1/**/
 }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.format_document("");
 		f.go_to_marker("");
 		f.verify_current_line_content(r#"    "a": 1"#);

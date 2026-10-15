@@ -35,7 +35,7 @@ let opt = /*11*/</*12*/MainButton onClick={()=>{}} />;
 let opt = /*13*/</*14*/MainButton onClick={()=>{}} ignore-prop />;
 let opt = /*15*/</*16*/MainButton goTo="goTo" />;
 let opt = /*17*/</*18*/MainButton wrong />;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18");
 	});
 }

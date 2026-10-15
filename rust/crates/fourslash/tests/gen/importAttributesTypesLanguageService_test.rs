@@ -30,11 +30,11 @@ import * as css from "./style.asset" with { type: "css" };
 import * as text from "./copy.asset" with { type: "text" };
 css./*css*/cssOnly;
 text./*text*/textOnly;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_completions("attributeName", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["outerAttributeName"], excludes: vec!["CssAttributeValue", "cssOnly", "shared"], ..Default::default() }, ..Default::default() });
-		f.verify_completions("attributeValue", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["OuterAttributeValue"], excludes: vec!["CssAttributeValue", "TextAttributeValue"], ..Default::default() }, ..Default::default() });
-		f.verify_completions("css", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["cssOnly", "shared"], excludes: vec!["textOnly"], ..Default::default() }, ..Default::default() });
-		f.verify_completions("text", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["shared", "textOnly"], excludes: vec!["cssOnly"], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_completions("attributeName", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["outerAttributeName"], excludes: vec!["CssAttributeValue", "cssOnly", "shared"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("attributeValue", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["OuterAttributeValue"], excludes: vec!["CssAttributeValue", "TextAttributeValue"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("css", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["cssOnly", "shared"], excludes: vec!["textOnly"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("text", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["shared", "textOnly"], excludes: vec!["cssOnly"], ..Default::default() }), ..Default::default() }));
 	});
 }
 
@@ -59,7 +59,7 @@ import * as css from /*cssModule*/"./style.asset" with { type: "css" };
 import * as text from /*textModule*/"./copy.asset" with { type: "text" };
 css./*cssUse*/shared;
 text./*textUse*/shared;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
 		f.verify_baseline_hover();
 		f.verify_baseline_go_to_definition(true, "cssModule", "textModule", "cssUse", "textUse");

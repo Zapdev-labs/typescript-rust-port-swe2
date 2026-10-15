@@ -13,11 +13,11 @@ export const helper = 1;
 // @Filename: /app.astro
 const value = help/**/;
 ", contentmappertest.prefixed_supplemental_mapper, ".astro");
-		f.verify_completions("", &tsc_fourslash::CompletionsExpectedList { user_preferences: &tsc_lsutil::UserPreferences { include_completions_for_module_exports: tsc_core::TS_TRUE, include_completions_for_import_statements: tsc_core::TS_TRUE, ..Default::default() }, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["helper"], ..Default::default() }, ..Default::default() });
-		f.verify_apply_code_action_from_completion(Some("".into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "helper", source: "./dep", description: "Add import from \"./dep\"", new_file_content: Some(r#"import { helper } from "./dep";
+		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { user_preferences: Some(tsc_lsutil::UserPreferences { include_completions_for_module_exports: tsc_core::TS_TRUE, include_completions_for_import_statements: tsc_core::TS_TRUE, ..Default::default() }), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["helper"], ..Default::default() }), ..Default::default() }));
+		f.verify_apply_code_action_from_completion(Some(("").into()), Some(tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "helper", source: "./dep", description: "Add import from \"./dep\"", new_file_content: Some((r#"import { helper } from "./dep";
 
 const value = help;
-"#.into()), ..Default::default() });
+"#).into()), ..Default::default() }));
 	});
 }
 
@@ -78,7 +78,7 @@ fn content_mapper_supplemental_code_lens() {
 function outer() {}
 outer();
 ", contentmappertest.prefixed_supplemental_mapper, ".astro");
-		f.verify_baseline_code_lens(&tsc_lsutil::UserPreferences { references_code_lens_enabled: tsc_core::TS_TRUE, references_code_lens_show_on_all_functions: tsc_core::TS_TRUE, ..Default::default() });
+		f.verify_baseline_code_lens(Some(tsc_lsutil::UserPreferences { references_code_lens_enabled: tsc_core::TS_TRUE, references_code_lens_show_on_all_functions: tsc_core::TS_TRUE, ..Default::default() }));
 	});
 }
 
@@ -89,7 +89,7 @@ fn content_mapper_disabled_supplemental_code_lens() {
 function outer() {}
 outer();
 ", contentmappertest.prefixed_supplemental_mapper, ".astro");
-		f.verify_baseline_code_lens(&tsc_lsutil::UserPreferences { references_code_lens_enabled: tsc_core::TS_TRUE, references_code_lens_show_on_all_functions: tsc_core::TS_TRUE, ..Default::default() });
+		f.verify_baseline_code_lens(Some(tsc_lsutil::UserPreferences { references_code_lens_enabled: tsc_core::TS_TRUE, references_code_lens_show_on_all_functions: tsc_core::TS_TRUE, ..Default::default() }));
 	});
 }
 
@@ -100,7 +100,7 @@ fn content_mapper_deduplicates_projected_code_lens() {
 function outer() {}
 outer();
 ", contentmappertest.prefixed_supplemental_mapper, ".astro");
-		f.verify_baseline_code_lens(&tsc_lsutil::UserPreferences { references_code_lens_enabled: tsc_core::TS_TRUE, references_code_lens_show_on_all_functions: tsc_core::TS_TRUE, ..Default::default() });
+		f.verify_baseline_code_lens(Some(tsc_lsutil::UserPreferences { references_code_lens_enabled: tsc_core::TS_TRUE, references_code_lens_show_on_all_functions: tsc_core::TS_TRUE, ..Default::default() }));
 	});
 }
 
@@ -111,7 +111,7 @@ fn content_mapper_supplemental_implementation_code_lens() {
 interface Service { run(): void }
 class Impl implements Service { run() {} }
 ", contentmappertest.prefixed_supplemental_mapper, ".astro");
-		f.verify_baseline_code_lens(&tsc_lsutil::UserPreferences { implementations_code_lens_enabled: tsc_core::TS_TRUE, ..Default::default() });
+		f.verify_baseline_code_lens(Some(tsc_lsutil::UserPreferences { implementations_code_lens_enabled: tsc_core::TS_TRUE, ..Default::default() }));
 	});
 }
 

@@ -9,7 +9,7 @@ fn signature_help_type_parameters_not_variadic() {
 	run_test(|t| {
 		let content = r"declare function f(a: any, ...b: any[]): any;
 f</*1*/>(1, 2);";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("1");
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { is_variadic: false, is_variadic_set: true, ..Default::default() });
 	});

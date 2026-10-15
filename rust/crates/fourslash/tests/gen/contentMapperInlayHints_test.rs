@@ -17,7 +17,7 @@ const value = () => 1;
 {{value}}
 ", contentmappertest.component_mapper, ".vue");
 		f.go_to_file("/app.vue");
-		f.verify_baseline_inlay_hints(None, &tsc_lsutil::UserPreferences { include_inlay_variable_type_hints: tsc_core::TS_TRUE, ..Default::default() });
+		f.verify_baseline_inlay_hints(None, Some(tsc_lsutil::UserPreferences { include_inlay_variable_type_hints: tsc_core::TS_TRUE, ..Default::default() }));
 	});
 }
 

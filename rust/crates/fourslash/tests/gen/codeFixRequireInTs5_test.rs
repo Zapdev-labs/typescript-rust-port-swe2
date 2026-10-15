@@ -11,7 +11,7 @@ fn code_fix_require_in_ts5() {
 const a = 1;
 const b = 2;
 const foo = require(" + "`" + r"foo${a}${b}" + "`" + r");";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_code_fix_not_available();
 	});
 }

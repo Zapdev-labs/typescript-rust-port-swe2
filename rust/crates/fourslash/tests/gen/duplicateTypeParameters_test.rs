@@ -8,7 +8,7 @@ use tsc_fourslash::*;
 fn duplicate_type_parameters() {
 	run_test(|t| {
 		let content = r"class A<B, /**/B>  { }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("");
 		f.verify_quick_info_exists();
 	});

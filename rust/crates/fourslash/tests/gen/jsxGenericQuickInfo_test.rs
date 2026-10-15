@@ -32,7 +32,7 @@ class Component<T> {
 }   
 var b = new Component({items: [0, 1, 2], render/*0*/Item: it/*1*/em => item.toFixed(), name/*2*/: 'A',});
 var c = <Component items={[0, 1, 2]} render/*3*/Item={it/*4*/em => item.toFixed()} name/*5*/="A" />"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("0", "(property) PropsA<number>.renderItem: (item: number) => string", "");
 		f.verify_quick_info_at("1", "(parameter) item: number", "");
 		f.verify_quick_info_at("2", "(property) PropsA<T>.name: \"A\"", "comments for A");

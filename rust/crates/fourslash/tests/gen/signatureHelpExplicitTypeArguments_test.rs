@@ -23,7 +23,7 @@ j(/*7*/);
 g<number>(/*8*/);
 h<number>(/*9*/);
 j<number>(/*10*/);";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("1");
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f(x: number, y: string): number", ..Default::default() });
 		f.go_to_marker("2");

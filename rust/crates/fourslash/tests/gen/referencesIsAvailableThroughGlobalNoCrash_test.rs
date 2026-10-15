@@ -20,7 +20,7 @@ declare namespace debug {
 { "types": "index.d.ts" }
 // @Filename: /packages/playwright-core/src/index.ts
 export const debug: typeof import('../bundles/utils/node_modules//*1*/@types/debug') = require('./utilsBundleImpl').debug;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("1");
 	});
 }

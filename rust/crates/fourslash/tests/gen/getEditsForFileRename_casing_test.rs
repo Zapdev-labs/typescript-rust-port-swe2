@@ -11,7 +11,7 @@ fn get_edits_for_file_rename_casing() {
 import { foo } from "./dir/fOo";
 // @Filename: /dir/fOo.ts
 export const foo = 0;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_will_rename_files_edits("/dir", "/newDir", vec![("/a.ts", r#"import { foo } from "./newDir/fOo";"#)].into_iter().collect::<FxHashMap<_, _>>(), None);
 	});
 }

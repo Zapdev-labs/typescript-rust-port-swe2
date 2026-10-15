@@ -54,9 +54,9 @@ declare abstract class Container_ extends Node {
 declare class Container extends Container_ {}
 
 export = Container;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_completions("1", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "parent", insert_text: Some("parent: Container_ | Document_ | undefined;".into()), filter_text: Some("parent".into()), additional_text_edits: tsc_fourslash::ANY_TEXT_EDITS, data: &tsc_lsproto::CompletionItemData { source: "ClassMemberSnippet/", ..Default::default() }, ..Default::default() }], ..Default::default() }, user_preferences: &tsc_lsutil::UserPreferences { include_completions_with_class_member_snippets: tsc_core::TS_TRUE, ..Default::default() }, ..Default::default() });
-		f.verify_apply_code_action_from_completion(Some("1".into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "parent", source: "ClassMemberSnippet/", description: "Includes imports of types referenced by 'parent'", new_file_content: Some(r#"import Document_ from "./document.js";
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_completions("1", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "parent", insert_text: Some(("parent: Container_ | Document_ | undefined;").into()), filter_text: Some(("parent").into()), additional_text_edits: tsc_fourslash::any_text_edits, data: Some(tsc_lsproto::CompletionItemData { source: "ClassMemberSnippet/", ..Default::default() }), ..Default::default() })], ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { include_completions_with_class_member_snippets: tsc_core::TS_TRUE, ..Default::default() }), ..Default::default() }));
+		f.verify_apply_code_action_from_completion(Some(("1").into()), Some(tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "parent", source: "ClassMemberSnippet/", description: "Includes imports of types referenced by 'parent'", new_file_content: Some((r#"import Document_ from "./document.js";
 import Node from "./node.js";
 
 declare namespace Container {
@@ -69,7 +69,7 @@ declare abstract class Container_ extends Node {
 
 declare class Container extends Container_ {}
 
-export = Container;"#.into()), user_preferences: &tsc_lsutil::UserPreferences { include_completions_with_class_member_snippets: tsc_core::TS_TRUE, ..Default::default() }, ..Default::default() });
+export = Container;"#).into()), user_preferences: Some(tsc_lsutil::UserPreferences { include_completions_with_class_member_snippets: tsc_core::TS_TRUE, ..Default::default() }), ..Default::default() }));
 	});
 }
 

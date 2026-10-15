@@ -64,7 +64,7 @@ function isLeaderGuard(g: RoyalGuard) {
    return g.isLeader();
 }
 let checked/*14*/LeaderStatus = isLeader/*15*/Guard(a);"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "(method) RoyalGuard.isLeader(): this is LeadGuard", "");
 		f.verify_quick_info_at("3", "(method) RoyalGuard.isFollower(): this is FollowerGuard", "");
 		f.verify_quick_info_at("5", "(method) GuardInterface.isLeader(): this is LeadGuard", "");

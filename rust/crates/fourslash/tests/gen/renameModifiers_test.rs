@@ -18,7 +18,7 @@ fn rename_modifiers() {
 }|]
 [|[|async|] function [|{| "isWriteAccess": true, "isDefinition": true, "contextRangeDelta": -2 |}fn|]() {}|]
 [|[|export|] [|default|] class [|{| "isWriteAccess": true, "isDefinition": true, "contextRangeDelta": -3 |}C2|] {}|]"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_rename(None, f.ranges()[1], f.ranges()[2], f.ranges()[5], f.ranges()[8], f.ranges()[11], f.ranges()[14], f.ranges()[17], f.ranges()[20], f.ranges()[23], f.ranges()[26], f.ranges()[27]);
 	});
 }

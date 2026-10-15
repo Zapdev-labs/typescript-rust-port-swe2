@@ -21,7 +21,7 @@ class /*ct*/MyClass {
 var x = <[|My/*c*/Class|] />;
 var y = <MyClass [|f/*p*/oo|]= 'hello' />;
 var z = <[|MyCl/*w*/ass|] wrong= 'hello' />;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_definition(true, "c", "p", "w");
 	});
 }

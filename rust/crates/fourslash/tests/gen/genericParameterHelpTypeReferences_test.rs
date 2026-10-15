@@ -24,7 +24,7 @@ let i: I</*interface*/>;
 
 type Ty<T> = T;
 let t: Ty</*typeAlias*/>;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("type1");
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "testClass<T extends IFoo, U, M extends IFoo>", parameter_name: "T", parameter_span: "T extends IFoo", ..Default::default() });
 		f.go_to_marker("type2");

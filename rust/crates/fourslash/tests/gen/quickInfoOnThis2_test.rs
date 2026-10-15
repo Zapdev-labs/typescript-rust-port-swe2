@@ -15,7 +15,7 @@ fn quick_info_on_this2() {
         console.log(thi/*2*/s);
     }
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "this: this", "");
 		f.verify_quick_info_at("2", "this: Bar<T>", "");
 	});

@@ -34,7 +34,7 @@ type Prop<T, K> = K extends keyof T ? T[K] : never;
 foo1({ bar: { /*1*/X: "test" } });
 
 foo2({ bar: { /*2*/X: "test" } });"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "(property) X: \"Error: bar should be boolean\"", "");
 		f.verify_quick_info_at("2", "(property) X: \"Error: bar should be boolean\"", "");
 	});

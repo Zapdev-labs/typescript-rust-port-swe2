@@ -12,11 +12,11 @@ fn configure_quote_preference(t: &mut TestHandle, f: &mut FourslashTest, quote_p
 }
 
 fn required_key(name: string) {
-	return &tsc_lsproto::CompletionItem { label: name, ..Default::default() };
+	return Some(tsc_lsproto::CompletionItem { label: name, ..Default::default() });
 }
 
 fn optional_key(name: string) {
-	return &tsc_lsproto::CompletionItem { label: name + "?", insert_text: Some(name.into()), filter_text: Some(name.into()), sort_text: Some(tsc_ls::SORT_TEXT_OPTIONAL_MEMBER.to_string().into()), ..Default::default() };
+	return Some(tsc_lsproto::CompletionItem { label: name + "?", insert_text: Some((name).into()), filter_text: Some((name).into()), sort_text: Some((tsc_ls::SORT_TEXT_OPTIONAL_MEMBER.to_string()).into()), ..Default::default() });
 }
 
 fn verify_object_literal_key_completions(t: &mut TestHandle, f: &mut FourslashTest, items: &[*tsc_lsproto::COMPLETION_ITEM]) {
@@ -25,7 +25,7 @@ fn verify_object_literal_key_completions(t: &mut TestHandle, f: &mut FourslashTe
 	for item in items {
 		expected.insert(i, item);
 	}
-	f.verify_completions("", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: expected, ..Default::default() }, ..Default::default() });
+	f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: expected, ..Default::default() }), ..Default::default() }));
 }
 
 #[test]
@@ -44,8 +44,8 @@ const test: Join = {
     /**/
   }
 };";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		configure_quote_preference(&mut *t, f, tsc_lsutil::QUOTE_PREFERENCE_SINGLE);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		configure_quote_preference(&mut *t, f, tsc_lsutil::QuotePreference::SINGLE);
 		verify_object_literal_key_completions(&mut *t, f, optional_key(r"'t1.id'"), optional_key(r"'t1.value'"), optional_key(r"'t2.id'"), optional_key(r"'t2.value'"));
 	});
 }
@@ -53,10 +53,10 @@ const test: Join = {
 #[test]
 fn completions_object_property_name_quote_preference_single_escaping() {
 	run_test(|t| {
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, object_property_name_content);
-		configure_quote_preference(&mut *t, f, tsc_lsutil::QUOTE_PREFERENCE_SINGLE);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, object_property_name_content);
+		configure_quote_preference(&mut *t, f, tsc_lsutil::QuotePreference::SINGLE);
 		let mut spaced = optional_key(r"'c d'");
-		spaced.detail = Some(r#"(property) Options["c d"]?: string | undefined"#.into());
+		spaced.detail = Some((r#"(property) Options["c d"]?: string | undefined"#).into());
 		verify_object_literal_key_completions(&mut *t, f, required_key(r"'a-b'"), required_key(r"plain"), spaced, optional_key(r"'it\'s'"), optional_key(r#"'say "hi"'"#));
 	});
 }
@@ -64,8 +64,8 @@ fn completions_object_property_name_quote_preference_single_escaping() {
 #[test]
 fn completions_object_property_name_quote_preference_double() {
 	run_test(|t| {
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, object_property_name_content);
-		configure_quote_preference(&mut *t, f, tsc_lsutil::QUOTE_PREFERENCE_DOUBLE);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, object_property_name_content);
+		configure_quote_preference(&mut *t, f, tsc_lsutil::QuotePreference::DOUBLE);
 		verify_object_literal_key_completions(&mut *t, f, required_key(r#""a-b""#), required_key(r"plain"), optional_key(r#""c d""#), optional_key(r#""it's""#), optional_key(r#""say \"hi\"""#));
 	});
 }
@@ -84,9 +84,9 @@ interface Options {
 const o: Options = {
     /**/
 };"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/b.ts");
-		configure_quote_preference(&mut *t, f, tsc_lsutil::QUOTE_PREFERENCE_AUTO);
+		configure_quote_preference(&mut *t, f, tsc_lsutil::QuotePreference::AUTO);
 		verify_object_literal_key_completions(&mut *t, f, optional_key(r"'a-b'"));
 	});
 }

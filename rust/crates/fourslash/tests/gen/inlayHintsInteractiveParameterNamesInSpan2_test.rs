@@ -20,11 +20,11 @@ foo3(/*e*/1, /*f*/2);
 foo4(/*g*/1, /*h*/2);
 foo5(/*i*/1, /*j*/2);
 foo6(/*k*/1, /*l*/2);";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut start = f.marker_by_name("c");
 		let mut end = f.marker_by_name("h");
-		let mut span = &tsc_lsproto::Range { start: start.ls_position, end: end.ls_position, ..Default::default() };
-		f.verify_baseline_inlay_hints(span, &tsc_lsutil::UserPreferences { include_inlay_parameter_name_hints: "literals", ..Default::default() });
+		let mut span = Some(tsc_lsproto::Range { start: start.ls_position, end: end.ls_position, ..Default::default() });
+		f.verify_baseline_inlay_hints(span, Some(tsc_lsutil::UserPreferences { include_inlay_parameter_name_hints: "literals", ..Default::default() }));
 	});
 }
 

@@ -14,9 +14,9 @@ fn completion_list_in_class_expression_with_type_parameter() {
    }
    prop: Ty/*1*/
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_completions("0", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { excludes: vec!["TypeParam"], ..Default::default() }, ..Default::default() });
-		f.verify_completions(vec!["0Type", "1"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "TypeParam", detail: Some("(type parameter) TypeParam in myClass<TypeParam>".into()), kind: Some(tsc_lsproto::COMPLETION_ITEM_KIND_PROPERTY.into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_completions("0", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { excludes: vec!["TypeParam"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions(vec!["0Type", "1"], Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "TypeParam", detail: Some(("(type parameter) TypeParam in myClass<TypeParam>").into()), kind: Some((tsc_lsproto::CompletionItemKind::PROPERTY).into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }
 

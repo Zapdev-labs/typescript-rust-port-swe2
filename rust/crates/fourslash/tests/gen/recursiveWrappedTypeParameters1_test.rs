@@ -20,7 +20,7 @@ var c/*4*/c = x.c;
 var d/*5*/d = x.c.a;
 var e/*6*/e = x.c.b;
 var f/*7*/f = x.c.c; ";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "var yy: I<I<I<I<I<I<number>>>>>>", "");
 		f.verify_quick_info_at("2", "var aa: number", "");
 		f.verify_quick_info_at("3", "var bb: I<number>", "");

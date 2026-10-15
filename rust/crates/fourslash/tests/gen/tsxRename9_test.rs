@@ -35,7 +35,7 @@ let opt = [|<[|{| "contextRangeIndex": 14 |}MainButton|] [|[|{| "contextRangeInd
 let opt = [|<[|{| "contextRangeIndex": 18 |}MainButton|] [|[|{| "contextRangeIndex": 20 |}onClick|]={()=>{}}|] [|ignore-prop|] />|];
 let opt = [|<[|{| "contextRangeIndex": 23 |}MainButton|] [|[|{| "contextRangeIndex": 25 |}goTo|]="goTo"|] />|];
 let opt = [|<[|{| "contextRangeIndex": 27 |}MainButton|] [|wrong|] />|];"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_rename_at_ranges_with_text(None, "onClick", "goTo", "MainButton", "ignore-prop", "wrong");
 	});
 }

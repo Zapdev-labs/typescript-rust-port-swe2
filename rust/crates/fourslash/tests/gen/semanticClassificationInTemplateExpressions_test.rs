@@ -16,7 +16,7 @@ fn semantic_classification_in_template_expressions() {
     }
 }
 " + "`" + r"abcd${ /*3*/M./*4*/C.x + /*5*/M./*6*/E.E1}efg" + "`" + r"";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_semantic_tokens(vec![tsc_fourslash::SemanticToken { type: "namespace.declaration", text: "M", ..Default::default() }, tsc_fourslash::SemanticToken { type: "class.declaration", text: "C", ..Default::default() }, tsc_fourslash::SemanticToken { type: "property.declaration.static", text: "x", ..Default::default() }, tsc_fourslash::SemanticToken { type: "enum.declaration", text: "E", ..Default::default() }, tsc_fourslash::SemanticToken { type: "enumMember.declaration.readonly", text: "E1", ..Default::default() }, tsc_fourslash::SemanticToken { type: "namespace", text: "M", ..Default::default() }, tsc_fourslash::SemanticToken { type: "class", text: "C", ..Default::default() }, tsc_fourslash::SemanticToken { type: "property.static", text: "x", ..Default::default() }, tsc_fourslash::SemanticToken { type: "namespace", text: "M", ..Default::default() }, tsc_fourslash::SemanticToken { type: "enum", text: "E", ..Default::default() }, tsc_fourslash::SemanticToken { type: "enumMember.readonly", text: "E1", ..Default::default() }]);
 	});
 }

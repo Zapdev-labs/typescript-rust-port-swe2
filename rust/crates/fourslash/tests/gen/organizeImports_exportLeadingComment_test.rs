@@ -30,8 +30,8 @@ console.log(a);"#, ..Default::default() }];
 		}
 		for tc in cases {
 			run_subtest(&mut t, tc.name, |t| {
-				let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, tc.content);
-				f.verify_organize_imports(tc.content, tsc_lsproto::CODE_ACTION_KIND_SOURCE_SORT_IMPORTS_TS, None);
+				let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, tc.content);
+				f.verify_organize_imports(tc.content, tsc_lsproto::CodeActionKind::SOURCE_SORT_IMPORTS_TS, None);
 			});
 		}
 	});

@@ -10,7 +10,7 @@ fn get_rename_info_tests2() {
 		let content = r"class C /**/extends null {
 
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("");
 		f.verify_rename_failed(None);
 	});

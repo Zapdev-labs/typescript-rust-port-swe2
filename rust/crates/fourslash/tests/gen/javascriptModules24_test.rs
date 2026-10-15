@@ -18,7 +18,7 @@ export = foo;
 import * as foo from "./mod"
 foo/*1*/();
 foo.bar(/*2*/"test");"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("1");
 		f.verify_error_exists_before_marker("1");
 		f.verify_quick_info_is("(alias) function foo(): number\n(alias) namespace foo\nimport foo", "");

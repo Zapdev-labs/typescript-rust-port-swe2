@@ -11,7 +11,7 @@ fn get_property_symbols_from_base_types_doesnt_crash() {
 class ClassA implements IInterface {
     private [|value|]: number;
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_document_highlights(None, to_any(f.ranges()));
 	});
 }

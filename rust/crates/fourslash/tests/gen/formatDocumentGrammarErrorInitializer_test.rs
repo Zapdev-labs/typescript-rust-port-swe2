@@ -8,7 +8,7 @@ use tsc_fourslash::*;
 fn format_document_grammar_error_initializer() {
 	run_test(|t| {
 		let mut content = "// @Filename: /a.ts\n" + "const f = () => {\n" + "  const v = x as A & {\n" + "    a: { b: C\n" + "  }\n" + "  const m: T[] = [\n" + "    { g: () => { nav(`${z}`) } },\n" + "  ]\n" + "  const n: T[] =\n" + "}\n";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.format_document("/a.ts");
 	});
 }

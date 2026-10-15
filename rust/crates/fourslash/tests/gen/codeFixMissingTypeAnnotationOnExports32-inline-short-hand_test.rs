@@ -14,7 +14,7 @@ const x = 1;
 export default {
   x
 };";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add satisfies and an inline type assertion with 'number'", new_file_content: r"const x = 1;
 export default {
   x: x as number

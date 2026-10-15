@@ -8,7 +8,7 @@ use tsc_fourslash::*;
 fn navigation_bar_items_type_alias() {
 	run_test(|t| {
 		let content = r"type T = number | string;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_document_symbol();
 	});
 }

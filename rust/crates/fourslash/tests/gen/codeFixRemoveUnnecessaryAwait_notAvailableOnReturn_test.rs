@@ -11,7 +11,7 @@ fn code_fix_remove_unnecessary_await_not_available_on_return() {
 async function fn(): Promise<number> {
   return 0;
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_suggestion_diagnostics(None);
 	});
 }

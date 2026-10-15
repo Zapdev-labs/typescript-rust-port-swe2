@@ -16,7 +16,7 @@ fn find_all_refs_re_export_local() {
 // @Filename: /b.ts
 [|import { /*bx0*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 7 |}x|], /*by0*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 7 |}y|] } from "./a";|]
 /*bx1*/[|x|]; /*by1*/[|y|];"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
 		f.verify_baseline_find_all_references("ax0", "ax1", "ax2", "bx0", "bx1", "ay", "by0", "by1");
 		f.verify_baseline_rename(None, f.ranges()[1], f.ranges()[5]);

@@ -12,7 +12,7 @@ function functionOverload(test: string);
 function functionOverload(test?: string) { }
 functionOverload(/*functionOverload1*/);
 functionOverload(""/*functionOverload2*/);"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("functionOverload1");
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "functionOverload(): any", parameter_count: 0, overloads_count: 2, ..Default::default() });
 		f.go_to_marker("functionOverload2");

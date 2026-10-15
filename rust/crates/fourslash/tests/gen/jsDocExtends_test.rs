@@ -23,7 +23,7 @@ class MyStringThing extends Thing {
 declare class Thing<T> {
     mine: T;
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("");
 		f.verify_quick_info_is("(local var) x: string", "");
 	});

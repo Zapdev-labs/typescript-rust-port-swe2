@@ -19,7 +19,7 @@ export const config = { /*targetAlpha*/alpha: "a", /*targetBeta*/beta: "b" };
 import { config } from "pkg";
 config./*accessAlpha*/alpha;
 config./*accessBeta*/beta;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_source_definition("accessAlpha", "accessBeta");
 	});
 }
@@ -37,7 +37,7 @@ export const nested = { inner: { /*targetValue*/value: 42 } };
 // @Filename: /home/src/workspaces/project/index.ts
 import { nested } from "pkg";
 nested.inner./*accessValue*/value;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_source_definition("accessValue");
 	});
 }
@@ -57,7 +57,7 @@ export const coords = { /*targetX*/x: 10, /*targetY*/y: 20 };
 import { coords } from "pkg";
 coords./*accessX*/x;
 coords./*accessY*/y;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_source_definition("accessX", "accessY");
 	});
 }

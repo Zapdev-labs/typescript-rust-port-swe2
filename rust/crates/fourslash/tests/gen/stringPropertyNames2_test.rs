@@ -12,7 +12,7 @@ fn string_property_names2() {
 }
 var a: Album<number>;
 var /**/x = a['artist']; "#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("", "var x: number", "");
 	});
 }

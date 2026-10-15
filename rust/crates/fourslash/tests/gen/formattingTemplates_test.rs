@@ -9,7 +9,7 @@ fn formatting_templates() {
 	run_test(|t| {
 		let content = r"String.call " + "`" + r"${123}" + "`" + r"/*1*/
 String.call " + "`" + r"${123} ${456}" + "`" + r"/*2*/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("1");
 		f.insert(";");
 		f.verify_current_line_content("String.call`${123}`;");

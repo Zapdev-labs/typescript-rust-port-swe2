@@ -22,7 +22,7 @@ export declare class IndirectDependency
 { "dependencies": { "direct-dependency": "*" } }
 // @Filename: /home/src/workspaces/project/index.ts
 IndirectDependency/**/"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
 		f.go_to_marker("");
 		let mut opts1155 = f.get_options();

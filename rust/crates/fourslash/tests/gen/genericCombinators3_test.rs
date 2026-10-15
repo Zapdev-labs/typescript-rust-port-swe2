@@ -21,7 +21,7 @@ var c2: Collection<number, string>;
 var _: Combinators;
 
 var /*9*/r1a  = _.ma/*1c*/p(c2, (/*1a*/x,/*1b*/y) => { return x + "" });  // check quick info of map here"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1a", "(parameter) x: number", "");
 		f.verify_quick_info_at("1b", "(parameter) y: string", "");
 		f.verify_quick_info_at("1c", "(method) Combinators.map<number, string, string>(c: Collection<number, string>, f: (x: number, y: string) => string): Collection<number, string> (+1 overload)", "");

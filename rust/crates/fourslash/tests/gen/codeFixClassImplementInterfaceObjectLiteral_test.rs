@@ -14,7 +14,7 @@ fn code_fix_class_implement_interface_object_literal() {
     }
 }
 class Person implements IPerson { }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'IPerson'", new_file_content: r"interface IPerson {
     coordinate: {
         x: number;

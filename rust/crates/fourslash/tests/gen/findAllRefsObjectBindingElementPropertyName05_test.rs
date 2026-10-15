@@ -15,7 +15,7 @@ fn find_all_refs_object_binding_element_property_name05() {
 function f({ /**/property1: p }, { property1 }) {
     let x = property1;
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("");
 	});
 }

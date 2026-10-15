@@ -15,11 +15,11 @@ export function fun() { /* ... */ }
 // @Filename: /declaration.ts
  type ZodType = {};
  export type { ZodType }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_organize_imports(r"import type { ZodType } from './declaration';
 
 /** Intended to be used in combination with {@link ZodType} */
-export function fun() { /* ... */ }", tsc_lsproto::CODE_ACTION_KIND_SOURCE_ORGANIZE_IMPORTS_TS, None);
+export function fun() { /* ... */ }", tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
 	});
 }
 

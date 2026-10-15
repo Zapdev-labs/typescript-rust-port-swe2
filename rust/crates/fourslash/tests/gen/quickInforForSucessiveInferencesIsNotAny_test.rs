@@ -12,7 +12,7 @@ fn quick_infor_for_sucessive_inferences_is_not_any() {
 declare const b: boolean;
 const obj/*1*/ = schema(b);
 const actualTypeOfNested/*2*/ = schema(obj);";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "const obj: {\n    field: boolean;\n}", "");
 		f.verify_quick_info_at("2", "const actualTypeOfNested: {\n    field: {\n        field: boolean;\n    };\n}", "");
 	});

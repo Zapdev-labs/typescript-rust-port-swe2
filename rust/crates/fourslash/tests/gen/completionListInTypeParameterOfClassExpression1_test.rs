@@ -13,9 +13,9 @@ var C1 = class D</*1*/T> {}
 var C2 = class D<T, /*2*/
 var C3 = class D<T, /*3*/U>{}
 var C4 = class D<T extends /*4*/>{}";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_completions(vec!["0", "1", "2", "3"], None);
-		f.verify_completions("4", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: completion_global_types_plus(vec!["D"]), ..Default::default() }, ..Default::default() });
+		f.verify_completions("4", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_global_types_plus(vec!["D"]), ..Default::default() }), ..Default::default() }));
 	});
 }
 

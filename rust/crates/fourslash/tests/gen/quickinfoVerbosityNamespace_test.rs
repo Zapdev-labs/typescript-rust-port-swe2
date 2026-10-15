@@ -55,7 +55,7 @@ namespace OnlyLocal/*4*/ {
 export function foo() { return "foo"; }
 import("/*5*/./foo")
 var x = import("./foo")"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_hover_with_verbosity(vec![("1", vec![0, 1]), ("2", vec![0, 1, 2]), ("3", vec![0, 1, 2]), ("4", vec![0, 1]), ("5", vec![0, 1])].into_iter().collect::<FxHashMap<_, _>>());
 	});
 }

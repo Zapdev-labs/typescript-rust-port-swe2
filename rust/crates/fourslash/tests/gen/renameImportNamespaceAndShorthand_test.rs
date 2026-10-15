@@ -9,7 +9,7 @@ fn rename_import_namespace_and_shorthand() {
 	run_test(|t| {
 		let content = r#"[|import * as [|{| "contextRangeIndex": 0 |}foo|] from 'bar';|]
 const bar = { [|foo|] };"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_rename(None, f.ranges()[1], f.ranges()[2]);
 	});
 }

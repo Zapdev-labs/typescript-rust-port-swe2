@@ -14,7 +14,7 @@ fn js_doc_property_description10() {
 function multipleClass(e: typeof MultipleClass) {
     console.log(e./*multipleClass*/anything);
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("multipleClass", "any", "");
 	});
 }

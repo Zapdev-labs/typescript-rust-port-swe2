@@ -14,7 +14,7 @@ fn fundule_with_recursive_reference() {
     export var /**/C = M.C
   }
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("", "var M.C.C: typeof M.C", "");
 		f.verify_no_errors();
 	});

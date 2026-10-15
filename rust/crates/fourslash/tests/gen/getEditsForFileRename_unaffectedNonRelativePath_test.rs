@@ -13,7 +13,7 @@ export const a = 1;
 import { a } from "sub/a";
 // @Filename: /tsconfig.json
 {"compilerOptions":{"paths":{"*":["*"]}}}"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_will_rename_files_edits("/sub/b.ts", "/sub/c/d.ts", vec![].into_iter().collect::<FxHashMap<_, _>>(), None);
 	});
 }

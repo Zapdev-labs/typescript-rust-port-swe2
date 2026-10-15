@@ -25,7 +25,7 @@ export interface ChainedArray<T> extends ChainedObject<Array<T>> {
     groupBy(): ChainedDictionary<any[]>;
     groupBy(propertyName): ChainedDictionary<any[]>;
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_position(0);
 		f.verify_number_of_errors_in_current_file(2);
 	});

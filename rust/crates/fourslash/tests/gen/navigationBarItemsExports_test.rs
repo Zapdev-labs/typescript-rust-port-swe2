@@ -14,7 +14,7 @@ export { b as B } from "a"
 export import e = require("a");
 
 export * from "a"; // no bindings here"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_document_symbol();
 	});
 }

@@ -34,7 +34,7 @@ export function add(a: number, b: number) {}
 // @Filename: /src/index.ts
 add/*imports*/;
 external/*exports*/;"##;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_import_fix_module_specifiers("imports", vec!["#add.js"], None);
 	});
 }

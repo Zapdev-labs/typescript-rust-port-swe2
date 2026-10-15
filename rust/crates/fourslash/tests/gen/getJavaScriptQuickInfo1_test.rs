@@ -12,7 +12,7 @@ fn get_java_script_quick_info1() {
 // @Filename: Foo.js
 /** @type {function(new:string,number)} */
 var /**/v;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("", "var v: new (arg1: number) => string", "");
 	});
 }

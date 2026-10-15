@@ -39,7 +39,7 @@ a++;/*19*/
         break;/*25*/
     }/*26*/
 }/*27*/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut opts874 = f.get_options();
 		opts874.format_code_settings.insert_space_after_semicolon_in_for_statements = tsc_core::TS_TRUE;
 		f.configure(opts874);

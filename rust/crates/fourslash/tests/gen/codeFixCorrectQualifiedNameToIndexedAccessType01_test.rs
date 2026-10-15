@@ -12,7 +12,7 @@ fn code_fix_correct_qualified_name_to_indexed_access_type01() {
   bar: string;
 }
 export const x: [|Foo.bar|] = """#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_range_after_code_fix(r#"Foo["bar"]"#, false, 0, 0);
 	});
 }

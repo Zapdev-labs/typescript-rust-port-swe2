@@ -31,7 +31,7 @@ function foo(x) { }
 // @Filename: bar.ts
 /** {@link /*use7*/[|Foo|] }dd*/
 const f = """#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_definition(false, "use1", "use2", "use3", "use4", "use5", "use6", "use7");
 	});
 }

@@ -14,7 +14,7 @@ foo/*0*/();|]
 export function foo() {};
 // @Filename: a/foo.ts
 export { foo } from "./foo/bar";"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_import_fix_at_position(vec![r#"import * as ns from "./foo";
 ns.foo();"#, r#"import * as ns from "./foo";
 import { foo } from "./foo";

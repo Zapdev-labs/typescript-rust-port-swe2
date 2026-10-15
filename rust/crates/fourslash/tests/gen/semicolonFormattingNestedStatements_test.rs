@@ -13,7 +13,7 @@ if (true) {
 if (true)/*directParent*/
 var x = 0/*innermost*/
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("innermost");
 		f.insert(";");
 		f.verify_current_line_content(r"        var x = 0;");

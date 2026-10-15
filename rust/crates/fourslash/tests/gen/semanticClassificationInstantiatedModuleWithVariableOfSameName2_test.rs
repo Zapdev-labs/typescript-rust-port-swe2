@@ -24,7 +24,7 @@ var /*3*/M = {
 var v: /*4*/M./*5*/I;
 
 var x = /*6*/M;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_semantic_tokens(vec![tsc_fourslash::SemanticToken { type: "namespace.declaration", text: "M", ..Default::default() }, tsc_fourslash::SemanticToken { type: "interface.declaration", text: "I", ..Default::default() }, tsc_fourslash::SemanticToken { type: "namespace.declaration", text: "M", ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.declaration.local", text: "x", ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.declaration", text: "M", ..Default::default() }, tsc_fourslash::SemanticToken { type: "property.declaration", text: "foo", ..Default::default() }, tsc_fourslash::SemanticToken { type: "property.declaration", text: "bar", ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.declaration", text: "v", ..Default::default() }, tsc_fourslash::SemanticToken { type: "namespace", text: "M", ..Default::default() }, tsc_fourslash::SemanticToken { type: "interface", text: "I", ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.declaration", text: "x", ..Default::default() }, tsc_fourslash::SemanticToken { type: "namespace", text: "M", ..Default::default() }]);
 	});
 }

@@ -13,7 +13,7 @@ import n = require([|'./a/*1*/'|]);
 var x = new n.Foo();
 // @Filename: a.ts
  /*2*/export class Foo {}";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
 		f.verify_baseline_go_to_definition(true, "1");
 	});

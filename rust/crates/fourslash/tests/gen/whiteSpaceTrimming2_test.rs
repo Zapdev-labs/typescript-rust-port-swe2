@@ -11,7 +11,7 @@ fn white_space_trimming2() {
 let templateHead = " + "`" + r"/*    /*2*/${1 + 2}" + "`" + r";
 let templateMiddle = " + "`" + r"/*    ${1 + 2    /*3*/}" + "`" + r";
 let templateTail = " + "`" + r"/*    ${1 + 2}    /*4*/" + "`" + r";";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("1");
 		f.insert("\n");
 		f.go_to_marker("2");

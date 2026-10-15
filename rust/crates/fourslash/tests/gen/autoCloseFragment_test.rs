@@ -50,8 +50,8 @@ const x = <p>
         <>/*9*/
     </>
 </p>";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_jsx_closing_tag(vec![("0", Some("</>".into())), ("1", None), ("2", None), ("3", None), ("4", Some("</>".into())), ("5", Some("</>".into())), ("6", Some("</>".into())), ("7", Some("</>".into())), ("8", None), ("9", Some("</>".into()))].into_iter().collect::<FxHashMap<_, _>>());
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_jsx_closing_tag(vec![("0", Some(("</>").into())), ("1", None), ("2", None), ("3", None), ("4", Some(("</>").into())), ("5", Some(("</>").into())), ("6", Some(("</>").into())), ("7", Some(("</>").into())), ("8", None), ("9", Some(("</>").into()))].into_iter().collect::<FxHashMap<_, _>>());
 	});
 }
 

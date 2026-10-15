@@ -10,22 +10,22 @@ fn organize_imports16() {
 		let content = r#"import { a, A, b } from "foo";
 interface Use extends A {}
 console.log(a, b);"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_organize_imports(r#"import { a, A, b } from "foo";
 interface Use extends A {}
-console.log(a, b);"#, tsc_lsproto::CODE_ACTION_KIND_SOURCE_ORGANIZE_IMPORTS_TS, None);
+console.log(a, b);"#, tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
 		f.replace_line(0, "import { a, A, b } from \"foo1\";");
 		f.verify_organize_imports(r#"import { a, A, b } from "foo1";
 interface Use extends A {}
-console.log(a, b);"#, tsc_lsproto::CODE_ACTION_KIND_SOURCE_ORGANIZE_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::TS_UNKNOWN, ..Default::default() });
+console.log(a, b);"#, tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::TS_UNKNOWN, ..Default::default() }));
 		f.replace_line(0, "import { a, A, b } from \"foo2\";");
 		f.verify_organize_imports(r#"import { a, A, b } from "foo2";
 interface Use extends A {}
-console.log(a, b);"#, tsc_lsproto::CODE_ACTION_KIND_SOURCE_ORGANIZE_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::TS_TRUE, ..Default::default() });
+console.log(a, b);"#, tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::TS_TRUE, ..Default::default() }));
 		f.replace_line(0, "import { a, A, b } from \"foo3\";");
 		f.verify_organize_imports(r#"import { A, a, b } from "foo3";
 interface Use extends A {}
-console.log(a, b);"#, tsc_lsproto::CODE_ACTION_KIND_SOURCE_ORGANIZE_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::TS_FALSE, ..Default::default() });
+console.log(a, b);"#, tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::TS_FALSE, ..Default::default() }));
 	});
 }
 

@@ -12,10 +12,10 @@ fn quick_info_js_doc_param_with_trailing_at_before_comment_end() {
 /** @param {string} x trailing @/*at*/*/
 function /*fn*/foo(/*x*/x) {}
 ";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("fn", "function foo(x: string): void", "\n\n*@param* `x` — trailing @");
 		f.verify_quick_info_at("x", "(parameter) x: string", "trailing @");
-		f.verify_completions("at", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "param", kind: Some(tsc_lsproto::COMPLETION_ITEM_KIND_KEYWORD.into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
+		f.verify_completions("at", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "param", kind: Some((tsc_lsproto::CompletionItemKind::KEYWORD).into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }
 

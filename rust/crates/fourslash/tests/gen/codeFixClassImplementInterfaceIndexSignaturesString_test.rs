@@ -12,7 +12,7 @@ fn code_fix_class_implement_interface_index_signatures_string() {
 }
 
 class C implements I<number> {}";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'I<number>'", new_file_content: r"interface I<X> {
     [Ƚ: string]: X;
 }

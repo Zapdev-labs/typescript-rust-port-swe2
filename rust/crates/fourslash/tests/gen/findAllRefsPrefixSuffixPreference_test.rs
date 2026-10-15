@@ -20,13 +20,13 @@ log(/*z2*/[|z|]);
 declare function log(s: string | number): void;
 [|import { /*q2*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 9 |}q|] } from "./file1";|]
 log(/*q3*/[|q|] + 1);"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
 		f.verify_baseline_find_all_references("q0", "q1", "q2", "q3", "z0", "z1", "z2");
-		f.verify_baseline_rename(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::TS_TRUE, ..Default::default() }, f.ranges()[1], f.ranges()[3], f.ranges()[10], f.ranges()[11]);
-		f.verify_baseline_rename(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::TS_FALSE, ..Default::default() }, f.ranges()[1], f.ranges()[3], f.ranges()[10], f.ranges()[11]);
-		f.verify_baseline_rename(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::TS_TRUE, ..Default::default() }, f.ranges()[5], f.ranges()[7], f.ranges()[8]);
-		f.verify_baseline_rename(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::TS_FALSE, ..Default::default() }, f.ranges()[5], f.ranges()[7], f.ranges()[8]);
+		f.verify_baseline_rename(Some(tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::TS_TRUE, ..Default::default() }), f.ranges()[1], f.ranges()[3], f.ranges()[10], f.ranges()[11]);
+		f.verify_baseline_rename(Some(tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::TS_FALSE, ..Default::default() }), f.ranges()[1], f.ranges()[3], f.ranges()[10], f.ranges()[11]);
+		f.verify_baseline_rename(Some(tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::TS_TRUE, ..Default::default() }), f.ranges()[5], f.ranges()[7], f.ranges()[8]);
+		f.verify_baseline_rename(Some(tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::TS_FALSE, ..Default::default() }), f.ranges()[5], f.ranges()[7], f.ranges()[8]);
 	});
 }
 

@@ -18,14 +18,14 @@ fn import_name_code_fix_new_import_base_url2() {
 export function f1() { };
 // @Filename: /a/c/y.ts
 [|f1/*0*/();|]"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/a/c/y.ts");
 		f.verify_import_fix_at_position(vec![r#"import { f1 } from "b/x";
 
 f1();"#], None);
 		f.verify_import_fix_at_position(vec![r#"import { f1 } from "../b/x";
 
-f1();"#], &tsc_lsutil::UserPreferences { import_module_specifier_preference: "relative", ..Default::default() });
+f1();"#], Some(tsc_lsutil::UserPreferences { import_module_specifier_preference: "relative", ..Default::default() }));
 	});
 }
 

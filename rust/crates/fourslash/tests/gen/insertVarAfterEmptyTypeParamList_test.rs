@@ -10,7 +10,7 @@ fn insert_var_after_empty_type_param_list() {
 		let content = r"class Dictionary<> { }
 var x;
 /**/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("");
 		f.insert("var y;\n");
 	});

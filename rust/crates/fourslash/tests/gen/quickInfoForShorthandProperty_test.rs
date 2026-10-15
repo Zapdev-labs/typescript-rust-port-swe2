@@ -13,7 +13,7 @@ var /*obj1*/obj1 = {/*name1*/name1, /*id1*/id1};
 var name2 = "Hello";
 var id2 = 10000;
 var /*obj2*/obj2 = {/*name2*/name2, /*id2*/id2};"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("obj1", "var obj1: {\n    name1: any;\n    id1: any;\n}", "");
 		f.verify_quick_info_at("name1", "(property) name1: any", "");
 		f.verify_quick_info_at("id1", "(property) id1: any", "");

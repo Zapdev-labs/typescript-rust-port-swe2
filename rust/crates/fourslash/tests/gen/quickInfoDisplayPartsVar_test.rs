@@ -22,7 +22,7 @@ var /*10*/h: { (a: string): number; (a: number): string; };
 var /*11*/i = /*12*/h;
 /*13*/h(10);
 /*14*/h("hello");"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_hover();
 	});
 }

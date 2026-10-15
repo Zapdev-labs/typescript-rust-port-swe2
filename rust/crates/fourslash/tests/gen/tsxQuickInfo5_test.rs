@@ -16,7 +16,7 @@ function Baz<T,U>(key1: T, value: U) {
     let a0 = <ComponentWi/*1*/thTwoAttributes k/*2*/ey1={key1} val/*3*/ue={value} />
     let a1 = <ComponentWithTwoAttributes {...{key1, value: value}} key="Component" />
 }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "function ComponentWithTwoAttributes<T, U>(l: {\n    key1: T;\n    value: U;\n}): JSX.Element", "");
 		f.verify_quick_info_at("2", "(property) key1: T", "");
 		f.verify_quick_info_at("3", "(property) value: U", "");

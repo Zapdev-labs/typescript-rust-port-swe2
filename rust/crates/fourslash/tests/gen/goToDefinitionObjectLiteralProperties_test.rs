@@ -20,7 +20,7 @@ o./*getterReference*/getter;
 o./*setterReference*/setter;
 o./*methodReference*/method;
 o./*es6StyleMethodReference*/es6StyleMethod;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_definition(false, "valueReference", "getterReference", "setterReference", "methodReference", "es6StyleMethodReference");
 	});
 }

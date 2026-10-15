@@ -12,7 +12,7 @@ fn rename_js_exports02() {
 module.exports = class /*1*/A {}
 // @Filename: b.js
 const /*2*/A = require("./a");"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("1", "2");
 	});
 }

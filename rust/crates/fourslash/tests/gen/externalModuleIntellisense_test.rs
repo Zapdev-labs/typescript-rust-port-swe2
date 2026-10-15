@@ -23,12 +23,12 @@ namespace express {
 ///<reference path='externalModuleIntellisense_file0.ts'/>
 import express = require('./externalModuleIntellisense_file0');
 var x = express();/*1*/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("1");
 		f.verify_number_of_errors_in_current_file(0);
 		f.go_to_eof();
 		f.insert("x.");
-		f.verify_completions(None, &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec!["enable", "post"], ..Default::default() }, ..Default::default() });
+		f.verify_completions(None, Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["enable", "post"], ..Default::default() }), ..Default::default() }));
 	});
 }
 

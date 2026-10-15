@@ -15,9 +15,9 @@ foo("a", /*1*/);
 const t3 = ['x', 'y', 'z'] as const;
 const x: [string, string, string, 'a' | 'b'] = [...t3, /*2*/];
 "#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_completions("1", &tsc_fourslash::CompletionsExpectedList { item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![r#""b""#], ..Default::default() }, ..Default::default() });
-		f.verify_completions("2", &tsc_fourslash::CompletionsExpectedList { item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![r#""b""#], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_completions("1", Some(tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![r#""b""#], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("2", Some(tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![r#""b""#], ..Default::default() }), ..Default::default() }));
 	});
 }
 

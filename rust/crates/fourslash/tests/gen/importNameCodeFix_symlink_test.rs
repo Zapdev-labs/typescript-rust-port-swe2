@@ -16,7 +16,7 @@ export const foo: number;
 import { foo } from "link";
 // @Filename: /b.ts
 [|foo;|]"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/b.ts");
 		f.verify_import_fix_at_position(vec![r#"import { foo } from "link";
 

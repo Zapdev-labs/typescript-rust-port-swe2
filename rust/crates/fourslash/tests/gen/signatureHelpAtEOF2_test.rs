@@ -9,8 +9,8 @@ fn signature_help_at_eof2() {
 	run_test(|t| {
 		let content = r"console.log()
 /**/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_no_signature_help_for_markers_with_context(&tsc_lsproto::SignatureHelpContext { trigger_kind: tsc_lsproto::SIGNATURE_HELP_TRIGGER_KIND_INVOKED, ..Default::default() }, "");
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_no_signature_help_for_markers_with_context(Some(tsc_lsproto::SignatureHelpContext { trigger_kind: tsc_lsproto::SignatureHelpTriggerKind::INVOKED, ..Default::default() }), "");
 	});
 }
 

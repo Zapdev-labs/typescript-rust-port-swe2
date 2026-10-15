@@ -9,7 +9,7 @@ fn formatting_spaces_after_constructor() {
 	run_test(|t| {
 		let content = r"/*1*/class test { constructor                   () { } }
 /*2*/class test { constructor                   () { } }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.format_document("");
 		f.go_to_marker("1");
 		f.verify_current_line_content(r"class test { constructor() { } }");

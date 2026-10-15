@@ -15,7 +15,7 @@ A.B.A.B./*2*/I;
 // @Filename: app2.ts
 export import B = require('./app');
 export var Y = 1;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "var A.Y: number", "");
 		f.verify_quick_info_at("2", "var I: number", "");
 	});

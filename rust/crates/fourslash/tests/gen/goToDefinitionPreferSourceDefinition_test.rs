@@ -14,7 +14,7 @@ export declare const /*dtsTarget*/a: string;
 // @Filename: /home/src/workspaces/project/index.ts
 import { a } from "./a";
 a/*start*/"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_definition(false, "start");
 		f.verify_baseline_go_to_source_definition("start");
 		f.configure(tsc_lsutil::UserPreferences { prefer_go_to_source_definition: true, ..Default::default() });
@@ -37,7 +37,7 @@ exports.makeConfig = () => ({ enabled: true });
 // @Filename: /home/src/workspaces/project/index.ts
 import type { Config } from "pkg";
 let value: /*start*/Config;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.configure(tsc_lsutil::UserPreferences { prefer_go_to_source_definition: true, ..Default::default() });
 		f.verify_baseline_go_to_definition(false, "start");
 	});

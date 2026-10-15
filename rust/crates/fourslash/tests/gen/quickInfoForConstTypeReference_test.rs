@@ -8,7 +8,7 @@ use tsc_fourslash::*;
 fn quick_info_for_const_type_reference() {
 	run_test(|t| {
 		let content = r#""" as /**/const;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_not_quick_info_exists();
 	});
 }

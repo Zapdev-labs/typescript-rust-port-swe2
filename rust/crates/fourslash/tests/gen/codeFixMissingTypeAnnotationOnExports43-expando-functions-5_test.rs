@@ -18,7 +18,7 @@ foo.y = 1;
 namespace foo {
   export let x = 42;
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Annotate types of properties expando function in a namespace", new_file_content: r"function foo(): void {}
 declare namespace foo {
     export var y: number;

@@ -16,7 +16,7 @@ fn format_with_statement() {
 with (bar.blah)/*4*/
 {/*5*/
 }/*6*/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut opts227 = f.get_options();
 		opts227.format_code_settings.place_open_brace_on_new_line_for_control_blocks = tsc_core::TS_FALSE;
 		f.configure(opts227);

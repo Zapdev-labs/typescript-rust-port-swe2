@@ -20,7 +20,7 @@ fn get_edits_for_file_rename_duplicate_unresolved_imports() {
 			content.write_string("import \"@some/unresolved-module\";\n");
 		}
 		content.write_string("import { v0 } from \"../src/file0\";\n");
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content.string());
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content.string());
 		let expected = Default::default();
 		for _ in num_imports {
 			expected.write_string("import \"@some/unresolved-module\";\n");

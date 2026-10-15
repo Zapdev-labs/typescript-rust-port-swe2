@@ -24,7 +24,7 @@ fn formatting_type_infer() {
 
 /*L8*/  type   Bar  <  T  >   =   T   extends   {   a  :   (x  :  infer  U  ) =>   void  ,   b  :   (x  :   infer   U  )   =>   void   }    ?   U   :   never  ;
 ";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.format_document("");
 		f.go_to_marker("L1");
 		f.verify_current_line_content(r"type C<T> = T extends Array<infer U> ? U : never;");

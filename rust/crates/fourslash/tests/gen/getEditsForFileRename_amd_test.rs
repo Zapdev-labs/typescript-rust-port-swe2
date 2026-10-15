@@ -12,7 +12,7 @@ fn get_edits_for_file_rename_amd() {
 import { x } from "old";
 // @Filename: /src/old.ts
 export const x = 0;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_will_rename_files_edits("/src/old.ts", "/src/new.ts", vec![("/src/user.ts", r#"import { x } from "./new";"#)].into_iter().collect::<FxHashMap<_, _>>(), None);
 	});
 }

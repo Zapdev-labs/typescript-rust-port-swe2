@@ -39,9 +39,9 @@ const m = import("./src//*6*/");
 import {} from "./src//*7*/";
 import mod = require("./src//*8*/");
 const m = import("./src//*9*/");"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_completions(vec!["1", "3", "6", "9"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["decl.cjs", "decl.mjs", "decl.js", "js.cjs", "js.js", "js.mjs", "module.cjs", "module.js", "module.mjs"], ..Default::default() }, ..Default::default() });
-		f.verify_completions(vec!["2", "4", "5", "7", "8"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["decl.cjs", "decl.mjs", "decl", "js.cjs", "js", "js.mjs", "module.cjs", "module", "module.mjs"], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_completions(vec!["1", "3", "6", "9"], Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["decl.cjs", "decl.mjs", "decl.js", "js.cjs", "js.js", "js.mjs", "module.cjs", "module.js", "module.mjs"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions(vec!["2", "4", "5", "7", "8"], Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["decl.cjs", "decl.mjs", "decl", "js.cjs", "js", "js.mjs", "module.cjs", "module", "module.mjs"], ..Default::default() }), ..Default::default() }));
 	});
 }
 

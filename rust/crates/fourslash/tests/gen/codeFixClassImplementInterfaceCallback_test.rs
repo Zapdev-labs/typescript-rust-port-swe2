@@ -34,7 +34,7 @@ interface IFoo4 {
 
 class Foo4 implements IFoo4 {
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixClassIncorrectlyImplementsInterface", new_file_content: r#"interface IFoo1 {
     parse(reviver: () => any): void;
 }

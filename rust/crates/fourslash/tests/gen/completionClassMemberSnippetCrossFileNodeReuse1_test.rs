@@ -28,11 +28,11 @@ export class CollapsibleContainerNode extends ElementNode {
 
   /*1*/
 }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut opts786 = f.get_options();
 		opts786.format_code_settings.insert_space_after_constructor = tsc_core::TS_FALSE;
 		f.configure(opts786);
-		f.verify_completions("1", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "[\"constructor\"]", insert_text: Some("[\"constructor\"]: KlassConstructor<typeof ElementNode>;".into()), filter_text: Some("[\"constructor\"]".into()), additional_text_edits: tsc_fourslash::ANY_TEXT_EDITS, data: &tsc_lsproto::CompletionItemData { source: "ClassMemberSnippet/", ..Default::default() }, ..Default::default() }], ..Default::default() }, user_preferences: &tsc_lsutil::UserPreferences { include_completions_with_class_member_snippets: tsc_core::TS_TRUE, ..Default::default() }, ..Default::default() });
+		f.verify_completions("1", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "[\"constructor\"]", insert_text: Some(("[\"constructor\"]: KlassConstructor<typeof ElementNode>;").into()), filter_text: Some(("[\"constructor\"]").into()), additional_text_edits: tsc_fourslash::any_text_edits, data: Some(tsc_lsproto::CompletionItemData { source: "ClassMemberSnippet/", ..Default::default() }), ..Default::default() })], ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { include_completions_with_class_member_snippets: tsc_core::TS_TRUE, ..Default::default() }), ..Default::default() }));
 	});
 }
 

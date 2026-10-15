@@ -16,8 +16,8 @@ declare global {
 }
 export import foo = N.foo;
 /**/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_completions("", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_plus(vec![&tsc_lsproto::CompletionItem { label: "foo", kind: Some(tsc_lsproto::COMPLETION_ITEM_KIND_VARIABLE.into()), detail: Some("(alias) const foo: number\nimport foo = N.foo".into()), ..Default::default() }, &tsc_lsproto::CompletionItem { label: "N", kind: Some(tsc_lsproto::COMPLETION_ITEM_KIND_MODULE.into()), detail: Some("namespace N".into()), ..Default::default() }], false), ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_plus(vec![Some(tsc_lsproto::CompletionItem { label: "foo", kind: Some((tsc_lsproto::CompletionItemKind::VARIABLE).into()), detail: Some(("(alias) const foo: number\nimport foo = N.foo").into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "N", kind: Some((tsc_lsproto::CompletionItemKind::MODULE).into()), detail: Some(("namespace N").into()), ..Default::default() })], false), ..Default::default() }), ..Default::default() }));
 	});
 }
 

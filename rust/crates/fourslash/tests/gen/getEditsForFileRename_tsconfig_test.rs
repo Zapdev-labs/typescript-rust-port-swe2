@@ -24,7 +24,7 @@ fn get_edits_for_file_rename_tsconfig() {
 }
 // @Filename: /src/old/someFile.ts
 "#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_will_rename_files_edits("/src/old", "/src/new", vec![("/src/tsconfig.json", r#"{
     "compilerOptions": {
         "baseUrl": "new",

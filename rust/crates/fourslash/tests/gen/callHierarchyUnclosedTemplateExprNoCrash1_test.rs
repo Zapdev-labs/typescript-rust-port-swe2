@@ -8,7 +8,7 @@ use tsc_fourslash::*;
 fn call_hierarchy_unclosed_template_expr_no_crash1() {
 	run_test(|t| {
 		let content = "// @Filename: /main.ts\n" + "function updateBadge() {\n" + "    const header = `<div class=\"sub\">${format`;\n" + "    const badge = `<div /*1*/class=\"badge\">`;\n" + "}";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("1");
 		f.verify_baseline_call_hierarchy();
 	});

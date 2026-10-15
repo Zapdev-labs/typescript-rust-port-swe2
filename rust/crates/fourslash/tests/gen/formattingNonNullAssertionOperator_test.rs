@@ -12,7 +12,7 @@ fn formatting_non_null_assertion_operator() {
 /*3*/ 'bar' [ 1 ] ! ;
 /*4*/ var  bar  =  'bar' . foo ! ;
 /*5*/ var  foo  =  bar ! ;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.format_document("");
 		f.go_to_marker("1");
 		f.verify_current_line_content(r"'bar'!;");

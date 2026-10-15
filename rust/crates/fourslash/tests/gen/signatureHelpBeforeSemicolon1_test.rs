@@ -11,7 +11,7 @@ fn signature_help_before_semicolon1() {
 }
 
 Foo(/**/;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("");
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "Foo(arg1: string, arg2: string): void", parameter_count: 2, parameter_name: "arg1", parameter_span: "arg1: string", ..Default::default() });
 	});

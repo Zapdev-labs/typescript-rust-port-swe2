@@ -18,7 +18,7 @@ declare module "node:fs/promises" { export * from "fs/promises"; }
 import "node:fs/promises";
 // @Filename: /index.ts
 writeFile/**/"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_import_fix_module_specifiers("", vec!["node:fs", "node:fs/promises"], None);
 		f.go_to_file("/other.ts");
 		f.replace_line(0, "\n");

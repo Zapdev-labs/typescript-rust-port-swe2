@@ -17,7 +17,7 @@ fnVariadicWrapped/*4*/(/*5*/'', /*6*/5);
 function fnNoParams () { }
 var fnNoParamsWrapped = wrap(fnNoParams);
 fnNoParamsWrapped/*7*/(/*8*/);";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("3", "var fnWrapped: (str: string, num: number) => void", "");
 		f.go_to_marker("1");
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "fnWrapped(str: string, num: number): void", parameter_count: 2, parameter_name: "str", parameter_span: "str: string", ..Default::default() });

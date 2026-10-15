@@ -13,7 +13,7 @@ let x  = <div.name b = "some-value" c = {1}>
 </div.name>;
 
 let y = <element.name attr="123"/>"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_semantic_tokens(vec![tsc_fourslash::SemanticToken { type: "variable.declaration", text: "x", ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.declaration", text: "y", ..Default::default() }]);
 	});
 }

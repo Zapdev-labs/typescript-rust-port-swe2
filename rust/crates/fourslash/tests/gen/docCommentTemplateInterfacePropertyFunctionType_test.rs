@@ -12,8 +12,8 @@ fn doc_comment_template_interface_property_function_type() {
     foo: (a: number, b: string) => void;
 }";
 		let mut capabilities = tsc_fourslash::get_default_capabilities();
-		capabilities.text_document.completion.completion_item.snippet_support = Some(false.into());
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, capabilities, content);
+		capabilities.text_document.completion.completion_item.snippet_support = Some((false).into());
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", capabilities, content);
 		f.verify_js_doc_completion("", 11, r"/**
      * 
      * @param a
@@ -24,7 +24,7 @@ fn doc_comment_template_interface_property_function_type() {
      * 
      * @param a
      * @param b
-     */", Some(false.into()));
+     */", Some((false).into()));
 	});
 }
 

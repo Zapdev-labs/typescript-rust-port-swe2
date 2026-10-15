@@ -17,7 +17,7 @@ module /*implementation1*/Bar {
 
 let x = Fo/*reference0*/o;
 let y = Ba/*reference1*/r;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_implementation("reference0", "reference1");
 	});
 }

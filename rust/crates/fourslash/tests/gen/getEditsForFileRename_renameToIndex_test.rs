@@ -20,7 +20,7 @@ import old from "../old";
 
 // @Filename: /tsconfig.json
 { "files": ["a.ts", "src/a.ts", "src/foo/a.ts", "src/old.ts"] }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_will_rename_files_edits("/src/old.ts", "/src/index.ts", vec![("/a.ts", r#"/// <reference path="./src/index.ts" />
 import old from "./src";"#), ("/src/a.ts", r#"/// <reference path="./index.ts" />
 import old from ".";"#), ("/src/foo/a.ts", r#"/// <reference path="../index.ts" />

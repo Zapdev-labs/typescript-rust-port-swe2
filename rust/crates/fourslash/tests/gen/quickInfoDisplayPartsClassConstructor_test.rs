@@ -33,7 +33,7 @@ var /*19*/cWithMultipleOverloadsInstance = new /*20*/cWithMultipleOverloads("hel
 var /*21*/cWithMultipleOverloadsInstance2 = new /*22*/cWithMultipleOverloads(10);
 var /*23*/cWithMultipleOverloadsInstance3 = new /*24*/cWithMultipleOverloads(true);
 var /*25*/cWithMultipleOverloadsVal = /*26*/cWithMultipleOverloads;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_hover();
 	});
 }

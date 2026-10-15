@@ -9,7 +9,7 @@ fn code_fix_require_in_ts3() {
 	run_test(|t| {
 		let content = r#"// @Filename: /a.ts
 const { a, b: { c } } = [|require("a")|];"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_code_fix_not_available();
 	});
 }

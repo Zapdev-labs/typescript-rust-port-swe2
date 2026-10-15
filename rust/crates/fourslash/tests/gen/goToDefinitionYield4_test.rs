@@ -10,7 +10,7 @@ fn go_to_definition_yield4() {
 		let content = r"function* gen() {
     class C { [/*start*/yield 10]() {} }
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_definition(true, "start");
 	});
 }

@@ -14,9 +14,9 @@ import { a } from './a';
 
 const foo = { '"a name\'s all good but it\'s better with more"': null };
 foo[|./**/|]"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/b.ts");
-		f.verify_completions("", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec![&tsc_lsproto::CompletionItem { label: "\"a name's all good but it's better with more\"", insert_text: Some("['\"a name\\'s all good but it\\'s better with more\"']".into()), text_edit: &tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: &tsc_lsproto::TextEdit { new_text: "['\"a name\\'s all good but it\\'s better with more\"']", range: f.ranges()[0].ls_range, ..Default::default() }, ..Default::default() }, ..Default::default() }], ..Default::default() }, user_preferences: &tsc_lsutil::UserPreferences { quote_preference: tsc_lsutil::quote_preference("auto"), ..Default::default() }, ..Default::default() });
+		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "\"a name's all good but it's better with more\"", insert_text: Some(("['\"a name\\'s all good but it\\'s better with more\"']").into()), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "['\"a name\\'s all good but it\\'s better with more\"']", range: f.ranges()[0].ls_range, ..Default::default() }), ..Default::default() }), ..Default::default() })], ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { quote_preference: tsc_lsutil::quote_preference("auto"), ..Default::default() }), ..Default::default() }));
 	});
 }
 

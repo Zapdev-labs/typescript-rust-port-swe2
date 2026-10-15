@@ -10,7 +10,7 @@ fn arguments_index_expression() {
 		let content = r"function f() {
     var x = /**/arguments[0];
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("");
 		f.verify_quick_info_exists();
 	});

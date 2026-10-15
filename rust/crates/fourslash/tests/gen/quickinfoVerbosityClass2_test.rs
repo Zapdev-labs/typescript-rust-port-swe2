@@ -44,7 +44,7 @@ class Dog/*8*/ {
     #bones: string[];
 }
 const d/*9*/ = new Dog();"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_hover_with_verbosity(vec![("1", vec![0, 1, 2]), ("2", vec![0, 1, 2]), ("3", vec![0, 1]), ("4", vec![0]), ("5", vec![0, 1, 2]), ("6", vec![0]), ("7", vec![0, 1]), ("8", vec![0, 1]), ("9", vec![0, 1])].into_iter().collect::<FxHashMap<_, _>>());
 	});
 }

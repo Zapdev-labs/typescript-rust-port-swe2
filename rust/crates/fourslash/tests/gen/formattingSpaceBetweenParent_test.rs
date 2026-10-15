@@ -10,7 +10,7 @@ fn formatting_space_between_parent() {
 		let content = r"/*1*/foo(() => 1);
 /*2*/foo(1);
 /*3*/if((true)){}";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut opts180 = f.get_options();
 		opts180.format_code_settings.insert_space_after_opening_and_before_closing_nonempty_parenthesis = tsc_core::TS_TRUE;
 		f.configure(opts180);

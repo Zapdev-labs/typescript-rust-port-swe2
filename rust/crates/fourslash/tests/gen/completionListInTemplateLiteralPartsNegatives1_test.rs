@@ -10,7 +10,7 @@ fn completion_list_in_template_literal_parts_negatives1() {
 		let content = r"" + "`" + r"/*0*/ /*1*/$ /*2*/{ /*3*/$/*4*/{ 10 + 1.1 }/*5*/ 12312/*6*/" + "`" + r"
 
 " + "`" + r"asdasd$/*7*/{ 2 + 1.1 }/*8*/ 12312 /*9*/{/*10*/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_completions(f.markers(), None);
 	});
 }

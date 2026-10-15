@@ -8,7 +8,7 @@ use tsc_fourslash::*;
 fn format_empty_param_list() {
 	run_test(|t| {
 		let content = r"function f( f: function){/*1*/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("1");
 		f.insert("}");
 		f.verify_current_line_content(r"function f(f: function) { }");

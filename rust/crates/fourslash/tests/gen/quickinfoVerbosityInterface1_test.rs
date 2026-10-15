@@ -67,7 +67,7 @@ fn quickinfo_verbosity_interface1() {
     }
     const f/*f5*/: Foo = { a: "a", b: "b" };
 }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_hover_with_verbosity(vec![("f1", vec![0, 1]), ("f2", vec![0, 1]), ("f3", vec![0, 1, 2, 3]), ("f4", vec![0, 1, 2]), ("b1", vec![0, 1]), ("a", vec![0, 1, 2]), ("f5", vec![0, 1])].into_iter().collect::<FxHashMap<_, _>>());
 	});
 }

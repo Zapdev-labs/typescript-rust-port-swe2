@@ -8,7 +8,7 @@ use tsc_fourslash::*;
 fn semicolon_formatting_inside_a_string_literal() {
 	run_test(|t| {
 		let content = r#"    var x = "string/**/"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("");
 		f.insert(";");
 		f.verify_current_line_content(r#"   var x = "string;"#);

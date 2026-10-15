@@ -12,7 +12,7 @@ fn formatting_space_before_close_paren() {
 /*3*/({foo:42});
 /*4*/(  {foo:42}  );
 /*5*/var bar = (function (a) { });";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut opts235 = f.get_options();
 		opts235.format_code_settings.insert_space_after_opening_and_before_closing_nonempty_parenthesis = tsc_core::TS_TRUE;
 		f.configure(opts235);

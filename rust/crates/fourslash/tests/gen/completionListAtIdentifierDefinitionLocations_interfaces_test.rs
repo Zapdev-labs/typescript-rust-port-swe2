@@ -10,7 +10,7 @@ fn completion_list_at_identifier_definition_locations_interfaces() {
 		let content = r"var aa = 1;
 interface /*interfaceName1*/
 interface a/*interfaceName2*/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_completions(f.markers(), None);
 	});
 }

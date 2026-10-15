@@ -13,7 +13,7 @@ fn rename_cross_js_ts01() {
 // @Filename: b.ts
 [|import { [|{| "contextRangeIndex": 2 |}area|] } from './a';|]
 var t = [|area|](10);"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_rename(None, f.ranges()[1], f.ranges()[3], f.ranges()[4]);
 	});
 }

@@ -15,8 +15,8 @@ declare function getTemplateLiteral3(): " + "`" + r"start${string}\${,$${string}
 const lit3 = getTemplateLiteral3();
 declare function getTemplateLiteral4(): " + "`" + r"${string}\" + "`" + r",${string}" + "`" + r";
 const lit4 = getTemplateLiteral4();";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_baseline_inlay_hints(None, &tsc_lsutil::UserPreferences { include_inlay_variable_type_hints: tsc_core::TS_TRUE, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_baseline_inlay_hints(None, Some(tsc_lsutil::UserPreferences { include_inlay_variable_type_hints: tsc_core::TS_TRUE, ..Default::default() }));
 	});
 }
 

@@ -13,7 +13,7 @@ fn find_all_refs_for_default_export01() {
 var x: /*3*/DefaultExportedClass;
 
 var y = new /*4*/DefaultExportedClass;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("1", "2", "3", "4");
 	});
 }

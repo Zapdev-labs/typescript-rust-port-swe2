@@ -14,7 +14,7 @@ fn find_all_refs_destructure_getter() {
 }
 const { /*x1*/x, /*y1*/y } = new Test();
 /*x2*/x; /*y2*/y;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("x0", "x1", "x2", "y0", "y1", "y2");
 	});
 }

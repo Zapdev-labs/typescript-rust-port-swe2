@@ -9,7 +9,7 @@ fn format_selection_edit_at_end_of_range() {
 	run_test(|t| {
 		let content = r"/*1*/var x = 1;/*2*/
 void 0;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut opts110 = f.get_options();
 		opts110.format_code_settings.semicolons = "remove";
 		f.configure(opts110);

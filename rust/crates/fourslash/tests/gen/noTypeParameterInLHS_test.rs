@@ -11,7 +11,7 @@ fn no_type_parameter_in_lhs() {
 class C<T> {}
 var /*1*/i: I<any>;
 var /*2*/c: C<I>;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "var i: I<any>", "");
 		f.verify_quick_info_at("2", "var c: C<any>", "");
 	});

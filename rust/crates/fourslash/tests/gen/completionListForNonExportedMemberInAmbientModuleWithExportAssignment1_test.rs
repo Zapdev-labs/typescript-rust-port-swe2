@@ -14,7 +14,7 @@ export = x;
 ///<reference path='completionListForNonExportedMemberInAmbientModuleWithExportAssignment1_file0.ts'/>
  import test = require("completionListForNonExportedMemberInAmbientModuleWithExportAssignment1_file0");
  test./**/"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_completions("", None);
 	});
 }

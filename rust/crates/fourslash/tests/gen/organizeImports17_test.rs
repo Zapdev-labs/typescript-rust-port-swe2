@@ -9,10 +9,10 @@ fn organize_imports17() {
 	run_test(|t| {
 		let content = r#"import { Both } from "module-specifiers-unsorted";
 import { aa, CaseInsensitively, sorted } from "aardvark";"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_organize_imports(r#"import { aa, CaseInsensitively, sorted } from "aardvark";
 import { Both } from "module-specifiers-unsorted";
-"#, tsc_lsproto::CODE_ACTION_KIND_SOURCE_SORT_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::TS_UNKNOWN, ..Default::default() });
+"#, tsc_lsproto::CodeActionKind::SOURCE_SORT_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::TS_UNKNOWN, ..Default::default() }));
 	});
 }
 

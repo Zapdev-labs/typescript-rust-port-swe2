@@ -39,7 +39,7 @@ writeFile/*test1*/
 // @Filename: /test2.ts
 import "node:test";
 writeFile/*test2*/"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_import_fix_module_specifiers("noPrefix", vec!["fs", "fs/promises"], None);
 		f.verify_import_fix_module_specifiers("prefix", vec!["node:fs", "node:fs/promises"], None);
 		f.verify_import_fix_module_specifiers("mixed1", vec!["node:fs", "node:fs/promises"], None);

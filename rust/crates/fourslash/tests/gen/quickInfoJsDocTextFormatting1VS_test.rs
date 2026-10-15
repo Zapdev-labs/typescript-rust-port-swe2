@@ -48,7 +48,7 @@ f2(/*2*/);
 f3(/*3*/);
 f4(/*4*/);
 f5(/*5*/);";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, &tsc_lsproto::ClientCapabilities { vs_supports_visual_studio_extensions: Some(true.into()), ..Default::default() }, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", Some(tsc_lsproto::ClientCapabilities { vs_supports_visual_studio_extensions: Some((true).into()), ..Default::default() }), content);
 		f.verify_baseline_signature_help();
 	});
 }

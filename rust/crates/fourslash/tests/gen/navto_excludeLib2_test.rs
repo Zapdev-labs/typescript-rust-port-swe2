@@ -15,9 +15,9 @@ import { someName as [|weirdName|] } from "bar";
 export const someName: number;
 // @filename: /node_modules/bar/package.json
 {}"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_workspace_symbol(vec![tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "weirdName", preferences: &tsc_lsutil::UserPreferences { exclude_library_symbols_in_nav_to: tsc_core::TS_FALSE, ..Default::default() }, exact: Some(vec![tsc_lsproto::SymbolInformation { name: "weirdName", kind: tsc_lsproto::SYMBOL_KIND_VARIABLE, location: f.ranges()[0].ls_location(), ..Default::default() }].into()), ..Default::default() }]);
-		f.verify_workspace_symbol(vec![tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "weirdName", preferences: None, exact: Some(vec![tsc_lsproto::SymbolInformation { name: "weirdName", kind: tsc_lsproto::SYMBOL_KIND_VARIABLE, location: f.ranges()[0].ls_location(), ..Default::default() }].into()), ..Default::default() }]);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_workspace_symbol(vec![tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "weirdName", preferences: Some(tsc_lsutil::UserPreferences { exclude_library_symbols_in_nav_to: tsc_core::TS_FALSE, ..Default::default() }), exact: Some((vec![tsc_lsproto::SymbolInformation { name: "weirdName", kind: tsc_lsproto::SYMBOL_KIND_VARIABLE, location: f.ranges()[0].ls_location(), ..Default::default() }]).into()), ..Default::default() }]);
+		f.verify_workspace_symbol(vec![tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "weirdName", preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "weirdName", kind: tsc_lsproto::SYMBOL_KIND_VARIABLE, location: f.ranges()[0].ls_location(), ..Default::default() }]).into()), ..Default::default() }]);
 	});
 }
 

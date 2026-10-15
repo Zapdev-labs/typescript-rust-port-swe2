@@ -32,7 +32,7 @@ var y = x./*14*/getItem(10);
 var x2: IList<IList<number>>;
 var x3: IList<number>;
 var y2 = x./*15*/method(x2, [x3, x3]);";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "class Container<T>", "");
 		f.verify_quick_info_at("2", "(type parameter) T in IList<T>", "");
 		f.verify_quick_info_at("3", "(type parameter) T in IList<T>", "");

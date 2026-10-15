@@ -9,7 +9,7 @@ fn signature_help_construct_expression() {
 	run_test(|t| {
 		let content = r#"class sampleCls { constructor(str: string, num: number) { } }
 var x = new sampleCls(/*1*/"", /*2*/5);"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("1");
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "sampleCls(str: string, num: number): sampleCls", parameter_count: 2, parameter_name: "str", parameter_span: "str: string", ..Default::default() });
 		f.go_to_marker("2");

@@ -13,7 +13,7 @@ fn quick_info_in_function_type_reference2() {
 }
 var c: C<number>;
 c.map(/*3*/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "(parameter) k: string", "");
 		f.verify_quick_info_at("2", "(parameter) value: T", "");
 		f.go_to_marker("3");

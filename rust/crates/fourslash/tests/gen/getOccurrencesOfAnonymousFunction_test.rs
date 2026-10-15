@@ -11,7 +11,7 @@ fn get_occurrences_of_anonymous_function() {
     var x = [|foo|];
     return 0;
 })";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_document_highlights(None, to_any(f.ranges()));
 	});
 }

@@ -16,7 +16,7 @@ export const x = 0;
 [|const a = require("/*1*/[|{| "contextRangeIndex": 2 |}../a|]");|]
 // @Filename: /d.ts
  /// <reference path="/*2*/[|./a.ts|]" />"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("0", "1", "2");
 		f.verify_baseline_document_highlights_with_options(None, vec!["/b.ts", "/c/sub.js", "/d.ts"], f.ranges()[1], f.ranges()[3], f.ranges()[4]);
 	});

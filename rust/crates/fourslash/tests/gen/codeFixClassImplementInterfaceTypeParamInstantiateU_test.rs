@@ -9,7 +9,7 @@ fn code_fix_class_implement_interface_type_param_instantiate_u() {
 	run_test(|t| {
 		let content = r"interface I<T> { x: T; }
 class C<U> implements I<U> {}";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'I<U>'", new_file_content: r"interface I<T> { x: T; }
 class C<U> implements I<U> {
     x: U;

@@ -17,7 +17,7 @@ export declare const a: string;
 // @Filename: /home/src/workspaces/project/index.ts
 import { a } from "foo";
 [|a/*start*/|]"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_source_definition("start");
 	});
 }
@@ -32,7 +32,7 @@ export declare const a: string;
 // @Filename: /home/src/workspaces/project/index.ts
 import { a } from [|"./a"/*moduleSpecifier*/|];
 [|a/*identifier*/|]"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_source_definition("identifier", "moduleSpecifier");
 	});
 }
@@ -46,7 +46,7 @@ export function /*target*/helper() { return 1; }
 // @Filename: /home/src/workspaces/project/index.ts
 import { helper } from "./utils";
 helper/*usage*/();"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_source_definition("usage");
 	});
 }
@@ -62,7 +62,7 @@ export declare function typesOnly(): void;
 // @Filename: /home/src/workspaces/project/index.ts
 import { /*importName*/typesOnly } from "pkg";
 typesOnly/*callSite*/();"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_source_definition("importName", "callSite");
 	});
 }
@@ -88,7 +88,7 @@ function greet() { return "hi"; }
 // @Filename: /home/src/workspaces/project/index.ts
 import { greet } from "pkg";
 greet/*usage*/();"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_source_definition("usage");
 	});
 }
@@ -116,7 +116,7 @@ function greet() { return "hi"; }
 // @Filename: /home/src/workspaces/project/index.ts
 import { greet } from "pkg";
 greet/*usage*/();"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_source_definition("usage");
 	});
 }
@@ -134,7 +134,7 @@ export function /*target*/foo() { return "ok"; }
 // @Filename: /home/src/workspaces/project/index.ts
 import { foo } from "pkg";
 const result = foo/*valueUsage*/();"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_source_definition("valueUsage");
 	});
 }
@@ -149,7 +149,7 @@ fn go_to_source_triple_slash_reference() {
 /// <reference path="./[|helper.js/*refPath*/|]" />
 declare function helper(): number;
 helper();"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_source_definition("refPath");
 	});
 }
@@ -167,7 +167,7 @@ export declare function internalHelper(): void;
 /*entryPoint*/Object.defineProperty(exports, "internalHelper", { value: function() {} });
 // @Filename: /home/src/workspaces/project/index.ts
 import { /*importName*/internalHelper } from "pkg";"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_source_definition("importName");
 	});
 }
@@ -190,7 +190,7 @@ export const /*target*/value = 42;
 // @Filename: /home/src/workspaces/project/index.ts
 import { /*importName*/value } from "pkg";
 console.log(value);"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_go_to_source_definition("importName");
 	});
 }

@@ -27,7 +27,7 @@ fn auto_import_provider_imports_map2() {
 export function something(name: string) {}
 // @Filename: /home/src/workspaces/project/src/a.ts
 something/**/"##;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
 		f.verify_import_fix_module_specifiers("", vec!["#internal/foo.js"], None);
 	});

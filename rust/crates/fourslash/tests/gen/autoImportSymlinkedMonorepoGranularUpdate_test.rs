@@ -53,7 +53,7 @@ import { projectBValue } from "project-b";
 console.log(projectBValue);
 newlyAdded/*projectACompletion*/
 // @link: /packages/project-b -> /packages/project-a/node_modules/project-b"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("projectACompletion");
 		f.baseline_auto_imports_completions(vec!["projectACompletion"]);
 		f.go_to_marker("projectBEdit");

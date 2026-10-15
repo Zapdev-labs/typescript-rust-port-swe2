@@ -21,7 +21,7 @@ declare function foo<T>(strings: TemplateStringsArray, ...values: T[]): void;
 /*5*/foo<T2>" + "`" + r"" + "`" + r";
 /*6*/foo<T3>" + "`" + r"" + "`" + r";
 /*7*/foo" + "`" + r"" + "`" + r";";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "function foo<number>(strings: TemplateStringsArray, ...values: number[]): void", "");
 		f.verify_quick_info_at("2", "function foo<string | number>(strings: TemplateStringsArray, ...values: (string | number)[]): void", "");
 		f.verify_quick_info_at("3", "function foo<{\n    a: number;\n}>(strings: TemplateStringsArray, ...values: {\n    a: number;\n}[]): void", "");

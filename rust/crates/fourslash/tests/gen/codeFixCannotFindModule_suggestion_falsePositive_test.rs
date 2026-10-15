@@ -16,7 +16,7 @@ fn code_fix_cannot_find_module_suggestion_false_positive() {
 // @Filename: /a.ts
 import abs = require([|"foo/bar.json"|]);
 abs;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
 		f.go_to_file("/a.ts");
 		f.verify_suggestion_diagnostics(None);

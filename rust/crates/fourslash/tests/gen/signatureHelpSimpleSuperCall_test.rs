@@ -16,7 +16,7 @@ class SuperCall extends SuperCallBase {
         super(/*superCall*/);
     }
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("superCall");
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "SuperCallBase(b: boolean): SuperCallBase", parameter_name: "b", parameter_span: "b: boolean", ..Default::default() });
 	});

@@ -8,7 +8,7 @@ use tsc_fourslash::*;
 fn range_format_starting_inside_js_doc_comment() {
 	run_test(|t| {
 		let mut content = "// @Filename: /a.ts\n" + "/**\n" + " * @a\n" + " * `\n" + "/*s*/ * @b\n" + " */\n" + "export function f() {}/*e*/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.format_selection("s", "e");
 	});
 }

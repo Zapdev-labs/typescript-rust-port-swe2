@@ -10,8 +10,8 @@ fn inlay_hints_tuple_type_crash() {
 		let content = r"function iterateTuples(tuples: [string][]): void {
   tuples.forEach((l) => {})
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_baseline_inlay_hints(None, &tsc_lsutil::UserPreferences { include_inlay_function_parameter_type_hints: tsc_core::TS_TRUE, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_baseline_inlay_hints(None, Some(tsc_lsutil::UserPreferences { include_inlay_function_parameter_type_hints: tsc_core::TS_TRUE, ..Default::default() }));
 	});
 }
 

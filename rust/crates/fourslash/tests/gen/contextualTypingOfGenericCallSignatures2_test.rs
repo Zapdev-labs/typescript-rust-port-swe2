@@ -14,7 +14,7 @@ fn contextual_typing_of_generic_call_signatures2() {
 function f6(x: <T extends I>(p: T) => void) { }
 // x should not be contextually typed so this should be an error
 f6(/**/x => x<number>())";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("", "(parameter) x: T extends I", "");
 		f.verify_number_of_errors_in_current_file(1);
 	});

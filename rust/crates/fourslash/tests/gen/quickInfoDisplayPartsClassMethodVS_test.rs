@@ -26,7 +26,7 @@ fn quick_info_display_parts_class_method_vs() {
 var cInstance = new c();
 /*9*/cInstance./*10*/publicMethod();
 /*11*/c./*12*/staticMethod();";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, &tsc_lsproto::ClientCapabilities { vs_supports_visual_studio_extensions: Some(true.into()), ..Default::default() }, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", Some(tsc_lsproto::ClientCapabilities { vs_supports_visual_studio_extensions: Some((true).into()), ..Default::default() }), content);
 		f.verify_baseline_vs_hover();
 	});
 }

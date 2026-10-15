@@ -11,7 +11,7 @@ fn formatting_expressions_in_if_condition() {
     /*0*/b === 2 ||/*1*/
     c === 3) {
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("1");
 		f.insert("\n");
 		f.go_to_marker("0");

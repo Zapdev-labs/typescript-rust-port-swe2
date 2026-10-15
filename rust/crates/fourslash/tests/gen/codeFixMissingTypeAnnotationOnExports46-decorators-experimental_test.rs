@@ -37,7 +37,7 @@ export class A {
   set a(value) {}
   @fieldDecorator() classProp = foo();
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingTypeAnnotationOnExports", new_file_content: r"function classDecorator<T extends Function>() { return (target: T) => target; }
 function methodDecorator() { return (target: any, key: string, descriptor: PropertyDescriptor) => descriptor;}
 function parameterDecorator() { return (target: any, key: string, idx: number) => {};}

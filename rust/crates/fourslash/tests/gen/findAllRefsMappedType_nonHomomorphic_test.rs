@@ -12,7 +12,7 @@ function f(x: { [K in "m"]: number; }) {
     x./*1*/m;
     x./*2*/m
 }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("1", "2");
 	});
 }

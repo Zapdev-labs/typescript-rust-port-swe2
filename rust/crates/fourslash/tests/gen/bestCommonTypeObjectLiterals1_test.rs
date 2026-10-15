@@ -22,7 +22,7 @@ interface I {
 }
 var i: I;
 var /*4*/c3 = [i, a];";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("4", "var c3: I[]", "");
 		f.verify_quick_info_at("1", "var c: {\n    name: string;\n    age: number;\n}[]", "");
 		f.verify_quick_info_at("2", "var c1: {\n    name: string;\n    age: number;\n}[]", "");

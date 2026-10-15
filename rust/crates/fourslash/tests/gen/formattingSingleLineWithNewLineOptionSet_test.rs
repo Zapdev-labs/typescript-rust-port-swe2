@@ -12,7 +12,7 @@ fn formatting_single_line_with_new_line_option_set() {
 /*3*/if (true){}
 /*4*/function boo() {
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut opts211 = f.get_options();
 		opts211.format_code_settings.place_open_brace_on_new_line_for_functions = tsc_core::TS_TRUE;
 		f.configure(opts211);

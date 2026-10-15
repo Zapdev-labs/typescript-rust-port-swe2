@@ -10,7 +10,7 @@ fn code_fix_add_parameter_names2() {
 		return /* skip: "Known failing fourslash test" */;
 		let content = r"// @noImplicitAny: true
 type Rest = ([|...number|]) => void;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_range_after_code_fix(r"...arg0: number[]", false, 0, 0);
 	});
 }

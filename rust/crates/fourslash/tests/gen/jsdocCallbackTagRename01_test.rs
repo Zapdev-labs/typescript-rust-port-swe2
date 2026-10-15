@@ -18,7 +18,7 @@ fn jsdoc_callback_tag_rename01() {
 
 /** @type {/*1*/[|FooCallback|]} */
 var t;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
 		f.verify_baseline_rename(None, f.ranges()[1]);
 	});

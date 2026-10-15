@@ -13,7 +13,7 @@ declare function f(s: string, b: boolean);
 declare function f(n: number, b: boolean);
 
 f(/**/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("");
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f(): any", parameter_count: 0, overloads_count: 4, ..Default::default() });
 		f.insert("x, ");

@@ -18,7 +18,7 @@ declare function isString(v: any): v is string;
 if (isString(someEnv)) {
   someEnv/*1*/.charAt(0);
 }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("app.ts");
 		f.go_to_marker("1");
 		f.verify_quick_info_is("(alias) const someEnv: string\nimport someEnv", "");

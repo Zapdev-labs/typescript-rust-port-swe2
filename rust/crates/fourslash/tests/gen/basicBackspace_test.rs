@@ -14,11 +14,11 @@ interface Point {
 }
 declare const p: Point;
 p./*a*/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_completions("a", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["y"], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_completions("a", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["y"], ..Default::default() }), ..Default::default() }));
 		f.go_to_marker("b");
 		f.backspace(10);
-		f.verify_completions("a", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { excludes: vec!["y"], ..Default::default() }, ..Default::default() });
+		f.verify_completions("a", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { excludes: vec!["y"], ..Default::default() }), ..Default::default() }));
 	});
 }
 

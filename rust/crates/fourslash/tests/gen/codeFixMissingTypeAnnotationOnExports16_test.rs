@@ -17,7 +17,7 @@ function foo3(): "42" {
     return "42";
 }
 export const { x: a , y: { [foo3()]: {dd: e} } } = foo();"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Extract binding expressions to variable", new_file_content: r#"function foo() {
     return { x: 1, y: {42: {dd: "45"}, b: 2} };
 }

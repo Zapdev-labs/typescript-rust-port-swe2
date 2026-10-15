@@ -10,7 +10,7 @@ fn get_occurrences_is_definition_of_computed_property() {
 		let content = r#"let o = { /*1*/["/*2*/foo"]: 12 };
 let y = o./*3*/foo;
 let z = o['/*4*/foo'];"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("1", "2", "3", "4");
 	});
 }

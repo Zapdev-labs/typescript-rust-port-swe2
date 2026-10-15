@@ -19,7 +19,7 @@ import * as /*i*/lib from '../lib/index';
 lib.someExportedVariable;
 // @Filename: /home/src/workspaces/project/tsconfig.json
 { "compilerOptions": { "lib": ["es5"] } }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
 		f.go_to_file("/home/src/workspaces/project/lib/index.ts");
 		f.go_to_file("/home/src/workspaces/project/src/index.ts");

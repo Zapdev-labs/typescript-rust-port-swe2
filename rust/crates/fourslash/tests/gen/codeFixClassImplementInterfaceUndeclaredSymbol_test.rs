@@ -12,7 +12,7 @@ fn code_fix_class_implement_interface_undeclared_symbol() {
 }
 
 class C implements I { }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_code_fix_available(vec!["Implement interface 'I'"]);
 	});
 }

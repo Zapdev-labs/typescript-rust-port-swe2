@@ -22,7 +22,7 @@ foo4<string>(1,/*4*/     // signature help shows y as string
 foo5<string>(1, (/*5*/   // signature help shows y as T
 foo6(1, </*6*/           // signature help shows y as {}
 foo7(1, <string>(/*7*/   // signature help shows y as T";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("1");
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "foo1(x: number, callback: (y1: unknown) => number): void", ..Default::default() });
 		f.go_to_marker("2");

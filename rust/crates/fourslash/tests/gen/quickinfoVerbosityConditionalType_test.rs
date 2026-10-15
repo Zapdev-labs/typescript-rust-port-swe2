@@ -16,7 +16,7 @@ type T1<T extends Apple | Apple[]> = T extends { color: string } ? "one apple" :
 function f<T extends Apple | Apple[]>(x: T1<T>): void {
     x/*x*/;
 }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_hover_with_verbosity(vec![("x", vec![0, 1, 2])].into_iter().collect::<FxHashMap<_, _>>());
 	});
 }

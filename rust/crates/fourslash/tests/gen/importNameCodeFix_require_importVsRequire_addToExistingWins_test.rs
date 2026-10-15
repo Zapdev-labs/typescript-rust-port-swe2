@@ -22,7 +22,7 @@ var path = require('path')
 import fs from 'fs'
 
 new Blah";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("index.js");
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Update import from \"./blah\"", new_file_content: r"var path = require('path')
   , { promisify } = require('util')

@@ -9,7 +9,7 @@ fn find_all_refs_js_doc_template_tag_function() {
 	run_test(|t| {
 		let content = r"/** @template /*1*/T */
 function f</*2*/T>() {}";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("1", "2");
 	});
 }

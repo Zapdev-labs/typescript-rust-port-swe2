@@ -121,7 +121,7 @@ function /*l*/l(param1: string) { /*9*/param1 = "hello"; }
  second line text
  */
 function /*m*/m(param1: string) { /*10*/param1 = "hello"; }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("a", "var a: string", "This is firstLine\nThis is second Line\n\nThis is fourth Line");
 		f.verify_quick_info_at("b", "var b: string", "This is firstLine\nThis is second Line\n\nThis is fourth Line");
 		f.verify_quick_info_at("c", "var c: string", "This is firstLine\nThis is second Line\n\nThis is fourth Line");

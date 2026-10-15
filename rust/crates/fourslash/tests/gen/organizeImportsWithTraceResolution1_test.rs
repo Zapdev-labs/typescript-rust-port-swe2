@@ -16,10 +16,10 @@ fn organize_imports_with_trace_resolution1() {
 // @Filename: /project/main.ts
 import "./dep.js";
 "#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/project/main.ts");
 		f.verify_organize_imports(r#"import "./dep.js";
-"#, tsc_lsproto::CODE_ACTION_KIND_SOURCE_ORGANIZE_IMPORTS_TS, None);
+"#, tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
 	});
 }
 

@@ -25,7 +25,7 @@ fn get_occurrences_return() {
     [|return|];
     [|return|] true;
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_document_highlights(None, to_any(f.ranges()));
 	});
 }

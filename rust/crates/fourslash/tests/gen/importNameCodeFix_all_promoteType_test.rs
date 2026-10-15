@@ -23,7 +23,7 @@ new F;
 import type { A, C, D, E, G } from './a';
 type Z = B | A;
 type Y = F;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/b.ts");
 		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport", new_file_content: r"import { B, F, type A, type C, type D, type E, type G } from './a';
 type Z = B | A;

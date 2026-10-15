@@ -26,7 +26,7 @@ const instance = f/*callF*/("hello");
 const b1/*b1*/ = new Box/*newBox*/(instance);
 declare const b2/*b2*/: Box<typeof instance>;
 "#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_hover();
 	});
 }

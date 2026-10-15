@@ -12,7 +12,7 @@ function functionCall(str: string, num: number) {
 }
 functionCall(/*functionCall1*/);
 functionCall("", /*functionCall2*/1);"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("functionCall1");
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "functionCall(str: string, num: number): void", parameter_name: "str", parameter_span: "str: string", ..Default::default() });
 		f.go_to_marker("functionCall2");

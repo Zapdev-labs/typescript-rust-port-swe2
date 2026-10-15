@@ -11,7 +11,7 @@ fn code_fix_class_implement_interface_mapped_type1() {
     x: { readonly [K in keyof X]: X[K] };
 }
 class C<Y> implements I<Y> {}";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'I<Y>'", new_file_content: r"interface I<X> {
     x: { readonly [K in keyof X]: X[K] };
 }

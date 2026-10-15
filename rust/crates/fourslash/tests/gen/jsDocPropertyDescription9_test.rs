@@ -19,7 +19,7 @@ function literalClass(e: typeof LiteralClass) {
     console.log(e./*literal2Class*/anything);
     console.log(e./*literal3Class*/prefix0);
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("literal1Class", "(index) LiteralClass[`prefix${string}`]: any", "Something generic");
 		f.verify_quick_info_at("literal2Class", "any", "");
 		f.verify_quick_info_at("literal3Class", "(index) LiteralClass[`prefix${string}` | `prefix${number}`]: any", "Something generic\nSomething else");

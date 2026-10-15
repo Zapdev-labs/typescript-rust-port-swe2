@@ -16,7 +16,7 @@ x.ss;
 x["ss"];
 x = { "ss": 0 };
 x = { ss: 0 };"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("1");
 	});
 }

@@ -19,7 +19,7 @@ class MyClass extends Base {
 var c: MyClass;
 c./*a3*/a;
 c./*method3*/method();";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("a1", "a2", "a3", "method1", "method2", "method3");
 	});
 }

@@ -8,7 +8,7 @@ use tsc_fourslash::*;
 fn remove_parameter_between_comment_and_parameter() {
 	run_test(|t| {
 		let content = r"function fn(/* comment! */ /**/a: number, c) { }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("");
 		f.delete_at_caret(10);
 	});

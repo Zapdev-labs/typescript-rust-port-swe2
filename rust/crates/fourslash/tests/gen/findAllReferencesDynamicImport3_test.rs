@@ -10,7 +10,7 @@ fn find_all_references_dynamic_import3() {
 		let content = r#"// @Filename: foo.ts
 [|export function /*0*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 0 |}bar|]() { return "bar"; }|]
 import('./foo').then(([|{ /*1*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 2 |}bar|] }|]) => undefined);"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("0", "1");
 		f.verify_baseline_rename(None, f.ranges()[1], f.ranges()[3]);
 	});

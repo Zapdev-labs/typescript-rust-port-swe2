@@ -23,7 +23,7 @@ var c: C;
 c.x/*7*/1(1, (x/*8*/x: 'hi') => { return 1; } );
 c.x1(1, (x/*9*/x: 'bye') => { return 1; } );
 c.x1(1, (x/*10*/x) => { return 1; } );"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "(method) I.x1(a: number, callback: (x: 'hi') => number): any", "");
 		f.verify_quick_info_at("2", "(method) C.x1(a: number, callback: (x: 'hi') => number): any", "");
 		f.verify_quick_info_at("3", "(parameter) callback: (x: 'hi') => number", "");

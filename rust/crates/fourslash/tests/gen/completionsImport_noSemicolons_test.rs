@@ -14,12 +14,12 @@ export function foo() {}
 const x = 0
 const y = 1
 const z = fo/**/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_apply_code_action_from_completion(Some("".into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "foo", source: "./a", description: "Add import from \"./a\"", new_file_content: Some(r#"import { foo } from "./a"
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_apply_code_action_from_completion(Some(("").into()), Some(tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "foo", source: "./a", description: "Add import from \"./a\"", new_file_content: Some((r#"import { foo } from "./a"
 
 const x = 0
 const y = 1
-const z = fo"#.into()), ..Default::default() });
+const z = fo"#).into()), ..Default::default() }));
 	});
 }
 

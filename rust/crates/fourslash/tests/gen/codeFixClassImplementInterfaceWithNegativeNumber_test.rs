@@ -9,7 +9,7 @@ fn code_fix_class_implement_interface_with_negative_number() {
 	run_test(|t| {
 		let content = r"interface X { value: -1 | 0 | 1; }
 class Y implements X { }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_code_fix_available(vec!["Implement interface 'X'"]);
 	});
 }

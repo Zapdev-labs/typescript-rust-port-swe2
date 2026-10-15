@@ -10,7 +10,7 @@ fn get_occurrences_is_definition_of_function() {
 		let content = r"/*1*/function /*2*/func(x: number) {
 }
 /*3*/func(x)";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("1", "2", "3");
 	});
 }

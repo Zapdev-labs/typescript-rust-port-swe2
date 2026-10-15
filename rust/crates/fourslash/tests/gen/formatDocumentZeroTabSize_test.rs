@@ -12,7 +12,7 @@ fn format_document_zero_tab_size() {
         var x = 1;
     }
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut opts = f.get_options();
 		opts.format_code_settings.tab_size = 0;
 		opts.format_code_settings.indent_size = 0;

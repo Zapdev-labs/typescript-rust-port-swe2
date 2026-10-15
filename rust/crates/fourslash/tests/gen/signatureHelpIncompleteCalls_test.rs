@@ -21,7 +21,7 @@ fn signature_help_incomplete_calls() {
     x.f2(5,/*incompleteCalls2*/
     x.f3(5,/*incompleteCalls3*/
 }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("incompleteCalls1");
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f1(): void", parameter_count: 0, ..Default::default() });
 		f.go_to_marker("incompleteCalls2");

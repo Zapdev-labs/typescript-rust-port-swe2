@@ -14,7 +14,7 @@ class E { }
 =======
 class D { }
 >>>>>>> Branch - a";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_semantic_tokens(vec![tsc_fourslash::SemanticToken { type: "class.declaration", text: "C", ..Default::default() }]);
 	});
 }

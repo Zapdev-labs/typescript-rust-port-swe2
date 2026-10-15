@@ -20,7 +20,7 @@ fn quick_info_display_parts_literal_like_names01() {
         this./*9*/NaN();
         C./*10*/stringLiteralName();
     }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_hover();
 	});
 }

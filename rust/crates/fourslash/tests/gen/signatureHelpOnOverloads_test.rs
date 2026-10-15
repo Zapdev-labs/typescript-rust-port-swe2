@@ -10,7 +10,7 @@ fn signature_help_on_overloads() {
 		let content = r"declare function fn(x: string);
 declare function fn(x: string, y: number);
 fn(/*1*/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("1");
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "fn(x: string): any", parameter_name: "x", parameter_span: "x: string", overloads_count: 2, ..Default::default() });
 		f.insert("'',");

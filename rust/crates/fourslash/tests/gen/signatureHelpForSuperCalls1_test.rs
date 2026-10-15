@@ -23,7 +23,7 @@ class C2 extends B2 {
         super(/*2*/ // sig help here?
     }
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("1");
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "B(): B", ..Default::default() });
 		f.go_to_marker("2");

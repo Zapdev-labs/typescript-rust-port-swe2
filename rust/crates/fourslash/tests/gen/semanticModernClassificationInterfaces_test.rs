@@ -10,7 +10,7 @@ fn semantic_modern_classification_interfaces() {
 		let content = r"interface Pos { x: number, y: number };
 const p = { x: 1, y: 2 } as Pos;
 const foo = (o: Pos) => o.x + o.y;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_semantic_tokens(vec![tsc_fourslash::SemanticToken { type: "interface.declaration", text: "Pos", ..Default::default() }, tsc_fourslash::SemanticToken { type: "property.declaration", text: "x", ..Default::default() }, tsc_fourslash::SemanticToken { type: "property.declaration", text: "y", ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.declaration.readonly", text: "p", ..Default::default() }, tsc_fourslash::SemanticToken { type: "property.declaration", text: "x", ..Default::default() }, tsc_fourslash::SemanticToken { type: "property.declaration", text: "y", ..Default::default() }, tsc_fourslash::SemanticToken { type: "interface", text: "Pos", ..Default::default() }, tsc_fourslash::SemanticToken { type: "function.declaration.readonly", text: "foo", ..Default::default() }, tsc_fourslash::SemanticToken { type: "parameter.declaration", text: "o", ..Default::default() }, tsc_fourslash::SemanticToken { type: "interface", text: "Pos", ..Default::default() }, tsc_fourslash::SemanticToken { type: "parameter", text: "o", ..Default::default() }, tsc_fourslash::SemanticToken { type: "property", text: "x", ..Default::default() }, tsc_fourslash::SemanticToken { type: "parameter", text: "o", ..Default::default() }, tsc_fourslash::SemanticToken { type: "property", text: "y", ..Default::default() }]);
 	});
 }

@@ -21,9 +21,9 @@ export { Group };
 import { Group } from "./namespace.js";
 
 console.log(Grou/**/);"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		let mut result = f.verify_completions("", &tsc_fourslash::CompletionsExpectedList { item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &DEFAULT_COMMIT_CHARACTERS, edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "Group", ..Default::default() }], ..Default::default() }, ..Default::default() });
-		result.and_has_no_code_action(&mut *t, &tsc_fourslash::CompletionsExpectedCodeAction { name: "Group", source: "./namespace.js", ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut result = f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "Group", ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		result.and_has_no_code_action(&mut *t, Some(tsc_fourslash::CompletionsExpectedCodeAction { name: "Group", source: "./namespace.js", ..Default::default() }));
 	});
 }
 

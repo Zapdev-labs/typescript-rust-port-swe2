@@ -40,7 +40,7 @@ import { /*fooIndirect3Import*/foo } from '../target/src/main';
 foo()
 export function bar() {}
 "#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("mainFoo");
 		f.go_to_marker("dummy");
 		f.close_file_of_marker("dummy");
@@ -126,7 +126,7 @@ export const indirect = 1;
 	]
 }
 "#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("mainFoo");
 		f.go_to_marker("dummy");
 		f.close_file_of_marker("dummy");
@@ -178,7 +178,7 @@ import { /*fooIndirect3Import*/foo } from '../target/src/main';
 foo()
 export function bar() {}
 "#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("mainFoo");
 		f.go_to_marker("dummy");
 		f.close_file_of_marker("dummy");
@@ -266,7 +266,7 @@ export const indirect = 1;
 	]
 }
 "#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("mainFoo");
 		f.go_to_marker("dummy");
 		f.close_file_of_marker("dummy");
@@ -353,7 +353,7 @@ export const indirect = 1;
 	]
 }
 "#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("mainFoo");
 		f.go_to_marker("dummy");
 		f.close_file_of_marker("dummy");
@@ -406,7 +406,7 @@ import { /*fooIndirect3Import*/foo } from '../target/src/main';
 foo()
 export function bar() {}
 "#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("mainFoo");
 		f.go_to_marker("dummy");
 		f.close_file_of_marker("dummy");
@@ -470,7 +470,7 @@ function foo() {
 		{ "path": "./common" },
 	],
 }"#, tsc_core::if_else(disable_source_of_project_reference_redirect, "// @tsc: --build /src/tsconfig.json", ""), disable_source_of_project_reference_redirect, disable_source_of_project_reference_redirect);
-				let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+				let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 				f.go_to_marker("keyboard");
 				f.go_to_marker("terminal");
 				f.verify_baseline_find_all_references("keyboard");
@@ -532,7 +532,7 @@ namespace ts {
 namespace ts {
 	const result = program.getSourceFiles();
 }"#, disable_solution_searching);
-				let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+				let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 				f.verify_baseline_find_all_references("local");
 				f.verify_baseline_find_all_references("notLocal");
 			});
@@ -611,7 +611,7 @@ import { I } from "../a";
 import { C } from "../c";
 export const D: I = C;
 "#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("");
 		f.verify_baseline_find_all_references("");
 	});
@@ -753,7 +753,7 @@ export const noCoreRef2Const = 10;
 		"composite": true,
 	},
 }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("main");
 		f.verify_baseline_find_all_references("find");
 	});
@@ -806,7 +806,7 @@ export interface Bar {
 const bar: Bar = {
 	prop: 1
 }"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("change");
 		f.go_to_marker("prop");
 		f.go_to_marker("change");
@@ -833,7 +833,7 @@ export function foobar() {}
 // @Filename: /myproject/playground/tsconfig-json/tests/spec.ts
 export function /*find*/bar() { }
 "#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("tests");
 		f.close_file_of_marker("tests");
 		f.verify_baseline_find_all_references("find");
@@ -907,7 +907,7 @@ import * as shared from "../../shared/dist"
 }
 // @Filename: /solution/shared/src/index.ts
 "# + tc.definition;
-				let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+				let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 				f.verify_baseline_find_all_references("ref");
 			});
 		}
@@ -973,7 +973,7 @@ import { /*symbolAUsage*/symbolA } from '../project-a/public';
 console.log(symbolB);
 console.log(symbolA);
 "#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("symbolA");
 		f.verify_baseline_find_all_references("symbolB");
 		f.verify_baseline_find_all_references("symbolAUsage");
@@ -1027,7 +1027,7 @@ export declare class B {
 	"mappings": "AAAA,qBAAa,CAAC;IACV,CAAC;CACJ"
 }"#;
 				}
-				let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+				let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 				if tc.project_already_loaded {
 					f.go_to_marker("ref");
 					f.go_to_marker("bHelper");

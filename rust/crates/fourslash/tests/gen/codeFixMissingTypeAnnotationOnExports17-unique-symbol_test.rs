@@ -11,7 +11,7 @@ fn code_fix_missing_type_annotation_on_exports17_unique_symbol() {
 // @declaration: true
 // @lib: es2019
 export const a = Symbol();";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add annotation of type 'unique symbol'", new_file_content: r"export const a: unique symbol = Symbol();", index: 0, ..Default::default() });
 	});
 }

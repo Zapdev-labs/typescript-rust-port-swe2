@@ -12,7 +12,7 @@ fn space_after_constructor() {
     constructor (processId: number) {/*1*/
         this._processId = processId;
     }/*2*/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("2");
 		f.insert("}");
 		f.go_to_marker("1");

@@ -42,8 +42,8 @@ const p: Pointable = {
   },
 };
 "#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_baseline_code_lens(&tsc_lsutil::UserPreferences { references_code_lens_enabled: tsc_core::TS_TRUE, references_code_lens_show_on_all_functions: tsc_core::TS_TRUE, implementations_code_lens_enabled: tsc_core::TS_TRUE, implementations_code_lens_show_on_interface_methods: tsc_core::TS_TRUE, implementations_code_lens_show_on_all_class_methods: tsc_core::TS_TRUE, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_baseline_code_lens(Some(tsc_lsutil::UserPreferences { references_code_lens_enabled: tsc_core::TS_TRUE, references_code_lens_show_on_all_functions: tsc_core::TS_TRUE, implementations_code_lens_enabled: tsc_core::TS_TRUE, implementations_code_lens_show_on_interface_methods: tsc_core::TS_TRUE, implementations_code_lens_show_on_all_class_methods: tsc_core::TS_TRUE, ..Default::default() }));
 	});
 }
 

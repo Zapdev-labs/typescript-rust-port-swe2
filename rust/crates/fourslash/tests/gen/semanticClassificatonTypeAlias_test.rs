@@ -11,7 +11,7 @@ fn semantic_classificaton_type_alias() {
 var x: /*1*/Alias;
 var y = </*2*/Alias>{};
 function f(x: /*3*/Alias): /*4*/Alias { return undefined; }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_semantic_tokens(vec![tsc_fourslash::SemanticToken { type: "type.declaration", text: "Alias", ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.declaration", text: "x", ..Default::default() }, tsc_fourslash::SemanticToken { type: "type", text: "Alias", ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.declaration", text: "y", ..Default::default() }, tsc_fourslash::SemanticToken { type: "type", text: "Alias", ..Default::default() }, tsc_fourslash::SemanticToken { type: "function.declaration", text: "f", ..Default::default() }, tsc_fourslash::SemanticToken { type: "parameter.declaration", text: "x", ..Default::default() }, tsc_fourslash::SemanticToken { type: "type", text: "Alias", ..Default::default() }, tsc_fourslash::SemanticToken { type: "type", text: "Alias", ..Default::default() }]);
 	});
 }

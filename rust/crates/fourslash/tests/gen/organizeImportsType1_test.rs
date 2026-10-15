@@ -18,19 +18,19 @@ import { type E } from "foo";
 import { D } from "foo";
 
 console.log(A, B, C, D, E);"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_organize_imports(r#"import { A, C, D, type B, type E } from "foo";
 
-console.log(A, B, C, D, E);"#, tsc_lsproto::CODE_ACTION_KIND_SOURCE_ORGANIZE_IMPORTS_TS, None);
+console.log(A, B, C, D, E);"#, tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
 		f.verify_organize_imports(r#"import { A, type B, C, D, type E } from "foo";
 
-console.log(A, B, C, D, E);"#, tsc_lsproto::CODE_ACTION_KIND_SOURCE_ORGANIZE_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::ORGANIZE_IMPORTS_TYPE_ORDER_INLINE, ..Default::default() });
+console.log(A, B, C, D, E);"#, tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::INLINE, ..Default::default() }));
 		f.verify_organize_imports(r#"import { type B, type E, A, C, D } from "foo";
 
-console.log(A, B, C, D, E);"#, tsc_lsproto::CODE_ACTION_KIND_SOURCE_ORGANIZE_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::ORGANIZE_IMPORTS_TYPE_ORDER_FIRST, ..Default::default() });
+console.log(A, B, C, D, E);"#, tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::FIRST, ..Default::default() }));
 		f.verify_organize_imports(r#"import { A, C, D, type B, type E } from "foo";
 
-console.log(A, B, C, D, E);"#, tsc_lsproto::CODE_ACTION_KIND_SOURCE_ORGANIZE_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::ORGANIZE_IMPORTS_TYPE_ORDER_LAST, ..Default::default() });
+console.log(A, B, C, D, E);"#, tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::LAST, ..Default::default() }));
 	});
 }
 

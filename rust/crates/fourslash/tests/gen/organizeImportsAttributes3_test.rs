@@ -17,13 +17,13 @@ import { Y } from "./a"   with{ type: "b" /* comment*/};
 import { B } from "./a";
 
 export type G = A | B | C | D | E | F | Y | Z;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_organize_imports(r#"import { A, B } from "./a";
 import { C, E, F } from "./a" with { type: "a" };
 import { A as D, Y } from "./a" with { type: "b" };
 import { Z } from "./z";
 
-export type G = A | B | C | D | E | F | Y | Z;"#, tsc_lsproto::CODE_ACTION_KIND_SOURCE_ORGANIZE_IMPORTS_TS, None);
+export type G = A | B | C | D | E | F | Y | Z;"#, tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
 	});
 }
 

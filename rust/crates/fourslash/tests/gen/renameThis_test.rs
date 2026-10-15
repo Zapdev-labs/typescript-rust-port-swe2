@@ -12,7 +12,7 @@ fn rename_this() {
 }
 this/**/;
 const _ = { [|[|{| "contextRangeIndex": 2 |}this|]: 0|] }.[|this|];"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("");
 		f.verify_rename_failed(None);
 		f.verify_baseline_rename(None, f.ranges()[0], f.ranges()[1], f.ranges()[3], f.ranges()[4]);

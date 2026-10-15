@@ -8,8 +8,8 @@ use tsc_fourslash::*;
 fn completions_dot_in_array_literal_in_object_literal() {
 	run_test(|t| {
 		let content = r"const o = { x: [[|.|][||]/**/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_non_suggestion_diagnostics(vec![tsc_lsproto::Diagnostic { code: &tsc_lsproto::IntegerOrString { integer: Some((1109) as i32.into()), ..Default::default() }, message: tsc_lsproto::StringOrMarkupContent { string: Some("Expression expected.".into()), ..Default::default() }, range: f.ranges()[0].ls_range, ..Default::default() }, tsc_lsproto::Diagnostic { code: &tsc_lsproto::IntegerOrString { integer: Some((1003) as i32.into()), ..Default::default() }, message: tsc_lsproto::StringOrMarkupContent { string: Some("Identifier expected.".into()), ..Default::default() }, range: f.ranges()[1].ls_range, ..Default::default() }]);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_non_suggestion_diagnostics(vec![tsc_lsproto::Diagnostic { code: Some(tsc_lsproto::IntegerOrString { integer: Some(((1109) as i32).into()), ..Default::default() }), message: tsc_lsproto::StringOrMarkupContent { string: Some(("Expression expected.").into()), ..Default::default() }, range: f.ranges()[0].ls_range, ..Default::default() }, tsc_lsproto::Diagnostic { code: Some(tsc_lsproto::IntegerOrString { integer: Some(((1003) as i32).into()), ..Default::default() }), message: tsc_lsproto::StringOrMarkupContent { string: Some(("Identifier expected.").into()), ..Default::default() }, range: f.ranges()[1].ls_range, ..Default::default() }]);
 		f.verify_completions("", None);
 	});
 }

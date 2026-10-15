@@ -10,7 +10,7 @@ fn rename_default_lib_dont_work() {
 		let content = r#"// @Filename: file1.ts
 [|var [|{| "contextRangeIndex": 0 |}test|] = "foo";|]
 console.log([|test|]);"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_rename(None, f.ranges()[1]);
 	});
 }

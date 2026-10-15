@@ -16,8 +16,8 @@ interface Ghost {
 declare class Poltergeist implements Ghost {
     /*b*/
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_completions("b", &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: IGNORED, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "boo", insert_text: Some("boo(): string;".into()), filter_text: Some("boo".into()), sort_text: Some(tsc_ls::SORT_TEXT_LOCATION_PRIORITY.to_string().into()), ..Default::default() }], ..Default::default() }, user_preferences: &tsc_lsutil::UserPreferences { include_completions_with_class_member_snippets: tsc_core::TS_TRUE, ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_completions("b", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "boo", insert_text: Some(("boo(): string;").into()), filter_text: Some(("boo").into()), sort_text: Some((tsc_ls::SORT_TEXT_LOCATION_PRIORITY.to_string()).into()), ..Default::default() })], ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { include_completions_with_class_member_snippets: tsc_core::TS_TRUE, ..Default::default() }), ..Default::default() }));
 	});
 }
 

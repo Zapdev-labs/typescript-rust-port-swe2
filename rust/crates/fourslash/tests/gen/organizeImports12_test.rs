@@ -12,11 +12,11 @@ fn organize_imports12() {
 declare export default class A {}
 declare export { a, b };
 declare export * from "foo";"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_organize_imports(r#"declare export default class A {}
 declare export * from "foo";
 declare export { a, b };
-"#, tsc_lsproto::CODE_ACTION_KIND_SOURCE_ORGANIZE_IMPORTS_TS, None);
+"#, tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
 	});
 }
 

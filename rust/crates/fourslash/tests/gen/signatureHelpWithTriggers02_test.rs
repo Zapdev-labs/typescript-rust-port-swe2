@@ -11,7 +11,7 @@ fn signature_help_with_triggers02() {
 declare function bar<U>(x: U, y: U): U;
 
 foo(bar/*1*/)";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("1");
 		f.insert("(");
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "bar(x: unknown, y: unknown): unknown", ..Default::default() });

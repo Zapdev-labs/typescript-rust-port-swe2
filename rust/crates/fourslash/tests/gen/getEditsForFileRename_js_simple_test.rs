@@ -12,7 +12,7 @@ fn get_edits_for_file_rename_js_simple() {
 import b from "./b.js";
 // @Filename: /b.js
 module.exports = 1;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_will_rename_files_edits("/b.js", "/c.js", vec![("/a.js", r#"import b from "./c.js";"#)].into_iter().collect::<FxHashMap<_, _>>(), None);
 	});
 }

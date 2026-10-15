@@ -12,7 +12,7 @@ fn generic_combinator_with_constraints1() {
     var /*1*/xs = source.map(selector); // any[]
     var /*2*/xs2 = source.map((x: T, a, b): U => { return null }); // any[] 
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "(local var) xs: U[]", "");
 		f.verify_quick_info_at("2", "(local var) xs2: U[]", "");
 	});

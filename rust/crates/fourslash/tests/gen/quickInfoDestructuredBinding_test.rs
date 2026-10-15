@@ -15,7 +15,7 @@ const { /*4*/c } = { c: 42 };
 let { /*5*/d } = { d: "hello" };
 var { /*6*/e } = { e: true };
 "#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "(parameter) x: number", "");
 		f.verify_quick_info_at("2", "(parameter) y: number", "");
 		f.verify_quick_info_at("3", "(parameter) b: string", "");

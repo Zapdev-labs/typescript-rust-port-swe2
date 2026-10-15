@@ -26,15 +26,15 @@ let x: B;
 export * as default from "./a";
 // @Filename: /e.ts
 let x: /*e*/ns.A;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("b");
 		f.verify_import_fix_at_position(vec![r#"import type { A } from "./a";
 
-let x: A;"#], &tsc_lsutil::UserPreferences { prefer_type_only_auto_imports: tsc_core::TS_TRUE, ..Default::default() });
+let x: A;"#], Some(tsc_lsutil::UserPreferences { prefer_type_only_auto_imports: tsc_core::TS_TRUE, ..Default::default() }));
 		f.go_to_marker("c");
 		f.verify_import_fix_at_position(vec![r#"import { A, type B } from "./a";
 new A();
-let x: B;"#], &tsc_lsutil::UserPreferences { prefer_type_only_auto_imports: tsc_core::TS_TRUE, ..Default::default() });
+let x: B;"#], Some(tsc_lsutil::UserPreferences { prefer_type_only_auto_imports: tsc_core::TS_TRUE, ..Default::default() }));
 		f.go_to_file("/d.ts");
 		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport", new_file_content: r#"import { A, type B } from "./a";
 
@@ -43,7 +43,7 @@ let x: B;"#, ..Default::default() });
 		f.go_to_marker("e");
 		f.verify_import_fix_at_position(vec![r#"import type ns from "./ns";
 
-let x: ns.A;"#], &tsc_lsutil::UserPreferences { prefer_type_only_auto_imports: tsc_core::TS_TRUE, ..Default::default() });
+let x: ns.A;"#], Some(tsc_lsutil::UserPreferences { prefer_type_only_auto_imports: tsc_core::TS_TRUE, ..Default::default() }));
 	});
 }
 

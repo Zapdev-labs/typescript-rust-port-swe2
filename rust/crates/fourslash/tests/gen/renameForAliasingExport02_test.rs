@@ -11,7 +11,7 @@ fn rename_for_aliasing_export02() {
 let x = 1;
 
 export { x as /**/[|y|] };";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("");
 		f.verify_rename_succeeded(None);
 	});

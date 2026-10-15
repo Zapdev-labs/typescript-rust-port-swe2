@@ -27,7 +27,7 @@ let opt1 = <Opt propx={100} propString />;
 let opt2 = <Opt propx={100} optional/>;
 let opt3 = <Opt [|wrong|] />;
 let opt4 = <Opt propx={100} propString="hi" />;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_rename(None);
 	});
 }

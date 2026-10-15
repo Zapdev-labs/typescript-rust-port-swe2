@@ -13,7 +13,7 @@ fn code_fix_missing_type_annotation_on_exports20() {
 export function foo () {
     return Symbol();
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_code_fix_available(vec!["Add return type 'symbol'"]);
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add return type 'symbol'", new_file_content: r"export function foo (): symbol {
     return Symbol();

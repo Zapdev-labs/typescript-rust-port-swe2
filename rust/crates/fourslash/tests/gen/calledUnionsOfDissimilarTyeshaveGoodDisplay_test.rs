@@ -49,7 +49,7 @@ declare const callableThing5:
 
 callableThing5(/*5*/1)
 ";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("1");
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "callableThing1(o1: { x: number; } & { y: number; }): void", ..Default::default() });
 		f.go_to_marker("2");

@@ -24,7 +24,7 @@ var /*1*/r = _./*11*/all([true, 1, null, 'yes'], x => !x);
 var /*2*/r2 = _./*21*/all([true], _.identity);
 var /*3*/r3 = _./*31*/all([], _.identity);
 var /*4*/r4 = _./*41*/all([<any>true], _.identity);";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "var r: string | number | boolean", "");
 		f.verify_quick_info_at("11", "(method) Underscore.Static.all<string | number | boolean>(list: (string | number | boolean)[], iterator?: Underscore.Iterator<string | number | boolean, boolean>, context?: any): string | number | boolean", "");
 		f.verify_quick_info_at("2", "var r2: boolean", "");

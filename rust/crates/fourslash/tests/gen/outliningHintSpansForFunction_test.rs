@@ -19,7 +19,7 @@ fn outlining_hint_spans_for_function() {
         return x + y;
     }|]
 }|]";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_outlining_spans();
 	});
 }

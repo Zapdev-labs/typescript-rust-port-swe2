@@ -19,7 +19,7 @@ function foo()/*8*/{{}}
 (function()/*10*/{});
 (() =>/*11*/{});
 var x :/*12*/{};";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.format_document("");
 		f.go_to_marker("1");
 		f.verify_current_line_content(r"namespace InternalModule { }");

@@ -16,7 +16,7 @@ function x1(a: any) {
 x1(''/*1*/);
 x1('hi'/*2*/);
 x1('bye'/*3*/);";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("1");
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "z", parameter_span: "z: string", overloads_count: 3, ..Default::default() });
 		f.go_to_marker("2");

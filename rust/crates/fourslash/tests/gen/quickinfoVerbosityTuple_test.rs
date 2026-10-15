@@ -25,7 +25,7 @@ const tf2/*f2*/: [Orange, Apple] = [
 ];
 type ManyFruits/*m*/ = (Orange | Apple)[];
 const mf/*mf*/: ManyFruits = [];"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_hover_with_verbosity(vec![("T", vec![0, 1, 2]), ("f", vec![0, 1, 2, 3]), ("f2", vec![0, 1, 2]), ("m", vec![0, 1, 2]), ("mf", vec![0, 1, 2, 3])].into_iter().collect::<FxHashMap<_, _>>());
 	});
 }

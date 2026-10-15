@@ -30,7 +30,7 @@ export default class /*defBX*/X {
 import { a } from "a";
 import { b } from "b";
 a(/*error*/b);"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/src/a.ts");
 		f.verify_number_of_errors_in_current_file(0);
 |version_patch, def| {

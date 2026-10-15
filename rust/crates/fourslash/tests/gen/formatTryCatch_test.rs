@@ -13,7 +13,7 @@ fn format_try_catch() {
     /*catch*/catch (e) {
     }
 }";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.format_document("");
 		f.format_document("");
 		f.format_document("");

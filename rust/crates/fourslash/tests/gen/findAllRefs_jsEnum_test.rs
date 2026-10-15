@@ -14,7 +14,7 @@ fn find_all_refs_js_enum() {
 /*3*/E["A"];
 /** @type {/*4*/E} */
 const e = /*5*/E.A;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("1", "2", "3", "4", "5");
 	});
 }

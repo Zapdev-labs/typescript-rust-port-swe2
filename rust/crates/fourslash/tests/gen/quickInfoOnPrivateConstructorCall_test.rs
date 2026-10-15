@@ -11,7 +11,7 @@ fn quick_info_on_private_constructor_call() {
     private constructor() {}
 }
 var x = new A(/*1*/";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_signature_help_for_markers("1");
 	});
 }

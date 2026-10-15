@@ -12,7 +12,7 @@ fn unused_constant_in_function1() {
 [| function f1 () {
     const x: string = "x";
 } |]"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_range_after_code_fix(r"function f1 () {
 }", false, 0, 0);
 	});

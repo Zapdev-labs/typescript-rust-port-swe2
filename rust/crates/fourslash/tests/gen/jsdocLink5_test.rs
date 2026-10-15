@@ -15,7 +15,7 @@ fn jsdoc_link5() {
 function f(x) {
 }
 f/*3*/()";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_hover();
 	});
 }

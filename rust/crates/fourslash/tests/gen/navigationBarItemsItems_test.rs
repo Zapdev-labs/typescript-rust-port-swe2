@@ -45,7 +45,7 @@ namespace Shapes {
 // Local variables
 var p: IPoint = new Shapes.Point(3, 4);
 var dist = p.getDist();";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_document_symbol();
 	});
 }

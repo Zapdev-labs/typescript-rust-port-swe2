@@ -13,7 +13,7 @@ fn code_fix_missing_type_annotation_on_exports36_conditional_releative() {
 const A = "A"
 const B = "B"
 export const AB = Math.random()? A: B;"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_code_fix_available(vec!["Add annotation of type '\"A\" | \"B\"'", "Add annotation of type 'typeof A | typeof B'", "Add annotation of type 'string'", "Add satisfies and an inline type assertion with '\"A\" | \"B\"'", "Add satisfies and an inline type assertion with 'typeof A | typeof B'", "Add satisfies and an inline type assertion with 'string'"]);
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add satisfies and an inline type assertion with 'typeof A | typeof B'", new_file_content: r#"const A = "A"
 const B = "B"

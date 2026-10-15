@@ -13,7 +13,7 @@ function foo() {
 }
 class C extends (foo())./*2*/B {}
 class C1 extends foo()./*3*/B {}";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_find_all_references("1", "2", "3");
 	});
 }

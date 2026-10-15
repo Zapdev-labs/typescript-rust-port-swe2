@@ -8,8 +8,8 @@ use tsc_fourslash::*;
 fn inlay_hints_no_variable_type_hints() {
 	run_test(|t| {
 		let content = r"const a = 123;";
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
-		f.verify_baseline_inlay_hints(None, &tsc_lsutil::UserPreferences { include_inlay_variable_type_hints: tsc_core::TS_FALSE, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		f.verify_baseline_inlay_hints(None, Some(tsc_lsutil::UserPreferences { include_inlay_variable_type_hints: tsc_core::TS_FALSE, ..Default::default() }));
 	});
 }
 

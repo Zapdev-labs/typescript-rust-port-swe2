@@ -13,7 +13,7 @@ m({ foo: /*3*/$("foo") });
 declare const m: <S extends string>(s: { [_ in S]: { $: NoInfer<S> } }) => void
 declare const $: <S, T extends S>(s: T) => { $: S }
 type NoInfer<T> = [T][T extends any ? 0 : never];"#;
-		let (mut f, _done) = tsc_fourslash::new_fourslash(&mut *t, None, content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_quick_info_at("1", "const m: <\"foo\">(s: {\n    foo: {\n        $: \"foo\";\n    };\n}) => void", "");
 		f.verify_quick_info_at("2", "const $: <unknown, string>(s: string) => {\n    $: unknown;\n}", "");
 		f.verify_quick_info_at("3", "const $: <unknown, string>(s: string) => {\n    $: unknown;\n}", "");
