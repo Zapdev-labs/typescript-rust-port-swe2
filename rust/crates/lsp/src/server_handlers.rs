@@ -15,6 +15,7 @@ use tsc_collections::Set;
 use tsc_core::context::{Context, with_checker_lifetime, CheckerLifetime};
 use tsc_core::options_generated::CompilerOptions;
 use tsc_ipc as ipc;
+use tsc_ipc::Transport as _;
 use tsc_json as json;
 use tsc_ls as ls;
 use tsc_lsconv as lsconv;
@@ -71,7 +72,7 @@ impl Server {
         if let Some(flake) = initialization_options.track_flaky_diagnostics {
             *self.flake_logging.lock().unwrap() = flake;
         }
-        let caps = lsproto::ResolvedClientCapabilities::resolve(params.capabilities.as_ref());
+        let caps = lsproto::ClientCapabilities::resolve(params.capabilities.as_ref());
         if caps.window.work_done_progress {
             *self.project_progress.lock().unwrap() =
                 Some(new_project_loading_progress(self, self.progress_delay));
@@ -164,7 +165,12 @@ impl Server {
                     ..Default::default()
                 }),
                 completion_provider: Some(lsproto::CompletionOptions {
-                    trigger_characters: Some(ls::completion_trigger_characters()),
+                    trigger_characters: Some(
+                        ls::completion_trigger_characters()
+                            .iter()
+                            .map(|s| s.to_string())
+                            .collect(),
+                    ),
                     resolve_provider: Some(true),
                     completion_item: Some(lsproto::ServerCompletionItemOptions {
                         label_details_support: Some(true),
@@ -172,9 +178,17 @@ impl Server {
                     ..Default::default()
                 }),
                 signature_help_provider: Some(lsproto::SignatureHelpOptions {
-                    trigger_characters: Some(ls::SIGNATURE_HELP_TRIGGER_CHARACTERS.to_vec()),
+                    trigger_characters: Some(
+                        ls::SIGNATURE_HELP_TRIGGER_CHARACTERS
+                            .iter()
+                            .map(|s| s.to_string())
+                            .collect(),
+                    ),
                     retrigger_characters: Some(
-                        ls::SIGNATURE_HELP_RETRIGGER_CHARACTERS.to_vec(),
+                        ls::SIGNATURE_HELP_RETRIGGER_CHARACTERS
+                            .iter()
+                            .map(|s| s.to_string())
+                            .collect(),
                     ),
                     ..Default::default()
                 }),
@@ -377,7 +391,7 @@ impl Server {
 
         self.telemetry_enabled.store(enable_telemetry, Ordering::SeqCst);
 
-        let session = project::session::new_session(&SessionInit {
+        let session = project::session::new_session(SessionInit {
             background_ctx: lsproto::with_client_capabilities(&self.background_ctx, caps),
             options: Arc::new(SessionOptions {
                 current_directory: cwd,
@@ -506,7 +520,7 @@ impl Server {
         params: Option<lsproto::DidOpenTextDocumentParams>,
     ) -> Result<(), Error> {
         let params = params.unwrap_or_default();
-        let doc = params.text_document;
+        let doc = params.text_document.unwrap_or_default();
         self.session().did_open_file(
             ctx,
             doc.uri,
@@ -623,15 +637,17 @@ impl Server {
         let secondary = language_service
             .provide_diagnostics(&ctx, params.text_document.uri.clone())
             .map_err(Error::Ls)?;
-        let items_of = |r: &lsproto::DocumentDiagnosticResponse| -> Vec<&lsproto::Diagnostic> {
+        fn items_of(r: &lsproto::DocumentDiagnosticResponse) -> Vec<&lsproto::Diagnostic> {
             r.full_document_diagnostic_report
                 .as_ref()
                 .and_then(|f| f.items.as_ref())
                 .map(|v| v.iter().collect())
                 .unwrap_or_default()
-        };
+        }
+        let direct_items = items_of(&direct);
+        let secondary_items = items_of(&secondary);
         let (missing_from_pre, missing_from_post) =
-            lsproto::compare_diagnostics(&items_of(&direct), &items_of(&secondary));
+            lsproto::compare_diagnostics(&direct_items, &secondary_items);
         if missing_from_pre.is_empty() && missing_from_post.is_empty() {
             return Ok(direct);
         }
@@ -1031,7 +1047,7 @@ impl Server {
         params: Option<lsproto::CompletionItem>,
         _req: &lsproto::RequestMessage,
     ) -> Result<lsproto::CompletionResolveResponse, Error> {
-        let mut params = params.unwrap_or_default();
+        let params = params.unwrap_or_default();
         let Some(data) = params.data.clone() else {
             return Err(Error::Message("completion item data is nil".to_string()));
         };
@@ -1053,10 +1069,11 @@ impl Server {
             .session()
             .get_language_service(ctx, &uri)
             .map_err(Error::from_session)?;
-        let language_service = sls.language_service();
-        language_service
-            .resolve_completion_item(ctx, &mut params, &data, &file_name)
-            .map_err(Error::Ls)?;
+        let _language_service = sls.language_service();
+        // TODO(port): `LanguageService::resolve_completion_item` /
+        // `getCompletionItemDetails` is not yet ported in `crates/ls`
+        // (`string_completions.rs` notes the gap). Until it lands, return the
+        // item unresolved rather than failing the request.
         Ok(Some(params))
     }
 
@@ -1068,8 +1085,9 @@ impl Server {
         params: Option<lsproto::DocumentFormattingParams>,
     ) -> Result<lsproto::DocumentFormattingResponse, Error> {
         let params = params.unwrap_or_default();
+        let options = params.options.unwrap_or_default();
         Ok(language_service
-            .provide_format_document(ctx, params.text_document.uri, &params.options)
+            .provide_format_document(ctx, params.text_document.uri, &options)
             .map_err(Error::Ls)?)
     }
 
@@ -1081,11 +1099,12 @@ impl Server {
         params: Option<lsproto::DocumentRangeFormattingParams>,
     ) -> Result<lsproto::DocumentRangeFormattingResponse, Error> {
         let params = params.unwrap_or_default();
+        let options = params.options.unwrap_or_default();
         Ok(language_service
             .provide_format_document_range(
                 ctx,
                 params.text_document.uri,
-                &params.options,
+                &options,
                 params.range,
             )
             .map_err(Error::Ls)?)
@@ -1099,11 +1118,12 @@ impl Server {
         params: Option<lsproto::DocumentOnTypeFormattingParams>,
     ) -> Result<lsproto::DocumentOnTypeFormattingResponse, Error> {
         let params = params.unwrap_or_default();
+        let options = params.options.unwrap_or_default();
         Ok(language_service
             .provide_format_document_on_type(
                 ctx,
                 params.text_document.uri,
-                &params.options,
+                &options,
                 params.position,
                 &params.ch,
             )
@@ -1266,13 +1286,12 @@ impl Server {
         if ctx.is_cancelled() {
             return Err(Error::Canceled);
         }
-        let Some((sls, all_projects)) = resolved.ok().flatten() else {
-            // `ErrorCodeContentModified` — the file could have been modified
-            // or removed since `Data.Uri` was captured (see Go comment).
-            return match resolved {
-                Err(e) => Err(e),
-                Ok(None) => Err(Error::Code(lsproto::ErrorCode::ContentModified)),
-            };
+        // `ErrorCodeContentModified` — the file could have been modified
+        // or removed since `Data.Uri` was captured (see Go comment).
+        let (sls, all_projects) = match resolved {
+            Err(e) => return Err(e),
+            Ok(None) => return Err(Error::Code(lsproto::ErrorCode::ContentModified)),
+            Ok(Some(pair)) => pair,
         };
         let language_service = sls.language_service();
         let orchestrator = ServerOrchestrator {
@@ -1428,12 +1447,12 @@ impl Server {
         params: Option<lsproto::ProfileParams>,
         _req: &lsproto::RequestMessage,
     ) -> Result<lsproto::StartCPUProfileResponse, Error> {
+        let dir = params.unwrap_or_default().dir;
         self.cpu_profiler
-            .start_cpu_profile(&params.unwrap_or_default().dir)
+            .start_cpu_profile(&dir)
             .map_err(Error::Message)?;
         self.logger.info(format_args!(
-            "CPU profiling started, will save to: {}",
-            params.unwrap_or_default().dir
+            "CPU profiling started, will save to: {dir}"
         ));
         Ok(lsproto::Null::default())
     }
@@ -1468,7 +1487,9 @@ impl Server {
             Error::Message(format!("failed to create API transport: {e}"))
         })?;
         let (api_ctx, api_cancel) = self.background_ctx.with_cancel();
-        let (done_tx, done_rx) = mpsc::channel(1);
+        // Go's `make(chan struct{}, 1)` — the unbounded std channel never
+        // blocks the sender, matching the buffered channel here.
+        let (done_tx, done_rx) = mpsc::channel();
         let state = Arc::new(ApiSessionState {
             session: api_session,
             transport: Arc::new(transport),
@@ -1483,6 +1504,9 @@ impl Server {
             .insert(id.clone(), state.clone());
         let s = self.clone();
         let state2 = state.clone();
+        // `id` moves into the accept-thread closure; keep a copy for the
+        // `InitializeAPISessionResult` below.
+        let session_id = id.clone();
         std::thread::spawn(move || {
             let _guard = scopeguard(&api_cancel, &s, &state2, id.clone(), done_tx);
             #[cfg(unix)]
@@ -1528,7 +1552,7 @@ impl Server {
             }
         });
         Ok(Some(lsproto::InitializeAPISessionResult {
-            session_id: id,
+            session_id,
             pipe: pipe_path,
         }))
     }
@@ -1773,9 +1797,12 @@ fn parse_content_mapper_contributions(
             )));
         }
         for option in manifest.compiler_options.clone().unwrap_or_default() {
-            if tsoptions::tsconfigparsing::command_line_compiler_options_map()
-                .get_option_declaration_from_name(&option, false)
-                .is_none()
+            // `CommandLineCompilerOptionsMap.Get(option)`.
+            if tsoptions::tsconfigparsing::name_map_get(
+                tsoptions::tsconfigparsing::command_line_compiler_options_map(),
+                &option,
+            )
+            .is_none()
             {
                 return Err(Error::Message(format!(
                     "content mapper contribution {identity:?} requests unknown compiler option {option:?}"

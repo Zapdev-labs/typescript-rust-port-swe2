@@ -377,11 +377,11 @@ fn id_key(id: &jsonrpc::ID) -> IdKey {
 /// `apiSessionState`.
 pub(crate) struct ApiSessionState {
     pub(crate) session: Arc<tsc_api::session::Session>,
-    transport: Arc<ipc::PipeTransport>,
-    cancel: CancelFunc,
+    pub(crate) transport: Arc<ipc::PipeTransport>,
+    pub(crate) cancel: CancelFunc,
     /// `done chan struct{}` — closed when the accept goroutine exits.
-    done: Mutex<Option<mpsc::Receiver<()>>>,
-    inner: Mutex<ApiSessionInner>,
+    pub(crate) done: Mutex<Option<mpsc::Receiver<()>>>,
+    pub(crate) inner: Mutex<ApiSessionInner>,
 }
 
 #[derive(Default)]
@@ -478,7 +478,7 @@ pub struct Server {
     /// `compilerOptionsForInferredProjects` — temporary.
     pub(crate) compiler_options_for_inferred_projects: Mutex<Option<Arc<CompilerOptions>>>,
     /// `parseCache` — `Rc` per the session port.
-    parse_cache: Option<Rc<ParseCache>>,
+    pub(crate) parse_cache: Option<Rc<ParseCache>>,
 
     pub(crate) npm_install: Option<NpmInstallFn>,
     pub(crate) spawn: Option<Arc<dyn tsc_contentmapper::Spawner>>,
@@ -785,14 +785,14 @@ impl project::client::Client for Server {
     /// `s.ProgressStart`.
     fn progress_start(&self, message: &diagnostics::Message, args: &[String]) {
         if let Some(p) = self.project_progress.lock().unwrap().clone() {
-            p.start(*message, args);
+            p.start(message.clone(), args);
         }
     }
 
     /// `s.ProgressFinish`.
     fn progress_finish(&self, message: &diagnostics::Message, args: &[String]) {
         if let Some(p) = self.project_progress.lock().unwrap().clone() {
-            p.finish(*message, args);
+            p.finish(message.clone(), args);
         }
     }
 
@@ -1065,7 +1065,7 @@ impl Server {
             }
 
             let req_for_error = req.clone();
-            let remove_request = |s: &Server| {
+            let remove_request = move |s: &Server| {
                 if let Some(c) = &cancel {
                     c.cancel();
                 }
@@ -1091,12 +1091,18 @@ impl Server {
                     let remove_request = SendShared(remove_request);
                     let s = self.clone();
                     let work = SendShared(work);
+                    // `req` is also read by the post-dispatch tracing below;
+                    // the spawned thread gets its own clone. `lsp_exit` is a
+                    // `&CancelFunc` — clone the `Arc`-backed func so the
+                    // thread closure is `'static`.
+                    let req = req.clone();
+                    let lsp_exit = lsp_exit.clone();
                     std::thread::spawn(move || {
                         let work = work.into_inner();
                         let remove_request = remove_request.into_inner();
                         let r = s.run_recovered(req.id.as_ref(), &req.method, work);
                         if let Err(err) = r {
-                            s.handle_request_error(req.id.as_ref(), err, lsp_exit);
+                            s.handle_request_error(req.id.as_ref(), err, &lsp_exit);
                         }
                         remove_request(&s);
                     });
@@ -1384,8 +1390,10 @@ macro_rules! uri_param {
     ($($t:ty),* $(,)?) => {$(
         impl UriParam for Option<$t> {
             fn uri(&self) -> lsproto::DocumentUri {
+                // `TextDocumentURI()` is generated per params struct
+                // (`VSOnAutoInsertParams` uses `vs_text_document`).
                 self.as_ref()
-                    .map(|p| p.text_document.uri.clone())
+                    .map(|p| <$t>::text_document_uri(p))
                     .unwrap_or_default()
             }
         }
@@ -1481,18 +1489,20 @@ fn content_mapper_fallback_response(method: &lsproto::Method) -> Option<Box<RawV
             &[],
         )
         .ok()?
-    } else if matches!(
-        *method,
-        lsproto::Method::TextDocumentHover
-            | lsproto::Method::TextDocumentSignatureHelp
-            | lsproto::Method::TextDocumentDefinition
-            | lsproto::Method::TextDocumentTypeDefinition
-            | lsproto::Method::TextDocumentImplementation
-            | lsproto::Method::TextDocumentReferences
-            | lsproto::Method::TextDocumentDocumentHighlight
-            | lsproto::Method::TextDocumentCompletion
-            | lsproto::Method::TextDocumentRename
-    ) {
+    } else if [
+        // `Method` wraps `Cow<str>` — not usable in match patterns.
+        lsproto::Method::TextDocumentHover,
+        lsproto::Method::TextDocumentSignatureHelp,
+        lsproto::Method::TextDocumentDefinition,
+        lsproto::Method::TextDocumentTypeDefinition,
+        lsproto::Method::TextDocumentImplementation,
+        lsproto::Method::TextDocumentReferences,
+        lsproto::Method::TextDocumentDocumentHighlight,
+        lsproto::Method::TextDocumentCompletion,
+        lsproto::Method::TextDocumentRename,
+    ]
+    .contains(method)
+    {
         b"null".to_vec()
     } else {
         return None;
@@ -1559,6 +1569,9 @@ where
         + Sync
         + 'static,
 {
+    // The outer handler is `Fn` (stored in the map); `f` is shared with the
+    // spawned `FnOnce` work item via `Arc`.
+    let f = Arc::new(f);
     map.insert(
         method,
         Box::new(move |s, ctx, req| {
@@ -1572,6 +1585,7 @@ where
             let s2 = s.clone();
             let ctx2 = ctx.clone();
             let id = req.id.clone();
+            let f = f.clone();
             Ok(Some(Box::new(move || {
                 let ls = sls.language_service();
                 let resp = f(&s2, &ctx2, &ls, params)?;
@@ -1599,6 +1613,9 @@ fn register_ls_auto_imports_handler<P, R, F>(
         + Sync
         + 'static,
 {
+    // `f` is shared with the spawned `FnOnce` work item via `Arc` (see
+    // `register_ls_document_handler`).
+    let f = Arc::new(f);
     map.insert(
         method,
         Box::new(move |s, ctx, req| {
@@ -1612,6 +1629,7 @@ fn register_ls_auto_imports_handler<P, R, F>(
             let s2 = s.clone();
             let ctx2 = ctx.clone();
             let id = req.id.clone();
+            let f = f.clone();
             Ok(Some(Box::new(move || {
                 let ls = sls.language_service();
                 let resp = match f(&s2, &ctx2, &ls, params.clone()) {
@@ -1662,6 +1680,9 @@ where
         + Sync
         + 'static,
 {
+    // `f` is shared with the spawned `FnOnce` work item via `Arc` (see
+    // `register_ls_document_handler`).
+    let f = Arc::new(f);
     map.insert(
         method,
         Box::new(move |s, ctx, req| {
@@ -1675,6 +1696,7 @@ where
             let s2 = s.clone();
             let ctx2 = ctx.clone();
             let id = req.id.clone();
+            let f = f.clone();
             Ok(Some(Box::new(move || {
                 let ls = sls.language_service();
                 let orchestrator = ServerOrchestrator {
@@ -1731,7 +1753,7 @@ pub(crate) struct ServerOrchestrator<'s, 'h> {
 }
 
 impl ServerOrchestrator<'_, '_> {
-    fn register_known(&self) {
+    pub(crate) fn register_known(&self) {
         let mut known = self.known.borrow_mut();
         known.insert(self.default_project.id.0.clone(), self.default_project.clone());
         for p in &self.all_projects {
@@ -2094,16 +2116,16 @@ pub(crate) fn handlers() -> &'static HandlerMap {
             lsproto::Method::TextDocumentVSOnAutoInsert,
             Server::handle_on_auto_insert,
         );
-        register_multi_project_handler(&mut m, lsproto::Method::TextDocumentReferences, |ls, ctx, params, o| {
+        register_multi_project_handler(&mut m, lsproto::Method::TextDocumentReferences, |ls, ctx, params: Option<lsproto::ReferenceParams>, o| {
             let params = params.unwrap_or_default();
             ls.provide_references(ctx, &params, o).map_err(Error::Ls)
         });
-        register_multi_project_handler(&mut m, lsproto::Method::TextDocumentVSReferences, |ls, ctx, params, o| {
+        register_multi_project_handler(&mut m, lsproto::Method::TextDocumentVSReferences, |ls, ctx, params: Option<lsproto::ReferenceParams>, o| {
             let params = params.unwrap_or_default();
             ls.provide_vs_references(ctx, &params, o).map_err(Error::Ls)
         });
         register_request_handler(&mut m, lsproto::Method::TextDocumentRename, |s: &Arc<Server>, ctx: &Context, p, r| s.handle_rename(ctx, p, r));
-        register_multi_project_handler(&mut m, lsproto::Method::TextDocumentImplementation, |ls, ctx, params, o| {
+        register_multi_project_handler(&mut m, lsproto::Method::TextDocumentImplementation, |ls, ctx, params: Option<lsproto::ImplementationParams>, o| {
             let params = params.unwrap_or_default();
             ls.provide_implementations(ctx, &params, o).map_err(Error::Ls)
         });
@@ -2277,10 +2299,16 @@ impl Server {
                     lsproto::SignatureHelpRegistrationOptions {
                         document_selector: sel.clone(),
                         trigger_characters: Some(
-                            ls::SIGNATURE_HELP_TRIGGER_CHARACTERS.to_vec(),
+                            ls::SIGNATURE_HELP_TRIGGER_CHARACTERS
+                                .iter()
+                                .map(|s| s.to_string())
+                                .collect(),
                         ),
                         retrigger_characters: Some(
-                            ls::SIGNATURE_HELP_RETRIGGER_CHARACTERS.to_vec(),
+                            ls::SIGNATURE_HELP_RETRIGGER_CHARACTERS
+                                .iter()
+                                .map(|s| s.to_string())
+                                .collect(),
                         ),
                         ..Default::default()
                     },
@@ -2333,7 +2361,12 @@ impl Server {
             reg(ids::COMPLETION, RegisterOptions {
                 text_document_completion: Some(lsproto::CompletionRegistrationOptions {
                     document_selector: sel.clone(),
-                    trigger_characters: Some(ls::completion_trigger_characters()),
+                    trigger_characters: Some(
+                        ls::completion_trigger_characters()
+                            .iter()
+                            .map(|s| s.to_string())
+                            .collect(),
+                    ),
                     resolve_provider: Some(true),
                     completion_item: Some(lsproto::ServerCompletionItemOptions {
                         label_details_support: Some(true),

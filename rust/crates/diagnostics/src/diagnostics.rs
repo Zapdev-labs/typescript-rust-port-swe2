@@ -43,6 +43,10 @@ pub type Key = &'static str;
 /// the generated table is `pub static` + `&'static` refs, which gives the same
 /// shared-pointer semantics. Fields are `pub(crate)` so the `include!`d
 /// generated table can use struct literals.
+///
+/// `Clone` lets `&Message` receivers (e.g. `Client::progress_start`) enqueue
+/// the value for a worker thread — all fields are `Copy`-able scalars.
+#[derive(Clone)]
 pub struct Message {
     pub(crate) code: i32,
     pub(crate) category: Category,
