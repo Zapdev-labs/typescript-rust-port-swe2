@@ -8,3 +8,15 @@ mod test_parser;
 pub mod testsutil;
 pub mod verify;
 pub mod verify_baseline;
+
+// Flat re-exports for the generated test suite (`use tsc_fourslash::*` —
+// tests reference harness types/consts unqualified, matching Go's
+// package-scoped `fourslash.` surface).
+pub use baselineutil::*;
+pub use fourslash::*;
+pub use semantictokens::*;
+pub use statebaseline::*;
+pub use test_parser::*;
+pub use testsutil::*;
+pub use verify::*;
+pub use verify_baseline::*;

@@ -13,7 +13,8 @@ declare -a mods
 for c in $(seq 0 $((CHUNKS-1))); do mods[$c]=""; done
 for f in $files; do
   m="${f%.rs}"
-  mods[$((i % CHUNKS))]+="#[path = \"gen/${m}.rs\"] mod ${m};\n"
+  m="${m//-/_}"
+  mods[$((i % CHUNKS))]+="#[path = \"gen/${f}\"] mod ${m};\n"
   i=$((i+1))
 done
 for c in $(seq 0 $((CHUNKS-1))); do
