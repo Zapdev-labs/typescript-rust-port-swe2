@@ -15,6 +15,7 @@ serde_json = { workspace = true }
 tsc-apiencoder = { path = "../apiencoder" }
 tsc-ast = { path = "../ast" }
 tsc-astnav = { path = "../astnav" }
+tsc-binder = { path = "../binder" }
 tsc-bundled = { path = "../bundled" }
 tsc-checker = { path = "../checker" }
 tsc-collections = { path = "../collections" }
@@ -24,6 +25,7 @@ tsc-core = { path = "../core" }
 tsc-debug = { path = "../debug" }
 tsc-diagnostics = { path = "../diagnostics" }
 tsc-diagnosticwriter = { path = "../diagnosticwriter" }
+tsc-evaluator = { path = "../evaluator" }
 tsc-execute = { path = "../execute" }
 tsc-format = { path = "../format" }
 tsc-ipc = { path = "../ipc" }
@@ -38,6 +40,7 @@ tsc-lsutil = { path = "../lsutil" }
 tsc-module = { path = "../module" }
 tsc-nodebuilder = { path = "../nodebuilder" }
 tsc-packagejson = { path = "../packagejson" }
+tsc-pprof = { path = "../pprof" }
 tsc-printer = { path = "../printer" }
 tsc-project = { path = "../project" }
 tsc-scanner = { path = "../scanner" }

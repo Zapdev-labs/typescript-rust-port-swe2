@@ -62,7 +62,7 @@ fn format_duration(d: Duration) -> String {
 }
 
 /// `type Statistics struct`.
-#[derive(Default)]
+#[derive(Clone, Debug, Default)]
 pub struct Statistics {
     is_aggregate: bool,
     /// `Projects int`.

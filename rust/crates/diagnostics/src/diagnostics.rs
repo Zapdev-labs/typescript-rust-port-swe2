@@ -12,9 +12,10 @@ use crate::diagnostics_generated::ALL_MESSAGES;
 use crate::loc_generated::{LOCALE_FUNCS, MATCHER_TAGS};
 
 /// `type Category int32`
-#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Default)]
 #[repr(i32)]
 pub enum Category {
+    #[default]
     Warning = 0,
     Error = 1,
     Suggestion = 2,

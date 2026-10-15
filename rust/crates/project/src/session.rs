@@ -432,6 +432,12 @@ impl Session {
         &self.fs
     }
 
+    /// `s.SnapshotHost()` — the session's snapshot host, shared with API
+    /// sessions layered over this project session.
+    pub fn snapshot_host(&self) -> Arc<SnapshotHost> {
+        self.host.clone()
+    }
+
     /// `s.GetCurrentDirectory` — implements `module.ResolutionHost`.
     pub fn get_current_directory(&self) -> RootedDirectoryPath {
         self.options.current_directory.clone()

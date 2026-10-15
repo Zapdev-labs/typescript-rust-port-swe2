@@ -121,9 +121,10 @@ fn new_content_mapper_logger(sys: &dyn System) -> Option<tsc_contentmapper::host
 }
 
 /// `type ExitStatus int`.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 #[repr(i32)]
 pub enum ExitStatus {
+    #[default]
     Success = 0,
     DiagnosticsPresentOutputsSkipped = 1,
     DiagnosticsPresentOutputsGenerated = 2,
@@ -221,7 +222,7 @@ pub fn new_content_mapper_host(
 }
 
 /// `type CompileTimes struct`.
-#[derive(Default)]
+#[derive(Clone, Debug, Default)]
 pub struct CompileTimes {
     pub config_time: Duration,
     pub parse_time: Duration,

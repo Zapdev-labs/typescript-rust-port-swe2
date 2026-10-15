@@ -634,7 +634,7 @@ pub struct MapperTimings {
 
 /// `type Timings struct` — a cumulative snapshot of content mapper process
 /// and protocol activity.
-#[derive(Clone, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct Timings {
     /// `Mappers map[string]MapperTimings`
     pub mappers: rustc_hash::FxHashMap<String, MapperTimings>,
