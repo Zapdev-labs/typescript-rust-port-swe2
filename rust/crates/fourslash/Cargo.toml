@@ -23,7 +23,6 @@ tsc-jsonrpc = { path = "../jsonrpc" }
 tsc-locale = { path = "../locale" }
 tsc-ls = { path = "../ls" }
 tsc-lsconv = { path = "../lsconv" }
-tsc-lsp = { path = "../lsp" }
 tsc-lsproto = { path = "../lsproto" }
 tsc-lsutil = { path = "../lsutil" }
 tsc-project = { path = "../project" }

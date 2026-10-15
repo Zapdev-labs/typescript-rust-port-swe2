@@ -5,3 +5,6 @@ mod fourslash;
 mod semantictokens;
 mod statebaseline;
 mod test_parser;
+pub mod testsutil;
+pub mod verify;
+pub mod verify_baseline;

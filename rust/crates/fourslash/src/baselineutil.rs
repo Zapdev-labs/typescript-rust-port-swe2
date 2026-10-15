@@ -400,7 +400,7 @@ fn unique_files_in_span_order(spans: &[DocumentSpan]) -> Vec<DocumentUri> {
 
 impl FourslashTest {
     /// `textOfFile`.
-    fn text_of_file(&self, file_name: &RootedFilePath) -> Option<String> {
+    pub(crate) fn text_of_file(&self, file_name: &RootedFilePath) -> Option<String> {
         if self.open_files.contains(file_name) {
             return Some(
                 self.get_script_info(file_name)
@@ -680,7 +680,13 @@ impl FourslashTest {
         });
         // !!! if canDetermineContextIdInline
 
-        let converters = self.test_converters();
+        // PORT: `ManuallyDrop` — `new_text_with_context_from_file_name` takes
+        // `&'a TestConverters<'a>` where the inner `'a` equals the borrow
+        // lifetime; a plain local `TestConverters<'a>` can never satisfy that
+        // because its `Box<dyn Fn>` destructor would need `'a` to outlive the
+        // value's own drop. `ManuallyDrop` suppresses the destructor (and the
+        // dropck requirement) — same pattern as `crates/ls`.
+        let converters = std::mem::ManuallyDrop::new(self.test_converters());
         let mut text_with_context =
             new_text_with_context_from_file_name(file_name.clone(), content, &converters);
         for (index, detail) in details.iter().enumerate() {
@@ -997,6 +1003,21 @@ pub(crate) struct MarkerAndItem<T> {
     /// `Marker` — `*Marker` in Go; `Rc` here since markers are shared.
     pub marker: Rc<Marker>,
     pub item: T,
+}
+
+// Hand-rolled `Serialize` — serde doesn't implement it for `Rc` without the
+// `rc` feature. Matches Go's `markerAndItem` JSON shape (`{"marker":…,"item":…}`).
+impl<T: serde::Serialize> serde::Serialize for MarkerAndItem<T> {
+    fn serialize<S: serde::Serializer>(
+        &self,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeStruct;
+        let mut st = serializer.serialize_struct("MarkerAndItem", 2)?;
+        st.serialize_field("marker", self.marker.as_ref())?;
+        st.serialize_field("item", &self.item)?;
+        st.end()
+    }
 }
 
 impl FourslashTest {

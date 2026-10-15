@@ -146,17 +146,25 @@ impl RangeMarker {
 }
 
 /// `type Marker struct`.
-#[derive(Clone, Debug)]
+///
+/// `Serialize` matches Go's `encoding/json` output: the unexported
+/// `fileName` field is skipped and exported fields keep their Go names.
+#[derive(Clone, Debug, serde::Serialize)]
 pub struct Marker {
-    /// `fileName tspath.RootedFilePath`
+    /// `fileName tspath.RootedFilePath` — unexported in Go; not marshaled.
+    #[serde(skip)]
     pub(crate) file_name: RootedFilePath,
     /// `Position int`
+    #[serde(rename = "Position")]
     pub position: TextPos,
     /// `LSPosition lsproto.Position`
+    #[serde(rename = "LSPosition")]
     pub ls_position: Position,
     /// `Name *string` — `None` for anonymous markers such as `{| "foo": "bar" |}`
+    #[serde(rename = "Name")]
     pub name: Option<String>,
     /// `Data map[string]any`
+    #[serde(rename = "Data")]
     pub data: Option<serde_json::Map<String, serde_json::Value>>,
 }
 
@@ -502,7 +510,7 @@ fn parse_file_content_worker(
         let (current_character, size) = decode_rune_in_string(&bytes[i..]);
         match state {
             ParserState::None => {
-                if previous_character == i32::from('[') && current_character == i32::from('|') {
+                if previous_character == '[' as i32 && current_character == '|' as i32 {
                     // found a range start
                     open_ranges.push(RangeLocationInformation {
                         location: LocationInformation {
@@ -517,8 +525,8 @@ fn parse_file_content_worker(
                     flush!((i - 1) as isize);
                     last_normal_char_position = i + 1;
                     difference += 2;
-                } else if previous_character == i32::from('|')
-                    && current_character == i32::from(']')
+                } else if previous_character == '|' as i32
+                    && current_character == ']' as i32
                 {
                     // found a range end
                     let Some(range_start) = open_ranges.pop() else {
@@ -547,8 +555,8 @@ fn parse_file_content_worker(
                     flush!((i - 1) as isize);
                     last_normal_char_position = i + 1;
                     difference += 2;
-                } else if previous_character == i32::from('/')
-                    && current_character == i32::from('*')
+                } else if previous_character == '/' as i32
+                    && current_character == '*' as i32
                     && (i + 1 >= bytes.len() || bytes[i + 1] != b'/')
                 {
                     // found a possible marker start
@@ -559,8 +567,8 @@ fn parse_file_content_worker(
                         source_line: line,
                         source_column: column - 1,
                     });
-                } else if previous_character == i32::from('{')
-                    && current_character == i32::from('|')
+                } else if previous_character == '{' as i32
+                    && current_character == '|' as i32
                 {
                     // found an object marker start
                     state = ParserState::InObjectMarker;
@@ -575,7 +583,7 @@ fn parse_file_content_worker(
             }
             ParserState::InObjectMarker => {
                 // Object markers are only ever terminated by |} and have no content restrictions
-                if previous_character == i32::from('|') && current_character == i32::from('}') {
+                if previous_character == '|' as i32 && current_character == '}' as i32 {
                     let source_position = open_marker.as_ref().unwrap().source_position;
                     let object_marker_data =
                         content[source_position + 2..i - 1].trim();
@@ -597,7 +605,7 @@ fn parse_file_content_worker(
                 }
             }
             ParserState::InSlashStarMarker => {
-                if previous_character == i32::from('*') && current_character == i32::from('/') {
+                if previous_character == '*' as i32 && current_character == '/' as i32 {
                     let (position, source_position) = {
                         let open = open_marker.as_ref().unwrap();
                         (open.position, open.source_position)
@@ -633,11 +641,11 @@ fn parse_file_content_worker(
                         char::from_u32(current_character as u32).unwrap_or(char::REPLACEMENT_CHARACTER);
                     if !(stringutil::is_digit(cur_char)
                         || stringutil::is_ascii_letter(cur_char)
-                        || current_character == i32::from('$')
-                        || current_character == i32::from('_'))
+                        || current_character == '$' as i32
+                        || current_character == '_' as i32)
                     {
                         // Invalid marker character
-                        if current_character == i32::from('*')
+                        if current_character == '*' as i32
                             && i < bytes.len() - 1
                             && bytes[i + 1] == b'/'
                         {
@@ -654,9 +662,9 @@ fn parse_file_content_worker(
                 }
             }
         }
-        if current_character == i32::from('\n') && previous_character == i32::from('\r') {
+        if current_character == '\n' as i32 && previous_character == '\r' as i32 {
             // Ignore trailing \n after \r
-        } else if current_character == i32::from('\n') || current_character == i32::from('\r') {
+        } else if current_character == '\n' as i32 || current_character == '\r' as i32 {
             line += 1;
             column = 1;
         } else {

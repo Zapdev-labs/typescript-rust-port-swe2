@@ -1,21 +1,14 @@
 // Ported from tsc/internal/fourslash/semantictokens.go @ ec47d33c23e464a17cdf2475632cba629bee8763
 //
-// ASSUMPTIONS about the parallel fourslash.rs port (all `pub(crate)`):
-//   - `FourslashTest` has fields `active_filename: RootedFilePath`,
-//     `script_infos` (map keyed `RootedFilePath` of `ScriptInfo` values with
-//     `line_map: LspLineMap` and `content: String`, indexable via `.get`),
-//     `semantic_token_types: Vec<String>`,
-//     `semantic_token_modifiers: Vec<String>`, and method
-//     `send_request<P, R>(&self, &RequestInfo<P, R>, P) -> R`.
-//   - `ScriptInfo` implements `lsconv::Script`.
-//   - `new_test_converters`/`TestConverters::line_and_character_to_position`
-//     as described in baselineutil.rs.
+// ASSUMPTIONS:
+//   - `FourslashTest.send_request` takes `&mut self` (matches the parallel port).
+//   - `f.converters` is the shared `TestConverters` (UTF-8 encoding).
 //   - Go's `t *testing.T` is dropped; `t.Fatal*`/`t.Errorf` become `panic!`.
 
-use tsc_lsconv::{file_name_to_document_uri, new_converters};
-use tsc_lsproto::{Position, PositionEncodingKind, SemanticTokensParams, TextDocumentIdentifier};
+use tsc_lsconv::file_name_to_document_uri;
+use tsc_lsproto::{Position, SemanticTokensParams, TextDocumentIdentifier};
 
-use crate::fourslash::{FourslashTest, new_test_converters};
+use crate::fourslash::FourslashTest;
 
 /// `type SemanticToken struct` — `Type` → `type_` (keyword).
 pub(crate) struct SemanticToken {
@@ -25,7 +18,7 @@ pub(crate) struct SemanticToken {
 
 impl FourslashTest {
     /// `VerifySemanticTokens`.
-    pub(crate) fn verify_semantic_tokens(&self, expected: &[SemanticToken]) {
+    pub(crate) fn verify_semantic_tokens(&mut self, expected: &[SemanticToken]) {
         let params = SemanticTokensParams {
             text_document: TextDocumentIdentifier {
                 uri: file_name_to_document_uri(&self.active_filename),
@@ -35,7 +28,7 @@ impl FourslashTest {
 
         let result = self.send_request(
             &tsc_lsproto::TEXT_DOCUMENT_SEMANTIC_TOKENS_FULL_INFO,
-            Some(params),
+            params,
         );
 
         let Some(semantic_tokens) = result.semantic_tokens else {
@@ -60,7 +53,7 @@ impl FourslashTest {
             expected.len(),
             actual.len(),
             format_semantic_tokens(expected),
-            format_semantic_tokens(actual),
+            format_semantic_tokens(&actual),
         );
 
         for (i, (exp, act)) in expected.iter().zip(actual.iter()).enumerate() {
@@ -92,11 +85,7 @@ fn decode_semantic_tokens(
         .script_infos
         .get(&f.active_filename)
         .expect("script info for active file");
-    let line_map = &script_info.line_map;
-    let converters = new_test_converters(new_converters(
-        PositionEncodingKind::UTF8,
-        move |_| line_map,
-    ));
+    let converters = f.test_converters();
 
     let mut tokens = Vec::new();
     let mut prev_line = 0u32;
@@ -156,8 +145,8 @@ fn decode_semantic_tokens(
             character: char_ + length,
         };
         let start_offset =
-            converters.line_and_character_to_position(script_info, start_pos) as usize;
-        let end_offset = converters.line_and_character_to_position(script_info, end_pos) as usize;
+            converters.line_and_character_to_position(&script_info, start_pos) as usize;
+        let end_offset = converters.line_and_character_to_position(&script_info, end_pos) as usize;
         let text = script_info.content[start_offset..end_offset].to_string();
 
         tokens.push(SemanticToken {

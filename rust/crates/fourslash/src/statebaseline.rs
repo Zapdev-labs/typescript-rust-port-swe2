@@ -19,6 +19,7 @@
 //     pointer; the port stores the address of the `&ConfigFileRegistry` it
 //     cloned (`RegistrySnapshot::source_addr`).
 
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::io::{self, Write};
 use std::rc::Rc;
@@ -32,18 +33,21 @@ use tsc_json as json;
 use tsc_lsconv::file_name_to_document_uri;
 use tsc_lsproto::{HoverParams, Method, Position, TextDocumentIdentifier};
 use tsc_project::configfileregistry::{
-    ConfigFileRegistry, TestConfigEntry, TestConfigFileNamesEntry,
+    ConfigFileRegistry, TestConfigEntry,
 };
 use tsc_project::snapshot::Snapshot;
 use tsc_testutil::fsbaselineutil::FsDiffer;
-use tsc_tspath::{PathKey, RootedFilePath};
+use tsc_tspath::RootedFilePath;
 use tsc_vfs::Vfs;
+use tsc_vfs::iovfs::{self, FsWithSys};
 
 use crate::fourslash::{FourslashTest, is_lib_file};
 
 /// `type stateBaseline struct`.
 pub(crate) struct StateBaseline {
-    pub(crate) baseline: Vec<u8>,
+    /// `baseline` is `RefCell<String>` — `verify_baselines` reads it via
+    /// `&state_baseline.baseline.borrow()`.
+    pub(crate) baseline: RefCell<String>,
     pub(crate) fs_differ: FsDiffer,
     is_initialized: bool,
 
@@ -67,23 +71,31 @@ struct OpenFileInfo {
     all_projects: Vec<String>,
 }
 
-/// `newStateBaseline` — `fsFromMap` is the `Arc<dyn Vfs>`; the Go
-/// `iovfs.FsWithSys` assertion is applied lazily inside `FsDiffer`.
-pub(crate) fn new_state_baseline(fs_from_map: Arc<dyn Vfs>) -> StateBaseline {
+/// `newStateBaseline` — `fsFromMap iovfs.FsWithSys`.
+///
+/// PORT: `FsDiffer` stores `Arc<dyn Vfs>` (to re-assert `FsWithSys` lazily),
+/// so the `&dyn FsWithSys` is re-wrapped in `iovfs::from(fsys, case)` — the
+/// inner `Arc<dyn Fs>` (the MapFS) is shared, preserving Go's identity.
+pub(crate) fn new_state_baseline(fs_from_map: &dyn FsWithSys) -> StateBaseline {
+    let fs = iovfs::from(fs_from_map.fsys(), fs_from_map.case_sensitivity());
     let mut state_baseline = StateBaseline {
-        baseline: Vec::new(),
-        fs_differ: FsDiffer::new(fs_from_map.clone(), None, Arc::new(SyncSet::new())),
+        baseline: RefCell::new(String::new()),
+        fs_differ: FsDiffer::new(fs, None, Arc::new(SyncSet::new())),
         is_initialized: false,
         serialized_projects: HashMap::new(),
         serialized_open_files: HashMap::new(),
         serialized_config_file_registry: None,
     };
-    state_baseline.baseline.extend_from_slice(
-        format!("CaseSensitivity: {}\n", fs_from_map.case_sensitivity()).as_bytes(),
-    );
-    state_baseline
-        .fs_differ
-        .baseline_fs_with_diff(&mut state_baseline.baseline);
+    {
+        let mut baseline = state_baseline.baseline.borrow_mut();
+        baseline.push_str(&format!(
+            "CaseSensitivity: {}\n",
+            fs_from_map.case_sensitivity()
+        ));
+        let mut buf = Vec::new();
+        state_baseline.fs_differ.baseline_fs_with_diff(&mut buf);
+        baseline.push_str(&String::from_utf8_lossy(&buf));
+    }
     state_baseline
 }
 
@@ -118,9 +130,11 @@ impl FourslashTest {
             .state_baseline
             .as_mut()
             .expect("state baselining enabled but stateBaseline is not initialized");
-        state_baseline.baseline.push(b'\n');
-        state_baseline.baseline.extend_from_slice(&res);
-        state_baseline.baseline.push(b'\n');
+        let mut baseline = state_baseline.baseline.borrow_mut();
+        baseline.push('\n');
+        baseline.push_str(&String::from_utf8_lossy(&res));
+        baseline.push('\n');
+        drop(baseline);
         state_baseline.is_initialized = true;
     }
 
@@ -130,7 +144,7 @@ impl FourslashTest {
             return;
         }
         // Do hover so we have snapshot to check things on!!
-        let (_, _, result_ok) = self.client.send_request(
+        let (_res_msg, _result, ok) = self.client.send_request(
             &tsc_lsproto::TEXT_DOCUMENT_HOVER_INFO,
             Some(HoverParams {
                 text_document: TextDocumentIdentifier {
@@ -143,7 +157,7 @@ impl FourslashTest {
                 ..Default::default()
             }),
         );
-        assert!(result_ok);
+        assert!(ok, "hover request failed");
         self.baseline_state();
     }
 
@@ -159,8 +173,14 @@ impl FourslashTest {
                 .state_baseline
                 .as_mut()
                 .expect("state baselining enabled but stateBaseline is not initialized");
-            state_baseline.baseline.push(b'\n');
-            state_baseline.baseline.extend_from_slice(&serialized);
+            state_baseline
+                .baseline
+                .borrow_mut()
+                .push('\n');
+            state_baseline
+                .baseline
+                .borrow_mut()
+                .push_str(&String::from_utf8_lossy(&serialized));
         }
     }
 
@@ -362,8 +382,9 @@ impl FourslashTest {
         if !state_baseline.is_initialized {
             return;
         }
-        // ASSUMPTION: `self.client.server().session().snapshot()` mirrors
-        // `f.client.Server.Session().Snapshot()`.
+        // ASSUMPTION: `client.server().session().snapshot()` mirrors
+        // `f.client.Server.Session().Snapshot()` (`Server` is a pub field on
+        // Go's `lsptestutil.LSPClient`; the Rust wrapper exposes `server()`).
         let snapshot = self.client.server().session().snapshot();
 
         self.print_projects_diff(&snapshot, w);
@@ -614,6 +635,7 @@ impl FourslashTest {
             .serialized_open_files = current_open_files;
         files_diff_table.print(w);
     }
+}
 
 /// `*project.TestConfigEntry` snapshotted eagerly — the iter.Seq fields
 /// become sorted `Vec<String>` (`string(path)`/`string(id)` conversions
