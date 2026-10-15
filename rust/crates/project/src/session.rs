@@ -154,7 +154,7 @@ use tsc_lsproto::{
 };
 use tsc_project_logging::LogTree;
 use tsc_lsutil::userpreferences_generated::UserPreferences;
-use tsc_tspath::{CaseSensitivity, PathKey, RootedFilePath};
+use tsc_tspath::{CaseSensitivity, PathKey};
 
 use crate::ata::{TypingsInstallRequest, new_typings_installer, TypingsInstaller, TypingsInstallerOptions};
 use crate::background::{Queue, new_queue};
@@ -2334,7 +2334,8 @@ impl Session {
             self.publish_project_diagnostics(removed_project, Vec::new(), old_snapshot);
         }
         for (id, new_project) in &new_projects {
-            let Some(old_project) = old_projects.get(id) else {
+            // Go's "common" callback receives `oldProject` but ignores it.
+            let Some(_old_project) = old_projects.get(id) else {
                 continue;
             };
             let Some(configured_id) = new_project.id.configured() else {

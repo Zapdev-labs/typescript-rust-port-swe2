@@ -108,7 +108,11 @@ impl ConfigFileRegistryBuilder {
     /// `Finalize` creates a new configFileRegistry based on the changes made
     /// in the builder. If no changes were made, it returns the original base
     /// registry.
-    pub fn finalize(&self) -> ConfigFileRegistry {
+    ///
+    /// PORT: Go returns the `c.base` pointer itself when unchanged, letting
+    /// callers compare pointer identity; here the bool reports that instead
+    /// (the registry is cloned either way).
+    pub fn finalize(&self) -> (ConfigFileRegistry, bool) {
         let mut changed = false;
         let mut new_registry = self.base.clone();
         macro_rules! ensure_cloned {
@@ -140,8 +144,7 @@ impl ConfigFileRegistryBuilder {
             new_registry.custom_config_file_name = self.custom_config_file_name.clone();
         }
 
-        let _ = changed;
-        new_registry
+        (new_registry, changed)
     }
 
     fn content_mappers(&self) -> ConfiguredContentMappers {

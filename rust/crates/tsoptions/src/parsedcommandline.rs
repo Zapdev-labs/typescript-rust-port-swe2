@@ -114,9 +114,28 @@ pub fn new_parsed_command_line(
     base_directory: RootedDirectoryPath,
     case_sensitivity: CaseSensitivity,
 ) -> ParsedCommandLine {
+    new_parsed_command_line_opt(
+        Some(compiler_options),
+        root_file_names,
+        project_references,
+        base_directory,
+        case_sensitivity,
+    )
+}
+
+/// `NewParsedCommandLine` with a nil-able `compilerOptions` (Go
+/// `*core.CompilerOptions`) — synthetic projects may carry a nil
+/// `ParsedConfig.CompilerOptions`.
+pub fn new_parsed_command_line_opt(
+    compiler_options: Option<CompilerOptions>,
+    root_file_names: Vec<RootedFilePath>,
+    project_references: Vec<ProjectReference>,
+    base_directory: RootedDirectoryPath,
+    case_sensitivity: CaseSensitivity,
+) -> ParsedCommandLine {
     ParsedCommandLine {
         parsed_config: Some(ParsedOptions {
-            compiler_options: Some(compiler_options),
+            compiler_options,
             file_names: root_file_names,
             project_references,
             ..Default::default()

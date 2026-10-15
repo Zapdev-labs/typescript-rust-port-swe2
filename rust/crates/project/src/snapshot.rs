@@ -34,7 +34,6 @@ use tsc_tspath::{PathKey, RootedDirectoryPath, RootedFilePath, RootedPath};
 use tsc_vfs::{Vfs, vfsmatch};
 
 use crate::ata::TypingsInfo;
-use crate::autoimport::new_auto_import_registry_clone_host;
 use crate::client::Client;
 use crate::configfileregistry::ConfigFileRegistry;
 use crate::filechange::FileChangeSummary;
@@ -636,7 +635,7 @@ impl Snapshot {
         };
 
         let new_snapshot_id = store.next_snapshot_id();
-        let mut project_collection_builder = new_project_collection_builder(
+        let project_collection_builder = new_project_collection_builder(
             ctx,
             new_snapshot_id,
             fs.clone(),
@@ -664,7 +663,11 @@ impl Snapshot {
         project_collection_builder
             .did_change_custom_config_file_name(&logger.fork("DidChangeCustomConfigFileName"));
         if change.compiler_options_for_inferred_projects.is_some() {
-            if let Some(inferred) = project_collection_builder.inferred_project.clone() {
+            // `b.inferredProject.Value()` — the dirty Box holds an
+            // `Option<Rc<Project>>` (Go's nil-able `*Project`).
+            if let Some(inferred) =
+                project_collection_builder.inferred_project.value().flatten()
+            {
                 let command_line = inferred.command_line.as_ref().expect(
                     "inferred project must have a command line",
                 );
@@ -856,7 +859,7 @@ impl Snapshot {
         new_snapshot.builder_logs = logger.clone();
         new_snapshot.api_error = api_error;
         new_snapshot.file_system_override = change.file_system_override;
-        new_snapshot.created_programs = project_collection_builder.created_programs;
+        new_snapshot.created_programs = project_collection_builder.created_programs();
 
         for project in new_snapshot.project_collection.projects() {
             if let Some(program) = &project.program {
