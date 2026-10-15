@@ -242,8 +242,8 @@ pub fn enum_values() -> BTreeMap<&'static str, BTreeMap<&'static str, i32>> {
     values.insert("CheckFlags", checkflags);
 
     let mut symbolownerkind: BTreeMap<&'static str, i32> = BTreeMap::new();
-    symbolownerkind.insert("File", SYMBOL_OWNER_KIND_FILE.0 as i32);
-    symbolownerkind.insert("Snapshot", SYMBOL_OWNER_KIND_SNAPSHOT.0 as i32);
+    symbolownerkind.insert("File", SYMBOL_OWNER_KIND_FILE as i32);
+    symbolownerkind.insert("Snapshot", SYMBOL_OWNER_KIND_SNAPSHOT as i32);
     values.insert("SymbolOwnerKind", symbolownerkind);
 
     let mut typeflags: BTreeMap<&'static str, i32> = BTreeMap::new();

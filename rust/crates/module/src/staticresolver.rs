@@ -34,6 +34,11 @@ struct StaticResolutionKey {
 }
 
 /// `type StaticResolutions struct`
+///
+/// PORT: `Clone` so a shared registration can hand copies to each
+/// `StaticResolver` wrapper it creates (Go shares the `*StaticResolutions`
+/// pointer; here each wrapper owns an equal copy).
+#[derive(Clone)]
 pub struct StaticResolutions {
     fallback_to_resolver: bool,
     entries: HashMap<StaticResolutionKey, Option<ResolvedModule>>,

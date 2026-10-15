@@ -56,7 +56,7 @@ static SESSION_ID_COUNTER: AtomicU64 = AtomicU64::new(0);
 /// Go caches `map[SymbolID]*ast.Symbol` on the `*ast.SourceFile`; the
 /// value type changes but the lifetime is identical.
 static SOURCE_FILE_SYMBOL_INDEX_KEY: LazyLock<
-    ast::SourceFileDataKey<FxHashMap<u64, ast::SymbolId>>,
+    ast::SourceFileDataKey<FxHashMap<SymbolId, ast::SymbolId>>,
 > = LazyLock::new(ast::new_source_file_data_key);
 
 /// `SymbolHandle` — the client-facing `SymbolID` for a symbol.
@@ -67,17 +67,17 @@ static SOURCE_FILE_SYMBOL_INDEX_KEY: LazyLock<
 /// purpose — unique for the arena's lifetime (which a retained snapshot
 /// or source-file lease covers).
 pub(crate) fn symbol_handle(symbol: ast::SymbolPtr) -> SymbolId {
-    &*symbol as *const ast::Symbol as usize as u64
+    SymbolId(&*symbol as *const ast::Symbol as usize as u64)
 }
 
 /// `TypeHandle` — `TypeID(t.Id())`; the checker's own sequential id.
 pub(crate) fn type_handle(t: &checker::Type) -> TypeId {
-    t.id().0
+    TypeId(t.id().0 as u64)
 }
 
 /// `SignatureHandle` — `SignatureID(sig.Id())`.
 pub(crate) fn signature_handle(sig: &checker::Signature) -> SignatureId {
-    sig.id().0 as u64
+    SignatureId(sig.id().0 as u64)
 }
 
 /// `typeHandles` — `[]TypeID` of a `[]*checker.Type` slice.
@@ -190,14 +190,14 @@ pub(crate) fn get_source_file_symbol_index(
     arena: &ast::SymbolArena,
     nodes: &mut Vec<ast::Node>,
     file: ast::NodeId,
-) -> FxHashMap<u64, ast::SymbolId> {
+) -> FxHashMap<SymbolId, ast::SymbolId> {
     ast::get_or_compute_data(nodes, file, &SOURCE_FILE_SYMBOL_INDEX_KEY, |nodes, file| {
         let mut index = FxHashMap::with_capacity_and_hasher(
             nodes[file].as_source_file().symbol_count as usize,
             Default::default(),
         );
         fn add_symbol(
-            index: &mut FxHashMap<u64, ast::SymbolId>,
+            index: &mut FxHashMap<SymbolId, ast::SymbolId>,
             arena: &ast::SymbolArena,
             nodes: &Vec<ast::Node>,
             file: ast::NodeId,
@@ -350,7 +350,7 @@ pub(crate) struct BoundSourceFile {
     /// this arena.
     pub symbols: ast::SymbolArena,
     /// `getSourceFileSymbolIndex` for the bound clone.
-    pub symbol_index: FxHashMap<u64, ast::SymbolId>,
+    pub symbol_index: FxHashMap<SymbolId, ast::SymbolId>,
 }
 
 impl SourceFileDescriptor {
@@ -470,8 +470,8 @@ pub(crate) struct SnapshotData {
 
     /// `symbolRegistry`/`symbolCanonicalProjects` — one `RwLock` each,
     /// mirroring `symbolRegistryMu`.
-    symbol_registry: RwLock<FxHashMap<u64, SymbolEntry>>,
-    symbol_canonical_projects: RwLock<FxHashMap<u64, project::project::Id>>,
+    symbol_registry: RwLock<FxHashMap<SymbolId, SymbolEntry>>,
+    symbol_canonical_projects: RwLock<FxHashMap<SymbolId, project::project::Id>>,
 
     project_registries: RwLock<FxHashMap<project::project::Id, Rc<ProjectRegistryData>>>,
 }
@@ -482,8 +482,8 @@ pub(crate) struct SnapshotData {
 /// collisions and allow clean teardown when a project is removed.
 #[derive(Default)]
 pub(crate) struct ProjectRegistryData {
-    pub types: RwLock<FxHashMap<u32, TypeEntry>>,
-    pub signatures: RwLock<FxHashMap<u64, SignatureEntry>>,
+    pub types: RwLock<FxHashMap<TypeId, TypeEntry>>,
+    pub signatures: RwLock<FxHashMap<SignatureId, SignatureEntry>>,
 }
 
 impl SnapshotData {
@@ -608,7 +608,7 @@ impl SnapshotData {
         canonical_project: &project::project::Id,
     ) -> (SymbolId, project::project::Id) {
         if symbol.is_none() {
-            return (0, project::project::Id(String::new()));
+            return (SymbolId(0), project::project::Id(String::new()));
         }
         assert!(
             !canonical_project.0.is_empty(),
@@ -681,10 +681,7 @@ impl SnapshotData {
                 (&mut resp.name_type, mapped.name_type()),
                 (&mut resp.template_type, mapped.template_type()),
             ] {
-                *slot = match value {
-                    Some(v) => self.register_type(&c.types, project_id, v),
-                    None => 0,
-                };
+                *slot = value.map(|v| self.register_type(&c.types, project_id, v));
             }
         }
         if checker_exports::is_tuple_type_target(&c.types, ty) {
@@ -692,15 +689,14 @@ impl SnapshotData {
             let element_infos = t.as_tuple_type().element_infos();
             for (i, info) in element_infos.iter().enumerate() {
                 if let Some(declaration) = info.labeled_declaration() {
-                    if resp.labeled_element_declarations.is_empty() {
-                        resp.labeled_element_declarations =
-                            vec![NodeHandle::default(); element_infos.len()];
-                    }
-                    resp.labeled_element_declarations[i] = self.node_handle_from(
+                    let declarations = resp
+                        .labeled_element_declarations
+                        .get_or_insert_with(|| vec![None; element_infos.len()]);
+                    declarations[i] = Some(self.node_handle_from(
                         nodes,
                         ast::get_source_file_of_node(Some(declaration), nodes).unwrap(),
                         declaration,
-                    );
+                    ));
                 }
             }
         }
@@ -715,7 +711,7 @@ impl SnapshotData {
         ty: checker::TypeId,
     ) -> TypeId {
         if ty.is_none() {
-            return 0;
+            return TypeId(0);
         }
         let entry = TypeEntry {
             arena: arena.clone(),
@@ -753,29 +749,31 @@ impl SnapshotData {
             ..Default::default()
         };
         if let Some(declaration) = sig.declaration() {
-            resp.declaration = self.node_handle_from(
+            resp.declaration = Some(self.node_handle_from(
                 nodes,
                 ast::get_source_file_of_node(Some(declaration), nodes).unwrap(),
                 declaration,
-            );
+            ));
         }
         if !sig.type_parameters().is_empty() {
-            resp.type_parameters = type_handles(&c.types, sig.type_parameters());
+            resp.type_parameters =
+                Some(type_handles(&c.types, sig.type_parameters()));
         }
         if !sig.parameters().is_empty() {
-            resp.parameters = sig
-                .parameters()
-                .iter()
-                .map(|&p| {
-                    new_symbol_reference(nodes, &c.symbol_arena, p).unwrap_or_default()
-                })
-                .collect();
+            resp.parameters = Some(
+                sig.parameters()
+                    .iter()
+                    .map(|&p| {
+                        new_symbol_reference(nodes, &c.symbol_arena, p).unwrap_or_default()
+                    })
+                    .collect(),
+            );
         }
         if let Some(this) = sig.this_parameter() {
             resp.this_parameter = new_symbol_reference(nodes, &c.symbol_arena, this);
         }
         if let Some(target) = sig.target() {
-            resp.target = signature_handle(c.signature_arena.get(target));
+            resp.target = Some(signature_handle(c.signature_arena.get(target)));
         }
         Some(resp)
     }
@@ -788,7 +786,7 @@ impl SnapshotData {
         signature: checker::SignatureId,
     ) -> SignatureId {
         if signature.is_none() {
-            return 0;
+            return SignatureId(0);
         }
         let id = signature_handle(arena.get(signature));
         let reg = self.get_or_create_project_registry(project_id);
@@ -923,7 +921,7 @@ pub(crate) fn new_file_symbol_response(
         owner: SymbolOwner {
             kind: SYMBOL_OWNER_KIND_FILE,
             file: Some(descriptor),
-            snapshot: 0,
+            snapshot: SnapshotId(0),
             project: project::project::Id(String::new()),
         },
         id: symbol_handle(arena.get(symbol)),
@@ -967,14 +965,16 @@ pub(crate) fn build_symbol_response(
         }
     }
     if !s.declarations.is_empty() {
-        resp.declarations = s
-            .declarations
-            .iter()
-            .map(|&decl| symbol_node_handle_from(nodes, decl, owner))
-            .collect();
+        resp.declarations = Some(
+            s.declarations
+                .iter()
+                .map(|&decl| symbol_node_handle_from(nodes, decl, owner))
+                .collect(),
+        );
     }
     if let Some(value_declaration) = s.value_declaration {
-        resp.value_declaration = symbol_node_handle_from(nodes, value_declaration, owner);
+        resp.value_declaration =
+            Some(symbol_node_handle_from(nodes, value_declaration, owner));
     }
     resp
 }
@@ -995,10 +995,10 @@ pub(crate) fn new_symbol_reference(
     }
     let mut reference = CompactSymbolReference {
         id: symbol_handle(arena.get(symbol)),
-        file: String::new(),
+        file: None,
     };
     if let Some(file) = symbol_owner_file(nodes, arena, symbol) {
-        reference.file = source_file_node_id(file).to_string();
+        reference.file = Some(source_file_node_id(file).to_string());
     }
     Some(reference)
 }
@@ -1017,7 +1017,9 @@ pub(crate) struct ModuleResolverRegistration {
 /// PORT: lives in `module_resolution.rs` in Go — kept next to the session
 /// state it protects, like Go's same-package layout.
 pub(crate) struct ProgramResolutionContext {
-    pub options: Mutex<module::ResolverOptions>,
+    /// `options` is fixed at registration; per-registration resolvers
+    /// clone it and swap `compiler_options` (`resolver_for`).
+    pub options: module::ResolverOptions,
     pub resolvers: Mutex<FxHashMap<ModuleResolverId, Arc<dyn module::Resolver>>>,
 }
 
@@ -1064,22 +1066,22 @@ pub struct Session {
     /// `snapshots_mu` is held only for short, map-bounded critical
     /// sections, never across slow work like a project snapshot update or
     /// checker queries — same as Go.
-    snapshots: RwLock<FxHashMap<u64, Arc<SnapshotData>>>,
+    snapshots: RwLock<FxHashMap<SnapshotId, Arc<SnapshotData>>>,
 
     /// `openProjects`, `openFiles`, and `createdPrograms` are the
     /// canonical LSP-state resources owned by this API client. Guarded by
     /// `language_server_update_mu`.
     language_server_state: Mutex<LanguageServerState>,
 
-    build_orchestrators: Mutex<FxHashMap<u64, Arc<build::Orchestrator>>>,
+    build_orchestrators: Mutex<FxHashMap<BuildOrchestratorId, Arc<build::Orchestrator>>>,
 
-    next_module_resolver_id: AtomicU64,
-    pub(crate) module_resolvers: RwLock<FxHashMap<u64, Rc<ModuleResolverRegistration>>>,
+    pub(crate) next_module_resolver_id: AtomicU64,
+    pub(crate) module_resolvers: RwLock<FxHashMap<ModuleResolverId, Arc<ModuleResolverRegistration>>>,
     pub(crate) next_program_resolution_context_id: AtomicU64,
     pub(crate) program_resolution_contexts:
         RwLock<FxHashMap<u64, Rc<ProgramResolutionContext>>>,
-    pub(crate) source_file_leases: Mutex<FxHashMap<u64, Rc<project::snapshothost::SourceFileLease>>>,
-    next_source_file_lease_id: AtomicU64,
+    pub(crate) source_file_leases: Mutex<FxHashMap<SourceFileLeaseId, Rc<project::snapshothost::SourceFileLease>>>,
+    pub(crate) next_source_file_lease_id: AtomicU64,
 
     /// Session-side bound clones of leased parse-cache files, keyed on
     /// the shared `Arc<ParsedSourceFile>` pointer. Go binds cached files
@@ -1227,7 +1229,7 @@ impl Session {
 
     /// `snapshotHandle` creates a snapshot handle from a snapshot's ID.
     pub(crate) fn snapshot_handle(snapshot: &project::snapshot::Snapshot) -> SnapshotId {
-        snapshot.id()
+        SnapshotId(snapshot.id())
     }
 
     /// `s.getSnapshotData` looks up snapshot data by handle.
@@ -1251,7 +1253,7 @@ impl Session {
         &self,
         handle: SnapshotId,
     ) -> Result<Arc<SnapshotData>, String> {
-        let mut snapshots = self.snapshots.write().unwrap();
+        let snapshots = self.snapshots.write().unwrap();
         match snapshots.get(&handle) {
             Some(sd) => {
                 sd.ref_count.set(sd.ref_count.get() + 1);
@@ -1400,11 +1402,6 @@ impl Session {
                     bound: None,
                 })
             }
-            _ => Err(format!(
-                "{}: invalid symbol reference kind {:?}",
-                ERR_CLIENT_ERROR,
-                ref_.owner.kind
-            )),
         }
     }
 
@@ -1621,11 +1618,11 @@ impl CheckerSetup {
             ..Default::default()
         };
         if let Some(declaration) = info.declaration {
-            result.declaration = self.sd.node_handle_from(
+            result.declaration = Some(self.sd.node_handle_from(
                 nodes,
                 ast::get_source_file_of_node(Some(declaration), nodes).unwrap(),
                 declaration,
-            );
+            ));
         }
         Some(result)
     }
@@ -1642,7 +1639,7 @@ impl CheckerSetup {
     pub fn resolve_symbol_handle(
         &self,
         ref_: &SymbolReference,
-        nodes: &mut Vec<ast::Node>,
+        _nodes: &mut Vec<ast::Node>,
     ) -> Result<SymbolEntry, String> {
         match ref_.owner.kind {
             SYMBOL_OWNER_KIND_SNAPSHOT => {
@@ -1692,11 +1689,6 @@ impl CheckerSetup {
                     )),
                 }
             }
-            _ => Err(format!(
-                "{}: invalid symbol reference kind {:?}",
-                ERR_CLIENT_ERROR,
-                ref_.owner.kind
-            )),
         }
     }
 

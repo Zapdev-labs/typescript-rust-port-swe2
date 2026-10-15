@@ -5,12 +5,12 @@
 //
 // PORT notes:
 // - Serde mapping: `json:"camelCase"` → `#[serde(rename_all = "camelCase")]`
-//   (or explicit `rename`). `omitempty` → `Option<T>` for Go pointers, or
-//   `#[serde(default, skip_serializing_if = ...)]` for value types where the
-//   Go empty value is omitted. `omitzero` → skip-if-zero. `nonnil:"true"` →
-//   a value type (or `Option` + `ser_nonnil`) so the field always serializes
-//   a non-null JSON value, and `#[serde(default)]` so missing input is the
-//   zero value — mirroring jsonv2's non-nil marshal behavior.
+//   (or explicit `rename`). `*T omitempty`/`omitzero` → `Option<T>` +
+//   `skip_serializing_if`; value `omitempty`/`omitzero` → `Option<T>` where
+//   the session assigns, else `T` + `default`/`skip_serializing_if`.
+//   `nonnil:"true"` → a value type (or `Option` + `ser_nonnil`) so the field
+//   always serializes a non-null JSON value, plus `#[serde(default)]` for
+//   missing input — mirroring jsonv2's non-nil marshal behavior.
 // - `#[serde(default)]` at the container level mirrors Go's json unmarshal,
 //   which never fails on missing fields (absent → zero value).
 // - Foreign types without serde impls (`tspath::*`, `project::Id`,
@@ -19,6 +19,8 @@
 //   prevent impls on the other crates. Go marshals them as plain
 //   strings/numbers.
 // - `Go int` → `i64`, `int32` → `i32`, `uint32`/`uint64` → `u32`/`u64`.
+//   Go's `TypeID uint32` is `pub struct TypeId(pub u64)` — the session's
+//   registries key on the u64 wire value; uint32→u64 is wire-identical.
 // - `json:"-"` (server-populated fields like `CompilerOptions`) →
 //   `#[serde(skip)]`.
 // - `SymbolId`/`TypeId`/`SignatureId`/`NodeHandle` are API wire ids, not the
@@ -29,8 +31,8 @@
 //   `unmarshallerFor[T]` returning `any` → `Box<dyn Any>` for session-side
 //   downcasting; `noParams` → `Box::new(())` (Go's nil `any`).
 // - `ErrInvalidRequest`/`ErrClientError` → `ERR_INVALID_REQUEST`/
-//   `ERR_CLIENT_ERROR` message consts; protocol_msgpack.rs already wraps
-//   the same text in `ipc::Error`.
+//   `ERR_CLIENT_ERROR` message consts; sessions return `Result<_, String>`
+//   and protocol_msgpack.rs already wraps the same text in `ipc::Error`.
 
 #![allow(dead_code)]
 
@@ -40,17 +42,19 @@ use std::fmt;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use rustc_hash::FxHashMap;
-use serde::de::{self, Error as _, IgnoredAny, MapAccess, SeqAccess, Visitor};
+use serde::de::{self, IgnoredAny, MapAccess, SeqAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use tsc_ast::{Node, NodeId, SymbolId as AstSymbolId};
 use tsc_ast::ast::SourceFileLike as AstSourceFileLike;
-use tsc_ast::diagnostic::{DiagnosticRef, lock_diagnostic, new_compiler_diagnostic};
+use tsc_ast::diagnostic::{
+    DiagnosticRef, lock_diagnostic, new_compiler_diagnostic, new_diagnostic_from_text,
+};
+use tsc_ast::{Node, SymbolId as AstSymbolId};
 use tsc_checker::checker_core::is_tuple_type;
 use tsc_checker::exports::is_tuple_type_target;
 use tsc_checker::types::{
-    ElementFlags, Signature, SignatureId as CheckerSignatureId, Type as CheckerType, TypeArena,
-    TypeFlags, TypeId as CheckerTypeId,
+    ElementFlags, ObjectFlags, Signature, Type as CheckerType, TypeArena, TypeFlags,
+    TypeId as CheckerTypeId,
 };
 use tsc_collections::OrderedMap;
 use tsc_core::compileroptions::ResolutionMode;
@@ -60,9 +64,7 @@ use tsc_core::projectreference::ProjectReference;
 use tsc_core::scriptkind::ScriptKind;
 use tsc_core::text::TextRange;
 use tsc_diagnostics::Category;
-use tsc_diagnosticwriter::{
-    ASTDiagnostic, Diagnostic as _, FileLike, wrap_ast_diagnostic,
-};
+use tsc_diagnosticwriter::{ASTDiagnostic, Diagnostic as _, FileLike, wrap_ast_diagnostic};
 use tsc_evaluator::Value as EvaluatorValue;
 use tsc_execute::tsc::{ExitStatus, Statistics};
 use tsc_json as json;
@@ -72,9 +74,7 @@ use tsc_lsproto::DocumentUri;
 use tsc_lsutil::userpreferences_generated::UserPreferences;
 use tsc_module::types::PackageId as ModulePackageId;
 use tsc_packagejson::{JSONValue, JSONValueData, JSONValueType};
-use tsc_project::project::{
-    Id as ProjectId, Kind as ProjectKind, Project, SyntheticProjectId,
-};
+use tsc_project::project::{Id as ProjectId, Kind as ProjectKind, Project, SyntheticProjectId};
 use tsc_scanner::scanner::get_ecma_line_and_utf16_character_of_position;
 use tsc_spanmap::SpanMap;
 use tsc_tsoptions::parsedcommandline::ParsedCommandLine;
@@ -108,24 +108,44 @@ trait StrWrapped: Sized {
 }
 
 impl StrWrapped for RootedFilePath {
-    fn wrapped_str(&self) -> &str { self.as_string() }
-    fn wrap_string(s: String) -> Self { RootedFilePath::from(s) }
+    fn wrapped_str(&self) -> &str {
+        self.as_string()
+    }
+    fn wrap_string(s: String) -> Self {
+        RootedFilePath::from(s)
+    }
 }
 impl StrWrapped for RootedDirectoryPath {
-    fn wrapped_str(&self) -> &str { self.as_string() }
-    fn wrap_string(s: String) -> Self { RootedDirectoryPath::from(s) }
+    fn wrapped_str(&self) -> &str {
+        self.as_string()
+    }
+    fn wrap_string(s: String) -> Self {
+        RootedDirectoryPath::from(s)
+    }
 }
 impl StrWrapped for PathKey {
-    fn wrapped_str(&self) -> &str { self.as_string() }
-    fn wrap_string(s: String) -> Self { PathKey::from(s) }
+    fn wrapped_str(&self) -> &str {
+        self.as_string()
+    }
+    fn wrap_string(s: String) -> Self {
+        PathKey::from(s)
+    }
 }
 impl StrWrapped for ProjectId {
-    fn wrapped_str(&self) -> &str { self.as_str() }
-    fn wrap_string(s: String) -> Self { ProjectId::from(s) }
+    fn wrapped_str(&self) -> &str {
+        self.as_str()
+    }
+    fn wrap_string(s: String) -> Self {
+        ProjectId::from(s)
+    }
 }
 impl StrWrapped for SyntheticProjectId {
-    fn wrapped_str(&self) -> &str { &self.0 }
-    fn wrap_string(s: String) -> Self { SyntheticProjectId(s) }
+    fn wrapped_str(&self) -> &str {
+        &self.0
+    }
+    fn wrap_string(s: String) -> Self {
+        SyntheticProjectId(s)
+    }
 }
 
 fn ser_str<T: StrWrapped, S: Serializer>(v: &T, s: S) -> Result<S::Ok, S::Error> {
@@ -140,9 +160,7 @@ fn ser_str_opt<T: StrWrapped, S: Serializer>(v: &Option<T>, s: S) -> Result<S::O
         None => s.serialize_none(),
     }
 }
-fn de_str_opt<'de, T: StrWrapped, D: Deserializer<'de>>(
-    d: D,
-) -> Result<Option<T>, D::Error> {
+fn de_str_opt<'de, T: StrWrapped, D: Deserializer<'de>>(d: D) -> Result<Option<T>, D::Error> {
     Ok(Option::<String>::deserialize(d)?.map(T::wrap_string))
 }
 fn ser_str_vec<T: StrWrapped, S: Serializer>(v: &[T], s: S) -> Result<S::Ok, S::Error> {
@@ -166,9 +184,8 @@ fn ser_str_opt_vec<T: StrWrapped, S: Serializer>(
 fn de_str_opt_vec<'de, T: StrWrapped, D: Deserializer<'de>>(
     d: D,
 ) -> Result<Option<Vec<T>>, D::Error> {
-    Ok(Option::<Vec<String>>::deserialize(d)?.map(|v| {
-        v.into_iter().map(T::wrap_string).collect()
-    }))
+    Ok(Option::<Vec<String>>::deserialize(d)?
+        .map(|v| v.into_iter().map(T::wrap_string).collect()))
 }
 fn str_wrapped_is_empty<T: StrWrapped>(v: &T) -> bool {
     v.wrapped_str().is_empty()
@@ -196,7 +213,9 @@ trait IntTagged: Sized {
 }
 
 impl IntTagged for ScriptKind {
-    fn as_i64(&self) -> i64 { *self as i64 }
+    fn as_i64(&self) -> i64 {
+        *self as i64
+    }
     fn from_i64(v: i64) -> Option<Self> {
         Some(match v {
             0 => ScriptKind::Unknown,
@@ -210,7 +229,9 @@ impl IntTagged for ScriptKind {
     }
 }
 impl IntTagged for Category {
-    fn as_i64(&self) -> i64 { *self as i64 }
+    fn as_i64(&self) -> i64 {
+        *self as i64
+    }
     fn from_i64(v: i64) -> Option<Self> {
         Some(match v {
             0 => Category::Warning,
@@ -222,7 +243,9 @@ impl IntTagged for Category {
     }
 }
 impl IntTagged for ExitStatus {
-    fn as_i64(&self) -> i64 { *self as i64 }
+    fn as_i64(&self) -> i64 {
+        *self as i64
+    }
     fn from_i64(v: i64) -> Option<Self> {
         Some(match v {
             0 => ExitStatus::Success,
@@ -251,7 +274,9 @@ impl IntTagged for CaseSensitivity {
     }
 }
 impl IntTagged for ElementFlags {
-    fn as_i64(&self) -> i64 { self.0 as i64 }
+    fn as_i64(&self) -> i64 {
+        self.0 as i64
+    }
     fn from_i64(v: i64) -> Option<Self> {
         u32::try_from(v).ok().map(ElementFlags)
     }
@@ -263,10 +288,7 @@ fn ser_int<T: IntTagged, S: Serializer>(v: &T, s: S) -> Result<S::Ok, S::Error> 
 fn de_int<'de, T: IntTagged, D: Deserializer<'de>>(d: D) -> Result<T, D::Error> {
     let v = i64::deserialize(d)?;
     T::from_i64(v).ok_or_else(|| {
-        de::Error::custom(format!(
-            "unknown {} value {v}",
-            std::any::type_name::<T>()
-        ))
+        de::Error::custom(format!("unknown {} value {v}", std::any::type_name::<T>()))
     })
 }
 fn ser_int_opt<T: IntTagged, S: Serializer>(v: &Option<T>, s: S) -> Result<S::Ok, S::Error> {
@@ -275,31 +297,23 @@ fn ser_int_opt<T: IntTagged, S: Serializer>(v: &Option<T>, s: S) -> Result<S::Ok
         None => s.serialize_none(),
     }
 }
-fn de_int_opt<'de, T: IntTagged, D: Deserializer<'de>>(
-    d: D,
-) -> Result<Option<T>, D::Error> {
+fn de_int_opt<'de, T: IntTagged, D: Deserializer<'de>>(d: D) -> Result<Option<T>, D::Error> {
     match Option::<i64>::deserialize(d)? {
+        Some(v) => Ok(Some(T::from_i64(v).ok_or_else(|| {
+            de::Error::custom(format!("unknown {} value {v}", std::any::type_name::<T>()))
+        })?)),
         None => Ok(None),
-        Some(v) => T::from_i64(v).map(Some).ok_or_else(|| {
-            de::Error::custom(format!(
-                "unknown {} value",
-                std::any::type_name::<T>()
-            ))
-        }),
     }
 }
 fn ser_int_vec<T: IntTagged, S: Serializer>(v: &[T], s: S) -> Result<S::Ok, S::Error> {
     s.collect_seq(v.iter().map(|x| x.as_i64()))
 }
 fn de_int_vec<'de, T: IntTagged, D: Deserializer<'de>>(d: D) -> Result<Vec<T>, D::Error> {
-    let raw = Vec::<i64>::deserialize(d)?;
-    raw.into_iter()
+    Vec::<i64>::deserialize(d)?
+        .into_iter()
         .map(|v| {
             T::from_i64(v).ok_or_else(|| {
-                de::Error::custom(format!(
-                    "unknown {} value {v}",
-                    std::any::type_name::<T>()
-                ))
+                de::Error::custom(format!("unknown {} value {v}", std::any::type_name::<T>()))
             })
         })
         .collect()
@@ -331,7 +345,7 @@ fn ser_statistics<S: Serializer>(v: &Statistics, s: S) -> Result<S::Ok, S::Error
     st.end()
 }
 fn de_statistics<'de, D: Deserializer<'de>>(d: D) -> Result<Statistics, D::Error> {
-    #[derive(Deserialize, Default)]
+    #[derive(Default, Deserialize)]
     #[serde(default)]
     struct StatisticsFields {
         #[serde(rename = "Projects")]
@@ -349,18 +363,47 @@ fn de_statistics<'de, D: Deserializer<'de>>(d: D) -> Result<Statistics, D::Error
     Ok(stats)
 }
 
-fn is_zero_u32(v: &u32) -> bool { *v == 0 }
-fn is_zero_u64(v: &u64) -> bool { *v == 0 }
-fn is_false(v: &bool) -> bool { !*v }
-fn document_uri_is_empty(v: &DocumentUri) -> bool { v.0.is_empty() }
+fn exit_status_default() -> ExitStatus {
+    // Go's `tsc.ExitStatus` zero value.
+    ExitStatus::Success
+}
+fn category_default() -> Category {
+    // Go's `diagnostics.Category` zero value.
+    Category::Warning
+}
+
+fn is_zero_u32(v: &u32) -> bool {
+    *v == 0
+}
+fn is_zero_i32(v: &i32) -> bool {
+    *v == 0
+}
+fn is_zero_i64(v: &i64) -> bool {
+    *v == 0
+}
+fn is_zero_u64(v: &u64) -> bool {
+    *v == 0
+}
+fn is_false(v: &bool) -> bool {
+    !*v
+}
+fn document_uri_is_empty(v: &DocumentUri) -> bool {
+    v.0.is_empty()
+}
+fn node_handle_is_empty(v: &NodeHandle) -> bool {
+    v.0.is_empty()
+}
 fn changed_projects_is_empty(m: &FxHashMap<ProjectId, ProjectFileChanges>) -> bool {
     m.is_empty()
+}
+fn script_kind_is_unknown(v: &ScriptKind) -> bool {
+    *v == ScriptKind::Unknown
 }
 
 /// Defines a Go `type X string` newtype (`Method`, `NodeHandle`,
 /// `ModuleResolutionFallback`, `ImportAdderActionKind`) over
-/// `Cow<'static, str>` — the same shape as `tsc_lsproto::Method`: const-
-/// constructible for method constants, `Cow::Owned` on deserialize.
+/// `Cow<'static, str>` — const-constructible for method constants,
+/// `Cow::Owned` on deserialize and for session-built handles.
 macro_rules! api_string_newtype {
     ($(#[$meta:meta])* $name:ident) => {
         $(#[$meta])*
@@ -418,49 +461,123 @@ api_string_newtype! {
 }
 
 // ---------------------------------------------------------------------------
-// ID types (`type ( SnapshotID uint64 ... NodeHandle string )`)
+// ID types (`type ( SnapshotID uint64 ... )`)
 // ---------------------------------------------------------------------------
 
-/// `type SnapshotID uint64`.
-pub type SnapshotId = u64;
-/// `type ModuleResolverID uint64`.
-pub type ModuleResolverId = u64;
-/// `type SourceFileLeaseID uint64`.
-pub type SourceFileLeaseId = u64;
-/// `type BuildOrchestratorID uint64`.
-pub type BuildOrchestratorId = u64;
-/// `type SymbolID uint64` — API wire id, not `ast::SymbolId`.
-pub type SymbolId = u64;
-/// `type TypeID uint32` — API wire id, not `checker::TypeId`.
-pub type TypeId = u32;
-/// `type SignatureID uint64` — API wire id, not `checker::SignatureId`.
-pub type SignatureId = u64;
+/// Bridge trait for the u64 wire-id newtypes (Go `type X uint64`) — the
+/// `omitzero` skip check looks through `Option` like Go's zero value.
+trait WireId: Sized {
+    fn raw(&self) -> u64;
+}
+fn wire_id_is_zero<T: WireId>(v: &T) -> bool {
+    v.raw() == 0
+}
+/// `Option<Id>` that treats `Some(0)` like Go's `omitzero` on the id value —
+/// the session uses `Some(TypeId(0))`/`Some(SignatureId(0))` as sentinels for
+/// the absent-id case Go writes as the zero value.
+fn opt_wire_id_is_zero<T: WireId>(v: &Option<T>) -> bool {
+    v.as_ref().map_or(true, |t| t.raw() == 0)
+}
+
+macro_rules! api_id_newtype {
+    ($(#[$meta:meta])* $name:ident, $gotype:literal) => {
+        $(#[$meta])*
+        /// Go `$gotype` — serializes as a JSON number.
+        #[derive(
+            Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash,
+            Serialize, Deserialize,
+        )]
+        #[serde(transparent)]
+        pub struct $name(pub u64);
+
+        impl $name {
+            /// `id == 0` — Go's nil handle check.
+            pub const fn is_zero(&self) -> bool {
+                self.0 == 0
+            }
+        }
+
+        impl WireId for $name {
+            fn raw(&self) -> u64 {
+                self.0
+            }
+        }
+
+        impl std::fmt::Display for $name {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                self.0.fmt(f)
+            }
+        }
+
+        impl PartialEq<u64> for $name {
+            fn eq(&self, other: &u64) -> bool {
+                self.0 == *other
+            }
+        }
+
+        impl From<u64> for $name {
+            fn from(v: u64) -> Self {
+                Self(v)
+            }
+        }
+    };
+}
+
+api_id_newtype! {
+    /// `type SnapshotID uint64`.
+    SnapshotId, "SnapshotID uint64"
+}
+api_id_newtype! {
+    /// `type ModuleResolverID uint64`.
+    ModuleResolverId, "ModuleResolverID uint64"
+}
+api_id_newtype! {
+    /// `type SourceFileLeaseID uint64`.
+    SourceFileLeaseId, "SourceFileLeaseID uint64"
+}
+api_id_newtype! {
+    /// `type BuildOrchestratorID uint64`.
+    BuildOrchestratorId, "BuildOrchestratorID uint64"
+}
+api_id_newtype! {
+    /// `type SymbolID uint64` — API wire id, not `ast::SymbolId`.
+    SymbolId, "SymbolID uint64"
+}
+api_id_newtype! {
+    /// `type TypeID uint32` — API wire id, not `checker::TypeId`.
+    /// PORT: inner is `u64` (session registries index the u64 wire value).
+    TypeId, "TypeID uint32"
+}
+api_id_newtype! {
+    /// `type SignatureID uint64` — API wire id, not `checker::SignatureId`.
+    SignatureId, "SignatureID uint64"
+}
 
 static NEXT_BUILD_ORCHESTRATOR_ID: AtomicU64 = AtomicU64::new(0);
 
 /// `func NewBuildOrchestratorID() BuildOrchestratorID` — `Add(1)` returns the
 /// new value; `fetch_add(1)+1` is equivalent.
 pub fn new_build_orchestrator_id() -> BuildOrchestratorId {
-    NEXT_BUILD_ORCHESTRATOR_ID.fetch_add(1, Ordering::Relaxed) + 1
+    BuildOrchestratorId(NEXT_BUILD_ORCHESTRATOR_ID.fetch_add(1, Ordering::Relaxed) + 1)
 }
 
 /// `func SymbolHandle(symbol *ast.Symbol) SymbolID`.
 ///
-/// PORT: Go reads a lazily-assigned atomic counter off `*ast.Symbol`; in this
-/// port the symbol's id is its `SymbolArena` slot (`ast::SymbolId`), so the
-/// handle is the slot index.
+/// PORT: Go reads a lazily-assigned atomic counter off `*ast.Symbol`; the
+/// session's canonical version (`session.rs::symbol_handle`) uses the symbol's
+/// stable arena pointer — this arena-slot variant exists for proto parity.
 pub fn symbol_handle(symbol: AstSymbolId) -> SymbolId {
-    symbol.0 as u64
+    SymbolId(symbol.0 as u64)
 }
 
 /// `func TypeHandle(t *checker.Type) TypeID` — `t.Id()`.
 pub fn type_handle(t: &CheckerType) -> TypeId {
-    t.id().0
+    TypeId(t.id().0 as u64)
 }
 
 /// `func SignatureHandle(sig *checker.Signature) SignatureID` — `sig.Id()`.
 pub fn signature_handle(sig: &Signature) -> SignatureId {
-    sig.id().0 as u64
+    SignatureId(sig.id().0 as u64)
 }
 
 // ---------------------------------------------------------------------------
@@ -717,16 +834,10 @@ pub const METHOD_SAVE_HEAP_PROFILE: Method = Method::new("saveHeapProfile");
 pub struct InitializeResponse {
     /// `CaseSensitivity` determines how the host file system compares paths.
     /// Go's `uint8` enum serializes as a number.
-    #[serde(
-        serialize_with = "ser_int",
-        deserialize_with = "de_int"
-    )]
+    #[serde(serialize_with = "ser_int", deserialize_with = "de_int")]
     pub case_sensitivity: CaseSensitivity,
     /// `CurrentDirectory` is the server's current working directory.
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub current_directory: RootedDirectoryPath,
 }
 
@@ -741,7 +852,7 @@ pub struct InitializeResponse {
 /// Go's custom `UnmarshalJSONFrom` accepts a bare string (-> `FileName`) or an
 /// object `{"uri": "..."}`; `Serialize` is the default struct shape
 /// (`{"fileName":...,"uri":...}` with both omitempty).
-#[derive(Clone, Debug, Default, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DocumentIdentifier {
     #[serde(skip_serializing_if = "String::is_empty")]
@@ -777,9 +888,7 @@ impl<'de> Deserialize<'de> for DocumentIdentifier {
 
             fn visit_str<E: de::Error>(self, v: &str) -> Result<Self::Value, E> {
                 if v.is_empty() {
-                    return Err(E::custom(
-                        "DocumentIdentifier: file name must not be empty",
-                    ));
+                    return Err(E::custom("DocumentIdentifier: file name must not be empty"));
                 }
                 Ok(DocumentIdentifier {
                     file_name: v.to_string(),
@@ -796,7 +905,7 @@ impl<'de> Deserialize<'de> for DocumentIdentifier {
                 while let Some(key) = map.next_key::<String>()? {
                     if key == "uri" {
                         if uri.is_some() {
-                            return Err(A::Error::custom(format!(
+                            return Err(de::Error::custom(format!(
                                 "DocumentIdentifier: duplicate field {key:?}"
                             )));
                         }
@@ -806,7 +915,7 @@ impl<'de> Deserialize<'de> for DocumentIdentifier {
                                 uri = Some(DocumentUri(s.to_string()));
                             }
                             _ => {
-                                return Err(A::Error::custom(
+                                return Err(de::Error::custom(
                                     "DocumentIdentifier: uri must be a non-empty string",
                                 ));
                             }
@@ -821,7 +930,7 @@ impl<'de> Deserialize<'de> for DocumentIdentifier {
                         file_name: String::new(),
                         uri,
                     }),
-                    None => Err(A::Error::custom(
+                    None => Err(de::Error::custom(
                         "DocumentIdentifier: object must contain uri",
                     )),
                 }
@@ -958,28 +1067,14 @@ pub struct SnapshotRequestChangesParams {
 /// `type EnsurePrograms struct { All bool; Projects []project.ID }`.
 ///
 /// PORT: the Go struct has a custom `UnmarshalJSONFrom` (`true` → All; array →
-/// Projects) and a default marshal that would emit `{"All":...,"Projects":...}`
-/// — only the unmarshal path is used (request params), so only `Deserialize`
-/// is implemented and Go's unused default marshal is not reproduced.
-#[derive(Clone, Debug, Default)]
+/// Projects). Its marshal is the default struct shape — Go's untagged
+/// exported fields serialize under their Go names (`All`/`Projects`).
+#[derive(Clone, Debug, Default, Serialize)]
 pub struct EnsurePrograms {
+    #[serde(rename = "All")]
     pub all: bool,
+    #[serde(rename = "Projects", serialize_with = "ser_str_vec")]
     pub projects: Vec<ProjectId>,
-}
-
-/// Go's default marshal (no `MarshalJSON`) emits `{"All":…,"Projects":…}`
-/// with capitalized field names.
-impl Serialize for EnsurePrograms {
-    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        use serde::ser::SerializeStruct;
-        let mut st = s.serialize_struct("EnsurePrograms", 2)?;
-        st.serialize_field("All", &self.all)?;
-        st.serialize_field(
-            "Projects",
-            &self.projects.iter().map(|p| p.as_str()).collect::<Vec<_>>(),
-        )?;
-        st.end()
-    }
 }
 
 /// `func (e *EnsurePrograms) UnmarshalJSONFrom(dec *json.Decoder) error` —
@@ -1044,7 +1139,7 @@ impl<'de> Deserialize<'de> for EnsurePrograms {
             }
 
             fn visit_map<A: MapAccess<'de>>(self, _map: A) -> Result<Self::Value, A::Error> {
-                Err(A::Error::custom(MSG))
+                Err(<A::Error as de::Error>::custom(MSG))
             }
         }
 
@@ -1106,10 +1201,7 @@ pub struct CreateSnapshotProgramParams {
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct ReconfigureSnapshotProgramParams {
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub id: SyntheticProjectId,
     pub root_files: Vec<DocumentIdentifier>,
     /// `CompilerOptions` — `json:"-"`.
@@ -1136,7 +1228,7 @@ pub struct UpdateSnapshotParams {
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct GetCurrentLanguageServerSnapshotParams {
-    #[serde(skip_serializing_if = "is_zero_u64")]
+    #[serde(skip_serializing_if = "wire_id_is_zero")]
     pub base_snapshot: SnapshotId,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub changes: Option<LanguageServerSnapshotChanges>,
@@ -1160,7 +1252,7 @@ pub struct CreateProgramOptions {
     pub project_references: Vec<ProjectReference>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub config_file_parsing_diagnostics: Vec<DiagnosticResponse>,
-    #[serde(skip_serializing_if = "is_zero_u64")]
+    #[serde(skip_serializing_if = "wire_id_is_zero")]
     pub module_resolver: ModuleResolverId,
 }
 
@@ -1189,8 +1281,10 @@ pub struct ModuleResolutionEntry {
     pub containing_directory: Option<DocumentIdentifier>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub resolution_mode: Option<ResolutionMode>,
-    /// `Result` — `nonnil:"true"`.
-    pub result: StaticModuleResolution,
+    /// `Result *StaticModuleResolution` — `nonnil:"true"`; `Option` so a
+    /// missing/null result reaches the same "has no result" error Go's
+    /// nil check produces.
+    pub result: Option<StaticModuleResolution>,
 }
 
 /// `type StaticModuleResolution struct`.
@@ -1227,7 +1321,7 @@ pub struct ReleaseModuleResolverParams {
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct ResolveModuleNameParams {
-    #[serde(skip_serializing_if = "is_zero_u64")]
+    #[serde(skip_serializing_if = "wire_id_is_zero")]
     pub snapshot: SnapshotId,
     #[serde(skip_serializing_if = "is_zero_u64")]
     pub in_progress_snapshot: u64,
@@ -1347,15 +1441,12 @@ pub struct SnapshotOperationResponse {
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct OpenedFileOperationResult {
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
 }
 
 // ---------------------------------------------------------------------------
-// Config-file parse / command-line params (declared after unmarshalers in Go)
+// Config-file parse / command-line params
 // ---------------------------------------------------------------------------
 
 /// `type ParseConfigFileParams struct`.
@@ -1462,10 +1553,6 @@ pub struct CreateSourceFileOptions {
     pub script_kind: ScriptKind,
 }
 
-fn script_kind_is_unknown(v: &ScriptKind) -> bool {
-    *v == ScriptKind::Unknown
-}
-
 /// `type CreateSourceFileParams struct`.
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
@@ -1524,8 +1611,6 @@ pub struct BatchRequestsParams {
     #[serde(skip_serializing_if = "is_zero_i64")]
     pub max_response_bytes_per_page: i64,
 }
-
-fn is_zero_i64(v: &i64) -> bool { *v == 0 }
 
 /// `type BatchRequest struct`.
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -1608,23 +1693,14 @@ pub struct ReleaseSourceFileParams {
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct SourceFileDescriptor {
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub file_name: RootedFilePath,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub path: PathKey,
     pub content_hash: String,
     pub parse_options_key: String,
     /// `core.ScriptKind` serializes as its int value in Go.
-    #[serde(
-        serialize_with = "ser_int",
-        deserialize_with = "de_int"
-    )]
+    #[serde(serialize_with = "ser_int", deserialize_with = "de_int")]
     pub script_kind: ScriptKind,
     pub node_id: String,
 }
@@ -1656,6 +1732,7 @@ pub struct GetCachedSourceFileParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetSymbolOfDeclarationParams {
     pub file: SourceFileDescriptor,
+    /// `Index uint32`.
     pub index: u32,
 }
 
@@ -1670,10 +1747,7 @@ pub struct ProfileParams {
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct ProfileResult {
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub file: RootedFilePath,
 }
 
@@ -1729,11 +1803,16 @@ pub struct BuildParams {
 }
 
 /// `type BuildResponse struct`.
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+///
+/// PORT: `Statistics` has no `Clone`/`Debug` impls in `tsc-execute`
+/// (mirroring Go, where only the exported fields matter), so this struct
+/// derives only serde traits.
+#[derive(Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct BuildResponse {
     /// `tsc.ExitStatus` serializes as its int value in Go.
     #[serde(
+        default = "exit_status_default",
         serialize_with = "ser_int",
         deserialize_with = "de_int"
     )]
@@ -1758,11 +1837,13 @@ pub struct CleanBuildParams {
     pub project: String,
 }
 
-/// `type CleanBuildResponse struct`.
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+/// `type CleanBuildResponse struct` — see `BuildResponse` for the
+/// `Statistics`-driven derive restrictions.
+#[derive(Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct CleanBuildResponse {
     #[serde(
+        default = "exit_status_default",
         serialize_with = "ser_int",
         deserialize_with = "de_int"
     )]
@@ -1802,10 +1883,7 @@ pub struct BuildOrchestrator {
 #[serde(rename_all = "camelCase", default)]
 pub struct ConfigFileResponse {
     /// `FileNames` — `nonnil:"true"`.
-    #[serde(
-        serialize_with = "ser_str_vec",
-        deserialize_with = "de_str_vec"
-    )]
+    #[serde(serialize_with = "ser_str_vec", deserialize_with = "de_str_vec")]
     pub file_names: Vec<RootedFilePath>,
     /// `Options` — `nonnil:"true"` (nil → `{}`).
     #[serde(serialize_with = "ser_nonnil")]
@@ -1848,10 +1926,7 @@ pub struct GetDefaultProjectForFileParams {
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct ProjectResponse {
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub id: ProjectId,
     #[serde(
         skip_serializing_if = "Option::is_none",
@@ -1859,20 +1934,14 @@ pub struct ProjectResponse {
         deserialize_with = "de_str_opt"
     )]
     pub config_file_name: Option<RootedFilePath>,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub current_directory: RootedDirectoryPath,
     pub dirty: bool,
     /// `ParsedCommandLine` — `nonnil:"true"` (nil → zero-value object).
     #[serde(serialize_with = "ser_nonnil")]
     pub parsed_command_line: Option<ConfigFileResponse>,
     /// Deprecated: Use parsedCommandLine.fileNames. `nonnil:"true"`.
-    #[serde(
-        serialize_with = "ser_str_vec",
-        deserialize_with = "de_str_vec"
-    )]
+    #[serde(serialize_with = "ser_str_vec", deserialize_with = "de_str_vec")]
     pub root_files: Vec<RootedFilePath>,
     /// Deprecated: Use parsedCommandLine.options. `nonnil:"true"`.
     #[serde(serialize_with = "ser_nonnil")]
@@ -1884,6 +1953,7 @@ pub struct ProjectResponse {
 /// PORT: `nodes` supplies the AST arena that `ASTDiagnostic` resolves
 /// diagnostic files through (Go diagnostics carry live `*ast.SourceFile`
 /// pointers; here the arena is explicit). `None` mirrors Go's nil → nil.
+/// Go does not populate `BuildOptions` here — it stays `None`.
 pub fn new_config_file_response(
     parsed_command_line: Option<&ParsedCommandLine>,
     nodes: &[Node],
@@ -1900,6 +1970,8 @@ pub fn new_config_file_response(
         }
     }
     let compiler_options = parsed_command_line.compiler_options().cloned();
+    // Go's `errors == nil` → `[]` is an empty Vec here (serializes `[]`
+    // either way).
     let errors = {
         let diags = parsed_command_line.errors.lock().unwrap();
         new_diagnostic_responses(&diags, nodes)
@@ -1907,12 +1979,12 @@ pub fn new_config_file_response(
     Some(ConfigFileResponse {
         file_names: parsed_command_line.file_names().to_vec(),
         options: compiler_options,
-        build_options: None,
         project_references: parsed_command_line.project_references().to_vec(),
         type_acquisition: parsed_command_line.type_acquisition().cloned(),
         compile_on_save,
         raw: parsed_command_line.raw.clone(),
         errors,
+        ..Default::default()
     })
 }
 
@@ -1925,8 +1997,8 @@ pub fn new_project_response(p: &Project, nodes: &[Node]) -> ProjectResponse {
     let Some(command_line) = p.command_line.as_ref() else {
         panic!("NewProjectResponse called with unloaded project");
     };
-    let config_file_name = (p.kind == ProjectKind::Configured)
-        .then(|| p.config_file_name().clone());
+    let config_file_name =
+        (p.kind == ProjectKind::Configured).then(|| p.config_file_name().clone());
     ProjectResponse {
         id: p.id().clone(),
         config_file_name,
@@ -1947,10 +2019,7 @@ pub fn new_project_response(p: &Project, nodes: &[Node]) -> ProjectResponse {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetSymbolAtPositionParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub file: DocumentIdentifier,
     pub position: u32,
@@ -1961,10 +2030,7 @@ pub struct GetSymbolAtPositionParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetSymbolsAtPositionsParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub file: DocumentIdentifier,
     pub positions: Vec<u32>,
@@ -1975,10 +2041,7 @@ pub struct GetSymbolsAtPositionsParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetSymbolOfSourceFileParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub file: DocumentIdentifier,
 }
@@ -1988,10 +2051,7 @@ pub struct GetSymbolOfSourceFileParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetSymbolsOfSourceFilesParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub files: Vec<DocumentIdentifier>,
 }
@@ -2001,10 +2061,7 @@ pub struct GetSymbolsOfSourceFilesParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetSymbolAtLocationParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub location: NodeHandle,
 }
@@ -2014,10 +2071,7 @@ pub struct GetSymbolAtLocationParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetSymbolsAtLocationsParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub locations: Vec<NodeHandle>,
 }
@@ -2030,26 +2084,50 @@ pub struct SymbolResponse {
     pub name: String,
     pub flags: u32,
     pub check_flags: u32,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub declarations: Vec<NodeHandle>,
-    #[serde(skip_serializing_if = "NodeHandle::is_empty")]
-    pub value_declaration: NodeHandle,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub declarations: Option<Vec<NodeHandle>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub value_declaration: Option<NodeHandle>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub parent: Option<CompactSymbolReference>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub export_symbol: Option<CompactSymbolReference>,
 }
 
-/// `type SymbolOwnerKind uint32` — serializes as a number; the newtype keeps
-/// the named constants.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(transparent)]
-pub struct SymbolOwnerKind(pub u32);
+/// `type SymbolOwnerKind uint32` — serializes as its uint32 value; the enum
+/// shape gives the session `SymbolOwnerKind::File`/`::Snapshot` variants
+/// (and `SYMBOL_OWNER_KIND_*` const patterns).
+///
+/// PORT: Go's `uint32` accepts any value on unmarshal; the Rust enum is
+/// closed and rejects out-of-range values.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum SymbolOwnerKind {
+    /// `SymbolOwnerKindFile`.
+    #[default]
+    File = 0,
+    /// `SymbolOwnerKindSnapshot`.
+    Snapshot = 1,
+}
 
 /// `SymbolOwnerKindFile`.
-pub const SYMBOL_OWNER_KIND_FILE: SymbolOwnerKind = SymbolOwnerKind(0);
+pub const SYMBOL_OWNER_KIND_FILE: SymbolOwnerKind = SymbolOwnerKind::File;
 /// `SymbolOwnerKindSnapshot`.
-pub const SYMBOL_OWNER_KIND_SNAPSHOT: SymbolOwnerKind = SymbolOwnerKind(1);
+pub const SYMBOL_OWNER_KIND_SNAPSHOT: SymbolOwnerKind = SymbolOwnerKind::Snapshot;
+
+impl Serialize for SymbolOwnerKind {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        s.serialize_u32(*self as u32)
+    }
+}
+impl<'de> Deserialize<'de> for SymbolOwnerKind {
+    fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        match u64::deserialize(d)? {
+            0 => Ok(SymbolOwnerKind::File),
+            1 => Ok(SymbolOwnerKind::Snapshot),
+            v => Err(de::Error::custom(format!("unknown SymbolOwnerKind {v}"))),
+        }
+    }
+}
 
 /// `type SymbolOwner struct`.
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -2059,7 +2137,7 @@ pub struct SymbolOwner {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub file: Option<SourceFileDescriptor>,
     /// `json:"snapshot,omitzero"` — omitted when zero.
-    #[serde(skip_serializing_if = "is_zero_u64")]
+    #[serde(skip_serializing_if = "wire_id_is_zero")]
     pub snapshot: SnapshotId,
     /// `json:"project,omitempty"` — empty ID omitted.
     #[serde(
@@ -2075,8 +2153,10 @@ pub struct SymbolOwner {
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct SymbolReference {
+    /// Embedded `SymbolOwner` — flattened like Go's anonymous field.
     #[serde(flatten)]
     pub owner: SymbolOwner,
+    /// `Id SymbolID` — Go's field name `Id` → `id` on the wire.
     pub id: SymbolId,
 }
 
@@ -2088,8 +2168,8 @@ pub struct SymbolReference {
 #[serde(rename_all = "camelCase", default)]
 pub struct CompactSymbolReference {
     pub id: SymbolId,
-    #[serde(skip_serializing_if = "String::is_empty")]
-    pub file: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub file: Option<String>,
 }
 
 /// `type GetTypeOfSymbolParams struct`.
@@ -2097,10 +2177,7 @@ pub struct CompactSymbolReference {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetTypeOfSymbolParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub symbol: SymbolReference,
 }
@@ -2110,10 +2187,7 @@ pub struct GetTypeOfSymbolParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetTypesOfSymbolsParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub symbols: Vec<SymbolReference>,
 }
@@ -2139,9 +2213,9 @@ pub struct TypeResponse {
     pub value: serde_json::Value,
 
     /// ObjectType / TypeReference / StringMappingType / IndexType target.
-    /// `omitzero`.
-    #[serde(skip_serializing_if = "is_zero_u32")]
-    pub target: TypeId,
+    /// `omitzero` — `Some(TypeId(0))` serializes as absent.
+    #[serde(skip_serializing_if = "opt_wire_id_is_zero")]
+    pub target: Option<TypeId>,
 
     /// InterfaceType type parameters.
     #[serde(skip_serializing_if = "Vec::is_empty")]
@@ -2162,54 +2236,57 @@ pub struct TypeResponse {
     pub fixed_length: Option<i64>,
     #[serde(rename = "readonly", skip_serializing_if = "Option::is_none")]
     pub tuple_readonly: Option<bool>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub labeled_element_declarations: Vec<NodeHandle>,
+    /// Go `[]NodeHandle` elements; the session emits `null` for label-less
+    /// elements (Go's empty `NodeHandle("")` would also render as `""` — the
+    /// `null` is the session's own port note).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub labeled_element_declarations: Option<Vec<Option<NodeHandle>>>,
 
     /// IndexedAccessType data — `omitzero`.
-    #[serde(skip_serializing_if = "is_zero_u32")]
-    pub object_type: TypeId,
-    #[serde(skip_serializing_if = "is_zero_u32")]
-    pub index_type: TypeId,
+    #[serde(skip_serializing_if = "opt_wire_id_is_zero")]
+    pub object_type: Option<TypeId>,
+    #[serde(skip_serializing_if = "opt_wire_id_is_zero")]
+    pub index_type: Option<TypeId>,
 
     /// ConditionalType data — `omitzero`.
-    #[serde(skip_serializing_if = "is_zero_u32")]
-    pub check_type: TypeId,
-    #[serde(skip_serializing_if = "is_zero_u32")]
-    pub extends_type: TypeId,
+    #[serde(skip_serializing_if = "opt_wire_id_is_zero")]
+    pub check_type: Option<TypeId>,
+    #[serde(skip_serializing_if = "opt_wire_id_is_zero")]
+    pub extends_type: Option<TypeId>,
 
     /// SubstitutionType data — `omitzero`.
-    #[serde(skip_serializing_if = "is_zero_u32")]
-    pub base_type: TypeId,
-    #[serde(skip_serializing_if = "is_zero_u32")]
-    pub subst_constraint: TypeId,
+    #[serde(skip_serializing_if = "opt_wire_id_is_zero")]
+    pub base_type: Option<TypeId>,
+    #[serde(skip_serializing_if = "opt_wire_id_is_zero")]
+    pub subst_constraint: Option<TypeId>,
 
     /// MappedType data — `omitzero`.
-    #[serde(skip_serializing_if = "is_zero_u32")]
-    pub type_parameter: TypeId,
-    #[serde(skip_serializing_if = "is_zero_u32")]
-    pub constraint_type: TypeId,
-    #[serde(skip_serializing_if = "is_zero_u32")]
-    pub name_type: TypeId,
-    #[serde(skip_serializing_if = "is_zero_u32")]
-    pub template_type: TypeId,
+    #[serde(skip_serializing_if = "opt_wire_id_is_zero")]
+    pub type_parameter: Option<TypeId>,
+    #[serde(skip_serializing_if = "opt_wire_id_is_zero")]
+    pub constraint_type: Option<TypeId>,
+    #[serde(skip_serializing_if = "opt_wire_id_is_zero")]
+    pub name_type: Option<TypeId>,
+    #[serde(skip_serializing_if = "opt_wire_id_is_zero")]
+    pub template_type: Option<TypeId>,
 
     /// TemplateLiteralType text segments.
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub texts: Vec<String>,
 
     /// FreshableType data (LiteralType and computed enum types) — `omitzero`.
-    #[serde(skip_serializing_if = "is_zero_u32")]
-    pub fresh_type: TypeId,
-    #[serde(skip_serializing_if = "is_zero_u32")]
-    pub regular_type: TypeId,
+    #[serde(skip_serializing_if = "opt_wire_id_is_zero")]
+    pub fresh_type: Option<TypeId>,
+    #[serde(skip_serializing_if = "opt_wire_id_is_zero")]
+    pub regular_type: Option<TypeId>,
 
     /// TypeParameter data.
     #[serde(skip_serializing_if = "is_false")]
     pub is_this_type: bool,
 
     /// InterfaceType data — `omitzero`.
-    #[serde(skip_serializing_if = "is_zero_u32")]
-    pub this_type: TypeId,
+    #[serde(skip_serializing_if = "opt_wire_id_is_zero")]
+    pub this_type: Option<TypeId>,
 
     /// IntrinsicType data.
     #[serde(skip_serializing_if = "String::is_empty")]
@@ -2251,33 +2328,35 @@ pub fn new_type_response(types: &TypeArena, t: CheckerTypeId, id: TypeId) -> Typ
             resp.value = literal_value_to_json(lit.value());
         }
         if let Some(fresh) = lit.fresh_type() {
-            resp.fresh_type = fresh.0;
+            resp.fresh_type = Some(TypeId(fresh.0 as u64));
         }
         if let Some(regular) = lit.regular_type() {
-            resp.regular_type = regular.0;
+            resp.regular_type = Some(TypeId(regular.0 as u64));
         }
     } else if flags.intersects(TypeFlags::OBJECT) {
         resp.object_flags = t_ref.object_flags().0;
         resp.is_tuple_type = is_tuple_type(types, t);
         let object_flags = t_ref.object_flags();
-        if object_flags.intersects(tsc_checker::types::ObjectFlags::REFERENCE) {
+        if object_flags.intersects(ObjectFlags::REFERENCE) {
             if is_tuple_type_target(types, t) {
                 let tuple = t_ref.as_tuple_type();
                 resp.element_flags = tuple.element_flags();
                 resp.fixed_length = Some(tuple.fixed_length() as i64);
                 resp.tuple_readonly = Some(tuple.is_readonly());
             }
+            // `ref := t.AsTypeReference(); ref.Target()` — `Type::target()`
+            // dispatches on the object type's structured target.
             if let Some(target) = t_ref.target() {
-                resp.target = target.0;
+                resp.target = Some(TypeId(target.0 as u64));
             }
         }
-        if object_flags.intersects(tsc_checker::types::ObjectFlags::CLASS_OR_INTERFACE) {
+        if object_flags.intersects(ObjectFlags::CLASS_OR_INTERFACE) {
             if let Some(iface) = t_ref.as_interface_type() {
                 resp.type_parameters = type_handles(iface.type_parameters());
                 resp.outer_type_parameters = type_handles(iface.outer_type_parameters());
                 resp.local_type_parameters = type_handles(iface.local_type_parameters());
                 if let Some(this_type) = iface.this_type() {
-                    resp.this_type = this_type.0;
+                    resp.this_type = Some(TypeId(this_type.0 as u64));
                 }
             }
         }
@@ -2285,39 +2364,27 @@ pub fn new_type_response(types: &TypeArena, t: CheckerTypeId, id: TypeId) -> Typ
         // types omitted; fetched via separate request
     } else if flags.intersects(TypeFlags::INDEX) {
         if let Some(target) = t_ref.as_index_type().target() {
-            resp.target = target.0;
+            resp.target = Some(TypeId(target.0 as u64));
         }
     } else if flags.intersects(TypeFlags::INDEXED_ACCESS) {
         let data = t_ref.as_indexed_access_type();
-        if let Some(object_type) = data.object_type() {
-            resp.object_type = object_type.0;
-        }
-        if let Some(index_type) = data.index_type() {
-            resp.index_type = index_type.0;
-        }
+        resp.object_type = data.object_type().map(|v| TypeId(v.0 as u64));
+        resp.index_type = data.index_type().map(|v| TypeId(v.0 as u64));
     } else if flags.intersects(TypeFlags::CONDITIONAL) {
         let data = t_ref.as_conditional_type();
-        if let Some(check_type) = data.check_type() {
-            resp.check_type = check_type.0;
-        }
-        if let Some(extends_type) = data.extends_type() {
-            resp.extends_type = extends_type.0;
-        }
+        resp.check_type = data.check_type().map(|v| TypeId(v.0 as u64));
+        resp.extends_type = data.extends_type().map(|v| TypeId(v.0 as u64));
     } else if flags.intersects(TypeFlags::SUBSTITUTION) {
         let data = t_ref.as_substitution_type();
-        if let Some(base_type) = data.base_type() {
-            resp.base_type = base_type.0;
-        }
-        if let Some(subst) = data.subst_constraint() {
-            resp.subst_constraint = subst.0;
-        }
+        resp.base_type = data.base_type().map(|v| TypeId(v.0 as u64));
+        resp.subst_constraint = data.subst_constraint().map(|v| TypeId(v.0 as u64));
     } else if flags.intersects(TypeFlags::TEMPLATE_LITERAL) {
         let tl = t_ref.as_template_literal_type();
         resp.texts = tl.texts().to_vec();
         // types omitted; fetched via separate request
     } else if flags.intersects(TypeFlags::STRING_MAPPING) {
         if let Some(target) = t_ref.as_string_mapping_type().target() {
-            resp.target = target.0;
+            resp.target = Some(TypeId(target.0 as u64));
         }
     } else if flags.intersects(TypeFlags::TYPE_PARAMETER) {
         resp.is_this_type = t_ref.as_type_parameter().is_this_type();
@@ -2334,7 +2401,7 @@ pub fn new_type_response(types: &TypeArena, t: CheckerTypeId, id: TypeId) -> Typ
 /// an empty slice produces an empty Vec, which `skip_serializing_if` omits
 /// like Go's nil slice.
 fn type_handles(types: &[CheckerTypeId]) -> Vec<TypeId> {
-    types.iter().map(|t| t.0).collect()
+    types.iter().map(|t| TypeId(t.0 as u64)).collect()
 }
 
 /// `func literalValueToJSON(value any) any`.
@@ -2381,17 +2448,17 @@ pub struct ConstantValueResponse {
 pub struct SignatureResponse {
     pub id: SignatureId,
     pub flags: u32,
-    #[serde(skip_serializing_if = "NodeHandle::is_empty")]
-    pub declaration: NodeHandle,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub type_parameters: Vec<TypeId>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub parameters: Vec<CompactSymbolReference>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub declaration: Option<NodeHandle>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub type_parameters: Option<Vec<TypeId>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parameters: Option<Vec<CompactSymbolReference>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub this_parameter: Option<CompactSymbolReference>,
-    /// `omitzero`.
-    #[serde(skip_serializing_if = "is_zero_u64")]
-    pub target: SignatureId,
+    /// `omitzero` — `Some(SignatureId(0))` serializes as absent.
+    #[serde(skip_serializing_if = "opt_wire_id_is_zero")]
+    pub target: Option<SignatureId>,
 }
 
 // ---------------------------------------------------------------------------
@@ -2403,10 +2470,7 @@ pub struct SignatureResponse {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetSourceFileParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub file: DocumentIdentifier,
 }
@@ -2416,10 +2480,7 @@ pub struct GetSourceFileParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetSourceFileNamesParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
 }
 
@@ -2428,10 +2489,7 @@ pub struct GetSourceFileNamesParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetModeForUsageLocationParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub file: DocumentIdentifier,
     pub usage: NodeHandle,
@@ -2442,10 +2500,7 @@ pub struct GetModeForUsageLocationParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetModeForResolutionAtIndexParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub file: DocumentIdentifier,
     /// `Index int`.
@@ -2457,10 +2512,7 @@ pub struct GetModeForResolutionAtIndexParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetResolvedModuleParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub file: DocumentIdentifier,
     pub module_name: String,
@@ -2473,10 +2525,7 @@ pub struct GetResolvedModuleParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetResolvedModuleFromModuleSpecifierParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub module_specifier: NodeHandle,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -2488,10 +2537,7 @@ pub struct GetResolvedModuleFromModuleSpecifierParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetResolvedTypeReferenceDirectiveParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub file: DocumentIdentifier,
     pub type_directive_name: String,
@@ -2504,10 +2550,7 @@ pub struct GetResolvedTypeReferenceDirectiveParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetResolvedTypeReferenceDirectiveFromReferenceParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub source_file: DocumentIdentifier,
     pub type_directive_name: String,
@@ -2581,10 +2624,7 @@ pub struct SourceFileMetadata {
     pub is_default_library: bool,
     pub is_from_external_library: bool,
     pub package_json_type: String,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub package_json_directory: RootedDirectoryPath,
     /// `core.ResolutionMode`.
     pub implied_node_format: ResolutionMode,
@@ -2599,14 +2639,11 @@ pub struct SourceFileMetadata {
 #[serde(rename_all = "camelCase", default)]
 pub struct ResolveNameParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub name: String,
     /// Optional: node handle for location context.
-    #[serde(skip_serializing_if = "NodeHandle::is_empty")]
+    #[serde(skip_serializing_if = "node_handle_is_empty")]
     pub location: NodeHandle,
     /// Optional: file for location context (alternative to Location).
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -2627,13 +2664,10 @@ pub struct ResolveNameParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetSymbolsInScopeParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     /// Optional: node handle for location context.
-    #[serde(skip_serializing_if = "NodeHandle::is_empty")]
+    #[serde(skip_serializing_if = "node_handle_is_empty")]
     pub location: NodeHandle,
     /// Optional: file for location context (alternative to Location).
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -2651,10 +2685,7 @@ pub struct GetSymbolsInScopeParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetTypePropertyParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     /// `json:"objectId"`.
     #[serde(rename = "objectId")]
@@ -2675,10 +2706,7 @@ pub struct GetSymbolPropertyParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetSignaturePropertyParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     /// `json:"objectId"`.
     #[serde(rename = "objectId")]
@@ -2690,10 +2718,7 @@ pub struct GetSignaturePropertyParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetContextualTypeParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub location: NodeHandle,
 }
@@ -2703,10 +2728,7 @@ pub struct GetContextualTypeParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetContextualTypeForArgumentParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub location: NodeHandle,
     /// `Index int32`.
@@ -2719,10 +2741,7 @@ pub struct GetContextualTypeForArgumentParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetTypeOfSymbolAtLocationParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub symbol: SymbolReference,
     pub location: NodeHandle,
@@ -2734,10 +2753,7 @@ pub struct GetTypeOfSymbolAtLocationParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetReferencesToSymbolInFileParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub file: DocumentIdentifier,
     pub symbol: SymbolReference,
@@ -2749,10 +2765,7 @@ pub struct GetReferencesToSymbolInFileParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetReferencedSymbolsForNodeParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub node: NodeHandle,
     /// `Position int`.
@@ -2776,10 +2789,7 @@ pub struct ReferencedSymbolEntry {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetSignatureUsagesParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub signature_decl: NodeHandle,
 }
@@ -2790,7 +2800,7 @@ pub struct GetSignatureUsagesParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct SignatureUsageResponse {
     pub name: NodeHandle,
-    #[serde(skip_serializing_if = "NodeHandle::is_empty")]
+    #[serde(skip_serializing_if = "node_handle_is_empty")]
     pub call: NodeHandle,
 }
 
@@ -2800,10 +2810,7 @@ pub struct SignatureUsageResponse {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetCompletionsAtPositionParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub file: DocumentIdentifier,
     pub position: u32,
@@ -2860,10 +2867,7 @@ pub struct CompletionInfoResponse {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetIntrinsicTypeParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
 }
 
@@ -2894,10 +2898,7 @@ pub struct WellKnownSignaturesResponse {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetBaseTypeOfLiteralTypeParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub r#type: TypeId,
 }
@@ -2908,10 +2909,7 @@ pub struct GetBaseTypeOfLiteralTypeParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetNonNullableTypeParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub r#type: TypeId,
 }
@@ -2922,10 +2920,7 @@ pub struct GetNonNullableTypeParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetTypeFromTypeNodeParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub location: NodeHandle,
 }
@@ -2935,10 +2930,7 @@ pub struct GetTypeFromTypeNodeParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetWidenedTypeParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub r#type: TypeId,
 }
@@ -2949,10 +2941,7 @@ pub struct GetWidenedTypeParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetParameterTypeParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub signature: SignatureId,
     /// `Index int32`.
@@ -2964,10 +2953,7 @@ pub struct GetParameterTypeParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct IsArrayLikeTypeParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub r#type: TypeId,
 }
@@ -2977,10 +2963,7 @@ pub struct IsArrayLikeTypeParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct IsTypeAssignableToParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub source: TypeId,
     pub target: TypeId,
@@ -2991,10 +2974,7 @@ pub struct IsTypeAssignableToParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetSignaturesOfTypeParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub r#type: TypeId,
     /// `Kind int32`.
@@ -3006,10 +2986,7 @@ pub struct GetSignaturesOfTypeParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetResolvedSignatureParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub location: NodeHandle,
 }
@@ -3019,10 +2996,7 @@ pub struct GetResolvedSignatureParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetTypeAtLocationParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub location: NodeHandle,
 }
@@ -3032,10 +3006,7 @@ pub struct GetTypeAtLocationParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetTypeAtLocationsParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub locations: Vec<NodeHandle>,
 }
@@ -3045,10 +3016,7 @@ pub struct GetTypeAtLocationsParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetTypeAtPositionParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub file: DocumentIdentifier,
     pub position: u32,
@@ -3059,10 +3027,7 @@ pub struct GetTypeAtPositionParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetTypesAtPositionsParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub file: DocumentIdentifier,
     pub positions: Vec<u32>,
@@ -3092,10 +3057,7 @@ pub struct ImportAdderAction {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetImportAdderEditsParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub file: DocumentIdentifier,
     pub actions: Vec<ImportAdderAction>,
@@ -3117,20 +3079,15 @@ pub struct TextEdit {
 #[serde(rename_all = "camelCase", default)]
 pub struct TypeToTypeNodeParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub r#type: TypeId,
-    #[serde(skip_serializing_if = "NodeHandle::is_empty")]
+    #[serde(skip_serializing_if = "node_handle_is_empty")]
     pub location: NodeHandle,
     /// `Flags int32`.
     #[serde(skip_serializing_if = "is_zero_i32")]
     pub flags: i32,
 }
-
-fn is_zero_i32(v: &i32) -> bool { *v == 0 }
 
 /// `type SignatureToSignatureDeclarationParams struct` — parameters for the
 /// signatureToSignatureDeclaration method.
@@ -3138,15 +3095,12 @@ fn is_zero_i32(v: &i32) -> bool { *v == 0 }
 #[serde(rename_all = "camelCase", default)]
 pub struct SignatureToSignatureDeclarationParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub signature: SignatureId,
     /// `Kind int32`.
     pub kind: i32,
-    #[serde(skip_serializing_if = "NodeHandle::is_empty")]
+    #[serde(skip_serializing_if = "node_handle_is_empty")]
     pub location: NodeHandle,
     /// `Flags int32`.
     #[serde(skip_serializing_if = "is_zero_i32")]
@@ -3172,10 +3126,7 @@ pub struct PrintNodeParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct EmitParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub emit_only: Option<u32>,
@@ -3186,10 +3137,7 @@ pub struct EmitParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct SelectedFilesEmitParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub files: Vec<DocumentIdentifier>,
 }
@@ -3202,10 +3150,7 @@ pub struct EmitResponse {
     /// `Diagnostics` — `nonnil:"true"`.
     pub diagnostics: Vec<DiagnosticResponse>,
     /// `EmittedFiles` — `nonnil:"true"`.
-    #[serde(
-        serialize_with = "ser_str_vec",
-        deserialize_with = "de_str_vec"
-    )]
+    #[serde(serialize_with = "ser_str_vec", deserialize_with = "de_str_vec")]
     pub emitted_files: Vec<RootedFilePath>,
     /// `EmittedFilesContents` contains contents parallel to EmittedFiles when
     /// the source snapshot uses a full filesystem. It is empty for
@@ -3217,10 +3162,7 @@ pub struct EmitResponse {
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct EmitOutputFile {
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub file_name: RootedFilePath,
     pub text: String,
     #[serde(
@@ -3248,10 +3190,7 @@ pub struct EmitOutputResponse {
 #[serde(rename_all = "camelCase", default)]
 pub struct FormatNodeForInsertionParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     /// Target file where the node will be inserted.
     pub file: DocumentIdentifier,
@@ -3271,10 +3210,7 @@ pub struct FormatNodeForInsertionParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct CheckerTypeParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub r#type: TypeId,
 }
@@ -3285,10 +3221,7 @@ pub struct CheckerTypeParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetPropertyOfTypeParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub r#type: TypeId,
     pub name: String,
@@ -3299,10 +3232,7 @@ pub struct GetPropertyOfTypeParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetIndexInfoOfTypeParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub r#type: TypeId,
     /// `Kind int32`.
@@ -3315,10 +3245,7 @@ pub struct GetIndexInfoOfTypeParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetMemberInModuleExportsParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub symbol: SymbolReference,
     pub name: String,
@@ -3330,10 +3257,7 @@ pub struct GetMemberInModuleExportsParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct CheckerNodeParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub location: NodeHandle,
 }
@@ -3344,10 +3268,7 @@ pub struct CheckerNodeParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct CheckerSymbolParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub symbol: SymbolReference,
 }
@@ -3369,10 +3290,7 @@ pub struct JsDocTagInfo {
 #[serde(rename_all = "camelCase", default)]
 pub struct CheckerSignatureParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     pub signature: SignatureId,
 }
@@ -3389,7 +3307,7 @@ pub struct TypePredicateResponse {
     #[serde(skip_serializing_if = "String::is_empty")]
     pub parameter_name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub r#type: Option<Box<TypeResponse>>,
+    pub r#type: Option<TypeResponse>,
 }
 
 /// `type IndexInfoResponse struct` — a single index signature.
@@ -3400,8 +3318,8 @@ pub struct IndexInfoResponse {
     pub value_type: TypeResponse,
     #[serde(skip_serializing_if = "is_false")]
     pub is_readonly: bool,
-    #[serde(skip_serializing_if = "NodeHandle::is_empty")]
-    pub declaration: NodeHandle,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub declaration: Option<NodeHandle>,
 }
 
 /// `type SourceFileResponse struct` — contains the binary-encoded AST data
@@ -3422,10 +3340,7 @@ pub struct SourceFileResponse {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetDiagnosticsParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub files: Vec<DocumentIdentifier>,
@@ -3437,10 +3352,7 @@ pub struct GetDiagnosticsParams {
 #[serde(rename_all = "camelCase", default)]
 pub struct GetProjectDiagnosticsParams {
     pub snapshot: SnapshotId,
-    #[serde(
-        serialize_with = "ser_str",
-        deserialize_with = "de_str"
-    )]
+    #[serde(serialize_with = "ser_str", deserialize_with = "de_str")]
     pub project: ProjectId,
 }
 
@@ -3474,6 +3386,7 @@ pub struct DiagnosticResponse {
     /// `Category` is the diagnostic category (error, warning, suggestion,
     /// message). Go `int32` serializes as a number.
     #[serde(
+        default = "category_default",
         serialize_with = "ser_int",
         deserialize_with = "de_int"
     )]
@@ -3681,8 +3594,9 @@ fn diagnostic_chain_refs(d: &ASTDiagnostic<'_>) -> Vec<DiagnosticRef> {
 }
 
 /// `ASTDiagnostic::resolve().synthesized` — the diagnostic's range falls in
-/// synthesized virtual code with no original counterpart (nil span map or
-/// `FidelityNone` from `virtual_to_original_span`).
+/// synthesized virtual code with no original counterpart (`FidelityNone`
+/// from `virtual_to_original_span`, or — for external-source diagnostics —
+/// Go's early return before the synthesized flag is set).
 fn diagnostic_is_synthesized(d: &ASTDiagnostic<'_>) -> bool {
     let locked = lock_diagnostic(&d.diagnostic);
     let Some(file) = locked.file() else {
@@ -3697,13 +3611,8 @@ fn diagnostic_is_synthesized(d: &ASTDiagnostic<'_>) -> bool {
         .node
         .and_then(|node| d.nodes[node].as_source_file().span_map());
     let span_map = live_span_map.as_deref().or(file.span_map.as_deref());
-    match span_map {
-        Some(span_map) => {
-            let (_, fidelity) = SpanMap::virtual_to_original_span(Some(span_map), locked.loc());
-            fidelity == tsc_spanmap::Fidelity::None
-        }
-        None => false,
-    }
+    let (_, fidelity) = SpanMap::virtual_to_original_span(span_map, locked.loc());
+    fidelity == tsc_spanmap::Fidelity::None
 }
 
 /// `ASTDiagnostic::content_mapper` — the live node's mapper identity, or
@@ -3742,8 +3651,6 @@ impl DiagnosticResponse {
     }
 }
 
-use tsc_ast::diagnostic::new_diagnostic_from_text;
-
 /// `func NewDiagnosticResponses(diags []*ast.Diagnostic) []*DiagnosticResponse`.
 ///
 /// PORT: `nodes` is the AST arena (see `new_diagnostic_response`); Go's nil
@@ -3771,14 +3678,13 @@ pub fn new_diagnostic_responses(
 /// Go's `nil` `any` (the session ignores params for those methods). Go's
 /// `%T` in the parse error becomes `*api.<TypeName>`.
 pub fn unmarshal_payload(method: &str, payload: &[u8]) -> Result<Box<dyn Any>, String> {
-    fn parse<T: serde::de::DeserializeOwned + 'static>(data: &[u8]) -> Result<Box<dyn Any>, String> {
+    fn parse<T: for<'de> Deserialize<'de> + 'static>(
+        data: &[u8],
+    ) -> Result<Box<dyn Any>, String> {
         serde_json::from_slice::<T>(data)
             .map(|v| Box::new(v) as Box<dyn Any>)
             .map_err(|e| {
-                let name = std::any::type_name::<T>()
-                    .rsplit("::")
-                    .next()
-                    .unwrap_or("?");
+                let name = std::any::type_name::<T>().rsplit("::").next().unwrap_or("?");
                 format!("failed to unmarshal *api.{name}: {e}")
             })
     }
