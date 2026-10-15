@@ -441,7 +441,7 @@ pub(crate) fn resolve_node_handle(
         ));
     };
     let nodes = program.arena_of(file);
-    let table = encoder::get_node_index_table(nodes.get_mut(), file);
+    let table = encoder::get_node_index_table((*nodes).get_mut(), file);
 
     if idx < table.nodes.len() {
         if let Some(node) = table.nodes[idx] {
@@ -470,10 +470,10 @@ pub(crate) struct SnapshotData {
 
     /// `symbolRegistry`/`symbolCanonicalProjects` — one `RwLock` each,
     /// mirroring `symbolRegistryMu`.
-    symbol_registry: RwLock<FxHashMap<SymbolId, SymbolEntry>>,
-    symbol_canonical_projects: RwLock<FxHashMap<SymbolId, project::project::Id>>,
+    pub(crate) symbol_registry: RwLock<FxHashMap<SymbolId, SymbolEntry>>,
+    pub(crate) symbol_canonical_projects: RwLock<FxHashMap<SymbolId, project::project::Id>>,
 
-    project_registries: RwLock<FxHashMap<project::project::Id, Rc<ProjectRegistryData>>>,
+    pub(crate) project_registries: RwLock<FxHashMap<project::project::Id, Rc<ProjectRegistryData>>>,
 }
 
 /// `projectRegistryData` holds per-project type and signature registries.
@@ -1047,18 +1047,18 @@ pub const DEFAULT_MAX_RESPONSE_BYTES_PER_PAGE: usize = 300_000_000;
 /// The session supports multiple active snapshots, each with their own
 /// symbol and type registries for maintaining object identity.
 pub struct Session {
-    id: String,
-    snapshot_host: Arc<project::snapshothost::SnapshotHost>,
-    owns_snapshot_host: bool,
-    with_locale: Option<Arc<dyn Fn(core_::context::Context) -> core_::context::Context + Send + Sync>>,
-    project_session: Option<Arc<project::session::Session>>,
+    pub(crate) id: String,
+    pub(crate) snapshot_host: Arc<project::snapshothost::SnapshotHost>,
+    pub(crate) owns_snapshot_host: bool,
+    pub(crate) with_locale: Option<Arc<dyn Fn(core_::context::Context) -> core_::context::Context + Send + Sync>>,
+    pub(crate) project_session: Option<Arc<project::session::Session>>,
 
-    close_once: Mutex<bool>,
+    pub(crate) close_once: Mutex<bool>,
 
     /// Set to true when using `MessagePackProtocol`.
-    use_binary_responses: bool,
-    batch_response_pages: Mutex<FxHashMap<u64, BatchResponsePage>>,
-    next_batch_response_page_id: AtomicU64,
+    pub(crate) use_binary_responses: bool,
+    pub(crate) batch_response_pages: Mutex<FxHashMap<String, BatchResponsePage>>,
+    pub(crate) next_batch_response_page_id: AtomicU64,
 
     /// `snapshots` maps snapshot handles to their data. Each snapshot has
     /// its own symbol/type registries.
@@ -1066,14 +1066,14 @@ pub struct Session {
     /// `snapshots_mu` is held only for short, map-bounded critical
     /// sections, never across slow work like a project snapshot update or
     /// checker queries — same as Go.
-    snapshots: RwLock<FxHashMap<SnapshotId, Arc<SnapshotData>>>,
+    pub(crate) snapshots: RwLock<FxHashMap<SnapshotId, Arc<SnapshotData>>>,
 
     /// `openProjects`, `openFiles`, and `createdPrograms` are the
     /// canonical LSP-state resources owned by this API client. Guarded by
     /// `language_server_update_mu`.
-    language_server_state: Mutex<LanguageServerState>,
+    pub(crate) language_server_state: Mutex<LanguageServerState>,
 
-    build_orchestrators: Mutex<FxHashMap<BuildOrchestratorId, Arc<build::Orchestrator>>>,
+    pub(crate) build_orchestrators: Mutex<FxHashMap<BuildOrchestratorId, Arc<build::Orchestrator>>>,
 
     pub(crate) next_module_resolver_id: AtomicU64,
     pub(crate) module_resolvers: RwLock<FxHashMap<ModuleResolverId, Arc<ModuleResolverRegistration>>>,
@@ -1087,11 +1087,11 @@ pub struct Session {
     /// the shared `Arc<ParsedSourceFile>` pointer. Go binds cached files
     /// eagerly into the shared heap; Rust programs bind their own arena
     /// copies, so leases get a private bound clone for symbol queries.
-    bound_source_files: Mutex<FxHashMap<usize, Rc<BoundSourceFile>>>,
+    pub(crate) bound_source_files: Mutex<FxHashMap<usize, Rc<BoundSourceFile>>>,
 
     pub(crate) conn: Mutex<Option<Arc<dyn ipc::Conn>>>,
 
-    cpu_profiler: pprof::CpuProfiler,
+    pub(crate) cpu_profiler: pprof::CpuProfiler,
 }
 
 // Go's `*Session` is shared across request-serving goroutines; every
@@ -1436,7 +1436,7 @@ impl Session {
         {
             let parsed = lease.source_file();
             let parsed = parsed.lock().unwrap();
-            if new_source_file_descriptor(parsed.nodes.get_mut(), parsed.file) != *descriptor {
+            if new_source_file_descriptor((*parsed.nodes).get_mut(), parsed.file) != *descriptor {
                 drop(parsed);
                 lease.release();
                 return Err(format!(
@@ -1470,8 +1470,8 @@ impl Session {
         };
         let nodes = Rc::new(ast::NodeArenaBuf::new(nodes_vec));
         let symbols = ast::SymbolArena::default();
-        tsc_binder::binder::bind_source_file(nodes.get_mut(), file, &symbols);
-        let index = get_source_file_symbol_index(&symbols, nodes.get_mut(), file);
+        tsc_binder::binder::bind_source_file((*nodes).get_mut(), file, &symbols);
+        let index = get_source_file_symbol_index(&symbols, (*nodes).get_mut(), file);
         let bound = Rc::new(BoundSourceFile {
             nodes,
             file,
@@ -1677,7 +1677,7 @@ impl CheckerSetup {
                 let arena = self.program.symbols.clone();
                 let index = get_source_file_symbol_index(
                     &arena,
-                    file_nodes.get_mut(),
+                    (*file_nodes).get_mut(),
                     source_file,
                 );
                 match index.get(&ref_.id) {
@@ -1727,7 +1727,7 @@ impl CheckerSetup {
                 .position_map()
                 .utf16_to_utf8(position as usize);
             return Ok(astnav::tokens::get_touching_property_name(
-                nodes.get_mut(),
+                (*nodes).get_mut(),
                 source_file,
                 position as core_::text::TextPos,
             ));

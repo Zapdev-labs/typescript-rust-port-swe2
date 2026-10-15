@@ -566,7 +566,8 @@ pub fn new_build_orchestrator_id() -> BuildOrchestratorId {
 /// PORT: Go reads a lazily-assigned atomic counter off `*ast.Symbol`; the
 /// session's canonical version (`session.rs::symbol_handle`) uses the symbol's
 /// stable arena pointer — this arena-slot variant exists for proto parity.
-pub fn symbol_handle(symbol: AstSymbolId) -> SymbolId {
+/// Renamed to disambiguate from `session::symbol_handle` in glob imports.
+pub fn symbol_handle_from_id(symbol: AstSymbolId) -> SymbolId {
     SymbolId(symbol.0 as u64)
 }
 

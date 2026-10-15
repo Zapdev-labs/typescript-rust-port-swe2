@@ -93,11 +93,11 @@ pub(crate) struct RefOptions {
 // === types for results ===
 
 /// `type SymbolAndEntries struct`.
-pub(crate) struct SymbolAndEntries {
+pub struct SymbolAndEntries {
     /// `definition`.
     pub(crate) definition: Option<Definition>,
     /// `references`.
-    pub(crate) references: Vec<Rc<RefCell<ReferenceEntry>>>,
+    pub references: Vec<Rc<RefCell<ReferenceEntry>>>,
 }
 
 /// `NewSymbolAndEntries`.
@@ -193,7 +193,7 @@ pub(crate) struct ReferenceEntry {
 
 impl ReferenceEntry {
     /// `Node`.
-    pub(crate) fn node(&self) -> Option<NodeId> {
+    pub fn node(&self) -> Option<NodeId> {
         self.node
     }
 
@@ -206,7 +206,7 @@ impl ReferenceEntry {
 impl SymbolAndEntries {
     /// `References` — callers should use the `references` field directly.
     /// `DefinitionNode`.
-    pub(crate) fn definition_node(&self, checker: &RefCell<Checker>) -> Option<NodeId> {
+    pub fn definition_node(&self, checker: &RefCell<Checker>) -> Option<NodeId> {
         self.definition.as_ref()?;
         let definition = self.definition.as_ref().expect("definition");
         if let Some(node) = definition.node {
@@ -222,7 +222,7 @@ impl SymbolAndEntries {
     }
 
     /// `DefinitionSymbol`.
-    pub(crate) fn definition_symbol(&self) -> Option<SymbolId> {
+    pub fn definition_symbol(&self) -> Option<SymbolId> {
         self.definition.as_ref().and_then(|d| d.symbol)
     }
 
@@ -1132,7 +1132,7 @@ pub(crate) struct SymbolEntryTransformOptions {
 
 /// `type SymbolAndEntriesData struct`.
 #[derive(Default)]
-pub(crate) struct SymbolAndEntriesData {
+pub struct SymbolAndEntriesData {
     /// `OriginalNode`.
     pub(crate) original_node: Option<NodeId>,
     /// `SymbolsAndEntries`.

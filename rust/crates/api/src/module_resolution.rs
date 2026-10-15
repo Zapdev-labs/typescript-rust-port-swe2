@@ -33,7 +33,6 @@ use tsc_core::compileroptions::{
 use tsc_core::context::Context;
 use tsc_core::options_generated::ModuleKind;
 use tsc_ipc as ipc;
-use tsc_json as json;
 use tsc_locale as locale;
 use tsc_module as module;
 use tsc_project as project;
@@ -533,7 +532,7 @@ impl Session {
     pub(crate) fn handle_release_module_resolver(
         &self,
         params: &ReleaseModuleResolverParams,
-    ) -> Result<Option<json::Value>, String> {
+    ) -> Result<Option<ipc::ResponsePayload>, String> {
         let ok = self
             .module_resolvers
             .write()
