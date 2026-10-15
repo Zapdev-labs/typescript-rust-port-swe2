@@ -1975,3 +1975,37 @@ Real-world bench: `tsc --noEmit --strict` on the compiler fixture set
 - PGO: training now covers --noEmit checking and declaration emit;
   committed profile refreshed (`pgo/merged.profdata.gz`). PGO+fork
   types.ts ~1.1-1.2s vs Go ~0.73s; mproj decl emit ~311ms vs Go ~275ms.
+
+## 2026-10-15 genfourslash emission fix-loop (state)
+
+Generated suite committed at `5665422211` (4371 modules, 8 chunk targets
+`crates/fourslash/tests/gen_{0..7}.rs` + `tests/gen_support/`).
+`cargo check -p tsc-fourslash --tests` on remote `dih@192.168.1.15` at
+`~/TypeScript/rust` (NOT /tmp — wiped; re-sync whole rust/ dir after any
+remote loss; remote is NOT a git repo — keep `rsync -az --delete` source
+of truth = local).
+
+Error census 16,611 → top symbols: `new_fourslash` (3392 — real signature
+is `new_fourslash(test_name, test_path, caps, content, ...)`, translator
+emits `new_fourslash(&mut t, None, content)` — fix template), `IGNORED`
+(1342 — Go `var` → emit `ignored`, not screaming), `DEFAULT_COMMIT_CHARACTERS`,
+`ANY_TEXT_EDITS` (vars → snake), `SORT_TEXT_*`, `MARKUP_KIND_MARKDOWN`,
+`COMPLETION_ITEM_KIND_*`, `QUOTE_PREFERENCE_*`, `JSX_ATTRIBUTE_*`,
+`ORGANIZE_IMPORTS_*`, `INCLUDE_INLAY_PARAMETER_NAME_HINTS_*` (Go enum-const
+names = TypePrefix+Variant → emit `pkg::Type::VARIANT`; extract enum type
+prefixes from lsproto/lsutil generated files), `UserPreferences`→
+`tsc_lsutil::UserPreferences` (translator maps `util.`→testsutil but
+UserPreferences lives in lsutil), `SemanticToken` (re-exported, fixed),
+`.type` field → `.type_`, `to_any` helper missing in gen_support,
+`String` (1751 — `Option<String>` fields got `&str` literals; emission
+needs `.into()`/`.to_string()` where typed String).
+
+Translator fixes pending in tools/genfourslash/main.go:
+- value-position consts: enum-type prefix table → `pkg::Type::VARIANT`;
+  known vars (DefaultCommitCharacters, Ignored, AnyTextEdits,
+  NewDefaultUserPreferences, NewFourslash*, GetDefaultCapabilities*,
+  Dedent, RecoverAndFail, RunFourslash, UserPreferences type) → snake.
+- `f.X(t, ...)` assumes receiver named `f` — generalize to any receiver.
+- `new_fourslash` template → match crates/fourslash/src/fourslash.rs:403.
+- After each template change: `./run.sh` regenerates; rsync tests/;
+  remote `cargo check -p tsc-fourslash --tests` is the gate.
