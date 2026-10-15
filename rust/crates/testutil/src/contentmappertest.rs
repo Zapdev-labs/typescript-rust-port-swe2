@@ -55,7 +55,7 @@ use tsc_tspath::{self as tspath};
 /// `Box<dyn std::error::Error + Send + Sync>` — the `HandleRequest` error
 /// result (ipc::Handler's signature).
 type BoxedError = Box<dyn std::error::Error + Send + Sync>;
-type HandlerResult = Result<Option<Value>, BoxedError>;
+type HandlerResult = Result<Option<ipc::ResponsePayload>, BoxedError>;
 
 /// `json.Unmarshal(params, &p)` — absent params decode like Go's unmarshal of
 /// `null` (zero value); the wire params here are always present.
@@ -68,7 +68,7 @@ fn params_of<T: serde::de::DeserializeOwned + Default>(
 /// `return result, nil` — marshal a handler response the way the conn's
 /// result marshaling would.
 fn respond<T: serde::Serialize>(value: &T) -> HandlerResult {
-    Ok(Some(ipc::marshal_params(value)?))
+    Ok(Some(ipc::ResponsePayload::Json(ipc::marshal_params(value)?)))
 }
 
 /// `json.Value(b)` — wraps already-marshaled JSON bytes in a raw `Value`.
