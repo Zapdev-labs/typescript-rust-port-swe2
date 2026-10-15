@@ -12,6 +12,11 @@ pub mod build;
 pub mod incremental;
 pub mod tsc;
 mod tsc_main;
+// `tsctests` is the tsc CLI test harness — `#[cfg(test)]`-gated because it
+// uses `tsc-testutil`, a dev-dependency (a normal dependency would cycle
+// tsc-execute → tsc-testutil → tsc-lsp → tsc-api → tsc-execute).
+#[cfg(test)]
+pub mod tsctests;
 pub mod util;
 mod watcher;
 

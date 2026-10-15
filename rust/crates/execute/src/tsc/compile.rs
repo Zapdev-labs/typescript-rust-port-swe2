@@ -50,6 +50,13 @@ impl SharedWriter {
         use std::io::Write;
         let _ = self.guard().write_all(s.as_bytes());
     }
+
+    /// Pointer-identity check — Go's `w == sys.Writer()` (interface value
+    /// equality) in `tsctests`' `GetTrace`, where writers share the same
+    /// inner `Arc`.
+    pub fn ptr_eq(&self, other: &SharedWriter) -> bool {
+        Arc::ptr_eq(&self.inner, &other.inner)
+    }
 }
 
 impl io::Write for SharedWriter {

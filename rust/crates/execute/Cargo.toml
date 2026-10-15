@@ -43,3 +43,6 @@ mimalloc = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 xxhash-rust = { workspace = true }
+
+[dev-dependencies]
+tsc-testutil = { path = "../testutil" }
