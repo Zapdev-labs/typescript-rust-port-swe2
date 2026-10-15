@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn export_default_function() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"export default function func() {
     /*1*/
 }

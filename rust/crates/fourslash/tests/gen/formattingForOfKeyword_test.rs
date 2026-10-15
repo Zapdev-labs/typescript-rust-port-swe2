@@ -9,9 +9,9 @@ fn formatting_for_of_keyword() {
 	run_test(|t| {
 		let content = r"/**/for ([]of[]) { }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
-		f.go_to_marker("");
-		f.verify_current_line_content(r"for ([] of []) { }");
+		f.format_document("".into());
+		f.go_to_marker("".into());
+		f.verify_current_line_content(r"for ([] of []) { }".into());
 	});
 }
 

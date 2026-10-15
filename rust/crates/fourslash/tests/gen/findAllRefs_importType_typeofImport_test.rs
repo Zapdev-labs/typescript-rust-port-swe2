@@ -13,7 +13,7 @@ export const x = 0;
 /*1*/const x: typeof import("/*2*/./a") = { x: 0 };
 /*3*/const y: typeof import("/*4*/./a") = { x: 0 };"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1", "2", "3", "4");
+		f.verify_baseline_find_all_references("1".into(), "2".into(), "3".into(), "4".into());
 	});
 }
 

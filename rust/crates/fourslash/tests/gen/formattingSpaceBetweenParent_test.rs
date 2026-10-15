@@ -14,13 +14,13 @@ fn formatting_space_between_parent() {
 		let mut opts180 = f.get_options();
 		opts180.format_code_settings.insert_space_after_opening_and_before_closing_nonempty_parenthesis = tsc_core::TS_TRUE;
 		f.configure(opts180);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"foo( () => 1 );");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"foo( 1 );");
-		f.go_to_marker("3");
-		f.verify_current_line_content(r"if ( ( true ) ) { }");
+		f.format_document("".into());
+		f.go_to_marker("1".into());
+		f.verify_current_line_content(r"foo( () => 1 );".into());
+		f.go_to_marker("2".into());
+		f.verify_current_line_content(r"foo( 1 );".into());
+		f.go_to_marker("3".into());
+		f.verify_current_line_content(r"if ( ( true ) ) { }".into());
 	});
 }
 

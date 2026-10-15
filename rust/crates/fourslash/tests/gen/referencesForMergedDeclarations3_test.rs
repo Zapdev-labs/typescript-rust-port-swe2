@@ -25,7 +25,7 @@ var c2: [|testClass|].Bar;
 [|testClass|].bind(this);
 new [|testClass|]();";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("module", "class");
+		f.verify_baseline_find_all_references("module".into(), "class".into());
 	});
 }
 

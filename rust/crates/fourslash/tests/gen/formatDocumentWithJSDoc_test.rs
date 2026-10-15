@@ -20,7 +20,7 @@ function f() {
     var multiline;
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
+		f.format_document("".into());
 		f.verify_current_file_content(r"/**
  * JSDoc for things
  */
@@ -32,7 +32,7 @@ function f() {
      * multiline
      */
     var multiline;
-}");
+}".into());
 	});
 }
 

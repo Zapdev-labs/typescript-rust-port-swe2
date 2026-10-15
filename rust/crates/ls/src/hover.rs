@@ -79,7 +79,7 @@ pub(crate) fn no_mapped_location(_file: NodeId, _range: TextRange) -> (lsproto::
 
 impl<'h> LanguageService<'h> {
     /// `ProvideHover`.
-    pub(crate) fn provide_hover(
+    pub fn provide_hover(
         &self,
         ctx: &Context,
         params: &lsproto::HoverParams,

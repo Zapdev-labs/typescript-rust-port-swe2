@@ -5468,7 +5468,7 @@ fn is_string_literal_property_reference(
 // ===========================================================================
 
 /// `type Project interface`.
-pub(crate) trait Project {
+pub trait Project {
     /// `Id`.
     fn id(&self) -> String;
     /// `GetProgram`.
@@ -5478,7 +5478,7 @@ pub(crate) trait Project {
 }
 
 /// `type CrossProjectOrchestrator interface`.
-pub(crate) trait CrossProjectOrchestrator<'h> {
+pub trait CrossProjectOrchestrator<'h> {
     /// `GetDefaultProject`.
     fn get_default_project(&self) -> Rc<dyn Project>;
     /// `GetAllProjectsForInitialRequest`.

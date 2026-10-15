@@ -11,11 +11,11 @@ fn content_mapper_supplemental_definition() {
 const [|supplementalValue|] = 1;
 [|supplemental/*use*/Value|];
 supplementalV/*completion*/;
-", contentmappertest.supplemental_mapper, ".astro");
-		f.verify_baseline_go_to_definition(false, "use");
-		f.verify_quick_info_at("use", "const supplementalValue: 1", "");
-		f.verify_baseline_find_all_references("use");
-		f.go_to_marker("completion");
+".into(), contentmappertest.supplemental_mapper, ".astro".into());
+		f.verify_baseline_go_to_definition(false, "use".into());
+		f.verify_quick_info_at("use".into(), "const supplementalValue: 1".into(), "".into());
+		f.verify_baseline_find_all_references("use".into());
+		f.go_to_marker("completion".into());
 		let mut completions = f.get_completions(None);
 		let completion = Default::default();
 		for item in completions.items {
@@ -25,10 +25,10 @@ supplementalV/*completion*/;
 			}
 		}
 		if completion == None {
-			panic!("supplementalValue completion not found");
+			panic!("supplementalValue completion not found".into());
 		}
 		if completion.data.file_name != "/globals.astro" || completion.data.supplemental_file_index == None || *completion.data.supplemental_file_index != 0 {
-			panic!("unexpected completion content mapper file data: %#v", completion.data);
+			panic!("unexpected completion content mapper file data: %#v".into(), completion.data);
 		}
 		f.resolve_completion_item(completion);
 	});

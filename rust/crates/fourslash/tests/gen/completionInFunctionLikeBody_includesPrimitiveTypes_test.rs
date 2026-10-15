@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn completion_in_function_like_body_includes_primitive_types() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"class Foo<T> { }
 class Bar { }
 function includesTypes() {

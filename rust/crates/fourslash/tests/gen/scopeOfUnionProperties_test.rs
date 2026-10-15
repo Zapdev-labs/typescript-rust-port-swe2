@@ -11,7 +11,7 @@ fn scope_of_union_properties() {
     s.constr/*1*/uctor
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_document_highlights(None, "1");
+		f.verify_baseline_document_highlights(None, "1".into());
 	});
 }
 

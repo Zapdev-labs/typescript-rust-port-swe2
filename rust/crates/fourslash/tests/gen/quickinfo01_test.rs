@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn quickinfo01() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @lib: es5
 interface One {
     commonProperty: number;
@@ -25,9 +25,9 @@ x./*2*/commonProperty;
 x./*3*/commonFunction;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.verify_quick_info_at("1", "var x: One | Two", "");
-		f.verify_quick_info_at("2", "(property) commonProperty: string | number", "");
-		f.verify_quick_info_at("3", "(method) commonFunction(): number", "");
+		f.verify_quick_info_at("1".into(), "var x: One | Two".into(), "".into());
+		f.verify_quick_info_at("2".into(), "(property) commonProperty: string | number".into(), "".into());
+		f.verify_quick_info_at("3".into(), "(method) commonFunction(): number".into(), "".into());
 	});
 }
 

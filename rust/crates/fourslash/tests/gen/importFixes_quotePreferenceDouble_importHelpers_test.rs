@@ -16,7 +16,7 @@ export default () => {};
 import a from "./a";
 [|b|];"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/test.ts");
+		f.go_to_file("/test.ts".into());
 		f.verify_import_fix_at_position(vec![r#"import b from "./b";
 b"#], None);
 	});

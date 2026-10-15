@@ -15,7 +15,7 @@ declare const f: Foo
 f.f = '[|foo|]'
 f.f = " + "`" + r"[|foo|]" + "`" + r"";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_rename_at_ranges_with_text(None, "foo");
+		f.verify_baseline_rename_at_ranges_with_text(None, "foo".into());
 	});
 }
 

@@ -17,9 +17,9 @@ class /*5*/Baf/*6*/ extends Foo {
    }
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_error_exists_between_markers("1", "2");
-		f.verify_error_exists_between_markers("3", "4");
-		f.verify_error_exists_between_markers("5", "6");
+		f.verify_error_exists_between_markers("1".into(), "2".into());
+		f.verify_error_exists_between_markers("3".into(), "4".into());
+		f.verify_error_exists_between_markers("5".into(), "6".into());
 		f.verify_number_of_errors_in_current_file(3);
 	});
 }

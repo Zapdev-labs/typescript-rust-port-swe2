@@ -22,7 +22,7 @@ var x = <[|di/*ds*/v|] />;
 var y = <[|s/*ss*/pan|] />;
 var z = <div [|na/*ps*/me|]='hello' />;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "ds", "ss", "ps");
+		f.verify_baseline_go_to_definition(true, "ds".into(), "ss".into(), "ps".into());
 	});
 }
 

@@ -23,7 +23,7 @@ import { C, E, F } from "./a" with { type: "a" };
 import { A as D, Y } from "./a" with { type: "b" };
 import { Z } from "./z";
 
-export type G = A | B | C | D | E | F | Y | Z;"#, tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
+export type G = A | B | C | D | E | F | Y | Z;"#.into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
 	});
 }
 

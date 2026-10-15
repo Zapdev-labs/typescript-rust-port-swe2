@@ -21,10 +21,10 @@ export function f(x) {
 }
 f/*f*/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("f");
-		f.verify_quick_info_is("function f(x: string): string", "`{@link foo}` initial at-param is OK in title comment\n\n*@param* `x` — hi there `{@link foo}`");
-		f.go_to_marker("x");
-		f.verify_quick_info_is("(parameter) x: string", "hi there `{@link foo}`");
+		f.go_to_marker("f".into());
+		f.verify_quick_info_is("function f(x: string): string".into(), "`{@link foo}` initial at-param is OK in title comment\n\n*@param* `x` — hi there `{@link foo}`".into());
+		f.go_to_marker("x".into());
+		f.verify_quick_info_is("(parameter) x: string".into(), "hi there `{@link foo}`".into());
 	});
 }
 

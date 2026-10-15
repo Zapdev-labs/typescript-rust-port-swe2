@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn let_quick_info_and_completion_list() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"let /*1*/a = 10;
 /*2*/a = 30;
 function foo() {
@@ -15,14 +15,14 @@ function foo() {
     /*4*/b = /*5*/a;
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("2", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "a", detail: Some(("let a: number").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
-		f.verify_completions("4", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "a", detail: Some(("let a: number").into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "b", detail: Some(("let b: number").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
-		f.verify_completions("5", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "a", detail: Some(("let a: number").into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "b", detail: Some(("let b: number").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
-		f.verify_quick_info_at("1", "let a: number", "");
-		f.verify_quick_info_at("2", "let a: number", "");
-		f.verify_quick_info_at("3", "let b: number", "");
-		f.verify_quick_info_at("4", "let b: number", "");
-		f.verify_quick_info_at("5", "let a: number", "");
+		f.verify_completions("2".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "a", detail: Some(("let a: number").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("4".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "a", detail: Some(("let a: number").into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "b", detail: Some(("let b: number").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("5".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "a", detail: Some(("let a: number").into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "b", detail: Some(("let b: number").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_quick_info_at("1".into(), "let a: number".into(), "".into());
+		f.verify_quick_info_at("2".into(), "let a: number".into(), "".into());
+		f.verify_quick_info_at("3".into(), "let b: number".into(), "".into());
+		f.verify_quick_info_at("4".into(), "let b: number".into(), "".into());
+		f.verify_quick_info_at("5".into(), "let a: number".into(), "".into());
 	});
 }
 

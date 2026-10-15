@@ -10,7 +10,7 @@ fn remove_interface_extends_clause() {
 		let content = r"interface IFoo<T> { }
 interface Array<T> /**/extends IFoo<T> { }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
+		f.go_to_marker("".into());
 		f.delete_at_caret(15);
 	});
 }

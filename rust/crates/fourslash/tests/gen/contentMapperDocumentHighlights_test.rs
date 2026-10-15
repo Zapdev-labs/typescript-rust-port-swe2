@@ -17,8 +17,8 @@ fn content_mapper_document_highlights() {
 export const [|ti/*script*/tle|] = "Profile";
 export const heading = [|title|].toUpperCase();
 </script>
-"#, contentmappertest.component_mapper, ".vue");
-		f.verify_baseline_document_highlights(None, "script", "template", "markup");
+"#.into(), contentmappertest.component_mapper, ".vue".into());
+		f.verify_baseline_document_highlights(None, "script".into(), "template".into(), "markup".into());
 	});
 }
 

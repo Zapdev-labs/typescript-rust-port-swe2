@@ -19,7 +19,7 @@ declare global {
 // @Filename: /a.tsx
 [|<div/>|]";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/a.tsx");
+		f.go_to_file("/a.tsx".into());
 		f.verify_import_fix_at_position(vec![r#"import { factory } from "./factory";
 
 <div/>"#], None);

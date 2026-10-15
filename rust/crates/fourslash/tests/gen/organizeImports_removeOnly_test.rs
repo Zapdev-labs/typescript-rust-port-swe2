@@ -18,7 +18,7 @@ export { g, e, b, c };"#;
 import { e } from "bar";
 import { g } from "foo";
 
-export { g, e, b, c };"#, tsc_lsproto::CodeActionKind::SOURCE_REMOVE_UNUSED_IMPORTS_TS, None);
+export { g, e, b, c };"#.into(), tsc_lsproto::CodeActionKind::SOURCE_REMOVE_UNUSED_IMPORTS_TS, None);
 	});
 }
 

@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn get_jsx_outlining_spans() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r#"import React, { Component } from 'react';
 
 export class Home extends Component[| {

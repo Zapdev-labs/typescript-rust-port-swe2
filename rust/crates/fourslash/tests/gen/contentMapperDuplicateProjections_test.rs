@@ -13,8 +13,8 @@ export const helper = 1;
 // @Filename: /app.astro
 import { helper } from "./dep";
 helper;
-"#, contentmappertest.duplicate_projection_mapper, ".astro");
-		f.verify_will_rename_files_edits("/dep.ts", "/renamed.ts", vec![("/app.astro", r#"import { helper } from "./renamed";
+"#.into(), contentmappertest.duplicate_projection_mapper, ".astro".into());
+		f.verify_will_rename_files_edits("/dep.ts".into(), "/renamed.ts".into(), vec![("/app.astro", r#"import { helper } from "./renamed";
 helper;
 "#)].into_iter().collect::<FxHashMap<_, _>>(), None);
 	});

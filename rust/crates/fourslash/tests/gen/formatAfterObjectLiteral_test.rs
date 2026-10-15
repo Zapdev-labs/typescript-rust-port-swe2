@@ -9,9 +9,9 @@ fn format_after_object_literal() {
 	run_test(|t| {
 		let content = r"/**/namespace Default{var x= ( { } ) ;}";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
-		f.go_to_marker("");
-		f.verify_current_line_content(r"namespace Default { var x = ({}); }");
+		f.format_document("".into());
+		f.go_to_marker("".into());
+		f.verify_current_line_content(r"namespace Default { var x = ({}); }".into());
 	});
 }
 

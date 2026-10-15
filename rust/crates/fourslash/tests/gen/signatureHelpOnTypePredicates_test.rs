@@ -14,11 +14,11 @@ f1(/*1*/)
 f2(/*2*/)
 f3(/*3*/)";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1");
+		f.go_to_marker("1".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f1(a: any): a is number", ..Default::default() });
-		f.go_to_marker("2");
+		f.go_to_marker("2".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f2(a: any): a is unknown", ..Default::default() });
-		f.go_to_marker("3");
+		f.go_to_marker("3".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f3(a: any, ...b: any[]): a is number", is_variadic: true, is_variadic_set: true, ..Default::default() });
 	});
 }

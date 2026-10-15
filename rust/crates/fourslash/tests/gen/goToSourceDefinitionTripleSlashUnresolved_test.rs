@@ -11,7 +11,7 @@ fn go_to_source_definition_unresolved_triple_slash() {
 /// <reference /*marker*/path="nonexistent.ts" />
 export {};"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("marker");
+		f.verify_baseline_go_to_source_definition("marker".into());
 	});
 }
 

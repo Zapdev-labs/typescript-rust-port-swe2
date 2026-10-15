@@ -22,7 +22,7 @@ fn completion_list_with_label() {
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_completions(vec!["1", "2", "7"], Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["label"], ..Default::default() }), ..Default::default() }));
 		f.verify_completions(vec!["3", "4", "5", "6"], Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["label", "testlabel"], ..Default::default() }), ..Default::default() }));
-		f.verify_completions("8", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { excludes: vec!["label"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("8".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { excludes: vec!["label"], ..Default::default() }), ..Default::default() }));
 	});
 }
 

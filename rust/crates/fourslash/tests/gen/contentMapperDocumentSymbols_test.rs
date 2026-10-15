@@ -9,8 +9,8 @@ fn content_mapper_synthesized_document_symbols() {
 	run_test(|t| {
 		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /app.vue
 component source with no direct TypeScript span/**/
-", contentmappertest.synthesizing_mapper, ".vue");
-		f.go_to_marker("");
+".into(), contentmappertest.synthesizing_mapper, ".vue".into());
+		f.go_to_marker("".into());
 		f.verify_baseline_document_symbol();
 	});
 }
@@ -20,8 +20,8 @@ fn content_mapper_supplemental_document_symbols() {
 	run_test(|t| {
 		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /app.astro
 export function supplementalSymbol() {}
-", contentmappertest.supplemental_mapper, ".astro");
-		f.go_to_file("/app.astro");
+".into(), contentmappertest.supplemental_mapper, ".astro".into());
+		f.go_to_file("/app.astro".into());
 		f.verify_baseline_document_symbol();
 	});
 }

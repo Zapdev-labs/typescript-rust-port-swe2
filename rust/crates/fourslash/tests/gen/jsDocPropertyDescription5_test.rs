@@ -15,7 +15,7 @@ function multiple1Example(e: Multiple1Example) {
     console.log(e./*multiple1*/anything);
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("multiple1", "any", "");
+		f.verify_quick_info_at("multiple1".into(), "any".into(), "".into());
 	});
 }
 

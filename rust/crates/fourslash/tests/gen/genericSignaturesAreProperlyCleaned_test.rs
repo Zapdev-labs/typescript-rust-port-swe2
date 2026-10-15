@@ -14,7 +14,7 @@ declare var v1: Int<string>;
 var v2: Int<number> = v1/*1*/;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_number_of_errors_in_current_file(1);
-		f.go_to_marker("1");
+		f.go_to_marker("1".into());
 		f.delete_at_caret(1);
 		f.verify_number_of_errors_in_current_file(1);
 	});

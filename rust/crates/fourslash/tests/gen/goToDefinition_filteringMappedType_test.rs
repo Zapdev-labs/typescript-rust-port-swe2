@@ -11,7 +11,7 @@ fn go_to_definition_filtering_mapped_type() {
 const filtered: { [P in keyof typeof obj as P extends 'b' ? never : P]: 0; } = { a: 0 };
 filtered.[|/*ref*/a|];";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "ref");
+		f.verify_baseline_go_to_definition(true, "ref".into());
 	});
 }
 

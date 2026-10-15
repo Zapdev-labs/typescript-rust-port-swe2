@@ -9,9 +9,9 @@ fn formatting_of_chained_lambda() {
 	run_test(|t| {
 		let content = r"var fn = (x: string) => ()=> alert(x)/**/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
-		f.insert(";");
-		f.verify_current_line_content(r"var fn = (x: string) => () => alert(x);");
+		f.go_to_marker("".into());
+		f.insert(";".into());
+		f.verify_current_line_content(r"var fn = (x: string) => () => alert(x);".into());
 	});
 }
 

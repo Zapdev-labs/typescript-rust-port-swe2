@@ -22,7 +22,7 @@ declare module "b" {
     export const y: typeof [|N|].[|x|];
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("N", "a", "b", "x");
+		f.verify_baseline_find_all_references("N".into(), "a".into(), "b".into(), "x".into());
 		f.verify_baseline_rename(None, f.ranges()[1], f.ranges()[5]);
 		f.verify_baseline_rename(None, f.ranges()[7]);
 		f.verify_baseline_rename(None, f.ranges()[9]);

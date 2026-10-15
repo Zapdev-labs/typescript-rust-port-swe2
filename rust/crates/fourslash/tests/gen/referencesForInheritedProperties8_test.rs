@@ -18,7 +18,7 @@ var d: D;
 d.propD;
 d.propC;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("d", "c");
+		f.verify_baseline_find_all_references("d".into(), "c".into());
 	});
 }
 

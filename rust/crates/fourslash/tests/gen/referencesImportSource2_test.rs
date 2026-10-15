@@ -24,8 +24,8 @@ f;
 import.source("./a.js");"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
-		f.verify_baseline_find_all_references("a", "b", "c", "module");
-		f.verify_baseline_rename(None, "a", "b", "c");
+		f.verify_baseline_find_all_references("a".into(), "b".into(), "c".into(), "module".into());
+		f.verify_baseline_rename(None, "a".into(), "b".into(), "c".into());
 	});
 }
 

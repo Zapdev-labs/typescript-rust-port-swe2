@@ -11,12 +11,12 @@ fn formatting_on_enter() {
 class bar {/**/ }
 // new line here";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
-		f.insert_line("");
+		f.go_to_marker("".into());
+		f.insert_line("".into());
 		f.verify_current_file_content(r"class foo { }
 class bar {
 }
-// new line here");
+// new line here".into());
 	});
 }
 

@@ -15,7 +15,7 @@ import * as a from ".//*rename*/a";"#;
 		let mut capabilities = tsc_fourslash::get_default_capabilities();
 		capabilities.workspace.workspace_edit = Some(tsc_lsproto::WorkspaceEditClientCapabilities { document_changes: Some((true).into()), resource_operations: Some(vec![]), ..Default::default() });
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", capabilities, content);
-		f.go_to_marker("rename");
+		f.go_to_marker("rename".into());
 		f.verify_rename_failed(None);
 	});
 }

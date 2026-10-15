@@ -19,7 +19,7 @@ switch (p) {
     /*1*/
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", tsc_fourslash::get_default_capabilities_with_options(Some(tsc_fourslash::ClientCapabilitiesOptions { completion_item: Some(tsc_lsproto::ClientCompletionItemOptions { snippet_support: Some((true).into()), ..Default::default() }), ..Default::default() })), content);
-		f.verify_completions("1", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "case P[\" Space\"]: ...", insert_text: Some(("case P[\" Space\"]:$1\ncase P.Bar:$2").into()), sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::SNIPPET).into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("1".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "case P[\" Space\"]: ...", insert_text: Some(("case P[\" Space\"]:$1\ncase P.Bar:$2").into()), sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::SNIPPET).into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn arguments_are_available_after_edits_at_end_of_function() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"namespace Test1 {
 	class Person {
 		children: string[];
@@ -17,8 +17,8 @@ fn arguments_are_available_after_edits_at_end_of_function() {
 	}
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
-		f.insert("this.children = ch");
+		f.go_to_marker("".into());
+		f.insert("this.children = ch".into());
 		f.verify_completions(None, Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "children", detail: Some(("(parameter) children: string[]").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }

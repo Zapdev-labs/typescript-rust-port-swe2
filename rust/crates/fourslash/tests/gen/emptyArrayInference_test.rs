@@ -11,8 +11,8 @@ fn empty_array_inference() {
 var x/*1*/x = true ? [1] : [undefined]; 
 var y/*2*/y = true ? [1] : [];";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "var xx: number[]", "");
-		f.verify_quick_info_at("2", "var yy: number[]", "");
+		f.verify_quick_info_at("1".into(), "var xx: number[]".into(), "".into());
+		f.verify_quick_info_at("2".into(), "var yy: number[]".into(), "".into());
 	});
 }
 

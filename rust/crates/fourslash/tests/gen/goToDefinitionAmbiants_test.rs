@@ -21,7 +21,7 @@ var ambientClassVariable = new /*constructorReference*/ambientClass();
 ambientClass./*staticMethodReference*/method();
 ambientClassVariable./*instanceMethodReference*/method();";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(false, "ambientVariableReference", "ambientFunctionReference", "constructorReference", "staticMethodReference", "instanceMethodReference");
+		f.verify_baseline_go_to_definition(false, "ambientVariableReference".into(), "ambientFunctionReference".into(), "constructorReference".into(), "staticMethodReference".into(), "instanceMethodReference".into());
 	});
 }
 

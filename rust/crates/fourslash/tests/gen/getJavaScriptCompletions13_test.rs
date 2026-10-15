@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn get_java_script_completions13() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @allowNonTsExtensions: true
 // @Filename: file1.js
 var file1Identifier = 1;
@@ -18,8 +18,8 @@ var file2Identifier2 = 2;
 /*1*/
 file2Identifier2./*2*/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("1", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["file2Identifier1", "file2Identifier2", Some(tsc_lsproto::CompletionItem { label: "file1Identifier", sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), ..Default::default() })], excludes: vec!["FooProp"], ..Default::default() }), ..Default::default() }));
-		f.verify_completions("2", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "file2Identifier1", sort_text: Some((tsc_ls::SORT_TEXT_JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "file2Identifier2", sort_text: Some((tsc_ls::SORT_TEXT_JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() })], excludes: vec!["file1Identifier", "FooProp"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("1".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["file2Identifier1", "file2Identifier2", Some(tsc_lsproto::CompletionItem { label: "file1Identifier", sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), ..Default::default() })], excludes: vec!["FooProp"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("2".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "file2Identifier1", sort_text: Some((tsc_ls::SORT_TEXT_JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "file2Identifier2", sort_text: Some((tsc_ls::SORT_TEXT_JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() })], excludes: vec!["file1Identifier", "FooProp"], ..Default::default() }), ..Default::default() }));
 	});
 }
 

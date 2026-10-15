@@ -14,7 +14,7 @@ export const x = 0;
 import { x } from 'foo';";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
-		f.verify_will_rename_files_edits("/user.ts", "/luser.ts", vec![].into_iter().collect::<FxHashMap<_, _>>(), None);
+		f.verify_will_rename_files_edits("/user.ts".into(), "/luser.ts".into(), vec![].into_iter().collect::<FxHashMap<_, _>>(), None);
 	});
 }
 

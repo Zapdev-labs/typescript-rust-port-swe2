@@ -11,8 +11,8 @@ fn completion_after_newline2() {
 let foo = 5 as const /*1*/
 /*2*/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("1", None);
-		f.verify_completions("2", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_plus(vec![Some(tsc_lsproto::CompletionItem { label: "foo", ..Default::default() })], false), ..Default::default() }), ..Default::default() }));
+		f.verify_completions("1".into(), None);
+		f.verify_completions("2".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_plus(vec![Some(tsc_lsproto::CompletionItem { label: "foo", ..Default::default() })], false), ..Default::default() }), ..Default::default() }));
 	});
 }
 

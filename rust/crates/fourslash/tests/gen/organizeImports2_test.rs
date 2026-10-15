@@ -19,7 +19,7 @@ console.log(Foo, Bar);"#;
     Foo
 } from "foo";
 
-console.log(Foo, Bar);"#, tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
+console.log(Foo, Bar);"#.into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
 	});
 }
 

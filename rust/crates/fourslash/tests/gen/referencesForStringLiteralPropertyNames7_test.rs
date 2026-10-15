@@ -15,7 +15,7 @@ var x = { "/*1*/someProperty": 0 }
 x["/*2*/someProperty"] = 3;
 x.someProperty = 5;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1", "2");
+		f.verify_baseline_find_all_references("1".into(), "2".into());
 	});
 }
 

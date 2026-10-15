@@ -12,8 +12,8 @@ fn generic_arity_enforcement_after_edit() {
 var v4: G<G<any>, any>;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_number_of_errors_in_current_file(1);
-		f.go_to_marker("");
-		f.insert(" ");
+		f.go_to_marker("".into());
+		f.insert(" ".into());
 		f.verify_number_of_errors_in_current_file(1);
 	});
 }

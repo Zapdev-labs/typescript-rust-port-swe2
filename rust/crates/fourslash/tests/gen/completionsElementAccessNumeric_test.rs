@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn completions_element_access_numeric() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @target: esnext
 type Tup = [
     /**
@@ -22,7 +22,7 @@ type Tup = [
 declare var x: Tup;
 x[|./**/|]";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "0", insert_text: Some(("[0]").into()), documentation: Some(tsc_lsproto::StringOrMarkupContent { markup_content: Some(tsc_lsproto::MarkupContent { kind: tsc_lsproto::MarkupKind::MARKDOWN, value: "The first label", ..Default::default() }), ..Default::default() }), detail: Some(("(property) 0: number (lbl1)").into()), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "[0]", range: f.ranges()[0].ls_range, ..Default::default() }), ..Default::default() }), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "1", insert_text: Some(("[1]").into()), documentation: Some(tsc_lsproto::StringOrMarkupContent { markup_content: Some(tsc_lsproto::MarkupContent { kind: tsc_lsproto::MarkupKind::MARKDOWN, value: "The second label", ..Default::default() }), ..Default::default() }), detail: Some(("(property) 1: number (lbl2)").into()), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "[1]", range: f.ranges()[0].ls_range, ..Default::default() }), ..Default::default() }), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "0", insert_text: Some(("[0]").into()), documentation: Some(tsc_lsproto::StringOrMarkupContent { markup_content: Some(tsc_lsproto::MarkupContent { kind: tsc_lsproto::MarkupKind::MARKDOWN, value: "The first label", ..Default::default() }), ..Default::default() }), detail: Some(("(property) 0: number (lbl1)").into()), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "[0]", range: f.ranges()[0].ls_range, ..Default::default() }), ..Default::default() }), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "1", insert_text: Some(("[1]").into()), documentation: Some(tsc_lsproto::StringOrMarkupContent { markup_content: Some(tsc_lsproto::MarkupContent { kind: tsc_lsproto::MarkupKind::MARKDOWN, value: "The second label", ..Default::default() }), ..Default::default() }), detail: Some(("(property) 1: number (lbl2)").into()), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "[1]", range: f.ranges()[0].ls_range, ..Default::default() }), ..Default::default() }), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -9,7 +9,7 @@ fn completion_list_new_identifier_variable_declaration() {
 	run_test(|t| {
 		let content = r"var y : (s:string, list/*2*/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("2", None);
+		f.verify_completions("2".into(), None);
 	});
 }
 

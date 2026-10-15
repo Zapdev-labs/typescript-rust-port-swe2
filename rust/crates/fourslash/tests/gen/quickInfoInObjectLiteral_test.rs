@@ -25,8 +25,8 @@ class Foo {
   }
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "(property) y1: () => string", "");
-		f.verify_quick_info_at("2", "var value: number", "");
+		f.verify_quick_info_at("1".into(), "(property) y1: () => string".into(), "".into());
+		f.verify_quick_info_at("2".into(), "var value: number".into(), "".into());
 	});
 }
 

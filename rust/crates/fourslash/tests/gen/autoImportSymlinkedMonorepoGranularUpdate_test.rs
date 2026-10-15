@@ -54,11 +54,11 @@ console.log(projectBValue);
 newlyAdded/*projectACompletion*/
 // @link: /packages/project-b -> /packages/project-a/node_modules/project-b"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("projectACompletion");
+		f.go_to_marker("projectACompletion".into());
 		f.baseline_auto_imports_completions(vec!["projectACompletion"]);
-		f.go_to_marker("projectBEdit");
-		f.insert("\nexport function newlyAddedFunction(): void {}");
-		f.go_to_marker("projectACompletion");
+		f.go_to_marker("projectBEdit".into());
+		f.insert("\nexport function newlyAddedFunction(): void {}".into());
+		f.go_to_marker("projectACompletion".into());
 		f.baseline_auto_imports_completions(vec!["projectACompletion"]);
 	});
 }

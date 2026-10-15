@@ -29,14 +29,14 @@ fn format_simulating_script_blocks() {
 		let mut opts640 = f.get_options();
 		opts640.format_code_settings.base_indent_size = 12;
 		f.configure(opts640);
-		f.format_selection("begin1", "end1");
-		f.format_selection("begin2", "end2");
-		f.format_selection("begin3", "end3");
+		f.format_selection("begin1".into(), "end1".into());
+		f.format_selection("begin2".into(), "end2".into());
+		f.format_selection("begin3".into(), "end3".into());
 		let mut opts794 = f.get_options();
 		opts794.format_code_settings.base_indent_size = 24;
 		f.configure(opts794);
-		f.format_selection("begin4", "end4");
-		f.format_selection("begin5", "end5");
+		f.format_selection("begin4".into(), "end4".into());
+		f.format_selection("begin5".into(), "end5".into());
 		f.verify_current_file_content(r#"/* BEGIN EXTERNAL SOURCE */
 
                         var a = 1;
@@ -54,7 +54,7 @@ fn format_simulating_script_blocks() {
             var e = "/********/";
             var f = 1;
 
-/* END EXTERNAL SOURCE */"#);
+/* END EXTERNAL SOURCE */"#.into());
 	});
 }
 

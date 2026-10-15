@@ -19,7 +19,7 @@ class Derived extends Base {
 	}
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_no_signature_help_for_markers("1");
+		f.verify_no_signature_help_for_markers("1".into());
 	});
 }
 

@@ -9,7 +9,7 @@ fn member_completion_on_right_side_of_import() {
 	run_test(|t| {
 		let content = r"import x = M./**/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("", None);
+		f.verify_completions("".into(), None);
 	});
 }
 

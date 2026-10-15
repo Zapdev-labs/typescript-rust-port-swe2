@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_file_exclude_patterns9() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @Filename: /src/vs/workbench/test.ts
 import { Parts } from './parts';
 export class /**/EditorParts implements Parts { }

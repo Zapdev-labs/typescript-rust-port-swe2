@@ -33,7 +33,7 @@ export default 0;
 // @Filename: /tsconfig.json
 { "files": ["a.ts", "src/b.ts", "src/foo/c.ts", "src/old/index.ts", "src/old/file.ts"] }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_will_rename_files_edits("/src/old", "/src/new", vec![("/a.ts", r#"/// <reference path="./src/new/file.ts" />
+		f.verify_will_rename_files_edits("/src/old".into(), "/src/new".into(), vec![("/a.ts", r#"/// <reference path="./src/new/file.ts" />
 import old from "./src/new";
 import old2 from "./src/new/file";
 export default 0;"#), ("/src/b.ts", r#"/// <reference path="./new/file.ts" />

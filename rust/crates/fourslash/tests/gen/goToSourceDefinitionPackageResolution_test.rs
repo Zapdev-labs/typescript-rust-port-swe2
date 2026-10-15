@@ -20,7 +20,7 @@ export function /*target*/bar() { return "hello"; }
 import { bar } from "foo";
 bar/*usage*/();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("usage");
+		f.verify_baseline_go_to_source_definition("usage".into());
 	});
 }
 
@@ -38,7 +38,7 @@ export function /*target*/greet() { return "hi"; }
 import { greet } from "pkg";
 greet/*usage*/();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("usage");
+		f.verify_baseline_go_to_source_definition("usage".into());
 	});
 }
 
@@ -56,7 +56,7 @@ export function /*target*/work() {}
 import { work } from "pkg";
 work/*usage*/();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("usage");
+		f.verify_baseline_go_to_source_definition("usage".into());
 	});
 }
 
@@ -74,7 +74,7 @@ export function /*target*/work() {}
 import { work } from "pkg";
 work/*usage*/();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("usage");
+		f.verify_baseline_go_to_source_definition("usage".into());
 	});
 }
 
@@ -92,7 +92,7 @@ export function /*target*/util() {}
 import { util } from "pkg";
 util/*usage*/();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("usage");
+		f.verify_baseline_go_to_source_definition("usage".into());
 	});
 }
 

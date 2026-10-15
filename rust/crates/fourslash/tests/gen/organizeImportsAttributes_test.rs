@@ -20,7 +20,7 @@ type G = A | B | C | D | E | F;"#;
 import { C, E } from "./file" with { type: "a" };
 import { A as D, A as F } from "./file" with { type: "b" };
 
-type G = A | B | C | D | E | F;"#, tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
+type G = A | B | C | D | E | F;"#.into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
 	});
 }
 

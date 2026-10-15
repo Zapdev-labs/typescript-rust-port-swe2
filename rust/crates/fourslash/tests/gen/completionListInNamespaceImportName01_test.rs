@@ -12,7 +12,7 @@ export var foo: number = 1;
 // @Filename: m2.ts
 import * as /**/ from "m1""#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("", None);
+		f.verify_completions("".into(), None);
 	});
 }
 

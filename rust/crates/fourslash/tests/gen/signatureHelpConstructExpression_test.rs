@@ -10,9 +10,9 @@ fn signature_help_construct_expression() {
 		let content = r#"class sampleCls { constructor(str: string, num: number) { } }
 var x = new sampleCls(/*1*/"", /*2*/5);"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1");
+		f.go_to_marker("1".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "sampleCls(str: string, num: number): sampleCls", parameter_count: 2, parameter_name: "str", parameter_span: "str: string", ..Default::default() });
-		f.go_to_marker("2");
+		f.go_to_marker("2".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "num", parameter_span: "num: number", ..Default::default() });
 	});
 }

@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn fundule_with_recursive_reference() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"namespace M {
     export function C() {}
     export namespace C {
@@ -15,7 +15,7 @@ fn fundule_with_recursive_reference() {
   }
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("", "var M.C.C: typeof M.C", "");
+		f.verify_quick_info_at("".into(), "var M.C.C: typeof M.C".into(), "".into());
 		f.verify_no_errors();
 	});
 }

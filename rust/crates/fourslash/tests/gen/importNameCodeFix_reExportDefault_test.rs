@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_re_export_default() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r#"// @Filename: /user.ts
 foo;
 // @Filename: /user2.ts
@@ -24,19 +24,19 @@ export default foo;
 // @Filename: /unnamed.ts
 export default 0;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/user.ts");
+		f.go_to_file("/user.ts".into());
 		f.verify_import_fix_at_position(vec![r#"import foo from "./named";
 
 foo;"#, r#"import foo from "./reExportNamed";
 
 foo;"#], None);
-		f.go_to_file("/user2.ts");
+		f.go_to_file("/user2.ts".into());
 		f.verify_import_fix_at_position(vec![r#"import unnamed from "./unnamed";
 
 unnamed;"#, r#"import unnamed from "./reExportUnnamed";
 
 unnamed;"#], None);
-		f.go_to_file("/user3.ts");
+		f.go_to_file("/user3.ts".into());
 		f.verify_import_fix_at_position(vec![r#"import reExportUnnamed from "./reExportUnnamed";
 
 reExportUnnamed;"#], None);

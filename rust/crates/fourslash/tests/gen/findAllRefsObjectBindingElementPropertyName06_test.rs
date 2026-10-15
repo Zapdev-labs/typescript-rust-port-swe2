@@ -23,7 +23,7 @@ var p2;
 for ({ /*4*/property1 : p2 } of elems) {
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("0", "1", "3", "4", "2");
+		f.verify_baseline_find_all_references("0".into(), "1".into(), "3".into(), "4".into(), "2".into());
 	});
 }
 

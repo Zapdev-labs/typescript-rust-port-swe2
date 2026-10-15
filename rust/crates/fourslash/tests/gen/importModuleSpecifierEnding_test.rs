@@ -13,7 +13,7 @@ export const helperFunc = () => {};
 helper/**/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.configure(tsc_lsutil::UserPreferences { include_completions_for_module_exports: tsc_core::TS_TRUE, include_completions_for_import_statements: tsc_core::TS_TRUE, import_module_specifier_ending: modulespecifiers.import_module_specifier_ending_preference_auto, ..Default::default() });
-		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["helperFunc"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("".into(), Some(tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["helperFunc"], ..Default::default() }), ..Default::default() }));
 		f.baseline_auto_imports_completions(vec![""]);
 	});
 }
@@ -27,7 +27,7 @@ export const helperFunc = () => {};
 helper/**/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.configure(tsc_lsutil::UserPreferences { include_completions_for_module_exports: tsc_core::TS_TRUE, include_completions_for_import_statements: tsc_core::TS_TRUE, import_module_specifier_ending: modulespecifiers.import_module_specifier_ending_preference_minimal, ..Default::default() });
-		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["helperFunc"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("".into(), Some(tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["helperFunc"], ..Default::default() }), ..Default::default() }));
 		f.baseline_auto_imports_completions(vec![""]);
 	});
 }
@@ -41,7 +41,7 @@ export const helperFunc = () => {};
 helper/**/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.configure(tsc_lsutil::UserPreferences { include_completions_for_module_exports: tsc_core::TS_TRUE, include_completions_for_import_statements: tsc_core::TS_TRUE, import_module_specifier_ending: modulespecifiers.import_module_specifier_ending_preference_index, ..Default::default() });
-		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["helperFunc"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("".into(), Some(tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["helperFunc"], ..Default::default() }), ..Default::default() }));
 		f.baseline_auto_imports_completions(vec![""]);
 	});
 }
@@ -55,7 +55,7 @@ export const helperFunc = () => {};
 helper/**/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.configure(tsc_lsutil::UserPreferences { include_completions_for_module_exports: tsc_core::TS_TRUE, include_completions_for_import_statements: tsc_core::TS_TRUE, import_module_specifier_ending: modulespecifiers.import_module_specifier_ending_preference_js, ..Default::default() });
-		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["helperFunc"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("".into(), Some(tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["helperFunc"], ..Default::default() }), ..Default::default() }));
 		f.baseline_auto_imports_completions(vec![""]);
 	});
 }

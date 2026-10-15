@@ -46,7 +46,7 @@ u = 1,
 v;
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
+		f.format_document("".into());
 		f.verify_current_file_content(r"namespace M {
 " + r"    export =
 " + r"        C;

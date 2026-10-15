@@ -15,7 +15,7 @@ fn this_binding_in_lambda() {
 	}
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("", "this: this", "");
+		f.verify_quick_info_at("".into(), "this: this".into(), "".into());
 	});
 }
 

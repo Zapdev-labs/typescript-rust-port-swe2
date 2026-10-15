@@ -39,7 +39,7 @@ console.log(e, f, F, g, G, H, h);";
 } from './foo';
 
 console.log(a, B, b, c, C, d, D);
-console.log(e, f, F, g, G, H, h);", tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS, tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::TS_TRUE, ..Default::default() }));
+console.log(e, f, F, g, G, H, h);".into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS, tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::TS_TRUE, ..Default::default() }));
 		f.verify_organize_imports(r"import {
     b as B,
     c as C,
@@ -58,7 +58,7 @@ console.log(e, f, F, g, G, H, h);", tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE
 } from './foo';
 
 console.log(a, B, b, c, C, d, D);
-console.log(e, f, F, g, G, H, h);", tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::TS_FALSE, ..Default::default() }));
+console.log(e, f, F, g, G, H, h);".into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::TS_FALSE, ..Default::default() }));
 	});
 }
 

@@ -18,11 +18,11 @@ exports.foo = function(a, b) {
 	b/*b*/
 };";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("a");
-		f.insert(".");
+		f.go_to_marker("a".into());
+		f.insert(".".into());
 		f.verify_completions(None, Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "toFixed", kind: Some((tsc_lsproto::CompletionItemKind::METHOD).into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
-		f.go_to_marker("b");
-		f.insert(".");
+		f.go_to_marker("b".into());
+		f.insert(".".into());
 		f.verify_completions(None, Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "substring", kind: Some((tsc_lsproto::CompletionItemKind::METHOD).into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }

@@ -14,7 +14,7 @@ x.[|/*ref*/test|]();
 x./*defFn*/test3 = function () { }
 x.[|/*refFn*/test3|]();";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "ref", "refFn");
+		f.verify_baseline_go_to_definition(true, "ref".into(), "refFn".into());
 	});
 }
 

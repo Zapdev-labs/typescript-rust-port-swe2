@@ -23,9 +23,9 @@ namespace Module1 {
     export var z = 0;
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("file1");
+		f.go_to_marker("file1".into());
 		f.verify_baseline_document_symbol();
-		f.go_to_marker("file2");
+		f.go_to_marker("file2".into());
 		f.verify_baseline_document_symbol();
 	});
 }

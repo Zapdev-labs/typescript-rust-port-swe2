@@ -10,8 +10,8 @@ fn format_jsx_with_keyword_in_identifier() {
 		let content = r#"// @Filename: /a.tsx
 <div module-layout=""></div>"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
-		f.verify_current_file_content(r#"<div module-layout=""></div>"#);
+		f.format_document("".into());
+		f.verify_current_file_content(r#"<div module-layout=""></div>"#.into());
 	});
 }
 

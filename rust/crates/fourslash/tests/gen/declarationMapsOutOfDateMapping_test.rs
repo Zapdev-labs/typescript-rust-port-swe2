@@ -31,8 +31,8 @@ export class /*2*/Foo {
 import { Foo/*1*/ } from "a";"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_file("/home/src/workspaces/project/index.ts");
-		f.verify_baseline_go_to_definition(false, "1");
+		f.go_to_file("/home/src/workspaces/project/index.ts".into());
+		f.verify_baseline_go_to_definition(false, "1".into());
 	});
 }
 

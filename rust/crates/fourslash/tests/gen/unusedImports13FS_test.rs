@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn unused_imports13_fs() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @noUnusedLocals: true
 // @Filename: file2.ts
 [| import A, { x } from './a'; |]
@@ -16,7 +16,7 @@ console.log(A);
 export default 10;
 export var x = 10;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_range_after_code_fix(r"import A from './a';", false, 0, 0);
+		f.verify_range_after_code_fix(r"import A from './a';".into(), false, 0, 0);
 	});
 }
 

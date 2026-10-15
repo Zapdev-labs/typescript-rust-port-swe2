@@ -12,9 +12,9 @@ fn signature_help_anonymous_function() {
 }
 anonymousFunctionTest(5, "")(/*anonymousFunction1*/1, /*anonymousFunction2*/"");"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("anonymousFunction1");
+		f.go_to_marker("anonymousFunction1".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "(a: number, b: string): string", parameter_count: 2, parameter_name: "a", parameter_span: "a: number", ..Default::default() });
-		f.go_to_marker("anonymousFunction2");
+		f.go_to_marker("anonymousFunction2".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "b", parameter_span: "b: string", ..Default::default() });
 	});
 }

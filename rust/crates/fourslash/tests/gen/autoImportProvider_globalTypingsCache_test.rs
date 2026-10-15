@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_provider_global_typings_cache() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r#"// @Filename: /home/src/Library/Caches/typescript/node_modules/@types/react-router-dom/package.json
  { "name": "@types/react-router-dom", "version": "16.8.4", "types": "index.d.ts" }
 // @Filename: /home/src/Library/Caches/typescript/node_modules/@types/react-router-dom/index.d.ts
@@ -27,7 +27,7 @@ fn auto_import_provider_global_typings_cache() {
 BrowserRouter/**/"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_in_js_plus(vec![Some(tsc_lsproto::CompletionItem { label: "BrowserRouterFromDts", data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "react-router-dom", ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::AnyTextEdits, sort_text: Some((tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() })], false), ..Default::default() }), ..Default::default() }));
+		f.verify_completions("".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_in_js_plus(vec![Some(tsc_lsproto::CompletionItem { label: "BrowserRouterFromDts", data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "react-router-dom", ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::AnyTextEdits, sort_text: Some((tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() })], false), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -12,7 +12,7 @@ fn goto_definition_link_tag2() {
     [|/*2*/A|]
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(false, "1");
+		f.verify_baseline_go_to_definition(false, "1".into());
 	});
 }
 

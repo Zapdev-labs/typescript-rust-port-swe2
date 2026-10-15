@@ -27,15 +27,15 @@ card.ti/*exact*/tle;
 // @Filename: /main.ts
 import { card } from "./ProfileCard.vue";
 card.se/*incoming*/ttings;
-"#, contentmappertest.component_mapper, ".vue");
+"#.into(), contentmappertest.component_mapper, ".vue".into());
 |items| {
 			return Some(tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: items, ..Default::default() }), ..Default::default() });
 		}		let mut property_completions = ;
-		f.verify_completions("exact", property_completions("title"));
-		f.verify_completions("outgoing", property_completions("color"));
-		f.verify_completions("incoming", property_completions("settings"));
-		f.verify_completions("atom", None);
-		f.verify_completions("markup", None);
+		f.verify_completions("exact".into(), property_completions("title".into()));
+		f.verify_completions("outgoing".into(), property_completions("color".into()));
+		f.verify_completions("incoming".into(), property_completions("settings".into()));
+		f.verify_completions("atom".into(), None);
+		f.verify_completions("markup".into(), None);
 	});
 }
 
@@ -50,8 +50,8 @@ export const settings = { color: "blue", size: 2 };
 import { settings } from "./settings";
 settings./*boundary*/</script>
 <template>{{ settings }}</template>
-"#, contentmappertest.component_mapper, ".vue");
-		f.verify_completions("boundary", Some(tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["color", "size"], ..Default::default() }), ..Default::default() }));
+"#.into(), contentmappertest.component_mapper, ".vue".into());
+		f.verify_completions("boundary".into(), Some(tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["color", "size"], ..Default::default() }), ..Default::default() }));
 	});
 }
 
@@ -61,8 +61,8 @@ fn content_mapper_completion_edit_range() {
 		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /app.box
 export const foo = 1;
 [|foo|]/*completion*/
-", contentmappertest.transforming_mapper, ".box");
-		f.verify_completions("completion", Some(tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: Some(tsc_fourslash::EditRange { insert: f.ranges()[0], replace: f.ranges()[0], ..Default::default() }), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["foo"], ..Default::default() }), ..Default::default() }));
+".into(), contentmappertest.transforming_mapper, ".box".into());
+		f.verify_completions("completion".into(), Some(tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: Some(tsc_fourslash::EditRange { insert: f.ranges()[0], replace: f.ranges()[0], ..Default::default() }), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["foo"], ..Default::default() }), ..Default::default() }));
 	});
 }
 
@@ -108,8 +108,8 @@ import {} from "./[|/*unloadedPath*/Un|]";
 |label, range_index| {
 			return Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: label, detail: Some((label).into()), kind: Some((tsc_lsproto::CompletionItemKind::FILE).into()), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: label, range: f.ranges()[range_index].ls_range, ..Default::default() }), ..Default::default() }), ..Default::default() })], ..Default::default() }), ..Default::default() });
 		}		let mut path_completion = ;
-		f.verify_completions("loadedPath", path_completion("Loaded.vue", 0));
-		f.verify_completions("unloadedPath", path_completion("Unloaded.vue", 1));
+		f.verify_completions("loadedPath".into(), path_completion("Loaded.vue".into(), 0));
+		f.verify_completions("unloadedPath".into(), path_completion("Unloaded.vue".into(), 1));
 	});
 }
 

@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn js_doc_inherit_doc() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r#"// @Filename: inheritDoc.ts
 class Foo {
     /**
@@ -65,12 +65,12 @@ Bar.method1/*3*/();
 const p1 = b.property1/*4*/;
 const p2 = b.property2/*5*/;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "constructor Bar(value: number): Bar", "");
-		f.verify_quick_info_at("2", "(method) Bar.method2(): void", "Foo#method2 documentation");
-		f.verify_quick_info_at("3", "(method) Bar.method1(): void", "Foo#method1 documentation");
-		f.verify_quick_info_at("4", "(property) Bar.property1: string", "Foo#property1 documentation");
-		f.verify_quick_info_at("5", "(property) Bar.property2: object", "Baz#property2 documentation\nBar#property2");
-		f.verify_quick_info_at("6", "(property) Bar.property3: string", "");
+		f.verify_quick_info_at("1".into(), "constructor Bar(value: number): Bar".into(), "".into());
+		f.verify_quick_info_at("2".into(), "(method) Bar.method2(): void".into(), "Foo#method2 documentation".into());
+		f.verify_quick_info_at("3".into(), "(method) Bar.method1(): void".into(), "Foo#method1 documentation".into());
+		f.verify_quick_info_at("4".into(), "(property) Bar.property1: string".into(), "Foo#property1 documentation".into());
+		f.verify_quick_info_at("5".into(), "(property) Bar.property2: object".into(), "Baz#property2 documentation\nBar#property2".into());
+		f.verify_quick_info_at("6".into(), "(property) Bar.property3: string".into(), "".into());
 	});
 }
 

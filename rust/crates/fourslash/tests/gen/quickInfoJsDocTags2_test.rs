@@ -11,7 +11,7 @@ fn quick_info_js_doc_tags2() {
 /** Doc   */
 const /**/x = 0;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("", "const x: 0", "Doc");
+		f.verify_quick_info_at("".into(), "const x: 0".into(), "Doc".into());
 	});
 }
 

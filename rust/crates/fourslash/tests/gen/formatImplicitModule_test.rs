@@ -11,11 +11,11 @@ fn format_implicit_module() {
 
        }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
+		f.format_document("".into());
 		f.go_to_bof();
-		f.verify_current_line_content(r"export class A {");
+		f.verify_current_line_content(r"export class A {".into());
 		f.go_to_eof();
-		f.verify_current_line_content(r"}");
+		f.verify_current_line_content(r"}".into());
 	});
 }
 

@@ -12,7 +12,7 @@ fn document_highlight_require_property_destructure1() {
 const { a } = require("m").f;
 a/*m*/;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_document_highlights(None, "m");
+		f.verify_baseline_document_highlights(None, "m".into());
 	});
 }
 

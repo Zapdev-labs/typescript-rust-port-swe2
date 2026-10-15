@@ -28,7 +28,7 @@ export interface IFoo {
     x;
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "alias1Type", "alias1Value", "alias2Type", "alias2Value");
+		f.verify_baseline_go_to_definition(true, "alias1Type".into(), "alias1Value".into(), "alias2Type".into(), "alias2Value".into());
 	});
 }
 

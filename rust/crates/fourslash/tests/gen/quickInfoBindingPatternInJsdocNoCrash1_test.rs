@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_binding_pattern_in_jsdoc_no_crash1() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"/** @type {({ /*1*/data: any }?) => { data: string[] }} */
 function useQuery({ data }): { data: string[] } {
   return {
@@ -15,7 +15,7 @@ function useQuery({ data }): { data: string[] } {
   };
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "", "");
+		f.verify_quick_info_at("1".into(), "".into(), "".into());
 	});
 }
 

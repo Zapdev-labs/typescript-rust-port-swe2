@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn export_default_class() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"export default class C {
     method() { /*1*/ }
 }

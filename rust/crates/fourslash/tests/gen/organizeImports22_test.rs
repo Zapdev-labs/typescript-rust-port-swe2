@@ -21,14 +21,14 @@ console.log(abc, Abc, bc, Bc, I, R, M);";
     R,
 } from 'a';
 import { abc, Abc, bc, Bc } from 'b';
-console.log(abc, Abc, bc, Bc, I, R, M);", tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
+console.log(abc, Abc, bc, Bc, I, R, M);".into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
 		f.verify_organize_imports(r"import {
     I,
     M,
     R,
 } from 'a';
 import { abc, Abc, bc, Bc } from 'b';
-console.log(abc, Abc, bc, Bc, I, R, M);", tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
+console.log(abc, Abc, bc, Bc, I, R, M);".into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
 	});
 }
 

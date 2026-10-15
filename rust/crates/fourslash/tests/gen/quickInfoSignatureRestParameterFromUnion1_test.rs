@@ -13,7 +13,7 @@ fn quick_info_signature_rest_parameter_from_union1() {
 
 /**/rest({ a: true, b: true }, "foo", "bar");"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("", "const rest: (v: {\n    a: true;\n} & {\n    b: true;\n}, ...rest: string[]) => unknown", "");
+		f.verify_quick_info_at("".into(), "const rest: (v: {\n    a: true;\n} & {\n    b: true;\n}, ...rest: string[]) => unknown".into(), "".into());
 	});
 }
 

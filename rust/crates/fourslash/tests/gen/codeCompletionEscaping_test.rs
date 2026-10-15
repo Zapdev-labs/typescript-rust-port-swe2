@@ -7,12 +7,12 @@ use tsc_fourslash::*;
 #[test]
 fn code_completion_escaping() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @Filename: a.js
 // @allowJs: true
 ___foo; __foo;/**/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "__foo", kind: Some((tsc_lsproto::CompletionItemKind::TEXT).into()), sort_text: Some((tsc_ls::SORT_TEXT_JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "___foo", kind: Some((tsc_lsproto::CompletionItemKind::TEXT).into()), sort_text: Some((tsc_ls::SORT_TEXT_JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "__foo", kind: Some((tsc_lsproto::CompletionItemKind::TEXT).into()), sort_text: Some((tsc_ls::SORT_TEXT_JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "___foo", kind: Some((tsc_lsproto::CompletionItemKind::TEXT).into()), sort_text: Some((tsc_ls::SORT_TEXT_JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }
 

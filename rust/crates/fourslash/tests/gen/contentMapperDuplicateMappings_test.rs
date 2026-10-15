@@ -9,11 +9,11 @@ fn content_mapper_duplicate_mappings() {
 	run_test(|t| {
 		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /value.dup
 [|val/*query*/ue|]
-", contentmappertest.duplicate_mapper, ".dup");
-		f.verify_quick_info_at("query", "const value: 1", "");
-		f.verify_baseline_go_to_definition(false, "query");
-		f.verify_baseline_find_all_references("query");
-		f.verify_rename("query", "renamed", vec![("/value.dup", "renamed\n")].into_iter().collect::<FxHashMap<_, _>>());
+".into(), contentmappertest.duplicate_mapper, ".dup".into());
+		f.verify_quick_info_at("query".into(), "const value: 1".into(), "".into());
+		f.verify_baseline_go_to_definition(false, "query".into());
+		f.verify_baseline_find_all_references("query".into());
+		f.verify_rename("query".into(), "renamed".into(), vec![("/value.dup", "renamed\n")].into_iter().collect::<FxHashMap<_, _>>());
 	});
 }
 
@@ -22,11 +22,11 @@ fn content_mapper_disabled_features() {
 	run_test(|t| {
 		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /disabled.dup
 val/*query*/ue
-", contentmappertest.duplicate_mapper, ".dup");
-		f.go_to_marker("query");
+".into(), contentmappertest.duplicate_mapper, ".dup".into());
+		f.go_to_marker("query".into());
 		f.verify_not_quick_info_exists();
-		f.verify_baseline_go_to_definition(false, "query");
-		f.verify_baseline_find_all_references("query");
+		f.verify_baseline_go_to_definition(false, "query".into());
+		f.verify_baseline_find_all_references("query".into());
 	});
 }
 
@@ -39,10 +39,10 @@ value
 // @Filename: /main.ts
 import { value } from "./disabled.dup";
 export const result = val/*query*/ue;
-"#, contentmappertest.duplicate_mapper, ".dup");
-		f.verify_baseline_go_to_definition(false, "query");
-		f.verify_baseline_find_all_references("query");
-		f.verify_baseline_vs_find_all_references("query");
+"#.into(), contentmappertest.duplicate_mapper, ".dup".into());
+		f.verify_baseline_go_to_definition(false, "query".into());
+		f.verify_baseline_find_all_references("query".into());
+		f.verify_baseline_vs_find_all_references("query".into());
 	});
 }
 
@@ -51,11 +51,11 @@ fn content_mapper_conflicting_duplicate_rename_mappings() {
 	run_test(|t| {
 		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /rename-conflict.dup
 val/*query*/ue
-", contentmappertest.duplicate_mapper, ".dup");
-		f.go_to_marker("query");
-		let mut result = f.rename_at_caret("renamed");
+".into(), contentmappertest.duplicate_mapper, ".dup".into());
+		f.go_to_marker("query".into());
+		let mut result = f.rename_at_caret("renamed".into());
 		if result.workspace_edit != None {
-			panic!("expected conflicting projections to abort rename, got %#v", result.workspace_edit);
+			panic!("expected conflicting projections to abort rename, got %#v".into(), result.workspace_edit);
 		}
 	});
 }

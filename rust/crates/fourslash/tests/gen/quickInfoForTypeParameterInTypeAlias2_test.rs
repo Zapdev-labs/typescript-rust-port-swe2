@@ -7,19 +7,19 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_for_type_parameter_in_type_alias2() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"type Call<AA> = { (): A/*1*/A };
 type Index<AA> = {[foo: string]: A/*2*/A};
 type GenericMethod<AA> = { method<BB>(): A/*3*/A & B/*4*/B }
 type Nesting<TT> = { method<UU>(): new <WW>() => T/*5*/T & U/*6*/U & W/*7*/W };";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "(type parameter) AA in type Call<AA>", "");
-		f.verify_quick_info_at("2", "(type parameter) AA in type Index<AA>", "");
-		f.verify_quick_info_at("3", "(type parameter) AA in type GenericMethod<AA>", "");
-		f.verify_quick_info_at("4", "(type parameter) BB in method<BB>(): AA & BB", "");
-		f.verify_quick_info_at("5", "(type parameter) TT in type Nesting<TT>", "");
-		f.verify_quick_info_at("6", "(type parameter) UU in method<UU>(): new <WW>() => TT & UU & WW", "");
-		f.verify_quick_info_at("7", "(type parameter) WW in <WW>(): TT & UU & WW", "");
+		f.verify_quick_info_at("1".into(), "(type parameter) AA in type Call<AA>".into(), "".into());
+		f.verify_quick_info_at("2".into(), "(type parameter) AA in type Index<AA>".into(), "".into());
+		f.verify_quick_info_at("3".into(), "(type parameter) AA in type GenericMethod<AA>".into(), "".into());
+		f.verify_quick_info_at("4".into(), "(type parameter) BB in method<BB>(): AA & BB".into(), "".into());
+		f.verify_quick_info_at("5".into(), "(type parameter) TT in type Nesting<TT>".into(), "".into());
+		f.verify_quick_info_at("6".into(), "(type parameter) UU in method<UU>(): new <WW>() => TT & UU & WW".into(), "".into());
+		f.verify_quick_info_at("7".into(), "(type parameter) WW in <WW>(): TT & UU & WW".into(), "".into());
 	});
 }
 

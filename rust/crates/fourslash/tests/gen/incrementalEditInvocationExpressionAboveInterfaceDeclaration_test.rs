@@ -14,10 +14,10 @@ interface Foo {
     setISO8601(dString): Date;
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1");
-		f.insert("alert(");
+		f.go_to_marker("1".into());
+		f.insert("alert(".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "alert(message?: any): void", ..Default::default() });
-		f.verify_error_exists_after_marker("1");
+		f.verify_error_exists_after_marker("1".into());
 	});
 }
 

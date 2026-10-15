@@ -92,15 +92,15 @@ function openElementsAtEditor2() {
 	],
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("call");
-		f.go_to_marker("temp");
-		f.go_to_marker("call");
+		f.go_to_marker("call".into());
+		f.go_to_marker("temp".into());
+		f.go_to_marker("call".into());
 		f.verify_baseline_call_hierarchy();
-		f.close_file_of_marker("temp");
-		f.go_to_marker("temp");
-		f.close_file_of_marker("call");
-		f.close_file_of_marker("temp");
-		f.go_to_marker("temp");
+		f.close_file_of_marker("temp".into());
+		f.go_to_marker("temp".into());
+		f.close_file_of_marker("call".into());
+		f.close_file_of_marker("temp".into());
+		f.go_to_marker("temp".into());
 	});
 }
 

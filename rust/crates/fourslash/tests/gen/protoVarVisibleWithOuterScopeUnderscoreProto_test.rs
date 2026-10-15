@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn proto_var_visible_with_outer_scope_underscore_proto() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r#"// outer
 var ___proto__ = 10;
 function foo() {
@@ -15,7 +15,7 @@ function foo() {
     /**/
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "__proto__", detail: Some(("(local var) __proto__: string").into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "___proto__", detail: Some(("var ___proto__: number").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "__proto__", detail: Some(("(local var) __proto__: string").into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "___proto__", detail: Some(("var ___proto__: number").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }
 

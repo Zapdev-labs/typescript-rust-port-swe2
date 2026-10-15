@@ -26,7 +26,7 @@ const x = [|<[|/*7*/Comp|]>
     Content
 </[|/*8*/Comp|]>|];";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1", "2", "3", "4", "5", "6", "7", "8");
+		f.verify_baseline_find_all_references("1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into(), "7".into(), "8".into());
 		f.verify_baseline_document_highlights(None, f.ranges()[1], f.ranges()[5], f.ranges()[7], f.ranges()[8], f.ranges()[9]);
 		f.verify_baseline_document_highlights(None, f.ranges()[3], f.ranges()[11], f.ranges()[12]);
 	});

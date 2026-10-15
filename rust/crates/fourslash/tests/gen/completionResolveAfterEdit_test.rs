@@ -20,17 +20,17 @@ declare const u: I;
 /*b*/
 ";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("a");
+		f.go_to_marker("a".into());
 		let mut completions = f.get_completions(None);
 		if completions == None || completions.items.len() == 0 {
-			panic!("Expected completions but got none");
+			panic!("Expected completions but got none".into());
 		}
 		let mut first_item = completions.items[0];
-		f.go_to_marker("b");
-		f.insert("1");
+		f.go_to_marker("b".into());
+		f.insert("1".into());
 		let mut resolved = f.resolve_completion_item(first_item);
 		if resolved == None {
-			panic!("Expected resolved completion item but got nil");
+			panic!("Expected resolved completion item but got nil".into());
 		}
 	});
 }
@@ -46,7 +46,7 @@ export const u = 1;
 [|import u/*a*/|]
 ";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("a", Some(tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "u", insert_text: Some((r#"import { u } from "./a";"#).into()), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./a", ..Default::default() }), ..Default::default() }), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: r#"import { u } from "./a";"#, range: f.ranges()[0].ls_range, ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::NoTextEdits, ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("a".into(), Some(tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "u", insert_text: Some((r#"import { u } from "./a";"#).into()), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./a", ..Default::default() }), ..Default::default() }), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: r#"import { u } from "./a";"#, range: f.ranges()[0].ls_range, ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::NoTextEdits, ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }
 

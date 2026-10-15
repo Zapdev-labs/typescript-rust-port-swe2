@@ -39,7 +39,7 @@ function createBarUsingClassDeclaration(): Bar {
     };
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_implementation("classExpressionRef", "declaredClassRef");
+		f.verify_baseline_go_to_implementation("classExpressionRef".into(), "declaredClassRef".into());
 	});
 }
 

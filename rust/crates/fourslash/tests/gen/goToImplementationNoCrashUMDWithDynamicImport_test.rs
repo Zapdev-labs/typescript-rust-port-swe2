@@ -13,7 +13,7 @@ export interface /*1*/IFoo {}
 // @Filename: /user.ts
 const p = import('./lib');";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_implementation("1");
+		f.verify_baseline_go_to_implementation("1".into());
 	});
 }
 

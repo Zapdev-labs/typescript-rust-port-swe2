@@ -19,7 +19,7 @@ export class PatternValidator {}
 PatternValidator/**/"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_marker("");
+		f.go_to_marker("".into());
 		let mut opts654 = f.get_options();
 		opts654.format_code_settings.new_line_character = "\n";
 		f.configure(opts654);

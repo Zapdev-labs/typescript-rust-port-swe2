@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn unused_class_in_namespace4() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @strict: false
 // @noUnusedLocals: true
 // @noUnusedParameters:true
@@ -33,7 +33,7 @@ fn unused_class_in_namespace4() {
     export class c2 {
 
     }
-}", false, 0, 0);
+}".into(), false, 0, 0);
 	});
 }
 

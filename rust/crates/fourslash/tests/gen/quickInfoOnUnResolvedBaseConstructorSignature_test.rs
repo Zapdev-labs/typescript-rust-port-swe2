@@ -17,7 +17,7 @@ class classInheritingSpecializedClass extends genericBaseClassInheritingConstruc
 }
 new class/*1*/InheritingSpecializedClass();";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1");
+		f.go_to_marker("1".into());
 		f.verify_quick_info_exists();
 	});
 }

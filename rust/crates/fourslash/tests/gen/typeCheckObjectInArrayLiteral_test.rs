@@ -11,7 +11,7 @@ fn type_check_object_in_array_literal() {
 create([{}]);";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_position(0);
-		f.insert("");
+		f.insert("".into());
 	});
 }
 

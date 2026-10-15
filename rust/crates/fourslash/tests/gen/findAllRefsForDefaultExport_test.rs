@@ -15,8 +15,8 @@ import /*deg*/g from "./a";
 // @Filename: c.ts
 import { f } from "./a";"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("def", "deg");
-		f.verify_baseline_go_to_definition(true, "ref");
+		f.verify_baseline_find_all_references("def".into(), "deg".into());
+		f.verify_baseline_go_to_definition(true, "ref".into());
 	});
 }
 

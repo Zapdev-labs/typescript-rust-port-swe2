@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn tsx_quick_info7() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r#"//@Filename: file.tsx
 // @jsx: preserve
 // @noLib: true
@@ -24,13 +24,13 @@ function Baz<T extends {b: number}, U extends {a: boolean, b:string}>(arg1: T, a
     let a6 = <Overloa/*7*/dComponent {...arg1} ignore-prop {...arg2} />;
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "function OverloadComponent<number>(attr: {\n    b: number;\n    a?: string;\n    \"ignore-prop\": boolean;\n}): JSX.Element (+2 overloads)", "");
-		f.verify_quick_info_at("2", "function OverloadComponent<boolean, string>(attr: {\n    b: string;\n    a: boolean;\n}): JSX.Element (+2 overloads)", "");
-		f.verify_quick_info_at("3", "function OverloadComponent<boolean, string>(attr: {\n    b: string;\n    a: boolean;\n}): JSX.Element (+2 overloads)", "");
-		f.verify_quick_info_at("4", "function OverloadComponent(): JSX.Element (+2 overloads)", "");
-		f.verify_quick_info_at("5", "function OverloadComponent(): JSX.Element (+2 overloads)", "");
-		f.verify_quick_info_at("6", "function OverloadComponent<boolean, never>(attr: {\n    b: never;\n    a: boolean;\n}): JSX.Element (+2 overloads)", "");
-		f.verify_quick_info_at("7", "function OverloadComponent<boolean, never>(attr: {\n    b: never;\n    a: boolean;\n}): JSX.Element (+2 overloads)", "");
+		f.verify_quick_info_at("1".into(), "function OverloadComponent<number>(attr: {\n    b: number;\n    a?: string;\n    \"ignore-prop\": boolean;\n}): JSX.Element (+2 overloads)".into(), "".into());
+		f.verify_quick_info_at("2".into(), "function OverloadComponent<boolean, string>(attr: {\n    b: string;\n    a: boolean;\n}): JSX.Element (+2 overloads)".into(), "".into());
+		f.verify_quick_info_at("3".into(), "function OverloadComponent<boolean, string>(attr: {\n    b: string;\n    a: boolean;\n}): JSX.Element (+2 overloads)".into(), "".into());
+		f.verify_quick_info_at("4".into(), "function OverloadComponent(): JSX.Element (+2 overloads)".into(), "".into());
+		f.verify_quick_info_at("5".into(), "function OverloadComponent(): JSX.Element (+2 overloads)".into(), "".into());
+		f.verify_quick_info_at("6".into(), "function OverloadComponent<boolean, never>(attr: {\n    b: never;\n    a: boolean;\n}): JSX.Element (+2 overloads)".into(), "".into());
+		f.verify_quick_info_at("7".into(), "function OverloadComponent<boolean, never>(attr: {\n    b: never;\n    a: boolean;\n}): JSX.Element (+2 overloads)".into(), "".into());
 	});
 }
 

@@ -15,7 +15,7 @@ var o = 0;
 o.[|/*reference1*/myObjectMethod|]();
 o[[|"/*reference2*/myObjectMethod"|]]();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "reference1", "reference2");
+		f.verify_baseline_go_to_definition(true, "reference1".into(), "reference2".into());
 	});
 }
 

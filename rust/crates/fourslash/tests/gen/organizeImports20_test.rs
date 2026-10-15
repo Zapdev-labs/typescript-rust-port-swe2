@@ -15,7 +15,7 @@ export { b };";
 		f.verify_organize_imports(r"const a = 1;
 const b = 1;
 export { a, b };
-", tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
+".into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
 	});
 }
 

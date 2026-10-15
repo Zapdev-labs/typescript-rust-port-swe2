@@ -11,9 +11,9 @@ fn format_async_computed_method() {
     /*method*/async [0]() { }
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
-		f.go_to_marker("method");
-		f.verify_current_line_content(r"    async [0]() { }");
+		f.format_document("".into());
+		f.go_to_marker("method".into());
+		f.verify_current_line_content(r"    async [0]() { }".into());
 	});
 }
 

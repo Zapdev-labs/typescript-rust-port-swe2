@@ -28,7 +28,7 @@ const u2: U = {
   [|/*propBogus*/prop|]: 0,
 };"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "kind", "prop", "kindBogus", "propBogus");
+		f.verify_baseline_go_to_definition(true, "kind".into(), "prop".into(), "kindBogus".into(), "propBogus".into());
 	});
 }
 

@@ -22,14 +22,14 @@ fn hover_over_private_name() {
     }
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "(property) A.#foo: number", "");
-		f.verify_quick_info_at("2", "(property) A.#bar: number", "");
-		f.verify_quick_info_at("3", "(property) A.#baz: () => string", "");
-		f.verify_quick_info_at("4", "(method) A.#qux(n: number): string", "");
-		f.verify_quick_info_at("5", "(property) A.#staticFoo: number", "");
-		f.verify_quick_info_at("6", "(property) A.#staticBar: number", "");
-		f.verify_quick_info_at("7", "(property) A.#staticBaz: () => string", "");
-		f.verify_quick_info_at("8", "(method) A.#staticQux(n: number): string", "");
+		f.verify_quick_info_at("1".into(), "(property) A.#foo: number".into(), "".into());
+		f.verify_quick_info_at("2".into(), "(property) A.#bar: number".into(), "".into());
+		f.verify_quick_info_at("3".into(), "(property) A.#baz: () => string".into(), "".into());
+		f.verify_quick_info_at("4".into(), "(method) A.#qux(n: number): string".into(), "".into());
+		f.verify_quick_info_at("5".into(), "(property) A.#staticFoo: number".into(), "".into());
+		f.verify_quick_info_at("6".into(), "(property) A.#staticBar: number".into(), "".into());
+		f.verify_quick_info_at("7".into(), "(property) A.#staticBaz: () => string".into(), "".into());
+		f.verify_quick_info_at("8".into(), "(method) A.#staticQux(n: number): string".into(), "".into());
 	});
 }
 

@@ -34,16 +34,16 @@ import bar = require("bar");
 
 foo"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/a.ts");
+		f.go_to_file("/a.ts".into());
 		f.verify_import_fix_at_position(vec![r#"import bar = require("bar");
 import foo = require("foo");
 
 foo"#], None);
-		f.go_to_file("/b.ts");
+		f.go_to_file("/b.ts".into());
 		f.verify_import_fix_at_position(vec![r#"import foo from "foo";
 
 foo"#], None);
-		f.go_to_file("/c.ts");
+		f.go_to_file("/c.ts".into());
 		f.verify_import_fix_at_position(vec![r#"import es from "es";
 import bar = require("bar");
 import foo = require("foo");

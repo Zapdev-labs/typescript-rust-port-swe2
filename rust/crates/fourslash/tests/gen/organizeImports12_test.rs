@@ -16,7 +16,7 @@ declare export * from "foo";"#;
 		f.verify_organize_imports(r#"declare export default class A {}
 declare export * from "foo";
 declare export { a, b };
-"#, tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
+"#.into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
 	});
 }
 

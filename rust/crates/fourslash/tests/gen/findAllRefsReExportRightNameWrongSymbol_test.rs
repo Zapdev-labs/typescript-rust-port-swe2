@@ -19,7 +19,7 @@ fn find_all_refs_re_export_right_name_wrong_symbol() {
 [|import { /*d*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 9 |}x|] } from "./c";|]"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
-		f.verify_baseline_find_all_references("a", "b", "cFromB", "cFromA", "cUse", "d");
+		f.verify_baseline_find_all_references("a".into(), "b".into(), "cFromB".into(), "cFromA".into(), "cUse".into(), "d".into());
 		f.verify_baseline_rename(None, f.ranges()[1]);
 		f.verify_baseline_rename(None, f.ranges()[7], f.ranges()[8]);
 		f.verify_baseline_rename(None, f.ranges()[3]);

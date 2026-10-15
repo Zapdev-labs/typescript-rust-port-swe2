@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn doc_comment_template_prototype_method() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @allowJs: true
 // @Filename: foo.js
 /** @class */
@@ -21,7 +21,7 @@ C.prototype.method = /*next*/ function (p) {}";
 			f.verify_js_doc_completion(marker, 7, r"/**
  * 
  * @param {any} p
- */", None);
+ */".into(), None);
 		}
 	});
 }

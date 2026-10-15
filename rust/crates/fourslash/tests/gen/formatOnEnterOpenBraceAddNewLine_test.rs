@@ -14,21 +14,21 @@ if(false)/*1*/{
 		let mut opts148 = f.get_options();
 		opts148.format_code_settings.place_open_brace_on_new_line_for_control_blocks = tsc_core::TS_TRUE;
 		f.configure(opts148);
-		f.go_to_marker("0");
-		f.insert_line("");
+		f.go_to_marker("0".into());
+		f.insert_line("".into());
 		f.verify_current_file_content(r"if (true)
 {
 }
 if(false){
-}");
-		f.go_to_marker("1");
-		f.insert_line("");
+}".into());
+		f.go_to_marker("1".into());
+		f.insert_line("".into());
 		f.verify_current_file_content(r"if (true)
 {
 }
 if (false)
 {
-}");
+}".into());
 	});
 }
 

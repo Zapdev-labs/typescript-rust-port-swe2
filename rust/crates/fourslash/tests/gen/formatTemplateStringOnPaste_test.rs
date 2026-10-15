@@ -9,8 +9,8 @@ fn format_template_string_on_paste() {
 	run_test(|t| {
 		let content = r"const x = " + "`" + r"${0}/*0*/abc/*1*/" + "`" + r";";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_selection("0", "1");
-		f.verify_current_file_content("const x = `${0}abc`;");
+		f.format_selection("0".into(), "1".into());
+		f.verify_current_file_content("const x = `${0}abc`;".into());
 	});
 }
 

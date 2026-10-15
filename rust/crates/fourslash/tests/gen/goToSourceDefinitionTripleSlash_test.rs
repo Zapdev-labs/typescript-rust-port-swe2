@@ -21,7 +21,7 @@ export function /*target*/bar() { return "hello"; }
 import { bar } from "foo";
 bar();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("refTypes");
+		f.verify_baseline_go_to_source_definition("refTypes".into());
 	});
 }
 
@@ -44,7 +44,7 @@ export function main() {}
 /// <reference path="./node_modules/pkg/[|lib.d.ts/*refPath*/|]" />
 declare function helper(): string;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("refPath");
+		f.verify_baseline_go_to_source_definition("refPath".into());
 	});
 }
 

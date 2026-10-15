@@ -23,7 +23,7 @@ var methodOverload = new MethodOverload();
 methodOverload.[|/*instanceMethodReference1*/method|]();
 methodOverload.[|/*instanceMethodReference2*/method|]("456");"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "staticMethodReference1", "staticMethodReference2", "instanceMethodReference1", "instanceMethodReference2", "staticMethodOverload1", "instanceMethodOverload1");
+		f.verify_baseline_go_to_definition(true, "staticMethodReference1".into(), "staticMethodReference2".into(), "instanceMethodReference1".into(), "instanceMethodReference2".into(), "staticMethodOverload1".into(), "instanceMethodOverload1".into());
 	});
 }
 

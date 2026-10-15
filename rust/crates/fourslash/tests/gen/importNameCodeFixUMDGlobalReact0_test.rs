@@ -30,12 +30,12 @@ export class MyMap extends Component { }
 [|import { Component } from "react";
 <></>;|]"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/a.tsx");
+		f.go_to_file("/a.tsx".into());
 		f.verify_import_fix_at_position(vec![r#"import * as React from "react";
 import { Component } from "react";
 export class MyMap extends Component { }
 <MyMap/>;"#], None);
-		f.go_to_file("/b.tsx");
+		f.go_to_file("/b.tsx".into());
 		f.verify_import_fix_at_position(vec![r#"import * as React from "react";
 import { Component } from "react";
 <></>;"#], None);

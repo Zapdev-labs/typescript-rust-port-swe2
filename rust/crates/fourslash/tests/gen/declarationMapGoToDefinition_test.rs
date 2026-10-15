@@ -47,7 +47,7 @@ const instance = new mod.Foo();
 instance.[|/*1*/methodName|]({member: 12});"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.verify_baseline_go_to_definition(true, "1");
+		f.verify_baseline_go_to_definition(true, "1".into());
 	});
 }
 

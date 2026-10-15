@@ -22,11 +22,11 @@ const jsx3 = (
     </>
 );/*e*/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		let mut start_range = f.marker_by_name("0").ls_position;
-		let mut end_range = f.marker_by_name("3").ls_position;
+		let mut start_range = f.marker_by_name("0".into()).ls_position;
+		let mut end_range = f.marker_by_name("3".into()).ls_position;
 		let mut linked_cursors1 = vec![tsc_lsproto::Range { start: start_range, end: start_range, ..Default::default() }, tsc_lsproto::Range { start: end_range, end: end_range, ..Default::default() }];
-		let mut start_range2 = f.marker_by_name("10").ls_position;
-		let mut end_range2 = f.marker_by_name("14").ls_position;
+		let mut start_range2 = f.marker_by_name("10".into()).ls_position;
+		let mut end_range2 = f.marker_by_name("14".into()).ls_position;
 		let mut linked_cursors2 = vec![tsc_lsproto::Range { start: start_range2, end: start_range2, ..Default::default() }, tsc_lsproto::Range { start: end_range2, end: end_range2, ..Default::default() }];
 		f.verify_linked_editing(vec![("0", linked_cursors1), ("1", None), ("2", None), ("3", linked_cursors1), ("4", None), ("5", None), ("6", None), ("7", None), ("8", None), ("9", None), ("10", linked_cursors2), ("11", None), ("12", None), ("13", None), ("14", linked_cursors2), ("15", None), ("16", None), ("17", None), ("18", None), ("a", None), ("b", None), ("c", None), ("d", None), ("e", None)].into_iter().collect::<FxHashMap<_, _>>());
 	});

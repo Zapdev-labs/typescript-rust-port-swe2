@@ -15,10 +15,10 @@ import f = /*foo*/foo;
 
 /*delete*/var x;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("foo", "namespace foo", "");
-		f.go_to_marker("delete");
+		f.verify_quick_info_at("foo".into(), "namespace foo".into(), "".into());
+		f.go_to_marker("delete".into());
 		f.delete_at_caret(6);
-		f.verify_quick_info_at("foo", "namespace foo", "");
+		f.verify_quick_info_at("foo".into(), "namespace foo".into(), "".into());
 	});
 }
 

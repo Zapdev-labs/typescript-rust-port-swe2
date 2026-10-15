@@ -12,10 +12,10 @@ fn formatting_expressions_in_if_condition() {
     c === 3) {
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1");
-		f.insert("\n");
-		f.go_to_marker("0");
-		f.verify_current_line_content(r"    b === 2 ||");
+		f.go_to_marker("1".into());
+		f.insert("\n".into());
+		f.go_to_marker("0".into());
+		f.verify_current_line_content(r"    b === 2 ||".into());
 	});
 }
 

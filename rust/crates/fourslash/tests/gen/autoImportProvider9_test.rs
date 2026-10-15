@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_provider9() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r#"// @lib: es5
 // @module: preserve
 // @Filename: /home/src/workspaces/project/index.ts
@@ -74,10 +74,10 @@ export class Lib10 {}
 export class Lib11 {}"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.verify_import_fix_module_specifiers("", vec![], None);
-		f.verify_import_fix_module_specifiers("", vec![], None);
-		f.insert_line("import {} from 'lib2';");
-		f.verify_import_fix_module_specifiers("", vec!["lib1"], None);
+		f.verify_import_fix_module_specifiers("".into(), vec![], None);
+		f.verify_import_fix_module_specifiers("".into(), vec![], None);
+		f.insert_line("import {} from 'lib2';".into());
+		f.verify_import_fix_module_specifiers("".into(), vec!["lib1"], None);
 	});
 }
 

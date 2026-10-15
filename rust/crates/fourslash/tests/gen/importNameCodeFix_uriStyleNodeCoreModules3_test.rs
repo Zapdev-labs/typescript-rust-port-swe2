@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_uri_style_node_core_modules3() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r#"// @module: commonjs
 // @Filename: /node_modules/@types/node/index.d.ts
 declare module "path" { function join(...segments: readonly string[]): string; }
@@ -40,12 +40,12 @@ writeFile/*test1*/
 import "node:test";
 writeFile/*test2*/"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_module_specifiers("noPrefix", vec!["fs", "fs/promises"], None);
-		f.verify_import_fix_module_specifiers("prefix", vec!["node:fs", "node:fs/promises"], None);
-		f.verify_import_fix_module_specifiers("mixed1", vec!["node:fs", "node:fs/promises"], None);
-		f.verify_import_fix_module_specifiers("mixed2", vec!["node:fs", "node:fs/promises"], None);
-		f.verify_import_fix_module_specifiers("test1", vec!["fs", "fs/promises"], None);
-		f.verify_import_fix_module_specifiers("test2", vec!["node:fs", "node:fs/promises"], None);
+		f.verify_import_fix_module_specifiers("noPrefix".into(), vec!["fs", "fs/promises"], None);
+		f.verify_import_fix_module_specifiers("prefix".into(), vec!["node:fs", "node:fs/promises"], None);
+		f.verify_import_fix_module_specifiers("mixed1".into(), vec!["node:fs", "node:fs/promises"], None);
+		f.verify_import_fix_module_specifiers("mixed2".into(), vec!["node:fs", "node:fs/promises"], None);
+		f.verify_import_fix_module_specifiers("test1".into(), vec!["fs", "fs/promises"], None);
+		f.verify_import_fix_module_specifiers("test2".into(), vec!["node:fs", "node:fs/promises"], None);
 	});
 }
 

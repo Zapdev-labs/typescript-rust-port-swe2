@@ -9,7 +9,7 @@ fn find_all_refs_bad_import() {
 	run_test(|t| {
 		let content = r#"import { /*0*/ab as /*1*/cd } from "doesNotExist";"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("0", "1");
+		f.verify_baseline_find_all_references("0".into(), "1".into());
 	});
 }
 

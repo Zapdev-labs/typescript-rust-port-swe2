@@ -10,7 +10,7 @@ fn signature_help_at_eof2() {
 		let content = r"console.log()
 /**/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_no_signature_help_for_markers_with_context(Some(tsc_lsproto::SignatureHelpContext { trigger_kind: tsc_lsproto::SignatureHelpTriggerKind::INVOKED, ..Default::default() }), "");
+		f.verify_no_signature_help_for_markers_with_context(Some(tsc_lsproto::SignatureHelpContext { trigger_kind: tsc_lsproto::SignatureHelpTriggerKind::INVOKED, ..Default::default() }), "".into());
 	});
 }
 

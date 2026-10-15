@@ -18,7 +18,7 @@ export const fooBar = 1;
 foo/**/
 "#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { items: Some(tsc_fourslash::CompletionsExpectedItems { excludes: vec!["foo-bar"], includes: vec!["fooBar"], ..Default::default() }), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &tsc_fourslash::testsutil::default_commit_characters, edit_range: tsc_fourslash::testsutil::ignored, ..Default::default() }), ..Default::default() }));
+		f.verify_completions("".into(), Some(tsc_fourslash::CompletionsExpectedList { items: Some(tsc_fourslash::CompletionsExpectedItems { excludes: vec!["foo-bar"], includes: vec!["fooBar"], ..Default::default() }), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &tsc_fourslash::testsutil::default_commit_characters, edit_range: tsc_fourslash::testsutil::ignored, ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -27,7 +27,7 @@ interface Implemented3 {}
 class C2 /*classDecl2_implementsKeyword*/implements Implemented2, Implemented3 {}
 interface I2 /*interfaceDecl2_extendsKeyword*/extends Implemented2, Implemented3 {}";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("classDecl1_classKeyword", "classDecl1_extendsKeyword", "classDecl1_implementsKeyword", "classDecl2_implementsKeyword", "getDecl_getKeyword", "setDecl_setKeyword", "interfaceDecl1_interfaceKeyword", "interfaceDecl1_extendsKeyword", "interfaceDecl2_extendsKeyword", "typeDecl_typeKeyword", "enumDecl_enumKeyword", "namespaceDecl_namespaceKeyword", "moduleDecl_moduleKeyword", "functionDecl_functionKeyword", "varDecl_varKeyword", "letDecl_letKeyword", "constDecl_constKeyword");
+		f.verify_baseline_find_all_references("classDecl1_classKeyword".into(), "classDecl1_extendsKeyword".into(), "classDecl1_implementsKeyword".into(), "classDecl2_implementsKeyword".into(), "getDecl_getKeyword".into(), "setDecl_setKeyword".into(), "interfaceDecl1_interfaceKeyword".into(), "interfaceDecl1_extendsKeyword".into(), "interfaceDecl2_extendsKeyword".into(), "typeDecl_typeKeyword".into(), "enumDecl_enumKeyword".into(), "namespaceDecl_namespaceKeyword".into(), "moduleDecl_moduleKeyword".into(), "functionDecl_functionKeyword".into(), "varDecl_varKeyword".into(), "letDecl_letKeyword".into(), "constDecl_constKeyword".into());
 	});
 }
 

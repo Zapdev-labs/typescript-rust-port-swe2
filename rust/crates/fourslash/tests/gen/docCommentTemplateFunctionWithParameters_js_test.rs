@@ -14,11 +14,11 @@ function f(a, ...b): boolean {}";
 		let mut capabilities = tsc_fourslash::get_default_capabilities();
 		capabilities.text_document.completion.completion_item.snippet_support = Some((false).into());
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", capabilities, content);
-		f.verify_js_doc_completion("0", 7, r"/**
+		f.verify_js_doc_completion("0".into(), 7, r"/**
  * 
  * @param {any} a
  * @param {...any} b
- */", None);
+ */".into(), None);
 	});
 }
 

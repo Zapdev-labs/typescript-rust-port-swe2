@@ -11,7 +11,7 @@ fn find_all_references_filtering_mapped_type_property() {
 const filtered: { [P in keyof typeof obj as P extends 'b' ? never : P]: 0; } = { /*2*/a: 0 };
 filtered./*3*/a;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1", "2", "3");
+		f.verify_baseline_find_all_references("1".into(), "2".into(), "3".into());
 	});
 }
 

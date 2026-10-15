@@ -12,7 +12,7 @@ fn code_fix_unused_identifier_parameter1() {
 function g(a, b) { b; }
 g(1, 2);";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix_not_available("Remove unused declaration for: 'a'");
+		f.verify_code_fix_not_available("Remove unused declaration for: 'a'".into());
 	});
 }
 

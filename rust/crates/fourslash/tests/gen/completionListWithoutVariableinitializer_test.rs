@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_without_variableinitializer() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"const a = a/*1*/;
 const b = a && b/*2*/;
 const c = [{ prop: [c/*3*/] }];

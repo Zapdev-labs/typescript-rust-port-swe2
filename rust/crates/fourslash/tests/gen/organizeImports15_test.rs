@@ -22,7 +22,7 @@ export const foo = 1;
 
 import { foo } from "./a";"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/b.ts");
+		f.go_to_file("/b.ts".into());
 		f.verify_organize_imports(r"/**
  * Module doc comment
  *
@@ -33,7 +33,7 @@ import { foo } from "./a";"#;
 
 // comment 2
 
-", tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
+".into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
 	});
 }
 

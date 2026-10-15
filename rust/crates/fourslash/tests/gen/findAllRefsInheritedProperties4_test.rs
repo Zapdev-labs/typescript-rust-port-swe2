@@ -20,7 +20,7 @@ var d: D;
 d./*3*/prop0;
 d./*4*/prop1;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("0", "2", "3", "1", "4");
+		f.verify_baseline_find_all_references("0".into(), "2".into(), "3".into(), "1".into(), "4".into());
 	});
 }
 

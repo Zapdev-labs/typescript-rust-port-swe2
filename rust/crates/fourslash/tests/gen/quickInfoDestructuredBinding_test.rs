@@ -16,12 +16,12 @@ let { /*5*/d } = { d: "hello" };
 var { /*6*/e } = { e: true };
 "#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "(parameter) x: number", "");
-		f.verify_quick_info_at("2", "(parameter) y: number", "");
-		f.verify_quick_info_at("3", "(parameter) b: string", "");
-		f.verify_quick_info_at("4", "const c: number", "");
-		f.verify_quick_info_at("5", "let d: string", "");
-		f.verify_quick_info_at("6", "var e: boolean", "");
+		f.verify_quick_info_at("1".into(), "(parameter) x: number".into(), "".into());
+		f.verify_quick_info_at("2".into(), "(parameter) y: number".into(), "".into());
+		f.verify_quick_info_at("3".into(), "(parameter) b: string".into(), "".into());
+		f.verify_quick_info_at("4".into(), "const c: number".into(), "".into());
+		f.verify_quick_info_at("5".into(), "let d: string".into(), "".into());
+		f.verify_quick_info_at("6".into(), "var e: boolean".into(), "".into());
 	});
 }
 

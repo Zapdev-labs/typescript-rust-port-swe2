@@ -7,14 +7,14 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_default_export4() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @Filename: /foo.ts
 const a = () => {};
 export default a;
 // @Filename: /test.ts
 [|foo|];";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/test.ts");
+		f.go_to_file("/test.ts".into());
 		f.verify_import_fix_at_position(vec![r#"import foo from "./foo";
 
 foo"#], None);

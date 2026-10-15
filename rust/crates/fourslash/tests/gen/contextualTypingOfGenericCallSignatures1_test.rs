@@ -13,7 +13,7 @@ fn contextual_typing_of_generic_call_signatures1() {
 // x should not be contextually typed 
 var f24 = (/**/x) => { return 1 };";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("", "(parameter) x: any", "");
+		f.verify_quick_info_at("".into(), "(parameter) x: any".into(), "".into());
 	});
 }
 

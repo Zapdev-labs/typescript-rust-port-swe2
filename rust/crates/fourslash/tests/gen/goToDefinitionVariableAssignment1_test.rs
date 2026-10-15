@@ -14,8 +14,8 @@ const Foo = module./*def*/exports = function () {}
 Foo.prototype.bar = function() {}
 new [|Foo/*ref*/|]();";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("foo.js");
-		f.verify_baseline_go_to_definition(true, "ref");
+		f.go_to_file("foo.js".into());
+		f.verify_baseline_go_to_definition(true, "ref".into());
 	});
 }
 

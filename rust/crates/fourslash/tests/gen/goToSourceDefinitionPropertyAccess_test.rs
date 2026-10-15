@@ -19,7 +19,7 @@ import { obj } from "pkg";
 obj./*propA*/a;
 obj./*propB*/b;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("propA", "propB");
+		f.verify_baseline_go_to_source_definition("propA".into(), "propB".into());
 	});
 }
 
@@ -40,7 +40,7 @@ import * as pkg from "pkg";
 pkg./*helperAccess*/helper();
 pkg./*valueAccess*/value;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("helperAccess", "valueAccess");
+		f.verify_baseline_go_to_source_definition("helperAccess".into(), "valueAccess".into());
 	});
 }
 

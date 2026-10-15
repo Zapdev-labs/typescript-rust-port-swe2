@@ -16,10 +16,10 @@ class /*className*/Sphere {
     }
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("className", "class Sphere", "");
-		f.go_to_marker("interfaceGoesHere");
-		f.insert("\ninterface Surface {\n    reflect: () => number;\n}\n");
-		f.verify_quick_info_at("className", "class Sphere", "");
+		f.verify_quick_info_at("className".into(), "class Sphere".into(), "".into());
+		f.go_to_marker("interfaceGoesHere".into());
+		f.insert("\ninterface Surface {\n    reflect: () => number;\n}\n".into());
+		f.verify_quick_info_at("className".into(), "class Sphere".into(), "".into());
 	});
 }
 

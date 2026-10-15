@@ -11,7 +11,7 @@ fn quick_info_on_closing_jsx() {
 let x = <div>
     /*$*/</div >";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("$");
+		f.go_to_marker("$".into());
 		f.verify_not_quick_info_exists();
 	});
 }

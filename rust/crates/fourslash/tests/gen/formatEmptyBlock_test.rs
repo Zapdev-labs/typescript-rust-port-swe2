@@ -10,9 +10,9 @@ fn format_empty_block() {
 		let content = r"{}";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_eof();
-		f.insert("\n");
+		f.insert("\n".into());
 		f.go_to_bof();
-		f.verify_current_line_content(r"{ }");
+		f.verify_current_line_content(r"{ }".into());
 	});
 }
 

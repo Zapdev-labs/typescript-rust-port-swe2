@@ -17,8 +17,8 @@ fn rename_js_doc_type_literal() {
  */
 function foo(/**/options) {}";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/a.js");
-		f.verify_baseline_rename(None, "");
+		f.go_to_file("/a.js".into());
+		f.verify_baseline_rename(None, "".into());
 	});
 }
 

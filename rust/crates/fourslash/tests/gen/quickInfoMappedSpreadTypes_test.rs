@@ -24,14 +24,14 @@ f3./*f3*/bar;
 const f4 = { ...f2 };
 f4./*f4*/bar;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("f");
-		f.verify_quick_info_is("(property) Foo.bar: number", "Doc");
-		f.go_to_marker("f2");
-		f.verify_quick_info_is("(property) bar: string", "Doc");
-		f.go_to_marker("f3");
-		f.verify_quick_info_is("(property) Foo.bar: number", "Doc");
-		f.go_to_marker("f4");
-		f.verify_quick_info_is("(property) bar: string", "Doc");
+		f.go_to_marker("f".into());
+		f.verify_quick_info_is("(property) Foo.bar: number".into(), "Doc".into());
+		f.go_to_marker("f2".into());
+		f.verify_quick_info_is("(property) bar: string".into(), "Doc".into());
+		f.go_to_marker("f3".into());
+		f.verify_quick_info_is("(property) Foo.bar: number".into(), "Doc".into());
+		f.go_to_marker("f4".into());
+		f.verify_quick_info_is("(property) bar: string".into(), "Doc".into());
 	});
 }
 

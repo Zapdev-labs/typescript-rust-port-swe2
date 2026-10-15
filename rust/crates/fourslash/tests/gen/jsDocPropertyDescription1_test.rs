@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn js_doc_property_description1() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"interface StringExample {
     /** Something generic */
     [p: string]: any; 
@@ -19,8 +19,8 @@ function stringExample(e: StringExample) {
     console.log(e./*string*/anything); 
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("property", "(property) StringExample.property: number", "Something specific");
-		f.verify_quick_info_at("string", "(index) StringExample[string]: any", "Something generic");
+		f.verify_quick_info_at("property".into(), "(property) StringExample.property: number".into(), "Something specific".into());
+		f.verify_quick_info_at("string".into(), "(index) StringExample[string]: any".into(), "Something generic".into());
 	});
 }
 

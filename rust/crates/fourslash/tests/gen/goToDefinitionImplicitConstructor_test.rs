@@ -11,7 +11,7 @@ fn go_to_definition_implicit_constructor() {
 }
 var implicitConstructor = new /*constructorReference*/ImplicitConstructor();";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(false, "constructorReference");
+		f.verify_baseline_go_to_definition(false, "constructorReference".into());
 	});
 }
 

@@ -21,7 +21,7 @@ import /*importDefault*/Widget, { /*importHelper*/helper } from "pkg";
 Widget;
 helper();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("importDefault", "importHelper");
+		f.verify_baseline_go_to_source_definition("importDefault".into(), "importHelper".into());
 	});
 }
 
@@ -41,7 +41,7 @@ export default class /*targetWidget*/Widget {}
 import /*importDefault*/Widget from "pkg";
 Widget;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("importDefault");
+		f.verify_baseline_go_to_source_definition("importDefault".into());
 	});
 }
 
@@ -59,7 +59,7 @@ export default /*targetDefault*/function() { return "ok"; }
 import /*importDefault*/myFunc from "pkg";
 myFunc/*usage*/();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("importDefault", "usage");
+		f.verify_baseline_go_to_source_definition("importDefault".into(), "usage".into());
 	});
 }
 
@@ -78,7 +78,7 @@ export default { run() {} };
 import /*defaultImport*/pkg from "pkg";
 pkg.run();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("defaultImport");
+		f.verify_baseline_go_to_source_definition("defaultImport".into());
 	});
 }
 
@@ -97,7 +97,7 @@ export default _default;
 import pkg from "pkg";
 pkg/*usage*/;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("usage");
+		f.verify_baseline_go_to_source_definition("usage".into());
 	});
 }
 
@@ -117,7 +117,7 @@ module.exports = legacyFn;
 import /*importName*/legacyFn from "legacy";
 legacyFn();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("importName");
+		f.verify_baseline_go_to_source_definition("importName".into());
 	});
 }
 
@@ -135,7 +135,7 @@ export default function createThing() { return { value: 42 }; }
 import /*defaultName*/createThing from "pkg";
 createThing/*callDefault*/();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("defaultName", "callDefault");
+		f.verify_baseline_go_to_source_definition("defaultName".into(), "callDefault".into());
 	});
 }
 

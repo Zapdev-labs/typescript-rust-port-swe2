@@ -19,7 +19,7 @@ const title = "Profile";
 const suffix = "!";
 function takesNumber(value: number) { return value; }
 </script>
-"#, contentmappertest.component_mapper, ".vue");
+"#.into(), contentmappertest.component_mapper, ".vue".into());
 		f.verify_baseline_non_suggestion_diagnostics();
 	});
 }
@@ -29,7 +29,7 @@ fn content_mapper_synthesized_diagnostics() {
 	run_test(|t| {
 		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /ProfileCard.vue
 <template><h1>Profile</h1></template>
-", contentmappertest.synthesizing_mapper, ".vue");
+".into(), contentmappertest.synthesizing_mapper, ".vue".into());
 		f.verify_baseline_non_suggestion_diagnostics();
 	});
 }
@@ -39,8 +39,8 @@ fn content_mapper_transform_failure_diagnostics() {
 	run_test(|t| {
 		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /app.vue
 [||]<template>hi</template>
-", contentmappertest.failing_mapper, ".vue");
-		f.go_to_file("/app.vue");
+".into(), contentmappertest.failing_mapper, ".vue".into());
+		f.go_to_file("/app.vue".into());
 		f.verify_non_suggestion_diagnostics(vec![tsc_lsproto::Diagnostic { code: Some(tsc_lsproto::IntegerOrString { integer: Some(((18069) as i32).into()), ..Default::default() }), message: tsc_lsproto::StringOrMarkupContent { string: Some(("The content mapper 'mapper' failed to transform this file.\n  The content mapper process failed while handling the transform request.").into()), ..Default::default() }, range: f.ranges()[0].ls_range, ..Default::default() }]);
 	});
 }

@@ -22,8 +22,8 @@ interface ContextualInterface2 {
 }
 let contextualInterface2: ContextualInterface2 = function (th/*2*/is, n) { }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "this: ContextualInterface", "");
-		f.verify_quick_info_at("2", "(parameter) this: void", "");
+		f.verify_quick_info_at("1".into(), "this: ContextualInterface".into(), "".into());
+		f.verify_quick_info_at("2".into(), "(parameter) this: void".into(), "".into());
 	});
 }
 

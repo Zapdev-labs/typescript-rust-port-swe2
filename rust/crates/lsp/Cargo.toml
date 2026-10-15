@@ -9,6 +9,8 @@ license.workspace = true
 workspace = true
 
 [dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
 tsc-api = { path = "../api" }
 tsc-bundled = { path = "../bundled" }
 tsc-collections = { path = "../collections" }
@@ -27,6 +29,7 @@ tsc-lsproto = { path = "../lsproto" }
 tsc-lsutil = { path = "../lsutil" }
 tsc-project = { path = "../project" }
 tsc-project-logging = { path = "../projectlogging" }
+tsc-pprof = { path = "../pprof" }
 tsc-tsoptions = { path = "../tsoptions" }
 tsc-tspath = { path = "../tspath" }
 tsc-vfs = { path = "../vfs" }

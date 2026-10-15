@@ -12,7 +12,7 @@ export const foo: number;
 // @Filename: /howNow/a.ts
 foo;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/howNow/a.ts");
+		f.go_to_file("/howNow/a.ts".into());
 		f.verify_import_fix_at_position(vec![r#"import { foo } from "brownCow";
 
 foo;"#], None);

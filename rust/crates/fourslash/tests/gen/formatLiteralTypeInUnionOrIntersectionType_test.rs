@@ -24,7 +24,7 @@ type Complexed =
     Bar |
     Baz;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
+		f.format_document("".into());
 		f.verify_current_file_content(r"type NumberAndString = {
     a: number
 } & {
@@ -40,7 +40,7 @@ type NumberOrString = {
 type Complexed =
     Foo &
     Bar |
-    Baz;");
+    Baz;".into());
 	});
 }
 

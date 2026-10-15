@@ -19,14 +19,14 @@ fn format_nested_class_with_open_brace_on_new_lines() {
 		let mut opts232 = f.get_options();
 		opts232.format_code_settings.place_open_brace_on_new_line_for_functions = tsc_core::TS_TRUE;
 		f.configure(opts232);
-		f.go_to_marker("1");
-		f.insert("}");
+		f.go_to_marker("1".into());
+		f.insert("}".into());
 		f.verify_current_file_content(r"module A
 {
     class B
     {
     }
-}");
+}".into());
 	});
 }
 

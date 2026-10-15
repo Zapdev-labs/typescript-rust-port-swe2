@@ -24,7 +24,7 @@ const d = new B("b");
 const d1 = new B1("b1");"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
-		f.verify_baseline_find_all_references("aCtr");
+		f.verify_baseline_find_all_references("aCtr".into());
 	});
 }
 

@@ -27,7 +27,7 @@ pkgImportGlobal;
 export {};"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_file("/home/src/workspaces/project/index.ts");
+		f.go_to_file("/home/src/workspaces/project/index.ts".into());
 		f.verify_number_of_errors_in_current_file(0);
 	});
 }

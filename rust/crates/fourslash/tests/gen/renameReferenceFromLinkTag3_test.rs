@@ -17,7 +17,7 @@ enum E {
     Foo
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_rename(None, "");
+		f.verify_baseline_rename(None, "".into());
 	});
 }
 

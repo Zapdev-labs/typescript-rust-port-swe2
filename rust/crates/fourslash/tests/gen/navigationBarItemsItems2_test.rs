@@ -9,9 +9,9 @@ fn navigation_bar_items_items2() {
 	run_test(|t| {
 		let content = r"/**/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
-		f.insert_line("module A");
-		f.insert("export class ");
+		f.go_to_marker("".into());
+		f.insert_line("module A".into());
+		f.insert("export class ".into());
 		f.verify_baseline_document_symbol();
 	});
 }

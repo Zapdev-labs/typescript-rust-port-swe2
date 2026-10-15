@@ -18,16 +18,16 @@ var a/*8*/8 = Array<boolean>();
 var a/*9*/9 = Array<boolean>(1);
 var a/*10*/10 = Array("s");"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "var a1: any[]", "");
-		f.verify_quick_info_at("2", "var a2: any[]", "");
-		f.verify_quick_info_at("3", "var a3: boolean[]", "");
-		f.verify_quick_info_at("4", "var a4: boolean[]", "");
-		f.verify_quick_info_at("5", "var a5: string[]", "");
-		f.verify_quick_info_at("6", "var a6: any[]", "");
-		f.verify_quick_info_at("7", "var a7: any[]", "");
-		f.verify_quick_info_at("8", "var a8: boolean[]", "");
-		f.verify_quick_info_at("9", "var a9: boolean[]", "");
-		f.verify_quick_info_at("10", "var a10: string[]", "");
+		f.verify_quick_info_at("1".into(), "var a1: any[]".into(), "".into());
+		f.verify_quick_info_at("2".into(), "var a2: any[]".into(), "".into());
+		f.verify_quick_info_at("3".into(), "var a3: boolean[]".into(), "".into());
+		f.verify_quick_info_at("4".into(), "var a4: boolean[]".into(), "".into());
+		f.verify_quick_info_at("5".into(), "var a5: string[]".into(), "".into());
+		f.verify_quick_info_at("6".into(), "var a6: any[]".into(), "".into());
+		f.verify_quick_info_at("7".into(), "var a7: any[]".into(), "".into());
+		f.verify_quick_info_at("8".into(), "var a8: boolean[]".into(), "".into());
+		f.verify_quick_info_at("9".into(), "var a9: boolean[]".into(), "".into());
+		f.verify_quick_info_at("10".into(), "var a10: string[]".into(), "".into());
 	});
 }
 

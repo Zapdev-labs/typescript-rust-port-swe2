@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn js_doc_property_description7() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"class StringClass {
     /** Something generic */
     static [p: string]: any;
@@ -16,7 +16,7 @@ function stringClass(e: typeof StringClass) {
     console.log(e./*stringClass*/anything);
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("stringClass", "(index) StringClass[string]: any", "Something generic");
+		f.verify_quick_info_at("stringClass".into(), "(index) StringClass[string]: any".into(), "Something generic".into());
 	});
 }
 

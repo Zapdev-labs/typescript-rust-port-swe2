@@ -17,9 +17,9 @@ namespace Y {
     var z = y + 5;
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
+		f.go_to_marker("".into());
 		f.backspace(6);
-		f.insert("var");
+		f.insert("var".into());
 		f.verify_no_errors();
 	});
 }

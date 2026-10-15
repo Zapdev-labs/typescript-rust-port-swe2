@@ -26,10 +26,10 @@ c2./*2*/prototype;
 c3./*3*/prototype;
 c4./*4*/prototype;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "(property) c1.prototype: c1", "");
-		f.verify_quick_info_at("2", "(property) c2<T>.prototype: c2<any>", "");
-		f.verify_quick_info_at("3", "(property) c3.prototype: c3", "");
-		f.verify_quick_info_at("4", "(property) c4.prototype: c4", "");
+		f.verify_quick_info_at("1".into(), "(property) c1.prototype: c1".into(), "".into());
+		f.verify_quick_info_at("2".into(), "(property) c2<T>.prototype: c2<any>".into(), "".into());
+		f.verify_quick_info_at("3".into(), "(property) c3.prototype: c3".into(), "".into());
+		f.verify_quick_info_at("4".into(), "(property) c4.prototype: c4".into(), "".into());
 	});
 }
 

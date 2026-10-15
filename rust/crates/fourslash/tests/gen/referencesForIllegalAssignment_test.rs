@@ -11,7 +11,7 @@ fn references_for_illegal_assignment() {
 var /*bar*/bar = function () { };
 bar = bar + 1;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1", "2", "bar");
+		f.verify_baseline_find_all_references("1".into(), "2".into(), "bar".into());
 	});
 }
 

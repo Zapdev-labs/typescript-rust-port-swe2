@@ -22,7 +22,7 @@ class test2 implements IFoo./*2*/ {}
 interface test3 extends IFoo./*3*/ {}
 interface test4 implements Foo./*4*/ {}";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("1", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_function_members_plus(vec![Some(tsc_lsproto::CompletionItem { label: "staticMethod", sort_text: Some((tsc_ls::SORT_TEXT_LOCAL_DECLARATION_PRIORITY.to_string()).into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "prototype", sort_text: Some((tsc_ls::SORT_TEXT_LOCATION_PRIORITY.to_string()).into()), ..Default::default() })]), ..Default::default() }), ..Default::default() }));
+		f.verify_completions("1".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_function_members_plus(vec![Some(tsc_lsproto::CompletionItem { label: "staticMethod", sort_text: Some((tsc_ls::SORT_TEXT_LOCAL_DECLARATION_PRIORITY.to_string()).into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "prototype", sort_text: Some((tsc_ls::SORT_TEXT_LOCATION_PRIORITY.to_string()).into()), ..Default::default() })]), ..Default::default() }), ..Default::default() }));
 		f.verify_completions(vec!["2", "3", "4"], None);
 	});
 }

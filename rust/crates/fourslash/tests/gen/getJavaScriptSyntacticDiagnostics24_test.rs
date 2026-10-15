@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn get_java_script_syntactic_diagnostics24() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @allowJs: true
 // @Filename: a.js
 function Person(age) {
@@ -20,7 +20,7 @@ function Person(age) {
 let x = new Person(100);
 x.canVote/**/;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("", "(property) Person.canVote: number | boolean", "");
+		f.verify_quick_info_at("".into(), "(property) Person.canVote: number | boolean".into(), "".into());
 	});
 }
 

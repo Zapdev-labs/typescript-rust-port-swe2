@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn completions_import_no_semicolons() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @Filename: /a.ts
 export function foo() {}
 // @Filename: /b.ts

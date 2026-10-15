@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_verbatim_type_only1() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @module: node18
 // @verbatimModuleSyntax: true
 // @Filename: /mod.ts
@@ -20,7 +20,7 @@ const x: /**/";
 		f.verify_apply_code_action_from_completion(Some(("").into()), Some(tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "I", source: "./mod", description: "Add import from \"./mod.js\"", auto_import_fix: Some(tsc_lsproto::AutoImportFix { module_specifier: "./mod.js", ..Default::default() }), new_file_content: Some((r#"import type { I } from "./mod.js";
 
 const x: "#).into()), ..Default::default() }));
-		f.insert("I = new C");
+		f.insert("I = new C".into());
 		f.verify_apply_code_action_from_completion(None, Some(tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "C", source: "./mod", description: "Update import from \"./mod.js\"", auto_import_fix: Some(tsc_lsproto::AutoImportFix { module_specifier: "./mod.js", ..Default::default() }), new_file_content: Some((r#"import { C, type I } from "./mod.js";
 
 const x: I = new C"#).into()), ..Default::default() }));

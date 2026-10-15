@@ -21,7 +21,7 @@ useForm/**/"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.configure(tsc_lsutil::UserPreferences { auto_import_entrypoint_directory_search: tsc_core::TS_TRUE, ..Default::default() });
 		f.mark_test_as_strada_server();
-		f.go_to_marker("");
+		f.go_to_marker("".into());
 		f.verify_import_fix_at_position(vec![r#"import { useForm } from "react-hook-form";
 
 useForm"#, r#"import { useForm } from "react-hook-form/dist/useForm";

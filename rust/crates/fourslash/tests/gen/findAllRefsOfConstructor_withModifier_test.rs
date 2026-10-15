@@ -12,7 +12,7 @@ fn find_all_refs_of_constructor_with_modifier() {
 }
 var x = new X();";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("0");
+		f.verify_baseline_find_all_references("0".into());
 	});
 }
 

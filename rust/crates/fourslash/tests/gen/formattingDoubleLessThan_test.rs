@@ -9,9 +9,9 @@ fn formatting_double_less_than() {
 	run_test(|t| {
 		let content = r"/*1*/if (<number>foo < <number>bar) {}";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"if (<number>foo < <number>bar) { }");
+		f.format_document("".into());
+		f.go_to_marker("1".into());
+		f.verify_current_line_content(r"if (<number>foo < <number>bar) { }".into());
 	});
 }
 

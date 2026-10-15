@@ -47,3 +47,14 @@ mod sourcedefinition;
 mod string_completions;
 mod symbols;
 mod utilities;
+
+// Re-exports used by the `tsc-lsp` server port (`server.go` calls these as
+// `ls.X` package members).
+pub use crate::api::Error;
+pub use crate::completions::{ERR_NEEDS_AUTO_IMPORTS, completion_trigger_characters};
+pub use crate::semantictokens::semantic_tokens_legend;
+pub use crate::signaturehelp::{
+    SIGNATURE_HELP_RETRIGGER_CHARACTERS, SIGNATURE_HELP_TRIGGER_CHARACTERS,
+};
+pub use crate::symbols::provide_workspace_symbols;
+pub use crate::findallreferences::{CrossProjectOrchestrator, Project};

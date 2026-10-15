@@ -24,16 +24,16 @@ oub.b/*8*/
 oub.b.b/*9*/
 oub.b.a.n.a.n.a/*10*/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "const out: {\n    a: {\n        a: ...;\n    };\n}", "");
-		f.verify_quick_info_at("2", "function foo<{\n    a: {\n        a: ...;\n    };\n}>(deep: Deep<{\n    a: {\n        a: ...;\n    };\n}>): {\n    a: {\n        a: ...;\n    };\n}", "");
-		f.verify_quick_info_at("3", "(property) a: {\n    a: {\n        a: ...;\n    };\n}", "");
-		f.verify_quick_info_at("4", "(property) a: {\n    a: {\n        a: ...;\n    };\n}", "");
-		f.verify_quick_info_at("5", "(property) a: {\n    a: {\n        a: ...;\n    };\n}", "");
-		f.verify_quick_info_at("6", "const oub: {\n    [x: string]: ...;\n}", "");
-		f.verify_quick_info_at("7", "function foo<{\n    [x: string]: ...;\n}>(deep: Deep<{\n    [x: string]: ...;\n}>): {\n    [x: string]: ...;\n}", "");
-		f.verify_quick_info_at("8", "{\n    [x: string]: ...;\n}", "");
-		f.verify_quick_info_at("9", "{\n    [x: string]: ...;\n}", "");
-		f.verify_quick_info_at("10", "{\n    [x: string]: ...;\n}", "");
+		f.verify_quick_info_at("1".into(), "const out: {\n    a: {\n        a: ...;\n    };\n}".into(), "".into());
+		f.verify_quick_info_at("2".into(), "function foo<{\n    a: {\n        a: ...;\n    };\n}>(deep: Deep<{\n    a: {\n        a: ...;\n    };\n}>): {\n    a: {\n        a: ...;\n    };\n}".into(), "".into());
+		f.verify_quick_info_at("3".into(), "(property) a: {\n    a: {\n        a: ...;\n    };\n}".into(), "".into());
+		f.verify_quick_info_at("4".into(), "(property) a: {\n    a: {\n        a: ...;\n    };\n}".into(), "".into());
+		f.verify_quick_info_at("5".into(), "(property) a: {\n    a: {\n        a: ...;\n    };\n}".into(), "".into());
+		f.verify_quick_info_at("6".into(), "const oub: {\n    [x: string]: ...;\n}".into(), "".into());
+		f.verify_quick_info_at("7".into(), "function foo<{\n    [x: string]: ...;\n}>(deep: Deep<{\n    [x: string]: ...;\n}>): {\n    [x: string]: ...;\n}".into(), "".into());
+		f.verify_quick_info_at("8".into(), "{\n    [x: string]: ...;\n}".into(), "".into());
+		f.verify_quick_info_at("9".into(), "{\n    [x: string]: ...;\n}".into(), "".into());
+		f.verify_quick_info_at("10".into(), "{\n    [x: string]: ...;\n}".into(), "".into());
 	});
 }
 

@@ -15,7 +15,7 @@ class B extends A {
     [|static foo() {}|]
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix_not_available("fixAddOverrideModifier");
+		f.verify_code_fix_not_available("fixAddOverrideModifier".into());
 	});
 }
 

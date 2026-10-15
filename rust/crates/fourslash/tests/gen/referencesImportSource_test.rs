@@ -34,8 +34,8 @@ import source /*e*/g from "m";
 import.source("m");"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
-		f.verify_baseline_find_all_references("a", "b", "c", "cUse", "d", "e");
-		f.verify_baseline_rename(None, "a", "b", "c", "cUse", "d", "e");
+		f.verify_baseline_find_all_references("a".into(), "b".into(), "c".into(), "cUse".into(), "d".into(), "e".into());
+		f.verify_baseline_rename(None, "a".into(), "b".into(), "c".into(), "cUse".into(), "d".into(), "e".into());
 	});
 }
 

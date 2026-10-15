@@ -14,7 +14,7 @@ var obj = { /*1*/name };
 var obj1 = { /*2*/name: /*3*/name };
 obj./*4*/name;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("0", "3", "1", "2", "4");
+		f.verify_baseline_find_all_references("0".into(), "3".into(), "1".into(), "2".into(), "4".into());
 	});
 }
 

@@ -24,7 +24,7 @@ export declare class IndirectDependency
 IndirectDependency/**/"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_marker("");
+		f.go_to_marker("".into());
 		let mut opts1155 = f.get_options();
 		opts1155.format_code_settings.new_line_character = "\n";
 		f.configure(opts1155);

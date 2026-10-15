@@ -18,7 +18,7 @@ export { /*2*/default } from "./export";
 import /*3*/fooDefault from "./re-export";"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
-		f.verify_baseline_find_all_references("0", "1", "2", "3");
+		f.verify_baseline_find_all_references("0".into(), "1".into(), "2".into(), "3".into());
 	});
 }
 

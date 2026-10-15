@@ -20,7 +20,7 @@ class B3 extends B2 {
     }
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("indirectSuperCall");
+		f.go_to_marker("indirectSuperCall".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "B2(n: number): B2", parameter_count: 1, parameter_name: "n", parameter_span: "n: number", overloads_count: 2, ..Default::default() });
 	});
 }

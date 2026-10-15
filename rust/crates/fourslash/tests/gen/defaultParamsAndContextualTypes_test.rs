@@ -20,8 +20,8 @@ var o: Foo = {
     }
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "(parameter) xy: string", "");
-		f.verify_quick_info_at("2", "(parameter) options: FooOptions", "");
+		f.verify_quick_info_at("1".into(), "(parameter) xy: string".into(), "".into());
+		f.verify_quick_info_at("2".into(), "(parameter) options: FooOptions".into(), "".into());
 	});
 }
 

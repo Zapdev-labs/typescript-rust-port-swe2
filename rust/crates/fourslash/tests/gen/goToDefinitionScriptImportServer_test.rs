@@ -20,7 +20,7 @@ import [|/*2*/"./stylez.css"|];
 import [|/*3*/"./foo.txt"|];"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.verify_baseline_go_to_definition(true, "1", "2", "3");
+		f.verify_baseline_go_to_definition(true, "1".into(), "2".into(), "3".into());
 	});
 }
 

@@ -15,13 +15,13 @@ fn format_tsx_multiline_attribute_string() {
     />
 );"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
+		f.format_document("".into());
 		f.verify_current_file_content(r#"(
     <input
         value="x
         x"
     />
-);"#);
+);"#.into());
 	});
 }
 

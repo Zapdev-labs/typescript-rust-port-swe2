@@ -99,14 +99,14 @@ class B2 implements Foo {
 }
 "#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("impl");
-		f.go_to_marker("temp");
-		f.verify_baseline_go_to_implementation("impl");
-		f.close_file_of_marker("temp");
-		f.go_to_marker("temp");
-		f.close_file_of_marker("impl");
-		f.close_file_of_marker("temp");
-		f.go_to_marker("temp");
+		f.go_to_marker("impl".into());
+		f.go_to_marker("temp".into());
+		f.verify_baseline_go_to_implementation("impl".into());
+		f.close_file_of_marker("temp".into());
+		f.go_to_marker("temp".into());
+		f.close_file_of_marker("impl".into());
+		f.close_file_of_marker("temp".into());
+		f.go_to_marker("temp".into());
 	});
 }
 

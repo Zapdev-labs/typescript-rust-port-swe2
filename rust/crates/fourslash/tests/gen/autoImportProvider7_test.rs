@@ -29,11 +29,11 @@ const a = new MyClass/*1*/();
 const b = new MyClass2/*2*/();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_marker("1");
+		f.go_to_marker("1".into());
 		let mut opts1196 = f.get_options();
 		opts1196.format_code_settings.new_line_character = "\n";
 		f.configure(opts1196);
-		f.verify_completions("1", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "MyClass", data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "mylib", ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::AnyTextEdits, sort_text: Some((tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("1".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "MyClass", data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "mylib", ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::AnyTextEdits, sort_text: Some((tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 		f.verify_apply_code_action_from_completion(Some(("1").into()), Some(tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "MyClass", source: "mylib", description: "Add import from \"mylib\"", auto_import_fix: Some(tsc_lsproto::AutoImportFix { ..Default::default() }), user_preferences: None, new_file_content: Some((r#"import { MyClass } from "mylib";
 
 const a = new MyClass();

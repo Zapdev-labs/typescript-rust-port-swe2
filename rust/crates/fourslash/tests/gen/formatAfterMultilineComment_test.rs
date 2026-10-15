@@ -10,9 +10,9 @@ fn format_after_multiline_comment() {
 		let content = r#"/*foo
 */"123123";"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
+		f.format_document("".into());
 		f.verify_current_file_content(r#"/*foo
-*/"123123";"#);
+*/"123123";"#.into());
 	});
 }
 

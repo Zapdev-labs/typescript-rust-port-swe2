@@ -15,9 +15,9 @@ namespace n1.
 		let mut capabilities = tsc_fourslash::get_default_capabilities();
 		capabilities.text_document.completion.completion_item.snippet_support = Some((false).into());
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", capabilities, content);
-		f.verify_js_doc_completion("top", 3, r"/** */", None);
-		f.verify_no_js_doc_completion("n2");
-		f.verify_no_js_doc_completion("n3");
+		f.verify_js_doc_completion("top".into(), 3, r"/** */".into(), None);
+		f.verify_no_js_doc_completion("n2".into());
+		f.verify_no_js_doc_completion("n3".into());
 	});
 }
 

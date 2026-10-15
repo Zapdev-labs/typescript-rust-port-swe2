@@ -9,9 +9,9 @@ fn chained_fat_arrow_formatting() {
 	run_test(|t| {
 		let content = r"var fn = () => () => null/**/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
-		f.insert(";");
-		f.verify_current_line_content(r"var fn = () => () => null;");
+		f.go_to_marker("".into());
+		f.insert(";".into());
+		f.verify_current_line_content(r"var fn = () => () => null;".into());
 	});
 }
 

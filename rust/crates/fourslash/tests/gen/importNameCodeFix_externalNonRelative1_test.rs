@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_external_non_relative1() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r#"// @Filename: /home/src/workspaces/project/tsconfig.base.json
 {
   "compilerOptions": {
@@ -49,11 +49,11 @@ Pkg2/*internal*/
 		let mut opts1534 = f.get_options();
 		opts1534.format_code_settings.new_line_character = "\n";
 		f.configure(opts1534);
-		f.go_to_marker("external");
+		f.go_to_marker("external".into());
 		f.verify_import_fix_at_position(vec![r#"import { Pkg2 } from "pkg-2/utils";
 
 Pkg2"#], Some(tsc_lsutil::UserPreferences { import_module_specifier_preference: "project-relative", ..Default::default() }));
-		f.go_to_marker("internal");
+		f.go_to_marker("internal".into());
 		f.verify_import_fix_at_position(vec![r#"import { Pkg2 } from "../../utils";
 
 Pkg2"#], Some(tsc_lsutil::UserPreferences { import_module_specifier_preference: "project-relative", ..Default::default() }));

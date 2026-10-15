@@ -17,11 +17,11 @@ x1(''/*1*/);
 x1('hi'/*2*/);
 x1('bye'/*3*/);";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1");
+		f.go_to_marker("1".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "z", parameter_span: "z: string", overloads_count: 3, ..Default::default() });
-		f.go_to_marker("2");
+		f.go_to_marker("2".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "x", parameter_span: "x: 'hi'", overloads_count: 3, ..Default::default() });
-		f.go_to_marker("3");
+		f.go_to_marker("3".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "y", parameter_span: "y: 'bye'", overloads_count: 3, ..Default::default() });
 	});
 }

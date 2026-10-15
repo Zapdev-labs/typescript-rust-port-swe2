@@ -14,8 +14,8 @@ fn unreachable_statement_node_reuse() {
 function abc() { }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_number_of_errors_in_current_file(1);
-		f.go_to_marker("a");
-		f.insert(" ");
+		f.go_to_marker("a".into());
+		f.insert(" ".into());
 		f.verify_no_errors();
 	});
 }

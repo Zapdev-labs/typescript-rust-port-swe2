@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_js_doc_import1() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r#"// @verbatimModuleSyntax: true
 // @target: esnext
 // @allowJs: true
@@ -30,7 +30,7 @@ fn auto_import_js_doc_import1() {
  */
 export function f(a, b, c, d) { }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
+		f.go_to_marker("".into());
 		f.verify_import_fix_at_position(vec![r#"/**
  * @import { A, D, C, B } from "./foo"
  */

@@ -93,7 +93,7 @@ const ic: I = { FC() {} };
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.verify_baseline_find_all_references("1", "2", "3", "4", "5", "6", "7", "8", "9");
+		f.verify_baseline_find_all_references("1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into(), "7".into(), "8".into(), "9".into());
 	});
 }
 

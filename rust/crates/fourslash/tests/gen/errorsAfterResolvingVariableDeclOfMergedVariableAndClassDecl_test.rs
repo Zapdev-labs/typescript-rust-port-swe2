@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn errors_after_resolving_variable_decl_of_merged_variable_and_class_decl() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"namespace M {
     export class C {
         foo() { }
@@ -18,10 +18,10 @@ fn errors_after_resolving_variable_decl_of_merged_variable_and_class_decl() {
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
-		f.go_to_marker("1");
+		f.go_to_marker("1".into());
 		f.backspace(1);
-		f.insert(" ");
-		f.verify_quick_info_is("var M.C.C: typeof M.C", "");
+		f.insert(" ".into());
+		f.verify_quick_info_is("var M.C.C: typeof M.C".into(), "".into());
 		f.verify_no_errors();
 	});
 }

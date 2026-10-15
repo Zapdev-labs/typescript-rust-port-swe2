@@ -22,8 +22,8 @@ fn jsdoc_typedef_tag_rename03() {
 var person;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_file("jsDocTypedef_form3.js");
-		f.verify_baseline_rename(None, to_any(f.get_ranges_by_text().get("Person")));
+		f.go_to_file("jsDocTypedef_form3.js".into());
+		f.verify_baseline_rename(None, to_any(f.get_ranges_by_text().get("Person".into())));
 	});
 }
 

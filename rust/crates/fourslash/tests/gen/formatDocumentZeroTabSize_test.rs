@@ -18,8 +18,8 @@ fn format_document_zero_tab_size() {
 		opts.format_code_settings.indent_size = 0;
 		opts.format_code_settings.convert_tabs_to_spaces = tsc_core::TS_TRUE;
 		f.configure(opts);
-		f.format_document("");
-		f.verify_current_file_content("function foo() {\nif (true) {\nvar x = 1;\n}\n}");
+		f.format_document("".into());
+		f.verify_current_file_content("function foo() {\nif (true) {\nvar x = 1;\n}\n}".into());
 	});
 }
 

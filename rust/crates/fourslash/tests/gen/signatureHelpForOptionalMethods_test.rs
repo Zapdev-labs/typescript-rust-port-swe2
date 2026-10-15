@@ -18,7 +18,7 @@ const o: Obj = {
   }
 };";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1");
+		f.go_to_marker("1".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "optionalMethod(current: any): any", parameter_name: "current", parameter_span: "current: any", ..Default::default() });
 	});
 }

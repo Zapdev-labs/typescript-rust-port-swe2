@@ -14,10 +14,10 @@ fn quick_info_enum_members_accept_non_ascii_strings() {
     /*Japanese*/Japanese = 'りんご',
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("Emoji", "(enum member) Demo.Emoji = \"🍎\"", "");
-		f.verify_quick_info_at("Hebrew", "(enum member) Demo.Hebrew = \"תפוח\"", "");
-		f.verify_quick_info_at("Chinese", "(enum member) Demo.Chinese = \"苹果\"", "");
-		f.verify_quick_info_at("Japanese", "(enum member) Demo.Japanese = \"りんご\"", "");
+		f.verify_quick_info_at("Emoji".into(), "(enum member) Demo.Emoji = \"🍎\"".into(), "".into());
+		f.verify_quick_info_at("Hebrew".into(), "(enum member) Demo.Hebrew = \"תפוח\"".into(), "".into());
+		f.verify_quick_info_at("Chinese".into(), "(enum member) Demo.Chinese = \"苹果\"".into(), "".into());
+		f.verify_quick_info_at("Japanese".into(), "(enum member) Demo.Japanese = \"りんご\"".into(), "".into());
 	});
 }
 

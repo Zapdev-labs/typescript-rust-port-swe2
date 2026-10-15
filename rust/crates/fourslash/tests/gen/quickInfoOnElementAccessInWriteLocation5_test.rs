@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_on_element_access_in_write_location5() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @strict: true
 interface Serializer {
   set value(v: string | number);
@@ -16,7 +16,7 @@ interface Serializer {
 declare let box: Serializer;
 box['value'/*1*/] += 10;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "(property) Serializer.value: string | number", "");
+		f.verify_quick_info_at("1".into(), "(property) Serializer.value: string | number".into(), "".into());
 	});
 }
 

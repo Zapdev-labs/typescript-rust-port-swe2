@@ -13,12 +13,12 @@ fn formatting_await() {
     }
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
+		f.format_document("".into());
 		f.verify_current_file_content(r"async function f() {
     for await (const x of g()) {
         console.log(x);
     }
-}");
+}".into());
 	});
 }
 

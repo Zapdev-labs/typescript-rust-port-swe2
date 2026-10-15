@@ -14,7 +14,7 @@ exports.x = 0;
 // @Filename: /b.ts
 import { x } from "./a";"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_will_rename_files_edits("/a.ts", "/a2.ts", vec![("/b.ts", r#"import { x } from "./a2";"#)].into_iter().collect::<FxHashMap<_, _>>(), None);
+		f.verify_will_rename_files_edits("/a.ts".into(), "/a2.ts".into(), vec![("/b.ts", r#"import { x } from "./a2";"#)].into_iter().collect::<FxHashMap<_, _>>(), None);
 	});
 }
 

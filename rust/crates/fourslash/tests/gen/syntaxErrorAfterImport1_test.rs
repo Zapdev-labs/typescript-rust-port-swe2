@@ -18,8 +18,8 @@ import ext = require('extmod');
 import int = ext.IntMod;
 var x = new int/*0*/"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("0");
-		f.insert(".");
+		f.go_to_marker("0".into());
+		f.insert(".".into());
 	});
 }
 

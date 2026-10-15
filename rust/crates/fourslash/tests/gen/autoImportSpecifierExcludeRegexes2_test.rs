@@ -21,11 +21,11 @@ export function add(a: number, b: number) {}
 // @Filename: /src/index.ts
 add/**/"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_module_specifiers("", vec!["./utils"], None);
-		f.verify_import_fix_module_specifiers("", vec!["@app/utils"], Some(tsc_lsutil::UserPreferences { auto_import_specifier_exclude_regexes: vec!["^\\./"], ..Default::default() }));
-		f.verify_import_fix_module_specifiers("", vec!["@app/utils"], Some(tsc_lsutil::UserPreferences { import_module_specifier_preference: "non-relative", ..Default::default() }));
-		f.verify_import_fix_module_specifiers("", vec!["./utils"], Some(tsc_lsutil::UserPreferences { import_module_specifier_preference: "non-relative", auto_import_specifier_exclude_regexes: vec!["^@app/"], ..Default::default() }));
-		f.verify_import_fix_module_specifiers("", vec![], Some(tsc_lsutil::UserPreferences { auto_import_specifier_exclude_regexes: vec!["utils"], ..Default::default() }));
+		f.verify_import_fix_module_specifiers("".into(), vec!["./utils"], None);
+		f.verify_import_fix_module_specifiers("".into(), vec!["@app/utils"], Some(tsc_lsutil::UserPreferences { auto_import_specifier_exclude_regexes: vec!["^\\./"], ..Default::default() }));
+		f.verify_import_fix_module_specifiers("".into(), vec!["@app/utils"], Some(tsc_lsutil::UserPreferences { import_module_specifier_preference: "non-relative", ..Default::default() }));
+		f.verify_import_fix_module_specifiers("".into(), vec!["./utils"], Some(tsc_lsutil::UserPreferences { import_module_specifier_preference: "non-relative", auto_import_specifier_exclude_regexes: vec!["^@app/"], ..Default::default() }));
+		f.verify_import_fix_module_specifiers("".into(), vec![], Some(tsc_lsutil::UserPreferences { auto_import_specifier_exclude_regexes: vec!["utils"], ..Default::default() }));
 	});
 }
 

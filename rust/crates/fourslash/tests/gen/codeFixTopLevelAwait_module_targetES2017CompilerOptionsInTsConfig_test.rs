@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_top_level_await_module_target_es2017_compiler_options_in_ts_config() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r#"// @filename: /dir/a.ts
 declare const p: Promise<number>;
 await p;
@@ -19,7 +19,7 @@ export {};
     }
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix_not_available("fixTargetOption");
+		f.verify_code_fix_not_available("fixTargetOption".into());
 		f.verify_code_fix_available(None);
 	});
 }

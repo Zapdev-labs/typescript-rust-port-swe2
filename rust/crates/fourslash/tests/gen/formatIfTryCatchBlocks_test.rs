@@ -20,7 +20,7 @@ catch (e) {
 		let mut opts187 = f.get_options();
 		opts187.format_code_settings.place_open_brace_on_new_line_for_control_blocks = tsc_core::TS_TRUE;
 		f.configure(opts187);
-		f.format_document("");
+		f.format_document("".into());
 		f.verify_current_file_content(r"try
 {
 }
@@ -33,7 +33,7 @@ try
 }
 catch (e)
 {
-}");
+}".into());
 	});
 }
 

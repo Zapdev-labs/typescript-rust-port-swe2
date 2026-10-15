@@ -32,7 +32,7 @@ function foo(x) { }
 /** {@link /*use7*/[|Foo|] }dd*/
 const f = """#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(false, "use1", "use2", "use3", "use4", "use5", "use6", "use7");
+		f.verify_baseline_go_to_definition(false, "use1".into(), "use2".into(), "use3".into(), "use4".into(), "use5".into(), "use6".into(), "use7".into());
 	});
 }
 

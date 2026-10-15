@@ -16,7 +16,7 @@ fn signature_help_applicable_range() {
 let s =/*a*/ obj.foo("Hello, world!")/*b*/  
   /*c*/;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_no_signature_help_for_markers("a", "b", "c");
+		f.verify_no_signature_help_for_markers("a".into(), "b".into(), "c".into());
 	});
 }
 

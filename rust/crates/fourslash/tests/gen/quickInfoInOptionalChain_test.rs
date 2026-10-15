@@ -26,12 +26,12 @@ declare const foo2: Foo2;
 
 if (foo2.b/*4*/ar?.b/*5*/az.q/*6*/we) {}"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "(property) A.arr: string[]", "");
-		f.verify_quick_info_at("2", "(property) Foo.bar: {\n    baz: string;\n}", "");
-		f.verify_quick_info_at("3", "(property) baz: string | undefined", "");
-		f.verify_quick_info_at("4", "(property) Foo2.bar?: {\n    baz: {\n        qwe: string;\n    };\n} | undefined", "");
-		f.verify_quick_info_at("5", "(property) baz: {\n    qwe: string;\n}", "");
-		f.verify_quick_info_at("6", "(property) qwe: string | undefined", "");
+		f.verify_quick_info_at("1".into(), "(property) A.arr: string[]".into(), "".into());
+		f.verify_quick_info_at("2".into(), "(property) Foo.bar: {\n    baz: string;\n}".into(), "".into());
+		f.verify_quick_info_at("3".into(), "(property) baz: string | undefined".into(), "".into());
+		f.verify_quick_info_at("4".into(), "(property) Foo2.bar?: {\n    baz: {\n        qwe: string;\n    };\n} | undefined".into(), "".into());
+		f.verify_quick_info_at("5".into(), "(property) baz: {\n    qwe: string;\n}".into(), "".into());
+		f.verify_quick_info_at("6".into(), "(property) qwe: string | undefined".into(), "".into());
 	});
 }
 

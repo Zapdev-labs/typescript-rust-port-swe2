@@ -21,8 +21,8 @@ const /*2*/utilityFunctions = {
   doSomethingWithTypes
 };";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "const utilityFunctions: {\n    doSomethingWithKeys: <T>(...keys: (keyof T)[]) => void;\n}", "");
-		f.verify_quick_info_at("2", "const utilityFunctions: {\n    doSomethingWithTypes: (...statics: (typeof Foo)[]) => void;\n}", "");
+		f.verify_quick_info_at("1".into(), "const utilityFunctions: {\n    doSomethingWithKeys: <T>(...keys: (keyof T)[]) => void;\n}".into(), "".into());
+		f.verify_quick_info_at("2".into(), "const utilityFunctions: {\n    doSomethingWithTypes: (...statics: (typeof Foo)[]) => void;\n}".into(), "".into());
 	});
 }
 

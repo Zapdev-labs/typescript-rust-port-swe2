@@ -16,7 +16,7 @@ export class Z {
 import f = require("./verifySingleFileEmitOutput1_file0");
 var /**/b = new f.A();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("", "var b: f.A", "");
+		f.verify_quick_info_at("".into(), "var b: f.A".into(), "".into());
 	});
 }
 

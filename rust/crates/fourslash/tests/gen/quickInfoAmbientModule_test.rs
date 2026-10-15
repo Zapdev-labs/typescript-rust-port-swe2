@@ -9,7 +9,7 @@ fn quick_info_ambient_module() {
 	run_test(|t| {
 		let content = r#"declare module "*.css"/*1*/;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", r#"module "*.css""#, "");
+		f.verify_quick_info_at("1".into(), r#"module "*.css""#.into(), "".into());
 	});
 }
 

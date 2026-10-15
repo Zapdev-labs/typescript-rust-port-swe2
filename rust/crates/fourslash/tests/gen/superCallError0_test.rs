@@ -16,8 +16,8 @@ class T6 extends T5<number>{
     }
 }/*1*/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1");
-		f.insert("/n");
+		f.go_to_marker("1".into());
+		f.insert("/n".into());
 	});
 }
 

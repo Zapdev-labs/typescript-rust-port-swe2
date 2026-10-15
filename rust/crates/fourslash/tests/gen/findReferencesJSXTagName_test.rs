@@ -17,7 +17,7 @@ function displaySubreddit(subreddit: string) {
 export const /*2*/SubmissionComp = (submission: SubmissionProps) =>
     <div style={{ fontFamily: "sans-serif" }}></div>;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1", "2");
+		f.verify_baseline_find_all_references("1".into(), "2".into());
 	});
 }
 

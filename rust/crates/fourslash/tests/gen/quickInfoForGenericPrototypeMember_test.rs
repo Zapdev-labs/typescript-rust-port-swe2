@@ -13,8 +13,8 @@ fn quick_info_for_generic_prototype_member() {
 var x = new /*1*/C<any>();
 var y = C.proto/*2*/type;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "constructor C<any>(): C<any>", "");
-		f.verify_quick_info_at("2", "(property) C<T>.prototype: C<any>", "");
+		f.verify_quick_info_at("1".into(), "constructor C<any>(): C<any>".into(), "".into());
+		f.verify_quick_info_at("2".into(), "(property) C<T>.prototype: C<any>".into(), "".into());
 	});
 }
 

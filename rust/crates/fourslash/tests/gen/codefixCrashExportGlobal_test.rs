@@ -29,9 +29,9 @@ interface Root {
 declare const root: Root;
 export = root;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("bar.ts");
+		f.go_to_file("bar.ts".into());
 		f.verify_code_fix_not_available();
-		f.go_to_file("foo.d.ts");
+		f.go_to_file("foo.d.ts".into());
 		f.verify_code_fix_not_available();
 	});
 }

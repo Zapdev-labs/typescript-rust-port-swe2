@@ -11,7 +11,7 @@ fn unclosed_comments_in_constructor() {
     constructor(/* /**/) { }
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("", None);
+		f.verify_completions("".into(), None);
 	});
 }
 

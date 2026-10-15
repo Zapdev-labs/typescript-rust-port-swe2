@@ -49,7 +49,7 @@ const DONE_POLL_INTERVAL: Duration = Duration::from_millis(10);
 
 /// `type progressEvent struct`
 struct ProgressEvent {
-    message: &'static diagnostics::Message,
+    message: diagnostics::Message,
     args: Vec<String>,
     finish: bool,
 }
@@ -167,7 +167,7 @@ pub(crate) fn new_project_loading_progress_from_reporter(
 
 impl ProjectLoadingProgress {
     /// `func (p *projectLoadingProgress) start(message *diagnostics.Message, args ...any)`
-    pub(crate) fn start(&self, message: &'static diagnostics::Message, args: &[String]) {
+    pub(crate) fn start(&self, message: diagnostics::Message, args: &[String]) {
         self.send_event(ProgressEvent {
             message,
             args: args.to_vec(),
@@ -176,7 +176,7 @@ impl ProjectLoadingProgress {
     }
 
     /// `func (p *projectLoadingProgress) finish(message *diagnostics.Message, args ...any)`
-    pub(crate) fn finish(&self, message: &'static diagnostics::Message, args: &[String]) {
+    pub(crate) fn finish(&self, message: diagnostics::Message, args: &[String]) {
         self.send_event(ProgressEvent {
             message,
             args: args.to_vec(),
@@ -241,7 +241,7 @@ impl ProjectLoadingProgress {
             match rx.recv_timeout(timeout) {
                 // `case ev := <-p.ch:`
                 Ok(ev) => {
-                    let text = self.reporter.localize(ev.message, &ev.args);
+                    let text = self.reporter.localize(&ev.message, &ev.args);
                     if !ev.finish {
                         let count = loading.get_or_zero(text.as_str());
                         loading.set(text.clone(), count + 1);

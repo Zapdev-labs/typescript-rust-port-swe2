@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn import_completions_package_json_imports_pattern_root_wildcard() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r##"// @module: nodenext
 // @Filename: /package.json
 {

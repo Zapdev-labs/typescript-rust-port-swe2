@@ -20,7 +20,7 @@ export class MySqlVarBinary extends MySqlColumn {
   [|/*1*/override|] readonly [entityKind]: string = "MySqlVarBinary";
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "1");
+		f.verify_baseline_go_to_definition(true, "1".into());
 	});
 }
 

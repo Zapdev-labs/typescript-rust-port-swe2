@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn completion_for_string_literal_quote_preference() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"enum A {
     A,
     B,
@@ -20,7 +20,7 @@ const b: B = {
     a: /**/
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "'A'", ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "'B'", ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "'C'", ..Default::default() })], ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { quote_preference: tsc_lsutil::quote_preference("single"), ..Default::default() }), ..Default::default() }));
+		f.verify_completions("".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "'A'", ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "'B'", ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "'C'", ..Default::default() })], ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { quote_preference: tsc_lsutil::quote_preference("single".into()), ..Default::default() }), ..Default::default() }));
 	});
 }
 

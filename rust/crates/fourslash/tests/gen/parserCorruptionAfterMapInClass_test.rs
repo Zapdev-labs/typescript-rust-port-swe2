@@ -18,8 +18,8 @@ class C {
     }
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("$");
-		f.insert("()");
+		f.go_to_marker("$".into());
+		f.insert("()".into());
 		f.verify_non_suggestion_diagnostics(vec![tsc_lsproto::Diagnostic { code: Some(tsc_lsproto::IntegerOrString { integer: Some(((2558) as i32).into()), ..Default::default() }), message: tsc_lsproto::StringOrMarkupContent { string: Some(("Expected 1 type arguments, but got 2.").into()), ..Default::default() }, ..Default::default() }]);
 	});
 }

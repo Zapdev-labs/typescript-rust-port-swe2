@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn jsdoc_template_prototype_completions() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @checkJs: true
 // @filename: index.js
 https://github.com/microsoft/TypeScript/issues/11492
@@ -21,7 +21,7 @@ function Foo() {}
 Foo.prototype.foo = function (bar) {};
 new Foo().foo({ id: 1234 })./**/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["id"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["id"], ..Default::default() }), ..Default::default() }));
 	});
 }
 

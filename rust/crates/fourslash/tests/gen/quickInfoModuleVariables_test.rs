@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_module_variables() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"var x = 1;
 namespace M {
     export var x = 2;
@@ -21,9 +21,9 @@ namespace M {
     console.log(/*3*/x); // 3
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "var M.x: number", "");
-		f.verify_quick_info_at("2", "var M.x: number", "");
-		f.verify_quick_info_at("3", "var x: number", "");
+		f.verify_quick_info_at("1".into(), "var M.x: number".into(), "".into());
+		f.verify_quick_info_at("2".into(), "var M.x: number".into(), "".into());
+		f.verify_quick_info_at("3".into(), "var x: number".into(), "".into());
 	});
 }
 

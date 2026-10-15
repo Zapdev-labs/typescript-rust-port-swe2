@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_new_import_file2() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"[|f1/*0*/();|]
 // @Filename: ../../other_dir/module.ts
 export var v1 = 5;

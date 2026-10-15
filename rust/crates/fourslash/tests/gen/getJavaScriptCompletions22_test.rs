@@ -12,8 +12,8 @@ fn get_java_script_completions22() {
 const abc = {};
 ({./*1*/});";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1");
-		f.insert(".");
+		f.go_to_marker("1".into());
+		f.insert(".".into());
 		f.verify_completions(None, None);
 	});
 }

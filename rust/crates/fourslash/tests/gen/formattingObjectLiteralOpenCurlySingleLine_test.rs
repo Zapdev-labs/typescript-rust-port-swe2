@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_object_literal_open_curly_single_line() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"
 let obj1 =
 { x: 10 };
@@ -17,7 +17,7 @@ let obj2 =
 { y: 10 };
 ";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
+		f.format_document("".into());
 		f.verify_current_file_content(r"
 let obj1 =
     { x: 10 };
@@ -25,7 +25,7 @@ let obj1 =
 let obj2 =
     // leading trivia
     { y: 10 };
-");
+".into());
 	});
 }
 

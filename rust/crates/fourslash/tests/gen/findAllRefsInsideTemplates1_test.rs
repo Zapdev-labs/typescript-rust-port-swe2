@@ -10,7 +10,7 @@ fn find_all_refs_inside_templates1() {
 		let content = r"/*1*/var /*2*/x = 10;
 var y = " + "`" + r"${ /*3*/x } ${ /*4*/x }" + "`" + r"";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1", "2", "3", "4");
+		f.verify_baseline_find_all_references("1".into(), "2".into(), "3".into(), "4".into());
 	});
 }
 

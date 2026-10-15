@@ -10,7 +10,7 @@ fn generic_function_signature_help1() {
 		let content = r"function f<T>(a: T): T { return null; }
 f(/**/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
+		f.go_to_marker("".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f(a: unknown): unknown", ..Default::default() });
 	});
 }

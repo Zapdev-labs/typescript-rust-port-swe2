@@ -25,8 +25,8 @@ const jsx = (
    </*12*/ //*13*/div>
 );";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		let mut linked_cursors1 = vec![tsc_lsproto::Range { start: f.marker_by_name("1start").ls_position, end: f.marker_by_name("1").ls_position, ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("2start").ls_position, end: f.marker_by_name("2").ls_position, ..Default::default() }];
-		let mut linked_cursors2 = vec![tsc_lsproto::Range { start: f.marker_by_name("6start").ls_position, end: f.marker_by_name("6").ls_position, ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("7start").ls_position, end: f.marker_by_name("7").ls_position, ..Default::default() }];
+		let mut linked_cursors1 = vec![tsc_lsproto::Range { start: f.marker_by_name("1start".into()).ls_position, end: f.marker_by_name("1".into()).ls_position, ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("2start".into()).ls_position, end: f.marker_by_name("2".into()).ls_position, ..Default::default() }];
+		let mut linked_cursors2 = vec![tsc_lsproto::Range { start: f.marker_by_name("6start".into()).ls_position, end: f.marker_by_name("6".into()).ls_position, ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("7start".into()).ls_position, end: f.marker_by_name("7".into()).ls_position, ..Default::default() }];
 		f.verify_linked_editing(vec![("0", None), ("1", linked_cursors1), ("2", linked_cursors1), ("3", None), ("4", None), ("5", None), ("6", linked_cursors2), ("7", linked_cursors2), ("8", None), ("9", None), ("10", None), ("11", None), ("12", None), ("13", None)].into_iter().collect::<FxHashMap<_, _>>());
 	});
 }

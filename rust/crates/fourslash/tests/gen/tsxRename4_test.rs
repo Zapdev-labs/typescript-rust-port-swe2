@@ -23,7 +23,7 @@ declare namespace JSX {
 [|<[|{| "contextRangeIndex": 7 |}div|]> </[|{| "contextRangeIndex": 7 |}div|]>|]"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
-		f.verify_baseline_rename_at_ranges_with_text(None, "MyClass", "div");
+		f.verify_baseline_rename_at_ranges_with_text(None, "MyClass".into(), "div".into());
 	});
 }
 

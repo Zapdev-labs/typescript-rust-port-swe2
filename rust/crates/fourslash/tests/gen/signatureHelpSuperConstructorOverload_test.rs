@@ -24,9 +24,9 @@ class SuperOverLoad2 extends SuperOverloadBase {
     }
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("superOverload1");
+		f.go_to_marker("superOverload1".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "SuperOverloadBase(): SuperOverloadBase", parameter_count: 0, overloads_count: 2, ..Default::default() });
-		f.go_to_marker("superOverload2");
+		f.go_to_marker("superOverload2".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "SuperOverloadBase(test: string): SuperOverloadBase", parameter_count: 1, parameter_name: "test", parameter_span: "test: string", overloads_count: 2, ..Default::default() });
 	});
 }

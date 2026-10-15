@@ -20,7 +20,7 @@ exports.makeConfig = () => ({ enabled: true });
 import type { /*importName*/Config } from "pkg";
 let value: /*typeRef*/Config;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("importName", "typeRef");
+		f.verify_baseline_go_to_source_definition("importName".into(), "typeRef".into());
 	});
 }
 
@@ -45,7 +45,7 @@ import { Config, makeConfig } from "pkg";
 let c: /*typeRef*/Config;
 makeConfig/*callRef*/();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("typeRef", "callRef");
+		f.verify_baseline_go_to_source_definition("typeRef".into(), "callRef".into());
 	});
 }
 
@@ -68,7 +68,7 @@ export { Config } from "./types.js";
 import { /*importName*/Config } from "pkg";
 let c: Config;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("importName");
+		f.verify_baseline_go_to_source_definition("importName".into());
 	});
 }
 

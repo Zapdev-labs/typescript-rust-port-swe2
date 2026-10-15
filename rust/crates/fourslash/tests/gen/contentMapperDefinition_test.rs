@@ -28,8 +28,8 @@ import DefaultCard, { ProfileCard, title } from "./ProfileCard.vue";
 export const pageTitle = ti/*incoming*/tle;
 export const component = Profile/*atomTarget*/Card;
 export const fallback = Default/*fallback*/Card;
-"#, contentmappertest.component_mapper, ".vue");
-		f.verify_baseline_go_to_definition(false, "within", "template", "incoming", "outgoing", "atomTarget", "fallback", "markup");
+"#.into(), contentmappertest.component_mapper, ".vue".into());
+		f.verify_baseline_go_to_definition(false, "within".into(), "template".into(), "incoming".into(), "outgoing".into(), "atomTarget".into(), "fallback".into(), "markup".into());
 	});
 }
 

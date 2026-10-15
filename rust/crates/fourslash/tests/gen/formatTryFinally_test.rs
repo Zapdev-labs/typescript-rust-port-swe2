@@ -13,12 +13,12 @@ fn format_try_finally() {
     // ...
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
+		f.format_document("".into());
 		f.verify_current_file_content(r"if (true) try {
     // ...
 } finally {
     // ...
-}");
+}".into());
 	});
 }
 

@@ -33,15 +33,15 @@ shared/*external2external*/"#;
 		let mut opts839 = f.get_options();
 		opts839.format_code_settings.new_line_character = "\n";
 		f.configure(opts839);
-		f.go_to_marker("internal2external");
+		f.go_to_marker("internal2external".into());
 		f.verify_import_fix_at_position(vec![r#"import { shared } from "shared/constants";
 
 shared"#], Some(tsc_lsutil::UserPreferences { import_module_specifier_preference: "project-relative", ..Default::default() }));
-		f.go_to_marker("internal2internal");
+		f.go_to_marker("internal2internal".into());
 		f.verify_import_fix_at_position(vec![r#"import { utils } from "./utils";
 
 utils"#], Some(tsc_lsutil::UserPreferences { import_module_specifier_preference: "project-relative", ..Default::default() }));
-		f.go_to_marker("external2external");
+		f.go_to_marker("external2external".into());
 		f.verify_import_fix_at_position(vec![r#"import { shared } from "./constants";
 
 shared"#], Some(tsc_lsutil::UserPreferences { import_module_specifier_preference: "project-relative", ..Default::default() }));

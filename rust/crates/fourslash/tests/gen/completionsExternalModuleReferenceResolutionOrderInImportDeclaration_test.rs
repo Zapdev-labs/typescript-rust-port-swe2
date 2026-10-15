@@ -18,8 +18,8 @@ declare module "externalModuleRefernceResolutionOrderInImportDeclaration_file1" 
 import file1 = require('externalModuleRefernceResolutionOrderInImportDeclaration_file1');
 /*1*/"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1");
-		f.insert("file1.");
+		f.go_to_marker("1".into());
+		f.insert("file1.".into());
 		f.verify_completions(None, Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["bar"], excludes: vec!["foo"], ..Default::default() }), ..Default::default() }));
 	});
 }

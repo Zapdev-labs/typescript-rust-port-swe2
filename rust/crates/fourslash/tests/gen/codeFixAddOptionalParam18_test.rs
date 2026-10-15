@@ -10,7 +10,7 @@ fn code_fix_add_optional_param18() {
 		let content = r#"[|function f(a: number, c: string) {}|]
 f(1, 1, "");"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix_not_available("addOptionalParam");
+		f.verify_code_fix_not_available("addOptionalParam".into());
 	});
 }
 

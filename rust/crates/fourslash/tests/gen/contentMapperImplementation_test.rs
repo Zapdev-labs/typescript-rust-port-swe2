@@ -28,8 +28,8 @@ models.External/*outgoing*/Shape;
 // @Filename: /main.ts
 import { LocalShape } from "./ProfileCard.vue";
 let shape: Local/*incoming*/Shape;
-"#, contentmappertest.component_mapper, ".vue");
-		f.verify_baseline_go_to_implementation("within", "template", "incoming", "outgoing", "markup");
+"#.into(), contentmappertest.component_mapper, ".vue".into());
+		f.verify_baseline_go_to_implementation("within".into(), "template".into(), "incoming".into(), "outgoing".into(), "markup".into());
 	});
 }
 

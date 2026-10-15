@@ -64,7 +64,7 @@ fn formatting_jsx_texts1() {
     (    homu   )    homu
 </option>;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
+		f.format_document("".into());
 		f.verify_current_file_content(r"<option>
     homu   ;      homu
     homu;homu
@@ -119,7 +119,7 @@ fn formatting_jsx_texts1() {
     homu@homu
 
     (    homu   )    homu
-</option>;");
+</option>;".into());
 	});
 }
 

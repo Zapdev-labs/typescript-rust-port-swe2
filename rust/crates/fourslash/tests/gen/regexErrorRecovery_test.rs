@@ -14,7 +14,7 @@ fn regex_error_recovery() {
 verify.quickInfoIs("RegExp");
 verify.not.errorExistsAfterMarker("1");"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.insert("(");
+		f.insert("(".into());
 	});
 }
 

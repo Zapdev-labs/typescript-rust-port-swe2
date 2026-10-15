@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_unused_identifier_suggestion() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @strict: false
 function f([|p|]) {
     const [|x|] = 0;

@@ -9,9 +9,9 @@ fn formatting_conditional_operator() {
 	run_test(|t| {
 		let content = r"var x=true?1:2";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
+		f.format_document("".into());
 		f.go_to_bof();
-		f.verify_current_line_content(r"var x = true ? 1 : 2");
+		f.verify_current_line_content(r"var x = true ? 1 : 2".into());
 	});
 }
 

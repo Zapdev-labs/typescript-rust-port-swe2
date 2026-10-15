@@ -13,8 +13,8 @@ export const foo = 0;
 // @Filename: /b.ts
 fo/**/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
-		f.verify_apply_code_action_from_completion(Some(("").into()), Some(tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "foo", source: "./a", description: "Add import from \"./a\"", user_preferences: Some(tsc_lsutil::UserPreferences { quote_preference: tsc_lsutil::quote_preference("single"), ..Default::default() }), new_file_content: Some((r"import { foo } from './a';
+		f.go_to_marker("".into());
+		f.verify_apply_code_action_from_completion(Some(("").into()), Some(tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "foo", source: "./a", description: "Add import from \"./a\"", user_preferences: Some(tsc_lsutil::UserPreferences { quote_preference: tsc_lsutil::quote_preference("single".into()), ..Default::default() }), new_file_content: Some((r"import { foo } from './a';
 
 fo").into()), ..Default::default() }));
 	});

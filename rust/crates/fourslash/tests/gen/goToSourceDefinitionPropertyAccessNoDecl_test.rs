@@ -20,7 +20,7 @@ import { config } from "pkg";
 config./*accessAlpha*/alpha;
 config./*accessBeta*/beta;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("accessAlpha", "accessBeta");
+		f.verify_baseline_go_to_source_definition("accessAlpha".into(), "accessBeta".into());
 	});
 }
 
@@ -38,7 +38,7 @@ export const nested = { inner: { /*targetValue*/value: 42 } };
 import { nested } from "pkg";
 nested.inner./*accessValue*/value;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("accessValue");
+		f.verify_baseline_go_to_source_definition("accessValue".into());
 	});
 }
 
@@ -58,7 +58,7 @@ import { coords } from "pkg";
 coords./*accessX*/x;
 coords./*accessY*/y;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("accessX", "accessY");
+		f.verify_baseline_go_to_source_definition("accessX".into(), "accessY".into());
 	});
 }
 

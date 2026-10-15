@@ -13,10 +13,10 @@ var /*2*/b = undefined;              // var b: any
 var /*3*/c = { x: 0, y: null };	// var c: { x: number, y: any }
 var /*4*/d = [null, undefined];      // var d: any[]";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "var a: any", "");
-		f.verify_quick_info_at("2", "var b: any", "");
-		f.verify_quick_info_at("3", "var c: {\n    x: number;\n    y: any;\n}", "");
-		f.verify_quick_info_at("4", "var d: any[]", "");
+		f.verify_quick_info_at("1".into(), "var a: any".into(), "".into());
+		f.verify_quick_info_at("2".into(), "var b: any".into(), "".into());
+		f.verify_quick_info_at("3".into(), "var c: {\n    x: number;\n    y: any;\n}".into(), "".into());
+		f.verify_quick_info_at("4".into(), "var d: any[]".into(), "".into());
 	});
 }
 

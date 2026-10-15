@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_js_doc_backticks() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @noEmit: true
 // @allowJs: true
 // @checkJs: true
@@ -24,12 +24,12 @@ export function f(x, y) {
 }
 f/*f*/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("f");
-		f.verify_quick_info_is("function f(x: string, y: string): string", "`@param` initial at-param is OK in title comment");
-		f.go_to_marker("x");
-		f.verify_quick_info_is("(parameter) x: string", "hi there `@param`");
-		f.go_to_marker("y");
-		f.verify_quick_info_is("(parameter) y: string", "hi there `@ * param\nthis is the margin");
+		f.go_to_marker("f".into());
+		f.verify_quick_info_is("function f(x: string, y: string): string".into(), "`@param` initial at-param is OK in title comment".into());
+		f.go_to_marker("x".into());
+		f.verify_quick_info_is("(parameter) x: string".into(), "hi there `@param`".into());
+		f.go_to_marker("y".into());
+		f.verify_quick_info_is("(parameter) y: string".into(), "hi there `@ * param\nthis is the margin".into());
 	});
 }
 

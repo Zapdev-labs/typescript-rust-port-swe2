@@ -11,8 +11,8 @@ fn add_declare_to_module() {
     namespace m3 { }
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
-		f.insert("declare ");
+		f.go_to_marker("".into());
+		f.insert("declare ".into());
 	});
 }
 

@@ -22,7 +22,7 @@ fn references_for_expression_keywords() {
 undefined /*instanceof*/instanceof C;
 undefined /*as*/as C;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("new", "void", "typeof", "yield", "await", "in", "instanceof", "as", "delete");
+		f.verify_baseline_find_all_references("new".into(), "void".into(), "typeof".into(), "yield".into(), "await".into(), "in".into(), "instanceof".into(), "as".into(), "delete".into());
 	});
 }
 

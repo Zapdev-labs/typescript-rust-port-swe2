@@ -21,7 +21,7 @@ class C {
     @[|/*useDecSymbol*/dec|] [s]() {}
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "useDecString", "useDecSymbol");
+		f.verify_baseline_go_to_definition(true, "useDecString".into(), "useDecSymbol".into());
 	});
 }
 

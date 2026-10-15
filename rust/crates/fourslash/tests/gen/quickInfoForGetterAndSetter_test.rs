@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_for_getter_and_setter() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"class Test {
     constructor() {
         this.value;
@@ -24,10 +24,10 @@ fn quick_info_for_getter_and_setter() {
     }
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1");
-		f.verify_quick_info_is("(getter) Test.value: any", "Getter text");
-		f.go_to_marker("2");
-		f.verify_quick_info_is("(setter) Test.value: any", "Setter text");
+		f.go_to_marker("1".into());
+		f.verify_quick_info_is("(getter) Test.value: any".into(), "Getter text".into());
+		f.go_to_marker("2".into());
+		f.verify_quick_info_is("(setter) Test.value: any".into(), "Setter text".into());
 	});
 }
 

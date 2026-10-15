@@ -13,7 +13,7 @@ export class logger { }
 import { logger } from './first';
 new logger()";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("second.ts");
+		f.go_to_file("second.ts".into());
 		f.verify_no_errors();
 		f.verify_suggestion_diagnostics(None);
 	});

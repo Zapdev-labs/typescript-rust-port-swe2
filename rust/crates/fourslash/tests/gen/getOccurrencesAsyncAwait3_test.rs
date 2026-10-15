@@ -12,7 +12,7 @@ async function f() {
     await 300;
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_document_highlights(None, "");
+		f.verify_baseline_document_highlights(None, "".into());
 	});
 }
 

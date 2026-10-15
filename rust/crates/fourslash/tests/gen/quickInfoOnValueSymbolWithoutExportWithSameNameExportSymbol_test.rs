@@ -22,10 +22,10 @@ export type Fn = () => void
 const /*4*/X = 1;
 export interface X {}";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "const Unit: number", "");
-		f.verify_quick_info_at("2", "const Unit: number", "");
-		f.verify_quick_info_at("3", "function Fn(): void", "");
-		f.verify_quick_info_at("4", "const X: 1", "");
+		f.verify_quick_info_at("1".into(), "const Unit: number".into(), "".into());
+		f.verify_quick_info_at("2".into(), "const Unit: number".into(), "".into());
+		f.verify_quick_info_at("3".into(), "function Fn(): void".into(), "".into());
+		f.verify_quick_info_at("4".into(), "const X: 1".into(), "".into());
 	});
 }
 

@@ -11,7 +11,7 @@ fn signature_help_negative_tests() {
 cl/*invalidContext*/ass InvalidSignatureHelpLocation { }
 InvalidSignatureHelpLocation(/*validContext*/);";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_no_signature_help_for_markers("insideComment", "invalidContext", "validContext");
+		f.verify_no_signature_help_for_markers("insideComment".into(), "invalidContext".into(), "validContext".into());
 	});
 }
 

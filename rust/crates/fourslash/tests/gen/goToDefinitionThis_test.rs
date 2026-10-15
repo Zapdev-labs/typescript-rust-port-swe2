@@ -15,7 +15,7 @@ class /*cls*/C {
     get self(/*getterDecl*/this: number) { return [|/*getterUse*/this|]; }
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "fnUse", "clsUse", "getterUse");
+		f.verify_baseline_go_to_definition(true, "fnUse".into(), "clsUse".into(), "getterUse".into());
 	});
 }
 

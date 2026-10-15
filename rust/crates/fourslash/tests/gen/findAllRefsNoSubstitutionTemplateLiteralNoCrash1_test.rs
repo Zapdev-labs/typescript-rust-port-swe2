@@ -9,7 +9,7 @@ fn find_all_refs_no_substitution_template_literal_no_crash1() {
 	run_test(|t| {
 		let content = r"type Test = " + "`" + r"T/*1*/" + "`" + r";";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1");
+		f.verify_baseline_find_all_references("1".into());
 	});
 }
 

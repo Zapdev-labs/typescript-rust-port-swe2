@@ -870,9 +870,23 @@ func (tr *translator) args(list []ast.Expr, skip int) string {
 			out = append(out, "&mut *t")
 			continue
 		}
-		out = append(out, tr.expr(a))
+		out = append(out, tr.exprArg(a))
 	}
 	return strings.Join(out, ", ")
+}
+
+// exprArg renders an argument — string literals get `.into()` so they
+// satisfy `String` fields while remaining valid `&str` elsewhere.
+func (tr *translator) exprArg(e ast.Expr) string {
+	if lit, ok := e.(*ast.BasicLit); ok && lit.Kind == token.STRING {
+		return tr.lit(lit) + ".into()"
+	}
+	if u, ok := e.(*ast.UnaryExpr); ok && u.Op == token.AND {
+		if lit, ok2 := u.X.(*ast.BasicLit); ok2 && lit.Kind == token.STRING {
+			return "&" + tr.lit(lit) + ".into()"
+		}
+	}
+	return tr.expr(e)
 }
 
 // mutNames prefixes `mut ` on every binding except `_done`/`_`.
@@ -1003,7 +1017,7 @@ func (tr *translator) compositeAs(x *ast.CompositeLit, expectedType string) stri
 		b.WriteString(t.Name + " { ")
 		for _, e := range x.Elts {
 			if kv, ok := e.(*ast.KeyValueExpr); ok {
-				b.WriteString(snake(identName(kv.Key)) + ": " + tr.expr(kv.Value) + ", ")
+				b.WriteString(snake(identName(kv.Key)) + ": " + tr.exprArg(kv.Value) + ", ")
 			} else {
 				b.WriteString(tr.expr(e) + ", ")
 			}

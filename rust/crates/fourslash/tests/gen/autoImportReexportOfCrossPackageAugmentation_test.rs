@@ -35,7 +35,7 @@ uniqueFunction/**/"#;
 		let mut prefs = tsc_lsutil::new_default_user_preferences();
 		prefs.auto_import_entrypoint_directory_search = tsc_core::TS_TRUE;
 		f.configure(prefs);
-		f.go_to_marker("");
+		f.go_to_marker("".into());
 		f.baseline_auto_imports_completions(vec![""]);
 	});
 }

@@ -14,12 +14,12 @@ var name2 = "Hello";
 var id2 = 10000;
 var /*obj2*/obj2 = {/*name2*/name2, /*id2*/id2};"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("obj1", "var obj1: {\n    name1: any;\n    id1: any;\n}", "");
-		f.verify_quick_info_at("name1", "(property) name1: any", "");
-		f.verify_quick_info_at("id1", "(property) id1: any", "");
-		f.verify_quick_info_at("obj2", "var obj2: {\n    name2: string;\n    id2: number;\n}", "");
-		f.verify_quick_info_at("name2", "(property) name2: string", "");
-		f.verify_quick_info_at("id2", "(property) id2: number", "");
+		f.verify_quick_info_at("obj1".into(), "var obj1: {\n    name1: any;\n    id1: any;\n}".into(), "".into());
+		f.verify_quick_info_at("name1".into(), "(property) name1: any".into(), "".into());
+		f.verify_quick_info_at("id1".into(), "(property) id1: any".into(), "".into());
+		f.verify_quick_info_at("obj2".into(), "var obj2: {\n    name2: string;\n    id2: number;\n}".into(), "".into());
+		f.verify_quick_info_at("name2".into(), "(property) name2: string".into(), "".into());
+		f.verify_quick_info_at("id2".into(), "(property) id2: number".into(), "".into());
 	});
 }
 

@@ -9,9 +9,9 @@ fn as_operator_formatting() {
 	run_test(|t| {
 		let content = r"/**/var x = 3   as  number;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
-		f.format_document("");
-		f.verify_current_line_content(r"var x = 3 as number;");
+		f.go_to_marker("".into());
+		f.format_document("".into());
+		f.verify_current_line_content(r"var x = 3 as number;".into());
 	});
 }
 

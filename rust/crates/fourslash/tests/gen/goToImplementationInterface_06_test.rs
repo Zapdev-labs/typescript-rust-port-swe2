@@ -16,7 +16,7 @@ interface SomeOtherType {}
 let x: Foo = [|class { constructor (a: number) {} }|];
 let y = <Foo> [|class { constructor (a: number) {} }|];";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_implementation("interface_definition");
+		f.verify_baseline_go_to_implementation("interface_definition".into());
 	});
 }
 

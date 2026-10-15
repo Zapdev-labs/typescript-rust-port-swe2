@@ -22,7 +22,7 @@ function unrelated() {
 import { /*importHelper*/helper } from "pkg";
 helper/*usage*/();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("importHelper", "usage");
+		f.verify_baseline_go_to_source_definition("importHelper".into(), "usage".into());
 	});
 }
 
@@ -44,7 +44,7 @@ function factory() {
 import { /*importWidget*/Widget } from "pkg";
 new Widget();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("importWidget");
+		f.verify_baseline_go_to_source_definition("importWidget".into());
 	});
 }
 

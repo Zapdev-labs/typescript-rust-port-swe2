@@ -10,11 +10,11 @@ fn format_debugger_statement() {
 		let content = r"if(false){debugger;}
   if    (   false   )   {    debugger  ;   }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
+		f.format_document("".into());
 		f.go_to_bof();
-		f.verify_current_line_content(r"if (false) { debugger; }");
+		f.verify_current_line_content(r"if (false) { debugger; }".into());
 		f.go_to_eof();
-		f.verify_current_line_content(r"if (false) { debugger; }");
+		f.verify_current_line_content(r"if (false) { debugger; }".into());
 	});
 }
 

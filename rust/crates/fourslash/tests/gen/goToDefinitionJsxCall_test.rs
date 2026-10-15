@@ -15,7 +15,7 @@ interface FC<P = {}> {
 const Thing: FC = (props) => <div></div>;
 const HelloWorld = () => <[|/**/Thing|] />;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "");
+		f.verify_baseline_go_to_definition(true, "".into());
 	});
 }
 

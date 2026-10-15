@@ -17,7 +17,7 @@ var c = /*1*/globalClass();
 { "files": ["referencesForGlobals_1.ts", "referencesForGlobals_2.ts"], "compilerOptions": { "lib": ["es5"] } }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.verify_baseline_find_all_references("1");
+		f.verify_baseline_find_all_references("1".into());
 	});
 }
 

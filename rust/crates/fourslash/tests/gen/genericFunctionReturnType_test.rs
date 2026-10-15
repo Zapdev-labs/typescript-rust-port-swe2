@@ -14,12 +14,12 @@ fn generic_function_return_type() {
 var /*2*/r = foo(/*1*/1, "");
 var /*4*/r2 = r(/*3*/"");"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1");
+		f.go_to_marker("1".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "foo(x: number, y: string): (a: string) => number", ..Default::default() });
-		f.verify_quick_info_at("2", "var r: (a: string) => number", "");
-		f.go_to_marker("3");
+		f.verify_quick_info_at("2".into(), "var r: (a: string) => number".into(), "".into());
+		f.go_to_marker("3".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "r(a: string): number", ..Default::default() });
-		f.verify_quick_info_at("4", "var r2: number", "");
+		f.verify_quick_info_at("4".into(), "var r2: number".into(), "".into());
 	});
 }
 

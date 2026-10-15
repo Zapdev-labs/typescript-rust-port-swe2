@@ -58,7 +58,7 @@ projectBFunction/**/
 		let mut prefs = tsc_lsutil::new_default_user_preferences();
 		prefs.auto_import_entrypoint_directory_search = tsc_core::TS_TRUE;
 		f.configure(prefs);
-		f.go_to_marker("");
+		f.go_to_marker("".into());
 		f.verify_import_fix_at_position(vec![r#"import { projectBFunction, projectBValue } from "project-b";
 console.log(projectBValue);
 projectBFunction"#, r#"import { projectBValue } from "project-b";

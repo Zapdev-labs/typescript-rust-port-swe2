@@ -14,11 +14,11 @@ module /*check*/A {
     var p;
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("check");
+		f.go_to_marker("check".into());
 		f.verify_quick_info_exists();
-		f.go_to_marker("var");
-		f.insert("var o;");
-		f.go_to_marker("check");
+		f.go_to_marker("var".into());
+		f.insert("var o;".into());
+		f.go_to_marker("check".into());
 		f.verify_quick_info_exists();
 	});
 }

@@ -12,11 +12,11 @@ fn format_selection_with_trivia2() {
 /*end*/    
     ";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_selection("begin", "end");
+		f.format_selection("begin".into(), "end".into());
 		f.verify_current_file_content(r";
 
 
-    ");
+    ".into());
 	});
 }
 

@@ -11,7 +11,7 @@ fn toggle_duplicate_function_declaration() {
 D();";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_bof();
-		f.insert("declare function D();");
+		f.insert("declare function D();".into());
 		f.go_to_bof();
 		f.delete_at_caret(21);
 	});

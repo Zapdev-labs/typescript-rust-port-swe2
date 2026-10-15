@@ -25,9 +25,9 @@ export function MainButton(props: ButtonProps): JSX.Element {
 }
 let e1 = <MainButton/*1*/ /*2*/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1");
+		f.go_to_marker("1".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "MainButton(props: ButtonProps): JSX.Element", parameter_span: "props: ButtonProps", ..Default::default() });
-		f.go_to_marker("2");
+		f.go_to_marker("2".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "MainButton(props: ButtonProps): JSX.Element", parameter_span: "props: ButtonProps", ..Default::default() });
 	});
 }

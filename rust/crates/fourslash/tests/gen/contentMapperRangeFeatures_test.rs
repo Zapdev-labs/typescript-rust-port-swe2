@@ -14,7 +14,7 @@ const message = "world";
 message/*selection*/;
 </script>
 <template>after</template>
-"#, contentmappertest.component_mapper, ".vue");
+"#.into(), contentmappertest.component_mapper, ".vue".into());
 		f.verify_baseline_selection_ranges();
 	});
 }

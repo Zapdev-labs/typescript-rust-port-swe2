@@ -10,8 +10,8 @@ fn js_doc_for_type_alias() {
 		let content = r"/** DOC */
 type /**/T = number";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
-		f.verify_quick_info_is("type T = number", "DOC");
+		f.go_to_marker("".into());
+		f.verify_quick_info_is("type T = number".into(), "DOC".into());
 	});
 }
 

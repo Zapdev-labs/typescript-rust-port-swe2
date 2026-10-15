@@ -27,21 +27,21 @@ var z5 = {
     y: () => { }
 }; ";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
-		f.go_to_marker("x");
-		f.verify_current_line_content(r"var x = [1, 2];");
-		f.go_to_marker("y");
-		f.verify_current_line_content(r"var y = (1, 2);");
-		f.go_to_marker("z1");
-		f.verify_current_line_content(r"var z1 = 1, zz = 2;");
-		f.go_to_marker("z2");
-		f.verify_current_line_content(r"    x: 1,");
-		f.go_to_marker("z3");
-		f.verify_current_line_content(r"    () => { },");
-		f.go_to_marker("z4");
-		f.verify_current_line_content(r"    () => { },");
-		f.go_to_marker("z5");
-		f.verify_current_line_content(r"    x: () => { },");
+		f.format_document("".into());
+		f.go_to_marker("x".into());
+		f.verify_current_line_content(r"var x = [1, 2];".into());
+		f.go_to_marker("y".into());
+		f.verify_current_line_content(r"var y = (1, 2);".into());
+		f.go_to_marker("z1".into());
+		f.verify_current_line_content(r"var z1 = 1, zz = 2;".into());
+		f.go_to_marker("z2".into());
+		f.verify_current_line_content(r"    x: 1,".into());
+		f.go_to_marker("z3".into());
+		f.verify_current_line_content(r"    () => { },".into());
+		f.go_to_marker("z4".into());
+		f.verify_current_line_content(r"    () => { },".into());
+		f.go_to_marker("z5".into());
+		f.verify_current_line_content(r"    x: () => { },".into());
 	});
 }
 

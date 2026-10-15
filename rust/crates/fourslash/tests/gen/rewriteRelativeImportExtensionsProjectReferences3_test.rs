@@ -42,7 +42,7 @@ export {};
 import {} from "../compiler/parser.ts";"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_file("/src/services/services.ts");
+		f.go_to_file("/src/services/services.ts".into());
 		f.verify_baseline_non_suggestion_diagnostics();
 	});
 }

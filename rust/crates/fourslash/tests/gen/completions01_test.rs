@@ -13,12 +13,12 @@ x.forEach(function (y) { y/*1*/
 x.forEach(y => y/*2*/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_marker("1");
-		f.insert(".");
+		f.go_to_marker("1".into());
+		f.insert(".".into());
 		f.verify_completions(None, Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["trim"], ..Default::default() }), ..Default::default() }));
-		f.insert("});");
-		f.go_to_marker("2");
-		f.insert(".");
+		f.insert("});".into());
+		f.go_to_marker("2".into());
+		f.insert(".".into());
 		f.verify_completions(None, Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["trim"], ..Default::default() }), ..Default::default() }));
 	});
 }

@@ -12,11 +12,11 @@ fn completions_writing_spread_argument() {
 const [] = [Math.min(./*marker*/)]
 ";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("marker");
+		f.go_to_marker("marker".into());
 		f.verify_completions(None, None);
-		f.insert(".");
+		f.insert(".".into());
 		f.verify_completions(None, None);
-		f.insert(".");
+		f.insert(".".into());
 		f.verify_completions(None, Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: COMPLETION_GLOBALS, ..Default::default() }), ..Default::default() }));
 	});
 }

@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn doc_comment_template_function_expression() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"/*above*/
 const x = /*next*/ function f(p) {}";
 		let mut capabilities = tsc_fourslash::get_default_capabilities();
@@ -17,7 +17,7 @@ const x = /*next*/ function f(p) {}";
 			f.verify_js_doc_completion(marker, 7, r"/**
  * 
  * @param p
- */", None);
+ */".into(), None);
 		}
 	});
 }

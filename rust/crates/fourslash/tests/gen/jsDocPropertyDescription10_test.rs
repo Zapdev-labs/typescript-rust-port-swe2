@@ -15,7 +15,7 @@ function multipleClass(e: typeof MultipleClass) {
     console.log(e./*multipleClass*/anything);
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("multipleClass", "any", "");
+		f.verify_quick_info_at("multipleClass".into(), "any".into(), "".into());
 	});
 }
 

@@ -17,10 +17,10 @@ fn rename_default_import_different_name() {
 let b = new [|B|]();
 b.test();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1", "2");
+		f.verify_baseline_find_all_references("1".into(), "2".into());
 		f.verify_baseline_rename(None, f.ranges()[1]);
 		f.verify_baseline_rename(None, f.ranges()[3], f.ranges()[4]);
-		f.verify_baseline_document_highlights(None, "1");
+		f.verify_baseline_document_highlights(None, "1".into());
 	});
 }
 

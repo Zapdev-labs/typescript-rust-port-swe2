@@ -17,7 +17,7 @@ class SuperCall extends SuperCallBase {
     }
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("superCall");
+		f.go_to_marker("superCall".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "SuperCallBase(b: boolean): SuperCallBase", parameter_name: "b", parameter_span: "b: boolean", ..Default::default() });
 	});
 }

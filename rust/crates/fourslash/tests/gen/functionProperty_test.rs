@@ -28,17 +28,17 @@ a./*quickInfoA*/x;
 b./*quickInfoB*/x;
 c./*quickInfoC*/x;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("signatureA");
+		f.go_to_marker("signatureA".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "x(a: number): void", ..Default::default() });
-		f.go_to_marker("signatureB");
+		f.go_to_marker("signatureB".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "x(a: number): void", ..Default::default() });
-		f.go_to_marker("signatureC");
+		f.go_to_marker("signatureC".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "x(a: number): void", ..Default::default() });
-		f.verify_completions("completionA", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "x", detail: Some(("(method) x(a: number): void").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("completionA".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "x", detail: Some(("(method) x(a: number): void").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 		f.verify_completions(vec!["completionB", "completionC"], Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "x", detail: Some(("(property) x: (a: number) => void").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
-		f.verify_quick_info_at("quickInfoA", "(method) x(a: number): void", "");
-		f.verify_quick_info_at("quickInfoB", "(property) x: (a: number) => void", "");
-		f.verify_quick_info_at("quickInfoC", "(property) x: (a: number) => void", "");
+		f.verify_quick_info_at("quickInfoA".into(), "(method) x(a: number): void".into(), "".into());
+		f.verify_quick_info_at("quickInfoB".into(), "(property) x: (a: number) => void".into(), "".into());
+		f.verify_quick_info_at("quickInfoC".into(), "(property) x: (a: number) => void".into(), "".into());
 	});
 }
 

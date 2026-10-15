@@ -15,7 +15,7 @@ export declare function helper(): string;
 import { /*usage*/helper } from "./lib/helper";
 helper();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("usage");
+		f.verify_baseline_go_to_source_definition("usage".into());
 	});
 }
 

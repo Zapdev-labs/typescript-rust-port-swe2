@@ -17,10 +17,10 @@ class /*className*/Sphere {
     }
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("className", "class Sphere", "");
-		f.go_to_marker("insertHere");
-		f.insert("ray: Ray;");
-		f.verify_quick_info_at("className", "class Sphere", "");
+		f.verify_quick_info_at("className".into(), "class Sphere".into(), "".into());
+		f.go_to_marker("insertHere".into());
+		f.insert("ray: Ray;".into());
+		f.verify_quick_info_at("className".into(), "class Sphere".into(), "".into());
 	});
 }
 

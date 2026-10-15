@@ -6,4 +6,5 @@ mod dynamic_queue;
 mod logger;
 mod progress;
 mod server;
+mod server_handlers;
 mod stack_sanitizer;

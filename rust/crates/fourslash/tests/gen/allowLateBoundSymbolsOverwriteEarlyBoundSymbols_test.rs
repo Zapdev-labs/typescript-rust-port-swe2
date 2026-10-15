@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn allow_late_bound_symbols_overwrite_early_bound_symbols() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r#"export {};
 const prop = "abc";
 function foo(): void {};

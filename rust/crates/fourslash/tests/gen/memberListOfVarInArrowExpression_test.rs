@@ -20,8 +20,8 @@ each(categories, category => {
 });
 function each<T>(items: T[], handler: (item: T) => void) { }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "(property) a1: string", "");
-		f.verify_completions("1", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "a1", detail: Some(("(property) a1: string").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_quick_info_at("1".into(), "(property) a1: string".into(), "".into());
+		f.verify_completions("1".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "a1", detail: Some(("(property) a1: string").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }
 

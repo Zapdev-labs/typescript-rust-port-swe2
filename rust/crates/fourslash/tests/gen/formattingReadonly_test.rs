@@ -12,11 +12,11 @@ fn formatting_readonly() {
   public readonly   property2: {};/*2*/
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"    readonly property1: {};");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"    public readonly property2: {};");
+		f.format_document("".into());
+		f.go_to_marker("1".into());
+		f.verify_current_line_content(r"    readonly property1: {};".into());
+		f.go_to_marker("2".into());
+		f.verify_current_line_content(r"    public readonly property2: {};".into());
 	});
 }
 

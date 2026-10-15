@@ -15,8 +15,8 @@ interface Point {
 declare const p: Point;
 p/*a*/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("a");
-		f.insert(".");
+		f.go_to_marker("a".into());
+		f.insert(".".into());
 		f.go_to_eof();
 		f.verify_completions(None, Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "x", kind: Some((tsc_lsproto::CompletionItemKind::FIELD).into()), sort_text: Some((tsc_ls::SORT_TEXT_LOCATION_PRIORITY.to_string()).into()), ..Default::default() }), "y"], ..Default::default() }), ..Default::default() }));
 	});

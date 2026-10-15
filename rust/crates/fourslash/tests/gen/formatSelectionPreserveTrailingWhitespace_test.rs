@@ -17,13 +17,13 @@ fn format_selection_preserve_trailing_whitespace() {
 		let mut opts154 = f.get_options();
 		opts154.format_code_settings.trim_trailing_whitespace = tsc_core::TS_FALSE;
 		f.configure(opts154);
-		f.format_selection("begin", "end");
+		f.format_selection("begin".into(), "end".into());
 		f.verify_current_file_content(r"
 ;    
     
     
     
-");
+".into());
 	});
 }
 

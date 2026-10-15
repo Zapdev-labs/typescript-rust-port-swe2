@@ -12,7 +12,7 @@ fn js_signature_41059() {
 // @Filename: Foo.js
 a.next(/**/);";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
+		f.go_to_marker("".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "Generator.next(): IteratorResult<T, TReturn>", overloads_count: 2, ..Default::default() });
 	});
 }

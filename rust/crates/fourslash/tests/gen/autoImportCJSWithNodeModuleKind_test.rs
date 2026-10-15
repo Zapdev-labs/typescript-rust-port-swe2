@@ -24,7 +24,7 @@ module.exports = { LIB_VERSION: 1 };
 module.exports.foo = 0;
 LIB_VERSION/**/"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
+		f.go_to_marker("".into());
 		f.verify_import_fix_at_position(vec![r#"const { LIB_VERSION } = require("./lib");
 
 module.exports.foo = 0;
@@ -51,7 +51,7 @@ module.exports = { LIB_VERSION: 1 };
 // @Filename: /main.js
 LIB_VERSION/**/"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
+		f.go_to_marker("".into());
 		f.verify_import_fix_at_position(vec![r#"const { LIB_VERSION } = require("./lib");
 
 LIB_VERSION"#], None);
@@ -77,7 +77,7 @@ export const LIB_VERSION = 1;
 const path = require("path");
 LIB_VERSION/**/"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
+		f.go_to_marker("".into());
 		f.verify_import_fix_at_position(vec![r#"const path = require("path");
 const { LIB_VERSION } = require("./lib");
 LIB_VERSION"#], None);

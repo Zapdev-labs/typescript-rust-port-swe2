@@ -11,7 +11,7 @@ fn document_highlight_type_parameter_constraint_expression_no_crash1() {
 const v/*m*/alue = 1;
 type Box<T extends +value> = typeof value";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_document_highlights(None, "m");
+		f.verify_baseline_document_highlights(None, "m".into());
 	});
 }
 

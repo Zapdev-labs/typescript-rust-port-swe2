@@ -15,7 +15,7 @@ fn find_all_refs_js_doc_template_tag_function_js() {
  */
 function f() {}";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1", "2");
+		f.verify_baseline_find_all_references("1".into(), "2".into());
 	});
 }
 

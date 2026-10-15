@@ -20,7 +20,7 @@ export {
     PersonDefinitions,
 } from './a';";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/b.ts");
+		f.go_to_file("/b.ts".into());
 		f.verify_organize_imports(r"export {
     /** @deprecated Use LocationDefinitions instead */
     LocationDefinitions as AddressDefinitions,
@@ -29,7 +29,7 @@ export {
     PersonDefinitions as NameDefinitions,
     PersonDefinitions
 } from './a';
-", tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
+".into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
 	});
 }
 

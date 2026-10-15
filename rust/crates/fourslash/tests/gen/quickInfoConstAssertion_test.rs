@@ -9,7 +9,7 @@ fn quick_info_const_assertion() {
 	run_test(|t| {
 		let content = r"const foo = 42 as /*1*/const";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "type const = 42", "");
+		f.verify_quick_info_at("1".into(), "type const = 42".into(), "".into());
 	});
 }
 

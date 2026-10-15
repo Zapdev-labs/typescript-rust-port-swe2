@@ -7,14 +7,14 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_for_typeof_parameter() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"function foo() {
     var y/*ref1*/1: string;
     var x: typeof y/*ref2*/1;
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("ref1", "(local var) y1: string", "");
-		f.verify_quick_info_at("ref2", "(local var) y1: string", "");
+		f.verify_quick_info_at("ref1".into(), "(local var) y1: string".into(), "".into());
+		f.verify_quick_info_at("ref2".into(), "(local var) y1: string".into(), "".into());
 	});
 }
 

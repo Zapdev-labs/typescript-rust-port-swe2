@@ -7,13 +7,13 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_correct_qualified_name_to_indexed_access_type01() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r#"export interface Foo {
   bar: string;
 }
 export const x: [|Foo.bar|] = """#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_range_after_code_fix(r#"Foo["bar"]"#, false, 0, 0);
+		f.verify_range_after_code_fix(r#"Foo["bar"]"#.into(), false, 0, 0);
 	});
 }
 

@@ -9,7 +9,7 @@ fn rename_quoted_single_character_property_name1() {
 	run_test(|t| {
 		let content = "" + "\n" + "const obj = {\n" + "  \"'\"/**/: 1,\n" + "}\n";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_rename(None, "");
+		f.verify_baseline_rename(None, "".into());
 	});
 }
 

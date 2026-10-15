@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn doc_comment_template_class_decl01() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"/*decl*/class C {
     private p;
     constructor(a, b, c, d);
@@ -21,7 +21,7 @@ fn doc_comment_template_class_decl01() {
 		let mut capabilities = tsc_fourslash::get_default_capabilities();
 		capabilities.text_document.completion.completion_item.snippet_support = Some((false).into());
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", capabilities, content);
-		f.verify_js_doc_completion("decl", 3, r"/** */", None);
+		f.verify_js_doc_completion("decl".into(), 3, r"/** */".into(), None);
 	});
 }
 

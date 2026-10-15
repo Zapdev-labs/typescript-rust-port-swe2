@@ -13,10 +13,10 @@ fn space_after_constructor() {
         this._processId = processId;
     }/*2*/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("2");
-		f.insert("}");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"    constructor(processId: number) {");
+		f.go_to_marker("2".into());
+		f.insert("}".into());
+		f.go_to_marker("1".into());
+		f.verify_current_line_content(r"    constructor(processId: number) {".into());
 	});
 }
 

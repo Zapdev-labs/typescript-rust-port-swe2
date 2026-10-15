@@ -9,7 +9,7 @@ fn numeric_property_names() {
 	run_test(|t| {
 		let content = r#"var /**/t2 = { 0: 1, 1: "" };"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("", "var t2: {\n    0: number;\n    1: string;\n}", "");
+		f.verify_quick_info_at("".into(), "var t2: {\n    0: number;\n    1: string;\n}".into(), "".into());
 	});
 }
 

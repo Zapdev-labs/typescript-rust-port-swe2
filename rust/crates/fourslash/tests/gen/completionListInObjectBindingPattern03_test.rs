@@ -15,7 +15,7 @@ fn completion_list_in_object_binding_pattern03() {
 var foo: I;
 var { property1: /**/ } = foo;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("", None);
+		f.verify_completions("".into(), None);
 	});
 }
 

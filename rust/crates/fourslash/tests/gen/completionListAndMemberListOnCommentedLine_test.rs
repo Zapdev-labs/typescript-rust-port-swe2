@@ -10,7 +10,7 @@ fn completion_list_and_member_list_on_commented_line() {
 		let content = r"// /**/
 var";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("", None);
+		f.verify_completions("".into(), None);
 	});
 }
 

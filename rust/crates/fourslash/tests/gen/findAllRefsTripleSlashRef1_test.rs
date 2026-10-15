@@ -17,7 +17,7 @@ export type JSX = {};
 import type {JSX} from '/*m*/react';
 "#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("m");
+		f.verify_baseline_find_all_references("m".into());
 	});
 }
 

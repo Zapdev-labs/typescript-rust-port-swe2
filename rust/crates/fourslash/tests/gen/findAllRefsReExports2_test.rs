@@ -13,7 +13,7 @@ export function /*1*/foo(): void {}
 import { foo as oof } from "./a";"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
-		f.verify_baseline_find_all_references("1");
+		f.verify_baseline_find_all_references("1".into());
 	});
 }
 

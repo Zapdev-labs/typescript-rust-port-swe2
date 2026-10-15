@@ -15,8 +15,8 @@ import {} from 'dir/a';
 // @Filename: /tsconfig.json
 {"compilerOptions":{"paths":{"*":["*"]}}}"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_will_rename_files_edits("/dir/a.ts", "/dir/a1.ts", vec![("/dir/b.ts", r#"import {} from "dir/a1";
-import {} from 'dir/a1';"#)].into_iter().collect::<FxHashMap<_, _>>(), Some(tsc_lsutil::UserPreferences { import_module_specifier_preference: "non-relative", quote_preference: tsc_lsutil::quote_preference("single"), ..Default::default() }));
+		f.verify_will_rename_files_edits("/dir/a.ts".into(), "/dir/a1.ts".into(), vec![("/dir/b.ts", r#"import {} from "dir/a1";
+import {} from 'dir/a1';"#)].into_iter().collect::<FxHashMap<_, _>>(), Some(tsc_lsutil::UserPreferences { import_module_specifier_preference: "non-relative", quote_preference: tsc_lsutil::quote_preference("single".into()), ..Default::default() }));
 	});
 }
 

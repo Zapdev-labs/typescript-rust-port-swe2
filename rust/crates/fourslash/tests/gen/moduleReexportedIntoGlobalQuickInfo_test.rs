@@ -19,7 +19,7 @@ declare global {
 // @Filename: /index.ts
 let v = new /*1*/THREE.Vector3();";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "const THREE: typeof import(\"three\")", "");
+		f.verify_quick_info_at("1".into(), "const THREE: typeof import(\"three\")".into(), "".into());
 	});
 }
 

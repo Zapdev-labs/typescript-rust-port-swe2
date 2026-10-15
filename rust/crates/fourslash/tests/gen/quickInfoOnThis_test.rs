@@ -30,13 +30,13 @@ class Foo {
     }
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("0", "this", "");
-		f.verify_quick_info_at("1", "this: void", "");
-		f.verify_quick_info_at("2", "this: this", "");
-		f.verify_quick_info_at("3", "(parameter) this: Restricted", "");
-		f.verify_quick_info_at("4", "this: Restricted", "");
-		f.verify_quick_info_at("5", "(parameter) this: Foo", "");
-		f.verify_quick_info_at("6", "this: Foo", "");
+		f.verify_quick_info_at("0".into(), "this".into(), "".into());
+		f.verify_quick_info_at("1".into(), "this: void".into(), "".into());
+		f.verify_quick_info_at("2".into(), "this: this".into(), "".into());
+		f.verify_quick_info_at("3".into(), "(parameter) this: Restricted".into(), "".into());
+		f.verify_quick_info_at("4".into(), "this: Restricted".into(), "".into());
+		f.verify_quick_info_at("5".into(), "(parameter) this: Foo".into(), "".into());
+		f.verify_quick_info_at("6".into(), "this: Foo".into(), "".into());
 	});
 }
 

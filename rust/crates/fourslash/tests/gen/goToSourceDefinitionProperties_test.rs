@@ -19,7 +19,7 @@ import { obj } from "pkg";
 obj./*propAccess*/greet("world");
 obj./*propAccess2*/count;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("propAccess", "propAccess2");
+		f.verify_baseline_go_to_source_definition("propAccess".into(), "propAccess2".into());
 	});
 }
 
@@ -35,7 +35,7 @@ export declare const a: { a: string };
 import { a } from './a';
 a.[|a/*start*/|]";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("start");
+		f.verify_baseline_go_to_source_definition("start".into());
 	});
 }
 
@@ -53,7 +53,7 @@ export const config = { /*targetName*/name: "test" };
 import { config } from "pkg";
 config./*propAccess*/name;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("propAccess");
+		f.verify_baseline_go_to_source_definition("propAccess".into());
 	});
 }
 
@@ -72,7 +72,7 @@ export const obj = { a: 1, /*target*/b: 2 };
 import { obj } from "pkg";
 obj./*propAccess*/b;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("propAccess");
+		f.verify_baseline_go_to_source_definition("propAccess".into());
 	});
 }
 
@@ -104,7 +104,7 @@ var TargetPopulation;
 import * as tas from "pkg";
 tas./*start*/TargetPopulation.Public;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("start");
+		f.verify_baseline_go_to_source_definition("start".into());
 	});
 }
 

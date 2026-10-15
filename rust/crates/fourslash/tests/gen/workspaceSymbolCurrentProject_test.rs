@@ -21,7 +21,7 @@ export function [|fromA|]() {}
 export function [|fromB|]() {}
 ";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/home/projects/a/index.ts");
+		f.go_to_file("/home/projects/a/index.ts".into());
 		let mut all_open_projects = tsc_lsutil::new_default_user_preferences();
 		let mut current_project = tsc_lsutil::new_default_user_preferences();
 		current_project.workspace_symbols_scope = tsc_lsutil::WORKSPACE_SYMBOLS_SCOPE_CURRENT_PROJECT;

@@ -11,7 +11,7 @@ fn remove_declare_param_type_annotation() {
 declare function parseInt(/**/s:T):T;
 parseInt('2');";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
+		f.go_to_marker("".into());
 		f.delete_at_caret(3);
 	});
 }

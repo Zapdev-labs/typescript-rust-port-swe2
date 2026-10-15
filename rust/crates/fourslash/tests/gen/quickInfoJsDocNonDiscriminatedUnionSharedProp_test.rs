@@ -50,7 +50,7 @@ const options: EntriesOptions[] = [
   },
 ];"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "(property) Entries.output?: string", "Output info...");
+		f.verify_quick_info_at("1".into(), "(property) Entries.output?: string".into(), "Output info...".into());
 	});
 }
 

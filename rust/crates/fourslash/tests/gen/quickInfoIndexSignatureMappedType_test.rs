@@ -14,7 +14,7 @@ declare const record: Record<string, string>;
 record.fo/*1*/o;
 ";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "string", "");
+		f.verify_quick_info_at("1".into(), "string".into(), "".into());
 	});
 }
 

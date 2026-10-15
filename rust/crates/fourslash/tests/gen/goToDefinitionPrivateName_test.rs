@@ -19,7 +19,7 @@ fn go_to_definition_private_name() {
     }
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "pnFieldUse", "pnMethodUse", "pnPropUse");
+		f.verify_baseline_go_to_definition(true, "pnFieldUse".into(), "pnMethodUse".into(), "pnPropUse".into());
 	});
 }
 

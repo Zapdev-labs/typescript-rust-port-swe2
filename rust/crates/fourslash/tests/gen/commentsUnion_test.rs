@@ -10,7 +10,7 @@ fn comments_union() {
 		let content = r"var a: Array<string> | Array<number>;
 a./*1*/length";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "(property) Array<T>.length: number", "Gets or sets the length of the array. This is a number one higher than the highest index in the array.");
+		f.verify_quick_info_at("1".into(), "(property) Array<T>.length: number".into(), "Gets or sets the length of the array. This is a number one higher than the highest index in the array.".into());
 	});
 }
 

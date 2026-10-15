@@ -16,7 +16,7 @@ function blah2() { container["searchProp"] };
 // @Filename: redeclaration.ts
 container = { "searchProp" : 18 };"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1");
+		f.verify_baseline_find_all_references("1".into());
 	});
 }
 

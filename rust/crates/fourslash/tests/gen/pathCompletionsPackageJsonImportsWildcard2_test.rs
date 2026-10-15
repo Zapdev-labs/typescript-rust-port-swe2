@@ -25,10 +25,10 @@ export const actionRenderer = 0;
 // @Filename: /index.mts
 import { } from "/**/";"##;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "#action", kind: Some((tsc_lsproto::CompletionItemKind::FOLDER).into()), detail: Some(("#action").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
-		f.insert("#action/");
+		f.verify_completions("".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "#action", kind: Some((tsc_lsproto::CompletionItemKind::FOLDER).into()), detail: Some(("#action").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.insert("#action/".into());
 		f.verify_completions(None, Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "pageObjects", kind: Some((tsc_lsproto::CompletionItemKind::FOLDER).into()), detail: Some(("pageObjects").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
-		f.insert("pageObjects/");
+		f.insert("pageObjects/".into());
 		f.verify_completions(None, Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "actionRenderer", kind: Some((tsc_lsproto::CompletionItemKind::FILE).into()), detail: Some(("actionRenderer.d.ts").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }

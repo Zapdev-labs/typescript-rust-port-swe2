@@ -10,7 +10,7 @@ fn remove_declare_keyword() {
 		let content = r"/**/declare var y;
 var x = new y;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
+		f.go_to_marker("".into());
 		f.delete_at_caret(7);
 	});
 }

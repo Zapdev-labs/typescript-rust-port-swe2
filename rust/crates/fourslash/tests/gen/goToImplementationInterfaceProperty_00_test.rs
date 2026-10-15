@@ -24,7 +24,7 @@ class Bar {
     constructor(public f: Foo = { [|hello|]: 7 } ) {}
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_implementation("reference");
+		f.verify_baseline_go_to_implementation("reference".into());
 	});
 }
 

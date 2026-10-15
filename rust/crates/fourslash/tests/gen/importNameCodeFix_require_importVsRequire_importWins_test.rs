@@ -24,12 +24,12 @@ const path = require('path');
 
 new Blah";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("addToExisting.js");
+		f.go_to_file("addToExisting.js".into());
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Update import from \"./blah\"", new_file_content: r"const { Named2 } = require('./blah')
 import Blah, { Named1 } from './blah'
 
 new Blah", index: 0, ..Default::default() });
-		f.go_to_file("newImport.js");
+		f.go_to_file("newImport.js".into());
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add import from \"./blah\"", new_file_content: r"import fs from 'fs';
 import Blah from './blah';
 const path = require('path');

@@ -11,7 +11,7 @@ fn code_fix_add_missing_await_not_available_without_promise() {
   a + b;
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix_not_available("addMissingAwait");
+		f.verify_code_fix_not_available("addMissingAwait".into());
 	});
 }
 

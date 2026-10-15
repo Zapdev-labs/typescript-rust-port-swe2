@@ -15,10 +15,10 @@ export declare const /*dtsTarget*/a: string;
 import { a } from "./a";
 a/*start*/"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(false, "start");
-		f.verify_baseline_go_to_source_definition("start");
+		f.verify_baseline_go_to_definition(false, "start".into());
+		f.verify_baseline_go_to_source_definition("start".into());
 		f.configure(tsc_lsutil::UserPreferences { prefer_go_to_source_definition: true, ..Default::default() });
-		f.verify_baseline_go_to_definition(false, "start");
+		f.verify_baseline_go_to_definition(false, "start".into());
 	});
 }
 
@@ -39,7 +39,7 @@ import type { Config } from "pkg";
 let value: /*start*/Config;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.configure(tsc_lsutil::UserPreferences { prefer_go_to_source_definition: true, ..Default::default() });
-		f.verify_baseline_go_to_definition(false, "start");
+		f.verify_baseline_go_to_definition(false, "start".into());
 	});
 }
 

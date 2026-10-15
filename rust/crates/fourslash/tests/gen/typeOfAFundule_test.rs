@@ -14,7 +14,7 @@ function foo13() {
 }
 var /**/r13 = foo13();";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("", "var r13: typeof m1", "");
+		f.verify_quick_info_at("".into(), "var r13: typeof m1".into(), "".into());
 	});
 }
 

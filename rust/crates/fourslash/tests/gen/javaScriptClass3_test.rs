@@ -20,7 +20,7 @@ var x = new Foo();
 x.[|alpha/*src1*/|];
 x.[|beta/*src2*/|];";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "src1", "src2");
+		f.verify_baseline_go_to_definition(true, "src1".into(), "src2".into());
 	});
 }
 

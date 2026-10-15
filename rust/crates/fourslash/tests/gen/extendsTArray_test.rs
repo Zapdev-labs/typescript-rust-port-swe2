@@ -18,7 +18,7 @@ var x: I2<Date>;
 var /**/y = x(undefined); // Typeof y should be Date[]
 y.length;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("", "var y: Date[]", "");
+		f.verify_quick_info_at("".into(), "var y: Date[]".into(), "".into());
 		f.verify_no_errors();
 	});
 }

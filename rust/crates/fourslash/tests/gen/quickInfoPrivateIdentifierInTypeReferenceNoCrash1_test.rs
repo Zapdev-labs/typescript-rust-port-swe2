@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_private_identifier_in_type_reference_no_crash1() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r#"// @target: esnext
 class Foo {
   #prop: string = "";
@@ -17,7 +17,7 @@ class Foo {
   }
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "", "");
+		f.verify_quick_info_at("1".into(), "".into(), "".into());
 	});
 }
 

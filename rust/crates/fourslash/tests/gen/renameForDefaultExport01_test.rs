@@ -17,7 +17,7 @@ var x: [|DefaultExportedClass|];
 
 var y = new [|DefaultExportedClass|];"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		let mut ranges = f.get_ranges_by_text().get("DefaultExportedClass");
+		let mut ranges = f.get_ranges_by_text().get("DefaultExportedClass".into());
 		let marker_or_ranges = Default::default();
 		for r in ranges {
 			if !(r.marker != None && r.marker.data != None && r.marker.data["inComment"] == true) {

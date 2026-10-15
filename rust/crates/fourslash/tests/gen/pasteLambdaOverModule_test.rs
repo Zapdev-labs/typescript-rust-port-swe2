@@ -10,11 +10,11 @@ fn paste_lambda_over_module() {
 		let content = r"// @strict: false
 /**/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
-		f.paste("namespace B { }");
+		f.go_to_marker("".into());
+		f.paste("namespace B { }".into());
 		f.go_to_bof();
 		f.delete_at_caret(15);
-		f.insert("var t = (public x) => { };");
+		f.insert("var t = (public x) => { };".into());
 		f.verify_number_of_errors_in_current_file(1);
 	});
 }

@@ -19,10 +19,10 @@ declare module "c" {
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
-		f.verify_baseline_find_all_references("1", "2", "3");
-		f.verify_baseline_rename(None, to_any(f.get_ranges_by_text().get("C")));
-		f.verify_baseline_rename(None, f.get_ranges_by_text().get("D")[0]);
-		f.verify_baseline_rename(None, f.get_ranges_by_text().get("D")[1], f.get_ranges_by_text().get("D")[2]);
+		f.verify_baseline_find_all_references("1".into(), "2".into(), "3".into());
+		f.verify_baseline_rename(None, to_any(f.get_ranges_by_text().get("C".into())));
+		f.verify_baseline_rename(None, f.get_ranges_by_text().get("D".into())[0]);
+		f.verify_baseline_rename(None, f.get_ranges_by_text().get("D".into())[1], f.get_ranges_by_text().get("D".into())[2]);
 	});
 }
 

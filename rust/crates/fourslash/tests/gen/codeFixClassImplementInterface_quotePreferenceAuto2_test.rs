@@ -19,7 +19,7 @@ export interface I {
 import { I } from './a';
 class Foo implements I {}";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("b.ts");
+		f.go_to_file("b.ts".into());
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'I'", new_file_content: r"import { I } from './a';
 class Foo implements I {
     a(): void {
@@ -30,7 +30,7 @@ class Foo implements I {
     }
     c: 'c';
     d: { e: 'e'; };
-}", index: 0, user_preferences: Some(tsc_lsutil::UserPreferences { quote_preference: tsc_lsutil::quote_preference("auto"), ..Default::default() }), ..Default::default() });
+}", index: 0, user_preferences: Some(tsc_lsutil::UserPreferences { quote_preference: tsc_lsutil::quote_preference("auto".into()), ..Default::default() }), ..Default::default() });
 	});
 }
 

@@ -15,7 +15,7 @@ fn transitive_export_imports3() {
 [|import { /*g1*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 7 |}g|] } from "./b";|]"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
-		f.verify_baseline_find_all_references("f", "g0", "g1", "f2");
+		f.verify_baseline_find_all_references("f".into(), "g0".into(), "g1".into(), "f2".into());
 		f.verify_baseline_rename(None, f.ranges()[1], f.ranges()[3]);
 		f.verify_baseline_rename(None, f.ranges()[6]);
 		f.verify_baseline_rename(None, f.ranges()[4]);

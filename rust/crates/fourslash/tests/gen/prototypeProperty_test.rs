@@ -11,8 +11,8 @@ fn prototype_property() {
 A./*1*/prototype;
 A./*2*/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "(property) A.prototype: A", "");
-		f.verify_completions("2", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "prototype", detail: Some(("(property) A.prototype: A").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_quick_info_at("1".into(), "(property) A.prototype: A".into(), "".into());
+		f.verify_completions("2".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "prototype", detail: Some(("(property) A.prototype: A").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }
 

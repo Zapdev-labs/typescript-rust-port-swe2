@@ -14,8 +14,8 @@ function f() {
    /*2*/foo.x = 1;
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/a.js");
-		f.verify_baseline_rename(None, "1", "2");
+		f.go_to_file("/a.js".into());
+		f.verify_baseline_rename(None, "1".into(), "2".into());
 	});
 }
 

@@ -21,13 +21,13 @@ var p/*5*/3 = p2.then(function (x/*6*/x) {
     return x/*7*/x;
 });"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "var p1: IPromise<number>", "");
-		f.verify_quick_info_at("2", "(parameter) xx: number", "");
-		f.verify_quick_info_at("3", "var p2: IPromise<string>", "");
-		f.verify_quick_info_at("4", "(parameter) xx: number", "");
-		f.verify_quick_info_at("5", "var p3: IPromise<string>", "");
-		f.verify_quick_info_at("6", "(parameter) xx: string", "");
-		f.verify_quick_info_at("7", "(parameter) xx: string", "");
+		f.verify_quick_info_at("1".into(), "var p1: IPromise<number>".into(), "".into());
+		f.verify_quick_info_at("2".into(), "(parameter) xx: number".into(), "".into());
+		f.verify_quick_info_at("3".into(), "var p2: IPromise<string>".into(), "".into());
+		f.verify_quick_info_at("4".into(), "(parameter) xx: number".into(), "".into());
+		f.verify_quick_info_at("5".into(), "var p3: IPromise<string>".into(), "".into());
+		f.verify_quick_info_at("6".into(), "(parameter) xx: string".into(), "".into());
+		f.verify_quick_info_at("7".into(), "(parameter) xx: string".into(), "".into());
 	});
 }
 

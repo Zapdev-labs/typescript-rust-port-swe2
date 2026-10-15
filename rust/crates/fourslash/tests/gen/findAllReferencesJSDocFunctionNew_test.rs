@@ -12,7 +12,7 @@ fn find_all_references_js_doc_function_new() {
 /** @type {function (/*1*/new: string, string): string} */
 var f;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1");
+		f.verify_baseline_find_all_references("1".into());
 	});
 }
 

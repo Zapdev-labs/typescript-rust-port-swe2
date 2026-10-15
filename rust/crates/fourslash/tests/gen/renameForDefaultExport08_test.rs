@@ -19,7 +19,7 @@ var x: typeof DefaultExportedFunction;
 
 var y = DefaultExportedFunction();";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
+		f.go_to_marker("".into());
 		f.verify_rename_succeeded(None);
 	});
 }

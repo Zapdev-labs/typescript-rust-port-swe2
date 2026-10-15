@@ -15,8 +15,8 @@ fn incremental_parsing_insert_into_method1() {
     public foo3() { }
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1");
-		f.insert(" + 1");
+		f.go_to_marker("1".into());
+		f.insert(" + 1".into());
 	});
 }
 

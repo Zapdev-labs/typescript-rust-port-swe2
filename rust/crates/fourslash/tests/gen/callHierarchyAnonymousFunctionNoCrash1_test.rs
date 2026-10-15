@@ -10,7 +10,7 @@ fn call_hierarchy_anonymous_function_no_crash1() {
 		let content = r"// @Filename: /main.ts
 func/*1*/tion() {}";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1");
+		f.go_to_marker("1".into());
 		f.verify_baseline_call_hierarchy();
 	});
 }

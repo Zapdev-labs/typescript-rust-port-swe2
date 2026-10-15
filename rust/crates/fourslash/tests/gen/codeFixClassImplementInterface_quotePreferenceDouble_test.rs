@@ -32,7 +32,7 @@ class Foo implements I {
     }
     c: "c";
     d: { e: "e"; };
-}"#, index: 0, user_preferences: Some(tsc_lsutil::UserPreferences { quote_preference: tsc_lsutil::quote_preference("double"), ..Default::default() }), ..Default::default() });
+}"#, index: 0, user_preferences: Some(tsc_lsutil::UserPreferences { quote_preference: tsc_lsutil::quote_preference("double".into()), ..Default::default() }), ..Default::default() });
 	});
 }
 

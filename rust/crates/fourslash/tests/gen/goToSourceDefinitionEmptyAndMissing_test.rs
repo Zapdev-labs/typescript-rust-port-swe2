@@ -17,7 +17,7 @@ export declare function foo(): void;
 import { foo } from /*specifier*/"pkg";
 foo();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("specifier");
+		f.verify_baseline_go_to_source_definition("specifier".into());
 	});
 }
 
@@ -36,7 +36,7 @@ module.exports = { create: internalCreate };
 import /*importDefault*/create from "pkg";
 create();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("importDefault");
+		f.verify_baseline_go_to_source_definition("importDefault".into());
 	});
 }
 

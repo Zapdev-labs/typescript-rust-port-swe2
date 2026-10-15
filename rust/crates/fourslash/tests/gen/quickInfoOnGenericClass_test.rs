@@ -11,7 +11,7 @@ fn quick_info_on_generic_class() {
     x: T;
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("", "class Container<T>", "");
+		f.verify_quick_info_at("".into(), "class Container<T>".into(), "".into());
 	});
 }
 

@@ -13,8 +13,8 @@ declare const b: boolean;
 const obj/*1*/ = schema(b);
 const actualTypeOfNested/*2*/ = schema(obj);";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "const obj: {\n    field: boolean;\n}", "");
-		f.verify_quick_info_at("2", "const actualTypeOfNested: {\n    field: {\n        field: boolean;\n    };\n}", "");
+		f.verify_quick_info_at("1".into(), "const obj: {\n    field: boolean;\n}".into(), "".into());
+		f.verify_quick_info_at("2".into(), "const actualTypeOfNested: {\n    field: {\n        field: boolean;\n    };\n}".into(), "".into());
 	});
 }
 

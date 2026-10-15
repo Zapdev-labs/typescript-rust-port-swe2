@@ -35,8 +35,8 @@ type FinalType/*1*/ = ReturnType<typeof test_outer>;
 var k: FinalType;
 k.test.test_inner/*2*/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "type FinalType = {\n    test: {\n        test_inner: string;\n    };\n}", "");
-		f.verify_quick_info_at("2", "(property) test_inner: string", "");
+		f.verify_quick_info_at("1".into(), "type FinalType = {\n    test: {\n        test_inner: string;\n    };\n}".into(), "".into());
+		f.verify_quick_info_at("2".into(), "(property) test_inner: string".into(), "".into());
 	});
 }
 

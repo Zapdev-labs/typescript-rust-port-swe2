@@ -21,7 +21,7 @@ function b(){
 		let mut opts233 = f.get_options();
 		opts233.format_code_settings.trim_trailing_whitespace = tsc_core::TS_FALSE;
 		f.configure(opts233);
-		f.format_document("");
+		f.format_document("".into());
 		f.verify_current_file_content(r"
 var a;     
 var b     
@@ -31,7 +31,7 @@ function b() {
     while (true) {     
     }     
 }     
-");
+".into());
 	});
 }
 

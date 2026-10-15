@@ -17,7 +17,7 @@ function bar () { return require('./a').a; }
 const c = foo()
 const d = bar()";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/b.js");
+		f.go_to_file("/b.js".into());
 		f.verify_baseline_inlay_hints(None, Some(tsc_lsutil::UserPreferences { include_inlay_variable_type_hints: tsc_core::TS_TRUE, include_inlay_function_like_return_type_hints: tsc_core::TS_TRUE, ..Default::default() }));
 	});
 }

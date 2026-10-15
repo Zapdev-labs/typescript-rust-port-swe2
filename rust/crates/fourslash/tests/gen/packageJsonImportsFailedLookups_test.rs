@@ -22,7 +22,7 @@ export function add(a: number, b: number): number;
 import { add } from "#utils";"##;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_file("/a/b/c/d/e/index.ts");
+		f.go_to_file("/a/b/c/d/e/index.ts".into());
 	});
 }
 

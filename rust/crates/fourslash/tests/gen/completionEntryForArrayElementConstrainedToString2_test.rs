@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn completion_entry_for_array_element_constrained_to_string2() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"declare function test<T extends 'a' | 'b'>(a: { foo: T[] }): void
 
 test({ foo: ['a', /*ts*/] })";

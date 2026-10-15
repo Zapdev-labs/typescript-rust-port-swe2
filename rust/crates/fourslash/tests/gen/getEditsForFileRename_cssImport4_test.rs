@@ -24,7 +24,7 @@ import styles from ".//*rename*/app.css";"#;
 		let mut capabilities = tsc_fourslash::get_default_capabilities();
 		capabilities.workspace.file_operations.will_rename = Some((false).into());
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", capabilities, content);
-		f.verify_rename("rename", "app2.css", vec![("/a.ts", r#"import styles from "./app2.css";"#), ("/app2.d.css.ts", r"declare const css: {
+		f.verify_rename("rename".into(), "app2.css".into(), vec![("/a.ts", r#"import styles from "./app2.css";"#), ("/app2.d.css.ts", r"declare const css: {
   cookieBanner: string;
 };
 export default css;"), ("/app2.css", r".cookie-banner {

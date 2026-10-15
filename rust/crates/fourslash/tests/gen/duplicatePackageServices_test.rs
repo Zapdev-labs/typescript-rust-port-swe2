@@ -31,10 +31,10 @@ import { a } from "a";
 import { b } from "b";
 a(/*error*/b);"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/src/a.ts");
+		f.go_to_file("/src/a.ts".into());
 		f.verify_number_of_errors_in_current_file(0);
-		f.verify_baseline_find_all_references("useAX", "defAX", "useBX");
-		f.verify_baseline_go_to_definition(true, "useAX", "useBX");
+		f.verify_baseline_find_all_references("useAX".into(), "defAX".into(), "useBX".into());
+		f.verify_baseline_go_to_definition(true, "useAX".into(), "useBX".into());
 	});
 }
 

@@ -14,7 +14,7 @@ declare moduleu "m" {
   /*m*/export = f;
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_document_highlights(None, "m");
+		f.verify_baseline_document_highlights(None, "m".into());
 	});
 }
 

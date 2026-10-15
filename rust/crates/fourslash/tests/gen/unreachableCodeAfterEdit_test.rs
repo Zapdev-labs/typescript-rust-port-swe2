@@ -35,10 +35,10 @@ export class TransparentCrypto implements ISecretStorageCrypto {
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_number_of_errors_in_current_file(0);
-		f.go_to_marker("before");
-		f.insert("throw new Error('foo');\n");
+		f.go_to_marker("before".into());
+		f.insert("throw new Error('foo');\n".into());
 		f.verify_number_of_errors_in_current_file(1);
-		f.go_to_marker("before");
+		f.go_to_marker("before".into());
 		f.delete_at_caret(24);
 		f.verify_number_of_errors_in_current_file(0);
 	});

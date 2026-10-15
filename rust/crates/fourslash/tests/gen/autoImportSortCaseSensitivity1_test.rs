@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_sort_case_sensitivity1() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r#"// @Filename: /exports1.ts
 export const a = 0;
 export const A = 1;
@@ -28,12 +28,12 @@ import { A, a, B, b } from "./exports1";
 import { E } from "./exports2";
 d/*1*/"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("0");
+		f.go_to_marker("0".into());
 		f.verify_import_fix_at_position(vec![r#"import { a, A, B, C } from "./exports1";
 a"#], None);
 		f.verify_import_fix_at_position(vec![r#"import { a, A, B, C } from "./exports1";
 a"#], None);
-		f.go_to_marker("1");
+		f.go_to_marker("1".into());
 		f.verify_import_fix_at_position(vec![r#"import { A, a, B, b } from "./exports1";
 import { d, E } from "./exports2";
 d"#], None);

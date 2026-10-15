@@ -15,10 +15,10 @@ function foo(x: A) {
     x.f/*1*/oo
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_document_highlights(None, "1");
-		f.go_to_marker("0");
-		f.insert("\n");
-		f.verify_baseline_document_highlights(None, "1");
+		f.verify_baseline_document_highlights(None, "1".into());
+		f.go_to_marker("0".into());
+		f.insert("\n".into());
+		f.verify_baseline_document_highlights(None, "1".into());
 	});
 }
 

@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn ng_proxy4() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r#"// @Filename: tsconfig.json
 {
     "compilerOptions": {
@@ -24,7 +24,7 @@ x/**/
 "#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_marker("");
+		f.go_to_marker("".into());
 		f.verify_number_of_errors_in_current_file(1);
 	});
 }

@@ -41,7 +41,7 @@ function /*f8Def*/f8(ij: any): any { return ij; }
 /*f7*/f7();
 /*f8*/f8();";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_type_definition("f0", "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8");
+		f.verify_baseline_go_to_type_definition("f0".into(), "f1".into(), "f2".into(), "f3".into(), "f4".into(), "f5".into(), "f6".into(), "f7".into(), "f8".into());
 	});
 }
 

@@ -26,7 +26,7 @@ Util.version = "1.0";
 import { /*importUtil*/Util } from "pkg";
 const u: /*typeRef*/Util = new Util();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("importUtil", "typeRef");
+		f.verify_baseline_go_to_source_definition("importUtil".into(), "typeRef".into());
 	});
 }
 

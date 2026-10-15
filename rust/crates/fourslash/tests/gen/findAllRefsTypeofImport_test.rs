@@ -12,7 +12,7 @@ fn find_all_refs_typeof_import() {
 declare const a: typeof import("./a");
 a./*3*/x;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1", "2", "3");
+		f.verify_baseline_find_all_references("1".into(), "2".into(), "3".into());
 	});
 }
 

@@ -29,15 +29,15 @@ var c/*5*/cc = _(aaa).map(xx => xx.length);  // Should not error, should be any[
 var d/*6*/dd = aaa.map(xx => xx.length);     // should not error, should be any[]";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
-		f.verify_quick_info_at("1", "var bb: number[]", "");
-		f.verify_quick_info_at("2", "var cc: number[]", "");
-		f.verify_quick_info_at("3", "var dd: number[]", "");
-		f.verify_quick_info_at("4", "var bbb: any[]", "");
-		f.verify_quick_info_at("5", "var ccc: any[]", "");
-		f.verify_quick_info_at("6", "var ddd: any[]", "");
-		f.verify_quick_info_at("7", "(parameter) xx: string", "");
-		f.verify_quick_info_at("8", "(parameter) xx: string", "");
-		f.verify_quick_info_at("9", "(parameter) xx: string", "");
+		f.verify_quick_info_at("1".into(), "var bb: number[]".into(), "".into());
+		f.verify_quick_info_at("2".into(), "var cc: number[]".into(), "".into());
+		f.verify_quick_info_at("3".into(), "var dd: number[]".into(), "".into());
+		f.verify_quick_info_at("4".into(), "var bbb: any[]".into(), "".into());
+		f.verify_quick_info_at("5".into(), "var ccc: any[]".into(), "".into());
+		f.verify_quick_info_at("6".into(), "var ddd: any[]".into(), "".into());
+		f.verify_quick_info_at("7".into(), "(parameter) xx: string".into(), "".into());
+		f.verify_quick_info_at("8".into(), "(parameter) xx: string".into(), "".into());
+		f.verify_quick_info_at("9".into(), "(parameter) xx: string".into(), "".into());
 	});
 }
 

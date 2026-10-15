@@ -13,7 +13,7 @@ export const a = 0;
 // @Filename: /b.js
 import { a } from "./src/a.js";"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_will_rename_files_edits("/b.js", "/src/b.js", vec![("/src/b.js", r#"import { a } from "./a.js";"#)].into_iter().collect::<FxHashMap<_, _>>(), None);
+		f.verify_will_rename_files_edits("/b.js".into(), "/src/b.js".into(), vec![("/src/b.js", r#"import { a } from "./a.js";"#)].into_iter().collect::<FxHashMap<_, _>>(), None);
 	});
 }
 

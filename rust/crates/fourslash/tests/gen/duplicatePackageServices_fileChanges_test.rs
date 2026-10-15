@@ -31,23 +31,23 @@ import { a } from "a";
 import { b } from "b";
 a(/*error*/b);"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/src/a.ts");
+		f.go_to_file("/src/a.ts".into());
 		f.verify_number_of_errors_in_current_file(0);
 |version_patch, def| {
 			f.go_to_marker(version_patch);
-			f.insert("4");
+			f.insert("4".into());
 			f.go_to_marker(def);
-			f.insert(" ");
-			f.verify_error_exists_after_marker("error");
+			f.insert(" ".into());
+			f.verify_error_exists_after_marker("error".into());
 			f.go_to_marker(version_patch);
 			f.delete_at_caret(1);
 			f.go_to_marker(def);
 			f.delete_at_caret(1);
-			f.go_to_file("/src/a.ts");
+			f.go_to_file("/src/a.ts".into());
 			f.verify_number_of_errors_in_current_file(0);
 		}		let mut test_change_and_change_back = ;
-		test_change_and_change_back("aVersionPatch", "defAX");
-		test_change_and_change_back("bVersionPatch", "defBX");
+		test_change_and_change_back("aVersionPatch".into(), "defAX".into());
+		test_change_and_change_back("bVersionPatch".into(), "defBX".into());
 	});
 }
 

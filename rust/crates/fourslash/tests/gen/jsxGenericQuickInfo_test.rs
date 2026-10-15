@@ -33,12 +33,12 @@ class Component<T> {
 var b = new Component({items: [0, 1, 2], render/*0*/Item: it/*1*/em => item.toFixed(), name/*2*/: 'A',});
 var c = <Component items={[0, 1, 2]} render/*3*/Item={it/*4*/em => item.toFixed()} name/*5*/="A" />"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("0", "(property) PropsA<number>.renderItem: (item: number) => string", "");
-		f.verify_quick_info_at("1", "(parameter) item: number", "");
-		f.verify_quick_info_at("2", "(property) PropsA<T>.name: \"A\"", "comments for A");
-		f.verify_quick_info_at("3", "(property) PropsA<number>.renderItem: (item: number) => string", "");
-		f.verify_quick_info_at("4", "(parameter) item: number", "");
-		f.verify_quick_info_at("5", "(property) PropsA<T>.name: \"A\"", "comments for A");
+		f.verify_quick_info_at("0".into(), "(property) PropsA<number>.renderItem: (item: number) => string".into(), "".into());
+		f.verify_quick_info_at("1".into(), "(parameter) item: number".into(), "".into());
+		f.verify_quick_info_at("2".into(), "(property) PropsA<T>.name: \"A\"".into(), "comments for A".into());
+		f.verify_quick_info_at("3".into(), "(property) PropsA<number>.renderItem: (item: number) => string".into(), "".into());
+		f.verify_quick_info_at("4".into(), "(parameter) item: number".into(), "".into());
+		f.verify_quick_info_at("5".into(), "(property) PropsA<T>.name: \"A\"".into(), "comments for A".into());
 	});
 }
 

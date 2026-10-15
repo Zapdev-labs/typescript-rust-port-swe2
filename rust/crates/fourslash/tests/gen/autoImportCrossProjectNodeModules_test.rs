@@ -29,8 +29,8 @@ console.log(pkg_unlisted_value);
 // @Filename: /project-b/index.ts
 pkg_/**/"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/project-a/index.ts");
-		f.go_to_marker("");
+		f.go_to_file("/project-a/index.ts".into());
+		f.go_to_marker("".into());
 		f.baseline_auto_imports_completions(vec![""]);
 	});
 }

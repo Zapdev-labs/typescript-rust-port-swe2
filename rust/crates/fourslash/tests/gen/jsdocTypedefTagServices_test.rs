@@ -19,11 +19,11 @@ fn jsdoc_typedef_tag_services() {
  */
 const product = null;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("use", "type Product = {\n    title: string;\n}", "Doc comment");
-		f.verify_baseline_find_all_references("use", "def");
+		f.verify_quick_info_at("use".into(), "type Product = {\n    title: string;\n}".into(), "Doc comment".into());
+		f.verify_baseline_find_all_references("use".into(), "def".into());
 		f.verify_baseline_rename(None, to_any(f.ranges().slice));
 		f.verify_baseline_document_highlights(None, to_any(f.ranges().slice));
-		f.verify_baseline_go_to_definition(true, "use");
+		f.verify_baseline_go_to_definition(true, "use".into());
 	});
 }
 

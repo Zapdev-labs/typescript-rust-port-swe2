@@ -11,9 +11,9 @@ fn signature_help_function_parameter() {
     callback(/*parameterFunction1*/5, /*parameterFunction2*/"");
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("parameterFunction1");
+		f.go_to_marker("parameterFunction1".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "callback(a: number, b: string): void", parameter_count: 2, parameter_name: "a", parameter_span: "a: number", ..Default::default() });
-		f.go_to_marker("parameterFunction2");
+		f.go_to_marker("parameterFunction2".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "callback(a: number, b: string): void", parameter_name: "b", parameter_span: "b: string", ..Default::default() });
 	});
 }

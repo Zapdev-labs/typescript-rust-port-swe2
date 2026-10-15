@@ -11,7 +11,7 @@ fn rename_locations_for_function_expression01() {
     [|f|]([|f|], g);
 }|]"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_rename_at_ranges_with_text(None, "f");
+		f.verify_baseline_rename_at_ranges_with_text(None, "f".into());
 	});
 }
 

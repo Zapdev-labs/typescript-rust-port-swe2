@@ -42,8 +42,8 @@ export const foo = "bar";
 export * from "./[|lib/*rename*/rary|]";
 "#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("rename");
-		f.verify_rename_range(f.ranges()[0].ls_range, "library", Some(tsc_lsutil::UserPreferences { allow_rename_of_import_path: tsc_core::TS_TRUE, ..Default::default() }));
+		f.go_to_marker("rename".into());
+		f.verify_rename_range(f.ranges()[0].ls_range, "library".into(), Some(tsc_lsutil::UserPreferences { allow_rename_of_import_path: tsc_core::TS_TRUE, ..Default::default() }));
 	});
 }
 

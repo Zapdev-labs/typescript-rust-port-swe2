@@ -20,11 +20,11 @@ declare module "node:fs" {
 readFile/**/"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_marker("");
+		f.go_to_marker("".into());
 		f.verify_import_fix_at_position(vec![], None);
 		f.go_to_bof();
-		f.insert_line("import { writeFile } from \"node:fs\";");
-		f.go_to_marker("");
+		f.insert_line("import { writeFile } from \"node:fs\";".into());
+		f.go_to_marker("".into());
 		f.verify_import_fix_at_position(vec![r#"import { readFile, writeFile } from "node:fs";
 readFile"#], None);
 	});

@@ -25,10 +25,10 @@ let y1 = <O/*1*/pt pro/*2*/px={2} />;
 let y2 = <Opt {...ob/*3*/j1} />;
 let y2 = <Opt {...obj1} pr/*4*/opx />;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "class Opt", "");
-		f.verify_quick_info_at("2", "(property) propx: number", "");
-		f.verify_quick_info_at("3", "const obj1: OptionProp", "");
-		f.verify_quick_info_at("4", "(property) propx: true", "");
+		f.verify_quick_info_at("1".into(), "class Opt".into(), "".into());
+		f.verify_quick_info_at("2".into(), "(property) propx: number".into(), "".into());
+		f.verify_quick_info_at("3".into(), "const obj1: OptionProp".into(), "".into());
+		f.verify_quick_info_at("4".into(), "(property) propx: true".into(), "".into());
 	});
 }
 

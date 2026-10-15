@@ -11,7 +11,7 @@ fn go_to_definition_switch_case1() {
   [|/*start*/case|] null: break;
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "start");
+		f.verify_baseline_go_to_definition(true, "start".into());
 	});
 }
 

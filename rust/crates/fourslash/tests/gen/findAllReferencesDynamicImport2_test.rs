@@ -14,8 +14,8 @@ x.then(foo => {
     foo./*2*/[|bar|]();
 })"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1", "2");
-		f.verify_baseline_rename_at_ranges_with_text(None, "bar");
+		f.verify_baseline_find_all_references("1".into(), "2".into());
+		f.verify_baseline_rename_at_ranges_with_text(None, "bar".into());
 	});
 }
 

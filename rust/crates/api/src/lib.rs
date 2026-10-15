@@ -15,5 +15,5 @@ mod handlers_resolve;
 mod proto;
 mod protocol_msgpack;
 mod server;
-mod session;
+pub mod session;
 mod stringer_generated;

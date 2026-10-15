@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn comments_line_preservation() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r#"/** This is firstLine
   * This is second Line
   * 
@@ -122,29 +122,29 @@ function /*l*/l(param1: string) { /*9*/param1 = "hello"; }
  */
 function /*m*/m(param1: string) { /*10*/param1 = "hello"; }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("a", "var a: string", "This is firstLine\nThis is second Line\n\nThis is fourth Line");
-		f.verify_quick_info_at("b", "var b: string", "This is firstLine\nThis is second Line\n\nThis is fourth Line");
-		f.verify_quick_info_at("c", "var c: string", "This is firstLine\nThis is second Line\n\nThis is fourth Line");
-		f.verify_quick_info_at("d", "function d(param: string): void", "This is firstLine\nThis is second Line");
-		f.verify_quick_info_at("1", "(parameter) param: string", "");
-		f.verify_quick_info_at("e", "function e(param: string): void", "This is firstLine\nThis is second Line");
-		f.verify_quick_info_at("2", "(parameter) param: string", "");
-		f.verify_quick_info_at("f", "function f(param1: string): void", "This is firstLine\nThis is second Line");
-		f.verify_quick_info_at("3", "(parameter) param1: string", "first line of param\n\nparam information third line");
-		f.verify_quick_info_at("g", "function g(param1: string): void", "This is firstLine\nThis is second Line");
-		f.verify_quick_info_at("4", "(parameter) param1: string", " param information first line");
-		f.verify_quick_info_at("h", "function h(param1: string): void", "This is firstLine\nThis is second Line");
-		f.verify_quick_info_at("5", "(parameter) param1: string", " param information first line\n\n param information third line");
-		f.verify_quick_info_at("i", "function i(param1: string): void", "This is firstLine\nThis is second Line");
-		f.verify_quick_info_at("6", "(parameter) param1: string", " param information first line\n\n param information third line");
-		f.verify_quick_info_at("j", "function j(param1: string): void", "This is firstLine\nThis is second Line");
-		f.verify_quick_info_at("7", "(parameter) param1: string", " param information first line\n\n param information third line");
-		f.verify_quick_info_at("k", "function k(param1: string): void", "This is firstLine\nThis is second Line");
-		f.verify_quick_info_at("8", "(parameter) param1: string", "hello");
-		f.verify_quick_info_at("l", "function l(param1: string): void", "This is firstLine\nThis is second Line");
-		f.verify_quick_info_at("9", "(parameter) param1: string", "first Line text\nblank line that shouldnt be shown when starting this \nsecond time information about the param again");
-		f.verify_quick_info_at("m", "function m(param1: string): void", "This is firstLine\nThis is second Line\n[1]: third * line");
-		f.verify_quick_info_at("10", "(parameter) param1: string", "first Line text\nsecond line text");
+		f.verify_quick_info_at("a".into(), "var a: string".into(), "This is firstLine\nThis is second Line\n\nThis is fourth Line".into());
+		f.verify_quick_info_at("b".into(), "var b: string".into(), "This is firstLine\nThis is second Line\n\nThis is fourth Line".into());
+		f.verify_quick_info_at("c".into(), "var c: string".into(), "This is firstLine\nThis is second Line\n\nThis is fourth Line".into());
+		f.verify_quick_info_at("d".into(), "function d(param: string): void".into(), "This is firstLine\nThis is second Line".into());
+		f.verify_quick_info_at("1".into(), "(parameter) param: string".into(), "".into());
+		f.verify_quick_info_at("e".into(), "function e(param: string): void".into(), "This is firstLine\nThis is second Line".into());
+		f.verify_quick_info_at("2".into(), "(parameter) param: string".into(), "".into());
+		f.verify_quick_info_at("f".into(), "function f(param1: string): void".into(), "This is firstLine\nThis is second Line".into());
+		f.verify_quick_info_at("3".into(), "(parameter) param1: string".into(), "first line of param\n\nparam information third line".into());
+		f.verify_quick_info_at("g".into(), "function g(param1: string): void".into(), "This is firstLine\nThis is second Line".into());
+		f.verify_quick_info_at("4".into(), "(parameter) param1: string".into(), " param information first line".into());
+		f.verify_quick_info_at("h".into(), "function h(param1: string): void".into(), "This is firstLine\nThis is second Line".into());
+		f.verify_quick_info_at("5".into(), "(parameter) param1: string".into(), " param information first line\n\n param information third line".into());
+		f.verify_quick_info_at("i".into(), "function i(param1: string): void".into(), "This is firstLine\nThis is second Line".into());
+		f.verify_quick_info_at("6".into(), "(parameter) param1: string".into(), " param information first line\n\n param information third line".into());
+		f.verify_quick_info_at("j".into(), "function j(param1: string): void".into(), "This is firstLine\nThis is second Line".into());
+		f.verify_quick_info_at("7".into(), "(parameter) param1: string".into(), " param information first line\n\n param information third line".into());
+		f.verify_quick_info_at("k".into(), "function k(param1: string): void".into(), "This is firstLine\nThis is second Line".into());
+		f.verify_quick_info_at("8".into(), "(parameter) param1: string".into(), "hello".into());
+		f.verify_quick_info_at("l".into(), "function l(param1: string): void".into(), "This is firstLine\nThis is second Line".into());
+		f.verify_quick_info_at("9".into(), "(parameter) param1: string".into(), "first Line text\nblank line that shouldnt be shown when starting this \nsecond time information about the param again".into());
+		f.verify_quick_info_at("m".into(), "function m(param1: string): void".into(), "This is firstLine\nThis is second Line\n[1]: third * line".into());
+		f.verify_quick_info_at("10".into(), "(parameter) param1: string".into(), "first Line text\nsecond line text".into());
 	});
 }
 

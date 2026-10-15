@@ -14,7 +14,7 @@ declare const rest:
 
 /**/rest({ a: true, b: true }, "foo", "bar");"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("", "const rest: (arg0?: {\n    a: true;\n} & {\n    b: true;\n}, ...rest: string[]) => unknown", "");
+		f.verify_quick_info_at("".into(), "const rest: (arg0?: {\n    a: true;\n} & {\n    b: true;\n}, ...rest: string[]) => unknown".into(), "".into());
 	});
 }
 

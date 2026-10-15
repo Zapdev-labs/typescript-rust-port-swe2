@@ -19,7 +19,7 @@ Dep/**/
 // @Filename: util2.js
 export {};";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
+		f.go_to_marker("".into());
 		f.verify_import_fix_at_position(vec![r"import fs from 'fs';
 import { Dep } from './types/dep';
 const path = require('path');

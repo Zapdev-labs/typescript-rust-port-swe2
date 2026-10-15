@@ -24,8 +24,8 @@ hello
 goodbye
         </div>
     )
-}");
-		f.format_document("");
+}".into());
+		f.format_document("".into());
 		f.verify_current_file_content(r"function foo() {
     return (
         <div>
@@ -33,7 +33,7 @@ goodbye
             goodbye
         </div>
     )
-}");
+}".into());
 	});
 }
 

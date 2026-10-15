@@ -11,13 +11,13 @@ fn formatting_on_document_ready_function() {
 /*2*/    alert    (           'i am ready'  )   ;
 /*3*/           }                 );";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"$(document).ready(function() {");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"    alert('i am ready');");
-		f.go_to_marker("3");
-		f.verify_current_line_content(r"});");
+		f.format_document("".into());
+		f.go_to_marker("1".into());
+		f.verify_current_line_content(r"$(document).ready(function() {".into());
+		f.go_to_marker("2".into());
+		f.verify_current_line_content(r"    alert('i am ready');".into());
+		f.go_to_marker("3".into());
+		f.verify_current_line_content(r"});".into());
 	});
 }
 

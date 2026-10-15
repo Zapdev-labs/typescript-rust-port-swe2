@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn completion_entry_for_union_property() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"interface One {
     commonProperty: number;
     commonFunction(): number;
@@ -22,7 +22,7 @@ var x : One | Two;
 
 x./**/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "commonFunction", detail: Some(("(method) commonFunction(): number").into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "commonProperty", detail: Some(("(property) commonProperty: string | number").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "commonFunction", detail: Some(("(method) commonFunction(): number").into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "commonProperty", detail: Some(("(property) commonProperty: string | number").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }
 

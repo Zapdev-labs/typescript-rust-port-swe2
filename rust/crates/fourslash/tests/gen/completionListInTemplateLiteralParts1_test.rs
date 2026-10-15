@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_in_template_literal_parts1() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @lib: es5
 /*0*/" + "`" + r"  $ { ${/*1*/ 10/*2*/ + 1.1/*3*/ /*4*/} 12312" + "`" + r"/*5*/
 

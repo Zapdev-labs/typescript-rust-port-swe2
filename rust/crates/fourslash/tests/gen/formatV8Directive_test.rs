@@ -7,12 +7,12 @@ use tsc_fourslash::*;
 #[test]
 fn format_v8_directive() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @Filename: foo.js
 function foo() {}
 /*1*/%PrepareFunctionForOptimization(foo)/*2*/;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_selection("1", "2");
+		f.format_selection("1".into(), "2".into());
 	});
 }
 

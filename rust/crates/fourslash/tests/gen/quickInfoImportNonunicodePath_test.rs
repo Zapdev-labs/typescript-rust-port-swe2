@@ -12,7 +12,7 @@ export const foo = 1;
 // @Filename: /test.ts
 import { foo } from "./江南/*1*/今何在/tmp";"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "module \"./江南今何在/tmp\"", "");
+		f.verify_quick_info_at("1".into(), "module \"./江南今何在/tmp\"".into(), "".into());
 	});
 }
 

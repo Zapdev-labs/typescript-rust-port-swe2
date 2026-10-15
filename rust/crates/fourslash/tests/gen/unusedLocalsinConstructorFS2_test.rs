@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn unused_localsin_constructor_fs2() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r#"// @noUnusedLocals: true
 // @noUnusedParameters: true
 class greeter {
@@ -23,7 +23,7 @@ class greeter {
         var used = "dummy";
         used = used + "second part";
     }
-"#, false, 0, 0);
+"#.into(), false, 0, 0);
 	});
 }
 

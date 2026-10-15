@@ -14,17 +14,17 @@ fn doc_comment_template_function_with_parameters() {
 		let mut capabilities = tsc_fourslash::get_default_capabilities();
 		capabilities.text_document.completion.completion_item.snippet_support = Some((false).into());
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", capabilities, content);
-		f.go_to_marker("0");
-		f.verify_js_doc_completion("0", 7, r"/**
+		f.go_to_marker("0".into());
+		f.verify_js_doc_completion("0".into(), 7, r"/**
  * 
  * @param x
  * @param y
- */", None);
-		f.verify_js_doc_completion("1", 0, r"/**
+ */".into(), None);
+		f.verify_js_doc_completion("1".into(), 0, r"/**
      * 
      * @param x
      * @param y
-     */", None);
+     */".into(), None);
 	});
 }
 

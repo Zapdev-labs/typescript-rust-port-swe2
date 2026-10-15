@@ -22,8 +22,8 @@ declare const x: X
 new /*2*/x()
 ";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "const x: () => string", "Description of invoking.");
-		f.verify_quick_info_at("2", "const x: new () => number", "Description of constructor.");
+		f.verify_quick_info_at("1".into(), "const x: () => string".into(), "Description of invoking.".into());
+		f.verify_quick_info_at("2".into(), "const x: new () => number".into(), "Description of constructor.".into());
 	});
 }
 

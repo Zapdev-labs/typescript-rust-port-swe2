@@ -16,7 +16,7 @@ Dep/**/
 // @Filename: util.js
 import fs from 'fs';";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
+		f.go_to_marker("".into());
 		f.verify_import_fix_at_position(vec![r#"import { Dep } from "./types/dep";
 
 Dep"#], None);

@@ -10,7 +10,7 @@ fn code_fix_use_big_int_literal_with_numeric_separators() {
 		let content = r"6_402_373_705_728_000;  // 18! < 2 ** 53
 0x16_BE_EC_CA_73_00_00; // 18! < 2 ** 53";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix_not_available("useBigintLiteral");
+		f.verify_code_fix_not_available("useBigintLiteral".into());
 	});
 }
 

@@ -7,13 +7,13 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_infer_from_usage_call() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @noImplicitAny: true
 function wat([|b |]) {
     b();
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_range_after_code_fix(r"b: () => void", false, 0, 0);
+		f.verify_range_after_code_fix(r"b: () => void".into(), false, 0, 0);
 	});
 }
 

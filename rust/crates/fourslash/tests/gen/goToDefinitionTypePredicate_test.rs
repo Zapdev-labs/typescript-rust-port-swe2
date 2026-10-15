@@ -12,7 +12,7 @@ function f(/*parameterDeclaration*/parameter: any): [|/*parameterName*/parameter
     return typeof parameter === "string";
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "parameterName", "typeReference");
+		f.verify_baseline_go_to_definition(true, "parameterName".into(), "typeReference".into());
 	});
 }
 

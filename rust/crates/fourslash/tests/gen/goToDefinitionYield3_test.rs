@@ -17,7 +17,7 @@ fn go_to_definition_yield3() {
     }
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "start1", "start2");
+		f.verify_baseline_go_to_definition(true, "start1".into(), "start2".into());
 	});
 }
 

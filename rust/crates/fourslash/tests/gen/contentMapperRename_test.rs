@@ -18,8 +18,8 @@ export const heading = title.toUpperCase();
 // @Filename: /main.ts
 import { title } from "./ProfileCard.vue";
 export const pageTitle = title;
-"#, contentmappertest.component_mapper, ".vue");
-		f.verify_rename("rename", "newTitle", vec![("/ProfileCard.vue", r#"<component name="ProfileCard">
+"#.into(), contentmappertest.component_mapper, ".vue".into());
+		f.verify_rename("rename".into(), "newTitle".into(), vec![("/ProfileCard.vue", r#"<component name="ProfileCard">
 <template><h1>{{ title }}</h1></template>
 <script lang="ts">
 export const newTitle = "Profile";
@@ -43,10 +43,10 @@ fn content_mapper_rename_rejects_atom_and_unmapped_origins() {
 <script lang="ts">
 export const title = "Profile";
 </script>
-"#, contentmappertest.component_mapper, ".vue");
-		f.go_to_marker("atom");
+"#.into(), contentmappertest.component_mapper, ".vue".into());
+		f.go_to_marker("atom".into());
 		f.verify_rename_failed(None);
-		f.go_to_marker("markup");
+		f.go_to_marker("markup".into());
 		f.verify_rename_failed(None);
 	});
 }
@@ -65,8 +65,8 @@ import * as utils from "./format";
 export const title = "Profile";
 export const heading = utils.for/*rename*/mat(title);
 </script>
-"#, contentmappertest.component_mapper, ".vue");
-		f.verify_rename("rename", "render", vec![("/format.ts", r"export function render(value: string): string { return value; }
+"#.into(), contentmappertest.component_mapper, ".vue".into());
+		f.verify_rename("rename".into(), "render".into(), vec![("/format.ts", r"export function render(value: string): string { return value; }
 "), ("/ProfileCard.vue", r#"<component name="ProfileCard">
 <template><h1>{{ utils.format(title) }}</h1></template>
 <script lang="ts">

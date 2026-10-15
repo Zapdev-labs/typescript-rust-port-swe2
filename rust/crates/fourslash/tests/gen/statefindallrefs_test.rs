@@ -41,15 +41,15 @@ foo()
 export function bar() {}
 "#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("mainFoo");
-		f.go_to_marker("dummy");
-		f.close_file_of_marker("dummy");
-		f.close_file_of_marker("mainFoo");
-		f.go_to_marker("dummy");
-		f.close_file_of_marker("dummy");
-		f.verify_baseline_find_all_references("mainFoo");
-		f.close_file_of_marker("mainFoo");
-		f.verify_baseline_find_all_references("fooIndirect3Import");
+		f.go_to_marker("mainFoo".into());
+		f.go_to_marker("dummy".into());
+		f.close_file_of_marker("dummy".into());
+		f.close_file_of_marker("mainFoo".into());
+		f.go_to_marker("dummy".into());
+		f.close_file_of_marker("dummy".into());
+		f.verify_baseline_find_all_references("mainFoo".into());
+		f.close_file_of_marker("mainFoo".into());
+		f.verify_baseline_find_all_references("fooIndirect3Import".into());
 	});
 }
 
@@ -127,15 +127,15 @@ export const indirect = 1;
 }
 "#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("mainFoo");
-		f.go_to_marker("dummy");
-		f.close_file_of_marker("dummy");
-		f.close_file_of_marker("mainFoo");
-		f.go_to_marker("dummy");
-		f.close_file_of_marker("dummy");
-		f.verify_baseline_find_all_references("mainFoo");
-		f.close_file_of_marker("mainFoo");
-		f.verify_baseline_find_all_references("fooIndirect3Import");
+		f.go_to_marker("mainFoo".into());
+		f.go_to_marker("dummy".into());
+		f.close_file_of_marker("dummy".into());
+		f.close_file_of_marker("mainFoo".into());
+		f.go_to_marker("dummy".into());
+		f.close_file_of_marker("dummy".into());
+		f.verify_baseline_find_all_references("mainFoo".into());
+		f.close_file_of_marker("mainFoo".into());
+		f.verify_baseline_find_all_references("fooIndirect3Import".into());
 	});
 }
 
@@ -179,15 +179,15 @@ foo()
 export function bar() {}
 "#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("mainFoo");
-		f.go_to_marker("dummy");
-		f.close_file_of_marker("dummy");
-		f.close_file_of_marker("mainFoo");
-		f.go_to_marker("dummy");
-		f.close_file_of_marker("dummy");
-		f.verify_baseline_find_all_references("mainFoo");
-		f.close_file_of_marker("mainFoo");
-		f.verify_baseline_find_all_references("fooIndirect3Import");
+		f.go_to_marker("mainFoo".into());
+		f.go_to_marker("dummy".into());
+		f.close_file_of_marker("dummy".into());
+		f.close_file_of_marker("mainFoo".into());
+		f.go_to_marker("dummy".into());
+		f.close_file_of_marker("dummy".into());
+		f.verify_baseline_find_all_references("mainFoo".into());
+		f.close_file_of_marker("mainFoo".into());
+		f.verify_baseline_find_all_references("fooIndirect3Import".into());
 	});
 }
 
@@ -267,15 +267,15 @@ export const indirect = 1;
 }
 "#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("mainFoo");
-		f.go_to_marker("dummy");
-		f.close_file_of_marker("dummy");
-		f.close_file_of_marker("mainFoo");
-		f.go_to_marker("dummy");
-		f.close_file_of_marker("dummy");
-		f.verify_baseline_find_all_references("mainFoo");
-		f.close_file_of_marker("mainFoo");
-		f.verify_baseline_find_all_references("fooIndirect3Import");
+		f.go_to_marker("mainFoo".into());
+		f.go_to_marker("dummy".into());
+		f.close_file_of_marker("dummy".into());
+		f.close_file_of_marker("mainFoo".into());
+		f.go_to_marker("dummy".into());
+		f.close_file_of_marker("dummy".into());
+		f.verify_baseline_find_all_references("mainFoo".into());
+		f.close_file_of_marker("mainFoo".into());
+		f.verify_baseline_find_all_references("fooIndirect3Import".into());
 	});
 }
 
@@ -354,15 +354,15 @@ export const indirect = 1;
 }
 "#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("mainFoo");
-		f.go_to_marker("dummy");
-		f.close_file_of_marker("dummy");
-		f.close_file_of_marker("mainFoo");
-		f.go_to_marker("dummy");
-		f.close_file_of_marker("dummy");
-		f.verify_baseline_find_all_references("mainFoo");
-		f.close_file_of_marker("mainFoo");
-		f.verify_baseline_find_all_references("fooIndirect3Import");
+		f.go_to_marker("mainFoo".into());
+		f.go_to_marker("dummy".into());
+		f.close_file_of_marker("dummy".into());
+		f.close_file_of_marker("mainFoo".into());
+		f.go_to_marker("dummy".into());
+		f.close_file_of_marker("dummy".into());
+		f.verify_baseline_find_all_references("mainFoo".into());
+		f.close_file_of_marker("mainFoo".into());
+		f.verify_baseline_find_all_references("fooIndirect3Import".into());
 	});
 }
 
@@ -407,15 +407,15 @@ foo()
 export function bar() {}
 "#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("mainFoo");
-		f.go_to_marker("dummy");
-		f.close_file_of_marker("dummy");
-		f.close_file_of_marker("mainFoo");
-		f.go_to_marker("dummy");
-		f.close_file_of_marker("dummy");
-		f.verify_baseline_find_all_references("mainFoo");
-		f.close_file_of_marker("mainFoo");
-		f.verify_baseline_find_all_references("fooIndirect3Import");
+		f.go_to_marker("mainFoo".into());
+		f.go_to_marker("dummy".into());
+		f.close_file_of_marker("dummy".into());
+		f.close_file_of_marker("mainFoo".into());
+		f.go_to_marker("dummy".into());
+		f.close_file_of_marker("dummy".into());
+		f.verify_baseline_find_all_references("mainFoo".into());
+		f.close_file_of_marker("mainFoo".into());
+		f.verify_baseline_find_all_references("fooIndirect3Import".into());
 	});
 }
 
@@ -423,7 +423,7 @@ export function bar() {}
 fn find_all_refs_root_of_referenced_project() {
 	run_test(|t| {
 		for disable_source_of_project_reference_redirect in vec![false, true] {
-			run_subtest(&mut t, "TestFindAllRefsRootOfReferencedProject" + tsc_core::if_else(disable_source_of_project_reference_redirect, "DeclarationMaps", ""), |t| {
+			run_subtest(&mut t, "TestFindAllRefsRootOfReferencedProject" + tsc_core::if_else(disable_source_of_project_reference_redirect, "DeclarationMaps".into(), "".into()), |t| {
 				let mut content = format!(r#"
 // @stateBaseline: true
 %s
@@ -469,11 +469,11 @@ function foo() {
 	"references": [
 		{ "path": "./common" },
 	],
-}"#, tsc_core::if_else(disable_source_of_project_reference_redirect, "// @tsc: --build /src/tsconfig.json", ""), disable_source_of_project_reference_redirect, disable_source_of_project_reference_redirect);
+}"#.into(), tsc_core::if_else(disable_source_of_project_reference_redirect, "// @tsc: --build /src/tsconfig.json".into(), "".into()), disable_source_of_project_reference_redirect, disable_source_of_project_reference_redirect);
 				let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-				f.go_to_marker("keyboard");
-				f.go_to_marker("terminal");
-				f.verify_baseline_find_all_references("keyboard");
+				f.go_to_marker("keyboard".into());
+				f.go_to_marker("terminal".into());
+				f.verify_baseline_find_all_references("keyboard".into());
 			});
 		}
 	});
@@ -483,7 +483,7 @@ function foo() {
 fn find_all_refs_ancestor_sibling_projects_loading() {
 	run_test(|t| {
 		for disable_solution_searching in vec![false, true] {
-			run_subtest(&mut t, "TestFindAllRefsAncestorSiblingProjectsLoading" + tsc_core::if_else(disable_solution_searching, "DisableSolutionSearching", ""), |t| {
+			run_subtest(&mut t, "TestFindAllRefsAncestorSiblingProjectsLoading" + tsc_core::if_else(disable_solution_searching, "DisableSolutionSearching".into(), "".into()), |t| {
 				let mut content = format!(r#"
 // @stateBaseline: true
 // @Filename: solution/tsconfig.json
@@ -531,10 +531,10 @@ namespace ts {
 /// <reference path="../compiler/program.ts" />
 namespace ts {
 	const result = program.getSourceFiles();
-}"#, disable_solution_searching);
+}"#.into(), disable_solution_searching);
 				let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-				f.verify_baseline_find_all_references("local");
-				f.verify_baseline_find_all_references("notLocal");
+				f.verify_baseline_find_all_references("local".into());
+				f.verify_baseline_find_all_references("notLocal".into());
 			});
 		}
 	});
@@ -612,8 +612,8 @@ import { C } from "../c";
 export const D: I = C;
 "#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("");
-		f.verify_baseline_find_all_references("");
+		f.verify_baseline_find_all_references("".into());
+		f.verify_baseline_find_all_references("".into());
 	});
 }
 
@@ -754,8 +754,8 @@ export const noCoreRef2Const = 10;
 	},
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("main");
-		f.verify_baseline_find_all_references("find");
+		f.go_to_marker("main".into());
+		f.verify_baseline_find_all_references("find".into());
 	});
 }
 
@@ -807,11 +807,11 @@ const bar: Bar = {
 	prop: 1
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("change");
-		f.go_to_marker("prop");
-		f.go_to_marker("change");
-		f.insert("// comment");
-		f.verify_baseline_find_all_references("prop");
+		f.go_to_marker("change".into());
+		f.go_to_marker("prop".into());
+		f.go_to_marker("change".into());
+		f.insert("// comment".into());
+		f.verify_baseline_find_all_references("prop".into());
 	});
 }
 
@@ -834,9 +834,9 @@ export function foobar() {}
 export function /*find*/bar() { }
 "#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("tests");
-		f.close_file_of_marker("tests");
-		f.verify_baseline_find_all_references("find");
+		f.go_to_marker("tests".into());
+		f.close_file_of_marker("tests".into());
+		f.verify_baseline_find_all_references("find".into());
 	});
 }
 
@@ -845,9 +845,9 @@ fn find_all_refs_special_handling_of_localness() {
 	run_test(|t| {
 		for tc in vec![testCase { "ArrowFunctionAssignment", r"export const dog = () => { };", r"shared.dog();", "dog", ..Default::default() }, testCase { "ArrowFunctionAsObjectLiteralPropertyTypes", r"export const foo = { bar: () => { } };", r"shared.foo.bar();", "bar", ..Default::default() }, testCase { "ObjectLiteralProperty", r#"export const foo = {  baz: "BAZ" };"#, r"shared.foo.baz;", "baz", ..Default::default() }, testCase { "MethodOfClassExpression", r"export const foo = class { fly() {} };", stringtestutil.dedent(r"
 					const instance = new shared.foo();
-					instance.fly();"), "fly", ..Default::default() }, testCase { "ArrowFunctionAsObjectLiteralProperty", stringtestutil.dedent(r"
+					instance.fly();".into()), "fly", ..Default::default() }, testCase { "ArrowFunctionAsObjectLiteralProperty", stringtestutil.dedent(r"
 					const local = { bar: () => { } };
-					export const foo = local;"), r"shared.foo.bar();", "bar", ..Default::default() }] {
+					export const foo = local;".into()), r"shared.foo.bar();", "bar", ..Default::default() }] {
 			run_subtest(&mut t, "TestFindAllRefsSpecialHandlingOfLocalness" + tc.name, |t| {
 				let mut usage_with_marker = tc.usage.slice + "/*ref*/" + tc.usage.slice;
 				let mut content = r#"
@@ -908,7 +908,7 @@ import * as shared from "../../shared/dist"
 // @Filename: /solution/shared/src/index.ts
 "# + tc.definition;
 				let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-				f.verify_baseline_find_all_references("ref");
+				f.verify_baseline_find_all_references("ref".into());
 			});
 		}
 	});
@@ -974,9 +974,9 @@ console.log(symbolB);
 console.log(symbolA);
 "#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("symbolA");
-		f.verify_baseline_find_all_references("symbolB");
-		f.verify_baseline_find_all_references("symbolAUsage");
+		f.verify_baseline_find_all_references("symbolA".into());
+		f.verify_baseline_find_all_references("symbolB".into());
+		f.verify_baseline_find_all_references("symbolAUsage".into());
 	});
 }
 
@@ -984,7 +984,7 @@ console.log(symbolA);
 fn find_all_refs_declaration_in_other_project() {
 	run_test(|t| {
 		for tc in vec![testCase { true, true, true, true, ..Default::default() }, testCase { true, true, true, false, ..Default::default() }, testCase { true, true, false, true, ..Default::default() }, testCase { true, true, false, false, ..Default::default() }, testCase { true, false, true, true, ..Default::default() }, testCase { true, false, true, false, ..Default::default() }, testCase { true, false, false, true, ..Default::default() }, testCase { true, false, false, false, ..Default::default() }, testCase { false, true, true, true, ..Default::default() }, testCase { false, true, true, false, ..Default::default() }, testCase { false, true, false, true, ..Default::default() }, testCase { false, true, false, false, ..Default::default() }, testCase { false, false, true, true, ..Default::default() }, testCase { false, false, true, false, ..Default::default() }, testCase { false, false, false, true, ..Default::default() }, testCase { false, false, false, false, ..Default::default() }] {
-			let mut sub_scenario = format!(r"Proj%sLoaded", tsc_core::if_else(tc.project_already_loaded, "Is", "IsNot")) + r"RefdProjLoadingIs" + tsc_core::if_else(tc.disable_referenced_project_load, "Disabled", "Enabled") + r"ProjRefRedirectsAre" + tsc_core::if_else(tc.disable_source_of_project_reference_redirect, "Disabled", "Enabled") + r"DeclMapIs" + tsc_core::if_else(tc.dts_map_present, "Present", "Missing");
+			let mut sub_scenario = format!(r"Proj%sLoaded".into(), tsc_core::if_else(tc.project_already_loaded, "Is".into(), "IsNot".into())) + r"RefdProjLoadingIs" + tsc_core::if_else(tc.disable_referenced_project_load, "Disabled".into(), "Enabled".into()) + r"ProjRefRedirectsAre" + tsc_core::if_else(tc.disable_source_of_project_reference_redirect, "Disabled".into(), "Enabled".into()) + r"DeclMapIs" + tsc_core::if_else(tc.dts_map_present, "Present".into(), "Missing".into());
 			run_subtest(&mut t, "TestFindAllRefsDeclarationInOtherProject" + sub_scenario, |t| {
 				let mut content = format!(r#"
 // @stateBaseline: true
@@ -1014,7 +1014,7 @@ const b: B = new B();
 export declare class B {
 	M(): void;
 }
-//# sourceMappingURL=index.d.ts.map"#, tc.disable_referenced_project_load, tc.disable_source_of_project_reference_redirect);
+//# sourceMappingURL=index.d.ts.map"#.into(), tc.disable_referenced_project_load, tc.disable_source_of_project_reference_redirect);
 				if tc.dts_map_present {
 					content += r#"
 // @Filename: /myproject/b/lib/index.d.ts.map
@@ -1029,10 +1029,10 @@ export declare class B {
 				}
 				let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 				if tc.project_already_loaded {
-					f.go_to_marker("ref");
-					f.go_to_marker("bHelper");
+					f.go_to_marker("ref".into());
+					f.go_to_marker("bHelper".into());
 				}
-				f.verify_baseline_find_all_references("ref");
+				f.verify_baseline_find_all_references("ref".into());
 			});
 		}
 	});

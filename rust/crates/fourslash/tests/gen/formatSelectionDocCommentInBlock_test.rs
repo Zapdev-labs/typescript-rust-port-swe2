@@ -20,7 +20,7 @@ while (true) {
  *//*4*/
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_selection("1", "2");
+		f.format_selection("1".into(), "2".into());
 		f.verify_current_file_content(r"{
     /**
      * Some doc comment
@@ -32,8 +32,8 @@ while (true) {
 /**
  * Some doc comment
  */
-}");
-		f.format_selection("3", "4");
+}".into());
+		f.format_selection("3".into(), "4".into());
 		f.verify_current_file_content(r"{
     /**
      * Some doc comment
@@ -45,7 +45,7 @@ while (true) {
     /**
      * Some doc comment
      */
-}");
+}".into());
 	});
 }
 

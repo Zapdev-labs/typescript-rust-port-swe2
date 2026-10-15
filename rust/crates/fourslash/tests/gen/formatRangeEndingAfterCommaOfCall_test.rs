@@ -12,7 +12,7 @@ fn format_range_ending_after_comma_of_call() {
     "something else"
 );"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_selection("start", "end");
+		f.format_selection("start".into(), "end".into());
 	});
 }
 

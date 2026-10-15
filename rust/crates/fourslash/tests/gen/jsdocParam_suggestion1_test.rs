@@ -21,7 +21,7 @@ function worse(): void {
     arguments
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("a.ts");
+		f.go_to_file("a.ts".into());
 		f.verify_suggestion_diagnostics(None);
 	});
 }

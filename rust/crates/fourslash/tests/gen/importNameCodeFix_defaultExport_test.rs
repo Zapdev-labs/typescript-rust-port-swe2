@@ -16,7 +16,7 @@ export default C;
 // @Filename: /b.js
 [|C;|]";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/b.js");
+		f.go_to_file("/b.js".into());
 		f.verify_import_fix_at_position(vec![r#"import C from "./a";
 
 C;"#], None);

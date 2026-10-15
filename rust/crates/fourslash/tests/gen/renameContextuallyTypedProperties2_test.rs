@@ -62,7 +62,7 @@ var o10: I = {
     [|set ["[|{| "contextRangeIndex": 20 |}prop2|]"](v) { }|]
 };"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_rename_at_ranges_with_text(None, "prop2");
+		f.verify_baseline_rename_at_ranges_with_text(None, "prop2".into());
 	});
 }
 

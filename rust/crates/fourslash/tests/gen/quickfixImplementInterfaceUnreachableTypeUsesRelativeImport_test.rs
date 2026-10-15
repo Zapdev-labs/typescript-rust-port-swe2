@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn quickfix_implement_interface_unreachable_type_uses_relative_import() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @Filename: class.ts
 export class Class { }
 // @Filename: interface.ts
@@ -21,7 +21,7 @@ import { Foo } from './interface';
 
 class /*1*/X implements Foo {}";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1");
+		f.go_to_marker("1".into());
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'Foo'", new_file_content: r"", index: 0, ..Default::default() });
 	});
 }

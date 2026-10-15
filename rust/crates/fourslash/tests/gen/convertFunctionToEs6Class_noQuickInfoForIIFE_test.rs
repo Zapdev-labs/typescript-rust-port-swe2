@@ -16,7 +16,7 @@ fn convert_function_to_es6_class_no_quick_info_for_iife() {
    foo;
 })();";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1");
+		f.go_to_marker("1".into());
 		f.verify_code_fix_not_available();
 	});
 }

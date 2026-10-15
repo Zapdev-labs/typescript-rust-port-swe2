@@ -24,7 +24,7 @@ const t2 = 1
  */
 const t3 = 1";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(false, "use1", "use2", "use3");
+		f.verify_baseline_go_to_definition(false, "use1".into(), "use2".into(), "use3".into());
 	});
 }
 

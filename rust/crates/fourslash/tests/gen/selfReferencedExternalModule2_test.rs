@@ -16,8 +16,8 @@ A.B.A.B./*2*/I;
 export import B = require('./app');
 export var Y = 1;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "var A.Y: number", "");
-		f.verify_quick_info_at("2", "var I: number", "");
+		f.verify_quick_info_at("1".into(), "var A.Y: number".into(), "".into());
+		f.verify_quick_info_at("2".into(), "var I: number".into(), "".into());
 	});
 }
 

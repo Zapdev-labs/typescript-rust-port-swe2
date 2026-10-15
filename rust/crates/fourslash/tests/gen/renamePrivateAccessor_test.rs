@@ -15,7 +15,7 @@ fn rename_private_accessor() {
    }
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_rename(None, to_any(f.get_ranges_by_text().get("#foo")));
+		f.verify_baseline_rename(None, to_any(f.get_ranges_by_text().get("#foo".into())));
 	});
 }
 

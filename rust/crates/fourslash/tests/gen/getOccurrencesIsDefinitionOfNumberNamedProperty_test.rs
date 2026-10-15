@@ -10,7 +10,7 @@ fn get_occurrences_is_definition_of_number_named_property() {
 		let content = r"let o = { /*1*/1: 12 };
 let y = o[/*2*/1];";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1", "2");
+		f.verify_baseline_find_all_references("1".into(), "2".into());
 	});
 }
 

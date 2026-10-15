@@ -7,13 +7,13 @@ use tsc_fourslash::*;
 #[test]
 fn self_referenced_external_module() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @Filename: app.ts
 export import A = require('./app');
 export var I = 1;
 A./**/I";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "A", detail: Some(("import A = require('./app')").into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "I", detail: Some(("var I: number").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "A", detail: Some(("import A = require('./app')").into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "I", detail: Some(("var I: number").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }
 

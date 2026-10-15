@@ -15,7 +15,7 @@ function symbolAlias(e: SymbolAlias) {
     console.log(e./*symbolAlias*/anything);
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("symbolAlias", "any", "");
+		f.verify_quick_info_at("symbolAlias".into(), "any".into(), "".into());
 	});
 }
 

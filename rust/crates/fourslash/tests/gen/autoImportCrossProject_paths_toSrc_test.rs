@@ -43,11 +43,11 @@ export const dep1 = 0;
 export const dep2 = 0;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_marker("1");
+		f.go_to_marker("1".into());
 		f.verify_import_fix_at_position(vec![r#"import { dep1 } from "dep";
 
 dep1;"#], None);
-		f.go_to_marker("2");
+		f.go_to_marker("2".into());
 		f.verify_import_fix_at_position(vec![r#"import { dep2 } from "dep/src/sub/folder";
 
 dep2;"#], None);

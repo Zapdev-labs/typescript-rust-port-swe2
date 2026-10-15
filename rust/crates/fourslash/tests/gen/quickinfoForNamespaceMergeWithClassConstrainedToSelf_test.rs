@@ -24,7 +24,7 @@ interface MassMarksCustomData extends AMap.MassMarks./*1*/Data {
     id: string;
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "interface AMap.MassMarks<D extends AMap.MassMarks.Data = AMap.MassMarks.Data>.Data", "");
+		f.verify_quick_info_at("1".into(), "interface AMap.MassMarks<D extends AMap.MassMarks.Data = AMap.MassMarks.Data>.Data".into(), "".into());
 	});
 }
 

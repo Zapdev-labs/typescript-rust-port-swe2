@@ -19,7 +19,7 @@ async function main () {
     const b = await bar()
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/b.ts");
+		f.go_to_file("/b.ts".into());
 		f.verify_baseline_inlay_hints(None, Some(tsc_lsutil::UserPreferences { include_inlay_variable_type_hints: tsc_core::TS_TRUE, include_inlay_function_like_return_type_hints: tsc_core::TS_TRUE, ..Default::default() }));
 	});
 }

@@ -20,7 +20,7 @@ export function /*target*/original() { return "ok"; }
 import { original as renamed } from "pkg";
 renamed/*usage*/();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("usage");
+		f.verify_baseline_go_to_source_definition("usage".into());
 	});
 }
 
@@ -38,7 +38,7 @@ export function /*target*/helper() { return "ok"; }
 import * as ns from "pkg";
 ns./*usage*/helper();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("usage");
+		f.verify_baseline_go_to_source_definition("usage".into());
 	});
 }
 

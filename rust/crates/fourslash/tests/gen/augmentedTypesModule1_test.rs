@@ -14,8 +14,8 @@ var m1c = 1; // Should be allowed
 var x: m1c./*1*/;
 var /*2*/r = m1c;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("1", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["I"], ..Default::default() }), ..Default::default() }));
-		f.verify_quick_info_at("2", "var r: number", "");
+		f.verify_completions("1".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["I"], ..Default::default() }), ..Default::default() }));
+		f.verify_quick_info_at("2".into(), "var r: number".into(), "".into());
 	});
 }
 

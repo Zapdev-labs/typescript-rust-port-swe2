@@ -13,7 +13,7 @@ class Tex {
     type = (/** @type {/**/const} */'Text');
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "");
+		f.verify_baseline_go_to_definition(true, "".into());
 		f.verify_no_errors();
 	});
 }

@@ -38,21 +38,21 @@ let f = class F {
 		capabilities.text_document.completion.completion_item.snippet_support = Some((false).into());
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", capabilities, content);
 		for var_name in vec!["a", "b", "c", "d"] {
-			f.verify_js_doc_completion(var_name, 3, r"/** */", None);
+			f.verify_js_doc_completion(var_name, 3, r"/** */".into(), None);
 		}
-		f.verify_js_doc_completion("e", 7, r"/**
+		f.verify_js_doc_completion("e".into(), 7, r"/**
  * 
  * @param x
  * @param y
  * @param z
  * @returns
- */", None);
-		f.verify_js_doc_completion("f", 7, r"/**
+ */".into(), None);
+		f.verify_js_doc_completion("f".into(), 7, r"/**
  * 
  * @param a
  * @param b
  * @param c
- */", None);
+ */".into(), None);
 	});
 }
 

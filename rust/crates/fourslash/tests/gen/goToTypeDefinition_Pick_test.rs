@@ -16,7 +16,7 @@ type PickedUser = Pick<User, "name">
 declare const user2: PickedUser
 /*reference2*/user2"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_type_definition("reference", "reference2");
+		f.verify_baseline_go_to_type_definition("reference".into(), "reference2".into());
 	});
 }
 

@@ -12,9 +12,9 @@ fn edit_template_constraint() {
  */
 function f() {}";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
-		f.insert("n");
-		f.insert("u");
+		f.go_to_marker("".into());
+		f.insert("n".into());
+		f.insert("u".into());
 	});
 }
 

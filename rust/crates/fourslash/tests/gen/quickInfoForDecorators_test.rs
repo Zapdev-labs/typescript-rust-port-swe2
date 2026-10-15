@@ -13,7 +13,7 @@ class C {
 /** decorator documentation*/
 var decorator = t=> t;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "var decorator: (t: any) => any", "decorator documentation");
+		f.verify_quick_info_at("1".into(), "var decorator: (t: any) => any".into(), "decorator documentation".into());
 	});
 }
 

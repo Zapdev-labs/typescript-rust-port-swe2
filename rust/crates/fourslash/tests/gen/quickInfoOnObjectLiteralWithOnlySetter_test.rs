@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_on_object_literal_with_only_setter() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"function /*1*/makePoint(x: number) {
     return {
         b: 10,
@@ -17,10 +17,10 @@ fn quick_info_on_object_literal_with_only_setter() {
 var /*3*/point = makePoint(2);
 point./*2*/x = 30;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("2", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "b", detail: Some(("(property) b: number").into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "x", detail: Some(("(property) x: number").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
-		f.verify_quick_info_at("1", "function makePoint(x: number): {\n    b: number;\n    x: number;\n}", "");
-		f.verify_quick_info_at("2", "(property) x: number", "");
-		f.verify_quick_info_at("3", "var point: {\n    b: number;\n    x: number;\n}", "");
+		f.verify_completions("2".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "b", detail: Some(("(property) b: number").into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "x", detail: Some(("(property) x: number").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_quick_info_at("1".into(), "function makePoint(x: number): {\n    b: number;\n    x: number;\n}".into(), "".into());
+		f.verify_quick_info_at("2".into(), "(property) x: number".into(), "".into());
+		f.verify_quick_info_at("3".into(), "var point: {\n    b: number;\n    x: number;\n}".into(), "".into());
 	});
 }
 

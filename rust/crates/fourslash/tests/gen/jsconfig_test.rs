@@ -18,8 +18,8 @@ function f(/**/x) {
     }
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/a.js");
-		f.verify_error_exists_after_marker("");
+		f.go_to_file("/a.js".into());
+		f.verify_error_exists_after_marker("".into());
 	});
 }
 

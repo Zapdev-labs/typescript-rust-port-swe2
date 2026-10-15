@@ -20,7 +20,7 @@ declare class C3 implements C2 {[|
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_range_after_code_fix(r"f1(): void;
-", false, 0, 0);
+".into(), false, 0, 0);
 	});
 }
 

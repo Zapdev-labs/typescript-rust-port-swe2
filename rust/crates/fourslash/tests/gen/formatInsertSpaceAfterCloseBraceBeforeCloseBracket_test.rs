@@ -12,8 +12,8 @@ fn format_insert_space_after_close_brace_before_close_bracket() {
 		let mut opts122 = f.get_options();
 		opts122.format_code_settings.insert_space_after_opening_and_before_closing_nonempty_brackets = tsc_core::TS_TRUE;
 		f.configure(opts122);
-		f.format_document("");
-		f.verify_current_file_content(r"[ {} ]");
+		f.format_document("".into());
+		f.verify_current_file_content(r"[ {} ]".into());
 	});
 }
 

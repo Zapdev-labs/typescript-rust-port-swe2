@@ -26,7 +26,7 @@ const foo = {
 			f.go_to_marker(marker);
 			f.verify_rename_failed(None);
 		}
-		f.go_to_marker("5");
+		f.go_to_marker("5".into());
 		f.verify_rename_succeeded(None);
 	});
 }

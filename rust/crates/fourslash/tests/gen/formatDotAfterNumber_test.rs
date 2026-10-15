@@ -7,24 +7,24 @@ use tsc_fourslash::*;
 #[test]
 fn format_dot_after_number() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"1+ 2 .toString() +3/*1*/
 1+ 2. .toString() +3/*2*/
 1+ 2.0 .toString() +3/*3*/
 1+ (2) .toString() +3/*4*/
 1+ 2_000 .toString() +3/*5*/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"1 + 2 .toString() + 3");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"1 + 2..toString() + 3");
-		f.go_to_marker("3");
-		f.verify_current_line_content(r"1 + 2.0.toString() + 3");
-		f.go_to_marker("4");
-		f.verify_current_line_content(r"1 + (2).toString() + 3");
-		f.go_to_marker("5");
-		f.verify_current_line_content(r"1 + 2_000 .toString() + 3");
+		f.format_document("".into());
+		f.go_to_marker("1".into());
+		f.verify_current_line_content(r"1 + 2 .toString() + 3".into());
+		f.go_to_marker("2".into());
+		f.verify_current_line_content(r"1 + 2..toString() + 3".into());
+		f.go_to_marker("3".into());
+		f.verify_current_line_content(r"1 + 2.0.toString() + 3".into());
+		f.go_to_marker("4".into());
+		f.verify_current_line_content(r"1 + (2).toString() + 3".into());
+		f.go_to_marker("5".into());
+		f.verify_current_line_content(r"1 + 2_000 .toString() + 3".into());
 	});
 }
 

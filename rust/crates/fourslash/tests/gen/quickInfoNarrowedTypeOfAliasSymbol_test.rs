@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_narrowed_type_of_alias_symbol() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r#"// @strict: true
 // @Filename: modules.ts
 export declare const someEnv: string | undefined;
@@ -19,9 +19,9 @@ if (isString(someEnv)) {
   someEnv/*1*/.charAt(0);
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("app.ts");
-		f.go_to_marker("1");
-		f.verify_quick_info_is("(alias) const someEnv: string\nimport someEnv", "");
+		f.go_to_file("app.ts".into());
+		f.go_to_marker("1".into());
+		f.verify_quick_info_is("(alias) const someEnv: string\nimport someEnv".into(), "".into());
 	});
 }
 

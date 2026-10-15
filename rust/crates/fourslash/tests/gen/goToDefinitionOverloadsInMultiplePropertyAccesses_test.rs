@@ -16,7 +16,7 @@ fn go_to_definition_overloads_in_multiple_property_accesses() {
 }
 A.B.[|/*2*/f|]("");"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "2");
+		f.verify_baseline_go_to_definition(true, "2".into());
 	});
 }
 

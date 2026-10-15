@@ -10,7 +10,7 @@ fn quick_info_for_in() {
 		let content = r"var obj;
 for (var /**/p in obj) { }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("", "var p: string", "");
+		f.verify_quick_info_at("".into(), "var p: string".into(), "".into());
 	});
 }
 

@@ -13,9 +13,9 @@ void 0;";
 		let mut opts110 = f.get_options();
 		opts110.format_code_settings.semicolons = "remove";
 		f.configure(opts110);
-		f.format_selection("1", "2");
+		f.format_selection("1".into(), "2".into());
 		f.verify_current_file_content(r"var x = 1
-void 0;");
+void 0;".into());
 	});
 }
 

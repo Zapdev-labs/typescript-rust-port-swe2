@@ -26,7 +26,7 @@ var rem2foo = new /*remoteClassReference*/rem2Cls();
 class rem2fooCls implements /*remoteInterfaceReference*/rem2Int { }
 var rem2fooVar = /*remoteModuleReference*/rem2Mod.foo;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(false, "remoteVariableReference", "remoteFunctionReference", "remoteClassReference", "remoteInterfaceReference", "remoteModuleReference");
+		f.verify_baseline_go_to_definition(false, "remoteVariableReference".into(), "remoteFunctionReference".into(), "remoteClassReference".into(), "remoteInterfaceReference".into(), "remoteModuleReference".into());
 	});
 }
 

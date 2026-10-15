@@ -10,9 +10,9 @@ fn signature_help_object_literal() {
 		let content = r#"var objectLiteral = { n: 5, s: "", f: (a: number, b: string) => "" };
 objectLiteral.f(/*objectLiteral1*/4, /*objectLiteral2*/"");"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("objectLiteral1");
+		f.go_to_marker("objectLiteral1".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f(a: number, b: string): string", parameter_count: 2, parameter_name: "a", parameter_span: "a: number", ..Default::default() });
-		f.go_to_marker("objectLiteral2");
+		f.go_to_marker("objectLiteral2".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f(a: number, b: string): string", parameter_name: "b", parameter_span: "b: string", ..Default::default() });
 	});
 }

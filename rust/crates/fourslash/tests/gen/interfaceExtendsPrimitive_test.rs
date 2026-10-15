@@ -9,7 +9,7 @@ fn interface_extends_primitive() {
 	run_test(|t| {
 		let content = r"interface x extends /*1*/string/*2*/ { }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_error_exists_between_markers("1", "2");
+		f.verify_error_exists_between_markers("1".into(), "2".into());
 		f.verify_number_of_errors_in_current_file(1);
 	});
 }

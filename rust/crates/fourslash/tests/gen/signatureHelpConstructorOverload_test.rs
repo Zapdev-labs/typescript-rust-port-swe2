@@ -11,9 +11,9 @@ fn signature_help_constructor_overload() {
 var x = new clsOverload(/*1*/);
 var y = new clsOverload(/*2*/'');";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1");
+		f.go_to_marker("1".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "clsOverload(): clsOverload", parameter_count: 0, overloads_count: 2, ..Default::default() });
-		f.go_to_marker("2");
+		f.go_to_marker("2".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "clsOverload(test: string): clsOverload", parameter_count: 1, parameter_name: "test", parameter_span: "test: string", overloads_count: 2, ..Default::default() });
 	});
 }

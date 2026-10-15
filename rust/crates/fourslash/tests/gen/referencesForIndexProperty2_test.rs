@@ -10,7 +10,7 @@ fn references_for_index_property2() {
 		let content = r#"var a;
 a["/*1*/blah"];"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1");
+		f.verify_baseline_find_all_references("1".into());
 	});
 }
 

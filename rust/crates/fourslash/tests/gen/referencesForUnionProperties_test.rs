@@ -29,7 +29,7 @@ var x : One | Two;
 
 x.common./*x*/a;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("one", "base", "x");
+		f.verify_baseline_find_all_references("one".into(), "base".into(), "x".into());
 	});
 }
 

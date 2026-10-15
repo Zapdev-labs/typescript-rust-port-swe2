@@ -11,10 +11,10 @@ fn parameter_with_nested_destructuring() {
   .map(([{ a, b: [c] }]) => /*1*/a + /*2*/c);
 function f([[/*3*/a]]: [[string]], { b1: { /*4*/b2 } }: { b1: { b2: string; } }) {}";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "(parameter) a: string", "");
-		f.verify_quick_info_at("2", "(parameter) c: number", "");
-		f.verify_quick_info_at("3", "(parameter) a: string", "");
-		f.verify_quick_info_at("4", "(parameter) b2: string", "");
+		f.verify_quick_info_at("1".into(), "(parameter) a: string".into(), "".into());
+		f.verify_quick_info_at("2".into(), "(parameter) c: number".into(), "".into());
+		f.verify_quick_info_at("3".into(), "(parameter) a: string".into(), "".into());
+		f.verify_quick_info_at("4".into(), "(parameter) b2: string".into(), "".into());
 	});
 }
 

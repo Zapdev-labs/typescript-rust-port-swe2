@@ -12,12 +12,12 @@ fn format_multiline_import_brace() {
 	extname, joinPath } from '../base/resources.js';
 import { URI } from '../base/uri.js';";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
+		f.format_document("".into());
 		f.verify_current_file_content(r"import {
     basename,
     extname, joinPath
 } from '../base/resources.js';
-import { URI } from '../base/uri.js';");
+import { URI } from '../base/uri.js';".into());
 	});
 }
 

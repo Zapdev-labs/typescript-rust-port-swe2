@@ -15,12 +15,12 @@ export const x = 0;
 // @Filename: index.js
 x";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("index.js");
+		f.go_to_file("index.js".into());
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add import from \"./a\"", new_file_content: r#"import { x } from "./a";
 
 x"#, index: 0, ..Default::default() });
 		f.go_to_position(0);
-		f.insert_line("const fs = require('fs');\n");
+		f.insert_line("const fs = require('fs');\n".into());
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add import from \"./a\"", new_file_content: r"const fs = require('fs');
 const { x } = require('./a');
 

@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_jsx4() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r#"// @jsx: react
 // @module: esnext
 // @esModuleInterop: true
@@ -25,7 +25,7 @@ export class Text extends React.Component {};
 import { Text } from "react-native";
 <Text></Text>;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/a.tsx");
+		f.go_to_file("/a.tsx".into());
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Import 'React' from \"react\"", new_file_content: r#"import React from "react";
 import { Text } from "react-native";
 <Text></Text>;"#, index: 0, ..Default::default() });

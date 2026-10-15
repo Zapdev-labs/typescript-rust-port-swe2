@@ -13,13 +13,13 @@ declare function f(x: string, y: number): any;
 
 /*1*/f/*2*/(/*3*/)";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("3");
+		f.go_to_marker("3".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { ..Default::default() });
-		f.insert("\"");
-		f.insert("\"");
+		f.insert("\"".into());
+		f.insert("\"".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { ..Default::default() });
 		f.verify_code_fix_not_available();
-		f.verify_error_exists_between_markers("1", "2");
+		f.verify_error_exists_between_markers("1".into(), "2".into());
 	});
 }
 

@@ -15,7 +15,7 @@ type A3<T> = { [P /*mappedType_inOperator*/in keyof T]: 1 };
 type A4<T> = /*keyofOperator_keyofKeyword*/keyof T;
 type A5<T> = /*readonlyOperator_readonlyKeyword*/readonly T[];";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("typeParam_extendsKeyword", "conditionalType_extendsKeyword", "inferType_inferKeyword", "mappedType_inOperator", "keyofOperator_keyofKeyword", "readonlyOperator_readonlyKeyword");
+		f.verify_baseline_find_all_references("typeParam_extendsKeyword".into(), "conditionalType_extendsKeyword".into(), "inferType_inferKeyword".into(), "mappedType_inOperator".into(), "keyofOperator_keyofKeyword".into(), "readonlyOperator_readonlyKeyword".into());
 	});
 }
 

@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn javascript_modules20() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r#"// @allowJs: true
 // @Filename: mod.js
 function foo() { return {a: true}; }
@@ -16,7 +16,7 @@ module.exports = foo();
 import * as mod from "./mod"
 mod./**/"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "a", kind: Some((tsc_lsproto::CompletionItemKind::FIELD).into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "mod", kind: Some((tsc_lsproto::CompletionItemKind::TEXT).into()), sort_text: Some((tsc_ls::SORT_TEXT_JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "a", kind: Some((tsc_lsproto::CompletionItemKind::FIELD).into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "mod", kind: Some((tsc_lsproto::CompletionItemKind::TEXT).into()), sort_text: Some((tsc_ls::SORT_TEXT_JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }
 

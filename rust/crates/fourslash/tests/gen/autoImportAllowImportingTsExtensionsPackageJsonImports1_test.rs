@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_allow_importing_ts_extensions_package_json_imports1() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r##"// @lib: es5
 // @module: node18
 // @allowImportingTsExtensions: true
@@ -41,8 +41,8 @@ export function add(a: number, b: number) {}
 add/*imports*/;
 external/*exports*/;"##;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_module_specifiers("imports", vec!["#add.ts"], None);
-		f.verify_import_fix_module_specifiers("exports", vec!["pkg/external.js"], None);
+		f.verify_import_fix_module_specifiers("imports".into(), vec!["#add.ts"], None);
+		f.verify_import_fix_module_specifiers("exports".into(), vec!["pkg/external.js"], None);
 	});
 }
 

@@ -22,8 +22,8 @@ namespace M {
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
-		f.go_to_marker("1");
-		f.insert("D = C << 1,");
+		f.go_to_marker("1".into());
+		f.insert("D = C << 1,".into());
 		f.verify_no_errors();
 	});
 }

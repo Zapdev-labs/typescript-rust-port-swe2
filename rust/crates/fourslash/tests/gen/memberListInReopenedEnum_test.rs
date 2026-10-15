@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn member_list_in_reopened_enum() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"namespace M {
     enum E {
         A, B
@@ -18,7 +18,7 @@ fn member_list_in_reopened_enum() {
     var x = E./*1*/
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("1", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "A", detail: Some(("(enum member) E.A = 0").into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "B", detail: Some(("(enum member) E.B = 1").into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "C", detail: Some(("(enum member) E.C = 0").into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "D", detail: Some(("(enum member) E.D = 1").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("1".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "A", detail: Some(("(enum member) E.A = 0").into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "B", detail: Some(("(enum member) E.B = 1").into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "C", detail: Some(("(enum member) E.C = 0").into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "D", detail: Some(("(enum member) E.D = 1").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }
 

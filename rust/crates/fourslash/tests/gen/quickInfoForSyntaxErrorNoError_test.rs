@@ -12,7 +12,7 @@ fn quick_info_for_syntax_error_no_error() {
 }
 X.add/*1*/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "any", "");
+		f.verify_quick_info_at("1".into(), "any".into(), "".into());
 	});
 }
 

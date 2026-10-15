@@ -7,14 +7,14 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_spelling5() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r#"// @Filename: f1.ts
 export const fooooooooo = 1;
 // @Filename: f2.ts
 import {[|fooooooooa|]} from "./f1"; fooooooooa;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("f2.ts");
-		f.verify_range_after_code_fix(r"fooooooooo", false, 0, 0);
+		f.go_to_file("f2.ts".into());
+		f.verify_range_after_code_fix(r"fooooooooo".into(), false, 0, 0);
 	});
 }
 

@@ -23,8 +23,8 @@ declare namespace JSX {
 // @filename: /a.tsx
 <my-el /*1*/prop:foo="bar" /*2*/foo="baz" />"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "(property) 'prop:foo': string", "This also appears");
-		f.verify_quick_info_at("2", "(property) foo: string", "This appears");
+		f.verify_quick_info_at("1".into(), "(property) 'prop:foo': string".into(), "This also appears".into());
+		f.verify_quick_info_at("2".into(), "(property) foo: string".into(), "This appears".into());
 	});
 }
 

@@ -11,17 +11,17 @@ fn signature_help_nested_calls() {
 function bar(s: string) { return s; }
 let s = foo(/*a*/ /*b*/bar/*c*/(/*d*/"hello"/*e*/)/*f*/);"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("a");
+		f.go_to_marker("a".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "foo(s: string): string", ..Default::default() });
-		f.go_to_marker("b");
+		f.go_to_marker("b".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "foo(s: string): string", ..Default::default() });
-		f.go_to_marker("c");
+		f.go_to_marker("c".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "foo(s: string): string", ..Default::default() });
-		f.go_to_marker("d");
+		f.go_to_marker("d".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "bar(s: string): string", ..Default::default() });
-		f.go_to_marker("e");
+		f.go_to_marker("e".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "bar(s: string): string", ..Default::default() });
-		f.go_to_marker("f");
+		f.go_to_marker("f".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "foo(s: string): string", ..Default::default() });
 	});
 }
@@ -33,7 +33,7 @@ fn signature_help_empty_inner_call() {
 function bar(s: string) { return s; }
 let s = foo(bar(/*a*/));";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("a");
+		f.go_to_marker("a".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "bar(s: string): string", ..Default::default() });
 	});
 }

@@ -16,8 +16,8 @@ fn quick_info_on_this2() {
     }
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "this: this", "");
-		f.verify_quick_info_at("2", "this: Bar<T>", "");
+		f.verify_quick_info_at("1".into(), "this: this".into(), "".into());
+		f.verify_quick_info_at("2".into(), "this: Bar<T>".into(), "".into());
 	});
 }
 

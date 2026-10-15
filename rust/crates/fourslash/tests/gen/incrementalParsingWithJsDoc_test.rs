@@ -14,7 +14,7 @@ import c from 'c';|]
 export class LanguageIdentifier[| { }|]";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_outlining_spans();
-		f.go_to_marker("");
+		f.go_to_marker("".into());
 		f.backspace(1);
 		f.verify_outlining_spans();
 	});

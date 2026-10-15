@@ -16,9 +16,9 @@ fn formatting_crash() {
 		let mut opts199 = f.get_options();
 		opts199.format_code_settings.place_open_brace_on_new_line_for_control_blocks = tsc_core::TS_TRUE;
 		f.configure(opts199);
-		f.format_document("");
-		f.go_to_marker("");
-		f.verify_current_line_content(r"module Default");
+		f.format_document("".into());
+		f.go_to_marker("".into());
+		f.verify_current_line_content(r"module Default".into());
 	});
 }
 

@@ -9,7 +9,7 @@ fn format_selection_in_js_doc_type_literal_no_crash1() {
 	run_test(|t| {
 		let content = "// @allowJs: true\n" + "// @filename: index.js\n" + "/**\n" + " *\n" + " *\n" + " * @typedef {Object} Fixture\n" + " * @property {typeof build} build\n" + "/*begin*/ * @property {(url: string) => string} resolveUrl\n" + " * @property {() => Promise<void>} clean\n" + "/*end*/ * @property {(streaming?: boolean) => Promise<App>} loadTestAdapterApp\n" + " */\n" + "\n";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_selection("begin", "end");
+		f.format_selection("begin".into(), "end".into());
 		f.verify_current_file_content("/**\n" + " *\n" + " *\n" + " * @typedef {Object} Fixture\n" + " * @property {typeof build} build\n" + " * @property {(url: string) => string} resolveUrl\n" + " * @property {() => Promise<void>} clean\n" + " * @property {(streaming?: boolean) => Promise<App>} loadTestAdapterApp\n" + " */\n" + "\n");
 	});
 }

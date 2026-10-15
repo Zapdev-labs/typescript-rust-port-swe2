@@ -27,7 +27,7 @@ use crate::languageservice::LanguageService;
 ///
 /// Go's sentinel is an `error` value; the port mirrors it as a constant of
 /// the language-service `Error` enum.
-pub(crate) const ERR_NEEDS_AUTO_IMPORTS: Error = Error::NeedsAutoImports;
+pub const ERR_NEEDS_AUTO_IMPORTS: Error = Error::NeedsAutoImports;
 
 /// `getSwitchedType` — `caseClause` is a `*ast.CaseOrDefaultClauseNode`.
 pub(crate) fn get_switched_type(case_clause: NodeId, type_checker: &mut Checker) -> TypeId {
@@ -442,7 +442,7 @@ pub(crate) enum CompletionKind {
 }
 
 /// `CompletionTriggerCharacters`.
-pub(crate) fn completion_trigger_characters() -> &'static [&'static str] {
+pub fn completion_trigger_characters() -> &'static [&'static str] {
     &[".", "\"", "'", "`", "/", "@", "<", "#", " ", "*"]
 }
 

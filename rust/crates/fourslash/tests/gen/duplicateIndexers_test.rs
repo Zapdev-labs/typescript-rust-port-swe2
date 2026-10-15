@@ -14,7 +14,7 @@ fn duplicate_indexers() {
 var i: I;
 var /**/r = i[1];";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("", "var r: string", "");
+		f.verify_quick_info_at("".into(), "var r: string".into(), "".into());
 	});
 }
 

@@ -14,12 +14,12 @@ const a = <ns: foobar   x : test1   x :test2="string"  x:test3={true?1:0}  />;
 return a;
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
+		f.format_document("".into());
 		f.verify_current_file_content(r#"function foo() {
     const a = <ns:foobar x:test1 x:test2="string" x:test3={true ? 1 : 0} />;
 
     return a;
-}"#);
+}"#.into());
 	});
 }
 

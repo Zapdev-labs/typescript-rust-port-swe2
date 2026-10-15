@@ -13,8 +13,8 @@ type Map1<K,V> = /*2*/[];
 type Map1<K1, V1> = </*3*/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_completions(vec!["0", "1"], None);
-		f.verify_completions("2", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["K", "V"], ..Default::default() }), ..Default::default() }));
-		f.verify_completions("3", None);
+		f.verify_completions("2".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["K", "V"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("3".into(), None);
 	});
 }
 

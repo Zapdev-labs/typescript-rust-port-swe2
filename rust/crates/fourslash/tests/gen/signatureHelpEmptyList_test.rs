@@ -14,9 +14,9 @@ Foo(/*1*/);
 function Bar<T>(arg1: string, arg2: string) { }
 Bar</*2*/>();";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1");
+		f.go_to_marker("1".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "Foo(arg1: string, arg2: string): void", parameter_count: 2, parameter_name: "arg1", parameter_span: "arg1: string", ..Default::default() });
-		f.go_to_marker("2");
+		f.go_to_marker("2".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "Bar<T>(arg1: string, arg2: string): void", ..Default::default() });
 	});
 }

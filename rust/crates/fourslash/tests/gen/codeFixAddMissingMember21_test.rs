@@ -12,7 +12,7 @@ async function f() {
     p.toLowerCase();
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix_not_available("fixMissingMember");
+		f.verify_code_fix_not_available("fixMissingMember".into());
 	});
 }
 

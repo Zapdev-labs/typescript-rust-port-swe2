@@ -21,7 +21,7 @@ const /*3*/j = require("/*4*/./j.json");
 /*6*/{ "x": 0 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
-		f.verify_baseline_find_all_references("0", "2", "1", "4", "3", "5", "6");
+		f.verify_baseline_find_all_references("0".into(), "2".into(), "1".into(), "4".into(), "3".into(), "5".into(), "6".into());
 	});
 }
 

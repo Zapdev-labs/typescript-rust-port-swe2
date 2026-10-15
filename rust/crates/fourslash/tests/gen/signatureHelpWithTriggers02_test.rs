@@ -12,14 +12,14 @@ declare function bar<U>(x: U, y: U): U;
 
 foo(bar/*1*/)";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1");
-		f.insert("(");
+		f.go_to_marker("1".into());
+		f.insert("(".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "bar(x: unknown, y: unknown): unknown", ..Default::default() });
 		f.backspace(1);
-		f.insert("<");
+		f.insert("<".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "bar<U>(x: U, y: U): U", ..Default::default() });
 		f.backspace(1);
-		f.insert(",");
+		f.insert(",".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "foo(x: <U>(x: U, y: U) => U, y: <U>(x: U, y: U) => U): <U>(x: U, y: U) => U", ..Default::default() });
 		f.backspace(1);
 	});

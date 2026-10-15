@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_infer_from_usage_variable3_js() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @allowJs: true
 // @checkJs: true
 // @noEmit: true
@@ -25,7 +25,7 @@ function f(foo) {
     foo += 2
     return foo
 }
-", false, 0, 0);
+".into(), false, 0, 0);
 	});
 }
 

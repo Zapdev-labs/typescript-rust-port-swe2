@@ -7,14 +7,14 @@ use tsc_fourslash::*;
 #[test]
 fn completions_with_deprecated_tag10() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @Filename: /foo.ts
 /** @deprecated foo */
 export const foo = 0;
 // @Filename: /index.ts
 /**/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "foo", data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./foo", ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::AnyTextEdits, kind: Some((tsc_lsproto::CompletionItemKind::VARIABLE).into()), sort_text: Some((tsc_ls::deprecate_sort_text(tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS).to_string()).into()), tags: Some(vec![tsc_lsproto::COMPLETION_ITEM_TAG_DEPRECATED]), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "foo", data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./foo", ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::AnyTextEdits, kind: Some((tsc_lsproto::CompletionItemKind::VARIABLE).into()), sort_text: Some((tsc_ls::deprecate_sort_text(tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS).to_string()).into()), tags: Some(vec![tsc_lsproto::COMPLETION_ITEM_TAG_DEPRECATED]), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }
 

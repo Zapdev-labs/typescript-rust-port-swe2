@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn unused_function_in_namespace5() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @noUnusedLocals: true
 // @noUnusedParameters:true
 namespace Validation {
@@ -33,7 +33,7 @@ namespace Validation {
         function1();
     }
 
-    export let a = function3;", false, 0, 0);
+    export let a = function3;".into(), false, 0, 0);
 	});
 }
 

@@ -20,7 +20,7 @@ exports./*target*/helper = function() { return "ok"; };
 const { /*importName*/helper } = require("pkg");
 helper/*usage*/();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("importName", "usage");
+		f.verify_baseline_go_to_source_definition("importName".into(), "usage".into());
 	});
 }
 
@@ -42,7 +42,7 @@ async function main() {
     mod./*usage*/dynHelper();
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("usage");
+		f.verify_baseline_go_to_source_definition("usage".into());
 	});
 }
 

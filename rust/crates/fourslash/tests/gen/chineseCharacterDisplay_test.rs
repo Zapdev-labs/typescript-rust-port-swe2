@@ -25,8 +25,8 @@ class 中文类 {
 let /*instanceHover*/实例 = new 中文类();
 let 属性对象 = 实例./*methodHover*/获取中文属性();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("instanceHover", "let 实例: 中文类", "");
-		f.verify_quick_info_at("methodHover", "(method) 中文类.获取中文属性(): 中文界面", "");
+		f.verify_quick_info_at("instanceHover".into(), "let 实例: 中文类".into(), "".into());
+		f.verify_quick_info_at("methodHover".into(), "(method) 中文类.获取中文属性(): 中文界面".into(), "".into());
 	});
 }
 
@@ -42,7 +42,7 @@ class TSLine {
 let lines = new TSLine();
 lines./*method*/setLengthTextPositionPreset;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("method", r#"(method) TSLine.setLengthTextPositionPreset(preset: "上居中" | "下居中" | "右居中" | "左居中"): void"#, "");
+		f.verify_quick_info_at("method".into(), r#"(method) TSLine.setLengthTextPositionPreset(preset: "上居中" | "下居中" | "右居中" | "左居中"): void"#.into(), "".into());
 	});
 }
 

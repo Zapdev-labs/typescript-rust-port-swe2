@@ -10,7 +10,7 @@ fn completion_list_after_regular_expression_literal02() {
 		let content = r"let v = 100;
 let x = /absidey//**/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("", None);
+		f.verify_completions("".into(), None);
 	});
 }
 

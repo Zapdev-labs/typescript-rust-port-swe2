@@ -30,7 +30,7 @@ import * as ns from './package';
 import Default, { foo } from './package';
 
 const x: Foo = foo;
-console.log(x, Default, ns);", tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
+console.log(x, Default, ns);".into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
 	});
 }
 
@@ -65,7 +65,7 @@ import { b } from './b';
 
 const x: TypeA = a;
 const y: TypeB = b;
-console.log(x, y);", tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
+console.log(x, y);".into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
 	});
 }
 

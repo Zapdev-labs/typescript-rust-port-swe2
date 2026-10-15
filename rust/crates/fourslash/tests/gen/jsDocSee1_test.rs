@@ -26,7 +26,7 @@ const [|/*def3*/d|] = ""
 /** @see /*use5*/[|d|] dd*/
 const e = """#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(false, "use1", "use2", "use3", "use4", "use5");
+		f.verify_baseline_go_to_definition(false, "use1".into(), "use2".into(), "use3".into(), "use4".into(), "use5".into());
 	});
 }
 

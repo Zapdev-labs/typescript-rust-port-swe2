@@ -16,7 +16,7 @@ import type { app } from "./re-export";
 declare const app: app
 app.hello();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("");
+		f.verify_baseline_find_all_references("".into());
 	});
 }
 

@@ -7,13 +7,13 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_type_error() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"foo({
     /**/f: function() {},
     f() {}
 });";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("", "(method) f(): void", "");
+		f.verify_quick_info_at("".into(), "(method) f(): void".into(), "".into());
 	});
 }
 

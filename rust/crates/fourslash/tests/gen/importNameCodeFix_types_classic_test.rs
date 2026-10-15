@@ -16,7 +16,7 @@ export const qrs: number;
 xyz;
 qrs;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/a.ts");
+		f.go_to_file("/a.ts".into());
 		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport", new_file_content: r#"import { xyz } from "foo";
 import { qrs } from "./node_modules/bar/index";
 

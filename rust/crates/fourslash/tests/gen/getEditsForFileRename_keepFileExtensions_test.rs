@@ -19,7 +19,7 @@ export const name = 0;
 // @Filename: /src/index.ts
 import {name} from "./person.js";"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_will_rename_files_edits("/src/person.ts", "/src/vip.ts", vec![("/src/index.ts", r#"import {name} from "./vip.js";"#)].into_iter().collect::<FxHashMap<_, _>>(), None);
+		f.verify_will_rename_files_edits("/src/person.ts".into(), "/src/vip.ts".into(), vec![("/src/index.ts", r#"import {name} from "./vip.js";"#)].into_iter().collect::<FxHashMap<_, _>>(), None);
 	});
 }
 

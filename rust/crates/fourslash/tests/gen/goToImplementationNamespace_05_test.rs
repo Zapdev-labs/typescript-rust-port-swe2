@@ -20,7 +20,7 @@ let y = Ba/*reference1*/r;
 let x1 = Foo.B/*reference2*/az;
 let y1 = Bar.B/*reference3*/az;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_implementation("reference0", "reference1", "reference2", "reference3");
+		f.verify_baseline_go_to_implementation("reference0".into(), "reference1".into(), "reference2".into(), "reference3".into());
 	});
 }
 

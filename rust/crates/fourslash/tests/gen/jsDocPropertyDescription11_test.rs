@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn js_doc_property_description11() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"type AliasExample = {
     /** Something generic */
     [p: string]: string;
@@ -18,7 +18,7 @@ function aliasExample(e: AliasExample) {
     console.log(e./*alias*/anything);
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("alias", "(index) AliasExample[string | `any${string}`]: string", "Something generic\nSomething else");
+		f.verify_quick_info_at("alias".into(), "(index) AliasExample[string | `any${string}`]: string".into(), "Something generic\nSomething else".into());
 	});
 }
 

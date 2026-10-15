@@ -43,9 +43,9 @@ duplicate./*duplicate*/a
 mixed./*mixed*/a
 ";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("distinct", "(property) a: number", "first\nsecond");
-		f.verify_quick_info_at("duplicate", "(property) a: number", "same\nthird");
-		f.verify_quick_info_at("mixed", "(property) a: number", "first\nsecond");
+		f.verify_quick_info_at("distinct".into(), "(property) a: number".into(), "first\nsecond".into());
+		f.verify_quick_info_at("duplicate".into(), "(property) a: number".into(), "same\nthird".into());
+		f.verify_quick_info_at("mixed".into(), "(property) a: number".into(), "first\nsecond".into());
 	});
 }
 

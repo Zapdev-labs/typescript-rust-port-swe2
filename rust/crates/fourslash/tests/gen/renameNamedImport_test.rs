@@ -21,9 +21,9 @@ someExportedVariable;
 { "compilerOptions": { "lib": ["es5"] } }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_file("/home/src/workspaces/project/lib/index.ts");
-		f.go_to_file("/home/src/workspaces/project/src/index.ts");
-		f.verify_baseline_rename(Some(tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::TS_TRUE, ..Default::default() }), "i");
+		f.go_to_file("/home/src/workspaces/project/lib/index.ts".into());
+		f.go_to_file("/home/src/workspaces/project/src/index.ts".into());
+		f.verify_baseline_rename(Some(tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::TS_TRUE, ..Default::default() }), "i".into());
 	});
 }
 

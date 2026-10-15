@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_missing_type_annotation_on_exports25_heritage_formatting_3() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @isolatedDeclarations: true
 // @declaration: true
 function mixin<T extends new (...a: any) => any>(ctor: T): T {

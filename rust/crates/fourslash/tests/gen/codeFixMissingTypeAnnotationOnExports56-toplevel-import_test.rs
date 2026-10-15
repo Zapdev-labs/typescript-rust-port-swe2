@@ -20,7 +20,7 @@ export function wrapPerson() {
   return { person: getPerson() }
 };"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/code.ts");
+		f.go_to_file("/code.ts".into());
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add return type '{ person: Person; }'", new_file_content: r#"import { getPerson, Person } from "./person-code";
 export function wrapPerson(): {
     person: Person;

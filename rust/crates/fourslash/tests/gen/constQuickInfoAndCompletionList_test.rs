@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn const_quick_info_and_completion_list() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"const /*1*/a = 10;
 var x = /*2*/a;
 /*3*/
@@ -18,15 +18,15 @@ function foo() {
     /*7*/
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("2", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "a", detail: Some(("const a: 10").into()), ..Default::default() })], excludes: vec!["b"], ..Default::default() }), ..Default::default() }));
-		f.verify_completions("3", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "a", detail: Some(("const a: 10").into()), ..Default::default() })], excludes: vec!["b"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("2".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "a", detail: Some(("const a: 10").into()), ..Default::default() })], excludes: vec!["b"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("3".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "a", detail: Some(("const a: 10").into()), ..Default::default() })], excludes: vec!["b"], ..Default::default() }), ..Default::default() }));
 		f.verify_completions(vec!["5", "6"], Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "a", detail: Some(("const a: 10").into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "b", detail: Some(("const b: 20").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
-		f.verify_completions("7", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "a", detail: Some(("const a: 10").into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "b", detail: Some(("const b: 20").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
-		f.verify_quick_info_at("1", "const a: 10", "");
-		f.verify_quick_info_at("2", "const a: 10", "");
-		f.verify_quick_info_at("4", "const b: 20", "");
-		f.verify_quick_info_at("5", "const b: 20", "");
-		f.verify_quick_info_at("6", "const a: 10", "");
+		f.verify_completions("7".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "a", detail: Some(("const a: 10").into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "b", detail: Some(("const b: 20").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_quick_info_at("1".into(), "const a: 10".into(), "".into());
+		f.verify_quick_info_at("2".into(), "const a: 10".into(), "".into());
+		f.verify_quick_info_at("4".into(), "const b: 20".into(), "".into());
+		f.verify_quick_info_at("5".into(), "const b: 20".into(), "".into());
+		f.verify_quick_info_at("6".into(), "const a: 10".into(), "".into());
 	});
 }
 

@@ -12,15 +12,15 @@ fn format_colon_and_q_mark() {
     x:number = 1?2:3;/*3*/
 }/*4*/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"class foo {");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"    constructor(n?: number, m = 5, o?: string) { }");
-		f.go_to_marker("3");
-		f.verify_current_line_content(r"    x: number = 1 ? 2 : 3;");
-		f.go_to_marker("4");
-		f.verify_current_line_content(r"}");
+		f.format_document("".into());
+		f.go_to_marker("1".into());
+		f.verify_current_line_content(r"class foo {".into());
+		f.go_to_marker("2".into());
+		f.verify_current_line_content(r"    constructor(n?: number, m = 5, o?: string) { }".into());
+		f.go_to_marker("3".into());
+		f.verify_current_line_content(r"    x: number = 1 ? 2 : 3;".into());
+		f.go_to_marker("4".into());
+		f.verify_current_line_content(r"}".into());
 	});
 }
 

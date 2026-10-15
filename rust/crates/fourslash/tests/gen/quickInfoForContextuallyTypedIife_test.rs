@@ -15,20 +15,20 @@ fn quick_info_for_contextually_typed_iife() {
     return q; })({ q: 13, qq: 12 }, 1, { p: 14 });
 ((a/*9*/, b/*10*/, c/*11*/) => [a/*12*/,b/*13*/,c/*14*/])("foo", 101, false);"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "(parameter) q: number", "");
-		f.verify_quick_info_at("2", "(parameter) qq: number", "");
-		f.verify_quick_info_at("3", "(parameter) x: number", "");
-		f.verify_quick_info_at("4", "(parameter) p: number", "");
-		f.verify_quick_info_at("5", "(parameter) q: number", "");
-		f.verify_quick_info_at("6", "(parameter) qq: number", "");
-		f.verify_quick_info_at("7", "(parameter) p: number", "");
-		f.verify_quick_info_at("8", "(parameter) x: number", "");
-		f.verify_quick_info_at("9", "(parameter) a: string", "");
-		f.verify_quick_info_at("10", "(parameter) b: number", "");
-		f.verify_quick_info_at("11", "(parameter) c: boolean", "");
-		f.verify_quick_info_at("12", "(parameter) a: string", "");
-		f.verify_quick_info_at("13", "(parameter) b: number", "");
-		f.verify_quick_info_at("14", "(parameter) c: boolean", "");
+		f.verify_quick_info_at("1".into(), "(parameter) q: number".into(), "".into());
+		f.verify_quick_info_at("2".into(), "(parameter) qq: number".into(), "".into());
+		f.verify_quick_info_at("3".into(), "(parameter) x: number".into(), "".into());
+		f.verify_quick_info_at("4".into(), "(parameter) p: number".into(), "".into());
+		f.verify_quick_info_at("5".into(), "(parameter) q: number".into(), "".into());
+		f.verify_quick_info_at("6".into(), "(parameter) qq: number".into(), "".into());
+		f.verify_quick_info_at("7".into(), "(parameter) p: number".into(), "".into());
+		f.verify_quick_info_at("8".into(), "(parameter) x: number".into(), "".into());
+		f.verify_quick_info_at("9".into(), "(parameter) a: string".into(), "".into());
+		f.verify_quick_info_at("10".into(), "(parameter) b: number".into(), "".into());
+		f.verify_quick_info_at("11".into(), "(parameter) c: boolean".into(), "".into());
+		f.verify_quick_info_at("12".into(), "(parameter) a: string".into(), "".into());
+		f.verify_quick_info_at("13".into(), "(parameter) b: number".into(), "".into());
+		f.verify_quick_info_at("14".into(), "(parameter) c: boolean".into(), "".into());
 	});
 }
 

@@ -30,7 +30,7 @@ var x2 = new [|/*xref*/x|]();
 var y1 = new [|/*yref*/y|]();
 var z1 = new [|/*zref*/z|]();";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "xusage", "yusage", "zusage", "cref", "xref", "yref", "zref");
+		f.verify_baseline_go_to_definition(true, "xusage".into(), "yusage".into(), "zusage".into(), "cref".into(), "xref".into(), "yref".into(), "zref".into());
 	});
 }
 

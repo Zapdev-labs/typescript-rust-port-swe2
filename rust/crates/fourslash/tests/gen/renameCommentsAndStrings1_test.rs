@@ -13,7 +13,7 @@ fn rename_comments_and_strings1() {
     "this is a reference to Bar in a string"
 }|]"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_rename_at_ranges_with_text(None, "Bar");
+		f.verify_baseline_rename_at_ranges_with_text(None, "Bar".into());
 	});
 }
 

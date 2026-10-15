@@ -34,7 +34,7 @@ class HasConstructor extends Base {
 }
 const hasConstructor = new [|/*HasConstructor*/HasConstructor|](cArg)";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "Derived", "SameFile", "HasConstructor", "Base");
+		f.verify_baseline_go_to_definition(true, "Derived".into(), "SameFile".into(), "HasConstructor".into(), "Base".into());
 	});
 }
 

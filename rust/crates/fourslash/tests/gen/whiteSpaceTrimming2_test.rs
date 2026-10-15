@@ -12,15 +12,15 @@ let templateHead = " + "`" + r"/*    /*2*/${1 + 2}" + "`" + r";
 let templateMiddle = " + "`" + r"/*    ${1 + 2    /*3*/}" + "`" + r";
 let templateTail = " + "`" + r"/*    ${1 + 2}    /*4*/" + "`" + r";";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1");
-		f.insert("\n");
-		f.go_to_marker("2");
-		f.insert("\n");
-		f.go_to_marker("3");
-		f.insert("\n");
-		f.go_to_marker("4");
-		f.insert("\n");
-		f.verify_current_file_content("let noSubTemplate = `/*    \n`;\nlet templateHead = `/*    \n${1 + 2}`;\nlet templateMiddle = `/*    ${1 + 2\n    }`;\nlet templateTail = `/*    ${1 + 2}    \n`;");
+		f.go_to_marker("1".into());
+		f.insert("\n".into());
+		f.go_to_marker("2".into());
+		f.insert("\n".into());
+		f.go_to_marker("3".into());
+		f.insert("\n".into());
+		f.go_to_marker("4".into());
+		f.insert("\n".into());
+		f.verify_current_file_content("let noSubTemplate = `/*    \n`;\nlet templateHead = `/*    \n${1 + 2}`;\nlet templateMiddle = `/*    ${1 + 2\n    }`;\nlet templateTail = `/*    ${1 + 2}    \n`;".into());
 	});
 }
 

@@ -15,7 +15,7 @@ export const /**/elem = <div>
     <span />
 </div>;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
+		f.go_to_marker("".into());
 		f.verify_code_fix_available(None);
 	});
 }

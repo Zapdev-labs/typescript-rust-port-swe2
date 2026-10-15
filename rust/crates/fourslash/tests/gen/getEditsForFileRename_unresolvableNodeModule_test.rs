@@ -14,7 +14,7 @@ import "doesnt-exist";
 // @Filename: /modules/@local/foo.js
 import "doesnt-exist"; "#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_will_rename_files_edits("/modules/@app/something", "/modules/@app/something-2", vec![].into_iter().collect::<FxHashMap<_, _>>(), None);
+		f.verify_will_rename_files_edits("/modules/@app/something".into(), "/modules/@app/something-2".into(), vec![].into_iter().collect::<FxHashMap<_, _>>(), None);
 	});
 }
 

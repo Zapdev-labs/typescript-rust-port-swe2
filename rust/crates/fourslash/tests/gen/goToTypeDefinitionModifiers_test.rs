@@ -26,7 +26,7 @@ fn go_to_type_definition_modifiers() {
 
 exp/*exportFunction*/ort function foo/*foo*/() { }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_type_definition("export", "A", "private", "z", "private2", "y", "readonly", "x", "async", "a", "override", "b", "public1", "public2", "multipleModifiers", "c", "exportFunction", "foo");
+		f.verify_baseline_go_to_type_definition("export".into(), "A".into(), "private".into(), "z".into(), "private2".into(), "y".into(), "readonly".into(), "x".into(), "async".into(), "a".into(), "override".into(), "b".into(), "public1".into(), "public2".into(), "multipleModifiers".into(), "c".into(), "exportFunction".into(), "foo".into());
 	});
 }
 

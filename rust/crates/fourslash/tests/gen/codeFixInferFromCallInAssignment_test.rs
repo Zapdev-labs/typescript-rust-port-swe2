@@ -7,14 +7,14 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_infer_from_call_in_assignment() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @noImplicitAny: true
 function inferAny( [| app |] ) {
     const result = app.use('hi')
     return result
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_range_after_code_fix(r"app: { use: (arg0: string) => any }", false, 0, 0);
+		f.verify_range_after_code_fix(r"app: { use: (arg0: string) => any }".into(), false, 0, 0);
 	});
 }
 

@@ -27,7 +27,7 @@ import { Base } from './interface';
 
 export class C implements Base {[| |]}"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("index.ts");
+		f.go_to_file("index.ts".into());
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'Base'", new_file_content: r"import { Base } from './interface';
 import A from './types1';
 import { B, C, D } from './types2';

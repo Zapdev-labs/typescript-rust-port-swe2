@@ -17,7 +17,7 @@ const f = require("./a");
 import f = require("./a");
 [|/*useTs*/f|]();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "use", "useTs");
+		f.verify_baseline_go_to_definition(true, "use".into(), "useTs".into());
 	});
 }
 

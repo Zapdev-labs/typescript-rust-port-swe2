@@ -15,7 +15,7 @@ class Foo {
     }
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("", "var x: number", "");
+		f.verify_quick_info_at("".into(), "var x: number".into(), "".into());
 	});
 }
 

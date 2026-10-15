@@ -18,16 +18,16 @@ fn doc_comment_template_class_decl_methods02() {
 		let mut capabilities = tsc_fourslash::get_default_capabilities();
 		capabilities.text_document.completion.completion_item.snippet_support = Some((false).into());
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", capabilities, content);
-		f.verify_js_doc_completion("0", 11, r"/**
+		f.verify_js_doc_completion("0".into(), 11, r"/**
      * 
      * @returns
-     */", None);
-		f.verify_js_doc_completion("1", 11, r"/**
+     */".into(), None);
+		f.verify_js_doc_completion("1".into(), 11, r"/**
      * 
      * @param x
      * @param y
      * @param z
-     */", None);
+     */".into(), None);
 	});
 }
 

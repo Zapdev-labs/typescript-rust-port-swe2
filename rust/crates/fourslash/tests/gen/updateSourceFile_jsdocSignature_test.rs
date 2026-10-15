@@ -13,8 +13,8 @@ fn update_source_file_jsdoc_signature() {
  */
 let x;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
-		f.insert("number");
+		f.go_to_marker("".into());
+		f.insert("number".into());
 	});
 }
 

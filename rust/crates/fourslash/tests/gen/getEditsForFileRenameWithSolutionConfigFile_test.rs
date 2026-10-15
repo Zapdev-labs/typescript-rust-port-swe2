@@ -31,7 +31,7 @@ b;
 // @Filename: /src/b.ts
 export const b = 0;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_will_rename_files_edits("/src/b.ts", "/src/c.ts", vec![("/src/a.ts", r#"import { b } from "./c";
+		f.verify_will_rename_files_edits("/src/b.ts".into(), "/src/c.ts".into(), vec![("/src/a.ts", r#"import { b } from "./c";
 b;
 "#)].into_iter().collect::<FxHashMap<_, _>>(), None);
 	});
@@ -81,10 +81,10 @@ helper;
 import { helper } from "../lib/helper";
 helper;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("helper");
-		let mut result = f.will_rename_files(Some(tsc_lsproto::FileRename { old_uri: lsconv.file_name_to_document_uri("/lib/helper.ts"), new_uri: lsconv.file_name_to_document_uri("/lib/renamed-helper.ts"), ..Default::default() }));
+		f.go_to_marker("helper".into());
+		let mut result = f.will_rename_files(Some(tsc_lsproto::FileRename { old_uri: lsconv.file_name_to_document_uri("/lib/helper.ts".into()), new_uri: lsconv.file_name_to_document_uri("/lib/renamed-helper.ts".into()), ..Default::default() }));
 		if result.workspace_edit == None || result.workspace_edit.document_changes == None {
-			panic!("workspace/willRenameFiles returned no document changes");
+			panic!("workspace/willRenameFiles returned no document changes".into());
 		}
 		for change in *result.workspace_edit.document_changes {
 			if change.text_document_edit != None && change.text_document_edit.text_document.uri.file_name() == "/app/main.ts" {
@@ -95,7 +95,7 @@ helper;"#;
 				}
 			}
 		}
-		panic!("workspace/willRenameFiles returned no import update for /app/main.ts");
+		panic!("workspace/willRenameFiles returned no import update for /app/main.ts".into());
 	});
 }
 

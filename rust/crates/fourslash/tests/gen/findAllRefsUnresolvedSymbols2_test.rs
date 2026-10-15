@@ -16,7 +16,7 @@ let d: /*a4*/Bar./*b0*/X;
 let e: /*a5*/Bar./*b1*/X<string>;
 let f: /*a6*/Bar./*c0*/X./*d0*/Y;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("a0", "a1", "a2", "a3", "a4", "a5", "a6", "b0", "b1", "c0", "d0");
+		f.verify_baseline_find_all_references("a0".into(), "a1".into(), "a2".into(), "a3".into(), "a4".into(), "a5".into(), "a6".into(), "b0".into(), "b1".into(), "c0".into(), "d0".into());
 	});
 }
 

@@ -9,9 +9,9 @@ fn semicolon_formatting_after_array_literal() {
 	run_test(|t| {
 		let content = r"[1,2]/**/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
-		f.insert(";");
-		f.verify_current_line_content(r"[1, 2];");
+		f.go_to_marker("".into());
+		f.insert(";".into());
+		f.verify_current_line_content(r"[1, 2];".into());
 	});
 }
 

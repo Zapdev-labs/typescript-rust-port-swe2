@@ -11,7 +11,7 @@ fn find_references_jsx_tag_name2() {
 /*1*/const /*2*/obj = {Component: () => <div/>};
 const element = </*3*/obj.Component/>;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1", "2", "3");
+		f.verify_baseline_find_all_references("1".into(), "2".into(), "3".into());
 	});
 }
 

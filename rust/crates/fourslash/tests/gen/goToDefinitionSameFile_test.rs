@@ -20,7 +20,7 @@ var foo = new /*localClassReference*/localClass();
 class fooCls implements /*localInterfaceReference*/localInterface { }
 var fooVar = /*localModuleReference*/localModule.foo;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(false, "localVariableReference", "localFunctionReference", "localClassReference", "localInterfaceReference", "localModuleReference");
+		f.verify_baseline_go_to_definition(false, "localVariableReference".into(), "localFunctionReference".into(), "localClassReference".into(), "localInterfaceReference".into(), "localModuleReference".into());
 	});
 }
 

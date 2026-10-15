@@ -13,13 +13,13 @@ fn formatting_on_nested_statements() {
 }/*2*/
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_selection("1", "2");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"    {");
-		f.go_to_marker("3");
-		f.verify_current_line_content(r"        test");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"    }");
+		f.format_selection("1".into(), "2".into());
+		f.go_to_marker("1".into());
+		f.verify_current_line_content(r"    {".into());
+		f.go_to_marker("3".into());
+		f.verify_current_line_content(r"        test".into());
+		f.go_to_marker("2".into());
+		f.verify_current_line_content(r"    }".into());
 	});
 }
 

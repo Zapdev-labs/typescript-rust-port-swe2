@@ -13,11 +13,11 @@ export const x = 0";
 [|export { x } from "./a";
 x;|]"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/b.ts");
+		f.go_to_file("/b.ts".into());
 		f.verify_range_after_code_fix(r#"import { x } from "./a";
 
 export { x } from "./a";
-x;"#, true, 0, 0);
+x;"#.into(), true, 0, 0);
 	});
 }
 

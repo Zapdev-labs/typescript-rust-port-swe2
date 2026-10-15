@@ -11,7 +11,7 @@ fn code_fix_missing_type_annotation_on_exports_arrow_parens_param_only() {
 // @declaration: true
 export const func = /*a*/x/*b*/ => 0;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("a");
+		f.go_to_marker("a".into());
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: r"Add annotation of type 'any'", new_file_content: r"export const func = (x: any) => 0;", apply_changes: true, ..Default::default() });
 	});
 }

@@ -9,7 +9,7 @@ fn contextual_typing_from_type_assertion1() {
 	run_test(|t| {
 		let content = r"var f3 = <(x: string) => string> function (/**/x) { return x.toLowerCase(); };";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("", "(parameter) x: string", "");
+		f.verify_quick_info_at("".into(), "(parameter) x: string".into(), "".into());
 	});
 }
 

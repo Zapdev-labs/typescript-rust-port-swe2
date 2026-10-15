@@ -9,7 +9,7 @@ fn invalid_rest_arg_error() {
 	run_test(|t| {
 		let content = r"function b(.../*1*/)/*2*/ {}  ";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_error_exists_between_markers("1", "2");
+		f.verify_error_exists_between_markers("1".into(), "2".into());
 	});
 }
 

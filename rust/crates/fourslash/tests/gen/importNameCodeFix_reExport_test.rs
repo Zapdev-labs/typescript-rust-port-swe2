@@ -14,7 +14,7 @@ export { default } from "./a";
 // @Filename: /user.ts
 [|foo;|]"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/user.ts");
+		f.go_to_file("/user.ts".into());
 		f.verify_import_fix_at_position(vec![r#"import foo from "./a";
 
 foo;"#, r#"import foo from "./b";

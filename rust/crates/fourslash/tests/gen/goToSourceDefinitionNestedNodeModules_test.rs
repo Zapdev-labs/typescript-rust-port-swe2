@@ -24,7 +24,7 @@ export function /*target*/inner() { return "ok"; }
 import { /*importName*/inner } from "outer";
 inner/*usage*/();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("importName", "usage");
+		f.verify_baseline_go_to_source_definition("importName".into(), "usage".into());
 	});
 }
 

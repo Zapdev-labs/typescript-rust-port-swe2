@@ -14,8 +14,8 @@ while (true) {
   getPromise()/*1*/.toLowerCase();
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix_not_available("addMissingAwait");
-		f.verify_code_fix_not_available("addMissingAwaitToInitializer");
+		f.verify_code_fix_not_available("addMissingAwait".into());
+		f.verify_code_fix_not_available("addMissingAwaitToInitializer".into());
 	});
 }
 

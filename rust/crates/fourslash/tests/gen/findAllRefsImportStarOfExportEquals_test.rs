@@ -24,7 +24,7 @@ fn find_all_refs_import_star_of_export_equals() {
 /*c2*/[|a|].x;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
-		f.verify_baseline_find_all_references("a0", "a1", "a2", "b0", "b1", "c0", "c1", "c2");
+		f.verify_baseline_find_all_references("a0".into(), "a1".into(), "a2".into(), "b0".into(), "b1".into(), "c0".into(), "c1".into(), "c2".into());
 		f.verify_baseline_rename(None, f.ranges()[1], f.ranges()[3], f.ranges()[5]);
 		f.verify_baseline_rename(None, f.ranges()[7], f.ranges()[8], f.ranges()[9]);
 		f.verify_baseline_rename(None, f.ranges()[11], f.ranges()[12], f.ranges()[13]);

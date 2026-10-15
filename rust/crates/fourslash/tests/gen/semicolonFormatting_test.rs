@@ -10,8 +10,8 @@ fn semicolon_formatting() {
 		let content = r"/**/function of1 (b:{r:{c:number";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_eof();
-		f.insert(";");
-		f.verify_current_line_content(r"function of1(b: { r: { c: number;");
+		f.insert(";".into());
+		f.verify_current_line_content(r"function of1(b: { r: { c: number;".into());
 	});
 }
 

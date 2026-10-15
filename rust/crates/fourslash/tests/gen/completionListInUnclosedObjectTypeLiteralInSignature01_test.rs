@@ -14,7 +14,7 @@ fn completion_list_in_unclosed_object_type_literal_in_signature01() {
 
 declare function foo<TString, TNumber>(obj: I<TString, TNumber>): { str: T/*1*/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("1", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["I", "TString", "TNumber"], excludes: vec!["foo", "obj"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("1".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["I", "TString", "TNumber"], excludes: vec!["foo", "obj"], ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -34,19 +34,19 @@ var /*11*/dd = aa.map(/*12*/x => x.length);
 
 var e = a.map(x => x./*13*/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "var b: number[]", "");
-		f.verify_quick_info_at("2", "(parameter) x: string", "");
-		f.verify_quick_info_at("3", "var c: number[]", "");
-		f.verify_quick_info_at("4", "(parameter) x: string", "");
-		f.verify_quick_info_at("5", "var d: number[]", "");
-		f.verify_quick_info_at("6", "(parameter) x: string", "");
-		f.verify_quick_info_at("7", "var bb: any[]", "");
-		f.verify_quick_info_at("8", "(parameter) x: any", "");
-		f.verify_quick_info_at("9", "var cc: any[]", "");
-		f.verify_quick_info_at("10", "(parameter) x: any", "");
-		f.verify_quick_info_at("11", "var dd: any[]", "");
-		f.verify_quick_info_at("12", "(parameter) x: any", "");
-		f.verify_completions("13", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["length"], excludes: vec!["toFixed"], ..Default::default() }), ..Default::default() }));
+		f.verify_quick_info_at("1".into(), "var b: number[]".into(), "".into());
+		f.verify_quick_info_at("2".into(), "(parameter) x: string".into(), "".into());
+		f.verify_quick_info_at("3".into(), "var c: number[]".into(), "".into());
+		f.verify_quick_info_at("4".into(), "(parameter) x: string".into(), "".into());
+		f.verify_quick_info_at("5".into(), "var d: number[]".into(), "".into());
+		f.verify_quick_info_at("6".into(), "(parameter) x: string".into(), "".into());
+		f.verify_quick_info_at("7".into(), "var bb: any[]".into(), "".into());
+		f.verify_quick_info_at("8".into(), "(parameter) x: any".into(), "".into());
+		f.verify_quick_info_at("9".into(), "var cc: any[]".into(), "".into());
+		f.verify_quick_info_at("10".into(), "(parameter) x: any".into(), "".into());
+		f.verify_quick_info_at("11".into(), "var dd: any[]".into(), "".into());
+		f.verify_quick_info_at("12".into(), "(parameter) x: any".into(), "".into());
+		f.verify_completions("13".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["length"], excludes: vec!["toFixed"], ..Default::default() }), ..Default::default() }));
 	});
 }
 

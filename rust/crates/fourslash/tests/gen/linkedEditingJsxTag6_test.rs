@@ -23,8 +23,8 @@ const jsx = (
      <//*30*/foo  /*31*/ .// hi/*32*/
      /*33*/bar/*30end*/>";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		let mut linked_cursors1 = vec![tsc_lsproto::Range { start: f.marker_by_name("start").ls_position, end: f.marker_by_name("startend").ls_position, ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("end").ls_position, end: f.marker_by_name("endend").ls_position, ..Default::default() }];
-		let mut linked_cursors2 = vec![tsc_lsproto::Range { start: f.marker_by_name("26").ls_position, end: f.marker_by_name("26end").ls_position, ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("30").ls_position, end: f.marker_by_name("30end").ls_position, ..Default::default() }];
+		let mut linked_cursors1 = vec![tsc_lsproto::Range { start: f.marker_by_name("start".into()).ls_position, end: f.marker_by_name("startend".into()).ls_position, ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("end".into()).ls_position, end: f.marker_by_name("endend".into()).ls_position, ..Default::default() }];
+		let mut linked_cursors2 = vec![tsc_lsproto::Range { start: f.marker_by_name("26".into()).ls_position, end: f.marker_by_name("26end".into()).ls_position, ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("30".into()).ls_position, end: f.marker_by_name("30end".into()).ls_position, ..Default::default() }];
 		f.verify_linked_editing(vec![("1", linked_cursors1), ("2", linked_cursors1), ("3", linked_cursors1), ("4", None), ("5", None), ("6", None), ("7", None), ("8", None), ("9", None), ("10", None), ("11", None), ("12", None), ("13", None), ("14", None), ("15", None), ("16", None), ("17", None), ("18", None), ("19", None), ("20", None), ("21", None), ("22", None), ("23", None), ("24", None), ("25", None), ("26", linked_cursors2), ("27", linked_cursors2), ("28", linked_cursors2), ("29", linked_cursors2), ("30", linked_cursors2), ("31", linked_cursors2), ("32", linked_cursors2), ("33", linked_cursors2)].into_iter().collect::<FxHashMap<_, _>>());
 	});
 }

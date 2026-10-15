@@ -10,10 +10,10 @@ fn formatting_with_multiline_comments() {
 		let content = r"f(/*
 /*2*/         */() => { /*1*/ });";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1");
-		f.insert_line("");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"         */() => {");
+		f.go_to_marker("1".into());
+		f.insert_line("".into());
+		f.go_to_marker("2".into());
+		f.verify_current_line_content(r"         */() => {".into());
 	});
 }
 

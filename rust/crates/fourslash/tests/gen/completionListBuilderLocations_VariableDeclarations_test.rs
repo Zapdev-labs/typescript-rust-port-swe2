@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_builder_locations_variable_declarations() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r#"// @lib: es5
 var x = a/*var1*/
 var x = (b/*var2*/

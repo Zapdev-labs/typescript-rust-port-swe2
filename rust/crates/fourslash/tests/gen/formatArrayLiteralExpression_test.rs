@@ -29,25 +29,25 @@ export let Things2 = [
         Pie: 'pie'
     }];/*9*/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"    Hat: 'hat',");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"}, {");
-		f.go_to_marker("3");
-		f.verify_current_line_content(r"    Salad: 'salad',");
-		f.go_to_marker("4");
-		f.verify_current_line_content(r"}];");
-		f.go_to_marker("5");
-		f.verify_current_line_content(r"        Hat: 'hat',");
-		f.go_to_marker("6");
-		f.verify_current_line_content(r"    },");
-		f.go_to_marker("7");
-		f.verify_current_line_content(r"        Salad: 'salad',");
-		f.go_to_marker("8");
-		f.verify_current_line_content(r"        Burrito: ['burrito', 'carne asada', 'tinga de res', 'tinga de pollo'],");
-		f.go_to_marker("9");
-		f.verify_current_line_content(r"    }];");
+		f.format_document("".into());
+		f.go_to_marker("1".into());
+		f.verify_current_line_content(r"    Hat: 'hat',".into());
+		f.go_to_marker("2".into());
+		f.verify_current_line_content(r"}, {".into());
+		f.go_to_marker("3".into());
+		f.verify_current_line_content(r"    Salad: 'salad',".into());
+		f.go_to_marker("4".into());
+		f.verify_current_line_content(r"}];".into());
+		f.go_to_marker("5".into());
+		f.verify_current_line_content(r"        Hat: 'hat',".into());
+		f.go_to_marker("6".into());
+		f.verify_current_line_content(r"    },".into());
+		f.go_to_marker("7".into());
+		f.verify_current_line_content(r"        Salad: 'salad',".into());
+		f.go_to_marker("8".into());
+		f.verify_current_line_content(r"        Burrito: ['burrito', 'carne asada', 'tinga de res', 'tinga de pollo'],".into());
+		f.go_to_marker("9".into());
+		f.verify_current_line_content(r"    }];".into());
 	});
 }
 

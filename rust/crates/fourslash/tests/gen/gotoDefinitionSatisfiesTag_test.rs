@@ -19,7 +19,7 @@ fn goto_definition_satisfies_tag() {
 /** @satisfies {/*use*/[|T|]} comment */
 const foo = { a: 1 };";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(false, "use");
+		f.verify_baseline_go_to_definition(false, "use".into());
 	});
 }
 

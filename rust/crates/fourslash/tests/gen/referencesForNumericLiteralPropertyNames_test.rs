@@ -16,7 +16,7 @@ x[12];
 x = { "12": 0 };
 x = { 12: 0 };"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1");
+		f.verify_baseline_find_all_references("1".into());
 	});
 }
 

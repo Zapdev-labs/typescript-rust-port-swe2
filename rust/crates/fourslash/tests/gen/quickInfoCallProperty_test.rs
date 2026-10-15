@@ -15,7 +15,7 @@ function f(x: I): void {
     x./**/m();
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("", "(property) I.m: () => void", "Doc");
+		f.verify_quick_info_at("".into(), "(property) I.m: () => void".into(), "Doc".into());
 	});
 }
 

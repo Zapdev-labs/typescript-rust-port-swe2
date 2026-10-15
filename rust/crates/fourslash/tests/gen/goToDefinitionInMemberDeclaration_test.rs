@@ -26,7 +26,7 @@ class /*selfDefinition*/Bar {
     }
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "interfaceReference", "interfaceReferenceInList", "interfaceReferenceInConstructor", "classReference", "classReferenceInInitializer", "enumReference", "enumReferenceInInitializer", "selfReference");
+		f.verify_baseline_go_to_definition(true, "interfaceReference".into(), "interfaceReferenceInList".into(), "interfaceReferenceInConstructor".into(), "classReference".into(), "classReferenceInInitializer".into(), "enumReference".into(), "enumReferenceInInitializer".into(), "selfReference".into());
 	});
 }
 

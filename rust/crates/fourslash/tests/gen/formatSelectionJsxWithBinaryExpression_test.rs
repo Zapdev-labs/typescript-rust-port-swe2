@@ -24,7 +24,7 @@ function TestWidget() {
     );
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_selection("1", "2");
+		f.format_selection("1".into(), "2".into());
 		f.verify_current_file_content(r"function TestWidget() {
     const test = true;
     return (
@@ -39,7 +39,7 @@ function TestWidget() {
             <div>some text</div>
         </div>
     );
-}");
+}".into());
 	});
 }
 

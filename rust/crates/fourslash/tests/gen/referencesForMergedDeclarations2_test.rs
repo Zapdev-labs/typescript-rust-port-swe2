@@ -18,7 +18,7 @@ function ATest() { }
 var a: /*3*/alias.Bar; // namespace
 /*4*/alias.call(this); // value";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1", "2", "3", "4");
+		f.verify_baseline_find_all_references("1".into(), "2".into(), "3".into(), "4".into());
 	});
 }
 

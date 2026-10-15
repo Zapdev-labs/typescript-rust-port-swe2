@@ -7,11 +7,11 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_display_parts_iife() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @strictNullChecks: true
 var iife = (function foo/*1*/(x, y) { return x })(12);";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "(local function) foo(x: number, y?: undefined): number", "");
+		f.verify_quick_info_at("1".into(), "(local function) foo(x: number, y?: undefined): number".into(), "".into());
 	});
 }
 

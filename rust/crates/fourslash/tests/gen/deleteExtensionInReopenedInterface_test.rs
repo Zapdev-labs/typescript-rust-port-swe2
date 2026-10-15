@@ -18,14 +18,14 @@ class C /*delImplements*/implements A { }
 var c: C;
 c.a;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("del");
+		f.go_to_marker("del".into());
 		f.delete_at_caret(9);
 		f.go_to_eof();
-		f.insert("var a = i.a;");
-		f.go_to_marker("delImplements");
+		f.insert("var a = i.a;".into());
+		f.go_to_marker("delImplements".into());
 		f.delete_at_caret(12);
-		f.go_to_marker("del");
-		f.insert("extends A");
+		f.go_to_marker("del".into());
+		f.insert("extends A".into());
 	});
 }
 

@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn js_doc_augments() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @allowJs: true
 // @Filename: dummy.js
 /**
@@ -24,8 +24,8 @@ declare class Thing<T> {
     mine: T;
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
-		f.verify_quick_info_is("(local var) x: string", "");
+		f.go_to_marker("".into());
+		f.verify_quick_info_is("(local var) x: string".into(), "".into());
 	});
 }
 

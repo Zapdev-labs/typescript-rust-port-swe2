@@ -29,14 +29,14 @@ class Something {
 }
 let x = new Something(/*sig*/);"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("body");
-		f.insert(".");
+		f.go_to_marker("body".into());
+		f.insert(".".into());
 		f.verify_completions(None, Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "toFixed", kind: Some((tsc_lsproto::CompletionItemKind::METHOD).into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 		f.backspace(1);
-		f.go_to_marker("sig");
+		f.go_to_marker("sig".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "Something(a: number, b: any): Something", ..Default::default() });
-		f.go_to_marker("method");
-		f.insert(".");
+		f.go_to_marker("method".into());
+		f.insert(".".into());
 		f.verify_completions(None, Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "toFixed", kind: Some((tsc_lsproto::CompletionItemKind::METHOD).into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }

@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn completion_entry_for_argument_constrained_to_string() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r#"declare function test<P extends "a" | "b">(p: P): void;
 
 test(/*ts*/)

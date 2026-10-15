@@ -31,24 +31,24 @@ class Foo {
 		let mut capabilities = tsc_fourslash::get_default_capabilities();
 		capabilities.text_document.completion.completion_item.snippet_support = Some((false).into());
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", capabilities, content);
-		f.verify_js_doc_completion("0", 3, r"/** */", None);
-		f.verify_js_doc_completion("1", 7, r"/**
+		f.verify_js_doc_completion("0".into(), 3, r"/** */".into(), None);
+		f.verify_js_doc_completion("1".into(), 7, r"/**
  * 
  * @returns
- */", None);
-		f.verify_js_doc_completion("2", 7, r"/**
+ */".into(), None);
+		f.verify_js_doc_completion("2".into(), 7, r"/**
  * 
  * @returns
- */", None);
-		f.verify_js_doc_completion("3", 7, r"/**
+ */".into(), None);
+		f.verify_js_doc_completion("3".into(), 7, r"/**
  * 
  * @returns
- */", None);
-		f.verify_js_doc_completion("4", 3, r"/** */", None);
-		f.verify_js_doc_completion("5", 11, r"/**
+ */".into(), None);
+		f.verify_js_doc_completion("4".into(), 3, r"/** */".into(), None);
+		f.verify_js_doc_completion("5".into(), 11, r"/**
      * 
      * @returns
-     */", None);
+     */".into(), None);
 	});
 }
 

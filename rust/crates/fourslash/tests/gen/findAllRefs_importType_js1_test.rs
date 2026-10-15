@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_import_type_js1() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r#"// @allowJs: true
 // @checkJs: true
 // @Filename: /a.js
@@ -20,7 +20,7 @@ const x = 0;
 const y = 0;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
-		f.verify_baseline_find_all_references("");
+		f.verify_baseline_find_all_references("".into());
 	});
 }
 

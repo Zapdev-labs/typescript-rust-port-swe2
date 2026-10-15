@@ -14,7 +14,7 @@ fn find_all_refs_rename_import_with_same_name() {
 /*3*/[|x|];"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
-		f.verify_baseline_find_all_references("0", "1", "2", "3");
+		f.verify_baseline_find_all_references("0".into(), "1".into(), "2".into(), "3".into());
 		f.verify_baseline_rename(None, f.ranges()[1], f.ranges()[3], f.ranges()[4], f.ranges()[5]);
 	});
 }

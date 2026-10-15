@@ -18,8 +18,8 @@ function [|foo|] () {
 [|foo|]();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_file("a.ts");
-		f.go_to_file("b.ts");
+		f.go_to_file("a.ts".into());
+		f.go_to_file("b.ts".into());
 		f.verify_baseline_document_highlights_with_options(None, vec!["a.ts", "b.ts"], to_any(f.ranges()));
 	});
 }

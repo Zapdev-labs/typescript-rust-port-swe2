@@ -15,7 +15,7 @@ export declare function customElement(name: string): any;
 customElement/**/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.configure(tsc_lsutil::UserPreferences { auto_import_entrypoint_directory_search: tsc_core::TS_TRUE, ..Default::default() });
-		f.verify_import_fix_module_specifiers("", vec!["lit/index.cjs"], None);
+		f.verify_import_fix_module_specifiers("".into(), vec!["lit/index.cjs"], None);
 	});
 }
 

@@ -10,7 +10,7 @@ fn quick_info_signature_with_trailing_comma() {
 		let content = r"declare function f<T>(a: T): T;
 /**/f(2,);";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("", "function f<2>(a: 2): 2", "");
+		f.verify_quick_info_at("".into(), "function f<2>(a: 2): 2".into(), "".into());
 	});
 }
 

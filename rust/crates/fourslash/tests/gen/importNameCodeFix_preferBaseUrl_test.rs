@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_prefer_base_url() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r#"// @Filename: /tsconfig.json
 { "compilerOptions": { "baseUrl": "./src" } }
 // @Filename: /src/d0/d1/d2/file.ts
@@ -15,7 +15,7 @@ foo/**/;
 // @Filename: /src/d0/a.ts
 export const foo = 0;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/src/d0/d1/d2/file.ts");
+		f.go_to_file("/src/d0/d1/d2/file.ts".into());
 		f.verify_import_fix_at_position(vec![r#"import { foo } from "d0/a";
 
 foo;"#], None);

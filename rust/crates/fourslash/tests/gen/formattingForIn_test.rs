@@ -9,9 +9,9 @@ fn formatting_for_in() {
 	run_test(|t| {
 		let content = r"/**/for (var i    in[]   )  {}";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
-		f.go_to_marker("");
-		f.verify_current_line_content(r"for (var i in []) { }");
+		f.format_document("".into());
+		f.go_to_marker("".into());
+		f.verify_current_line_content(r"for (var i in []) { }".into());
 	});
 }
 

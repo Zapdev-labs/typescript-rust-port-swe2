@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn completions_literal_from_inference_within_inferred_type3() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r#"// @stableTypeOrdering: true
 declare function test<T>(a: {
   [K in keyof T]: {

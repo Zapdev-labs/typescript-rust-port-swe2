@@ -9,7 +9,7 @@ fn remove_parameter_between_comment_and_parameter() {
 	run_test(|t| {
 		let content = r"function fn(/* comment! */ /**/a: number, c) { }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
+		f.go_to_marker("".into());
 		f.delete_at_caret(10);
 	});
 }

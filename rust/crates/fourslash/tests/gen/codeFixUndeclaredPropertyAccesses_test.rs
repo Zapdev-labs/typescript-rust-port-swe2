@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_undeclared_property_accesses() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r#"interface I { x: number; }
 let i: I;
 i.y;

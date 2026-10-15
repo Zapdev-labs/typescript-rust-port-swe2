@@ -13,7 +13,7 @@ fn remove_declare_in_module() {
 
 Foo.a();";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
+		f.go_to_marker("".into());
 		f.delete_at_caret(7);
 		f.verify_number_of_errors_in_current_file(1);
 	});

@@ -11,8 +11,8 @@ fn format_document_no_crash_jsx_attr_unterminated_string() {
 const x = <HangupButton customClass = 'ha
 ";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
-		f.verify_current_file_content("const x = <HangupButton customClass='ha\n");
+		f.format_document("".into());
+		f.verify_current_file_content("const x = <HangupButton customClass='ha\n".into());
 	});
 }
 

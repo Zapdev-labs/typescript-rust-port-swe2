@@ -12,8 +12,8 @@ fn add_duplicate_setter() {
     /**/
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
-		f.insert("set foo(value) { }");
+		f.go_to_marker("".into());
+		f.insert("set foo(value) { }".into());
 	});
 }
 

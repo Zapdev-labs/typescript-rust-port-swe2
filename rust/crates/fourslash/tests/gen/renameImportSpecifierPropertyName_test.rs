@@ -12,7 +12,7 @@ export interface /**/Ginger {}
 // @Filename: dry.ts
 import { Ginger as Ale } from './canada';";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_rename(None, "");
+		f.verify_baseline_rename(None, "".into());
 	});
 }
 

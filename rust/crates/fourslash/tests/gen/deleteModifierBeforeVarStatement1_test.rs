@@ -34,7 +34,7 @@ declare var WScript: {
 		f.go_to_position(198);
 		f.delete_at_caret(16);
 		f.go_to_position(198);
-		f.insert("Item(): string; ");
+		f.insert("Item(): string; ".into());
 	});
 }
 

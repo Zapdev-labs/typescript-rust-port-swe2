@@ -20,14 +20,14 @@ export interface Foo {
 import { Foo } from "./index";
 declare type FooBar = Foo[/*ok3*/"[|bar|]"];"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("okWithAlias");
+		f.go_to_marker("okWithAlias".into());
 		f.verify_rename_succeeded(Some(tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::TS_TRUE, ..Default::default() }));
 		f.verify_rename_failed(Some(tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::TS_FALSE, ..Default::default() }));
-		f.go_to_marker("notOk");
+		f.go_to_marker("notOk".into());
 		f.verify_rename_failed(None);
-		f.go_to_marker("ok2");
+		f.go_to_marker("ok2".into());
 		f.verify_rename_succeeded(None);
-		f.go_to_marker("ok3");
+		f.go_to_marker("ok3".into());
 		f.verify_rename_succeeded(None);
 	});
 }

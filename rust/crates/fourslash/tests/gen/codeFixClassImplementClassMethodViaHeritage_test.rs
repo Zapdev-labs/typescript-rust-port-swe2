@@ -22,7 +22,7 @@ class C3 implements C2 {[|
 		f.verify_range_after_code_fix(r#"f1(): void{
     throw new Error("Method not implemented.");
 }
-"#, false, 0, 0);
+"#.into(), false, 0, 0);
 	});
 }
 

@@ -14,13 +14,13 @@ fn format_try_catch() {
     }
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
-		f.format_document("");
-		f.format_document("");
-		f.go_to_marker("try");
-		f.verify_current_line_content(r"    try {");
-		f.go_to_marker("catch");
-		f.verify_current_line_content(r"    catch (e) {");
+		f.format_document("".into());
+		f.format_document("".into());
+		f.format_document("".into());
+		f.go_to_marker("try".into());
+		f.verify_current_line_content(r"    try {".into());
+		f.go_to_marker("catch".into());
+		f.verify_current_line_content(r"    catch (e) {".into());
 	});
 }
 

@@ -17,7 +17,7 @@ let obj: Obj = {
 }
 ";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("constructOnly");
+		f.go_to_marker("constructOnly".into());
 		f.verify_no_signature_help();
 	});
 }

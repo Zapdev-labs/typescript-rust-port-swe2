@@ -13,17 +13,17 @@ fn formatting_in_destructuring3() {
 /*4*/} = {a: 1, b: 2};
 /*5*/const {a: c} = {a: 1, b: 2};";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"const {");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"    a,");
-		f.go_to_marker("3");
-		f.verify_current_line_content(r"    b,");
-		f.go_to_marker("4");
-		f.verify_current_line_content(r"} = { a: 1, b: 2 };");
-		f.go_to_marker("5");
-		f.verify_current_line_content(r"const { a: c } = { a: 1, b: 2 };");
+		f.format_document("".into());
+		f.go_to_marker("1".into());
+		f.verify_current_line_content(r"const {".into());
+		f.go_to_marker("2".into());
+		f.verify_current_line_content(r"    a,".into());
+		f.go_to_marker("3".into());
+		f.verify_current_line_content(r"    b,".into());
+		f.go_to_marker("4".into());
+		f.verify_current_line_content(r"} = { a: 1, b: 2 };".into());
+		f.go_to_marker("5".into());
+		f.verify_current_line_content(r"const { a: c } = { a: 1, b: 2 };".into());
 	});
 }
 

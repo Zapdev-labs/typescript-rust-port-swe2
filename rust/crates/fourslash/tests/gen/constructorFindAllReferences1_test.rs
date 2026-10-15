@@ -14,7 +14,7 @@ fn constructor_find_all_references1() {
 
 new C().foo();";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("");
+		f.verify_baseline_find_all_references("".into());
 	});
 }
 

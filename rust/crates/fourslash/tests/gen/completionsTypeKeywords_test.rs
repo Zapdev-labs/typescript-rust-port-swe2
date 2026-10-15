@@ -10,7 +10,7 @@ fn completions_type_keywords() {
 		let content = r"// @noLib: true
 type T = /**/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_type_keywords_plus(vec!["T", COMPLETION_GLOBAL_THIS_ITEM]), ..Default::default() }), ..Default::default() }));
+		f.verify_completions("".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_type_keywords_plus(vec!["T", COMPLETION_GLOBAL_THIS_ITEM]), ..Default::default() }), ..Default::default() }));
 	});
 }
 

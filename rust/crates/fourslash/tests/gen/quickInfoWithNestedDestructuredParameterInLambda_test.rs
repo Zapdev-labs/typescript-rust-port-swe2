@@ -18,7 +18,7 @@ interface SomeProps {
 }
 export const /*1*/SomeStatelessComponent = ({someProp: { someBoolean, someString}}: SomeProps) => (<div>{" + "`" + r"${someBoolean}${someString}" + "`" + r"});";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1");
+		f.go_to_marker("1".into());
 		f.verify_quick_info_exists();
 	});
 }

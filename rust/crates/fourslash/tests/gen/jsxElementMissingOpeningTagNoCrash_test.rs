@@ -11,7 +11,7 @@ fn jsx_element_missing_opening_tag_no_crash() {
 declare function Foo(): any;
 let x = <></Fo/*$*/o>;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("$", "let Foo: any", "");
+		f.verify_quick_info_at("$".into(), "let Foo: any".into(), "".into());
 	});
 }
 

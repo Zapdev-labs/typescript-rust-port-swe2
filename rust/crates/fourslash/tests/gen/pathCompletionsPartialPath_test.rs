@@ -16,7 +16,7 @@ export const fsApi = "fs";
 // @Filename: /src/foo/sync.ts
 export const syncApi = "sync";"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("$", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["async", "fs", "sync"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("$".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["async", "fs", "sync"], ..Default::default() }), ..Default::default() }));
 	});
 }
 
@@ -37,7 +37,7 @@ export const syncApi = "sync";
 // @Filename: /src/main.ts
 import { } from "@typescript/typescript/unstable//*$*/";"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("$", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["async", "fs", "sync"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("$".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["async", "fs", "sync"], ..Default::default() }), ..Default::default() }));
 	});
 }
 
@@ -68,7 +68,7 @@ export const syncApi = "sync";
 // @Filename: /src/main.ts
 import { } from "@typescript/typescript/unstable//*$*/";"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("$", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["async", "fs", "sync"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("$".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["async", "fs", "sync"], ..Default::default() }), ..Default::default() }));
 	});
 }
 
@@ -95,7 +95,7 @@ export declare const syncApi: string;
 // @Filename: /src/main.ts
 import { } from "@typescript/typescript/unstable//*$*/";"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("$", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["async", "fs", "sync"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("$".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["async", "fs", "sync"], ..Default::default() }), ..Default::default() }));
 	});
 }
 
@@ -122,7 +122,7 @@ export declare const syncApi: string;
 // @Filename: /src/main.ts
 import { } from "@typescript/typescript/unstable//*$*/";"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("$", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["_async/api", "_fs/api", "_sync/api"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("$".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["_async/api", "_fs/api", "_sync/api"], ..Default::default() }), ..Default::default() }));
 	});
 }
 

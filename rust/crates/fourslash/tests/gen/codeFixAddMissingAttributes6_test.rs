@@ -23,7 +23,7 @@ const props = { a: 1, b: "", c: [], d: undefined };
 const Bar = () =>
     [|<A {...props}></A>|]"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix_not_available("fixMissingAttributes");
+		f.verify_code_fix_not_available("fixMissingAttributes".into());
 	});
 }
 

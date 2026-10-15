@@ -15,7 +15,7 @@ x;
 import {} from "a/utils";
 export const x = 0;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/packages/a/test.ts");
+		f.go_to_file("/packages/a/test.ts".into());
 		f.verify_import_fix_at_position(vec![r#"import { x } from "./utils";
 
 x;"#], None);

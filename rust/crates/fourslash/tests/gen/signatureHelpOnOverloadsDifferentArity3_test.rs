@@ -14,11 +14,11 @@ declare function f(n: number, b: boolean);
 
 f(/**/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
+		f.go_to_marker("".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f(): any", parameter_count: 0, overloads_count: 4, ..Default::default() });
-		f.insert("x, ");
+		f.insert("x, ".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f(s: string, b: boolean): any", parameter_count: 2, parameter_name: "b", parameter_span: "b: boolean", overloads_count: 4, ..Default::default() });
-		f.insert("x, ");
+		f.insert("x, ".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f(s: string, b: boolean): any", parameter_count: 2, overloads_count: 4, ..Default::default() });
 	});
 }

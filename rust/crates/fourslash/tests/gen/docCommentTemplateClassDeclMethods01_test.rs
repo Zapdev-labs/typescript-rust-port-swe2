@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn doc_comment_template_class_decl_methods01() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"class C {
 /*0*/    /*1*/
     foo();
@@ -20,33 +20,33 @@ fn doc_comment_template_class_decl_methods01() {
 		let mut capabilities = tsc_fourslash::get_default_capabilities();
 		capabilities.text_document.completion.completion_item.snippet_support = Some((false).into());
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", capabilities, content);
-		f.verify_js_doc_completion("0", 3, r"/** */", None);
-		f.verify_js_doc_completion("1", 3, r"/** */", None);
-		f.verify_js_doc_completion("2", 11, r"/**
+		f.verify_js_doc_completion("0".into(), 3, r"/** */".into(), None);
+		f.verify_js_doc_completion("1".into(), 3, r"/** */".into(), None);
+		f.verify_js_doc_completion("2".into(), 11, r"/**
      * 
      * @param a
      */
-    ", None);
-		f.verify_js_doc_completion("3", 11, r"/**
+    ".into(), None);
+		f.verify_js_doc_completion("3".into(), 11, r"/**
      * 
      * @param a
      * @param b
      */
-    ", None);
-		f.verify_js_doc_completion("4", 11, r"/**
+    ".into(), None);
+		f.verify_js_doc_completion("4".into(), 11, r"/**
      * 
      * @param a
      * @param param1
      * @param param2
      */
-    ", None);
-		f.verify_js_doc_completion("5", 11, r"/**
+    ".into(), None);
+		f.verify_js_doc_completion("5".into(), 11, r"/**
      * 
      * @param a
      * @param b
      * @param args
      */
-    ", None);
+    ".into(), None);
 	});
 }
 

@@ -16,17 +16,17 @@ function a(
 }
 /*5*/var x       =";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"foo(): Bar { }");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"function Foo() #   { }");
-		f.go_to_marker("3");
-		f.verify_current_line_content(r"4 +: 5");
-		f.go_to_marker("4");
-		f.verify_current_line_content(r"    : T) { }");
-		f.go_to_marker("5");
-		f.verify_current_line_content(r"var x =");
+		f.format_document("".into());
+		f.go_to_marker("1".into());
+		f.verify_current_line_content(r"foo(): Bar { }".into());
+		f.go_to_marker("2".into());
+		f.verify_current_line_content(r"function Foo() #   { }".into());
+		f.go_to_marker("3".into());
+		f.verify_current_line_content(r"4 +: 5".into());
+		f.go_to_marker("4".into());
+		f.verify_current_line_content(r"    : T) { }".into());
+		f.go_to_marker("5".into());
+		f.verify_current_line_content(r"var x =".into());
 	});
 }
 

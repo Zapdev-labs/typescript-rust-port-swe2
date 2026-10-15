@@ -20,15 +20,15 @@ testFunction<any, any, any>(/*3*/
 testFunction<any, any,/*4*/ any>(null, null, null);
 testFunction<, ,/*5*/>(null, null, null);";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1");
+		f.go_to_marker("1".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "testFunction<T extends IFoo, U, M extends IFoo>(a: T, b: U, c: M): M", parameter_count: 3, parameter_name: "T", parameter_span: "T extends IFoo", ..Default::default() });
-		f.go_to_marker("2");
+		f.go_to_marker("2".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "U", parameter_span: "U", ..Default::default() });
-		f.go_to_marker("3");
+		f.go_to_marker("3".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "a", parameter_span: "a: any", ..Default::default() });
-		f.go_to_marker("4");
+		f.go_to_marker("4".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "M", parameter_span: "M extends IFoo", ..Default::default() });
-		f.go_to_marker("5");
+		f.go_to_marker("5".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "M", parameter_span: "M extends IFoo", ..Default::default() });
 	});
 }

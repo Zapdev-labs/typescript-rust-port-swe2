@@ -11,9 +11,9 @@ fn augmented_types_class3_fourslash() {
 namespace c/*2*/5b { export var y = 2; } // should be ok
 /*3*/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "class c5b\nnamespace c5b", "");
-		f.verify_quick_info_at("2", "class c5b\nnamespace c5b", "");
-		f.verify_completions("3", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "c5b", detail: Some(("class c5b\nnamespace c5b").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_quick_info_at("1".into(), "class c5b\nnamespace c5b".into(), "".into());
+		f.verify_quick_info_at("2".into(), "class c5b\nnamespace c5b".into(), "".into());
+		f.verify_completions("3".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "c5b", detail: Some(("class c5b\nnamespace c5b").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -9,8 +9,8 @@ fn content_mapper_diagnostic_code_does_not_select_type_script_fix() {
 	run_test(|t| {
 		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /app.box
 export function f/*query*/oo() { return 1; }
-", contentmappertest.diagnostic_code_collision_mapper, ".box");
-		f.go_to_marker("query");
+".into(), contentmappertest.diagnostic_code_collision_mapper, ".box".into());
+		f.go_to_marker("query".into());
 		f.verify_code_fix_not_available();
 	});
 }

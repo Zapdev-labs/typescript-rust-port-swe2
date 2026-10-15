@@ -13,17 +13,17 @@ fn formatting_non_null_assertion_operator() {
 /*4*/ var  bar  =  'bar' . foo ! ;
 /*5*/ var  foo  =  bar ! ;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"'bar'!;");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"('bar')!;");
-		f.go_to_marker("3");
-		f.verify_current_line_content(r"'bar'[1]!;");
-		f.go_to_marker("4");
-		f.verify_current_line_content(r"var bar = 'bar'.foo!;");
-		f.go_to_marker("5");
-		f.verify_current_line_content(r"var foo = bar!;");
+		f.format_document("".into());
+		f.go_to_marker("1".into());
+		f.verify_current_line_content(r"'bar'!;".into());
+		f.go_to_marker("2".into());
+		f.verify_current_line_content(r"('bar')!;".into());
+		f.go_to_marker("3".into());
+		f.verify_current_line_content(r"'bar'[1]!;".into());
+		f.go_to_marker("4".into());
+		f.verify_current_line_content(r"var bar = 'bar'.foo!;".into());
+		f.go_to_marker("5".into());
+		f.verify_current_line_content(r"var foo = bar!;".into());
 	});
 }
 

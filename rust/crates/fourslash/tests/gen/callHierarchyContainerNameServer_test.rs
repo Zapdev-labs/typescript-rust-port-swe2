@@ -45,7 +45,7 @@ namespace Foo.Bar {
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_marker("");
+		f.go_to_marker("".into());
 		f.verify_baseline_call_hierarchy();
 	});
 }

@@ -22,11 +22,11 @@ fn signature_help_incomplete_calls() {
     x.f3(5,/*incompleteCalls3*/
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("incompleteCalls1");
+		f.go_to_marker("incompleteCalls1".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f1(): void", parameter_count: 0, ..Default::default() });
-		f.go_to_marker("incompleteCalls2");
+		f.go_to_marker("incompleteCalls2".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f2(n: number): number", parameter_count: 1, ..Default::default() });
-		f.go_to_marker("incompleteCalls3");
+		f.go_to_marker("incompleteCalls3".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f3(n: number, s: string): string", parameter_count: 2, parameter_name: "s", parameter_span: "s: string", ..Default::default() });
 	});
 }

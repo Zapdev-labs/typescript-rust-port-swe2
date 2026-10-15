@@ -10,9 +10,9 @@ fn format_no_space_before_close_brace6() {
 		let content = r"new Foo(1, /* comment */  
   );";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
+		f.format_document("".into());
 		f.verify_current_file_content(r"new Foo(1, /* comment */
-);");
+);".into());
 	});
 }
 

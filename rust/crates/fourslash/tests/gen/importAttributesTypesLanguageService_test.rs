@@ -31,10 +31,10 @@ import * as text from "./copy.asset" with { type: "text" };
 css./*css*/cssOnly;
 text./*text*/textOnly;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("attributeName", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["outerAttributeName"], excludes: vec!["CssAttributeValue", "cssOnly", "shared"], ..Default::default() }), ..Default::default() }));
-		f.verify_completions("attributeValue", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["OuterAttributeValue"], excludes: vec!["CssAttributeValue", "TextAttributeValue"], ..Default::default() }), ..Default::default() }));
-		f.verify_completions("css", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["cssOnly", "shared"], excludes: vec!["textOnly"], ..Default::default() }), ..Default::default() }));
-		f.verify_completions("text", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["shared", "textOnly"], excludes: vec!["cssOnly"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("attributeName".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["outerAttributeName"], excludes: vec!["CssAttributeValue", "cssOnly", "shared"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("attributeValue".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["OuterAttributeValue"], excludes: vec!["CssAttributeValue", "TextAttributeValue"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("css".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["cssOnly", "shared"], excludes: vec!["textOnly"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("text".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["shared", "textOnly"], excludes: vec!["cssOnly"], ..Default::default() }), ..Default::default() }));
 	});
 }
 
@@ -62,11 +62,11 @@ text./*textUse*/shared;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
 		f.verify_baseline_hover();
-		f.verify_baseline_go_to_definition(true, "cssModule", "textModule", "cssUse", "textUse");
-		f.verify_baseline_go_to_type_definition("cssUse", "textUse");
-		f.verify_baseline_find_all_references("cssUse", "textUse");
-		f.verify_baseline_rename(None, "cssUse", "textUse");
-		f.verify_baseline_document_highlights(None, "cssUse", "textUse");
+		f.verify_baseline_go_to_definition(true, "cssModule".into(), "textModule".into(), "cssUse".into(), "textUse".into());
+		f.verify_baseline_go_to_type_definition("cssUse".into(), "textUse".into());
+		f.verify_baseline_find_all_references("cssUse".into(), "textUse".into());
+		f.verify_baseline_rename(None, "cssUse".into(), "textUse".into());
+		f.verify_baseline_document_highlights(None, "cssUse".into(), "textUse".into());
 	});
 }
 

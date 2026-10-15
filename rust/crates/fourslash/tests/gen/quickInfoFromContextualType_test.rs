@@ -14,7 +14,7 @@ interface I {
 }
 const i: I = { /**/x: 0 };";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("", "(property) I.x: number", "Documentation");
+		f.verify_quick_info_at("".into(), "(property) I.x: number".into(), "Documentation".into());
 	});
 }
 

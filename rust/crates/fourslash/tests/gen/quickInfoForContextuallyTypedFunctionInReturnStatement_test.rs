@@ -22,7 +22,7 @@ function makeAccumulator(): Accumulator {
     };
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("", "(parameter) value: number", "");
+		f.verify_quick_info_at("".into(), "(parameter) value: number".into(), "".into());
 	});
 }
 

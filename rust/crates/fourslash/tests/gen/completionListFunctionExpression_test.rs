@@ -21,10 +21,10 @@ class DataHandler {
     }
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("local");
-		f.insert_line("");
+		f.go_to_marker("local".into());
+		f.insert_line("".into());
 		f.verify_completions(None, Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["xmlEvent"], ..Default::default() }), ..Default::default() }));
-		f.verify_completions("this", None);
+		f.verify_completions("this".into(), None);
 	});
 }
 

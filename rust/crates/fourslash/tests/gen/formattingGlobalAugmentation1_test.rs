@@ -10,9 +10,9 @@ fn formatting_global_augmentation1() {
 		let content = r"/*1*/declare          global                      {
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"declare global {");
+		f.format_document("".into());
+		f.go_to_marker("1".into());
+		f.verify_current_line_content(r"declare global {".into());
 	});
 }
 

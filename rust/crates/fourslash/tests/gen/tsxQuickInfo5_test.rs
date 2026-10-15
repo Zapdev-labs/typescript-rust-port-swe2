@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn tsx_quick_info5() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r#"//@Filename: file.tsx
 // @jsx: preserve
 // @noLib: true
@@ -17,9 +17,9 @@ function Baz<T,U>(key1: T, value: U) {
     let a1 = <ComponentWithTwoAttributes {...{key1, value: value}} key="Component" />
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "function ComponentWithTwoAttributes<T, U>(l: {\n    key1: T;\n    value: U;\n}): JSX.Element", "");
-		f.verify_quick_info_at("2", "(property) key1: T", "");
-		f.verify_quick_info_at("3", "(property) value: U", "");
+		f.verify_quick_info_at("1".into(), "function ComponentWithTwoAttributes<T, U>(l: {\n    key1: T;\n    value: U;\n}): JSX.Element".into(), "".into());
+		f.verify_quick_info_at("2".into(), "(property) key1: T".into(), "".into());
+		f.verify_quick_info_at("3".into(), "(property) value: U".into(), "".into());
 	});
 }
 

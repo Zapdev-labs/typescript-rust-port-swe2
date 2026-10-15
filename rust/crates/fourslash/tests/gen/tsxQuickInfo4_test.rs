@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn tsx_quick_info4() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"//@Filename: file.tsx
 // @jsx: preserve
 // @noLib: true
@@ -46,11 +46,11 @@ function buildSomeElement2(): JSX.Element {
 }
 let componenet = <MainButton onClick={()=>{}} ext/*5*/ra-prop>GO</MainButton>;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "function MainButton(linkProps: LinkProps): JSX.Element (+1 overload)", "");
-		f.verify_quick_info_at("2", "(property) LinkProps.to: string", "");
-		f.verify_quick_info_at("3", "function MainButton(buttonProps: ButtonProps): JSX.Element (+1 overload)", "");
-		f.verify_quick_info_at("4", "(method) ButtonProps.onClick(event?: React.MouseEvent<HTMLButtonElement>): void", "");
-		f.verify_quick_info_at("5", "(property) extra-prop: true", "");
+		f.verify_quick_info_at("1".into(), "function MainButton(linkProps: LinkProps): JSX.Element (+1 overload)".into(), "".into());
+		f.verify_quick_info_at("2".into(), "(property) LinkProps.to: string".into(), "".into());
+		f.verify_quick_info_at("3".into(), "function MainButton(buttonProps: ButtonProps): JSX.Element (+1 overload)".into(), "".into());
+		f.verify_quick_info_at("4".into(), "(method) ButtonProps.onClick(event?: React.MouseEvent<HTMLButtonElement>): void".into(), "".into());
+		f.verify_quick_info_at("5".into(), "(property) extra-prop: true".into(), "".into());
 	});
 }
 

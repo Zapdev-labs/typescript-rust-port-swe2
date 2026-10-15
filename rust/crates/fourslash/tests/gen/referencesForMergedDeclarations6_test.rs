@@ -17,7 +17,7 @@ fn references_for_merged_declarations6() {
 // module
 import a1 = /*3*/Foo;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1", "2", "3");
+		f.verify_baseline_find_all_references("1".into(), "2".into(), "3".into());
 	});
 }
 

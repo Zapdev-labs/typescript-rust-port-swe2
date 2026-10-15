@@ -17,7 +17,7 @@ var q1: Query<number>;
 var q2: Query2<number>;
 q1 = q2;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
+		f.go_to_marker("".into());
 		f.delete_at_caret(1);
 	});
 }

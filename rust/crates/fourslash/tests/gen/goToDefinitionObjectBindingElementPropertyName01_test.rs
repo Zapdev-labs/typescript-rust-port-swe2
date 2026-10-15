@@ -15,7 +15,7 @@ fn go_to_definition_object_binding_element_property_name01() {
 var foo: I;
 var { [|/*use*/property1|]: prop1 } = foo;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "use");
+		f.verify_baseline_go_to_definition(true, "use".into());
 	});
 }
 

@@ -12,7 +12,7 @@ import { foo } from "./dir/fOo";
 // @Filename: /dir/fOo.ts
 export const foo = 0;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_will_rename_files_edits("/dir", "/newDir", vec![("/a.ts", r#"import { foo } from "./newDir/fOo";"#)].into_iter().collect::<FxHashMap<_, _>>(), None);
+		f.verify_will_rename_files_edits("/dir".into(), "/newDir".into(), vec![("/a.ts", r#"import { foo } from "./newDir/fOo";"#)].into_iter().collect::<FxHashMap<_, _>>(), None);
 	});
 }
 

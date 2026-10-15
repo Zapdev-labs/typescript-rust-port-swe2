@@ -21,9 +21,9 @@ namespace m {
 // @Filename: input2.ts
 var x = "hello world"; /*2*/"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1");
+		f.go_to_marker("1".into());
 		f.verify_number_of_errors_in_current_file(1);
-		f.go_to_marker("2");
+		f.go_to_marker("2".into());
 		f.verify_number_of_errors_in_current_file(0);
 	});
 }

@@ -23,7 +23,7 @@ console.log(abc, Abc, I, R, M);";
 } from 'a';
 import { abc, Abc, type bc, type Bc } from 'b';
 type x = bc | Bc;
-console.log(abc, Abc, I, R, M);", tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
+console.log(abc, Abc, I, R, M);".into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
 		f.verify_organize_imports(r"import {
     I,
     M,
@@ -31,7 +31,7 @@ console.log(abc, Abc, I, R, M);", tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_I
 } from 'a';
 import { abc, Abc, type bc, type Bc } from 'b';
 type x = bc | Bc;
-console.log(abc, Abc, I, R, M);", tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
+console.log(abc, Abc, I, R, M);".into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
 	});
 }
 

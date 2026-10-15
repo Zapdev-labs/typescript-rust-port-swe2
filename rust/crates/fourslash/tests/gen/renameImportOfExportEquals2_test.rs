@@ -23,8 +23,8 @@ declare module "b" {
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
-		f.verify_baseline_find_all_references("N", "O", "P", "Q");
-		f.verify_baseline_rename_at_ranges_with_text(None, "N", "O", "P", "Q");
+		f.verify_baseline_find_all_references("N".into(), "O".into(), "P".into(), "Q".into());
+		f.verify_baseline_rename_at_ranges_with_text(None, "N".into(), "O".into(), "P".into(), "Q".into());
 	});
 }
 

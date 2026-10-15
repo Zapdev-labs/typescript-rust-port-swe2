@@ -10,9 +10,9 @@ fn signature_help_in_parenthetical() {
 		let content = r"class base { constructor (public n: number, public y: string) { } }
 (new base(/**/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
+		f.go_to_marker("".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "n", ..Default::default() });
-		f.insert("0, ");
+		f.insert("0, ".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "y", ..Default::default() });
 	});
 }

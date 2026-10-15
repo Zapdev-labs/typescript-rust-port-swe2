@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_on_prop_declared_using_index_signature_on_interface_with_base() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"interface P {}
 interface B extends P {
   [k: string]: number;
@@ -15,7 +15,7 @@ interface B extends P {
 declare const b: B;
 b.t/*1*/est = 10;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "(index) B[string]: number", "");
+		f.verify_quick_info_at("1".into(), "(index) B[string]: number".into(), "".into());
 	});
 }
 

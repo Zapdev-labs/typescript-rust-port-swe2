@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn jsdoc_callback_tag() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r#"// @lib: es5
 // @strict: false
 // @allowNonTsExtensions: true
@@ -36,14 +36,14 @@ var t2/*2*/;
 t(/*4*/"!", /*5*/12, /*6*/false);"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_marker("1");
-		f.verify_quick_info_is("var t: FooHandler", "");
-		f.go_to_marker("2");
-		f.verify_quick_info_is("var t2: FooHandler2", "");
-		f.go_to_marker("3");
-		f.verify_quick_info_is("type FooHandler2 = (eventName?: string | undefined, eventName2?: string) => any", "- What, another one?");
-		f.go_to_marker("8");
-		f.verify_quick_info_is("type FooHandler = (eventName: string, eventName2: number | string, eventName3: any) => number", "- A kind of magic");
+		f.go_to_marker("1".into());
+		f.verify_quick_info_is("var t: FooHandler".into(), "".into());
+		f.go_to_marker("2".into());
+		f.verify_quick_info_is("var t2: FooHandler2".into(), "".into());
+		f.go_to_marker("3".into());
+		f.verify_quick_info_is("type FooHandler2 = (eventName?: string | undefined, eventName2?: string) => any".into(), "- What, another one?".into());
+		f.go_to_marker("8".into());
+		f.verify_quick_info_is("type FooHandler = (eventName: string, eventName2: number | string, eventName3: any) => number".into(), "- A kind of magic".into());
 	});
 }
 

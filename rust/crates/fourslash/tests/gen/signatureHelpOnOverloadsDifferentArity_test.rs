@@ -14,9 +14,9 @@ declare function f(n: number, b: boolean);
 
 f(1/**/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("");
+		f.go_to_marker("".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f(n: number): any", parameter_name: "n", parameter_span: "n: number", overloads_count: 4, ..Default::default() });
-		f.insert(", ");
+		f.insert(", ".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f(n: number, b: boolean): any", parameter_name: "b", parameter_span: "b: boolean", overloads_count: 4, ..Default::default() });
 	});
 }

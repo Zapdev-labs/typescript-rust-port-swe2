@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn synthetic_import_from_babel_generated_file2() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r#"// @allowJs: true
 // @allowSyntheticDefaultImports: true
 // @Filename: /a.js
@@ -24,7 +24,7 @@ function f(t) {}
 import f from "./a"
 /**/f"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("", "(alias) function f(t: string): void\nimport f", "Run this function");
+		f.verify_quick_info_at("".into(), "(alias) function f(t: string): void\nimport f".into(), "Run this function".into());
 	});
 }
 

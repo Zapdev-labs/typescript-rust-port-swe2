@@ -25,8 +25,8 @@ A/*parent*/
 // @Filename: /src/index.ts
 export * from "./a";"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_module_specifiers("sibling", vec!["./a", "./index", "../index"], Some(tsc_lsutil::UserPreferences { import_module_specifier_ending: "index", ..Default::default() }));
-		f.verify_import_fix_module_specifiers("parent", vec!["../foo/a", "../foo/index", "../index"], Some(tsc_lsutil::UserPreferences { import_module_specifier_ending: "index", ..Default::default() }));
+		f.verify_import_fix_module_specifiers("sibling".into(), vec!["./a", "./index", "../index"], Some(tsc_lsutil::UserPreferences { import_module_specifier_ending: "index", ..Default::default() }));
+		f.verify_import_fix_module_specifiers("parent".into(), vec!["../foo/a", "../foo/index", "../index"], Some(tsc_lsutil::UserPreferences { import_module_specifier_ending: "index", ..Default::default() }));
 	});
 }
 

@@ -13,9 +13,9 @@ function functionOverload(test?: string) { }
 functionOverload(/*functionOverload1*/);
 functionOverload(""/*functionOverload2*/);"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("functionOverload1");
+		f.go_to_marker("functionOverload1".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "functionOverload(): any", parameter_count: 0, overloads_count: 2, ..Default::default() });
-		f.go_to_marker("functionOverload2");
+		f.go_to_marker("functionOverload2".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "functionOverload(test: string): any", parameter_name: "test", parameter_span: "test: string", overloads_count: 2, ..Default::default() });
 	});
 }

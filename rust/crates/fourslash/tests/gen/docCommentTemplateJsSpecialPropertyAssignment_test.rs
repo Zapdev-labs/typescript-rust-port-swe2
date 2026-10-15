@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn doc_comment_template_js_special_property_assignment() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @allowJs: true
 // @Filename: /a.js
 /*0*/module.exports = function(a) {};
@@ -16,16 +16,16 @@ const myNamespace  = {};
 		let mut capabilities = tsc_fourslash::get_default_capabilities();
 		capabilities.text_document.completion.completion_item.snippet_support = Some((false).into());
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", capabilities, content);
-		f.verify_js_doc_completion("0", 7, r"/**
+		f.verify_js_doc_completion("0".into(), 7, r"/**
  * 
  * @param {any} a
  */
-", None);
-		f.verify_js_doc_completion("1", 7, r"/**
+".into(), None);
+		f.verify_js_doc_completion("1".into(), 7, r"/**
  * 
  * @param {any} x
  */
-", None);
+".into(), None);
 	});
 }
 

@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_missing_type_annotation_on_exports28_long_types() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @strict: false
 // @isolatedDeclarations: true
 // @declaration: true

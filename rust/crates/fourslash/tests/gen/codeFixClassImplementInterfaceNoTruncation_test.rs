@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_class_implement_interface_no_truncation() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @stableTypeOrdering: true
 type GeneratePrefixedNumbers<Limit extends number, Prefix extends string, Result extends number[] = []> = 
     Result['length'] extends Limit ? " + "`" + r"${Prefix}${Result[number]}" + "`" + r#" : GeneratePrefixedNumbers<Limit, Prefix, [...Result, Result['length']]>;

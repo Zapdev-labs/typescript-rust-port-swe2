@@ -11,8 +11,8 @@ fn format_document_no_crash_jsx_namespaced_name1() {
 const x = <foo:bar />;
 ";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("");
-		f.verify_current_file_content("const x = <foo:bar />;\n");
+		f.format_document("".into());
+		f.verify_current_file_content("const x = <foo:bar />;\n".into());
 	});
 }
 

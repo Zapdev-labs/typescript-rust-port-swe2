@@ -44,8 +44,8 @@ export function withInstall<C extends Component, T extends WithInstallPlugin>(
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
-		f.go_to_marker("");
-		f.insert("type C = Component['name']");
+		f.go_to_marker("".into());
+		f.insert("type C = Component['name']".into());
 		f.verify_no_errors();
 	});
 }

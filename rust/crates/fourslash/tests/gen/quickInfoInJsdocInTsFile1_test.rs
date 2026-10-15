@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_in_jsdoc_in_ts_file1() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"/** @type {() => { /*1*/data: string[] }} */
 function test(): { data: string[] } {
   return {
@@ -41,14 +41,14 @@ if (stuff.quantity) {}
 /** @type {(a/*8*/: string) => void} */
 function test2(a: string) {}";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1", "", "");
-		f.verify_quick_info_at("2", "", "");
-		f.verify_quick_info_at("3", "", "");
-		f.verify_quick_info_at("4", "type SomeObj = {\n    bar: string;\n}", "");
-		f.verify_quick_info_at("5", "(parameter) stuff: {\n    quantity: number;\n}", "Stuff to do stuff with");
-		f.verify_quick_info_at("6", "(parameter) stuff: {\n    quantity: number;\n}", "Stuff to do stuff with");
-		f.verify_quick_info_at("7", "function doStuffWithStuff(stuff: {\n    quantity: number;\n}): void", "");
-		f.verify_quick_info_at("8", "", "");
+		f.verify_quick_info_at("1".into(), "".into(), "".into());
+		f.verify_quick_info_at("2".into(), "".into(), "".into());
+		f.verify_quick_info_at("3".into(), "".into(), "".into());
+		f.verify_quick_info_at("4".into(), "type SomeObj = {\n    bar: string;\n}".into(), "".into());
+		f.verify_quick_info_at("5".into(), "(parameter) stuff: {\n    quantity: number;\n}".into(), "Stuff to do stuff with".into());
+		f.verify_quick_info_at("6".into(), "(parameter) stuff: {\n    quantity: number;\n}".into(), "Stuff to do stuff with".into());
+		f.verify_quick_info_at("7".into(), "function doStuffWithStuff(stuff: {\n    quantity: number;\n}): void".into(), "".into());
+		f.verify_quick_info_at("8".into(), "".into(), "".into());
 	});
 }
 

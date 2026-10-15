@@ -19,7 +19,7 @@ export function something(name: string): any;
 // @Filename: /src/a/b/c/d.ts
 something/**/"##;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_module_specifiers("", vec!["./something"], None);
+		f.verify_import_fix_module_specifiers("".into(), vec!["./something"], None);
 	});
 }
 

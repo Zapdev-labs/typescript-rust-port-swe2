@@ -72,15 +72,15 @@ class GenericPlanet2<T extends Food, V>{
  /*1*/"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
-		f.go_to_marker("1");
-		f.insert_line("");
-		f.insert_line("");
+		f.go_to_marker("1".into());
+		f.insert_line("".into());
+		f.insert_line("".into());
 		f.verify_no_errors();
-		f.go_to_marker("2");
+		f.go_to_marker("2".into());
 		f.delete_at_caret(6);
-		f.insert("any");
+		f.insert("any".into());
 		f.verify_no_errors();
-		f.insert_line("var narnia = new GenericPlanet2<Cookie, string>(");
+		f.insert_line("var narnia = new GenericPlanet2<Cookie, string>(".into());
 	});
 }
 

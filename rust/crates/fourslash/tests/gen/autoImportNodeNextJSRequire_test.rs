@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_node_next_js_require() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
+		return /* skip: "Known failing fourslash test".into() */;
 		let content = r"// @module: node18
 // @allowJs: true
 // @checkJs: true
@@ -21,7 +21,7 @@ exports.dedupeLines = data => {
 // @Filename: /totally-irrelevant-no-way-this-changes-things-right.js
 export default 0;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/main.js");
+		f.go_to_file("/main.js".into());
 		f.verify_import_fix_at_position(vec![r#"const { variants } = require("./matrix")
 
 exports.dedupeLines = data => {

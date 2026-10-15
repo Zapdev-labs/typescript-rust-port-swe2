@@ -33,7 +33,7 @@ class GenericL10n extends L10n/*1*/ {
 
 "#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1");
+		f.go_to_marker("1".into());
 		f.get_completions(None);
 	});
 }

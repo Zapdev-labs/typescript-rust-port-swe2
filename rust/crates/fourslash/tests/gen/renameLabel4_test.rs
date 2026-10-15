@@ -14,7 +14,7 @@ for (let i = 0; i <= 10; i++) {
    if (i === 10) break loop;
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_rename(None, "");
+		f.verify_baseline_rename(None, "".into());
 	});
 }
 

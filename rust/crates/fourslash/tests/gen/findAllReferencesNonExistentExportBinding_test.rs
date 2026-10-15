@@ -14,7 +14,7 @@ import { Foo/**/ } from "./foo";
 // @filename: /foo.ts
 export { Foo }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("");
+		f.verify_baseline_find_all_references("".into());
 	});
 }
 

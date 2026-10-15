@@ -15,10 +15,10 @@ fn overload_on_const_call_signature() {
 }
 var /*2*/x = foo(/*1*/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1");
+		f.go_to_marker("1".into());
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "foo(name: 'order'): string", overloads_count: 4, ..Default::default() });
-		f.insert("\"hi\"");
-		f.verify_quick_info_at("2", "var x: string", "");
+		f.insert("\"hi\"".into());
+		f.verify_quick_info_at("2".into(), "var x: string".into(), "".into());
 	});
 }
 
