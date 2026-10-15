@@ -672,6 +672,10 @@ func (tr *translator) selector(x *ast.SelectorExpr) string {
 		if path == "" {
 			return pkg + "." + x.Sel.Name // fmt/testing handled in call()
 		}
+		// types living in other crates despite the qualifier used.
+		if relocate, ok := relocatedTypes[pkg+"."+x.Sel.Name]; ok {
+			return relocate
+		}
 		// package-level member: type names stay CamelCase; Go enum consts
 		// `TypeNameVariant` map to `Type::VARIANT`; vars/fns -> snake.
 		name := x.Sel.Name
@@ -691,6 +695,14 @@ func (tr *translator) selector(x *ast.SelectorExpr) string {
 
 // enumConst splits `TypeNameVariant` Go enum constants into
 // (`TypeName`, `Variant`) when the longest registered enum-type prefix matches.
+// relocatedTypes maps `pkg.Type` (as written in Go tests) to the Rust path
+// when the type lives in a different crate than the qualifier implies.
+var relocatedTypes = map[string]string{
+	"util.UserPreferences":           "tsc_lsutil::UserPreferences",
+	"util.NewDefaultUserPreferences": "tsc_lsutil::new_default_user_preferences",
+	"util.ClientCapabilitiesOptions": "tsc_fourslash::testsutil::ClientCapabilitiesOptions",
+}
+
 var enumTypes = []string{
 	"OrganizeImportsCollation", "OrganizeImportsCaseFirst",
 	"OrganizeImportsTypeOrder", "OrganizeImportsSort", "OrganizeImportsModuleSpecifiers",
@@ -720,11 +732,15 @@ func isTypeName(name string) bool {
 	// constants we know are the enum/preference names. Err toward const.
 	typish := map[string]bool{
 		"FourslashOptions": true, "VerifyCodeFixAllOptions": true,
-		"VerifyCompletionsRequest": true, "UserPreferences": true,
-		"Capabilities": true, "Marker": true, "RangeMarker": true,
+		"VerifyCompletionsRequest": true, "Capabilities": true,
+		"Marker": true, "RangeMarker": true,
 		"ApplyCodeActionFromCompletionOptions": true,
 	}
-	return typish[name]
+	return typish[name] || strings.HasSuffix(name, "Options") ||
+		strings.HasSuffix(name, "Params") || strings.HasSuffix(name, "List") ||
+		strings.HasSuffix(name, "Defaults") || strings.HasSuffix(name, "Item") ||
+		strings.HasSuffix(name, "Items") || strings.HasSuffix(name, "Edits") ||
+		strings.HasSuffix(name, "Capabilities") || strings.HasSuffix(name, "Preferences")
 }
 
 // call handles function/method calls including the `f.X(t, ...)` convention.

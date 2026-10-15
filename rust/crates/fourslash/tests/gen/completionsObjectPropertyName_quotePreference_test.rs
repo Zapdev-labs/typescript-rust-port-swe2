@@ -19,7 +19,7 @@ fn optional_key(name: string) {
 	return Some(tsc_lsproto::CompletionItem { label: name + "?", insert_text: Some((name).into()), filter_text: Some((name).into()), sort_text: Some((tsc_ls::SORT_TEXT_OPTIONAL_MEMBER.to_string()).into()), ..Default::default() });
 }
 
-fn verify_object_literal_key_completions(t: &mut TestHandle, f: &mut FourslashTest, items: &[*tsc_lsproto::COMPLETION_ITEM]) {
+fn verify_object_literal_key_completions(t: &mut TestHandle, f: &mut FourslashTest, items: &[*tsc_lsproto::CompletionItem]) {
 	/* t.Helper */ ();
 	let mut expected = vec![Default::default(); items.len()];
 	for item in items {

@@ -40,7 +40,7 @@ fn completions_import_umd_default_no_crash1() {
 // @Filename: /src/index.js
 /**/"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "Dottie", additional_text_edits: tsc_fourslash::any_text_edits, data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "dottie", ..Default::default() }), ..Default::default() }), sort_text: Some((tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("", Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "Dottie", additional_text_edits: tsc_fourslash::AnyTextEdits, data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "dottie", ..Default::default() }), ..Default::default() }), sort_text: Some((tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
 	});
 }
 

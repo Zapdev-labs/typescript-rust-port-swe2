@@ -57,8 +57,8 @@ pub fn insert_replace_text_edit(
 // `ls.SortTextLocationPriority` (`"11"`) and `ls.DeprecateSortText` are
 // `pub(crate)` inside `tsc-ls` (`ls/src/completions.rs` `sort_text` module);
 // mirrored here until that crate exposes them publicly.
-const SORT_TEXT_GLOBALS_OR_KEYWORDS: &str = "15";
-const SORT_TEXT_LOCATION_PRIORITY: &str = "11";
+pub const SORT_TEXT_GLOBALS_OR_KEYWORDS: &str = "15";
+pub const SORT_TEXT_LOCATION_PRIORITY: &str = "11";
 
 /// `ls.DeprecateSortText`.
 fn deprecate_sort_text(original: &str) -> String {
