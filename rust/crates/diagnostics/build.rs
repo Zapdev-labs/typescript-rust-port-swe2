@@ -30,9 +30,22 @@ fn main() {
         .join("../../..")
         .canonicalize()
         .expect("failed to resolve repo root from CARGO_MANIFEST_DIR");
-    let diagnostics_dir = repo_root.join("tsc/internal/diagnostics");
+    // Inputs are vendored under rust/vendor so the tree is self-contained
+    // after the Go implementation is removed; fall back to the Go checkout
+    // layout for dev trees that still have it.
+    let vendored = manifest_dir.join("../../vendor");
+    let (diagnostics_dir, project_path) = if vendored.join("diagnostics").is_dir() {
+        (
+            vendored.join("diagnostics"),
+            vendored.join("tools/LocProject.json"),
+        )
+    } else {
+        (
+            repo_root.join("tsc/internal/diagnostics"),
+            repo_root.join("tools/LocProject.json"),
+        )
+    };
     let loc_dir = diagnostics_dir.join("loc");
-    let project_path = repo_root.join("tools/LocProject.json");
     let messages_path = diagnostics_dir.join("diagnosticMessages.json");
 
     println!("cargo:rerun-if-changed={}", messages_path.display());

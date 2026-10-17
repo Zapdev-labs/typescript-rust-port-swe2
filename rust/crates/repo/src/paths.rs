@@ -20,23 +20,32 @@ fn root_path_init() -> String {
     }
 
     // PORT: the Go walk looks for go.mod in ancestors of the source file,
-    // finding tsc/go.mod. This crate lives in rust/crates/repo, not inside
-    // tsc/, so each ancestor is checked for a tsc/go.mod entry — the found
-    // tsc directory is the same module root Go returns.
+    // finding tsc/go.mod. The Rust tree vendors `testdata/` directly under
+    // rust/, so each ancestor is checked for a `rust/testdata` dir — the
+    // found `rust` directory is the module root the tests resolve from.
     let mut dir = Path::new(filename);
     loop {
-        let candidate = dir.join("tsc").join("go.mod");
-        if candidate.is_file() {
+        let candidate = dir.join("rust").join("testdata");
+        if candidate.is_dir() {
             return dir
-                .join("tsc")
+                .join("rust")
                 .into_os_string()
                 .into_string()
                 // PORT: Go paths are arbitrary bytes; Rust String is UTF-8.
                 .unwrap_or_else(|_| panic!("repo root path is not valid UTF-8"));
         }
+        // Legacy layout: a Go checkout with tsc/testdata still present.
+        let legacy = dir.join("tsc").join("go.mod");
+        if legacy.is_file() {
+            return dir
+                .join("tsc")
+                .into_os_string()
+                .into_string()
+                .unwrap_or_else(|_| panic!("repo root path is not valid UTF-8"));
+        }
         match dir.parent() {
             Some(parent) => dir = parent,
-            None => panic!("could not find go.mod above {filename}"),
+            None => panic!("could not find rust/testdata above {filename}"),
         }
     }
 }
