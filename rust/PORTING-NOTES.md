@@ -2058,3 +2058,56 @@ End-to-end TODO after tests compile: `cargo test -p tsc-fourslash
 ls::resolve_completion_item (server_handlers.rs:1071 TODO), build a tsc
 binary + lsp server binary and smoke-test end-to-end, THEN remove the
 Go `tsc/` tree per user request (only after runtime parity verified).
+
+## 2026-10-17 genfourslash checkpoint 3 (ea8fe62802)
+
+cargo check -p tsc-fourslash --tests (remote): 2764 errors, down from 11803.
+Translator now has: arg-shape tables (optRef/optOwned/marker/rcRef/strPtr/
+owned/fmut/map/slice/variadicSlice/variadicIter/iter), prefsGroupField
+routing (UserPreferences -> nested Completion/Inlay/Format/CodeLens groups,
+FormatCodeSettings -> editor_settings), lsproto PascalCase enum consts,
+cap-chain .as_mut().unwrap(), fieldName() keyword->x_, exprField(.into()/
+Some()/vec![]/.to_string()), sliceLit/iterVec/fieldVec/packSlice/packIter,
+local-struct TypeSpec decls + positional field-name resolution, format!
+for string concat, dedent helper in gen_support, sort_text re-exported
+from tsc_ls root, tsc-modulespecifiers dep added to fourslash,
+MarkerInput From<&[&str;N]>/From<Option<()>>/Default, IGNORED const.
+new_fourslash -> (&t_name(), "", Some(caps), content).
+
+NEXT fixes needed (by error class):
+- 574 E0283 "annotations needed": `"1".into()` for impl Into<MarkerInput>
+  ambiguous -> emit `tsc_fourslash::MarkerInput::from(x)` in markerArgs mode.
+- 546 E0308 mismatched: recheck census after above.
+- 196 E0507 move out of index Vec<Rc<RangeMarker>>: `f.ranges()[i]` ->
+  `.clone()` (also f.markers()[i]). IndexExpr on call -> append .clone().
+- 178 E0277 Option<Vec<TextEdit>> From<ExpectedTextEdits>: sentinel problem.
+  field `additional_text_edits` in CompletionItem literal is
+  Option<Vec<TextEdit>>; tests write fourslash.AnyTextEdits/NoTextEdits.
+  -> emit marker fns: `tsc_fourslash::any_text_edits_marker()` /
+  `no_text_edits_marker()` (to ADD in verify.rs: produce Option<Vec<TextEdit>>
+  w/ sentinel TextEdit, detect in ExpectedCompletionItem::from -> Any/None).
+  Change relocatedTypes entries for AnyTextEdits/NoTextEdits accordingly.
+- 148+108+95+56+29 SORT_TEXT_* missing: `pub use completions::sort_text::*`
+  landed in ls/lib.rs (sort_text is `pub mod` now) — verify re-export works.
+- 72 E0061 takes 1 arg 0 supplied: verify_code_fix_not_available() zero-arg
+  variadic -> emit `&[]` when variadic tail is EMPTY (packSlice: if no tail
+  args, still emit `&[]`).
+- 67+35 E0599 CodeActionKind::SourceOrganizeImportsTs/SourceSortImportsTs:
+  real consts are SourceOrganizeImports/SourceSortImports (no Ts suffix) —
+  enumVariantAlias map needed for PascalCase lsproto const renames.
+- 32+32 `expected identifier, keyword true/false`: `testCase{true,...}` —
+  fixed once testCase struct emits (TypeSpec DeclStmt branch — VERIFY it
+  landed; earlier edit silently failed).
+- 31 E0422 `testCase` not found: same — DeclStmt TypeSpec case must emit.
+- 47 E0425 `new_content_mapper_fourslash` missing: helper lives in
+  contentMapper_test.go (skipped — no Test fns). Options: translate helper
+  fns from no-Test files into a shared gen file, or special-case name.
+- 40 E0507 move out of Rc: `*x` deref on Rc -> `(*x).clone()` or method.
+- 26 E0425 `assert`: gotest.tools `assert` pkg: assert.Assert->assert!,
+  assert.Equal->assert_eq!, assert.DeepEqual->assert_eq!, NilError->
+  is_none, etc. Add `assert` handling in call().
+- 25 E0277 VerifyWorkspaceSymbolCase: Default: add #[derive(Default)] to
+  verify structs used with ..Default::default() (grep gen for which).
+- 20 E0271 &[CompletionItem;N] vs IntoIterator: unqualified calls like
+  `completionGlobalsPlus(...)` bypass callArgs — Ident-fun call path must
+  also route through callArgs(name,...).
