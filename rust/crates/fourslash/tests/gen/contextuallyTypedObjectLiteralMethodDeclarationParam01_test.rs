@@ -31,7 +31,7 @@ function getFoo1(): Foo {
         }
     }
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("param1", "(parameter) arg: A", "");
 		f.verify_quick_info_at("param2", "(parameter) arg: B", "");
 	});

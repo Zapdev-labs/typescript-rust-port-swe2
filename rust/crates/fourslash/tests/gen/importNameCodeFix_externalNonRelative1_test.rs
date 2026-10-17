@@ -44,7 +44,7 @@ export const Pkg2 = {};
 // @Filename: /home/src/workspaces/project/packages/pkg-2/src/blah/foo/data.ts
 Pkg2/*internal*/
 // @link: /home/src/workspaces/project/packages/pkg-2 -> /home/src/workspaces/project/packages/pkg-1/node_modules/pkg-2"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.mark_test_as_strada_server();
 		let mut opts1534 = f.get_options();
 		opts1534.format_code_settings.new_line_character = "\n";

@@ -20,7 +20,7 @@ import { a } from "a";
 // @Filename: /c/foo.ts
 [|import { b } from "b";
 a;|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("/c/foo.ts");
 		f.verify_import_fix_at_position(&[r#"import { a } from "a";
 import { b } from "b";

@@ -13,7 +13,7 @@ fn import_name_code_fix_new_import_node_modules1() {
 // @Filename: ../node_modules/fake-module/nested.ts
 export var v1 = 5;
 export function f1();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.configure(tsc_lsutil::UserPreferences { auto_import_entrypoint_directory_search: tsc_core::tristate::TS_TRUE.into(), ..Default::default() });
 		f.verify_import_fix_at_position(&[r#"import { f1 } from "fake-module/nested";
 

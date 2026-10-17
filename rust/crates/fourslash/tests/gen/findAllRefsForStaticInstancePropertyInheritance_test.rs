@@ -28,7 +28,7 @@ y./*5*/foo;
 z./*6*/foo;
 Y./*7*/foo;
 Z./*8*/foo;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_find_all_references(&["0".into(), "1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into(), "7".into(), "8".into()]);
 	});
 }

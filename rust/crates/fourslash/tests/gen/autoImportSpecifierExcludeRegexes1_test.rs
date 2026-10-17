@@ -17,7 +17,7 @@ declare module "ambient/utils" {
 }
 // @Filename: /index.ts
 x/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_import_fix_module_specifiers("", &["ambient".into(), "ambient/utils".into()], None);
 		f.verify_import_fix_module_specifiers("", &["ambient".into()], Some(&tsc_lsutil::UserPreferences { auto_import_specifier_exclude_regexes: vec!["utils".into()].into(), ..Default::default() }));
 		f.verify_import_fix_module_specifiers("", &["ambient".into(), "ambient/utils".into()], Some(&tsc_lsutil::UserPreferences { auto_import_specifier_exclude_regexes: vec!["/UTILS/".into()].into(), ..Default::default() }));

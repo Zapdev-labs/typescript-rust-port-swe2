@@ -12,7 +12,7 @@ fn semantic_classification1() {
     }
 }
 interface /*2*/X extends /*3*/M./*4*/I { }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type_: "namespace.declaration".to_string().into(), text: "M".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "interface.declaration".to_string().into(), text: "I".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "interface.declaration".to_string().into(), text: "X".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "namespace".to_string().into(), text: "M".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "interface".to_string().into(), text: "I".to_string().into(), ..Default::default() }]);
 	});
 }

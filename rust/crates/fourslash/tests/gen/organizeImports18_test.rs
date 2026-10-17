@@ -24,7 +24,7 @@ export { A } from "./A";
 export { bFuncC } from "./C";
 export { bFuncB } from "./B";
 export { bFuncA } from "./A";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("/test.ts");
 		f.verify_organize_imports(r#"export { A } from "./A";
 export { B } from "./B";

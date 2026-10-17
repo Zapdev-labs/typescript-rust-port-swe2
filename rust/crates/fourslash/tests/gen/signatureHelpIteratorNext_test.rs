@@ -27,7 +27,7 @@ declare const asyncGenerator: AsyncGenerator<string, void, number>;
 
 asyncGenerator.next(/*7*/);
 asyncGenerator.next(/*8*/ 0);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_signature_help();
 	});
 }

@@ -13,7 +13,7 @@ fn smart_selection_simple2() {
   open(ho/*1*/st: number, data: any): Promise<any>;
   bar(): void/*2*/
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_selection_ranges();
 	});
 }

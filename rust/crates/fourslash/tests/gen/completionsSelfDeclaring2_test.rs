@@ -10,8 +10,8 @@ fn completions_self_declaring2() {
 		let content = r"// @lib: es5
 function f1<T>(x: T) {}
 f1({ [|abc|]/*1*/ });";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: Some(tsc_fourslash::EditRange { insert: f.ranges()[0].clone().into(), replace: f.ranges()[0].clone().into(), ..Default::default() }), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_plus(vec!["f1".into()], false).into(), ..Default::default() }), ..Default::default() }));
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
+		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::ExpectedCompletionEditRange::EditRange(tsc_fourslash::EditRange { insert: f.ranges()[0].clone().into(), replace: f.ranges()[0].clone().into(), ..Default::default() }), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_plus(vec!["f1".into()], false).into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

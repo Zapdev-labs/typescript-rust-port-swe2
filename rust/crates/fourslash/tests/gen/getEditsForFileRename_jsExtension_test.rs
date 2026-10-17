@@ -12,7 +12,7 @@ fn get_edits_for_file_rename_js_extension() {
 export const a = 0;
 // @Filename: /b.js
 import { a } from "./src/a.js";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_will_rename_files_edits("/b.js", "/src/b.js", &std::collections::BTreeMap::from([("/src/b.js".to_string().into(), r#"import { a } from "./a.js";"#.to_string().into())]), None);
 	});
 }

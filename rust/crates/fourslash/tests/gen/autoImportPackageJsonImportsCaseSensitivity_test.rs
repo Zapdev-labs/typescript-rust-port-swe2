@@ -21,7 +21,7 @@ fn auto_import_package_json_imports_case_sensitivity() {
 export function add(a: number, b: number) {}
 // @Filename: /src/index.ts
 add/*imports*/;"##;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_import_fix_module_specifiers("imports", &["#src/add.ts".into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_preference: tsc_modulespecifiers::ImportModuleSpecifierPreference("non-relative"), ..Default::default() }));
 	});
 }

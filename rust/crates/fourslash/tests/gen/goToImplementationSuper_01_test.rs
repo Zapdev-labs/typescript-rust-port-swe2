@@ -16,7 +16,7 @@ class Bar extends Foo {
         sup/*super_call*/er.hello();
     }
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_implementation(&["super_call".into()]);
 	});
 }

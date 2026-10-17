@@ -94,7 +94,7 @@ var f5_/*e6*/r12 = f5.ofIG4;
 var f5_/*e7*/r14 = f5.ofIG6;
 var f5_/*e8*/r18 = f5.ofC2;
 var f5_/*e9*/r20 = f5.ofC4;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_no_errors();
 		f.verify_quick_info_at("a1", "var f_r1: number", "");
 		f.verify_quick_info_at("a2", "var f_r2: string", "");

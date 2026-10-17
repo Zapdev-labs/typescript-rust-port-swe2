@@ -12,7 +12,7 @@ fn quick_info_on_catch_variable() {
 function f() {
    try { } catch (/**/e) { }
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("", "(local var) e: any", "");
 	});
 }

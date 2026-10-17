@@ -14,7 +14,7 @@ function /*1*/f(x) {
 }
 
 /*2*/f('');";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_hover();
 	});
 }

@@ -44,7 +44,7 @@ class Dog/*8*/ {
     #bones: string[];
 }
 const d/*9*/ = new Dog();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("1".to_string().into(), vec![0, 1, 2]), ("2".to_string().into(), vec![0, 1, 2]), ("3".to_string().into(), vec![0, 1]), ("4".to_string().into(), vec![0]), ("5".to_string().into(), vec![0, 1, 2]), ("6".to_string().into(), vec![0]), ("7".to_string().into(), vec![0, 1]), ("8".to_string().into(), vec![0, 1]), ("9".to_string().into(), vec![0, 1])]));
 	});
 }

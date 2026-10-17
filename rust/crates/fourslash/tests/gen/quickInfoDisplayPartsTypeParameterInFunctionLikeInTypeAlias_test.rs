@@ -9,7 +9,7 @@ fn quick_info_display_parts_type_parameter_in_function_like_in_type_alias() {
 	run_test(|t| {
 		let content = r"type MixinCtor<A> = new () => /*0*/A & { constructor: MixinCtor</*1*/A> };
 type MixinCtor<A> = new () => A & { constructor: { constructor: MixinCtor</*2*/A> } };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_hover();
 	});
 }

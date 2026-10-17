@@ -15,7 +15,7 @@ async function fn1(a: Promise<void> | void) {
 async function fn2<T extends Promise<void> | void>(a: T) {
   await a;
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_suggestion_diagnostics(&[]);
 	});
 }

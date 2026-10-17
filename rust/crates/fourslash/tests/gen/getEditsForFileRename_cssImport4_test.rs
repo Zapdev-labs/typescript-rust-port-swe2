@@ -23,7 +23,7 @@ export default css;
 import styles from ".//*rename*/app.css";"#;
 		let mut capabilities = tsc_fourslash::get_default_capabilities();
 		capabilities.workspace.as_mut().unwrap().file_operations.will_rename = Some((false).into());
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", capabilities.into(), content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", capabilities.into(), &content);
 		f.verify_rename("rename", "app2.css", &std::collections::BTreeMap::from([("/a.ts".to_string().into(), r#"import styles from "./app2.css";"#.to_string().into()), ("/app2.d.css.ts".to_string().into(), r"declare const css: {
   cookieBanner: string;
 };

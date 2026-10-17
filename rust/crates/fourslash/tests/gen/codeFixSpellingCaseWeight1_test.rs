@@ -11,7 +11,7 @@ fn code_fix_spelling_case_weight1() {
 		let content = r"let ABCDEFGHIJKLMNOPQR = 1;
 let abcdefghijklmnopqrs = 1;
 [|abcdefghijklmnopqr|]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_range_after_code_fix(r"abcdefghijklmnopqrs", false, 0, 0);
 	});
 }

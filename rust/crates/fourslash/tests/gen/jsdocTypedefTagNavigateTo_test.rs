@@ -17,7 +17,7 @@ var NumberLike2;
 
 /** @type {/*1*/NumberLike} */
 var numberLike;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.mark_test_as_strada_server();
 		f.verify_baseline_document_symbol();
 	});

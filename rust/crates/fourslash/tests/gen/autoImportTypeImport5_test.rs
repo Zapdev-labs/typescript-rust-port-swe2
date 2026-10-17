@@ -34,7 +34,7 @@ const bar: y;
 import { A, B, type X, type Y, type Z } from "./exports1";
 const foo: x/*1*/;
 const bar: y;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("0");
 		f.verify_import_fix_at_position(&[r#"import { type x, type X, type Y, type Z } from "./exports1";
 const foo: x;

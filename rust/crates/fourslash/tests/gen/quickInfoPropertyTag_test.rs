@@ -17,7 +17,7 @@ fn quick_info_property_tag() {
 
 /** @type {I} */
 const obj = { /**/x: 10 };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("", "(property) x: number", "Doc\nMore doc");
 	});
 }

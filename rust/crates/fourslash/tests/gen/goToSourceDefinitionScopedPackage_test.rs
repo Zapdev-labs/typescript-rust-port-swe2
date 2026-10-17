@@ -17,7 +17,7 @@ export function /*target*/scopedHelper() { return "scoped"; }
 // @Filename: /home/src/workspaces/project/index.ts
 import { /*importName*/scopedHelper } from "@myscope/mylib";
 scopedHelper/*usage*/();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_source_definition(&["importName".into(), "usage".into()]);
 	});
 }
@@ -37,7 +37,7 @@ export function /*target*/nsHelper() { return 42; }
 // @Filename: /home/src/workspaces/project/index.ts
 import { nsHelper } from "@myns/mylib";
 nsHelper/*usage*/();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_source_definition(&["usage".into()]);
 	});
 }

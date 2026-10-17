@@ -9,7 +9,7 @@ fn syntactic_classifications_doc_comment4() {
 	run_test(|t| {
 		let content = r"/** @param {number} p1 */
 function foo(p1) {}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type_: "function.declaration".to_string().into(), text: "foo".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "parameter.declaration".to_string().into(), text: "p1".to_string().into(), ..Default::default() }]);
 	});
 }

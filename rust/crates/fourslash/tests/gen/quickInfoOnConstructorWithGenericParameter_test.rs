@@ -22,11 +22,11 @@ class B extends A {
     }
 }
 var x = new /*2*/B(/*1*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("1");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "B(a: Foo<I>, b: number): B".to_string().into(), ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "B(a: Foo<I>, b: number): B".to_string().into(), ..Default::default() });
 		f.insert("null,");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "B(a: Foo<I>, b: number): B".to_string().into(), ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "B(a: Foo<I>, b: number): B".to_string().into(), ..Default::default() });
 		f.insert("10);");
 		f.verify_quick_info_at("2", "constructor B(a: Foo<I>, b: number): B", "");
 	});

@@ -15,7 +15,7 @@ fn call_hierarchy_incoming_calls_object_literal_method_in_string_literal_compute
   }
 };
 "#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("split");
 		f.verify_baseline_call_hierarchy();
 	});

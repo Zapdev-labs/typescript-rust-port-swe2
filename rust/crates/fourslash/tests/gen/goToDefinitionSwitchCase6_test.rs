@@ -10,7 +10,7 @@ fn go_to_definition_switch_case6() {
 		let content = r"export default { [|/*a*/case|] };
 [|/*b*/default|];
 [|/*c*/case|] 42;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_definition(true, &["a".into(), "b".into(), "c".into()]);
 	});
 }

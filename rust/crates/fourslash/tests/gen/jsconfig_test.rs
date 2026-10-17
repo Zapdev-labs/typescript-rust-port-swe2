@@ -17,7 +17,7 @@ function f(/**/x) {
         "noImplicitAny": true
     }
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("/a.js");
 		f.verify_error_exists_after_marker("");
 	});

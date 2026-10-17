@@ -13,7 +13,7 @@ fn regex_error_recovery() {
  Bug 579071: Parser no longer detects a Regex when an open bracket is inserted
 verify.quickInfoIs("RegExp");
 verify.not.errorExistsAfterMarker("1");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.insert("(");
 	});
 }

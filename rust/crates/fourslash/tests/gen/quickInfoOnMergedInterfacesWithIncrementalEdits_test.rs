@@ -19,7 +19,7 @@ namespace MM {
     var r3 = b.foo; // number
     var r/*2*/4 = b.b/*1*/ar; // string
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("1");
 		f.verify_quick_info_is("(property) B<string>.bar: string", "");
 		f.delete_at_caret(1);

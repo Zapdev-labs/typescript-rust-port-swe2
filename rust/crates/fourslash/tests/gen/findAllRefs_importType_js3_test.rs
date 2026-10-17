@@ -18,7 +18,7 @@ module.exports.D = class /**/D {};
 const x = 0;
 /** @type {import("./a").D} */
 const y = 0;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_no_errors();
 		f.verify_baseline_find_all_references(&["".into()]);
 	});

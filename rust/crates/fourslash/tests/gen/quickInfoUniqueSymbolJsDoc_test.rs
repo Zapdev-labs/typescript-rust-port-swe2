@@ -13,7 +13,7 @@ fn quick_info_unique_symbol_js_doc() {
 /** @type {unique symbol} */
 const foo = Symbol();
 foo/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_hover();
 	});
 }

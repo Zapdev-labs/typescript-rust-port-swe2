@@ -23,7 +23,7 @@ import old2 from "../index";
 
 // @Filename: /tsconfig.json
 { "files": ["a.ts", "src/a.ts", "src/foo/a.ts", "src/index.ts"] }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_will_rename_files_edits("/src/index.ts", "/src/new.ts", &std::collections::BTreeMap::from([("/a.ts".to_string().into(), r#"/// <reference path="./src/new.ts" />
 import old from "./src/new";
 import old2 from "./src/new";"#.to_string().into()), ("/src/a.ts".to_string().into(), r#"/// <reference path="./new.ts" />

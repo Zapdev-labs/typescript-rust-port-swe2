@@ -21,7 +21,7 @@ import b = require("./b");
 [|/*xUse*/x|];
 [|/*aUse*/a|];
 [|/*bUse*/b|];"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_definition(true, &["aUse".into(), "fUse".into(), "xUse".into(), "bUse".into()]);
 	});
 }

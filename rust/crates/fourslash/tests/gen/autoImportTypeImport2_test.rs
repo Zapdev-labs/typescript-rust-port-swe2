@@ -18,7 +18,7 @@ export class D = { y: string };
 import { A, type C, D } from './foo';
 const b: B/**/ | C;
 console.log(A, D);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("");
 		f.verify_import_fix_at_position(&[r"import { A, type B, type C, D } from './foo';
 const b: B | C;

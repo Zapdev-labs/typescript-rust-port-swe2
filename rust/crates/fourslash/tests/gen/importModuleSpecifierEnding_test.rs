@@ -11,7 +11,7 @@ fn import_module_specifier_ending_auto() {
 export const helperFunc = () => {};
 // @Filename: /project/index.ts
 helper/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.configure(tsc_lsutil::UserPreferences { import_module_specifier_ending: tsc_modulespecifiers::ImportModuleSpecifierEndingPreference::AUTO.into(), completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() });
 		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["helperFunc".into()].into(), ..Default::default() }), ..Default::default() }));
 		f.baseline_auto_imports_completions(&["".into()]);
@@ -25,7 +25,7 @@ fn import_module_specifier_ending_minimal() {
 export const helperFunc = () => {};
 // @Filename: /project/index.ts
 helper/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.configure(tsc_lsutil::UserPreferences { import_module_specifier_ending: tsc_modulespecifiers::ImportModuleSpecifierEndingPreference::MINIMAL.into(), completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() });
 		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["helperFunc".into()].into(), ..Default::default() }), ..Default::default() }));
 		f.baseline_auto_imports_completions(&["".into()]);
@@ -39,7 +39,7 @@ fn import_module_specifier_ending_index() {
 export const helperFunc = () => {};
 // @Filename: /project/index.ts
 helper/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.configure(tsc_lsutil::UserPreferences { import_module_specifier_ending: tsc_modulespecifiers::ImportModuleSpecifierEndingPreference::INDEX.into(), completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() });
 		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["helperFunc".into()].into(), ..Default::default() }), ..Default::default() }));
 		f.baseline_auto_imports_completions(&["".into()]);
@@ -53,7 +53,7 @@ fn import_module_specifier_ending_js() {
 export const helperFunc = () => {};
 // @Filename: /project/index.ts
 helper/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.configure(tsc_lsutil::UserPreferences { import_module_specifier_ending: tsc_modulespecifiers::ImportModuleSpecifierEndingPreference::JS.into(), completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() });
 		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["helperFunc".into()].into(), ..Default::default() }), ..Default::default() }));
 		f.baseline_auto_imports_completions(&["".into()]);

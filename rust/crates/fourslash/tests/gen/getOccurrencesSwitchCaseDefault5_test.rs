@@ -24,7 +24,7 @@ fn get_occurrences_switch_case_default5() {
         break/*13*/;
     case 16/*14*/:
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_document_highlights(None, to_any(f.markers()).into_iter().map(Into::into));
 	});
 }

@@ -11,7 +11,7 @@ fn get_occurrences_is_definition_of_namespace() {
     export var n = 12;
 }
 let x = /*3*/Numbers.n + 1;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
 	});
 }

@@ -43,7 +43,7 @@ declare namespace React { export interface Whatever {} }
 }
 // @Filename: /index.ts
 import { useForm } from "react-hook-form";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_find_all_references(&["".into()]);
 	});
 }

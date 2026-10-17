@@ -20,7 +20,7 @@ class /*4*/default {}
 const foo = {
     /*5*/[|default|]: 1
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		let mut markers = vec!["1", "2", "3", "4"];
 		for marker in markers {
 			f.go_to_marker(marker);

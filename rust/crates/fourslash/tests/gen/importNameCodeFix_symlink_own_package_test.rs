@@ -17,7 +17,7 @@ export const x = 0;
 // @Filename: /packages/a/index.d.ts
 // @Symlink: /node_modules/a/index.d.ts
 export const a: number;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("/packages/b/b0.ts");
 		f.verify_import_fix_at_position(&[r#"import { x } from "./b1";
 

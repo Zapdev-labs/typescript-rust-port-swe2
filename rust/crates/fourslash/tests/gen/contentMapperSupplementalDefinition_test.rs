@@ -18,7 +18,7 @@ supplementalV/*completion*/;
 		f.go_to_marker("completion");
 		let mut completions = f.get_completions(None);
 		let completion = Default::default();
-		for item in completions.items {
+		for item in completions.as_ref().unwrap().items {
 			if item.label == "supplementalValue" {
 				completion = item;
 				break;
@@ -30,7 +30,7 @@ supplementalV/*completion*/;
 		if completion.as_mut().unwrap().data.file_name != "/globals.astro" || completion.as_mut().unwrap().data.supplemental_file_index == None || (*completion.as_mut().unwrap().data.supplemental_file_index).clone() != 0 {
 			panic!("unexpected completion content mapper file data: %#v", completion.as_mut().unwrap().data);
 		}
-		f.resolve_completion_item(completion);
+		f.resolve_completion_item(&completion);
 	});
 }
 

@@ -19,7 +19,7 @@ c. // test on c.
 
 //Test for comment
 //c./**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_completions(tsc_fourslash::MarkerInput::from(""), None);
 	});
 }

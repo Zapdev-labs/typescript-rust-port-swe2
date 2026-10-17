@@ -16,7 +16,7 @@ export = C;
 import C = require("./a");
 declare var x: C<number>;
 x./**/m;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("", "(method) C<number>.m(): void", "");
 	});
 }

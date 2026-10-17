@@ -9,7 +9,7 @@ fn quick_info_error_signature_fills_in_type_parameter() {
 	run_test(|t| {
 		let content = r"declare function f<T>(x: number): T;
 const x/**/ = f();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("", "const x: unknown", "");
 	});
 }

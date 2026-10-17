@@ -12,7 +12,7 @@ fn quick_info_for_type_parameter_in_type_alias2() {
 type Index<AA> = {[foo: string]: A/*2*/A};
 type GenericMethod<AA> = { method<BB>(): A/*3*/A & B/*4*/B }
 type Nesting<TT> = { method<UU>(): new <WW>() => T/*5*/T & U/*6*/U & W/*7*/W };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "(type parameter) AA in type Call<AA>", "");
 		f.verify_quick_info_at("2", "(type parameter) AA in type Index<AA>", "");
 		f.verify_quick_info_at("3", "(type parameter) AA in type GenericMethod<AA>", "");

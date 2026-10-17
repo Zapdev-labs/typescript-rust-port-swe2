@@ -19,8 +19,8 @@ export const extensions = {
        return actualValue === expectedValue
     }
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingTypeAnnotationOnExports".to_string().into(), new_file_content: r"export const extensions = {
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
+		f.verify_code_fix_all(&tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingTypeAnnotationOnExports".to_string().into(), new_file_content: r"export const extensions = {
     /**
      */
     fn: <T>(actualValue: T, expectedValue: T): boolean => {

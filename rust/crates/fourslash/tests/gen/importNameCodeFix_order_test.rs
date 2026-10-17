@@ -15,7 +15,7 @@ export const bar: number;
 // @Filename: /c.ts
 [|import { bar } from "./b";
 foo;|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("/c.ts");
 		f.verify_import_fix_at_position(&[r#"import { bar, foo } from "./b";
 foo;"#.into(), r#"import { foo } from "./a";

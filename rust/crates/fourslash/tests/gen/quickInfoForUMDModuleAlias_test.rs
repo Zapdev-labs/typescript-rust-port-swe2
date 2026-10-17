@@ -15,7 +15,7 @@ export as namespace /*0*/myLib;
 // @Filename: 1.ts
 /// <reference path="0.d.ts" />
 /*1*/myLib.doThing();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("0", "export namespace myLib", "");
 		f.verify_quick_info_at("1", "export namespace myLib", "");
 	});

@@ -16,7 +16,7 @@ export default Foo;
 // @Filename: /bar.jsx
 import Foo from './foo';
 const a = <[|/*use*/Foo|] />";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_definition(true, &["use".into()]);
 	});
 }

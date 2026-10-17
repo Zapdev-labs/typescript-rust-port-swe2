@@ -16,7 +16,7 @@ fn quick_info_for_aliased_generic() {
 import d = M.N;
 var /*1*/aa: d.C<number>;
 var /*2*/bb: d.D;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "var aa: d.C<number>", "");
 		f.verify_quick_info_at("2", "var bb: d.D", "");
 	});

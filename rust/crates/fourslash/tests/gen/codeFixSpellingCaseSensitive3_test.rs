@@ -11,7 +11,7 @@ fn code_fix_spelling_case_sensitive3() {
 		let content = r"class Node {}
 let node = new Node();
 [|nodes|]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_range_after_code_fix(r"node", false, 0, 0);
 	});
 }

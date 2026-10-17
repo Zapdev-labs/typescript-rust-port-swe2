@@ -8,7 +8,7 @@ use tsc_fourslash::*;
 fn go_to_definition_await2() {
 	run_test(|t| {
 		let content = r"[|/*start*/await|] Promise.resolve(0);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_definition(true, &["start".into()]);
 	});
 }

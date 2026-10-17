@@ -20,7 +20,7 @@ fn suggestion_of_unused_variable_with_external_module() {
 // @Filename: /app.js
 //@ts-check
 [|require("./mymodule")|];"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("/app.js");
 		f.verify_suggestion_diagnostics(&[tsc_lsproto::Diagnostic { code: Some(tsc_lsproto::IntegerOrString { integer: Some(((80001) as i32).into()), ..Default::default() }), message: tsc_lsproto::StringOrMarkupContent { string: Some(("File is a CommonJS module; it may be converted to an ES module.").into()), ..Default::default() }.into(), range: f.ranges()[2].clone().ls_range.into(), ..Default::default() }]);
 		f.go_to_file("/mymodule.js");

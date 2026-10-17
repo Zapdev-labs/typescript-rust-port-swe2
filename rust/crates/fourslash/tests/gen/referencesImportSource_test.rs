@@ -32,7 +32,7 @@ import { /*d*/f } from "./c";
 import source /*e*/g from "m";
 /*eUse*/g;
 import.source("m");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_no_errors();
 		f.verify_baseline_find_all_references(&["a".into(), "b".into(), "c".into(), "cUse".into(), "d".into(), "e".into()]);
 		f.verify_baseline_rename(None, vec!["a".into(), "b".into(), "c".into(), "cUse".into(), "d".into(), "e".into()]);

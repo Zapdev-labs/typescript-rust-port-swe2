@@ -18,7 +18,7 @@ import { type E } from "foo";
 import { D } from "foo";
 
 console.log(A, B, C, D, E);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_organize_imports(r#"import { A, C, D, type B, type E } from "foo";
 
 console.log(A, B, C, D, E);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);

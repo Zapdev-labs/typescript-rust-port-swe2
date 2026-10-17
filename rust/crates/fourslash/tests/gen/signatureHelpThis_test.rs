@@ -35,19 +35,19 @@ implicitAny(/*4*/12);
 explicitVoid(/*5*/13);
 let o = { n: 14, m: explicitLiteral };
 o.m(/*6*/);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("1");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "n".to_string().into(), ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "n".to_string().into(), ..Default::default() });
 		f.go_to_marker("2");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "n".to_string().into(), ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "n".to_string().into(), ..Default::default() });
 		f.go_to_marker("3");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "n".to_string().into(), ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "n".to_string().into(), ..Default::default() });
 		f.go_to_marker("4");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "x".to_string().into(), ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "x".to_string().into(), ..Default::default() });
 		f.go_to_marker("5");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "x".to_string().into(), ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "x".to_string().into(), ..Default::default() });
 		f.go_to_marker("6");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "x".to_string().into(), ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "x".to_string().into(), ..Default::default() });
 	});
 }
 

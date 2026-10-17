@@ -13,7 +13,7 @@ export class B {}
 // @Filename: /b.ts
 import type { A } from './a';
 new B";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("/b.ts");
 		f.verify_import_fix_at_position(&[r"import { B, type A } from './a';
 new B".into()], None);

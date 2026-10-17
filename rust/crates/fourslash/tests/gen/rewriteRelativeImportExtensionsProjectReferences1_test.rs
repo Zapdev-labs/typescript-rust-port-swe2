@@ -50,7 +50,7 @@ export {};
 { "type": "module" }
 // @Filename: packages/main/src/index.ts
 import {} from "../../common/src/index.ts";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.mark_test_as_strada_server();
 		f.go_to_file("/packages/main/src/index.ts");
 		f.verify_baseline_non_suggestion_diagnostics();

@@ -17,7 +17,7 @@ fn find_all_refs_re_export_right_name_wrong_symbol() {
 /*cUse*/[|x|];
 // @Filename: /d.ts
 [|import { /*d*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 9 |}x|] } from "./c";|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_no_errors();
 		f.verify_baseline_find_all_references(&["a".into(), "b".into(), "cFromB".into(), "cFromA".into(), "cUse".into(), "d".into()]);
 		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into()]);

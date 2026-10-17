@@ -19,7 +19,7 @@ import { foo as /*importAlias*/bar } from "pkg";
 bar;
 // @Filename: /home/src/workspaces/project/reexport.ts
 export { foo as /*reExportAlias*/bar } from "pkg";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_source_definition(&["importAlias".into(), "reExportAlias".into()]);
 	});
 }
@@ -37,7 +37,7 @@ export function /*target*/original() { return "ok"; }
 // @Filename: /home/src/workspaces/project/index.ts
 import { original as /*aliasedImport*/renamed } from "pkg";
 renamed();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_source_definition(&["aliasedImport".into()]);
 	});
 }
@@ -62,7 +62,7 @@ export class /*targetWidget*/Widget {
 import { Widget } from "pkg";
 const w = new /*constructorCall*/Widget("test");
 w./*methodCall*/render();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_source_definition(&["constructorCall".into(), "methodCall".into()]);
 	});
 }
@@ -93,7 +93,7 @@ import { command } from "yargs";
 command("foo", yargs => {
     yargs.[|/*start*/positional|]();
 });"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_source_definition(&["start".into()]);
 	});
 }
@@ -114,7 +114,7 @@ export function /*targetBar*/bar() { return 42; }
 export { /*reExportFoo*/foo, /*reExportBar*/bar } from "pkg";
 // @Filename: /home/src/workspaces/project/index.ts
 import { foo, bar } from [|"pkg"/*moduleSpecifier*/|];"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_source_definition(&["reExportFoo".into(), "reExportBar".into(), "moduleSpecifier".into()]);
 	});
 }
@@ -133,7 +133,7 @@ export function /*targetAlpha*/alpha() { return "a"; }
 export function /*targetBeta*/beta() { return 2; }
 // @Filename: /home/src/workspaces/project/reexport.ts
 export { alpha, beta } from [|"pkg"/*reExportSpecifier*/|];"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_source_definition(&["reExportSpecifier".into()]);
 	});
 }
@@ -155,7 +155,7 @@ export function /*target*/foo() { return "ok"; }
 // @Filename: /home/src/workspaces/project/index.ts
 import { /*importName*/foo } from "pkg";
 foo/*start*/();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_source_definition(&["importName".into(), "start".into()]);
 	});
 }
@@ -174,7 +174,7 @@ export function /*target*/helper() {}
 import { helper } from "pkg";
 helper/*usage*/();
 export { helper as /*reExport*/myHelper } from "pkg";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_source_definition(&["usage".into(), "reExport".into()]);
 	});
 }
@@ -196,7 +196,7 @@ export { helper } from "./impl.js";
 // @Filename: /home/src/workspaces/project/index.ts
 import { helper } from "pkg";
 helper/*usage*/();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_source_definition(&["usage".into()]);
 	});
 }
@@ -218,7 +218,7 @@ export { doWork } from "./impl.js";
 // @Filename: /home/src/workspaces/project/index.ts
 import { /*importName*/doWork } from "pkg";
 doWork/*callSite*/();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_source_definition(&["importName".into(), "callSite".into()]);
 	});
 }
@@ -262,7 +262,7 @@ var /*targetPopulationImpl*/TargetPopulation;
 import { /*namedImport*/greet, /*enumImport*/TargetPopulation } from "pkg";
 greet/*call*/("world");
 TargetPopulation/*enumAccess*/.Team;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_source_definition(&["namedImport".into(), "enumImport".into(), "call".into(), "enumAccess".into()]);
 	});
 }

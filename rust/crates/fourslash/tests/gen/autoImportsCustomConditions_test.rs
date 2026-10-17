@@ -24,7 +24,7 @@ fn auto_imports_custom_conditions() {
 export const dep: number;
 // @Filename: /index.ts
 dep/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_import_fix_module_specifiers("", &["dep".into()], None);
 	});
 }

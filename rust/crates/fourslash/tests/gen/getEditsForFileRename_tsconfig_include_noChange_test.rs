@@ -13,7 +13,7 @@ fn get_edits_for_file_rename_tsconfig_include_no_change() {
 }
 // @Filename: /src/dir/a.ts
 "#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_will_rename_files_edits("/src/dir/a.ts", "/src/dir/b.ts", &std::collections::BTreeMap::from([]), None);
 	});
 }

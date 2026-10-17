@@ -200,7 +200,7 @@ Point.prototype = {
         return new Point(this.x + dx, this.y + dy);
     }
 };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "(property) C1T5.foo: (i: number, s: string) => number", "");
 		f.verify_quick_info_at("2", "(parameter) i: number", "");
 		f.verify_quick_info_at("3", "(parameter) i: number", "");

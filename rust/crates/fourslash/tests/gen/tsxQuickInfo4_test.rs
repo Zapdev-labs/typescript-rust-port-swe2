@@ -45,7 +45,7 @@ function buildSomeElement2(): JSX.Element {
     );
 }
 let componenet = <MainButton onClick={()=>{}} ext/*5*/ra-prop>GO</MainButton>;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "function MainButton(linkProps: LinkProps): JSX.Element (+1 overload)", "");
 		f.verify_quick_info_at("2", "(property) LinkProps.to: string", "");
 		f.verify_quick_info_at("3", "function MainButton(buttonProps: ButtonProps): JSX.Element (+1 overload)", "");

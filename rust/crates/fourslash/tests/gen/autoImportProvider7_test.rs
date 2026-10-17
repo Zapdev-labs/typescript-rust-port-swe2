@@ -27,7 +27,7 @@ export class MyClass2 {}
 
 const a = new MyClass/*1*/();
 const b = new MyClass2/*2*/();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.mark_test_as_strada_server();
 		f.go_to_marker("1");
 		let mut opts1196 = f.get_options();

@@ -12,7 +12,7 @@ fn quick_info_js_doc_function_this() {
 // @Filename: Foo.js
 /** @type {function (this: string, string): string} */
 var f/**/ = function (s) { return s; }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("");
 		f.verify_quick_info_is("var f: (this: string, arg1: string) => string", "");
 	});

@@ -17,7 +17,7 @@ declare module "externalModuleRefernceResolutionOrderInImportDeclaration_file1" 
 ///<reference path='externalModuleRefernceResolutionOrderInImportDeclaration_file2.ts'/>
 import file1 = require('externalModuleRefernceResolutionOrderInImportDeclaration_file1');
 /*1*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("1");
 		f.insert("file1.");
 		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["bar".into()].into(), excludes: vec!["foo".into()].into(), ..Default::default() }), ..Default::default() }));

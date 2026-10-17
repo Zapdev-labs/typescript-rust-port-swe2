@@ -14,8 +14,8 @@ function foo() {
     return { x: 1, y: 1 } as const;
 }
 export const { x, y = 0 } = foo();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Extract binding expressions to variable".to_string().into(), new_file_content: r"function foo() {
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
+		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Extract binding expressions to variable".to_string().into(), new_file_content: r"function foo() {
     return { x: 1, y: 1 } as const;
 }
 const dest = foo();

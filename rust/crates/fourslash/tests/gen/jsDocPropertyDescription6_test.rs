@@ -18,7 +18,7 @@ function literal1Example(e: Literal1Example) {
     console.log(e./*literal2*/anything);
     console.log(e./*literal3*/prefix0);
 }");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("literal1", "(index) Literal1Example[`prefix${string}`]: string | number", "");
 		f.verify_quick_info_at("literal2", "any", "");
 		f.verify_quick_info_at("literal3", "(index) Literal1Example[`prefix${string}` | `prefix${number}`]: number", "Something else");

@@ -8,7 +8,7 @@ use tsc_fourslash::*;
 fn smart_selection_behind_caret() {
 	run_test(|t| {
 		let content = r"let/**/ x: string";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_selection_ranges();
 	});
 }

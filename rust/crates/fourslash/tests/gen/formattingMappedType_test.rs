@@ -10,7 +10,7 @@ fn formatting_mapped_type() {
 		let content = r"/*generic*/type t  < T  > =   {
 /*map*/   [   P   in   keyof    T  ]   :   T  [  P  ]
 };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.format_document("");
 		f.go_to_marker("generic");
 		f.verify_current_line_content(r"type t<T> = {");

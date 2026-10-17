@@ -13,7 +13,7 @@ fn unused_class_in_namespace1() {
   class class1 {
   }
 } |]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_range_after_code_fix(r"namespace greeter {
 }", false, 0, 0);
 	});

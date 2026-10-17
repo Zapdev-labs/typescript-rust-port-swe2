@@ -11,7 +11,7 @@ fn signature_help_nested_call_trailing_comma() {
 declare function inner(a: any): any;
 
 outer(inner/*1*/(undefined,),);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("1");
 		f.verify_signature_help_present(Some(tsc_lsproto::SignatureHelpContext { is_retrigger: false.into(), trigger_kind: tsc_lsproto::SignatureHelpTriggerKind::Invoked.into(), ..Default::default() }));
 	});

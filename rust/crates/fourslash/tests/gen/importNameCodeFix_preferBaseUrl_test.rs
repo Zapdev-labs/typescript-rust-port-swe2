@@ -14,7 +14,7 @@ fn import_name_code_fix_prefer_base_url() {
 foo/**/;
 // @Filename: /src/d0/a.ts
 export const foo = 0;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("/src/d0/d1/d2/file.ts");
 		f.verify_import_fix_at_position(&[r#"import { foo } from "d0/a";
 

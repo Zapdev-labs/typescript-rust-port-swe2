@@ -13,7 +13,7 @@ fn add_member_to_module() {
 module /*check*/A {
     var p;
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("check");
 		f.verify_quick_info_exists();
 		f.go_to_marker("var");

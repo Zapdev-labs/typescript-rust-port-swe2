@@ -38,7 +38,7 @@ export class MyClass {
  export type TypeA = string;
  export class TypeB { }
  export type TypeC = () => string;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_organize_imports(r"import { TypeA, TypeB, TypeC } from './my-types';
 
 /**

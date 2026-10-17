@@ -11,7 +11,7 @@ fn formatting_object_literal_open_curly_newline_typing() {
 		let content = r"
 var varName =/**/
 ";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("");
 		f.insert("\n{");
 		f.verify_current_file_content(r"

@@ -20,7 +20,7 @@ export function [|fromA|]() {}
 // @Filename: /home/projects/b/index.ts
 export function [|fromB|]() {}
 ";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("/home/projects/a/index.ts");
 		let mut all_open_projects = tsc_lsutil::new_default_user_preferences();
 		let mut current_project = tsc_lsutil::new_default_user_preferences();

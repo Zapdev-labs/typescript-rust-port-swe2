@@ -11,7 +11,7 @@ fn organize_imports20() {
 const b = 1;
 export { a };
 export { b };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_organize_imports(r"const a = 1;
 const b = 1;
 export { a, b };

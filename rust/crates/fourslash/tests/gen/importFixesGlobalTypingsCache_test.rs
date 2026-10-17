@@ -20,7 +20,7 @@ export class BrowserRouter {}
  export const BrowserRouter = () => null;
 // @Filename: /project/index.js
 BrowserRouter/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("/project/index.js");
 		f.verify_import_fix_at_position(&[r#"const { BrowserRouter } = require("react-router-dom");
 

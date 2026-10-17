@@ -10,7 +10,7 @@ fn format_selection_with_trivia3() {
 		let content = r"if (true) {
 /*begin*/// test comment
 /*end*/}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.format_selection("begin", "end");
 		f.verify_current_file_content(r"if (true) {
     // test comment

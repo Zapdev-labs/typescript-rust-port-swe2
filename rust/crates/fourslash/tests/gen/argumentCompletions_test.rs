@@ -15,7 +15,7 @@ foo("a", /*1*/);
 const t3 = ['x', 'y', 'z'] as const;
 const x: [string, string, string, 'a' | 'b'] = [...t3, /*2*/];
 "#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![r#""b""#.into()].into(), ..Default::default() }), ..Default::default() }));
 		f.verify_completions(tsc_fourslash::MarkerInput::from("2"), Some(&tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![r#""b""#.into()].into(), ..Default::default() }), ..Default::default() }));
 	});

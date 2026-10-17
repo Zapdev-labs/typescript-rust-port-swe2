@@ -14,7 +14,7 @@ fn js_doc_property_description2() {
 function symbolExample(e: SymbolExample) {
     console.log(e./*symbol*/anything);
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("symbol", "any", "");
 	});
 }

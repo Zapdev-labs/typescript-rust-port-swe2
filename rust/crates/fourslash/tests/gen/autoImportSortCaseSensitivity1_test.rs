@@ -27,7 +27,7 @@ a/*0*/
 import { A, a, B, b } from "./exports1";
 import { E } from "./exports2";
 d/*1*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("0");
 		f.verify_import_fix_at_position(&[r#"import { a, A, B, C } from "./exports1";
 a"#.into()], None);

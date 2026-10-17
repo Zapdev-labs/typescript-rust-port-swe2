@@ -18,7 +18,7 @@ fn auto_import_package_json_imports_caps_in_path1() {
 export function something(name: string): any;
 // @Filename: /Dev/a.ts
 something/**/"##;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_import_fix_module_specifiers("", &["#thing".into()], None);
 	});
 }

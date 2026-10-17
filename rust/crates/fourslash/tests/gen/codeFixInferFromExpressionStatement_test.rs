@@ -12,7 +12,7 @@ fn code_fix_infer_from_expression_statement() {
 function inferVoid( [| app |] ) {
     app.use('hi')
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_range_after_code_fix(r"app: { use: (arg0: string) => void; }", false, 0, 0);
 	});
 }

@@ -16,7 +16,7 @@ fn rename_for_default_export01() {
 var x: [|DefaultExportedClass|];
 
 var y = new [|DefaultExportedClass|];"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		let mut ranges = f.get_ranges_by_text().get("DefaultExportedClass");
 		let marker_or_ranges = Default::default();
 		for r in ranges {

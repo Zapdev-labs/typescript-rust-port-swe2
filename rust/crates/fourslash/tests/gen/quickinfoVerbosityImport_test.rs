@@ -32,7 +32,7 @@ export default class {
 // @filename: /4.ts
 import Foo/*d*/ from "./3";
 const f/*e*/ = new Foo/*f*/();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("b".to_string().into(), vec![0, 1, 2]), ("a".to_string().into(), vec![0, 1]), ("c".to_string().into(), vec![0, 1]), ("d".to_string().into(), vec![0]), ("e".to_string().into(), vec![0, 1]), ("f".to_string().into(), vec![0, 1])]));
 	});
 }

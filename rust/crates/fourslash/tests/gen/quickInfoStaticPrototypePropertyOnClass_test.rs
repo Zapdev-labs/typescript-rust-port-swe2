@@ -25,7 +25,7 @@ c1./*1*/prototype;
 c2./*2*/prototype;
 c3./*3*/prototype;
 c4./*4*/prototype;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "(property) c1.prototype: c1", "");
 		f.verify_quick_info_at("2", "(property) c2<T>.prototype: c2<any>", "");
 		f.verify_quick_info_at("3", "(property) c3.prototype: c3", "");

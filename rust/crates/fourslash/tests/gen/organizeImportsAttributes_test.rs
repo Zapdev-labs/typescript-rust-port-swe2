@@ -15,7 +15,7 @@ import { E } from "./file" with { type: "a" };
 import { A as F } from "./file" with { type: "b" };
 
 type G = A | B | C | D | E | F;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_organize_imports(r#"import { A, type B } from "./file";
 import { C, E } from "./file" with { type: "a" };
 import { A as D, A as F } from "./file" with { type: "b" };

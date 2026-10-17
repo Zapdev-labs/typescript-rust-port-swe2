@@ -28,7 +28,7 @@ console.log(pkg_unlisted_value);
 { "name": "project-b", "dependencies": { "pkg-listed": "*" } }
 // @Filename: /project-b/index.ts
 pkg_/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("/project-a/index.ts");
 		f.go_to_marker("");
 		f.baseline_auto_imports_completions(&["".into()]);

@@ -21,7 +21,7 @@ function f(p1, p2, p3, p4, p5) {
     return p1 + p2 + p3 + p4 + p5 + '.';
 }
 f/*1*/('literal', 'literal', "[|o/*2*/ther1|]", 12);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("1");
 		f.verify_quick_info_exists();
 		f.verify_quick_info_is("function f(p1: \"literal\", p2: \"literal\", p3: \"other1\" | \"other2\", p4: \"literal\" | number, p5: 12 | true): string", "I am documentation");

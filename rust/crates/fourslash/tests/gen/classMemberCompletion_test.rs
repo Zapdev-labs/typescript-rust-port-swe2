@@ -13,7 +13,7 @@ fn class_member_completion_keeps_name_fallback() {
 class C extends B {
 	/*a*/
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_completions(tsc_fourslash::MarkerInput::from("a"), Some(&tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "value".to_string().into(), insert_text: Some(("value").into()), ..Default::default() }.into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_with_class_member_snippets: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), ..Default::default() }));
 	});
 }
@@ -26,8 +26,8 @@ class B {
     method() {}
 }
 class C implements B {[| |]}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'B'".to_string().into(), new_file_content: r#"class B {
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
+		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'B'".to_string().into(), new_file_content: r#"class B {
     method() {}
 }
 class C implements B {

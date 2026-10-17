@@ -13,7 +13,7 @@ fn rename_in_configured_project() {
 var y = [|globalName|];
 // @Filename: tsconfig.json
 { "files": ["referencesForGlobals_1.ts", "referencesForGlobals_2.ts"], "compilerOptions": { "lib": ["es5"] } }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.mark_test_as_strada_server();
 		f.verify_baseline_rename(None, to_any(f.ranges().slice).into_iter().map(Into::into));
 	});

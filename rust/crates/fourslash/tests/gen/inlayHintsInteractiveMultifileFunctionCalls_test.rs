@@ -19,7 +19,7 @@ export function helperB(bParam: string) {
 }
 // @Filename: ccc.mts
 export function helperC(cParam: string) {}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("./aaa.mts");
 		f.verify_baseline_inlay_hints(None, Some(&tsc_lsutil::UserPreferences { inlay_hints_preferences: tsc_lsutil::InlayHintsPreferences { include_inlay_parameter_name_hints: tsc_lsutil::IncludeInlayParameterNameHints::ALL.into(), ..Default::default() }, ..Default::default() }));
 	});

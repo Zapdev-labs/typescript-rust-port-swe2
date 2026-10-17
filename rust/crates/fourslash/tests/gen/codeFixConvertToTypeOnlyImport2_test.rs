@@ -20,7 +20,7 @@ declare const a: A;
 declare const b: B;
 declare const c: C;
 console.log(a, b, c);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("imports.ts");
 		f.verify_code_fix_not_available(&[]);
 	});

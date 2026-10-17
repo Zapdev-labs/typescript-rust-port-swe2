@@ -20,7 +20,7 @@ function fn1<T extends T1>(obj: T, key: keyof T, k2: keyof T1) {
 	}
 	return key;
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("x1".to_string().into(), vec![0, 1]), ("x2".to_string().into(), vec![0]), ("k2".to_string().into(), vec![0, 1]), ("key".to_string().into(), vec![0])]));
 	});
 }

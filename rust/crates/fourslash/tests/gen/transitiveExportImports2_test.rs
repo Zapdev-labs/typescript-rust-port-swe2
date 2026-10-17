@@ -16,7 +16,7 @@ fn transitive_export_imports2() {
 [|B|].x;
 // @Filename: c.ts
 [|import { /*C*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 6 |}B|] } from "./b";|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_no_errors();
 		f.verify_baseline_find_all_references(&["A".into(), "B".into(), "C".into()]);
 		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into(), f.ranges()[4].clone().into()]);

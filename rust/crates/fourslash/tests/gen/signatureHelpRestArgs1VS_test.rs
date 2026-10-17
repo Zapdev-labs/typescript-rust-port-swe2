@@ -16,7 +16,7 @@ fn(/*2*/, ...a);
 
 fn(...b, /*3*/);
 fn(/*4*/, ...b, /*5*/);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", Some(tsc_lsproto::ClientCapabilities { vs_supports_visual_studio_extensions: Some((true).into()), ..Default::default() }), content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", Some(tsc_lsproto::ClientCapabilities { vs_supports_visual_studio_extensions: Some((true).into()), ..Default::default() }), &content);
 		f.verify_baseline_signature_help();
 	});
 }

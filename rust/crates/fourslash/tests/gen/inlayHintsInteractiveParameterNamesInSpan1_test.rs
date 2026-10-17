@@ -20,10 +20,10 @@ function c3 () { foo3(/*e*/1, /*f*/2); }
 function c4 () { foo4(/*g*/1, /*h*/2); }
 function c5 () { foo5(/*i*/1, /*j*/2); }
 function c6 () { foo6(/*k*/1, /*l*/2); }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		let mut start = f.marker_by_name("c");
 		let mut end = f.marker_by_name("h");
-		let mut span = tsc_lsproto::Range { start: start.ls_position.into(), end: end.ls_position.into(), ..Default::default() };
+		let mut span = tsc_lsproto::Range { start: start.as_ref().unwrap().ls_position.into(), end: end.as_ref().unwrap().ls_position.into(), ..Default::default() };
 		f.verify_baseline_inlay_hints(span.into(), Some(&tsc_lsutil::UserPreferences { inlay_hints_preferences: tsc_lsutil::InlayHintsPreferences { include_inlay_parameter_name_hints: "literals".to_string().into(), ..Default::default() }, ..Default::default() }));
 	});
 }

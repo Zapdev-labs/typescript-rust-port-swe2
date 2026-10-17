@@ -9,7 +9,7 @@ fn format_on_open_curly_brace_remove_new_line() {
 	run_test(|t| {
 		let content = r"if(true)
 /**/ }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		let mut opts124 = f.get_options();
 		opts124.format_code_settings.place_open_brace_on_new_line_for_control_blocks = tsc_core::tristate::TS_FALSE;
 		f.configure(opts124);

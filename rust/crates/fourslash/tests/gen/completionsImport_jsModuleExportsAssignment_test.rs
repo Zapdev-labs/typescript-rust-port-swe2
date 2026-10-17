@@ -27,7 +27,7 @@ module.exports = {
 };
 // @Filename: /home/src/workspaces/project/index.ts
 /**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.mark_test_as_strada_server();
 		let mut opts666 = f.get_options();
 		opts666.format_code_settings.new_line_character = "\n";

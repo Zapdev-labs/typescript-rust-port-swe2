@@ -10,7 +10,7 @@ fn inlay_hints_type_matches_name() {
 		let content = r"type Client = {};
 function getClient(): Client { return {}; };
 const client = getClient();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_inlay_hints(None, Some(&tsc_lsutil::UserPreferences { inlay_hints_preferences: tsc_lsutil::InlayHintsPreferences { include_inlay_variable_type_hints: tsc_core::tristate::TS_TRUE.into(), include_inlay_variable_type_hints_when_type_matches_name: tsc_core::tristate::TS_FALSE.into(), ..Default::default() }, ..Default::default() }));
 	});
 }

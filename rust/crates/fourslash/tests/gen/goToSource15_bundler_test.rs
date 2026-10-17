@@ -32,7 +32,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 // @Filename: /home/src/workspaces/project/index.ts
 import { [|/*start*/useState|] } from 'react';"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.mark_test_as_strada_server();
 		f.verify_baseline_go_to_source_definition(&["start".into()]);
 	});

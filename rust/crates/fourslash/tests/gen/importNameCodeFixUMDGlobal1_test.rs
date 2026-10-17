@@ -17,7 +17,7 @@ bar1/*0*/.bar();|]
 // @Filename: a/foo.d.ts
 export declare function bar(): number;
 export as namespace bar1; "#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_import_fix_at_position(&[r#"import * as bar1 from "./foo";
 import { bar } from "./foo";
 

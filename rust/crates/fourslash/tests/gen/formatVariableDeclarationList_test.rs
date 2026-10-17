@@ -20,7 +20,7 @@ fn format_variable_declaration_list() {
 /*10*/            x   =   'Foo'           ;
 /*11*/                return   fun            ;
 /*12*/}   (           fun1            )   )       ;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.format_document("");
 		f.go_to_marker("1");
 		f.verify_current_line_content(r"var fun1 = function() {");

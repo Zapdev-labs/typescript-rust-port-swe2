@@ -21,7 +21,7 @@ function f(t) {}
 // @Filename: /b.js
 import f from "./a"
 /**/f"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("", "(alias) function f(t: string): void\nimport f", "Run this function");
 	});
 }

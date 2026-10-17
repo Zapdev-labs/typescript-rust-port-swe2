@@ -25,7 +25,7 @@ export declare function compile(): void
 { "dependencies": { "mdx": "*" } }
 // @Filename: /index.ts
 mdx/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("");
 		f.baseline_auto_imports_completions(&["".into()]);
 	});

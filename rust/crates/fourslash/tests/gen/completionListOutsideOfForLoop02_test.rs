@@ -8,7 +8,7 @@ use tsc_fourslash::*;
 fn completion_list_outside_of_for_loop02() {
 	run_test(|t| {
 		let content = r"for (let i = 0; i < 10; i++);/*1*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { excludes: vec!["i".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }

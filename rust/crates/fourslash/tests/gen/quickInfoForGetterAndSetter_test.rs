@@ -23,7 +23,7 @@ fn quick_info_for_getter_and_setter() {
         this.value = value;
     }
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("1");
 		f.verify_quick_info_is("(getter) Test.value: any", "Getter text");
 		f.go_to_marker("2");

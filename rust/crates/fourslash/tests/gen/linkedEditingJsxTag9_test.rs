@@ -20,7 +20,7 @@ const triviaOpening = (
     /* this is/*14*/ comment *//*15*/</*16*//* /*17*/more/*18*/ comment *//*19*/ /*20start*/di/*20*/v/*20end*/ /* comments */>/*21*/Hello/*22*/
     <//*23*/ /*24*///*25*/* even/*26*/ more comment *//*27*/ /*28start*/d/*28*/iv/*28end*/ /* b/*29*/ye */>
 );";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		let mut linked_cursors1 = vec![tsc_lsproto::Range { start: f.marker_by_name("1").unwrap().ls_position.into(), end: f.marker_by_name("2").unwrap().ls_position.into(), ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("5").unwrap().ls_position.into(), end: f.marker_by_name("5end").unwrap().ls_position.into(), ..Default::default() }];
 		let mut linked_cursors2 = vec![tsc_lsproto::Range { start: f.marker_by_name("7").unwrap().ls_position.into(), end: f.marker_by_name("8end").unwrap().ls_position.into(), ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("10").unwrap().ls_position.into(), end: f.marker_by_name("11").unwrap().ls_position.into(), ..Default::default() }];
 		let mut linked_cursors3 = vec![tsc_lsproto::Range { start: f.marker_by_name("20start").unwrap().ls_position.into(), end: f.marker_by_name("20end").unwrap().ls_position.into(), ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("28start").unwrap().ls_position.into(), end: f.marker_by_name("28end").unwrap().ls_position.into(), ..Default::default() }];

@@ -13,13 +13,13 @@ fn signature_help_trailing_rest_tuple() {
 leading(/*1*/);
 leading(false, /*2*/);
 leading(false, "ok", /*3*/);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("1");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "leading(allCaps: boolean, ...names: string[]): void".to_string().into(), parameter_count: 2, parameter_name: "allCaps".to_string().into(), parameter_span: "allCaps: boolean".to_string().into(), overloads_count: 1, is_variadic: true.into(), is_variadic_set: true.into(), ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "leading(allCaps: boolean, ...names: string[]): void".to_string().into(), parameter_count: 2, parameter_name: "allCaps".to_string().into(), parameter_span: "allCaps: boolean".to_string().into(), overloads_count: 1, is_variadic: true.into(), is_variadic_set: true.into(), ..Default::default() });
 		f.go_to_marker("2");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "leading(allCaps: boolean, ...names: string[]): void".to_string().into(), parameter_count: 2, parameter_name: "names".to_string().into(), parameter_span: "...names: string[]".to_string().into(), overloads_count: 1, is_variadic: true.into(), is_variadic_set: true.into(), ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "leading(allCaps: boolean, ...names: string[]): void".to_string().into(), parameter_count: 2, parameter_name: "names".to_string().into(), parameter_span: "...names: string[]".to_string().into(), overloads_count: 1, is_variadic: true.into(), is_variadic_set: true.into(), ..Default::default() });
 		f.go_to_marker("3");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "leading(allCaps: boolean, ...names: string[]): void".to_string().into(), parameter_count: 2, parameter_name: "names".to_string().into(), parameter_span: "...names: string[]".to_string().into(), overloads_count: 1, is_variadic: true.into(), is_variadic_set: true.into(), ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "leading(allCaps: boolean, ...names: string[]): void".to_string().into(), parameter_count: 2, parameter_name: "names".to_string().into(), parameter_span: "...names: string[]".to_string().into(), overloads_count: 1, is_variadic: true.into(), is_variadic_set: true.into(), ..Default::default() });
 	});
 }
 

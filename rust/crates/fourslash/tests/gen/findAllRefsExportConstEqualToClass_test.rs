@@ -12,7 +12,7 @@ class C {}
 export const /*0*/D = C;
 // @Filename: /b.ts
 import { /*1*/D } from "./a";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_find_all_references(&["0".into(), "1".into()]);
 	});
 }

@@ -12,7 +12,7 @@ type U = { [K in keyof T]: string };
 type V = { [K in keyof U]: boolean };
 const u: U = { a: "" }
 const v: V = { a: true }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_find_all_references(&["1".into()]);
 	});
 }

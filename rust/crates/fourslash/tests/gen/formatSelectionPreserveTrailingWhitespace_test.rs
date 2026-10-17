@@ -13,7 +13,7 @@ fn format_selection_preserve_trailing_whitespace() {
 /*end*/    
     
 ";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		let mut opts154 = f.get_options();
 		opts154.format_code_settings.trim_trailing_whitespace = tsc_core::tristate::TS_FALSE;
 		f.configure(opts154);

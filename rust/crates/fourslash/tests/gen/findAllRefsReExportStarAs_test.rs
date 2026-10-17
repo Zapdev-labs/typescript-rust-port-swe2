@@ -14,7 +14,7 @@ export * as /*leafDef*/Leaf from './leafModule';
 // @Filename: /importing.ts
  import { /*leafImportDef*/Leaf } from './exporting';
  /*leafUse*/[|Leaf|]./*helloUse*/[|hello|]()";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_no_errors();
 		f.verify_baseline_find_all_references(&["helloDef".into(), "helloUse".into(), "leafDef".into(), "leafImportDef".into(), "leafUse".into()]);
 	});

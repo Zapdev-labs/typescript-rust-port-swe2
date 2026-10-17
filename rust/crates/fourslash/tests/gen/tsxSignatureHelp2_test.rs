@@ -29,11 +29,11 @@ export function MainButton(props: ButtonProps | LinkProps): JSX.Element {
     return this._buildMainButton(props);
 }
 let e1 = <MainButton/*1*/ /*2*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("1");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "MainButton(buttonProps: ButtonProps): JSX.Element".to_string().into(), parameter_span: "buttonProps: ButtonProps".to_string().into(), overloads_count: 2, ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "MainButton(buttonProps: ButtonProps): JSX.Element".to_string().into(), parameter_span: "buttonProps: ButtonProps".to_string().into(), overloads_count: 2, ..Default::default() });
 		f.go_to_marker("2");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "MainButton(buttonProps: ButtonProps): JSX.Element".to_string().into(), parameter_span: "buttonProps: ButtonProps".to_string().into(), overloads_count: 2, ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "MainButton(buttonProps: ButtonProps): JSX.Element".to_string().into(), parameter_span: "buttonProps: ButtonProps".to_string().into(), overloads_count: 2, ..Default::default() });
 	});
 }
 

@@ -16,7 +16,7 @@ var f/*3*/3 = new Foo(3);
 var f/*4*/4: Foo<number> = new Foo(3);
 var f/*5*/5 = new Foo<number>(3);
 var f/*6*/6: Foo<number> = new Foo<number>(3);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "var f1: Foo<number>", "");
 		f.verify_quick_info_at("2", "var f2: Foo<number>", "");
 		f.verify_quick_info_at("3", "var f3: any", "");

@@ -25,8 +25,8 @@ interface I<Species> {
     [Symbol.unscopables]: any;
 }
 class C implements I<number> {}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'I<number>'".to_string().into(), new_file_content: r#"interface I<Species> {
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
+		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'I<number>'".to_string().into(), new_file_content: r#"interface I<Species> {
     [Symbol.hasInstance](o: any): boolean;
     [Symbol.isConcatSpreadable]: boolean;
     [Symbol.iterator](): any;

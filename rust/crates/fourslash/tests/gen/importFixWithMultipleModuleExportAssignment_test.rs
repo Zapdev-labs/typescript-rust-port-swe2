@@ -18,7 +18,7 @@ module.exports = 42;
 export const foo = 0;
 // @Filename: /c.js
 foo";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("/c.js");
 		f.verify_import_fix_at_position(&[r#"const { foo } = require("./b");
 

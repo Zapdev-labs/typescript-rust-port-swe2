@@ -9,11 +9,11 @@ fn signature_help_object_literal() {
 	run_test(|t| {
 		let content = r#"var objectLiteral = { n: 5, s: "", f: (a: number, b: string) => "" };
 objectLiteral.f(/*objectLiteral1*/4, /*objectLiteral2*/"");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("objectLiteral1");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f(a: number, b: string): string".to_string().into(), parameter_count: 2, parameter_name: "a".to_string().into(), parameter_span: "a: number".to_string().into(), ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "f(a: number, b: string): string".to_string().into(), parameter_count: 2, parameter_name: "a".to_string().into(), parameter_span: "a: number".to_string().into(), ..Default::default() });
 		f.go_to_marker("objectLiteral2");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f(a: number, b: string): string".to_string().into(), parameter_name: "b".to_string().into(), parameter_span: "b: string".to_string().into(), ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "f(a: number, b: string): string".to_string().into(), parameter_name: "b".to_string().into(), parameter_span: "b: string".to_string().into(), ..Default::default() });
 	});
 }
 

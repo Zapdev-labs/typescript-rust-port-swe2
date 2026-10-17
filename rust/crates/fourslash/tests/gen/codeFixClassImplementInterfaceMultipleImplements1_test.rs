@@ -18,7 +18,7 @@ interface I2 {
 class C implements I1,I2 {[|
     |]y: number;
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_range_after_code_fix(r"
 x: number;
 ", false, 0, 0);

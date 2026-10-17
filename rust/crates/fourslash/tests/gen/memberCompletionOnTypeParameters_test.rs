@@ -19,7 +19,7 @@ function foo<S, T extends IFoo, U extends Object, V extends IFoo>() {
     u./*U*/;    // IFoo
     v./*V*/;    // IFoo
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_completions(tsc_fourslash::MarkerInput::from("S"), None);
 		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["T", "V"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "x".to_string().into(), detail: Some(("(property) IFoo.x: number").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "y".to_string().into(), detail: Some(("(property) IFoo.y: string").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 		f.verify_completions(tsc_fourslash::MarkerInput::from("U"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["constructor".into(), "toString".into(), "toLocaleString".into(), "valueOf".into(), "hasOwnProperty".into(), "isPrototypeOf".into(), "propertyIsEnumerable".into()].into(), ..Default::default() }), ..Default::default() }));

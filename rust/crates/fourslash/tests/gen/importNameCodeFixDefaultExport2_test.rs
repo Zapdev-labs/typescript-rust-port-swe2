@@ -12,7 +12,7 @@ class Base { }
 export default Base;
 // @Filename: /test.ts
 [|class Derived extends Base { }|]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("/test.ts");
 		f.verify_import_fix_at_position(&[r#"import Base from "./lib";
 

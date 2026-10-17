@@ -59,7 +59,7 @@ const obj4 = { /*4n*/name: "", /*4a*/age: 10 };
 /** @type {/*t5*/MyType5} */
 const obj5 = { /*5n*/name: "", /*5a*/age: 10 };
 "#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("t1", "type MyType1 = {\n    name: string;\n    age: number;\n}", "");
 		f.verify_quick_info_at("t2", "type MyType2 = {\n    name: string;\n    age: number;\n}", "");
 		f.verify_quick_info_at("t3", "type MyType3 = {\n    name: string;\n    age: number;\n}", "");

@@ -27,7 +27,7 @@ export function processValue(value: any) {
   }
 }
 "#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "(alias) function isSomeAliasType(x: any): x is SomeAliasType<any>", "");
 	});
 }

@@ -20,7 +20,7 @@ class C {
 }
 let instance = new C();
 instance./*setterUse*/myValue = instance./*getterUse*/myValue;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("getterUse", "(property) C.myValue: Promise<string>", "");
 		f.verify_quick_info_at("getterDef", "(getter) C.myValue: Promise<string>", "");
 		f.verify_quick_info_at("setterUse", "(property) C.myValue: string | Promise<string>", "");

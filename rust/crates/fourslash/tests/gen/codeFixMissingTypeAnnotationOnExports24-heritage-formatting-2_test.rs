@@ -16,9 +16,9 @@ class Point2D { x = 0; y = 0; }
 export class Point3D2 extends mixin(Point2D) {
     z = 0;
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_code_fix_available(Some(&["Extract base class to variable".into()]));
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Extract base class to variable".to_string().into(), new_file_content: r"function mixin<T extends new (...a: any) => any>(ctor: T): T {
+		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Extract base class to variable".to_string().into(), new_file_content: r"function mixin<T extends new (...a: any) => any>(ctor: T): T {
     return ctor;
 }
 class Point2D { x = 0; y = 0; }

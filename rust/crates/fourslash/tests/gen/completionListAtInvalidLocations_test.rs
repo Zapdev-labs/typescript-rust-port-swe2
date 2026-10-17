@@ -27,7 +27,7 @@ type htm/*inTypeAlias*/
 //  /*inComment5*/
 foo;
 var v10 = /reg/*inRegExp1*/ex/;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["openString1", "openString2", "openString3"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![].into(), ..Default::default() }), ..Default::default() }));
 		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["inComment1", "inComment2", "inComment3", "inComment4", "inTypeAlias", "inComment5", "inRegExp1"]), None);
 	});

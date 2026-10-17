@@ -11,7 +11,7 @@ fn completions01() {
 var x: string[] = [];
 x.forEach(function (y) { y/*1*/
 x.forEach(y => y/*2*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.mark_test_as_strada_server();
 		f.go_to_marker("1");
 		f.insert(".");

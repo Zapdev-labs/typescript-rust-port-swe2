@@ -10,7 +10,7 @@ fn alias_merging_with_namespace() {
 		return /* skip: "Known failing fourslash test" */;
 		let content = r"namespace bar { }
 import bar = bar/**/;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("", "namespace bar\nimport bar = bar", "");
 	});
 }

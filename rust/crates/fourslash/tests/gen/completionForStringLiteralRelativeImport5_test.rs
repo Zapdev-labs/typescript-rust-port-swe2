@@ -26,7 +26,7 @@ var foo3 = require(".//*require3*/
 /*f1*/
 // @Filename: /repo/generated2/dir/f2.ts
 /*f2*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["import_as1", "import_equals1", "require1"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["f1".into(), "f2".into(), "test2".into()].into(), ..Default::default() }), ..Default::default() }));
 		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["import_as2", "import_equals2", "require2"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["dir".into(), "index".into()].into(), ..Default::default() }), ..Default::default() }));
 		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["import_as3", "import_equals3", "require3"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["dir".into()].into(), ..Default::default() }), ..Default::default() }));

@@ -13,8 +13,8 @@ fn code_fix_missing_type_annotation_on_exports59_drops_unneeded_after_unknown() 
 export interface Foo<S = string, T = unknown, U = number> {}
 export function g(x: Foo<number, unknown, number>) { return x; }
 ";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add return type 'Foo<number>'".to_string().into(), new_file_content: r"
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
+		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Add return type 'Foo<number>'".to_string().into(), new_file_content: r"
 export interface Foo<S = string, T = unknown, U = number> {}
 export function g(x: Foo<number, unknown, number>): Foo<number> { return x; }
 ".to_string().into(), index: 0, ..Default::default() });

@@ -16,7 +16,7 @@ fn rename_js_doc_type_literal() {
  * @param {number} options.bar
  */
 function foo(/**/options) {}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("/a.js");
 		f.verify_baseline_rename(None, vec!["".into()]);
 	});

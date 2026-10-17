@@ -13,7 +13,7 @@ fn goto_definition_throws_tag() {
  * @throws {/*use*/[|E|]}
  */
 function f() {}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_definition(false, &["use".into()]);
 	});
 }

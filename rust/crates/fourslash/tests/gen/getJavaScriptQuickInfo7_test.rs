@@ -23,7 +23,7 @@ function a1(p) {
 }
 
 x - /**/a1()";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("", "function a1(p: any): number", "This is a very cool function that is very nice.");
 	});
 }

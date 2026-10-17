@@ -17,7 +17,7 @@ fn quick_info_js_doc_tags11() {
  * @template {number} T2 Comment T2
  */
 const /**/foo = (a, b) => {};";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_hover();
 	});
 }

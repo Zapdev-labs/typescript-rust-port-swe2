@@ -10,7 +10,7 @@ fn find_all_refs_with_leading_underscore_names9() {
 		let content = r"(/*1*/function /*2*/___foo() {
     /*3*/___foo();
 })";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
 	});
 }

@@ -34,7 +34,7 @@ new A/**/();
 // @Filename: /home/src/workspaces/project/c/index.ts
 export {};
 // @link: /home/src/workspaces/project/a -> /home/src/workspaces/project/c/node_modules/a"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.mark_test_as_strada_server();
 		f.go_to_file("/home/src/workspaces/project/c/index.ts");
 		f.verify_baseline_find_all_references(&["".into()]);

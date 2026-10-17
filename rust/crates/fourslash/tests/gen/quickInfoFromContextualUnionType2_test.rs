@@ -14,7 +14,7 @@ test1({ /*1*/prop: "bar" });
 
 function test2(arg: { prop: "foo" } | undefined) {}
 test2({ /*2*/prop: "bar" });"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "(property) prop: \"foo\"", "");
 		f.verify_quick_info_at("2", "(property) prop: \"foo\"", "");
 	});

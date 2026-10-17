@@ -15,7 +15,7 @@ foo2(1, 2, 3)
 type Args3 = [number, number]
 declare function foo3(c: number, ...args: Args3);
 foo3(1, 2, 3)";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_inlay_hints(None, Some(&tsc_lsutil::UserPreferences { inlay_hints_preferences: tsc_lsutil::InlayHintsPreferences { include_inlay_parameter_name_hints: tsc_lsutil::IncludeInlayParameterNameHints::LITERALS.into(), ..Default::default() }, ..Default::default() }));
 	});
 }

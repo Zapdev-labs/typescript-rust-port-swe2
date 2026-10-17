@@ -13,7 +13,7 @@ export const x = 0;
 exports.x = 0;
 // @Filename: /b.ts
 import { x } from "./a";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_will_rename_files_edits("/a.ts", "/a2.ts", &std::collections::BTreeMap::from([("/b.ts".to_string().into(), r#"import { x } from "./a2";"#.to_string().into())]), None);
 	});
 }

@@ -10,7 +10,7 @@ fn organize_imports16() {
 		let content = r#"import { a, A, b } from "foo";
 interface Use extends A {}
 console.log(a, b);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_organize_imports(r#"import { a, A, b } from "foo";
 interface Use extends A {}
 console.log(a, b);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);

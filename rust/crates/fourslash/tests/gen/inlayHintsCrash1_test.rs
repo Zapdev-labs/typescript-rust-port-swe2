@@ -16,7 +16,7 @@ fn inlay_hints_crash1() {
 function doThing(f) {
     f(100)
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_inlay_hints(None, Some(&tsc_lsutil::UserPreferences { inlay_hints_preferences: tsc_lsutil::InlayHintsPreferences { include_inlay_variable_type_hints: tsc_core::tristate::TS_TRUE.into(), include_inlay_parameter_name_hints: tsc_lsutil::IncludeInlayParameterNameHints::ALL.into(), ..Default::default() }, ..Default::default() }));
 	});
 }

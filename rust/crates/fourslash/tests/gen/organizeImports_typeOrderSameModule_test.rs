@@ -23,7 +23,7 @@ export declare const foo: Foo;
 export declare function fn(): void;
 export default class Default {}
 export as namespace Package;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_organize_imports(r"import './package';
 import type { Foo } from './package';
 import * as ns from './package';
@@ -55,7 +55,7 @@ export declare const a: TypeA;
 // @Filename: /b.d.ts
 export type TypeB = string;
 export declare const b: TypeB;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_organize_imports(r"import './a';
 import type { TypeA } from './a';
 import { a } from './a';

@@ -16,7 +16,7 @@ function Person(age) {
         this.canVote = false;
     }
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_non_suggestion_diagnostics(&[]);
 		f.verify_non_suggestion_diagnostics(&[]);
 	});

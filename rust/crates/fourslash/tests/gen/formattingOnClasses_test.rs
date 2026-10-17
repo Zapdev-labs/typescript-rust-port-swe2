@@ -89,7 +89,7 @@ fn formatting_on_classes() {
 /*65*/                                                                         private                pv4  :    number =
 /*66*/                                                                         {};
 /*END*/}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.format_document("");
 		f.go_to_marker("1");
 		f.verify_current_line_content(r"class a {");

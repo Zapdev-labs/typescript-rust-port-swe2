@@ -8,7 +8,7 @@ use tsc_fourslash::*;
 fn formatting_on_enter_in_strings() {
 	run_test(|t| {
 		let content = r#"var x = /*1*/"unclosed string literal\/*2*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("2");
 		f.insert_line("");
 		f.insert_line("");

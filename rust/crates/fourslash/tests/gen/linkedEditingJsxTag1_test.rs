@@ -20,7 +20,7 @@ const jsx2 = (
         <//*13start*/d/*13*/iv/*13end*/>
     <//*14start*/d/*14*/iv/*14end*/>
 );/*d*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		let mut linked_cursors1 = vec![tsc_lsproto::Range { start: f.marker_by_name("0").unwrap().ls_position.into(), end: f.marker_by_name("2").unwrap().ls_position.into(), ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("5").unwrap().ls_position.into(), end: f.marker_by_name("7").unwrap().ls_position.into(), ..Default::default() }];
 		let mut linked_cursors2 = vec![tsc_lsproto::Range { start: f.marker_by_name("9start").unwrap().ls_position.into(), end: f.marker_by_name("9end").unwrap().ls_position.into(), ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("14start").unwrap().ls_position.into(), end: f.marker_by_name("14end").unwrap().ls_position.into(), ..Default::default() }];
 		let mut linked_cursors3 = vec![tsc_lsproto::Range { start: f.marker_by_name("10start").unwrap().ls_position.into(), end: f.marker_by_name("10end").unwrap().ls_position.into(), ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("13start").unwrap().ls_position.into(), end: f.marker_by_name("13end").unwrap().ls_position.into(), ..Default::default() }];

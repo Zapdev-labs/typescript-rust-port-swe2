@@ -22,7 +22,7 @@ import {
 
 console.log(a, B, b, c, C, d, D);
 console.log(e, f, F, g, G, H, h);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_organize_imports_with_request_kind(r"import {
     a,
     b,

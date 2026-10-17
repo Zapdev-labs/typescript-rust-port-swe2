@@ -18,7 +18,7 @@ export interface SvgProperties {}
 [|import SvgProp/**/|]
 // @link: /home/src/workspaces/project/node_modules/.pnpm/@types+react@17.0.7/node_modules/@types/react -> /home/src/workspaces/project/node_modules/@types/react
 // @link: /home/src/workspaces/project/node_modules/.pnpm/csstype@3.0.8/node_modules/csstype -> /home/src/workspaces/project/node_modules/.pnpm/@types+react@17.0.7/node_modules/csstype"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", Some(tsc_fourslash::get_default_capabilities_with_options(Some(&tsc_fourslash::ClientCapabilitiesOptions { completion_item: Some(tsc_lsproto::ClientCompletionItemOptions { snippet_support: Some((true).into()), ..Default::default() }), ..Default::default() }))), content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", Some(tsc_fourslash::get_default_capabilities_with_options(Some(&tsc_fourslash::ClientCapabilitiesOptions { completion_item: Some(tsc_lsproto::ClientCompletionItemOptions { snippet_support: Some((true).into()), ..Default::default() }), ..Default::default() }))), &content);
 		f.mark_test_as_strada_server();
 		f.go_to_marker("");
 		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "type".to_string().into(), sort_text: Some((tsc_ls::GLOBALS_OR_KEYWORDS.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));

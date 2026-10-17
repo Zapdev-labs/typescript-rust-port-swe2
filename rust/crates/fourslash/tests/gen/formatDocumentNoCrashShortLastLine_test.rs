@@ -8,7 +8,7 @@ use tsc_fourslash::*;
 fn format_document_no_crash_short_last_line() {
 	run_test(|t| {
 		let content = "type X = {\n\tb}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.format_document("");
 	});
 }

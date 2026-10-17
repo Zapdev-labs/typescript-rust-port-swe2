@@ -20,7 +20,7 @@ var p/*3*/2 = p1.then(function (x/*4*/x) { return "hello"; })
 var p/*5*/3 = p2.then(function (x/*6*/x) {
     return x/*7*/x;
 });"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "var p1: IPromise<number>", "");
 		f.verify_quick_info_at("2", "(parameter) xx: number", "");
 		f.verify_quick_info_at("3", "var p2: IPromise<string>", "");

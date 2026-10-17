@@ -17,7 +17,7 @@ fn formatting_on_tab_after_close_curly() {
         Blah=1, Bleah=2/*7*/
     }/*8*/
 }/*9*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.format_document("");
 		f.go_to_marker("1");
 		f.verify_current_line_content(r"namespace Tools {");

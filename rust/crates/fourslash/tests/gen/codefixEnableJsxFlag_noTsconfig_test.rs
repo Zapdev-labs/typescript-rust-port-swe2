@@ -9,7 +9,7 @@ fn codefix_enable_jsx_flag_no_tsconfig() {
 	run_test(|t| {
 		let content = r"// @Filename: /dir/a.tsx
 export const Component = () => <></>";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("/dir/a.tsx");
 		f.verify_code_fix_not_available(&[]);
 	});

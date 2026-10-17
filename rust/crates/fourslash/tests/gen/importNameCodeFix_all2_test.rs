@@ -15,9 +15,9 @@ export declare function homedir(): void;
 
 join();
 homedir();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("/index.ts");
-		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport".to_string().into(), new_file_content: r#"import { homedir } from "./os";
+		f.verify_code_fix_all(&tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport".to_string().into(), new_file_content: r#"import { homedir } from "./os";
 import { join } from "./path";
 
 join();

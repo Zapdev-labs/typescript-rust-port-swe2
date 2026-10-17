@@ -16,7 +16,7 @@ class class1 extends class1 {
 var c: class1;
 c.[|doStuff|]();
 c.[|propName|];";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_document_highlights(None, to_any(f.ranges()).into_iter().map(Into::into));
 	});
 }

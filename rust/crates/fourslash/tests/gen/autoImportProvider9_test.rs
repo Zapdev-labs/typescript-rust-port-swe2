@@ -72,7 +72,7 @@ export class Lib10 {}
 { "name": "lib11", "types": "./index.d.ts" }
 // @Filename: /home/src/workspaces/project/node_modules/lib11/index.d.ts
 export class Lib11 {}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.mark_test_as_strada_server();
 		f.verify_import_fix_module_specifiers("", &[], None);
 		f.verify_import_fix_module_specifiers("", &[], None);

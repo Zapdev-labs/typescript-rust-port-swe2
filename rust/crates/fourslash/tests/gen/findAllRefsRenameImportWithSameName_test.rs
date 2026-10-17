@@ -12,7 +12,7 @@ fn find_all_refs_rename_import_with_same_name() {
 //@Filename: /b.ts
 [|import { /*1*/[|{| "contextRangeIndex": 2 |}x|] as /*2*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 2 |}x|] } from "./a";|]
 /*3*/[|x|];"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_no_errors();
 		f.verify_baseline_find_all_references(&["0".into(), "1".into(), "2".into(), "3".into()]);
 		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into(), f.ranges()[3].clone().into(), f.ranges()[4].clone().into(), f.ranges()[5].clone().into()]);

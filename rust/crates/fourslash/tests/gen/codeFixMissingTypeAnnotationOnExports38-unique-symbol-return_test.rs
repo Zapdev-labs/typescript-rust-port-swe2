@@ -13,8 +13,8 @@ fn code_fix_missing_type_annotation_on_exports38_unique_symbol_return() {
 // @Filename: /code.ts
 const u: unique symbol = Symbol();
 export const fn = () => ({ u } as const);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add return type '{ readonly u: typeof u; }'".to_string().into(), new_file_content: r"const u: unique symbol = Symbol();
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
+		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Add return type '{ readonly u: typeof u; }'".to_string().into(), new_file_content: r"const u: unique symbol = Symbol();
 export const fn = (): {
     readonly u: typeof u;
 } => ({ u } as const);".to_string().into(), index: 0, ..Default::default() });

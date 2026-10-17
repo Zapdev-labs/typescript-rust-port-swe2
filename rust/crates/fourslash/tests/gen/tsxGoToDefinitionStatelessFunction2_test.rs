@@ -35,7 +35,7 @@ let opt = <[|Main/*thirdTarget*/Button|] onClick={()=>{}} />;
 let opt = <[|Main/*fourthTarget*/Button|] onClick={()=>{}} ignore-prop />;
 let opt = <[|Main/*fifthTarget*/Button|] goTo="goTo" />;
 let opt = <[|Main/*sixthTarget*/Button|] wrong />;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_definition(true, &["firstTarget".into(), "secondTarget".into(), "thirdTarget".into(), "fourthTarget".into(), "fifthTarget".into(), "sixthTarget".into()]);
 	});
 }

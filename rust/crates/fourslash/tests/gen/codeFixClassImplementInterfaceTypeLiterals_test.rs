@@ -22,8 +22,8 @@ interface Foo {
     request(): DeepPartial<{ nested1: Nested; test2: Nested }>;
 }
 [|export class C implements Foo {}|]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'Foo'".to_string().into(), new_range_content: r#"export class C implements Foo {
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
+		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'Foo'".to_string().into(), new_range_content: r#"export class C implements Foo {
     request(): DeepPartial<{ nested1: Nested; test2: Nested; }> {
         throw new Error("Method not implemented.");
     }

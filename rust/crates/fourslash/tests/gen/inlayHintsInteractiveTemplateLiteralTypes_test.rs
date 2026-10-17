@@ -15,7 +15,7 @@ declare function getTemplateLiteral3(): "), "`"), r"start${string}\${,$${string}
 const lit3 = getTemplateLiteral3();
 declare function getTemplateLiteral4(): "), "`"), r"${string}\"), "`"), r",${string}"), "`"), r";
 const lit4 = getTemplateLiteral4();");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_inlay_hints(None, Some(&tsc_lsutil::UserPreferences { inlay_hints_preferences: tsc_lsutil::InlayHintsPreferences { include_inlay_variable_type_hints: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }));
 	});
 }

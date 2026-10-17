@@ -21,7 +21,7 @@ fn path_completions_package_json_exports_wildcard11() {
 export {};
 // @Filename: /main.ts
 import { } from "repo//**/";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "card.js".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::File).into()), detail: Some(("card.js").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }

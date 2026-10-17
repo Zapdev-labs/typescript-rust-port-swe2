@@ -13,7 +13,7 @@ function /*functionDefinition*/f() { n/*3*/ew.[|t/*4*/arget|]; }
 // @Filename: /b.ts
 im/*5*/port.m;
 class /*classDefinition*/c { constructor() { n/*6*/ew.[|t/*7*/arget|]; } }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_definition(true, &["1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into(), "7".into()]);
 	});
 }

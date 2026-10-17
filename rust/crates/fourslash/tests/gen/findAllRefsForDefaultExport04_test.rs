@@ -13,7 +13,7 @@ export /*1*/default /*2*/a;
 // @Filename: /b.ts
 import /*3*/a from "./a";
 /*4*/a;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_find_all_references(&["0".into(), "2".into(), "1".into(), "3".into(), "4".into()]);
 	});
 }

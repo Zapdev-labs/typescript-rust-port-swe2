@@ -12,7 +12,7 @@ fn find_all_refs_js_doc_import_tag5() {
 export default function /*0*/a() {}
 // @Filename: /b.js
 /** @import /*1*/a, * as ns from "./a" */"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_find_all_references(&["0".into(), "1".into()]);
 	});
 }

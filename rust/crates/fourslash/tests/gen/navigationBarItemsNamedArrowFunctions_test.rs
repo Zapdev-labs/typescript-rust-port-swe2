@@ -11,7 +11,7 @@ fn navigation_bar_items_named_arrow_functions() {
 export const func = () => 2;
 export const func2 = function() { };
 export function exportedFunction() { }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_document_symbol();
 	});
 }

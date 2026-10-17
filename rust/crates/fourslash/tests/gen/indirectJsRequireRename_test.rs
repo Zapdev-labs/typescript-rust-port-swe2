@@ -14,7 +14,7 @@ require('../lib/classes/Error').log/**/Warning(", "`"), r"CLI triage crashed wit
 const { logWarning } = require('../../../../../../classes/Error');
 // @Filename: /lib/classes/Error.js
 module.exports.logWarning = message => { };");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("");
 		f.verify_baseline_find_all_references(&["".into()]);
 	});

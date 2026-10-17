@@ -102,7 +102,7 @@ fn formatting_on_invalid_codes() {
 /*83*/$( document ).ready(function(){
 /*84*/alert('hello');
 /*85*/    } ) ;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.format_document("");
 		f.go_to_marker("1");
 		f.verify_current_line_content(r"var a; var c, b; var $d");

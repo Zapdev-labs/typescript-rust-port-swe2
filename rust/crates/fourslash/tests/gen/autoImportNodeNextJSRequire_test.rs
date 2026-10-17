@@ -20,7 +20,7 @@ exports.dedupeLines = data => {
 }
 // @Filename: /totally-irrelevant-no-way-this-changes-things-right.js
 export default 0;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("/main.js");
 		f.verify_import_fix_at_position(&[r#"const { variants } = require("./matrix")
 

@@ -20,7 +20,7 @@ export default a;
 import * as foo from './file1';
 /**/
 export default foo.b;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("");
 		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_in_js_plus(vec!["foo".into(), tsc_lsproto::CompletionItem { label: "a".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./file1".to_string().into(), ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "b".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./file1".to_string().into(), ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }.into()], false).into(), ..Default::default() }), ..Default::default() }));
 	});

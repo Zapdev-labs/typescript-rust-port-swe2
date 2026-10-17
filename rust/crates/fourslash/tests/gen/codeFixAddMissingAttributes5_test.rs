@@ -21,7 +21,7 @@ const A = ({ a, b, c, d }: P) =>
 
 const Bar = () =>
     [|<A a={100} b={""} c={[]} d={undefined}></A>|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_code_fix_not_available(&["fixMissingAttributes".into()]);
 	});
 }

@@ -14,7 +14,7 @@ fn references_for_string_literal_property_names3() {
 
 var y: Foo2;
 y[/*5*/42];"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into()]);
 	});
 }

@@ -26,7 +26,7 @@ var result = r.x;
 a = new DbSet<Entity>();
 var r2 = a._itemsByKey['x'];
 var result2 = r2.x;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("", "var r: CollectionItem", "");
 		f.verify_no_errors();
 	});

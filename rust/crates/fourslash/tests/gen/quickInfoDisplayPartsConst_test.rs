@@ -28,7 +28,7 @@ const /*12*/h: { (a: string): number; (a: number): string; } = a => a;
 const /*13*/i = /*14*/h;
 /*15*/h(10);
 /*16*/h("hello");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_hover();
 	});
 }

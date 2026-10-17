@@ -17,7 +17,7 @@ export class D extends C {
     m() { } // crashes here
 }
 new C().m/**/ // and here (with a different thing trying to access undefined)";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_no_errors();
 		f.verify_baseline_hover();
 	});

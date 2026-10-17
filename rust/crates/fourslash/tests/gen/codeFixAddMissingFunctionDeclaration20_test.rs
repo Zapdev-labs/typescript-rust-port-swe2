@@ -11,7 +11,7 @@ fn code_fix_add_missing_function_declaration20() {
    b: { f(x: number) {} }
 }
 a.b.f(foo);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_code_fix_not_available(&["fixMissingFunctionDeclaration".into()]);
 	});
 }

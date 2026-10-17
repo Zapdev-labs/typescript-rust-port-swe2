@@ -19,7 +19,7 @@ function foo(x) {
 }
 
 fo/**/o()";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("");
 		f.verify_quick_info_is("function foo<any>(x: any): void", "Do some foo things");
 	});

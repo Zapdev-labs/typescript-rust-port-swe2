@@ -15,7 +15,7 @@ namespace greeter {
     interface interface1 {
     } |]
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_range_after_code_fix(r"export interface interface2 {
 }", false, 0, 0);
 	});

@@ -16,7 +16,7 @@ import {} from "./other2";
 
 
 readFileSync/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.baseline_auto_imports_completions(&["".into()]);
 	});
 }
@@ -34,7 +34,7 @@ import {} from "./other2";
 
 
 readFileSync/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.baseline_auto_imports_completions(&["".into()]);
 	});
 }

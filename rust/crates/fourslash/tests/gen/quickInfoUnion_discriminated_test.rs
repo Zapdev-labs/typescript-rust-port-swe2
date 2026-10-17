@@ -32,7 +32,7 @@ const u2: U = {
     /*u2Kind*/kind: "bogus",
     /*u2Prop*/prop: 1,
 };"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("uKind", "(property) A.kind: \"a\"", "Kind A");
 		f.verify_quick_info_at("uProp", "(property) A.prop: number", "Prop A");
 		f.verify_quick_info_at("u2Kind", "(property) kind: \"bogus\"", "");

@@ -17,7 +17,7 @@ fn quick_info_type_of_this_in_statics() {
         return 1;
     }
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "(local var) r: typeof C", "");
 		f.verify_quick_info_at("2", "(local var) r: typeof C", "");
 	});

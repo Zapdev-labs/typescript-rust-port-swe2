@@ -16,7 +16,7 @@ interface B extends A {
 }
 const a: A = { /*2*/x: 0 };
 const b: B = { /*3*/x: 0 };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_find_all_references(&["0".into(), "1".into(), "2".into(), "3".into()]);
 	});
 }

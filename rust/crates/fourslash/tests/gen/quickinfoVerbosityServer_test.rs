@@ -10,7 +10,7 @@ fn quickinfo_verbosity_server() {
 		let content = r"// @lib: es5
 type FooType = string | number
 const foo/*a*/: FooType = 1";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.mark_test_as_strada_server();
 		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("a".to_string().into(), vec![0, 1])]));
 	});

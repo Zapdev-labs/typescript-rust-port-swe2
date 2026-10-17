@@ -13,7 +13,7 @@ for (let i = 0; i <= 10; i++) {
    if (i === 1) continue loop;
    if (i === 10) break loop;
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_rename(None, vec!["".into()]);
 	});
 }

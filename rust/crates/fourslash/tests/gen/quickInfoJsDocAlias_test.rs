@@ -17,7 +17,7 @@ export declare const A: T;
 // @filename: /b.ts
 import { A } from "./a";
 A/**/()"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_hover();
 	});
 }

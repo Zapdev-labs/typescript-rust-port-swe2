@@ -12,7 +12,7 @@ fn generic_function_with_generic_params1() {
     var x/**/x: T;
     return a;
 };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("", "(local var) xx: T", "");
 	});
 }

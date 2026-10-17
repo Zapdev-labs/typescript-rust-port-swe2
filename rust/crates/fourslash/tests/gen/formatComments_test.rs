@@ -18,7 +18,7 @@ wow(
     4
 // wua/*argument2*/
 );";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.format_document("");
 		f.go_to_marker("callChain1");
 		f.verify_current_line_content(r"    // wow");

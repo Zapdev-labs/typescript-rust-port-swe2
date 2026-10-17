@@ -33,8 +33,8 @@ class C4 extends C3 implements I0, I4, I5 {
 
 interface I6 extends C4 {}
 class C5 implements I6 {}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'I6'".to_string().into(), new_file_content: r"// Referenced throughout the inheritance chain.
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
+		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'I6'".to_string().into(), new_file_content: r"// Referenced throughout the inheritance chain.
 interface I0 { a: number }
 
 class C1 implements I0 { a: number }

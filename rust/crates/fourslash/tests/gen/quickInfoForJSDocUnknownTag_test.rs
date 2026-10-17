@@ -53,7 +53,7 @@ function b/*4*/oo() {
 function go/*5*/o() {
     return '2';
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_hover();
 	});
 }

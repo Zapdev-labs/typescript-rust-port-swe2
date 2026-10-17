@@ -22,7 +22,7 @@ export const b = 1;
 // @Filename: /home/src/projects/p/e.ts
 export const e = 1;
 "#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("/home/src/projects/p/a.ts");
 		f.replace(0, r#"import "./e";"#.len(), "");
 		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "b".to_string().into(), includes: Some((vec![]).into()), ..Default::default() }, tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "e".to_string().into(), includes: Some((vec![tsc_lsproto::SymbolInformation { name: "e".to_string().into(), kind: tsc_lsproto::SymbolKind::Variable.into(), location: tsc_lsproto::Location { uri: "file:///home/src/projects/p/e.ts".to_string().into(), range: tsc_lsproto::Range { start: tsc_lsproto::Position { line: 0, character: 13, ..Default::default() }.into(), end: tsc_lsproto::Position { line: 0, character: 14, ..Default::default() }.into(), ..Default::default() }.into(), ..Default::default() }.into(), ..Default::default() }]).into()), ..Default::default() }]);

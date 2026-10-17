@@ -16,7 +16,7 @@ let obj: Obj = {
     foo(/*constructOnly*/) {}
 }
 ";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("constructOnly");
 		f.verify_no_signature_help();
 	});

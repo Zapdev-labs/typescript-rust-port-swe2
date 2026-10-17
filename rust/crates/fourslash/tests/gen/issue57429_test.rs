@@ -24,7 +24,7 @@ Builder<IThing>({
   },
   doAnotherThing() { },
 })");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "const value: any", "");
 		f.verify_non_suggestion_diagnostics(&[tsc_lsproto::Diagnostic { message: tsc_lsproto::StringOrMarkupContent { string: Some(("Property 'args' does not exist on type 'IThing'.").into()), ..Default::default() }.into(), code: Some(tsc_lsproto::IntegerOrString { integer: Some(((2339) as i32).into()), ..Default::default() }), ..Default::default() }]);
 	});

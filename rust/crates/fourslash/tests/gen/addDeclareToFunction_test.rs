@@ -8,7 +8,7 @@ use tsc_fourslash::*;
 fn add_declare_to_function() {
 	run_test(|t| {
 		let content = r"/*1*/function parseInt(s/*2*/:string):number;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("2");
 		f.delete_at_caret(7);
 		f.go_to_marker("1");

@@ -18,7 +18,7 @@ fn jsdoc_typedef_tag_rename01() {
 
 /** @type {[|NumberLike|]} */
 var numberLike;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.mark_test_as_strada_server();
 		f.verify_baseline_rename(None, to_any(f.ranges().slice).into_iter().map(Into::into));
 	});

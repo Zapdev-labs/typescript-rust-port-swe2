@@ -17,7 +17,7 @@ var x = {
     void: void 0,
     v: v += v,
 };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type_: "variable.declaration".to_string().into(), text: "v".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.declaration".to_string().into(), text: "x".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "property.declaration".to_string().into(), text: "p1".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "property.declaration".to_string().into(), text: "p2".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "property.declaration".to_string().into(), text: "any".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "property.declaration".to_string().into(), text: "function".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "property.declaration".to_string().into(), text: "var".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "property.declaration".to_string().into(), text: "void".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "property.declaration".to_string().into(), text: "v".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable".to_string().into(), text: "v".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable".to_string().into(), text: "v".to_string().into(), ..Default::default() }]);
 	});
 }

@@ -8,7 +8,7 @@ use tsc_fourslash::*;
 fn format_object_binding_pattern_rest_element_with_property_name() {
 	run_test(|t| {
 		let content = r"const { ...a: b } = {};";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.format_document("");
 		f.verify_current_file_content(r"const { ...a: b } = {};");
 	});

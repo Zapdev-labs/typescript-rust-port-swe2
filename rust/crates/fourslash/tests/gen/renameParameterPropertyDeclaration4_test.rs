@@ -12,7 +12,7 @@ fn rename_parameter_property_declaration4() {
         let myProtectedParam = [|protectedParam|];
     }
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into(), f.ranges()[2].clone().into()]);
 	});
 }

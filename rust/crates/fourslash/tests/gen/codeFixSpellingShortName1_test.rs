@@ -10,7 +10,7 @@ fn code_fix_spelling_short_name1() {
 		return /* skip: "Known failing fourslash test" */;
 		let content = r"export let ab = 1;
 [|aB|] = 1;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_range_after_code_fix(r"ab", false, 0, 0);
 	});
 }

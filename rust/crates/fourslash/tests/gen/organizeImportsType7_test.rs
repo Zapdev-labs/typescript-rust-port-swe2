@@ -10,7 +10,7 @@ fn organize_imports_type7() {
 		let content = r#"import { a, type A, b } from "foo";
 interface Use extends A {}
 console.log(a, b);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_organize_imports(r#"import { a, type A, b } from "foo";
 interface Use extends A {}
 console.log(a, b);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, Some(&tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::INLINE.into(), ..Default::default() }));

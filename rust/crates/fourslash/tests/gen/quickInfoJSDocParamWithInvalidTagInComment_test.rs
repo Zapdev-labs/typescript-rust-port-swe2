@@ -18,7 +18,7 @@ fn quick_info_js_doc_param_with_invalid_tag_in_comment() {
  */
 function /*fn*/foo(/**/x, /*a*/a, /*b*/b, /*c*/c, /*d*/d) {}
 ";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("fn", "function foo(x: string, a: string, b: string, c: string, d: string): void", &format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", "", "\n\n*@param* `x` — Checks @-rule here\n"), "\n*@param* `a` — see"), "\n\n*@foo* — *bar here\n"), "\n*@param* `b` — see"), "\n\n*@test* — (something) here"), "\n\n*@param* `c` — see @*not-ident here"), "\n\n*@param* `d` — see @(paren) here"));
 		f.verify_quick_info_at("", "(parameter) x: string", "Checks @-rule here");
 		f.verify_quick_info_at("a", "(parameter) a: string", "see");

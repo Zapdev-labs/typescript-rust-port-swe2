@@ -13,11 +13,11 @@ fn signature_help_empty_list() {
 Foo(/*1*/);
 function Bar<T>(arg1: string, arg2: string) { }
 Bar</*2*/>();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("1");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "Foo(arg1: string, arg2: string): void".to_string().into(), parameter_count: 2, parameter_name: "arg1".to_string().into(), parameter_span: "arg1: string".to_string().into(), ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "Foo(arg1: string, arg2: string): void".to_string().into(), parameter_count: 2, parameter_name: "arg1".to_string().into(), parameter_span: "arg1: string".to_string().into(), ..Default::default() });
 		f.go_to_marker("2");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "Bar<T>(arg1: string, arg2: string): void".to_string().into(), ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "Bar<T>(arg1: string, arg2: string): void".to_string().into(), ..Default::default() });
 	});
 }
 

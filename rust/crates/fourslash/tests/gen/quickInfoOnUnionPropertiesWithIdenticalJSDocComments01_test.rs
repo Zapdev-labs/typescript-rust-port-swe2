@@ -32,7 +32,7 @@ fn quick_info_on_union_properties_with_identical_js_doc_comments01() {
 
 declare let x: DocumentFilter;
 x./**/language");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_hover();
 	});
 }

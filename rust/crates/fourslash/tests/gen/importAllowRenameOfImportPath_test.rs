@@ -18,7 +18,7 @@ import * as dir2 from "./dir/[|index|]";
 // @Filename: /c.js
 const a = require("./[|a|]");
 "#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		let mut prefs_true = tsc_lsutil::UserPreferences { allow_rename_of_import_path: tsc_core::tristate::TS_TRUE.into(), completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() };
 		let mut prefs_false = tsc_lsutil::UserPreferences { allow_rename_of_import_path: tsc_core::tristate::TS_FALSE.into(), completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() };
 		let mut markers = vec!["a", "dir", "index"];
@@ -41,7 +41,7 @@ export const foo = "bar";
 // @Filename: /index.ts
 export * from "./[|lib/*rename*/rary|]";
 "#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("rename");
 		f.verify_rename_range(f.ranges()[0].clone().ls_range, "library", Some(&tsc_lsutil::UserPreferences { allow_rename_of_import_path: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }));
 	});

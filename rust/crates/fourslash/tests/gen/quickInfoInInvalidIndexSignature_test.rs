@@ -9,7 +9,7 @@ fn quick_info_in_invalid_index_signature() {
 	run_test(|t| {
 		return /* skip: "Known failing fourslash test" */;
 		let content = r"function method() { var /**/dictionary = <{ [index]: string; }>{}; }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("", "(local var) dictionary: {\n    [x: number]: string;\n}", "");
 	});
 }

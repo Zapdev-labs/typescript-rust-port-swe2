@@ -37,7 +37,7 @@ var /*11*/AnyType;
 var /*12*/QType;
 /** @type {String|Number} */
 var /*13*/SOrN;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_hover();
 	});
 }

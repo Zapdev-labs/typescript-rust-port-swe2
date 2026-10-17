@@ -10,7 +10,7 @@ fn formatting_multiline_template_literals() {
 		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"/*1*/new Error(", "`"), r"Failed to expand glob: ${projectSpec.filesGlob}
 /*2*/                at projectPath : ${projectFile}
 /*3*/                with error: ${ex.message}"), "`"), r")");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.format_document("");
 		f.go_to_marker("1");
 		f.verify_current_line_content("new Error(`Failed to expand glob: ${projectSpec.filesGlob}");

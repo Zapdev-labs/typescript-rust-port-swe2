@@ -17,7 +17,7 @@ var i: I;
 class C /*delImplements*/implements A { }
 var c: C;
 c.a;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("del");
 		f.delete_at_caret(9);
 		f.go_to_eof();

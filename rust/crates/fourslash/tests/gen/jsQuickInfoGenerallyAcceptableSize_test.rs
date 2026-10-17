@@ -215,7 +215,7 @@ var doSome/*1*/thing = function (dataTable) {
   * @type {SomeCallback}
   */
 var anotherThing/*2*/ = function(a, b) {}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "var doSomething: (dataTable: DataTableThing) => void", "Do something");
 		f.verify_quick_info_at("2", "var anotherThing: SomeCallback", "Another thing");
 	});

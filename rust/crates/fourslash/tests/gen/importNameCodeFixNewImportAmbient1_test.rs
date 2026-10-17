@@ -24,7 +24,7 @@ declare module "yet-another-ambient-module" {
    export function f3();
    export var v3;
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_import_fix_at_position(&[r#"import { v1 } from "ambient-module";
 import d from "other-ambient-module";
 import * as ns from "yet-another-ambient-module";

@@ -21,8 +21,8 @@ export function three() {
     type Z = string;
     return {} as Z;
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add return type '\"\"'".to_string().into(), new_file_content: r#"export function two(): "" {
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
+		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Add return type '\"\"'".to_string().into(), new_file_content: r#"export function two(): "" {
     const y = "";
     return {} as typeof y;
 }
@@ -31,7 +31,7 @@ export function three() {
     type Z = string;
     return {} as Z;
 }"#.to_string().into(), index: 0, ..Default::default() });
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add return type 'string'".to_string().into(), new_file_content: r#"export function two() {
+		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Add return type 'string'".to_string().into(), new_file_content: r#"export function two() {
     const y = "";
     return {} as typeof y;
 }

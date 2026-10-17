@@ -24,7 +24,7 @@ export const i: I;
 // @Filename: /user.ts
 import { i } from "./a";
 i[|./**/|];"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["n".into(), tsc_lsproto::CompletionItem { label: "publicSym".to_string().into(), insert_text: Some(("[publicSym]").into()), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./a".to_string().into(), ..Default::default() }), ..Default::default() }), sort_text: Some((tsc_ls::GLOBALS_OR_KEYWORDS.to_string()).into()), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "[publicSym]".to_string().into(), range: f.ranges()[0].clone().ls_range.into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 		f.verify_apply_code_action_from_completion("", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "publicSym".to_string().into(), source: "./a".to_string().into(), description: "Update import from \"./a\"".to_string().into(), new_file_content: Some((r#"import { i, publicSym } from "./a";
 i.;"#).into()), ..Default::default() });

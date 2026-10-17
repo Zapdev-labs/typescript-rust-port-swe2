@@ -11,7 +11,7 @@ fn goto_definition_link_tag6() {
     /** {@link E./*1*/[|A|]} */
     [|/*2*/A|]
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_definition(false, &["1".into()]);
 	});
 }

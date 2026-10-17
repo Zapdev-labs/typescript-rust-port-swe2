@@ -13,7 +13,7 @@ fn code_fix_unused_interface_in_namespace1() {
     interface interface1 {
     }
 } |]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_range_after_code_fix(r"
 namespace greeter {
 }", false, 0, 0);

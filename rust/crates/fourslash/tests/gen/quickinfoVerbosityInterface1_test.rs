@@ -67,7 +67,7 @@ fn quickinfo_verbosity_interface1() {
     }
     const f/*f5*/: Foo = { a: "a", b: "b" };
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("f1".to_string().into(), vec![0, 1]), ("f2".to_string().into(), vec![0, 1]), ("f3".to_string().into(), vec![0, 1, 2, 3]), ("f4".to_string().into(), vec![0, 1, 2]), ("b1".to_string().into(), vec![0, 1]), ("a".to_string().into(), vec![0, 1, 2]), ("f5".to_string().into(), vec![0, 1])]));
 	});
 }

@@ -15,7 +15,7 @@ import a from "A";
 import b from "B";
 
 console.log(a, b, c, d)"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_organize_imports(r#"// polyfill
 import c from "C";
 // not polyfill

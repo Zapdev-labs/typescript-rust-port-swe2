@@ -11,7 +11,7 @@ fn import_name_code_fix_type_used_as_value() {
 export class ReadonlyArray<T> {}
 // @Filename: /b.ts
 [|new ReadonlyArray<string>();|]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("/b.ts");
 		f.verify_import_fix_at_position(&[r#"import { ReadonlyArray } from "./a";
 

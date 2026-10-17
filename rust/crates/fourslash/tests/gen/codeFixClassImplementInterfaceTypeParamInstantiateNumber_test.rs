@@ -9,8 +9,8 @@ fn code_fix_class_implement_interface_type_param_instantiate_number() {
 	run_test(|t| {
 		let content = r"interface I<T> { x: T; }
 class C implements I<number> { }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'I<number>'".to_string().into(), new_file_content: r"interface I<T> { x: T; }
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
+		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'I<number>'".to_string().into(), new_file_content: r"interface I<T> { x: T; }
 class C implements I<number> {
     x: number;
 }".to_string().into(), index: 0, ..Default::default() });

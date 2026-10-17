@@ -25,7 +25,7 @@ function fo/*1*/o() {
 function bo/*2*/o() {
     return '2';
 }");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_hover();
 	});
 }

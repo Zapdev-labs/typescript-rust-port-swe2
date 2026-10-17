@@ -25,8 +25,8 @@ fn code_fix_class_implement_interface_property_signatures() {
     a10: { (b10: number, c10: string): number; [d10: string]: I };
 }
 class C implements I {}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'I'".to_string().into(), new_file_content: r"interface I {
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
+		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'I'".to_string().into(), new_file_content: r"interface I {
     a0: {};
     a1: { (b1: number, c1: string): number; };
     a2: (b2: number, c2: string) => number;

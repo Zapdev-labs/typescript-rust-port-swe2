@@ -11,7 +11,7 @@ fn formatting_of_export_default() {
 /*1*/    export        default        class        Test { }
 }
 /*2*/export        default        function        bar() { }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.format_document("");
 		f.go_to_marker("1");
 		f.verify_current_line_content(r"    export default class Test { }");

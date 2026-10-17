@@ -25,8 +25,8 @@ export { Event };
 // @Filename: /src/vs/workbench/workbench2.ts
 import { Event } from '../event/event';
 export { Event };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'Parts'".to_string().into(), new_file_content: r"import { Event } from '../event/event';
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
+		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'Parts'".to_string().into(), new_file_content: r"import { Event } from '../event/event';
 import { Parts } from './parts';
 export class EditorParts implements Parts {
     options: Event;

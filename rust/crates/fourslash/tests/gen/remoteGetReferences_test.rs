@@ -182,7 +182,7 @@ namespace remotemodTest {
 		var remoteboo = remotefoo;
 	}
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into(), "7".into(), "8".into(), "9".into(), "10".into(), "11".into(), "12".into(), "13".into(), "14".into(), "15".into(), "16".into(), "17".into(), "18".into(), "19".into(), "20".into(), "21".into(), "22".into(), "23".into(), "24".into(), "25".into(), "26".into(), "27".into(), "28".into(), "29".into(), "30".into()]);
 	});
 }

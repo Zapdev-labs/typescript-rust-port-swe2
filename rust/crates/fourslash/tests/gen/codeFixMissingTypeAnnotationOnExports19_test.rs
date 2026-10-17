@@ -13,8 +13,8 @@ fn code_fix_missing_type_annotation_on_exports19() {
 export const a = {
     z: Symbol()
 } as const;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add annotation of type '{ readonly z: symbol; }'".to_string().into(), new_file_content: r"export const a: {
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
+		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Add annotation of type '{ readonly z: symbol; }'".to_string().into(), new_file_content: r"export const a: {
     readonly z: symbol;
 } = {
     z: Symbol()

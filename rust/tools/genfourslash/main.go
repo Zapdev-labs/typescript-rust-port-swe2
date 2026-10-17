@@ -103,6 +103,8 @@ type translator struct {
 	anonCounter  int
 	// localStructs: fn-local Go `type X struct{...}` names -> ordered field list.
 	localStructs map[string][]string
+	// optionVars: var names holding Option<T> (from Option-returning calls).
+	optionVars map[string]bool
 }
 
 // flushDecls emits synthesized declarations pending before the next stmt.
@@ -132,6 +134,7 @@ func translateFile(path, outDir string) error {
 		fset: fset,
 		src:  src,
 		localStructs: map[string][]string{},
+		optionVars:   map[string]bool{},
 		imports: map[string]string{
 			"fourslash": "tsc_fourslash",
 			"testutil":  "tsc_testutil",
@@ -436,6 +439,17 @@ func (tr *translator) emitStmt(s ast.Stmt) {
 				}
 			}
 			rhs := tr.expr(rhsExpr)
+			if st.Tok == token.DEFINE {
+				if _, isCall := rhsExpr.(*ast.CallExpr); isCall {
+					if s, ok2 := st.Lhs[0].(*ast.Ident); ok2 {
+						if strings.HasPrefix(rhs, "f.marker_by_name(") ||
+							strings.HasPrefix(rhs, "f.get_completions_public(") ||
+							strings.Contains(rhs, "get_completions(") {
+							tr.optionVars[s.Name] = true
+						}
+					}
+				}
+			}
 			switch st.Tok {
 			case token.DEFINE:
 				fmt.Fprintf(&tr.out, "%slet mut %s = %s;\n", tr.indent(), lhs, rhs)
@@ -837,6 +851,9 @@ func (tr *translator) selector(x *ast.SelectorExpr) string {
 		}
 		return path + "::" + screaming(name)
 	}
+	if id, ok := x.X.(*ast.Ident); ok && tr.optionVars[id.Name] {
+		return tr.expr(x.X) + ".as_ref().unwrap()." + snake(x.Sel.Name)
+	}
 	recv := tr.expr(x.X)
 	// `f.MarkerByName("n").field` — Option-returning accessor needs unwrap.
 	if call, ok := x.X.(*ast.CallExpr); ok {
@@ -1022,11 +1039,11 @@ func (tr *translator) call(c *ast.CallExpr) string {
 		case pkg == "fourslash" && sel.Sel.Name == "NewFourslash":
 			// NewFourslash(t, *ClientCapabilities, content)
 			return "tsc_fourslash::new_fourslash(&t_name(), \"\", " +
-				tr.optOwnedArg(c.Args[1]) + ", " + tr.expr(c.Args[2]) + ")"
+				tr.optOwnedArg(c.Args[1]) + ", " + tr.contentArg(c.Args[2]) + ")"
 		case pkg == "fourslash" && sel.Sel.Name == "NewFourslashWithOptions":
 			// NewFourslashWithOptions(t, content, *FourslashOptions)
 			return "tsc_fourslash::new_fourslash_with_options(&t_name(), \"\", " +
-				tr.expr(c.Args[1]) + ", " + tr.ownedArg(c.Args[2]) + ")"
+				tr.contentArg(c.Args[1]) + ", " + tr.ownedArg(c.Args[2]) + ")"
 		case pkg == "stringtestutil" && sel.Sel.Name == "Dedent":
 			return "dedent(" + tr.args(c.Args, 0) + ")"
 		case tr.imports[pkg] != "":
@@ -1158,6 +1175,15 @@ var rcRefArgs = map[string][]int{
 	"go_to_select_range": {0}, "go_to_range_end": {0},
 }
 
+// refArgs — `&T` params where Go passes `T{...}`/`*T{...}`: emit `&T{...}`.
+var refArgs = map[string][]int{
+	"verify_signature_help": {0}, "verify_code_fix": {0},
+	"verify_code_fix_all": {0}, "resolve_completion_item": {0},
+	"and_apply_code_action": {1}, "and_has_no_code_action": {0},
+	"verify_apply_code_action_from_completion": {1},
+	"verify_rename_range": {}, // keep owned
+}
+
 // strPtrArgs — `&str` params where Go passes `*string` via `new("x")`.
 var strPtrArgs = map[string][]int{
 	"verify_apply_code_action_from_completion": {0},
@@ -1281,6 +1307,12 @@ func (tr *translator) argFor(name string, i int, e ast.Expr) string {
 	if containsInt(rcRefArgs[name], i) {
 		return "&" + tr.expr(e)
 	}
+	if containsInt(refArgs[name], i) {
+		if u, ok := e.(*ast.UnaryExpr); ok && u.Op == token.AND {
+			return "&" + tr.expr(u.X)
+		}
+		return "&" + tr.expr(e)
+	}
 	if containsInt(strPtrArgs[name], i) {
 		if c, ok := e.(*ast.CallExpr); ok {
 			if id, ok2 := c.Fun.(*ast.Ident); ok2 && id.Name == "new" {
@@ -1311,6 +1343,18 @@ func (tr *translator) argFor(name string, i int, e ast.Expr) string {
 		return tr.iterArg(e)
 	}
 	return tr.exprArg(e)
+}
+
+// contentArg renders `&str`-param content args: literals pass through;
+// String-typed exprs (vars, format!, calls) get `&`.
+func (tr *translator) contentArg(e ast.Expr) string {
+	if lit, ok := e.(*ast.BasicLit); ok && lit.Kind == token.STRING {
+		return tr.lit(lit)
+	}
+	if u, ok := e.(*ast.UnaryExpr); ok && u.Op == token.AND {
+		return "&" + tr.expr(u.X)
+	}
+	return "&" + tr.expr(e)
 }
 
 // ownedArg renders an argument for an owned `T` param where Go passed `*T`.
@@ -1827,6 +1871,12 @@ func (tr *translator) emitFields(b *strings.Builder, x *ast.CompositeLit, selfPa
 		}
 		fname := fieldName(identName(kv.Key))
 		val := tr.exprField(kv.Value)
+		if fname == "edit_range" {
+			if u, ok := kv.Value.(*ast.UnaryExpr); ok && u.Op == token.AND {
+				val = "tsc_fourslash::ExpectedCompletionEditRange::EditRange(" +
+					tr.expr(u.X) + ")"
+			}
+		}
 		if nt, ok := newtypeStrFields[fname]; ok && nt != "" {
 			if lit, ok2 := kv.Value.(*ast.BasicLit); ok2 && lit.Kind == token.STRING {
 				val = nt + "(" + tr.lit(lit) + ")"
@@ -1952,7 +2002,17 @@ func (tr *translator) compositeAs(x *ast.CompositeLit, expectedType string) stri
 		for _, e := range x.Elts {
 			if kv, ok := e.(*ast.KeyValueExpr); ok {
 				var v string
-				if cl, ok2 := kv.Value.(*ast.CompositeLit); ok2 && cl.Type == nil {
+				if u, ok2 := kv.Value.(*ast.UnaryExpr); ok2 && u.Op == token.AND {
+					if cl2, ok3 := u.X.(*ast.CompositeLit); ok3 {
+						if _, isArr := cl2.Type.(*ast.ArrayType); isArr {
+							v = tr.fieldVec(cl2)
+						} else {
+							v = tr.expr(cl2) // &T{} -> T{} (owned map value)
+						}
+					} else {
+						v = tr.exprField(kv.Value)
+					}
+				} else if cl, ok2 := kv.Value.(*ast.CompositeLit); ok2 && cl.Type == nil {
 					if isSlice {
 						v = tr.exprSlice(cl)
 					} else {

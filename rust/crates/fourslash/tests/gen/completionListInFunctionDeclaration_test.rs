@@ -10,7 +10,7 @@ fn completion_list_in_function_declaration() {
 		let content = r"// @lib: es5
 var a = 0;
 function foo(/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_completions(tsc_fourslash::MarkerInput::from(""), None);
 		f.insert("a");
 		f.verify_completions(Default::default(), None);

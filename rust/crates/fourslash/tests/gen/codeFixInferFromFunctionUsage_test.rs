@@ -13,7 +13,7 @@ fn code_fix_infer_from_function_usage() {
 function wrap( [| arr |] ) {
      arr.other(function (a: number, b: number) { return a < b ? -1 : 1 });
  }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_range_after_code_fix(r"arr: { other: (arg0: (a: number, b: number) => -1 | 1) => void; }", false, 0, 0);
 	});
 }

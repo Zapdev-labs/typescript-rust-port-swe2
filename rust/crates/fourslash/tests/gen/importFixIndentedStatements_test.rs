@@ -51,7 +51,7 @@ export const helper = 1;
 #[test]
 fn import_fix_before_indented_import_with_carriage_returns() {
 	run_test(|t| {
-		let mut f = tsc_fourslash::new_fourslash_with_options(&t_name(), "", format!("{}{}", r"// @Filename: /aaa.ts
+		let mut f = tsc_fourslash::new_fourslash_with_options(&t_name(), "", &format!("{}{}", r"// @Filename: /aaa.ts
 export const helper = 1;
 
 // @Filename: /dep.ts

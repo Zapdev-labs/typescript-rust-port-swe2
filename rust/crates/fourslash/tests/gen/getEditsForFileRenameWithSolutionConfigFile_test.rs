@@ -30,7 +30,7 @@ b;
 
 // @Filename: /src/b.ts
 export const b = 0;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_will_rename_files_edits("/src/b.ts", "/src/c.ts", &std::collections::BTreeMap::from([("/src/a.ts".to_string().into(), r#"import { b } from "./c";
 b;
 "#.to_string().into())]), None);
@@ -80,7 +80,7 @@ helper;
 // @Filename: /app/main.ts
 import { helper } from "../lib/helper";
 helper;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("helper");
 		let mut result = f.will_rename_files(&[tsc_lsproto::FileRename { old_uri: tsc_lsconv::file_name_to_document_uri("/lib/helper.ts").into(), new_uri: tsc_lsconv::file_name_to_document_uri("/lib/renamed-helper.ts").into(), ..Default::default() }]);
 		if result.workspace_edit == None || result.workspace_edit.document_changes == None {

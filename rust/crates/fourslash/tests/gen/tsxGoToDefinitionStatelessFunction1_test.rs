@@ -26,7 +26,7 @@ let opt = <[|O/*one*/pt|] />;
 let opt1 = <[|Op/*two*/t|] [|pr/*p1*/opx|]={100} />;
 let opt2 = <[|Op/*three*/t|] propx={100} [|opt/*p2*/ional|] />;
 let opt3 = <[|Op/*four*/t|] wr/*p3*/ong />;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_definition(true, &["one".into(), "two".into(), "three".into(), "four".into(), "p1".into(), "p2".into()]);
 	});
 }

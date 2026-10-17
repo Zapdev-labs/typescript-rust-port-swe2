@@ -12,7 +12,7 @@ fn code_fix_infer_from_usage_optional_param2() {
 function f([|a? |]){
     if (a < 9) return;
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_range_after_code_fix(r"a?: number", false, 0, 0);
 	});
 }

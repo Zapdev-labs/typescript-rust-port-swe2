@@ -9,7 +9,7 @@ fn quick_info_class_keyword() {
 	run_test(|t| {
 		let content = r"[1].forEach(cla/*1*/ss {});
 [1].forEach(cla/*2*/ss OK{});";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "(local class) (Anonymous class)", "");
 		f.verify_quick_info_at("2", "(local class) OK", "");
 	});

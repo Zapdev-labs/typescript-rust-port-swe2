@@ -23,7 +23,7 @@ namespace express {
 ///<reference path='externalModuleIntellisense_file0.ts'/>
 import express = require('./externalModuleIntellisense_file0');
 var x = express();/*1*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("1");
 		f.verify_number_of_errors_in_current_file(0);
 		f.go_to_eof();

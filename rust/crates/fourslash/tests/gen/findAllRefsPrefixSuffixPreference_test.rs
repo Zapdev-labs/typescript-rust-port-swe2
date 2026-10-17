@@ -20,7 +20,7 @@ log(/*z2*/[|z|]);
 declare function log(s: string | number): void;
 [|import { /*q2*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 9 |}q|] } from "./file1";|]
 log(/*q3*/[|q|] + 1);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_no_errors();
 		f.verify_baseline_find_all_references(&["q0".into(), "q1".into(), "q2".into(), "q3".into(), "z0".into(), "z1".into(), "z2".into()]);
 		f.verify_baseline_rename(Some(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }), vec![f.ranges()[1].clone().into(), f.ranges()[3].clone().into(), f.ranges()[10].clone().into(), f.ranges()[11].clone().into()]);

@@ -17,8 +17,8 @@ interface I1 {
 }
 
 class C1 implements N1.I1 {}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'N1.I1'".to_string().into(), new_file_content: r#"namespace N1 {
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
+		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'N1.I1'".to_string().into(), new_file_content: r#"namespace N1 {
     export interface I1 {
         f1():string;
     }

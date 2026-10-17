@@ -17,7 +17,7 @@ import { Y } from "./a" with { foo: 42 };
 import { Z } from "./a" with { foo: "42" };
 
 export type G = A | B | C | D | E | F | Y | Z;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_organize_imports(r#"import { A, B } from "./a" with { foo: "foo", bar: "bar" };
 import { C, D, E } from "./a" with { bar: "foo", foo: "bar" };
 import { F, Z } from "./a" with { foo: "42" };

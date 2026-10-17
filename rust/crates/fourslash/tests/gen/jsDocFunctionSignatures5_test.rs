@@ -22,7 +22,7 @@ function pathFilter(basePath, pattern, type, options){
 //...
 }
 pathFilter(/**/'foo', 'bar', 'baz', {});";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_signature_help();
 	});
 }

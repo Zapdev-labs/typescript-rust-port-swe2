@@ -16,7 +16,7 @@ export = Foo;
 import a = require('./quickInfoExportAssignmentOfGenericInterface_0');
 export var /*1*/x: a<a<string>>;
 x.a;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "var x: a<a<string>>", "");
 	});
 }

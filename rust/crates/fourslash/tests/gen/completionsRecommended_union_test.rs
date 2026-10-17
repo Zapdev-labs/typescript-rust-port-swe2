@@ -13,7 +13,7 @@ const enum E { A = "A", B = "B" }
 const enum E2 { X = "X", Y = "Y" }
 const e: E | undefined = /*a*/
 const e2: E | E2 = /*b*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_completions(tsc_fourslash::MarkerInput::from("a"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "E".to_string().into(), preselect: Some((true).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 		f.verify_completions(tsc_fourslash::MarkerInput::from("b"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "E".to_string().into(), preselect: Some((true).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "E2".to_string().into(), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});

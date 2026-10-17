@@ -17,7 +17,7 @@ var C = class {
 [|C.prototype.[|{| "contextRangeIndex": 0 |}z|] = 1;|]
 var t = new C(12);
 [|t.[|{| "contextRangeIndex": 2 |}z|] = 11;|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_rename_at_ranges_with_text(None, &["z".into()]);
 	});
 }

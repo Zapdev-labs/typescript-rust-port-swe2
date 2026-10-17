@@ -13,7 +13,7 @@ fn completion_list_in_unclosed_function19() {
 function foo(x: string, y: number, z: boolean) {
     function bar(a: number, b: string = "hello", c: typeof x = "hello") {
         var v = (p: MyType) => { return y + /*1*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["foo".into(), "x".into(), "y".into(), "z".into(), "bar".into(), "a".into(), "b".into(), "c".into(), "v".into(), "p".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }

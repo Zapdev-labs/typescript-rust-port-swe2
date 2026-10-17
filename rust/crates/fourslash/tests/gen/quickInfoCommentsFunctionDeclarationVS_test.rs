@@ -24,7 +24,7 @@ fooWithParam/*8*/eters("a",10);
 */
 declare function fn(a: string);
 fn("hello");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", Some(tsc_lsproto::ClientCapabilities { vs_supports_visual_studio_extensions: Some((true).into()), ..Default::default() }), content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", Some(tsc_lsproto::ClientCapabilities { vs_supports_visual_studio_extensions: Some((true).into()), ..Default::default() }), &content);
 		f.verify_baseline_vs_hover();
 	});
 }

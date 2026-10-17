@@ -17,7 +17,7 @@ import { default as bee } from "./b";
 // @Filename: /b.ts
 [|const [|{| "contextRangeIndex": 6 |}b|] = 0;|]
 [|export default [|{| "contextRangeIndex": 8 |}b|];|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into(), f.ranges()[3].clone().into(), f.ranges()[5].clone().into(), f.ranges()[7].clone().into(), f.ranges()[9].clone().into()]);
 	});
 }

@@ -19,7 +19,7 @@ class Derived extends BaseFactory {
   static /*1*/idField = "id" as const;
 }
 "#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_hover();
 	});
 }

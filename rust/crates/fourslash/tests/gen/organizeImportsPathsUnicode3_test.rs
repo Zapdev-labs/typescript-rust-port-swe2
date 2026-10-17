@@ -12,7 +12,7 @@ import * as À from "./À";
 import * as A from "./A";
 
 console.log(A, À, B);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_organize_imports(r#"import * as A from "./A";
 import * as À from "./À";
 import * as B from "./B";

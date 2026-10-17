@@ -27,7 +27,7 @@ declare var WScript: {
     Quit(): number;
 }
 ";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file_number(0);
 		f.go_to_position(0);
 		f.delete_at_caret(100);

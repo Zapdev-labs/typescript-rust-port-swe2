@@ -27,7 +27,7 @@ var /*5*/see2 = true
 
 /** {@link https://hvaD} */
 var /*6*/see3 = true";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_hover();
 	});
 }

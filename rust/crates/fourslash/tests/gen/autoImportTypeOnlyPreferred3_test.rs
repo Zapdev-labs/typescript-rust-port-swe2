@@ -26,7 +26,7 @@ let x: B;
 export * as default from "./a";
 // @Filename: /e.ts
 let x: /*e*/ns.A;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("b");
 		f.verify_import_fix_at_position(&[r#"import type { A } from "./a";
 
@@ -36,7 +36,7 @@ let x: A;"#.into()], Some(&tsc_lsutil::UserPreferences { prefer_type_only_auto_i
 new A();
 let x: B;"#.into()], Some(&tsc_lsutil::UserPreferences { prefer_type_only_auto_imports: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }));
 		f.go_to_file("/d.ts");
-		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport".to_string().into(), new_file_content: r#"import { A, type B } from "./a";
+		f.verify_code_fix_all(&tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport".to_string().into(), new_file_content: r#"import { A, type B } from "./a";
 
 new A();
 let x: B;"#.to_string().into(), ..Default::default() });

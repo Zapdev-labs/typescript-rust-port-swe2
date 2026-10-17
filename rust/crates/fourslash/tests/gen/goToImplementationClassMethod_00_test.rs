@@ -12,7 +12,7 @@ fn go_to_implementation_class_method_00() {
 }
 
 new Bar().hel/*reference*/lo;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_implementation(&["reference".into()]);
 	});
 }

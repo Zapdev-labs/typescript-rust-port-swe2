@@ -28,7 +28,7 @@ export let Things2 = [
         Burrito: ['burrito', 'carne asada', 'tinga de res', 'tinga de pollo'], /*8*/
         Pie: 'pie'
     }];/*9*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.format_document("");
 		f.go_to_marker("1");
 		f.verify_current_line_content(r"    Hat: 'hat',");

@@ -12,7 +12,7 @@ fn get_java_script_quick_info5() {
 // @Filename: Foo.js
 /** @param {{b:number}} [a] */
 function /**/f(a) { }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("", "function f(a?: {\n    b: number;\n}): void", "");
 	});
 }

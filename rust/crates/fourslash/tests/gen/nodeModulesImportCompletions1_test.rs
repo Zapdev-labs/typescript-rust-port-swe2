@@ -39,7 +39,7 @@ const m = import("./src//*6*/");
 import {} from "./src//*7*/";
 import mod = require("./src//*8*/");
 const m = import("./src//*9*/");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["1", "3", "6", "9"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["decl.cjs".into(), "decl.mjs".into(), "decl.js".into(), "js.cjs".into(), "js.js".into(), "js.mjs".into(), "module.cjs".into(), "module.js".into(), "module.mjs".into()].into(), ..Default::default() }), ..Default::default() }));
 		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["2", "4", "5", "7", "8"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["decl.cjs".into(), "decl.mjs".into(), "decl".into(), "js.cjs".into(), "js".into(), "js.mjs".into(), "module.cjs".into(), "module".into(), "module.mjs".into()].into(), ..Default::default() }), ..Default::default() }));
 	});

@@ -16,7 +16,7 @@ import [|/*importFoo*/foo|], {bar} from "jquery";
 import * as [|/*importBaz*/baz|] from "jquery";
 import [|/*importBang*/bang|] = require("jquery");
 [|foo/*useFoo*/|]([|bar/*useBar*/|], [|baz/*useBaz*/|], [|bang/*useBang*/|]);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("useFoo", "(alias) module \"jquery\"\nimport foo", "");
 		f.verify_quick_info_at("useBar", "(alias) module \"jquery\"\nimport bar", "");
 		f.verify_quick_info_at("useBaz", "(alias) module \"jquery\"\nimport baz", "");

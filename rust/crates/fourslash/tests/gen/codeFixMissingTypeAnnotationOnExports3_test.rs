@@ -15,8 +15,8 @@ export class C {
   //making sure comments are not changed
   property =a+b; // comment should stay here
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add annotation of type 'number'".to_string().into(), new_file_content: r"const a = 42;
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
+		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Add annotation of type 'number'".to_string().into(), new_file_content: r"const a = 42;
 const b = 42;
 export class C {
   //making sure comments are not changed

@@ -17,8 +17,8 @@ abstract class A {
 }
 
 class C implements A {[| |]}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'A'".to_string().into(), new_file_content: r#"abstract class A {
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
+		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'A'".to_string().into(), new_file_content: r#"abstract class A {
     abstract x: number;
     private y: number;
     protected z: number;

@@ -17,7 +17,7 @@ namespace A {
 namespace B {
     export function f() {}
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("", "(method) f(): void", "");
 	});
 }

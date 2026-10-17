@@ -26,7 +26,7 @@ export abstract class ABC {
   static #methodStaticD(): void {}
 }
 ";
-				let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+				let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 				f.verify_baseline_code_lens(Some(&tsc_lsutil::UserPreferences { code_lens_user_preferences: tsc_lsutil::CodeLensUserPreferences { implementations_code_lens_enabled: tsc_core::tristate::TS_TRUE.into(), implementations_code_lens_show_on_all_class_methods: value.into(), ..Default::default() }, ..Default::default() }));
 			});
 		}

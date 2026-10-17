@@ -18,7 +18,7 @@ class B extends UNRESOLVED_VALUE_DEFINITELY_DOES_NOT_EXIST {
         return undefined;
     }
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_hover();
 	});
 }

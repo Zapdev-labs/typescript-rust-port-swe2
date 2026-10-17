@@ -44,7 +44,7 @@ const test: Join = {
     /**/
   }
 };");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		configure_quote_preference(&mut *t, f, tsc_lsutil::QuotePreference::SINGLE);
 		verify_object_literal_key_completions(&mut *t, f, optional_key(r"'t1.id'"), optional_key(r"'t1.value'"), optional_key(r"'t2.id'"), optional_key(r"'t2.value'"));
 	});
@@ -53,7 +53,7 @@ const test: Join = {
 #[test]
 fn completions_object_property_name_quote_preference_single_escaping() {
 	run_test(|t| {
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, object_property_name_content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &object_property_name_content);
 		configure_quote_preference(&mut *t, f, tsc_lsutil::QuotePreference::SINGLE);
 		let mut spaced = optional_key(r"'c d'");
 		spaced.detail = Some((r#"(property) Options["c d"]?: string | undefined"#).into());
@@ -64,7 +64,7 @@ fn completions_object_property_name_quote_preference_single_escaping() {
 #[test]
 fn completions_object_property_name_quote_preference_double() {
 	run_test(|t| {
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, object_property_name_content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &object_property_name_content);
 		configure_quote_preference(&mut *t, f, tsc_lsutil::QuotePreference::DOUBLE);
 		verify_object_literal_key_completions(&mut *t, f, required_key(r#""a-b""#), required_key(r"plain"), optional_key(r#""c d""#), optional_key(r#""it's""#), optional_key(r#""say \"hi\"""#));
 	});
@@ -84,7 +84,7 @@ interface Options {
 const o: Options = {
     /**/
 };"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("/b.ts");
 		configure_quote_preference(&mut *t, f, tsc_lsutil::QuotePreference::AUTO);
 		verify_object_literal_key_completions(&mut *t, f, optional_key(r"'a-b'"));

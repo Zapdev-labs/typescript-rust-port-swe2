@@ -29,7 +29,7 @@ export class MyMap extends Component { }
 // @Filename: /b.tsx
 [|import { Component } from "react";
 <></>;|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("/a.tsx");
 		f.verify_import_fix_at_position(&[r#"import * as React from "react";
 import { Component } from "react";

@@ -28,7 +28,7 @@ interface Root {
 
 declare const root: Root;
 export = root;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("bar.ts");
 		f.verify_code_fix_not_available(&[]);
 		f.go_to_file("foo.d.ts");

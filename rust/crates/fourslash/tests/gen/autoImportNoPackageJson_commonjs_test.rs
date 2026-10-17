@@ -13,7 +13,7 @@ fn auto_import_no_package_json_commonjs() {
 export declare function customElement(name: string): any;
 // @Filename: /a.ts
 customElement/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.configure(tsc_lsutil::UserPreferences { auto_import_entrypoint_directory_search: tsc_core::tristate::TS_TRUE.into(), ..Default::default() });
 		f.verify_import_fix_module_specifiers("", &["lit/index.cjs".into()], None);
 	});

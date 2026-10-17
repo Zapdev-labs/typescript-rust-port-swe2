@@ -14,7 +14,7 @@ async function /*reference*/getUser() { return { name: "Bob" } satisfies User as
 const /*reference2*/promisedBob = getUser() 
 
 export {}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_type_definition(&["reference".into(), "reference2".into()]);
 	});
 }

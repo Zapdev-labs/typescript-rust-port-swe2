@@ -24,7 +24,7 @@ const obj1: OptionProp = {
 let y1 = <O/*1*/pt pro/*2*/px={2} />;
 let y2 = <Opt {...ob/*3*/j1} />;
 let y2 = <Opt {...obj1} pr/*4*/opx />;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "class Opt", "");
 		f.verify_quick_info_at("2", "(property) propx: number", "");
 		f.verify_quick_info_at("3", "const obj1: OptionProp", "");

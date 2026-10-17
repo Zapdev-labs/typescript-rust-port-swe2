@@ -14,7 +14,7 @@ export declare function helper(): string;
 // @Filename: /home/src/workspaces/project/index.ts
 import { /*usage*/helper } from "./lib/helper";
 helper();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_source_definition(&["usage".into()]);
 	});
 }

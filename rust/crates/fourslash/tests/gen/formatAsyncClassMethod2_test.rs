@@ -10,7 +10,7 @@ fn format_async_class_method2() {
 		let content = r"class Foo {
     private    async     foo() {}
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.format_document("");
 		f.verify_current_file_content(r"class Foo {
     private async foo() { }

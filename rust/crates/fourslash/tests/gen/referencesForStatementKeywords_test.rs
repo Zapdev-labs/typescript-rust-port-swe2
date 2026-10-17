@@ -60,7 +60,7 @@ export const h = 1;
 // @filename: /j.ts
 export const j1 = 1;
 export const j2 = 2;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_find_all_references(&["importEqualsDecl1_importKeyword".into(), "importEqualsDecl1_requireKeyword".into(), "importEqualsDecl2_importKeyword".into(), "importDecl1_importKeyword".into(), "importDecl1_typeKeyword".into(), "importDecl1_fromKeyword".into(), "importDecl2_importKeyword".into(), "importDecl2_typeKeyword".into(), "importDecl2_asKeyword".into(), "importDecl2_fromKeyword".into(), "importDecl3_importKeyword".into(), "importDecl3_typeKeyword".into(), "importDecl3_fromKeyword".into(), "importDecl4_importKeyword".into(), "importDecl4_typeKeyword".into(), "importDecl4_fromKeyword".into(), "importDecl4_asKeyword".into(), "importDecl5_importKeyword".into(), "exportDecl1_exportKeyword".into(), "exportDecl1_typeKeyword".into(), "exportDecl1_fromKeyword".into(), "exportDecl2_exportKeyword".into(), "exportDecl2_typeKeyword".into(), "exportDecl2_asKeyword".into(), "exportDecl2_fromKeyword".into(), "exportDecl3_exportKeyword".into(), "exportDecl3_typeKeyword".into(), "exportDecl3_fromKeyword".into(), "exportDecl4_exportKeyword".into(), "exportDecl4_typeKeyword".into(), "exportDecl4_fromKeyword".into(), "exportDecl4_asKeyword".into(), "exportDecl5_exportKeyword".into(), "exportDecl5_typeKeyword".into(), "exportDecl6_exportKeyword".into(), "exportDecl6_typeKeyword".into(), "exportDecl6_asKeyword".into(), "exportAssignment1_exportKeyword".into(), "exportAssignment2_exportKeyword".into()]);
 	});
 }

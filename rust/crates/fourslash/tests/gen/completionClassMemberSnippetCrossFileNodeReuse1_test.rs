@@ -28,7 +28,7 @@ export class CollapsibleContainerNode extends ElementNode {
 
   /*1*/
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		let mut opts786 = f.get_options();
 		opts786.format_code_settings.insert_space_after_constructor = tsc_core::tristate::TS_FALSE;
 		f.configure(opts786);

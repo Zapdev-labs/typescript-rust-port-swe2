@@ -21,13 +21,13 @@ fn signature_help_incomplete_calls() {
     x.f2(5,/*incompleteCalls2*/
     x.f3(5,/*incompleteCalls3*/
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("incompleteCalls1");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f1(): void".to_string().into(), parameter_count: 0, ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "f1(): void".to_string().into(), parameter_count: 0, ..Default::default() });
 		f.go_to_marker("incompleteCalls2");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f2(n: number): number".to_string().into(), parameter_count: 1, ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "f2(n: number): number".to_string().into(), parameter_count: 1, ..Default::default() });
 		f.go_to_marker("incompleteCalls3");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f3(n: number, s: string): string".to_string().into(), parameter_count: 2, parameter_name: "s".to_string().into(), parameter_span: "s: string".to_string().into(), ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "f3(n: number, s: string): string".to_string().into(), parameter_count: 2, parameter_name: "s".to_string().into(), parameter_span: "s: string".to_string().into(), ..Default::default() });
 	});
 }
 

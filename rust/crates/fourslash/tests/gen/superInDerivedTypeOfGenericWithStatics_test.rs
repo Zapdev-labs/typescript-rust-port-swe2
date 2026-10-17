@@ -20,7 +20,7 @@ class D extends M.C<Date> {
         /**/ // was an error appearing on super in editing scenarios
        }
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("");
 		f.insert("super();");
 		f.verify_no_errors();

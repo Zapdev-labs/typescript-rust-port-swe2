@@ -24,7 +24,7 @@ import invalidRef2 = /*9*/requi/*10*/(/*10A*/"refFile2");
 var obj: /*11*/C/*12*/;
 var obj1: D;
 var obj2: ref2.E;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("main.ts");
 		f.verify_number_of_errors_in_current_file(7);
 		f.verify_error_exists_between_markers("1", "2");

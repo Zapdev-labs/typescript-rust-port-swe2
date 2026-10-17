@@ -11,7 +11,7 @@ fn quick_info_on_error_types1() {
     x: number;
     <
 };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("A", "var f: {\n    (): any;\n    x: number;\n}", "");
 	});
 }

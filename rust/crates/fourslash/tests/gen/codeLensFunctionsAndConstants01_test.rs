@@ -33,7 +33,7 @@ import { foo, bar } from "./exports";
 foo(5);
 console.log(bar);
 "#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_code_lens(Some(&tsc_lsutil::UserPreferences { code_lens_user_preferences: tsc_lsutil::CodeLensUserPreferences { references_code_lens_enabled: tsc_core::tristate::TS_TRUE.into(), references_code_lens_show_on_all_functions: tsc_core::tristate::TS_TRUE.into(), implementations_code_lens_enabled: tsc_core::tristate::TS_TRUE.into(), implementations_code_lens_show_on_interface_methods: tsc_core::tristate::TS_TRUE.into(), implementations_code_lens_show_on_all_class_methods: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }));
 	});
 }

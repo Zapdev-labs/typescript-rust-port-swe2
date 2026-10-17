@@ -40,7 +40,7 @@ export {};
 }
 // @Filename: src/services/services.ts
 import {} from "../compiler/parser.ts";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.mark_test_as_strada_server();
 		f.go_to_file("/src/services/services.ts");
 		f.verify_baseline_non_suggestion_diagnostics();

@@ -15,7 +15,7 @@ function /*7*/foo2</*8*/U extends string>(/*9*/a: /*10*/U) {
     return /*11*/a;
 }
 /*12*/foo2("hello");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_hover();
 	});
 }

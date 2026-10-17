@@ -15,7 +15,7 @@ a = { [|e|] };
 // @Filename: /b.ts
 [|import { [|{| "contextRangeIndex": 6 |}e|] } from "./a";|]
 [|export { [|{| "contextRangeIndex": 8 |}e|] };|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into(), f.ranges()[2].clone().into(), f.ranges()[3].clone().into(), f.ranges()[5].clone().into(), f.ranges()[7].clone().into(), f.ranges()[9].clone().into()]);
 	});
 }

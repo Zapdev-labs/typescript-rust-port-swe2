@@ -28,11 +28,11 @@ import { greet } from "./ProfileCard.vue";
 greet("hello", /*incomingCall*/2);
 "#, tsc_testutil::contentmappertest::COMPONENT_MAPPER, ".vue");
 		f.go_to_marker("scriptCall");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "format(value: string, uppercase?: boolean): string".to_string().into(), parameter_name: "uppercase?".to_string().into(), parameter_span: "uppercase?: boolean".to_string().into(), ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "format(value: string, uppercase?: boolean): string".to_string().into(), parameter_name: "uppercase?".to_string().into(), parameter_span: "uppercase?: boolean".to_string().into(), ..Default::default() });
 		f.go_to_marker("templateCall");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "format(value: string, uppercase?: boolean): string".to_string().into(), parameter_name: "value".to_string().into(), parameter_span: "value: string".to_string().into(), ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "format(value: string, uppercase?: boolean): string".to_string().into(), parameter_name: "value".to_string().into(), parameter_span: "value: string".to_string().into(), ..Default::default() });
 		f.go_to_marker("incomingCall");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "greet(name: string, count: number): string".to_string().into(), parameter_name: "count".to_string().into(), parameter_span: "count: number".to_string().into(), ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "greet(name: string, count: number): string".to_string().into(), parameter_name: "count".to_string().into(), parameter_span: "count: number".to_string().into(), ..Default::default() });
 		f.go_to_marker("markup");
 		f.verify_no_signature_help();
 	});
@@ -48,7 +48,7 @@ function use(value: number) { return value; }
 use(/*call*/target);
 ", tsc_testutil::contentmappertest::SUPPLEMENTAL_MAPPER, ".astro");
 		f.go_to_marker("call");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "use(value: number): number".to_string().into(), doc_comment: "See [target](file:///globals.astro#1,7-1,13).".to_string().into(), parameter_name: "value".to_string().into(), parameter_span: "value: number".to_string().into(), ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "use(value: number): number".to_string().into(), doc_comment: "See [target](file:///globals.astro#1,7-1,13).".to_string().into(), parameter_name: "value".to_string().into(), parameter_span: "value: number".to_string().into(), ..Default::default() });
 	});
 }
 
@@ -59,7 +59,7 @@ fn content_mapper_signature_help_tries_later_projection() {
 use(/*call*/)
 ", tsc_testutil::contentmappertest::DUPLICATE_MAPPER, ".dup");
 		f.go_to_marker("call");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "use(value: number): void".to_string().into(), parameter_name: "value".to_string().into(), parameter_span: "value: number".to_string().into(), ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "use(value: number): void".to_string().into(), parameter_name: "value".to_string().into(), parameter_span: "value: number".to_string().into(), ..Default::default() });
 	});
 }
 

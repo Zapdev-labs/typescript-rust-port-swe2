@@ -38,7 +38,7 @@ b;
 import { A, a, B, b, type Y, type Z } from "./exports1";
 import { E } from "./exports2";
 d/*2*//*2a*//*2b*//*2c*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("0");
 		f.verify_import_fix_at_position(&[r#"import { a, A, B, C } from "./exports1";
 a;

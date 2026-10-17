@@ -51,7 +51,7 @@ fn formatting_decorators() {
 /*31*/function test(@decorator36@decorator37 param) {};
 /*32*/function test2(@decorator38()@decorator39()param) {};
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.format_document("");
 		f.go_to_marker("1");
 		f.verify_current_line_content(r"@decorator1");

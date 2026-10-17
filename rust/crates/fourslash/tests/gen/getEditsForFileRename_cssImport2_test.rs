@@ -20,7 +20,7 @@ declare const css: {
 export default css;
 // @Filename: /a.ts
 import styles from "./app.css";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_will_rename_files_edits("/app.d.css.ts", "/app2.d.css.ts", &std::collections::BTreeMap::from([("/a.ts".to_string().into(), r#"import styles from "./app2.css";"#.to_string().into()), ("/app2.css".to_string().into(), r".cookie-banner {
   display: none;
 }".to_string().into()), ("/app2.d.css.ts".to_string().into(), r"declare const css: {

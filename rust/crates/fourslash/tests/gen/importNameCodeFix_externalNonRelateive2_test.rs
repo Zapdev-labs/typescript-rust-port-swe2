@@ -28,7 +28,7 @@ export const utils = 0;
 export const shared = 0;
 // @Filename: /home/src/workspaces/project/shared/data.ts
 shared/*external2external*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.mark_test_as_strada_server();
 		let mut opts839 = f.get_options();
 		opts839.format_code_settings.new_line_character = "\n";

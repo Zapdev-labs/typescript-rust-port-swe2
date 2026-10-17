@@ -13,7 +13,7 @@ export default function foo(): void {}
 export { default } from "./a";
 // @Filename: /user.ts
 [|foo;|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("/user.ts");
 		f.verify_import_fix_at_position(&[r#"import foo from "./a";
 

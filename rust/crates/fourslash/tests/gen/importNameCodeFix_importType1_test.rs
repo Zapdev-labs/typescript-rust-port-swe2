@@ -19,7 +19,7 @@ interface MoreProps extends /*a*/ComponentProps {}
 // @Filename: /b.ts
 import someValue from "./exports.js";
 interface MoreProps extends /*b*/ComponentProps {}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("a");
 		f.verify_import_fix_at_position(&[r#"import { Component, type ComponentProps } from "./exports.js";
 interface MoreProps extends ComponentProps {}"#.into()], None);

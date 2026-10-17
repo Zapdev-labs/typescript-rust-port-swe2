@@ -37,7 +37,7 @@ export function fooFromIndex(): void;
 export function fooFromLol(): void;
 // @Filename: /home/src/workspaces/project/src/foo.ts
 fooFrom/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.mark_test_as_strada_server();
 		f.go_to_marker("");
 		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "fooFromIndex".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "dependency".to_string().into(), ..Default::default() }), ..Default::default() }), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), ..Default::default() }.into()].into(), excludes: vec!["fooFromLol".into()].into(), ..Default::default() }), ..Default::default() }));

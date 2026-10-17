@@ -14,7 +14,7 @@ fn code_fix_missing_type_annotation_on_exports_jsx_whitespace_text() {
 export const /**/elem = <div>
     <span />
 </div>;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("");
 		f.verify_code_fix_available(None);
 	});

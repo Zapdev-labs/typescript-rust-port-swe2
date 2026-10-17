@@ -15,7 +15,7 @@ class /*0*/globalClass {
 // @Filename: /home/src/workspaces/project/referencesForGlobals_2.ts
 ///<reference path="referencesForGlobals_1.ts" />
 var c = /*1*/globalClass();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.mark_test_as_strada_server();
 		f.verify_baseline_find_all_references(&["1".into()]);
 	});

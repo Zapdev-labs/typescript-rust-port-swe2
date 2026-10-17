@@ -13,7 +13,7 @@ fn get_edits_for_file_rename_tsconfig_include_add() {
 }
 // @Filename: /src/dir/a.ts
 "#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_will_rename_files_edits("/src/dir/a.ts", "/src/newDir/b.ts", &std::collections::BTreeMap::from([("/src/tsconfig.json".to_string().into(), r#"{
     "include": ["dir", "newDir/b.ts"],
 }"#.to_string().into())]), None);

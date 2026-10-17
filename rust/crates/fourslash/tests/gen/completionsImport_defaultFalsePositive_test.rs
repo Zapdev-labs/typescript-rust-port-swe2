@@ -14,7 +14,7 @@ export const concat = 0;
 // @Filename: /a.ts
 export {};
 conca/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		let mut prefs = tsc_lsutil::new_default_user_preferences();
 		prefs.auto_import_entrypoint_directory_search = tsc_core::tristate::TS_TRUE;
 		f.configure(prefs);

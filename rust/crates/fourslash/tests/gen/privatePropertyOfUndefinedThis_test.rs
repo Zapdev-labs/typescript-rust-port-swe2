@@ -12,7 +12,7 @@ fn private_property_of_undefined_this1() {
 this.#a = {};
 export {};
 ";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_non_suggestion_diagnostics();
 	});
 }
@@ -28,7 +28,7 @@ export class C {
     }
 }
 ";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_non_suggestion_diagnostics();
 	});
 }

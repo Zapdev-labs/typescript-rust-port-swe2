@@ -12,7 +12,7 @@ fn smart_selection_object_types() {
   /*2*/readonly /*3*/bar: { x: num/*4*/ber };
   /*5*/meh
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_selection_ranges();
 	});
 }

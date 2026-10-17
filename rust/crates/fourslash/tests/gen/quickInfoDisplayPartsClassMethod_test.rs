@@ -26,7 +26,7 @@ fn quick_info_display_parts_class_method() {
 var cInstance = new c();
 /*9*/cInstance./*10*/publicMethod();
 /*11*/c./*12*/staticMethod();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_hover();
 	});
 }

@@ -11,7 +11,7 @@ fn go_to_definition_dynamic_import1() {
 /*Destination*/export function foo() { return "foo"; }
 import([|"./f/*1*/oo"|])
 var x = import([|"./fo/*2*/o"|])"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_definition(true, &["1".into(), "2".into()]);
 	});
 }

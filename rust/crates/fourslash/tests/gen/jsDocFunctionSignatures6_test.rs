@@ -17,7 +17,7 @@ fn js_doc_function_signatures6() {
  */
 function f1(p1, p2, p3, p4){}
 f1(/*1*/'foo', /*2*/'bar', /*3*/'baz', /*4*/'qux');"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_signature_help();
 	});
 }

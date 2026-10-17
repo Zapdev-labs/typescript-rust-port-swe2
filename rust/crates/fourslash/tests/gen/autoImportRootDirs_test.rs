@@ -18,7 +18,7 @@ fn auto_import_root_dirs() {
 export type Something = {};
 // @Filename: /index.ts
 const s: Something/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_import_fix_module_specifiers("", &["./types".into()], None);
 	});
 }

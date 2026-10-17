@@ -13,7 +13,7 @@ class Foo {
     static m() {}
 }
 Foo./**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_function_members_plus(vec![tsc_lsproto::CompletionItem { label: "prototype".to_string().into(), sort_text: Some((tsc_ls::LOCATION_PRIORITY.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "m".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Method).into()), sort_text: Some((tsc_ls::deprecate_sort_text(tsc_ls::LOCAL_DECLARATION_PRIORITY).to_string()).into()), tags: Some(vec![tsc_lsproto::CompletionItemTag::Deprecated]), ..Default::default() }.into()]).into(), ..Default::default() }), ..Default::default() }));
 	});
 }

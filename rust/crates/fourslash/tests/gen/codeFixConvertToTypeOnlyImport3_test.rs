@@ -27,7 +27,7 @@ declare const c: C;
 declare const d: D;
 declare const o: typeof others;
 console.log(a, b, c, d, o);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("imports.ts");
 		f.verify_code_fix_not_available(&[]);
 	});

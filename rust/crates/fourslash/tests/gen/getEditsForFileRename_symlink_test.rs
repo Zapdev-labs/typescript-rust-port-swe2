@@ -12,7 +12,7 @@ fn get_edits_for_file_rename_symlink() {
 export const x = 0;
 // @Filename: /user.ts
 import { x } from 'foo';";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_no_errors();
 		f.verify_will_rename_files_edits("/user.ts", "/luser.ts", &std::collections::BTreeMap::from([]), None);
 	});

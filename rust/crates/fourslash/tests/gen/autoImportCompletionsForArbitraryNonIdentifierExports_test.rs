@@ -17,7 +17,7 @@ export const fooBar = 1;
 // @Filename: /b.ts
 foo/**/
 "#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { items: Some(tsc_fourslash::CompletionsExpectedItems { excludes: vec!["foo-bar".into()].into(), includes: vec!["fooBar".into()].into(), ..Default::default() }), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), ..Default::default() }));
 	});
 }

@@ -38,7 +38,7 @@ export function Tooltip {};
 // @Filename: /home/src/workspaces/project/packages/app/lib/index.ts
 Tooltip/**/
 // @link: /home/src/workspaces/project/packages/common -> /home/src/workspaces/project/node_modules/@company/common"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.mark_test_as_strada_server();
 		f.go_to_marker("");
 		f.verify_import_fix_module_specifiers("", &["@company/common".into()], None);

@@ -80,7 +80,7 @@ export function getMyConst() {
 	],
 }
 "#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("find");
 		f.go_to_marker("temp");
 		f.verify_baseline_rename(None, vec!["find".into()]);
@@ -112,7 +112,7 @@ console.log(C)
 // @Filename: /projects/c/fc.ts
 export const /*find*/C = 42;
 "#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("aTs");
 		f.go_to_marker("bTs");
 		let mut find_marker = f.marker_by_name("find");

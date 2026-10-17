@@ -24,7 +24,7 @@ let t1/*1*/ = f("hello")
 const t2/*2*/ = new B()
 t2./*3*/foo()
 "#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "let t1: f<string>.C", "");
 		f.verify_quick_info_at("2", "const t2: B", "");
 		f.verify_quick_info_at("3", "(method) A<string>.foo(): void", "");

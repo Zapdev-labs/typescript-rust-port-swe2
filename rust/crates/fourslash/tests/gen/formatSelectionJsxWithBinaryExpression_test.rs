@@ -23,7 +23,7 @@ function TestWidget() {
         </div>
     );
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.format_selection("1", "2");
 		f.verify_current_file_content(r"function TestWidget() {
     const test = true;

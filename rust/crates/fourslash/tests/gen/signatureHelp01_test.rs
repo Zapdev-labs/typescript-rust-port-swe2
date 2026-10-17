@@ -14,10 +14,10 @@ function foo(data: number) {
 function bar {
     foo(/*1*/)
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.mark_test_as_strada_server();
 		f.go_to_marker("1");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { doc_comment: "".to_string().into(), parameter_count: 1, ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { doc_comment: "".to_string().into(), parameter_count: 1, ..Default::default() });
 	});
 }
 

@@ -21,7 +21,7 @@ obj.c;
 type T<U> = I | U;
 let t: T<number>;
 t.x;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_code_fix_available(None);
 	});
 }

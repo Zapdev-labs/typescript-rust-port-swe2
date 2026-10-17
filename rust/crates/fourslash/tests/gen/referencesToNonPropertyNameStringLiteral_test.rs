@@ -9,7 +9,7 @@ fn references_to_non_property_name_string_literal() {
 	run_test(|t| {
 		let content = r#"// @lib: es5
 const str: string = "hello/*1*/";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.mark_test_as_strada_server();
 		f.verify_baseline_find_all_references(&["1".into()]);
 	});

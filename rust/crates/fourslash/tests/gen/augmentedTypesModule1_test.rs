@@ -13,7 +13,7 @@ fn augmented_types_module1() {
 var m1c = 1; // Should be allowed
 var x: m1c./*1*/;
 var /*2*/r = m1c;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["I".into()].into(), ..Default::default() }), ..Default::default() }));
 		f.verify_quick_info_at("2", "var r: number", "");
 	});

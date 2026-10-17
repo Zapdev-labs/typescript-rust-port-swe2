@@ -13,7 +13,7 @@ fn get_outlining_spans_for_unbalanced_region() {
 [|// #region matched
 
 // #endregion matched|]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_outlining_spans(Some(tsc_lsproto::FoldingRangeKind::Region));
 	});
 }

@@ -14,7 +14,7 @@ fn quick_info_link2() {
  * that aren't defined in {@link IWallabyConfig}.
  * @property {boolean} autoDetect
  */";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_no_errors();
 		f.verify_baseline_hover();
 	});

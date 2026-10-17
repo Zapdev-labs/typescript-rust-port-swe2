@@ -25,7 +25,7 @@ declare const k: K;
 k.[|/*usea*/a|];
 k.[|/*useb*/b|];
 k.[|/*useab*/ab|];");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_definition(true, &["useI".into(), "useIJ".into(), "usea".into(), "useb".into(), "useab".into()]);
 	});
 }

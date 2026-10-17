@@ -32,7 +32,7 @@ const i: foo/*foo_type*/ = { x: 1, y: 2 };
 [|import bar = require("bar_module");|]
 const x = bar/*bar_value*/;
 const i: bar/*bar_type*/ = { x: 1, y: 2 };"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_no_errors();
 		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "foo".to_string().into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "foo".to_string().into(), kind: tsc_lsproto::SymbolKind::Variable.into(), location: f.ranges()[0].clone().ls_location().into(), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "foo".to_string().into(), kind: tsc_lsproto::SymbolKind::Variable.into(), location: f.ranges()[2].clone().ls_location().into(), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "foo_module".to_string().into(), kind: tsc_lsproto::SymbolKind::Namespace.into(), location: f.ranges()[1].clone().ls_location().into(), ..Default::default() }]).into()), ..Default::default() }]);
 		f.go_to_marker("foo_value");

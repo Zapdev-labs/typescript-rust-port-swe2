@@ -15,7 +15,7 @@ declare const foo: [number, ...number[]];
 declare const bar: number[];
 
 const /*1*/test2: TypeEq<typeof foo, typeof bar> = false;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("1");
 		f.verify_quick_info_is("const test2: false", "");
 		f.go_to_marker("2");

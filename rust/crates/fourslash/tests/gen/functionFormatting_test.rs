@@ -9,7 +9,7 @@ fn function_formatting() {
 	run_test(|t| {
 		let content = r"var foo = foo(function () {
     /**/function foo  ()  {}}    );";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.format_document("");
 		f.go_to_marker("");
 		f.verify_current_line_content(r"    function foo() { }");

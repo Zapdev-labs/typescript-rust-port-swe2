@@ -23,7 +23,7 @@ const oub/*6*/ = foo/*7*/(b);
 oub.b/*8*/
 oub.b.b/*9*/
 oub.b.a.n.a.n.a/*10*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "const out: {\n    a: {\n        a: ...;\n    };\n}", "");
 		f.verify_quick_info_at("2", "function foo<{\n    a: {\n        a: ...;\n    };\n}>(deep: Deep<{\n    a: {\n        a: ...;\n    };\n}>): {\n    a: {\n        a: ...;\n    };\n}", "");
 		f.verify_quick_info_at("3", "(property) a: {\n    a: {\n        a: ...;\n    };\n}", "");

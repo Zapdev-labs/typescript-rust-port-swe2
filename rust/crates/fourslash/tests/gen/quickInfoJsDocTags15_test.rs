@@ -37,7 +37,7 @@ class C2 { }
  * @augments {_a.Foo/*3*/}
  */
 class C3 { }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("/b.js");
 		f.verify_baseline_hover();
 	});

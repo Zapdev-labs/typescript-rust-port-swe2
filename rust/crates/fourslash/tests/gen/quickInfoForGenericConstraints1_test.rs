@@ -10,7 +10,7 @@ fn quick_info_for_generic_constraints1() {
 		return /* skip: "Known failing fourslash test" */;
 		let content = r"function foo4<T extends Date>(te/**/st: T): T;
 function foo4<T extends Date>(test: any): any { return null; }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("", "(parameter) test: T extends Date", "");
 	});
 }

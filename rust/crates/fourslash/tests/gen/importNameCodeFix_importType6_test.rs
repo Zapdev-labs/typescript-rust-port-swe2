@@ -16,7 +16,7 @@ declare module "react" { var React: any; export = React; export as namespace Rea
 import type React from "react";
 function Component() {}
 (<Component/**/ />)"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("");
 		f.verify_import_fix_at_position(&[r#"import React from "react";
 function Component() {}

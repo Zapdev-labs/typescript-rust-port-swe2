@@ -18,7 +18,7 @@ export { [|A|] as [|B|] };
 type [|A|] = 1;
 let [|A|]: [|A|] = 1;
 export type { [|A|] as [|B|] };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_document_highlights(None, to_any(f.ranges()).into_iter().map(Into::into));
 	});
 }

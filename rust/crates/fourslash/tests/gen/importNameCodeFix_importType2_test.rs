@@ -26,7 +26,7 @@ const x: OtherType/*c*/
 // @Filename: /d.ts
 import type { OtherType } from "./exports1.js";
 const x: OtherOtherType/*d*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("a");
 		f.verify_import_fix_at_position(&[r#"import type SomeType from "./exports1.js";
 import { someValue } from "./exports1.js";

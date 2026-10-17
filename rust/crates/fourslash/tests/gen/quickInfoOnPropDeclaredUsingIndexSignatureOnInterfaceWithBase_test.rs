@@ -14,7 +14,7 @@ interface B extends P {
 }
 declare const b: B;
 b.t/*1*/est = 10;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "(index) B[string]: number", "");
 	});
 }

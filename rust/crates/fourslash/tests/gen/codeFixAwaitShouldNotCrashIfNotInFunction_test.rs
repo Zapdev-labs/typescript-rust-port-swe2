@@ -8,7 +8,7 @@ use tsc_fourslash::*;
 fn code_fix_await_should_not_crash_if_not_in_function() {
 	run_test(|t| {
 		let content = r"await a";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_code_fix_not_available(&["addMissingAwait".into()]);
 	});
 }

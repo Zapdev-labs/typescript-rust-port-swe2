@@ -17,7 +17,7 @@ class C {
       this./*read*/x;
     }
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("write", "(property) C.x: any", "Doc");
 		f.verify_quick_info_at("read", "(property) C.x: number", "Doc");
 	});

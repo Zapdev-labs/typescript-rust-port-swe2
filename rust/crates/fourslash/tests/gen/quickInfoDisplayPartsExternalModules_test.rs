@@ -19,7 +19,7 @@ export namespace /*8*/m1./*9*/m2 {
 }
 export var /*12*/x = /*13*/m1./*14*/m2;
 export var /*15*/y: typeof /*16*/m1./*17*/m2;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_hover();
 	});
 }

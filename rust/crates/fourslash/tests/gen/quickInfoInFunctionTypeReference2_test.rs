@@ -13,11 +13,11 @@ fn quick_info_in_function_type_reference2() {
 }
 var c: C<number>;
 c.map(/*3*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "(parameter) k: string", "");
 		f.verify_quick_info_at("2", "(parameter) value: T", "");
 		f.go_to_marker("3");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "map(fn: (k: string, value: number, context: any) => void, context: any): void".to_string().into(), ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "map(fn: (k: string, value: number, context: any) => void, context: any): void".to_string().into(), ..Default::default() });
 	});
 }
 

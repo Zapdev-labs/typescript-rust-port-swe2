@@ -23,7 +23,7 @@ var b: bar;
 var /*2*/r2 = b["hello world"];
 var /*3*/r4 = b['1'];
 var /*4*/r5 = b[1];"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "var r: string", "");
 		f.verify_quick_info_at("2", "var r2: number", "");
 		f.verify_quick_info_at("3", "var r4: string", "");

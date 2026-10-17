@@ -18,7 +18,7 @@ export const db = {};
 export const db = {};
 // @Filename: /src/client/foo.ts
 db/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("");
 		f.verify_import_fix_at_position(&[r#"import { db } from "./db";
 

@@ -18,7 +18,7 @@ fn rename_modifiers() {
 }|]
 [|[|async|] function [|{| "isWriteAccess": true, "isDefinition": true, "contextRangeDelta": -2 |}fn|]() {}|]
 [|[|export|] [|default|] class [|{| "isWriteAccess": true, "isDefinition": true, "contextRangeDelta": -3 |}C2|] {}|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into(), f.ranges()[2].clone().into(), f.ranges()[5].clone().into(), f.ranges()[8].clone().into(), f.ranges()[11].clone().into(), f.ranges()[14].clone().into(), f.ranges()[17].clone().into(), f.ranges()[20].clone().into(), f.ranges()[23].clone().into(), f.ranges()[26].clone().into(), f.ranges()[27].clone().into()]);
 	});
 }

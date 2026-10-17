@@ -11,7 +11,7 @@ fn format_range_ending_after_comma_of_call() {
     /*start*/"firstParameter",/*end*/
     "something else"
 );"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.format_selection("start", "end");
 	});
 }

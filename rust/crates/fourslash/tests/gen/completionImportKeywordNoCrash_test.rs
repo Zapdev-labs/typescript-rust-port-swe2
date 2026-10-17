@@ -10,13 +10,13 @@ fn completion_import_keyword_no_crash() {
 		let mut empty_commit_chars = vec![];
 		{
 			let content = r"import super/*1*/";
-			let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+			let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 			f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(empty_commit_chars.clone()), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["type".into()].into(), ..Default::default() }), ..Default::default() }));
 			done();
 		}
 		{
 			let content = r"import this/*1*/";
-			let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+			let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 			f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(empty_commit_chars.clone()), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["type".into()].into(), ..Default::default() }), ..Default::default() }));
 			done();
 		}

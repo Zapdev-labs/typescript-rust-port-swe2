@@ -23,9 +23,9 @@ declare global {
 /// <reference path="globals.d.ts" />
 // @Filename: a.ts
 class Foo implements Disposable {}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("a.ts");
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'Disposable'".to_string().into(), new_file_content: r#"class Foo implements Disposable {
+		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'Disposable'".to_string().into(), new_file_content: r#"class Foo implements Disposable {
     [Symbol.dispose](): void {
         throw new Error("Method not implemented.");
     }

@@ -15,7 +15,7 @@ export = A;
 /**/
 var i: I1;
 var n: number = i.p1;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("");
 		f.insert("import I1 = require(\"exportEqualsInterface_A\");");
 	});

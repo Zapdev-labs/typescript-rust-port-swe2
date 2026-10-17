@@ -26,7 +26,7 @@ class Foo {
         <div  /*2*/ />
     }
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["1", "2"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "aria-label".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Field).into()), detail: Some(("(property) \"aria-label\": string").into()), documentation: Some(tsc_lsproto::StringOrMarkupContent { markup_content: Some(tsc_lsproto::MarkupContent { kind: tsc_lsproto::MarkupKind::Markdown.into(), value: "Label docs".to_string().into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "foo".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Field).into()), detail: Some(("(property) foo: string").into()), documentation: Some(tsc_lsproto::StringOrMarkupContent { markup_content: Some(tsc_lsproto::MarkupContent { kind: tsc_lsproto::MarkupKind::Markdown.into(), value: "Doc".to_string().into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
@@ -51,7 +51,7 @@ declare namespace JSX {
 }
 <foo:bar /*1*/ />
 <foo:bar  /*2*/></foo:bar>"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["1", "2"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "bar".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Field).into()), detail: Some(("(property) bar: string").into()), documentation: Some(tsc_lsproto::StringOrMarkupContent { markup_content: Some(tsc_lsproto::MarkupContent { kind: tsc_lsproto::MarkupKind::Markdown.into(), value: "Bar docs".to_string().into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "foo".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Field).into()), detail: Some(("(property) foo: boolean").into()), documentation: Some(tsc_lsproto::StringOrMarkupContent { markup_content: Some(tsc_lsproto::MarkupContent { kind: tsc_lsproto::MarkupKind::Markdown.into(), value: "Foo docs".to_string().into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }

@@ -16,7 +16,7 @@ export declare function foo(): void;
 // @Filename: /home/src/workspaces/project/index.ts
 import { foo } from /*specifier*/"pkg";
 foo();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_source_definition(&["specifier".into()]);
 	});
 }
@@ -35,7 +35,7 @@ module.exports = { create: internalCreate };
 // @Filename: /home/src/workspaces/project/index.ts
 import /*importDefault*/create from "pkg";
 create();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_source_definition(&["importDefault".into()]);
 	});
 }

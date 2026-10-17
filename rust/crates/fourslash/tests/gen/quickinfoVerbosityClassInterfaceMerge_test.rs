@@ -16,7 +16,7 @@ declare interface Foo {
 }
 const f: Foo/*2*/ = { x: 1, y: "hello" };
 "#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("1".to_string().into(), vec![0, 1]), ("2".to_string().into(), vec![0, 1])]));
 	});
 }

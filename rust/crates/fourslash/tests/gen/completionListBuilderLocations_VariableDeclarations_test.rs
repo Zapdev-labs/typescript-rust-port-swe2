@@ -23,7 +23,7 @@ var y = [0, /*var9*/
 var y = "#, "`"), r"${/*var10*/
 var y = "), "`"), r"${10} dd ${ /*var11*/
 var y = 10; y=/*var12*/");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["var1"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_plus(vec!["C".into(), "y".into()], false).into(), ..Default::default() }), ..Default::default() }));
 		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["var2", "var3", "var4", "var5", "var6", "var7", "var8", "var9", "var10", "var11", "var12"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_plus(vec!["C".into(), "x".into(), "y".into()], false).into(), ..Default::default() }), ..Default::default() }));
 	});

@@ -31,7 +31,7 @@ var w: IFoo = { xy: undefined };
 
 // Untped -- should not be included
 var u = { xy: 0 };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_find_all_references(&["xy".into()]);
 	});
 }

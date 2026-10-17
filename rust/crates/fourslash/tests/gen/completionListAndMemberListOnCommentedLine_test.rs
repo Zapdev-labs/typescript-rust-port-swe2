@@ -9,7 +9,7 @@ fn completion_list_and_member_list_on_commented_line() {
 	run_test(|t| {
 		let content = r"// /**/
 var";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_completions(tsc_fourslash::MarkerInput::from(""), None);
 	});
 }

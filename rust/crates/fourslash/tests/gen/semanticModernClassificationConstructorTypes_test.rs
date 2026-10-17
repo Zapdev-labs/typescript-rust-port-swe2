@@ -11,7 +11,7 @@ fn semantic_modern_classification_constructor_types() {
 Object.create(null);
 const x = Promise.resolve(Number.MAX_VALUE);
 if (x instanceof Promise) {}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type_: "class.defaultLibrary".to_string().into(), text: "Object".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "method.defaultLibrary".to_string().into(), text: "create".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.declaration.readonly".to_string().into(), text: "x".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "class.defaultLibrary".to_string().into(), text: "Number".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "property.readonly.defaultLibrary".to_string().into(), text: "MAX_VALUE".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.readonly".to_string().into(), text: "x".to_string().into(), ..Default::default() }]);
 	});
 }

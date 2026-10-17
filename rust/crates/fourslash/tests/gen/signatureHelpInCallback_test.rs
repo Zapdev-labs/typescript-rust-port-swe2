@@ -11,9 +11,9 @@ fn signature_help_in_callback() {
 forEach(/*1*/() => {
     /*2*/
 });";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("1");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "forEach(f: () => void): any".to_string().into(), ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "forEach(f: () => void): any".to_string().into(), ..Default::default() });
 		f.verify_no_signature_help_for_markers(&["2".into()]);
 	});
 }

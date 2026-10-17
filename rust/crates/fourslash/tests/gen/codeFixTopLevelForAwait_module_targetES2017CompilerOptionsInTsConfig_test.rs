@@ -18,7 +18,7 @@ export {};
         "target": "es2017"
     }
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_code_fix_not_available(&["fixTargetOption".into()]);
 		f.verify_code_fix_available(None);
 	});

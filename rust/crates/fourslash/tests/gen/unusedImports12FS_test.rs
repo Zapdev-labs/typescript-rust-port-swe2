@@ -16,7 +16,7 @@ f1(42);
 export function f1(n: number){}
 export function f2(s: string){};
 export default f1;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_range_after_code_fix(r#"import f1 from "./file1";"#, false, 0, 0);
 	});
 }

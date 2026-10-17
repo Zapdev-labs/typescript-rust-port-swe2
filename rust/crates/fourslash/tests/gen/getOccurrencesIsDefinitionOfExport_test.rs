@@ -12,7 +12,7 @@ export var /*1*/x = 12;
 // @Filename: main.ts
 import { /*2*/x } from "./m";
 const y = x;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_find_all_references(&["1".into(), "2".into()]);
 	});
 }

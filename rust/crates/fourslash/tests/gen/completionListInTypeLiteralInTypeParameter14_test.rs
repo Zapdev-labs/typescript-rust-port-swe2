@@ -13,7 +13,7 @@ fn completion_list_in_type_literal_in_type_parameter14() {
 }
 declare function f<T extends Foo>(x: TemplateStringsArray): void;
 f<{/*0*/}>", "`"), r""), "`"), r";");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_completions(tsc_fourslash::MarkerInput::from("0"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["one".into(), "two".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }

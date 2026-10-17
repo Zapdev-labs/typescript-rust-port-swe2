@@ -81,7 +81,7 @@ fn references_for_overrides() {
         z.method();
 	}
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_find_all_references(&["foo".into(), "ifoo".into(), "icfoo".into(), "field".into(), "method".into()]);
 	});
 }

@@ -16,7 +16,7 @@ type T = Direction.Left
 const x = 1
 type x = string
 var y: x = 'hi'";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_suggestion_diagnostics(&[]);
 	});
 }

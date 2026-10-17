@@ -14,7 +14,7 @@ fn missing_method_after_edit_after_import() {
 import f = /*foo*/foo;
 
 /*delete*/var x;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("foo", "namespace foo", "");
 		f.go_to_marker("delete");
 		f.delete_at_caret(6);

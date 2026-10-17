@@ -17,7 +17,7 @@ export declare function autorun(): void;
 autorun/**/
 // @Filename: /utils.ts
 import "./mobx.cjs";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("");
 		f.verify_import_fix_at_position(&[r#"import { autorun } from "./mobx.cjs";
 

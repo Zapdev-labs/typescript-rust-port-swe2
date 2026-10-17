@@ -25,7 +25,7 @@ export function test() {
 export function test2() {
 
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_range_after_code_fix(r#"import {Calculator as calc, test as t1} from "./file1""#, false, 0, 0);
 	});
 }

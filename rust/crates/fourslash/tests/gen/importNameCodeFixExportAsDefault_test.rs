@@ -12,7 +12,7 @@ const foo = 'foo'
 export { foo as default }
 // @Filename: /index.ts
  foo/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_apply_code_action_from_completion("", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "foo".to_string().into(), source: "./foo".to_string().into(), description: "Add import from \"./foo\"".to_string().into(), new_file_content: Some((r#"import foo from "./foo";
 
 foo"#).into()), user_preferences: None, ..Default::default() });

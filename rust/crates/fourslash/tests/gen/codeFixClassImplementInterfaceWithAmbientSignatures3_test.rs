@@ -11,8 +11,8 @@ fn code_fix_class_implement_interface_with_ambient_signatures3() {
     abstract method(): void;
 }
 class B implements A {}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'A'".to_string().into(), new_file_content: r#"declare abstract class A {
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
+		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'A'".to_string().into(), new_file_content: r#"declare abstract class A {
     abstract method(): void;
 }
 class B implements A {

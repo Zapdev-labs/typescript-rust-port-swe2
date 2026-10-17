@@ -18,7 +18,7 @@ function hello() {
 const goodbye = 5;
 
 console./*0*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_completions(tsc_fourslash::MarkerInput::from("0"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "hello".to_string().into(), sort_text: Some((tsc_ls::JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "goodbye".to_string().into(), sort_text: Some((tsc_ls::JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }

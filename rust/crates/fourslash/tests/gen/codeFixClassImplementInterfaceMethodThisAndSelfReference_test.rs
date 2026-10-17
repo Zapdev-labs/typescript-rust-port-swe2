@@ -12,8 +12,8 @@ fn code_fix_class_implement_interface_method_this_and_self_reference() {
 }
 
 class C implements I {[| |]}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'I'".to_string().into(), new_file_content: r#"interface I {
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
+		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'I'".to_string().into(), new_file_content: r#"interface I {
     f(x: number, y: this): I
 }
 

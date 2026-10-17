@@ -10,7 +10,7 @@ fn outline_spans_block_comments_without_statements() {
 		let content = r"[|/*
 / * Some text
   */|]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_outlining_spans();
 	});
 }

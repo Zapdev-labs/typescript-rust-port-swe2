@@ -23,7 +23,7 @@ export const foo = 1;
 import { foo } from "./a";
 import { foo } from "./a";
 import { foo } from "./a";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("/b.ts");
 		f.verify_organize_imports(r"/**
  * Module doc comment

@@ -36,7 +36,7 @@ namespace foo/*8*/ {
 foo/*9*/()
 let x1: foo/*10*/;
 let x2: foo/*11*/.bar;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_hover();
 	});
 }

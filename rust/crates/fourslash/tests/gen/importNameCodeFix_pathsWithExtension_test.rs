@@ -25,7 +25,7 @@ fn import_name_code_fix_paths_with_extension() {
 export function helloWorld() {}
 // @Filename: /src/index.ts
 helloWorld/**/"##;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_import_fix_module_specifiers("", &["#internals/example".into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_ending: tsc_modulespecifiers::ImportModuleSpecifierEndingPreference("js"), ..Default::default() }));
 	});
 }

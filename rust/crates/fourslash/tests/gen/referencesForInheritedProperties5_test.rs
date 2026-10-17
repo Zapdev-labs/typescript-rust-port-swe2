@@ -19,7 +19,7 @@ interface interface2 extends interface1 {
 var v: interface1;
 v.propName;
 v.doStuff();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_find_all_references(&["1".into(), "2".into()]);
 	});
 }

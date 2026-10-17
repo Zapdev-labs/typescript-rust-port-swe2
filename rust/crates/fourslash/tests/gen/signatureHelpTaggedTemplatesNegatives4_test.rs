@@ -11,7 +11,7 @@ fn signature_help_tagged_templates_negatives4() {
 }
 
 /*1*/fo/*2*/o /*3*/", "`"), r""), "`"), r"/*4*/  /*5*/");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_no_signature_help_for_markers(&f.marker_names());
 	});
 }

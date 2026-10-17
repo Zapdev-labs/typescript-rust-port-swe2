@@ -64,7 +64,7 @@ b.method2/*2*/();
 Bar.method1/*3*/();
 const p1 = b.property1/*4*/;
 const p2 = b.property2/*5*/;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "constructor Bar(value: number): Bar", "");
 		f.verify_quick_info_at("2", "(method) Bar.method2(): void", "Foo#method2 documentation");
 		f.verify_quick_info_at("3", "(method) Bar.method1(): void", "Foo#method1 documentation");

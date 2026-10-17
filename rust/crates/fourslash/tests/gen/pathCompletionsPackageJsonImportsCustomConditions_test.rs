@@ -22,7 +22,7 @@ fn path_completions_package_json_imports_custom_conditions() {
 export const index = 0;
 // @Filename: /index.ts
 import { } from "/**/";"##;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "#only-with-custom-conditions".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::File).into()), detail: Some(("#only-with-custom-conditions.js").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }

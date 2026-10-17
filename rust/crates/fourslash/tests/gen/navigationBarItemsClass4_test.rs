@@ -11,7 +11,7 @@ fn navigation_bar_items_class4() {
 // @filename: /foo.js
 class Foo {}
 function Foo() {}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_document_symbol();
 	});
 }

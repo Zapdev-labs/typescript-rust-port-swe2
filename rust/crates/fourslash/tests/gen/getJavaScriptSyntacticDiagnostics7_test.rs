@@ -10,7 +10,7 @@ fn get_java_script_syntactic_diagnostics7() {
 		let content = r"// @allowJs: true
 // @Filename: a.js
 namespace M { }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_non_suggestion_diagnostics();
 	});
 }

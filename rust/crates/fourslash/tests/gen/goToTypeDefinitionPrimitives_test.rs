@@ -17,7 +17,7 @@ w./*reference1*/a;
 /*reference2*/x;
 /*reference3*/y;
 /*reference4*/y;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_type_definition(&["reference1".into(), "reference2".into(), "reference3".into(), "reference4".into()]);
 	});
 }

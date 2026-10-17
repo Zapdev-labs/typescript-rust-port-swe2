@@ -23,9 +23,9 @@ foo();
 util1();
 util2();
 new Blah;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("index.js");
-		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport".to_string().into(), new_file_content: r#"const { default: Blah } = require("./blah");
+		f.verify_code_fix_all(&tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport".to_string().into(), new_file_content: r#"const { default: Blah } = require("./blah");
 const foo = require("./foo");
 const { util1, util2 } = require("./utils");
 

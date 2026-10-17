@@ -16,13 +16,13 @@ function x1(a: any) {
 x1(''/*1*/);
 x1('hi'/*2*/);
 x1('bye'/*3*/);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("1");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "z".to_string().into(), parameter_span: "z: string".to_string().into(), overloads_count: 3, ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "z".to_string().into(), parameter_span: "z: string".to_string().into(), overloads_count: 3, ..Default::default() });
 		f.go_to_marker("2");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "x".to_string().into(), parameter_span: "x: 'hi'".to_string().into(), overloads_count: 3, ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "x".to_string().into(), parameter_span: "x: 'hi'".to_string().into(), overloads_count: 3, ..Default::default() });
 		f.go_to_marker("3");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "y".to_string().into(), parameter_span: "y: 'bye'".to_string().into(), overloads_count: 3, ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "y".to_string().into(), parameter_span: "y: 'bye'".to_string().into(), overloads_count: 3, ..Default::default() });
 	});
 }
 

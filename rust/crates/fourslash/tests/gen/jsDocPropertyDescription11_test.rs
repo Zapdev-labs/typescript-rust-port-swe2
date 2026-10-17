@@ -17,7 +17,7 @@ fn js_doc_property_description11() {
 function aliasExample(e: AliasExample) {
     console.log(e./*alias*/anything);
 }");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("alias", "(index) AliasExample[string | `any${string}`]: string", "Something generic\nSomething else");
 	});
 }

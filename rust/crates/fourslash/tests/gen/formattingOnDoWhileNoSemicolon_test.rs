@@ -11,7 +11,7 @@ fn formatting_on_do_while_no_semicolon() {
 /*3*/    for (var i = 0; i < 10; i++)
 /*4*/        i -= 2
 /*5*/        }/*1*/while (1 !== 1)";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("1");
 		f.insert("\n");
 		f.verify_current_line_content(r"while (1 !== 1)");

@@ -23,7 +23,7 @@ export function /*target*/inner() { return "ok"; }
 // @Filename: /home/src/workspaces/project/index.ts
 import { /*importName*/inner } from "outer";
 inner/*usage*/();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_source_definition(&["importName".into(), "usage".into()]);
 	});
 }

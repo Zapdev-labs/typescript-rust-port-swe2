@@ -15,7 +15,7 @@ export default class {
   };
 }
 ";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("m1");
 		f.verify_baseline_call_hierarchy();
 	});

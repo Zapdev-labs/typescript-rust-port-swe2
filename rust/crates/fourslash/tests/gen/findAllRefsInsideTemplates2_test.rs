@@ -9,7 +9,7 @@ fn find_all_refs_inside_templates2() {
 	run_test(|t| {
 		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"/*1*/function /*2*/f(...rest: any[]) { }
 /*3*/f ", "`"), r"${ /*4*/f } ${ /*5*/f }"), "`"), r"");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into()]);
 	});
 }

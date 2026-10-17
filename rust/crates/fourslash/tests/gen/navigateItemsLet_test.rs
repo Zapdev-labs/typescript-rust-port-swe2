@@ -12,7 +12,7 @@ let [|c|] = 10;
 function foo() {
     let [|d|] = 10;
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "c".to_string().into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "c".to_string().into(), kind: tsc_lsproto::SymbolKind::Variable.into(), location: f.ranges()[0].clone().ls_location().into(), ..Default::default() }]).into()), ..Default::default() }, tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "d".to_string().into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "d".to_string().into(), kind: tsc_lsproto::SymbolKind::Variable.into(), location: f.ranges()[1].clone().ls_location().into(), container_name: Some(("foo").into()), ..Default::default() }]).into()), ..Default::default() }]);
 	});
 }

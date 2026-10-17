@@ -15,7 +15,7 @@ fn quick_info_on_object_literal_with_only_getter() {
 };
 var /*4*/point = makePoint(2);
 var /*2*/x = point./*3*/x;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "function makePoint(x: number): {\n    readonly x: number;\n}", "");
 		f.verify_quick_info_at("2", "var x: number", "");
 		f.verify_quick_info_at("4", "var point: {\n    readonly x: number;\n}", "");

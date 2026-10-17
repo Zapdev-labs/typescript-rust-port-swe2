@@ -11,7 +11,7 @@ fn tsx_quick_info1() {
 var x1 = <di/*1*/v></di/*2*/v>
 class MyElement {}
 var z = <My/*3*/Element></My/*4*/Element>";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "any", "");
 		f.verify_quick_info_at("2", "any", "");
 		f.verify_quick_info_at("3", "class MyElement", "");

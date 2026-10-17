@@ -19,7 +19,7 @@ f</*f0*/;
 f<number, /*f1*/;
 f<number, string, /*f2*/;
 f<number, string, boolean, /*f3*/;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_signature_help();
 	});
 }

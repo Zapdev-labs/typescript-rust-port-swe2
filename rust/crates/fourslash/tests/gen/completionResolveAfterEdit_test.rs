@@ -19,16 +19,16 @@ declare const u: I;
 // @filename: 1.ts
 /*b*/
 ";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("a");
 		let mut completions = f.get_completions(None);
-		if completions == None || completions.items.len() == 0 {
+		if completions == None || completions.as_ref().unwrap().items.len() == 0 {
 			panic!("Expected completions but got none");
 		}
-		let mut first_item = completions.items[0];
+		let mut first_item = completions.as_ref().unwrap().items[0];
 		f.go_to_marker("b");
 		f.insert("1");
-		let mut resolved = f.resolve_completion_item(first_item);
+		let mut resolved = f.resolve_completion_item(&first_item);
 		if resolved == None {
 			panic!("Expected resolved completion item but got nil");
 		}
@@ -45,7 +45,7 @@ export const u = 1;
 // @filename: 1.ts
 [|import u/*a*/|]
 ";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_completions(tsc_fourslash::MarkerInput::from("a"), Some(&tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "u".to_string().into(), insert_text: Some((r#"import { u } from "./a";"#).into()), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./a".to_string().into(), ..Default::default() }), ..Default::default() }), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: r#"import { u } from "./a";"#.to_string().into(), range: f.ranges()[0].clone().ls_range.into(), ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::no_text_edits_marker().into(), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }

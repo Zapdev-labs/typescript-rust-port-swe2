@@ -14,7 +14,7 @@ export const abc = 0;
 acb/*1*/;
 // @Filename: /c.ts
 acb/*2*/;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("1");
 		f.verify_apply_code_action_from_completion("1", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "abc".to_string().into(), source: "./a".to_string().into(), description: "Add import from \"./a\"".to_string().into(), new_file_content: Some((r#"import { abc } from "./a";
 

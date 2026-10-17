@@ -12,7 +12,7 @@ export interface I {}
 // @Filename: 1.ts
 import * as u from "./a";
 [|import I/*a*/|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		let mut preferences = tsc_lsutil::new_default_user_preferences();
 		preferences.include_completions_for_module_exports = tsc_core::tristate::TS_FALSE;
 		preferences.include_completions_for_import_statements = tsc_core::tristate::TS_TRUE;

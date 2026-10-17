@@ -15,7 +15,7 @@ fn organize_imports_unicode1() {
 } from './foo';
 
 console.log(_aB, _Ab, aB, Ab);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_organize_imports(r"import {
     Ab,
     _Ab,

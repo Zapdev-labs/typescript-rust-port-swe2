@@ -17,7 +17,7 @@ fn transitive_export_imports() {
 // @Filename: c.ts
 [|import /*3*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 6 |}b|] = require('./b');|]
 var a = new /*4*/[|b|]./**/[|b|]();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("");
 		f.verify_quick_info_exists();
 		f.verify_no_errors();

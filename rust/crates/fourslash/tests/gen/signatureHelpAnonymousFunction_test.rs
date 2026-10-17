@@ -11,11 +11,11 @@ fn signature_help_anonymous_function() {
     return null;
 }
 anonymousFunctionTest(5, "")(/*anonymousFunction1*/1, /*anonymousFunction2*/"");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("anonymousFunction1");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "(a: number, b: string): string".to_string().into(), parameter_count: 2, parameter_name: "a".to_string().into(), parameter_span: "a: number".to_string().into(), ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "(a: number, b: string): string".to_string().into(), parameter_count: 2, parameter_name: "a".to_string().into(), parameter_span: "a: number".to_string().into(), ..Default::default() });
 		f.go_to_marker("anonymousFunction2");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "b".to_string().into(), parameter_span: "b: string".to_string().into(), ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "b".to_string().into(), parameter_span: "b: string".to_string().into(), ..Default::default() });
 	});
 }
 

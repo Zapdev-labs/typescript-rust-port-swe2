@@ -15,7 +15,7 @@ fn auto_import_typedef_missing_name() {
 export function doSomething() {}
 // @Filename: /index.ts
 doSomething/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("");
 		f.baseline_auto_imports_completions(&["".into()]);
 	});

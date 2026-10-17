@@ -14,7 +14,7 @@ fn incremental_js_doc_adjusts_lengths_right() {
  *
  * @param {String} str
  * @param {Number} wid/*1*/");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("1");
 		f.insert("th\n@");
 	});

@@ -19,7 +19,7 @@ console.log("./script/*3*/");
 /// <reference path="script.ts" />
 // @Filename: /stringLiteral.ts
 console.log("./script");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
 	});
 }

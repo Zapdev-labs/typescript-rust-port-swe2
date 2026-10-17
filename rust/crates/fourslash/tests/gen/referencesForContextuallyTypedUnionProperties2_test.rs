@@ -40,7 +40,7 @@ var w: A|B = { b:undefined, common: undefined };
 // Untped -- should not be included
 var u1 = { a: 0, b: 0, common: "" };
 var u2 = { b: 0, common: 0 };"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_find_all_references(&["1".into()]);
 	});
 }

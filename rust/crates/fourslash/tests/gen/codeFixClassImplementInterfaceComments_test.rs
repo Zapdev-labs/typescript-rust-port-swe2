@@ -23,8 +23,8 @@ namespace N {
         /**close-brace prefix*/ }
 /**close-brace prefix*/ }
 class C implements N.I {}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'N.I'".to_string().into(), new_file_content: r#"namespace N {
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
+		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'N.I'".to_string().into(), new_file_content: r#"namespace N {
     /**enum prefix */
     export enum /**enum identifier prefix */ E /**open-brace prefix*/ {
     /* literal prefix */ a /** comma prefix */,

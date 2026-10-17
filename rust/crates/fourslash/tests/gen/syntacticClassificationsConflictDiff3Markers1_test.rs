@@ -16,7 +16,7 @@ fn syntactic_classifications_conflict_diff3_markers1() {
     v = 2;
 >>>>>>> Branch - a
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type_: "class.declaration".to_string().into(), text: "C".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "property.declaration".to_string().into(), text: "v".to_string().into(), ..Default::default() }]);
 	});
 }

@@ -15,7 +15,7 @@ class Foo {
 class Bar extends Foo {
     public /*1*/x/*2*/: string = 'hi';
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_error_exists_between_markers("1", "2");
 		f.verify_number_of_errors_in_current_file(1);
 	});

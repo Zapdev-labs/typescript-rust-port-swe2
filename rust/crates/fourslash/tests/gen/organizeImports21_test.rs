@@ -19,7 +19,7 @@ export {
     PersonDefinitions as NameDefinitions,
     PersonDefinitions,
 } from './a';";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("/b.ts");
 		f.verify_organize_imports(r"export {
     /** @deprecated Use LocationDefinitions instead */

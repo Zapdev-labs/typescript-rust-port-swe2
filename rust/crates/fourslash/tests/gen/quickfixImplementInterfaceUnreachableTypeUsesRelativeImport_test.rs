@@ -20,9 +20,9 @@ export interface Foo {
 import { Foo } from './interface';
 
 class /*1*/X implements Foo {}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("1");
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'Foo'".to_string().into(), new_file_content: r"".to_string().into(), index: 0, ..Default::default() });
+		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'Foo'".to_string().into(), new_file_content: r"".to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

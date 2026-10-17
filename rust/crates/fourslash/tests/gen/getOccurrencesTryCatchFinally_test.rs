@@ -22,7 +22,7 @@ fn get_occurrences_try_catch_finally() {
 }
 [|fina/*3*/lly|] {
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_document_highlights(None, to_any(f.markers()).into_iter().map(Into::into));
 	});
 }

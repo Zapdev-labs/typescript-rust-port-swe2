@@ -16,7 +16,7 @@ fn space_before_and_after_binary_operators() {
 let s = 'foo';
 /*6*/for (var i = 0,ii = 2; i < s.length; ii++,i++) {
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.format_document("");
 		f.go_to_marker("1");
 		f.verify_current_line_content(r"(i++, i++);");

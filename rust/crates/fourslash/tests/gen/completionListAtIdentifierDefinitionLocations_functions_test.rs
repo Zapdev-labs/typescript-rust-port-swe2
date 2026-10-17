@@ -10,7 +10,7 @@ fn completion_list_at_identifier_definition_locations_functions() {
 		let content = r"var aa = 1;
 function /*functionName1*/
 function a/*functionName2*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_completions(tsc_fourslash::MarkerInput::from(f.markers()), None);
 	});
 }

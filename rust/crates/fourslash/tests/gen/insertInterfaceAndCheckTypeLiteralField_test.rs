@@ -10,7 +10,7 @@ fn insert_interface_and_check_type_literal_field() {
 		let content = r"/*addC*/
 interface G<T, U> { }
 var v2: G<{ a: /*checkParam*/C }, C>;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("addC");
 		f.insert("interface C { }");
 		f.go_to_marker("checkParam");

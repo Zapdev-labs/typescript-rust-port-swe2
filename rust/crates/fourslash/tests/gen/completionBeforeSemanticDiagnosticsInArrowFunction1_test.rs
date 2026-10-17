@@ -9,7 +9,7 @@ fn completion_before_semantic_diagnostics_in_arrow_function1() {
 	run_test(|t| {
 		let content = r"var f4 = <T>(x: T/**/ ) => {
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("");
 		f.backspace(1);
 		f.insert("A");

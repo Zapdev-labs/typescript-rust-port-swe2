@@ -12,7 +12,7 @@ type MixinCtor<AA> = new () => AA & { constructor: MixinCtor<A/*2*/A> };
 type NestedCtor<AA> = new() => AA & (new () => AA & { constructor: NestedCtor<A/*3*/A> });
 type Method<AA> = { method(): A/*4*/A };
 type Construct<AA> = { new(): A/*5*/A };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "(type parameter) AA in type Ctor<AA>", "");
 		f.verify_quick_info_at("2", "(type parameter) AA in type MixinCtor<AA>", "");
 		f.verify_quick_info_at("3", "(type parameter) AA in type NestedCtor<AA>", "");

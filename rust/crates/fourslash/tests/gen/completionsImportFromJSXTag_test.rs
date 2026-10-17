@@ -22,7 +22,7 @@ export function App() {
     </div>
   )
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_apply_code_action_from_completion("", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "Box".to_string().into(), source: "./Box".to_string().into(), description: "Add import from \"./Box\"".to_string().into(), new_file_content: Some((r#"import { Box } from "./Box";
 
 export function App() {

@@ -11,9 +11,9 @@ fn code_fix_missing_type_annotation_on_exports8() {
 // @declaration: true
 function foo() {return 42;}
 export const g = function () { return foo(); };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_code_fix_available(Some(&["Add return type 'number'".into()]));
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add return type 'number'".to_string().into(), new_file_content: r"function foo() {return 42;}
+		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Add return type 'number'".to_string().into(), new_file_content: r"function foo() {return 42;}
 export const g = function (): number { return foo(); };".to_string().into(), index: 0, ..Default::default() });
 	});
 }

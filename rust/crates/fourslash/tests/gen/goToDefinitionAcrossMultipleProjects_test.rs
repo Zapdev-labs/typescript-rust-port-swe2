@@ -21,7 +21,7 @@ var /*def4*/x: number;
 /// <reference path="c.ts" />
 /// <reference path="d.ts" />
 [|/*use*/x|]++;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_definition(true, &["use".into()]);
 	});
 }

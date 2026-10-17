@@ -31,7 +31,7 @@ export = $;
 module.exports = {};
 // @Filename: /index.ts
 filter/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_import_fix_module_specifiers("", &["./object-literal".into(), "./jquery".into()], None);
 	});
 }

@@ -11,7 +11,7 @@ fn completions_writing_spread_argument() {
 
 const [] = [Math.min(./*marker*/)]
 ";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("marker");
 		f.verify_completions(Default::default(), None);
 		f.insert(".");

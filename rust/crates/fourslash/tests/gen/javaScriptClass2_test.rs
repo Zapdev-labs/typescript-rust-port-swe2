@@ -18,7 +18,7 @@ class Foo {
 }
 var x = new Foo();
 x.[|union|];"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_rename_at_ranges_with_text(None, &["union".into()]);
 	});
 }

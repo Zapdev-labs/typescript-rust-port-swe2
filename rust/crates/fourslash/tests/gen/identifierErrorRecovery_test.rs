@@ -11,7 +11,7 @@ fn identifier_error_recovery() {
 var foo;
 var /*3*/class/*4*/;
 var bar;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_error_exists_between_markers("1", "2");
 		f.verify_error_exists_between_markers("3", "4");
 		f.verify_number_of_errors_in_current_file(3);

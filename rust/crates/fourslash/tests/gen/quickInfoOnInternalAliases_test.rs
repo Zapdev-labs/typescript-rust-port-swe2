@@ -26,7 +26,7 @@ var /*6*/anotherAliasVar = /*7*/internalAlias;
 import /*8*/internalFoo = m1./*9*/foo;
 var /*10*/callVar = /*11*/internalFoo();
 var /*12*/anotherAliasFoo = /*13*/internalFoo;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "class m1.m2.c", "class comment;");
 		f.verify_quick_info_at("2", "(alias) class internalAlias\nimport internalAlias = m1.m2.c", "This is on import declaration");
 		f.verify_quick_info_at("3", "class m1.m2.c", "class comment;");

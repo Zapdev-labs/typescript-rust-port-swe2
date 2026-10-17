@@ -29,7 +29,7 @@ fn organize_imports_type11() {
 } from "foo";
 interface Use extends Type1, Type2, Type3, Type4, Type5, Type6, Type7, Type8, Type9 {}
 console.log(func1, func2, func3, func4, func5, func6, func7, func8, func9);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_organize_imports(r#"import {
     type Type1,
     type Type2,

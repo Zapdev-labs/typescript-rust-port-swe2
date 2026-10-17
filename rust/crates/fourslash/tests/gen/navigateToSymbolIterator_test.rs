@@ -11,7 +11,7 @@ fn navigate_to_symbol_iterator() {
 class C {
     [|[Symbol.iterator]|]() {}
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "iterator".to_string().into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "iterator".to_string().into(), kind: tsc_lsproto::SymbolKind::Method.into(), location: f.ranges()[0].clone().ls_location().into(), container_name: Some(("C").into()), ..Default::default() }]).into()), ..Default::default() }]);
 	});
 }

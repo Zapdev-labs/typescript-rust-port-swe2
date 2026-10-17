@@ -11,7 +11,7 @@ fn signature_help_tagged_templates_negatives1() {
 function g(templateStrings, x, y, z) { return ""; }
 
 /*1*/f/*2*/ /*3*/"#, "`"), r" qwerty ${ 123 } asdf ${   41234   }  zxcvb ${ g "), "`"), r"    "), "`"), r" }     "), "`"), r"/*4*/");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_no_signature_help_for_markers(&f.marker_names());
 	});
 }

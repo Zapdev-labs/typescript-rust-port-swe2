@@ -13,8 +13,8 @@ fn code_fix_class_implement_interface_no_undefined_on_optional_parameter() {
 
 class Foo implements IFoo {
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'IFoo'".to_string().into(), new_file_content: r#"interface IFoo {
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
+		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'IFoo'".to_string().into(), new_file_content: r#"interface IFoo {
     bar(x?: number | string): void;
 }
 

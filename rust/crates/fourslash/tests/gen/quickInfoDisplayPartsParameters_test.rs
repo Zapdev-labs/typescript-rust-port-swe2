@@ -14,7 +14,7 @@ function /*1*/foo(/*2*/param: string, /*3*/optionalParam?: string, /*4*/paramWit
     /*8*/paramWithInitializer = "Hello";
     /*9*/restParam[0] = "World";
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_hover();
 	});
 }

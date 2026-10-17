@@ -20,7 +20,7 @@ namespace M {
     var x = 3;
     console.log(/*3*/x); // 3
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "var M.x: number", "");
 		f.verify_quick_info_at("2", "var M.x: number", "");
 		f.verify_quick_info_at("3", "var x: number", "");

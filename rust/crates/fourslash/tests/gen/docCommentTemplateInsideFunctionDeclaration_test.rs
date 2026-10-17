@@ -11,7 +11,7 @@ fn doc_comment_template_inside_function_declaration() {
 f/*0*/unction /*1*/foo/*2*/(/*3*/) /*4*/{ /*5*/}";
 		let mut capabilities = tsc_fourslash::get_default_capabilities();
 		capabilities.text_document.as_mut().unwrap().completion.as_mut().unwrap().completion_item.as_mut().unwrap().snippet_support = Some((false).into());
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", capabilities.into(), content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", capabilities.into(), &content);
 		for marker in f.markers() {
 			f.verify_no_js_doc_completion(tsc_fourslash::MarkerInput::from(marker));
 		}

@@ -12,7 +12,7 @@ fn duplicate_function_implementation() {
 }
 function foo<string>(/**/): string { return null; }
 function foo<T>(x: T): T { return null; }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("");
 		f.insert("x: string");
 	});

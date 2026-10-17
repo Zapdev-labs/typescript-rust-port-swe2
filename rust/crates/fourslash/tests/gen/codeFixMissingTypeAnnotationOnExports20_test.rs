@@ -13,9 +13,9 @@ fn code_fix_missing_type_annotation_on_exports20() {
 export function foo () {
     return Symbol();
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_code_fix_available(Some(&["Add return type 'symbol'".into()]));
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add return type 'symbol'".to_string().into(), new_file_content: r"export function foo (): symbol {
+		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Add return type 'symbol'".to_string().into(), new_file_content: r"export function foo (): symbol {
     return Symbol();
 }".to_string().into(), index: 0, ..Default::default() });
 	});

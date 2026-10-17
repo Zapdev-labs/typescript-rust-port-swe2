@@ -13,7 +13,7 @@ myLabel: while (true) {
         /*marker*/break myLabel;
     }
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_number_of_errors_in_current_file(0);
 		f.go_to_marker("marker");
 		f.delete_at_caret(14);

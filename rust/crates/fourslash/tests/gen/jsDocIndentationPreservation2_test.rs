@@ -15,7 +15,7 @@ fn js_doc_indentation_preservation2() {
 		Third line.
 */
 function foo/**/(){}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("");
 		f.verify_quick_info_is("function foo(): void", "Does some stuff.\n    Second line.\n\tThird line.");
 	});

@@ -12,9 +12,9 @@ fn import_name_code_fix_type_only2() {
 export class A {}
 // @Filename: index.ts
 const a: A = new A();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("index.ts");
-		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport".to_string().into(), new_file_content: r#"import { A } from "./types";
+		f.verify_code_fix_all(&tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport".to_string().into(), new_file_content: r#"import { A } from "./types";
 
 const a: A = new A();"#.to_string().into(), ..Default::default() });
 	});

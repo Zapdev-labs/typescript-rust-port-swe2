@@ -18,7 +18,7 @@ fn member_overload_edits() {
     }
     export class B extends A { /*1*/ }
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_no_errors();
 		f.go_to_marker("1");
 		f.insert("public m(n: number) { return 0; }");

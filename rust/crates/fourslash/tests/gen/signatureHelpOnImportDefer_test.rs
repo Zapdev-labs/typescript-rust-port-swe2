@@ -8,7 +8,7 @@ use tsc_fourslash::*;
 fn signature_help_on_import_defer() {
 	run_test(|t| {
 		let content = r"let m = import.defer(/**/)";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("");
 		f.verify_baseline_signature_help();
 	});

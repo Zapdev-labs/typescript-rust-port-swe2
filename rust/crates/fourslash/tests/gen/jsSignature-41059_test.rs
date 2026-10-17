@@ -11,9 +11,9 @@ fn js_signature_41059() {
 // @allowNonTsExtensions: true
 // @Filename: Foo.js
 a.next(/**/);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "Generator.next(): IteratorResult<T, TReturn>".to_string().into(), overloads_count: 2, ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "Generator.next(): IteratorResult<T, TReturn>".to_string().into(), overloads_count: 2, ..Default::default() });
 	});
 }
 

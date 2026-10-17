@@ -12,7 +12,7 @@ var n = /*null*/null;
 var a = function() { return /*arguments*/arguments; };
 var t = /*true*/true;
 var f = /*false*/false;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_definition(true, &f.marker_names());
 	});
 }

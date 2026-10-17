@@ -35,7 +35,7 @@ var t7: (...a1: string[]) => void = (/*t71*/f1, /*t72*/f2, /*t73*/f3) => { }; //
 var t8: (...a1: string[]) => void = (/*t8*/f1: number[]) => { };
 // Explicit initialization value
 var t9: (a1: string[], a2: string[]) => void = (/*t91*/f1 = 4, /*t92*/f2 = [false, true]) => { };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "(parameter) restArgs: any[]", "");
 		f.verify_quick_info_at("2", "(parameter) restArgs: any[]", "");
 		f.verify_quick_info_at("3", "(parameter) y: string[]", "");

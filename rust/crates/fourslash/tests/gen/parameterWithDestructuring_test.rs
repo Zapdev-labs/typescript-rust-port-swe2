@@ -15,7 +15,7 @@ const f1 = (a: (b: string[]) => void) => {};
 f1(([a, b]) => { /*3*/a.charAt(0); });
 
 function f2({/*4*/a }: { a: string; }, [/*5*/b]: [string]) {}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "(parameter) a: string", "");
 		f.verify_quick_info_at("2", "(parameter) a: string", "");
 		f.verify_quick_info_at("3", "(parameter) a: string", "");

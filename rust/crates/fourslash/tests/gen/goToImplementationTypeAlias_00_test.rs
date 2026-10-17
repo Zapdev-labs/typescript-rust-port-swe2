@@ -12,7 +12,7 @@ export type TypeAlias = { P: number }
 // @Filename: ref.ts
 import { TypeAlias } from "./def";
 const c: T/*ref*/ypeAlias = [|{ P: 2 }|];"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_implementation(&["ref".into()]);
 	});
 }

@@ -38,9 +38,9 @@ import './';
 import './';
 // @filename: /a.tsx
 export const x = <div aria-label="label text" />;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_file("/a.tsx");
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add annotation of type 'JSX.Element'".to_string().into(), new_file_content: r#"export const x: JSX.Element = <div aria-label="label text" />;"#.to_string().into(), index: 0, ..Default::default() });
+		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Add annotation of type 'JSX.Element'".to_string().into(), new_file_content: r#"export const x: JSX.Element = <div aria-label="label text" />;"#.to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

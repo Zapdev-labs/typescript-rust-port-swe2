@@ -31,7 +31,7 @@ fo/*dcheck*/
 // @Filename: /d2.ts
 const a = import("./a"); // Does not make this an external module
 fo/*dts*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["b", "c", "ccheck", "cts", "d", "dcheck", "dts"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "foo".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "a".to_string().into(), ..Default::default() }), ..Default::default() }), detail: Some(("const foo: 0").into()), kind: Some((tsc_lsproto::CompletionItemKind::Variable).into()), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }

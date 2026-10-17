@@ -12,7 +12,7 @@ fn get_java_script_quick_info6() {
 // @Filename: Foo.js
 /** @type {function(this:number)} */
 function f() { /**/this }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("", "number", "");
 	});
 }

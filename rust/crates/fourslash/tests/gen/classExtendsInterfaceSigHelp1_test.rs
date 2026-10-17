@@ -17,9 +17,9 @@ interface I extends C {
 }
 var i: I;
 i.foo(/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_span: "x: string".to_string().into(), overloads_count: 2, ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { parameter_span: "x: string".to_string().into(), overloads_count: 2, ..Default::default() });
 	});
 }
 

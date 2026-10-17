@@ -21,7 +21,7 @@ namespace m2 {
     export import /*7*/a4 = m.m1;
     new /*8*/a4.c();
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_hover();
 	});
 }

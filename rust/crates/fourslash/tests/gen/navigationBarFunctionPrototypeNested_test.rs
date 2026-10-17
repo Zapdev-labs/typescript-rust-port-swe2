@@ -17,7 +17,7 @@ Object.defineProperty(A.B.prototype, "x", {
 })
 A.prototype.D = function () {  } 
 A.prototype.D.prototype.d = function () {  } "#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_document_symbol();
 	});
 }

@@ -17,7 +17,7 @@ fn rename_comments_and_strings4() {
         "), "`"), r"[|Bar|] ba ${Bar} bara [|Bar|] berbobo ${Bar} araura [|Bar|] ara!"), "`"), r";
     }
 }|]");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into()]);
 	});
 }

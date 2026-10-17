@@ -21,7 +21,7 @@ declare module "mymod" {
 }
 // @Filename: /home/src/workspaces/project/index.ts
 my/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.mark_test_as_strada_server();
 		f.verify_import_fix_module_specifiers("", &[], None);
 	});

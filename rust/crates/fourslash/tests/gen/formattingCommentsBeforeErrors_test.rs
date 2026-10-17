@@ -20,7 +20,7 @@ fn formatting_comments_before_errors() {
         bar();
     }
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("1");
 		f.insert("\n");
 		f.go_to_marker("0");

@@ -17,7 +17,7 @@ Dep/**/
 import fs from 'fs';
 // @Filename: util2.js
 const fs = require('fs');";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("");
 		f.verify_import_fix_at_position(&[r#"const { Dep } = require("./types/dep");
 

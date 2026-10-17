@@ -13,7 +13,7 @@ fn formatting_in_multiline_comments() {
 }
 
 // newline at the end of the file";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("2");
 		f.insert_line("");
 		f.go_to_marker("1");

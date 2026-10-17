@@ -9,7 +9,7 @@ fn go_to_type_definition3() {
 	run_test(|t| {
 		let content = r"type /*definition*/T = string;
 const x: /*reference*/T;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_type_definition(&["reference".into()]);
 	});
 }

@@ -13,7 +13,7 @@ fn go_to_definition_yield2() {
     }
     return gen
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_definition(true, &["start".into()]);
 	});
 }

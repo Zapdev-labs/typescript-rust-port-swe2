@@ -20,7 +20,7 @@ new Shape/**/
 // @Filename: /home/src/workspaces/project/b/index.ts
 export class Shape {}
 // @link: /home/src/workspaces/project/b -> /home/src/workspaces/project/a/node_modules/b"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.mark_test_as_strada_server();
 		f.go_to_marker("");
 		f.verify_import_fix_at_position(&[r#"import { Shape } from "b";

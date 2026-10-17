@@ -8,7 +8,7 @@ use tsc_fourslash::*;
 fn quick_info_ambient_module() {
 	run_test(|t| {
 		let content = r#"declare module "*.css"/*1*/;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", r#"module "*.css""#, "");
 	});
 }
@@ -20,7 +20,7 @@ fn quick_info_pattern_ambient_module_with_import_attributes() {
     const styles: { readonly [className: string]: string };
     export default styles;
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("1".to_string().into(), vec![0, 1])]));
 	});
 }
@@ -43,7 +43,7 @@ declare module "*.asset" with { type: "css" } {
 declare module "*.asset" with { type: "text" } {
     export const textAlso: "text-also";
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("css".to_string().into(), vec![0, 1]), ("text".to_string().into(), vec![0, 1])]));
 	});
 }

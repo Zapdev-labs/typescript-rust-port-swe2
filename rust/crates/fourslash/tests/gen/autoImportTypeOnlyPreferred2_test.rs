@@ -25,7 +25,7 @@ import { useState } from "react";
 import type { ComponentType } from "react";
 
 type _ = ComponentProps/*2*/;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("1");
 		f.verify_import_fix_at_position(&[r#"import type { ComponentType } from "react";
 import { useEffect, useState } from "react";

@@ -76,7 +76,7 @@ declare module "../index" {
 // @Filename: /home/src/workspaces/project/index.ts
 import [|/*defaultImport*/_|], { [|/*unresolvableNamedImport*/foo|] } from [|/*moduleSpecifier*/'lodash'|];
 _.[|/*propertyAccess*/add|]"#);
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.mark_test_as_strada_server();
 		f.verify_baseline_go_to_source_definition(&["defaultImport".into(), "unresolvableNamedImport".into(), "moduleSpecifier".into()]);
 	});

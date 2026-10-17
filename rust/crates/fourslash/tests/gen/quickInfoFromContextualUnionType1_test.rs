@@ -20,7 +20,7 @@ type X =
     };
 
 const obj = { name: "john", /*1*/someProp: "foo" } satisfies X;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "(property) someProp: string", "");
 	});
 }

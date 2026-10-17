@@ -12,7 +12,7 @@ var /*1*/r = <T>(x: T) => x;
 var /*2*/r2 = < <T>(x: T) => T>f;
 var a;
 var /*3*/r3 = < <T>(x: <A>(y: A) => A) => T>a;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "var r: <T>(x: T) => T", "");
 		f.verify_quick_info_at("2", "var r2: <T>(x: T) => T", "");
 		f.verify_quick_info_at("3", "var r3: <T>(x: <A>(y: A) => A) => T", "");

@@ -13,9 +13,9 @@ fn code_fix_missing_type_annotation_on_exports36_conditional_releative() {
 const A = "A"
 const B = "B"
 export const AB = Math.random()? A: B;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_code_fix_available(Some(&["Add annotation of type '\"A\" | \"B\"'".into(), "Add annotation of type 'typeof A | typeof B'".into(), "Add annotation of type 'string'".into(), "Add satisfies and an inline type assertion with '\"A\" | \"B\"'".into(), "Add satisfies and an inline type assertion with 'typeof A | typeof B'".into(), "Add satisfies and an inline type assertion with 'string'".into()]));
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add satisfies and an inline type assertion with 'typeof A | typeof B'".to_string().into(), new_file_content: r#"const A = "A"
+		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Add satisfies and an inline type assertion with 'typeof A | typeof B'".to_string().into(), new_file_content: r#"const A = "A"
 const B = "B"
 export const AB = (Math.random() ? A : B) satisfies typeof A | typeof B as typeof A | typeof B;"#.to_string().into(), index: 4, ..Default::default() });
 	});

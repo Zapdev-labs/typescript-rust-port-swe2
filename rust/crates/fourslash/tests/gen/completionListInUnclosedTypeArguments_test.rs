@@ -29,7 +29,7 @@ f2<typeof /*1uValueOnly*/x, {| "newId": true |}T{| "newId": true |}y{| "newId": 
 f2</*1x*/T/*2x*/y/*3x*/, () =>/*4x*/T/*5x*/y/*6x*/
 f2<() =>/*1y*/T/*2y*/y/*3y*/, () =>/*4y*/T/*5y*/y/*6y*/
 f2<any, () =>/*1z*/T/*2z*/y/*3z*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 |marker, index| {
 			let mut marker_name = marker.name;
 			let mut value_only = marker_name != None && strings.has_suffix((*marker_name).clone(), "ValueOnly");

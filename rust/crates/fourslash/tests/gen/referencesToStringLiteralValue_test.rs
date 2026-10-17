@@ -9,7 +9,7 @@ fn references_to_string_literal_value() {
 	run_test(|t| {
 		let content = r#"// @lib: es5
 const s: string = "some /*1*/ string";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.mark_test_as_strada_server();
 		f.verify_baseline_find_all_references(&["1".into()]);
 	});

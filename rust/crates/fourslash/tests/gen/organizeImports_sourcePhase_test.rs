@@ -10,7 +10,7 @@ fn organize_imports_source_phase_imports_are_not_coalesced() {
 		let content = r#"import source b from "lib";
 import source a from "lib";
 a; b;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_organize_imports(r#"import source a from "lib";
 import source b from "lib";
 a; b;"#, tsc_lsproto::CodeActionKind::SourceSortImports, Some(&tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE.into(), ..Default::default() }));
@@ -24,7 +24,7 @@ fn organize_imports_source_and_evaluation_phase_imports_are_not_coalesced() {
 import source b from "lib";
 import { a } from "lib";
 a; b; c;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_organize_imports(r#"import source b from "lib";
 import { a, c } from "lib";
 a; b; c;"#, tsc_lsproto::CodeActionKind::SourceSortImports, Some(&tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE.into(), ..Default::default() }));
@@ -74,7 +74,7 @@ import * as o from "lib";
 				expected: String,
 			}
 			run_subtest(&mut t, test.name, |t| {
-				let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, test.content);
+				let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &test.content);
 				f.verify_organize_imports(&format!("{}{}", test.expected, "\n"), tsc_lsproto::CodeActionKind::SourceSortImports, Some(&tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::AUTO.into(), ..Default::default() }));
 			});
 		}

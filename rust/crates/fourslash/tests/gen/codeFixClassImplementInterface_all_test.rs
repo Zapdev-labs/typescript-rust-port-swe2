@@ -11,8 +11,8 @@ fn code_fix_class_implement_interface_all() {
 interface J { j(): void; }
 class C implements I, J {}
 class D implements J {}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixClassIncorrectlyImplementsInterface".to_string().into(), new_file_content: r#"interface I { i(): void; }
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
+		f.verify_code_fix_all(&tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixClassIncorrectlyImplementsInterface".to_string().into(), new_file_content: r#"interface I { i(): void; }
 interface J { j(): void; }
 class C implements I, J {
     i(): void {

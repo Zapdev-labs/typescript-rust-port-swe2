@@ -17,9 +17,9 @@ fn function_overload_count() {
 }
 var i = new C1;
 i.attr(/*1*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("1");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { overloads_count: 3, ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { overloads_count: 3, ..Default::default() });
 	});
 }
 

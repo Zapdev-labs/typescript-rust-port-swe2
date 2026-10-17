@@ -10,7 +10,7 @@ fn annotate_with_type_from_js_doc2() {
 		let content = r"// @Filename: test123.ts
 /** @type {number} */
 var [|x|]: string;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_suggestion_diagnostics(&[]);
 	});
 }

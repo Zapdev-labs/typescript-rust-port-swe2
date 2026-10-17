@@ -17,7 +17,7 @@ fn find_all_refs_re_exports_use_in_import_type() {
 export type fullType = /*foo3*/[|foo|]./*full1*/[|Full|];
 type namespaceImport = typeof import('./foo/types');
 type fullType2 = import('./foo/types')./*foo4*/[|foo|]./*full2*/[|Full|];"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_no_errors();
 		f.verify_baseline_find_all_references(&["full0".into(), "full1".into(), "full2".into(), "foo0".into(), "foo1".into(), "foo2".into(), "foo3".into(), "foo4".into()]);
 		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into(), f.ranges()[9].clone().into(), f.ranges()[11].clone().into()]);

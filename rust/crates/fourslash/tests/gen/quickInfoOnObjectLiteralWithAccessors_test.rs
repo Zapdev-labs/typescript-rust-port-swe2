@@ -18,7 +18,7 @@ fn quick_info_on_object_literal_with_accessors() {
 var /*4*/point = makePoint(2);
 var /*2*/x = point.x;
 point./*3*/x = 30;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "function makePoint(x: number): {\n    b: number;\n    x: number;\n}", "");
 		f.verify_quick_info_at("2", "var x: number", "");
 		f.verify_quick_info_at("3", "(property) x: number", "");

@@ -70,7 +70,7 @@ var f5_/*e2*/r7 = f5.ofFooFooNum;
 var f5_/*e3*/r9 = f5.ofIG;
 var f5_/*e5*/r13 = f5.ofIG5;
 var f5_/*e7*/r17 = f5.ofC1;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_no_errors();
 		f.verify_quick_info_at("a1", "var f_r4: Foo<any>", "");
 		f.verify_quick_info_at("a2", "var f_r7: Foo<Foo<number>>", "");

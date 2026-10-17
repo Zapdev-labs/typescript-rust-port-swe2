@@ -70,7 +70,7 @@ class GenericPlanet2<T extends Food, V>{
     constructor(public name: string, public solarSystem: string, public species: GenericMonster<T, V>) { }
 }
  /*1*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_no_errors();
 		f.go_to_marker("1");
 		f.insert_line("");

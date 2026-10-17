@@ -17,7 +17,7 @@ interface T0 {
     [prop]: number;
     abc: number;
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_no_errors();
 	});
 }

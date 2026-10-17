@@ -13,7 +13,7 @@ fn format_import_declaration() {
 import bar  =    Foo;/*3*/
 
 import bar2=Foo;/*4*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.format_document("");
 		f.go_to_marker("1");
 		f.verify_current_line_content(r"namespace Foo {");

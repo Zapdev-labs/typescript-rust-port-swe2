@@ -13,9 +13,9 @@ type B<T> = T;
 type C<T> = T;
 f<A<B<C<number>>>, /*nested*/;
 ";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("nested");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f<T, U>(): void".to_string().into(), parameter_name: "U".to_string().into(), parameter_span: "U".to_string().into(), parameter_count: 2, ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "f<T, U>(): void".to_string().into(), parameter_name: "U".to_string().into(), parameter_span: "U".to_string().into(), parameter_count: 2, ..Default::default() });
 	});
 }
 

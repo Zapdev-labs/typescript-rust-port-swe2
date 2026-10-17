@@ -14,7 +14,7 @@ fn quick_info_link_code_plain() {
     m() { }
 }
 new C().m/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_no_errors();
 		f.verify_baseline_hover();
 	});

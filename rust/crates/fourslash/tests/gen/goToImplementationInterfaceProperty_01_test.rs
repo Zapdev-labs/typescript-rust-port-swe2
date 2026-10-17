@@ -16,7 +16,7 @@ class Bar implements Foo {
 function whatever(foo: Foo) {
     foo.he/*reference*/llo;
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_implementation(&["reference".into()]);
 	});
 }

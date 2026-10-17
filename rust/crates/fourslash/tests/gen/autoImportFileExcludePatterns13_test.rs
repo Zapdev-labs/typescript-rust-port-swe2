@@ -31,8 +31,8 @@ declare module './thing' {
 		c: string;
 	}
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'Parts'".to_string().into(), new_file_content: r"import { Event } from '../event/event';
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
+		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'Parts'".to_string().into(), new_file_content: r"import { Event } from '../event/event';
 import { Parts } from './parts';
 export class Extended implements Parts {
     options: Event;

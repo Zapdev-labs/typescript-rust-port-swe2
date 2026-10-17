@@ -17,7 +17,7 @@ class greeter {
         used = used + "second part";
     }|]
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_range_after_code_fix(r#"
     constructor() {
         var used = "dummy";

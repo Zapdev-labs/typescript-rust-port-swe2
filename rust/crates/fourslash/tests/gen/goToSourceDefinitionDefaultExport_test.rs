@@ -20,7 +20,7 @@ export function /*targetHelper*/helper() {}
 import /*importDefault*/Widget, { /*importHelper*/helper } from "pkg";
 Widget;
 helper();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_source_definition(&["importDefault".into(), "importHelper".into()]);
 	});
 }
@@ -40,7 +40,7 @@ export default class /*targetWidget*/Widget {}
 // @Filename: /home/src/workspaces/project/index.ts
 import /*importDefault*/Widget from "pkg";
 Widget;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_source_definition(&["importDefault".into()]);
 	});
 }
@@ -58,7 +58,7 @@ export default /*targetDefault*/function() { return "ok"; }
 // @Filename: /home/src/workspaces/project/index.ts
 import /*importDefault*/myFunc from "pkg";
 myFunc/*usage*/();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_source_definition(&["importDefault".into(), "usage".into()]);
 	});
 }
@@ -77,7 +77,7 @@ export default { run() {} };
 // @Filename: /home/src/workspaces/project/index.ts
 import /*defaultImport*/pkg from "pkg";
 pkg.run();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_source_definition(&["defaultImport".into()]);
 	});
 }
@@ -96,7 +96,7 @@ export default _default;
 // @Filename: /home/src/workspaces/project/index.ts
 import pkg from "pkg";
 pkg/*usage*/;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_source_definition(&["usage".into()]);
 	});
 }
@@ -116,7 +116,7 @@ module.exports = legacyFn;
 // @Filename: /home/src/workspaces/project/index.ts
 import /*importName*/legacyFn from "legacy";
 legacyFn();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_source_definition(&["importName".into()]);
 	});
 }
@@ -134,7 +134,7 @@ export default function createThing() { return { value: 42 }; }
 // @Filename: /home/src/workspaces/project/index.ts
 import /*defaultName*/createThing from "pkg";
 createThing/*callDefault*/();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_go_to_source_definition(&["defaultName".into(), "callDefault".into()]);
 	});
 }

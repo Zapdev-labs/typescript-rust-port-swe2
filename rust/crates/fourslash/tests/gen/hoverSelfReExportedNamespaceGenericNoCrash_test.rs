@@ -16,7 +16,7 @@ import { Box } from "./mod"
 declare const b: Box<string>
 const x = b./*1*/content
 "#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_hover();
 	});
 }
@@ -32,7 +32,7 @@ import { Box } from "./mod"
 declare const b: Box<string>
 const x = b./*1*/content
 "#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_hover();
 	});
 }
@@ -48,7 +48,7 @@ import { Box } from "./mod"
 declare const b: Box<string>
 const x = b./*1*/content
 "#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_hover();
 	});
 }

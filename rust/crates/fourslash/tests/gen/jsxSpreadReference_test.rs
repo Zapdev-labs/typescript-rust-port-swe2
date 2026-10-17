@@ -23,7 +23,7 @@ class MyClass {
 
 [|var [|/*dst*/{| "contextRangeIndex": 0 |}nn|]: {name?: string; size?: number};|]
 var x = <MyClass {...[|n/*src*/n|]}></MyClass>;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_rename_at_ranges_with_text(None, &["nn".into()]);
 		f.verify_baseline_go_to_definition(true, &["src".into()]);
 	});

@@ -26,7 +26,7 @@ funcC({ /*C*/ });
 funcD({ /*D*/ });
 funcE({ /*E*/ });
 funcF({ /*F*/ });";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_completions(tsc_fourslash::MarkerInput::from(f.markers()), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["hello".into(), "world".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }

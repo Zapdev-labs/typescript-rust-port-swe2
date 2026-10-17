@@ -13,7 +13,7 @@ fn semantic_classification2() {
 
 var Thing = 0;
 Thing.toExponential();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type_: "interface.declaration".to_string().into(), text: "Thing".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "method.declaration".to_string().into(), text: "toExponential".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.declaration".to_string().into(), text: "Thing".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable".to_string().into(), text: "Thing".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "method.defaultLibrary".to_string().into(), text: "toExponential".to_string().into(), ..Default::default() }]);
 	});
 }

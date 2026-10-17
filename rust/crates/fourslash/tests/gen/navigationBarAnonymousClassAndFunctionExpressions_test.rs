@@ -34,7 +34,7 @@ fn navigation_bar_anonymous_class_and_function_expressions() {
     console.log(class cls3 {});
     (class { });
 })");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_document_symbol();
 	});
 }

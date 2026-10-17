@@ -13,7 +13,7 @@ fn formatting_on_enter_in_comments() {
          */*1*/
     /*2*/}
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("1");
 		f.insert_line("");
 		f.go_to_marker("2");

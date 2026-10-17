@@ -21,7 +21,7 @@ const f4 = () => {};
 
 const f5 = function() {};
 ";
-				let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+				let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 				f.verify_baseline_code_lens(Some(&tsc_lsutil::UserPreferences { code_lens_user_preferences: tsc_lsutil::CodeLensUserPreferences { references_code_lens_enabled: tsc_core::tristate::TS_TRUE.into(), references_code_lens_show_on_all_functions: value.into(), ..Default::default() }, ..Default::default() }));
 			});
 		}

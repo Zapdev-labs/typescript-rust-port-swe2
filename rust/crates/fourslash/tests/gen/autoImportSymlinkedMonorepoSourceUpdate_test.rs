@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_symlinked_monorepo_source_update() {
 	run_test(|t| {
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, TEST_AUTO_IMPORT_SYMLINKED_MONOREPO_SOURCE_UPDATE_SCENARIO);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &TEST_AUTO_IMPORT_SYMLINKED_MONOREPO_SOURCE_UPDATE_SCENARIO);
 		f.go_to_marker("fooCompletion");
 		f.baseline_auto_imports_completions(&["fooCompletion".into()]);
 		f.go_to_marker("fooEdit");

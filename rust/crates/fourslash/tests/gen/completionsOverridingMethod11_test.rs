@@ -25,7 +25,7 @@ interface Base {
 class Sub implements Base {
    /*a*/
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_completions(tsc_fourslash::MarkerInput::from("a"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "a".to_string().into(), insert_text: Some(("a: string").into()), filter_text: Some(("a").into()), sort_text: Some((tsc_ls::LOCATION_PRIORITY.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "b".to_string().into(), insert_text: Some(("b(a: string): void {\n}").into()), filter_text: Some(("b").into()), sort_text: Some((tsc_ls::LOCATION_PRIORITY.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "c".to_string().into(), insert_text: Some(("c(a: string): string\nc(a: number): number\nc(a: unknown): string | number {\n}").into()), filter_text: Some(("c").into()), sort_text: Some((tsc_ls::LOCATION_PRIORITY.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_with_class_member_snippets: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), ..Default::default() }));
 	});
 }

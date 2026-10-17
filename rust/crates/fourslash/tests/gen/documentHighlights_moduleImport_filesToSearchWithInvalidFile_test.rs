@@ -16,7 +16,7 @@ foo.[|x|];
 import { [|x|] } from "foo";
 // @Filename: /c.ts
 import { x } from "foo";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_document_highlights_with_options(None, &["/a.ts".into(), "/b.ts".into(), "/unknown.ts".into()], to_any(f.ranges()).into_iter().map(Into::into));
 	});
 }

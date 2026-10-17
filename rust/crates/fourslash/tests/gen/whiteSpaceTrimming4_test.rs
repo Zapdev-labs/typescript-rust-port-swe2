@@ -8,7 +8,7 @@ use tsc_fourslash::*;
 fn white_space_trimming4() {
 	run_test(|t| {
 		let content = r"var re = /\w+   /*1*//;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("1");
 		f.insert("\n");
 		f.verify_current_file_content("var re = /\\w+\n    /;");

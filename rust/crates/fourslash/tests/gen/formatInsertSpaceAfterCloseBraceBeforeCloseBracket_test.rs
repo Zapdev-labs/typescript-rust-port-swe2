@@ -8,7 +8,7 @@ use tsc_fourslash::*;
 fn format_insert_space_after_close_brace_before_close_bracket() {
 	run_test(|t| {
 		let content = r"[{}]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		let mut opts122 = f.get_options();
 		opts122.format_code_settings.insert_space_after_opening_and_before_closing_nonempty_brackets = tsc_core::tristate::TS_TRUE;
 		f.configure(opts122);

@@ -9,7 +9,7 @@ fn rename_numerical_index() {
 	run_test(|t| {
 		let content = r"const foo = { [|0|]: true };
 foo[[|0|]];";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_baseline_rename_at_ranges_with_text(None, &["0".into()]);
 	});
 }

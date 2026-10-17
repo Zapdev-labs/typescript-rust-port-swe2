@@ -15,7 +15,7 @@ fn unused_function_in_namespace2() {
     function function1() {
     }
 } |]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_range_after_code_fix(r"namespace greeter {
     export function function2() {
     }

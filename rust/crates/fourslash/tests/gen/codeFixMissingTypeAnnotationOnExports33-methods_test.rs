@@ -14,9 +14,9 @@ export class Foo {
   m() {
   }
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_code_fix_available(Some(&["Add return type 'void'".into()]));
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add return type 'void'".to_string().into(), new_file_content: r"export class Foo {
+		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Add return type 'void'".to_string().into(), new_file_content: r"export class Foo {
   m(): void {
   }
 }".to_string().into(), index: 0, ..Default::default() });

@@ -13,9 +13,9 @@ fn js_doc_function_signatures2() {
 var f6;
 
 f6('', /**/false)";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("");
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f6(arg0: string, arg1?: boolean): number".to_string().into(), ..Default::default() });
+		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "f6(arg0: string, arg1?: boolean): number".to_string().into(), ..Default::default() });
 	});
 }
 

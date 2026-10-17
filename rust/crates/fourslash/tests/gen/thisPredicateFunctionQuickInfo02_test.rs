@@ -38,7 +38,7 @@ if (crate.isSupplies/*7*/()) {
        crate.;
     }
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_quick_info_at("1", "(method) Crate<T>.isSundries(): this is Crate<Sundries>", "");
 		f.verify_quick_info_at("2", "(method) Crate<T>.isSupplies(): this is Crate<Supplies>", "");
 		f.verify_quick_info_at("3", "(method) Crate<T>.isPackedTight(): this is (this & {\n    extraContents: T;\n})", "");

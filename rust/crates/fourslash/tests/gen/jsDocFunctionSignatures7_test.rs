@@ -21,7 +21,7 @@ function Test(p0, p1) {
 
 
 var /**/test = new Test("");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.go_to_marker("");
 		f.verify_quick_info_is("var test: Test", "");
 	});

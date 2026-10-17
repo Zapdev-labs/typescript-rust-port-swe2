@@ -17,7 +17,7 @@ export {/*3*/} from "./m1"
 export {foo,/*4*/ from "./m1"
 export {bar as /*5*/, /*6*/ from "./m1"
 export {foo, bar, baz as b,/*7*/} from "./m1""#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["1", "2", "3"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["bar".into(), "baz".into(), "foo".into(), tsc_lsproto::CompletionItem { label: "type".to_string().into(), sort_text: Some((tsc_ls::GLOBALS_OR_KEYWORDS.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 		f.verify_completions(tsc_fourslash::MarkerInput::from("4"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["bar".into(), "baz".into(), tsc_lsproto::CompletionItem { label: "type".to_string().into(), sort_text: Some((tsc_ls::GLOBALS_OR_KEYWORDS.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 		f.verify_completions(tsc_fourslash::MarkerInput::from("5"), None);

@@ -10,7 +10,7 @@ fn syntactic_classification_for_js_doc_template_tag() {
 		let content = r"/** @template T baring strait */
 function ident<T>: T {
 }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
 		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type_: "function.declaration".to_string().into(), text: "ident".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "typeParameter.declaration".to_string().into(), text: "T".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "typeParameter".to_string().into(), text: "T".to_string().into(), ..Default::default() }]);
 	});
 }
