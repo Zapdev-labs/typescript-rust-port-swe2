@@ -2241,3 +2241,35 @@ STILL TODO next segment:
    field when value is `&EditRange{}`)
 4. Also: `edit_range` field — emit `ExpectedCompletionEditRange::EditRange(x)`
    when Go value is `&fourslash.EditRange{...}` (field is enum not Option).
+
+## checkpoint 7 — 1733 errors (was 1804/1959/2764/11803/16204)
+
+Current census (/tmp/fsfull.txt on dih@192.168.1.15:~/TypeScript/rust):
+- 793 E0283 `.into()` ambiguity — STILL the top class; sample:
+  `verify_completions("".into(), ...)` — markerArgs->MarkerInput::from may
+  not be reached if the receiver is `f.` but call goes through the
+  fallthrough (or `.into()` comes from exprField inside the same line).
+  NEXT: grep fsfull for the exact `cannot infer` sites and map each to
+  its emission site; consider emitting `MarkerInput::from` is already done
+  so check where `.into()` remains (e.g. iterArgs `vec![x.into()]`,
+  `T{...}.into()`, `new()`-wrapped `Some((x).into())`, `None.into()`,
+  `Some(x).into()`).
+- 546 E0308 — re-census after E0283 fix.
+- 47 new_content_mapper_fourslash — emit no-Test helper fns to shared
+  gen module.
+- 40 `*x` on Rc (`(*x).clone()` emitted but sites need `.as_ref()`).
+- 35 CodeActionKind::SourceSortImports — find real const name.
+- 25 VerifyWorkspaceSymbolCase: Default — derive Default on verify structs.
+- 21 E0061 zero-arg calls still — verify_code_fix_not_available() emits
+  `&[]` now? check gen output.
+- 17 quote_preference / 17 object_literal_property_sort_text / 10
+  deprecate_sort_text — make `pub` + `pub use` in tsc_ls lib.rs
+  (sort_text::* re-export pattern already there).
+- 10 `COMPLETION_ITEM_TAG_DEPRECATED` — CompletionItemTag const —
+  add "CompletionItemTag" to enumTypes (PascalCase `Deprecated`).
+- 10 `tsc_core::if_else` — `core.IfElse`? Go `core.IfElse(cond, a, b)`
+  helper — find Rust name (tsc_core::if_else doesn't exist; maybe
+  `core::if_else`/`tsc_core::ifthen`?) — grep crates/core.
+- 12 `From<&Rc<RangeMarker>>` — packIter &x strip landed; recheck.
+- 8 get_completions private — `f.get_completions(...)` calls: method is
+  pub(crate)? make pub or route to public wrapper.
