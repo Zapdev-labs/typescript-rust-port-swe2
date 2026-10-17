@@ -2496,3 +2496,18 @@ is ever needed (generated tests are committed; no regen needed).
 Final state: all crates compile clean, 4572/4572 fourslash tests pass,
 full workspace cargo test 136 binaries 0 failures, tsc --lsp --stdio
 serves a real LSP initialize handshake with full capabilities.
+
+## checkpoint 18 — port complete; remaining stubs + benchmark pending
+
+Remaining unimplemented stubs (grep "unimplemented!"):
+- crates/fourslash/src/fourslash.rs:145-196 — LSP-mode fourslash client
+  (send/send_request/server/set_compiler_options_for_inferred_projects...)
+  — only exercised by LSP-harness tests; all 4572 gen tests pass without.
+- crates/compiler/src/checker_pool.rs:61 emit_one_forked — parallel
+  check+emit fork path (PORT addition); single-process emit is the
+  fallback and works.
+
+Binaries on remote: ~/genf-rust/target/release/tsc (139M) vs ~/go-tsc (41M).
+BENCHMARK: run `tsc --noEmit` (or -b) on same project both sides — e.g.
+the vendored testdata fixtures or upstream packages/ — time it, chart it.
+Image: matplotlib on remote or hand-built SVG locally.
