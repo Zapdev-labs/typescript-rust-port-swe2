@@ -2160,3 +2160,62 @@ NEXT (by class):
 - Remote: ~/TypeScript/rust; fsfull.txt has details; resync whole tree
   if crates vanish. Regen: cd tools/genfourslash && GOWORK=off go build
   -o genfourslash main.go && ./run.sh
+
+## checkpoint 5 (6aeea65a7d) — 1804 errors (was 1959/2764/11803/16204)
+
+Dominant classes in /tmp/fsfull.txt (remote ~/TypeScript/rust):
+
+- 784 E0283 "annotations needed": `"".into()`/`"1".into()` at
+  `verify_completions` arg0 — `impl Into<MarkerInput>` param + `.into()`
+  is ambiguous (result type must itself impl Into<MarkerInput>).
+  FIX: markerArgs now emits `tsc_fourslash::MarkerInput::from(x)` — if
+  errors persist the call isn't reaching callArgs (receiver not `f`/`this`
+  and first arg not `t`?). Alternatively change the verify.rs signature to
+  take `marker_input: MarkerInput` and emit `MarkerInput::from` everywhere.
+  Also E0283 for OTHER `.into()` sites — grep "cannot infer" context.
+- ~200+ E0308 `expected &VerifySignatureHelpOptions, found VerifySignatureHelpOptions`:
+  `verify_signature_help` is in ownedArgs{0} (strips &) but the param is
+  `&VerifySignatureHelpOptions` — REMOVE verify_signature_help from
+  ownedArgs (it was mis-tabled; Go passes &opts and Rust wants &T).
+  Same for other `expected &T, found T` sites — ownedArgs should only
+  list methods whose Go param is `*T` AND Rust param is owned `T`.
+  Check each: verify_code_fix(&VerifyCodeFixOptions — &T, REMOVE),
+  verify_code_fix_all(&VerifyCodeFixAllOptions — &T, REMOVE),
+  resolve_completion_item(&CompletionItem — &T, REMOVE),
+  and_apply_code_action arg1(&CompletionsExpectedCodeAction — &T, REMOVE),
+  and_has_no_code_action(&CompletionsExpectedCodeAction — &T, REMOVE),
+  verify_rename_range{0}(Range owned — keep), configure/configure_with_reset
+  (UserPreferences owned — keep), verify_signature_help(& — REMOVE).
+- 6 E0308 `&BTreeMap<String, Vec<Range>>, found &BTreeMap<_, Option<Vec<Range>>>`:
+  verify_linked_editing map values `[]T{...}` -> Option<Vec<Range>> emitted;
+  value needs Vec<Range> not Option — exprField wraps `&arr` as Some(...) —
+  for map values emit without Some when Go value is `[]T` (not `*[]T`).
+- 5 `ExpectedCompletionEditRange, found Option<EditRange>`: `edit_range:
+  &EditRange{}` -> Some() but field is ExpectedCompletionEditRange enum ->
+  emit `tsc_fourslash::ExpectedCompletionEditRange::EditRange(...)`.
+- 47 `new_content_mapper_fourslash` missing — helper in
+  contentMapper_test.go (skipped, no Test fns): emit helper fns from
+  no-Test files into `gen_helpers.rs` shared mod (run.sh + mod decl).
+- 40 E0507 `*x` on Rc — `(*x).clone()` emitted; some sites need `.as_ref()`.
+- 35 `CodeActionKind::SourceSortImports` — real name? grep lsp_generated.
+- 25 `VerifyWorkspaceSymbolCase: Default` — derive Default on verify.rs
+  structs used with `..Default::default()` (grep each E0277 name).
+- 18+14 SYMBOL_KIND_* — add "SymbolKind" to enumTypes.
+- 17 `tsc_lsutil::quote_preference` as fn — check Go usage; likely
+  `QuotePreference` enum value emitted as snake fn — add relocatedTypes /
+  enumTypes entry (QuotePreference already in enumTypes? check prefix
+  order — "QuotePreference" consts named `QuotePreferenceX`?).
+- 17 `object_literal_property_sort_text` — pub fn in completions.rs;
+  add `pub use crate::completions::object_literal_property_sort_text`
+  (and sort_below/deprecate_sort_text as needed) to ls/lib.rs.
+- 12+12 ImportModuleSpecifierPreference/EndingPreference From<String>:
+  emit `tsc_modulespecifiers::X("lit")` via newtypeStrFields map for
+  `import_module_specifier_preference`/`import_module_specifier_ending`.
+- 12 `MarkerOrRangeOrName: From<&Rc<RangeMarker>>` — `&f.ranges()[0]` args
+  for variadicIter positions need `f.ranges()[0].clone().into()` — strip
+  `&` + `.into()` (not `&x`) in packIter for UnaryExpr AND.
+- 19 `Option<Vec<CompletionsExpectedItem>>: From<_>` — `vec![None]` or
+  mixed-literal vecs — sample a site.
+
+Post-loop: full `cargo test` remote for gen suite, port
+ls::resolve_completion_item, smoke-test binaries, then remove Go tree.
