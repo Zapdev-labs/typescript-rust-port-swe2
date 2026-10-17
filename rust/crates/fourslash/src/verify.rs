@@ -316,6 +316,18 @@ impl From<Vec<Rc<Marker>>> for MarkerInput {
     }
 }
 
+impl From<Vec<&str>> for MarkerInput {
+    fn from(names: Vec<&str>) -> Self {
+        MarkerInput::Names(names.iter().map(|s| s.to_string()).collect())
+    }
+}
+
+impl From<&Rc<Marker>> for MarkerInput {
+    fn from(m: &Rc<Marker>) -> Self {
+        MarkerInput::Marker(m.clone())
+    }
+}
+
 impl<const N: usize> From<&[&str; N]> for MarkerInput {
     fn from(names: &[&str; N]) -> Self {
         MarkerInput::from(&names[..])

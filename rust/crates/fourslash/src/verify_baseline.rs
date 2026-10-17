@@ -67,6 +67,12 @@ impl From<Rc<Marker>> for MarkerOrRangeOrName {
     }
 }
 
+impl From<&Rc<RangeMarker>> for MarkerOrRangeOrName {
+    fn from(r: &Rc<RangeMarker>) -> Self {
+        MarkerOrRangeOrName::Range(r.clone())
+    }
+}
+
 impl From<Rc<RangeMarker>> for MarkerOrRangeOrName {
     fn from(r: Rc<RangeMarker>) -> Self {
         MarkerOrRangeOrName::Range(r)
