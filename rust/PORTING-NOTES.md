@@ -2511,3 +2511,14 @@ Binaries on remote: ~/genf-rust/target/release/tsc (139M) vs ~/go-tsc (41M).
 BENCHMARK: run `tsc --noEmit` (or -b) on same project both sides — e.g.
 the vendored testdata fixtures or upstream packages/ — time it, chart it.
 Image: matplotlib on remote or hand-built SVG locally.
+
+## checkpoint 19 — perf gap analysis (user asked for speed parity)
+
+Benchmark (release, remote): Rust 0.30s vs Go 0.19s on tiny.ts
+(startup floor); Rust 0.67s vs Go 0.30s on checker.ts --noEmit
+--skipLibCheck. Split: ~0.11s fixed startup overhead, ~0.26s check-time.
+Release profile already has lto=fat codegen-units=1 + mimalloc.
+Suspects: eager bundled-lib parse (Go lazily parses lib.d.ts?), arena
+warm-up, symbol-table sizing, checker init. NEXT: perf profile the
+~0.37s check gap — check if lib files are parsed eagerly in
+program_setup/project compile, and whether --skipLibCheck still parses.
