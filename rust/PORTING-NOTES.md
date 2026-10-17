@@ -2356,3 +2356,5 @@ Census (remote /tmp/fsfull.txt):
 - 7 `new_line_character` on FormatCodeSettings — editor_settings routing
   failed for this literal shape — sample site.
 - MarkerInput::from landed (E0283 784->46).
+
+## ck10 (b8986dc437) — 1050 errors (was 16.2k). Census remote /tmp/fsfull.txt: 555 E0308 (re-census 'expected/found'), 178 E0507 *x-on-Rc (emit .as_ref().clone() not (*x).clone() where receiver is Rc), 47 new_content_mapper_fourslash (emit no-Test helpers to shared gen_helpers.rs), 46 E0283, 35 CodeActionKind::SourceSortImports name, 21 E0061, 19 Option<Vec<CompletionsExpectedItem>> From<_> (vec elem .into() gaps), 17 quote_preference ctor, 13 .items on Option<CompletionList> (.unwrap()), 7 new_line_character fmt routing, 7 E0499 double &mut f borrow (f.X(f.Y()) nested calls -> temp var), 6 expected-'f' syntax (fn name vs arg), 4 .ls_position Option unwrap, 4 COMPLETION_CLASS_ELEMENT_KEYWORDS const.
