@@ -2368,3 +2368,32 @@ crates/diagnostics -> $HOME on remote). Tests run <1s per chunk.
 Remaining: resolve_completion_item (lsp/server_handlers.rs:~1071),
 full cargo test workspace, TS-server smoke test, then remove Go tree.
 
+
+## checkpoint 11 — fourslash suite DONE (4572/4572 pass); finishing resolve_completion_item
+
+Remote layout (IMPORTANT):
+- ~/genf-rust = my build tree. Sync: `rsync -azL --exclude='target/' . dih@192.168.1.15:~/genf-rust/`
+  (the -L matters: crates/bundled/libs is a symlink into the Go tree).
+- ~/TypeScript/rust = THE USER'S OWN tree — do NOT sync or delete; user runs
+  their own cargo test --release there.
+- ~/tsc/internal/diagnostics + ~/tools/LocProject.json needed on remote:
+  diagnostics/build.rs resolves repo_root = CARGO_MANIFEST_DIR/../../..
+  (= $HOME on remote) then reads tsc/internal/diagnostics/*.
+- Test cmds: cd ~/genf-rust && cargo test -p tsc-fourslash --test gen_{0..7}
+  (each ~1s after first build).
+
+In flight: subagent ff2f56f0 ports resolve_completion_item +
+get_completion_item_details into crates/ls + wires lsp server_handlers
+stub (~line 1070). Go ref: internal/ls/completions.go:5488-~5700.
+Also needed: get_symbol_completion_from_item_data, get_completion_entry_details.
+Scaffolding exists: autoimport::Fix::edits, get_relevant_tokens, is_in_string,
+get_string_literal_completion_details, try_get_program_and_file.
+
+In flight: `cargo test --workspace` remote -> /tmp/ws.txt (may take a while;
+fourslash chunk already verified 4572/4572 pass).
+
+Remaining after that: TS server binary smoke test (echo a JSON-RPC
+initialize/completion request through `tsc --server`/tsserver binary),
+then remove /home/dih/TypeScript/tsc Go tree + bundled/libs symlink
+retarget + diagnostics/build.rs vendored-input fix (make it read
+vendored copies, not ../../../tsc) so the Rust tree is self-contained.
