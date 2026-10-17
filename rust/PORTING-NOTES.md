@@ -2219,3 +2219,25 @@ Dominant classes in /tmp/fsfull.txt (remote ~/TypeScript/rust):
 
 Post-loop: full `cargo test` remote for gen suite, port
 ls::resolve_completion_item, smoke-test binaries, then remove Go tree.
+
+## checkpoint 6 (13f53e737e) — loop continues
+
+Last commit removed mis-tabled ownedArgs (&T params: verify_signature_help,
+verify_code_fix, verify_code_fix_all, resolve_completion_item,
+and_apply_code_action{1}, and_has_no_code_action{0} — these take &T so
+exprArg's `&` path is correct). Added SymbolKind/etc to enumTypes,
+newtypeStrFields for modulespecifier prefs, packIter &x strip.
+
+STILL TODO next segment:
+1. rsync rust/ -> dih@192.168.1.15:~/TypeScript/rust (full tree,
+   --exclude target, remote drops dirs — resync if manifests fail)
+2. ssh ... cargo check -p tsc-fourslash --tests > /tmp/fsfull.txt; census
+3. Remaining known items from checkpoint 5 note (new_content_mapper_fourslash
+   helper fn, VerifyWorkspaceSymbolCase Default derives, SYMBOL_KIND
+   consts now handled via SymbolKind in enumTypes, quote_preference,
+   object_literal_property_sort_text pub+reexport in tsc_ls lib.rs,
+   `"".into()` E0283 residual locations, `&[]T` map-value Option wraps,
+   `ExpectedCompletionEditRange::EditRange` field emission for edit_range
+   field when value is `&EditRange{}`)
+4. Also: `edit_range` field — emit `ExpectedCompletionEditRange::EditRange(x)`
+   when Go value is `&fourslash.EditRange{...}` (field is enum not Option).
