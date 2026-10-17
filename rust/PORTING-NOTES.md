@@ -2565,3 +2565,17 @@ checks, dynamic dispatch on hot paths, SymbolTable lookup depth.
 
 Remaining stubs: fourslash.rs:145-196 LSP-mode client; checker_pool.rs
 emit_one_forked.
+
+## checkpoint 22 — pprof wired for check-time profiling
+
+tsc.rs: TSC_PPROF_DIR=dir starts tsc_pprof::begin_profiling; session.stop()
+called before process::exit (exit skips destructors — that bug ate the
+first profile). Rebuild running remote, then:
+
+  TSC_PPROF_DIR=/tmp/bench/prof ~/genf-rust/target/release/tsc \
+      --noEmit --skipLibCheck /tmp/bench/checker.ts
+  go tool pprof -top -nodecount=25 /tmp/bench/prof/*-cpuprofile.pb.gz
+
+PGO binary: ~/genf-rust/target-pgo/release/tsc — check 0.332s vs Go 0.210
+(same 63k symbols — ~1.5x same-work slower). Find the check hotspot.
+

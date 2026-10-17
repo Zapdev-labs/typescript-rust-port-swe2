@@ -206,7 +206,16 @@ fn run_main() -> i32 {
 }
 
 fn main() {
-    std::process::exit(run_main());
+    // TSC_PPROF_DIR=/path: write a pprof CPU profile of the whole run.
+    // `process::exit` skips destructors, so stop the session explicitly.
+    let mut session = std::env::var("TSC_PPROF_DIR").ok().map(|dir| {
+        tsc_pprof::begin_profiling(&dir, Box::new(std::io::stderr()))
+    });
+    let code = run_main();
+    if let Some(s) = session.as_mut() {
+        s.stop();
+    }
+    std::process::exit(code);
 }
 
 /// `runLSP` — `tsc --lsp --stdio`: an LSP server over stdio.
