@@ -29,7 +29,7 @@ export const entity = 1;
 // @Filename: /src/features/deep/consumer.ts
 entit/**/"##;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.baseline_auto_imports_completions(vec![""]);
+		f.baseline_auto_imports_completions(&[""]);
 	});
 }
 
@@ -53,7 +53,7 @@ export const entity = 1;
 // @Filename: /src/consumer.ts
 entit/**/"##;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.baseline_auto_imports_completions(vec![""]);
+		f.baseline_auto_imports_completions(&[""]);
 	});
 }
 

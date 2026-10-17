@@ -12,7 +12,7 @@ if(false)/*1*/{
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut opts148 = f.get_options();
-		opts148.format_code_settings.place_open_brace_on_new_line_for_control_blocks = tsc_core::TS_TRUE;
+		opts148.format_code_settings.place_open_brace_on_new_line_for_control_blocks = tsc_core::tristate::TS_TRUE;
 		f.configure(opts148);
 		f.go_to_marker("0".into());
 		f.insert_line("".into());

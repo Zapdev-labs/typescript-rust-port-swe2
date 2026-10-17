@@ -32,7 +32,7 @@ const obj2 = {
 obj2.Infinity;
 obj2.NaN;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_semantic_tokens(vec![tsc_fourslash::SemanticToken { type: "variable.declaration.readonly", text: "obj1", ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.readonly", text: "obj1", ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.readonly", text: "obj1", ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.readonly", text: "obj1", ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.declaration.readonly", text: "obj2", ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.readonly", text: "obj2", ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.readonly", text: "obj2", ..Default::default() }]);
+		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type: "variable.declaration.readonly".into(), text: "obj1".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.readonly".into(), text: "obj1".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.readonly".into(), text: "obj1".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.readonly".into(), text: "obj1".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.declaration.readonly".into(), text: "obj2".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.readonly".into(), text: "obj2".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.readonly".into(), text: "obj2".into(), ..Default::default() }]);
 	});
 }
 

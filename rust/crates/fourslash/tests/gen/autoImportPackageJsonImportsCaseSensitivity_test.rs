@@ -22,7 +22,7 @@ export function add(a: number, b: number) {}
 // @Filename: /src/index.ts
 add/*imports*/;"##;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_module_specifiers("imports".into(), vec!["#src/add.ts"], Some(tsc_lsutil::UserPreferences { import_module_specifier_preference: "non-relative", ..Default::default() }));
+		f.verify_import_fix_module_specifiers("imports".into(), &["#src/add.ts"], &tsc_lsutil::UserPreferences { import_module_specifier_preference: "non-relative", ..Default::default() });
 	});
 }
 

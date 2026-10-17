@@ -10,7 +10,7 @@ fn declare_function() {
 		let content = r"// @filename: index.ts
 declare function";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_workspace_symbol(vec![tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "", preferences: None, exact: Some((vec![]).into()), ..Default::default() }]);
+		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "".into(), preferences: None, exact: Some((vec![]).into()), ..Default::default() }]);
 	});
 }
 

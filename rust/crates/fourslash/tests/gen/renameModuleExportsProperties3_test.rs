@@ -12,7 +12,7 @@ fn rename_module_exports_properties3() {
 [|class [|{| "contextRangeIndex": 0 |}A|] {}|]
 module.exports = { [|A|] }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_rename(Some(tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::TS_TRUE, ..Default::default() }), f.ranges()[1], f.ranges()[2]);
+		f.verify_baseline_rename(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_TRUE, ..Default::default() }, f.ranges()[1], f.ranges()[2]);
 	});
 }
 

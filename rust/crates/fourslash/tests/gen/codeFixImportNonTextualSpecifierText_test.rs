@@ -10,7 +10,7 @@ fn code_fix_import_non_textual_specifier_text() {
 		let content = "// @Filename: /a.ts\n" + "import type { A } from `./${myFolder}/${myFile}`;\n" + "\n" + "new A/**/()";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("".into());
-		f.verify_import_fix_at_position(vec!["import { A } from `./${myFolder}/${myFile}`;\n" + "\n" + "new A()"], None);
+		f.verify_import_fix_at_position(&["import { A } from `./${myFolder}/${myFile}`;\n" + "\n" + "new A()"], None);
 	});
 }
 

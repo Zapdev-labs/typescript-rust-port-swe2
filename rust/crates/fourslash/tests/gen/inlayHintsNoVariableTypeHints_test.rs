@@ -9,7 +9,7 @@ fn inlay_hints_no_variable_type_hints() {
 	run_test(|t| {
 		let content = r"const a = 123;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_inlay_hints(None, Some(tsc_lsutil::UserPreferences { include_inlay_variable_type_hints: tsc_core::TS_FALSE, ..Default::default() }));
+		f.verify_baseline_inlay_hints(None, &tsc_lsutil::UserPreferences { include_inlay_variable_type_hints: tsc_core::tristate::TS_FALSE, ..Default::default() });
 	});
 }
 

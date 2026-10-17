@@ -10,7 +10,7 @@ fn syntactic_classifications_doc_comment1() {
 		let content = r"/** @type {number} */
 var v;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_semantic_tokens(vec![tsc_fourslash::SemanticToken { type: "variable.declaration", text: "v", ..Default::default() }]);
+		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type: "variable.declaration".into(), text: "v".into(), ..Default::default() }]);
 	});
 }
 

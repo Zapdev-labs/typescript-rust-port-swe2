@@ -22,7 +22,7 @@ declare module "./a" {
 Foo/**/
 "#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.baseline_auto_imports_completions(vec![""]);
+		f.baseline_auto_imports_completions(&[""]);
 	});
 }
 

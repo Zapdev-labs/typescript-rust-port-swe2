@@ -23,7 +23,7 @@ console.log(_aB, _Ab, aB, Ab);";
     aB,
 } from './foo';
 
-console.log(_aB, _Ab, aB, Ab);".into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::TS_FALSE, organize_imports_collation: tsc_lsutil::OrganizeImportsCollation::ORDINAL, ..Default::default() }));
+console.log(_aB, _Ab, aB, Ab);".into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_FALSE, organize_imports_collation: tsc_lsutil::OrganizeImportsCollation::ORDINAL, ..Default::default() });
 		f.verify_organize_imports(r"import {
     _aB,
     _Ab,
@@ -31,7 +31,7 @@ console.log(_aB, _Ab, aB, Ab);".into(), tsc_lsproto::CodeActionKind::SOURCE_ORGA
     Ab,
 } from './foo';
 
-console.log(_aB, _Ab, aB, Ab);".into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::TS_FALSE, organize_imports_collation: tsc_lsutil::OrganizeImportsCollation::UNICODE, ..Default::default() }));
+console.log(_aB, _Ab, aB, Ab);".into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_FALSE, organize_imports_collation: tsc_lsutil::OrganizeImportsCollation::UNICODE, ..Default::default() });
 	});
 }
 

@@ -21,7 +21,7 @@ autorun/**/
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
 		f.go_to_marker("".into());
-		f.verify_import_fix_at_position(vec![r#"import { autorun } from "mobx";
+		f.verify_import_fix_at_position(&[r#"import { autorun } from "mobx";
 
 autorun"#], None);
 	});

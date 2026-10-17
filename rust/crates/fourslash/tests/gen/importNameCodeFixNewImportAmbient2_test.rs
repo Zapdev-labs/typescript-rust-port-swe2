@@ -17,7 +17,7 @@ f1/*0*/();|]
     export var v1;
  }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_at_position(vec![r#"/*!
+		f.verify_import_fix_at_position(&[r#"/*!
  * I'm a license or something
  */
 

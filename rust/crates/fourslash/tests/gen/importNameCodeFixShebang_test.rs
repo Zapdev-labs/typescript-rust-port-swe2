@@ -15,7 +15,7 @@ foo/**/|]";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/a.ts".into());
 		f.go_to_file("/b.ts".into());
-		f.verify_import_fix_at_position(vec![r#"#!/usr/bin/env node
+		f.verify_import_fix_at_position(&[r#"#!/usr/bin/env node
 
 import { foo } from "./a";
 

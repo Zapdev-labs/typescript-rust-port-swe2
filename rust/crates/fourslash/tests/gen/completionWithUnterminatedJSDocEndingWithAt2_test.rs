@@ -12,7 +12,7 @@ fn completion_with_unterminated_js_doc_ending_with_at2() {
 function foo(x) {}
 /** some text @/*1*/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("1".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "param", kind: Some((tsc_lsproto::CompletionItemKind::KEYWORD).into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("1".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "param", kind: Some((tsc_lsproto::CompletionItemKind::KEYWORD).into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
 	});
 }
 

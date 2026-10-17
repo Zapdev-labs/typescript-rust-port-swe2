@@ -27,7 +27,7 @@ export function foo(): void;
 // @Filename: /index.ts
 foo/**/"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_module_specifiers("".into(), vec!["pkg/something.ts"], None);
+		f.verify_import_fix_module_specifiers("".into(), &["pkg/something.ts"], None);
 	});
 }
 

@@ -14,7 +14,7 @@ fn formatting_spaces_after_constructor() {
 		f.go_to_marker("1".into());
 		f.verify_current_line_content(r"class test { constructor() { } }".into());
 		let mut opts319 = f.get_options();
-		opts319.format_code_settings.insert_space_after_constructor = tsc_core::TS_TRUE;
+		opts319.format_code_settings.insert_space_after_constructor = tsc_core::tristate::TS_TRUE;
 		f.configure(opts319);
 		f.format_document("".into());
 		f.go_to_marker("2".into());

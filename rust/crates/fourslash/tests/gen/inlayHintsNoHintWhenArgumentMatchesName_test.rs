@@ -15,7 +15,7 @@ foo(v.a, v.a);
 foo(v.b, v.b);
 foo(v.c, v.c);";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_inlay_hints(None, Some(tsc_lsutil::UserPreferences { include_inlay_parameter_name_hints: tsc_lsutil::IncludeInlayParameterNameHints::ALL, include_inlay_parameter_name_hints_when_argument_matches_name: tsc_core::TS_FALSE, ..Default::default() }));
+		f.verify_baseline_inlay_hints(None, &tsc_lsutil::UserPreferences { include_inlay_parameter_name_hints: tsc_lsutil::IncludeInlayParameterNameHints::ALL, include_inlay_parameter_name_hints_when_argument_matches_name: tsc_core::tristate::TS_FALSE, ..Default::default() });
 	});
 }
 

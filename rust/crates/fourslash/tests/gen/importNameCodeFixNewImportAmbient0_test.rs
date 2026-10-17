@@ -14,7 +14,7 @@ declare module "ambient-module" {
    export var v1;
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_at_position(vec![r#"import { f1 } from "ambient-module";
+		f.verify_import_fix_at_position(&[r#"import { f1 } from "ambient-module";
 
 f1();"#], None);
 	});

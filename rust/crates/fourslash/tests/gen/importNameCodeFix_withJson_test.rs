@@ -15,7 +15,7 @@ import "./anything.json";
 a/**/"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/b.ts".into());
-		f.verify_import_fix_at_position(vec![r#"import { a } from "./a";
+		f.verify_import_fix_at_position(&[r#"import { a } from "./a";
 import "./anything.json";
 
 a"#], None);

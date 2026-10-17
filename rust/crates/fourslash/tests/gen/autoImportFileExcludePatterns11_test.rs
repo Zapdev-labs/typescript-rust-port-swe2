@@ -36,7 +36,7 @@ declare module './thing' {
 import { Parts } from './parts';
 export class Extended implements Parts {
     options: Event;
-}", index: 0, user_preferences: Some(tsc_lsutil::UserPreferences { auto_import_file_exclude_patterns: vec!["src/thing.ts"], ..Default::default() }), ..Default::default() });
+}", index: 0, user_preferences: &tsc_lsutil::UserPreferences { auto_import_file_exclude_patterns: vec!["src/thing.ts"], ..Default::default() }, ..Default::default() });
 	});
 }
 

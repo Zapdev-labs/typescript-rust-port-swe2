@@ -22,7 +22,7 @@ foo;
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/x/y.ts".into());
-		f.verify_import_fix_at_position(vec![r#"import { foo } from "@root/a";
+		f.verify_import_fix_at_position(&[r#"import { foo } from "@root/a";
 
 foo;"#], None);
 	});

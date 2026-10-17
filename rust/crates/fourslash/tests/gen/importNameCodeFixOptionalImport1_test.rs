@@ -14,7 +14,7 @@ export function foo() {};
 // @Filename: a/foo.ts
 export { foo } from "bar";"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_at_position(vec![r#"import { foo } from "bar";
+		f.verify_import_fix_at_position(&[r#"import { foo } from "bar";
 
 foo();"#, r#"import { foo } from "./foo";
 

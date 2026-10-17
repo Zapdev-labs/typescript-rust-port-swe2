@@ -21,7 +21,7 @@ const newVar = {
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("".into());
-		f.verify_import_fix_at_position(vec![r#"const MY_EXPORTS = require("./test_module");
+		f.verify_import_fix_at_position(&[r#"const MY_EXPORTS = require("./test_module");
 
 const newVar = {
   any: MY_EXPORTS,

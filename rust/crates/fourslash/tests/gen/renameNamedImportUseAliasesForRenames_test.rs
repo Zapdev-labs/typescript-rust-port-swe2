@@ -15,8 +15,8 @@ export interface MyTypeA {
     foo: string;
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_rename(Some(tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::TS_FALSE, ..Default::default() }), "import".into());
-		f.verify_baseline_rename(Some(tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::TS_TRUE, ..Default::default() }), "import".into());
+		f.verify_baseline_rename(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_FALSE, ..Default::default() }, "import".into());
+		f.verify_baseline_rename(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_TRUE, ..Default::default() }, "import".into());
 	});
 }
 
@@ -36,9 +36,9 @@ export interface Foo {
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_baseline_rename(None, "fooImport".into());
-		f.verify_baseline_rename(Some(tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::TS_TRUE, ..Default::default() }), "fooImport".into());
+		f.verify_baseline_rename(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_TRUE, ..Default::default() }, "fooImport".into());
 		f.go_to_marker("fooImport".into());
-		f.verify_rename_failed(Some(tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::TS_FALSE, ..Default::default() }));
+		f.verify_rename_failed(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_FALSE, ..Default::default() });
 	});
 }
 

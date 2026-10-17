@@ -29,7 +29,7 @@ console.log(A, a, B, b, c, C, d, D);";
     type c,
     d
 } from './foo';
-console.log(A, a, B, b, c, C, d, D);".into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::TS_FALSE, organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::INLINE, ..Default::default() }));
+console.log(A, a, B, b, c, C, d, D);".into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_FALSE, organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::INLINE, ..Default::default() });
 	});
 }
 

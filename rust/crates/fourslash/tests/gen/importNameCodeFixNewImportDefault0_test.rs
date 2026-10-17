@@ -11,7 +11,7 @@ fn import_name_code_fix_new_import_default0() {
 // @Filename: module.ts
 export default function f1() { };";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_at_position(vec![r#"import f1 from "./module";
+		f.verify_import_fix_at_position(&[r#"import f1 from "./module";
 
 f1();"#], None);
 	});

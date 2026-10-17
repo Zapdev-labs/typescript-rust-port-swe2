@@ -14,8 +14,8 @@ fn import_name_code_fix_new_import_node_modules1() {
 export var v1 = 5;
 export function f1();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.configure(tsc_lsutil::UserPreferences { auto_import_entrypoint_directory_search: tsc_core::TS_TRUE, ..Default::default() });
-		f.verify_import_fix_at_position(vec![r#"import { f1 } from "fake-module/nested";
+		f.configure(tsc_lsutil::UserPreferences { auto_import_entrypoint_directory_search: tsc_core::tristate::TS_TRUE, ..Default::default() });
+		f.verify_import_fix_at_position(&[r#"import { f1 } from "fake-module/nested";
 
 f1();"#], None);
 	});

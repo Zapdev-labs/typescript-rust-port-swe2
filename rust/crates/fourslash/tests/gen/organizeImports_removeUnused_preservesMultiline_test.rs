@@ -57,7 +57,7 @@ fn organize_imports_remove_unused_uses_language_service_format_options() {
 export { a, c };"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut preferences = tsc_lsutil::parse_user_preferences(vec![("editor", vec![("tabSize", 2), ("insertSpaces", false)].into_iter().collect::<FxHashMap<_, _>>())].into_iter().collect::<FxHashMap<_, _>>());
-		f.verify_organize_imports("import {\n\ta,\n\tc\n} from \"module\";\n\nexport { a, c };".into(), tsc_lsproto::CodeActionKind::SOURCE_REMOVE_UNUSED_IMPORTS_TS, &preferences);
+		f.verify_organize_imports("import {\n\ta,\n\tc\n} from \"module\";\n\nexport { a, c };".into(), tsc_lsproto::CodeActionKind::SOURCE_REMOVE_UNUSED_IMPORTS_TS, Some(preferences.clone()));
 	});
 }
 

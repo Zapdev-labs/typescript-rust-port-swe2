@@ -8,7 +8,7 @@ use tsc_fourslash::*;
 fn code_lens_references_show_on_all_class_methods() {
 	run_test(|t| {
 		let mut containing_test_name = t_name();
-		for value in vec![tsc_core::TS_TRUE, tsc_core::TS_FALSE] {
+		for value in vec![tsc_core::tristate::TS_TRUE, tsc_core::tristate::TS_FALSE] {
 			run_subtest(&mut t, format!("{}={}", containing_test_name, value.is_true()), |t| {
 				let content = r"
 export abstract class ABC {
@@ -27,7 +27,7 @@ export abstract class ABC {
 }
 ";
 				let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-				f.verify_baseline_code_lens(Some(tsc_lsutil::UserPreferences { implementations_code_lens_enabled: tsc_core::TS_TRUE, implementations_code_lens_show_on_all_class_methods: value, ..Default::default() }));
+				f.verify_baseline_code_lens(&tsc_lsutil::UserPreferences { implementations_code_lens_enabled: tsc_core::tristate::TS_TRUE, implementations_code_lens_show_on_all_class_methods: value, ..Default::default() });
 			});
 		}
 	});

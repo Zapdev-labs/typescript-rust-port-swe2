@@ -20,12 +20,12 @@ export function f1() { };
 [|f1/*0*/();|]"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/a/c/y.ts".into());
-		f.verify_import_fix_at_position(vec![r#"import { f1 } from "b/x";
+		f.verify_import_fix_at_position(&[r#"import { f1 } from "b/x";
 
 f1();"#], None);
-		f.verify_import_fix_at_position(vec![r#"import { f1 } from "../b/x";
+		f.verify_import_fix_at_position(&[r#"import { f1 } from "../b/x";
 
-f1();"#], Some(tsc_lsutil::UserPreferences { import_module_specifier_preference: "relative", ..Default::default() }));
+f1();"#], &tsc_lsutil::UserPreferences { import_module_specifier_preference: "relative", ..Default::default() });
 	});
 }
 

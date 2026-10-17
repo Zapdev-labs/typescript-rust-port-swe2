@@ -19,7 +19,7 @@ var /*2*/x = point./*3*/x;";
 		f.verify_quick_info_at("1".into(), "function makePoint(x: number): {\n    readonly x: number;\n}".into(), "".into());
 		f.verify_quick_info_at("2".into(), "var x: number".into(), "".into());
 		f.verify_quick_info_at("4".into(), "var point: {\n    readonly x: number;\n}".into(), "".into());
-		f.verify_completions("3".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "x", detail: Some(("(property) x: number").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("3".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec![&tsc_lsproto::CompletionItem { label: "x", detail: Some(("(property) x: number").into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
 	});
 }
 

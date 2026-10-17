@@ -12,11 +12,11 @@ fn configure_quote_preference(t: &mut TestHandle, f: &mut FourslashTest, quote_p
 }
 
 fn required_key(name: string) {
-	return Some(tsc_lsproto::CompletionItem { label: name, ..Default::default() });
+	return &tsc_lsproto::CompletionItem { label: name, ..Default::default() };
 }
 
 fn optional_key(name: string) {
-	return Some(tsc_lsproto::CompletionItem { label: name + "?", insert_text: Some((name).into()), filter_text: Some((name).into()), sort_text: Some((tsc_ls::SORT_TEXT_OPTIONAL_MEMBER.to_string()).into()), ..Default::default() });
+	return &tsc_lsproto::CompletionItem { label: name + "?", insert_text: Some((name).into()), filter_text: Some((name).into()), sort_text: Some((tsc_ls::SORT_TEXT_OPTIONAL_MEMBER.to_string()).into()), ..Default::default() };
 }
 
 fn verify_object_literal_key_completions(t: &mut TestHandle, f: &mut FourslashTest, items: &[*tsc_lsproto::CompletionItem]) {
@@ -25,7 +25,7 @@ fn verify_object_literal_key_completions(t: &mut TestHandle, f: &mut FourslashTe
 	for item in items {
 		expected.insert(i, item);
 	}
-	f.verify_completions("".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: expected, ..Default::default() }), ..Default::default() }));
+	f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: expected, ..Default::default() }, ..Default::default() });
 }
 
 #[test]

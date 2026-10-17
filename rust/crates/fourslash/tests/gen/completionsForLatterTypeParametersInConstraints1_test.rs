@@ -11,8 +11,8 @@ fn completions_for_latter_type_parameters_in_constraints1() {
 function test<First extends S/*1*/, Second>(a: First, b: Second) {}
 type A1<K extends /*2*/, L> = K";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions(vec!["1"], Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["Second"], excludes: vec!["First"], ..Default::default() }), ..Default::default() }));
-		f.verify_completions(vec!["2"], Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["L"], excludes: vec!["K"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions(&["1"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["Second"], excludes: vec!["First"], ..Default::default() }, ..Default::default() });
+		f.verify_completions(&["2"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["L"], excludes: vec!["K"], ..Default::default() }, ..Default::default() });
 	});
 }
 

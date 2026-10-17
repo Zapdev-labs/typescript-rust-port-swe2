@@ -24,13 +24,13 @@ console.log(A, B, C, D, E);"#;
 console.log(A, B, C, D, E);"#.into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
 		f.verify_organize_imports(r#"import { A, type B, C, D, type E } from "foo";
 
-console.log(A, B, C, D, E);"#.into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::INLINE, ..Default::default() }));
+console.log(A, B, C, D, E);"#.into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::INLINE, ..Default::default() });
 		f.verify_organize_imports(r#"import { type B, type E, A, C, D } from "foo";
 
-console.log(A, B, C, D, E);"#.into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::FIRST, ..Default::default() }));
+console.log(A, B, C, D, E);"#.into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::FIRST, ..Default::default() });
 		f.verify_organize_imports(r#"import { A, C, D, type B, type E } from "foo";
 
-console.log(A, B, C, D, E);"#.into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::LAST, ..Default::default() }));
+console.log(A, B, C, D, E);"#.into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::LAST, ..Default::default() });
 	});
 }
 

@@ -13,7 +13,7 @@ x; y;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_organize_imports(r#"import y from "lib1";
 import x from "lib2";
-x; y;"#.into(), tsc_lsproto::CodeActionKind::SOURCE_SORT_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE, ..Default::default() }));
+x; y;"#.into(), tsc_lsproto::CodeActionKind::SOURCE_SORT_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE, ..Default::default() });
 	});
 }
 
@@ -26,7 +26,7 @@ x; y;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_organize_imports(r#"import y from "./lib1";
 import x from "./lib2";
-x; y;"#.into(), tsc_lsproto::CodeActionKind::SOURCE_SORT_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE, ..Default::default() }));
+x; y;"#.into(), tsc_lsproto::CodeActionKind::SOURCE_SORT_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE, ..Default::default() });
 	});
 }
 
@@ -39,7 +39,7 @@ x; y;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_organize_imports(r#"import y from "lib";
 import x from "./lib";
-x; y;"#.into(), tsc_lsproto::CodeActionKind::SOURCE_SORT_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE, ..Default::default() }));
+x; y;"#.into(), tsc_lsproto::CodeActionKind::SOURCE_SORT_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE, ..Default::default() });
 	});
 }
 
@@ -52,7 +52,7 @@ x; y;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_organize_imports(r#"import y from "a";
 import x from "Z";
-x; y;"#.into(), tsc_lsproto::CodeActionKind::SOURCE_SORT_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE, ..Default::default() }));
+x; y;"#.into(), tsc_lsproto::CodeActionKind::SOURCE_SORT_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE, ..Default::default() });
 	});
 }
 
@@ -65,7 +65,7 @@ x; y;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_organize_imports(r#"import y from "A";
 import x from "z";
-x; y;"#.into(), tsc_lsproto::CodeActionKind::SOURCE_SORT_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE, ..Default::default() }));
+x; y;"#.into(), tsc_lsproto::CodeActionKind::SOURCE_SORT_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE, ..Default::default() });
 	});
 }
 

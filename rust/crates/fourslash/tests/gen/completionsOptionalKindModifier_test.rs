@@ -12,7 +12,7 @@ function f(x: A) {
 x./*a*/;
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("a".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "a?", insert_text: Some(("a").into()), filter_text: Some(("a").into()), kind: Some((tsc_lsproto::CompletionItemKind::FIELD).into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "method?", insert_text: Some(("method").into()), filter_text: Some(("method").into()), kind: Some((tsc_lsproto::CompletionItemKind::METHOD).into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("a".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec![&tsc_lsproto::CompletionItem { label: "a?", insert_text: Some(("a").into()), filter_text: Some(("a").into()), kind: Some((tsc_lsproto::CompletionItemKind::FIELD).into()), ..Default::default() }, &tsc_lsproto::CompletionItem { label: "method?", insert_text: Some(("method").into()), filter_text: Some(("method").into()), kind: Some((tsc_lsproto::CompletionItemKind::METHOD).into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
 	});
 }
 

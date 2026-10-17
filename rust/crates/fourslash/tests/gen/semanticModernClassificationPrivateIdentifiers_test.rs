@@ -17,7 +17,7 @@ fn semantic_modern_classification_private_identifiers() {
 	}
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_semantic_tokens(vec![tsc_fourslash::SemanticToken { type: "class.declaration", text: "Foo", ..Default::default() }, tsc_fourslash::SemanticToken { type: "property.declaration", text: "#privateField", ..Default::default() }, tsc_fourslash::SemanticToken { type: "method.declaration", text: "#privateMethod", ..Default::default() }, tsc_fourslash::SemanticToken { type: "method.declaration", text: "test", ..Default::default() }, tsc_fourslash::SemanticToken { type: "property", text: "#privateField", ..Default::default() }, tsc_fourslash::SemanticToken { type: "method", text: "#privateMethod", ..Default::default() }]);
+		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type: "class.declaration".into(), text: "Foo".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "property.declaration".into(), text: "#privateField".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "method.declaration".into(), text: "#privateMethod".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "method.declaration".into(), text: "test".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "property".into(), text: "#privateField".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "method".into(), text: "#privateMethod".into(), ..Default::default() }]);
 	});
 }
 

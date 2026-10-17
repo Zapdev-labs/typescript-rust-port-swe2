@@ -20,15 +20,15 @@ const b: B/**/ | C;
 console.log(A, D);";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("".into());
-		f.verify_import_fix_at_position(vec![r"import { A, D, type C, type B } from './foo';
+		f.verify_import_fix_at_position(&[r"import { A, D, type C, type B } from './foo';
 const b: B | C;
-console.log(A, D);"], Some(tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::INLINE, ..Default::default() }));
-		f.verify_import_fix_at_position(vec![r"import { A, D, type B, type C } from './foo';
+console.log(A, D);"], &tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::INLINE, ..Default::default() });
+		f.verify_import_fix_at_position(&[r"import { A, D, type B, type C } from './foo';
 const b: B | C;
-console.log(A, D);"], Some(tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::LAST, ..Default::default() }));
-		f.verify_import_fix_at_position(vec![r"import { A, D, type C, type B } from './foo';
+console.log(A, D);"], &tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::LAST, ..Default::default() });
+		f.verify_import_fix_at_position(&[r"import { A, D, type C, type B } from './foo';
 const b: B | C;
-console.log(A, D);"], Some(tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::FIRST, ..Default::default() }));
+console.log(A, D);"], &tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::FIRST, ..Default::default() });
 	});
 }
 

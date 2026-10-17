@@ -15,7 +15,7 @@ interface Point {
 declare const p: Point;
 p./*a*/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("a".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "x", kind: Some((tsc_lsproto::CompletionItemKind::FIELD).into()), sort_text: Some((tsc_ls::SORT_TEXT_LOCATION_PRIORITY.to_string()).into()), ..Default::default() }), "y"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("a".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec![&tsc_lsproto::CompletionItem { label: "x", kind: Some((tsc_lsproto::CompletionItemKind::FIELD).into()), sort_text: Some((tsc_ls::SORT_TEXT_LOCATION_PRIORITY.to_string()).into()), ..Default::default() }, "y"], ..Default::default() }, ..Default::default() });
 	});
 }
 

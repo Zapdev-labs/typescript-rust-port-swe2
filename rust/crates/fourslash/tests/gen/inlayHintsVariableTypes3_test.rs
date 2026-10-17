@@ -20,7 +20,7 @@ interface ElementMap {
 declare function getCtor<K extends keyof ElementMap>(tagName: K): ElementMap[K] | undefined;
 const div = getCtor("div");"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_inlay_hints(None, Some(tsc_lsutil::UserPreferences { include_inlay_variable_type_hints: tsc_core::TS_TRUE, ..Default::default() }));
+		f.verify_baseline_inlay_hints(None, &tsc_lsutil::UserPreferences { include_inlay_variable_type_hints: tsc_core::tristate::TS_TRUE, ..Default::default() });
 	});
 }
 

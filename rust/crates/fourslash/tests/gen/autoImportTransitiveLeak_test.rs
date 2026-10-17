@@ -8,7 +8,7 @@ use tsc_fourslash::*;
 fn auto_import_transitive_leak() {
 	run_test(|t| {
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, TEST_AUTO_IMPORT_TRANSITIVE_LEAK_SCENARIO);
-		f.verify_completions("fooCompletion".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "foo", sort_text: Some((tsc_ls::SORT_TEXT_LOCATION_PRIORITY.to_string()).into()), ..Default::default() })], excludes: vec!["fooInternal"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("fooCompletion".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "foo", sort_text: Some((tsc_ls::SORT_TEXT_LOCATION_PRIORITY.to_string()).into()), ..Default::default() }], excludes: vec!["fooInternal"], ..Default::default() }, ..Default::default() });
 	});
 }
 

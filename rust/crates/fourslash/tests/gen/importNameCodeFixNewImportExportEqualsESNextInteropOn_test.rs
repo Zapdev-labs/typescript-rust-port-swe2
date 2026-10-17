@@ -18,7 +18,7 @@ declare module "foo" {
 [|foo|]"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/index.ts".into());
-		f.verify_import_fix_at_position(vec![r#"import foo from "foo";
+		f.verify_import_fix_at_position(&[r#"import foo from "foo";
 
 foo"#], None);
 	});

@@ -24,8 +24,8 @@ var y = "# + "`" + r"${/*var10*/
 var y = " + "`" + r"${10} dd ${ /*var11*/
 var y = 10; y=/*var12*/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions(vec!["var1"], Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_plus(vec!["C", "y"], false), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(vec!["var2", "var3", "var4", "var5", "var6", "var7", "var8", "var9", "var10", "var11", "var12"], Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_plus(vec!["C", "x", "y"], false), ..Default::default() }), ..Default::default() }));
+		f.verify_completions(&["var1"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_plus(&["C", "y"], false), ..Default::default() }, ..Default::default() });
+		f.verify_completions(&["var2", "var3", "var4", "var5", "var6", "var7", "var8", "var9", "var10", "var11", "var12"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_plus(&["C", "x", "y"], false), ..Default::default() }, ..Default::default() });
 	});
 }
 

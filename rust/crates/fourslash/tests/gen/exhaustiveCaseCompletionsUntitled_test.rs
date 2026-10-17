@@ -18,8 +18,8 @@ declare const e: E;
 switch (e) {
     case/**/
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", tsc_fourslash::get_default_capabilities_with_options(Some(tsc_fourslash::ClientCapabilitiesOptions { completion_item: Some(tsc_lsproto::ClientCompletionItemOptions { snippet_support: Some((true).into()), ..Default::default() }), ..Default::default() })), content);
-		f.verify_completions("".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "case E.A: ...", insert_text: Some(("case E.A:$1\ncase E.B:$2\ncase E.C:$3").into()), sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::SNIPPET).into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", tsc_fourslash::get_default_capabilities_with_options(&tsc_fourslash::ClientCapabilitiesOptions { completion_item: &tsc_lsproto::ClientCompletionItemOptions { snippet_support: Some((true).into()), ..Default::default() }, ..Default::default() }), content);
+		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "case E.A: ...", insert_text: Some(("case E.A:$1\ncase E.B:$2\ncase E.C:$3").into()), sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::SNIPPET).into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
 	});
 }
 
@@ -40,8 +40,8 @@ declare const direction: Direction;
 switch (direction) {
     case/**/
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", tsc_fourslash::get_default_capabilities_with_options(Some(tsc_fourslash::ClientCapabilitiesOptions { completion_item: Some(tsc_lsproto::ClientCompletionItemOptions { snippet_support: Some((true).into()), ..Default::default() }), ..Default::default() })), content);
-		f.verify_completions("".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "case Direction.Up: ...", insert_text: Some(("case Direction.Up:$1\ncase Direction.Down:$2\ncase Direction.Left:$3\ncase Direction.Right:$4").into()), sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::SNIPPET).into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", tsc_fourslash::get_default_capabilities_with_options(&tsc_fourslash::ClientCapabilitiesOptions { completion_item: &tsc_lsproto::ClientCompletionItemOptions { snippet_support: Some((true).into()), ..Default::default() }, ..Default::default() }), content);
+		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "case Direction.Up: ...", insert_text: Some(("case Direction.Up:$1\ncase Direction.Down:$2\ncase Direction.Left:$3\ncase Direction.Right:$4").into()), sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::SNIPPET).into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
 	});
 }
 
@@ -55,8 +55,8 @@ declare const status: "pending" | "success" | "error";
 switch (status) {
     case/**/
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", tsc_fourslash::get_default_capabilities_with_options(Some(tsc_fourslash::ClientCapabilitiesOptions { completion_item: Some(tsc_lsproto::ClientCompletionItemOptions { snippet_support: Some((true).into()), ..Default::default() }), ..Default::default() })), content);
-		f.verify_completions("".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: r#"case "error": ..."#, insert_text: Some((r#"case "error":$1"# + "\n" + r#"case "pending":$2"# + "\n" + r#"case "success":$3"#).into()), sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::SNIPPET).into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", tsc_fourslash::get_default_capabilities_with_options(&tsc_fourslash::ClientCapabilitiesOptions { completion_item: &tsc_lsproto::ClientCompletionItemOptions { snippet_support: Some((true).into()), ..Default::default() }, ..Default::default() }), content);
+		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: r#"case "error": ..."#, insert_text: Some((r#"case "error":$1"# + "\n" + r#"case "pending":$2"# + "\n" + r#"case "success":$3"#).into()), sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::SNIPPET).into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
 	});
 }
 
@@ -76,8 +76,8 @@ declare const s: import("/home/src/project/enums").Status;
 switch (s) {
     case/**/
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", tsc_fourslash::get_default_capabilities_with_options(Some(tsc_fourslash::ClientCapabilitiesOptions { completion_item: Some(tsc_lsproto::ClientCompletionItemOptions { snippet_support: Some((true).into()), ..Default::default() }), ..Default::default() })), content);
-		f.verify_completions("".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "case Status.Active: ...", insert_text: Some(("case Status.Active:$1\ncase Status.Inactive:$2\ncase Status.Pending:$3").into()), sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::SNIPPET).into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", tsc_fourslash::get_default_capabilities_with_options(&tsc_fourslash::ClientCapabilitiesOptions { completion_item: &tsc_lsproto::ClientCompletionItemOptions { snippet_support: Some((true).into()), ..Default::default() }, ..Default::default() }), content);
+		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "case Status.Active: ...", insert_text: Some(("case Status.Active:$1\ncase Status.Inactive:$2\ncase Status.Pending:$3").into()), sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::SNIPPET).into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
 	});
 }
 

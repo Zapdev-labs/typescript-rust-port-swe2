@@ -20,7 +20,7 @@ import * as foo1 from "/path/w/*first*/
 // @Filename: path/whatever.ts
 export {}"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions(vec!["first"], Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["whatever"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions(&["first"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec!["whatever"], ..Default::default() }, ..Default::default() });
 	});
 }
 

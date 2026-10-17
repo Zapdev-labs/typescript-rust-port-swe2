@@ -18,9 +18,9 @@ export = Collection as typeof Collection & { default: typeof Collection };
 // @Filename: /index.ts
 Colle/**/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_apply_code_action_from_completion(Some(("").into()), Some(tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "Collection", source: "./collection", description: "Add import from \"./collection\"", user_preferences: None, new_file_content: Some((r#"import Collection = require("./collection");
+		f.verify_apply_code_action_from_completion(Some(("").into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "Collection", source: "./collection", description: "Add import from \"./collection\"", user_preferences: None, new_file_content: Some((r#"import Collection = require("./collection");
 
-Colle"#).into()), ..Default::default() }));
+Colle"#).into()), ..Default::default() });
 	});
 }
 

@@ -18,7 +18,7 @@ const text = () => {
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("m".into());
 		f.insert("<".into());
-		f.verify_no_signature_help_with_context(Some(tsc_lsproto::SignatureHelpContext { trigger_kind: tsc_lsproto::SignatureHelpTriggerKind::TRIGGER_CHARACTER, trigger_character: Some(("<").into()), is_retrigger: false, ..Default::default() }));
+		f.verify_no_signature_help_with_context(&tsc_lsproto::SignatureHelpContext { trigger_kind: tsc_lsproto::SignatureHelpTriggerKind::TRIGGER_CHARACTER, trigger_character: Some(("<").into()), is_retrigger: false, ..Default::default() });
 	});
 }
 

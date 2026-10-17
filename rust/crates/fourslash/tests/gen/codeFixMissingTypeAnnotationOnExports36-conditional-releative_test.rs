@@ -14,7 +14,7 @@ const A = "A"
 const B = "B"
 export const AB = Math.random()? A: B;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix_available(vec!["Add annotation of type '\"A\" | \"B\"'", "Add annotation of type 'typeof A | typeof B'", "Add annotation of type 'string'", "Add satisfies and an inline type assertion with '\"A\" | \"B\"'", "Add satisfies and an inline type assertion with 'typeof A | typeof B'", "Add satisfies and an inline type assertion with 'string'"]);
+		f.verify_code_fix_available(&["Add annotation of type '\"A\" | \"B\"'", "Add annotation of type 'typeof A | typeof B'", "Add annotation of type 'string'", "Add satisfies and an inline type assertion with '\"A\" | \"B\"'", "Add satisfies and an inline type assertion with 'typeof A | typeof B'", "Add satisfies and an inline type assertion with 'string'"]);
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add satisfies and an inline type assertion with 'typeof A | typeof B'", new_file_content: r#"const A = "A"
 const B = "B"
 export const AB = (Math.random() ? A : B) satisfies typeof A | typeof B as typeof A | typeof B;"#, index: 4, ..Default::default() });

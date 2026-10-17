@@ -26,14 +26,14 @@ declare module "./test" {
 
 Abcde/**/"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_apply_code_action_from_completion(Some(("").into()), Some(tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "Abcde", source: "./test", description: "Add import from \"./test\"", new_file_content: Some((r#"import { Abcde } from "./test";
+		f.verify_apply_code_action_from_completion(Some(("").into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "Abcde", source: "./test", description: "Add import from \"./test\"", new_file_content: Some((r#"import { Abcde } from "./test";
 
 export {};
 declare module "./test" {
     interface Abcde { b: string }
 }
 
-Abcde"#).into()), user_preferences: None, ..Default::default() }));
+Abcde"#).into()), user_preferences: None, ..Default::default() });
 	});
 }
 

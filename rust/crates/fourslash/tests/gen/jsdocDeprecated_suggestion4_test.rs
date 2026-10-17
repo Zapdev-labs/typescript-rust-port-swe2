@@ -22,7 +22,7 @@ function B() {
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("a.tsx".into());
-		f.verify_suggestion_diagnostics(vec![tsc_lsproto::Diagnostic { message: tsc_lsproto::StringOrMarkupContent { string: Some(("'x' is deprecated.").into()), ..Default::default() }, code: Some(tsc_lsproto::IntegerOrString { integer: Some(((6385) as i32).into()), ..Default::default() }), range: f.ranges()[0].ls_range, tags: Some(vec![tsc_lsproto::DiagnosticTag::DEPRECATED]), ..Default::default() }]);
+		f.verify_suggestion_diagnostics(&[tsc_lsproto::Diagnostic { message: tsc_lsproto::StringOrMarkupContent { string: Some(("'x' is deprecated.").into()), ..Default::default() }, code: Some(tsc_lsproto::IntegerOrString { integer: Some(((6385) as i32).into()), ..Default::default() }), range: f.ranges()[0].ls_range, tags: Some(vec![tsc_lsproto::DiagnosticTag::DEPRECATED]), ..Default::default() }]);
 	});
 }
 

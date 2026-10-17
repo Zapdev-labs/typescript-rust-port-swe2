@@ -24,7 +24,7 @@ var foo7 = require("f/*require0*/
 // @Filename: dir1/dir2/dir3/node_modules/fake-module3/ts.ts
 "#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions(f.markers(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["fake-module3", "fake-module2", "fake-module"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions(f.markers(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["fake-module3", "fake-module2", "fake-module"], ..Default::default() }, ..Default::default() });
 	});
 }
 

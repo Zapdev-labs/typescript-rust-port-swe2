@@ -250,7 +250,7 @@ export declare function f(): void;
 #[test]
 fn declaration_maps_rename() {
 	run_test(|t| {
-		for tc in vec![testCase { name: "ProjectReferences", dont_build: true, ..Default::default() }, testCase { name: "DisableSourceOfProjectReferenceRedirect", disable_source_of_project_reference_redirect: true, ..Default::default() }, testCase { name: "SourceMaps", main_with_no_ref: true, ..Default::default() }, testCase { name: "SourceMapsNotSolution", main_with_no_ref: true, tsconfig_not_solution: true, ..Default::default() }] {
+		for tc in vec![testCase { name: "ProjectReferences".into(), dont_build: true, ..Default::default() }, testCase { name: "DisableSourceOfProjectReferenceRedirect".into(), disable_source_of_project_reference_redirect: true, ..Default::default() }, testCase { name: "SourceMaps".into(), main_with_no_ref: true, ..Default::default() }, testCase { name: "SourceMapsNotSolution".into(), main_with_no_ref: true, tsconfig_not_solution: true, ..Default::default() }] {
 			let mut build_str = tsc_core::if_else(!tc.dont_build, "// @tsc: --build /myproject/dependency,--build /myproject/main".into(), "".into());
 			let mut main_refs_str = tsc_core::if_else(!tc.main_with_no_ref, r#""references": [{ "path": "../dependency" }]"#.into(), "".into());
 			let mut files_str = tsc_core::if_else(!tc.tsconfig_not_solution, r#""files": [],"#.into(), "".into());

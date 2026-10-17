@@ -64,7 +64,7 @@ gainUtility/**/
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
 		f.go_to_marker("".into());
-		f.verify_import_fix_module_specifiers("".into(), vec!["@monorepo/utils"], None);
+		f.verify_import_fix_module_specifiers("".into(), &["@monorepo/utils"], None);
 	});
 }
 

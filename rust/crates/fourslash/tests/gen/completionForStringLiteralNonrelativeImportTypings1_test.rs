@@ -22,7 +22,7 @@ export var y = 9;
 // @Filename: my_other_typings/module-z/index.d.ts
 export var z = 9;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions(f.markers(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["module-x", "module-y", "module-z"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions(f.markers(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec!["module-x", "module-y", "module-z"], ..Default::default() }, ..Default::default() });
 	});
 }
 

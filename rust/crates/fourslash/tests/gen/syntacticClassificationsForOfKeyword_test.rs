@@ -9,7 +9,7 @@ fn syntactic_classifications_for_of_keyword() {
 	run_test(|t| {
 		let content = r"for (var of of of) { }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_semantic_tokens(vec![tsc_fourslash::SemanticToken { type: "variable.declaration", text: "of", ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable", text: "of", ..Default::default() }]);
+		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type: "variable.declaration".into(), text: "of".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable".into(), text: "of".into(), ..Default::default() }]);
 	});
 }
 

@@ -19,7 +19,7 @@ autorun/**/
 import "./mobx.cjs";"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("".into());
-		f.verify_import_fix_at_position(vec![r#"import { autorun } from "./mobx.cjs";
+		f.verify_import_fix_at_position(&[r#"import { autorun } from "./mobx.cjs";
 
 autorun"#], None);
 	});

@@ -22,13 +22,13 @@ var /*2*/r = C(/*1*/
 var /*4*/r2 = new C(/*3*/ // using void returning function as constructor
 var r3 = C./*5*/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("1".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["C"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("1".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["C"], ..Default::default() }, ..Default::default() });
 		f.insert("C.x);".into());
 		f.verify_quick_info_at("2".into(), "var r: void".into(), "".into());
-		f.verify_completions("3".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["C"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("3".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["C"], ..Default::default() }, ..Default::default() });
 		f.insert("C.x);".into());
 		f.verify_quick_info_at("4".into(), "var r2: any".into(), "".into());
-		f.verify_completions("5".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["x", "foo"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("5".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["x", "foo"], ..Default::default() }, ..Default::default() });
 		f.insert("x;".into());
 		f.verify_no_errors();
 	});

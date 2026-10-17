@@ -22,7 +22,7 @@ export class Logger {};
 Logger/**/"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("".into());
-		f.verify_import_fix_at_position(vec![r#"import { Logger } from "../common/logging";
+		f.verify_import_fix_at_position(&[r#"import { Logger } from "../common/logging";
 
 Logger"#], None);
 	});

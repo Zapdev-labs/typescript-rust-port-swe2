@@ -14,7 +14,7 @@ fn semantic_classification2() {
 var Thing = 0;
 Thing.toExponential();";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_semantic_tokens(vec![tsc_fourslash::SemanticToken { type: "interface.declaration", text: "Thing", ..Default::default() }, tsc_fourslash::SemanticToken { type: "method.declaration", text: "toExponential", ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.declaration", text: "Thing", ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable", text: "Thing", ..Default::default() }, tsc_fourslash::SemanticToken { type: "method.defaultLibrary", text: "toExponential", ..Default::default() }]);
+		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type: "interface.declaration".into(), text: "Thing".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "method.declaration".into(), text: "toExponential".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.declaration".into(), text: "Thing".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable".into(), text: "Thing".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "method.defaultLibrary".into(), text: "toExponential".into(), ..Default::default() }]);
 	});
 }
 

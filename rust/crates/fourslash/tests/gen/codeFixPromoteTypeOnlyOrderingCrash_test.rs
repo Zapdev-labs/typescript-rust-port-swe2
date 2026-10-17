@@ -21,7 +21,7 @@ import type {
 let x: AAA = new BBB()"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/foo.ts".into());
-		f.verify_import_fix_at_position(vec![r#"import {
+		f.verify_import_fix_at_position(&[r#"import {
     BBB,
     type AAA,
 } from "./bar";

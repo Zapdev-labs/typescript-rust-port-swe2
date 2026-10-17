@@ -17,13 +17,13 @@ export interface I {}
 // @Filename: /a.mts
 const x: /**/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_apply_code_action_from_completion(Some(("").into()), Some(tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "I", source: "./mod", description: "Add import from \"./mod.js\"", auto_import_fix: Some(tsc_lsproto::AutoImportFix { module_specifier: "./mod.js", ..Default::default() }), new_file_content: Some((r#"import type { I } from "./mod.js";
+		f.verify_apply_code_action_from_completion(Some(("").into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "I", source: "./mod", description: "Add import from \"./mod.js\"", auto_import_fix: &tsc_lsproto::AutoImportFix { module_specifier: "./mod.js", ..Default::default() }, new_file_content: Some((r#"import type { I } from "./mod.js";
 
-const x: "#).into()), ..Default::default() }));
+const x: "#).into()), ..Default::default() });
 		f.insert("I = new C".into());
-		f.verify_apply_code_action_from_completion(None, Some(tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "C", source: "./mod", description: "Update import from \"./mod.js\"", auto_import_fix: Some(tsc_lsproto::AutoImportFix { module_specifier: "./mod.js", ..Default::default() }), new_file_content: Some((r#"import { C, type I } from "./mod.js";
+		f.verify_apply_code_action_from_completion(None, &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "C", source: "./mod", description: "Update import from \"./mod.js\"", auto_import_fix: &tsc_lsproto::AutoImportFix { module_specifier: "./mod.js", ..Default::default() }, new_file_content: Some((r#"import { C, type I } from "./mod.js";
 
-const x: I = new C"#).into()), ..Default::default() }));
+const x: I = new C"#).into()), ..Default::default() });
 	});
 }
 

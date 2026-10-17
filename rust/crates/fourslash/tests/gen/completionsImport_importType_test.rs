@@ -17,17 +17,17 @@ export const m = 0;
 /** @type {/*0*/} */
 /** @type {/*1*/} */";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions(vec!["0", "1"], Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "C", data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./a", ..Default::default() }), ..Default::default() }), detail: Some(("class C").into()), additional_text_edits: tsc_fourslash::AnyTextEdits, sort_text: Some((tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "T", data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./a", ..Default::default() }), ..Default::default() }), detail: Some(("type T = number").into()), additional_text_edits: tsc_fourslash::AnyTextEdits, sort_text: Some((tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() })], excludes: vec!["x"], ..Default::default() }), ..Default::default() }));
-		f.verify_apply_code_action_from_completion(Some(("0").into()), Some(tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "C", source: "./a", description: "Add import from \"./a\"", new_file_content: Some((r#"import { C } from "./a";
+		f.verify_completions(&["0", "1"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "C", data: &tsc_lsproto::CompletionItemData { auto_import: &tsc_lsproto::AutoImportFix { module_specifier: "./a", ..Default::default() }, ..Default::default() }, detail: Some(("class C").into()), additional_text_edits: tsc_fourslash::AnyTextEdits, sort_text: Some((tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }, &tsc_lsproto::CompletionItem { label: "T", data: &tsc_lsproto::CompletionItemData { auto_import: &tsc_lsproto::AutoImportFix { module_specifier: "./a", ..Default::default() }, ..Default::default() }, detail: Some(("type T = number").into()), additional_text_edits: tsc_fourslash::AnyTextEdits, sort_text: Some((tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }], excludes: vec!["x"], ..Default::default() }, ..Default::default() });
+		f.verify_apply_code_action_from_completion(Some(("0").into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "C", source: "./a", description: "Add import from \"./a\"", new_file_content: Some((r#"import { C } from "./a";
 
 export const m = 0;
 /** @type {} */
-/** @type {} */"#).into()), ..Default::default() }));
-		f.verify_apply_code_action_from_completion(Some(("1").into()), Some(tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "T", source: "./a", description: "Change 'T' to 'import(\"./a\").T'", new_file_content: Some((r#"import { C } from "./a";
+/** @type {} */"#).into()), ..Default::default() });
+		f.verify_apply_code_action_from_completion(Some(("1").into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "T", source: "./a", description: "Change 'T' to 'import(\"./a\").T'", new_file_content: Some((r#"import { C } from "./a";
 
 export const m = 0;
 /** @type {} */
-/** @type {import("./a").} */"#).into()), ..Default::default() }));
+/** @type {import("./a").} */"#).into()), ..Default::default() });
 	});
 }
 

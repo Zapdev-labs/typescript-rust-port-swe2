@@ -11,7 +11,7 @@ fn semantic_classification_class_expression_method() {
   equals(other: C) { return this == other; }
 };";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_semantic_tokens(vec![tsc_fourslash::SemanticToken { type: "class.declaration", text: "x", ..Default::default() }, tsc_fourslash::SemanticToken { type: "class.declaration", text: "C", ..Default::default() }, tsc_fourslash::SemanticToken { type: "method.declaration", text: "equals", ..Default::default() }, tsc_fourslash::SemanticToken { type: "parameter.declaration", text: "other", ..Default::default() }, tsc_fourslash::SemanticToken { type: "class", text: "C", ..Default::default() }, tsc_fourslash::SemanticToken { type: "parameter", text: "other", ..Default::default() }]);
+		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type: "class.declaration".into(), text: "x".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "class.declaration".into(), text: "C".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "method.declaration".into(), text: "equals".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "parameter.declaration".into(), text: "other".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "class".into(), text: "C".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "parameter".into(), text: "other".into(), ..Default::default() }]);
 	});
 }
 

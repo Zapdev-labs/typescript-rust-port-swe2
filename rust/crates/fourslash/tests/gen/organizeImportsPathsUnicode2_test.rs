@@ -17,12 +17,12 @@ console.log(a1, a2, a100);"#;
 import * as a100 from "./a100";
 import * as a2 from "./a2";
 
-console.log(a1, a2, a100);"#.into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::TS_FALSE, organize_imports_collation: tsc_lsutil::OrganizeImportsCollation::UNICODE, organize_imports_numeric_collation: tsc_core::TS_FALSE, ..Default::default() }));
+console.log(a1, a2, a100);"#.into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_FALSE, organize_imports_collation: tsc_lsutil::OrganizeImportsCollation::UNICODE, organize_imports_numeric_collation: tsc_core::tristate::TS_FALSE, ..Default::default() });
 		f.verify_organize_imports(r#"import * as a1 from "./a1";
 import * as a2 from "./a2";
 import * as a100 from "./a100";
 
-console.log(a1, a2, a100);"#.into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::TS_FALSE, organize_imports_collation: tsc_lsutil::OrganizeImportsCollation::UNICODE, organize_imports_numeric_collation: tsc_core::TS_TRUE, ..Default::default() }));
+console.log(a1, a2, a100);"#.into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_FALSE, organize_imports_collation: tsc_lsutil::OrganizeImportsCollation::UNICODE, organize_imports_numeric_collation: tsc_core::tristate::TS_TRUE, ..Default::default() });
 	});
 }
 

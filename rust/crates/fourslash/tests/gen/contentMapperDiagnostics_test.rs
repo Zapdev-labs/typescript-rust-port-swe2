@@ -41,7 +41,7 @@ fn content_mapper_transform_failure_diagnostics() {
 [||]<template>hi</template>
 ".into(), contentmappertest.failing_mapper, ".vue".into());
 		f.go_to_file("/app.vue".into());
-		f.verify_non_suggestion_diagnostics(vec![tsc_lsproto::Diagnostic { code: Some(tsc_lsproto::IntegerOrString { integer: Some(((18069) as i32).into()), ..Default::default() }), message: tsc_lsproto::StringOrMarkupContent { string: Some(("The content mapper 'mapper' failed to transform this file.\n  The content mapper process failed while handling the transform request.").into()), ..Default::default() }, range: f.ranges()[0].ls_range, ..Default::default() }]);
+		f.verify_non_suggestion_diagnostics(&[tsc_lsproto::Diagnostic { code: Some(tsc_lsproto::IntegerOrString { integer: Some(((18069) as i32).into()), ..Default::default() }), message: tsc_lsproto::StringOrMarkupContent { string: Some(("The content mapper 'mapper' failed to transform this file.\n  The content mapper process failed while handling the transform request.").into()), ..Default::default() }, range: f.ranges()[0].ls_range, ..Default::default() }]);
 	});
 }
 

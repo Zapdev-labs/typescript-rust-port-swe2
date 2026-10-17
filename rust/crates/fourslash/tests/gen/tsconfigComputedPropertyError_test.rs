@@ -18,7 +18,7 @@ fn tsconfig_computed_property_error() {
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.verify_non_suggestion_diagnostics(vec![tsc_lsproto::Diagnostic { message: tsc_lsproto::StringOrMarkupContent { string: Some(("String literal with double quotes expected.").into()), ..Default::default() }, code: Some(tsc_lsproto::IntegerOrString { integer: Some(((1327) as i32).into()), ..Default::default() }), ..Default::default() }]);
+		f.verify_non_suggestion_diagnostics(&[tsc_lsproto::Diagnostic { message: tsc_lsproto::StringOrMarkupContent { string: Some(("String literal with double quotes expected.").into()), ..Default::default() }, code: Some(tsc_lsproto::IntegerOrString { integer: Some(((1327) as i32).into()), ..Default::default() }), ..Default::default() }]);
 	});
 }
 

@@ -16,7 +16,7 @@ import {} from "qwik";
 $/**/"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("".into());
-		f.verify_import_fix_at_position(vec![r#"import { $ } from "qwik";
+		f.verify_import_fix_at_position(&[r#"import { $ } from "qwik";
 $"#], None);
 	});
 }

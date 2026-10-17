@@ -14,7 +14,7 @@ export const foo = 0;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/a/index.ts".into());
 		f.go_to_file("/b.ts".into());
-		f.verify_import_fix_at_position(vec![r#"import { foo } from "./a";
+		f.verify_import_fix_at_position(&[r#"import { foo } from "./a";
 
 foo;"#], None);
 	});

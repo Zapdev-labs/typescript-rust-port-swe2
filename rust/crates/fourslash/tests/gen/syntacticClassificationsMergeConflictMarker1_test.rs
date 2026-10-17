@@ -13,7 +13,7 @@ fn syntactic_classifications_merge_conflict_marker1() {
 "BBBB"
 >>>>>>> Feature"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_semantic_tokens(vec![]);
+		f.verify_semantic_tokens(&[]);
 	});
 }
 

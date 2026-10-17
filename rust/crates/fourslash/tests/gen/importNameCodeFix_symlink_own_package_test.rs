@@ -19,7 +19,7 @@ export const x = 0;
 export const a: number;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/packages/b/b0.ts".into());
-		f.verify_import_fix_at_position(vec![r#"import { x } from "./b1";
+		f.verify_import_fix_at_position(&[r#"import { x } from "./b1";
 
 x;"#], None);
 	});

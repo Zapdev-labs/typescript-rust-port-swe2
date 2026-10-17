@@ -13,7 +13,7 @@ fn import_name_code_fix_new_import_file2() {
 export var v1 = 5;
 export function f1();";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_at_position(vec![r#"import { f1 } from "../../other_dir/module";
+		f.verify_import_fix_at_position(&[r#"import { f1 } from "../../other_dir/module";
 
 f1();"#], None);
 	});

@@ -11,14 +11,14 @@ use tsc_lsproto::{Position, SemanticTokensParams, TextDocumentIdentifier};
 use crate::fourslash::FourslashTest;
 
 /// `type SemanticToken struct` — `Type` → `type_` (keyword).
-pub(crate) struct SemanticToken {
-    pub(crate) type_: String,
+pub struct SemanticToken {
+    pub type_: String,
     pub(crate) text: String,
 }
 
 impl FourslashTest {
     /// `VerifySemanticTokens`.
-    pub(crate) fn verify_semantic_tokens(&mut self, expected: &[SemanticToken]) {
+    pub fn verify_semantic_tokens(&mut self, expected: &[SemanticToken]) {
         let params = SemanticTokensParams {
             text_document: TextDocumentIdentifier {
                 uri: file_name_to_document_uri(&self.active_filename),

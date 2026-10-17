@@ -10,7 +10,7 @@ fn document_highlights_windows_path() {
 		let content = r"//@Filename: C:\a\b\c.ts
 var /*1*/[|x|] = 1;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_document_highlights_with_options(None, vec![f.ranges()[0].file_name().as_string()], f.ranges()[0]);
+		f.verify_baseline_document_highlights_with_options(None, &[f.ranges()[0].file_name().as_string()], f.ranges()[0]);
 	});
 }
 

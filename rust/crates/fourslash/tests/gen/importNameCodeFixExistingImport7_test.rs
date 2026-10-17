@@ -13,7 +13,7 @@ f1/*0*/();
 export var v1 = 5;
 export function f1();"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_at_position(vec![r"{ f1, v1 }"], None);
+		f.verify_import_fix_at_position(&[r"{ f1, v1 }"], None);
 	});
 }
 

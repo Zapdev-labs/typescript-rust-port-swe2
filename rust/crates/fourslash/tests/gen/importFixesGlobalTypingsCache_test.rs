@@ -22,7 +22,7 @@ export class BrowserRouter {}
 BrowserRouter/**/"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/project/index.js".into());
-		f.verify_import_fix_at_position(vec![r#"const { BrowserRouter } = require("react-router-dom");
+		f.verify_import_fix_at_position(&[r#"const { BrowserRouter } = require("react-router-dom");
 
 BrowserRouter"#], None);
 	});

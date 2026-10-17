@@ -21,7 +21,7 @@ export default {
 };"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/code.ts".into());
-		f.verify_code_fix_available(vec!["Extract default export to variable", "Add satisfies and an inline type assertion with 'Person'", "Extract to variable and replace with 'newLocal as typeof newLocal'"]);
+		f.verify_code_fix_available(&["Extract default export to variable", "Add satisfies and an inline type assertion with 'Person'", "Extract to variable and replace with 'newLocal as typeof newLocal'"]);
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add satisfies and an inline type assertion with 'Person'", new_file_content: r#"import { getPerson, Person } from "./person-code";
 export default {
   person: getPerson() satisfies Person as Person

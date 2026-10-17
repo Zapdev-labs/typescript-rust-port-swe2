@@ -22,7 +22,7 @@ fn completion_list_in_named_function_expression() {
 /*globalScope*/
 fo/*referenceInGlobalScope*/o;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions(vec!["globalScope", "insideFunctionDeclaration", "insideFunctionExpression"], Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["foo"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions(&["globalScope", "insideFunctionDeclaration", "insideFunctionExpression"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["foo"], ..Default::default() }, ..Default::default() });
 		f.verify_quick_info_at("referenceInsideFunctionExpression".into(), "(local function) foo(): number".into(), "".into());
 		f.verify_quick_info_at("referenceInGlobalScope".into(), "function foo(a: number): string".into(), "".into());
 	});

@@ -16,7 +16,7 @@ fn format_document_zero_tab_size() {
 		let mut opts = f.get_options();
 		opts.format_code_settings.tab_size = 0;
 		opts.format_code_settings.indent_size = 0;
-		opts.format_code_settings.convert_tabs_to_spaces = tsc_core::TS_TRUE;
+		opts.format_code_settings.convert_tabs_to_spaces = tsc_core::tristate::TS_TRUE;
 		f.configure(opts);
 		f.format_document("".into());
 		f.verify_current_file_content("function foo() {\nif (true) {\nvar x = 1;\n}\n}".into());

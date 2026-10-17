@@ -29,7 +29,7 @@ const a6 = " + "`" + r"
 " + "`" + r";";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut opts405 = f.get_options();
-		opts405.format_code_settings.insert_space_after_opening_and_before_closing_template_string_braces = tsc_core::TS_TRUE;
+		opts405.format_code_settings.insert_space_after_opening_and_before_closing_template_string_braces = tsc_core::tristate::TS_TRUE;
 		f.configure(opts405);
 		f.format_document("".into());
 		f.verify_current_file_content("const a1 = `${ 1 }${ 1 }`;\n" + "const a2 = `\n" + r"    ${ 1 }${ 1 }

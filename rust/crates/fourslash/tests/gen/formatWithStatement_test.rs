@@ -18,7 +18,7 @@ with (bar.blah)/*4*/
 }/*6*/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut opts227 = f.get_options();
-		opts227.format_code_settings.place_open_brace_on_new_line_for_control_blocks = tsc_core::TS_FALSE;
+		opts227.format_code_settings.place_open_brace_on_new_line_for_control_blocks = tsc_core::tristate::TS_FALSE;
 		f.configure(opts227);
 		f.format_document("".into());
 		f.go_to_marker("1".into());
@@ -30,7 +30,7 @@ with (bar.blah)/*4*/
 		f.go_to_marker("6".into());
 		f.verify_current_line_content(r"}".into());
 		let mut opts565 = f.get_options();
-		opts565.format_code_settings.place_open_brace_on_new_line_for_control_blocks = tsc_core::TS_TRUE;
+		opts565.format_code_settings.place_open_brace_on_new_line_for_control_blocks = tsc_core::tristate::TS_TRUE;
 		f.configure(opts565);
 		f.format_document("".into());
 		f.go_to_marker("1".into());

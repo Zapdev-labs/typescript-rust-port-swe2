@@ -10,7 +10,7 @@ fn syntactic_classifications_doc_comment4() {
 		let content = r"/** @param {number} p1 */
 function foo(p1) {}";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_semantic_tokens(vec![tsc_fourslash::SemanticToken { type: "function.declaration", text: "foo", ..Default::default() }, tsc_fourslash::SemanticToken { type: "parameter.declaration", text: "p1", ..Default::default() }]);
+		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type: "function.declaration".into(), text: "foo".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "parameter.declaration".into(), text: "p1".into(), ..Default::default() }]);
 	});
 }
 

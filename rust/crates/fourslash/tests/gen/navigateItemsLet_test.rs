@@ -13,7 +13,7 @@ function foo() {
     let [|d|] = 10;
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_workspace_symbol(vec![tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "c", preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "c", kind: tsc_lsproto::SYMBOL_KIND_VARIABLE, location: f.ranges()[0].ls_location(), ..Default::default() }]).into()), ..Default::default() }, tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "d", preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "d", kind: tsc_lsproto::SYMBOL_KIND_VARIABLE, location: f.ranges()[1].ls_location(), container_name: Some(("foo").into()), ..Default::default() }]).into()), ..Default::default() }]);
+		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "c".into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "c".into(), kind: tsc_lsproto::SYMBOL_KIND_VARIABLE, location: f.ranges()[0].ls_location(), ..Default::default() }]).into()), ..Default::default() }, tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "d".into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "d".into(), kind: tsc_lsproto::SYMBOL_KIND_VARIABLE, location: f.ranges()[1].ls_location(), container_name: Some(("foo").into()), ..Default::default() }]).into()), ..Default::default() }]);
 	});
 }
 

@@ -10,7 +10,7 @@ fn signature_help_malformed_tagged_template_no_crash1() {
 		let content = "`${1}\n/*m1*/\n// ``\n";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("m1".into());
-		f.verify_no_signature_help_with_context(Some(tsc_lsproto::SignatureHelpContext { trigger_kind: tsc_lsproto::SignatureHelpTriggerKind::INVOKED, is_retrigger: false, ..Default::default() }));
+		f.verify_no_signature_help_with_context(&tsc_lsproto::SignatureHelpContext { trigger_kind: tsc_lsproto::SignatureHelpTriggerKind::INVOKED, is_retrigger: false, ..Default::default() });
 	});
 }
 

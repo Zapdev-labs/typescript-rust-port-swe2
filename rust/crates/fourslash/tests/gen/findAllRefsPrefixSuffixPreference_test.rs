@@ -23,10 +23,10 @@ log(/*q3*/[|q|] + 1);"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.verify_no_errors();
 		f.verify_baseline_find_all_references("q0".into(), "q1".into(), "q2".into(), "q3".into(), "z0".into(), "z1".into(), "z2".into());
-		f.verify_baseline_rename(Some(tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::TS_TRUE, ..Default::default() }), f.ranges()[1], f.ranges()[3], f.ranges()[10], f.ranges()[11]);
-		f.verify_baseline_rename(Some(tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::TS_FALSE, ..Default::default() }), f.ranges()[1], f.ranges()[3], f.ranges()[10], f.ranges()[11]);
-		f.verify_baseline_rename(Some(tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::TS_TRUE, ..Default::default() }), f.ranges()[5], f.ranges()[7], f.ranges()[8]);
-		f.verify_baseline_rename(Some(tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::TS_FALSE, ..Default::default() }), f.ranges()[5], f.ranges()[7], f.ranges()[8]);
+		f.verify_baseline_rename(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_TRUE, ..Default::default() }, f.ranges()[1], f.ranges()[3], f.ranges()[10], f.ranges()[11]);
+		f.verify_baseline_rename(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_FALSE, ..Default::default() }, f.ranges()[1], f.ranges()[3], f.ranges()[10], f.ranges()[11]);
+		f.verify_baseline_rename(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_TRUE, ..Default::default() }, f.ranges()[5], f.ranges()[7], f.ranges()[8]);
+		f.verify_baseline_rename(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_FALSE, ..Default::default() }, f.ranges()[5], f.ranges()[7], f.ranges()[8]);
 	});
 }
 

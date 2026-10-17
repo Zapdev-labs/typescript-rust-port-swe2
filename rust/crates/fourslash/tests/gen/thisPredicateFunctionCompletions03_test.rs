@@ -51,8 +51,8 @@ function isLeaderGuard(g: RoyalGuard) {
 }
 let checked/*14*/LeaderStatus = isLeader/*15*/Guard(a);";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions(vec!["2", "6"], Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["lead", "isLeader", "isFollower"], ..Default::default() }), ..Default::default() }));
-		f.verify_completions(vec!["4", "8"], Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["follow", "isLeader", "isFollower"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions(&["2", "6"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["lead", "isLeader", "isFollower"], ..Default::default() }, ..Default::default() });
+		f.verify_completions(&["4", "8"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["follow", "isLeader", "isFollower"], ..Default::default() }, ..Default::default() });
 	});
 }
 

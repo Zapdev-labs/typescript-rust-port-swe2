@@ -29,7 +29,7 @@ aB;|]
 aB;|]"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/b.ts".into());
-		f.verify_import_fix_at_position(vec![r#"import {
+		f.verify_import_fix_at_position(&[r#"import {
     _aB,
     _Ab,
     Ab,
@@ -37,7 +37,7 @@ aB;|]"#;
 } from "./a";
 aB;"#], None);
 		f.go_to_file("/c.ts".into());
-		f.verify_import_fix_at_position(vec![r#"import {
+		f.verify_import_fix_at_position(&[r#"import {
     _aB,
     _Ab,
     aB,

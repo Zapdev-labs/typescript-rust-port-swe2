@@ -11,7 +11,7 @@ fn inlay_hints_quote_preference2() {
 const b1: "\\" = "\\";
 export function fn(a = a1, b = b1) {}"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_inlay_hints(None, Some(tsc_lsutil::UserPreferences { quote_preference: tsc_lsutil::quote_preference("single".into()), include_inlay_function_parameter_type_hints: tsc_core::TS_TRUE, ..Default::default() }));
+		f.verify_baseline_inlay_hints(None, &tsc_lsutil::UserPreferences { quote_preference: tsc_lsutil::quote_preference("single".into()), include_inlay_function_parameter_type_hints: tsc_core::tristate::TS_TRUE, ..Default::default() });
 	});
 }
 

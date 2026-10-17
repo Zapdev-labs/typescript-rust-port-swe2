@@ -14,7 +14,7 @@ fn formatting_space_before_close_paren() {
 /*5*/var bar = (function (a) { });";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut opts235 = f.get_options();
-		opts235.format_code_settings.insert_space_after_opening_and_before_closing_nonempty_parenthesis = tsc_core::TS_TRUE;
+		opts235.format_code_settings.insert_space_after_opening_and_before_closing_nonempty_parenthesis = tsc_core::tristate::TS_TRUE;
 		f.configure(opts235);
 		f.format_document("".into());
 		f.go_to_marker("1".into());
@@ -28,7 +28,7 @@ fn formatting_space_before_close_paren() {
 		f.go_to_marker("5".into());
 		f.verify_current_line_content(r"var bar = ( function( a ) { } );".into());
 		let mut opts674 = f.get_options();
-		opts674.format_code_settings.insert_space_after_opening_and_before_closing_nonempty_parenthesis = tsc_core::TS_FALSE;
+		opts674.format_code_settings.insert_space_after_opening_and_before_closing_nonempty_parenthesis = tsc_core::tristate::TS_FALSE;
 		f.configure(opts674);
 		f.format_document("".into());
 		f.go_to_marker("1".into());

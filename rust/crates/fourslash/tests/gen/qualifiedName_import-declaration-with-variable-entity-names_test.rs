@@ -18,7 +18,7 @@ namespace Beta {
 var x = Alpha.[|{| "name" : "mem" |}x|]"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("import".into());
-		f.verify_completions(None, Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "x", detail: Some(("var Alpha.x: number").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_completions(None, &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "x", detail: Some(("var Alpha.x: number").into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
 		f.verify_baseline_document_highlights(None, "import".into());
 		f.verify_baseline_go_to_definition(false, "import".into());
 	});

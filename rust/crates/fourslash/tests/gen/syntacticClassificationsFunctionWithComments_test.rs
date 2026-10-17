@@ -16,7 +16,7 @@ function myFunction(/* x */ x: any) {
 }
 // end of file";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_semantic_tokens(vec![tsc_fourslash::SemanticToken { type: "function.declaration", text: "myFunction", ..Default::default() }, tsc_fourslash::SemanticToken { type: "parameter.declaration", text: "x", ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.declaration.local", text: "y", ..Default::default() }, tsc_fourslash::SemanticToken { type: "parameter", text: "x", ..Default::default() }, tsc_fourslash::SemanticToken { type: "parameter", text: "x", ..Default::default() }, tsc_fourslash::SemanticToken { type: "parameter", text: "x", ..Default::default() }]);
+		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type: "function.declaration".into(), text: "myFunction".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "parameter.declaration".into(), text: "x".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.declaration.local".into(), text: "y".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "parameter".into(), text: "x".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "parameter".into(), text: "x".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "parameter".into(), text: "x".into(), ..Default::default() }]);
 	});
 }
 

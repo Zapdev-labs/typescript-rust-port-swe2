@@ -28,7 +28,7 @@ IndirectDependency/**/"#;
 		let mut opts1155 = f.get_options();
 		opts1155.format_code_settings.new_line_character = "\n";
 		f.configure(opts1155);
-		f.verify_import_fix_at_position(vec![], None);
+		f.verify_import_fix_at_position(&[], None);
 	});
 }
 

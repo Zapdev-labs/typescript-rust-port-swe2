@@ -25,7 +25,7 @@ export function foo() {};
     "compilerOptions": { }
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_at_position(vec![r#"import { foo } from "b";
+		f.verify_import_fix_at_position(&[r#"import { foo } from "b";
 
 foo();"#], None);
 	});

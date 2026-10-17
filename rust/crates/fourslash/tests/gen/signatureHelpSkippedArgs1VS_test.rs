@@ -9,7 +9,7 @@ fn signature_help_skipped_args1_vs() {
 	run_test(|t| {
 		let content = r"function fn(a: number, b: number, c: number) {}
 fn(/*1*/, /*2*/, /*3*/, /*4*/, /*5*/);";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", Some(tsc_lsproto::ClientCapabilities { vs_supports_visual_studio_extensions: Some((true).into()), ..Default::default() }), content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", &tsc_lsproto::ClientCapabilities { vs_supports_visual_studio_extensions: Some((true).into()), ..Default::default() }, content);
 		f.verify_baseline_signature_help();
 	});
 }

@@ -20,12 +20,12 @@ export class C implements Base {
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("".into());
-		f.verify_completions("".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "method", insert_text: Some(("method(p: I): void {\n}").into()), filter_text: Some(("method").into()), sort_text: Some((tsc_ls::SORT_TEXT_LOCATION_PRIORITY.to_string()).into()), additional_text_edits: tsc_fourslash::AnyTextEdits, data: Some(tsc_lsproto::CompletionItemData { source: "ClassMemberSnippet/", ..Default::default() }), ..Default::default() })], ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { include_completions_with_class_member_snippets: tsc_core::TS_TRUE, ..Default::default() }), ..Default::default() }));
-		f.verify_apply_code_action_from_completion(Some(("").into()), Some(tsc_fourslash::ApplyCodeActionFromCompletionOptions { user_preferences: Some(tsc_lsutil::UserPreferences { include_completions_with_class_member_snippets: tsc_core::TS_TRUE, ..Default::default() }), name: "method", source: "ClassMemberSnippet/", description: "Includes imports of types referenced by 'method'", new_file_content: Some((r#"import { I } from "./types1";
+		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "method", insert_text: Some(("method(p: I): void {\n}").into()), filter_text: Some(("method").into()), sort_text: Some((tsc_ls::SORT_TEXT_LOCATION_PRIORITY.to_string()).into()), additional_text_edits: tsc_fourslash::AnyTextEdits, data: &tsc_lsproto::CompletionItemData { source: "ClassMemberSnippet/", ..Default::default() }, ..Default::default() }], ..Default::default() }, user_preferences: &tsc_lsutil::UserPreferences { include_completions_with_class_member_snippets: tsc_core::tristate::TS_TRUE, ..Default::default() }, ..Default::default() });
+		f.verify_apply_code_action_from_completion(Some(("").into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { user_preferences: &tsc_lsutil::UserPreferences { include_completions_with_class_member_snippets: tsc_core::tristate::TS_TRUE, ..Default::default() }, name: "method", source: "ClassMemberSnippet/", description: "Includes imports of types referenced by 'method'", new_file_content: Some((r#"import { I } from "./types1";
 import { Base } from "./types2";
 export class C implements Base {
   
-}"#).into()), ..Default::default() }));
+}"#).into()), ..Default::default() });
 	});
 }
 

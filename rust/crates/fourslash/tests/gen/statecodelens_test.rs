@@ -109,7 +109,7 @@ class Point2 implements Pointable {
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("impl".into());
 		f.go_to_marker("temp".into());
-		f.verify_baseline_code_lens(Some(tsc_lsutil::UserPreferences { references_code_lens_enabled: tsc_core::TS_TRUE, references_code_lens_show_on_all_functions: tsc_core::TS_TRUE, implementations_code_lens_enabled: tsc_core::TS_TRUE, implementations_code_lens_show_on_interface_methods: tsc_core::TS_TRUE, implementations_code_lens_show_on_all_class_methods: tsc_core::TS_TRUE, ..Default::default() }));
+		f.verify_baseline_code_lens(&tsc_lsutil::UserPreferences { references_code_lens_enabled: tsc_core::tristate::TS_TRUE, references_code_lens_show_on_all_functions: tsc_core::tristate::TS_TRUE, implementations_code_lens_enabled: tsc_core::tristate::TS_TRUE, implementations_code_lens_show_on_interface_methods: tsc_core::tristate::TS_TRUE, implementations_code_lens_show_on_all_class_methods: tsc_core::tristate::TS_TRUE, ..Default::default() });
 		f.close_file_of_marker("temp".into());
 		f.go_to_marker("temp".into());
 		f.close_file_of_marker("impl".into());
@@ -156,7 +156,7 @@ import * as foo from '../../a/dist/foo.js';
 foo.aaa();
 "#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_code_lens(Some(tsc_lsutil::UserPreferences { references_code_lens_enabled: tsc_core::TS_TRUE, ..Default::default() }));
+		f.verify_baseline_code_lens(&tsc_lsutil::UserPreferences { references_code_lens_enabled: tsc_core::tristate::TS_TRUE, ..Default::default() });
 	});
 }
 

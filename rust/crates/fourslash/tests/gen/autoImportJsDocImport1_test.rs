@@ -31,7 +31,7 @@ fn auto_import_js_doc_import1() {
 export function f(a, b, c, d) { }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("".into());
-		f.verify_import_fix_at_position(vec![r#"/**
+		f.verify_import_fix_at_position(&[r#"/**
  * @import { A, D, C, B } from "./foo"
  */
 

@@ -25,9 +25,9 @@ export const e = 1;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/home/src/projects/p/a.ts".into());
 		f.replace(0, r#"import "./e";"#.len(), "".into());
-		f.verify_workspace_symbol(vec![tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "b", includes: Some((vec![]).into()), ..Default::default() }, tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "e", includes: Some((vec![tsc_lsproto::SymbolInformation { name: "e", kind: tsc_lsproto::SYMBOL_KIND_VARIABLE, location: tsc_lsproto::Location { uri: "file:///home/src/projects/p/e.ts", range: tsc_lsproto::Range { start: tsc_lsproto::Position { line: 0, character: 13, ..Default::default() }, end: tsc_lsproto::Position { line: 0, character: 14, ..Default::default() }, ..Default::default() }, ..Default::default() }, ..Default::default() }]).into()), ..Default::default() }]);
+		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "b".into(), includes: Some((vec![]).into()), ..Default::default() }, tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "e".into(), includes: Some((vec![tsc_lsproto::SymbolInformation { name: "e".into(), kind: tsc_lsproto::SYMBOL_KIND_VARIABLE, location: tsc_lsproto::Location { uri: "file:///home/src/projects/p/e.ts", range: tsc_lsproto::Range { start: tsc_lsproto::Position { line: 0, character: 13, ..Default::default() }, end: tsc_lsproto::Position { line: 0, character: 14, ..Default::default() }, ..Default::default() }, ..Default::default() }, ..Default::default() }]).into()), ..Default::default() }]);
 		f.go_to_file("/home/src/projects/p/b.ts".into());
-		f.verify_workspace_symbol(vec![tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "b", includes: Some((vec![]).into()), ..Default::default() }]);
+		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "b".into(), includes: Some((vec![]).into()), ..Default::default() }]);
 	});
 }
 

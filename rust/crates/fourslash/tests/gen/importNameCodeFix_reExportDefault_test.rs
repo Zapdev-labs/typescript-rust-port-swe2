@@ -25,19 +25,19 @@ export default foo;
 export default 0;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/user.ts".into());
-		f.verify_import_fix_at_position(vec![r#"import foo from "./named";
+		f.verify_import_fix_at_position(&[r#"import foo from "./named";
 
 foo;"#, r#"import foo from "./reExportNamed";
 
 foo;"#], None);
 		f.go_to_file("/user2.ts".into());
-		f.verify_import_fix_at_position(vec![r#"import unnamed from "./unnamed";
+		f.verify_import_fix_at_position(&[r#"import unnamed from "./unnamed";
 
 unnamed;"#, r#"import unnamed from "./reExportUnnamed";
 
 unnamed;"#], None);
 		f.go_to_file("/user3.ts".into());
-		f.verify_import_fix_at_position(vec![r#"import reExportUnnamed from "./reExportUnnamed";
+		f.verify_import_fix_at_position(&[r#"import reExportUnnamed from "./reExportUnnamed";
 
 reExportUnnamed;"#], None);
 	});

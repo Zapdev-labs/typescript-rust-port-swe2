@@ -20,7 +20,7 @@ const b: B = {
     a: /**/
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "\"A\"", ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "\"B\"", ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "\"C\"", ..Default::default() })], ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { quote_preference: tsc_lsutil::quote_preference("double".into()), ..Default::default() }), ..Default::default() }));
+		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "\"A\"", ..Default::default() }, &tsc_lsproto::CompletionItem { label: "\"B\"", ..Default::default() }, &tsc_lsproto::CompletionItem { label: "\"C\"", ..Default::default() }], ..Default::default() }, user_preferences: &tsc_lsutil::UserPreferences { quote_preference: tsc_lsutil::quote_preference("double".into()), ..Default::default() }, ..Default::default() });
 	});
 }
 

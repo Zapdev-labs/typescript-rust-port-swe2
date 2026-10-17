@@ -14,8 +14,8 @@ const enum E2 { X = "X", Y = "Y" }
 const e: E | undefined = /*a*/
 const e2: E | E2 = /*b*/"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("a".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "E", preselect: Some((true).into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
-		f.verify_completions("b".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "E", preselect: Some((true).into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "E2", ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("a".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "E", preselect: Some((true).into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
+		f.verify_completions("b".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "E", preselect: Some((true).into()), ..Default::default() }, &tsc_lsproto::CompletionItem { label: "E2", ..Default::default() }], ..Default::default() }, ..Default::default() });
 	});
 }
 

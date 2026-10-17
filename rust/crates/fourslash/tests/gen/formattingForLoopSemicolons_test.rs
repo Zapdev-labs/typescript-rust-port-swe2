@@ -19,7 +19,7 @@ fn formatting_for_loop_semicolons() {
 		f.go_to_marker("3".into());
 		f.verify_current_line_content(r"for (var x; x < 0; x++) { }".into());
 		let mut opts444 = f.get_options();
-		opts444.format_code_settings.insert_space_after_semicolon_in_for_statements = tsc_core::TS_FALSE;
+		opts444.format_code_settings.insert_space_after_semicolon_in_for_statements = tsc_core::tristate::TS_FALSE;
 		f.configure(opts444);
 		f.format_document("".into());
 		f.go_to_marker("1".into());

@@ -12,7 +12,7 @@ Object.create(null);
 const x = Promise.resolve(Number.MAX_VALUE);
 if (x instanceof Promise) {}";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_semantic_tokens(vec![tsc_fourslash::SemanticToken { type: "class.defaultLibrary", text: "Object", ..Default::default() }, tsc_fourslash::SemanticToken { type: "method.defaultLibrary", text: "create", ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.declaration.readonly", text: "x", ..Default::default() }, tsc_fourslash::SemanticToken { type: "class.defaultLibrary", text: "Number", ..Default::default() }, tsc_fourslash::SemanticToken { type: "property.readonly.defaultLibrary", text: "MAX_VALUE", ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.readonly", text: "x", ..Default::default() }]);
+		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type: "class.defaultLibrary".into(), text: "Object".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "method.defaultLibrary".into(), text: "create".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.declaration.readonly".into(), text: "x".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "class.defaultLibrary".into(), text: "Number".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "property.readonly.defaultLibrary".into(), text: "MAX_VALUE".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.readonly".into(), text: "x".into(), ..Default::default() }]);
 	});
 }
 

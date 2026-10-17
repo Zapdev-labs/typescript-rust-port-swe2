@@ -11,10 +11,10 @@ fn formatting_crash() {
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut opts131 = f.get_options();
-		opts131.format_code_settings.place_open_brace_on_new_line_for_functions = tsc_core::TS_TRUE;
+		opts131.format_code_settings.place_open_brace_on_new_line_for_functions = tsc_core::tristate::TS_TRUE;
 		f.configure(opts131);
 		let mut opts199 = f.get_options();
-		opts199.format_code_settings.place_open_brace_on_new_line_for_control_blocks = tsc_core::TS_TRUE;
+		opts199.format_code_settings.place_open_brace_on_new_line_for_control_blocks = tsc_core::tristate::TS_TRUE;
 		f.configure(opts199);
 		f.format_document("".into());
 		f.go_to_marker("".into());

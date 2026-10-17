@@ -57,7 +57,7 @@ bindingLeading(/*bindingLeading*/{ a: 1, b: 2 }, 123 /*idTrailing*/)
 function multipleBindings({ a, b }, { c, d }) {}
 multipleBindings({ a: 0, b: "" }/*firstObjParam*/, { c: true, d: "" }/*secondObjParam*/)
 "#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", Some(tsc_lsproto::ClientCapabilities { vs_supports_visual_studio_extensions: Some((true).into()), ..Default::default() }), content);
+		let mut f = tsc_fourslash::new_fourslash(t_name(), "", &tsc_lsproto::ClientCapabilities { vs_supports_visual_studio_extensions: Some((true).into()), ..Default::default() }, content);
 		f.verify_baseline_signature_help();
 	});
 }

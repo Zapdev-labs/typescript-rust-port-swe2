@@ -17,7 +17,7 @@ export {};
 const x = 0;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/b.js".into());
-		f.verify_import_fix_at_position(vec![r#"/** @type {import("./a").T} */
+		f.verify_import_fix_at_position(&[r#"/** @type {import("./a").T} */
 const x = 0;"#], None);
 	});
 }

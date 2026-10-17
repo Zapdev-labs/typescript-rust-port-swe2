@@ -34,7 +34,7 @@ var obj2 = obj ||
 }
 ".into());
 		let mut opts400 = f.get_options();
-		opts400.format_code_settings.indent_multi_line_object_literal_beginning_on_blank_line = tsc_core::TS_TRUE;
+		opts400.format_code_settings.indent_multi_line_object_literal_beginning_on_blank_line = tsc_core::tristate::TS_TRUE;
 		f.configure(opts400);
 		f.format_document("".into());
 		f.verify_current_file_content(r"

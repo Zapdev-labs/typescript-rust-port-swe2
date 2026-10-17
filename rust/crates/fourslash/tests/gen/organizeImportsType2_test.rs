@@ -25,17 +25,17 @@ export { A, C, type B };
 type B = string;
 const C = "hello";
 export { A, type B, C };
-"#.into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::INLINE, ..Default::default() }));
+"#.into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::INLINE, ..Default::default() });
 		f.verify_organize_imports(r#"type A = string;
 type B = string;
 const C = "hello";
 export { type B, A, C };
-"#.into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::FIRST, ..Default::default() }));
+"#.into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::FIRST, ..Default::default() });
 		f.verify_organize_imports(r#"type A = string;
 type B = string;
 const C = "hello";
 export { A, C, type B };
-"#.into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, Some(tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::LAST, ..Default::default() }));
+"#.into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::LAST, ..Default::default() });
 	});
 }
 

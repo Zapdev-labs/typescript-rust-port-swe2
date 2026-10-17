@@ -7,22 +7,22 @@ use tsc_fourslash::*;
 #[test]
 fn organize_imports_export_leading_comment_not_duplicated() {
 	run_test(|t| {
-		let mut cases = vec![anon_1 { name: "singleComment", content: r#"// a
+		let mut cases = vec![anon_1 { name: "singleComment".into(), content: r#"// a
 export { a } from "a";
-console.log(a);"#, ..Default::default() }, anon_1 { name: "multipleComments", content: r#"// a
+console.log(a);"#.into(), ..Default::default() }, anon_1 { name: "multipleComments".into(), content: r#"// a
 // a
 export { a } from "a";
-console.log(a);"#, ..Default::default() }, anon_1 { name: "secondExport", content: r#"export { a } from "a";
+console.log(a);"#.into(), ..Default::default() }, anon_1 { name: "secondExport".into(), content: r#"export { a } from "a";
 // b
 export { b } from "b";
-console.log(a, b);"#, ..Default::default() }, anon_1 { name: "secondExportWithBlankLine", content: r#"export { a } from "a";
+console.log(a, b);"#.into(), ..Default::default() }, anon_1 { name: "secondExportWithBlankLine".into(), content: r#"export { a } from "a";
 
 // b
 export { b } from "b";
-console.log(a, b);"#, ..Default::default() }, anon_1 { name: "commentWithBlankLine", content: r#"// a
+console.log(a, b);"#.into(), ..Default::default() }, anon_1 { name: "commentWithBlankLine".into(), content: r#"// a
 
 export { a } from "a";
-console.log(a);"#, ..Default::default() }];
+console.log(a);"#.into(), ..Default::default() }];
 		#[derive(Default, Clone, Debug)]
 		struct anon_1 {
 			name: &'static str,

@@ -24,7 +24,7 @@ function foo5(...x: [number, number]) {
     foo(...x, 3);
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_inlay_hints(None, Some(tsc_lsutil::UserPreferences { include_inlay_parameter_name_hints: tsc_lsutil::IncludeInlayParameterNameHints::ALL, ..Default::default() }));
+		f.verify_baseline_inlay_hints(None, &tsc_lsutil::UserPreferences { include_inlay_parameter_name_hints: tsc_lsutil::IncludeInlayParameterNameHints::ALL, ..Default::default() });
 	});
 }
 

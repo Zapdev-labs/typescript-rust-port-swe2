@@ -11,7 +11,7 @@ fn syntactic_classification_for_js_doc_template_tag() {
 function ident<T>: T {
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_semantic_tokens(vec![tsc_fourslash::SemanticToken { type: "function.declaration", text: "ident", ..Default::default() }, tsc_fourslash::SemanticToken { type: "typeParameter.declaration", text: "T", ..Default::default() }, tsc_fourslash::SemanticToken { type: "typeParameter", text: "T", ..Default::default() }]);
+		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type: "function.declaration".into(), text: "ident".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "typeParameter.declaration".into(), text: "T".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "typeParameter".into(), text: "T".into(), ..Default::default() }]);
 	});
 }
 

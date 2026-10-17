@@ -28,7 +28,7 @@ var foo3 = require("fake-module//*require0*/
 // @Filename: ambient.ts
 declare module "fake-module/other""#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions(vec!["import_as0", "import_equals0", "require0"], Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["other", "repeated"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions(&["import_as0", "import_equals0", "require0"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec!["other", "repeated"], ..Default::default() }, ..Default::default() });
 	});
 }
 

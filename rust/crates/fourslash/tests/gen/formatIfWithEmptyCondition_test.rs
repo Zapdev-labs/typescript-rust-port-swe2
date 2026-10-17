@@ -11,7 +11,7 @@ fn format_if_with_empty_condition() {
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut opts123 = f.get_options();
-		opts123.format_code_settings.place_open_brace_on_new_line_for_control_blocks = tsc_core::TS_TRUE;
+		opts123.format_code_settings.place_open_brace_on_new_line_for_control_blocks = tsc_core::tristate::TS_TRUE;
 		f.configure(opts123);
 		f.format_document("".into());
 		f.verify_current_file_content(r"if ()

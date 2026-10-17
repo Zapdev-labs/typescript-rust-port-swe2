@@ -16,13 +16,13 @@ acb/*1*/;
 acb/*2*/;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("1".into());
-		f.verify_apply_code_action_from_completion(Some(("1").into()), Some(tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "abc", source: "./a", description: "Add import from \"./a\"", new_file_content: Some((r#"import { abc } from "./a";
+		f.verify_apply_code_action_from_completion(Some(("1").into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "abc", source: "./a", description: "Add import from \"./a\"", new_file_content: Some((r#"import { abc } from "./a";
 
-acb;"#).into()), ..Default::default() }));
+acb;"#).into()), ..Default::default() });
 		f.go_to_marker("2".into());
-		f.verify_apply_code_action_from_completion(Some(("2").into()), Some(tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "abc", source: "./a", auto_import_fix: Some(tsc_lsproto::AutoImportFix { module_specifier: "./a", ..Default::default() }), description: "Add import from \"./a\"", new_file_content: Some((r#"import { abc } from "./a";
+		f.verify_apply_code_action_from_completion(Some(("2").into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "abc", source: "./a", auto_import_fix: &tsc_lsproto::AutoImportFix { module_specifier: "./a", ..Default::default() }, description: "Add import from \"./a\"", new_file_content: Some((r#"import { abc } from "./a";
 
-acb;"#).into()), ..Default::default() }));
+acb;"#).into()), ..Default::default() });
 	});
 }
 

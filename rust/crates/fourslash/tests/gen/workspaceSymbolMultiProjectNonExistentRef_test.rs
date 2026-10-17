@@ -27,7 +27,7 @@ export const [|myValueA|]: number = 1;
 export const [|myValueB|]: string = "hello";
 "#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_workspace_symbol(vec![tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "myValue", includes: Some((vec![tsc_lsproto::SymbolInformation { name: "myValueA", kind: tsc_lsproto::SYMBOL_KIND_VARIABLE, location: f.ranges()[0].ls_location(), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "myValueB", kind: tsc_lsproto::SYMBOL_KIND_VARIABLE, location: f.ranges()[1].ls_location(), ..Default::default() }]).into()), ..Default::default() }]);
+		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "myValue".into(), includes: Some((vec![tsc_lsproto::SymbolInformation { name: "myValueA".into(), kind: tsc_lsproto::SYMBOL_KIND_VARIABLE, location: f.ranges()[0].ls_location(), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "myValueB".into(), kind: tsc_lsproto::SYMBOL_KIND_VARIABLE, location: f.ranges()[1].ls_location(), ..Default::default() }]).into()), ..Default::default() }]);
 	});
 }
 

@@ -15,8 +15,8 @@ let x: MyT/*type*/;
 let y = MyV/*value*/;
 ";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.configure(tsc_lsutil::UserPreferences { include_completions_for_module_exports: tsc_core::TS_TRUE, include_completions_for_import_statements: tsc_core::TS_TRUE, prefer_type_only_auto_imports: tsc_core::TS_TRUE, ..Default::default() });
-		f.baseline_auto_imports_completions(vec!["type", "value"]);
+		f.configure(tsc_lsutil::UserPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE, include_completions_for_import_statements: tsc_core::tristate::TS_TRUE, prefer_type_only_auto_imports: tsc_core::tristate::TS_TRUE, ..Default::default() });
+		f.baseline_auto_imports_completions(&["type", "value"]);
 	});
 }
 

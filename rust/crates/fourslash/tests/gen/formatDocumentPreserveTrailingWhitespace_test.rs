@@ -19,7 +19,7 @@ function b(){
 ";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut opts233 = f.get_options();
-		opts233.format_code_settings.trim_trailing_whitespace = tsc_core::TS_FALSE;
+		opts233.format_code_settings.trim_trailing_whitespace = tsc_core::tristate::TS_FALSE;
 		f.configure(opts233);
 		f.format_document("".into());
 		f.verify_current_file_content(r"

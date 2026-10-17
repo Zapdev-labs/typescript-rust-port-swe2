@@ -16,7 +16,7 @@ export function f1();
 // @Filename: ../node_modules/fake-module/package.json
 {}"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_at_position(vec![r#"import { f1 } from "fake-module";
+		f.verify_import_fix_at_position(&[r#"import { f1 } from "fake-module";
 
 f1();"#], None);
 	});

@@ -15,7 +15,7 @@ export var v1 = 5;
 export var v2 = 5;
 export var v3 = 5;"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_at_position(vec![r"{ f1 }"], None);
+		f.verify_import_fix_at_position(&[r"{ f1 }"], None);
 	});
 }
 

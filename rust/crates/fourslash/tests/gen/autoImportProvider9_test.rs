@@ -74,10 +74,10 @@ export class Lib10 {}
 export class Lib11 {}"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.verify_import_fix_module_specifiers("".into(), vec![], None);
-		f.verify_import_fix_module_specifiers("".into(), vec![], None);
+		f.verify_import_fix_module_specifiers("".into(), &[], None);
+		f.verify_import_fix_module_specifiers("".into(), &[], None);
 		f.insert_line("import {} from 'lib2';".into());
-		f.verify_import_fix_module_specifiers("".into(), vec!["lib1"], None);
+		f.verify_import_fix_module_specifiers("".into(), &["lib1"], None);
 	});
 }
 

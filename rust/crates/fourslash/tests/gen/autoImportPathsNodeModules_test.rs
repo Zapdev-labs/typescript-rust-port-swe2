@@ -29,7 +29,7 @@ export class Dialog {}
 // @Filename: ts/main.ts
 Dialog/**/"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_module_specifiers("".into(), vec!["WoltLabSuite/Core/Component/Dialog"], None);
+		f.verify_import_fix_module_specifiers("".into(), &["WoltLabSuite/Core/Component/Dialog"], None);
 	});
 }
 

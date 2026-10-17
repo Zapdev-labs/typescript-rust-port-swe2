@@ -33,10 +33,10 @@ export interface AugmentedInterface {
 uniqueFunction/**/"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut prefs = tsc_lsutil::new_default_user_preferences();
-		prefs.auto_import_entrypoint_directory_search = tsc_core::TS_TRUE;
+		prefs.auto_import_entrypoint_directory_search = tsc_core::tristate::TS_TRUE;
 		f.configure(prefs);
 		f.go_to_marker("".into());
-		f.baseline_auto_imports_completions(vec![""]);
+		f.baseline_auto_imports_completions(&[""]);
 	});
 }
 

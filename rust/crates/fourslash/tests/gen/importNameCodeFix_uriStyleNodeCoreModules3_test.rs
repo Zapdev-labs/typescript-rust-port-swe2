@@ -40,12 +40,12 @@ writeFile/*test1*/
 import "node:test";
 writeFile/*test2*/"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_module_specifiers("noPrefix".into(), vec!["fs", "fs/promises"], None);
-		f.verify_import_fix_module_specifiers("prefix".into(), vec!["node:fs", "node:fs/promises"], None);
-		f.verify_import_fix_module_specifiers("mixed1".into(), vec!["node:fs", "node:fs/promises"], None);
-		f.verify_import_fix_module_specifiers("mixed2".into(), vec!["node:fs", "node:fs/promises"], None);
-		f.verify_import_fix_module_specifiers("test1".into(), vec!["fs", "fs/promises"], None);
-		f.verify_import_fix_module_specifiers("test2".into(), vec!["node:fs", "node:fs/promises"], None);
+		f.verify_import_fix_module_specifiers("noPrefix".into(), &["fs", "fs/promises"], None);
+		f.verify_import_fix_module_specifiers("prefix".into(), &["node:fs", "node:fs/promises"], None);
+		f.verify_import_fix_module_specifiers("mixed1".into(), &["node:fs", "node:fs/promises"], None);
+		f.verify_import_fix_module_specifiers("mixed2".into(), &["node:fs", "node:fs/promises"], None);
+		f.verify_import_fix_module_specifiers("test1".into(), &["fs", "fs/promises"], None);
+		f.verify_import_fix_module_specifiers("test2".into(), &["node:fs", "node:fs/promises"], None);
 	});
 }
 

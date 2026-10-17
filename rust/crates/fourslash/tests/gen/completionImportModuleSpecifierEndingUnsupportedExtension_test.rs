@@ -12,8 +12,8 @@ fn completion_import_module_specifier_ending_unsupported_extension() {
 //@Filename:module.ts
 import ".//**/""#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { excludes: vec!["index.css"], ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { import_module_specifier_ending: "js", ..Default::default() }), ..Default::default() }));
-		f.verify_completions("".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { excludes: vec!["index"], ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { import_module_specifier_ending: "index", ..Default::default() }), ..Default::default() }));
+		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { excludes: vec!["index.css"], ..Default::default() }, user_preferences: &tsc_lsutil::UserPreferences { import_module_specifier_ending: "js", ..Default::default() }, ..Default::default() });
+		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { excludes: vec!["index"], ..Default::default() }, user_preferences: &tsc_lsutil::UserPreferences { import_module_specifier_ending: "index", ..Default::default() }, ..Default::default() });
 	});
 }
 

@@ -18,7 +18,7 @@ bar1/*0*/.bar;|]
 export declare function bar(): number;
 export as namespace bar1; ";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_at_position(vec![r#"import * as bar1 from "./foo";
+		f.verify_import_fix_at_position(&[r#"import * as bar1 from "./foo";
 
 export function test() { };
 bar1.bar;"#], None);

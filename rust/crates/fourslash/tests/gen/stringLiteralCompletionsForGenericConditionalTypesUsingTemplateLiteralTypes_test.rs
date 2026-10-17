@@ -16,7 +16,7 @@ declare function consumer<K extends string>(path: PathOf<{a: string, b: {c: stri
 
 consumer('b./*ts*/')";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions(vec!["ts"], Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &default_commit_characters, edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["a", "b", "b.c"], ..Default::default() }), ..Default::default() }));
+		f.verify_completions(&["ts"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec!["a", "b", "b.c"], ..Default::default() }, ..Default::default() });
 	});
 }
 

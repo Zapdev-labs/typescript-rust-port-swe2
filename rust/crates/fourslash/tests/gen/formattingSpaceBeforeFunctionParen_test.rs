@@ -16,10 +16,10 @@ fn formatting_space_before_function_paren() {
 /*7*/function* g () { }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut opts333 = f.get_options();
-		opts333.format_code_settings.insert_space_before_function_parenthesis = tsc_core::TS_TRUE;
+		opts333.format_code_settings.insert_space_before_function_parenthesis = tsc_core::tristate::TS_TRUE;
 		f.configure(opts333);
 		let mut opts414 = f.get_options();
-		opts414.format_code_settings.insert_space_after_function_keyword_for_anonymous_functions = tsc_core::TS_FALSE;
+		opts414.format_code_settings.insert_space_after_function_keyword_for_anonymous_functions = tsc_core::tristate::TS_FALSE;
 		f.configure(opts414);
 		f.format_document("".into());
 		f.go_to_marker("1".into());

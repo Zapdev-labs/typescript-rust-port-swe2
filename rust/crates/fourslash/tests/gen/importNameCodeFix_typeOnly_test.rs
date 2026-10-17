@@ -15,7 +15,7 @@ export class A {}
 const a: /**/A";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("".into());
-		f.verify_import_fix_at_position(vec![r#"import type { A } from "./types";
+		f.verify_import_fix_at_position(&[r#"import type { A } from "./types";
 
 const a: A"#], None);
 	});

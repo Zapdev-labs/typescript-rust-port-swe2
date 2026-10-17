@@ -56,10 +56,10 @@ projectBFunction/**/
 // @link: /packages/project-b -> /packages/project-a/node_modules/project-b"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut prefs = tsc_lsutil::new_default_user_preferences();
-		prefs.auto_import_entrypoint_directory_search = tsc_core::TS_TRUE;
+		prefs.auto_import_entrypoint_directory_search = tsc_core::tristate::TS_TRUE;
 		f.configure(prefs);
 		f.go_to_marker("".into());
-		f.verify_import_fix_at_position(vec![r#"import { projectBFunction, projectBValue } from "project-b";
+		f.verify_import_fix_at_position(&[r#"import { projectBFunction, projectBValue } from "project-b";
 console.log(projectBValue);
 projectBFunction"#, r#"import { projectBValue } from "project-b";
 import { projectBFunction } from "project-b/src/utils/foo";

@@ -22,7 +22,7 @@ something/*a*/
 // @Filename: /types/thing.d.ts
 export function something(name: string): any;"##;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_module_specifiers("a".into(), vec!["#thing"], None);
+		f.verify_import_fix_module_specifiers("a".into(), &["#thing"], None);
 	});
 }
 

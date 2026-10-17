@@ -24,7 +24,7 @@ type fullType2 = import('./foo/types')./*foo4*/[|foo|]./*full2*/[|Full|];"#;
 		f.verify_baseline_rename(None, f.ranges()[3]);
 		f.verify_baseline_rename(None, f.ranges()[5], f.ranges()[10]);
 		f.verify_baseline_rename(None, f.ranges()[7], f.ranges()[8]);
-		f.verify_baseline_rename(Some(tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::TS_FALSE, ..Default::default() }), f.ranges()[7], f.ranges()[8], f.ranges()[10], f.ranges()[3], f.ranges()[5]);
+		f.verify_baseline_rename(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_FALSE, ..Default::default() }, f.ranges()[7], f.ranges()[8], f.ranges()[10], f.ranges()[3], f.ranges()[5]);
 	});
 }
 

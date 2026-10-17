@@ -23,7 +23,7 @@ someExportedVariable;
 		f.mark_test_as_strada_server();
 		f.go_to_file("/home/src/workspaces/project/lib/index.ts".into());
 		f.go_to_file("/home/src/workspaces/project/src/index.ts".into());
-		f.verify_baseline_rename(Some(tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::TS_TRUE, ..Default::default() }), "i".into());
+		f.verify_baseline_rename(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_TRUE, ..Default::default() }, "i".into());
 	});
 }
 

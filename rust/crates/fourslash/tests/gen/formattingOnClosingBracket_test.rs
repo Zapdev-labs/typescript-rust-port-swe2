@@ -41,7 +41,7 @@ a++;/*19*/
 }/*27*/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut opts874 = f.get_options();
-		opts874.format_code_settings.insert_space_after_semicolon_in_for_statements = tsc_core::TS_TRUE;
+		opts874.format_code_settings.insert_space_after_semicolon_in_for_statements = tsc_core::tristate::TS_TRUE;
 		f.configure(opts874);
 		f.format_document("".into());
 		f.go_to_marker("1".into());

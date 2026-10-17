@@ -13,7 +13,7 @@ fn formatting_in_destructuring4() {
 /*4*/} = { a: 1, b: 2 };";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut opts198 = f.get_options();
-		opts198.format_code_settings.insert_space_after_opening_and_before_closing_nonempty_braces = tsc_core::TS_FALSE;
+		opts198.format_code_settings.insert_space_after_opening_and_before_closing_nonempty_braces = tsc_core::tristate::TS_FALSE;
 		f.configure(opts198);
 		f.format_document("".into());
 		f.go_to_marker("1".into());

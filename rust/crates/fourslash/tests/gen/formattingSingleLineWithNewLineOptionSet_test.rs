@@ -14,10 +14,10 @@ fn formatting_single_line_with_new_line_option_set() {
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut opts211 = f.get_options();
-		opts211.format_code_settings.place_open_brace_on_new_line_for_functions = tsc_core::TS_TRUE;
+		opts211.format_code_settings.place_open_brace_on_new_line_for_functions = tsc_core::tristate::TS_TRUE;
 		f.configure(opts211);
 		let mut opts279 = f.get_options();
-		opts279.format_code_settings.place_open_brace_on_new_line_for_control_blocks = tsc_core::TS_TRUE;
+		opts279.format_code_settings.place_open_brace_on_new_line_for_control_blocks = tsc_core::tristate::TS_TRUE;
 		f.configure(opts279);
 		f.format_document("".into());
 		f.go_to_marker("1".into());

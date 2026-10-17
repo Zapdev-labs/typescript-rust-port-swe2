@@ -14,9 +14,9 @@ import * as u from "./a";
 [|import I/*a*/|]"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut preferences = tsc_lsutil::new_default_user_preferences();
-		preferences.include_completions_for_module_exports = tsc_core::TS_FALSE;
-		preferences.include_completions_for_import_statements = tsc_core::TS_TRUE;
-		f.verify_completions("a".into(), Some(tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "I", insert_text: Some((r#"import { I } from "./a";"#).into()), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./a", ..Default::default() }), ..Default::default() }), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: r#"import { I } from "./a";"#, range: f.ranges()[0].ls_range, ..Default::default() }), ..Default::default() }), ..Default::default() })], ..Default::default() }), user_preferences: &preferences, ..Default::default() }));
+		preferences.include_completions_for_module_exports = tsc_core::tristate::TS_FALSE;
+		preferences.include_completions_for_import_statements = tsc_core::tristate::TS_TRUE;
+		f.verify_completions("a".into(), &tsc_fourslash::CompletionsExpectedList { item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "I", insert_text: Some((r#"import { I } from "./a";"#).into()), data: &tsc_lsproto::CompletionItemData { auto_import: &tsc_lsproto::AutoImportFix { module_specifier: "./a", ..Default::default() }, ..Default::default() }, text_edit: &tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: &tsc_lsproto::TextEdit { new_text: r#"import { I } from "./a";"#, range: f.ranges()[0].ls_range, ..Default::default() }, ..Default::default() }, ..Default::default() }], ..Default::default() }, user_preferences: Some(preferences.clone()), ..Default::default() });
 	});
 }
 

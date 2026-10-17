@@ -12,7 +12,7 @@ fn syntactic_classification_with_errors() {
 }
 c =";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_semantic_tokens(vec![tsc_fourslash::SemanticToken { type: "class.declaration", text: "A", ..Default::default() }, tsc_fourslash::SemanticToken { type: "property.declaration", text: "a", ..Default::default() }]);
+		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type: "class.declaration".into(), text: "A".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "property.declaration".into(), text: "a".into(), ..Default::default() }]);
 	});
 }
 

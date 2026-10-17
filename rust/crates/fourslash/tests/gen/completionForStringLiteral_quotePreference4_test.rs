@@ -11,7 +11,7 @@ fn completion_for_string_literal_quote_preference4() {
 		let content = r"type T = 0 | 1;
 const t: T = /**/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("".into(), Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![Some(tsc_lsproto::CompletionItem { label: "0", ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "1", ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "0", ..Default::default() }, &tsc_lsproto::CompletionItem { label: "1", ..Default::default() }], ..Default::default() }, ..Default::default() });
 	});
 }
 

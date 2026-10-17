@@ -19,7 +19,7 @@ import fs from 'fs';
 const fs = require('fs');";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_marker("".into());
-		f.verify_import_fix_at_position(vec![r#"const { Dep } = require("./types/dep");
+		f.verify_import_fix_at_position(&[r#"const { Dep } = require("./types/dep");
 
 Dep"#], None);
 	});

@@ -23,7 +23,7 @@ PatternValidator/**/"#;
 		let mut opts654 = f.get_options();
 		opts654.format_code_settings.new_line_character = "\n";
 		f.configure(opts654);
-		f.verify_import_fix_at_position(vec![r#"import { PatternValidator } from "@angular/forms";
+		f.verify_import_fix_at_position(&[r#"import { PatternValidator } from "@angular/forms";
 
 PatternValidator"#], None);
 	});

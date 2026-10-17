@@ -24,7 +24,7 @@ f1();
 // @Filename: /index.ts
 [|f2/*0*/();|]"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_module_specifiers("0".into(), vec!["myLib"], None);
+		f.verify_import_fix_module_specifiers("0".into(), &["myLib"], None);
 	});
 }
 
@@ -48,7 +48,7 @@ f1();
 // @Filename: /index.ts
 [|f2/*0*/();|]"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_module_specifiers("0".into(), vec!["myLib"], None);
+		f.verify_import_fix_module_specifiers("0".into(), &["myLib"], None);
 	});
 }
 

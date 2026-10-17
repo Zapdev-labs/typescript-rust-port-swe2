@@ -19,11 +19,11 @@ export const bar = 0;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/a/index.ts".into());
 		f.go_to_file("/b.ts".into());
-		f.verify_import_fix_at_position(vec![r#"import { foo } from "./a/index";
+		f.verify_import_fix_at_position(&[r#"import { foo } from "./a/index";
 
 foo;"#], None);
 		f.go_to_file("/c.ts".into());
-		f.verify_import_fix_at_position(vec![r#"import { bar } from "./node_modules/x/index";
+		f.verify_import_fix_at_position(&[r#"import { bar } from "./node_modules/x/index";
 
 bar;"#], None);
 	});

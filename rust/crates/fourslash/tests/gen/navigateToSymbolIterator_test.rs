@@ -12,7 +12,7 @@ class C {
     [|[Symbol.iterator]|]() {}
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_workspace_symbol(vec![tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "iterator", preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "iterator", kind: tsc_lsproto::SYMBOL_KIND_METHOD, location: f.ranges()[0].ls_location(), container_name: Some(("C").into()), ..Default::default() }]).into()), ..Default::default() }]);
+		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "iterator".into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "iterator".into(), kind: tsc_lsproto::SYMBOL_KIND_METHOD, location: f.ranges()[0].ls_location(), container_name: Some(("C").into()), ..Default::default() }]).into()), ..Default::default() }]);
 	});
 }
 

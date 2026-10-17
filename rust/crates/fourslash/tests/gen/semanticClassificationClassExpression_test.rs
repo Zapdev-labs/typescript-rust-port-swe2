@@ -11,7 +11,7 @@ fn semantic_classification_class_expression() {
 class /*1*/C {}
 class /*2*/D extends class /*3*/B{} { }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_semantic_tokens(vec![tsc_fourslash::SemanticToken { type: "class.declaration", text: "x", ..Default::default() }, tsc_fourslash::SemanticToken { type: "class.declaration", text: "C", ..Default::default() }, tsc_fourslash::SemanticToken { type: "class.declaration", text: "C", ..Default::default() }, tsc_fourslash::SemanticToken { type: "class.declaration", text: "D", ..Default::default() }, tsc_fourslash::SemanticToken { type: "class.declaration", text: "B", ..Default::default() }]);
+		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type: "class.declaration".into(), text: "x".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "class.declaration".into(), text: "C".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "class.declaration".into(), text: "C".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "class.declaration".into(), text: "D".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "class.declaration".into(), text: "B".into(), ..Default::default() }]);
 	});
 }
 

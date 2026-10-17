@@ -19,15 +19,15 @@ import "node:fs/promises";
 // @Filename: /index.ts
 writeFile/**/"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_module_specifiers("".into(), vec!["node:fs", "node:fs/promises"], None);
+		f.verify_import_fix_module_specifiers("".into(), &["node:fs", "node:fs/promises"], None);
 		f.go_to_file("/other.ts".into());
 		f.replace_line(0, "\n".into());
 		f.go_to_file("/index.ts".into());
-		f.verify_import_fix_module_specifiers("".into(), vec!["fs", "fs/promises", "node:fs", "node:fs/promises"], None);
+		f.verify_import_fix_module_specifiers("".into(), &["fs", "fs/promises", "node:fs", "node:fs/promises"], None);
 		f.go_to_file("/other.ts".into());
 		f.replace_line(0, "import \"node:fs/promises\";\n".into());
 		f.go_to_file("/index.ts".into());
-		f.verify_import_fix_module_specifiers("".into(), vec!["node:fs", "node:fs/promises"], None);
+		f.verify_import_fix_module_specifiers("".into(), &["node:fs", "node:fs/promises"], None);
 	});
 }
 

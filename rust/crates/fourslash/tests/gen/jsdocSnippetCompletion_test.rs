@@ -23,7 +23,7 @@ function abcdef(x, y) { }
 		assert.deep_equal(&mut *t, item.kind, Some((tsc_lsproto::CompletionItemKind::TEXT).into()));
 		assert.deep_equal(&mut *t, item.detail, Some(("JSDoc comment").into()));
 		assert.deep_equal(&mut *t, item.sort_text, Some(("\x00").into()));
-		assert.deep_equal(&mut *t, item.commit_characters, Some(vec![]));
+		assert.deep_equal(&mut *t, item.commit_characters, &vec![]);
 		assert.deep_equal(&mut *t, item.insert_text_format, Some((tsc_lsproto::InsertTextFormat::SNIPPET).into()));
 		assert.assert(&mut *t, item.text_edit != None);
 		assert.assert(&mut *t, item.text_edit.insert_replace_edit != None);
@@ -82,8 +82,8 @@ function abcdef(x) { return x; }
 		f.go_to_marker("completion".into());
 		f.insert("/**".into());
 		let mut user_preferences = tsc_lsutil::new_default_user_preferences();
-		user_preferences.generate_return_in_doc_template = tsc_core::TS_FALSE;
-		let mut list = f.get_completions(&user_preferences);
+		user_preferences.generate_return_in_doc_template = tsc_core::tristate::TS_FALSE;
+		let mut list = f.get_completions(Some(user_preferences.clone()));
 		assert.assert(&mut *t, list != None);
 		assert.equal(&mut *t, list.items.len(), 1);
 		assert.equal(&mut *t, list.items[0].text_edit.insert_replace_edit.new_text, "/**\n * $0\n * @param x ${1}\n */".into());
@@ -100,8 +100,8 @@ function abcdef(x) { }
 		f.go_to_marker("completion".into());
 		f.insert("/**".into());
 		let mut user_preferences = tsc_lsutil::new_default_user_preferences();
-		user_preferences.complete_js_docs = tsc_core::TS_FALSE;
-		let mut list = f.get_completions(&user_preferences);
+		user_preferences.complete_js_docs = tsc_core::tristate::TS_FALSE;
+		let mut list = f.get_completions(Some(user_preferences.clone()));
 		if list != None {
 			for item in list.items {
 				assert.assert(&mut *t, item.label != "/** */");

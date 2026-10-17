@@ -31,7 +31,7 @@ export { Event };";
 import { Parts } from './parts';
 export class EditorParts implements Parts {
     options: Event;
-}", index: 0, user_preferences: Some(tsc_lsutil::UserPreferences { auto_import_file_exclude_patterns: vec!["src/vs/workbench/workbench*"], ..Default::default() }), ..Default::default() });
+}", index: 0, user_preferences: &tsc_lsutil::UserPreferences { auto_import_file_exclude_patterns: vec!["src/vs/workbench/workbench*"], ..Default::default() }, ..Default::default() });
 	});
 }
 

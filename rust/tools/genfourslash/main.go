@@ -550,9 +550,9 @@ func (tr *translator) expr(e ast.Expr) string {
 		switch x.Op {
 		case token.AND:
 			if _, ok := x.X.(*ast.CompositeLit); ok {
-				return "Some(" + tr.expr(x.X) + ")"
+				return "&" + tr.expr(x.X) // &T{} -> &T{} in arg position
 			}
-			return "&" + tr.expr(x.X)
+			return "Some(" + tr.expr(x.X) + ".clone())" // &var -> *T -> Option<T>
 		case token.NOT:
 			return "!" + tr.expr(x.X)
 		case token.SUB:
@@ -636,13 +636,14 @@ func rustRawString(s string) string {
 // snakeNames: Go package-level identifiers that are vars/fns/types used in
 // value position — they keep snake_case rather than SCREAMING_SNAKE consts.
 var snakeNames = map[string]bool{
-	"Ignored": true, "DefaultCommitCharacters": true, "AnyTextEdits": true,
+	"Ignored": true, "DefaultCommitCharacters": true,
 	"NewFourslash": true, "NewFourslashWithOptions": true,
 	"GetDefaultCapabilities": true, "GetDefaultCapabilitiesWithOptions": true,
 	"NewDefaultUserPreferences": true, "Dedent": true, "RecoverAndFail": true,
 	"RunFourslash": true, "NewLSPClient": true, "ClientCapabilitiesOptions": true,
 	"FourslashOptions": true,
 }
+
 
 // rustIdent maps a Go identifier to its Rust form.
 func rustIdent(name string) string {
@@ -698,6 +699,9 @@ func (tr *translator) selector(x *ast.SelectorExpr) string {
 // relocatedTypes maps `pkg.Type` (as written in Go tests) to the Rust path
 // when the type lives in a different crate than the qualifier implies.
 var relocatedTypes = map[string]string{
+	"core.TSTrue":  "tsc_core::tristate::TS_TRUE",
+	"core.TSFalse": "tsc_core::tristate::TS_FALSE",
+	"core.TSUnknown": "tsc_core::tristate::TS_UNKNOWN",
 	"util.UserPreferences":           "tsc_lsutil::UserPreferences",
 	"util.NewDefaultUserPreferences": "tsc_lsutil::new_default_user_preferences",
 	"util.ClientCapabilitiesOptions": "tsc_fourslash::testsutil::ClientCapabilitiesOptions",
@@ -885,6 +889,17 @@ func (tr *translator) exprArg(e ast.Expr) string {
 		if lit, ok2 := u.X.(*ast.BasicLit); ok2 && lit.Kind == token.STRING {
 			return "&" + tr.lit(lit) + ".into()"
 		}
+		if cl, ok2 := u.X.(*ast.CompositeLit); ok2 {
+			return "&" + tr.expr(cl)
+		}
+	}
+	if cl, ok := e.(*ast.CompositeLit); ok {
+		if _, isArr := cl.Type.(*ast.ArrayType); isArr {
+			s := tr.expr(cl)
+			if strings.HasPrefix(s, "vec![") {
+				return "&[" + s[5:]
+			}
+		}
 	}
 	return tr.expr(e)
 }
@@ -981,7 +996,11 @@ func (tr *translator) compositeAs(x *ast.CompositeLit, expectedType string) stri
 			b.WriteString(expectedType + " { ")
 			for _, e := range x.Elts {
 				if kv, ok := e.(*ast.KeyValueExpr); ok {
-					b.WriteString(snake(identName(kv.Key)) + ": " + tr.expr(kv.Value) + ", ")
+					v2 := tr.exprArg(kv.Value)
+					if strings.HasPrefix(v2, "&") && len(v2) > 1 {
+						v2 = "Some(" + v2[1:] + ")"
+					}
+					b.WriteString(snake(identName(kv.Key)) + ": " + v2 + ", ")
 				} else {
 					b.WriteString(tr.expr(e) + ", ")
 				}
@@ -1017,7 +1036,12 @@ func (tr *translator) compositeAs(x *ast.CompositeLit, expectedType string) stri
 		b.WriteString(t.Name + " { ")
 		for _, e := range x.Elts {
 			if kv, ok := e.(*ast.KeyValueExpr); ok {
-				b.WriteString(snake(identName(kv.Key)) + ": " + tr.exprArg(kv.Value) + ", ")
+				v := tr.exprArg(kv.Value)
+				if strings.HasPrefix(v, "&") && len(v) > 1 {
+					// &T{...} field -> Option<T>
+					v = "Some(" + v[1:] + ")"
+				}
+				b.WriteString(snake(identName(kv.Key)) + ": " + v + ", ")
 			} else {
 				b.WriteString(tr.expr(e) + ", ")
 			}
@@ -1040,7 +1064,7 @@ func (tr *translator) compositeAs(x *ast.CompositeLit, expectedType string) stri
 				parts = append(parts, tr.expr(e))
 			}
 		}
-		return "vec![" + strings.Join(parts, ", ") + "]"
+		return "vec![" + strings.Join(parts, ", ") + "]" // caller wraps
 
 	case *ast.MapType:
 		_, isSlice := t.Value.(*ast.ArrayType)

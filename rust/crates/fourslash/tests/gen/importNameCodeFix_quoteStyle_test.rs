@@ -13,9 +13,9 @@ export const foo: number;
 [|foo;|]";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/b.ts".into());
-		f.verify_import_fix_at_position(vec![r"import { foo } from './a';
+		f.verify_import_fix_at_position(&[r"import { foo } from './a';
 
-foo;"], Some(tsc_lsutil::UserPreferences { quote_preference: tsc_lsutil::quote_preference("single".into()), ..Default::default() }));
+foo;"], &tsc_lsutil::UserPreferences { quote_preference: tsc_lsutil::quote_preference("single".into()), ..Default::default() });
 	});
 }
 

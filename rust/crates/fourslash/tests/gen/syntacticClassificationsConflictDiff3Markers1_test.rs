@@ -17,7 +17,7 @@ fn syntactic_classifications_conflict_diff3_markers1() {
 >>>>>>> Branch - a
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_semantic_tokens(vec![tsc_fourslash::SemanticToken { type: "class.declaration", text: "C", ..Default::default() }, tsc_fourslash::SemanticToken { type: "property.declaration", text: "v", ..Default::default() }]);
+		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type: "class.declaration".into(), text: "C".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "property.declaration".into(), text: "v".into(), ..Default::default() }]);
 	});
 }
 

@@ -32,7 +32,7 @@ var clear =
 };
 ".into());
 		let mut opts444 = f.get_options();
-		opts444.format_code_settings.indent_multi_line_object_literal_beginning_on_blank_line = tsc_core::TS_TRUE;
+		opts444.format_code_settings.indent_multi_line_object_literal_beginning_on_blank_line = tsc_core::tristate::TS_TRUE;
 		f.configure(opts444);
 		f.format_document("".into());
 		f.verify_current_file_content(r"

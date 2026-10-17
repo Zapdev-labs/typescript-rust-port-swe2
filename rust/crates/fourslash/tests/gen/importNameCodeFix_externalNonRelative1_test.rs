@@ -50,13 +50,13 @@ Pkg2/*internal*/
 		opts1534.format_code_settings.new_line_character = "\n";
 		f.configure(opts1534);
 		f.go_to_marker("external".into());
-		f.verify_import_fix_at_position(vec![r#"import { Pkg2 } from "pkg-2/utils";
+		f.verify_import_fix_at_position(&[r#"import { Pkg2 } from "pkg-2/utils";
 
-Pkg2"#], Some(tsc_lsutil::UserPreferences { import_module_specifier_preference: "project-relative", ..Default::default() }));
+Pkg2"#], &tsc_lsutil::UserPreferences { import_module_specifier_preference: "project-relative", ..Default::default() });
 		f.go_to_marker("internal".into());
-		f.verify_import_fix_at_position(vec![r#"import { Pkg2 } from "../../utils";
+		f.verify_import_fix_at_position(&[r#"import { Pkg2 } from "../../utils";
 
-Pkg2"#], Some(tsc_lsutil::UserPreferences { import_module_specifier_preference: "project-relative", ..Default::default() }));
+Pkg2"#], &tsc_lsutil::UserPreferences { import_module_specifier_preference: "project-relative", ..Default::default() });
 	});
 }
 

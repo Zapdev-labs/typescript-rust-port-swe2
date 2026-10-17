@@ -12,7 +12,7 @@ fn formatting_space_between_parent() {
 /*3*/if((true)){}";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut opts180 = f.get_options();
-		opts180.format_code_settings.insert_space_after_opening_and_before_closing_nonempty_parenthesis = tsc_core::TS_TRUE;
+		opts180.format_code_settings.insert_space_after_opening_and_before_closing_nonempty_parenthesis = tsc_core::tristate::TS_TRUE;
 		f.configure(opts180);
 		f.format_document("".into());
 		f.go_to_marker("1".into());

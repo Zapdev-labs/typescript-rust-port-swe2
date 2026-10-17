@@ -26,7 +26,7 @@ declare module "yet-another-ambient-module" {
    export var v3;
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_at_position(vec![r#"let a = "I am a non-trivial statement that appears before imports";
+		f.verify_import_fix_at_position(&[r#"let a = "I am a non-trivial statement that appears before imports";
 import { v1 } from "ambient-module";
 import d from "other-ambient-module"
 import * as ns from "yet-another-ambient-module"

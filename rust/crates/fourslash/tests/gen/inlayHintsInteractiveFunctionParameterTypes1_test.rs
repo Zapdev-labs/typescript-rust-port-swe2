@@ -45,7 +45,7 @@ foo4(p => {})
  }) => void
  const foo5: F4 = (a) => { }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_inlay_hints(None, Some(tsc_lsutil::UserPreferences { include_inlay_function_parameter_type_hints: tsc_core::TS_TRUE, ..Default::default() }));
+		f.verify_baseline_inlay_hints(None, &tsc_lsutil::UserPreferences { include_inlay_function_parameter_type_hints: tsc_core::tristate::TS_TRUE, ..Default::default() });
 	});
 }
 

@@ -23,8 +23,8 @@ function c6 () { foo6(/*k*/1, /*l*/2); }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		let mut start = f.marker_by_name("c".into());
 		let mut end = f.marker_by_name("h".into());
-		let mut span = Some(tsc_lsproto::Range { start: start.ls_position, end: end.ls_position, ..Default::default() });
-		f.verify_baseline_inlay_hints(span, Some(tsc_lsutil::UserPreferences { include_inlay_parameter_name_hints: "literals", ..Default::default() }));
+		let mut span = &tsc_lsproto::Range { start: start.ls_position, end: end.ls_position, ..Default::default() };
+		f.verify_baseline_inlay_hints(span, &tsc_lsutil::UserPreferences { include_inlay_parameter_name_hints: "literals", ..Default::default() });
 	});
 }
 

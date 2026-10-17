@@ -12,9 +12,9 @@ export default Math.foo;
 // @Filename: /index.ts
 a/**/";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_apply_code_action_from_completion(Some(("").into()), Some(tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "a", source: "./a", description: "Add import from \"./a\"", new_file_content: Some((r#"import a from "./a";
+		f.verify_apply_code_action_from_completion(Some(("").into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "a", source: "./a", description: "Add import from \"./a\"", new_file_content: Some((r#"import a from "./a";
 
-a"#).into()), user_preferences: None, ..Default::default() }));
+a"#).into()), user_preferences: None, ..Default::default() });
 	});
 }
 

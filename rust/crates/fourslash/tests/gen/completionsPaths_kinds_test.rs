@@ -24,7 +24,7 @@ import {} from "./[|/*1*/|]";
     }
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions(vec!["0", "1"], Some(tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: ignored, ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![Some(tsc_lsproto::CompletionItem { label: "b", kind: Some((tsc_lsproto::CompletionItemKind::FILE).into()), detail: Some(("b.ts").into()), ..Default::default() }), Some(tsc_lsproto::CompletionItem { label: "dir", kind: Some((tsc_lsproto::CompletionItemKind::FOLDER).into()), detail: Some(("dir").into()), ..Default::default() })], ..Default::default() }), ..Default::default() }));
+		f.verify_completions(&["0", "1"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec![&tsc_lsproto::CompletionItem { label: "b", kind: Some((tsc_lsproto::CompletionItemKind::FILE).into()), detail: Some(("b.ts").into()), ..Default::default() }, &tsc_lsproto::CompletionItem { label: "dir", kind: Some((tsc_lsproto::CompletionItemKind::FOLDER).into()), detail: Some(("dir").into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
 	});
 }
 

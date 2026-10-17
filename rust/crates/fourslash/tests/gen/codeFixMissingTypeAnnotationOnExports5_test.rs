@@ -15,7 +15,7 @@ export class C {
   get property() { return a + b; }
 }";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix_available(vec!["Add return type 'number'"]);
+		f.verify_code_fix_available(&["Add return type 'number'"]);
 		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add return type 'number'", new_file_content: r"const a = 42;
 const b = 42;
 export class C {

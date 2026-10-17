@@ -23,7 +23,7 @@ export function App() {
   )
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_apply_code_action_from_completion(Some(("").into()), Some(tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "Box", source: "./Box", description: "Add import from \"./Box\"", new_file_content: Some((r#"import { Box } from "./Box";
+		f.verify_apply_code_action_from_completion(Some(("").into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "Box", source: "./Box", description: "Add import from \"./Box\"", new_file_content: Some((r#"import { Box } from "./Box";
 
 export function App() {
   return (
@@ -31,7 +31,7 @@ export function App() {
       <Box
     </div>
   )
-}"#).into()), ..Default::default() }));
+}"#).into()), ..Default::default() });
 	});
 }
 

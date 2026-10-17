@@ -18,7 +18,7 @@ fn import_name_code_fix_new_import_base_url0() {
 // @Filename: a/b.ts
 export function f1() { };"#;
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_at_position(vec![r#"import { f1 } from "b";
+		f.verify_import_fix_at_position(&[r#"import { f1 } from "b";
 
 f1();"#], None);
 	});

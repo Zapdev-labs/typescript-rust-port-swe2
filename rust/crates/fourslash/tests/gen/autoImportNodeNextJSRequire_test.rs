@@ -22,7 +22,7 @@ exports.dedupeLines = data => {
 export default 0;";
 		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
 		f.go_to_file("/main.js".into());
-		f.verify_import_fix_at_position(vec![r#"const { variants } = require("./matrix")
+		f.verify_import_fix_at_position(&[r#"const { variants } = require("./matrix")
 
 exports.dedupeLines = data => {
   variants
