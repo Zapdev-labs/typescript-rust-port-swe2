@@ -2358,3 +2358,13 @@ Census (remote /tmp/fsfull.txt):
 - MarkerInput::from landed (E0283 784->46).
 
 ## ck10 (b8986dc437) — 1050 errors (was 16.2k). Census remote /tmp/fsfull.txt: 555 E0308 (re-census 'expected/found'), 178 E0507 *x-on-Rc (emit .as_ref().clone() not (*x).clone() where receiver is Rc), 47 new_content_mapper_fourslash (emit no-Test helpers to shared gen_helpers.rs), 46 E0283, 35 CodeActionKind::SourceSortImports name, 21 E0061, 19 Option<Vec<CompletionsExpectedItem>> From<_> (vec elem .into() gaps), 17 quote_preference ctor, 13 .items on Option<CompletionList> (.unwrap()), 7 new_line_character fmt routing, 7 E0499 double &mut f borrow (f.X(f.Y()) nested calls -> temp var), 6 expected-'f' syntax (fn name vs arg), 4 .ls_position Option unwrap, 4 COMPLETION_CLASS_ELEMENT_KEYWORDS const.
+
+## MILESTONE: generated fourslash suite — ALL 4572 TESTS PASS (0 failed)
+remote ~/genf-rust (isolated dir; ~/TypeScript/rust is the user's own sync —
+do NOT rsync there; user's cargo shares its target/). Remote needs:
+rsync -azL (symlinks: bundled/libs -> Go tree), plus ~/tsc/internal/diagnostics
++ ~/tools/LocProject.json (build.rs repo_root resolves 3 up from
+crates/diagnostics -> $HOME on remote). Tests run <1s per chunk.
+Remaining: resolve_completion_item (lsp/server_handlers.rs:~1071),
+full cargo test workspace, TS-server smoke test, then remove Go tree.
+
