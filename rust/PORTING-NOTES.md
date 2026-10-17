@@ -2542,3 +2542,26 @@ NEXT (priority order):
    go-tsc at ~/go-tsc; rust bin at ~/genf-rust/target/release/tsc.
    Sync: rsync -azL --exclude=target/ . -> ~/genf-rust (+ rm+mkdir libs if
    symlink drifts back).
+
+## checkpoint 21 — PGO rebuild in flight; phase breakdown known
+
+Phase timing (--diagnostics, checker.ts, remote):
+  parse  Go .040 RS .065 | bind Go .022 RS .031 |
+  check  Go .210 RS .405 (0.325 PGO-old) | total Go .281 RS .516
+Gap is ~80% check-time; same symbol/type counts (62,950 vs 62,930 —
+identical work, not extra). Hashmaps already FxHashMap. mimalloc +
+lto=fat + codegen-units=1 already on.
+
+IN FLIGHT: `PGO_TARGET_DIR=target-pgo ./scripts/build-pgo.sh` on remote
+(~/genf-rust) — committed profile pgo/merged.profdata.gz. Old PGO binary
+(~/pgo-target/release/tsc) did 0.44s wall / 0.325 check vs Go 0.30/0.210
+— closes ~35% of gap; still ~1.5x on check.
+
+Next: re-bench new PGO binary vs Go -> update BENCH-checker.png.
+If still gapped: pprof the check phase (pprof-rs crate dep'd; --pprofDir
+flag exists in runLSP args parser — wire it into tsc --noEmit path, or
+add TSC_PPROF env). Likely suspects: Rc clone/drop traffic, RefCell
+checks, dynamic dispatch on hot paths, SymbolTable lookup depth.
+
+Remaining stubs: fourslash.rs:145-196 LSP-mode client; checker_pool.rs
+emit_one_forked.
