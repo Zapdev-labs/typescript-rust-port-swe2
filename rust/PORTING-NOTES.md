@@ -2417,3 +2417,18 @@ Next: collect workspace results -> fix residual failures -> smoke-test
 `tsc` binary (initialize/completion JSON-RPC through tsserver) ->
 vendor diagnostics build inputs so tree is self-contained ->
 remove Go source tree -> final commit.
+
+## checkpoint 13 — FULL WORKSPACE TEST GREEN: 136 test binaries, 0 failures
+
+cargo test --workspace remote (~/genf-rust): all 136 result lines "ok",
+zero FAILED — after env fixes (~/genf-rust/tsc/go.mod, ~/tsc/go.mod,
+~/genf-rust/tsc/testdata/{baselines,fixtures}, diagnostics json + loc,
+tools/LocProject.json). ws-test.txt on remote has the log.
+
+In flight: subagent ff2f56f0 porting resolve_completion_item
+(get_completion_item_details/get_symbol_completion_from_item_data/
+get_completion_entry_details -> crates/ls; wire lsp server_handlers ~1073).
+
+tsc binary: crates/execute/src/bin/tsc.rs (fn main ~line 210).
+NEXT: tsserver/api server smoke test -> vendor diagnostics+libs inputs
+for Go-free tree -> remove /home/dih/TypeScript/tsc.

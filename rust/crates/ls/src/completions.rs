@@ -19,6 +19,7 @@ use tsc_debug as debug;
 use tsc_lsproto::{self as lsproto, CompletionItem as LspCompletionItem};
 use tsc_lsutil::userpreferences_generated::UserPreferences;
 use tsc_spanmap::Feature;
+use tsc_tspath::RootedFilePath;
 
 use crate::api::Error;
 use crate::languageservice::LanguageService;
@@ -542,6 +543,7 @@ impl std::ops::BitOr for SymbolOriginInfoKind {
 }
 
 /// `type symbolOriginInfo struct`.
+#[derive(Clone)]
 pub(crate) struct SymbolOriginInfo {
     /// `kind`.
     pub(crate) kind: SymbolOriginInfoKind,
@@ -556,6 +558,7 @@ pub(crate) struct SymbolOriginInfo {
 }
 
 /// `symbolOriginInfo.data` — the Go `any` payload.
+#[derive(Clone)]
 pub(crate) enum SymbolOriginInfoData {
     /// `*symbolOriginInfoObjectLiteralMethod`.
     ObjectLiteralMethod(Box<SymbolOriginInfoObjectLiteralMethod>),
@@ -590,6 +593,7 @@ impl SymbolOriginInfo {
 }
 
 /// `type symbolOriginInfoObjectLiteralMethod struct`.
+#[derive(Clone)]
 pub(crate) struct SymbolOriginInfoObjectLiteralMethod {
     /// `insertText`.
     pub(crate) insert_text: String,
@@ -10013,5 +10017,328 @@ impl CompletionDataBuilder<'_, '_> {
             });
         }
         methods
+    }
+}
+
+/// `getCompletionDocumentationFormat`.
+fn get_completion_documentation_format(ctx: &Context) -> lsproto::MarkupKind {
+    lsproto::preferred_markup_kind(
+        &lsproto::get_client_capabilities(ctx)
+            .text_document
+            .completion
+            .completion_item
+            .documentation_format,
+    )
+}
+
+/// `createSimpleDetails`.
+fn create_simple_details(
+    item: LspCompletionItem,
+    name: &str,
+    doc_format: lsproto::MarkupKind,
+) -> LspCompletionItem {
+    crate::string_completions::create_completion_details(item, name, "", doc_format)
+}
+
+/// `type detailsData struct`.
+#[derive(Default)]
+struct DetailsData {
+    /// `symbol *symbolDetails`.
+    symbol: Option<SymbolDetails>,
+    /// `request *completionData` — a non-`completionDataData` variant
+    /// (`*completionDataKeyword` / the JSDoc requests).
+    request: Option<CompletionData>,
+    /// `literal *literalValue`.
+    literal: Option<LiteralValue>,
+    /// `cases` — set when `itemData.Source == SourceSwitchCases`.
+    cases: bool,
+}
+
+/// `type symbolDetails struct` — Go populates every field but
+/// `getCompletionItemDetails` only reads `symbol`/`location`.
+#[allow(dead_code)]
+struct SymbolDetails {
+    /// `symbol`.
+    symbol: SymbolId,
+    /// `location`.
+    location: Option<NodeId>,
+    /// `origin`.
+    origin: Option<SymbolOriginInfo>,
+    /// `previousToken`.
+    previous_token: Option<NodeId>,
+    /// `contextToken`.
+    context_token: Option<NodeId>,
+    /// `jsxInitializer`.
+    jsx_initializer: JsxInitializer,
+    /// `isTypeOnlyLocation`.
+    is_type_only_location: bool,
+}
+
+impl LanguageService<'_> {
+    /// `ResolveCompletionItem` — `completionItem/resolve`. Go's `item` is a
+    /// mutable `*lsproto.CompletionItem`; the port takes/returns the value.
+    pub fn resolve_completion_item(
+        &self,
+        ctx: &Context,
+        item: LspCompletionItem,
+        data: &lsproto::CompletionItemData,
+        file_name: &RootedFilePath,
+    ) -> Result<LspCompletionItem, Error> {
+        let (program, file) = self.try_get_program_and_file(file_name);
+        let Some(file) = file else {
+            return Err(Error::Message(format!("file not found: {}", data.file_name)));
+        };
+        let file = {
+            let nodes = program.nodes(file.file_index());
+            source_file_for_supplemental_file_index(
+                &nodes,
+                file,
+                data.supplemental_file_index,
+            )
+        };
+        let Some(file) = file else {
+            return Err(Error::Message(format!(
+                "supplemental source file index not found: {}",
+                data.supplemental_file_index.unwrap_or(-1)
+            )));
+        };
+
+        let (checker, done) = program.get_type_checker_for_file(ctx.clone(), file);
+        let item = self.get_completion_item_details(
+            ctx,
+            &program,
+            &checker,
+            data.position,
+            file,
+            item,
+            data,
+        );
+        drop(checker);
+        done();
+        Ok(item)
+    }
+
+    /// `getCompletionItemDetails`.
+    fn get_completion_item_details(
+        &self,
+        ctx: &Context,
+        program: &Rc<Program>,
+        checker: &Rc<RefCell<Checker>>,
+        position: TextPos,
+        file: NodeId,
+        item: LspCompletionItem,
+        data: &lsproto::CompletionItemData,
+    ) -> LspCompletionItem {
+        let doc_format = get_completion_documentation_format(ctx);
+        let (context_token, previous_token) = {
+            let mut nodes = program.nodes_mut(file.file_index());
+            get_relevant_tokens(&mut nodes, position, file)
+        };
+        let in_string = {
+            let mut nodes = program.nodes_mut(file.file_index());
+            crate::utilities::is_in_string(&mut nodes, file, position, previous_token)
+        };
+        if in_string {
+            return self.get_string_literal_completion_details(
+                ctx,
+                checker,
+                item,
+                &data.name,
+                file,
+                position,
+                context_token,
+                doc_format,
+            );
+        }
+
+        if let Some(auto_import) = &data.auto_import {
+            if data.is_import_statement_completion {
+                return item;
+            }
+            // Auto-imports in content-mapped files are evaluated eagerly so edits outside
+            // of verbatim spans can cause the completion item to be filtered out entirely.
+            // Only real files take this code path, so the final Edits() is guaranteed ok.
+            let nodes = program.nodes_handle(file.file_index());
+            let (edits, description, _ok) = crate::autoimport::Fix {
+                auto_import_fix: auto_import.clone(),
+                ..Default::default()
+            }
+            .edits(
+                ctx,
+                &nodes,
+                file,
+                &program.options(),
+                self.format_options(),
+                &self.converters,
+                self.user_preferences(),
+            );
+            let mut item = item;
+            item.additional_text_edits = Some(edits);
+            item.detail = str_ptr_to(description);
+            return item;
+        }
+
+        // Compute all the completion symbols again.
+        let symbol_completion =
+            self.get_symbol_completion_from_item_data(ctx, checker, file, position, data);
+        let preferences = self.user_preferences();
+
+        if let Some(request) = symbol_completion.request {
+            match request {
+                CompletionData::JSDocTagName
+                | CompletionData::JSDocTag
+                | CompletionData::JSDocParameterName { .. } => {
+                    return create_simple_details(item, &data.name, doc_format);
+                }
+                CompletionData::Keyword(request) => {
+                    if request
+                        .keyword_completions
+                        .iter()
+                        .any(|c| c.item.label == data.name)
+                    {
+                        return create_simple_details(item, &data.name, doc_format);
+                    }
+                    return item;
+                }
+                // `request` is only set for non-`completionDataData` variants.
+                CompletionData::Data(_) => {
+                    unreachable!("Unexpected completion data type: *completionDataData")
+                }
+            }
+        }
+
+        if let Some(symbol_details) = symbol_completion.symbol {
+            return self.create_completion_details_for_symbol(
+                item,
+                symbol_details.symbol,
+                checker,
+                symbol_details.location.expect("symbolDetails.location"),
+                position,
+                doc_format,
+            );
+        }
+
+        if let Some(literal) = &symbol_completion.literal {
+            let name = {
+                let nodes = program.nodes(file.file_index());
+                completion_name_for_literal(&nodes, file, preferences, literal)
+            };
+            return create_simple_details(item, &name, doc_format);
+        }
+
+        if symbol_completion.cases {
+            return item;
+        }
+
+        // Didn't find a symbol with this name. See if we can find a keyword instead.
+        if all_keyword_completions()
+            .iter()
+            .any(|c| c.label == data.name)
+        {
+            return create_simple_details(item, &data.name, doc_format);
+        }
+        item
+    }
+
+    /// `getSymbolCompletionFromItemData`.
+    fn get_symbol_completion_from_item_data(
+        &self,
+        ctx: &Context,
+        checker: &Rc<RefCell<Checker>>,
+        file: NodeId,
+        position: TextPos,
+        item_data: &lsproto::CompletionItemData,
+    ) -> DetailsData {
+        if item_data.source == completion_source::SWITCH_CASES {
+            return DetailsData {
+                cases: true,
+                ..Default::default()
+            };
+        }
+
+        let completion_data = self
+            .get_completion_data(
+                ctx,
+                checker,
+                file,
+                position,
+                self.user_preferences(),
+                true, /*forItemResolve*/
+            )
+            .unwrap_or_else(|err| panic!("{err}"));
+
+        let Some(completion_data) = completion_data else {
+            return DetailsData::default();
+        };
+
+        let CompletionData::Data(data) = completion_data else {
+            return DetailsData {
+                request: Some(completion_data),
+                ..Default::default()
+            };
+        };
+
+        let program = self.get_program();
+        let preferences = self.user_preferences();
+        let literal = data
+            .literals
+            .iter()
+            .find(|literal| {
+                let nodes = program.nodes(file.file_index());
+                completion_name_for_literal(&nodes, file, preferences, literal)
+                    == item_data.name
+            })
+            .cloned();
+        if let Some(literal) = literal {
+            return DetailsData {
+                literal: Some(literal),
+                ..Default::default()
+            };
+        }
+
+        // Find the symbol with the matching entry name.
+        // We don't need to perform character checks here because we're only comparing the
+        // name against 'entryName' (which is known to be good), not building a new
+        // completion entry.
+        for (index, &symbol) in data.symbols.iter().enumerate() {
+            let origin = data.symbol_to_origin_info_map.get(&(index as i32));
+            let (display_name, _) = {
+                let mut nodes = program.nodes_mut(file.file_index());
+                get_completion_entry_display_name_for_symbol(
+                    &mut nodes,
+                    file,
+                    preferences,
+                    symbol,
+                    origin,
+                    data.completion_kind,
+                    data.is_jsx_identifier_expected,
+                    &checker.borrow(),
+                    &program,
+                )
+            };
+            let symbol_flags = program.symbols.get_ref(symbol).flags;
+            if display_name == item_data.name
+                && (item_data.source == completion_source::CLASS_MEMBER_SNIPPET
+                    && symbol_flags.intersects(SymbolFlags::CLASS_MEMBER)
+                    || item_data.source == completion_source::OBJECT_LITERAL_METHOD_SNIPPET
+                        && symbol_flags.intersects(SymbolFlags::PROPERTY | SymbolFlags::METHOD)
+                    || item_data.source == get_source_from_origin(origin)
+                    || item_data.source == completion_source::OBJECT_LITERAL_MEMBER_WITH_COMMA)
+            {
+                return DetailsData {
+                    symbol: Some(SymbolDetails {
+                        symbol,
+                        location: data.location,
+                        origin: origin.cloned(),
+                        previous_token: data.previous_token,
+                        context_token: data.context_token,
+                        jsx_initializer: data.jsx_initializer,
+                        is_type_only_location: data.is_type_only_location,
+                    }),
+                    ..Default::default()
+                };
+            }
+        }
+        DetailsData::default()
     }
 }
