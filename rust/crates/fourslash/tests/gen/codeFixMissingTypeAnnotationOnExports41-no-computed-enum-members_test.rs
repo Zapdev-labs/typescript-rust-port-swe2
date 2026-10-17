@@ -15,7 +15,7 @@ enum E {
     A = "foo".length
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_code_fix_not_available();
+		f.verify_code_fix_not_available(&[]);
 	});
 }
 

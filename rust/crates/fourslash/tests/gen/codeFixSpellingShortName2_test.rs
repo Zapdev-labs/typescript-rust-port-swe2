@@ -10,7 +10,7 @@ fn code_fix_spelling_short_name2() {
 		let content = r"export let ab = 1;
 abc;";
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_code_fix_not_available();
+		f.verify_code_fix_not_available(&[]);
 	});
 }
 

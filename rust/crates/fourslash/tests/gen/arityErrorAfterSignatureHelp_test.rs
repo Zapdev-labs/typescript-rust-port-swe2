@@ -18,7 +18,7 @@ declare function f(x: string, y: number): any;
 		f.insert("\"");
 		f.insert("\"");
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { ..Default::default() });
-		f.verify_code_fix_not_available();
+		f.verify_code_fix_not_available(&[]);
 		f.verify_error_exists_between_markers("1", "2");
 	});
 }

@@ -22,7 +22,7 @@ class C implements I1,I2 {[|
 		f.verify_range_after_code_fix(r#"
 y: "𣋝ઢȴ¬⏊";
 "#, false, 0, 0);
-		f.verify_code_fix_not_available();
+		f.verify_code_fix_not_available(&[]);
 	});
 }
 

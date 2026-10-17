@@ -11,7 +11,7 @@ fn content_mapper_diagnostic_code_does_not_select_type_script_fix() {
 export function f/*query*/oo() { return 1; }
 ", tsc_testutil::contentmappertest::DIAGNOSTIC_CODE_COLLISION_MAPPER, ".box");
 		f.go_to_marker("query");
-		f.verify_code_fix_not_available();
+		f.verify_code_fix_not_available(&[]);
 	});
 }
 

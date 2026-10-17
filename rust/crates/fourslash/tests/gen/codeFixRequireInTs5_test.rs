@@ -12,7 +12,7 @@ const a = 1;
 const b = 2;
 const foo = require(", "`"), r"foo${a}${b}"), "`"), r");");
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_code_fix_not_available();
+		f.verify_code_fix_not_available(&[]);
 	});
 }
 

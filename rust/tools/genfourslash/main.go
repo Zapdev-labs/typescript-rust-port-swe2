@@ -1247,10 +1247,10 @@ func (tr *translator) callArgs(name string, list []ast.Expr, skip int, spread bo
 		out = append(out, tr.argFor(name, i, a))
 	}
 
-	if hasVSlice && len(args) > vSlice {
+	if hasVSlice && len(args) >= vSlice {
 		out = append(out, tr.packSlice(args[vSlice:], spread))
 	}
-	if hasVIter && len(args) > vIter {
+	if hasVIter && len(args) >= vIter {
 		out = append(out, tr.packIter(args[vIter:], spread))
 	}
 	return strings.Join(out, ", ")
@@ -1850,7 +1850,19 @@ func (tr *translator) compositeAs(x *ast.CompositeLit, expectedType string) stri
 		if expectedType != "" {
 			var b strings.Builder
 			b.WriteString(expectedType + " { ")
-			tr.emitFields(&b, x, expectedType)
+			if fields, ok := tr.localStructs[expectedType]; ok {
+				i := 0
+				for _, e := range x.Elts {
+					if kv, ok2 := e.(*ast.KeyValueExpr); ok2 {
+						b.WriteString(fieldName(identName(kv.Key)) + ": " + tr.exprField(kv.Value) + ", ")
+					} else if i < len(fields) {
+						b.WriteString(fields[i] + ": " + tr.exprField(e) + ", ")
+					}
+					i++
+				}
+			} else {
+				tr.emitFields(&b, x, expectedType)
+			}
 			b.WriteString("..Default::default() }")
 			return b.String()
 		}

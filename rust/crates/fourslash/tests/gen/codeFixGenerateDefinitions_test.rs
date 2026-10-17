@@ -12,7 +12,7 @@ module.exports = 0;
 // @Filename: /a.ts
 import * as foo from "foo";"#;
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_code_fix_not_available();
+		f.verify_code_fix_not_available(&[]);
 	});
 }
 
