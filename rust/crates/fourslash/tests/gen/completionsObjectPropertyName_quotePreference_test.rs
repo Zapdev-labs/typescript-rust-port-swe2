@@ -16,7 +16,7 @@ fn required_key(name: string) {
 }
 
 fn optional_key(name: string) {
-	return &tsc_lsproto::CompletionItem { label: format!("{}{}", name, "?").into(), insert_text: Some((name).into()), filter_text: Some((name).into()), sort_text: Some((tsc_ls::SORT_TEXT_OPTIONAL_MEMBER.to_string()).into()), ..Default::default() };
+	return &tsc_lsproto::CompletionItem { label: format!("{}{}", name, "?").into(), insert_text: Some((name).into()), filter_text: Some((name).into()), sort_text: Some((tsc_ls::OPTIONAL_MEMBER.to_string()).into()), ..Default::default() };
 }
 
 fn verify_object_literal_key_completions(t: &mut TestHandle, f: &mut FourslashTest, items: &[(*tsc_lsproto::CompletionItem).clone()]) {

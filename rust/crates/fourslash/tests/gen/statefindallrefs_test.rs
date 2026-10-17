@@ -843,6 +843,13 @@ export function /*find*/bar() { }
 #[test]
 fn find_all_refs_special_handling_of_localness() {
 	run_test(|t| {
+		#[derive(Default, Clone, Debug)]
+		struct testCase {
+			name: String,
+			definition: String,
+			usage: String,
+			reference_term: String,
+		}
 		for tc in vec![testCase { "ArrowFunctionAssignment", r"export const dog = () => { };", r"shared.dog();", "dog", ..Default::default() }, testCase { "ArrowFunctionAsObjectLiteralPropertyTypes", r"export const foo = { bar: () => { } };", r"shared.foo.bar();", "bar", ..Default::default() }, testCase { "ObjectLiteralProperty", r#"export const foo = {  baz: "BAZ" };"#, r"shared.foo.baz;", "baz", ..Default::default() }, testCase { "MethodOfClassExpression", r"export const foo = class { fly() {} };", dedent(r"
 					const instance = new shared.foo();
 					instance.fly();"), "fly", ..Default::default() }, testCase { "ArrowFunctionAsObjectLiteralProperty", dedent(r"
@@ -983,6 +990,13 @@ console.log(symbolA);
 #[test]
 fn find_all_refs_declaration_in_other_project() {
 	run_test(|t| {
+		#[derive(Default, Clone, Debug)]
+		struct testCase {
+			project_already_loaded: bool,
+			disable_referenced_project_load: bool,
+			disable_source_of_project_reference_redirect: bool,
+			dts_map_present: bool,
+		}
 		for tc in vec![testCase { true, true, true, true, ..Default::default() }, testCase { true, true, true, false, ..Default::default() }, testCase { true, true, false, true, ..Default::default() }, testCase { true, true, false, false, ..Default::default() }, testCase { true, false, true, true, ..Default::default() }, testCase { true, false, true, false, ..Default::default() }, testCase { true, false, false, true, ..Default::default() }, testCase { true, false, false, false, ..Default::default() }, testCase { false, true, true, true, ..Default::default() }, testCase { false, true, true, false, ..Default::default() }, testCase { false, true, false, true, ..Default::default() }, testCase { false, true, false, false, ..Default::default() }, testCase { false, false, true, true, ..Default::default() }, testCase { false, false, true, false, ..Default::default() }, testCase { false, false, false, true, ..Default::default() }, testCase { false, false, false, false, ..Default::default() }] {
 			let mut sub_scenario = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!(r"Proj%sLoaded", tsc_core::if_else(tc.project_already_loaded, "Is", "IsNot")), r"RefdProjLoadingIs"), tsc_core::if_else(tc.disable_referenced_project_load, "Disabled", "Enabled")), r"ProjRefRedirectsAre"), tsc_core::if_else(tc.disable_source_of_project_reference_redirect, "Disabled", "Enabled")), r"DeclMapIs"), tsc_core::if_else(tc.dts_map_present, "Present", "Missing"));
 			run_subtest(&mut t, format!("{}{}", "TestFindAllRefsDeclarationInOtherProject", sub_scenario), |t| {

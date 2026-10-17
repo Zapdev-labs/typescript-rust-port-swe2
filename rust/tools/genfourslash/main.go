@@ -399,6 +399,12 @@ func (tr *translator) emitStmt(s ast.Stmt) {
 		}
 		for _, spec := range decl.Specs {
 			switch sp := spec.(type) {
+			case *ast.TypeSpec:
+				if st2, ok2 := sp.Type.(*ast.StructType); ok2 {
+					tr.emitLocalStruct(sp.Name.Name, st2)
+				} else {
+					note(tr.fset, spec, "type decl %T", sp.Type)
+				}
 			case *ast.ValueSpec:
 				for i, n := range sp.Names {
 					var init string
@@ -806,6 +812,10 @@ func (tr *translator) selector(x *ast.SelectorExpr) string {
 		// package-level member: type names stay CamelCase; Go enum consts
 		// `TypeNameVariant` map to `Type::VARIANT`; vars/fns -> snake.
 		name := x.Sel.Name
+		if pkg == "ls" && strings.HasPrefix(name, "SortText") &&
+			len(name) > len("SortText") && unicode.IsUpper(rune(name[len("SortText")])) {
+			return "tsc_ls::" + screaming(name[len("SortText"):])
+		}
 		if isTypeName(name) {
 			return path + "::" + name
 		}
@@ -1022,7 +1032,12 @@ func (tr *translator) call(c *ast.CallExpr) string {
 				tr.callArgs(snake(sel.Sel.Name), c.Args, 0, c.Ellipsis.IsValid()) + ")"
 		}
 		// method call on other receivers: x.Method(...) -> x.method(...)
-		return tr.expr(sel.X) + "." + snake(sel.Sel.Name) + "(" + tr.args(c.Args, 0) + ")"
+		skip := 0
+		if len(c.Args) > 0 && identName(c.Args[0]) == "t" {
+			skip = 1
+		}
+		return tr.expr(sel.X) + "." + snake(sel.Sel.Name) + "(" +
+			tr.callArgs(snake(sel.Sel.Name), c.Args, skip, c.Ellipsis.IsValid()) + ")"
 	}
 	if id, ok := c.Fun.(*ast.Ident); ok {
 		switch id.Name {

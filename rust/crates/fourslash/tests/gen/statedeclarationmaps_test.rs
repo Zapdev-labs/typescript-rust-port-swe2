@@ -50,6 +50,12 @@ new /*1*/A();
 #[test]
 fn declaration_map_test_cases_for_maps() {
 	run_test(|t| {
+		#[derive(Default, Clone, Debug)]
+		struct testCase {
+			name: String,
+			go_to_marker: String,
+			op_marker: String,
+		}
 		let mut tests = vec![testCase { "FindAllRefs", "userFnA", "userFnA", ..Default::default() }, testCase { "FindAllRefsStartingAtDefinition", "userFnA", "fnADef", ..Default::default() }, testCase { "FindAllRefsTargetDoesNotExist", "userFnB", "userFnB", ..Default::default() }, testCase { "Rename", "userFnA", "userFnA", ..Default::default() }, testCase { "RenameStartingAtDefinition", "userFnA", "fnADef", ..Default::default() }, testCase { "RenameTargetDoesNotExist", "userFnB", "userFnB", ..Default::default() }];
 		for tc in tests {
 			run_subtest(&mut t, format!("{}{}", "TestDeclarationMaps", tc.name), |t| {
@@ -250,6 +256,14 @@ export declare function f(): void;
 #[test]
 fn declaration_maps_rename() {
 	run_test(|t| {
+		#[derive(Default, Clone, Debug)]
+		struct testCase {
+			name: String,
+			dont_build: bool,
+			main_with_no_ref: bool,
+			disable_source_of_project_reference_redirect: bool,
+			tsconfig_not_solution: bool,
+		}
 		for tc in vec![testCase { name: "ProjectReferences".to_string().into(), dont_build: true.into(), ..Default::default() }, testCase { name: "DisableSourceOfProjectReferenceRedirect".to_string().into(), disable_source_of_project_reference_redirect: true.into(), ..Default::default() }, testCase { name: "SourceMaps".to_string().into(), main_with_no_ref: true.into(), ..Default::default() }, testCase { name: "SourceMapsNotSolution".to_string().into(), main_with_no_ref: true.into(), tsconfig_not_solution: true.into(), ..Default::default() }] {
 			let mut build_str = tsc_core::if_else(!tc.dont_build, "// @tsc: --build /myproject/dependency,--build /myproject/main", "");
 			let mut main_refs_str = tsc_core::if_else(!tc.main_with_no_ref, r#""references": [{ "path": "../dependency" }]"#, "");

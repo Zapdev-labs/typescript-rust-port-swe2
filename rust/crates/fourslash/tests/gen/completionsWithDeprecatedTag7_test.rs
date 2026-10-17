@@ -20,7 +20,7 @@ const i: I = {
     /**/
 }";
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "a".to_string().into(), sort_text: Some((tsc_ls::deprecate_sort_text(tsc_ls::SORT_TEXT_MEMBER_DECLARED_BY_SPREAD_ASSIGNMENT).to_string()).into()), kind: Some((tsc_lsproto::CompletionItemKind::Field).into()), tags: Some(vec![tsc_lsproto::COMPLETION_ITEM_TAG_DEPRECATED]), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "a".to_string().into(), sort_text: Some((tsc_ls::deprecate_sort_text(tsc_ls::MEMBER_DECLARED_BY_SPREAD_ASSIGNMENT).to_string()).into()), kind: Some((tsc_lsproto::CompletionItemKind::Field).into()), tags: Some(vec![tsc_lsproto::COMPLETION_ITEM_TAG_DEPRECATED]), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

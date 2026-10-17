@@ -11,7 +11,7 @@ fn completion_resolve_keyword() {
 	/*a*/
 }";
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_completions("a".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "abstract".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Keyword).into()), sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), detail: Some(("abstract").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions("a".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "abstract".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Keyword).into()), sort_text: Some((tsc_ls::GLOBALS_OR_KEYWORDS.to_string()).into()), detail: Some(("abstract").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

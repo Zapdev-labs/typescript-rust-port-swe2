@@ -2111,3 +2111,52 @@ NEXT fixes needed (by error class):
 - 20 E0271 &[CompletionItem;N] vs IntoIterator: unqualified calls like
   `completionGlobalsPlus(...)` bypass callArgs — Ident-fun call path must
   also route through callArgs(name,...).
+
+## checkpoint 4 (after ea8fe62802 + marker/assert/sorttext/typespec fixes)
+
+cargo check -p tsc-fourslash --tests: 1959 errors (was 2764, 11803, 16204).
+New fixes landed: TypeSpec local-struct branch in DeclStmt, ls.SortTextX ->
+tsc_ls::X (strip SortText prefix), non-f receiver calls route through
+callArgs when first arg is `t`, MarkerInput::from for marker args,
+packSlice empty->&[], any/no_text_edits_marker() sentinels in verify.rs,
+assert pkg -> assert!/assert_eq!, CodeActionKind Ts-suffix variant aliases.
+
+NEXT (by class):
+- 784 E0283: `.into()` ambiguity — locate residual `.into()` sites
+  (sample /tmp/fsfull.txt on remote); MarkerInput::from landed for
+  markerArgs — remaining are probably `.to_string().into()`/bare `.into()`
+  on field values where target type is ambiguous (e.g. `.into()` on
+  `vec![...]` inside `Some(...)` without type context, `None.into()`,
+  `T{...}.into()` where T itself is ambiguous). Consider: emit
+  `Option::<T>::from`/explicit paths for the worst offenders.
+- 547 E0308: re-census.
+- 72 E0061 verify_code_fix_not_available() — packSlice emits `&[]` now;
+  verify it landed (may need the call path to reach callArgs — receiver `f`
+  ok). If still failing, the empty-tail guard ordering may be wrong.
+- 47 new_content_mapper_fourslash: helper in contentMapper_test.go
+  (skipped, no Test fns). Emit helper fns from no-Test files into a
+  `gen_helpers.rs` shared module or map name -> real fn.
+- 40 E0507 `*x` on Rc: `(*x).clone()` emitted — check sites; may need
+  `x.as_ref()`/method instead where target isn't T but &T.
+- 35 CodeActionKind::SourceSortImports not found — check real const names
+  (SourceOrganizeImports exists; SortImports variant may be named
+  differently — grep lsp_generated.rs).
+- 32+32 `keyword true/false` + testCase struct: TypeSpec branch added —
+  verify `struct testCase` actually emits in gen files now.
+- 25 VerifyWorkspaceSymbolCase: Default + similar — add #[derive(Default)]
+  to verify.rs structs used with ..Default::default() (grep which).
+- 18+14 SYMBOL_KIND_*: add "SymbolKind" to enumTypes (PascalCase ->
+  SymbolKind::Variable/Property).
+- 17 quote_preference/17 object_literal_property_sort_text missing:
+  `ls.ObjectLiteralPropertySortText(...)` is pub(crate) fn in
+  completions.rs -> make pub + re-export in tsc_ls lib.rs;
+  `quote_preference` — find Go usage (probably `lsutil.QuotePreference`
+  enum const mis-emitted as fn call — check gen site).
+- 12 ImportModuleSpecifierPreference: From<String>: `.to_string().into()`
+  can't work (&'static str newtype) — emit
+  `tsc_modulespecifiers::ImportModuleSpecifierPreference("x")` for fields
+  `import_module_specifier_preference`/`import_module_specifier_ending`
+  (newtypeStrFields map) or add From<&'static str> impl + emit `.into()`.
+- Remote: ~/TypeScript/rust; fsfull.txt has details; resync whole tree
+  if crates vanish. Regen: cd tools/genfourslash && GOWORK=off go build
+  -o genfourslash main.go && ./run.sh

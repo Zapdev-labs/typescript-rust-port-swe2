@@ -1,6 +1,2 @@
 /home/dih/TypeScript/tsc/internal/fourslash/tests/getEditsForFileRename_duplicateUnresolvedImports_test.go:58:2: C-style for
-/home/dih/TypeScript/tsc/internal/fourslash/tests/statedeclarationmaps_test.go:59:7: decl spec *ast.TypeSpec
-/home/dih/TypeScript/tsc/internal/fourslash/tests/statedeclarationmaps_test.go:276:7: decl spec *ast.TypeSpec
-/home/dih/TypeScript/tsc/internal/fourslash/tests/statefindallrefs_test.go:932:7: decl spec *ast.TypeSpec
-/home/dih/TypeScript/tsc/internal/fourslash/tests/statefindallrefs_test.go:1118:7: decl spec *ast.TypeSpec
 /home/dih/TypeScript/tsc/internal/fourslash/tests/testmain_test.go:12:2: unhandled defer

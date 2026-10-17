@@ -18,7 +18,7 @@ p/*a*/";
 		f.go_to_marker("a");
 		f.insert(".");
 		f.go_to_eof();
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "x".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Field).into()), sort_text: Some((tsc_ls::SORT_TEXT_LOCATION_PRIORITY.to_string()).into()), ..Default::default() }.into(), "y".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "x".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Field).into()), sort_text: Some((tsc_ls::LOCATION_PRIORITY.to_string()).into()), ..Default::default() }.into(), "y".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 
