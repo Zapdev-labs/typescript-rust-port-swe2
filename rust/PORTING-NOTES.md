@@ -2522,3 +2522,23 @@ Suspects: eager bundled-lib parse (Go lazily parses lib.d.ts?), arena
 warm-up, symbol-table sizing, checker init. NEXT: perf profile the
 ~0.37s check gap — check if lib files are parsed eagerly in
 program_setup/project compile, and whether --skipLibCheck still parses.
+
+## checkpoint 20 — perf work CONTINUES (user: "Improve our speed then wtf")
+
+Data (remote, release): tiny.ts Go .19 / RS .30; checker.ts --noEmit
+--skipLibCheck Go .30 / RS .67. ~0.11s fixed startup, ~0.26s check gap.
+
+NEXT (priority order):
+1. Check if lib files parse EAGERLY despite --skipLibCheck —
+   program.rs:3669 `for (path, lib_file) in &self.lib_files` is in some
+   setup loop; program.rs:1570 gates skip on declaration files.
+   Rust may parse all bundled libs up-front; Go lazily parses them.
+   Look at where lib_files get parsed (program setup / compilerHost).
+2. pprof profile `tsc --noEmit checker.ts` (pprof crate already dep'd,
+   --pprofDir flag exists in Go runLSP — check Rust binary has a prof
+   flag or add env-triggered profiling).
+3. Then fix the dominant cost and re-run the same remote bench command:
+   ssh dih@192.168.1.15 'cd /tmp/bench && time-loops as in notes'.
+   go-tsc at ~/go-tsc; rust bin at ~/genf-rust/target/release/tsc.
+   Sync: rsync -azL --exclude=target/ . -> ~/genf-rust (+ rm+mkdir libs if
+   symlink drifts back).
