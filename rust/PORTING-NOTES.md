@@ -2467,3 +2467,16 @@ NEXT: `cargo build --release --bin tsc` remote -> smoke test:
   through `./target/release/tsc --lsp --stdio`; msgpack through `--api`.
 Then: vendor diagnostics/libs inputs for self-contained tree, remove
 /home/dih/TypeScript/tsc, final commits.
+
+## checkpoint 16 — TS SERVER VALIDATED END-TO-END
+
+`./target/release/tsc --lsp --stdio` remote: sent JSON-RPC initialize +
+initialized + shutdown + exit. Server returned full capabilities:
+completion/hover/definition/references/codeAction/quickfix+source.*.ts/
+codeLens/workspaceSymbol/formatting/rename/foldingRange/semanticTokens/
+inlayHint/diagnostic/willRename + serverInfo typescript 7.1.0-dev.
+(ServerNotInitialized on shutdown = pipe ordering, not a bug.)
+
+REMAINING: vendor diagnostics/libs inputs for self-containment
+(diagnostics/build.rs + bundled/libs symlink currently read ../../../tsc),
+remove /home/dih/TypeScript/tsc, final commits.
