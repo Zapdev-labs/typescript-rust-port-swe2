@@ -191,10 +191,8 @@ fn run_main() -> i32 {
     let args = &args[1..];
     if let Some(first) = args.first() {
         match first.as_str() {
-            "--lsp" | "--api" => {
-                eprintln!("{first}: server mode is not yet ported");
-                return 5; // ExitStatusNotImplemented
-            }
+            "--lsp" => return run_lsp(&args[1..]),
+            "--api" => return run_api(&args[1..]),
             _ => {}
         }
     }
@@ -209,4 +207,133 @@ fn run_main() -> i32 {
 
 fn main() {
     std::process::exit(run_main());
+}
+
+/// `runLSP` — `tsc --lsp --stdio`: an LSP server over stdio.
+fn run_lsp(args: &[String]) -> i32 {
+    let mut stdio = false;
+    let mut i = 0;
+    while i < args.len() {
+        match args[i].as_str() {
+            "-stdio" | "--stdio" => stdio = true,
+            "-pprofDir" | "--pprofDir" | "-pipe" | "--pipe" | "-socket" | "--socket" | "-clientProcessId" | "--clientProcessId" => i += 1,
+            _ => {}
+        }
+        i += 1;
+    }
+    if !stdio {
+        eprintln!("only stdio is supported");
+        return 1;
+    }
+    let fs = wrap_fs(tsc_vfs::osvfs::fs());
+    let default_library_path = lib_path();
+    let cwd = rooted_directory_path_from_absolute(
+        &std::env::current_dir().unwrap_or_default().to_string_lossy(),
+    );
+    let typings_location = tsc_tspath::to_rooted_directory_path(
+        &tsc_vfs::osvfs::get_global_typings_cache_location(),
+        &cwd,
+    );
+    let server = tsc_lsp::server::new_server(&tsc_lsp::server::ServerOptions {
+        in_: tsc_lsp::server::to_reader(std::io::stdin()),
+        out: tsc_lsp::server::to_writer(std::io::stdout()),
+        err: Some(std::sync::Arc::new(std::sync::Mutex::new(
+            Box::new(std::io::stderr()) as Box<dyn std::io::Write + Send>,
+        ))),
+        cwd,
+        fs: Some(fs),
+        default_library_path,
+        typings_location,
+        ..Default::default()
+    });
+    match server.run(&Context::background()) {
+        Ok(()) => 0,
+        Err(e) => {
+            eprintln!("{e}");
+            1
+        }
+    }
+}
+
+/// `runAPI` — `tsc --api`: a MessagePack/JSON-RPC session over stdio or a pipe.
+fn run_api(args: &[String]) -> i32 {
+    let mut flag_cwd = std::env::current_dir()
+        .unwrap_or_default()
+        .to_string_lossy()
+        .into_owned();
+    let mut pipe = String::new();
+    let mut callbacks = String::new();
+    let mut case_sensitive = false;
+    let mut async_ = false;
+    let mut timing = false;
+    let mut run_external_code = false;
+    let mut i = 0;
+    let val = |args: &[String], i: usize, cur: &str| -> String {
+        if let Some(eq) = cur.find('=') {
+            cur[eq + 1..].to_string()
+        } else {
+            args.get(i + 1).cloned().unwrap_or_default()
+        }
+    };
+    while i < args.len() {
+        let a = args[i].as_str();
+        let name = a.trim_start_matches('-');
+        if !a.contains('=') {
+            match name {
+                "cwd" | "pipe" | "callbacks" => i += 1,
+                _ => {}
+            }
+        }
+        match name.split('=').next().unwrap_or("") {
+            "cwd" => flag_cwd = val(args, i, a),
+            "pipe" => pipe = val(args, i, a),
+            "callbacks" => callbacks = val(args, i, a),
+            "useCaseSensitiveFileNames" => case_sensitive = a.split('=').nth(1) != Some("false"),
+            "async" => async_ = a.split('=').nth(1) != Some("false"),
+            "timing" => timing = a.split('=').nth(1) != Some("false"),
+            "runExternalCode" => run_external_code = a.split('=').nth(1) != Some("false"),
+            _ => {}
+        }
+        i += 1;
+    }
+    let cwd = tsc_tspath::to_rooted_directory_path(
+        &flag_cwd,
+        &rooted_directory_path_from_absolute(
+            &std::env::current_dir().unwrap_or_default().to_string_lossy(),
+        ),
+    );
+    let mut server = tsc_api::server::new_stdio_server(tsc_api::server::StdioServerOptions {
+        input: if pipe.is_empty() {
+            Some(Box::new(std::io::stdin()) as Box<dyn tsc_ipc::ReadClose>)
+        } else {
+            None
+        },
+        output: if pipe.is_empty() {
+            Some(Box::new(std::io::stdout()) as Box<dyn tsc_ipc::WriteClose>)
+        } else {
+            None
+        },
+        cwd,
+        default_library_path: lib_path(),
+        pipe_path: pipe,
+        callbacks: callbacks
+            .split(',')
+            .filter(|s| !s.is_empty())
+            .map(String::from)
+            .collect(),
+        use_case_sensitive_file_names: Some(
+            tsc_vfs::osvfs::fs().case_sensitivity().is_case_sensitive(),
+        ),
+        async_,
+        collect_timing: timing,
+        run_external_code,
+        content_mapper_spawner: None,
+    });
+    match server.run(&Context::background()) {
+        Ok(()) => 0,
+        Err(e) => {
+            eprintln!("{e}");
+            1
+        }
+    }
 }

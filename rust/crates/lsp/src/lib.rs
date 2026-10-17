@@ -5,6 +5,6 @@ pub mod lspwatcher;
 mod dynamic_queue;
 mod logger;
 mod progress;
-mod server;
+pub mod server;
 mod server_handlers;
 mod stack_sanitizer;
