@@ -13,6 +13,7 @@ use std::rc::Rc;
 use tsc_ast::ast::{NodeFactory, NodeFactoryHooks};
 use tsc_ast::{self as ast, Kind, Node, NodeId, SymbolId};
 use tsc_checker::checker_core::Checker;
+use tsc_checker::nodebuilder::VerbosityContext;
 use tsc_checker::types::{ContextFlags, TypeId};
 use tsc_collections::{OrderedMap, Set};
 use tsc_compiler::program::Program;
@@ -3040,12 +3041,11 @@ fn compare_pattern_keys_comparison(a: &str, b: &str) -> tsc_stringutil::Comparis
 
 impl LanguageService<'_> {
     /// `getStringLiteralCompletionDetails` — used by `getCompletionItemDetails`
-    /// (the `completionItem/resolve` path, `ResolveCompletionItem` — itself
-    /// not yet ported).
+    /// (the `completionItem/resolve` path, `ResolveCompletionItem`).
     pub(crate) fn get_string_literal_completion_details(
         &self,
         ctx: &Context,
-        checker: &mut Checker,
+        checker: &Rc<RefCell<Checker>>,
         item: lsproto::CompletionItem,
         name: &str,
         file: NodeId,
@@ -3064,9 +3064,13 @@ impl LanguageService<'_> {
         if !is_string_literal_like {
             return item;
         }
-        let Some(completions) =
-            self.get_string_literal_completion_entries(ctx, file, context_token, position, checker)
-        else {
+        let Some(completions) = self.get_string_literal_completion_entries(
+            ctx,
+            file,
+            context_token,
+            position,
+            &mut checker.borrow_mut(),
+        ) else {
             return item;
         };
         self.string_literal_completion_details(
@@ -3090,7 +3094,7 @@ impl LanguageService<'_> {
         position: TextPos,
         completion: &StringLiteralCompletions,
         file: NodeId,
-        checker: &mut Checker,
+        checker: &Rc<RefCell<Checker>>,
         doc_format: lsproto::MarkupKind,
     ) -> lsproto::CompletionItem {
         let program = self.get_program();
@@ -3113,7 +3117,7 @@ impl LanguageService<'_> {
         if let Some(types) = &completion.from_types {
             for &t in &types.types {
                 let matches = {
-                    let t_ref = checker.types.get(t);
+                    let t_ref = checker.borrow().types.get(t);
                     matches!(&t_ref.as_literal_type().value, Some(tsc_evaluator::Value::String(v)) if v == name)
                 };
                 if matches {
@@ -3127,23 +3131,31 @@ impl LanguageService<'_> {
 
     /// `createCompletionDetailsForSymbol`.
     ///
-    /// PORT(deferred): `getQuickInfoAndDocumentationForSymbol` lives in
-    /// hover.go (sibling-owned and still a skeleton), so the symbol's quick
-    /// info/documentation detail is not populated yet.
-    fn create_completion_details_for_symbol(
+    /// PORT(ownership): Go's `verbosityContext` argument is `nil` here; the
+    /// port passes a throwaway `VerbosityContext` since the signature needs a
+    /// mutable receiver.
+    pub(crate) fn create_completion_details_for_symbol(
         &self,
         item: lsproto::CompletionItem,
         symbol: SymbolId,
-        checker: &mut Checker,
+        checker: &Rc<RefCell<Checker>>,
         location: NodeId,
         position: TextPos,
         doc_format: lsproto::MarkupKind,
     ) -> lsproto::CompletionItem {
-        // PORT(deferred): quickInfo/documentation come from
-        // `l.getQuickInfoAndDocumentationForSymbol(checker, symbol, location,
-        // docFormat, nil, false /*vsCapability*/)`.
-        let _ = (symbol, checker, location, position);
-        create_completion_details(item, "", "", doc_format)
+        let program = self.get_program();
+        let mut vc = VerbosityContext::default();
+        let (quick_info, documentation, _, _) = self.get_quick_info_and_documentation_for_symbol(
+            &program,
+            checker,
+            Some(symbol),
+            location,
+            doc_format.clone(),
+            &mut vc,
+            false, /*vsCapability*/
+        );
+        let _ = position;
+        create_completion_details(item, &quick_info, &documentation, doc_format)
     }
 }
 
@@ -3151,7 +3163,7 @@ impl LanguageService<'_> {
 ///
 /// PORT(ownership): Go mutates `*item` and returns it; the Rust version takes
 /// and returns the value.
-fn create_completion_details(
+pub(crate) fn create_completion_details(
     mut item: lsproto::CompletionItem,
     detail: &str,
     documentation: &str,

@@ -10271,11 +10271,14 @@ impl LanguageService<'_> {
             return DetailsData::default();
         };
 
-        let CompletionData::Data(data) = completion_data else {
-            return DetailsData {
-                request: Some(completion_data),
-                ..Default::default()
-            };
+        let data = match completion_data {
+            CompletionData::Data(data) => data,
+            request => {
+                return DetailsData {
+                    request: Some(request),
+                    ..Default::default()
+                };
+            }
         };
 
         let program = self.get_program();

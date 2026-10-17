@@ -331,7 +331,7 @@ impl<'h> LanguageService<'h> {
 
     /// `getQuickInfoAndDocumentationForSymbol` — PORT: Go's `node` parameter
     /// is the caller's `rangeNode` (from `getNodeForQuickInfo`).
-    fn get_quick_info_and_documentation_for_symbol(
+    pub(crate) fn get_quick_info_and_documentation_for_symbol(
         &self,
         program: &Rc<Program>,
         c: &Rc<RefCell<Checker>>,

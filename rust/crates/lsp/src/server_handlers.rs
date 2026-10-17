@@ -1069,12 +1069,11 @@ impl Server {
             .session()
             .get_language_service(ctx, &uri)
             .map_err(Error::from_session)?;
-        let _language_service = sls.language_service();
-        // TODO(port): `LanguageService::resolve_completion_item` /
-        // `getCompletionItemDetails` is not yet ported in `crates/ls`
-        // (`string_completions.rs` notes the gap). Until it lands, return the
-        // item unresolved rather than failing the request.
-        Ok(Some(params))
+        let language_service = sls.language_service();
+        let item = language_service
+            .resolve_completion_item(ctx, params, &data, &file_name)
+            .map_err(Error::Ls)?;
+        Ok(Some(item))
     }
 
     /// `s.handleDocumentFormat`.

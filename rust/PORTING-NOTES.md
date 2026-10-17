@@ -2432,3 +2432,17 @@ get_completion_entry_details -> crates/ls; wire lsp server_handlers ~1073).
 tsc binary: crates/execute/src/bin/tsc.rs (fn main ~line 210).
 NEXT: tsserver/api server smoke test -> vendor diagnostics+libs inputs
 for Go-free tree -> remove /home/dih/TypeScript/tsc.
+
+## checkpoint 14 — workspace green; resolve_completion_item in flight
+
+tsc binary: crates/execute/src/bin/tsc.rs dispatches "--lsp"/"--api" at
+line ~194. Go equivalent: cmd/tsc/main.go runMain -> runLSP/runAPI.
+SMOKE TEST NEXT: build tsc binary on remote, pipe a JSON-RPC
+initialize/textDocument.completion through `tsc --lsp --stdio`.
+
+In flight: subagent ff2f56f0 porting resolve_completion_item into
+crates/ls + lsp server_handlers wire-up (it had already edited
+completions.rs when last checked).
+
+Then: vendor diagnostics+libs inputs (self-contained tree), remove
+/home/dih/TypeScript/tsc, final commit.
