@@ -2009,3 +2009,52 @@ Translator fixes pending in tools/genfourslash/main.go:
 - `new_fourslash` template → match crates/fourslash/src/fourslash.rs:403.
 - After each template change: `./run.sh` regenerates; rsync tests/;
   remote `cargo check -p tsc-fourslash --tests` is the gate.
+
+## 2026-10-17 genfourslash fix-loop checkpoint 2
+
+Port status: api/lsp/ls/fourslash-harness/testutil/tsctests all compile
+clean. ONLY remaining bulk work = the 4371 generated tests compiling
+(`cargo check -p tsc-fourslash --tests` remote `dih@192.168.1.15`
+`~/TypeScript/rust`; resync `rsync -az --delete --exclude=target/ rust/`
+when remote loses crates — it is NOT a git repo and drops dirs).
+
+Error loop state: 16,204 -> 19,398 (the `.into()`-on-args change
+regressed; revert `exprArg()` string `.into()` in
+tools/genfourslash/main.go to the plain literal, then re-census).
+The generated files on disk match HEAD `af5388ce4c` + the regressed
+emission — regenerate after reverting.
+
+Confirmed correct emission rules to keep:
+- `f, done := fourslash.NewFourslash(t, caps, content)` ->
+  `let mut f = tsc_fourslash::new_fourslash(t_name(), "", caps, content);`
+- enum consts `TypeVariant` -> `pkg::Type::VARIANT` (enumTypes prefix table)
+- `&T{...}` in arg position -> `&T{...}`; in struct-field position ->
+  `Some(T{...})`; `&var` arg -> `Some(var.clone())`
+- `core.TSTrue/False/Unknown` -> `tsc_core::tristate::TS_*`
+- vars (DefaultCommitCharacters, Ignored, UserPreferences-type) -> snake;
+  `ANY_TEXT_EDITS` stays screaming (it is a pub const in verify.rs)
+- `SemanticToken`/`type_` fields public now
+
+Remaining biggest classes (fix in this order):
+1. `expected String, found &str` — Option<String> fields need
+   `Some("x".into())`; `&str` targets got `String` from `.into()` — revert
+   `.into()` on args, emit `.to_string()` ONLY where the callee is a
+   `String` param (can't infer — accept residual manual fixes).
+2. `&CompletionsExpectedList`/`&VerifySignatureHelpOptions`/
+   `&UserPreferences` — arg-position composite literals need `&` prefix
+   (args emission strips it now — `exprArg` for CompositeLit should
+   return `&` + literal when the Go source had `&`... actually the Go
+   has `&T{}` which we now emit `&`+literal — verify this regression too).
+3. `tsc_ls::` paths ~1k — grep crates/ls/src for the real names
+   (markers like `ls::MarkerOrRange` may be `crate::test_parser` types —
+   add relocatedTypes entries).
+4. `Option<Vec<String>>` fields — emit `Some(vec![..])` for `[]string{}`
+   field values (Option<Vec<T>> is the dominant lsproto shape).
+5. `SemanticToken` literals — field `type` -> `type_`/`r#type` in
+   composite keys (field emission maps `type`->`type_`).
+
+End-to-end TODO after tests compile: `cargo test -p tsc-fourslash
+--test gen_*` remotely (real runtime gate), port
+ls::resolve_completion_item (server_handlers.rs:1071 TODO), build a tsc
+binary + lsp server binary and smoke-test end-to-end, THEN remove the
+Go `tsc/` tree per user request (only after runtime parity verified).
