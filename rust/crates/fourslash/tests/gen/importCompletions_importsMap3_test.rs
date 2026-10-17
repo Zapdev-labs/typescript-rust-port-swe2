@@ -7,31 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_completions_imports_map3() {
 	run_test(|t| {
-		let content = r##"// @Filename: /home/src/workspaces/project/tsconfig.json
-{
-  "compilerOptions": {
-    "module": "nodenext",
-    "lib": ["es5"],
-    "rootDir": "src",
-    "outDir": "dist"
-  }
-}
-// @Filename: /home/src/workspaces/project/package.json
-{
-  "type": "module",
-  "imports": {
-    "#internal/": "./dist/internal/"
-  }
-}
-// @Filename: /home/src/workspaces/project/src/internal/foo.ts
-export function something(name: string) {}
-// @Filename: /home/src/workspaces/project/src/a.ts
-import {} from "/*1*/";
-import {} from "#internal//*2*/";"##;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["1"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["#internal".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["2"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["foo.js".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

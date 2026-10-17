@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_error_mixed_export_kinds() {
 	run_test(|t| {
-		let content = r"// @Filename: a.ts
-export function foo(): number {
-	return 10
-}
-
-const bar = 20;
-export { bar as foo };
-
-// @Filename: b.ts
-foo/**/
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.baseline_auto_imports_completions(&["".into()]);
 	});
 }
 

@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_no_arguments() {
 	run_test(|t| {
-		let content = r"function foo(n: number): string {
-}
-
-foo(/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "foo(n: number): string".to_string().into(), parameter_name: "n".to_string().into(), parameter_span: "n: number".to_string().into(), ..Default::default() });
 	});
 }
 

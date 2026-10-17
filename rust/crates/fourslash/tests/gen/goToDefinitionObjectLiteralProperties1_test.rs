@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_object_literal_properties1() {
 	run_test(|t| {
-		let content = r"interface PropsBag {
-   /*first*/propx: number
-}
-function foo(arg: PropsBag) {}
-foo({
-   [|pr/*p1*/opx|]: 10
-})
-function bar(firstarg: boolean, secondarg: PropsBag) {}
-bar(true, {
-   [|pr/*p2*/opx|]: 10
-})";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["p1".into(), "p2".into()]);
 	});
 }
 

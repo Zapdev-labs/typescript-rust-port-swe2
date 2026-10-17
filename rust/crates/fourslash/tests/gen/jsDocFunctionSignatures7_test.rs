@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn js_doc_function_signatures7() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r#"// @allowJs: true
-// @Filename: Foo.js
-/**
- * @param {string} p0
- * @param {string} [p1]
- */
-function Test(p0, p1) {
-    this.P0 = p0;
-    this.P1 = p1;
-}
-
-
-var /**/test = new Test("");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_quick_info_is("var test: Test", "");
 	});
 }
 

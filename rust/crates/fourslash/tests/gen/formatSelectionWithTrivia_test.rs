@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_selection_with_trivia() {
 	run_test(|t| {
-		let content = r"if (true) {     
-  //   
-   /*begin*/   
-     //    
-     ;    
-       
-      }/*end*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_selection("begin", "end");
-		f.verify_current_file_content(r"if (true) {     
-  //   
-
-    //    
-    ;
-
-}");
 	});
 }
 

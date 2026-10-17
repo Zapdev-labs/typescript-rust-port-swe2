@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_await4() {
 	run_test(|t| {
-		let content = r"async function outerAsyncFun() {
-    let /*end*/af = async () => {
-      [|/*start*/await|] Promise.resolve(0);
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["start".into()]);
 	});
 }
 

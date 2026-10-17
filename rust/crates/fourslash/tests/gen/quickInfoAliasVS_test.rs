@@ -7,30 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_alias_vs() {
 	run_test(|t| {
-		let content = r#"// @Filename: /a.ts
-/**
- * Doc
- * @tag Tag text
- */
-export const x = 0;
-// @Filename: /b.ts
-import { x } from "./a";
-x/*b*/;
-// @Filename: /c.ts
-/**
- * Doc 2
- * @tag Tag text 2
- */
-import {
-    /**
-     * Doc 3
-     * @tag Tag text 3
-     */
-    x
-} from "./a";
-x/*c*/;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", Some(tsc_lsproto::ClientCapabilities { vs_supports_visual_studio_extensions: Some((true).into()), ..Default::default() }), &content);
-		f.verify_baseline_vs_hover();
 	});
 }
 

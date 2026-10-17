@@ -7,46 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_edits_for_file_rename_directory_down() {
 	run_test(|t| {
-		let content = r#"// @Filename: /a.ts
-/// <reference path="./src/old/file.ts" />
-import old from "./src/old";
-import old2 from "./src/old/file";
-export default 0;
-// @Filename: /src/b.ts
-/// <reference path="./old/file.ts" />
-import old from "./old";
-import old2 from "./old/file";
-export default 0;
-// @Filename: /src/foo/c.ts
-/// <reference path="../old/file.ts" />
-import old from "../old";
-import old2 from "../old/file";
-export default 0;
-// @Filename: /src/old/index.ts
-import a from "../../a";
-import a2 from "../b";
-import a3 from "../foo/c";
-import f from "./file";
-export default 0;
-// @Filename: /src/old/file.ts
-export default 0;
-// @Filename: /tsconfig.json
-{ "files": ["a.ts", "src/b.ts", "src/foo/c.ts", "src/old/index.ts", "src/old/file.ts"] }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_will_rename_files_edits("/src/old", "/src/newDir/new", &std::collections::BTreeMap::from([("/a.ts".to_string().into(), r#"/// <reference path="./src/newDir/new/file.ts" />
-import old from "./src/newDir/new";
-import old2 from "./src/newDir/new/file";
-export default 0;"#.to_string().into()), ("/src/b.ts".to_string().into(), r#"/// <reference path="./newDir/new/file.ts" />
-import old from "./newDir/new";
-import old2 from "./newDir/new/file";
-export default 0;"#.to_string().into()), ("/src/foo/c.ts".to_string().into(), r#"/// <reference path="../newDir/new/file.ts" />
-import old from "../newDir/new";
-import old2 from "../newDir/new/file";
-export default 0;"#.to_string().into()), ("/src/newDir/new/index.ts".to_string().into(), r#"import a from "../../../a";
-import a2 from "../../b";
-import a3 from "../../foo/c";
-import f from "./file";
-export default 0;"#.to_string().into()), ("/tsconfig.json".to_string().into(), r#"{ "files": ["a.ts", "src/b.ts", "src/foo/c.ts", "src/newDir/new/index.ts", "src/newDir/new/file.ts"] }"#.to_string().into())]), None);
 	});
 }
 

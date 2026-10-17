@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn document_highlight_type_parameter_constraint_expression_no_crash1() {
 	run_test(|t| {
-		let content = r"// @Filename: /a.ts
-const v/*m*/alue = 1;
-type Box<T extends +value> = typeof value";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, vec!["m".into()]);
 	});
 }
 

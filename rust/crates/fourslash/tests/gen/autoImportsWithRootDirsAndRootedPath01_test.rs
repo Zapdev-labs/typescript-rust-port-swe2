@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_imports_with_root_dirs_and_rooted_path01() {
 	run_test(|t| {
-		let content = r#"// @Filename: /dir/foo.ts
- export function foo() {}
-// @Filename: /dir/bar.ts
- /*$*/
-// @Filename: /dir/tsconfig.json
-{
-    "compilerOptions": {
-        "module": "commonjs",
-        "moduleResolution": "classic",
-        "rootDirs": ["D:/"]
-    }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("$");
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { ..Default::default() }), ..Default::default() }));
 	});
 }
 

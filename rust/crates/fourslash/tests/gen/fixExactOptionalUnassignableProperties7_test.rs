@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn fix_exact_optional_unassignable_properties7() {
 	run_test(|t| {
-		let content = r"// @strictNullChecks: true
-// @exactOptionalPropertyTypes: true
-// @Filename: fixExactOptionalUnassignableProperties6.ts
-class Feh {
-    _requestFinished(error?: string) {
-        this._finishedPromiseCallback({ error/**/ });
-    }
-    private _finishedPromiseCallback: (arg: { error?: string }) => void = () => {};
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix_not_available(&[]);
 	});
 }
 

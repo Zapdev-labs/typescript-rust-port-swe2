@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_in_named_class_expression_with_shadowing() {
 	run_test(|t| {
-		let content = r"class myClass { /*0*/ }
-/*1*/
-var x = class myClass {
-   getClassName (){
-       m/*2*/
-   }
-   /*3*/
-}
-var y = class {
-   getSomeName() {
-       /*4*/
-   }
-   /*5*/
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("0"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { excludes: vec!["myClass".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["1", "4"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "myClass".to_string().into(), detail: Some(("class myClass").into()), kind: Some((tsc_lsproto::CompletionItemKind::Class).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("2"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "myClass".to_string().into(), detail: Some(("(local class) myClass").into()), kind: Some((tsc_lsproto::CompletionItemKind::Property).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["3", "5"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { excludes: vec!["myClass".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

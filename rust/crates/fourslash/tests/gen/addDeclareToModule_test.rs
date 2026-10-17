@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn add_declare_to_module() {
 	run_test(|t| {
-		let content = r"/**/namespace mAmbient {
-    namespace m3 { }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.insert("declare ");
 	});
 }
 

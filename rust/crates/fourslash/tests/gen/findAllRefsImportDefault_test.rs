@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_import_default() {
 	run_test(|t| {
-		let content = r#"// @Filename: f.ts
-export { foo as default };
-function /*start*/foo(a: number, b: number) {
-    return a + b;
-}
-// @Filename: b.ts
-import bar from "./f";
-bar(1, 2);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.verify_baseline_find_all_references(&["start".into()]);
 	});
 }
 

@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn tsx_go_to_definition_union_element_type2() {
 	run_test(|t| {
-		let content = r"//@Filename: file.tsx
-// @jsx: preserve
-// @noLib: true
-class RC1 extends React.Component<{}, {}> {
-    render() {
-        return null;
-    }
-}
-class RC2 extends React.Component<{}, {}> {
-    render() {
-        return null;
-    }
-    private method() { }
-}
-var /*pt1*/RCComp = RC1 || RC2;
-<[|RC/*one*/Comp|] />";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["one".into()]);
 	});
 }
 

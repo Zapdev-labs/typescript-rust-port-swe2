@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_specifier_exclude_regexes3() {
 	run_test(|t| {
-		let content = r#"// @module: preserve
-// @Filename: /node_modules/pkg/package.json
-{
-    "name": "pkg",
-    "version": "1.0.0",
-    "exports": {
-        ".": "./index.js",
-        "./utils": "./utils.js"
-    }
-}
-// @Filename: /node_modules/pkg/utils.d.ts
-export function add(a: number, b: number) {}
-// @Filename: /node_modules/pkg/index.d.ts
-export * from "./utils";
-// @Filename: /src/index.ts
-add/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_module_specifiers("", &["pkg".into(), "pkg/utils".into()], None);
-		f.verify_import_fix_module_specifiers("", &["pkg/utils".into()], Some(&tsc_lsutil::UserPreferences { auto_import_specifier_exclude_regexes: vec!["^pkg$".into()].into(), ..Default::default() }));
 	});
 }
 

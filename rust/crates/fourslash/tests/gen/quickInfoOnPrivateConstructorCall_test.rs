@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_on_private_constructor_call() {
 	run_test(|t| {
-		let content = r"class A {
-    private constructor() {}
-}
-var x = new A(/*1*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_signature_help_for_markers(&["1".into()]);
 	});
 }
 

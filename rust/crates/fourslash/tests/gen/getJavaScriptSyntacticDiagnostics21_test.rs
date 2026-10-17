@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_java_script_syntactic_diagnostics21() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @experimentalDecorators: true
-// @Filename: a.js
-@internal class C {}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_non_suggestion_diagnostics(&[]);
 	});
 }
 

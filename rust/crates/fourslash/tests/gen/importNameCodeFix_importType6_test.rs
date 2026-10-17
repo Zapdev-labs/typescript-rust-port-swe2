@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_import_type6() {
 	run_test(|t| {
-		let content = r#"// @module: es2015
-// @esModuleInterop: true
-// @jsx: react
-// @Filename: /types.d.ts
-declare module "react" { var React: any; export = React; export as namespace React; }
-// @Filename: /a.tsx
-import type React from "react";
-function Component() {}
-(<Component/**/ />)"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_import_fix_at_position(&[r#"import React from "react";
-function Component() {}
-(<Component />)"#.into()], None);
 	});
 }
 

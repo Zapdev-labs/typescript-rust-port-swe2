@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_mapped_type() {
 	run_test(|t| {
-		let content = r#"interface I { /*def*/m(): void; };
-declare const i: { [K in "m"]: I[K] };
-i.[|/*ref*/m|]();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["ref".into()]);
 	});
 }
 

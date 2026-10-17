@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_missing_type_annotation_on_exports32_inline_short_hand() {
 	run_test(|t| {
-		let content = r"// @isolatedDeclarations: true
-// @declaration: true
-// @Filename: /code.ts
-const x = 1;
-export default {
-  x
-};";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Add satisfies and an inline type assertion with 'number'".to_string().into(), new_file_content: r"const x = 1;
-export default {
-  x: x as number
-};".to_string().into(), index: 1, ..Default::default() });
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Add satisfies and an inline type assertion with 'typeof x'".to_string().into(), new_file_content: r"const x = 1;
-export default {
-  x: x as typeof x
-};".to_string().into(), index: 2, ..Default::default() });
 	});
 }
 

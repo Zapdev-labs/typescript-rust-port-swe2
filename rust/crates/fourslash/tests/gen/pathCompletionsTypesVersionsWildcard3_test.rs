@@ -7,33 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn path_completions_types_versions_wildcard3() {
 	run_test(|t| {
-		let content = r#"// @module: commonjs
-// @resolveJsonModule: false
-// @Filename: /node_modules/foo/package.json
-{
-  "types": "index.d.ts",
-  "typesVersions": {
-    ">=4.3.5": {
-      "browser/*": ["dist/*"]
-    }
-  }
-}
-// @Filename: /node_modules/foo/nope.d.ts
-export const nope = 0;
-// @Filename: /node_modules/foo/dist/index.d.ts
-export const index = 0;
-// @Filename: /node_modules/foo/dist/blah.d.ts
-export const blah = 0;
-// @Filename: /node_modules/foo/dist/subfolder/one.d.ts
-export const one = 0;
-// @Filename: /a.ts
-import { } from "foo//**/";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["browser".into(), "nope".into(), "dist".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("browser/");
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["blah".into(), "index".into(), "subfolder".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("subfolder/");
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["one".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

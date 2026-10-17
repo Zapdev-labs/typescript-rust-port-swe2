@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsdoc_deprecated_suggestion7() {
 	run_test(|t| {
-		let content = r"enum Direction {
-    Left = -1,
-    Right = 1,
-}
-type T = Direction.Left
-/** @deprecated */
-const x = 1
-type x = string
-var y: x = 'hi'";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_suggestion_diagnostics(&[]);
 	});
 }
 

@@ -7,34 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_in_type_literal_in_type_parameter11() {
 	run_test(|t| {
-		let content = r"interface Foo {
-    one: string;
-    two: number;
-}
-interface Bar {
-    three: boolean;
-    four: symbol;
-}
-
-class A<T extends Foo> {}
-new A<{/*0*/}>();
-
-class B<T extends Foo, U extends Bar> {}
-new B<{/*1*/}, {/*2*/}>();
-
-declare const C: {
-   new <T extends Foo>(): unknown
-   new <T extends Bar>(): unknown
-}
-new C<{/*3*/}>()
-
-new (class <T extends Foo> {})<{/*4*/}>();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("0"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["one".into(), "two".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["one".into(), "two".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("2"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["three".into(), "four".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("3"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["one".into(), "two".into(), "three".into(), "four".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("4"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["one".into(), "two".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

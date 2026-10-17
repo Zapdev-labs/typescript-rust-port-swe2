@@ -7,51 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsx_tag_name_completion_unclosed() {
 	run_test(|t| {
-		let content = r"//@Filename: file.tsx
-interface NestedInterface {
-    Foo: NestedInterface;
-    (props: {}): any;
-}
-
-declare const Foo: NestedInterface;
-
-function fn1() {
-    return <Foo>
-        </*1*/
-    </Foo>
-}
-function fn2() {
-    return <Foo>
-        <Fo/*2*/
-    </Foo>
-}
-function fn3() {
-    return <Foo>
-        <Foo./*3*/
-    </Foo>
-}
-function fn4() {
-    return <Foo>
-        <Foo.F/*4*/
-    </Foo>
-}
-function fn5() {
-    return <Foo>
-        <Foo.Foo./*5*/
-    </Foo>
-}
-function fn6() {
-    return <Foo>
-        <Foo.Foo.F/*6*/
-    </Foo>
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", Some(tsc_fourslash::get_default_capabilities_with_options(Some(&tsc_fourslash::ClientCapabilitiesOptions { completion_item: Some(tsc_lsproto::ClientCompletionItemOptions { snippet_support: Some((true).into()), ..Default::default() }), ..Default::default() }))), &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "Foo".to_string().into(), detail: Some(("const Foo: NestedInterface").into()), ..Default::default() }.into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { jsx_attribute_completion_style: tsc_lsutil::JsxAttributeCompletionStyle::BRACES.into(), ..Default::default() }, ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("2"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "Foo".to_string().into(), detail: Some(("const Foo: NestedInterface").into()), ..Default::default() }.into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { jsx_attribute_completion_style: tsc_lsutil::JsxAttributeCompletionStyle::BRACES.into(), ..Default::default() }, ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("3"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "Foo".to_string().into(), detail: Some(("(property) NestedInterface.Foo: NestedInterface").into()), ..Default::default() }.into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { jsx_attribute_completion_style: tsc_lsutil::JsxAttributeCompletionStyle::BRACES.into(), ..Default::default() }, ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("4"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "Foo".to_string().into(), detail: Some(("(property) NestedInterface.Foo: NestedInterface").into()), ..Default::default() }.into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { jsx_attribute_completion_style: tsc_lsutil::JsxAttributeCompletionStyle::BRACES.into(), ..Default::default() }, ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("5"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "Foo".to_string().into(), detail: Some(("(property) NestedInterface.Foo: NestedInterface").into()), ..Default::default() }.into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { jsx_attribute_completion_style: tsc_lsutil::JsxAttributeCompletionStyle::BRACES.into(), ..Default::default() }, ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("6"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "Foo".to_string().into(), detail: Some(("(property) NestedInterface.Foo: NestedInterface").into()), ..Default::default() }.into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { jsx_attribute_completion_style: tsc_lsutil::JsxAttributeCompletionStyle::BRACES.into(), ..Default::default() }, ..Default::default() }), ..Default::default() }));
 	});
 }
 

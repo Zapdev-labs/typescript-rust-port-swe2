@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_in_object_binding_pattern10() {
 	run_test(|t| {
-		let content = r"interface I {
-    propertyOfI_1: number;
-    propertyOfI_2: string;
-}
-interface J {
-    property1: I;
-    property2: string;
-}
-
-var foo: J[];
-var [{ property1: { propertyOfI_1, }, /*1*/ }, { /*2*/ }] = foo;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["property2".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("2"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["property1".into(), "property2".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

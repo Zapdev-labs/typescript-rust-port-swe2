@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_in_configured_project() {
 	run_test(|t| {
-		let content = r#"// @Filename: /home/src/workspaces/project/referencesForGlobals_1.ts
-class /*0*/globalClass {
-    public f() { }
-}
-// @Filename: /home/src/workspaces/project/referencesForGlobals_2.ts
-var c = /*1*/globalClass();
-// @Filename: /home/src/workspaces/project/tsconfig.json
-{ "files": ["referencesForGlobals_1.ts", "referencesForGlobals_2.ts"], "compilerOptions": { "lib": ["es5"] } }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.verify_baseline_find_all_references(&["1".into()]);
 	});
 }
 

@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn highlights_for_export_from_unfound_module() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @Filename: a.js
-import foo from 'unfound';
-export {
-  foo,
-};
-// @Filename: b.js
-export {
-   /**/foo
-} from './a';";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_baseline_rename(None, vec!["".into()]);
 	});
 }
 

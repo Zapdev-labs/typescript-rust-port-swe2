@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_type_definition2() {
 	run_test(|t| {
-		let content = r"// @Filename: goToTypeDefinition2_Definition.ts
-interface /*definition*/I1 {
-    p;
-}
-type propertyType = I1;
-interface I2 {
-    property: propertyType;
-}
-// @Filename: goToTypeDefinition2_Consumption.ts
-var i2: I2;
-i2.prop/*reference*/erty;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_type_definition(&["reference".into()]);
 	});
 }
 

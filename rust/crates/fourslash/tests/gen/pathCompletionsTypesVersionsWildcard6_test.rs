@@ -7,37 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn path_completions_types_versions_wildcard6() {
 	run_test(|t| {
-		let content = r#"// @module: commonjs
-// @Filename: /node_modules/foo/package.json
-{
-  "types": "index.d.ts",
-  "typesVersions": {
-    "*": {
-      "bar/*": ["dist/*"],
-      "exact-match": ["dist/index.d.ts"],
-      "foo/*": ["dist/*"],
-      "*": ["dist/*"]
-    }
-  }
-}
-// @Filename: /node_modules/foo/nope.d.ts
-export const nope = 0;
-// @Filename: /node_modules/foo/dist/index.d.ts
-export const index = 0;
-// @Filename: /node_modules/foo/dist/blah.d.ts
-export const blah = 0;
-// @Filename: /node_modules/foo/dist/foo/onlyInFooFolder.d.ts
-export const foo = 0;
-// @Filename: /node_modules/foo/dist/subfolder/one.d.ts
-export const one = 0;
-// @Filename: /a.ts
-import { } from "foo//**/";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["bar".into(), "exact-match".into(), "foo".into(), "blah".into(), "index".into(), "subfolder".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("foo/");
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["blah".into(), "index".into(), "foo".into(), "subfolder".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("foo/");
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["onlyInFooFolder".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

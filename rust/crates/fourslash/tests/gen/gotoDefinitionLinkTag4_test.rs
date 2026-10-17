@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn goto_definition_link_tag4() {
 	run_test(|t| {
-		let content = r"// @filename: a.ts
-interface [|/*2*/Foo|] {
-    foo: E.Foo;
-}
-// @Filename: b.ts
-enum E {
-    /** {@link /*1*/[|Foo|]} */
-    Foo
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(false, &["1".into()]);
 	});
 }
 

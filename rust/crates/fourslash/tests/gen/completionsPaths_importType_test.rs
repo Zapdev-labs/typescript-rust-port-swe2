@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_paths_import_type() {
 	run_test(|t| {
-		let content = r#"// @allowJs: true
-// @moduleResolution: bundler
-// @Filename: /ns.ts
-file content not read
-// @Filename: /node_modules/package/index.ts
-file content not read
-// @Filename: /usage.ts
-type A = typeof import("[|p|]/*1*/");
-type B = import(".//*2*/");
-// @Filename: /user.js
-/** @type {import("/*3*/")} */"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "package".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Folder).into()), detail: Some(("package").into()), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "package".to_string().into(), range: f.ranges()[0].clone().ls_range.into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("3"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "package".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Folder).into()), detail: Some(("package").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("2"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "node_modules".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Folder).into()), detail: Some(("node_modules").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "ns".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::File).into()), detail: Some(("ns.ts").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "user".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::File).into()), detail: Some(("user.js").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

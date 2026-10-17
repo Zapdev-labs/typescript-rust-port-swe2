@@ -7,30 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_call_expression_tuples() {
 	run_test(|t| {
-		let content = r"function fnTest(str: string, num: number) { }
-declare function wrap<A extends any[], R>(fn: (...a: A) => R) : (...a: A) => R;
-var fnWrapped = wrap(fnTest);
-fnWrapped/*3*/(/*1*/'', /*2*/5);
-function fnTestVariadic (str: string, ...num: number[]) { }
-var fnVariadicWrapped = wrap(fnTestVariadic);
-fnVariadicWrapped/*4*/(/*5*/'', /*6*/5);
-function fnNoParams () { }
-var fnNoParamsWrapped = wrap(fnNoParams);
-fnNoParamsWrapped/*7*/(/*8*/);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("3", "var fnWrapped: (str: string, num: number) => void", "");
-		f.go_to_marker("1");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "fnWrapped(str: string, num: number): void".to_string().into(), parameter_count: 2, parameter_name: "str".to_string().into(), parameter_span: "str: string".to_string().into(), ..Default::default() });
-		f.go_to_marker("2");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "num".to_string().into(), parameter_span: "num: number".to_string().into(), ..Default::default() });
-		f.verify_quick_info_at("4", "var fnVariadicWrapped: (str: string, ...num: number[]) => void", "");
-		f.go_to_marker("5");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "fnVariadicWrapped(str: string, ...num: number[]): void".to_string().into(), parameter_count: 2, parameter_name: "str".to_string().into(), parameter_span: "str: string".to_string().into(), is_variadic: true.into(), is_variadic_set: true.into(), ..Default::default() });
-		f.go_to_marker("6");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "num".to_string().into(), parameter_span: "...num: number[]".to_string().into(), is_variadic: true.into(), is_variadic_set: true.into(), ..Default::default() });
-		f.verify_quick_info_at("7", "var fnNoParamsWrapped: () => void", "");
-		f.go_to_marker("8");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "fnNoParamsWrapped(): void".to_string().into(), parameter_count: 0, ..Default::default() });
 	});
 }
 

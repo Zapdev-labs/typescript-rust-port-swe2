@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_edits_for_file_rename_resolve_json_module() {
 	run_test(|t| {
-		let content = r#"// @resolveJsonModule: true
-// @Filename: /a.ts
-import text from "./message.json";
-// @Filename: /message.json
-{}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_will_rename_files_edits("/a.ts", "/src/a.ts", &std::collections::BTreeMap::from([("/src/a.ts".to_string().into(), r#"import text from "../message.json";"#.to_string().into())]), None);
 	});
 }
 

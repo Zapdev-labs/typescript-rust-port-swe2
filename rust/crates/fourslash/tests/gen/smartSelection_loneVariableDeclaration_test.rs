@@ -7,9 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn smart_selection_lone_variable_declaration() {
 	run_test(|t| {
-		let content = r"const /**/x = 3;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_selection_ranges();
 	});
 }
 

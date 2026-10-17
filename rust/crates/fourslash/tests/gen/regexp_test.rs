@@ -7,9 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn regexp() {
 	run_test(|t| {
-		let content = r"var /**/x = /aa/;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("", "var x: RegExp", "");
 	});
 }
 

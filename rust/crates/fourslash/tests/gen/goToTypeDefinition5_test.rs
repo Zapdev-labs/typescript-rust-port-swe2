@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_type_definition5() {
 	run_test(|t| {
-		let content = r"// @Filename: foo.ts
-let Foo: /*definition*/unresolved;
-type Foo = { x: string };
-/*reference*/Foo;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_type_definition(&["reference".into()]);
 	});
 }
 

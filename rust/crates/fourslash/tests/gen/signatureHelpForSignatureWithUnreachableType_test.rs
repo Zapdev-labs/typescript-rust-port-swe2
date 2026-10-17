@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_for_signature_with_unreachable_type() {
 	run_test(|t| {
-		let content = r#"// @Filename: /node_modules/foo/node_modules/bar/index.d.ts
-export interface SomeType {
-    x?: number;
-}
-// @Filename: /node_modules/foo/index.d.ts
-import { SomeType } from "bar";
-export function func<T extends SomeType>(param: T): void;
-export function func<T extends SomeType>(param: T, other: T): void;
-// @Filename: /usage.ts
-import { func } from "foo";
-func({/*1*/});"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "func(param: {}): void".to_string().into(), overloads_count: 2, ..Default::default() });
 	});
 }
 

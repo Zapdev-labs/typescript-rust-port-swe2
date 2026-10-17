@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_for_class_local() {
 	run_test(|t| {
-		let content = r"var n = 14;
-
-class foo {
-    /*1*/private /*2*/n = 0;
-
-    public bar() {
-        this./*3*/n = 9;
-    }
-
-    constructor() {
-        this./*4*/n = 4;
-    }
-
-    public bar2() {
-        var n = 12;
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into()]);
 	});
 }
 

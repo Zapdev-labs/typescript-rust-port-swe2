@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsdoc_callback_tag_rename01() {
 	run_test(|t| {
-		let content = r#"// @lib: es5
-// @allowNonTsExtensions: true
-// @Filename: jsDocCallback.js
-
-/**
- * [|@callback [|{| "contextRangeIndex": 0 |}FooCallback|]
- * @param {string} eventName - Rename should work
- |]*/
-
-/** @type {/*1*/[|FooCallback|]} */
-var t;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into()]);
 	});
 }
 

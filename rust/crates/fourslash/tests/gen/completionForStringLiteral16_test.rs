@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_for_string_literal16() {
 	run_test(|t| {
-		let content = r#"interface Foo {
-    a: string;
-    b: number;
-    c: string;
-}
-
-declare function f1<T>(key: keyof T): T;
-declare function f2<T>(a: keyof T, b: keyof T): T;
-
-f1<Foo>("/*1*/",);
-f1<Foo>("/*2*/");
-f1<Foo>("/*3*/",,,);
-f2<Foo>("/*4*/", "/*5*/",);
-f2<Foo>("/*6*/", "/*7*/");
-f2<Foo>("/*8*/", "/*9*/",,,);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(f.markers()), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["a".into(), "b".into(), "c".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

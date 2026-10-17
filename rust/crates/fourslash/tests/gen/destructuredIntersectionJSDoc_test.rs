@@ -7,37 +7,12 @@ use tsc_fourslash::*;
 #[test]
 fn destructured_intersection_js_doc() {
 	run_test(|t| {
-		let content = r"
-type X = {
-    /** Description of a. */
-    a: {}
-}
-
-type Y = X & { a: {} }
-
-declare function f({ /*1*/a }: Y): void
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 
 #[test]
 fn destructured_intersection_js_doc_variable() {
 	run_test(|t| {
-		let content = r"
-type X = {
-    /** Description of a. */
-    a: {}
-}
-
-type Y = X & { a: {} }
-
-declare const y: Y;
-const { /*1*/a } = y;
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

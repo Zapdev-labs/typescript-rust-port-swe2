@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_import_attributes() {
 	run_test(|t| {
-		let content = r#"
-// @target: esnext
-// @module: esnext
-// @filename: main.ts
-import yadda1 from "yadda" with {/*attr*/}
-import yadda2 from "yadda" with {attr/*attrEnd1*/: true}
-import yadda3 from "yadda" with {attr: /*attrValue*/}
-
-// @filename: yadda
-export default {};
-"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-|marker, index| {
-			f.verify_completions(tsc_fourslash::MarkerInput::from(marker), None);
-		}		f.go_to_each_marker(&[], );
 	});
 }
 

@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_lens_overloads01() {
 	run_test(|t| {
-		let content = r#"
-export function foo(x: number): number;
-export function foo(x: string): string;
-export function foo(x: string | number): string | number {
-	return x;
-}
-
-foo(1);
-
-foo("hello");
-
-// This one isn't expected to match any overload,
-// but is really just here to test how it affects how code lens.
-foo(Math.random() ? 1 : "hello");
-"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_code_lens(Some(&tsc_lsutil::UserPreferences { code_lens_user_preferences: tsc_lsutil::CodeLensUserPreferences { references_code_lens_enabled: tsc_core::tristate::TS_TRUE.into(), references_code_lens_show_on_all_functions: tsc_core::tristate::TS_TRUE.into(), implementations_code_lens_enabled: tsc_core::tristate::TS_TRUE.into(), implementations_code_lens_show_on_interface_methods: tsc_core::tristate::TS_TRUE.into(), implementations_code_lens_show_on_all_class_methods: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 

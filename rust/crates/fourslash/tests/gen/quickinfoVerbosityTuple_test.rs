@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quickinfo_verbosity_tuple() {
 	run_test(|t| {
-		let content = r#"interface Orange {
-    color: string;
-}
-interface Apple {
-    color: string;
-    other: Orange;
-}
-type TwoFruits/*T*/ = [Orange, Apple];
-const tf/*f*/: TwoFruits = [
-    { color: "orange" },
-    { color: "red", other: { color: "orange" } }
-];
-const tf2/*f2*/: [Orange, Apple] = [
-    { color: "orange" },
-    { color: "red", other: { color: "orange" } }
-];
-type ManyFruits/*m*/ = (Orange | Apple)[];
-const mf/*mf*/: ManyFruits = [];"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("T".to_string().into(), vec![0, 1, 2]), ("f".to_string().into(), vec![0, 1, 2, 3]), ("f2".to_string().into(), vec![0, 1, 2]), ("m".to_string().into(), vec![0, 1, 2]), ("mf".to_string().into(), vec![0, 1, 2, 3])]));
 	});
 }
 

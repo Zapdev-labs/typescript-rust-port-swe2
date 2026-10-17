@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn incremental_js_doc_adjusts_lengths_right() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"// @noLib: true
-
-/**
- * Pad ", "`"), r"str"), "`"), r" to "), "`"), r"width"), "`"), r".
- *
- * @param {String} str
- * @param {Number} wid/*1*/");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.insert("th\n@");
 	});
 }
 

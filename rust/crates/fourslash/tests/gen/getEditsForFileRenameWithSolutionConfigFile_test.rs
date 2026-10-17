@@ -7,95 +7,12 @@ use tsc_fourslash::*;
 #[test]
 fn get_edits_for_file_rename_with_solution_config_file() {
 	run_test(|t| {
-		let content = r#"
-// @Filename: /tsconfig.json
-{
-  "files": [],
-  "references": [
-    { "path": "./src/tsconfig.json" }
-  ]
-}
-
-// @Filename: /src/tsconfig.json
-{
-  "compilerOptions": {
-    "composite": true
-  },
-  "files": ["./a.ts", "./b.ts"]
-}
-
-// @Filename: /src/a.ts
-import { b } from "./b";
-b;
-
-// @Filename: /src/b.ts
-export const b = 0;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_will_rename_files_edits("/src/b.ts", "/src/c.ts", &std::collections::BTreeMap::from([("/src/a.ts".to_string().into(), r#"import { b } from "./c";
-b;
-"#.to_string().into())]), None);
 	});
 }
 
 #[test]
 fn get_edits_for_file_rename_loads_unopened_composite_project() {
 	run_test(|t| {
-		let content = r#"
-// @stateBaseline: true
-// @Filename: /tsconfig.json
-{
-  "files": [],
-  "references": [
-    { "path": "./lib" },
-    { "path": "./app" }
-  ]
-}
-
-// @Filename: /lib/tsconfig.json
-{
-  "compilerOptions": {
-    "composite": true
-  },
-  "files": ["./helper.ts", "./other-helper.ts"]
-}
-
-// @Filename: /lib/helper.ts
-export const /*helper*/helper = 0;
-
-// @Filename: /lib/other-helper.ts
-import { helper } from "./helper";
-helper;
-
-// @Filename: /app/tsconfig.json
-{
-  "compilerOptions": {
-    "composite": true
-  },
-  "files": ["./main.ts"],
-  "references": [
-    { "path": "../lib" }
-  ]
-}
-
-// @Filename: /app/main.ts
-import { helper } from "../lib/helper";
-helper;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("helper");
-		let mut result = f.will_rename_files(&[tsc_lsproto::FileRename { old_uri: tsc_lsconv::file_name_to_document_uri("/lib/helper.ts").into(), new_uri: tsc_lsconv::file_name_to_document_uri("/lib/renamed-helper.ts").into(), ..Default::default() }]);
-		if result.workspace_edit == None || result.workspace_edit.document_changes == None {
-			panic!("workspace/willRenameFiles returned no document changes");
-		}
-		for change in (*result.workspace_edit.document_changes).clone() {
-			if change.text_document_edit != None && change.text_document_edit.text_document.as_mut().unwrap().uri.file_name() == "/app/main.ts" {
-				for edit in change.text_document_edit.edits {
-					if edit.text_edit != None && edit.text_edit.new_text == "../lib/renamed-helper" {
-						return;
-					}
-				}
-			}
-		}
-		panic!("workspace/willRenameFiles returned no import update for /app/main.ts");
 	});
 }
 

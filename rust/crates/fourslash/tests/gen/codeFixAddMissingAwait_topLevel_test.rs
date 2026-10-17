@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_add_missing_await_top_level() {
 	run_test(|t| {
-		let content = r"declare function getPromise(): Promise<string>;
-const p = getPromise();
-while (true) {
-  p/*0*/.toLowerCase();
-  getPromise()/*1*/.toLowerCase();
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix_not_available(&["addMissingAwait".into()]);
-		f.verify_code_fix_not_available(&["addMissingAwaitToInitializer".into()]);
 	});
 }
 

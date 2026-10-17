@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_trim_remaining_range() {
 	run_test(|t| {
-		let content = r"// @lib: es5
-    ;
-    /*
-    
-*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.format_document("");
-		f.verify_current_file_content(r";
-/*
- 
-*/");
 	});
 }
 

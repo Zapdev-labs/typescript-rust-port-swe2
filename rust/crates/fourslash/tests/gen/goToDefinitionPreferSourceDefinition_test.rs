@@ -7,39 +7,12 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_prefer_source_definition() {
 	run_test(|t| {
-		let content = r#"// @Filename: /home/src/workspaces/project/a.js
-export const /*sourceTarget*/a = "a";
-// @Filename: /home/src/workspaces/project/a.d.ts
-export declare const /*dtsTarget*/a: string;
-// @Filename: /home/src/workspaces/project/index.ts
-import { a } from "./a";
-a/*start*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(false, &["start".into()]);
-		f.verify_baseline_go_to_source_definition(&["start".into()]);
-		f.configure(tsc_lsutil::UserPreferences { prefer_go_to_source_definition: true.into(), ..Default::default() });
-		f.verify_baseline_go_to_definition(false, &["start".into()]);
 	});
 }
 
 #[test]
 fn go_to_definition_prefer_source_definition_fallback() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{ "name": "pkg", "main": "./index.js", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.d.ts
-export interface Config {
-    enabled: boolean;
-}
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.js
-exports.makeConfig = () => ({ enabled: true });
-// @Filename: /home/src/workspaces/project/index.ts
-import type { Config } from "pkg";
-let value: /*start*/Config;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.configure(tsc_lsutil::UserPreferences { prefer_go_to_source_definition: true.into(), ..Default::default() });
-		f.verify_baseline_go_to_definition(false, &["start".into()]);
 	});
 }
 

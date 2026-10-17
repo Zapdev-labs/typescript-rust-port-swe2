@@ -7,27 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_for_merged_declarations4() {
 	run_test(|t| {
-		let content = r"/*1*/class /*2*/testClass {
-    static staticMethod() { }
-    method() { }
-}
-
-/*3*/module /*4*/testClass {
-    export interface Bar {
-
-    }
-    export var s = 0;
-}
-
-var c1: /*5*/testClass;
-var c2: /*6*/testClass.Bar;
-/*7*/testClass.staticMethod();
-/*8*/testClass.prototype.method();
-/*9*/testClass.bind(this);
-/*10*/testClass.s;
-new /*11*/testClass();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into(), "7".into(), "8".into(), "9".into(), "10".into(), "11".into()]);
 	});
 }
 

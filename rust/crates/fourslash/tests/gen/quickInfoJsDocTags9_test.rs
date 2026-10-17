@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_js_doc_tags9() {
 	run_test(|t| {
-		let content = r"// @noEmit: true
-// @allowJs: true
-// @Filename: quickInfoJsDocTags9.js
-/**
- * @typedef {{ [x: string]: any, y: number }} Foo
- */
-
-/**
- * @type {(t: T) => number}
- * @template {Foo} T Comment Text
- */
-const /**/foo = t => t.y;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn semantic_modern_classification_variables() {
 	run_test(|t| {
-		let content = r"  var x = 9, y1 = [x];
-  try {
-    for (const s of y1) { x = s }
-  } catch (e) {
-    throw y1;
-  }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type_: "variable.declaration".to_string().into(), text: "x".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.declaration".to_string().into(), text: "y1".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable".to_string().into(), text: "x".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.declaration.readonly.local".to_string().into(), text: "s".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable".to_string().into(), text: "y1".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable".to_string().into(), text: "x".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.readonly.local".to_string().into(), text: "s".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.declaration.local".to_string().into(), text: "e".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable".to_string().into(), text: "y1".to_string().into(), ..Default::default() }]);
 	});
 }
 

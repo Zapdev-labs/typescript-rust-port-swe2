@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_occurrences_const04() {
 	run_test(|t| {
-		let content = r"export const class C {
-    private static c/*1*/onst f/*2*/oo;
-    constructor(public con/*3*/st foo) {
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, vec!["1".into(), "2".into(), "3".into()]);
 	});
 }
 

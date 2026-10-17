@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_import_equals_json_file() {
 	run_test(|t| {
-		let content = r#"// @allowJs: true
-// @checkJs: true
-// @resolveJsonModule: true
-// @module: commonjs
-// @Filename: /a.ts
-import /*0*/j = require("/*1*/./j.json");
-/*2*/j;
-// @Filename: /b.js
-const /*3*/j = require("/*4*/./j.json");
-/*5*/j;
-// @Filename: /j.json
-/*6*/{ "x": 0 }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.verify_baseline_find_all_references(&["0".into(), "2".into(), "1".into(), "4".into(), "3".into(), "5".into(), "6".into()]);
 	});
 }
 

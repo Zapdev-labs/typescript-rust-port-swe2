@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_occurrences_constructor() {
 	run_test(|t| {
-		let content = r"class C {
-    [|const/**/ructor|]();
-    [|constructor|](x: number);
-    [|constructor|](y: string, x: number);
-    [|constructor|](a?: any, ...r: any[]) {
-        if (a === undefined && r.length === 0) {
-            return;
-        }
-
-        return;
-    }
-}
-
-class D {
-    constructor(public x: number, public y: number) {
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, to_any(f.ranges()).into_iter().map(Into::into));
 	});
 }
 

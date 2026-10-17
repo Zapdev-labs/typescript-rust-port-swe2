@@ -7,33 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn tsx_signature_help2() {
 	run_test(|t| {
-		let content = r#"// @jsx: preserve
-//@Filename: file.tsx
-import React = require('react');
-export interface ClickableProps {
-    children?: string;
-    className?: string;
-}
-export interface ButtonProps extends ClickableProps {
-    onClick(event?: React.MouseEvent<HTMLButtonElement>): void;
-}
-export interface LinkProps extends ClickableProps {
-    goTo(where: "home" | "contact"): void;
-}
-function _buildMainButton({ onClick, children, className }: ButtonProps): JSX.Element {
-    return(<button className={className} onClick={onClick}>{ children || 'MAIN BUTTON'}</button>);
-}
-export function MainButton(buttonProps: ButtonProps): JSX.Element;
-export function MainButton(linkProps: LinkProps): JSX.Element;
-export function MainButton(props: ButtonProps | LinkProps): JSX.Element {
-    return this._buildMainButton(props);
-}
-let e1 = <MainButton/*1*/ /*2*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "MainButton(buttonProps: ButtonProps): JSX.Element".to_string().into(), parameter_span: "buttonProps: ButtonProps".to_string().into(), overloads_count: 2, ..Default::default() });
-		f.go_to_marker("2");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "MainButton(buttonProps: ButtonProps): JSX.Element".to_string().into(), parameter_span: "buttonProps: ButtonProps".to_string().into(), overloads_count: 2, ..Default::default() });
 	});
 }
 

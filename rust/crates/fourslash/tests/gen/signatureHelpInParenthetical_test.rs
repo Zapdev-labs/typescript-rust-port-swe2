@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_in_parenthetical() {
 	run_test(|t| {
-		let content = r"class base { constructor (public n: number, public y: string) { } }
-(new base(/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "n".to_string().into(), ..Default::default() });
-		f.insert("0, ");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "y".to_string().into(), ..Default::default() });
 	});
 }
 

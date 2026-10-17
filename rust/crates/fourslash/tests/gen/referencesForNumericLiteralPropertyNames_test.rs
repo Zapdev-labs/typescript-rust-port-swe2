@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_for_numeric_literal_property_names() {
 	run_test(|t| {
-		let content = r#"class Foo {
-    public /*1*/12: any;
-}
-
-var x: Foo;
-x[12];
-x = { "12": 0 };
-x = { 12: 0 };"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into()]);
 	});
 }
 

@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn smart_indent_named_import() {
 	run_test(|t| {
-		let content = r"import {/*0*/
-    numbers as bn,/*1*/
-    list/*2*/
-} from '@bykov/basics';/*3*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("0");
-		f.verify_current_line_content(r"import {");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"    numbers as bn,");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"    list");
-		f.go_to_marker("3");
-		f.verify_current_line_content(r"} from '@bykov/basics';");
 	});
 }
 

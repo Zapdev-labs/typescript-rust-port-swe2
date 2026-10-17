@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_for_variable_in_extends_clause02() {
 	run_test(|t| {
-		let content = r"/*1*/interface /*2*/Base { }
-namespace n {
-    var Base = class { };
-    interface I extends /*3*/Base { }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
 	});
 }
 

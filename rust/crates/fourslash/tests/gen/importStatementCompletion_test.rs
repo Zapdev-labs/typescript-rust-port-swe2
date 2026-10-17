@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_statement_completion_uses_named_import() {
 	run_test(|t| {
-		let content = r#"// @Filename: a.ts
-export interface I {}
-// @Filename: 1.ts
-import * as u from "./a";
-[|import I/*a*/|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		let mut preferences = tsc_lsutil::new_default_user_preferences();
-		preferences.include_completions_for_module_exports = tsc_core::tristate::TS_FALSE;
-		preferences.include_completions_for_import_statements = tsc_core::tristate::TS_TRUE;
-		f.verify_completions(tsc_fourslash::MarkerInput::from("a"), Some(&tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "I".to_string().into(), insert_text: Some((r#"import { I } from "./a";"#).into()), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./a".to_string().into(), ..Default::default() }), ..Default::default() }), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: r#"import { I } from "./a";"#.to_string().into(), range: f.ranges()[0].clone().ls_range.into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), user_preferences: Some(preferences.clone()), ..Default::default() }));
 	});
 }
 

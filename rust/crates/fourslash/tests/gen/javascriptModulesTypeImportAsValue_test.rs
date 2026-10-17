@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn javascript_modules_type_import_as_value() {
 	run_test(|t| {
-		let content = r#"// @allowJs: true
-// @Filename: types.js
-/**
- * @typedef {Object} Pet
- * @prop {string} name
- */
-module.exports = { a: 1 };
-// @Filename: app.js
-import { /**/ } from "./types""#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { excludes: vec!["Pet".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -7,41 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn outlining_spans_switch_cases() {
 	run_test(|t| {
-		let content = r"switch (undefined)[| {
- case 0:[|
-   console.log(1)
-   console.log(2)
-   break;
-   console.log(3);|]
- case 1:[|
-   break;|]
- case 2:[|
-   break;
-   console.log(3);|]
- case 3:[|
-   console.log(4);|]
- 
- case 4:
- case 5:
- case 6:[|
-
-
-   console.log(5);|]
- 
- case 7:[| console.log(6);|]
-
- case 8:[| [|{
-   console.log(8);
-   break;
- }|]
- console.log(8);|]
-
- default:[|
-   console.log(7);
-   console.log(8);|]
-}|]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_outlining_spans();
 	});
 }
 

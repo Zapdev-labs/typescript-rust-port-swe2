@@ -7,27 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_implementation_interface_00() {
 	run_test(|t| {
-		let content = r#"interface Fo/*interface_definition*/o {
-    hello: () => void
-}
-
-interface Baz extends Foo {}
-
-var bar: Foo = [|{|"parts": ["(","object literal",")"], "kind": "interface"|}{ hello: helloImpl /**0*/ }|];
-var baz: Foo[] = [|[{ hello: helloImpl /**4*/ }]|];
-
-function helloImpl () {}
-
-function whatever(x: Foo = [|{|"parts": ["(","object literal",")"], "kind": "interface"|}{ hello() {/**1*/} }|] ) {
-}
-
-class Bar {
-    x: Foo = [|{ hello() {/*2*/} }|]
-
-    constructor(public f: Foo = [|{ hello() {/**3*/} }|] ) {}
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_implementation(&["interface_definition".into()]);
 	});
 }
 

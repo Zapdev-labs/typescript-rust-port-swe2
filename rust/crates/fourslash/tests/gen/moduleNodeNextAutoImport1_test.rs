@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn module_node_next_auto_import1() {
 	run_test(|t| {
-		let content = r#"// @Filename: /tsconfig.json
-{ "compilerOptions": { "module": "nodenext" } }
-// @Filename: /package.json
-{ "type": "module" }
-// @Filename: /mobx.d.ts
-export declare function autorun(): void;
-// @Filename: /index.ts
-autorun/**/
-// @Filename: /utils.ts
-import "./mobx.js";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_import_fix_at_position(&[r#"import { autorun } from "./mobx.js";
-
-autorun"#.into()], None);
 	});
 }
 

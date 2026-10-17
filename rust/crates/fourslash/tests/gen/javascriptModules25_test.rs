@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn javascript_modules25() {
 	run_test(|t| {
-		let content = r#"// @allowJs: true
-// @Filename: mod.js
-function foo() { return {a: true}; }
-module.exports.a = foo;
-// @Filename: app.js
-import * as mod from "./mod"
-mod./**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["a".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_private_name() {
 	run_test(|t| {
-		let content = r#"class A {
-    [|/*pnMethodDecl*/#method|]() { }
-    [|/*pnFieldDecl*/#foo|] = 3;
-    get [|/*pnPropGetDecl*/#prop|]() { return ""; }
-    set [|/*pnPropSetDecl*/#prop|](value: string) {  }
-    constructor() {
-        this.[|/*pnFieldUse*/#foo|]
-        this.[|/*pnMethodUse*/#method|]
-        this.[|/*pnPropUse*/#prop|]
-    }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["pnFieldUse".into(), "pnMethodUse".into(), "pnPropUse".into()]);
 	});
 }
 

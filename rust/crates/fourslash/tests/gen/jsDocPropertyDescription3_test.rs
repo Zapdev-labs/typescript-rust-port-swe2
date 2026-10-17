@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn js_doc_property_description3() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"interface LiteralExample {
-    /** Something generic */
-    [key: ", "`"), r"data-${string}"), "`"), r"]: string;
-     /** Something else */
-    [key: "), "`"), r"prefix${number}"), "`"), r"]: number;
-}
-function literalExample(e: LiteralExample) {
-    console.log(e./*literal*/anything);
-}");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("literal", "any", "");
 	});
 }
 

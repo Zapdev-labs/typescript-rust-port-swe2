@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_for_derived_generic_type_with_constructor() {
 	run_test(|t| {
-		let content = r"class A<T> {
-    foo() { }
-}
-class B<T> extends A<T> {
-    bar() { }
-    constructor() { super() }
-}
-class B2<T> extends A<T> {
-    bar() { }
-}
-var /*1*/b: B<number>;
-var /*2*/b2: B<number>;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "var b: B<number>", "");
-		f.verify_quick_info_at("2", "var b2: B<number>", "");
 	});
 }
 

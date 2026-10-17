@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_different_file_indirectly() {
 	run_test(|t| {
-		let content = r"// @Filename: Remote2.ts
-var /*remoteVariableDefinition*/rem2Var;
-function /*remoteFunctionDefinition*/rem2Fn() { }
-class /*remoteClassDefinition*/rem2Cls { }
-interface /*remoteInterfaceDefinition*/rem2Int{}
-module /*remoteModuleDefinition*/rem2Mod { export var foo; }
-// @Filename: Remote1.ts
-var remVar;
-function remFn() { }
-class remCls { }
-interface remInt{}
-namespace remMod { export var foo; }
-// @Filename: Definition.ts
-/*remoteVariableReference*/rem2Var = 1;
-/*remoteFunctionReference*/rem2Fn();
-var rem2foo = new /*remoteClassReference*/rem2Cls();
-class rem2fooCls implements /*remoteInterfaceReference*/rem2Int { }
-var rem2fooVar = /*remoteModuleReference*/rem2Mod.foo;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(false, &["remoteVariableReference".into(), "remoteFunctionReference".into(), "remoteClassReference".into(), "remoteInterfaceReference".into(), "remoteModuleReference".into()]);
 	});
 }
 

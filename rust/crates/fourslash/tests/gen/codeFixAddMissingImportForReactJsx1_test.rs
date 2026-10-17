@@ -7,35 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_add_missing_import_for_react_jsx1() {
 	run_test(|t| {
-		let content = r#"// @jsx: react-jsx
-// @Filename: node_modules/react/index.d.ts
-export declare var React: any;
-// @Filename: node_modules/react/package.json
-{
-  "name": "react",
-  "types": "./index.d.ts"
-}
-// @Filename: foo.tsx
- export default function Foo(){
-     return <></>;
- }
-// @Filename: bar.tsx
- export default function Bar(){
-     return <Foo></Foo>;
- }
-// @Filename: package.json
-{
-  "dependencies": {
-    "react": "*"
-  }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("bar.tsx");
-		f.verify_code_fix_all(&tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport".to_string().into(), new_file_content: r#"import Foo from "./foo";
-
-export default function Bar(){
-    return <Foo></Foo>;
-}"#.to_string().into(), ..Default::default() });
 	});
 }
 

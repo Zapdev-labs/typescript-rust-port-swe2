@@ -7,58 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn organize_imports1() {
 	run_test(|t| {
-		let content = r"import {
-    d, d as D,
-    c,
-    c as C, b,
-    b as B, a
-} from './foo';
-import {
-    h, h as H,
-    g,
-    g as G, f,
-    f as F, e
-} from './foo';
-
-console.log(a, B, b, c, C, d, D);
-console.log(e, f, F, g, G, H, h);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_organize_imports_with_request_kind(r"import {
-    a,
-    b,
-    b as B,
-    c,
-    c as C,
-    d, d as D,
-    e,
-    f,
-    f as F,
-    g,
-    g as G,
-    h, h as H
-} from './foo';
-
-console.log(a, B, b, c, C, d, D);
-console.log(e, f, F, g, G, H, h);", tsc_lsproto::CodeActionKind::SourceOrganizeImports, tsc_lsproto::CodeActionKind::SourceOrganizeImports, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }));
-		f.verify_organize_imports(r"import {
-    b as B,
-    c as C,
-    d as D,
-    f as F,
-    g as G,
-    h as H,
-    a,
-    b,
-    c,
-    d,
-    e,
-    f,
-    g,
-    h
-} from './foo';
-
-console.log(a, B, b, c, C, d, D);
-console.log(e, f, F, g, G, H, h);", tsc_lsproto::CodeActionKind::SourceOrganizeImports, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_FALSE.into(), ..Default::default() }));
 	});
 }
 

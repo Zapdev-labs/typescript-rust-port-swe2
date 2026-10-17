@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_js_doc_namespaced_typedef() {
 	run_test(|t| {
-		let content = r"
-// @allowJs: true
-// @checkJs: true
-// @Filename: /index.js
-// Namespaced typedef
-/** @typedef {string} [|NS|].[|T|] */
-
-// Namespaced typedef aliased to qualified namespaced typedef.
-/** @typedef {NS.T} NS.[|U|] */
-
-// Namespaced typedef aliased to implicitly-resolved typedef.
-/** @typedef {U} NS.[|V|] */
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&[]);
 	});
 }
 

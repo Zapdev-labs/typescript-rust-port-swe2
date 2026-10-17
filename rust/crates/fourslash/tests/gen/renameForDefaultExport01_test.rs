@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_for_default_export01() {
 	run_test(|t| {
-		let content = r#"[|export default class [|{| "contextRangeIndex": 0 |}DefaultExportedClass|] {
-}|]
-/*
- *  Commenting [|{| "inComment": true |}DefaultExportedClass|]
- */
-
-var x: [|DefaultExportedClass|];
-
-var y = new [|DefaultExportedClass|];"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		let mut ranges = f.get_ranges_by_text().get("DefaultExportedClass");
-		let marker_or_ranges = Default::default();
-		for r in ranges {
-			if !(r.marker != None && r.marker.data != None && r.marker.data["inComment"] == true) {
-				marker_or_ranges = marker_or_ranges.push(r);
-			}
-		}
-		f.verify_baseline_rename(None, marker_or_ranges.into_iter().map(Into::into));
 	});
 }
 

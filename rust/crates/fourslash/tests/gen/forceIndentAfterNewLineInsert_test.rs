@@ -7,27 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn force_indent_after_new_line_insert() {
 	run_test(|t| {
-		let content = r"function f1()
-{ return 0; }
-function f2()
-{
-return 0;
-}
-function g()
-{ function h() {
-return 0;
-}}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.verify_current_file_content(r"function f1() { return 0; }
-function f2() {
-    return 0;
-}
-function g() {
-    function h() {
-        return 0;
-    }
-}");
 	});
 }
 

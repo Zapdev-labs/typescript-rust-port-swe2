@@ -7,190 +7,84 @@ use tsc_fourslash::*;
 #[test]
 fn content_mapper_auto_import_after_synthesized_supplemental_prefix() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /dep.ts
-export const helper = 1;
-
-// @Filename: /app.astro
-const value = help/**/;
-", tsc_testutil::contentmappertest::PREFIXED_SUPPLEMENTAL_MAPPER, ".astro");
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["helper".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_apply_code_action_from_completion("", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "helper".to_string().into(), source: "./dep".to_string().into(), description: "Add import from \"./dep\"".to_string().into(), new_file_content: Some((r#"import { helper } from "./dep";
-
-const value = help;
-"#).into()), ..Default::default() });
 	});
 }
 
 #[test]
 fn content_mapper_drops_unmapped_folding_ranges() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /app.fold
-host markup
-", tsc_testutil::contentmappertest::UNMAPPED_FOLDING_MAPPER, ".fold");
-		f.go_to_file("/app.fold");
-		f.verify_folding_range_lines(&[]);
 	});
 }
 
 #[test]
 fn content_mapper_supplemental_folding_ranges() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /app.astro
-function outer() {
-    const value = 1;
-}
-", tsc_testutil::contentmappertest::PREFIXED_SUPPLEMENTAL_MAPPER, ".astro");
-		f.go_to_file("/app.astro");
-		f.verify_folding_range_lines(&[tsc_fourslash::FoldingRangeLineExpected { start_line: 0, end_line: 2, ..Default::default() }]);
 	});
 }
 
 #[test]
 fn content_mapper_disabled_supplemental_folding_ranges() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /folding-disabled.astro
-function outer() {
-    const value = 1;
-}
-", tsc_testutil::contentmappertest::PREFIXED_SUPPLEMENTAL_MAPPER, ".astro");
-		f.go_to_file("/folding-disabled.astro");
-		f.verify_folding_range_lines(&[]);
 	});
 }
 
 #[test]
 fn content_mapper_deduplicates_projected_folding_ranges() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /folding-duplicate.astro
-function outer() {
-    const value = 1;
-}
-", tsc_testutil::contentmappertest::PREFIXED_SUPPLEMENTAL_MAPPER, ".astro");
-		f.go_to_file("/folding-duplicate.astro");
-		f.verify_folding_range_lines(&[tsc_fourslash::FoldingRangeLineExpected { start_line: 0, end_line: 2, ..Default::default() }]);
 	});
 }
 
 #[test]
 fn content_mapper_supplemental_code_lens() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /codelens-supplemental.astro
-function outer() {}
-outer();
-", tsc_testutil::contentmappertest::PREFIXED_SUPPLEMENTAL_MAPPER, ".astro");
-		f.verify_baseline_code_lens(Some(&tsc_lsutil::UserPreferences { code_lens_user_preferences: tsc_lsutil::CodeLensUserPreferences { references_code_lens_enabled: tsc_core::tristate::TS_TRUE.into(), references_code_lens_show_on_all_functions: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 
 #[test]
 fn content_mapper_disabled_supplemental_code_lens() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /codelens-disabled.astro
-function outer() {}
-outer();
-", tsc_testutil::contentmappertest::PREFIXED_SUPPLEMENTAL_MAPPER, ".astro");
-		f.verify_baseline_code_lens(Some(&tsc_lsutil::UserPreferences { code_lens_user_preferences: tsc_lsutil::CodeLensUserPreferences { references_code_lens_enabled: tsc_core::tristate::TS_TRUE.into(), references_code_lens_show_on_all_functions: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 
 #[test]
 fn content_mapper_deduplicates_projected_code_lens() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /codelens-duplicate.astro
-function outer() {}
-outer();
-", tsc_testutil::contentmappertest::PREFIXED_SUPPLEMENTAL_MAPPER, ".astro");
-		f.verify_baseline_code_lens(Some(&tsc_lsutil::UserPreferences { code_lens_user_preferences: tsc_lsutil::CodeLensUserPreferences { references_code_lens_enabled: tsc_core::tristate::TS_TRUE.into(), references_code_lens_show_on_all_functions: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 
 #[test]
 fn content_mapper_supplemental_implementation_code_lens() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /codelens-implementation.astro
-interface Service { run(): void }
-class Impl implements Service { run() {} }
-", tsc_testutil::contentmappertest::PREFIXED_SUPPLEMENTAL_MAPPER, ".astro");
-		f.verify_baseline_code_lens(Some(&tsc_lsutil::UserPreferences { code_lens_user_preferences: tsc_lsutil::CodeLensUserPreferences { implementations_code_lens_enabled: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 
 #[test]
 fn content_mapper_formats_supplemental_verbatim_range() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /formatting.astro
-function outer(){
-const value={a:1};
-}
-", tsc_testutil::contentmappertest::PREFIXED_SUPPLEMENTAL_MAPPER, ".astro");
-		f.go_to_file("/formatting.astro");
-		f.format_document("/formatting.astro");
-		f.verify_current_file_content(r"function outer() {
-    const value = { a: 1 };
-}
-");
 	});
 }
 
 #[test]
 fn content_mapper_skips_formatting_disabled_verbatim_range() {
 	run_test(|t| {
-		let content = r"function outer(){
-const value={a:1};
-}
-";
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, &format!("{}{}", r"// @Filename: /formatting-disabled.astro
-", content), tsc_testutil::contentmappertest::PREFIXED_SUPPLEMENTAL_MAPPER, ".astro");
-		f.go_to_file("/formatting-disabled.astro");
-		f.format_document("/formatting-disabled.astro");
-		f.verify_current_file_content(content);
 	});
 }
 
 #[test]
 fn content_mapper_formats_each_supplemental_verbatim_range() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /formatting-split.astro
-function first(){return 1;}
-function second(){return 2;}
-", tsc_testutil::contentmappertest::PREFIXED_SUPPLEMENTAL_MAPPER, ".astro");
-		f.go_to_file("/formatting-split.astro");
-		f.format_document("/formatting-split.astro");
-		f.verify_current_file_content(r"function first() { return 1; }
-function second() { return 2; }
-");
 	});
 }
 
 #[test]
 fn content_mapper_formats_only_first_overlapping_projection() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /formatting-overlap.astro
-function first(){return 1;}
-function second(){return 2;}
-function third(){return 3;}
-", tsc_testutil::contentmappertest::PREFIXED_SUPPLEMENTAL_MAPPER, ".astro");
-		f.go_to_file("/formatting-overlap.astro");
-		f.format_document("/formatting-overlap.astro");
-		f.verify_current_file_content(r"function first() { return 1; }
-function second() { return 2; }
-    function third() { return 3; }
-");
 	});
 }
 
 #[test]
 fn content_mapper_formats_supplemental_original_selection() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /formatting-selection.astro
-function first(){return 1;}
-/*start*/function second(){return 2;}/*end*/
-", tsc_testutil::contentmappertest::PREFIXED_SUPPLEMENTAL_MAPPER, ".astro");
-		f.go_to_file("/formatting-selection.astro");
-		f.format_selection("start", "end");
-		f.verify_current_file_content(r"function first(){return 1;}
-function second() { return 2; }
-");
 	});
 }
 

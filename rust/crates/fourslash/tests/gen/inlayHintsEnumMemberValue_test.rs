@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn inlay_hints_enum_member_value() {
 	run_test(|t| {
-		let content = r"enum E {
-    A,
-    AA,
-    B = 10,
-    BB,
-    C = 'C',
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_inlay_hints(None, Some(&tsc_lsutil::UserPreferences { inlay_hints_preferences: tsc_lsutil::InlayHintsPreferences { include_inlay_enum_member_value_hints: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 

@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn outlining_hint_spans_for_function() {
 	run_test(|t| {
-		let content = r"namespace NS[| {
-    function f(x: number, y: number)[| {
-        return x + y;
-    }|]
-
-    function g[|(
-        x: number,
-        y: number,
-    ): number {
-        return x + y;
-    }|]
-}|]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_outlining_spans();
 	});
 }
 

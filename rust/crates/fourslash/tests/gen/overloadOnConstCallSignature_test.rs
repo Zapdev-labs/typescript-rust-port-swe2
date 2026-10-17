@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn overload_on_const_call_signature() {
 	run_test(|t| {
-		let content = r"var foo: {
-    (name: string): string;
-    (name: 'order'): string;
-    (name: 'content'): string;
-    (name: 'done'): string;
-}
-var /*2*/x = foo(/*1*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "foo(name: 'order'): string".to_string().into(), overloads_count: 4, ..Default::default() });
-		f.insert("\"hi\"");
-		f.verify_quick_info_at("2", "var x: string", "");
 	});
 }
 

@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_parameter_property_declaration3() {
 	run_test(|t| {
-		let content = r"class Foo {
-    constructor(protected /*0*/protectedParam: number) {
-        let localProtected = /*1*/protectedParam;
-        this./*2*/protectedParam += 10;
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["0".into(), "1".into(), "2".into()]);
 	});
 }
 

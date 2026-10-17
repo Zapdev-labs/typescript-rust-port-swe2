@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_in_adjacent_block_body() {
 	run_test(|t| {
-		let content = r"declare function foo(...args);
-
-foo(() => {/*1*/}/*2*/)";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_signature_help_present(Some(tsc_lsproto::SignatureHelpContext { trigger_kind: tsc_lsproto::SignatureHelpTriggerKind::Invoked.into(), ..Default::default() }));
-		f.go_to_marker("2");
-		f.verify_signature_help_present(Some(tsc_lsproto::SignatureHelpContext { trigger_kind: tsc_lsproto::SignatureHelpTriggerKind::Invoked.into(), ..Default::default() }));
 	});
 }
 

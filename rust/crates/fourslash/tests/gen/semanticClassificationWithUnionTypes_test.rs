@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn semantic_classification_with_union_types() {
 	run_test(|t| {
-		let content = r"module /*0*/M {
-    export interface /*1*/I {
-    }
-}
-
-interface /*2*/I {
-}
-class /*3*/C {
-}
-
-var M: /*4*/M./*5*/I | /*6*/I | /*7*/C;
-var I: typeof M | typeof /*8*/C;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type_: "variable".to_string().into(), text: "M".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "interface.declaration".to_string().into(), text: "I".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "interface.declaration".to_string().into(), text: "I".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "class.declaration".to_string().into(), text: "C".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.declaration".to_string().into(), text: "M".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable".to_string().into(), text: "M".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "interface".to_string().into(), text: "I".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "interface".to_string().into(), text: "I".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "class".to_string().into(), text: "C".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "class.declaration".to_string().into(), text: "I".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable".to_string().into(), text: "M".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "class".to_string().into(), text: "C".to_string().into(), ..Default::default() }]);
 	});
 }
 

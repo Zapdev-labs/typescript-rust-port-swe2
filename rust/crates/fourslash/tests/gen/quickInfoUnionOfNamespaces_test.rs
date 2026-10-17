@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_union_of_namespaces() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"declare const x: typeof A | typeof B;
-x./**/f;
-
-namespace A {
-    export function f() {}
-}
-namespace B {
-    export function f() {}
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("", "(method) f(): void", "");
 	});
 }
 

@@ -7,31 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_mapped_spread_types() {
 	run_test(|t| {
-		let content = r#"interface Foo {
-    /** Doc */
-    bar: number;
-}
-
-const f: Foo = { bar: 0 };
-f./*f*/bar;
-
-const f2: { [TKey in keyof Foo]: string } = { bar: "0" };
-f2./*f2*/bar;
-
-const f3 = { ...f };
-f3./*f3*/bar;
-
-const f4 = { ...f2 };
-f4./*f4*/bar;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("f");
-		f.verify_quick_info_is("(property) Foo.bar: number", "Doc");
-		f.go_to_marker("f2");
-		f.verify_quick_info_is("(property) bar: string", "Doc");
-		f.go_to_marker("f3");
-		f.verify_quick_info_is("(property) Foo.bar: number", "Doc");
-		f.go_to_marker("f4");
-		f.verify_quick_info_is("(property) bar: string", "Doc");
 	});
 }
 

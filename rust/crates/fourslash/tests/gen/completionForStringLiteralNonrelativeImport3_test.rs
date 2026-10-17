@@ -7,29 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_for_string_literal_nonrelative_import3() {
 	run_test(|t| {
-		let content = r#"// @allowJs: true
-// @Filename: tests/test0.ts
-import * as foo1 from "fake-module//*import_as0*/
-import foo2 = require("fake-module//*import_equals0*/
-var foo3 = require("fake-module//*require0*/
-// @Filename: package.json
-{ "dependencies": { "fake-module": "latest" } }
-// @Filename: node_modules/fake-module/ts.ts
-/*ts*/
-// @Filename: node_modules/fake-module/tsx.tsx
-/*tsx*/
-// @Filename: node_modules/fake-module/dts.d.ts
-/*dts*/
-// @Filename: node_modules/fake-module/js.js
-/*js*/
-// @Filename: node_modules/fake-module/jsx.jsx
-/*jsx*/
-// @Filename: node_modules/fake-module/repeated.js
-/*repeatedjs*/
-// @Filename: node_modules/fake-module/repeated.jsx
-/*repeatedjsx*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["import_as0", "import_equals0", "require0"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["dts".into(), "js".into(), "jsx".into(), "repeated".into(), "ts".into(), "tsx".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

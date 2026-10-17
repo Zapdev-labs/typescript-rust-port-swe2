@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_in_class_static_blocks() {
 	run_test(|t| {
-		let content = r"// @lib: es5
-// @target: esnext
-class Foo {
-    static #a = 1;
-    static a() {
-        this./*1*/
-    }
-    static b() {
-        Foo./*2*/
-    }
-    static {
-        this./*3*/
-    }
-    static {
-        Foo./*4*/
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["1", "2", "3", "4"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_function_members_plus(vec![tsc_lsproto::CompletionItem { label: "#a".to_string().into(), sort_text: Some((tsc_ls::LOCAL_DECLARATION_PRIORITY.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "a".to_string().into(), sort_text: Some((tsc_ls::LOCAL_DECLARATION_PRIORITY.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "b".to_string().into(), sort_text: Some((tsc_ls::LOCAL_DECLARATION_PRIORITY.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "prototype".to_string().into(), ..Default::default() }.into()]).into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

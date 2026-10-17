@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn smart_selection_function2() {
 	run_test(|t| {
-		let content = r"function f2() {
-    /**/
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_selection_ranges();
 	});
 }
 

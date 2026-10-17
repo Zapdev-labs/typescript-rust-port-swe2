@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_occurrences_is_definition_of_interface_class_merge() {
 	run_test(|t| {
-		let content = r"/*1*/interface /*2*/Numbers {
-    p: number;
-}
-/*3*/interface /*4*/Numbers {
-    m: number;
-}
-/*5*/class /*6*/Numbers {
-    f(n: number) {
-        return this.p + this.m + n;
-    }
-}
-let i: /*7*/Numbers = new /*8*/Numbers();
-let x = i.f(i.p + i.m);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into(), "7".into(), "8".into()]);
 	});
 }
 

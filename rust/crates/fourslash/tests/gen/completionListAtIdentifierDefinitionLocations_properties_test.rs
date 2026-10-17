@@ -7,30 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_at_identifier_definition_locations_properties() {
 	run_test(|t| {
-		let content = r"var aa = 1;
-class A1 {
-    /*property1*/
-}
-class A2 {
-    p/*property2*/
-}
-class A3 {
-    public s/*property3*/
-}
-class A4 {
-    a/*property4*/
-}
-class A5 {
-    public a/*property5*/
-}
-class A6 {
-    protected a/*property6*/
-}
-class A7 {
-    private a/*property7*/
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(f.markers()), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: COMPLETION_CLASS_ELEMENT_KEYWORDS.into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

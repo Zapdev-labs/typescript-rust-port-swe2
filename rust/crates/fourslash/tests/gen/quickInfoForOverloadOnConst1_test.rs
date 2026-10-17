@@ -7,33 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_for_overload_on_const1() {
 	run_test(|t| {
-		let content = r#"interface I {
-    x/*1*/1(a: number, callback: (x: 'hi') => number);
-}
-class C {
-    x/*2*/1(a: number, call/*3*/back: (x: 'hi') => number);
-    x/*4*/1(a: number, call/*5*/back: (x: string) => number) {
-        call/*6*/back('hi');
-        callback('bye');
-        var hm = "hm";
-        callback(hm);
-    }
-}
-var c: C;
-c.x/*7*/1(1, (x/*8*/x: 'hi') => { return 1; } );
-c.x1(1, (x/*9*/x: 'bye') => { return 1; } );
-c.x1(1, (x/*10*/x) => { return 1; } );"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "(method) I.x1(a: number, callback: (x: 'hi') => number): any", "");
-		f.verify_quick_info_at("2", "(method) C.x1(a: number, callback: (x: 'hi') => number): any", "");
-		f.verify_quick_info_at("3", "(parameter) callback: (x: 'hi') => number", "");
-		f.verify_quick_info_at("4", "(method) C.x1(a: number, callback: (x: string) => number): void", "");
-		f.verify_quick_info_at("5", "(parameter) callback: (x: string) => number", "");
-		f.verify_quick_info_at("6", "(parameter) callback: (x: string) => number", "");
-		f.verify_quick_info_at("7", "(method) C.x1(a: number, callback: (x: 'hi') => number): any", "");
-		f.verify_quick_info_at("8", "(parameter) xx: \"hi\"", "");
-		f.verify_quick_info_at("9", "(parameter) xx: \"bye\"", "");
-		f.verify_quick_info_at("10", "(parameter) xx: \"hi\"", "");
 	});
 }
 

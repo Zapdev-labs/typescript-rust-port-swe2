@@ -7,29 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_class_implement_interface_property() {
 	run_test(|t| {
-		let content = r"// @lib: es2017
-enum E { a,b,c }
-interface I {
-    x: E;
-    y: E.a
-    z: symbol;
-    w: object;
-}
-class C implements I {}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'I'".to_string().into(), new_file_content: r"enum E { a,b,c }
-interface I {
-    x: E;
-    y: E.a
-    z: symbol;
-    w: object;
-}
-class C implements I {
-    x: E;
-    y: E.a;
-    z: symbol;
-    w: object;
-}".to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

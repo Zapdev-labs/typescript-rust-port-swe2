@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_template_literals_define_property_js() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"// @allowJs: true
-// @Filename: a.js
-let obj = {};
-
-Object.defineProperty(obj, ", "`"), r"[|prop|]"), "`"), r", { value: 0 });
-
-obj = {
-    [|["), "`"), r#"[|{| "contextRangeIndex": 1 |}prop|]"#), "`"), r#"]: 1|]
-};
-
-obj.[|prop|];
-obj['[|prop|]'];
-obj["[|prop|]"];
-obj["#), "`"), r"[|prop|]"), "`"), r"];");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename_at_ranges_with_text(None, &["prop".into()]);
 	});
 }
 

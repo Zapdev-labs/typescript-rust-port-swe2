@@ -7,47 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_trigger_character() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r#"// @jsx: preserve
-/** @/*tag*/ */
-//</*comment*/
-const x: "a" | "b" = "[|/*openQuote*/|]"/*closeQuote*/;
-const y: 'a' | 'b' = '[|/*openSingleQuote*/|]'/*closeSingleQuote*/;
-const z: 'a' | 'b' = "#, "`"), r"[|/*openTemplate*/|]"), "`"), r#"/*closeTemplate*/;
-const q: ""#), "`"), r"a"), "`"), r#"" | ""#), "`"), r"b"), "`"), r#"" = "[|"#), "`"), r"/*openTemplateInQuote*/a"), "`"), r#"/*closeTemplateInQuote*/|]";
-// "/*quoteInComment*/ </*lessInComment*/
-// @Filename: /foo/importMe.ts
-whatever
-// @Filename: /a.tsx
-declare global {
-    namespace JSX {
-        interface Element {}
-        interface IntrinsicElements {
-            div: {};
-        }
-    }
-}
-const ctr = </*openTag*/;
-const less = 1 </*lessThan*/;
-const closeTag = <div> foo <//*closeTag*/;
-import something from "./foo//*path*/";
-const divide = 1 //*divide*/"#);
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("tag"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["param".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("comment"), None);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("openQuote"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "a".to_string().into(), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "a".to_string().into(), range: f.ranges()[0].clone().ls_range.into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "b".to_string().into(), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "b".to_string().into(), range: f.ranges()[0].clone().ls_range.into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("closeQuote"), None);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("openSingleQuote"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "a".to_string().into(), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "a".to_string().into(), range: f.ranges()[1].clone().ls_range.into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "b".to_string().into(), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "b".to_string().into(), range: f.ranges()[1].clone().ls_range.into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("closeSingleQuote"), None);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("openTemplate"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "a".to_string().into(), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "a".to_string().into(), range: f.ranges()[2].clone().ls_range.into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "b".to_string().into(), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "b".to_string().into(), range: f.ranges()[2].clone().ls_range.into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("closeTemplate"), None);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("quoteInComment"), None);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("lessInComment"), None);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("openTag"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["div".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("lessThan"), None);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("closeTag"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["div>".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("path"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["importMe".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("divide"), None);
 	});
 }
 

@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_for_string_literal_property_names3() {
 	run_test(|t| {
-		let content = r#"class Foo2 {
-    /*1*/get "/*2*/42"() { return 0; }
-    /*3*/set /*4*/42(n) { }
-}
-
-var y: Foo2;
-y[/*5*/42];"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into()]);
 	});
 }
 

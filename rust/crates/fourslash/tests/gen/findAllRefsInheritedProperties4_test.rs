@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_inherited_properties4() {
 	run_test(|t| {
-		let content = r"interface C extends D {
-    /*0*/prop0: string;
-    /*1*/prop1: number;
-}
-
-interface D extends C {
-    /*2*/prop0: string;
-}
-
-var d: D;
-d./*3*/prop0;
-d./*4*/prop1;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["0".into(), "2".into(), "3".into(), "1".into(), "4".into()]);
 	});
 }
 

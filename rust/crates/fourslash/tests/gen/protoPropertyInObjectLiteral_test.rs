@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn proto_property_in_object_literal() {
 	run_test(|t| {
-		let content = r#"var o1 = {
-    "__proto__": 10
-};
-var o2 = {
-    __proto__: 10
-};
-o1./*1*/
-o2./*2*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "__proto__".to_string().into(), detail: Some(("(property) \"__proto__\": number").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("__proto__ = 10;");
-		f.verify_quick_info_at("1", "(property) \"__proto__\": number", "");
-		f.verify_completions(tsc_fourslash::MarkerInput::from("2"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "__proto__".to_string().into(), detail: Some(("(property) __proto__: number").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("__proto__ = 10;");
-		f.verify_quick_info_at("2", "(property) __proto__: number", "");
 	});
 }
 

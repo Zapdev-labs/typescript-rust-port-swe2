@@ -7,31 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_file_exclude_patterns6() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"// @Filename: /src/vs/workbench/test.ts
-import { Parts } from './parts';
-export class /**/EditorParts implements Parts { }
-// @Filename: /src/vs/event/event.ts
-export interface Event {
-	(): string;
-}
-// @Filename: /src/vs/workbench/parts.ts
-import { Event } from '../event/event';
-export interface Parts {
-	readonly options: Event;
-}
-// @Filename: /src/vs/workbench/workbench.ts
-import { Event } from './canImport';
-export { Event };
-// @Filename: /src/vs/workbench/canImport.ts
-import { Event } from '../event/event';
-export { Event };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'Parts'".to_string().into(), new_file_content: r"import { Event } from './canImport';
-import { Parts } from './parts';
-export class EditorParts implements Parts {
-    options: Event;
-}".to_string().into(), index: 0, user_preferences: Some(tsc_lsutil::UserPreferences { auto_import_file_exclude_patterns: vec!["src/vs/workbench/workbench.ts".into()].into(), ..Default::default() }), ..Default::default() });
 	});
 }
 

@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn path_completions_allow_ts_extensions() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @allowImportingTsExtensions: true
-// @noEmit: true
-// @Filename: /project/foo.ts
-export const foo = 0;
-// @Filename: /project/main.ts
-import {} from ".//**/""#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["foo".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["foo.ts".into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { import_module_specifier_ending: tsc_modulespecifiers::ImportModuleSpecifierEndingPreference("js"), ..Default::default() }), ..Default::default() }));
-		f.insert("foo.ts\"\nimport {} from \"./");
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["foo.ts".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

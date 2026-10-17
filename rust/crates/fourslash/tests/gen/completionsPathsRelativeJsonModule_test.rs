@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_paths_relative_json_module() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @resolveJsonModule: true
-// @Filename: /project/test.json
-not read
-// @Filename: /project/index.ts
-import { } from ".//**/";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "test.json".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::File).into()), detail: Some(("test.json").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

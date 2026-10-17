@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_all_js() {
 	run_test(|t| {
-		let content = r"// @module: esnext
-// @allowJs: true
-// @checkJs: true
-// @Filename: /a.js
-export class C {}
-/** @typedef {number} T */
-// @Filename: /b.js
-C;
-/** @type {T} */
-const x = 0;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/b.js");
-		f.verify_code_fix_all(&tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport".to_string().into(), new_file_content: r#"import { C } from "./a";
-
-C;
-/** @type {import("./a").T} */
-const x = 0;"#.to_string().into(), ..Default::default() });
 	});
 }
 

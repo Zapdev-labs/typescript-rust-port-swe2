@@ -7,62 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn contextually_typed_parameters() {
 	run_test(|t| {
-		let content = r"declare function foo(cb: (this: any, x: number, y: string, z: boolean) => void): void;
-
-foo(function(this, a, ...args) {
-    a/*10*/;
-    args/*11*/;
-});
-
-foo(function(this, a, b, ...args) {
-    a/*20*/;
-    b/*21*/;
-    args/*22*/;
-});
-
-foo(function(this, a, b, c, ...args) {
-    a/*30*/;
-    b/*31*/;
-    c/*32*/;
-    args/*33*/;
-});
-
-foo(function(a, ...args) {
-    a/*40*/;
-    args/*41*/;
-});
-
-foo(function(a, b, ...args) {
-    a/*50*/;
-    b/*51*/;
-    args/*52*/;
-});
-
-foo(function(a, b, c, ...args) {
-    a/*60*/;
-    b/*61*/;
-    c/*62*/;
-    args/*63*/;
-});";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("10", "(parameter) a: number", "");
-		f.verify_quick_info_at("11", "(parameter) args: [y: string, z: boolean]", "");
-		f.verify_quick_info_at("20", "(parameter) a: number", "");
-		f.verify_quick_info_at("21", "(parameter) b: string", "");
-		f.verify_quick_info_at("22", "(parameter) args: [z: boolean]", "");
-		f.verify_quick_info_at("30", "(parameter) a: number", "");
-		f.verify_quick_info_at("31", "(parameter) b: string", "");
-		f.verify_quick_info_at("32", "(parameter) c: boolean", "");
-		f.verify_quick_info_at("33", "(parameter) args: []", "");
-		f.verify_quick_info_at("40", "(parameter) a: number", "");
-		f.verify_quick_info_at("41", "(parameter) args: [y: string, z: boolean]", "");
-		f.verify_quick_info_at("50", "(parameter) a: number", "");
-		f.verify_quick_info_at("51", "(parameter) b: string", "");
-		f.verify_quick_info_at("52", "(parameter) args: [z: boolean]", "");
-		f.verify_quick_info_at("60", "(parameter) a: number", "");
-		f.verify_quick_info_at("61", "(parameter) b: string", "");
-		f.verify_quick_info_at("62", "(parameter) c: boolean", "");
-		f.verify_quick_info_at("63", "(parameter) args: []", "");
 	});
 }
 

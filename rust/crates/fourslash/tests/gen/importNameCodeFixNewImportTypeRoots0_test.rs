@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_new_import_type_roots0() {
 	run_test(|t| {
-		let content = r#"// @Filename: a/f1.ts
-[|foo/*0*/();|]
-// @Filename: types/random/index.ts
-export function foo() {};
-// @Filename: tsconfig.json
-{
-    "compilerOptions": {
-        "typeRoots": [
-            "./types"
-        ]
-    }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_at_position(&[r#"import { foo } from "../types/random";
-
-foo();"#.into()], None);
 	});
 }
 

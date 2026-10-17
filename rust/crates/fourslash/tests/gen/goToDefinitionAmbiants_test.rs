@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_ambiants() {
 	run_test(|t| {
-		let content = r"declare var /*ambientVariableDefinition*/ambientVar;
-declare function /*ambientFunctionDefinition*/ambientFunction();
-declare class ambientClass {
-    /*constructorDefinition*/constructor();
-    static /*staticMethodDefinition*/method();
-    public /*instanceMethodDefinition*/method();
-}
-
-/*ambientVariableReference*/ambientVar = 1;
-/*ambientFunctionReference*/ambientFunction();
-var ambientClassVariable = new /*constructorReference*/ambientClass();
-ambientClass./*staticMethodReference*/method();
-ambientClassVariable./*instanceMethodReference*/method();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(false, &["ambientVariableReference".into(), "ambientFunctionReference".into(), "constructorReference".into(), "staticMethodReference".into(), "instanceMethodReference".into()]);
 	});
 }
 

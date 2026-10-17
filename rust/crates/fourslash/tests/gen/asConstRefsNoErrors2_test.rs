@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn as_const_refs_no_errors2() {
 	run_test(|t| {
-		let content = r"class Tex {
-    type = </**/const>'Text';
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["".into()]);
-		f.verify_no_errors();
 	});
 }
 

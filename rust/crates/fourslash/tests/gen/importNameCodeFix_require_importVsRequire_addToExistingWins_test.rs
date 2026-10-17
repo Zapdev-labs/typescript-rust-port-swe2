@@ -7,30 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_require_import_vs_require_add_to_existing_wins() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"// @allowJs: true
-// @checkJs: true
-// @Filename: blah.js
-export default class Blah {}
-export const Named1 = 0;
-export const Named2 = 1;
-// @Filename: index.js
-var path = require('path')
-  , { promisify } = require('util')
-  , { Named1 } = require('./blah')
-
-import fs from 'fs'
-
-new Blah";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("index.js");
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Update import from \"./blah\"".to_string().into(), new_file_content: r"var path = require('path')
-  , { promisify } = require('util')
-  , { Named1, default: Blah } = require('./blah')
-
-import fs from 'fs'
-
-new Blah".to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

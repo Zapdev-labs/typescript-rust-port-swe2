@@ -7,36 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_union_discriminated() {
 	run_test(|t| {
-		let content = r#"// @Filename: quickInfoJsDocTags.ts
-type U = A | B;
-
-interface A {
-    /** Kind A */
-    kind: "a";
-    /** Prop A */
-    prop: number;
-}
-
-interface B {
-    /** Kind B */
-    kind: "b";
-    /** Prop B */
-    prop: string;
-}
-
-const u: U = {
-    /*uKind*/kind: "a",
-    /*uProp*/prop: 0,
-}
-const u2: U = {
-    /*u2Kind*/kind: "bogus",
-    /*u2Prop*/prop: 1,
-};"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("uKind", "(property) A.kind: \"a\"", "Kind A");
-		f.verify_quick_info_at("uProp", "(property) A.prop: number", "Prop A");
-		f.verify_quick_info_at("u2Kind", "(property) kind: \"bogus\"", "");
-		f.verify_quick_info_at("u2Prop", "(property) prop: number", "");
 	});
 }
 

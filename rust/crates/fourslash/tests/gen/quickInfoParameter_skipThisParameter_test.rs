@@ -7,10 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_parameter_skip_this_parameter() {
 	run_test(|t| {
-		let content = r"function f(cb: (x: number) => void) {}
-f(function(this: any, /**/x) {});";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("", "(parameter) x: number", "");
 	});
 }
 

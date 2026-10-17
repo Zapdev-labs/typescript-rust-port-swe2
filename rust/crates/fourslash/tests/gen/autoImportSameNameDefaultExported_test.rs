@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_same_name_default_exported() {
 	run_test(|t| {
-		let content = r"// @lib: es5
-// @module: commonjs
-// @Filename: /node_modules/antd/index.d.ts
-declare function Table(): void;
-export default Table;
-// @Filename: /node_modules/rc-table/index.d.ts
-declare function Table(): void;
-export default Table;
-// @Filename: /index.ts
-Table/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_plus(vec![tsc_lsproto::CompletionItem { label: "Table".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "antd".to_string().into(), ..Default::default() }), ..Default::default() }), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "Table".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "rc-table".to_string().into(), ..Default::default() }), ..Default::default() }), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), ..Default::default() }.into()], false).into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

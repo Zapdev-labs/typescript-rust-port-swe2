@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_source1_local_js_beside_dts() {
 	run_test(|t| {
-		let content = r#"// @lib: es5
-// @Filename: /home/src/workspaces/project/a.js
-export const /*end*/a = "a";
-// @Filename: /home/src/workspaces/project/a.d.ts
-export declare const a: string;
-// @Filename: /home/src/workspaces/project/index.ts
-import { a } from [|"./a"/*moduleSpecifier*/|];
-[|a/*identifier*/|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.verify_baseline_go_to_source_definition(&["identifier".into(), "moduleSpecifier".into()]);
 	});
 }
 

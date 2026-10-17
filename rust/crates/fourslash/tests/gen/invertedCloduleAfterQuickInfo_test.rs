@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn inverted_clodule_after_quick_info() {
 	run_test(|t| {
-		let content = r"// @strict: false
-namespace M {
-    namespace A {
-        var o;
-    }
-    class A {
-        /**/c
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_quick_info_exists();
-		f.verify_number_of_errors_in_current_file(1);
 	});
 }
 

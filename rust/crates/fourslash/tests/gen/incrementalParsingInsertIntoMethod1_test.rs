@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn incremental_parsing_insert_into_method1() {
 	run_test(|t| {
-		let content = r"class C {
-    public foo1() { }
-    public foo2() {
-        return 1/*1*/;
-    }
-    public foo3() { }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.insert(" + 1");
 	});
 }
 

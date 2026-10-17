@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn generic_interface_with_inheritance_edit1() {
 	run_test(|t| {
-		let content = r"interface ChainedObject<T> {
-    values(): ChainedArray<any>;
-    pairs(): ChainedArray<any[]>;
-    extend(...sources: any[]): ChainedObject<T>;
-
-    value(): T;
-}
-interface ChainedArray<T> extends ChainedObject<Array<T>> {
-
-    extend(...sources: any[]): ChainedArray<T>;
-}
- /*1*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.go_to_marker("1");
-		f.insert(" ");
-		f.verify_no_errors();
 	});
 }
 

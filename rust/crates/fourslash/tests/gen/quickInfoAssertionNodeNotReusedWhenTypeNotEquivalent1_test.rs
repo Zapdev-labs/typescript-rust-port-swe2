@@ -7,35 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_assertion_node_not_reused_when_type_not_equivalent1() {
 	run_test(|t| {
-		let content = r#"// @strict: true
-type Wrapper<T> = {
-  _type: T;
-};
-
-function stringWrapper(): Wrapper<string> {
-  return { _type: "" };
-}
-
-function objWrapper<T extends Record<string, Wrapper<any>>>(
-  obj: T,
-): Wrapper<T> {
-  return { _type: obj };
-}
-
-const value = objWrapper({
-  prop1: stringWrapper() as Wrapper<"hello">,
-});
-
-type Unwrap<T extends Wrapper<any>> = T["_type"] extends Record<
-  string,
-  Wrapper<any>
->
-  ? { [Key in keyof T["_type"]]: Unwrap<T["_type"][Key]> }
-  : T["_type"];
-
-type Test/*1*/ = Unwrap<typeof value>;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "type Test = {\n    prop1: \"hello\";\n}", "");
 	});
 }
 

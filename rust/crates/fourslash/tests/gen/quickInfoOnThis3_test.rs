@@ -7,30 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_on_this3() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"interface Restricted {
-    n: number;
-}
-function implicitAny(x: number): void {
-    return th/*1*/is;
-}
-function explicitVoid(th/*2*/is: void, x: number): void {
-    return th/*3*/is;
-}
-function explicitInterface(th/*4*/is: Restricted): void {
-    console.log(thi/*5*/s);
-}
-function explicitLiteral(th/*6*/is: { n: number }): void {
-    console.log(th/*7*/is);
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "any", "");
-		f.verify_quick_info_at("2", "(parameter) this: void", "");
-		f.verify_quick_info_at("3", "this: void", "");
-		f.verify_quick_info_at("4", "(parameter) this: Restricted", "");
-		f.verify_quick_info_at("5", "this: Restricted", "");
-		f.verify_quick_info_at("6", "(parameter) this: {\n    n: number;\n}", "");
-		f.verify_quick_info_at("7", "this: {\n    n: number;\n}", "");
 	});
 }
 

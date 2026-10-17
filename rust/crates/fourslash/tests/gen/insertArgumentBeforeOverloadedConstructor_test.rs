@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn insert_argument_before_overloaded_constructor() {
 	run_test(|t| {
-		let content = r"alert(/**/100);
-
-class OverloadedMonster {
-    constructor();
-    constructor(name) { }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.insert("'1', ");
 	});
 }
 

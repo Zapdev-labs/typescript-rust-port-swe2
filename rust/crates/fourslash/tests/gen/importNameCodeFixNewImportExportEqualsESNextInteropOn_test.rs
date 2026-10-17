@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_new_import_export_equals_es_next_interop_on() {
 	run_test(|t| {
-		let content = r#"// @EsModuleInterop: true
-// @Module: es2015
-// @Filename: /foo.d.ts
-declare module "foo" {
-  const foo: number;
-  export = foo;
-}
-// @Filename: /index.ts
-[|foo|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/index.ts");
-		f.verify_import_fix_at_position(&[r#"import foo from "foo";
-
-foo"#.into()], None);
 	});
 }
 

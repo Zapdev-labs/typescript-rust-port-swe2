@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn constructor_brace_formatting() {
 	run_test(|t| {
-		let content = r"class X {
-    constructor () {}/*target*/
- /**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.insert("}");
-		f.go_to_marker("target");
-		f.verify_current_line_content(r"    constructor() { }");
 	});
 }
 

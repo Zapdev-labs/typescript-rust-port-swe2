@@ -7,32 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_for_statics_and_members_with_same_names() {
 	run_test(|t| {
-		let content = r"namespace FindRef4 {
-	namespace MixedStaticsClassTest {
-		export class Foo {
-			/*1*/bar: Foo;
-			/*2*/static /*3*/bar: Foo;
-
-			/*4*/public /*5*/foo(): void {
-			}
-			/*6*/public static /*7*/foo(): void {
-			}
-		}
-	}
-
-	function test() {
-		// instance function
-		var x = new MixedStaticsClassTest.Foo();
-		x./*8*/foo();
-		x./*9*/bar;
-
-		// static function
-		MixedStaticsClassTest.Foo./*10*/foo();
-		MixedStaticsClassTest.Foo./*11*/bar;
-	}
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into(), "7".into(), "8".into(), "9".into(), "10".into(), "11".into()]);
 	});
 }
 

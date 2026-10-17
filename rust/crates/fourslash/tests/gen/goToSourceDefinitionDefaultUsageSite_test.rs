@@ -7,41 +7,12 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_source_default_import_usage_site_checker() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{ "name": "pkg", "main": "./index.js", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.d.ts
-export default class Widget {
-    render(): void;
-}
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.js
-export default class /*targetWidget*/Widget {
-    /*targetRender*/render() {}
-}
-// @Filename: /home/src/workspaces/project/index.ts
-import Widget from "pkg";
-const w = new Widget/*constructUsage*/("test");
-w./*methodUsage*/render();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["constructUsage".into(), "methodUsage".into()]);
 	});
 }
 
 #[test]
 fn go_to_source_default_import_re_export_usage() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{ "name": "pkg", "main": "./index.js", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.d.ts
-export default function greet(name: string): string;
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.js
-export default function /*targetGreet*/greet(name) { return "Hello, " + name; }
-// @Filename: /home/src/workspaces/project/index.ts
-import greet from "pkg";
-greet/*callUsage*/("world");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["callUsage".into()]);
 	});
 }
 

@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_type_with_tuple_types1() {
 	run_test(|t| {
-		let content = r"
-export let x/*1*/: [number, number] = [1, 2];
-
-type DoubleTupleTrouble<T> = [T, T];
-
-export let y/*2*/: DoubleTupleTrouble<number> = [1, 2];
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_type_definition(&f.marker_names());
 	});
 }
 

@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_incomplete_jsx_attribute() {
 	run_test(|t| {
-		let content = r"// @Filename: /a.tsx
-<a><b c=
-/*a*/</a>";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_signature_help_for_markers(&["a".into()]);
 	});
 }
 

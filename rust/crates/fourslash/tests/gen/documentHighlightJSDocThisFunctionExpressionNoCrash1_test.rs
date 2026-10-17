@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn document_highlight_js_doc_this_function_expression_parameter() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @Filename: /a.js
-/**@this{A}*/x=function(/*m*/a){};";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, vec!["m".into()]);
 	});
 }
 

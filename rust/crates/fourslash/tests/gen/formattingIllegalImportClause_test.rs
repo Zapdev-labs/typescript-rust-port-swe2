@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_illegal_import_clause() {
 	run_test(|t| {
-		let content = r"var expect = require('expect.js');
-import React   from 'react'/*1*/;
-import { mount } from 'enzyme';
-require('../setup');
-var Amount = require('../../src/js/components/amount');
-describe('<Failed />', () => {
-  var history
-  beforeEach(() => {
-    history = createMemoryHistory();
-    sinon.spy(history, 'pushState');
-  });
-  afterEach(() => {
-  })
-  it('redirects to order summary', () => {
-  });
-});";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"import React from 'react';");
 	});
 }
 

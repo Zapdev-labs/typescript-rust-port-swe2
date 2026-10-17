@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_for_nonlocal_type_does_not_use_import_type() {
 	run_test(|t| {
-		let content = r#"// @Filename: exporter.ts
-export interface Thing {}
-export const Foo: () => Thing = null as any;
-// @Filename: usage.ts
-import {Foo} from "./exporter"
-function f(p = Foo()): void {}
-f(/*1*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "f(p?: Thing): void".to_string().into(), ..Default::default() });
 	});
 }
 

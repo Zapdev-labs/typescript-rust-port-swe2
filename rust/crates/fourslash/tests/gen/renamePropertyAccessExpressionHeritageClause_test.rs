@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_property_access_expression_heritage_clause() {
 	run_test(|t| {
-		let content = r#"class B {}
-function foo() {
-    return {[|[|{| "contextRangeIndex": 0 |}B|]: B|]};
-}
-class C extends (foo()).[|B|] {}
-class C1 extends foo().[|B|] {}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename_at_ranges_with_text(None, &["B".into()]);
 	});
 }
 

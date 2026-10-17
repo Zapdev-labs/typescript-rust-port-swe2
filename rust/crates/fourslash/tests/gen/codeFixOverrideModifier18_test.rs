@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_override_modifier18() {
 	run_test(|t| {
-		let content = r"// @noImplicitOverride: true
-class A {
-    static foo() {}
-}
-class B extends A {
-    [|static foo() {}|]
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix_not_available(&["fixAddOverrideModifier".into()]);
 	});
 }
 

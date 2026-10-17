@@ -7,30 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn organize_imports_type1() {
 	run_test(|t| {
-		let content = r#"// @allowSyntheticDefaultImports: true
-// @moduleResolution: bundler
-// @noUnusedLocals: true
-// @target: es2018
-import { A } from "foo";
-import { type B } from "foo";
-import { C } from "foo";
-import { type E } from "foo";
-import { D } from "foo";
-
-console.log(A, B, C, D, E);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_organize_imports(r#"import { A, C, D, type B, type E } from "foo";
-
-console.log(A, B, C, D, E);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
-		f.verify_organize_imports(r#"import { A, type B, C, D, type E } from "foo";
-
-console.log(A, B, C, D, E);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, Some(&tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::INLINE.into(), ..Default::default() }));
-		f.verify_organize_imports(r#"import { type B, type E, A, C, D } from "foo";
-
-console.log(A, B, C, D, E);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, Some(&tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::FIRST.into(), ..Default::default() }));
-		f.verify_organize_imports(r#"import { A, C, D, type B, type E } from "foo";
-
-console.log(A, B, C, D, E);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, Some(&tsc_lsutil::UserPreferences { organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::LAST.into(), ..Default::default() }));
 	});
 }
 

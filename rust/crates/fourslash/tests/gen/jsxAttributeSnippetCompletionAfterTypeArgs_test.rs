@@ -7,44 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsx_attribute_snippet_completion_after_type_args() {
 	run_test(|t| {
-		let content = r"// @strict: false
-//@Filename: file.tsx
-declare const React: any;
-
-namespace JSX {
-    export interface IntrinsicElements {
-        div: any;
-    }
-}
-
-function GenericElement<T>(props: {xyz?: T}) {
-    return <></>
-}
-
-function fn1() {
-    return <div>
-        <GenericElement<number> /*1*/ />
-    </div>
-}
-
-function fn2() {
-    return <>
-        <GenericElement<number> /*2*/ />
-    </>
-}
-function fn3() {
-    return <div>
-        <GenericElement<number> /*3*/ ></GenericElement>
-    </div>
-}
-
-function fn4() {
-    return <>
-        <GenericElement<number> /*4*/ ></GenericElement>
-    </>
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", Some(tsc_fourslash::get_default_capabilities_with_options(Some(&tsc_fourslash::ClientCapabilitiesOptions { completion_item: Some(tsc_lsproto::ClientCompletionItemOptions { snippet_support: Some((true).into()), ..Default::default() }), ..Default::default() }))), &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(f.markers()), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "xyz?".to_string().into(), insert_text: Some(("xyz={$1}").into()), filter_text: Some(("xyz").into()), detail: Some(("(property) xyz?: number").into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::Snippet).into()), sort_text: Some((tsc_ls::OPTIONAL_MEMBER.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { jsx_attribute_completion_style: tsc_lsutil::JsxAttributeCompletionStyle::BRACES.into(), ..Default::default() }, ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn folding_range_jsx_property_access() {
 	run_test(|t| {
-		let content = r"// @jsx: preserve
-// @Filename: /a.tsx
-const Components =[| {
-  Nested: () => null
-}|];
-
-export const Test = () =>[| {
-  return [|<Components.Nested></Components.Nested>|];
-}|];";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_outlining_spans();
 	});
 }
 

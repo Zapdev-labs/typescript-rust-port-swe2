@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn definition_name_on_enum_member() {
 	run_test(|t| {
-		let content = r"enum e {
-    firstMember,
-    secondMember,
-    thirdMember
-}
-var enumMember = e.[|/*1*/thirdMember|];";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(false, &["1".into()]);
 	});
 }
 

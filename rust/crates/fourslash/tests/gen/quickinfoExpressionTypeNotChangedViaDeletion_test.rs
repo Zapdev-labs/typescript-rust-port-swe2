@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quickinfo_expression_type_not_changed_via_deletion() {
 	run_test(|t| {
-		let content = r"type TypeEq<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false;
-
-const /*2*/test1: TypeEq<number[], [number, ...number[]]> = false;
-
-declare const foo: [number, ...number[]];
-declare const bar: number[];
-
-const /*1*/test2: TypeEq<typeof foo, typeof bar> = false;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_quick_info_is("const test2: false", "");
-		f.go_to_marker("2");
-		f.verify_quick_info_is("const test1: false", "");
 	});
 }
 

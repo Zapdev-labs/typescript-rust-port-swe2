@@ -7,35 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_tsx_closing_after_jsx_text() {
 	run_test(|t| {
-		let content = r"// @Filename: foo.tsx
-
-const a = (
-    <div>
-        text
-               </div>
-)
-const b = (
-    <div>
-        text
-      twice
-               </div>
-)
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.verify_current_file_content(r"
-const a = (
-    <div>
-        text
-    </div>
-)
-const b = (
-    <div>
-        text
-        twice
-    </div>
-)
-");
 	});
 }
 

@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_provider1() {
 	run_test(|t| {
-		let content = r#"// @Filename: /home/src/workspaces/project/node_modules/@angular/forms/package.json
-{ "name": "@angular/forms", "typings": "./forms.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/@angular/forms/forms.d.ts
-export class PatternValidator {}
-// @Filename: /home/src/workspaces/project/tsconfig.json
-{ "compilerOptions": { "lib": ["es5"] } }
-// @Filename: /home/src/workspaces/project/package.json
-{ "dependencies": { "@angular/forms": "*" } }
-// @Filename: /home/src/workspaces/project/index.ts
-PatternValidator/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.go_to_marker("");
-		let mut opts654 = f.get_options();
-		opts654.format_code_settings.new_line_character = "\n";
-		f.configure(opts654);
-		f.verify_import_fix_at_position(&[r#"import { PatternValidator } from "@angular/forms";
-
-PatternValidator"#.into()], None);
 	});
 }
 

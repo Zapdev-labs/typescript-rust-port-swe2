@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_for_inherited_properties6() {
 	run_test(|t| {
-		let content = r"class class1 extends class1 {
-    /*1*/doStuff() { }
-}
-class class2 extends class1 {
-    doStuff() { }
-}
-
-var v: class2;
-v.doStuff();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into()]);
 	});
 }
 

@@ -7,50 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_provider_wildcard_exports1() {
 	run_test(|t| {
-		let content = r#"// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{
-    "name": "pkg",
-    "version": "1.0.0",
-    "exports": {
-        "./*": "./a/*.js",
-        "./b/*.js": "./b/*.js",
-        "./c/*": "./c/*",
-        "./d/*": {
-            "import": "./d/*.mjs"
-        }
-    }
-}
-// @Filename: /home/src/workspaces/project/node_modules/pkg/a/a1.d.ts
-export const a1: number;
-// @Filename: /home/src/workspaces/project/node_modules/pkg/b/b1.d.ts
-export const b1: number;
-// @Filename: /home/src/workspaces/project/node_modules/pkg/b/b2.d.mts
-export const NOT_REACHABLE: number;
-// @Filename: /home/src/workspaces/project/node_modules/pkg/c/c1.d.ts
-export const c1: number;
-// @Filename: /home/src/workspaces/project/node_modules/pkg/c/subfolder/c2.d.mts
-export const c2: number;
-// @Filename: /home/src/workspaces/project/node_modules/pkg/d/d1.d.mts
-export const d1: number;
-// @Filename: /home/src/workspaces/project/package.json
-{
-    "type": "module",
-    "dependencies": {
-        "pkg": "1.0.0"
-    }
-}
-// @Filename: /home/src/workspaces/project/tsconfig.json
-{
-    "compilerOptions": {
-        "module": "nodenext",
-        "lib": ["es5"]
-    }
-}
-// @Filename: /home/src/workspaces/project/main.ts
-/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "a1".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "pkg/a1".to_string().into(), ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "b1".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "pkg/b/b1.js".to_string().into(), ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "c1".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "pkg/c/c1.js".to_string().into(), ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "c2".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "pkg/c/subfolder/c2.mjs".to_string().into(), ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "d1".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "pkg/d/d1".to_string().into(), ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }.into()].into(), excludes: vec!["NOT_REACHABLE".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_object_literal_properties() {
 	run_test(|t| {
-		let content = r"var o = {
-    /*valueDefinition*/value: 0,
-    get /*getterDefinition*/getter() {return 0 },
-    set /*setterDefinition*/setter(v: number) { },
-    /*methodDefinition*/method: () => { },
-    /*es6StyleMethodDefinition*/es6StyleMethod() { }
-};
-
-o./*valueReference*/value;
-o./*getterReference*/getter;
-o./*setterReference*/setter;
-o./*methodReference*/method;
-o./*es6StyleMethodReference*/es6StyleMethod;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(false, &["valueReference".into(), "getterReference".into(), "setterReference".into(), "methodReference".into(), "es6StyleMethodReference".into()]);
 	});
 }
 

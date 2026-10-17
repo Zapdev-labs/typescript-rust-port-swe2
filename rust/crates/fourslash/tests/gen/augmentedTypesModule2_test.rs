@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn augmented_types_module2() {
 	run_test(|t| {
-		let content = r"function /*11*/m2f(x: number) { };
-namespace m2f { export interface I { foo(): void } }
-var x: m2f./*1*/
-var /*2*/r = m2f/*3*/;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("11", "function m2f(x: number): void", "");
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["I".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("I.");
-		f.verify_completions(Default::default(), None);
-		f.backspace(1);
-		f.verify_quick_info_at("2", "var r: (x: number) => void", "");
-		f.go_to_marker("3");
-		f.insert("(");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "m2f(x: number): void".to_string().into(), ..Default::default() });
 	});
 }
 

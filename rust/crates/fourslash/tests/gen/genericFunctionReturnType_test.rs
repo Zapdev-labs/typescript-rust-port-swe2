@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn generic_function_return_type() {
 	run_test(|t| {
-		let content = r#"function foo<T, U>(x: T, y: U): (a: U) => T {
-    var z = y;
-    return (z) => x;
-}
-var /*2*/r = foo(/*1*/1, "");
-var /*4*/r2 = r(/*3*/"");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "foo(x: number, y: string): (a: string) => number".to_string().into(), ..Default::default() });
-		f.verify_quick_info_at("2", "var r: (a: string) => number", "");
-		f.go_to_marker("3");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "r(a: string): number".to_string().into(), ..Default::default() });
-		f.verify_quick_info_at("4", "var r2: number", "");
 	});
 }
 

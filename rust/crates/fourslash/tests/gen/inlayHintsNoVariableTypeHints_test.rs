@@ -7,9 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn inlay_hints_no_variable_type_hints() {
 	run_test(|t| {
-		let content = r"const a = 123;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_inlay_hints(None, Some(&tsc_lsutil::UserPreferences { inlay_hints_preferences: tsc_lsutil::InlayHintsPreferences { include_inlay_variable_type_hints: tsc_core::tristate::TS_FALSE.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 

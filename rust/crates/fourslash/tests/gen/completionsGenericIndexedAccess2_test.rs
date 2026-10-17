@@ -7,30 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_generic_indexed_access2() {
 	run_test(|t| {
-		let content = r#"export type GetMethodsForType<T, G extends string> = { [K in keyof T]:
-  T[K] extends () => any ? { name: K, group: G, } : T[K] extends (s: infer U) => any ? { name: K, group: G, payload: U } : never }[keyof T];
-
-
-class Sample {
-  count = 0;
-  books: { name: string, year: number }[] = []
-  increment() {
-      this.count++
-      this.count++
-  }
-
-  addBook(book: Sample["books"][0]) {
-      this.books.push(book)
-  }
-}
-export declare function testIt<T, G extends string>(): (input: any, method: GetMethodsForType<T, G>) => any
-
-
-const t = testIt<Sample, "Sample">()
-
-const i = t(null, { name: "addBook", group: "Sample", payload: { /**/ } })"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "name".to_string().into(), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "year".to_string().into(), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

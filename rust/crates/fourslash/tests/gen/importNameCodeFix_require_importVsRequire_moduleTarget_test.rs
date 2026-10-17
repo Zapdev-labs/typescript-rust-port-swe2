@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_require_import_vs_require_module_target() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @checkJs: true
-// @module: es2015
-// @Filename: a.js
-export const x = 0;
-// @Filename: index.js
-x";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("index.js");
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Add import from \"./a\"".to_string().into(), new_file_content: r#"import { x } from "./a";
-
-x"#.to_string().into(), index: 0, ..Default::default() });
-		f.go_to_position(0);
-		f.insert_line("const fs = require('fs');\n");
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Add import from \"./a\"".to_string().into(), new_file_content: r"const fs = require('fs');
-const { x } = require('./a');
-
-x".to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

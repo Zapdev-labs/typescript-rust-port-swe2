@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn issue57429() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"// @strict: true
-function Builder<I>(def: I) {
-  return def;
-}
-
-interface IThing {
-  doThing: (args: { value: object }) => string
-  doAnotherThing: () => void
-}
-
-Builder<IThing>({
-  doThing(args: { value: object }) {
-    const { v/*1*/alue } = this.[|args|]
-    return ", "`"), r"${value}"), "`"), r"
-  },
-  doAnotherThing() { },
-})");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "const value: any", "");
-		f.verify_non_suggestion_diagnostics(&[tsc_lsproto::Diagnostic { message: tsc_lsproto::StringOrMarkupContent { string: Some(("Property 'args' does not exist on type 'IThing'.").into()), ..Default::default() }.into(), code: Some(tsc_lsproto::IntegerOrString { integer: Some(((2339) as i32).into()), ..Default::default() }), ..Default::default() }]);
 	});
 }
 

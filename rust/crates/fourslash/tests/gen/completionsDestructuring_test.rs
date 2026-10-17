@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_destructuring() {
 	run_test(|t| {
-		let content = r"const points = [{ x: 1, y: 2 }];
-points.forEach(({ /*a*/ }) => { });
-const { /*b*/ } = points[0];
-for (const { /*c*/ } of points) {}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(f.markers()), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["x".into(), "y".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

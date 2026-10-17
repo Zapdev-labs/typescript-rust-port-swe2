@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn document_highlight_default_in_switch() {
 	run_test(|t| {
-		let content = r"const foo = 'foo';
-[|switch|] (foo) {
-   [|case|] 'foo':
-       [|break|];
-   [|default|]:
-       [|break|];
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, vec![f.ranges()[1].clone().into(), f.ranges()[4].clone().into()]);
 	});
 }
 

@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn recursive_internal_module_import() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"namespace M {
-    import A = B;
-    import /**/B = A;
-}
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_quick_info_exists();
 	});
 }
 

@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_infer_from_function_this_usage_object_property_parameter() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r#"// @noImplicitThis: true
-function returnThisMember([| |]suffix: string) {
-     return this.member + suffix;
- }
-
- interface Container {
-     member: string;
-     returnThisMember(suffix: string): string;
- }
-
- const container: Container = {
-     member: "sample",
-     returnThisMember: returnThisMember,
- };
-
- container.returnThisMember("");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_range_after_code_fix(r"this: Container, ", false, 0, 0);
 	});
 }
 

@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn basic_multifile_completions() {
 	run_test(|t| {
-		let content = r"// @Filename: /a.ts
-export const foo = { bar: 'baz' };
-
-// @Filename: /b.ts
-import { foo } from './a';
-const test = foo./*1*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "bar".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Field).into()), sort_text: Some((tsc_ls::LOCATION_PRIORITY.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

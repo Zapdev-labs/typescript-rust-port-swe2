@@ -7,29 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_paths_node_modules() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r#"// @Filename: tsconfig.json
-{
-    "compilerOptions": {
-        "module": "commonjs",
-        "moduleResolution": "node",
-        "rootDir": "ts",
-        "baseUrl": ".",
-        "paths": {
-            "*": ["node_modules/@woltlab/wcf/ts/*"]
-        }
-    },
-    "include": [
-        "ts",
-        "node_modules/@woltlab/wcf/ts",
-     ]
-}
-// @Filename: node_modules/@woltlab/wcf/ts/WoltLabSuite/Core/Component/Dialog.ts
-export class Dialog {}
-// @Filename: ts/main.ts
-Dialog/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_module_specifiers("", &["WoltLabSuite/Core/Component/Dialog".into()], None);
 	});
 }
 

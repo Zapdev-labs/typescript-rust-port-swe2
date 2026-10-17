@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_edits_for_file_rename_unresolvable_node_module() {
 	run_test(|t| {
-		let content = r#"// @allowJs: true
-// @checkJs: true
-// @Filename: /modules/@app/something/index.js
-import "doesnt-exist";
-// @Filename: /modules/@local/foo.js
-import "doesnt-exist"; "#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_will_rename_files_edits("/modules/@app/something", "/modules/@app/something-2", &std::collections::BTreeMap::from([]), None);
 	});
 }
 

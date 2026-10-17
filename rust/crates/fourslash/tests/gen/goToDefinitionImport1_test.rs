@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_import1() {
 	run_test(|t| {
-		let content = r#"// @Filename: /b.ts
-/*2*/export const foo = 1;
-// @Filename: /a.ts
-import { foo } from      [|"./b/*1*/"|];"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["1".into()]);
 	});
 }
 

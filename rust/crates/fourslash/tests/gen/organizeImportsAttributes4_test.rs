@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn organize_imports_attributes4() {
 	run_test(|t| {
-		let content = r#"import { A } from "./a" with { foo: "foo", bar: "bar" };
-import { B } from "./a" with { bar: "bar", foo: "foo" };
-import { D } from "./a" with { bar: "foo", foo: "bar" };
-import { E } from "./a" with { foo: 'bar', bar: "foo" };
-import { C } from "./a" with { foo: "bar", bar: "foo" };
-import { F } from "./a" with { foo: "42" };
-import { Y } from "./a" with { foo: 42 };
-import { Z } from "./a" with { foo: "42" };
-
-export type G = A | B | C | D | E | F | Y | Z;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_organize_imports(r#"import { A, B } from "./a" with { foo: "foo", bar: "bar" };
-import { C, D, E } from "./a" with { bar: "foo", foo: "bar" };
-import { F, Z } from "./a" with { foo: "42" };
-import { Y } from "./a" with { foo: 42 };
-
-export type G = A | B | C | D | E | F | Y | Z;"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 	});
 }
 

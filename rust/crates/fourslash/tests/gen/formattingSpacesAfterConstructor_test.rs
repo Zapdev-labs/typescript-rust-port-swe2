@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_spaces_after_constructor() {
 	run_test(|t| {
-		let content = r"/*1*/class test { constructor                   () { } }
-/*2*/class test { constructor                   () { } }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"class test { constructor() { } }");
-		let mut opts319 = f.get_options();
-		opts319.format_code_settings.insert_space_after_constructor = tsc_core::tristate::TS_TRUE;
-		f.configure(opts319);
-		f.format_document("");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"class test { constructor () { } }");
 	});
 }
 

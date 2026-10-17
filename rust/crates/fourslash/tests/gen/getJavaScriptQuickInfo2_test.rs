@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_java_script_quick_info2() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"// @allowNonTsExtensions: true
-// @Filename: Foo.js
-/** @param {number} [a] */
-function /**/f(a) { }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("", "function f(a?: number): void", "");
 	});
 }
 

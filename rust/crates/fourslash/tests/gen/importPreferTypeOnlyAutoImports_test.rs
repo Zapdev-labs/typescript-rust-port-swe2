@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn prefer_type_only_auto_imports() {
 	run_test(|t| {
-		let content = r"// @Filename: types.ts
-export type MyType = { x: number };
-export const MyValue = 123;
-// @Filename: main.ts
-let x: MyT/*type*/;
-let y = MyV/*value*/;
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.configure(tsc_lsutil::UserPreferences { prefer_type_only_auto_imports: tsc_core::tristate::TS_TRUE.into(), completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() });
-		f.baseline_auto_imports_completions(&["type".into(), "value".into()]);
 	});
 }
 

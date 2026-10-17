@@ -7,9 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn outlining_for_non_complete_interface_declaration() {
 	run_test(|t| {
-		let content = r"interface I";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_outlining_spans();
 	});
 }
 

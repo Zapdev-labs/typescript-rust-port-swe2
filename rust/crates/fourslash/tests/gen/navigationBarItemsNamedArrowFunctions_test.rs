@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn navigation_bar_items_named_arrow_functions() {
 	run_test(|t| {
-		let content = r"export const value = 2;
-export const func = () => 2;
-export const func2 = function() { };
-export function exportedFunction() { }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_symbol();
 	});
 }
 

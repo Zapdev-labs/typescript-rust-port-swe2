@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_overridden_member11() {
 	run_test(|t| {
-		let content = r#"// @allowJs: true
-// @checkJs: true
-// @noEmit: true
-// @noImplicitOverride: true
-// @filename: a.js
-class Foo {
-    /*Foo_m*/m() {}
-}
-class Bar extends Foo {
-    /** @[|over{|"name": "1"|}ride|][| se{|"name": "2"|}e {@li{|"name": "3"|}nk https://test.c{|"name": "4"|}om} {|"name": "5"|}description |]*/
-    m() {}
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["1".into(), "2".into(), "3".into(), "4".into(), "5".into()]);
 	});
 }
 

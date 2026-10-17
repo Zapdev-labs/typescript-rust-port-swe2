@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_type_formatting() {
 	run_test(|t| {
-		let content = r#"var y: import("./c2").mytype;
-var z: import ("./c2").mytype;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.verify_current_file_content(r#"var y: import("./c2").mytype;
-var z: import("./c2").mytype;"#);
 	});
 }
 

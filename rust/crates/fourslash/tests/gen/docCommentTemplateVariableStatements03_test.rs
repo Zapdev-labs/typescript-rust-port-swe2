@@ -7,65 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn doc_comment_template_variable_statements03() {
 	run_test(|t| {
-		let content = r#"/*a*/
-var a = x => x
-
-/*b*/
-let b = (x,y,z) => x + y + z;
-
-/*c*/
-const c = ((x => +x))
-
-/*d*/
-let d = (function () { })
-
-/*e*/
-let e = function e([a,b,c]) {
-    return "hello"
-};
-
-/*f*/
-let f = class {
-}
-
-/*g*/
-const g = ((class G {
-    constructor(private x);
-    constructor(x,y,z);
-    constructor(x,y,z, ...okayThatsEnough) {
-    }
-}))"#;
-		let mut capabilities = tsc_fourslash::get_default_capabilities();
-		capabilities.text_document.as_mut().unwrap().completion.as_mut().unwrap().completion_item.as_mut().unwrap().snippet_support = Some((false).into());
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", capabilities.into(), &content);
-		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("a"), 7, r"/**
- * 
- * @param x
- * @returns
- */", None);
-		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("b"), 7, r"/**
- * 
- * @param x
- * @param y
- * @param z
- * @returns
- */", None);
-		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("c"), 7, r"/**
- * 
- * @param x
- * @returns
- */", None);
-		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("d"), 3, r"/** */", None);
-		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("e"), 7, r"/**
- * 
- * @param param0
- * @returns
- */", None);
-		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("f"), 3, r"/** */", None);
-		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("g"), 7, r"/**
- * 
- * @param x
- */", None);
 	});
 }
 

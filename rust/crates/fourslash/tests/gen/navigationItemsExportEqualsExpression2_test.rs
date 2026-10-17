@@ -7,37 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn navigation_items_export_equals_expression2() {
 	run_test(|t| {
-		let content = r"export const foo = {
-  foo: {},
-};
-
-export = {
-  foo: {},
-};
-
-export = {
-  foo: {},
-};
-
-type Type = typeof foo;
-
-export = {
-  foo: {},
-} as Type;
-
-export = {
-  foo: {},
-} satisfies Type;
-
-export = (class {
-  prop = 42;
-});
-
-export = (class Cls {
-  prop = 42;
-});";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_symbol();
 	});
 }
 

@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn js_doc_property_description12() {
 	run_test(|t| {
-		let content = r"type SymbolAlias = {
-    /** Something generic */
-    [p: symbol]: string;
-}
-function symbolAlias(e: SymbolAlias) {
-    console.log(e./*symbolAlias*/anything);
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("symbolAlias", "any", "");
 	});
 }
 

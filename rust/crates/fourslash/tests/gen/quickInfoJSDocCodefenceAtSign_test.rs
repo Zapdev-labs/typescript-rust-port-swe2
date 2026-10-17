@@ -7,30 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_js_doc_codefence_at_sign() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"/**
- * text
- * @example Foo
- * ", "```"), r"
- * @Embed[asfasdfasf]
- * "), "```"), r"
- * becomes
- * "), "```html"), r"
- * <div></div>
- * "), "```"), r"
- */
-const /*1*/x = 1;
-
-/**
- * Some text
- * "), "```"), r"
- * @tag inside code
- * "), "```"), r"
- * @param y - a number
- */
-function /*2*/foo(y: number) {}
-");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

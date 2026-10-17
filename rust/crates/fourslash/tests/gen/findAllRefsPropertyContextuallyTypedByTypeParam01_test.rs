@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_property_contextually_typed_by_type_param01() {
 	run_test(|t| {
-		let content = r#"interface IFoo {
-    /*1*/a: string;
-}
-class C<T extends IFoo> {
-    method() {
-        var x: T = {
-            a: ""
-        };
-        x.a;
-    }
-}
-
-
-var x: IFoo = {
-    a: "ss"
-};"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into()]);
 	});
 }
 

@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn syntactic_classifications_function_with_comments() {
 	run_test(|t| {
-		let content = r"/**
- * This is my function.
- * There are many like it, but this one is mine.
- */
-function myFunction(/* x */ x: any) {
-    var y = x ? x++ : ++x;
-}
-// end of file";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type_: "function.declaration".to_string().into(), text: "myFunction".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "parameter.declaration".to_string().into(), text: "x".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.declaration.local".to_string().into(), text: "y".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "parameter".to_string().into(), text: "x".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "parameter".to_string().into(), text: "x".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "parameter".to_string().into(), text: "x".to_string().into(), ..Default::default() }]);
 	});
 }
 

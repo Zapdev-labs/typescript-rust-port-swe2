@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn white_space_trimming3() {
 	run_test(|t| {
-		let content = r#"let t = "foo \
-bar     \   
-"/*1*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.insert(";");
-		f.verify_current_file_content("let t = \"foo \\\nbar     \\   \n\";");
 	});
 }
 

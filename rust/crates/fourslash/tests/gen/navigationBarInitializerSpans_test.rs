@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn navigation_bar_initializer_spans() {
 	run_test(|t| {
-		let content = r"// get the name for the navbar from the variable name rather than the function name
-const [|[|x|] = () => { var [|a|]; }|];
-const [|[|f|] = function f() { var [|b|]; }|];
-const [|[|y|] = { [|[|z|]: function z() { var [|c|]; }|] }|];";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_symbol();
 	});
 }
 

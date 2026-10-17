@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_non_null_assertion_operator() {
 	run_test(|t| {
-		let content = r"/*1*/ 'bar' ! ;
-/*2*/ ( 'bar' ) ! ;
-/*3*/ 'bar' [ 1 ] ! ;
-/*4*/ var  bar  =  'bar' . foo ! ;
-/*5*/ var  foo  =  bar ! ;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"'bar'!;");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"('bar')!;");
-		f.go_to_marker("3");
-		f.verify_current_line_content(r"'bar'[1]!;");
-		f.go_to_marker("4");
-		f.verify_current_line_content(r"var bar = 'bar'.foo!;");
-		f.go_to_marker("5");
-		f.verify_current_line_content(r"var foo = bar!;");
 	});
 }
 

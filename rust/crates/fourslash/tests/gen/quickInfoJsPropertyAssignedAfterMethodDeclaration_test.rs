@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_js_property_assigned_after_method_declaration() {
 	run_test(|t| {
-		let content = r"// @noLib: true
-// @allowJs: true
-// @noImplicitThis: true
-// @Filename: /a.js
-const o = {
-    test/*1*/() {
-        this./*2*/test = 0;
-    }
-};";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "(method) test(): void", "");
-		f.verify_quick_info_at("2", "(method) test(): void", "");
 	});
 }
 

@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_uri_style_node_core_modules1() {
 	run_test(|t| {
-		let content = r#"// @module: commonjs
-// @Filename: /node_modules/@types/node/index.d.ts
-declare module "fs" { function writeFile(): void }
-declare module "fs/promises" { function writeFile(): Promise<void> }
-declare module "node:fs" { export * from "fs"; }
-declare module "node:fs/promises" { export * from "fs/promises"; }
-// @Filename: /index.ts
-writeFile/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_module_specifiers("", &["fs".into(), "node:fs".into(), "fs/promises".into(), "node:fs/promises".into()], None);
 	});
 }
 

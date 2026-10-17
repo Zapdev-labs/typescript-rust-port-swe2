@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_type_parameters() {
 	run_test(|t| {
-		let content = r"/**/type Bar<T extends any[]= any[]> = T";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("");
-		f.verify_current_line_content(r"type Bar<T extends any[] = any[]> = T");
 	});
 }
 

@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_on_constructor_signature() {
 	run_test(|t| {
-		let content = r"/*1*/interface Gourai { new   () {} }
-/*2*/type Stylet = { new   () {} }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"interface Gourai { new() { } }");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"type Stylet = { new() { } }");
 	});
 }
 

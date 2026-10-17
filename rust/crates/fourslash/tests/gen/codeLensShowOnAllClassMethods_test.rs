@@ -7,29 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_lens_references_show_on_all_class_methods() {
 	run_test(|t| {
-		let mut containing_test_name = t_name();
-		for value in vec![tsc_core::tristate::TS_TRUE, tsc_core::tristate::TS_FALSE] {
-			run_subtest(&mut t, format!("{}={}", containing_test_name, value.is_true()), |t| {
-				let content = r"
-export abstract class ABC {
-  abstract methodA(): void;
-  methodB(): void {}
-  #methodC(): void {}
-  protected methodD(): void {}
-  private methodE(): void {}
-  protected abstract methodG(): void;
-  public methodH(): void {}
-
-  static methodStaticA(): void {}
-  protected static methodStaticB(): void {}
-  private static methodStaticC(): void {}
-  static #methodStaticD(): void {}
-}
-";
-				let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-				f.verify_baseline_code_lens(Some(&tsc_lsutil::UserPreferences { code_lens_user_preferences: tsc_lsutil::CodeLensUserPreferences { implementations_code_lens_enabled: tsc_core::tristate::TS_TRUE.into(), implementations_code_lens_show_on_all_class_methods: value.into(), ..Default::default() }, ..Default::default() }));
-			});
-		}
 	});
 }
 

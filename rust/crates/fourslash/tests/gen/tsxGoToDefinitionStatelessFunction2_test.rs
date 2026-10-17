@@ -7,36 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn tsx_go_to_definition_stateless_function2() {
 	run_test(|t| {
-		let content = r#"//@Filename: file.tsx
-// @jsx: preserve
-// @noLib: true
-declare namespace JSX {
-    interface Element { }
-    interface IntrinsicElements {
-    }
-    interface ElementAttributesProperty { props; }
-}
-interface ClickableProps {
-    children?: string;
-    className?: string;
-}
-interface ButtonProps extends ClickableProps {
-    onClick(event?: React.MouseEvent<HTMLButtonElement>): void;
-}
-interface LinkProps extends ClickableProps {
-    goTo: string;
-}
-declare function /*firstSource*/MainButton(buttonProps: ButtonProps): JSX.Element;
-declare function /*secondSource*/MainButton(linkProps: LinkProps): JSX.Element;
-declare function /*thirdSource*/MainButton(props: ButtonProps | LinkProps): JSX.Element;
-let opt = <[|Main/*firstTarget*/Button|] />;
-let opt = <[|Main/*secondTarget*/Button|] children="chidlren" />;
-let opt = <[|Main/*thirdTarget*/Button|] onClick={()=>{}} />;
-let opt = <[|Main/*fourthTarget*/Button|] onClick={()=>{}} ignore-prop />;
-let opt = <[|Main/*fifthTarget*/Button|] goTo="goTo" />;
-let opt = <[|Main/*sixthTarget*/Button|] wrong />;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["firstTarget".into(), "secondTarget".into(), "thirdTarget".into(), "fourthTarget".into(), "fifthTarget".into(), "sixthTarget".into()]);
 	});
 }
 

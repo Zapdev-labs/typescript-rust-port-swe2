@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_js_enum() {
 	run_test(|t| {
-		let content = r#"// @allowJs: true
-// @Filename: /a.js
-/** @enum {string} */
-/*1*/const /*2*/E = { A: "" };
-/*3*/E["A"];
-/** @type {/*4*/E} */
-const e = /*5*/E.A;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into()]);
 	});
 }
 

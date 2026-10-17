@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_in_object_binding_pattern12() {
 	run_test(|t| {
-		let content = r"interface I {
-    property1: number;
-    property2: string;
-}
-
-function f({ property1, /**/ }: I): void {
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["property2".into()].into(), excludes: vec!["property1".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

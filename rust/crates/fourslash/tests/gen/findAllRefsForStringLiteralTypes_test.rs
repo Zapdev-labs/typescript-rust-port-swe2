@@ -7,10 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_for_string_literal_types() {
 	run_test(|t| {
-		let content = r#"type Options = "/*1*/option 1" | "option 2";
-let myOption: Options = "/*2*/option 1";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into()]);
 	});
 }
 

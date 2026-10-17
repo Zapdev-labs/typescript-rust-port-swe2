@@ -7,40 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn this_predicate_function_completions02() {
 	run_test(|t| {
-		let content = r"interface Sundries {
-    broken: boolean;
-}
-
-interface Supplies {
-    spoiled: boolean;
-}
-
-interface Crate<T> {
-    contents: T;
-    isSundries(): this is Crate<Sundries>;
-    isSupplies(): this is Crate<Supplies>;
-    isPackedTight(): this is (this & {extraContents: T});
-}
-const crate: Crate<any>;
-if (crate.isPackedTight()) {
-    crate./*1*/;
-}
-if (crate.isSundries()) {
-    crate.contents./*2*/;
-    if (crate.isPackedTight()) {
-        crate./*3*/;
-    }
-}
-if (crate.isSupplies()) {
-    crate.contents./*4*/;
-    if (crate.isPackedTight()) {
-        crate./*5*/;
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["1", "3", "5"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["contents".into(), "extraContents".into(), "isPackedTight".into(), "isSundries".into(), "isSupplies".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("2"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["broken".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("4"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["spoiled".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

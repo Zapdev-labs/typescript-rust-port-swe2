@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_class_extend_abstract_some_properties_present() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"// @strict: false
-// @noImplicitOverride: true
-abstract class A {
-   abstract x: number;
-   abstract y: number;
-   abstract z: number;
-}
-
-class C extends A {[|   
-   |]constructor(public x: number) { super(); }
-   y: number;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_range_after_code_fix(r"
-override z: number;
-", false, 0, 0);
 	});
 }
 

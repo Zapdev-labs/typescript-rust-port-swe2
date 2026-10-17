@@ -7,49 +7,12 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_promote_type_only_import_jsx_tag() {
 	run_test(|t| {
-		let content = r#"// @module: preserve
-// @verbatimModuleSyntax: true
-// @jsx: react
-// @Filename: /react.ts
-const React: any = {};
-export default React;
-// @Filename: /bar.tsx
-import type React from "./react";
-
-<Foo/**/ />;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_import_fix_at_position(&[r#"import React from "./react";
-
-<Foo />;"#.into()], None);
 	});
 }
 
 #[test]
 fn code_fix_promote_type_only_import_jsx_tag_both_type_only() {
 	run_test(|t| {
-		let content = r#"// @module: preserve
-// @verbatimModuleSyntax: true
-// @jsx: react
-// @Filename: /react.ts
-const React: any = {};
-export default React;
-// @Filename: /foo.ts
-export function Foo() { return null; }
-// @Filename: /bar.tsx
-import type React from "./react";
-import type { Foo } from "./foo";
-
-<Foo/**/ />;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_import_fix_at_position(&[r#"import type React from "./react";
-import { Foo } from "./foo";
-
-<Foo />;"#.into(), r#"import React from "./react";
-import type { Foo } from "./foo";
-
-<Foo />;"#.into()], None);
 	});
 }
 

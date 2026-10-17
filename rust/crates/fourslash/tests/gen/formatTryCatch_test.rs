@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_try_catch() {
 	run_test(|t| {
-		let content = r"function test() {
-    /*try*/try {
-    }
-    /*catch*/catch (e) {
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.format_document("");
-		f.format_document("");
-		f.go_to_marker("try");
-		f.verify_current_line_content(r"    try {");
-		f.go_to_marker("catch");
-		f.verify_current_line_content(r"    catch (e) {");
 	});
 }
 

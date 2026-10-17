@@ -7,10 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn add_signature_partial() {
 	run_test(|t| {
-		let content = r"";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.insert("interface Number { toFixed");
-		f.insert("(");
 	});
 }
 

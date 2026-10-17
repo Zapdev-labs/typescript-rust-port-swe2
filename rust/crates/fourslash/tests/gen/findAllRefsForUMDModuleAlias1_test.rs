@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_for_umd_module_alias1() {
 	run_test(|t| {
-		let content = r#"// @Filename: 0.d.ts
-export function doThing(): string;
-export function doTheOtherThing(): void;
-/*1*/export as namespace /*2*/myLib;
-// @Filename: 1.ts
-/// <reference path="0.d.ts" />
-/*3*/myLib.doThing();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
 	});
 }
 

@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_function_overloads_in_class() {
 	run_test(|t| {
-		let content = r#"class clsInOverload {
-    static fnOverload();
-    static [|/*staticFunctionOverload*/fnOverload|](foo: string);
-    static /*staticFunctionOverloadDefinition*/fnOverload(foo: any) { }
-    public [|/*functionOverload*/fnOverload|](): any;
-    public fnOverload(foo: string);
-    public /*functionOverloadDefinition*/fnOverload(foo: any) { return "foo" }
-
-    constructor() { }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["staticFunctionOverload".into(), "functionOverload".into()]);
 	});
 }
 

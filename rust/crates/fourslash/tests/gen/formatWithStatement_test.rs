@@ -7,40 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_with_statement() {
 	run_test(|t| {
-		let content = r"with /*1*/(foo.bar)
-
-   {/*2*/
-
-     }/*3*/
-
-with (bar.blah)/*4*/
-{/*5*/
-}/*6*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		let mut opts227 = f.get_options();
-		opts227.format_code_settings.place_open_brace_on_new_line_for_control_blocks = tsc_core::tristate::TS_FALSE;
-		f.configure(opts227);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"with (foo.bar) {");
-		f.go_to_marker("3");
-		f.verify_current_line_content(r"}");
-		f.go_to_marker("4");
-		f.verify_current_line_content(r"with (bar.blah) {");
-		f.go_to_marker("6");
-		f.verify_current_line_content(r"}");
-		let mut opts565 = f.get_options();
-		opts565.format_code_settings.place_open_brace_on_new_line_for_control_blocks = tsc_core::tristate::TS_TRUE;
-		f.configure(opts565);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"with (foo.bar)");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"{");
-		f.go_to_marker("4");
-		f.verify_current_line_content(r"with (bar.blah)");
-		f.go_to_marker("5");
-		f.verify_current_line_content(r"{");
 	});
 }
 

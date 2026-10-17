@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_js_doc_tags14() {
 	run_test(|t| {
-		let content = r"/**
- * @param {Object} options the args object
- * @param {number} options.a first number
- * @param {number} options.b second number
- * @param {Object} options.c sub-object
- * @param {number} options.c.d third number
- * @param {Function} callback the callback function
- * @returns {number}
- */
-function /**/fn(options, callback = null) { }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

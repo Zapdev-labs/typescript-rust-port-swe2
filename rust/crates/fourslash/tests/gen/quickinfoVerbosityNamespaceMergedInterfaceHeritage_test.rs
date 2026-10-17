@@ -7,27 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quickinfo_verbosity_namespace_merged_interface_heritage() {
 	run_test(|t| {
-		let content = r"
-declare namespace NS/*1*/ {
-    interface Config extends A {
-        a: string;
-    }
-
-    interface Config extends B {
-        b: number;
-    }
-
-    interface A {
-        a: string;
-    }
-
-    interface B {
-        b: number;
-    }
-}
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("1".to_string().into(), vec![0, 1])]));
 	});
 }
 

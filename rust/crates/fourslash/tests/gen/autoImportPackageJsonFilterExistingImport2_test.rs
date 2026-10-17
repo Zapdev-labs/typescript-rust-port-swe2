@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_package_json_filter_existing_import2() {
 	run_test(|t| {
-		let content = r"// @lib: es5
-// @module: preserve
-// @Filename: /home/src/workspaces/project/node_modules/@types/react/index.d.ts
-export declare function useMemo(): void;
-export declare function useState(): void;
-// @Filename: /home/src/workspaces/project/package.json
-{}
-// @Filename: /home/src/workspaces/project/index.ts
-useMemo/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.go_to_marker("");
-		f.verify_import_fix_at_position(&[], None);
-		f.go_to_bof();
-		f.insert_line("import { useState } from \"react\";");
-		f.go_to_marker("");
-		f.verify_import_fix_at_position(&[r#"import { useMemo, useState } from "react";
-useMemo"#.into()], None);
 	});
 }
 

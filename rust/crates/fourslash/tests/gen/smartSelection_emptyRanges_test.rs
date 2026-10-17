@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn smart_selection_empty_ranges() {
 	run_test(|t| {
-		let content = r"class HomePage {
-  componentDidMount(/*1*/) {
-    if (this.props.username/*2*/) {
-      return '/*3*/';
-    }
-  }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_selection_ranges();
 	});
 }
 

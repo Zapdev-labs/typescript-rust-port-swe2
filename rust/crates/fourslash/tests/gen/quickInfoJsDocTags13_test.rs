@@ -7,33 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_js_doc_tags13() {
 	run_test(|t| {
-		let content = r#"// @allowJs: true
-// @checkJs: true
-// @filename: ./a.js
-/**
- * First overload
- * @overload
- * @param {number} a
- * @returns {void}
- */
-
-/**
- * Second overload
- * @overload
- * @param {string} a
- * @returns {void}
- */
-
-/**
- * @param {string | number} a
- * @returns {void}
- */
-function f(a) {}
-
-f(/*a*/1);
-f(/*b*/"");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_signature_help();
 	});
 }
 

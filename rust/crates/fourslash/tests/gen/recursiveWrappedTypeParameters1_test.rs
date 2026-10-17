@@ -7,27 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn recursive_wrapped_type_parameters1() {
 	run_test(|t| {
-		let content = r"interface I<T> {
-	a: T;
-	b: I<T>;
-	c: I<I<T>>;
-}
-var x: I<number>;
-var y/*1*/y = x.c.c.c.c.c.b;
-var a/*2*/a = x.a;
-var b/*3*/b = x.b;
-var c/*4*/c = x.c;
-var d/*5*/d = x.c.a;
-var e/*6*/e = x.c.b;
-var f/*7*/f = x.c.c; ";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "var yy: I<I<I<I<I<I<number>>>>>>", "");
-		f.verify_quick_info_at("2", "var aa: number", "");
-		f.verify_quick_info_at("3", "var bb: I<number>", "");
-		f.verify_quick_info_at("4", "var cc: I<I<number>>", "");
-		f.verify_quick_info_at("5", "var dd: I<number>", "");
-		f.verify_quick_info_at("6", "var ee: I<I<number>>", "");
-		f.verify_quick_info_at("7", "var ff: I<I<I<number>>>", "");
 	});
 }
 

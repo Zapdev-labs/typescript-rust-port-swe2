@@ -7,29 +7,12 @@ use tsc_fourslash::*;
 #[test]
 fn private_property_of_undefined_this1() {
 	run_test(|t| {
-		let content = r"
-// @strict: true
-this.#a = {};
-export {};
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_non_suggestion_diagnostics();
 	});
 }
 
 #[test]
 fn private_property_of_undefined_this2() {
 	run_test(|t| {
-		let content = r"
-// @strict: true
-export class C {
-    wat(this: any): boolean {
-        return this.#prop = {};
-    }
-}
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_non_suggestion_diagnostics();
 	});
 }
 

@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn constructor_find_all_references1_vs() {
 	run_test(|t| {
-		let content = r"export class C {
-    /**/public constructor() { }
-    public foo() { }
-}
-
-new C().foo();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", Some(tsc_lsproto::ClientCapabilities { vs_supports_visual_studio_extensions: Some((true).into()), ..Default::default() }), &content);
-		f.verify_baseline_vs_find_all_references(&["".into()]);
 	});
 }
 

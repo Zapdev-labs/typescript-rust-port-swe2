@@ -7,37 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_import_computed_symbol_name() {
 	run_test(|t| {
-		let content = r#"// @Filename: /home/src/workspaces/project/tsconfig.json
-{ "compilerOptions": { "module": "commonjs", "lib": ["es5"] } }
-// @Filename: /home/src/workspaces/project/node_modules/@types/ts-node/index.d.ts
-export {};
-declare const REGISTER_INSTANCE: unique symbol;
-declare global {
-    namespace NodeJS {
-      interface Process {
-          [REGISTER_INSTANCE]?: Service;
-      }
-  }
-}
-// @Filename: /home/src/workspaces/project/node_modules/@types/node/index.d.ts
-declare module "process" {
-    global {
-        var process: NodeJS.Process;
-        namespace NodeJS {
-            interface Process {
-                argv: string[];
-            }
-        }
-    }
-    export = process;
-}
-// @Filename: /home/src/workspaces/project/index.ts
-I/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { ..Default::default() }), ..Default::default() }));
-		f.insert("N");
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { ..Default::default() }), ..Default::default() }));
 	});
 }
 

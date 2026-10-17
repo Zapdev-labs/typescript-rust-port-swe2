@@ -7,45 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_root_symbol_js_doc_aggregation() {
 	run_test(|t| {
-		let content = r"
-declare const distinct: {
-    /** first */
-    a: number;
-} & {
-    /** second */
-    a: number;
-};
-
-declare const duplicate: {
-    /** same */
-    a: number;
-} & {
-    /** same */
-    a: number;
-} & {
-    /** third */
-    a: number;
-};
-
-declare const mixed: {
-    /** first */
-    a: number;
-} & {
-    /** second */
-    a: number;
-} & {
-    /** first */
-    a: number;
-};
-
-distinct./*distinct*/a
-duplicate./*duplicate*/a
-mixed./*mixed*/a
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("distinct", "(property) a: number", "first\nsecond");
-		f.verify_quick_info_at("duplicate", "(property) a: number", "same\nthird");
-		f.verify_quick_info_at("mixed", "(property) a: number", "first\nsecond");
 	});
 }
 

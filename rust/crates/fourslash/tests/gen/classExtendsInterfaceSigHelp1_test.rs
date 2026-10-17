@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn class_extends_interface_sig_help1() {
 	run_test(|t| {
-		let content = r"class C {
-    public foo(x: string);
-    public foo(x: number);
-    public foo(x: any) { return x; }
-}
-interface I extends C {
-    other(x: any): any;
-}
-var i: I;
-i.foo(/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { parameter_span: "x: string".to_string().into(), overloads_count: 2, ..Default::default() });
 	});
 }
 

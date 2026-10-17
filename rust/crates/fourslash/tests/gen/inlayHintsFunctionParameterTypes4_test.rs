@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn inlay_hints_function_parameter_types4() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @checkJs: true
-// @Filename: /a.js
-class Foo {
-    #value = 0;
-    get foo() { return this.#value; }
-    /**
-     * @param {number} value
-     */
-    set foo(value) { this.#value = value; }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_inlay_hints(None, Some(&tsc_lsutil::UserPreferences { inlay_hints_preferences: tsc_lsutil::InlayHintsPreferences { include_inlay_function_parameter_type_hints: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 

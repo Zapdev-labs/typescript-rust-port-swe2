@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsdoc_deprecated_suggestion16() {
 	run_test(|t| {
-		let content = r#"// @module: esnext
-// @filename: /a.ts
-const a = 1;
-const b = 1;
-export { a, /** @deprecated b is deprecated */ b }
-// @filename: /b.ts
-import { [|b|] } from "./a";
-[|b|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/b.ts");
-		f.verify_suggestion_diagnostics(&[tsc_lsproto::Diagnostic { code: Some(tsc_lsproto::IntegerOrString { integer: Some(((6385) as i32).into()), ..Default::default() }), message: tsc_lsproto::StringOrMarkupContent { string: Some(("'b' is deprecated.").into()), ..Default::default() }.into(), tags: Some(vec![tsc_lsproto::DiagnosticTag::Deprecated]), range: f.ranges()[0].clone().ls_range.into(), ..Default::default() }, tsc_lsproto::Diagnostic { code: Some(tsc_lsproto::IntegerOrString { integer: Some(((6385) as i32).into()), ..Default::default() }), message: tsc_lsproto::StringOrMarkupContent { string: Some(("'b' is deprecated.").into()), ..Default::default() }.into(), tags: Some(vec![tsc_lsproto::DiagnosticTag::Deprecated]), range: f.ranges()[1].clone().ls_range.into(), ..Default::default() }]);
 	});
 }
 

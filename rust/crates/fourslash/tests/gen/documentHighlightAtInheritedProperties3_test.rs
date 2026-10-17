@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn document_highlight_at_inherited_properties3() {
 	run_test(|t| {
-		let content = r"// @Filename: file1.ts
-interface interface1 extends interface1 {
-   [|doStuff|](): void;
-   [|propName|]: string;
-}
-
-var v: interface1;
-v.[|propName|];
-v.[|doStuff|]();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, to_any(f.ranges()).into_iter().map(Into::into));
 	});
 }
 

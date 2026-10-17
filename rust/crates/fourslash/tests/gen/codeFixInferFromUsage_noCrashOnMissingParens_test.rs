@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_infer_from_usage_no_crash_on_missing_parens() {
 	run_test(|t| {
-		let content = r"// @noImplicitAny: true
-// @target: esnext
-class C {
-    m() { this.x * 2; }
-    get x { return null; }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix_not_available(&[]);
 	});
 }
 

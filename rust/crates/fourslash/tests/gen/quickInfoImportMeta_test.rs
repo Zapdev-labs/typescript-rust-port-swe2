@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_import_meta() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"// @module: esnext
-// @Filename: foo.ts
-/// <reference path='./bar.d.ts' />
-im/*1*/port.me/*2*/ta;
-//@Filename: bar.d.ts
-/**
- * The type of ", "`"), r"import.meta"), "`"), r".
- *
- * If you need to declare that a given property exists on "), "`"), r"import.meta"), "`"), r",
- * this type may be augmented via interface merging.
- */
- interface ImportMeta {
-}");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

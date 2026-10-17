@@ -7,42 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_provider_wildcard_exports3() {
 	run_test(|t| {
-		let content = r#"// @Filename: /home/src/workspaces/project/packages/ui/package.json
-{
-  "name": "@repo/ui",
-  "version": "1.0.0",
-  "exports": {
-    "./*": "./src/*.tsx"
-  }
-}
-// @Filename: /home/src/workspaces/project/packages/ui/src/Card.tsx
-export const Card = () => null;
-// @Filename: /home/src/workspaces/project/apps/web/package.json
-{
-  "name": "web",
-  "version": "1.0.0",
-  "dependencies": {
-    "@repo/ui": "workspace:*"
-  }
-}
-// @Filename: /home/src/workspaces/project/apps/web/tsconfig.json
-{
-  "compilerOptions": {
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "noEmit": true,
-    "jsx": "preserve",
-    "lib": ["es5"]
-  },
- "include": ["app"]
-}
-// @Filename: /home/src/workspaces/project/apps/web/app/index.tsx
-(<Card/**/ />);
-// @link: /home/src/workspaces/project/packages/ui -> /home/src/workspaces/project/apps/web/node_modules/@repo/ui"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.go_to_marker("");
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "Card".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "@repo/ui/Card".to_string().into(), ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

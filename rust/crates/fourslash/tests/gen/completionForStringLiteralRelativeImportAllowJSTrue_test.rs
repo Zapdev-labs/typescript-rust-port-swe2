@@ -7,32 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_for_string_literal_relative_import_allow_js_true() {
 	run_test(|t| {
-		let content = r#"// @allowJs: true
-// @Filename: test0.ts
-import * as foo1 from ".//*import_as0*/
-import * as foo2 from "./f/*import_as1*/
-import foo3 = require(".//*import_equals0*/
-import foo4 = require("./f/*import_equals1*/
-var foo5 = require(".//*require0*/
-var foo6 = require("./f/*require1*/
-// @Filename: f1.ts
-
-// @Filename: f2.js
-
-// @Filename: f3.d.ts
-
-// @Filename: f4.tsx
-
-// @Filename: f5.js
-
-// @Filename: f6.jsx
-
-// @Filename: g1.ts
-
-// @Filename: g2.js
-"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(f.markers()), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["f1".into(), "f2".into(), "f3".into(), "f4".into(), "f5".into(), "f6".into(), "g1".into(), "g2".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

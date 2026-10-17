@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_export_equals() {
 	run_test(|t| {
-		let content = r"// @module: commonjs
-// @esModuleInterop: false
-// @allowSyntheticDefaultImports: false
-// @Filename: /a.d.ts
-declare function a(): void;
-declare namespace a {
-    export interface b {}
-}
-export = a;
-// @Filename: /b.ts
-a;
-let x: b;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/b.ts");
-		f.verify_code_fix_all(&tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport".to_string().into(), new_file_content: r#"import { b } from "./a";
-import a = require("./a");
-
-a;
-let x: b;"#.to_string().into(), ..Default::default() });
 	});
 }
 

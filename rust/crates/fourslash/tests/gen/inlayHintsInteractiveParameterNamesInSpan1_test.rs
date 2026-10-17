@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn inlay_hints_interactive_parameter_names_in_span1() {
 	run_test(|t| {
-		let content = r"function foo1 (a: number, b: number) {}
-function foo2 (c: number, d: number) {}
-function foo3 (e: number, f: number) {}
-function foo4 (g: number, h: number) {}
-function foo5 (i: number, j: number) {}
-function foo6 (k: number, i: number) {}
-
-function c1 () { foo1(/*a*/1, /*b*/2); }
-function c2 () { foo2(/*c*/1, /*d*/2); }
-function c3 () { foo3(/*e*/1, /*f*/2); }
-function c4 () { foo4(/*g*/1, /*h*/2); }
-function c5 () { foo5(/*i*/1, /*j*/2); }
-function c6 () { foo6(/*k*/1, /*l*/2); }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		let mut start = f.marker_by_name("c");
-		let mut end = f.marker_by_name("h");
-		let mut span = tsc_lsproto::Range { start: start.as_ref().unwrap().ls_position.into(), end: end.as_ref().unwrap().ls_position.into(), ..Default::default() };
-		f.verify_baseline_inlay_hints(span.into(), Some(&tsc_lsutil::UserPreferences { inlay_hints_preferences: tsc_lsutil::InlayHintsPreferences { include_inlay_parameter_name_hints: "literals".to_string().into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 

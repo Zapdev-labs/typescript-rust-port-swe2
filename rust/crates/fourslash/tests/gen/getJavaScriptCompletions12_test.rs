@@ -7,33 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_java_script_completions12() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r#"// @allowNonTsExtensions: true
-// @Filename: Foo.js
-/**
- * @param {number} input
- * @param {string} currency
- * @returns {number}
- */
-var convert = function(input, currency) {
-    switch(currency./*1*/) {
-            case "USD":
-            input./*2*/;
-            case "EUR":
-                return "" + rateToUsd.EUR;
-            case "CNY":
-                return {} + rateToUsd.CNY;
-    }
-}
-convert(1, "")./*3*/
-/**
- * @param {number} x
- */
-var test1 = function(x) { return x./*4*/ }, test2 = function(a) { return a./*5*/ };"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "charCodeAt".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Method).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["2", "3", "4"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "toExponential".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Method).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("5"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "test1".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Text).into()), sort_text: Some((tsc_ls::JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

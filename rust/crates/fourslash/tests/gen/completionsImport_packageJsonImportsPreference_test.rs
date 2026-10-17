@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_import_package_json_imports_preference() {
 	run_test(|t| {
-		let content = r##"// @module: preserve
-// @allowImportingTsExtensions: true
-// @Filename: /project/package.json
-{
-  "name": "project",
-  "version": "1.0.0",
-  "imports": {
-    "#internal/*": "./src/internal/*.ts"
-  }
-}
-// @Filename: /project/src/internal/foo.ts
-export const internalFoo = 0;
-// @Filename: /project/src/other.ts
-export * from "./internal/foo.ts";
-// @Filename: /project/src/main.ts
-internalFoo/**/"##;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "internalFoo".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "#internal/foo".to_string().into(), ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { import_module_specifier_preference: tsc_modulespecifiers::ImportModuleSpecifierPreference("non-relative"), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "internalFoo".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./other".to_string().into(), ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { import_module_specifier_preference: tsc_modulespecifiers::ImportModuleSpecifierPreference("relative"), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -7,47 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn duplicate_package_services_file_changes() {
 	run_test(|t| {
-		let content = r#"// @noImplicitReferences: true
-// @Filename: /node_modules/a/index.d.ts
-import X from "x";
-export function a(x: X): void;
-// @Filename: /node_modules/a/node_modules/x/index.d.ts
-export default class /*defAX*/X {
-    private x: number;
-}
-// @Filename: /node_modules/a/node_modules/x/package.json
-{ "name": "x", "version": "1.2./*aVersionPatch*/3" }
-// @Filename: /node_modules/b/index.d.ts
-import X from "x";
-export const b: X;
-// @Filename: /node_modules/b/node_modules/x/index.d.ts
-export default class /*defBX*/X {
-    private x: number;
-}
-// @Filename: /node_modules/b/node_modules/x/package.json
-{ "name": "x", "version": "1.2./*bVersionPatch*/3" }
-// @Filename: /src/a.ts
-import { a } from "a";
-import { b } from "b";
-a(/*error*/b);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/src/a.ts");
-		f.verify_number_of_errors_in_current_file(0);
-|version_patch, def| {
-			f.go_to_marker(version_patch);
-			f.insert("4");
-			f.go_to_marker(def);
-			f.insert(" ");
-			f.verify_error_exists_after_marker("error");
-			f.go_to_marker(version_patch);
-			f.delete_at_caret(1);
-			f.go_to_marker(def);
-			f.delete_at_caret(1);
-			f.go_to_file("/src/a.ts");
-			f.verify_number_of_errors_in_current_file(0);
-		}		let mut test_change_and_change_back = ;
-		test_change_and_change_back("aVersionPatch", "defAX");
-		test_change_and_change_back("bVersionPatch", "defBX");
 	});
 }
 

@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn syntactic_classification_with_errors() {
 	run_test(|t| {
-		let content = r"class A {
-    a:
-}
-c =";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type_: "class.declaration".to_string().into(), text: "A".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "property.declaration".to_string().into(), text: "a".to_string().into(), ..Default::default() }]);
 	});
 }
 

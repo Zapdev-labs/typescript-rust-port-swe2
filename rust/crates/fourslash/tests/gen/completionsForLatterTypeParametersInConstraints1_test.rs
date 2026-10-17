@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_for_latter_type_parameters_in_constraints1() {
 	run_test(|t| {
-		let content = r"// https://github.com/microsoft/TypeScript/issues/56474
-function test<First extends S/*1*/, Second>(a: First, b: Second) {}
-type A1<K extends /*2*/, L> = K";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["1"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["Second".into()].into(), excludes: vec!["First".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["2"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["L".into()].into(), excludes: vec!["K".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

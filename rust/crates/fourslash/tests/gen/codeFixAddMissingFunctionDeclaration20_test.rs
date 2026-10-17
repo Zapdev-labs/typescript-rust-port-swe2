@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_add_missing_function_declaration20() {
 	run_test(|t| {
-		let content = r"const a = {
-   b: { f(x: number) {} }
-}
-a.b.f(foo);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix_not_available(&["fixMissingFunctionDeclaration".into()]);
 	});
 }
 

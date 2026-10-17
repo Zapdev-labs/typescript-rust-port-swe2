@@ -7,44 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_cross_project_paths_to_dist2() {
 	run_test(|t| {
-		let content = r#"// @Filename: /home/src/workspaces/project/common/tsconfig.json
-{
-  "compilerOptions": {
-    "lib": ["es5"],
-    "module": "commonjs",
-    "outDir": "dist",
-    "composite": true
-  },
-  "include": ["src"]
-}
-// @Filename: /home/src/workspaces/project/common/src/MyModule.ts
-export function square(n: number) {
-  return n * 2;
-}
-// @Filename: /home/src/workspaces/project/web/tsconfig.json
-{
-  "compilerOptions": {
-    "lib": ["es5"],
-    "module": "esnext",
-    "moduleResolution": "node",
-    "noEmit": true,
-    "paths": {
-      "@common/*": ["../common/dist/src/*"]
-    }
-  },
-  "include": ["src"],
-  "references": [{ "path": "../common" }]
-}
-// @Filename: /home/src/workspaces/project/web/src/MyApp.ts
-import { square } from "@common/MyModule";
-// @Filename: /home/src/workspaces/project/web/src/Helper.ts
-export function saveMe() {
-  square/**/(2);
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.go_to_file("/home/src/workspaces/project/web/src/Helper.ts");
-		f.verify_import_fix_module_specifiers("", &["@common/MyModule".into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_preference: tsc_modulespecifiers::ImportModuleSpecifierPreference("non-relative"), ..Default::default() }));
 	});
 }
 

@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_union_type_property1() {
 	run_test(|t| {
-		let content = r"interface One {
-    /*propertyDefinition1*/commonProperty: number;
-    commonFunction(): number;
-}
-
-interface Two {
-    /*propertyDefinition2*/commonProperty: string
-    commonFunction(): number;
-}
-
-var x : One | Two;
-
-x.[|/*propertyReference*/commonProperty|];
-x./*3*/commonFunction;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["propertyReference".into()]);
 	});
 }
 

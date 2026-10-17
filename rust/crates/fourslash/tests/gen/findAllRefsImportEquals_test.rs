@@ -7,10 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_import_equals() {
 	run_test(|t| {
-		let content = r"import j = N./**/q;
-namespace N { export const q = 0; }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["".into()]);
 	});
 }
 

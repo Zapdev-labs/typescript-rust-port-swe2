@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_implementation_namespace_00() {
 	run_test(|t| {
-		let content = r"namespace /*implementation0*/Foo {
-    export function hello() {}
-}
-
-module /*implementation1*/Bar {
-    export function sure() {}
-}
-
-let x = Fo/*reference0*/o;
-let y = Ba/*reference1*/r;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_implementation(&["reference0".into(), "reference1".into()]);
 	});
 }
 

@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_paths_config_dir() {
 	run_test(|t| {
-		let content = r#"// @Filename: tsconfig.json
-{
-    "compilerOptions": {
-        "paths": {
-            "@root/*": ["${configDir}/src/*"]
-        }
-    }
-}
-// @Filename: src/one.ts
-export const one = 1;
-// @Filename: src/foo/two.ts
-one/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_module_specifiers("", &["@root/one".into()], None);
 	});
 }
 

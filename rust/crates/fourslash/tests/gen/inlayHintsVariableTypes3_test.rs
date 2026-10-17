@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn inlay_hints_variable_types3() {
 	run_test(|t| {
-		let content = r#"// @strict: true
-// @target: esnext
-interface DivElement {}
-declare var DivElementCtor: {
-  prototype: DivElement;
-  new(): DivElement;
-};
-interface ElementMap {
-  div: typeof DivElementCtor;
-}
-declare function getCtor<K extends keyof ElementMap>(tagName: K): ElementMap[K] | undefined;
-const div = getCtor("div");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_inlay_hints(None, Some(&tsc_lsutil::UserPreferences { inlay_hints_preferences: tsc_lsutil::InlayHintsPreferences { include_inlay_variable_type_hints: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 

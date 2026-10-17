@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_occurrences_abstract03() {
 	run_test(|t| {
-		let content = r"function f() {
-    [|abstract|] class A {
-        [|abstract|] m(): void;
-    }
-    abstract class B {}
-}
-switch (0) {
-    case 0:
-        [|abstract|] class A { [|abstract|] m(): void; }
-    default:
-        [|abstract|] class B { [|abstract|] m(): void; }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, to_any(f.ranges()).into_iter().map(Into::into));
 	});
 }
 

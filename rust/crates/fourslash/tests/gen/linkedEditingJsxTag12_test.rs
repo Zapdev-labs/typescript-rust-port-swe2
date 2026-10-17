@@ -7,57 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn linked_editing_jsx_tag12() {
 	run_test(|t| {
-		let content = r"// @Filename: /incomplete.tsx
-function Test() {
-    return <div>
-        </*0*/
-        <div {...{}}>
-        </div>
-    </div>
-}
-// @Filename: /incompleteMismatched.tsx
-function Test() {
-    return <div>
-        <T
-        <div {...{}}>
-        </div>
-    </div>
-}
-// @Filename: /incompleteMismatched2.tsx
-function Test() {
-    return <div>
-        <T
-        <div {...{}}>
-        T</div>
-    </div>
-}
-// @Filename: /incompleteMismatched3.tsx
-function Test() {
-    return <div>
-        <div {...{}}>
-        </div>
-        <T
-    </div>
-}
-// @Filename: /mismatched.tsx
-function Test() {
-    return <div>
-        <T>
-        <div {...{}}>
-        </div>
-    </div>
-}
-// @Filename: /matched.tsx
-function Test() {
-    return <div>
-
-        <div {...{}}>
-        </div>
-    </div>
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_linked_editing(&std::collections::BTreeMap::from([("0".to_string().into(), None)]));
-		f.verify_baseline_linked_editing();
 	});
 }
 

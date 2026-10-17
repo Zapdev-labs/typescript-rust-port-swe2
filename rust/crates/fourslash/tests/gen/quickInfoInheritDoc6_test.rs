@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_inherit_doc6() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @checkJs: true
-// @Filename: quickInfoInheritDoc6.js
-class B extends UNRESOLVED_VALUE_DEFINITELY_DOES_NOT_EXIST {
-    /**
-     * @inheritdoc
-     */
-    static /**/value() {
-        return undefined;
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

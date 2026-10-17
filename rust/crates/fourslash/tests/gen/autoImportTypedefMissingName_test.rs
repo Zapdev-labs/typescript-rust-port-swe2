@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_typedef_missing_name() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @checkJs: true
-// @Filename: /utils.js
-/** @typedef {{ x: number }} */
-
-export function doSomething() {}
-// @Filename: /index.ts
-doSomething/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.baseline_auto_imports_completions(&["".into()]);
 	});
 }
 

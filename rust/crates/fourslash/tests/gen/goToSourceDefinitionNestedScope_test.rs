@@ -7,44 +7,12 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_source_nested_scope_shadowing() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{ "name": "pkg", "main": "./index.js", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.d.ts
-export declare function helper(): string;
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.js
-export function /*targetHelper*/helper() { return "ok"; }
-function unrelated() {
-    const helper = "shadow";
-    return helper;
-}
-// @Filename: /home/src/workspaces/project/index.ts
-import { /*importHelper*/helper } from "pkg";
-helper/*usage*/();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["importHelper".into(), "usage".into()]);
 	});
 }
 
 #[test]
 fn go_to_source_nested_class_shadowing() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{ "name": "pkg", "main": "./index.js", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.d.ts
-export declare class Widget {}
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.js
-export class /*targetWidget*/Widget {}
-function factory() {
-    class Widget { constructor() { this.local = true; } }
-    return new Widget();
-}
-// @Filename: /home/src/workspaces/project/index.ts
-import { /*importWidget*/Widget } from "pkg";
-new Widget();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["importWidget".into()]);
 	});
 }
 

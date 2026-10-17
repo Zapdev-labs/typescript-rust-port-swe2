@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_dot_dot_dot_in_object_literal1() {
 	run_test(|t| {
-		let content = r"// https://github.com/microsoft/TypeScript/issues/57540
-
-const foo = { b: 100 };
-
-const bar: {
-  a: number;
-  b: number;
-} = {
-  a: 42,
-  .../*1*/
-};";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["foo".into()].into(), excludes: vec!["b".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

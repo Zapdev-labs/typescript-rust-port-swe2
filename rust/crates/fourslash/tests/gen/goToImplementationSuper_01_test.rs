@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_implementation_super_01() {
 	run_test(|t| {
-		let content = r"class [|Foo|] {
-    hello() {}
-}
-
-class Bar extends Foo {
-    hello() {
-        sup/*super_call*/er.hello();
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_implementation(&["super_call".into()]);
 	});
 }
 

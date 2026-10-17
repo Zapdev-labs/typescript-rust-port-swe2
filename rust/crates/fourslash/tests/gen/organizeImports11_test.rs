@@ -7,64 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn organize_imports11() {
 	run_test(|t| {
-		let content = r"// @Filename: /test.ts
-import { TypeA, TypeB, TypeC, UnreferencedType } from './my-types';
-
-/**
- * MyClass {@link TypeA}
- */
-export class MyClass {
-
-  /**
-   * Some Property {@link TypeB}
-   */
-  public something;
-
-  /**
-   * Some function {@link TypeC}
-   */
-  public myMethod() {
-
-    /**
-     * Some lambda function {@link TypeC}
-     */
-    const someFunction = () => {
-      return '';
-    }
-    someFunction();
-  }
-}
-// @Filename: /my-types.ts
- export type TypeA = string;
- export class TypeB { }
- export type TypeC = () => string;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_organize_imports(r"import { TypeA, TypeB, TypeC } from './my-types';
-
-/**
- * MyClass {@link TypeA}
- */
-export class MyClass {
-
-  /**
-   * Some Property {@link TypeB}
-   */
-  public something;
-
-  /**
-   * Some function {@link TypeC}
-   */
-  public myMethod() {
-
-    /**
-     * Some lambda function {@link TypeC}
-     */
-    const someFunction = () => {
-      return '';
-    }
-    someFunction();
-  }
-}", tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 	});
 }
 

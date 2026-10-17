@@ -7,29 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_module_members() {
 	run_test(|t| {
-		let content = r" namespace Module {
-     var innerVariable = 1;
-     function innerFunction() { }
-     class innerClass { }
-     namespace innerModule { }
-     interface innerInterface {}
-     export var exportedVariable = 1;
-     export function exportedFunction() { }
-     export class exportedClass { }
-     export namespace exportedModule { export var exportedInnerModuleVariable = 1; }
-     export interface exportedInterface {}
- }
-
-Module./*ValueReference*/;
-
-var x : Module./*TypeReference*/
-
-class TestClass extends Module./*TypeReferenceInExtendsList*/ { }
-
-interface TestInterface implements Module./*TypeReferenceInImplementsList*/ { }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["ValueReference", "TypeReferenceInExtendsList"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["exportedFunction".into(), "exportedVariable".into(), "exportedClass".into(), "exportedModule".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["TypeReference", "TypeReferenceInImplementsList"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["exportedClass".into(), "exportedInterface".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

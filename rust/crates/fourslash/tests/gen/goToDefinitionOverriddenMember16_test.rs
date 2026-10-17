@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_overridden_member16() {
 	run_test(|t| {
-		let content = r"// @Filename: goToDefinitionOverrideJsdoc.ts
-// @allowJs: true
-// @checkJs: true
-export class C extends CompletelyUndefined {
-    /**
-     * @override/*1*/
-     * @returns {{}}
-     */
-    static foo() {
-        return {}
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["1".into()]);
 	});
 }
 

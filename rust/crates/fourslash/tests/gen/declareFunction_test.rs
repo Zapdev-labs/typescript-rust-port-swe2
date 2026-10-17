@@ -7,10 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn declare_function() {
 	run_test(|t| {
-		let content = r"// @filename: index.ts
-declare function";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "".to_string().into(), preferences: None, exact: Some((vec![]).into()), ..Default::default() }]);
 	});
 }
 

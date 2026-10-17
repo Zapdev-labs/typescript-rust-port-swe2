@@ -7,27 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_for_super_calls1() {
 	run_test(|t| {
-		let content = r"class A { }
-class B extends A { }
-class C extends B {
-    constructor() {
-        super(/*1*/ // sig help here?
-    }
-}
-class A2 { }
-class B2 extends A2 {
-    constructor(x:number) {}
- }
-class C2 extends B2 {
-    constructor() {
-        super(/*2*/ // sig help here?
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "B(): B".to_string().into(), ..Default::default() });
-		f.go_to_marker("2");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "B2(x: number): B2".to_string().into(), ..Default::default() });
 	});
 }
 

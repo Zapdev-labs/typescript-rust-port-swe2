@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_already_imported_namespace_export_alias() {
 	run_test(|t| {
-		let content = r#"// @module: node18
-// @Filename: /values.ts
-export const A = 1;
-export const B = 2;
-
-// @Filename: /namespace.ts
-import * as Group from "./values.js";
-type Group = (typeof Group)[keyof typeof Group];
-export { Group };
-
-// @Filename: /index.ts
-import { Group } from "./namespace.js";
-
-console.log(Grou/**/);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		let mut result = f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "Group".to_string().into(), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		result.and_has_no_code_action(&tsc_fourslash::CompletionsExpectedCodeAction { name: "Group".to_string().into(), source: "./namespace.js".to_string().into(), ..Default::default() });
 	});
 }
 

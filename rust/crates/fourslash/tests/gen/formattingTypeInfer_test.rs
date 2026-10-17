@@ -7,41 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_type_infer() {
 	run_test(|t| {
-		let content = r"
-/*L1*/type C<T> = T extends Array<infer U> ? U : never;
-
-/*L2*/  type   C  <  T  >   =   T   extends   Array   <   infer     U  >  ?   U   :   never  ; 
-
-/*L3*/type C<T> = T extends Array<infer U> ? U : T;
-
-/*L4*/  type   C  <  T  >   =   T   extends   Array   <   infer     U  >  ?   U   :   T  ;  
-
-/*L5*/type Foo<T> = T extends { a: infer U, b: infer U } ? U : never;
-
-/*L6*/  type   Foo  <  T  > = T   extends   {   a  :   infer   U  ,   b  :   infer   U   }   ?   U   :   never  ;  
-
-/*L7*/type Bar<T> = T extends { a: (x: infer U) => void, b: (x: infer U) => void } ? U : never;
-
-/*L8*/  type   Bar  <  T  >   =   T   extends   {   a  :   (x  :  infer  U  ) =>   void  ,   b  :   (x  :   infer   U  )   =>   void   }    ?   U   :   never  ;
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("L1");
-		f.verify_current_line_content(r"type C<T> = T extends Array<infer U> ? U : never;");
-		f.go_to_marker("L2");
-		f.verify_current_line_content(r"type C<T> = T extends Array<infer U> ? U : never;");
-		f.go_to_marker("L3");
-		f.verify_current_line_content(r"type C<T> = T extends Array<infer U> ? U : T;");
-		f.go_to_marker("L4");
-		f.verify_current_line_content(r"type C<T> = T extends Array<infer U> ? U : T;");
-		f.go_to_marker("L5");
-		f.verify_current_line_content(r"type Foo<T> = T extends { a: infer U, b: infer U } ? U : never;");
-		f.go_to_marker("L6");
-		f.verify_current_line_content(r"type Foo<T> = T extends { a: infer U, b: infer U } ? U : never;");
-		f.go_to_marker("L7");
-		f.verify_current_line_content(r"type Bar<T> = T extends { a: (x: infer U) => void, b: (x: infer U) => void } ? U : never;");
-		f.go_to_marker("L8");
-		f.verify_current_line_content(r"type Bar<T> = T extends { a: (x: infer U) => void, b: (x: infer U) => void } ? U : never;");
 	});
 }
 

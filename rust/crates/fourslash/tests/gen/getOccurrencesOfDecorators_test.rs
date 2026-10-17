@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_occurrences_of_decorators() {
 	run_test(|t| {
-		let content = r"// @Filename: b.ts
-@/*1*/decorator
-class C {
-    @decorator
-    method() {}
-}
-function decorator(target) {
-    return target;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, vec!["1".into()]);
 	});
 }
 

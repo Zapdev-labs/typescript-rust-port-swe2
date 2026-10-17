@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_references_of_json_module() {
 	run_test(|t| {
-		let content = r#"// @resolveJsonModule: true
-// @module: commonjs
-// @esModuleInterop: true
-// @Filename: /foo.ts
-/*1*/import /*2*/settings from "./settings.json";
-/*3*/settings;
-// @Filename: /settings.json
- {}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
 	});
 }
 

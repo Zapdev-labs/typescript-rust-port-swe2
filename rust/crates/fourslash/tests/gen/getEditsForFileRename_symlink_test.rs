@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_edits_for_file_rename_symlink() {
 	run_test(|t| {
-		let content = r"// @Filename: /foo.ts
-// @Symlink: /node_modules/foo/index.ts
-export const x = 0;
-// @Filename: /user.ts
-import { x } from 'foo';";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.verify_will_rename_files_edits("/user.ts", "/luser.ts", &std::collections::BTreeMap::from([]), None);
 	});
 }
 

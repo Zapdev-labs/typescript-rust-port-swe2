@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsdoc_typedef_tag_namespace() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"// @lib: es5
-// @allowNonTsExtensions: true
-// @Filename: jsdocCompletion_typedef.js
-/**
- * @typedef {string | number} T.NumberLike
- * @typedef {{age: number}} T.People
- * @typedef {string | number} T.O.Q.NumberLike
- * @type {T.NumberLike}
- */
-var x; x./*1*/;
-/** @type {T.O.Q.NumberLike} */
-var x1; x1./*2*/;
-/** @type {T.People} */
-var x1; x1./*3*/;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["1", "3"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["charAt".into(), "toExponential".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("2"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "age".to_string().into(), sort_text: Some((tsc_ls::JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

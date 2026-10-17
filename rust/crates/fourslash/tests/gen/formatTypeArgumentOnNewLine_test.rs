@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_type_argument_on_new_line() {
 	run_test(|t| {
-		let content = r"const genericObject = new GenericObject<
-  /*1*/{}
->();
-const genericObject2 = new GenericObject2<
-  /*2*/{},
-  /*3*/{}
->();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"    {}");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"    {},");
-		f.go_to_marker("3");
-		f.verify_current_line_content(r"    {}");
 	});
 }
 

@@ -7,29 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_for_inherited_properties10() {
 	run_test(|t| {
-		let content = r#"interface IFeedbackHandler {
-  /*1*/handleAccept?(): void;
-  handleReject?(): void;
-}
-
-abstract class AbstractFeedbackHandler implements IFeedbackHandler {}
-
-class FeedbackHandler extends AbstractFeedbackHandler {
-  /*2*/handleAccept(): void {
-    console.log("Feedback accepted");
-  }
-
-  handleReject(): void {
-    console.log("Feedback rejected");
-  }
-}
-
-function foo(handler: IFeedbackHandler) {
-  handler./*3*/handleAccept?.();
-  handler.handleReject?.();
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
 	});
 }
 

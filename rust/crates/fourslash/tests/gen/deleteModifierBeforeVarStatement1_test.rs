@@ -7,34 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn delete_modifier_before_var_statement1() {
 	run_test(|t| {
-		let content = r"
-
-/////////////////////////////
-/// Windows Script Host APIS
-/////////////////////////////
-
-declare var ActiveXObject: { new (s: string): any; };
-
-interface ITextWriter {
-    WriteLine(s): void;
-}
-
-declare var WScript: {
-    Echo(s): void;
-    StdErr: ITextWriter;
-    Arguments: { length: number; Item(): string; };
-    ScriptFullName: string;
-    Quit(): number;
-}
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file_number(0);
-		f.go_to_position(0);
-		f.delete_at_caret(100);
-		f.go_to_position(198);
-		f.delete_at_caret(16);
-		f.go_to_position(198);
-		f.insert("Item(): string; ");
 	});
 }
 

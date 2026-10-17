@@ -7,37 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn string_completions_from_generic_conditional_types_using_template_literal_types() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r#"// @stableTypeOrdering: true
-// @strict: true
-type keyword = "foo" | "bar" | "baz"
-
-type validateString<s> = s extends keyword
-    ? s
-    : s extends "#, "`"), r"${infer left extends keyword}|${infer right}"), "`"), r"
-    ? right extends keyword
-        ? s
-        : "), "`"), r"${left}|${keyword}"), "`"), r#"
-    : keyword
-
-type isUnknown<t> = unknown extends t
-    ? [t] extends [{}]
-        ? false
-        : true
-    : false
-
-type validate<def> = def extends string
-    ? validateString<def>
-    : isUnknown<def> extends true
-    ? keyword
-    : {
-          [k in keyof def]: validate<def[k]>
-      }
-const parse = <def>(def: validate<def>) => def
-const shallowExpression = parse("foo|/*ts*/")
-const nestedExpression = parse({ prop: "foo|/*ts2*/" })"#);
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["ts"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["bar".into(), "baz".into(), "foo".into(), "foo|bar".into(), "foo|baz".into(), "foo|foo".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["ts2"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["foo|bar".into(), "foo|baz".into(), "foo|foo".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

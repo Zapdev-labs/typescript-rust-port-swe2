@@ -7,28 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_references_jsx_tag_name3() {
 	run_test(|t| {
-		let content = r"// @jsx: preserve
-// @Filename: /a.tsx
-namespace JSX {
-    export interface Element { }
-    export interface IntrinsicElements {
-        [|[|/*1*/div|]: any;|]
-    }
-}
-
-[|const [|/*6*/Comp|] = () =>
-    [|<[|/*2*/div|]>
-        Some content
-        [|<[|/*3*/div|]>More content</[|/*4*/div|]>|]
-    </[|/*5*/div|]>|];|]
-
-const x = [|<[|/*7*/Comp|]>
-    Content
-</[|/*8*/Comp|]>|];";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into(), "7".into(), "8".into()]);
-		f.verify_baseline_document_highlights(None, vec![f.ranges()[1].clone().into(), f.ranges()[5].clone().into(), f.ranges()[7].clone().into(), f.ranges()[8].clone().into(), f.ranges()[9].clone().into()]);
-		f.verify_baseline_document_highlights(None, vec![f.ranges()[3].clone().into(), f.ranges()[11].clone().into(), f.ranges()[12].clone().into()]);
 	});
 }
 

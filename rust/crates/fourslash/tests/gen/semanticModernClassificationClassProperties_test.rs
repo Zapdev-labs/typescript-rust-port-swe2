@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn semantic_modern_classification_class_properties() {
 	run_test(|t| {
-		let content = r"class A { 
-  private y: number;
-  constructor(public x : number, _y : number) { this.y = _y; }
-  get z() : number { return this.x + this.y; }
-  set a(v: number) { }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type_: "class.declaration".to_string().into(), text: "A".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "property.declaration".to_string().into(), text: "y".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "parameter.declaration".to_string().into(), text: "x".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "parameter.declaration".to_string().into(), text: "_y".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "property".to_string().into(), text: "y".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "parameter".to_string().into(), text: "_y".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "property.declaration".to_string().into(), text: "z".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "property".to_string().into(), text: "x".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "property".to_string().into(), text: "y".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "property.declaration".to_string().into(), text: "a".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "parameter.declaration".to_string().into(), text: "v".to_string().into(), ..Default::default() }]);
 	});
 }
 

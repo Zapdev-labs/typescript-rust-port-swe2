@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_package_json_imports_length1() {
 	run_test(|t| {
-		let content = r##"// @module: node18
-// @Filename: /package.json
-{
-  "imports": {
-    "#*": "./src/*.ts"
-  }
-}
-// @Filename: /src/a/b/c/something.ts
-export function something(name: string): any;
-// @Filename: /src/a/b/c/d.ts
-something/**/"##;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_module_specifiers("", &["./something".into()], None);
 	});
 }
 

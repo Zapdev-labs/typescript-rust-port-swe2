@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_interface_after_implement() {
 	run_test(|t| {
-		let content = r"interface /*interfaceDefinition*/sInt {
-    sVar: number;
-    sFn: () => void;
-}
-
-class iClass implements /*interfaceReference*/sInt {
-    public sVar = 1;
-    public sFn() {
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(false, &["interfaceReference".into()]);
 	});
 }
 

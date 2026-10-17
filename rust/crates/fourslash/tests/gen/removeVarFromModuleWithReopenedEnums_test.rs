@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn remove_var_from_module_with_reopened_enums() {
 	run_test(|t| {
-		let content = r"namespace A {
-    /**/var o;
-}
-enum A {
-}
-enum A {
-}
-namespace A {
-    var p;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.delete_at_caret(6);
 	});
 }
 

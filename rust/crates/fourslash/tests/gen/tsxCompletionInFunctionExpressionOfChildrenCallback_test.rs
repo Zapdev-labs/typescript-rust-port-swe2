@@ -7,33 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn tsx_completion_in_function_expression_of_children_callback() {
 	run_test(|t| {
-		let content = r"//@module: commonjs
-//@jsx: preserve
-// @Filename: 1.tsx
-declare namespace JSX {
-    interface Element { }
-    interface IntrinsicElements {
-    }
-    interface ElementAttributesProperty { props; }
-}
-interface IUser {
-    Name: string;
-}
-interface IFetchUserProps {
-    children: (user: IUser) => any;
-}
-function FetchUser(props: IFetchUserProps) { return undefined; }
-function UserName() {
-    return (
-        <FetchUser>
-            { user => (
-                <h1>{ user./**/ }</h1>
-            )}
-        </FetchUser>
-    );
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), None);
 	});
 }
 

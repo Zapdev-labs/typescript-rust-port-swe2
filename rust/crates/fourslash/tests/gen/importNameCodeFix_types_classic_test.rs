@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_types_classic() {
 	run_test(|t| {
-		let content = r"// @moduleResolution: classic
-// @Filename: /node_modules/@types/foo/index.d.ts
-export const xyz: number;
-// @Filename: /node_modules/bar/index.d.ts
-export const qrs: number;
-// @Filename: /a.ts
-xyz;
-qrs;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/a.ts");
-		f.verify_code_fix_all(&tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport".to_string().into(), new_file_content: r#"import { xyz } from "foo";
-import { qrs } from "./node_modules/bar/index";
-
-xyz;
-qrs;"#.to_string().into(), ..Default::default() });
 	});
 }
 

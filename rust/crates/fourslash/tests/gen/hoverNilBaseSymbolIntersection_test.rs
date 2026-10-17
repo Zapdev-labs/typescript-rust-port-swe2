@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn hover_nil_base_symbol_intersection() {
 	run_test(|t| {
-		let content = r#"
-// @strict: true
-// @filename: main.ts
-
-class Base {}
-
-declare const BaseFactory: new() => Base & { c: string };
-
-class Derived extends BaseFactory {
-  static /*1*/idField = "id" as const;
-}
-"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

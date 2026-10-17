@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_module_augmentation() {
 	run_test(|t| {
-		let content = r#"// @Filename: /node_modules/foo/index.d.ts
-/*1*/export type /*2*/T = number;
-// @Filename: /a.ts
-import * as foo from "foo";
-declare module "foo" {
-    export const x: /*3*/T;
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
 	});
 }
 

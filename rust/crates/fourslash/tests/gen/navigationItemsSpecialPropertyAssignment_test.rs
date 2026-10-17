@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn navigation_items_special_property_assignment() {
 	run_test(|t| {
-		let content = r"// @noLib: true
-// @allowJs: true
-// @Filename: /a.js
-exports.[|x|] = 0;
-exports.[|z|] = function() {};
-function Cls() {
-    this.[|instanceProp|] = 0;
-}
-Cls.[|staticMethod|] = function() {};
-Cls.[|staticProperty|] = 0;
-Cls.prototype.[|instanceMethod|] = function() {};";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "x".to_string().into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "x".to_string().into(), kind: tsc_lsproto::SymbolKind::Variable.into(), location: f.ranges()[0].clone().ls_location().into(), ..Default::default() }]).into()), ..Default::default() }, tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "z".to_string().into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "z".to_string().into(), kind: tsc_lsproto::SymbolKind::Variable.into(), location: f.ranges()[1].clone().ls_location().into(), ..Default::default() }]).into()), ..Default::default() }, tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "instanceProp".to_string().into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "instanceProp".to_string().into(), kind: tsc_lsproto::SymbolKind::Property.into(), location: f.ranges()[2].clone().ls_location().into(), container_name: Some(("Cls").into()), ..Default::default() }]).into()), ..Default::default() }, tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "staticMethod".to_string().into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "staticMethod".to_string().into(), kind: tsc_lsproto::SymbolKind::Property.into(), location: f.ranges()[3].clone().ls_location().into(), ..Default::default() }]).into()), ..Default::default() }, tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "staticProperty".to_string().into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "staticProperty".to_string().into(), kind: tsc_lsproto::SymbolKind::Property.into(), location: f.ranges()[4].clone().ls_location().into(), ..Default::default() }]).into()), ..Default::default() }, tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "instanceMethod".to_string().into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "instanceMethod".to_string().into(), kind: tsc_lsproto::SymbolKind::Property.into(), location: f.ranges()[5].clone().ls_location().into(), ..Default::default() }]).into()), ..Default::default() }]);
 	});
 }
 

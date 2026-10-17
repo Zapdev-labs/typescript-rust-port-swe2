@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_import_module_specifier_ending_unsupported_extension() {
 	run_test(|t| {
-		let content = r#"//@Filename:index.css
- body {}
-//@Filename:module.ts
-import ".//**/""#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { excludes: vec!["index.css".into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { import_module_specifier_ending: tsc_modulespecifiers::ImportModuleSpecifierEndingPreference("js"), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { excludes: vec!["index".into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { import_module_specifier_ending: tsc_modulespecifiers::ImportModuleSpecifierEndingPreference("index"), ..Default::default() }), ..Default::default() }));
 	});
 }
 

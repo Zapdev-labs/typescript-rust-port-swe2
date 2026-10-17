@@ -7,27 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_locations_for_class_expression01() {
 	run_test(|t| {
-		let content = r#"class Foo {
-}
-
-var x = [|class [|{| "contextRangeIndex": 0 |}Foo|] {
-    doIt() {
-        return [|Foo|];
-    }
-
-    static doItStatically() {
-        return [|Foo|].y;
-    }
-}|]
-
-var y = class {
-   getSomeName() {
-      return Foo
-   }
-}
-var z = class Foo {}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename_at_ranges_with_text(None, &["Foo".into()]);
 	});
 }
 

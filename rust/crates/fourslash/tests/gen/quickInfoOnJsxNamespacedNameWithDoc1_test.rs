@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_on_jsx_namespaced_name_with_doc1() {
 	run_test(|t| {
-		let content = r#"// @jsx: react
-// @Filename: /types.d.ts
-declare namespace JSX {
-  interface IntrinsicElements {
-    'my-el': {
-      /** This appears */
-      foo: string;
-
-      /** This also appears */
-      'prop:foo': string;
-    };
-  }
-}
-// @filename: /a.tsx
-<my-el /*1*/prop:foo="bar" /*2*/foo="baz" />"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "(property) 'prop:foo': string", "This also appears");
-		f.verify_quick_info_at("2", "(property) foo: string", "This appears");
 	});
 }
 

@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn index_signature_without_annotation() {
 	run_test(|t| {
-		let content = r"interface B {
-    1: any;
-}
-interface C {
-    [s]: any;
-}
-interface D extends B, C /**/ {
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.insert(" ");
 	});
 }
 

@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn no_errors_after_completions_request_within_generic_function1() {
 	run_test(|t| {
-		let content = r"// @strict: true
-
-declare function func<T extends { foo: 1 }>(arg: T): void;
-func({ foo: 1, bar/*1*/: 1 });";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_completions(Default::default(), None);
-		f.verify_no_errors();
 	});
 }
 

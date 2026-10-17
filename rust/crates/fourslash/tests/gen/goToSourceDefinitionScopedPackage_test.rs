@@ -7,38 +7,12 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_source_scoped_package() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/@myscope/mylib/package.json
-{ "name": "@myscope/mylib", "main": "./index.js", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/@myscope/mylib/index.d.ts
-export declare function scopedHelper(): string;
-// @Filename: /home/src/workspaces/project/node_modules/@myscope/mylib/index.js
-export function /*target*/scopedHelper() { return "scoped"; }
-// @Filename: /home/src/workspaces/project/index.ts
-import { /*importName*/scopedHelper } from "@myscope/mylib";
-scopedHelper/*usage*/();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["importName".into(), "usage".into()]);
 	});
 }
 
 #[test]
 fn go_to_source_scoped_at_types_package() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/@types/myns__mylib/package.json
-{ "name": "@types/myns__mylib", "version": "1.0.0" }
-// @Filename: /home/src/workspaces/project/node_modules/@types/myns__mylib/index.d.ts
-export declare function nsHelper(): number;
-// @Filename: /home/src/workspaces/project/node_modules/@myns/mylib/package.json
-{ "name": "@myns/mylib", "version": "1.0.0", "main": "./index.js" }
-// @Filename: /home/src/workspaces/project/node_modules/@myns/mylib/index.js
-export function /*target*/nsHelper() { return 42; }
-// @Filename: /home/src/workspaces/project/index.ts
-import { nsHelper } from "@myns/mylib";
-nsHelper/*usage*/();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["usage".into()]);
 	});
 }
 

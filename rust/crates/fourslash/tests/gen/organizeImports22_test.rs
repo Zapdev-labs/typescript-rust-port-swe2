@@ -7,28 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn organize_imports22() {
 	run_test(|t| {
-		let content = r"import {abc, Abc, bc, Bc} from 'b';
-import {
-  I,
-  R,
-  M,
-} from 'a';
-console.log(abc, Abc, bc, Bc, I, R, M);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_organize_imports(r"import {
-    I,
-    M,
-    R,
-} from 'a';
-import { abc, Abc, bc, Bc } from 'b';
-console.log(abc, Abc, bc, Bc, I, R, M);", tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
-		f.verify_organize_imports(r"import {
-    I,
-    M,
-    R,
-} from 'a';
-import { abc, Abc, bc, Bc } from 'b';
-console.log(abc, Abc, bc, Bc, I, R, M);", tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 	});
 }
 

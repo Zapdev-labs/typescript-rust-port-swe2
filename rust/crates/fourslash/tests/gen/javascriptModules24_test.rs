@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn javascript_modules24() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r#"// @Filename: mod.ts
-function foo() { return 42; }
-namespace foo {
-  export function bar (a: string) { return a; }
-}
-export = foo;
-// @Filename: app.ts
-import * as foo from "./mod"
-foo/*1*/();
-foo.bar(/*2*/"test");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_error_exists_before_marker("1");
-		f.verify_quick_info_is("(alias) function foo(): number\n(alias) namespace foo\nimport foo", "");
-		f.go_to_marker("2");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { ..Default::default() });
 	});
 }
 

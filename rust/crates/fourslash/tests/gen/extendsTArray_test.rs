@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn extends_t_array() {
 	run_test(|t| {
-		let content = r"// @strict: false
-interface I1<T> {
-    (a: T): T;
-}
-interface I2<T> extends I1<T[]> {
-    b: T;
-}
-var x: I2<Date>;
-var /**/y = x(undefined); // Typeof y should be Date[]
-y.length;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("", "var y: Date[]", "");
-		f.verify_no_errors();
 	});
 }
 

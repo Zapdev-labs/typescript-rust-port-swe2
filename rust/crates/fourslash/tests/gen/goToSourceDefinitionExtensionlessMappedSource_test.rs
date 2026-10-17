@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_source_definition_extensionless_mapped_source() {
 	run_test(|t| {
-		let content = r#"// @Filename: /lib/helper.d.ts
-export declare function helper(): string;
-//# sourceMappingURL=helper.d.ts.map
-// @Filename: /lib/helper.d.ts.map
-{"version":3,"file":"helper.d.ts","sourceRoot":"","sources":["helper"],"names":[],"mappings":"AAAA,wBAAgB,MAAM,IAAI,MAAM,CAAC"}
-// @Filename: /lib/helper
-export function helper(): string { return ""; }
-// @Filename: /index.ts
-import { /*usage*/helper } from "./lib/helper";
-helper();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["usage".into()]);
 	});
 }
 

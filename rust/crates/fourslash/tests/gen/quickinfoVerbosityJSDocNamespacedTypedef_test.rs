@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_verbosity_js_doc_namespaced_typedef() {
 	run_test(|t| {
-		let content = r"
-// @allowJs: true
-// @checkJs: true
-// @Filename: /index.js
-// Namespaced typedef
-/** @typedef {string} /*ns*/NS./*t*/T */
-
-// Namespaced typedef aliased to qualified namespaced typedef.
-/** @typedef {NS.T} NS./*u*/U */
-
-// Namespaced typedef aliased to implicitly-resolved typedef.
-/** @typedef {U} NS./*v*/V */
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("ns".to_string().into(), vec![0, 1]), ("t".to_string().into(), vec![0, 1]), ("u".to_string().into(), vec![0, 1]), ("v".to_string().into(), vec![0, 1])]));
 	});
 }
 

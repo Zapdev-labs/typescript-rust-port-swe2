@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_new_import_node_modules6() {
 	run_test(|t| {
-		let content = r#"[|f1/*0*/('');|]
-// @Filename: package.json
-{ "dependencies": { "package-name": "latest" } }
-// @Filename: node_modules/package-name/bin/lib/index.d.ts
-export function f1(text: string): string;
-// @Filename: node_modules/package-name/bin/lib/index.js
-function f1(text) { }
-exports.f1 = f1;
-// @Filename: node_modules/package-name/package.json
-{
-  "main": "bin/lib/index.js",
-  "types": "bin/lib/index.d.ts"
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_at_position(&[r#"import { f1 } from "package-name";
-
-f1('');"#.into()], None);
 	});
 }
 

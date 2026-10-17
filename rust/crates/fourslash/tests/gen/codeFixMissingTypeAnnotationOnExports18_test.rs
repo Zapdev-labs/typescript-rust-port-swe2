@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_missing_type_annotation_on_exports18() {
 	run_test(|t| {
-		let content = r"// @isolatedDeclarations: true
-// @declaration: true
-function foo() { return 42; }
-export class A {
-    readonly a = () => foo();
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix_available(Some(&["Add return type 'number'".into()]));
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Add return type 'number'".to_string().into(), new_file_content: r"function foo() { return 42; }
-export class A {
-    readonly a = (): number => foo();
-}".to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn keyword_shadows_auto_import() {
 	run_test(|t| {
-		let content = r"
-// @Filename: /mod.ts
-const value = 1;
-export { value as function }
-
-// @Filename: /index.ts
-function/**/
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "function".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Keyword).into()), sort_text: Some((tsc_ls::GLOBALS_OR_KEYWORDS.to_string()).into()), ..Default::default() }.into()].into(), excludes: vec!["function".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

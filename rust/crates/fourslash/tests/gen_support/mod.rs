@@ -58,3 +58,35 @@ pub fn run_subtest(_t: &mut TestHandle, _name: String, f: impl FnOnce(&mut TestH
 pub fn dedent(text: &str) -> String {
     String::from_utf8(tsc_testutil::stringtestutil::dedent(text.as_bytes())).unwrap()
 }
+
+fn noop_done() {}
+
+/// `newContentMapperFourslash` — builds a fourslash test whose tsconfig wires
+/// the given content-mapper package for `extensions`.
+pub fn new_content_mapper_fourslash(
+    _t: &mut TestHandle,
+    content: &str,
+    mapper: &str,
+    extensions: &[&str],
+) -> (tsc_fourslash::FourslashTest, fn()) {
+    let quoted: Vec<String> = extensions.iter().map(|e| format!("{:?}", e)).collect();
+    let content = format!(
+        "// @Filename: /tsconfig.json\n{{\n\t\"compilerOptions\": {{\n\t\t\"target\": \"es2020\",\n\t\t\"module\": \"esnext\",\n\t\t\"moduleResolution\": \"bundler\",\n\t\t\"strict\": true\n\t}},\n\t\"contentMappers\": [\n\t\t{{ \"package\": \"mapper\", \"extensions\": [{}] }}\n\t]\n}}\n\n// @Filename: /node_modules/mapper/package.json\n{}\n\n{}",
+        quoted.join(", "),
+        tsc_testutil::contentmappertest::package_json(mapper),
+        content
+    );
+    (
+        tsc_fourslash::new_fourslash_with_options(
+            &t_name(),
+            "",
+            &content,
+            tsc_fourslash::FourslashOptions {
+                content_mapper_spawner: Some(tsc_testutil::contentmappertest::new_spawner()),
+                run_external_code: true,
+                ..Default::default()
+            },
+        ),
+        noop_done,
+    )
+}

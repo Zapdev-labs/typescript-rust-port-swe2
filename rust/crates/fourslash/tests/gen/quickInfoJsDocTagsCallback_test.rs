@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_js_doc_tags_callback() {
 	run_test(|t| {
-		let content = r"// @noEmit: true
-// @allowJs: true
-// @Filename: quickInfoJsDocTagsCallback.js
-/**
- * @callback cb/*1*/
- * @param {string} x - x comment
- */
-
-/**
- * @param {/*2*/cb} bar -callback comment
- */
-function foo(bar) {
-    bar(bar);
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

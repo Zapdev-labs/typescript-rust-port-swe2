@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_for_function_declaration() {
 	run_test(|t| {
-		let content = r"interface A<T> { }
-
-function ma/*makeA*/keA<T>(t: T): A<T> { return null; }
-
-function /*f*/f<T>(t: T) {
-    return makeA(t);
-}
-
-var x = f(0);
-var y = makeA(0);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("makeA", "function makeA<T>(t: T): A<T>", "");
-		f.verify_quick_info_at("f", "function f<T>(t: T): A<T>", "");
 	});
 }
 

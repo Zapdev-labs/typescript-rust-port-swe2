@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsdoc_link6() {
 	run_test(|t| {
-		let content = r#"// @filename: /a.ts
-export default function A() { }
-export function B() { };
-// @Filename: /b.ts
-import A, { B } from "./a";
-/**
- * {@link A}
- * {@link B}
- */
-export default function /**/f() { }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

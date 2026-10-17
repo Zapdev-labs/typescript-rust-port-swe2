@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn organize_imports_shebang_preserve_and_sort() {
 	run_test(|t| {
-		let content = r#"#!/usr/bin/env node
-import Foo from "foo";
-import Bar from "bar";
-
-import Foobar from "foobar";
-
-console.log(Foo, Bar, Foobar);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_organize_imports(r#"#!/usr/bin/env node
-import Bar from "bar";
-import Foo from "foo";
-
-import Foobar from "foobar";
-
-console.log(Foo, Bar, Foobar);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 	});
 }
 

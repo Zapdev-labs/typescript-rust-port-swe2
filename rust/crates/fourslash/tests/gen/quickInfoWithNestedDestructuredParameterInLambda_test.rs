@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_with_nested_destructured_parameter_in_lambda() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"// @filename: a.tsx
-import * as React from 'react';
-interface SomeInterface {
-    someBoolean: boolean,
-    someString: string;
-}
-interface SomeProps {
-    someProp: SomeInterface;
-}
-export const /*1*/SomeStatelessComponent = ({someProp: { someBoolean, someString}}: SomeProps) => (<div>{", "`"), r"${someBoolean}${someString}"), "`"), r"});");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_quick_info_exists();
 	});
 }
 

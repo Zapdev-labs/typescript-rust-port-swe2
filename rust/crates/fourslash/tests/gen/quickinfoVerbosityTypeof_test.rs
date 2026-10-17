@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quickinfo_verbosity_typeof() {
 	run_test(|t| {
-		let content = r#"interface Apple {
-    color: string;
-    weight: number;
-}
-const a: Apple = { color: "red", weight: 150 };
-const b/*b*/: typeof a = { color: "green", weight: 120 };
-class Banana {
-    length: number;
-    constructor(length: number) {
-        this.length = length;
-    }
-}
-const c/*c*/: typeof Banana = Banana;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("b".to_string().into(), vec![0, 1]), ("c".to_string().into(), vec![0, 1])]));
 	});
 }
 

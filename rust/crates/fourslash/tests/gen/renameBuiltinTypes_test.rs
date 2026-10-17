@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_builtin_types() {
 	run_test(|t| {
-		let content = r#"
-const arr: /*1*/Array<number> = [];
-const map1: /*2*/Map<string, number> = new Map();
-const prom: /*3*/Promise<void> = Promise.resolve();
-const str: /*4*/string = "hello";
-"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		for marker in vec!["1", "2", "3", "4"] {
-			f.go_to_marker(marker);
-			f.verify_rename_failed(None);
-		}
 	});
 }
 

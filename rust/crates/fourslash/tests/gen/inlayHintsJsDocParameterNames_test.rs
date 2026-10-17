@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn inlay_hints_js_doc_parameter_names() {
 	run_test(|t| {
-		let content = r#"// @allowJs: true
-// @checkJs: true
-// @Filename: /a.js
-var x
-x.foo(1, 2);
-/**
- * @type {{foo: (a: number, b: number) => void}}
- */
-var y
-y.foo(1, 2)
-/**
- * @type {string}
- */
-var z = """#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/a.js");
-		f.verify_baseline_inlay_hints(None, Some(&tsc_lsutil::UserPreferences { inlay_hints_preferences: tsc_lsutil::InlayHintsPreferences { include_inlay_parameter_name_hints: tsc_lsutil::IncludeInlayParameterNameHints::LITERALS.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 

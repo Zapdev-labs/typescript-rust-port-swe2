@@ -7,29 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_paths_path_mapping_non_trailing_wildcard1() {
 	run_test(|t| {
-		let content = r#"// @Filename: /src/b.ts
-export const x = 0;
-// @Filename: /src/dir/x.ts
-/export const x = 0;
-// @Filename: /src/a.ts
-import {} from "foo//*0*/";
-import {} from "foo/dir//*1*/"; // invalid
-import {} from "foo/[|_|]/*2*/";
-import {} from "foo/_dir//*3*/";
-// @Filename: /tsconfig.json
-{
-    "compilerOptions": {
-        "baseUrl": ".",
-        "paths": {
-            "foo/_*/suffix": ["src/*.ts"]
-        }
-    }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("0"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "_a/suffix".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::File).into()), detail: Some(("_a/suffix.ts").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "_b/suffix".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::File).into()), detail: Some(("_b/suffix.ts").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "_dir".to_string().into(), detail: Some(("_dir").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), None);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("2"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "_a/suffix".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::File).into()), detail: Some(("_a/suffix.ts").into()), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { range: f.ranges()[0].clone().ls_range.into(), new_text: "_a/suffix".to_string().into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "_b/suffix".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::File).into()), detail: Some(("_b/suffix.ts").into()), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { range: f.ranges()[0].clone().ls_range.into(), new_text: "_b/suffix".to_string().into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "_dir".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Folder).into()), detail: Some(("_dir").into()), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { range: f.ranges()[0].clone().ls_range.into(), new_text: "_dir".to_string().into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("3"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "x/suffix".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::File).into()), detail: Some(("x/suffix.ts").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

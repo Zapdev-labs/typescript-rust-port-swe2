@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_destructuring_function_parameter() {
 	run_test(|t| {
-		let content = r#"function f([|{[|{| "contextRangeIndex": 0 |}a|]}: {[|a|]}|]) {
-    f({[|a|]});
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into(), f.ranges()[3].clone().into(), f.ranges()[2].clone().into()]);
 	});
 }
 

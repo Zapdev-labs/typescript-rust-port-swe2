@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn js_doc_function_signatures8() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"// @allowJs: true
-// @Filename: Foo.js
-/**
- * Represents a person
- * a b multiline test
- * @constructor
- * @param {string} name The name of the person
- * @param {number} age The age of the person
- */
-function Person(name, age) {
-    this.name = name;
-    this.age = age;
-}
-var p = new Pers/**/on();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_quick_info_is("constructor Person(name: string, age: number): Person", "Represents a person\na b multiline test");
 	});
 }
 

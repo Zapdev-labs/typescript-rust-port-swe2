@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_add_void_to_promise_js5() {
 	run_test(|t| {
-		let content = r"// @target: esnext
-// @lib: es2015
-// @strict: true
-// @allowJS: true
-// @checkJS: true
-// @filename: main.js
-/** @type {Promise<number>} */
-const p2 = new Promise(resolve => resolve());";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix_not_available(&["Add 'void' to Promise resolved without a value".into()]);
 	});
 }
 

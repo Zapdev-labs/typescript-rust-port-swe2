@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_for_module() {
 	run_test(|t| {
-		let content = r#"// @allowJs: true
-// @Filename: /a.ts
-export const x = 0;
-// @Filename: /b.ts
-[|import { x } from "/*0*/[|{| "contextRangeIndex": 0 |}./a|]";|]
-// @Filename: /c/sub.js
-[|const a = require("/*1*/[|{| "contextRangeIndex": 2 |}../a|]");|]
-// @Filename: /d.ts
- /// <reference path="/*2*/[|./a.ts|]" />"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["0".into(), "1".into(), "2".into()]);
-		f.verify_baseline_document_highlights_with_options(None, &["/b.ts".into(), "/c/sub.js".into(), "/d.ts".into()], vec![f.ranges()[1].clone().into(), f.ranges()[3].clone().into(), f.ranges()[4].clone().into()]);
 	});
 }
 

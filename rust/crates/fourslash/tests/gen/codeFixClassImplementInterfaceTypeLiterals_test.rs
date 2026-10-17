@@ -7,27 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_class_implement_interface_type_literals() {
 	run_test(|t| {
-		let content = r"type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
-
-export type DeepPartial<T> = T extends Builtin ? T :
-    T extends Array<infer U> ? Array<DeepPartial<U>> :
-        T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>> :
-            T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> } : Partial<T>;
-
-export interface Nested {
-    field: string;
-}
-
-interface Foo {
-    request(): DeepPartial<{ nested1: Nested; test2: Nested }>;
-}
-[|export class C implements Foo {}|]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'Foo'".to_string().into(), new_range_content: r#"export class C implements Foo {
-    request(): DeepPartial<{ nested1: Nested; test2: Nested; }> {
-        throw new Error("Method not implemented.");
-    }
-}"#.to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

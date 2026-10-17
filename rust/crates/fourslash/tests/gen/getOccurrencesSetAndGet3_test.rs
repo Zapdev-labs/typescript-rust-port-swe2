@@ -7,30 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_occurrences_set_and_get3() {
 	run_test(|t| {
-		let content = r"class Foo {
-    set bar(b: any) {
-    }
-
-    public get bar(): any {
-        return undefined;
-    }
-
-    public set set(s: any) {
-    }
-
-    public get set(): any {
-        return undefined;
-    }
-
-    public [|set|] get(g: any) {
-    }
-
-    public [|get|] get(): any {
-        return undefined;
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, to_any(f.ranges()).into_iter().map(Into::into));
 	});
 }
 

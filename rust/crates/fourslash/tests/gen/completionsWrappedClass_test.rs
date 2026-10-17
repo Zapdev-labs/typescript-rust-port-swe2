@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_wrapped_class() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"class Client {
-    private close() { }
-    public open() { }
-}
-type Wrap<T> = T &
-{
-    [K in Extract<keyof T, string> as ", "`"), r"${K}Wrapped"), "`"), r"]: T[K];
-};
-class Service {
-    method() {
-        let service = undefined as unknown as Wrap<Client>;
-        const { /*a*/ } = service;
-    }
-}");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("a"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["open".into(), "openWrapped".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

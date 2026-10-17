@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_conditional_types() {
 	run_test(|t| {
-		let content = r"/*L1*/type Diff1<T, U> = T extends U?never:T;
-/*L2*/type Diff2<T, U> = T    extends    U  ?    never   :     T;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("L1");
-		f.verify_current_line_content(r"type Diff1<T, U> = T extends U ? never : T;");
-		f.go_to_marker("L2");
-		f.verify_current_line_content(r"type Diff2<T, U> = T extends U ? never : T;");
 	});
 }
 

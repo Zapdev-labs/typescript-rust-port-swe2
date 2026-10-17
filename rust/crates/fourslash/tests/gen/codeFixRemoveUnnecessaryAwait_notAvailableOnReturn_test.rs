@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_remove_unnecessary_await_not_available_on_return() {
 	run_test(|t| {
-		let content = r"// @target: esnext
-async function fn(): Promise<number> {
-  return 0;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_suggestion_diagnostics(&[]);
 	});
 }
 

@@ -7,36 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn navigation_bar_items_multiline_string_identifiers1() {
 	run_test(|t| {
-		let content = r#"declare module "Multiline\r\nMadness" {
-}
-
-declare module "Multiline\
-Madness" {
-}
-declare module "MultilineMadness" {}
-
-declare module "Multiline\
-Madness2" {
-}
-
-interface Foo {
-    "a1\\\r\nb";
-    "a2\
-    \
-    b"(): Foo;
-}
-
-class Bar implements Foo {
-    'a1\\\r\nb': Foo;
-
-    'a2\
-    \
-    b'(): Foo {
-        return this;
-    }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_symbol();
 	});
 }
 

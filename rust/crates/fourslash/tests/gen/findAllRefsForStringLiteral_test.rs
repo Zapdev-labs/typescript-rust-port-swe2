@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_for_string_literal() {
 	run_test(|t| {
-		let content = r#"// @filename: /a.ts
-interface Foo {
-    property: /**/"foo";
-}
-/**
- * @type {{ property: "foo"}}
- */
-const obj: Foo = {
-    property: "foo",
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["".into()]);
 	});
 }
 

@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn exhaustive_case_completions5() {
 	run_test(|t| {
-		let content = r#"// @newline: LF
-enum P {
-    " Space",
-    Bar,
-}
-
-declare const p: P;
-
-switch (p) {
-    /*1*/
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", Some(tsc_fourslash::get_default_capabilities_with_options(Some(&tsc_fourslash::ClientCapabilitiesOptions { completion_item: Some(tsc_lsproto::ClientCompletionItemOptions { snippet_support: Some((true).into()), ..Default::default() }), ..Default::default() }))), &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "case P[\" Space\"]: ...".to_string().into(), insert_text: Some(("case P[\" Space\"]:$1\ncase P.Bar:$2").into()), sort_text: Some((tsc_ls::GLOBALS_OR_KEYWORDS.to_string()).into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::Snippet).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

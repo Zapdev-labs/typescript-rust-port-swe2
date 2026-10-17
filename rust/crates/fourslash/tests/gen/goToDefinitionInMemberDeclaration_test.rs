@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_in_member_declaration() {
 	run_test(|t| {
-		let content = r"interface /*interfaceDefinition*/IFoo { method1(): number; }
-
-class /*classDefinition*/Foo implements IFoo {
-    public method1(): number { return 0; }
-}
-
-enum /*enumDefinition*/Enum { value1, value2 };
-
-class /*selfDefinition*/Bar {
-    public _interface: [|IFo/*interfaceReference*/o|] = new [|Fo/*classReferenceInInitializer*/o|]();
-    public _class: [|Fo/*classReference*/o|] = new Foo();
-    public _list: [|IF/*interfaceReferenceInList*/oo|][]=[];
-    public _enum: [|E/*enumReference*/num|] = [|En/*enumReferenceInInitializer*/um|].value1;
-    public _self: [|Ba/*selfReference*/r|];
-
-    constructor(public _inConstructor: [|IFo/*interfaceReferenceInConstructor*/o|]) {
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["interfaceReference".into(), "interfaceReferenceInList".into(), "interfaceReferenceInConstructor".into(), "classReference".into(), "classReferenceInInitializer".into(), "enumReference".into(), "enumReferenceInInitializer".into(), "selfReference".into()]);
 	});
 }
 

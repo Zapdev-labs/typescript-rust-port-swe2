@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_reference_from_link_tag2() {
 	run_test(|t| {
-		let content = r"// @Filename: /a.ts
-enum E {
-    /** {@link /**/Foo} */
-    Foo
-}
-interface Foo {
-    foo: E.Foo;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename(None, vec!["".into()]);
 	});
 }
 

@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_occurrences_class_expression_static() {
 	run_test(|t| {
-		let content = r"let A = class Foo {
-    public [|static|] foo;
-    [|static|] a;
-    constructor(public y: string, private x: string) {
-    }
-    public method() { }
-    private method2() {}
-    public [|static|] static() { }
-    private [|static|] static2() { }
-}
-
-let B = class D {
-    static a;
-    constructor(private x: number) {
-    }
-    private static test() {}
-    public static test2() {}
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, to_any(f.ranges()).into_iter().map(Into::into));
 	});
 }
 

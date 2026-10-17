@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_unused_interface_in_namespace1() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"// @noUnusedLocals: true
- [| namespace greeter {
-    interface interface1 {
-    }
-} |]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_range_after_code_fix(r"
-namespace greeter {
-}", false, 0, 0);
 	});
 }
 

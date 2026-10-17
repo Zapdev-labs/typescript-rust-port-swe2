@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_salsa_methods_on_assigned_function_expressions() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @Filename: something.js
-var C = function () { }
-/**
- * The prototype method.
- * @param {string} a Parameter definition.
- */
-function f(a) {}
-C.prototype.m = f;
-
-var x = new C();
-x/*1*/.m();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

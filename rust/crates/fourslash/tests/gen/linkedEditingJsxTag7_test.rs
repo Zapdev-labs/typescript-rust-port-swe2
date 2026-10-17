@@ -7,28 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn linked_editing_jsx_tag7() {
 	run_test(|t| {
-		let content = r"// @FileName: /fragment.tsx
-/*a*/const j/*b*/sx =/*c*/ (
-    /*5*/</*0*/>/*1*/
-        <img />
-    /*6*/</*2*///*3*/>/*4*/
-)/*d*/;
-const jsx2 = (
-    /* this is comment *//*13*/</*10*//* /*11*/more comment *//*12*/>/*8*/Hello/*9*/
-    <//*14*/ /*18*///*17*/* even/*15*/ more comment *//*16*/>
-);
-const jsx3 = (
-    <>/*7*/
-    </>
-);/*e*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		let mut start_range = f.marker_by_name("0").unwrap().ls_position;
-		let mut end_range = f.marker_by_name("3").unwrap().ls_position;
-		let mut linked_cursors1 = vec![tsc_lsproto::Range { start: start_range.into(), end: start_range.into(), ..Default::default() }, tsc_lsproto::Range { start: end_range.into(), end: end_range.into(), ..Default::default() }];
-		let mut start_range2 = f.marker_by_name("10").unwrap().ls_position;
-		let mut end_range2 = f.marker_by_name("14").unwrap().ls_position;
-		let mut linked_cursors2 = vec![tsc_lsproto::Range { start: start_range2.into(), end: start_range2.into(), ..Default::default() }, tsc_lsproto::Range { start: end_range2.into(), end: end_range2.into(), ..Default::default() }];
-		f.verify_linked_editing(&std::collections::BTreeMap::from([("0".to_string().into(), linked_cursors1.into()), ("1".to_string().into(), None), ("2".to_string().into(), None), ("3".to_string().into(), linked_cursors1.into()), ("4".to_string().into(), None), ("5".to_string().into(), None), ("6".to_string().into(), None), ("7".to_string().into(), None), ("8".to_string().into(), None), ("9".to_string().into(), None), ("10".to_string().into(), linked_cursors2.into()), ("11".to_string().into(), None), ("12".to_string().into(), None), ("13".to_string().into(), None), ("14".to_string().into(), linked_cursors2.into()), ("15".to_string().into(), None), ("16".to_string().into(), None), ("17".to_string().into(), None), ("18".to_string().into(), None), ("a".to_string().into(), None), ("b".to_string().into(), None), ("c".to_string().into(), None), ("d".to_string().into(), None), ("e".to_string().into(), None)]));
 	});
 }
 

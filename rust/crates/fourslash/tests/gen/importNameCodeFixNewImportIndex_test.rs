@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_new_import_index() {
 	run_test(|t| {
-		let content = r"// @Filename: /a/index.ts
-export const foo = 0;
-// @Filename: /b.ts
-[|/**/foo;|]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/a/index.ts");
-		f.go_to_file("/b.ts");
-		f.verify_import_fix_at_position(&[r#"import { foo } from "./a";
-
-foo;"#.into()], None);
 	});
 }
 

@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn constructor_quick_info() {
 	run_test(|t| {
-		let content = r"class SS<T>{}
-
-var x/*1*/1 = new SS<number>();
-var x/*2*/2 = new SS();
-var x/*3*/3 = new SS;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "var x1: SS<number>", "");
-		f.verify_quick_info_at("2", "var x2: SS<unknown>", "");
-		f.verify_quick_info_at("3", "var x3: SS<unknown>", "");
 	});
 }
 

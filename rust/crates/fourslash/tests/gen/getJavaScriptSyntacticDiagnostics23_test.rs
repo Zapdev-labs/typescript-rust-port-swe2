@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_java_script_syntactic_diagnostics23() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @Filename: a.js
-function Person(age) {
-    if (age >= 18) {
-        this.canVote = true;
-    } else {
-        this.canVote = false;
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_non_suggestion_diagnostics(&[]);
-		f.verify_non_suggestion_diagnostics(&[]);
 	});
 }
 

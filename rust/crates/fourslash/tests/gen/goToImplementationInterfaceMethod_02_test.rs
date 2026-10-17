@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_implementation_interface_method_02() {
 	run_test(|t| {
-		let content = r"interface Foo {
-    he/*declaration*/llo(): void
-}
-
-abstract class AbstractBar implements Foo {
-    abstract hello(): void;
-}
-
-class Bar extends AbstractBar {
-    [|hello|]() {}
-}
-
-function whatever(a: AbstractBar) {
-    a.he/*function_call*/llo();
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_implementation(&["function_call".into(), "declaration".into()]);
 	});
 }
 

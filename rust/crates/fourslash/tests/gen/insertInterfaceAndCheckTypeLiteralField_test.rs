@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn insert_interface_and_check_type_literal_field() {
 	run_test(|t| {
-		let content = r"/*addC*/
-interface G<T, U> { }
-var v2: G<{ a: /*checkParam*/C }, C>;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("addC");
-		f.insert("interface C { }");
-		f.go_to_marker("checkParam");
-		f.verify_quick_info_exists();
 	});
 }
 

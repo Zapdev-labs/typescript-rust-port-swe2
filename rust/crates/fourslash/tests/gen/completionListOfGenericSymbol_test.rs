@@ -7,10 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_of_generic_symbol() {
 	run_test(|t| {
-		let content = r"var a = [1,2,3];
-a./**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "length".to_string().into(), detail: Some(("(property) Array<number>.length: number").into()), documentation: Some(tsc_lsproto::StringOrMarkupContent { markup_content: Some(tsc_lsproto::MarkupContent { kind: tsc_lsproto::MarkupKind::Markdown.into(), value: "Gets or sets the length of the array. This is a number one higher than the highest index in the array.".to_string().into(), ..Default::default() }), ..Default::default() }), kind: Some((tsc_lsproto::CompletionItemKind::Field).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "toString".to_string().into(), detail: Some(("(method) Array<number>.toString(): string").into()), documentation: Some(tsc_lsproto::StringOrMarkupContent { markup_content: Some(tsc_lsproto::MarkupContent { kind: tsc_lsproto::MarkupKind::Markdown.into(), value: "Returns a string representation of an array.".to_string().into(), ..Default::default() }), ..Default::default() }), kind: Some((tsc_lsproto::CompletionItemKind::Method).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

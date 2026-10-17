@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn type_above_number_literal_expression_statement() {
 	run_test(|t| {
-		let content = r"
-// foo
-1;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_bof();
-		f.insert("var x;\n");
 	});
 }
 

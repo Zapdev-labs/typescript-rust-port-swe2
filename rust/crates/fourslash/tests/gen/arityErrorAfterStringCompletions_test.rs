@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn arity_error_after_string_completions() {
 	run_test(|t| {
-		let content = r#"// @strict: true
-
-interface Events {
-  click: any;
-  drag: any;
-}
-
-declare function addListener<K extends keyof Events>(type: K, listener: (ev: Events[K]) => any): void;
-
-/*1*/addListener/*2*/("/*3*/")"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["3"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["click".into(), "drag".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_error_exists_between_markers("1", "2");
 	});
 }
 

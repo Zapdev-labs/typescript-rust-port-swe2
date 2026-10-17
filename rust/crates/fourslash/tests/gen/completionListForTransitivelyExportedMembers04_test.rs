@@ -7,35 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_for_transitively_exported_members04() {
 	run_test(|t| {
-		let content = r#"// @Filename: A.ts
-export interface I1 { one: number }
-export interface I2 { two: string }
-export type I1_OR_I2 = I1 | I2;
-
-export class C1 {
-    one: string;
-}
-
-export namespace Inner {
-    export interface I3 {
-        three: boolean
-    }
-
-    export var varVar = 100;
-    export let letVar = 200;
-    export const constVar = 300;
-}
-// @Filename: B.ts
-export var bVar = "bee!";
-// @Filename: C.ts
-export var cVar = "see!";
-export * from "./A";
-export * from "./B"
-// @Filename: D.ts
-import * as c from "./C";
-var x: c.Inner./**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["I3".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

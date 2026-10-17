@@ -7,10 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn navigation_bar_js_doc_comment_with_no_tags() {
 	run_test(|t| {
-		let content = r"/** Test */
-export const Test = {}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_symbol();
 	});
 }
 

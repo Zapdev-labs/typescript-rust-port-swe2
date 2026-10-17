@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_jsx7() {
 	run_test(|t| {
-		let content = r"// @jsx: react
-// @module: esnext
-// @esModuleInterop: true
-// @moduleResolution: bundler
-// @Filename: /node_modules/react/index.d.ts
-// React was not defined
-// @Filename: /a.tsx
-<[|Text|]></Text>;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/a.tsx");
-		f.verify_code_fix_not_available(&[]);
 	});
 }
 

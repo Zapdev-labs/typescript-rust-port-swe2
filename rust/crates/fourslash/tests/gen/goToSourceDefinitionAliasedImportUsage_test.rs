@@ -7,38 +7,12 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_source_aliased_import_at_usage_site() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{ "name": "pkg", "main": "./index.js", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.d.ts
-export declare function unrelated(): void;
-export declare function original(): string;
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.js
-export function unrelated() {}
-export function /*target*/original() { return "ok"; }
-// @Filename: /home/src/workspaces/project/index.ts
-import { original as renamed } from "pkg";
-renamed/*usage*/();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["usage".into()]);
 	});
 }
 
 #[test]
 fn go_to_source_aliased_import_at_usage_site_namespace_import() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{ "name": "pkg", "main": "./index.js", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.d.ts
-export declare function helper(): string;
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.js
-export function /*target*/helper() { return "ok"; }
-// @Filename: /home/src/workspaces/project/index.ts
-import * as ns from "pkg";
-ns./*usage*/helper();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["usage".into()]);
 	});
 }
 

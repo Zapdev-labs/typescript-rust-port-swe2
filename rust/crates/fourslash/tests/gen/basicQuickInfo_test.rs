@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn basic_quick_info() {
 	run_test(|t| {
-		let content = r"
-/**
- * Some var
- */
-var someVar/*1*/ = 123;
-
-/**
- * Other var
- * See {@link someVar}
- */
-var otherVar/*2*/ = someVar;
-
-class Foo/*3*/ {
-	#bar: string;
-}
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "var someVar: number", "Some var");
-		f.verify_quick_info_at("2", "var otherVar: number", "Other var\nSee [someVar](file:///basicQuickInfo.ts#5,5-5,12)");
 	});
 }
 

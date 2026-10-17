@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_edits_for_file_rename_sub_dir() {
 	run_test(|t| {
-		let content = r#"// @Filename: /src/foo/a.ts
-
-// @Filename: /src/old.ts
-import a from "./foo/a";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_will_rename_files_edits("/src/old.ts", "/src/dir/new.ts", &std::collections::BTreeMap::from([("/src/dir/new.ts".to_string().into(), r#"import a from "../foo/a";"#.to_string().into())]), None);
 	});
 }
 

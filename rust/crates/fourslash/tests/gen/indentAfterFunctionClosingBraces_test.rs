@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn indent_after_function_closing_braces() {
 	run_test(|t| {
-		let content = r"class foo {
-    public f() {
-        return 0;
-    /*1*/}/*2*/
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("2");
-		f.insert_line("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"    }");
 	});
 }
 

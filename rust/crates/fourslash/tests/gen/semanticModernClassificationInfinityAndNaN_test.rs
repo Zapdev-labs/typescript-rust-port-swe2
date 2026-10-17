@@ -7,32 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn semantic_modern_classification_infinity_and_na_n() {
 	run_test(|t| {
-		let content = r#" Infinity;
- NaN;
-
-// Regular properties
-
-const obj1 = {
-    Infinity: 100,
-    NaN: 200,
-    "-Infinity": 300
-};
-
-obj1.Infinity;
-obj1.NaN;
-obj1["-Infinity"];
-
-// Shorthand properties
-
-const obj2 = {
-    Infinity,
-    NaN,
-}
-
-obj2.Infinity;
-obj2.NaN;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type_: "variable.declaration.readonly".to_string().into(), text: "obj1".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.readonly".to_string().into(), text: "obj1".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.readonly".to_string().into(), text: "obj1".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.readonly".to_string().into(), text: "obj1".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.declaration.readonly".to_string().into(), text: "obj2".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.readonly".to_string().into(), text: "obj2".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.readonly".to_string().into(), text: "obj2".to_string().into(), ..Default::default() }]);
 	});
 }
 

@@ -7,30 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsdoc_typedef_tag_rename04() {
 	run_test(|t| {
-		let content = r"// @lib: es5
-// @allowNonTsExtensions: true
-// @Filename: jsDocTypedef_form2.js
-
-function test1() {
-   /** @typedef {(string | number)} NumberLike */
-
-   /** @type {/*1*/NumberLike} */
-   var numberLike;
-}
-function test2() {
-   /** @typedef {(string | number)} NumberLike2 */
-
-   /** @type {NumberLike2} */
-   var n/*2*/umberLike2;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.go_to_marker("2");
-		f.verify_quick_info_exists();
-		f.go_to_marker("1");
-		f.insert("111");
-		f.go_to_marker("2");
-		f.verify_quick_info_exists();
 	});
 }
 

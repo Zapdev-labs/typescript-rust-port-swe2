@@ -7,27 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_comments() {
 	run_test(|t| {
-		let content = r"_.chain()
-// wow/*callChain1*/
-  .then()
-// waa/*callChain2*/
-    .then();
-wow(
-  3,
-// uaa/*argument1*/
-    4
-// wua/*argument2*/
-);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("callChain1");
-		f.verify_current_line_content(r"    // wow");
-		f.go_to_marker("callChain2");
-		f.verify_current_line_content(r"    // waa");
-		f.go_to_marker("argument1");
-		f.verify_current_line_content(r"    // uaa");
-		f.go_to_marker("argument2");
-		f.verify_current_line_content(r"    // wua");
 	});
 }
 

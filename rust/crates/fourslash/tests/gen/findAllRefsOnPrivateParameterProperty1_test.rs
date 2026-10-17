@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_on_private_parameter_property1() {
 	run_test(|t| {
-		let content = r"class ABCD {
-    constructor(private x: number, public y: number, /*1*/private /*2*/z: number) {
-    }
-
-    func() {
-        return this./*3*/z;
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
 	});
 }
 

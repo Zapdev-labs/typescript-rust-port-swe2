@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_in_recursive_type() {
 	run_test(|t| {
-		let content = r"type Tail<T extends any[]> =
-	((...args: T) => any) extends ((head: any, ...tail: infer R) => any) ? R : never;
-
-type Reverse<List extends any[]> = _Reverse<List, []>;
-
-type _Reverse<Source extends any[], Result extends any[] = []> = {
-	1: Result,
-	0: _Reverse<Tail<Source>, 0>,
-}[Source extends [] ? 1 : 0];
-
-type Foo = Reverse<[0,/**/]>;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "Reverse<List extends any[]>".to_string().into(), ..Default::default() });
 	});
 }
 

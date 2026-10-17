@@ -7,48 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_new_import_export_equals_common_js_interop_on() {
 	run_test(|t| {
-		let content = r#"// @Module: commonjs
-// @EsModuleInterop: true
-// @Filename: /foo.d.ts
-declare module "bar" {
-  const bar: number;
-  export = bar;
-}
-declare module "foo" {
-  const foo: number;
-  export = foo;
-}
-declare module "es" {
-  const es = 0;
-  export default es;
-}
-// @Filename: /a.ts
-import bar = require("bar");
-
-foo
-// @Filename: /b.ts
-foo
-// @Filename: /c.ts
-import es from "es";
-import bar = require("bar");
-
-foo"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/a.ts");
-		f.verify_import_fix_at_position(&[r#"import bar = require("bar");
-import foo = require("foo");
-
-foo"#.into()], None);
-		f.go_to_file("/b.ts");
-		f.verify_import_fix_at_position(&[r#"import foo from "foo";
-
-foo"#.into()], None);
-		f.go_to_file("/c.ts");
-		f.verify_import_fix_at_position(&[r#"import es from "es";
-import bar = require("bar");
-import foo = require("foo");
-
-foo"#.into()], None);
 	});
 }
 

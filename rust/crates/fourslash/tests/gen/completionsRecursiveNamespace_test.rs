@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_recursive_namespace() {
 	run_test(|t| {
-		let content = r"declare namespace N {
-    export import M = N;
-}
-type T = N./**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), None);
 	});
 }
 

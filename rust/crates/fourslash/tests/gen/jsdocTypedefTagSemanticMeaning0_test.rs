@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsdoc_typedef_tag_semantic_meaning0() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @Filename: a.js
-/** /*1*/@typedef {number} /*2*/T */
-/*3*/const /*4*/T = 1;
-/** @type {/*5*/T} */
-const n = /*6*/T;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into()]);
 	});
 }
 

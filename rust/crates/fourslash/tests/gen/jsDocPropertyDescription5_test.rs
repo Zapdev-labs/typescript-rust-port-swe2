@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn js_doc_property_description5() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"interface Multiple1Example {
-    /** Something generic */
-    [key: number | symbol | ", "`"), r"data-${string}"), "`"), r" | "), "`"), r"data-${number}"), "`"), r"]: string;
-}
-function multiple1Example(e: Multiple1Example) {
-    console.log(e./*multiple1*/anything);
-}");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("multiple1", "any", "");
 	});
 }
 

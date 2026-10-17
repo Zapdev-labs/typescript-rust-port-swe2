@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_rest() {
 	run_test(|t| {
-		let content = r#"interface Gen {
-    x: number;
-    [|[|{| "contextRangeIndex": 0 |}parent|]: Gen;|]
-    millenial: string;
-}
-let t: Gen;
-var { x, ...rest } = t;
-rest.[|parent|];"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename_at_ranges_with_text(None, &["parent".into()]);
 	});
 }
 

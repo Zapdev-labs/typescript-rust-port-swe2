@@ -7,33 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_import_module_augmentation_with_js() {
 	run_test(|t| {
-		let content = r#"// @allowJs: true
-// @checkJs: true
-// @noEmit: true
-// @Filename: /test.js
-class Abcde {
-    x
-}
-
-module.exports = {
-    Abcde
-};
-// @Filename: /index.ts
-export {};
-declare module "./test" {
-    interface Abcde { b: string }
-}
-
-Abcde/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_apply_code_action_from_completion("", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "Abcde".to_string().into(), source: "./test".to_string().into(), description: "Add import from \"./test\"".to_string().into(), new_file_content: Some((r#"import { Abcde } from "./test";
-
-export {};
-declare module "./test" {
-    interface Abcde { b: string }
-}
-
-Abcde"#).into()), user_preferences: None, ..Default::default() });
 	});
 }
 

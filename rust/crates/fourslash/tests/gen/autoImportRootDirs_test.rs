@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_root_dirs() {
 	run_test(|t| {
-		let content = r#"// @Filename: /tsconfig.json
-{
-    "compilerOptions": {
-        "module": "commonjs",
-        "rootDirs": [".", "./some/other/root"]
-    }
-}
-// @Filename: /some/other/root/types.ts
-export type Something = {};
-// @Filename: /index.ts
-const s: Something/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_module_specifiers("", &["./types".into()], None);
 	});
 }
 

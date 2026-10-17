@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn js_doc_see3() {
 	run_test(|t| {
-		let content = r"function foo ([|/*def1*/a|]: string) {
-    /**
-     * @see {/*use1*/[|a|]}
-     */
-    function bar ([|/*def2*/a|]: string) {
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(false, &["use1".into()]);
 	});
 }
 

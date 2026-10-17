@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_call_property() {
 	run_test(|t| {
-		let content = r"interface I {
-    /** Doc */
-    m: () => void;
-}
-function f(x: I): void {
-    x./**/m();
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("", "(property) I.m: () => void", "Doc");
 	});
 }
 

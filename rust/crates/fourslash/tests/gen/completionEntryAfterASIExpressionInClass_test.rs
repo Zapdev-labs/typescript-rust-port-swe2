@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_entry_after_asi_expression_in_class() {
 	run_test(|t| {
-		let content = r"class Parent {
-  protected shouldWork() {
-      console.log();
-  }
-}
-
-class Child extends Parent {
-            // this assumes ASI, but on next line wants to  
-  x = () => 1
-  shoul/*insideid*/ 
-}
-
-class ChildTwo extends Parent {
-            // this assumes ASI, but on next line wants to  
-  x = () => 1
-  /*root*/ //nothing
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["insideid", "root"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["shouldWork".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

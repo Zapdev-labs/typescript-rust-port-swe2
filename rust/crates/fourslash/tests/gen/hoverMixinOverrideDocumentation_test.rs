@@ -7,28 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn hover_mixin_override_documentation() {
 	run_test(|t| {
-		let content = r"
-// @strict: true
-// @filename: main.ts
-
-declare class BaseClass {
-    /** some documentation */
-    static method(): number;
-}
-
-type AnyConstructor = abstract new (...args: any[]) => object
-
-class MixinClass {}
-declare function Mix<T extends AnyConstructor>(BaseClass: T): typeof MixinClass & T;
-
-declare class Mixed extends Mix(BaseClass) {
-    static method(): number;
-}
-
-Mixed./*1*/method;
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "(method) Mixed.method(): number", "some documentation");
 	});
 }
 

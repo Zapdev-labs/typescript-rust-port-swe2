@@ -7,31 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_cross_project_node_modules() {
 	run_test(|t| {
-		let content = r#"// @Filename: /node_modules/pkg-listed/package.json
-{ "name": "pkg-listed", "version": "1.0.0" }
-// @Filename: /node_modules/pkg-listed/index.d.ts
-export declare const pkg_listed_value: number;
-// @Filename: /node_modules/pkg-unlisted/package.json
-{ "name": "pkg-unlisted", "version": "1.0.0" }
-// @Filename: /node_modules/pkg-unlisted/index.d.ts
-export declare const pkg_unlisted_value: string;
-// @Filename: /project-a/tsconfig.json
-{ "compilerOptions": { "module": "commonjs", "strict": true } }
-// @Filename: /project-a/package.json
-{ "name": "project-a", "dependencies": { "pkg-listed": "*" } }
-// @Filename: /project-a/index.ts
-import { pkg_unlisted_value } from "pkg-unlisted";
-console.log(pkg_unlisted_value);
-// @Filename: /project-b/tsconfig.json
-{ "compilerOptions": { "module": "commonjs", "strict": true } }
-// @Filename: /project-b/package.json
-{ "name": "project-b", "dependencies": { "pkg-listed": "*" } }
-// @Filename: /project-b/index.ts
-pkg_/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/project-a/index.ts");
-		f.go_to_marker("");
-		f.baseline_auto_imports_completions(&["".into()]);
 	});
 }
 

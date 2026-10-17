@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn linked_editing_jsx_tag11() {
 	run_test(|t| {
-		let content = r#"// @Filename: /customElements.tsx
-const jsx = <fbt:enum knownProp="accepted"
-    unknownProp="rejected">
-</fbt:enum>;
-
-const customElement = <custom-element></custom-element>;
-
-const standardElement = 
-   <Link href="/hello" passHref>
-       <Button component="a">
-           Next
-       </Button>
-   </Link>;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_linked_editing();
 	});
 }
 

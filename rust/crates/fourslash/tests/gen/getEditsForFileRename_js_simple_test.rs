@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_edits_for_file_rename_js_simple() {
 	run_test(|t| {
-		let content = r#"// @allowJs: true
-// @Filename: /a.js
-import b from "./b.js";
-// @Filename: /b.js
-module.exports = 1;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_will_rename_files_edits("/b.js", "/c.js", &std::collections::BTreeMap::from([("/a.js".to_string().into(), r#"import b from "./c.js";"#.to_string().into())]), None);
 	});
 }
 

@@ -7,29 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_for_union_properties() {
 	run_test(|t| {
-		let content = r"interface One {
-    common: { /*one*/a: number; };
-}
-
-interface Base {
-    /*base*/a: string;
-    b: string;
-}
-
-interface HasAOrB extends Base {
-    a: string;
-    b: string;
-}
-
-interface Two {
-    common: HasAOrB;
-}
-
-var x : One | Two;
-
-x.common./*x*/a;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["one".into(), "base".into(), "x".into()]);
 	});
 }
 

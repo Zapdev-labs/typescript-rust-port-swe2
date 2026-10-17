@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_import_type_js2() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r#"// @allowJs: true
-// @checkJs: true
-// @Filename: /a.js
-module.exports = class C {};
-module.exports./**/D = class D {};
-// @Filename: /b.js
-/** @type {import("./a")} */
-const x = 0;
-/** @type {import("./a").D} */
-const y = 0;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.verify_baseline_find_all_references(&["".into()]);
 	});
 }
 

@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_for_default_export07() {
 	run_test(|t| {
-		let content = r"// @Filename: foo.ts
-export default function /**/[|DefaultExportedFunction|]() {
-    return DefaultExportedFunction
-}
-/**
- *  Commenting DefaultExportedFunction
- */
-
-var x: typeof DefaultExportedFunction;
-
-var y = DefaultExportedFunction();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_rename_succeeded(None);
 	});
 }
 

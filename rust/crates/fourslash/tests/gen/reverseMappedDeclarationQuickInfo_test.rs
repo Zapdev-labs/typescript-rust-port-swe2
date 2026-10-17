@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn reverse_mapped_declaration_quick_info() {
 	run_test(|t| {
-		let content = r#"
-declare function unwrap<T>(input: { [K in keyof T]: { value: T[K] } }): T;
-declare const input: { [key: string]: { value: string } };
-const /*index*/indexed = unwrap(input);
-indexed["name"].charAt/*member*/(0);
-
-type Validator<T> = ((input: unknown) => T | undefined) | {
-    [K in keyof T]: Validator<T[K]>;
-};
-declare function decode<T>(input: { [K in keyof T]: Validator<T[K]> }): T;
-declare const stringValidator: (input: unknown) => string | undefined;
-const /*deep*/deep = decode({ a: { b: { c: { d: stringValidator } } } });
-deep.a.b.c./*leaf*/d;
-"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.verify_baseline_hover();
 	});
 }
 

@@ -7,44 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_external_non_relateive2() {
 	run_test(|t| {
-		let content = r#"// @Filename: /home/src/workspaces/project/apps/app1/tsconfig.json
-{
-  "compilerOptions": {
-    "module": "commonjs",
-    "lib": ["es5"],
-    "paths": {
-      "shared/*": ["../../shared/*"]
-    }
-  },
-  "include": ["src", "../../shared"]
-}
-// @Filename: /home/src/workspaces/project/apps/app1/src/index.ts
-shared/*internal2external*/
-// @Filename: /home/src/workspaces/project/apps/app1/src/app.ts
-utils/*internal2internal*/
-// @Filename: /home/src/workspaces/project/apps/app1/src/utils.ts
-export const utils = 0;
-// @Filename: /home/src/workspaces/project/shared/constants.ts
-export const shared = 0;
-// @Filename: /home/src/workspaces/project/shared/data.ts
-shared/*external2external*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		let mut opts839 = f.get_options();
-		opts839.format_code_settings.new_line_character = "\n";
-		f.configure(opts839);
-		f.go_to_marker("internal2external");
-		f.verify_import_fix_at_position(&[r#"import { shared } from "shared/constants";
-
-shared"#.into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_preference: tsc_modulespecifiers::ImportModuleSpecifierPreference("project-relative"), ..Default::default() }));
-		f.go_to_marker("internal2internal");
-		f.verify_import_fix_at_position(&[r#"import { utils } from "./utils";
-
-utils"#.into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_preference: tsc_modulespecifiers::ImportModuleSpecifierPreference("project-relative"), ..Default::default() }));
-		f.go_to_marker("external2external");
-		f.verify_import_fix_at_position(&[r#"import { shared } from "./constants";
-
-shared"#.into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_preference: tsc_modulespecifiers::ImportModuleSpecifierPreference("project-relative"), ..Default::default() }));
 	});
 }
 

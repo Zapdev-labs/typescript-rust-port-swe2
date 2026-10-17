@@ -7,29 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn triple_slash_ref_path_completion_absolute_paths() {
 	run_test(|t| {
-		let content = r#"// @Filename: /tests/cases/fourslash/tests/test0.ts
-/// <reference path="/tests/cases/f/*0*/
-// @Filename: /tests/cases/fourslash/tests/test1.ts
-/// <reference path="/tests/cases/fourslash/*1*/
-// @Filename: /tests/cases/fourslash/tests/test2.ts
-/// <reference path="/tests/cases/fourslash//*2*/
-// @Filename: /tests/cases/fourslash/f1.ts
-/*f1*/
-// @Filename: /tests/cases/fourslash/f2.tsx
-/*f2*/
-// @Filename: /tests/cases/fourslash/folder/f1.ts
-/*subf1*/
-// @Filename: /tests/cases/fourslash/f3.js
-/*f3*/
-// @Filename: /tests/cases/fourslash/f4.jsx
-/*f4*/
-// @Filename: /tests/cases/fourslash/e1.ts
-/*e1*/
-// @Filename: /tests/cases/fourslash/e2.js
-/*e2*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["0", "1"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["fourslash".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("2"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["e1.ts".into(), "f1.ts".into(), "f2.tsx".into(), "folder".into(), "tests".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

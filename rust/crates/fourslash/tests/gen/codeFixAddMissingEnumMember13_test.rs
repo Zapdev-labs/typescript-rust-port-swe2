@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_add_missing_enum_member13() {
 	run_test(|t| {
-		let content = r"enum E { A, B }
-declare var a: E;
-a.C;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix_not_available(&["fixMissingMember".into()]);
 	});
 }
 

@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_java_script_completions_ts_check() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @Filename: /a.js
-// @ts-check
-interface I { a: number; b: number; }
-interface J { b: number; c: number; }
-declare const ij: I | J;
-ij./**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["b".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

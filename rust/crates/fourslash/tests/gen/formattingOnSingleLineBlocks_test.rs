@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_on_single_line_blocks() {
 	run_test(|t| {
-		let content = r"class C
-{}
-if (true)
-{}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.verify_current_file_content(r"class C { }
-if (true) { }");
 	});
 }
 

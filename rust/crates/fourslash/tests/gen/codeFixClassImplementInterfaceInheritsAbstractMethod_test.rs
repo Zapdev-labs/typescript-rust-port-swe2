@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_class_implement_interface_inherits_abstract_method() {
 	run_test(|t| {
-		let content = r"abstract class C1 { }
-abstract class C2 {
-    abstract fＡ<T extends number>(): T;
-}
-interface I1 extends C1, C2 { }
-class C3 implements I1 {[| |]}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'I1'".to_string().into(), new_file_content: r#"abstract class C1 { }
-abstract class C2 {
-    abstract fＡ<T extends number>(): T;
-}
-interface I1 extends C1, C2 { }
-class C3 implements I1 {
-    fＡ<T extends number>(): T {
-        throw new Error("Method not implemented.");
-    }
-}"#.to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

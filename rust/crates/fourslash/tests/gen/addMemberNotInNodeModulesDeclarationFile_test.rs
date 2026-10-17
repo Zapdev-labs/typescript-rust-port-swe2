@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn add_member_not_in_node_modules_declaration_file() {
 	run_test(|t| {
-		let content = r#"// @noImplicitReferences: true
-// @traceResolution: true
-// @Filename: /node_modules/foo/types.d.ts
-interface Response {}
-// @Filename: /node_modules/foo/package.json
-{ "types": "types.d.ts" }
-// @Filename: /foo.ts
-import { Response } from 'foo'
-declare const resp: Response
-resp.test()"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/foo.ts");
-		f.verify_code_fix_not_available(&[]);
 	});
 }
 

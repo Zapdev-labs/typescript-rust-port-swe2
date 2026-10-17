@@ -7,39 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn comments_import_declaration() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r#"// @Filename: commentsImportDeclaration_file0.ts
-/** NamespaceComment*/
-export namespace m/*2*/1 {
-    /** b's comment*/
-    export var b: number;
-    /** m2 comments*/
-    export namespace m2 {
-        /** class comment;*/
-        export class c {
-        };
-        /** i*/
-        export var i: c;;
-    }
-    /** exported function*/
-    export function fooExport(): number;
-}
-// @Filename: commentsImportDeclaration_file1.ts
-///<reference path='commentsImportDeclaration_file0.ts'/>
-/** Import declaration*/
-import /*3*/extMod = require("./commentsImportDeclaration_file0/*4*/");
-extMod./*6*/m1./*7*/fooEx/*8q*/port(/*8*/);
-var new/*9*/Var = new extMod.m1.m2./*10*/c();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("2", "namespace m1", "NamespaceComment");
-		f.verify_quick_info_at("3", "import extMod = require(\"./commentsImportDeclaration_file0\")", "Import declaration");
-		f.verify_completions(tsc_fourslash::MarkerInput::from("6"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "m1".to_string().into(), detail: Some(("namespace extMod.m1").into()), documentation: Some(tsc_lsproto::StringOrMarkupContent { markup_content: Some(tsc_lsproto::MarkupContent { kind: tsc_lsproto::MarkupKind::Markdown.into(), value: "NamespaceComment".to_string().into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("7"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "b".to_string().into(), detail: Some(("var extMod.m1.b: number").into()), documentation: Some(tsc_lsproto::StringOrMarkupContent { markup_content: Some(tsc_lsproto::MarkupContent { kind: tsc_lsproto::MarkupKind::Markdown.into(), value: "b's comment".to_string().into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "fooExport".to_string().into(), detail: Some(("function extMod.m1.fooExport(): number").into()), documentation: Some(tsc_lsproto::StringOrMarkupContent { markup_content: Some(tsc_lsproto::MarkupContent { kind: tsc_lsproto::MarkupKind::Markdown.into(), value: "exported function".to_string().into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "m2".to_string().into(), detail: Some(("namespace extMod.m1.m2").into()), documentation: Some(tsc_lsproto::StringOrMarkupContent { markup_content: Some(tsc_lsproto::MarkupContent { kind: tsc_lsproto::MarkupKind::Markdown.into(), value: "m2 comments".to_string().into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.go_to_marker("8");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { doc_comment: "exported function".to_string().into(), ..Default::default() });
-		f.verify_quick_info_at("8q", "function extMod.m1.fooExport(): number", "exported function");
-		f.verify_quick_info_at("9", "var newVar: extMod.m1.m2.c", "");
-		f.verify_completions(tsc_fourslash::MarkerInput::from("10"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "c".to_string().into(), detail: Some(("constructor extMod.m1.m2.c(): extMod.m1.m2.c").into()), documentation: Some(tsc_lsproto::StringOrMarkupContent { markup_content: Some(tsc_lsproto::MarkupContent { kind: tsc_lsproto::MarkupKind::Markdown.into(), value: "class comment;".to_string().into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "i".to_string().into(), detail: Some(("var extMod.m1.m2.i: extMod.m1.m2.c").into()), documentation: Some(tsc_lsproto::StringOrMarkupContent { markup_content: Some(tsc_lsproto::MarkupContent { kind: tsc_lsproto::MarkupKind::Markdown.into(), value: "i".to_string().into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

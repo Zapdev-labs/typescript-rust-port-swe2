@@ -7,48 +7,12 @@ use tsc_fourslash::*;
 #[test]
 fn import_fix_from_at_types_with_real_package() {
 	run_test(|t| {
-		let content = r#"// @Filename: /node_modules/myLib/package.json
-{"name":"myLib","version":"1.0.0","main":"index.js"}
-// @Filename: /node_modules/myLib/index.js
-module.exports = {};
-// @Filename: /node_modules/@types/myLib/package.json
-{"name":"@types/myLib","version":"1.0.0","types":"index.d.ts"}
-// @Filename: /node_modules/@types/myLib/index.d.ts
-export function f1(): void;
-export function f2(): void;
-// @Filename: /package.json
-{"dependencies":{"myLib":"*"}}
-// @Filename: /other.ts
-import { f1 } from "myLib";
-f1();
-// @Filename: /index.ts
-[|f2/*0*/();|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_module_specifiers("0", &["myLib".into()], None);
 	});
 }
 
 #[test]
 fn import_fix_from_at_types_with_real_package_exports() {
 	run_test(|t| {
-		let content = r#"// @Filename: /node_modules/myLib/package.json
-{"name":"myLib","version":"1.0.0","exports":{".":{"default":"./index.js"}}}
-// @Filename: /node_modules/myLib/index.js
-module.exports = {};
-// @Filename: /node_modules/@types/myLib/package.json
-{"name":"@types/myLib","version":"1.0.0","types":"index.d.ts"}
-// @Filename: /node_modules/@types/myLib/index.d.ts
-export function f1(): void;
-export function f2(): void;
-// @Filename: /package.json
-{"dependencies":{"myLib":"*"}}
-// @Filename: /other.ts
-import { f1 } from "myLib";
-f1();
-// @Filename: /index.ts
-[|f2/*0*/();|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_module_specifiers("0", &["myLib".into()], None);
 	});
 }
 

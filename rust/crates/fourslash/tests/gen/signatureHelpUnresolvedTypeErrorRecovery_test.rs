@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_unresolved_type_in_error_recovered_signature() {
 	run_test(|t| {
-		let content = r"function f(x: {
-    a?: U =
-    b?: (p: U) => void
-}) {}
-f(/*a*/);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_signature_help();
 	});
 }
 

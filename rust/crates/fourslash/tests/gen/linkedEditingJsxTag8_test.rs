@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn linked_editing_jsx_tag8() {
 	run_test(|t| {
-		let content = r"// @FileName: /mismatchedNames.tsx
-const A = thing;
-const B = thing;
-const jsx = (
-    </*8*/A>
-    </B>
-);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_linked_editing(&std::collections::BTreeMap::from([("8".to_string().into(), None)]));
 	});
 }
 

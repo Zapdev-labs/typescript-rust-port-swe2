@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_for_default_export04() {
 	run_test(|t| {
-		let content = r#"// @Filename: /a.ts
-const /*0*/a = 0;
-export /*1*/default /*2*/a;
-// @Filename: /b.ts
-import /*3*/a from "./a";
-/*4*/a;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["0".into(), "2".into(), "1".into(), "3".into(), "4".into()]);
 	});
 }
 

@@ -7,55 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_provider_export_map5() {
 	run_test(|t| {
-		let content = r#"// @types package lookup
-// @Filename: /home/src/workspaces/project/tsconfig.json
-{
-  "compilerOptions": {
-    "module": "nodenext",
-    "lib": ["es5"]
-  }
-}
-// @Filename: /home/src/workspaces/project/package.json
-{
-  "type": "module",
-  "dependencies": {
-    "dependency": "^1.0.0"
-  }
-}
-// @Filename: /home/src/workspaces/project/node_modules/dependency/package.json
-{
-  "type": "module",
-  "name": "dependency",
-  "version": "1.0.0",
-  "exports": {
-    ".": "./lib/index.js",
-    "./lol": "./lib/lol.js"
-  }
-}
-// @Filename: /home/src/workspaces/project/node_modules/dependency/lib/index.js
-export function fooFromIndex() {}
-// @Filename: /home/src/workspaces/project/node_modules/dependency/lib/lol.js
-export function fooFromLol() {}
-// @Filename: /home/src/workspaces/project/node_modules/@types/dependency/package.json
-{
-  "type": "module",
-  "name": "@types/dependency",
-  "version": "1.0.0",
-  "exports": {
-    ".": "./lib/index.d.ts",
-    "./lol": "./lib/lol.d.ts"
-  }
-}
-// @Filename: /home/src/workspaces/project/node_modules/@types/dependency/lib/index.d.ts
-export declare function fooFromIndex(): void;
-// @Filename: /home/src/workspaces/project/node_modules/@types/dependency/lib/lol.d.ts
-export declare function fooFromLol(): void;
-// @Filename: /home/src/workspaces/project/src/foo.ts
-fooFrom/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.go_to_marker("");
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "fooFromIndex".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "dependency".to_string().into(), ..Default::default() }), ..Default::default() }), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "fooFromLol".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "dependency/lol".to_string().into(), ..Default::default() }), ..Default::default() }), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

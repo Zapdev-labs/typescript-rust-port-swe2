@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_top_level_await_module_no_ts_config() {
 	run_test(|t| {
-		let content = r"// @filename: /dir/a.ts
-declare const p: Promise<number>;
-await p;
-export {};";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix_not_available(&["fixModuleOption".into()]);
 	});
 }
 

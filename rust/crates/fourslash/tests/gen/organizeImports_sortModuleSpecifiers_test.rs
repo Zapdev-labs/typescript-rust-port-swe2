@@ -7,65 +7,30 @@ use tsc_fourslash::*;
 #[test]
 fn organize_imports_sort_module_specifiers_non_relative_vs_non_relative() {
 	run_test(|t| {
-		let content = r#"import x from "lib2";
-import y from "lib1";
-x; y;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_organize_imports(r#"import y from "lib1";
-import x from "lib2";
-x; y;"#, tsc_lsproto::CodeActionKind::SourceSortImports, Some(&tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE.into(), ..Default::default() }));
 	});
 }
 
 #[test]
 fn organize_imports_sort_module_specifiers_relative_vs_relative() {
 	run_test(|t| {
-		let content = r#"import x from "./lib2";
-import y from "./lib1";
-x; y;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_organize_imports(r#"import y from "./lib1";
-import x from "./lib2";
-x; y;"#, tsc_lsproto::CodeActionKind::SourceSortImports, Some(&tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE.into(), ..Default::default() }));
 	});
 }
 
 #[test]
 fn organize_imports_sort_module_specifiers_relative_vs_non_relative() {
 	run_test(|t| {
-		let content = r#"import x from "./lib";
-import y from "lib";
-x; y;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_organize_imports(r#"import y from "lib";
-import x from "./lib";
-x; y;"#, tsc_lsproto::CodeActionKind::SourceSortImports, Some(&tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE.into(), ..Default::default() }));
 	});
 }
 
 #[test]
 fn organize_imports_sort_module_specifiers_case_insensitive() {
 	run_test(|t| {
-		let content = r#"import x from "Z";
-import y from "a";
-x; y;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_organize_imports(r#"import y from "a";
-import x from "Z";
-x; y;"#, tsc_lsproto::CodeActionKind::SourceSortImports, Some(&tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE.into(), ..Default::default() }));
 	});
 }
 
 #[test]
 fn organize_imports_sort_module_specifiers_case_insensitive_reverse() {
 	run_test(|t| {
-		let content = r#"import x from "z";
-import y from "A";
-x; y;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_organize_imports(r#"import y from "A";
-import x from "z";
-x; y;"#, tsc_lsproto::CodeActionKind::SourceSortImports, Some(&tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE.into(), ..Default::default() }));
 	});
 }
 

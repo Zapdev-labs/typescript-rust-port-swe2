@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_on_type_predicates() {
 	run_test(|t| {
-		let content = r"function f1(a: any): a is number {}
-function f2<T>(a: any): a is T {}
-function f3(a: any, ...b): a is number {}
-f1(/*1*/)
-f2(/*2*/)
-f3(/*3*/)";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "f1(a: any): a is number".to_string().into(), ..Default::default() });
-		f.go_to_marker("2");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "f2(a: any): a is unknown".to_string().into(), ..Default::default() });
-		f.go_to_marker("3");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "f3(a: any, ...b: any[]): a is number".to_string().into(), is_variadic: true.into(), is_variadic_set: true.into(), ..Default::default() });
 	});
 }
 

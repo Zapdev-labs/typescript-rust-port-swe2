@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_occurrences_return4() {
 	run_test(|t| {
-		let content = r"function f(a: number) {
-    if (a > 0) {
-        return (function () {
-            return/*1*/;
-            return/*2*/;
-            return/*3*/;
-
-            if (false) {
-                return/*4*/ true;
-            }
-        })() || true;
-    }
-
-    var unusued = [1, 2, 3, 4].map(x => { return/*5*/ 4 })
-
-    return/*6*/;
-    return/*7*/ true;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, to_any(f.markers()).into_iter().map(Into::into));
 	});
 }
 

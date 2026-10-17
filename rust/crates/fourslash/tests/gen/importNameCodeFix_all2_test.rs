@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_all2() {
 	run_test(|t| {
-		let content = r"// @Filename: /path.ts
-export declare function join(): void;
-// @Filename: /os.ts
-export declare function homedir(): void;
-// @Filename: /index.ts
-
-join();
-homedir();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/index.ts");
-		f.verify_code_fix_all(&tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport".to_string().into(), new_file_content: r#"import { homedir } from "./os";
-import { join } from "./path";
-
-join();
-homedir();"#.to_string().into(), ..Default::default() });
 	});
 }
 

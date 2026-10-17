@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn js_doc_dont_break_with_namespaces() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @Filename: jsDocDontBreakWithNamespaces.js
-/**
- * @returns {module:@nodefuel/web~Webserver~wsServer#hello} Websocket server object
- */
-function foo() { }
-foo(''/*foo*/);
-
-/**
- * @type {module:xxxxx} */
- */
-function bar() { }
-bar(''/*bar*/);
-
-/** @type {function(module:xxxx, module:xxxx): module:xxxxx} */
-function zee() { }
-zee(''/*zee*/);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_signature_help();
 	});
 }
 

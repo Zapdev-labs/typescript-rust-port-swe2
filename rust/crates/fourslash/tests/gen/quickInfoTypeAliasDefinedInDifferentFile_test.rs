@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_type_alias_defined_in_different_file() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r#"// @Filename: /a.ts
-export type X = { x: number };
-export function f(x: X): void {}
-// @Filename: /b.ts
-import { f } from "./a";
-/**/f({ x: 1 });"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("", "(alias) f(x: X): void\nimport f", "");
 	});
 }
 

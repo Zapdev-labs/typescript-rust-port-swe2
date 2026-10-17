@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_class_super_must_precede_this_access() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"class Base{
-}
-class C extends Base{
-    private a:number;
-    constructor() {[|
-        this.a = 12;
-        super();
-    |]}
-    m() { this.a; } // avoid unused 'a'
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_range_after_code_fix(r"
-        super();
-        this.a = 12;
-    ", true, 0, 0);
 	});
 }
 

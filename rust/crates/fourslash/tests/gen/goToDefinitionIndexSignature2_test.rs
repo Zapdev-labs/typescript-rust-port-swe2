@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_index_signature2() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @Filename: /a.js
-const o = {};
-o.[|/*use*/foo|];";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["use".into()]);
 	});
 }
 

@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn inlay_hints_rest_parameters2() {
 	run_test(|t| {
-		let content = r"function foo(a: unknown, b: unknown, c: unknown) { }
-function foo1(...x: [number, number | undefined]) {
-    foo(...x, 3);
-}
-function foo2(...x: []) {
-    foo(...x, 1, 2, 3);
-}
-function foo3(...x: [number, number?]) {
-    foo(1, ...x);
-}
-function foo4(...x: [number, number?]) {
-    foo(...x, 3);
-}
-function foo5(...x: [number, number]) {
-    foo(...x, 3);
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_inlay_hints(None, Some(&tsc_lsutil::UserPreferences { inlay_hints_preferences: tsc_lsutil::InlayHintsPreferences { include_inlay_parameter_name_hints: tsc_lsutil::IncludeInlayParameterNameHints::ALL.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 

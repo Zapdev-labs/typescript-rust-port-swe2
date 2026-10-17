@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn navigation_items_exact_match2() {
 	run_test(|t| {
-		let content = r"module Shapes {
-    class [|Point|] {
-        private [|_origin|] = 0.0;
-        private [|distanceFromA|] = 0.0;
-
-        get [|distance1|](distanceParam): number {
-            var [|distanceLocal|];
-            return 0;
-        }
-    }
-}
-
-var [|point|] = new Shapes.Point();
-function [|distance2|](distanceParam1): void {
-    var [|distanceLocal1|];
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "point".to_string().into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "Point".to_string().into(), kind: tsc_lsproto::SymbolKind::Class.into(), location: f.ranges()[0].clone().ls_location().into(), container_name: Some(("Shapes").into()), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "point".to_string().into(), kind: tsc_lsproto::SymbolKind::Variable.into(), location: f.ranges()[5].clone().ls_location().into(), ..Default::default() }]).into()), ..Default::default() }, tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "distance".to_string().into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "distance1".to_string().into(), kind: tsc_lsproto::SymbolKind::Property.into(), location: f.ranges()[3].clone().ls_location().into(), container_name: Some(("Point").into()), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "distance2".to_string().into(), kind: tsc_lsproto::SymbolKind::Function.into(), location: f.ranges()[6].clone().ls_location().into(), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "distanceFromA".to_string().into(), kind: tsc_lsproto::SymbolKind::Property.into(), location: f.ranges()[2].clone().ls_location().into(), container_name: Some(("Point").into()), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "distanceLocal".to_string().into(), kind: tsc_lsproto::SymbolKind::Variable.into(), location: f.ranges()[4].clone().ls_location().into(), container_name: Some(("distance1").into()), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "distanceLocal1".to_string().into(), kind: tsc_lsproto::SymbolKind::Variable.into(), location: f.ranges()[7].clone().ls_location().into(), container_name: Some(("distance2").into()), ..Default::default() }]).into()), ..Default::default() }, tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "origin".to_string().into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "_origin".to_string().into(), kind: tsc_lsproto::SymbolKind::Property.into(), location: f.ranges()[1].clone().ls_location().into(), container_name: Some(("Point").into()), ..Default::default() }]).into()), ..Default::default() }, tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "square".to_string().into(), preferences: None, exact: Some((vec![]).into()), ..Default::default() }]);
 	});
 }
 

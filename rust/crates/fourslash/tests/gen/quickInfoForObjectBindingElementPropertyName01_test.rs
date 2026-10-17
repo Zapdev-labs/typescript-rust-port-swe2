@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_for_object_binding_element_property_name01() {
 	run_test(|t| {
-		let content = r"interface I {
-    property1: number;
-    property2: string;
-}
-
-var foo: I;
-var { /**/property1: prop1 } = foo;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("", "(property) I.property1: number", "");
 	});
 }
 

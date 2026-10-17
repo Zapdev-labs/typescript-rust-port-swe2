@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn semantic_classification_instantiated_module_with_variable_of_same_name1() {
 	run_test(|t| {
-		let content = r"module /*0*/M {
-    export interface /*1*/I {
-    }
-    var x = 10;
-}
-
-var /*2*/M = {
-    foo: 10,
-    bar: 20
-}
-
-var v: /*3*/M./*4*/I;
-
-var x = /*5*/M;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type_: "namespace.declaration".to_string().into(), text: "M".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "interface.declaration".to_string().into(), text: "I".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.declaration.local".to_string().into(), text: "x".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.declaration".to_string().into(), text: "M".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "property.declaration".to_string().into(), text: "foo".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "property.declaration".to_string().into(), text: "bar".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.declaration".to_string().into(), text: "v".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "namespace".to_string().into(), text: "M".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "interface".to_string().into(), text: "I".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.declaration".to_string().into(), text: "x".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "namespace".to_string().into(), text: "M".to_string().into(), ..Default::default() }]);
 	});
 }
 

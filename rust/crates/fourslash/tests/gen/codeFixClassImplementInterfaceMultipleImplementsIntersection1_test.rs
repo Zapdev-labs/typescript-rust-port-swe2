@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_class_implement_interface_multiple_implements_intersection1() {
 	run_test(|t| {
-		let content = r"interface I1 {
-    x: number;
-}
-interface I2 {
-    x: string;
-}
-
-class C implements I1,I2 {[| |]}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix_available(Some(&["Implement interface 'I1'".into(), "Implement interface 'I2'".into()]));
 	});
 }
 

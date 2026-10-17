@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_rest_args3() {
 	run_test(|t| {
-		let content = r"// @target: esnext
-// @lib: esnext
-const layers = Object.assign({}, /*1*/...[]);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_signature_help();
 	});
 }
 

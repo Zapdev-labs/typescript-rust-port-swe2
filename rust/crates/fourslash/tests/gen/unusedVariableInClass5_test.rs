@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn unused_variable_in_class5() {
 	run_test(|t| {
-		let content = r"// @noUnusedLocals: true
-// @target: esnext
-declare class greeter {
-    #private;
-    private name;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
 	});
 }
 

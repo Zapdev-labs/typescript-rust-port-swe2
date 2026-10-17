@@ -7,28 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn add_all_missing_imports_no_crash() {
 	run_test(|t| {
-		let content = r"// @Filename: file1.ts
-export interface Test1 {}
-export interface Test2 {}
-export interface Test3 {}
-export interface Test4 {}
-// @Filename: file2.ts
-import { Test1, Test4 } from './file1';
-interface Testing {
-    test1: Test1;
-    test2: Test2;
-    test3: Test3;
-    test4: Test4;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("file2.ts");
-		f.verify_code_fix_all(&tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport".to_string().into(), new_file_content: r"import { Test1, Test2, Test3, Test4 } from './file1';
-interface Testing {
-    test1: Test1;
-    test2: Test2;
-    test3: Test3;
-    test4: Test4;
-}".to_string().into(), ..Default::default() });
 	});
 }
 

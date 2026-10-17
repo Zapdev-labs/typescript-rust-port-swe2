@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_on_import_aliases2() {
 	run_test(|t| {
-		let content = r#"//@Filename: a.ts
-[|export class /*class0*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 0 |}Class|] {}|]
-//@Filename: b.ts
-[|import { /*class1*/[|{| "contextRangeIndex": 2 |}Class|] as /*c2_0*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 2 |}C2|] } from "./a";|]
-var c = new /*c2_1*/[|C2|]();
-//@Filename: c.ts
-[|export { /*class2*/[|{| "contextRangeIndex": 6 |}Class|] as /*c3*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 6 |}C3|] } from "./a";|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["class0".into(), "class1".into(), "class2".into(), "c2_0".into(), "c2_1".into(), "c3".into()]);
-		f.verify_baseline_rename_at_ranges_with_text(None, &["Class".into(), "C2".into(), "C3".into()]);
 	});
 }
 

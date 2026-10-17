@@ -134,7 +134,7 @@ mod gen_support;
 #[path = "gen/completionsImport_default_didNotExistBefore_test.rs"] mod completionsImport_default_didNotExistBefore_test;
 #[path = "gen/completionsImport_details_withMisspelledName_test.rs"] mod completionsImport_details_withMisspelledName_test;
 #[path = "gen/completionsImport_exportEqualsNamespace_noDuplicate_test.rs"] mod completionsImport_exportEqualsNamespace_noDuplicate_test;
-#[path = "gen/completionsImport_filteredByPackageJson_@typesOnly_test.rs"] mod completionsImport_filteredByPackageJson_@typesOnly_test;
+#[path = "gen/completionsImport_filteredByPackageJson_@typesOnly_test.rs"] mod completionsImport_filteredByPackageJson__typesOnly_test;
 #[path = "gen/completionsImport_multipleWithSameName_test.rs"] mod completionsImport_multipleWithSameName_test;
 #[path = "gen/completionsImport_notFromUnrelatedNodeModules_test.rs"] mod completionsImport_notFromUnrelatedNodeModules_test;
 #[path = "gen/completionsImport_quoteStyle_test.rs"] mod completionsImport_quoteStyle_test;

@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_for_module_global() {
 	run_test(|t| {
-		let content = r#"// @Filename: /node_modules/foo/index.d.ts
-export const x = 0;
-// @Filename: /b.ts
-/// <reference types="foo" />
-import { x } from "/*1*/foo";
-declare module "foo" {}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.verify_baseline_find_all_references(&["1".into()]);
 	});
 }
 

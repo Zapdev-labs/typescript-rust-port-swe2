@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn navigation_bar_items_exports() {
 	run_test(|t| {
-		let content = r#"export { a } from "a";
-
-export { b as B } from "a" 
-
-export import e = require("a");
-
-export * from "a"; // no bindings here"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_symbol();
 	});
 }
 

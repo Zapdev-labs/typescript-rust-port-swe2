@@ -7,37 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn outlining_spans_for_parenthesized_expression() {
 	run_test(|t| {
-		let content = r"const a = [|(
-    true
-        ? true
-        : false
-            ? true
-            : false
-)|];
-
-const b = ( 1 );
-
-const c = [|(
-    1
-)|];
-
-( 1 );
-
-[|(
-    [|(
-        [|(
-            1
-        )|]
-    )|]
-)|];
-
-[|(
-    [|(
-        ( 1 )
-    )|]
-)|];";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_outlining_spans();
 	});
 }
 

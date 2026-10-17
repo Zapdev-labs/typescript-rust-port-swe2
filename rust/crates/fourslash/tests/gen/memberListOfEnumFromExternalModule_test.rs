@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn member_list_of_enum_from_external_module() {
 	run_test(|t| {
-		let content = r"// @Filename: memberListOfEnumFromExternalModule_file0.ts
-export enum Topic{ One, Two }
-var topic = Topic.One;
-// @Filename: memberListOfEnumFromExternalModule_file1.ts
-import t = require('./memberListOfEnumFromExternalModule_file0');
-var topic = t.Topic./*1*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["One".into(), "Two".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

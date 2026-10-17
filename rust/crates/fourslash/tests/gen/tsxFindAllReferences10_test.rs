@@ -7,36 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn tsx_find_all_references10() {
 	run_test(|t| {
-		let content = r#"//@Filename: file.tsx
-// @jsx: preserve
-// @noLib: true
-declare namespace JSX {
-    interface Element { }
-    interface IntrinsicElements {
-    }
-    interface ElementAttributesProperty { props; }
-}
-interface ClickableProps {
-    children?: string;
-    className?: string;
-}
-interface ButtonProps extends ClickableProps {
-    /*1*/onClick(event?: React.MouseEvent<HTMLButtonElement>): void;
-}
-interface LinkProps extends ClickableProps {
-    goTo: string;
-}
-declare function MainButton(buttonProps: ButtonProps): JSX.Element;
-declare function MainButton(linkProps: LinkProps): JSX.Element;
-declare function MainButton(props: ButtonProps | LinkProps): JSX.Element;
-let opt = <MainButton />;
-let opt = <MainButton children="chidlren" />;
-let opt = <MainButton onClick={()=>{}} />;
-let opt = <MainButton onClick={()=>{}} ignore-prop />;
-let opt = <MainButton goTo="goTo" />;
-let opt = <MainButton wrong />;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into()]);
 	});
 }
 

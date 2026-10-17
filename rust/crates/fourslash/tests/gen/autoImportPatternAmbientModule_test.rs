@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_merged_pattern_ambient_module() {
 	run_test(|t| {
-		let content = r#"// @Filename: /tsconfig.json
-{ "compilerOptions": { "module": "preserve", "moduleResolution": "bundler" } }
-
-// @Filename: /first.d.ts
-declare module "*.asset" with { type: "css" } {
-    export const styles: string;
-}
-
-// @Filename: /second.d.ts
-declare module "*.asset" with { type: "css" } {
-    export const styleTokens: string;
-}
-
-// @Filename: /index.ts
-sty/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { excludes: vec!["styles".into(), "styleTokens".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

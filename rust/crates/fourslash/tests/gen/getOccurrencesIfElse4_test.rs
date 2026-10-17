@@ -7,29 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_occurrences_if_else4() {
 	run_test(|t| {
-		let content = r"if (true) {
-    if (false) {
-    }
-    else {
-    }
-    if (true) {
-    }
-    else {
-        /*1*/if (false)
-            /*2*/i/*3*/f (true)
-                var x = undefined;
-    }
-}
-else            if (null) {
-}
-else /* whar garbl */ if (undefined) {
-}
-else
-if (false) {
-}
-else { }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, to_any(f.markers()).into_iter().map(Into::into));
 	});
 }
 

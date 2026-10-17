@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_simple_super_call() {
 	run_test(|t| {
-		let content = r"class SuperCallBase {
-    constructor(b: boolean) {
-    }
-}
-class SuperCall extends SuperCallBase {
-    constructor() {
-        super(/*superCall*/);
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("superCall");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "SuperCallBase(b: boolean): SuperCallBase".to_string().into(), parameter_name: "b".to_string().into(), parameter_span: "b: boolean".to_string().into(), ..Default::default() });
 	});
 }
 

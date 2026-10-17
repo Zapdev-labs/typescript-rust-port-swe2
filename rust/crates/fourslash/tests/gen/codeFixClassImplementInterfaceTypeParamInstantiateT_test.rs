@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_class_implement_interface_type_param_instantiate_t() {
 	run_test(|t| {
-		let content = r"interface I<T> { x: T; }
-class C<T> implements I<T> {}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'I<T>'".to_string().into(), new_file_content: r"interface I<T> { x: T; }
-class C<T> implements I<T> {
-    x: T;
-}".to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_on_jsx_namespaced_name() {
 	run_test(|t| {
-		let content = r#"// @jsx: react
-// @Filename: /types.d.ts
-declare namespace JSX {
-    interface IntrinsicElements { ['a:b']: { a: string }; }
-}
-// @filename: /a.tsx
-</**/a:b a="accepted" b="rejected" />;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

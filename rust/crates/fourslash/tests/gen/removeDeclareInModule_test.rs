@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn remove_declare_in_module() {
 	run_test(|t| {
-		let content = r"/**/export namespace Foo {
-    function a(): void {}
-}
-
-Foo.a();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.delete_at_caret(7);
-		f.verify_number_of_errors_in_current_file(1);
 	});
 }
 

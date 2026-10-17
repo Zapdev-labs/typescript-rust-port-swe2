@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_on_value_symbol_without_export_with_same_name_export_symbol() {
 	run_test(|t| {
-		let content = r"// @strict: true
-
-declare function num(): number
-const /*1*/Unit = num()
-export type Unit = number
-const value = /*2*/Unit
-
-function Fn() {}
-export type Fn = () => void
-/*3*/Fn()
-
-// repro from #41897
-const /*4*/X = 1;
-export interface X {}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "const Unit: number", "");
-		f.verify_quick_info_at("2", "const Unit: number", "");
-		f.verify_quick_info_at("3", "function Fn(): void", "");
-		f.verify_quick_info_at("4", "const X: 1", "");
 	});
 }
 

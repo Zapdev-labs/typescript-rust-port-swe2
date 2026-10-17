@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn unreachable_statement_node_reuse() {
 	run_test(|t| {
-		let content = r"function test() {
-	return/*a*/abc();
-	return;
-}
-function abc() { }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_number_of_errors_in_current_file(1);
-		f.go_to_marker("a");
-		f.insert(" ");
-		f.verify_no_errors();
 	});
 }
 

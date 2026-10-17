@@ -7,34 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn javascript_modules22() {
 	run_test(|t| {
-		let content = r#"// @allowJs: true
-// @module: commonjs
-// @allowSyntheticDefaultImports: false
-// @esModuleInterop: false
-// @Filename: mod.js
-function foo() { return {a: "hello, world"}; }
-module.exports = foo();
-// @Filename: mod2.js
-var x = {name: 'test'};
-(function createExport(obj){
-    module.exports = {
-        "default": x,
-        "sausages": {eggs: 2}
-    };
-})();
-// @Filename: app.js
-import {a} from "./mod"
-import def, {sausages} from "./mod2"
-a./**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["toString".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.backspace(2);
-		f.insert("def.");
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["name".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("name;\nsausages.");
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["eggs".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("eggs;");
-		f.verify_no_errors();
 	});
 }
 

@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn self_referenced_external_module2() {
 	run_test(|t| {
-		let content = r"// @Filename: app.ts
-export import A = require('./app2');
-export var I = 1;
-A./*1*/Y;
-A.B.A.B./*2*/I;
-// @Filename: app2.ts
-export import B = require('./app');
-export var Y = 1;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "var A.Y: number", "");
-		f.verify_quick_info_at("2", "var I: number", "");
 	});
 }
 

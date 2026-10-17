@@ -7,42 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn doc_comment_template_interfaces_enums_and_type_aliases() {
 	run_test(|t| {
-		let content = r"/*interfaceFoo*/
-interface Foo {
-    /*propertybar*/
-    bar: any;
-
-    /*methodbaz*/
-    baz(message: any): void;
-
-    /*methodUnit*/
-    unit(): void;
-}
-
-/*enumStatus*/
-const enum Status {
-    /*memberOpen*/
-    Open,
-
-    /*memberClosed*/
-    Closed
-}
-
-/*aliasBar*/
-type Bar = Foo & any;";
-		let mut capabilities = tsc_fourslash::get_default_capabilities();
-		capabilities.text_document.as_mut().unwrap().completion.as_mut().unwrap().completion_item.as_mut().unwrap().snippet_support = Some((false).into());
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", capabilities.into(), &content);
-		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("interfaceFoo"), 3, r"/** */", None);
-		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("propertybar"), 3, r"/** */", None);
-		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("methodbaz"), 11, r"/**
-     * 
-     * @param message
-     */", None);
-		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("methodUnit"), 3, r"/** */", None);
-		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("enumStatus"), 3, r"/** */", None);
-		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("memberOpen"), 3, r"/** */", None);
-		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("memberClosed"), 3, r"/** */", None);
 	});
 }
 

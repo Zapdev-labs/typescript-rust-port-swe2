@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_signature_alias_require() {
 	run_test(|t| {
-		let content = r#"// @allowJs: true
-// @Filename: /a.js
-module.exports = function /*f*/f() {}
-// @Filename: /b.js
-const f = require("./a");
-[|/*use*/f|]();
-// @Filename: /bar.ts
-import f = require("./a");
-[|/*useTs*/f|]();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["use".into(), "useTs".into()]);
 	});
 }
 

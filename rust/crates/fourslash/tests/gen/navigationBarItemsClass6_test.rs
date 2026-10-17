@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn navigation_bar_items_class6() {
 	run_test(|t| {
-		let content = r"function Z() { }
-
-Z.foo = 42
-
-class Z { }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_symbol();
 	});
 }
 

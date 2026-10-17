@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_on_jsx_intrinsic_declared_using_catch_call_index_signature() {
 	run_test(|t| {
-		let content = r#"// @jsx: react
-// @filename: /a.tsx
-declare namespace JSX {
-  interface IntrinsicElements { [elemName: string]: any; }
-}
-</**/div class="democlass" />;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

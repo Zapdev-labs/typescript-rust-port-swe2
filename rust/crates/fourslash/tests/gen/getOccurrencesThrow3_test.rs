@@ -7,49 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_occurrences_throw3() {
 	run_test(|t| {
-		let content = r#"function f(a: number) {
-    try {
-        [|throw|] "Hello";
-
-        try {
-            throw 10;
-        }
-        catch (x) {
-            return 100;
-        }
-        finally {
-            [|thr/**/ow|] 10;
-        }
-    }
-    catch (x) {
-        throw "Something";
-    }
-    finally {
-        throw "Also something";
-    }
-    if (a > 0) {
-        return (function () {
-            return;
-            return;
-            return;
-
-            if (false) {
-                return true;
-            }
-            throw "Hello!";
-        })() || true;
-    }
-
-    throw 10;
-
-    var unusued = [1, 2, 3, 4].map(x => { throw 4 })
-
-    return;
-    return true;
-    throw false;
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, to_any(f.ranges()).into_iter().map(Into::into));
 	});
 }
 

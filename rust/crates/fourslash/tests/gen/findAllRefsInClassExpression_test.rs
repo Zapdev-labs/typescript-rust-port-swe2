@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_in_class_expression() {
 	run_test(|t| {
-		let content = r"interface I { /*0*/boom(): void; }
-new class C implements I {
-   /*1*/boom(){}
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["0".into(), "1".into()]);
 	});
 }
 

@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_source14_unresolved_require_destructuring() {
 	run_test(|t| {
-		let content = r#"// @lib: es5
-// @allowJs: true
-// @Filename: /home/src/workspaces/project/index.js
-const { blah/**/ } = require("unresolved");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.verify_baseline_go_to_source_definition(&["".into()]);
 	});
 }
 

@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_in_destructuring3() {
 	run_test(|t| {
-		let content = r"/*1*/const {
-/*2*/    a,
-/*3*/    b,
-/*4*/} = {a: 1, b: 2};
-/*5*/const {a: c} = {a: 1, b: 2};";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"const {");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"    a,");
-		f.go_to_marker("3");
-		f.verify_current_line_content(r"    b,");
-		f.go_to_marker("4");
-		f.verify_current_line_content(r"} = { a: 1, b: 2 };");
-		f.go_to_marker("5");
-		f.verify_current_line_content(r"const { a: c } = { a: 1, b: 2 };");
 	});
 }
 

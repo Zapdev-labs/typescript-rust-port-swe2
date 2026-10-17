@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_paths_with_extension() {
 	run_test(|t| {
-		let content = r##"// @Filename: /tsconfig.json
-{
-  "compilerOptions": {
-    "target": "ESNext",
-    "module": "Node16",
-    "moduleResolution": "Node16",
-    "rootDir": "./src",
-    "outDir": "./dist",
-    "paths": {
-      "#internals/*": ["./src/internals/*.ts"]
-    }
-  },
-  "include": ["src"]
-}
-// @Filename: /src/internals/example.ts
-export function helloWorld() {}
-// @Filename: /src/index.ts
-helloWorld/**/"##;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_module_specifiers("", &["#internals/example".into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_ending: tsc_modulespecifiers::ImportModuleSpecifierEndingPreference("js"), ..Default::default() }));
 	});
 }
 

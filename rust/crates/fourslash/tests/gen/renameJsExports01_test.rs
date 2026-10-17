@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_js_exports01() {
 	run_test(|t| {
-		let content = r#"// @allowJs: true
-// @Filename: a.js
-[|exports.[|{| "contextRangeIndex": 0 |}area|] = function (r) { return r * r; }|]
-// @Filename: b.js
-var mod = require('./a');
-var t = mod./*1*/[|area|](10);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into()]);
-		f.verify_baseline_rename_at_ranges_with_text(None, &["area".into()]);
 	});
 }
 

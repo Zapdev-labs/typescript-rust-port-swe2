@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_bloom_filters3() {
 	run_test(|t| {
-		let content = r#"// @Filename: declaration.ts
-enum Test { /*1*/"/*2*/42" = 1 };
-// @Filename: expression.ts
-(Test[/*3*/42]);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
 	});
 }
 

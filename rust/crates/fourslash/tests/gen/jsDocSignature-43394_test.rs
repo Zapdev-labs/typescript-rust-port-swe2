@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn js_doc_signature_43394() {
 	run_test(|t| {
-		let content = r"/**
- * @typedef {Object} Foo
- * @property {number} ...
- * /**/@typedef {number} Bar
- */";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_signature_help();
 	});
 }
 

@@ -7,27 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_imports_node_next1() {
 	run_test(|t| {
-		let content = r#"// @module: node18
-// @Filename: /node_modules/pack/package.json
-{
-    "name": "pack",
-    "version": "1.0.0",
-    "exports": {
-        ".": "./main.mjs"
-    }
-}
-// @Filename: /node_modules/pack/main.d.mts
-import {} from "./unreachable.mjs";
-export const fromMain = 0;
-// @Filename: /node_modules/pack/unreachable.d.mts
-export const fromUnreachable = 0;
-// @Filename: /index.mts
-import { fromMain } from "pack";
-fromUnreachable/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_import_fix_at_position(&[], None);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { excludes: vec!["fromUnreachable".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

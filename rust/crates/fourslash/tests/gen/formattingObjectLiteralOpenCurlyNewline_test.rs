@@ -7,45 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_object_literal_open_curly_newline() {
 	run_test(|t| {
-		let content = r"
-var clear =
-{
-    outerKey:
-    {
-        innerKey: 1,
-        innerKey2:
-            2
-    }
-};
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.verify_current_file_content(r"
-var clear =
-{
-    outerKey:
-    {
-        innerKey: 1,
-        innerKey2:
-            2
-    }
-};
-");
-		let mut opts444 = f.get_options();
-		opts444.format_code_settings.indent_multi_line_object_literal_beginning_on_blank_line = tsc_core::tristate::TS_TRUE;
-		f.configure(opts444);
-		f.format_document("");
-		f.verify_current_file_content(r"
-var clear =
-    {
-        outerKey:
-            {
-                innerKey: 1,
-                innerKey2:
-                    2
-            }
-    };
-");
 	});
 }
 

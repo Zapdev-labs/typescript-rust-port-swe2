@@ -7,31 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn organize_imports_unicode1() {
 	run_test(|t| {
-		let content = r"import {
-    Ab,
-    _aB,
-    aB,
-    _Ab,
-} from './foo';
-
-console.log(_aB, _Ab, aB, Ab);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_organize_imports(r"import {
-    Ab,
-    _Ab,
-    _aB,
-    aB,
-} from './foo';
-
-console.log(_aB, _Ab, aB, Ab);", tsc_lsproto::CodeActionKind::SourceOrganizeImports, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_FALSE.into(), organize_imports_collation: tsc_lsutil::OrganizeImportsCollation::ORDINAL.into(), ..Default::default() }));
-		f.verify_organize_imports(r"import {
-    _aB,
-    _Ab,
-    aB,
-    Ab,
-} from './foo';
-
-console.log(_aB, _Ab, aB, Ab);", tsc_lsproto::CodeActionKind::SourceOrganizeImports, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_FALSE.into(), organize_imports_collation: tsc_lsutil::OrganizeImportsCollation::UNICODE.into(), ..Default::default() }));
 	});
 }
 

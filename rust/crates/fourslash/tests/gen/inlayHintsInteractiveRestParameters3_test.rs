@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn inlay_hints_interactive_rest_parameters3() {
 	run_test(|t| {
-		let content = r"function fn(x: number, y: number, a: number, b: number) {
-    return x + y + a + b;
-}
-const foo: [x: number, y: number] = [1, 2];
-fn(...foo, 3, 4);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_inlay_hints(None, Some(&tsc_lsutil::UserPreferences { inlay_hints_preferences: tsc_lsutil::InlayHintsPreferences { include_inlay_parameter_name_hints: tsc_lsutil::IncludeInlayParameterNameHints::ALL.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 

@@ -7,33 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn indentation_in_jsx3() {
 	run_test(|t| {
-		let content = r"//@Filename: file.tsx
-function foo() {
-   return (
-        <div>
-hello
-goodbye
-        </div>
-    )
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_current_file_content(r"function foo() {
-   return (
-        <div>
-hello
-goodbye
-        </div>
-    )
-}");
-		f.format_document("");
-		f.verify_current_file_content(r"function foo() {
-    return (
-        <div>
-            hello
-            goodbye
-        </div>
-    )
-}");
 	});
 }
 

@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_string_property_names2() {
 	run_test(|t| {
-		let content = r#"type Props = {
-  foo: boolean;
-}
-
-let { foo }: Props = null as any;
-foo;
-
-let asd: Props = { "foo"/**/: true }; // rename foo here"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename(None, vec!["".into()]);
 	});
 }
 

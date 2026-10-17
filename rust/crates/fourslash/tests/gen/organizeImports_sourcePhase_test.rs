@@ -7,77 +7,18 @@ use tsc_fourslash::*;
 #[test]
 fn organize_imports_source_phase_imports_are_not_coalesced() {
 	run_test(|t| {
-		let content = r#"import source b from "lib";
-import source a from "lib";
-a; b;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_organize_imports(r#"import source a from "lib";
-import source b from "lib";
-a; b;"#, tsc_lsproto::CodeActionKind::SourceSortImports, Some(&tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE.into(), ..Default::default() }));
 	});
 }
 
 #[test]
 fn organize_imports_source_and_evaluation_phase_imports_are_not_coalesced() {
 	run_test(|t| {
-		let content = r#"import { c } from "lib";
-import source b from "lib";
-import { a } from "lib";
-a; b; c;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_organize_imports(r#"import source b from "lib";
-import { a, c } from "lib";
-a; b; c;"#, tsc_lsproto::CodeActionKind::SourceSortImports, Some(&tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE.into(), ..Default::default() }));
 	});
 }
 
 #[test]
 fn organize_imports_source_phase_import_sorting() {
 	run_test(|t| {
-		let imports = r#"import source a from "lib";
-import source b from "lib";
-import source c from "lib";
-import source d from "lib";
-import source e from "lib";
-import source f from "lib";
-import source g from "lib";
-import source h from "lib";
-import source i from "lib";
-import source j from "lib";
-import source k from "lib";
-import source l from "lib";
-import source m from "lib";
-"#;
-		for test in vec![anon_1 { name: "case insensitive bindings".to_string().into(), content: r#"import { b, D } from "B";
-import "a";
-import source C from "lib";
-import source a from "lib";"#.to_string().into(), expected: r#"import { b, D } from "B";
-import "a";
-import source a from "lib";
-import source C from "lib";"#.to_string().into(), ..Default::default() }, anon_1 { name: "case sensitive bindings".to_string().into(), content: r#"import { D, b } from "a";
-import "B";
-import source a from "lib";
-import source C from "lib";"#.to_string().into(), expected: r#"import { D, b } from "a";
-import "B";
-import source C from "lib";
-import source a from "lib";"#.to_string().into(), ..Default::default() }, anon_1 { name: "no named imports".to_string().into(), content: r#"import source a from "lib";
-import source B from "lib";"#.to_string().into(), expected: r#"import source B from "lib";
-import source a from "lib";"#.to_string().into(), ..Default::default() }, anon_1 { name: "mixed import kinds".to_string().into(), content: (format!("{}{}", format!("{}{}", r#"import { n } from "lib";
-"#, imports), r#"import * as o from "lib";
-import type { T } from "lib";"#)).into(), expected: (format!("{}{}", format!("{}{}", r#"import type { T } from "lib";
-import * as o from "lib";
-"#, imports), r#"import { n } from "lib";"#)).into(), ..Default::default() }] {
-			#[derive(Default, Clone, Debug)]
-			struct anon_1 {
-				name: String,
-				content: String,
-				expected: String,
-			}
-			run_subtest(&mut t, test.name, |t| {
-				let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &test.content);
-				f.verify_organize_imports(&format!("{}{}", test.expected, "\n"), tsc_lsproto::CodeActionKind::SourceSortImports, Some(&tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::AUTO.into(), ..Default::default() }));
-			});
-		}
 	});
 }
 

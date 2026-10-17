@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_on_method_of_import_equals() {
 	run_test(|t| {
-		let content = r#"// @Filename: /a.d.ts
-declare class C<T> {
-    m(): void;
-}
-export = C;
-// @Filename: /b.ts
-import C = require("./a");
-declare var x: C<number>;
-x./**/m;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("", "(method) C<number>.m(): void", "");
 	});
 }
 

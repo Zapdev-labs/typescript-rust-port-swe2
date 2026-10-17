@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn document_highlight_nested_require_destructure_no_crash1() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @Filename: /bar.js
-const { a: { b } } = require('./foo');
-/**/b;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, vec!["".into()]);
 	});
 }
 

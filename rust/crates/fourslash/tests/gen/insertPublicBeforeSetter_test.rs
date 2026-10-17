@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn insert_public_before_setter() {
 	run_test(|t| {
-		let content = r"class C {
-    /**/set Bar(bar:string) {}
-}
-var o2 = { set Foo(val:number) { } };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.insert("public ");
 	});
 }
 

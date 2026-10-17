@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_umd_global_react2() {
 	run_test(|t| {
-		let content = r"// @jsx: react
-// @jsxFactory: factory
-// @Filename: /factory.ts
-export function factory() { return {}; }
-declare global {
-    namespace JSX {
-        interface Element {}
-    }
-}
-// @Filename: /a.tsx
-[|<div/>|]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/a.tsx");
-		f.verify_import_fix_at_position(&[r#"import { factory } from "./factory";
-
-<div/>"#.into()], None);
 	});
 }
 

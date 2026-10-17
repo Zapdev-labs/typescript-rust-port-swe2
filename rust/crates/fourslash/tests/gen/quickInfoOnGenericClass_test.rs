@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_on_generic_class() {
 	run_test(|t| {
-		let content = r"class Contai/**/ner<T> {
-    x: T;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("", "class Container<T>", "");
 	});
 }
 

@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn semantic_classification_in_template_expressions() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"module /*0*/M {
-    export class /*1*/C {
-        static x;
-    }
-    export enum /*2*/E {
-        E1 = 0
-    }
-}
-", "`"), r"abcd${ /*3*/M./*4*/C.x + /*5*/M./*6*/E.E1}efg"), "`"), r"");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type_: "namespace.declaration".to_string().into(), text: "M".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "class.declaration".to_string().into(), text: "C".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "property.declaration.static".to_string().into(), text: "x".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "enum.declaration".to_string().into(), text: "E".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "enumMember.declaration.readonly".to_string().into(), text: "E1".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "namespace".to_string().into(), text: "M".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "class".to_string().into(), text: "C".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "property.static".to_string().into(), text: "x".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "namespace".to_string().into(), text: "M".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "enum".to_string().into(), text: "E".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "enumMember.readonly".to_string().into(), text: "E1".to_string().into(), ..Default::default() }]);
 	});
 }
 

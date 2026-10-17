@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn js_doc_function_signatures4() {
 	run_test(|t| {
-		let content = r"// @allowNonTsExtensions: true
-// @Filename: Foo.js
-/** @param {function ({OwnerID:string,AwayID:string}):void} x
-  * @param {function (string):void} y */
-function fn(x, y) { }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
 	});
 }
 

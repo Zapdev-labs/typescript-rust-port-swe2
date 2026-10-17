@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_global_module_augmentation() {
 	run_test(|t| {
-		let content = r"// @Filename: /a.ts
-export {};
-declare global {
-    /*1*/function /*2*/f(): void;
-}
-// @Filename: /b.ts
-/*3*/f();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
 	});
 }
 

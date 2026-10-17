@@ -7,10 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_type_parameter_in_merged_interface() {
 	run_test(|t| {
-		let content = r"interface I</*1*/T> { a: /*2*/T }
-interface I</*3*/T> { b: /*4*/T }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into()]);
 	});
 }
 

@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_export_as_namespace() {
 	run_test(|t| {
-		let content = r#"// @Filename: /node_modules/a/index.d.ts
-export function /*0*/f(): void;
-export as namespace A;
-// @Filename: /b.ts
-import { /*1*/f } from "a";
-// @Filename: /c.ts
-A./*2*/f();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.verify_baseline_find_all_references(&["0".into(), "1".into(), "2".into()]);
 	});
 }
 

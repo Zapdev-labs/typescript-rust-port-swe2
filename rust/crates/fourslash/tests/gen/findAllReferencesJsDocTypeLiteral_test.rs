@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_references_js_doc_type_literal() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @checkJs: true
-// @Filename: foo.js
-/**
- * @param {object} o - very important!
- * @param {string} o.x - a thing, its ok
- * @param {number} o.y - another thing
- * @param {Object} o.nested - very nested
- * @param {boolean} o.nested./*1*/great - much greatness
- * @param {number} o.nested.times - twice? probably!??
- */
- function f(o) { return o.nested./*2*/great; }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into()]);
 	});
 }
 

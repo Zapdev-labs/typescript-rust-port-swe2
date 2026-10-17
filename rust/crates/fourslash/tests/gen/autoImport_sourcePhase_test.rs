@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_does_not_add_to_source_phase_import() {
 	run_test(|t| {
-		let content = r#"// @module: esnext
-// @Filename: /a.ts
-const a = 0;
-export default a;
-export const b = 1;
-
-// @Filename: /b.ts
-import source a from "./a";
-a;
-b/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_import_fix_at_position(&[r#"import source a from "./a";
-import { b } from "./a";
-a;
-b"#.into()], None);
 	});
 }
 

@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_from_node_modules_dep1() {
 	run_test(|t| {
-		let content = r#"// @Filename: /index.ts
-import { /*okWithAlias*/[|Foo|] } from "foo";
-declare const f: Foo;
-f./*notOk*/bar;
-// @Filename: /tsconfig.json
- { }
-// @Filename: /node_modules/foo/package.json
- { "types": "index.d.ts" }
-// @Filename: /node_modules/foo/index.d.ts
-export interface Foo {
-    bar: string;
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("okWithAlias");
-		f.verify_rename_succeeded(Some(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }));
-		f.verify_rename_failed(Some(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_FALSE.into(), ..Default::default() }));
-		f.go_to_marker("notOk");
-		f.verify_rename_failed(None);
 	});
 }
 

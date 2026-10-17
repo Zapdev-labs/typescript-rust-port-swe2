@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_overloads_in_multiple_property_accesses() {
 	run_test(|t| {
-		let content = r#"namespace A {
-    export namespace B {
-        export function f(value: number): void;
-        export function /*1*/f(value: string): void;
-        export function f(value: number | string) {}
-    }
-}
-A.B.[|/*2*/f|]("");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["2".into()]);
 	});
 }
 

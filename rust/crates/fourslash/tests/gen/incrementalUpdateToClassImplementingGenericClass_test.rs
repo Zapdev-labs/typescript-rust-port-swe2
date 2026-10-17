@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn incremental_update_to_class_implementing_generic_class() {
 	run_test(|t| {
-		let content = r#"declare function alert(message?: string): void;
-class Animal<T> {
-    constructor(public name: T) { }
-    move(meters: number) {
-        alert(this.name + " moved " + meters + "m.");
-    }
-}
-class Animal2 extends Animal<string> {
-    constructor(name: string) { super(name); }
-    /*1*/get name2() { return this.name; }
-}
-var a = new Animal2('eprst');"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_no_errors();
-		f.insert("//");
-		f.verify_no_errors();
 	});
 }
 

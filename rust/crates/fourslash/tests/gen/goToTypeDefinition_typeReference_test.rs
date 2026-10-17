@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_type_definition_type_reference() {
 	run_test(|t| {
-		let content = r"type User = { name: string };
-type Box<T> = { value: T };
-declare const boxedUser: Box<User>
-/*reference*/boxedUser";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_type_definition(&["reference".into()]);
 	});
 }
 

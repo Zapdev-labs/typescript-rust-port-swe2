@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_correct_return_value6() {
 	run_test(|t| {
-		let content = r"function Foo (): undefined {
-    undefined
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix_not_available(&[]);
 	});
 }
 

@@ -7,69 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_in_scope() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r#"namespace TestModule {
-    var localVariable = "";
-    export var exportedVariable = 0;
-
-    function localFunction() { }
-    export function exportedFunction() { }
-
-    class localClass { }
-    export class exportedClass { }
-
-    interface localInterface {}
-    export interface exportedInterface {}
-
-    namespace localModule {
-        export var x = 0;
-    }
-    export namespace exportedModule {
-        export var x = 0;
-    }
-
-    var v = /*valueReference*/ 0;
-    var t :/*typeReference*/;
-}
-
-// Add some new items to the module
-namespace TestModule {
-    var localVariable2 = "";
-    export var exportedVariable2 = 0;
-
-    function localFunction2() { }
-    export function exportedFunction2() { }
-
-    class localClass2 { }
-    export class exportedClass2 { }
-
-    interface localInterface2 {}
-    export interface exportedInterface2 {}
-
-    namespace localModule2 {
-        export var x = 0;
-    }
-    export namespace exportedModule2 {
-        export var x = 0;
-    }
-}
-var globalVar: string = "";
-function globalFunction() { }
-
-class TestClass {
-    property: number;
-    method() { }
-    staticMethod() { }
-    testMethod(param: number) {
-        var localVar = 0;
-        function localFunction() {};
-        /*insideMethod*/
-    }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("valueReference"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["localVariable".into(), "exportedVariable".into(), "localFunction".into(), "exportedFunction".into(), "localClass".into(), "exportedClass".into(), "localModule".into(), "exportedModule".into(), "exportedVariable2".into(), "exportedFunction2".into(), "exportedClass2".into(), "exportedModule2".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("typeReference"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["localInterface".into(), "exportedInterface".into(), "localClass".into(), "exportedClass".into(), "exportedClass2".into()].into(), excludes: vec!["localModule".into(), "exportedModule".into(), "exportedModule2".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("insideMethod"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["globalVar".into(), "globalFunction".into(), "param".into(), "localVar".into(), "localFunction".into()].into(), excludes: vec!["property".into(), "testMethod".into(), "staticMethod".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

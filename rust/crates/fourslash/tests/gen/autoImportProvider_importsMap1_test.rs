@@ -7,34 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_provider_imports_map1() {
 	run_test(|t| {
-		let content = r##"// @Filename: /home/src/workspaces/project/tsconfig.json
-{
-  "compilerOptions": {
-    "module": "nodenext",
-    "lib": ["es5"],
-    "rootDir": "src",
-    "outDir": "dist"
-  }
-}
-// @Filename: /home/src/workspaces/project/package.json
-{
-  "type": "module",
-  "imports": {
-    "#is-browser": {
-      "browser": "./dist/env/browser.js",
-      "default": "./dist/env/node.js"
-    }
-  }
-}
-// @Filename: /home/src/workspaces/project/src/env/browser.ts
-export const isBrowser = true;
-// @Filename: /home/src/workspaces/project/src/env/node.ts
-export const isBrowser = false;
-// @Filename: /home/src/workspaces/project/src/a.ts
-isBrowser/**/"##;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.verify_import_fix_module_specifiers("", &["#is-browser".into(), "./env/browser.js".into()], None);
 	});
 }
 

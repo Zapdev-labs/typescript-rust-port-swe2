@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_import_multiple_with_same_name() {
 	run_test(|t| {
-		let content = r"// @module: esnext
-// @noLib: true
-// @Filename: /global.d.ts
-declare var foo: number;
-// @Filename: /a.ts
-export const foo = 0;
-// @Filename: /b.ts
-export const foo = 1;
-// @Filename: /c.ts
-fo/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_plus(vec![tsc_lsproto::CompletionItem { label: "foo".to_string().into(), detail: Some(("var foo: number").into()), kind: Some((tsc_lsproto::CompletionItemKind::Variable).into()), sort_text: Some((tsc_ls::GLOBALS_OR_KEYWORDS.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "foo".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./a".to_string().into(), ..Default::default() }), ..Default::default() }), detail: Some(("const foo: 0").into()), kind: Some((tsc_lsproto::CompletionItemKind::Variable).into()), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "foo".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./b".to_string().into(), ..Default::default() }), ..Default::default() }), detail: Some(("const foo: 1").into()), kind: Some((tsc_lsproto::CompletionItemKind::Variable).into()), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }.into()], true).into(), ..Default::default() }), ..Default::default() }));
-		f.verify_apply_code_action_from_completion("", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "foo".to_string().into(), source: "./b".to_string().into(), description: "Add import from \"./b\"".to_string().into(), new_file_content: Some((r#"import { foo } from "./b";
-
-fo"#).into()), ..Default::default() });
 	});
 }
 

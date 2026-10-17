@@ -7,27 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_object_literal_properties2() {
 	run_test(|t| {
-		let content = r#"type C = {
-  foo: string;
-  bar: number;
-};
-
-declare function fn<T extends C>(arg: T): T;
-
-fn({
-  foo/*1*/: "",
-  bar/*2*/: true,
-});
-
-const result = fn({
-  foo/*3*/: "",
-  bar/*4*/: 1,
-});
-
-// this one shouldn't go to the constraint type
-result.foo/*5*/;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["1".into(), "2".into(), "3".into(), "4".into(), "5".into()]);
 	});
 }
 

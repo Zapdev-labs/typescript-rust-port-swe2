@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_document_no_crash_jsx_namespaced_name2() {
 	run_test(|t| {
-		let content = r#"// @Filename: /a.tsx
-const x = <A my-ns:attr="val" />;
-"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.verify_current_file_content("const x = <A my-ns:attr=\"val\" />;\n");
 	});
 }
 

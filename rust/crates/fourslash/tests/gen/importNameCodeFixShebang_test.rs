@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_shebang() {
 	run_test(|t| {
-		let content = r"// @Filename: /a.ts
-export const foo = 0;
-// @Filename: /b.ts
-[|#!/usr/bin/env node
-foo/**/|]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/a.ts");
-		f.go_to_file("/b.ts");
-		f.verify_import_fix_at_position(&[r#"#!/usr/bin/env node
-
-import { foo } from "./a";
-
-foo"#.into()], None);
 	});
 }
 

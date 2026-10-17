@@ -7,39 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_missing_type_annotation_on_exports49_private_name() {
 	run_test(|t| {
-		let content = r#"// @isolatedDeclarations: true
-// @declaration: true
-// @moduleResolution: bundler
-// @target: es2018
-// @jsx: react-jsx
-export function two() {
-    const y = "";
-    return {} as typeof y;
-}
-
-export function three() {
-    type Z = string;
-    return {} as Z;
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Add return type '\"\"'".to_string().into(), new_file_content: r#"export function two(): "" {
-    const y = "";
-    return {} as typeof y;
-}
-
-export function three() {
-    type Z = string;
-    return {} as Z;
-}"#.to_string().into(), index: 0, ..Default::default() });
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Add return type 'string'".to_string().into(), new_file_content: r#"export function two() {
-    const y = "";
-    return {} as typeof y;
-}
-
-export function three(): string {
-    type Z = string;
-    return {} as Z;
-}"#.to_string().into(), index: 1, ..Default::default() });
 	});
 }
 

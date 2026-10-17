@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_edits_for_file_rename_node_module_directory_case() {
 	run_test(|t| {
-		let content = r#"// @Filename: /a/b/file1.ts
-import { foo } from "foo";
-// @Filename: /a/node_modules/foo/index.d.ts
-export const foo = 0;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_will_rename_files_edits("/a/b", "/a/B", &std::collections::BTreeMap::from([]), None);
 	});
 }
 

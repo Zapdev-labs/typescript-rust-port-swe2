@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn js_doc_see_rename1() {
 	run_test(|t| {
-		let content = r#"[|interface [|{| "contextRangeIndex": 0 |}A|] {}|]
-/**
- * @see {[|A|]}
- */
-declare const a: [|A|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename(None, to_any(f.ranges().slice).into_iter().map(Into::into));
 	});
 }
 

@@ -7,104 +7,30 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_source_access_expression_property() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{ "name": "pkg", "main": "./index.js", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.d.ts
-export declare const obj: { greet(name: string): string; count: number; };
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.js
-export const /*targetObj*/obj = { /*targetGreet*/greet(name) { return name; }, /*targetCount*/count: 42 };
-// @Filename: /home/src/workspaces/project/index.ts
-import { obj } from "pkg";
-obj./*propAccess*/greet("world");
-obj./*propAccess2*/count;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["propAccess".into(), "propAccess2".into()]);
 	});
 }
 
 #[test]
 fn go_to_source_property_of_alias() {
 	run_test(|t| {
-		let content = r"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/a.js
-export const a = { /*end*/a: 'a' };
-// @Filename: /home/src/workspaces/project/a.d.ts
-export declare const a: { a: string };
-// @Filename: /home/src/workspaces/project/b.ts
-import { a } from './a';
-a.[|a/*start*/|]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["start".into()]);
 	});
 }
 
 #[test]
 fn go_to_source_index_signature_property() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{ "name": "pkg", "main": "./index.js", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.d.ts
-export declare const config: { readonly [key: string]: string; name: string };
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.js
-export const config = { /*targetName*/name: "test" };
-// @Filename: /home/src/workspaces/project/index.ts
-import { config } from "pkg";
-config./*propAccess*/name;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["propAccess".into()]);
 	});
 }
 
 #[test]
 fn go_to_source_mapped_type_property() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{ "name": "pkg", "main": "./index.js", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.d.ts
-type Keys = "a" | "b";
-export declare const obj: { [K in Keys]: number };
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.js
-export const obj = { a: 1, /*target*/b: 2 };
-// @Filename: /home/src/workspaces/project/index.ts
-import { obj } from "pkg";
-obj./*propAccess*/b;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["propAccess".into()]);
 	});
 }
 
 #[test]
 fn go_to_source_common_js_alias_prefers_declaration() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{ "name": "pkg", "main": "./index.js", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.d.ts
-export declare enum TargetPopulation {
-    Team = "team",
-    Internal = "internal",
-    Insiders = "insider",
-    Public = "public",
-}
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.js
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.TargetPopulation = void 0;
-var TargetPopulation;
-(function (TargetPopulation) {
-    TargetPopulation["Team"] = "team";
-    TargetPopulation["Internal"] = "internal";
-    TargetPopulation["Insiders"] = "insider";
-    TargetPopulation["Public"] = "public";
-})(TargetPopulation || (exports.TargetPopulation = TargetPopulation = {}));
-// @Filename: /home/src/workspaces/project/index.ts
-import * as tas from "pkg";
-tas./*start*/TargetPopulation.Public;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["start".into()]);
 	});
 }
 

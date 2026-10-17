@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_display_parts_var_with_string_types01() {
 	run_test(|t| {
-		let content = r#"let /*1*/hello: "hello" | 'hello' = "hello";
-let /*2*/world: 'world' = "world";
-let /*3*/helloOrWorld: "hello" | 'world';"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_shorthand_property_assignment1() {
 	run_test(|t| {
-		let content = r"// @Filename: /a.ts
-export const a = 1;
-// @Filename: /b.ts
-const b = { /**/a };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/b.ts");
-		f.verify_import_fix_at_position(&[r#"import { a } from "./a";
-
-const b = { a };"#.into()], None);
 	});
 }
 

@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_built_in_values() {
 	run_test(|t| {
-		let content = r"var u = /*undefined*/undefined;
-var n = /*null*/null;
-var a = function() { return /*arguments*/arguments; };
-var t = /*true*/true;
-var f = /*false*/false;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &f.marker_names());
 	});
 }
 

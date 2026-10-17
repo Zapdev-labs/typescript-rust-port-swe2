@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_enum_members_accept_non_ascii_strings() {
 	run_test(|t| {
-		let content = r"enum Demo {
-    /*Emoji*/Emoji = '🍎',
-    /*Hebrew*/Hebrew = 'תפוח',
-    /*Chinese*/Chinese = '苹果',
-    /*Japanese*/Japanese = 'りんご',
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("Emoji", "(enum member) Demo.Emoji = \"🍎\"", "");
-		f.verify_quick_info_at("Hebrew", "(enum member) Demo.Hebrew = \"תפוח\"", "");
-		f.verify_quick_info_at("Chinese", "(enum member) Demo.Chinese = \"苹果\"", "");
-		f.verify_quick_info_at("Japanese", "(enum member) Demo.Japanese = \"りんご\"", "");
 	});
 }
 

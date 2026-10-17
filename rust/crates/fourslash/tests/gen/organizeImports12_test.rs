@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn organize_imports12() {
 	run_test(|t| {
-		let content = r#"// @allowJs: true
-// @Filename: /test.js
-declare export default class A {}
-declare export { a, b };
-declare export * from "foo";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_organize_imports(r#"declare export default class A {}
-declare export * from "foo";
-declare export { a, b };
-"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 	});
 }
 

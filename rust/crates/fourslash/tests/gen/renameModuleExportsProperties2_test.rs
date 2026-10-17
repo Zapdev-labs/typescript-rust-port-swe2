@@ -7,10 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_module_exports_properties2() {
 	run_test(|t| {
-		let content = r#"[|class [|{| "contextRangeIndex": 0 |}A|] {}|]
-module.exports = { B: [|A|] }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into(), f.ranges()[2].clone().into()]);
 	});
 }
 

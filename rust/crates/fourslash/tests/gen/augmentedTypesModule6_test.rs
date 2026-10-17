@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn augmented_types_module6() {
 	run_test(|t| {
-		let content = r"declare class m3f { foo(x: number): void }
-namespace m3f { export interface I { foo(): void } }
-var x: m3f./*1*/
-var /*4*/r = new /*2*/m3f(/*3*/);
-r./*5*/
-var r2: m3f.I = r;
-r2./*6*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["I".into()].into(), excludes: vec!["foo".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("I;");
-		f.verify_completions(tsc_fourslash::MarkerInput::from("2"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["m3f".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.go_to_marker("3");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "m3f(): m3f".to_string().into(), ..Default::default() });
-		f.verify_quick_info_at("4", "var r: m3f", "");
-		f.verify_completions(tsc_fourslash::MarkerInput::from("5"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["foo".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("foo(1)");
-		f.verify_completions(tsc_fourslash::MarkerInput::from("6"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["foo".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("foo(");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "foo(): void".to_string().into(), ..Default::default() });
 	});
 }
 

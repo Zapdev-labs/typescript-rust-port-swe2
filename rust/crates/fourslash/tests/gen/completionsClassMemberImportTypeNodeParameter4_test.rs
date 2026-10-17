@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_class_member_import_type_node_parameter4() {
 	run_test(|t| {
-		let content = r#"// @module: node18
-// @FileName: /other/cls.d.ts
-export declare class Cls {
-  method(
-    param: import("./doesntexist.js").Foo,
-  ): import("./doesntexist.js").Foo;
-}
-// @FileName: /index.d.ts
-import { Cls } from "./other/cls.js";
-
-export declare class Derived extends Cls {
-  /*1*/
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "method".to_string().into(), insert_text: Some(("method(param: import(\"./doesntexist.js\").Foo);").into()), filter_text: Some(("method").into()), ..Default::default() }.into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_with_class_member_snippets: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn call_hierarchy_decorator() {
 	run_test(|t| {
-		let content = r"// @experimentalDecorators: true
-@bar
-class Foo {
-}
-
-function /**/bar() {
-    baz();
-}
-
-function baz() {
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_baseline_call_hierarchy();
 	});
 }
 

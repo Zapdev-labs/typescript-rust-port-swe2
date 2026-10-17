@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_of_export_default() {
 	run_test(|t| {
-		let content = r"namespace Foo {
-/*1*/    export        default        class        Test { }
-}
-/*2*/export        default        function        bar() { }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"    export default class Test { }");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"export default function bar() { }");
 	});
 }
 

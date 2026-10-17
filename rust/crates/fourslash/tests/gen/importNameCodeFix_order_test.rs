@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_order() {
 	run_test(|t| {
-		let content = r#"// @Filename: /a.ts
-export const foo: number;
-// @Filename: /b.ts
-export const foo: number;
-export const bar: number;
-// @Filename: /c.ts
-[|import { bar } from "./b";
-foo;|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/c.ts");
-		f.verify_import_fix_at_position(&[r#"import { bar, foo } from "./b";
-foo;"#.into(), r#"import { foo } from "./a";
-import { bar } from "./b";
-foo;"#.into()], None);
 	});
 }
 

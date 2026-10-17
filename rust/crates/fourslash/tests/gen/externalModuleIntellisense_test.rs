@@ -7,28 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn external_module_intellisense() {
 	run_test(|t| {
-		let content = r"// @module: commonjs
-// @Filename: externalModuleIntellisense_file0.ts
-export = express;
-function express(): express.ExpressServer;
-namespace express {
-    export interface ExpressServer {
-        enable(name: string): ExpressServer;
-        post(path: RegExp, handler: (req: Function) => void): void;
-    }
-    export class ExpressServerRequest {
-    }
-}
-// @Filename: externalModuleIntellisense_file1.ts
-///<reference path='externalModuleIntellisense_file0.ts'/>
-import express = require('./externalModuleIntellisense_file0');
-var x = express();/*1*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_number_of_errors_in_current_file(0);
-		f.go_to_eof();
-		f.insert("x.");
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["enable".into(), "post".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

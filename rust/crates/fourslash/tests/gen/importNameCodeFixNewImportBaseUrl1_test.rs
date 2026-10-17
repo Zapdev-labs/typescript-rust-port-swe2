@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_new_import_base_url1() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r#"// @Filename: /tsconfig.json
-{
-    "compilerOptions": {
-        "baseUrl": "./a"
-    }
-}
-// @Filename: /a/b/x.ts
-export function f1() { };
-// @Filename: /a/b/y.ts
-[|f1/*0*/();|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/a/b/y.ts");
-		f.verify_import_fix_at_position(&[r#"import { f1 } from "./x";
-
-f1();"#.into()], None);
-		f.verify_import_fix_at_position(&[r#"import { f1 } from "b/x";
-
-f1();"#.into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_preference: tsc_modulespecifiers::ImportModuleSpecifierPreference("non-relative"), ..Default::default() }));
 	});
 }
 

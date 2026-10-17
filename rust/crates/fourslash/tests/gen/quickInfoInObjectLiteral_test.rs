@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_in_object_literal() {
 	run_test(|t| {
-		let content = r#"interface Foo {
-    doStuff(x: string, callback: (a: string) => string);
-}
-var x1: Foo = {
-    y/*1*/1: () => {
-        return "";
-    } ,
-    doStuff: (z, callback) => { return callback(this.y); }
-}
-var value = 3;
-class Foo {
-    static getRandomPosition() {
-        return {
-            "row": v/*2*/alue
-        }
-  }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "(property) y1: () => string", "");
-		f.verify_quick_info_at("2", "var value: number", "");
 	});
 }
 

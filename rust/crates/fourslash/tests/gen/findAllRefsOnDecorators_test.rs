@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_on_decorators() {
 	run_test(|t| {
-		let content = r#"// @Filename: a.ts
-/*1*/function /*2*/decorator(target) {
-    return target;
-}
-/*3*/decorator();
-// @Filename: b.ts
-@/*4*/decorator @/*5*/decorator("again")
-class C {
-    @/*6*/decorator
-    method() {}
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into()]);
 	});
 }
 

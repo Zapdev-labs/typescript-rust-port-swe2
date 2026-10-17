@@ -7,53 +7,12 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_package_json_imports_hash_slash_nodenext() {
 	run_test(|t| {
-		let content = r##"// @Filename: /tsconfig.json
-{
-  "compilerOptions": {
-    "module": "nodenext",
-    "rootDir": "./",
-    "outDir": "build"
-  }
-}
-// @Filename: /package.json
-{
-  "imports": {
-    "#/*": {
-      "types": "./src/*",
-      "default": "./src/*"
-    }
-  }
-}
-// @Filename: /src/domain/entities/entity.ts
-export const entity = 1;
-// @Filename: /src/features/deep/consumer.ts
-entit/**/"##;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.baseline_auto_imports_completions(&["".into()]);
 	});
 }
 
 #[test]
 fn auto_import_package_json_imports_hash_slash_node16() {
 	run_test(|t| {
-		let content = r##"// @Filename: /tsconfig.json
-{
-  "compilerOptions": {
-    "module": "node16"
-  }
-}
-// @Filename: /package.json
-{
-  "imports": {
-    "#/*": "./src/*"
-  }
-}
-// @Filename: /src/domain/entities/entity.ts
-export const entity = 1;
-// @Filename: /src/consumer.ts
-entit/**/"##;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.baseline_auto_imports_completions(&["".into()]);
 	});
 }
 

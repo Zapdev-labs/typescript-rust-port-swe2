@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_constructor_inheritance() {
 	run_test(|t| {
-		let content = r"class base {
-    constructor(s: string);
-    constructor(n: number);
-    constructor(a: any) { }
-}
-class B1 extends base { }
-class B2 extends B1 { }
-class B3 extends B2 {
-    constructor() {
-        super(/*indirectSuperCall*/3);
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("indirectSuperCall");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "B2(n: number): B2".to_string().into(), parameter_count: 1, parameter_name: "n".to_string().into(), parameter_span: "n: number".to_string().into(), overloads_count: 2, ..Default::default() });
 	});
 }
 

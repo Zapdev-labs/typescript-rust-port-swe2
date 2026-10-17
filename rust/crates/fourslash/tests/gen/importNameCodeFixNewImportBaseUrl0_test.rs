@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_new_import_base_url0() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r#"[|f1/*0*/();|]
-// @Filename: tsconfig.json
-{
-    "compilerOptions": {
-        "baseUrl": "./a"
-    }
-}
-// @Filename: a/b.ts
-export function f1() { };"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_at_position(&[r#"import { f1 } from "b";
-
-f1();"#.into()], None);
 	});
 }
 

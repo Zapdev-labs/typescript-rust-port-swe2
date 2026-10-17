@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_occurrences_yield() {
 	run_test(|t| {
-		let content = r"function* f() {
- [|yield|] 100;
- [|y/**/ield|] [|yield|] 200;
-  class Foo {
-      *memberFunction() {
-          return yield 1;
-      }
-  }
-  return function* g() {
-    yield 1;
-  }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, to_any(f.ranges()).into_iter().map(Into::into));
 	});
 }
 

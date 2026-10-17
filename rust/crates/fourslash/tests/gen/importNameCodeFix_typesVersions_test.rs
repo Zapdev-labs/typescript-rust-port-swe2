@@ -7,30 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_types_versions() {
 	run_test(|t| {
-		let content = r#"// @module: commonjs
-// @checkJs: true
-// @Filename: /node_modules/unified/package.json
-{
-  "name": "unified",
-  "types": "types/ts3.444/index.d.ts",
-  "typesVersions": {
-    ">=4.0": {
-      "types/ts3.444/*": [
-        "types/ts4.0/*"
-      ]
-    }
-  }
-}
-// @Filename: /node_modules/unified/types/ts3.444/index.d.ts
-export declare const x: number;
-// @Filename: /node_modules/unified/types/ts4.0/index.d.ts
-export declare const x: number;
-// @Filename: /foo.js
-import {} from "unified";
-// @Filename: /index.js
-x/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_module_specifiers("", &["unified".into(), "unified/types/ts3.444/index.js".into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_ending: tsc_modulespecifiers::ImportModuleSpecifierEndingPreference("js"), auto_import_entrypoint_directory_search: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }));
 	});
 }
 

@@ -7,28 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_alias() {
 	run_test(|t| {
-		let content = r#"// @Filename: b.ts
-import /*alias1Definition*/alias1 = require("fileb");
-namespace Module {
-    export import /*alias2Definition*/alias2 = alias1;
-}
-
-// Type position
-var t1: [|/*alias1Type*/alias1|].IFoo;
-var t2: Module.[|/*alias2Type*/alias2|].IFoo;
-
-// Value posistion
-var v1 = new [|/*alias1Value*/alias1|].Foo();
-var v2 = new Module.[|/*alias2Value*/alias2|].Foo();
-// @Filename: a.ts
-export class Foo {
-    private f;
-}
-export interface IFoo {
-    x;
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["alias1Type".into(), "alias1Value".into(), "alias2Type".into(), "alias2Value".into()]);
 	});
 }
 

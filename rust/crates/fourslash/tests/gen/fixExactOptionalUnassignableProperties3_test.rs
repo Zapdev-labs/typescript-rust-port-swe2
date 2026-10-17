@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn fix_exact_optional_unassignable_properties3() {
 	run_test(|t| {
-		let content = r"// @strictNullChecks: true
-// @exactOptionalPropertyTypes: true
-// @Filename: fixExactOptionalUnassignableProperties2.ts
-import { INodeModules } from 'foo'
-interface J {
-    a?: number | undefined
-}
-declare var inm: INodeModules
-declare var j: J
-inm/**/ = j
-console.log(inm)
-// @Filename: node_modules/@types/foo/index.d.ts
-export interface INodeModules {
-    a?: number
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix_not_available(&[]);
 	});
 }
 

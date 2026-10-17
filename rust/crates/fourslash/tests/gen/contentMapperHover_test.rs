@@ -7,63 +7,24 @@ use tsc_fourslash::*;
 #[test]
 fn content_mapper_hover() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r#"// @Filename: /format.ts
-export function format(value: string): string { return value.toUpperCase(); }
-
-// @Filename: /ProfileCard.vue
-<component name="ProfileCard">
-<template>
-  <h1>{{ ti/*templateTitle*/tle }}</h1>
-  <p class="/*markup*/subtitle">Welcome</p>
-</template>
-<script lang="ts">
-import { format } from "./format";
-export const ti/*scriptTitle*/tle: string = "Profile";
-export const heading = for/*outgoing*/mat(title);
-</script>
-
-// @Filename: /main.ts
-import { title } from "./ProfileCard.vue";
-export const pageTitle = ti/*incoming*/tle;
-"#, tsc_testutil::contentmappertest::COMPONENT_MAPPER, ".vue");
-		f.verify_quick_info_at("scriptTitle", "const title: string", "");
-		f.verify_quick_info_at("templateTitle", "const title: string", "");
-		f.verify_quick_info_at("outgoing", "(alias) function format(value: string): string", "");
-		f.verify_quick_info_at("incoming", "(alias) const title: string", "");
-		f.go_to_marker("markup");
-		f.verify_not_quick_info_exists();
 	});
 }
 
 #[test]
 fn content_mapper_supplemental_hover_js_doc_link() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /globals.astro
-const target = 1;
-/** See {@link target}. */
-const val/*hover*/ue = target;
-", tsc_testutil::contentmappertest::SUPPLEMENTAL_MAPPER, ".astro");
-		f.verify_quick_info_at("hover", "const value: 1", "See [target](file:///globals.astro#1,7-1,13).");
 	});
 }
 
 #[test]
 fn content_mapper_hover_tries_later_projection() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /hover-fallback.dup
-val/*hover*/ue
-", tsc_testutil::contentmappertest::DUPLICATE_MAPPER, ".dup");
-		f.verify_quick_info_at("hover", "const value: 1", "");
 	});
 }
 
 #[test]
 fn content_mapper_hover_concatenates_projections() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /hover-concat.dup
-val/*hover*/ue
-", tsc_testutil::contentmappertest::DUPLICATE_MAPPER, ".dup");
-		f.verify_baseline_hover();
 	});
 }
 

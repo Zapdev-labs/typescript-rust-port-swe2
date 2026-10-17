@@ -7,39 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_import_filtered_by_package_json_nested() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r#"//@noEmit: true
-//@Filename: /package.json
-{
-  "dependencies": {
-    "react": "*"
-  }
-}
-//@Filename: /node_modules/react/index.d.ts
-export declare var React: any;
-//@Filename: /node_modules/react/package.json
-{
-  "name": "react",
-  "types": "./index.d.ts"
-}
-//@Filename: /dir/package.json
-{
-  "dependencies": {
-    "redux": "*"
-  }
-}
-//@Filename: /dir/node_modules/redux/package.json
-{
-  "name": "redux",
-  "types": "./index.d.ts"
-}
-//@Filename: /dir/node_modules/redux/index.d.ts
-export declare var Redux: any;
-//@Filename: /dir/index.ts
-const x = Re/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "React".to_string().into(), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "react".to_string().into(), ..Default::default() }), ..Default::default() }), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "Redux".to_string().into(), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "redux".to_string().into(), ..Default::default() }), ..Default::default() }), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

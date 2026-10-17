@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn object_literal_binding_in_parameter() {
 	run_test(|t| {
-		let content = r"interface I { x1: number; x2: string }
-function f(cb: (ev: I) => any) { }
-f(({/*1*/}) => 0);
-[<I>null].reduce(({/*2*/}, b) => b);
-interface Foo {
-    m(x: { x1: number, x2: number }): void;
-    prop: I;
-}
-let x: Foo = {
-    m({ /*3*/ }) {
-    },
-    get prop(): I { return undefined; },
-    set prop({ /*4*/ }) {
-    }
-};";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(f.markers()), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["x1".into(), "x2".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn javascript_modules20() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r#"// @allowJs: true
-// @Filename: mod.js
-function foo() { return {a: true}; }
-module.exports = foo();
-// @Filename: app.js
-import * as mod from "./mod"
-mod./**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "a".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Field).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "mod".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Text).into()), sort_text: Some((tsc_ls::JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -7,30 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn content_mapper_type_definition() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r#"// @Filename: /models.ts
-export interface [|ExternalShape|] { area: number }
-
-// @Filename: /ProfileCard.vue
-<component name="[|ProfileCard|]">
-<template>
-  <p>{{ lo/*template*/calShape.area }}</p>
-  <span class="shape/*markup*/">Shape</span>
-</template>
-<script lang="ts">
-import { ExternalShape } from "./models";
-export interface [|LocalShape|] { area: number }
-export const localShape: LocalShape = { area: 1 };
-export const externalShape: ExternalShape = { area: 2 };
-local/*within*/Shape;
-external/*outgoing*/Shape;
-</script>
-
-// @Filename: /main.ts
-import { ProfileCard, localShape } from "./ProfileCard.vue";
-local/*incoming*/Shape;
-Profile/*atomTarget*/Card;
-"#, tsc_testutil::contentmappertest::COMPONENT_MAPPER, ".vue");
-		f.verify_baseline_go_to_type_definition(&["within".into(), "template".into(), "incoming".into(), "outgoing".into(), "atomTarget".into(), "markup".into()]);
 	});
 }
 

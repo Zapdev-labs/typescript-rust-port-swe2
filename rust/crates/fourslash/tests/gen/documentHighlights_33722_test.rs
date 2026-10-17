@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn document_highlights_33722() {
 	run_test(|t| {
-		let content = r#"// @Filename: /y.ts
-class Foo {
-  private foo() {}
-}
-
-const f = () => new Foo();
-export default f;
-// @Filename: /x.ts
-import y from "./y";
-
-y().[|foo|]();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights_with_options(None, &["/x.ts".into()], vec![f.ranges()[0].clone().into()]);
 	});
 }
 

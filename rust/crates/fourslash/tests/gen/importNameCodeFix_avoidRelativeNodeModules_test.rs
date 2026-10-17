@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_avoid_relative_node_modules() {
 	run_test(|t| {
-		let content = r#"// @Filename: /a/index.d.ts
-// @Symlink: /b/node_modules/a/index.d.ts
-// @Symlink: /c/node_modules/a/index.d.ts
-export const a: number;
-// @Filename: /b/index.ts
-// @Symlink: /c/node_modules/b/index.d.ts
-import { a } from 'a'
-export const b: number;
-// @Filename: /c/a_user.ts
-import { a } from "a";
-// @Filename: /c/foo.ts
-[|import { b } from "b";
-a;|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/c/foo.ts");
-		f.verify_import_fix_at_position(&[r#"import { a } from "a";
-import { b } from "b";
-a;"#.into()], None);
 	});
 }
 

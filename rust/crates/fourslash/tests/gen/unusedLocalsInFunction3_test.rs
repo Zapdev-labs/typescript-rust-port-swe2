@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn unused_locals_in_function3() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"// @noUnusedLocals: true
-function greeter() {
-   [| var x, y = 0,z = 1; |]
-    x+1;
-    z+1;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_range_after_code_fix(r"var x,z = 1;", false, 6133, 0);
 	});
 }
 

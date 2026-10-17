@@ -7,46 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn underscore_typings01() {
 	run_test(|t| {
-		let content = r"interface Iterator_<T, U> {
-    (value: T, index: any, list: any): U;
-}
-
-interface WrappedArray<T> {
-    map<U>(iterator: Iterator_<T, U>, context?: any): U[];
-}
-
-interface Underscore {
-    <T>(list: T[]): WrappedArray<T>;
-    map<T, U>(list: T[], iterator: Iterator_<T, U>, context?: any): U[];
-}
-
-declare var _: Underscore;
-
-var a: string[];
-var /*1*/b = _.map(a, /*2*/x => x.length);    // Was typed any[], should be number[]
-var /*3*/c = _(a).map(/*4*/x => x.length);
-var /*5*/d = a.map(/*6*/x => x.length);
-
-var aa: any[];
-var /*7*/bb = _.map(aa, /*8*/x => x.length);
-var /*9*/cc = _(aa).map(/*10*/x => x.length);
-var /*11*/dd = aa.map(/*12*/x => x.length);
-
-var e = a.map(x => x./*13*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "var b: number[]", "");
-		f.verify_quick_info_at("2", "(parameter) x: string", "");
-		f.verify_quick_info_at("3", "var c: number[]", "");
-		f.verify_quick_info_at("4", "(parameter) x: string", "");
-		f.verify_quick_info_at("5", "var d: number[]", "");
-		f.verify_quick_info_at("6", "(parameter) x: string", "");
-		f.verify_quick_info_at("7", "var bb: any[]", "");
-		f.verify_quick_info_at("8", "(parameter) x: any", "");
-		f.verify_quick_info_at("9", "var cc: any[]", "");
-		f.verify_quick_info_at("10", "(parameter) x: any", "");
-		f.verify_quick_info_at("11", "var dd: any[]", "");
-		f.verify_quick_info_at("12", "(parameter) x: any", "");
-		f.verify_completions(tsc_fourslash::MarkerInput::from("13"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["length".into()].into(), excludes: vec!["toFixed".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

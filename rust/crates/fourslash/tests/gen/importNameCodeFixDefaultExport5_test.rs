@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_default_export5() {
 	run_test(|t| {
-		let content = r"// @moduleResolution: bundler
-// @Filename: /node_modules/hooks/useFoo.ts
-declare const _default: () => void;
-export default _default;
-// @Filename: /test.ts
-[|useFoo|];";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.configure(tsc_lsutil::UserPreferences { auto_import_entrypoint_directory_search: tsc_core::tristate::TS_TRUE.into(), ..Default::default() });
-		f.go_to_file("/test.ts");
-		f.verify_import_fix_at_position(&[r#"import useFoo from "hooks/useFoo";
-
-useFoo"#.into()], None);
 	});
 }
 

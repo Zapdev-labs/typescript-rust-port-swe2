@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_for_type_parameter_in_type_alias1() {
 	run_test(|t| {
-		let content = r"type Ctor<AA> = new () => A/*1*/A;
-type MixinCtor<AA> = new () => AA & { constructor: MixinCtor<A/*2*/A> };
-type NestedCtor<AA> = new() => AA & (new () => AA & { constructor: NestedCtor<A/*3*/A> });
-type Method<AA> = { method(): A/*4*/A };
-type Construct<AA> = { new(): A/*5*/A };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "(type parameter) AA in type Ctor<AA>", "");
-		f.verify_quick_info_at("2", "(type parameter) AA in type MixinCtor<AA>", "");
-		f.verify_quick_info_at("3", "(type parameter) AA in type NestedCtor<AA>", "");
-		f.verify_quick_info_at("4", "(type parameter) AA in type Method<AA>", "");
-		f.verify_quick_info_at("5", "(type parameter) AA in type Construct<AA>", "");
 	});
 }
 

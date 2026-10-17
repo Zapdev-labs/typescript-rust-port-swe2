@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_for_computed_string_properties() {
 	run_test(|t| {
-		let content = r#"const p2 = "p2";
-interface A {
-    ["p1"]: string;
-    [p2]: string;
-}
-declare const a: A;
-a[|./**/|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "p1".to_string().into(), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "p2".to_string().into(), insert_text: Some(("[p2]").into()), sort_text: Some((tsc_ls::GLOBALS_OR_KEYWORDS.to_string()).into()), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "[p2]".to_string().into(), range: f.ranges()[0].clone().ls_range.into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

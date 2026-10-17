@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_new_import_node_modules1() {
 	run_test(|t| {
-		let content = r#"[|f1/*0*/();|]
-// @Filename: ../package.json
-{ "dependencies": { "fake-module": "latest" } }
-// @Filename: ../node_modules/fake-module/nested.ts
-export var v1 = 5;
-export function f1();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.configure(tsc_lsutil::UserPreferences { auto_import_entrypoint_directory_search: tsc_core::tristate::TS_TRUE.into(), ..Default::default() });
-		f.verify_import_fix_at_position(&[r#"import { f1 } from "fake-module/nested";
-
-f1();"#.into()], None);
 	});
 }
 

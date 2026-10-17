@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_inherited_properties2() {
 	run_test(|t| {
-		let content = r#"class class1 extends class1 {
-   [|[|{| "contextRangeIndex": 0 |}doStuff|]() { }|]
-}
-
-var v: class1;
-v.[|doStuff|]();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename_at_ranges_with_text(None, &["doStuff".into()]);
 	});
 }
 

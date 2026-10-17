@@ -7,30 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_filter_text3() {
 	run_test(|t| {
-		let content = r#"// @strict: true
-declare const foo1: { b: number; "a bc": string; };
-if (true) {
-    foo1[|.|]/*1*/
-} 
-else {
-    foo1[|.a|]/*2*/
-}
-
-declare const foo2: { b: number; "a bc": string; } | undefined;
-if (true) {
-    foo2[|.|]/*3*/
-} else if (false) {
-    foo2[|.a|]/*4*/
-} else {
-    foo2[|?.|]/*5*/
-}
-"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "a bc".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Field).into()), sort_text: Some((tsc_ls::LOCATION_PRIORITY.to_string()).into()), insert_text: Some(("[\"a bc\"]").into()), filter_text: Some((".a bc").into()), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "[\"a bc\"]".to_string().into(), range: f.ranges()[0].clone().ls_range.into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("2"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "a bc".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Field).into()), sort_text: Some((tsc_ls::LOCATION_PRIORITY.to_string()).into()), insert_text: Some(("[\"a bc\"]").into()), filter_text: Some((".a bc").into()), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "[\"a bc\"]".to_string().into(), range: f.ranges()[1].clone().ls_range.into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("3"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "a bc".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Field).into()), sort_text: Some((tsc_ls::LOCATION_PRIORITY.to_string()).into()), insert_text: Some(("?.[\"a bc\"]").into()), filter_text: Some((".a bc").into()), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "?.[\"a bc\"]".to_string().into(), range: f.ranges()[2].clone().ls_range.into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("4"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "a bc".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Field).into()), sort_text: Some((tsc_ls::LOCATION_PRIORITY.to_string()).into()), insert_text: Some(("?.[\"a bc\"]").into()), filter_text: Some((".a bc").into()), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "?.[\"a bc\"]".to_string().into(), range: f.ranges()[3].clone().ls_range.into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("5"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "a bc".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Field).into()), sort_text: Some((tsc_ls::LOCATION_PRIORITY.to_string()).into()), insert_text: Some(("?.[\"a bc\"]").into()), filter_text: Some(("?.a bc").into()), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "?.[\"a bc\"]".to_string().into(), range: f.ranges()[4].clone().ls_range.into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

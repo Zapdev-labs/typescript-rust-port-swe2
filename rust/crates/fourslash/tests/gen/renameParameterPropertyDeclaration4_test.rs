@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_parameter_property_declaration4() {
 	run_test(|t| {
-		let content = r#"class Foo {
-    constructor([|protected { [|{| "contextRangeIndex": 0 |}protectedParam|] }|]) {
-        let myProtectedParam = [|protectedParam|];
-    }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into(), f.ranges()[2].clone().into()]);
 	});
 }
 

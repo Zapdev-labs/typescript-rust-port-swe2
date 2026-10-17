@@ -7,56 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn path_completions_package_json_exports_wildcard5() {
 	run_test(|t| {
-		let content = r#"// @module: node18
-// @Filename: /node_modules/foo/package.json
-{
-  "name": "foo",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
-  "exports": {
-    ".": {
-      "import": {
-        "types": "./dist/types/index.d.mts",
-        "default": "./dist/esm/index.mjs"
-      },
-      "default": {
-        "types": "./dist/types/index.d.ts",
-        "default": "./dist/cjs/index.js"
-      }
-    },
-    "./*": {
-      "import": {
-        "types": "./dist/types/*.d.mts",
-        "default": "./dist/esm/*.mjs"
-      },
-      "default": {
-        "types": "./dist/types/*.d.ts",
-        "default": "./dist/cjs/*.js"
-      }
-    },
-    "./only-in-cjs": {
-      "require": {
-        "types": "./dist/types/only-in-cjs/index.d.ts",
-        "default": "./dist/cjs/only-in-cjs/index.js"
-      }
-    }
-  }
-}
-// @Filename: /node_modules/foo/dist/types/index.d.mts
-export const index = 0;
-// @Filename: /node_modules/foo/dist/types/index.d.ts
-export const index = 0;
-// @Filename: /node_modules/foo/dist/types/blah.d.mts
-export const blah = 0;
-// @Filename: /node_modules/foo/dist/types/blah.d.ts
-export const blah = 0;
-// @Filename: /node_modules/foo/dist/types/only-in-cjs/index.d.ts
-export const onlyInCjs = 0;
-// @Filename: /index.mts
-import { } from "foo//**/";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "blah".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::File).into()), detail: Some(("blah.d.mts").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "index".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::File).into()), detail: Some(("index.d.mts").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

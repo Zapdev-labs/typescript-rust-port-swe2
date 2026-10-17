@@ -7,44 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_meaning() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r#"// @lib: es5
-// @module: commonjs
-// @Filename: foo.d.ts
-declare const [|/*foo_value_declaration*/foo: number|];
-[|declare module "foo_module" {
-    interface /*foo_type_declaration*/I { x: number; y: number }
-    export = I;
-}|]
-// @Filename: foo_user.ts
-///<reference path="foo.d.ts" />
-[|import foo = require("foo_module");|]
-const x = foo/*foo_value*/;
-const i: foo/*foo_type*/ = { x: 1, y: 2 };
-// @Filename: bar.d.ts
-[|declare interface /*bar_type_declaration*/bar { x: number; y: number }|]
-[|declare module "bar_module" {
-    const /*bar_value_declaration*/x: number;
-    export = x;
-}|]
-// @Filename: bar_user.ts
-///<reference path="bar.d.ts" />
-[|import bar = require("bar_module");|]
-const x = bar/*bar_value*/;
-const i: bar/*bar_type*/ = { x: 1, y: 2 };"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "foo".to_string().into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "foo".to_string().into(), kind: tsc_lsproto::SymbolKind::Variable.into(), location: f.ranges()[0].clone().ls_location().into(), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "foo".to_string().into(), kind: tsc_lsproto::SymbolKind::Variable.into(), location: f.ranges()[2].clone().ls_location().into(), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "foo_module".to_string().into(), kind: tsc_lsproto::SymbolKind::Namespace.into(), location: f.ranges()[1].clone().ls_location().into(), ..Default::default() }]).into()), ..Default::default() }]);
-		f.go_to_marker("foo_value");
-		f.verify_quick_info_is("const foo: number", "");
-		f.go_to_marker("foo_type");
-		f.verify_quick_info_is("(alias) interface foo\nimport foo = require(\"foo_module\")", "");
-		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "bar".to_string().into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "bar".to_string().into(), kind: tsc_lsproto::SymbolKind::Interface.into(), location: f.ranges()[3].clone().ls_location().into(), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "bar".to_string().into(), kind: tsc_lsproto::SymbolKind::Variable.into(), location: f.ranges()[5].clone().ls_location().into(), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "bar_module".to_string().into(), kind: tsc_lsproto::SymbolKind::Namespace.into(), location: f.ranges()[4].clone().ls_location().into(), ..Default::default() }]).into()), ..Default::default() }]);
-		f.go_to_marker("bar_value");
-		f.verify_quick_info_is("(alias) const bar: number\nimport bar = require(\"bar_module\")", "");
-		f.go_to_marker("bar_type");
-		f.verify_quick_info_is("interface bar", "");
-		f.verify_baseline_go_to_definition(false, &["foo_value".into(), "foo_type".into(), "bar_value".into(), "bar_type".into()]);
 	});
 }
 

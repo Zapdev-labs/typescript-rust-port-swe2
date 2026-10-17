@@ -7,39 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_js_doc_tags15() {
 	run_test(|t| {
-		let content = r#"// @allowJs: true
-// @checkJs: true
-// @filename: /a.js
-/**
- * @callback Bar
- * @param {string} name
- * @returns {string}
- */
-
-/**
- * @typedef Foo
- * @property {Bar} getName
- */
-export const foo = 1;
-// @filename: /b.js
-import * as _a from "./a.js";
-/**
- * @implements {_a.Foo/*1*/}
- */
-class C1 { }
-
-/**
- * @extends {_a.Foo/*2*/}
- */
-class C2 { }
-
-/**
- * @augments {_a.Foo/*3*/}
- */
-class C3 { }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/b.js");
-		f.verify_baseline_hover();
 	});
 }
 

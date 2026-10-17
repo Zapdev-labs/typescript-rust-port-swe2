@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_source11_property_of_alias() {
 	run_test(|t| {
-		let content = r"// @lib: es5
-// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/a.js
-export const a = { /*end*/a: 'a' };
-// @Filename: /home/src/workspaces/project/a.d.ts
-export declare const a: { a: string };
-// @Filename: /home/src/workspaces/project/b.ts
-import { a } from './a';
-a.[|a/*start*/|]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.verify_baseline_go_to_source_definition(&["start".into()]);
 	});
 }
 

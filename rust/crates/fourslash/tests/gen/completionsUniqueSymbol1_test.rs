@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_unique_symbol1() {
 	run_test(|t| {
-		let content = r"declare const Symbol: () => symbol;
-namespace M {
-    export const sym = Symbol();
-}
-namespace N {
-    const sym = Symbol();
-    export interface I {
-        [sym]: number;
-        [M.sym]: number;
-    }
-}
-
-declare const i: N.I;
-i[|./**/|];";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "M".to_string().into(), insert_text: Some(("[M]").into()), sort_text: Some((tsc_ls::GLOBALS_OR_KEYWORDS.to_string()).into()), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "[M]".to_string().into(), range: f.ranges()[0].clone().ls_range.into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

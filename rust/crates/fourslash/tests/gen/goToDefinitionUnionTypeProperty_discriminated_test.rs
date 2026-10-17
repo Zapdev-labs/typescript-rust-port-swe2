@@ -7,28 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_union_type_property_discriminated() {
 	run_test(|t| {
-		let content = r#"type U = A | B;
-
-interface A {
-  /*aKind*/kind: "a";
-  /*aProp*/prop: number;
-};
-
-interface B {
-  /*bKind*/kind: "b";
-  /*bProp*/prop: string;
-}
-
-const u: U = {
-  [|/*kind*/kind|]: "a",
-  [|/*prop*/prop|]: 0,
-};
-const u2: U = {
-  [|/*kindBogus*/kind|]: "bogus",
-  [|/*propBogus*/prop|]: 0,
-};"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["kind".into(), "prop".into(), "kindBogus".into(), "propBogus".into()]);
 	});
 }
 

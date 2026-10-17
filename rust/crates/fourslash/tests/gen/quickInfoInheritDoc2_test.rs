@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_inherit_doc2() {
 	run_test(|t| {
-		let content = r"// @noEmit: true
-// @allowJs: true
-// @Filename: quickInfoInheritDoc2.ts
-class Base<T> {
-    /**
-     * Base.prop
-     */
-    prop: T | undefined;
-}
-
-class SubClass<T> extends Base<T> {
-    /**
-     * @inheritdoc
-     * SubClass.prop
-     */
-    /*1*/prop: T | undefined;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

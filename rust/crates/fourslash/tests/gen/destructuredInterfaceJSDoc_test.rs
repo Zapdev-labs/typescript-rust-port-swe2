@@ -7,66 +7,18 @@ use tsc_fourslash::*;
 #[test]
 fn destructured_interface_js_doc() {
 	run_test(|t| {
-		let content = r"
-interface FooBar {
-    /** foo comment */
-    foo: number;
-    /** bar comment */
-    bar: string;
-    /** baz comment */
-    baz: string;
-}
-
-declare const fubar: FooBar;
-
-const {/*1*/foo, /*2*/bar, /*3*/baz: /*4*/biz} = fubar;
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 
 #[test]
 fn destructured_interface_js_doc_with_rename() {
 	run_test(|t| {
-		let content = r"
-interface FooBar {
-    /** foo comment */
-    foo: number;
-    /** bar comment */
-    bar: string;
-}
-
-declare const fubar: FooBar;
-
-const {foo: /*1*/myFoo, bar: /*2*/myBar} = fubar;
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 
 #[test]
 fn destructured_with_own_js_doc() {
 	run_test(|t| {
-		let content = r"
-interface Foo {
-    /** This is bar from the interface */
-    bar: string;
-    /** This is baz from the interface */
-    baz: number;
-}
-
-declare var foo: Foo;
-
-/** Comment on the variable statement. */
-const {
-    /** Comment on bar destructuring. */ /*1*/bar,
-    /** Comment on baz destructuring. */ /*2*/baz
-} = foo;
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

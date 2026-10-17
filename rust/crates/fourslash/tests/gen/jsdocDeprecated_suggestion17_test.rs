@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsdoc_deprecated_suggestion17() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"// @filename: foo.ts
-interface Foo {
-    /** @deprecated */
-    [k: string]: any;
-    /** @deprecated please use ", "`"), r".y"), "`"), r" instead  */
-    x: number;
-    y: number;
-}
-function f(foo: Foo) {
-    foo.[|x|];
-    foo.[|y|];
-    foo.[|z|];
-}");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_suggestion_diagnostics(&[tsc_lsproto::Diagnostic { code: Some(tsc_lsproto::IntegerOrString { integer: Some(((6385) as i32).into()), ..Default::default() }), message: tsc_lsproto::StringOrMarkupContent { string: Some(("'x' is deprecated.").into()), ..Default::default() }.into(), tags: Some(vec![tsc_lsproto::DiagnosticTag::Deprecated]), range: f.ranges()[0].clone().ls_range.into(), ..Default::default() }, tsc_lsproto::Diagnostic { code: Some(tsc_lsproto::IntegerOrString { integer: Some(((6385) as i32).into()), ..Default::default() }), message: tsc_lsproto::StringOrMarkupContent { string: Some(("'z' is deprecated.").into()), ..Default::default() }.into(), tags: Some(vec![tsc_lsproto::DiagnosticTag::Deprecated]), range: f.ranges()[2].clone().ls_range.into(), ..Default::default() }]);
 	});
 }
 

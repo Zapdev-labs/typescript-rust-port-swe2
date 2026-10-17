@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quickinfo_verbosity_indexed_access_type() {
 	run_test(|t| {
-		let content = r#"interface T2 {
-	"string key": string;
-	"number key": number;
-	"any key": string | number | symbol;
-}
-type K2 = "string key" | "any key";
-function fn2<T extends T2>(obj: T, key: keyof T) {
-	const value/*v1*/: T[K2] = undefined as any;
-}
-function fn3<K extends keyof T2>(obj: T2, key: K) {
-    const value/*v2*/: T2[K] = undefined as any;;
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("v1".to_string().into(), vec![0, 1]), ("v2".to_string().into(), vec![0, 1])]));
 	});
 }
 

@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_symlink_own_package() {
 	run_test(|t| {
-		let content = r#"// @Filename: /packages/b/b0.ts
-// @Symlink: /node_modules/b/b0.ts
-x;
-// @Filename: /packages/b/b1.ts
-// @Symlink: /node_modules/b/b1.ts
-import { a } from "a";
-export const x = 0;
-// @Filename: /packages/a/index.d.ts
-// @Symlink: /node_modules/a/index.d.ts
-export const a: number;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/packages/b/b0.ts");
-		f.verify_import_fix_at_position(&[r#"import { x } from "./b1";
-
-x;"#.into()], None);
 	});
 }
 

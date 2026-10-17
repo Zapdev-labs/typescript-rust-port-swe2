@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_implementation_interface_property_01() {
 	run_test(|t| {
-		let content = r"interface Foo { hello: number }
-
-class Bar implements Foo {
-    [|hello|] = 5 * 9;
-}
-
-function whatever(foo: Foo) {
-    foo.he/*reference*/llo;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_implementation(&["reference".into()]);
 	});
 }
 

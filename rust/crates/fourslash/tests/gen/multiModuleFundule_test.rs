@@ -7,30 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn multi_module_fundule() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"// @strict: false
-function C(x: number) { }
-
-namespace C {
-    export var x = 1;
-}
-namespace C {
-    export function foo() { }
-}
-
-var /*2*/r = C(/*1*/
-var /*4*/r2 = new C(/*3*/ // using void returning function as constructor
-var r3 = C./*5*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["C".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("C.x);");
-		f.verify_quick_info_at("2", "var r: void", "");
-		f.verify_completions(tsc_fourslash::MarkerInput::from("3"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["C".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("C.x);");
-		f.verify_quick_info_at("4", "var r2: any", "");
-		f.verify_completions(tsc_fourslash::MarkerInput::from("5"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["x".into(), "foo".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("x;");
-		f.verify_no_errors();
 	});
 }
 

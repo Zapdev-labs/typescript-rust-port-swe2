@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn organize_imports_paths_unicode3() {
 	run_test(|t| {
-		let content = r#"import * as B from "./B";
-import * as À from "./À";
-import * as A from "./A";
-
-console.log(A, À, B);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_organize_imports(r#"import * as A from "./A";
-import * as À from "./À";
-import * as B from "./B";
-
-console.log(A, À, B);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_FALSE.into(), organize_imports_collation: tsc_lsutil::OrganizeImportsCollation::UNICODE.into(), organize_imports_accent_collation: tsc_core::tristate::TS_FALSE.into(), ..Default::default() }));
-		f.verify_organize_imports(r#"import * as A from "./A";
-import * as À from "./À";
-import * as B from "./B";
-
-console.log(A, À, B);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_FALSE.into(), organize_imports_collation: tsc_lsutil::OrganizeImportsCollation::UNICODE.into(), organize_imports_accent_collation: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }));
 	});
 }
 

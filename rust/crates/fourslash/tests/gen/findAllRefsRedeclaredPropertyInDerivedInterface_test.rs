@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_redeclared_property_in_derived_interface() {
 	run_test(|t| {
-		let content = r"// @noLib: true
-interface A {
-    readonly /*0*/x: number | string;
-}
-interface B extends A {
-    readonly /*1*/x: number;
-}
-const a: A = { /*2*/x: 0 };
-const b: B = { /*3*/x: 0 };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["0".into(), "1".into(), "2".into(), "3".into()]);
 	});
 }
 

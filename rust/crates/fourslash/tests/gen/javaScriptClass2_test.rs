@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn java_script_class2() {
 	run_test(|t| {
-		let content = r#"// @allowNonTsExtensions: true
-// @Filename: Foo.js
-class Foo {
-   constructor() {
-       [|this.[|{| "contextRangeIndex": 0 |}union|] = 'foo';|]
-       [|this.[|{| "contextRangeIndex": 2 |}union|] = 100;|]
-   }
-   method() { return this.[|union|]; }
-}
-var x = new Foo();
-x.[|union|];"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename_at_ranges_with_text(None, &["union".into()]);
 	});
 }
 

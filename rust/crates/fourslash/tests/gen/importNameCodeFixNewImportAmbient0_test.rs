@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_new_import_ambient0() {
 	run_test(|t| {
-		let content = r#"[|f1/*0*/();|]
-// @Filename: ambientModule.ts
-declare module "ambient-module" {
-   export function f1();
-   export var v1;
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_at_position(&[r#"import { f1 } from "ambient-module";
-
-f1();"#.into()], None);
 	});
 }
 

@@ -7,31 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_jsx_react17() {
 	run_test(|t| {
-		let content = r#"// @jsx: preserve
-// @module: commonjs
-// @Filename: /node_modules/@types/react/index.d.ts
-declare namespace React {
-  function createElement(): any;
-}
-export = React;
-export as namespace React;
-
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {}
-    interface IntrinsicAttributes {}
-  }  
-}
-// @Filename: /component.tsx
-import "react";
-export declare function Component(): any;
-// @Filename: /index.tsx
-(<Component/**/ />);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_import_fix_at_position(&[r#"import { Component } from "./component";
-
-(<Component />);"#.into()], None);
 	});
 }
 

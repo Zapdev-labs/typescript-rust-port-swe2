@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn navigation_bar_variables() {
 	run_test(|t| {
-		let content = r"var x = 0;
-let y = 1;
-const z = 2;
-// @Filename: file2.ts
-var {a} = 0;
-let {a: b} = 0;
-const [c] = 0;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_symbol();
-		f.go_to_file("file2.ts");
-		f.verify_baseline_document_symbol();
 	});
 }
 

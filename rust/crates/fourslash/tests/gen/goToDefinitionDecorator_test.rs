@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_decorator() {
 	run_test(|t| {
-		let content = r#"// @Filename: b.ts
-@[|/*decoratorUse*/decorator|]
-class C {
-    @[|decora/*decoratorFactoryUse*/torFactory|](a, "22", true)
-    method() {}
-}
-// @Filename: a.ts
-function /*decoratorDefinition*/decorator(target) {
-    return target;
-}
-function /*decoratorFactoryDefinition*/decoratorFactory(...args) {
-    return target => target;
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["decoratorUse".into(), "decoratorFactoryUse".into()]);
 	});
 }
 

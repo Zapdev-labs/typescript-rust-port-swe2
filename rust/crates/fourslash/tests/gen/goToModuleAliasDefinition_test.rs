@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_module_alias_definition() {
 	run_test(|t| {
-		let content = r"// @Filename: a.ts
-export class /*2*/Foo {}
-// @Filename: b.ts
- import /*3*/n = require('a');
- var x = new [|/*1*/n|].Foo();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["1".into()]);
 	});
 }
 

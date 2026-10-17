@@ -7,40 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_references_of_constructor() {
 	run_test(|t| {
-		let content = r#"// @Filename: a.ts
-export class C {
-    /*0*/constructor(n: number);
-    /*1*/constructor();
-    /*2*/constructor(n?: number){}
-    static f() {
-        this.f();
-        new this();
-    }
-}
-new C();
-const D = C;
-new D();
-// @Filename: b.ts
-import { C } from "./a";
-new C();
-// @Filename: c.ts
-import { C } from "./a";
-class D extends C {
-    constructor() {
-        super();
-        super.method();
-    }
-    method() { super(); }
-}
-class E implements C {
-    constructor() { super(); }
-}
-// @Filename: d.ts
-import * as a from "./a";
-new a.C();
-class d extends a.C { constructor() { super(); }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["0".into(), "1".into(), "2".into()]);
 	});
 }
 

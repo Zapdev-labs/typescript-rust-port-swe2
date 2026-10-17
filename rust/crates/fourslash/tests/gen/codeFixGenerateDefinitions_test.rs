@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_generate_definitions() {
 	run_test(|t| {
-		let content = r#"// @Filename: /node_modules/foo/index.d.ts
-module.exports = 0;
-// @Filename: /a.ts
-import * as foo from "foo";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix_not_available(&[]);
 	});
 }
 

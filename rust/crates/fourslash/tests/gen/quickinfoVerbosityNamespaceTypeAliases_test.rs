@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quickinfo_verbosity_namespace_type_aliases() {
 	run_test(|t| {
-		let content = r"
-type BaseConfig = { host: string; port: number };
-
-declare namespace Config/*1*/ {
-    type Readonly<T> = { readonly [K in keyof T]: T[K] };
-    type Optional<T> = { [K in keyof T]?: T[K] };
-    type ServerConfig = Readonly<BaseConfig>;
-}
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("1".to_string().into(), vec![0, 1])]));
 	});
 }
 

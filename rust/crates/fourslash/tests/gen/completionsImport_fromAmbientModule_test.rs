@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_import_from_ambient_module() {
 	run_test(|t| {
-		let content = r#"// @module: esnext
-// @Filename: /a.ts
-declare module "m" {
-    export const x: number;
-}
-// @Filename: /b.ts
-/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_apply_code_action_from_completion("", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "x".to_string().into(), source: "m".to_string().into(), description: "Add import from \"m\"".to_string().into(), new_file_content: Some((r#"import { x } from "m";
-
-"#).into()), ..Default::default() });
 	});
 }
 

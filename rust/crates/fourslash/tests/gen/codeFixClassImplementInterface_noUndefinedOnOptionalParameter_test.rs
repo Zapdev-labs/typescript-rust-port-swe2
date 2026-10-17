@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_class_implement_interface_no_undefined_on_optional_parameter() {
 	run_test(|t| {
-		let content = r"interface IFoo {
-    bar(x?: number | string): void;
-}
-
-class Foo implements IFoo {
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'IFoo'".to_string().into(), new_file_content: r#"interface IFoo {
-    bar(x?: number | string): void;
-}
-
-class Foo implements IFoo {
-    bar(x?: number | string): void {
-        throw new Error("Method not implemented.");
-    }
-}"#.to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

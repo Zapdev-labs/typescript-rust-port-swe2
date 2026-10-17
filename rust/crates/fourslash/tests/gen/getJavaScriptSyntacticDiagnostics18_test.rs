@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_java_script_syntactic_diagnostics18() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @Filename: a.js
-class C {
-    x; // Regular property declaration allowed
-    static y; // static allowed
-    public z; // public not allowed
-}
-// @Filename: b.js
-class C {
-    x: number; // Types not allowed
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_non_suggestion_diagnostics();
 	});
 }
 

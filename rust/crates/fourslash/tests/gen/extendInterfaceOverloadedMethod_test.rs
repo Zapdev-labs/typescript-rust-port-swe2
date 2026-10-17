@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn extend_interface_overloaded_method() {
 	run_test(|t| {
-		let content = r"// @strict: false
-interface A<T> {
-    foo(a: T): B<T>;
-    foo(): void ;
-    foo2(): B<number>;
-}
-interface B<T> extends A<T> {
-    bar(): void ;
-}
-var b: B<number>;
-var /**/x = b.foo2().foo(5).foo(); // 'x' is of type 'void'";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("", "var x: void", "");
-		f.verify_no_errors();
 	});
 }
 

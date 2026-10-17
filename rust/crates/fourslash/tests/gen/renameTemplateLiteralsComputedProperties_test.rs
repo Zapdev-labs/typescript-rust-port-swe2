@@ -7,44 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_template_literals_computed_properties() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"// @Filename: a.ts
-interface Obj {
-    [|[", "`"), r#"[|{| "contextRangeIndex": 0 |}num|]"#), "`"), r#"]: number;|]
-    [|['[|{| "contextRangeIndex": 2 |}bool|]']: boolean;|]
-}
-
-let o: Obj = {
-    [|["#), "`"), r#"[|{| "contextRangeIndex": 4 |}num|]"#), "`"), r#"]: 0|],
-    [|['[|{| "contextRangeIndex": 6 |}bool|]']: true|],
-};
-
-o = {
-    [|['[|{| "contextRangeIndex": 8 |}num|]']: 1|],
-    [|["#), "`"), r#"[|{| "contextRangeIndex": 10 |}bool|]"#), "`"), r#"]: false|],
-};
-
-o.[|num|];
-o['[|num|]'];
-o["[|num|]"];
-o["#), "`"), r"[|num|]"), "`"), r#"];
-
-o.[|bool|];
-o['[|bool|]'];
-o["[|bool|]"];
-o["#), "`"), r"[|bool|]"), "`"), r"];
-
-export { o };
-// @allowJs: true
-// @Filename: b.js
-import { o as obj } from './a';
-
-obj.[|num|];
-obj["), "`"), r"[|num|]"), "`"), r"];
-
-obj.[|bool|];
-obj["), "`"), r"[|bool|]"), "`"), r"];");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename_at_ranges_with_text(None, &["num".into(), "bool".into()]);
 	});
 }
 

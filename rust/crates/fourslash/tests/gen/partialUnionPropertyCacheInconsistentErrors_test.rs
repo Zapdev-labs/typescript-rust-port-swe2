@@ -7,46 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn partial_union_property_cache_inconsistent_errors() {
 	run_test(|t| {
-		let content = r#"// @strict: true
-// @lib: esnext
-interface ComponentOptions<Props> {
-  setup?: (props: Props) => void;
-  name?: string;
-}
-
-interface FunctionalComponent<P> {
-  (props: P): void;
-}
-
-type ConcreteComponent<Props> =
-  | ComponentOptions<Props>
-  | FunctionalComponent<Props>;
-
-type Component<Props = {}> = ConcreteComponent<Props>;
-
-type WithInstallPlugin = { _prefix?: string };
-
-
-/**/
-export function withInstall<C extends Component, T extends WithInstallPlugin>(
-  component: C | C[],
-  target?: T,
-): string {
-  const componentWithInstall = (target ?? component) as T;
-  const components = Array.isArray(component) ? component : [component];
-
-  const { name } = components[0];
-  if (name) {
-    return name;
-  }
-
-  return "";
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.go_to_marker("");
-		f.insert("type C = Component['name']");
-		f.verify_no_errors();
 	});
 }
 

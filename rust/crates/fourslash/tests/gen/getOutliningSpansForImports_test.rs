@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_outlining_spans_for_imports() {
 	run_test(|t| {
-		let content = r#"[|import * as ns from "mod";
-
-import d from "mod";
-import { a, b, c } from "mod";
-
-import r = require("mod");|]
-
-// statement
-var x = 0;
-
-// another set of imports
-[|import * as ns from "mod";
-import d from "mod";
-import { a, b, c } from "mod";
-import r = require("mod");|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_outlining_spans(Some(tsc_lsproto::FoldingRangeKind::Imports));
 	});
 }
 

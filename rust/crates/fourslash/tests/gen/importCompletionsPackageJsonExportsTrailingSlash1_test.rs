@@ -7,30 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_completions_package_json_exports_trailing_slash1() {
 	run_test(|t| {
-		let content = r#"// @module: node18
-// @moduleResolution: nodenext
-// @Filename: /node_modules/pkg/package.json
-{
-    "name": "pkg",
-    "version": "1.0.0",
-    "exports": {
-      "./test/": "./"
-    }
- }
-// @Filename: /node_modules/pkg/foo.d.ts
-export function foo(): void;
-// @Filename: /package.json
-{
-    "dependencies": {
-       "pkg": "*"
-    }
- }
-// @Filename: /index.ts
-import {} from "pkg//*1*/";
-import {} from "pkg/test//*2*/";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["1"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["test".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["2"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["foo.js".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

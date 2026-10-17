@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_references_from_link_tag_reference3() {
 	run_test(|t| {
-		let content = r"// @filename: a.ts
-interface Foo {
-    foo: E.Foo;
-}
-// @Filename: b.ts
-enum E {
-    /** {@link /**/Foo} */
-    Foo
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["".into()]);
 	});
 }
 

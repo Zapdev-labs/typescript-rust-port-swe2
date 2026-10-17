@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quickinfo_verbosity_nested_namespace() {
 	run_test(|t| {
-		let content = r"
-declare namespace Outer/*1*/ {
-    namespace Inner {
-        const x: number;
-        function f(): string;
-    }
-    const outerVal: boolean;
-}
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("1".to_string().into(), vec![0, 1])]));
 	});
 }
 

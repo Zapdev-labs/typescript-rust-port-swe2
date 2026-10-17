@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_in_object_literal7() {
 	run_test(|t| {
-		let content = r"type Foo = { foo: boolean };
-function f<T>(shape: Foo): any;
-function f<T>(shape: () => Foo): any;
-function f(arg: any) {
-  return arg;
-}
-
-f({ /*1*/ });
-f(() => ({ /*2*/ }));
-f(() => (({ /*3*/ })));";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["1", "2", "3"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["foo".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

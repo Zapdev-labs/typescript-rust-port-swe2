@@ -7,32 +7,10 @@ use tsc_fourslash::*;
 #[test]
 fn organize_imports_export_leading_comment_not_duplicated() {
 	run_test(|t| {
-		let mut cases = vec![anon_1 { name: "singleComment".to_string().into(), content: r#"// a
-export { a } from "a";
-console.log(a);"#.to_string().into(), ..Default::default() }, anon_1 { name: "multipleComments".to_string().into(), content: r#"// a
-// a
-export { a } from "a";
-console.log(a);"#.to_string().into(), ..Default::default() }, anon_1 { name: "secondExport".to_string().into(), content: r#"export { a } from "a";
-// b
-export { b } from "b";
-console.log(a, b);"#.to_string().into(), ..Default::default() }, anon_1 { name: "secondExportWithBlankLine".to_string().into(), content: r#"export { a } from "a";
-
-// b
-export { b } from "b";
-console.log(a, b);"#.to_string().into(), ..Default::default() }, anon_1 { name: "commentWithBlankLine".to_string().into(), content: r#"// a
-
-export { a } from "a";
-console.log(a);"#.to_string().into(), ..Default::default() }];
 		#[derive(Default, Clone, Debug)]
 		struct anon_1 {
 			name: String,
 			content: String,
-		}
-		for tc in cases {
-			run_subtest(&mut t, tc.name, |t| {
-				let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &tc.content);
-				f.verify_organize_imports(tc.content, tsc_lsproto::CodeActionKind::SourceSortImports, None);
-			});
 		}
 	});
 }

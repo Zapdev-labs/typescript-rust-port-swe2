@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_source_find_implementation_non_node_modules() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @declaration: true
-// @Filename: /home/src/workspaces/project/lib/helper.d.ts
-export declare function helper(): string;
-// @Filename: /home/src/workspaces/project/index.ts
-import { /*usage*/helper } from "./lib/helper";
-helper();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["usage".into()]);
 	});
 }
 

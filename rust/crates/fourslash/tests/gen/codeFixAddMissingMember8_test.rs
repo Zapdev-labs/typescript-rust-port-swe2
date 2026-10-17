@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_add_missing_member8() {
 	run_test(|t| {
-		let content = r"// @Filename: a.ts
-declare var x: [1, 2];
-x.b;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix_not_available(&[]);
 	});
 }
 

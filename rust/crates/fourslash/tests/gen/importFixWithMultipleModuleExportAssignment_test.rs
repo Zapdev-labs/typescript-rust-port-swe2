@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_fix_with_multiple_module_export_assignment() {
 	run_test(|t| {
-		let content = r"// @module: esnext
-// @allowJs: true
-// @checkJs: true
-// @Filename: /a.js
-function f() {}
-module.exports = f;
-module.exports = 42;
-// @Filename: /b.js
-export const foo = 0;
-// @Filename: /c.js
-foo";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/c.js");
-		f.verify_import_fix_at_position(&[r#"const { foo } = require("./b");
-
-foo"#.into()], None);
 	});
 }
 

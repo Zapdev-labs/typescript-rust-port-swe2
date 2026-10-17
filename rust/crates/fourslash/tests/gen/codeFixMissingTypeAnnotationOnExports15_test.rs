@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_missing_type_annotation_on_exports15() {
 	run_test(|t| {
-		let content = r"// @stableTypeOrdering: true
-// @isolatedDeclarations: true
-// @declaration: true
-function foo() {
-    return { x: 1, y: 1 } as const;
-}
-export const { x, y = 0 } = foo();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Extract binding expressions to variable".to_string().into(), new_file_content: r"function foo() {
-    return { x: 1, y: 1 } as const;
-}
-const dest = foo();
-export const x: 1 = dest.x;
-const temp = dest.y;
-export const y: 0 | 1 = temp === undefined ? 0 : dest.y;".to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

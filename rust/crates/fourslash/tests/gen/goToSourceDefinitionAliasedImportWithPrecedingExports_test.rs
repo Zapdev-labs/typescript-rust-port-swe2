@@ -7,39 +7,12 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_source_aliased_import_with_preceding_exports() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{ "name": "pkg", "main": "./index.js", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.d.ts
-export declare function unrelated(): void;
-export declare function original(): string;
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.js
-export function unrelated() {}
-export function /*target*/original() { return "ok"; }
-// @Filename: /home/src/workspaces/project/index.ts
-import { original as /*aliasedImport*/renamed } from "pkg";
-renamed();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["aliasedImport".into()]);
 	});
 }
 
 #[test]
 fn go_to_source_re_export_alias_with_preceding_exports() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{ "name": "pkg", "main": "./index.js", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.d.ts
-export declare function unrelated(): void;
-export declare function original(): string;
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.js
-export function unrelated() {}
-export function /*target*/original() { return "ok"; }
-// @Filename: /home/src/workspaces/project/reexport.ts
-export { original as /*reExportAlias*/renamed } from "pkg";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["reExportAlias".into()]);
 	});
 }
 

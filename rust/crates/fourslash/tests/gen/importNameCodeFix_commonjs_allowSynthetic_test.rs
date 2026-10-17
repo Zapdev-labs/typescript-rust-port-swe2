@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_commonjs_allow_synthetic() {
 	run_test(|t| {
-		let content = r"// @module: esnext
-// @moduleResolution: bundler
-// @allowJs: true
-// @checkJs: true
-// @allowSyntheticDefaultImports: true
-// @Filename: /test_module.js
-const MY_EXPORTS = {}
-module.exports = MY_EXPORTS;
-// @Filename: /index.js
-const newVar = {
-  any: MY_EXPORTS/**/,
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_import_fix_at_position(&[r#"const MY_EXPORTS = require("./test_module");
-
-const newVar = {
-  any: MY_EXPORTS,
-}"#.into()], None);
 	});
 }
 

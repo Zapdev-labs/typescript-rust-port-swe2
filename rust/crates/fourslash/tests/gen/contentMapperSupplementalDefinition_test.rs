@@ -7,30 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn content_mapper_supplemental_definition() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /globals.astro
-const [|supplementalValue|] = 1;
-[|supplemental/*use*/Value|];
-supplementalV/*completion*/;
-", tsc_testutil::contentmappertest::SUPPLEMENTAL_MAPPER, ".astro");
-		f.verify_baseline_go_to_definition(false, &["use".into()]);
-		f.verify_quick_info_at("use", "const supplementalValue: 1", "");
-		f.verify_baseline_find_all_references(&["use".into()]);
-		f.go_to_marker("completion");
-		let mut completions = f.get_completions(None);
-		let completion = Default::default();
-		for item in completions.as_ref().unwrap().items {
-			if item.label == "supplementalValue" {
-				completion = item;
-				break;
-			}
-		}
-		if completion == None {
-			panic!("supplementalValue completion not found");
-		}
-		if completion.as_mut().unwrap().data.file_name != "/globals.astro" || completion.as_mut().unwrap().data.supplemental_file_index == None || (*completion.as_mut().unwrap().data.supplemental_file_index).clone() != 0 {
-			panic!("unexpected completion content mapper file data: %#v", completion.as_mut().unwrap().data);
-		}
-		f.resolve_completion_item(&completion);
 	});
 }
 

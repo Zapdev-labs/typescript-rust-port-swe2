@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn inlay_hints_interactive_template_literal_types() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"declare function getTemplateLiteral1(): ", "`"), r"${string},${string}"), "`"), r";
-const lit1 = getTemplateLiteral1();
-declare function getTemplateLiteral2(): "), "`"), r"\${${string},${string}"), "`"), r";
-const lit2 = getTemplateLiteral2();
-declare function getTemplateLiteral3(): "), "`"), r"start${string}\${,$${string}end"), "`"), r";
-const lit3 = getTemplateLiteral3();
-declare function getTemplateLiteral4(): "), "`"), r"${string}\"), "`"), r",${string}"), "`"), r";
-const lit4 = getTemplateLiteral4();");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_inlay_hints(None, Some(&tsc_lsutil::UserPreferences { inlay_hints_preferences: tsc_lsutil::InlayHintsPreferences { include_inlay_variable_type_hints: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 

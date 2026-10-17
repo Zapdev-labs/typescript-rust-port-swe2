@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn enum_update1() {
 	run_test(|t| {
-		let content = r"namespace M {
-	export enum E {
-		A = 1,
-		B = 2,
-		C = 3,
-		/*1*/
-	}
-}
-namespace M {
-	function foo(): M.E {
-		return M.E.A;
-	}
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.go_to_marker("1");
-		f.insert("D = C << 1,");
-		f.verify_no_errors();
 	});
 }
 

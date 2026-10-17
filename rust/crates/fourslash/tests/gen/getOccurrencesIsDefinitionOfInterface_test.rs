@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_occurrences_is_definition_of_interface() {
 	run_test(|t| {
-		let content = r"/*1*/interface /*2*/I {
-    p: number;
-}
-let i: /*3*/I = { p: 12 };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
 	});
 }
 

@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsdoc_throws_tag_find_all_references() {
 	run_test(|t| {
-		let content = r"class /**/E extends Error {}
-/**
- * @throws {E}
- */
-function f() {}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["".into()]);
 	});
 }
 

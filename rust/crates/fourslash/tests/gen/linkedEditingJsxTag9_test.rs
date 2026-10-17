@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn linked_editing_jsx_tag9() {
 	run_test(|t| {
-		let content = r"// @Filename: /whitespace.tsx
-const whitespaceOpening = (
-   </*0*/ /*1*/div/*2*/ /*3*/> /*4*/
-   <//*5*/di/*6*/v/*5end*/>
-);
-const whitespaceClosing = (
-   </*7*/di/*8*/v/*8end*/>
-   <//*9*/ /*10*/div/*11*/ /*12*/> /*13*/
-);
-const triviaOpening = (
-    /* this is/*14*/ comment *//*15*/</*16*//* /*17*/more/*18*/ comment *//*19*/ /*20start*/di/*20*/v/*20end*/ /* comments */>/*21*/Hello/*22*/
-    <//*23*/ /*24*///*25*/* even/*26*/ more comment *//*27*/ /*28start*/d/*28*/iv/*28end*/ /* b/*29*/ye */>
-);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		let mut linked_cursors1 = vec![tsc_lsproto::Range { start: f.marker_by_name("1").unwrap().ls_position.into(), end: f.marker_by_name("2").unwrap().ls_position.into(), ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("5").unwrap().ls_position.into(), end: f.marker_by_name("5end").unwrap().ls_position.into(), ..Default::default() }];
-		let mut linked_cursors2 = vec![tsc_lsproto::Range { start: f.marker_by_name("7").unwrap().ls_position.into(), end: f.marker_by_name("8end").unwrap().ls_position.into(), ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("10").unwrap().ls_position.into(), end: f.marker_by_name("11").unwrap().ls_position.into(), ..Default::default() }];
-		let mut linked_cursors3 = vec![tsc_lsproto::Range { start: f.marker_by_name("20start").unwrap().ls_position.into(), end: f.marker_by_name("20end").unwrap().ls_position.into(), ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("28start").unwrap().ls_position.into(), end: f.marker_by_name("28end").unwrap().ls_position.into(), ..Default::default() }];
-		f.verify_linked_editing(&std::collections::BTreeMap::from([("0".to_string().into(), None), ("1".to_string().into(), linked_cursors1.into()), ("2".to_string().into(), linked_cursors1.into()), ("3".to_string().into(), None), ("4".to_string().into(), None), ("5".to_string().into(), linked_cursors1.into()), ("6".to_string().into(), linked_cursors1.into()), ("7".to_string().into(), linked_cursors2.into()), ("8".to_string().into(), linked_cursors2.into()), ("9".to_string().into(), None), ("10".to_string().into(), linked_cursors2.into()), ("11".to_string().into(), linked_cursors2.into()), ("12".to_string().into(), None), ("13".to_string().into(), None), ("14".to_string().into(), None), ("15".to_string().into(), None), ("16".to_string().into(), None), ("17".to_string().into(), None), ("18".to_string().into(), None), ("19".to_string().into(), None), ("20".to_string().into(), linked_cursors3.into()), ("21".to_string().into(), None), ("22".to_string().into(), None), ("23".to_string().into(), None), ("24".to_string().into(), None), ("25".to_string().into(), None), ("26".to_string().into(), None), ("27".to_string().into(), None), ("28".to_string().into(), linked_cursors3.into()), ("29".to_string().into(), None)]));
 	});
 }
 

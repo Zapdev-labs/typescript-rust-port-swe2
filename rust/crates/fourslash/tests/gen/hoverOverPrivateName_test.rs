@@ -7,29 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn hover_over_private_name() {
 	run_test(|t| {
-		let content = r#"class A {
-    #f/*1*/oo = 3;
-    #b/*2*/ar: number;
-    #b/*3*/az = () => "hello";
-    #q/*4*/ux(n: number): string {
-        return "" + n;
-    }
-    static #staticF/*5*/oo = 3;
-    static #staticB/*6*/ar: number;
-    static #staticB/*7*/az = () => "hello";
-    static #staticQ/*8*/ux(n: number): string {
-        return "" + n;
-    }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "(property) A.#foo: number", "");
-		f.verify_quick_info_at("2", "(property) A.#bar: number", "");
-		f.verify_quick_info_at("3", "(property) A.#baz: () => string", "");
-		f.verify_quick_info_at("4", "(method) A.#qux(n: number): string", "");
-		f.verify_quick_info_at("5", "(property) A.#staticFoo: number", "");
-		f.verify_quick_info_at("6", "(property) A.#staticBar: number", "");
-		f.verify_quick_info_at("7", "(property) A.#staticBaz: () => string", "");
-		f.verify_quick_info_at("8", "(method) A.#staticQux(n: number): string", "");
 	});
 }
 

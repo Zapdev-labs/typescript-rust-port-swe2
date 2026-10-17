@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_getter_setter() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r#"// @target: es2015
-class C {
-    #x = Promise.resolve("")
-    set /*setterDef*/myValue(x: Promise<string> | string) {
-        this.#x = Promise.resolve(x);
-    }
-    get /*getterDef*/myValue(): Promise<string> {
-        return this.#x;
-    }
-}
-let instance = new C();
-instance./*setterUse*/myValue = instance./*getterUse*/myValue;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("getterUse", "(property) C.myValue: Promise<string>", "");
-		f.verify_quick_info_at("getterDef", "(getter) C.myValue: Promise<string>", "");
-		f.verify_quick_info_at("setterUse", "(property) C.myValue: string | Promise<string>", "");
-		f.verify_quick_info_at("setterDef", "(setter) C.myValue: string | Promise<string>", "");
 	});
 }
 

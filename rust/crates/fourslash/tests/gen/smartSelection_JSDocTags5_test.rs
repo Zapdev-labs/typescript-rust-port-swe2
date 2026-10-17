@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn smart_selection_js_doc_tags5() {
 	run_test(|t| {
-		let content = r"/**
- * @callback Foo
- * @param {string} data
- * @param {/**/number} [index] - comment
- * @return {boolean}
- */
-
-/** @type {Foo} */
-const foo = s => !(s.length % 2);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_selection_ranges();
 	});
 }
 

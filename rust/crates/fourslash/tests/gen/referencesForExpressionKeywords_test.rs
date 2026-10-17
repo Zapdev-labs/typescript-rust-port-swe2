@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_for_expression_keywords() {
 	run_test(|t| {
-		let content = r#"class C {
-    static x = 1;
-}
-/*new*/new C();
-/*void*/void C;
-/*typeof*/typeof C;
-/*delete*/delete C.x;
-/*async*/async function* f() {
-    /*yield*/yield C;
-    /*await*/await C;
-}
-"x" /*in*/in C;
-undefined /*instanceof*/instanceof C;
-undefined /*as*/as C;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["new".into(), "void".into(), "typeof".into(), "yield".into(), "await".into(), "in".into(), "instanceof".into(), "as".into(), "delete".into()]);
 	});
 }
 

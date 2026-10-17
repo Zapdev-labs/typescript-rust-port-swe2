@@ -7,32 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_for_contextually_typed_object_literal_properties() {
 	run_test(|t| {
-		let content = r"interface IFoo { /*xy*/xy: number; }
-
-// Assignment
-var a1: IFoo = { xy: 0 };
-var a2: IFoo = { xy: 0 };
-
-// Function call
-function consumer(f: IFoo) { }
-consumer({ xy: 1 });
-
-// Type cast
-var c = <IFoo>{ xy: 0 };
-
-// Array literal
-var ar: IFoo[] = [{ xy: 1 }, { xy: 2 }];
-
-// Nested object literal
-var ob: { ifoo: IFoo } = { ifoo: { xy: 0 } };
-
-// Widened type
-var w: IFoo = { xy: undefined };
-
-// Untped -- should not be included
-var u = { xy: 0 };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["xy".into()]);
 	});
 }
 

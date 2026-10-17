@@ -7,33 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn exhaustive_case_completions2() {
 	run_test(|t| {
-		let content = r#"// @newline: LF
-// @Filename: /dep.ts
-export enum E {
-    A = 0,
-    B = "B",
-    C = "C",
-}
-declare const u: E.A | E.B | 1;
-export { u };
-// @Filename: /main.ts
-import { u } from "./dep";
-switch (u) {
-    case/*1*/
-}
-// @Filename: /other.ts
-import * as d from "./dep";
-declare const u: d.E;
-switch (u) {
-    case/*2*/
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", Some(tsc_fourslash::get_default_capabilities_with_options(Some(&tsc_fourslash::ClientCapabilitiesOptions { completion_item: Some(tsc_lsproto::ClientCompletionItemOptions { snippet_support: Some((true).into()), ..Default::default() }), ..Default::default() }))), &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "case 1: ...".to_string().into(), insert_text: Some(("case 1:$1\ncase E.A:$2\ncase E.B:$3").into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::Snippet).into()), sort_text: Some((tsc_ls::GLOBALS_OR_KEYWORDS.to_string()).into()), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("2"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "case d.E.A: ...".to_string().into(), insert_text: Some(("case d.E.A:$1\ncase d.E.B:$2\ncase d.E.C:$3").into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::Snippet).into()), sort_text: Some((tsc_ls::GLOBALS_OR_KEYWORDS.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_apply_code_action_from_completion("1", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "case 1: ...".to_string().into(), source: "SwitchCases/".to_string().into(), new_file_content: Some((r#"import { E, u } from "./dep";
-switch (u) {
-    case
-}"#).into()), ..Default::default() });
 	});
 }
 

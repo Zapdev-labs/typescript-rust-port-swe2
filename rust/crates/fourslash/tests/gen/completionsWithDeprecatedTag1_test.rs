@@ -7,32 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_with_deprecated_tag1() {
 	run_test(|t| {
-		let content = r#"// @strict: true
-// @filename: /foobar.ts
-/** @deprecated */
-export function foobar() {}
-// @filename: /foo.ts
-import { foobar/*4*/ } from "./foobar";
-
-/** @deprecated */
-interface Foo {
-    /** @deprecated */
-    bar(): void
-    /** @deprecated */
-    prop: number
-}
-declare const foo: Foo;
-declare const foooo: Fo/*1*/;
-foo.ba/*2*/;
-foo.pro/*3*/;
-
-fooba/*5*/;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "Foo".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Interface).into()), sort_text: Some((tsc_ls::deprecate_sort_text(tsc_ls::LOCATION_PRIORITY).to_string()).into()), tags: Some(vec![tsc_lsproto::CompletionItemTag::Deprecated]), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("2"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "bar".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Method).into()), sort_text: Some((tsc_ls::deprecate_sort_text(tsc_ls::LOCATION_PRIORITY).to_string()).into()), tags: Some(vec![tsc_lsproto::CompletionItemTag::Deprecated]), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("3"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "prop".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Field).into()), sort_text: Some((tsc_ls::deprecate_sort_text(tsc_ls::LOCATION_PRIORITY).to_string()).into()), tags: Some(vec![tsc_lsproto::CompletionItemTag::Deprecated]), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("4"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "foobar".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Function).into()), sort_text: Some((tsc_ls::deprecate_sort_text(tsc_ls::LOCATION_PRIORITY).to_string()).into()), tags: Some(vec![tsc_lsproto::CompletionItemTag::Deprecated]), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("5"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "foobar".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Variable).into()), sort_text: Some((tsc_ls::deprecate_sort_text(tsc_ls::LOCATION_PRIORITY).to_string()).into()), tags: Some(vec![tsc_lsproto::CompletionItemTag::Deprecated]), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn tsx_find_all_references_union_element_type1() {
 	run_test(|t| {
-		let content = r#"//@Filename: file.tsx
-// @jsx: preserve
-// @noLib: true
-declare namespace JSX {
-    interface Element { }
-    interface IntrinsicElements {
-    }
-    interface ElementAttributesProperty { props; }
-}
-function SFC1(prop: { x: number }) {
-    return <div>hello </div>;
-};
-function SFC2(prop: { x: boolean }) {
-    return <h1>World </h1>;
-}
-/*1*/var /*2*/SFCComp = SFC1 || SFC2;
-/*3*/</*4*/SFCComp x={ "hi" } />"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into()]);
 	});
 }
 

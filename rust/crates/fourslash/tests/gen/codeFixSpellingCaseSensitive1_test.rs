@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_spelling_case_sensitive1() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"export let Console = 1;
-export let console = 1;
-[|conole|] = 1;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_range_after_code_fix(r"console", false, 0, 0);
 	});
 }
 

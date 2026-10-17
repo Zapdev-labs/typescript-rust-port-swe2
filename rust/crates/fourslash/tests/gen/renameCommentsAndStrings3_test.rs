@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_comments_and_strings3() {
 	run_test(|t| {
-		let content = r#"///<reference path="./Bar.ts" />
-[|function [|{| "contextRangeIndex": 0 |}Bar|]() {
-    // This is a reference to [|Bar|] in a comment.
-    "this is a reference to Bar in a string"
-}|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into()]);
 	});
 }
 

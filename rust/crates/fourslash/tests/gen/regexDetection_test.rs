@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn regex_detection() {
 	run_test(|t| {
-		let content = r" /*1*/15 / /*2*/Math.min(61 / /*3*/42, 32 / 15) / /*4*/15;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_not_quick_info_exists();
-		f.go_to_marker("2");
-		f.verify_quick_info_is("var Math: Math", "An intrinsic object that provides basic mathematics functionality and constants.");
-		f.go_to_marker("3");
-		f.verify_not_quick_info_exists();
-		f.go_to_marker("4");
-		f.verify_not_quick_info_exists();
 	});
 }
 

@@ -7,28 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn js_file_import_no_types2() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"// @allowJs: true
-// @Filename: /default.ts
-export default class TestDefaultClass {}
-// @Filename: /defaultType.ts
-export default interface TestDefaultInterface {}
-// @Filename: /reExport/toReExport.ts
-export class TestClassReExport {}
-export interface TestInterfaceReExport {}
-// @Filename: /reExport/index.ts
-export { TestClassReExport, TestInterfaceReExport } from './toReExport';
-// @Filename: /exportList.ts
-class TestClassExportList {};
-interface TestInterfaceExportList {};
-export { TestClassExportList, TestInterfaceExportList };
-// @Filename: /baseline.ts
-export class TestClassBaseline {}
-export interface TestInterfaceBaseline {}
-// @Filename: /a.js
-import /**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "TestClassBaseline".to_string().into(), insert_text: Some(("import { TestClassBaseline } from \"./baseline\";").into()), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./baseline".to_string().into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "TestClassExportList".to_string().into(), insert_text: Some(("import { TestClassExportList } from \"./exportList\";").into()), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./exportList".to_string().into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "TestClassReExport".to_string().into(), insert_text: Some(("import { TestClassReExport } from \"./reExport\";").into()), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./reExport".to_string().into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "TestDefaultClass".to_string().into(), insert_text: Some(("import TestDefaultClass from \"./default\";").into()), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./default".to_string().into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

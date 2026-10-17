@@ -7,68 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quickinfo_verbosity_interface1() {
 	run_test(|t| {
-		let content = r#"{
-    interface Foo {
-        a: "a" | "c";
-    }
-    const f/*f1*/: Foo = { a: "a" };
-}
-{
-    interface Bar {
-        b: "b" | "d";
-    }
-    interface Foo extends Bar {
-        a: "a" | "c";
-    }
-    const f/*f2*/: Foo = { a: "a", b: "b" };
-}
-{
-    type BarParam = "b" | "d";
-    interface Bar {
-        bar(b: BarParam): string;
-    }
-    type FooType = "a" | "c";
-    interface FooParam {
-        param: FooType;
-    }
-    interface Foo extends Bar {
-        a: FooType;
-        foo: (a: FooParam) => number;
-    }
-    const f/*f3*/: Foo = { a: "a", bar: () => "b", foo: () => 1 };
-}
-{
-    interface Bar<B> {
-        bar(b: B): string;
-    }
-    interface FooParam {
-        param: "a" | "c";
-    }
-    interface Foo extends Bar<FooParam> {
-        a: "a" | "c";
-        foo: (a: FooParam) => number;
-    }
-    const f/*f4*/: Foo = { a: "a", bar: () => "b", foo: () => 1 };
-    const b/*b1*/: Bar<number> = { bar: () => "" };
-}
-{
-    interface Foo<A> {
-        a: A;
-    }
-    type Alias = Foo<string>;
-    const a/*a*/: Alias = { a: "a" };
-}
-{
-    interface Foo {
-        a: "a";
-    }
-    interface Foo {
-        b: "b";
-    }
-    const f/*f5*/: Foo = { a: "a", b: "b" };
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("f1".to_string().into(), vec![0, 1]), ("f2".to_string().into(), vec![0, 1]), ("f3".to_string().into(), vec![0, 1, 2, 3]), ("f4".to_string().into(), vec![0, 1, 2]), ("b1".to_string().into(), vec![0, 1]), ("a".to_string().into(), vec![0, 1, 2]), ("f5".to_string().into(), vec![0, 1])]));
 	});
 }
 

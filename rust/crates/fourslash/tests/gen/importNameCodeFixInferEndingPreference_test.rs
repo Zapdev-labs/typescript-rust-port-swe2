@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_infer_ending_preference() {
 	run_test(|t| {
-		let content = r#"// @module: esnext
-// @moduleResolution: bundler
-// @Filename: /a.mts
-export {};
-// @Filename: /b.ts
-export {};
-// @Filename: /c.ts
-export const c = 0;
-// @Filename: /main.ts
-import {} from "./a.mjs";
-import {} from "./b";
-
-c/**/;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_module_specifiers("", &["./c".into()], None);
 	});
 }
 

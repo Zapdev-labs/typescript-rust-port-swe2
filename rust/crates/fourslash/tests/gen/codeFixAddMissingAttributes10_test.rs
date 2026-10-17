@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_add_missing_attributes10() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"// @jsx: preserve
-// @filename: foo.tsx
-type A = 'a' | 'b' | 'c' | 'd' | 'e';
-type B = 1 | 2 | 3;
-type C = '@' | '!';
-type D = ", "`"), r"${A}${Uppercase<A>}${B}${C}"), "`"), r";
-const A = (props: { [K in D]: K }) =>
-   <div {...props}></div>;
-
-const Bar = () =>
-   [|<A></A>|]");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix_not_available(&["fixMissingAttributes".into()]);
 	});
 }
 

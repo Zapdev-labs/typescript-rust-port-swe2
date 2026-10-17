@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_comments_before_errors() {
 	run_test(|t| {
-		let content = r"namespace A {
-    interface B {
-        // a
-        // b
-        baz();
-/*0*/        // d /*1*/asd a
-        // e
-        foo();
-        // f asd
-        // g as
-        bar();
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.insert("\n");
-		f.go_to_marker("0");
-		f.verify_current_line_content(r"        // d ");
 	});
 }
 

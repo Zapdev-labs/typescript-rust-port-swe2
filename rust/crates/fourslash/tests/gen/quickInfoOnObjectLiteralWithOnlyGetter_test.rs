@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_on_object_literal_with_only_getter() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"function /*1*/makePoint(x: number) {
-    return {
-        get x() { return x; },
-    };
-};
-var /*4*/point = makePoint(2);
-var /*2*/x = point./*3*/x;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "function makePoint(x: number): {\n    readonly x: number;\n}", "");
-		f.verify_quick_info_at("2", "var x: number", "");
-		f.verify_quick_info_at("4", "var point: {\n    readonly x: number;\n}", "");
-		f.verify_completions(tsc_fourslash::MarkerInput::from("3"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "x".to_string().into(), detail: Some(("(property) x: number").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

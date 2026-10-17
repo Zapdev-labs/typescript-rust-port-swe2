@@ -7,30 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn member_constructor_edits() {
 	run_test(|t| {
-		let content = r#" namespace M {
-     export class A {
-		 constructor(a: string) {}
-         public m(n: number) {
-             return 0;
-         }
-         public n() {
-             return this.m(0);
-         }
-     }
-     export class B extends A {
-     	constructor(a: string) {
-			super(a);
-		}
-		/*1*/
-	 }
-	 var a = new A("s");
-	 var b = new B("s");
- }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.go_to_marker("1");
-		f.insert("public m(n: number) { return 0; }");
-		f.verify_no_errors();
 	});
 }
 

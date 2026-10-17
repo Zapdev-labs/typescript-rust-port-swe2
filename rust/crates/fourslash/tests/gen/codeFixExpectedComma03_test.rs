@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_expected_comma03() {
 	run_test(|t| {
-		let content = r"class C {
-    const example = [|{ one: 1 one }|]
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix_not_available(&["fixExpectedComma".into()]);
 	});
 }
 

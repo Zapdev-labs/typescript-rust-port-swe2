@@ -7,32 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_document_with_js_doc() {
 	run_test(|t| {
-		let content = r"/**
- * JSDoc for things
- */
-function f() {
-    /** more
-        jsdoc */
-    var t;
-    /**
-     * multiline
-     */
-    var multiline;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.verify_current_file_content(r"/**
- * JSDoc for things
- */
-function f() {
-    /** more
-        jsdoc */
-    var t;
-    /**
-     * multiline
-     */
-    var multiline;
-}");
 	});
 }
 

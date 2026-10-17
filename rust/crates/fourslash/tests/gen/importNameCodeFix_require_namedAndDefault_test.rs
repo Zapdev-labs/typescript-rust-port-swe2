@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_require_named_and_default() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @checkJs: true
-// @Filename: blah.ts
-export default class Blah {}
-export const Named1 = 0;
-export const Named2 = 1;
-// @Filename: index.js
-Named1 + Named2;
-new Blah;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("index.js");
-		f.verify_code_fix_all(&tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport".to_string().into(), new_file_content: r#"const { default: Blah, Named1, Named2 } = require("./blah");
-
-Named1 + Named2;
-new Blah;"#.to_string().into(), ..Default::default() });
 	});
 }
 

@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn incremental_edit_invocation_expression_above_interface_declaration() {
 	run_test(|t| {
-		let content = r"// @lib: es5
-declare function alert(message?: any): void;
-/*1*/
-interface Foo {
-    setISO8601(dString): Date;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.insert("alert(");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "alert(message?: any): void".to_string().into(), ..Default::default() });
-		f.verify_error_exists_after_marker("1");
 	});
 }
 

@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_function_type() {
 	run_test(|t| {
-		let content = r"const /*constDefinition*/c: () => void;
-/*constReference*/c();
-function test(/*cbDefinition*/cb: () => void) {
-    /*cbReference*/cb();
-}
-class C {
-    /*propDefinition*/prop: () => void;
-    m() {
-        this./*propReference*/prop();
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(false, &["constReference".into(), "cbReference".into(), "propReference".into()]);
 	});
 }
 

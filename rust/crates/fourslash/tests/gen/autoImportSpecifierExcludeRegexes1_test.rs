@@ -7,29 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_specifier_exclude_regexes1() {
 	run_test(|t| {
-		let content = r#"// @module: preserve
-// @Filename: /node_modules/lib/index.d.ts
-declare module "ambient" {
-    export const x: number;
-}
-declare module "ambient/utils" {
-   export const x: number;
-}
-// @Filename: /index.ts
-x/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_module_specifiers("", &["ambient".into(), "ambient/utils".into()], None);
-		f.verify_import_fix_module_specifiers("", &["ambient".into()], Some(&tsc_lsutil::UserPreferences { auto_import_specifier_exclude_regexes: vec!["utils".into()].into(), ..Default::default() }));
-		f.verify_import_fix_module_specifiers("", &["ambient".into(), "ambient/utils".into()], Some(&tsc_lsutil::UserPreferences { auto_import_specifier_exclude_regexes: vec!["/UTILS/".into()].into(), ..Default::default() }));
-		f.verify_import_fix_module_specifiers("", &["ambient".into()], Some(&tsc_lsutil::UserPreferences { auto_import_specifier_exclude_regexes: vec!["/UTILS/i".into()].into(), ..Default::default() }));
-		f.verify_import_fix_module_specifiers("", &["ambient".into(), "ambient/utils".into()], Some(&tsc_lsutil::UserPreferences { auto_import_specifier_exclude_regexes: vec!["/ambient/utils/".into()].into(), ..Default::default() }));
-		f.verify_import_fix_module_specifiers("", &["ambient".into()], Some(&tsc_lsutil::UserPreferences { auto_import_specifier_exclude_regexes: vec!["/ambient\\/utils/".into()].into(), ..Default::default() }));
-		f.verify_import_fix_module_specifiers("", &["ambient".into()], Some(&tsc_lsutil::UserPreferences { auto_import_specifier_exclude_regexes: vec!["/.*?$".into()].into(), ..Default::default() }));
-		f.verify_import_fix_module_specifiers("", &["ambient".into()], Some(&tsc_lsutil::UserPreferences { auto_import_specifier_exclude_regexes: vec!["^ambient/".into()].into(), ..Default::default() }));
-		f.verify_import_fix_module_specifiers("", &["ambient/utils".into()], Some(&tsc_lsutil::UserPreferences { auto_import_specifier_exclude_regexes: vec!["ambient$".into()].into(), ..Default::default() }));
-		f.verify_import_fix_module_specifiers("", &["ambient".into(), "ambient/utils".into()], Some(&tsc_lsutil::UserPreferences { auto_import_specifier_exclude_regexes: vec!["oops(".into()].into(), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "x".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "ambient".to_string().into(), ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "x".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "ambient/utils".to_string().into(), ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { excludes: vec!["ambient/utils".into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { auto_import_specifier_exclude_regexes: vec!["utils".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

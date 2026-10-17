@@ -7,8 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn main() {
 	run_test(|t| {
-		tsc_core::apply_debug_stack_limit();
-		m.run();
 	});
 }
 

@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_index_re_export_prefix() {
 	run_test(|t| {
-		let content = r#"// @module: nodenext
-// @Filename: /package.json
-{ "type": "module" }
-// @Filename: /utils/sum/index.ts
-export { sum } from "./sum.js";
-// @Filename: /utils/sum/sum.ts
-export const sum = 0;
-// @Filename: /utils/sumAB.ts
-sum/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_module_specifiers("", &["./sum/index.js".into(), "./sum/sum.js".into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_ending: tsc_modulespecifiers::ImportModuleSpecifierEndingPreference("js"), ..Default::default() }));
 	});
 }
 

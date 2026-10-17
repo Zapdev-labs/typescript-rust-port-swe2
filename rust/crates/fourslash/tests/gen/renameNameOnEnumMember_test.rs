@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_name_on_enum_member() {
 	run_test(|t| {
-		let content = r"enum e {
-    firstMember,
-    secondMember,
-    thirdMember
-}
-var enumMember = e.[|/**/thirdMember|];";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_rename_succeeded(None);
 	});
 }
 

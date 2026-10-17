@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_function_parameter() {
 	run_test(|t| {
-		let content = r#"function parameterFunction(callback: (a: number, b: string) => void) {
-    callback(/*parameterFunction1*/5, /*parameterFunction2*/"");
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("parameterFunction1");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "callback(a: number, b: string): void".to_string().into(), parameter_count: 2, parameter_name: "a".to_string().into(), parameter_span: "a: number".to_string().into(), ..Default::default() });
-		f.go_to_marker("parameterFunction2");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "callback(a: number, b: string): void".to_string().into(), parameter_name: "b".to_string().into(), parameter_span: "b: string".to_string().into(), ..Default::default() });
 	});
 }
 

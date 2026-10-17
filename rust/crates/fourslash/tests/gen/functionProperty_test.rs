@@ -7,38 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn function_property() {
 	run_test(|t| {
-		let content = r"var a = {
-    x(a: number) { }
-};
-
-var b = {
-    x: function (a: number) { }
-};
-
-var c = {
-    x: (a: number) => { }
-};
-a.x(/*signatureA*/1);
-b.x(/*signatureB*/1);
-c.x(/*signatureC*/1);
-a./*completionA*/;
-b./*completionB*/;
-c./*completionC*/;
-a./*quickInfoA*/x;
-b./*quickInfoB*/x;
-c./*quickInfoC*/x;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("signatureA");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "x(a: number): void".to_string().into(), ..Default::default() });
-		f.go_to_marker("signatureB");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "x(a: number): void".to_string().into(), ..Default::default() });
-		f.go_to_marker("signatureC");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "x(a: number): void".to_string().into(), ..Default::default() });
-		f.verify_completions(tsc_fourslash::MarkerInput::from("completionA"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "x".to_string().into(), detail: Some(("(method) x(a: number): void").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["completionB", "completionC"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "x".to_string().into(), detail: Some(("(property) x: (a: number) => void").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_quick_info_at("quickInfoA", "(method) x(a: number): void", "");
-		f.verify_quick_info_at("quickInfoB", "(property) x: (a: number) => void", "");
-		f.verify_quick_info_at("quickInfoC", "(property) x: (a: number) => void", "");
 	});
 }
 

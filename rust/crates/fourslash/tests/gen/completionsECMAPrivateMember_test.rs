@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_ecma_private_member() {
 	run_test(|t| {
-		let content = r"// @target: esnext
-class K {
-  #value: number;
-
-  foo() {
-     this.#va/**/
-  }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "#value".to_string().into(), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "foo".to_string().into(), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

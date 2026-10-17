@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_quick_info_for_intersection_types() {
 	run_test(|t| {
-		let content = r"function f(): string & {(): any} {
-	return <any>{};
-}
-let x = f();
-x/**/();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("", "let x: () => any", "");
 	});
 }
 

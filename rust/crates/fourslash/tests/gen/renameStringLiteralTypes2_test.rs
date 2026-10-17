@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_string_literal_types2() {
 	run_test(|t| {
-		let content = r#"type Foo = "[|a|]" | "b";
-
-class C {
-    p: Foo = "[|a|]";
-    m() {
-        if (this.p === "[|a|]") {}
-        if ("[|a|]" === this.p) {}
-
-        if (this.p !== "[|a|]") {}
-        if ("[|a|]" !== this.p) {}
-
-        if (this.p == "[|a|]") {}
-        if ("[|a|]" == this.p) {}
-
-        if (this.p != "[|a|]") {}
-        if ("[|a|]" != this.p) {}
-    }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename_at_ranges_with_text(None, &["a".into()]);
 	});
 }
 

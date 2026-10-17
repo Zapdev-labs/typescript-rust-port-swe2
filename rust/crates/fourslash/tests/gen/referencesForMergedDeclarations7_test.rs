@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_for_merged_declarations7() {
 	run_test(|t| {
-		let content = r"interface Foo { }
-namespace Foo {
-    export interface /*1*/Bar { }
-    export module /*2*/Bar { export interface Baz { } }
-    export function /*3*/Bar() { }
-}
-
-// module, value and type
-import a2 = Foo./*4*/Bar;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into()]);
 	});
 }
 

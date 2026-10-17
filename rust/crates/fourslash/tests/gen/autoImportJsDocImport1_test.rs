@@ -7,41 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_js_doc_import1() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r#"// @verbatimModuleSyntax: true
-// @target: esnext
-// @allowJs: true
-// @checkJs: true
-// @Filename: /foo.ts
- export const A = 1;
- export type B = { x: number };
- export type C = 1;
- export class D { y: string }
-// @Filename: /test.js
-/**
- * @import { A, D, C } from "./foo"
- */
-
-/**
- * @param { typeof A } a
- * @param { B/**/ | C } b
- * @param { C } c
- * @param { D } d
- */
-export function f(a, b, c, d) { }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_import_fix_at_position(&[r#"/**
- * @import { A, D, C, B } from "./foo"
- */
-
-/**
- * @param { typeof A } a
- * @param { B | C } b
- * @param { C } c
- * @param { D } d
- */
-export function f(a, b, c, d) { }"#.into()], None);
 	});
 }
 

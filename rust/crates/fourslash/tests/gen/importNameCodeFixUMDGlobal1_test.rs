@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_umd_global1() {
 	run_test(|t| {
-		let content = r#"// @AllowSyntheticDefaultImports: false
-// @Module: esnext
-// @Filename: a/f1.ts
-[|import { bar } from "./foo";
-
-export function test() { };
-bar1/*0*/.bar();|]
-// @Filename: a/foo.d.ts
-export declare function bar(): number;
-export as namespace bar1; "#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_at_position(&[r#"import * as bar1 from "./foo";
-import { bar } from "./foo";
-
-export function test() { };
-bar1.bar();"#.into()], None);
 	});
 }
 

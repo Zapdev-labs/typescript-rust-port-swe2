@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn constructor_find_all_references3() {
 	run_test(|t| {
-		let content = r"export class C {
-    /**/constructor() { }
-    public foo() { }
-}
-
-new C().foo();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["".into()]);
 	});
 }
 

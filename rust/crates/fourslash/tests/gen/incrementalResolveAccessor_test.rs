@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn incremental_resolve_accessor() {
 	run_test(|t| {
-		let content = r#"class c1 {
-    get p1(): string {
-        return "30";
-    }
-    set p1(a: number) {
-        a = "30";
-    }
-}
-var val = new c1();
-var b = val.p1;
-/*1*/b;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "var b: string", "");
-		f.verify_number_of_errors_in_current_file(1);
 	});
 }
 

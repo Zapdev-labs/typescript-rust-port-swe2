@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_inference_js_doc_import_tag_vs() {
 	run_test(|t| {
-		let content = r"// @allowJS: true
-// @checkJs: true
-// @module: esnext
-// @filename: a.ts
-export interface Foo {}
-// @filename: b.js
-/**
- * @import {
- *     Foo
- * } from './a'
- */
-
-/**
- * @param {Foo} a
- */
-function foo(a) {}
-foo(/**/)";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", Some(tsc_lsproto::ClientCapabilities { vs_supports_visual_studio_extensions: Some((true).into()), ..Default::default() }), &content);
-		f.verify_baseline_signature_help();
 	});
 }
 

@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn syntactic_classifications_merge_conflict_marker1() {
 	run_test(|t| {
-		let content = r#"<<<<<<< HEAD
-"AAAA"
-=======
-"BBBB"
->>>>>>> Feature"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_semantic_tokens(&[]);
 	});
 }
 

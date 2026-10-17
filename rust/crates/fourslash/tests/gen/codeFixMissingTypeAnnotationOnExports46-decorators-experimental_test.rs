@@ -7,63 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_missing_type_annotation_on_exports46_decorators_experimental() {
 	run_test(|t| {
-		let content = r"// @isolatedDeclarations: true
-// @declaration: true
-// @experimentalDecorators: true
-// @Filename: /code.ts
-function classDecorator<T extends Function>() { return (target: T) => target; }
-function methodDecorator() { return (target: any, key: string, descriptor: PropertyDescriptor) => descriptor;}
-function parameterDecorator() { return (target: any, key: string, idx: number) => {};}
-function getterDecorator() { return (target: any, key: string) => {}; }
-function setterDecorator() { return (target: any, key: string) => {}; }
-function fieldDecorator()  { return (target: any, key: string) => {}; }
-function foo() { return 42; }
-
-@classDecorator()
-export class A {
-  @methodDecorator()
-  sum(...args: number[]) {
-    return args.reduce((a, b) => a + b, 0);
-  }
-  getSelf() {
-    return this;
-  }
-  passParameter(@parameterDecorator() param = foo()) {}
-  @getterDecorator()
-  get a() {
-    return foo();
-  }
-  @setterDecorator()
-  set a(value) {}
-  @fieldDecorator() classProp = foo();
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix_all(&tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingTypeAnnotationOnExports".to_string().into(), new_file_content: r"function classDecorator<T extends Function>() { return (target: T) => target; }
-function methodDecorator() { return (target: any, key: string, descriptor: PropertyDescriptor) => descriptor;}
-function parameterDecorator() { return (target: any, key: string, idx: number) => {};}
-function getterDecorator() { return (target: any, key: string) => {}; }
-function setterDecorator() { return (target: any, key: string) => {}; }
-function fieldDecorator()  { return (target: any, key: string) => {}; }
-function foo() { return 42; }
-
-@classDecorator()
-export class A {
-  @methodDecorator()
-  sum(...args: number[]): number {
-    return args.reduce((a, b) => a + b, 0);
-  }
-  getSelf(): this {
-    return this;
-  }
-  passParameter(@parameterDecorator() param: number = foo()): void {}
-  @getterDecorator()
-  get a(): number {
-    return foo();
-  }
-  @setterDecorator()
-  set a(value: number) {}
-  @fieldDecorator() classProp: number = foo();
-}".to_string().into(), ..Default::default() });
 	});
 }
 

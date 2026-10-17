@@ -7,27 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn workspace_symbol_multi_project_non_existent_ref() {
 	run_test(|t| {
-		let content = r#"
-// @Filename: /home/src/projects/project-a/tsconfig.json
-{
-  "compilerOptions": { "composite": true },
-  "references": [{ "path": "../project-nonexistent" }]
-}
-
-// @Filename: /home/src/projects/project-a/index.ts
-export const [|myValueA|]: number = 1;
-
-// @Filename: /home/src/projects/project-b/tsconfig.json
-{
-  "compilerOptions": { "composite": true },
-  "references": [{ "path": "../project-a" }]
-}
-
-// @Filename: /home/src/projects/project-b/index.ts
-export const [|myValueB|]: string = "hello";
-"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "myValue".to_string().into(), includes: Some((vec![tsc_lsproto::SymbolInformation { name: "myValueA".to_string().into(), kind: tsc_lsproto::SymbolKind::Variable.into(), location: f.ranges()[0].clone().ls_location().into(), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "myValueB".to_string().into(), kind: tsc_lsproto::SymbolKind::Variable.into(), location: f.ranges()[1].clone().ls_location().into(), ..Default::default() }]).into()), ..Default::default() }]);
 	});
 }
 

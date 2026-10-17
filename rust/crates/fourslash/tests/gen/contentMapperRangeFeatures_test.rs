@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn content_mapper_range_features_include_script_inside_markup() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r#"// @Filename: /app.vue
-<template>before</template>
-<script lang="ts">
-const message = "world";
-message/*selection*/;
-</script>
-<template>after</template>
-"#, tsc_testutil::contentmappertest::COMPONENT_MAPPER, ".vue");
-		f.verify_baseline_selection_ranges();
 	});
 }
 

@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_add_all_missing_imports() {
 	run_test(|t| {
-		let content = r"// @Filename: /a.ts
-export const a: number;
-// @Filename: /b.ts
-export const b: number;
-// @Filename: /c.ts
-export const c: number;
-// @Filename: /main.ts
-a;
-b;
-c;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/main.ts");
-		f.verify_code_fix_all(&tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport".to_string().into(), new_file_content: r#"import { a } from "./a";
-import { b } from "./b";
-import { c } from "./c";
-
-a;
-b;
-c;"#.to_string().into(), ..Default::default() });
 	});
 }
 

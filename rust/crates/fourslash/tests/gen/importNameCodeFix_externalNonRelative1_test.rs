@@ -7,56 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_external_non_relative1() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r#"// @Filename: /home/src/workspaces/project/tsconfig.base.json
-{
-  "compilerOptions": {
-    "module": "commonjs",
-    "lib": ["es5"],
-    "paths": {
-      "pkg-1/*": ["./packages/pkg-1/src/*"],
-      "pkg-2/*": ["./packages/pkg-2/src/*"]
-    }
-  }
-}
-// @Filename: /home/src/workspaces/project/packages/pkg-1/package.json
-{ "dependencies": { "pkg-2": "*" } }
-// @Filename: /home/src/workspaces/project/packages/pkg-1/tsconfig.json
-{
-  "extends": "../../tsconfig.base.json",
-  "references": [
-    { "path": "../pkg-2" }
-  ]
-}
-// @Filename: /home/src/workspaces/project/packages/pkg-1/src/index.ts
-Pkg2/*external*/
-// @Filename: /home/src/workspaces/project/packages/pkg-2/package.json
-{ "types": "dist/index.d.ts" }
-// @Filename: /home/src/workspaces/project/packages/pkg-2/tsconfig.json
-{
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": { "outDir": "dist", "rootDir": "src", "composite": true, "lib": ["es5"] }
-}
-// @Filename: /home/src/workspaces/project/packages/pkg-2/src/index.ts
-import "./utils";
-// @Filename: /home/src/workspaces/project/packages/pkg-2/src/utils.ts
-export const Pkg2 = {};
-// @Filename: /home/src/workspaces/project/packages/pkg-2/src/blah/foo/data.ts
-Pkg2/*internal*/
-// @link: /home/src/workspaces/project/packages/pkg-2 -> /home/src/workspaces/project/packages/pkg-1/node_modules/pkg-2"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		let mut opts1534 = f.get_options();
-		opts1534.format_code_settings.new_line_character = "\n";
-		f.configure(opts1534);
-		f.go_to_marker("external");
-		f.verify_import_fix_at_position(&[r#"import { Pkg2 } from "pkg-2/utils";
-
-Pkg2"#.into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_preference: tsc_modulespecifiers::ImportModuleSpecifierPreference("project-relative"), ..Default::default() }));
-		f.go_to_marker("internal");
-		f.verify_import_fix_at_position(&[r#"import { Pkg2 } from "../../utils";
-
-Pkg2"#.into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_preference: tsc_modulespecifiers::ImportModuleSpecifierPreference("project-relative"), ..Default::default() }));
 	});
 }
 

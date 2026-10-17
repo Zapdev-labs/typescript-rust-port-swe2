@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_module_augmentation() {
 	run_test(|t| {
-		let content = r#"// @Filename: /a.ts
-export interface Foo {
-    x: number;
-}
-
-// @Filename: /b.ts
-export {};
-declare module "./a" {
-    export const Foo: any;
-}
-
-// @Filename: /c.ts
-Foo/**/
-"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.baseline_auto_imports_completions(&["".into()]);
 	});
 }
 

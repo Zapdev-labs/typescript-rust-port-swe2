@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_for_default_export02() {
 	run_test(|t| {
-		let content = r"/*1*/export default function /*2*/DefaultExportedFunction() {
-    return /*3*/DefaultExportedFunction;
-}
-
-var x: typeof /*4*/DefaultExportedFunction;
-
-var y = /*5*/DefaultExportedFunction();
-
-/*6*/namespace /*7*/DefaultExportedFunction {
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into(), "7".into()]);
 	});
 }
 

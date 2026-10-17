@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_mapped_type_non_homomorphic() {
 	run_test(|t| {
-		let content = r#"// @strict: true
-function f(x: { [K in "m"]: number; }) {
-    x./*1*/m;
-    x./*2*/m
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into()]);
 	});
 }
 

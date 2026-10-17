@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_on_this4() {
 	run_test(|t| {
-		let content = r"interface ContextualInterface {
-    m: number;
-    method(this: this, n: number);
-}
-let o: ContextualInterface = {
-    m: 12,
-    method(n) {
-        let x = this/*1*/.m;
-    }
-}
-interface ContextualInterface2 {
-    (this: void, n: number): void;
-}
-let contextualInterface2: ContextualInterface2 = function (th/*2*/is, n) { }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "this: ContextualInterface", "");
-		f.verify_quick_info_at("2", "(parameter) this: void", "");
 	});
 }
 

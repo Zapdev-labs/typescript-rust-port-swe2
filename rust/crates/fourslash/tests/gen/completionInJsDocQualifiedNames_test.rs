@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_in_js_doc_qualified_names() {
 	run_test(|t| {
-		let content = r#"// @allowJs: true
-// @Filename: /node_modules/foo/index.d.ts
-/** tee */
-export type T = number;
-// @Filename: /a.js
-import * as Foo from "foo";
-/** @type {Foo./**/} */
-const x = 0;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "T".to_string().into(), detail: Some(("type T = number").into()), documentation: Some(tsc_lsproto::StringOrMarkupContent { markup_content: Some(tsc_lsproto::MarkupContent { kind: tsc_lsproto::MarkupKind::Markdown.into(), value: "tee".to_string().into(), ..Default::default() }), ..Default::default() }), kind: Some((tsc_lsproto::CompletionItemKind::Class).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

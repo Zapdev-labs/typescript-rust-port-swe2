@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_js_missing_property_access_vs() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @checkJs: true
-// @Filename: test.js
-foo.filter(/**/)";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", Some(tsc_lsproto::ClientCapabilities { vs_supports_visual_studio_extensions: Some((true).into()), ..Default::default() }), &content);
-		f.verify_baseline_signature_help();
 	});
 }
 

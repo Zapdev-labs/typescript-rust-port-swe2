@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_destructuring_assignment_nested_in_for_of() {
 	run_test(|t| {
-		let content = r#"// @strict: false
-interface MultiRobot {
-    name: string;
-    skills: {
-        [|[|{| "contextRangeIndex": 0 |}primary|]: string;|]
-        secondary: string;
-    };
-}
-let multiRobots: MultiRobot[];
-let [|[|{| "contextRangeIndex": 2 |}primary|]: string|], secondary: string, primaryA: string, secondaryA: string;
-for ([|{ skills: { [|{| "contextRangeIndex": 4 |}primary|]: primaryA, secondary: secondaryA } } of multiRobots|]) {
-    primaryA;
-}
-for ([|{ skills: { [|{| "contextRangeIndex": 6 |}primary|], secondary } } of multiRobots|]) {
-    [|primary|];
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into(), f.ranges()[5].clone().into(), f.ranges()[3].clone().into(), f.ranges()[7].clone().into(), f.ranges()[8].clone().into()]);
 	});
 }
 

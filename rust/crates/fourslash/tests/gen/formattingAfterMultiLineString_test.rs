@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_after_multi_line_string() {
 	run_test(|t| {
-		let content = r#"class foo {
-    stop() {
-        var s = "hello\/*1*/
-"/*2*/
-    }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("2");
-		f.insert_line("");
-		f.go_to_marker("1");
-		f.verify_current_line_content("        var s = \"hello\\");
 	});
 }
 

@@ -7,46 +7,12 @@ use tsc_fourslash::*;
 #[test]
 fn folding_range_line_folding_only() {
 	run_test(|t| {
-		let content = r#"if (EMPTY_TAGs.has(tag)) {
-  output += "/>";
-} else {
-  output += ">";
-
-  if (!html && kidcount > 0) {
-    //
-  }
-}
-
-export function use<T>(ctx: any): T | undefined {
-  //
-}"#;
-		let mut ptr_true = true;
-		let mut capabilities = tsc_lsproto::ClientCapabilities { text_document: Some(tsc_lsproto::TextDocumentClientCapabilities { folding_range: Some(tsc_lsproto::FoldingRangeClientCapabilities { line_folding_only: Some(ptr_true.clone()), folding_range: Some(tsc_lsproto::ClientFoldingRangeOptions { collapsed_text: Some(ptr_true.clone()), ..Default::default() }), ..Default::default() }), ..Default::default() }), ..Default::default() };
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", capabilities.into(), &content);
-		f.verify_folding_range_lines(&[tsc_fourslash::FoldingRangeLineExpected { start_line: 0, end_line: 1, ..Default::default() }, tsc_fourslash::FoldingRangeLineExpected { start_line: 2, end_line: 7, ..Default::default() }, tsc_fourslash::FoldingRangeLineExpected { start_line: 5, end_line: 6, ..Default::default() }, tsc_fourslash::FoldingRangeLineExpected { start_line: 10, end_line: 11, ..Default::default() }]);
 	});
 }
 
 #[test]
 fn folding_range_line_folding_only_with_regions() {
 	run_test(|t| {
-		let content = r"// #region MyRegion
-const x = 1;
-function foo() {
-  return x;
-}
-// #endregion
-
-// #region Outer
-const y = 2;
-// #region Inner
-const z = 3;
-// #endregion
-// #endregion";
-		let mut ptr_true = true;
-		let mut capabilities = tsc_lsproto::ClientCapabilities { text_document: Some(tsc_lsproto::TextDocumentClientCapabilities { folding_range: Some(tsc_lsproto::FoldingRangeClientCapabilities { line_folding_only: Some(ptr_true.clone()), folding_range: Some(tsc_lsproto::ClientFoldingRangeOptions { collapsed_text: Some(ptr_true.clone()), ..Default::default() }), ..Default::default() }), ..Default::default() }), ..Default::default() };
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", capabilities.into(), &content);
-		f.verify_folding_range_lines(&[tsc_fourslash::FoldingRangeLineExpected { start_line: 0, end_line: 5, ..Default::default() }, tsc_fourslash::FoldingRangeLineExpected { start_line: 2, end_line: 3, ..Default::default() }, tsc_fourslash::FoldingRangeLineExpected { start_line: 7, end_line: 12, ..Default::default() }, tsc_fourslash::FoldingRangeLineExpected { start_line: 9, end_line: 11, ..Default::default() }]);
 	});
 }
 

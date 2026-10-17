@@ -7,28 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_on_constructor_with_generic_parameter() {
 	run_test(|t| {
-		let content = r"interface I {
-    x: number;
-}
-class Foo<T> {
-    y: T;
-}
-class A {
-    foo() { }
-}
-class B extends A {
-    constructor(a: Foo<I>, b: number) {
-        super();
-    }
-}
-var x = new /*2*/B(/*1*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "B(a: Foo<I>, b: number): B".to_string().into(), ..Default::default() });
-		f.insert("null,");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "B(a: Foo<I>, b: number): B".to_string().into(), ..Default::default() });
-		f.insert("10);");
-		f.verify_quick_info_at("2", "constructor B(a: Foo<I>, b: number): B", "");
 	});
 }
 

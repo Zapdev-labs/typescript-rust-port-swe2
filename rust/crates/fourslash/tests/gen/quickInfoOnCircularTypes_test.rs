@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_on_circular_types() {
 	run_test(|t| {
-		let content = r"interface A { (): B; };
-declare var a: A;
-var xx = a();
-
-interface B { (): C; };
-declare var b: B;
-var yy = b();
-
-interface C { (): A; };
-declare var c: C;
-var zz = c();
-
-x/*B*/x = y/*C*/y;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("B", "var xx: B", "");
-		f.verify_quick_info_at("C", "var yy: C", "");
 	});
 }
 

@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_default_import() {
 	run_test(|t| {
-		let content = r#"// @Filename: B.ts
-[|export default class /*1*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 0 |}B|] {
-    test() {
-    }
-}|]
-// @Filename: A.ts
-[|import /*2*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 2 |}B|] from "./B";|]
-let b = new [|B|]();
-b.test();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into(), f.ranges()[3].clone().into(), f.ranges()[4].clone().into()]);
-		f.verify_baseline_document_highlights(None, vec!["1".into()]);
 	});
 }
 

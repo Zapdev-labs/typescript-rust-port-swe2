@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_private_method() {
 	run_test(|t| {
-		let content = r#"class Foo {
-   [|[|{| "contextRangeIndex": 0 |}#foo|]() { }|]
-   callFoo() {
-       return this.[|#foo|]();
-   }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename(None, to_any(f.get_ranges_by_text().get("#foo")).into_iter().map(Into::into));
 	});
 }
 

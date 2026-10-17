@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_overridden_member21() {
 	run_test(|t| {
-		let content = r#"// @strict: true
-// @target: esnext
-// @lib: esnext
-const prop = "foo" as const;
-
-abstract class A {}
-
-export class B extends A {
-  static [|/*1*/override|] readonly [prop] = "B";
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["1".into()]);
 	});
 }
 

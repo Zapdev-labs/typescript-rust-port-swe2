@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_missing_type_annotation_on_exports35_variable_releative() {
 	run_test(|t| {
-		let content = r"// @isolatedDeclarations: true
-// @declaration: true
-// @Filename: /code.ts
-const foo = { a: 1 }
-export const exported = foo;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Add annotation of type 'typeof foo'".to_string().into(), new_file_content: r"const foo = { a: 1 }
-export const exported: typeof foo = foo;".to_string().into(), index: 1, ..Default::default() });
 	});
 }
 

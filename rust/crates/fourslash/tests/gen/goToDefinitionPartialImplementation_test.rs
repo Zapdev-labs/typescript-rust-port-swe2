@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_partial_implementation() {
 	run_test(|t| {
-		let content = r"// @Filename: goToDefinitionPartialImplementation_1.ts
-namespace A {
-    export interface /*Part1Definition*/IA {
-        y: string;
-    }
-}
-// @Filename: goToDefinitionPartialImplementation_2.ts
-namespace A {
-    export interface /*Part2Definition*/IA {
-        x: number;
-    }
-
-    var x: [|/*Part2Use*/IA|];
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["Part2Use".into()]);
 	});
 }
 

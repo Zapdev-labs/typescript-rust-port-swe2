@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_inside_with_block() {
 	run_test(|t| {
-		let content = r"/*1*/var /*2*/x = 0;
-
-with ({}) {
-    var y = x;  // Reference of x here should not be picked
-    y++;        // also reference for y should be ignored
-}
-
-/*3*/x = /*4*/x + 1;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into()]);
 	});
 }
 

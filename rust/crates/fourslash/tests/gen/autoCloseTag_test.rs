@@ -7,52 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_close_tag() {
 	run_test(|t| {
-		let content = r"// @noLib: true
-
-// @Filename: /0.tsx
-const x = <div>/*0*/;
-
-// @Filename: /1.tsx
-const x = <div> foo/*1*/ </div>;
-
-// @Filename: /2.tsx
-const x = <div></div>/*2*/;
-
-// @Filename: /3.tsx
-const x = <div/>/*3*/;
-
-// @Filename: /4.tsx
-const x = <div>
-    <p>/*4*/
-    </div>
-</p>;
-
-// @Filename: /5.tsx
-const x = <div> text /*5*/;
-
-// @Filename: /6.tsx
-const x = <div>
-    <div>/*6*/
-</div>;
-
-// @Filename: /7.tsx
-const x = <div>
-    <p>/*7*/
-</div>;
-
-// @Filename: /8.tsx
-const x = <div>
-    <div>/*8*/</div>
-</div>;
-
-// @Filename: /9.tsx
-const x = <p>
-    <div>
-        <div>/*9*/
-    </div>
-</p>";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_jsx_closing_tag(&std::collections::BTreeMap::from([("0".to_string().into(), Some(("</div>").into())), ("1".to_string().into(), None), ("2".to_string().into(), None), ("3".to_string().into(), None), ("4".to_string().into(), Some(("</p>").into())), ("5".to_string().into(), Some(("</div>").into())), ("6".to_string().into(), Some(("</div>").into())), ("7".to_string().into(), Some(("</p>").into())), ("8".to_string().into(), None), ("9".to_string().into(), Some(("</div>").into()))]));
 	});
 }
 

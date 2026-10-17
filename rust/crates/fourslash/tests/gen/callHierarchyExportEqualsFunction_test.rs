@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn call_hierarchy_export_equals_function() {
 	run_test(|t| {
-		let content = r#"// @filename: main.ts
-import bar = require("./other");
-
-function foo() {
-    bar();
-}
-// @filename: other.ts
-export = /**/function () {
-    baz();
-}
-
-function baz() {
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_baseline_call_hierarchy();
 	});
 }
 

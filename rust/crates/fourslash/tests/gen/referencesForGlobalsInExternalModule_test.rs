@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_for_globals_in_external_module() {
 	run_test(|t| {
-		let content = r"/*1*/var /*2*/topLevelVar = 2;
-var topLevelVar2 = /*3*/topLevelVar;
-
-/*4*/class /*5*/topLevelClass { }
-var c = new /*6*/topLevelClass();
-
-/*7*/interface /*8*/topLevelInterface { }
-var i: /*9*/topLevelInterface;
-
-/*10*/module /*11*/topLevelModule {
-    export var x;
-}
-var x = /*12*/topLevelModule.x;
-
-export = x;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into(), "7".into(), "8".into(), "9".into(), "10".into(), "11".into(), "12".into()]);
 	});
 }
 

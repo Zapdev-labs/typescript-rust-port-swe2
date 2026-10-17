@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn proto_var_visible_with_outer_scope_underscore_proto() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r#"// outer
-var ___proto__ = 10;
-function foo() {
-    var __proto__ = "hello";
-    /**/
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "__proto__".to_string().into(), detail: Some(("(local var) __proto__: string").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "___proto__".to_string().into(), detail: Some(("var ___proto__: number").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

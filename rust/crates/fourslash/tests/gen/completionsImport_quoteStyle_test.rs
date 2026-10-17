@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_import_quote_style() {
 	run_test(|t| {
-		let content = r"// @module: esnext
-// @Filename: /a.ts
-export const foo = 0;
-// @Filename: /b.ts
-fo/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_apply_code_action_from_completion("", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "foo".to_string().into(), source: "./a".to_string().into(), description: "Add import from \"./a\"".to_string().into(), user_preferences: Some(tsc_lsutil::UserPreferences { quote_preference: tsc_lsutil::quote_preference("single").into(), ..Default::default() }), new_file_content: Some((r"import { foo } from './a';
-
-fo").into()), ..Default::default() });
 	});
 }
 

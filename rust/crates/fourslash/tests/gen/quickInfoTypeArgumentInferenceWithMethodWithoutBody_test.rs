@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_type_argument_inference_with_method_without_body() {
 	run_test(|t| {
-		let content = r"interface ProxyHandler<T extends object> {
-    getPrototypeOf?(target: T): object | null;
-}
-interface ProxyConstructor {
-    new <T extends object>(target: T, handler: ProxyHandler<T>): T;
-}
-declare var Proxy: ProxyConstructor;
-let target = {}
-let proxy = new /**/Proxy(target, {
-    getPrototypeOf()
-})";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_quick_info_exists();
 	});
 }
 

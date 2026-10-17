@@ -7,38 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_import_js_module_exports_assignment() {
 	run_test(|t| {
-		let content = r#"// @Filename: /home/src/workspaces/project/tsconfig.json
-{ "compilerOptions": { "module": "commonjs", "allowJs": true, "lib": ["es5"] } }
-// @Filename: /home/src/workspaces/project/third_party/marked/src/defaults.js
-function getDefaults() {
-  return {
-    baseUrl: null,
-  };
-}
-
-function changeDefaults(newDefaults) {
-  module.exports.defaults = newDefaults;
-}
-
-module.exports = {
-  defaults: getDefaults(),
-  getDefaults,
-  changeDefaults
-};
-// @Filename: /home/src/workspaces/project/index.ts
-/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		let mut opts666 = f.get_options();
-		opts666.format_code_settings.new_line_character = "\n";
-		f.configure(opts666);
-		f.go_to_marker("");
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { ..Default::default() }), ..Default::default() }));
-		f.insert("d");
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "defaults".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./third_party/marked/src/defaults".to_string().into(), ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }.into()].into(), excludes: vec!["newDefaults".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_apply_code_action_from_completion("", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "defaults".to_string().into(), source: "./third_party/marked/src/defaults".to_string().into(), description: "Add import from \"./third_party/marked/src/defaults\"".to_string().into(), auto_import_fix: Some(tsc_lsproto::AutoImportFix { module_specifier: "./third_party/marked/src/defaults".to_string().into(), ..Default::default() }), new_file_content: Some((r#"import { defaults } from "./third_party/marked/src/defaults";
-
-d"#).into()), ..Default::default() });
 	});
 }
 

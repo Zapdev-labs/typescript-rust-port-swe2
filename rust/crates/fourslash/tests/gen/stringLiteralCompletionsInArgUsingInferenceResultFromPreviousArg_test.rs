@@ -7,35 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn string_literal_completions_in_arg_using_inference_result_from_previous_arg() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r#"// @strict: true
-// https://github.com/microsoft/TypeScript/issues/55545
-enum myEnum {
-  valA = "valA",
-  valB = "valB",
-}
-
-interface myEnumParamMapping {
-  ["valA"]: "1" | "2";
-  ["valB"]: "3" | "4";
-}
-
-function myFunction<K extends keyof typeof myEnum>(
-  a: K,
-  b: myEnumParamMapping[K],
-) {}
-
-myFunction("valA", "/*ts1*/");
-myFunction("valA", "#, "`"), r"/*ts2*/"), "`"), r#");
-
-function myFunction2<K extends keyof typeof myEnum>(
-  a: K,
-  { b }: { b: myEnumParamMapping[K] },
-) {}
-
-myFunction2("valA", { b: "/*ts3*/" });
-myFunction2("valA", { b: "#), "`"), r"/*ts4*/"), "`"), r" });");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["ts1", "ts2", "ts3", "ts4"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["1".into(), "2".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

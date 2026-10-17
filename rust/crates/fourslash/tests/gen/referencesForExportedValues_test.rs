@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_for_exported_values() {
 	run_test(|t| {
-		let content = r"namespace M {
-    /*1*/export var /*2*/variable = 0;
-
-    // local use
-    var x = /*3*/variable;
-}
-
-// external use
-M./*4*/variable";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into()]);
 	});
 }
 

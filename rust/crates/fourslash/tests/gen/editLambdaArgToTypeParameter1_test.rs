@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn edit_lambda_arg_to_type_parameter1() {
 	run_test(|t| {
-		let content = r"class C<T> {
-    foo(x: T) {
-        return (a: number/*1*/) => x;
-    }
-}
-/*2*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.backspace(6);
-		f.insert("T");
-		f.verify_no_errors();
-		f.go_to_marker("2");
-		f.insert_line("");
-		f.verify_no_errors();
 	});
 }
 

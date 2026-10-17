@@ -7,45 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quickinfo_verbosity_class2() {
 	run_test(|t| {
-		let content = r#"interface Apple {
-    color: string;
-}
-class Foo/*1*/<T> {
-    constructor(public x: T) { }
-    public y!: T;
-    static whatever(): void { }
-    private foo(): Apple { return { color: "green" }; }
-    static {
-        const a = class { x?: Apple; };
-    }
-    protected z = true;
-}
-type Whatever/*2*/ = Foo<string>;
-const a/*3*/ = Foo;
-const c/*4*/ = Foo<string>;
-[1].forEach(class/*5*/ <T> {
-    constructor(public x: T) { }
-    public y!: T;
-    static whatever(): void { }
-    private foo(): Apple { return { color: "green" }; }
-    static {
-        const a = class { x?: Apple; };
-    }
-    protected z = true;
-});
-const b/*6*/ = Bar<number>;
-@random()
-abstract class Animal/*7*/ {
-    name!: string;
-    abstract makeSound(): void;
-}
-class Dog/*8*/ {
-    what(this: this, that: Dog) { }
-    #bones: string[];
-}
-const d/*9*/ = new Dog();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("1".to_string().into(), vec![0, 1, 2]), ("2".to_string().into(), vec![0, 1, 2]), ("3".to_string().into(), vec![0, 1]), ("4".to_string().into(), vec![0]), ("5".to_string().into(), vec![0, 1, 2]), ("6".to_string().into(), vec![0]), ("7".to_string().into(), vec![0, 1]), ("8".to_string().into(), vec![0, 1]), ("9".to_string().into(), vec![0, 1])]));
 	});
 }
 

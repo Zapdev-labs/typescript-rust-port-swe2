@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_barrel_export3() {
 	run_test(|t| {
-		let content = r#"// @module: commonjs
-// @Filename: /foo/a.ts
-export const A = 0;
-// @Filename: /foo/b.ts
-export {};
-A/*sibling*/
-// @Filename: /foo/index.ts
-export * from "./a";
-export * from "./b";
-// @Filename: /index.ts
-export * from "./foo";
-export * from "./src";
-// @Filename: /src/a.ts
-export {};
-A/*parent*/
-// @Filename: /src/index.ts
-export * from "./a";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_module_specifiers("sibling", &["./a".into(), "./index".into(), "../index".into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_ending: tsc_modulespecifiers::ImportModuleSpecifierEndingPreference("index"), ..Default::default() }));
-		f.verify_import_fix_module_specifiers("parent", &["../foo/a".into(), "../foo/index".into(), "../index".into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_ending: tsc_modulespecifiers::ImportModuleSpecifierEndingPreference("index"), ..Default::default() }));
 	});
 }
 

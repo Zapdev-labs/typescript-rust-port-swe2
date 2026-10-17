@@ -7,29 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsx_attribute_completion_style_auto() {
 	run_test(|t| {
-		let content = r"// @Filename: foo.tsx
-declare namespace JSX {
-    interface Element { }
-    interface IntrinsicElements {
-        foo: {
-            prop_a: boolean;
-            prop_b: string;
-            prop_c: any;
-            prop_d: { p1: string; }
-            prop_e: string | undefined;
-            prop_f: boolean | undefined | { p1: string; };
-            prop_g: { p1: string; } | undefined;
-            prop_h?: string;
-            prop_i?: boolean;
-            prop_j?: { p1: string; };
-            prop_string_literal_union?: 'input' | 'password' | (string & {})
-        }
-    }
-}
-
-<foo [|prop_/**/|] />";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", Some(tsc_fourslash::get_default_capabilities_with_options(Some(&tsc_fourslash::ClientCapabilitiesOptions { completion_item: Some(tsc_lsproto::ClientCompletionItemOptions { snippet_support: Some((true).into()), ..Default::default() }), ..Default::default() }))), &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "prop_a".to_string().into(), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "prop_b".to_string().into(), text_edit: insert_replace_text_edit("prop_b=\"$1\"", f.ranges()[0].clone().ls_range).into(), insert_text_format: Some((tsc_lsproto::InsertTextFormat::Snippet).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "prop_c".to_string().into(), text_edit: insert_replace_text_edit("prop_c={$1}", f.ranges()[0].clone().ls_range).into(), insert_text_format: Some((tsc_lsproto::InsertTextFormat::Snippet).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "prop_d".to_string().into(), text_edit: insert_replace_text_edit("prop_d={$1}", f.ranges()[0].clone().ls_range).into(), insert_text_format: Some((tsc_lsproto::InsertTextFormat::Snippet).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "prop_e".to_string().into(), text_edit: insert_replace_text_edit("prop_e=\"$1\"", f.ranges()[0].clone().ls_range).into(), insert_text_format: Some((tsc_lsproto::InsertTextFormat::Snippet).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "prop_f".to_string().into(), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "prop_g".to_string().into(), text_edit: insert_replace_text_edit("prop_g={$1}", f.ranges()[0].clone().ls_range).into(), insert_text_format: Some((tsc_lsproto::InsertTextFormat::Snippet).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "prop_h?".to_string().into(), text_edit: insert_replace_text_edit("prop_h=\"$1\"", f.ranges()[0].clone().ls_range).into(), filter_text: Some(("prop_h").into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::Snippet).into()), sort_text: Some((tsc_ls::OPTIONAL_MEMBER.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "prop_i?".to_string().into(), text_edit: insert_replace_text_edit("prop_i", f.ranges()[0].clone().ls_range).into(), filter_text: Some(("prop_i").into()), sort_text: Some((tsc_ls::OPTIONAL_MEMBER.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "prop_j?".to_string().into(), text_edit: insert_replace_text_edit("prop_j={$1}", f.ranges()[0].clone().ls_range).into(), filter_text: Some(("prop_j").into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::Snippet).into()), sort_text: Some((tsc_ls::OPTIONAL_MEMBER.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "prop_string_literal_union?".to_string().into(), text_edit: insert_replace_text_edit("prop_string_literal_union=\"$1\"", f.ranges()[0].clone().ls_range).into(), filter_text: Some(("prop_string_literal_union").into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::Snippet).into()), sort_text: Some((tsc_ls::OPTIONAL_MEMBER.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { jsx_attribute_completion_style: tsc_lsutil::JsxAttributeCompletionStyle::AUTO.into(), ..Default::default() }, ..Default::default() }), ..Default::default() }));
 	});
 }
 

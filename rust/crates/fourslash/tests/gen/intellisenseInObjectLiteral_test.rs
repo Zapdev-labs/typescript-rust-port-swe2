@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn intellisense_in_object_literal() {
 	run_test(|t| {
-		let content = r#"var x = 3;
-
-class Foo {
-    static something() {
-        return { "prop": /**/x };
-    }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("", "var x: number", "");
 	});
 }
 

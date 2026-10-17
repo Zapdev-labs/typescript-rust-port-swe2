@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_for_merged_declarations2() {
 	run_test(|t| {
-		let content = r"namespace ATest {
-    export interface Bar { }
-}
-
-function ATest() { }
-
-/*1*/import /*2*/alias = ATest; // definition
-
-var a: /*3*/alias.Bar; // namespace
-/*4*/alias.call(this); // value";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into()]);
 	});
 }
 

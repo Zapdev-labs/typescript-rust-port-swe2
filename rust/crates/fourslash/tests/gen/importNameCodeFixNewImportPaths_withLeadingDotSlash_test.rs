@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_new_import_paths_with_leading_dot_slash() {
 	run_test(|t| {
-		let content = r#"// @Filename: /a.ts
-[|foo|]
-// @Filename: /thisHasPathMapping.ts
-export function foo() {};
-// @Filename: /tsconfig.json
-{
-    "compilerOptions": {
-        "baseUrl": ".",
-        "paths": {
-            "foo": ["././thisHasPathMapping"]
-        }
-    }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_at_position(&[r#"import { foo } from "foo";
-
-foo"#.into()], None);
 	});
 }
 

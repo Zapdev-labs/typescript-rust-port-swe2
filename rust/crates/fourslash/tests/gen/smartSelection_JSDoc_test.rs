@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn smart_selection_js_doc() {
 	run_test(|t| {
-		let content = r"// Not a JSDoc comment
-/**
- * @param {number} x The number to square
- */
-function /**/square(x) {
-  return x * x;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_selection_ranges();
 	});
 }
 

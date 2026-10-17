@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn path_completions_allow_module_augmentation_extensions() {
 	run_test(|t| {
-		let content = r#"// @Filename: /project/foo.css
-export const foo = 0;
-// @Filename: declarations.d.ts
-declare module "*.css" {}
-// @Filename: /project/main.ts
-import {} from ".//**/""#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["foo.css".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

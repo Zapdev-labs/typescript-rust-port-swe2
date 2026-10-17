@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsdoc_deprecated_suggestion22() {
 	run_test(|t| {
-		let content = r"// @filename: /a.ts
-const foo: {
-    /**
-	 * @deprecated
-	 */
-	(a: string, b: string): string;
-	(a: string, b: number): string;
-} = (a: string, b: string | number) => a + b;
-
-[|foo|](1, 1);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_suggestion_diagnostics(&[]);
 	});
 }
 

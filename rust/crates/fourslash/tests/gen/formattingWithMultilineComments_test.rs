@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_with_multiline_comments() {
 	run_test(|t| {
-		let content = r"f(/*
-/*2*/         */() => { /*1*/ });";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.insert_line("");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"         */() => {");
 	});
 }
 

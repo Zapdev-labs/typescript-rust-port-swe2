@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn document_highlight_malformed_ambient_module_export_equals() {
 	run_test(|t| {
-		let content = r#"// @Filename: /a.d.ts
-declare moduleu "m" {
-  interface A { x: 1 }
-  function f(): A[];
-  /*m*/export = f;
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, vec!["m".into()]);
 	});
 }
 

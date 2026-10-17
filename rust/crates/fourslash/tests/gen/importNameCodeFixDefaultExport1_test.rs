@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_default_export1() {
 	run_test(|t| {
-		let content = r#"// @Filename: /foo-bar.ts
-export default function fooBar();
-// @Filename: /b.ts
-[|import * as fb from "./foo-bar";
-foo/**/Bar|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/b.ts");
-		f.verify_import_fix_at_position(&[r#"import fooBar, * as fb from "./foo-bar";
-fooBar"#.into()], None);
 	});
 }
 

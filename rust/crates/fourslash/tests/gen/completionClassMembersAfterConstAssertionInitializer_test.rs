@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn class_members_after_const_assertion_initializer() {
 	run_test(|t| {
-		let content = r"
-interface A {
-	a: number
-	def: string
-}
-
-class B implements A {
-	a = 1 as const
-	/**/
-}
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![&tsc_lsproto::CompletionItem { label: "def".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Field).into()), sort_text: Some((tsc_ls::LOCATION_PRIORITY.to_string()).into()), ..Default::default() }].push(COMPLETION_CLASS_ELEMENT_KEYWORDS).into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -7,29 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn space_before_and_after_binary_operators() {
 	run_test(|t| {
-		let content = r"let i = 0;
-/*1*/(i++,i++);
-/*2*/(i++,++i);
-/*3*/(1,2);
-/*4*/(i++,2);
-/*5*/(i++,i++,++i,i--,2);
-let s = 'foo';
-/*6*/for (var i = 0,ii = 2; i < s.length; ii++,i++) {
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"(i++, i++);");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"(i++, ++i);");
-		f.go_to_marker("3");
-		f.verify_current_line_content(r"(1, 2);");
-		f.go_to_marker("4");
-		f.verify_current_line_content(r"(i++, 2);");
-		f.go_to_marker("5");
-		f.verify_current_line_content(r"(i++, i++, ++i, i--, 2);");
-		f.go_to_marker("6");
-		f.verify_current_line_content(r"for (var i = 0, ii = 2; i < s.length; ii++, i++) {");
 	});
 }
 

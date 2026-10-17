@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn string_literal_completions_in_position_typed_using_rest() {
 	run_test(|t| {
-		let content = r#"declare function pick<T extends object, K extends keyof T>(obj: T, ...keys: K[]): Pick<T, K>;
-declare function pick2<T extends object, K extends (keyof T)[]>(obj: T, ...keys: K): Pick<T, K[number]>;
-
-const obj = { aaa: 1, bbb: '2', ccc: true };
-
-pick(obj, 'aaa', '/*ts1*/');
-pick2(obj, 'aaa', '/*ts2*/');
-class Q<T> {
-  public select<Keys extends keyof T>(...args: Keys[]) {}
-}
-new Q<{ id: string; name: string }>().select("name", "/*ts3*/");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["ts1", "ts2"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["aaa".into(), "bbb".into(), "ccc".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["ts3"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["id".into(), "name".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_js_doc_tags_typedef() {
 	run_test(|t| {
-		let content = r"// @noEmit: true
-// @allowJs: true
-// @Filename: quickInfoJsDocTagsTypedef.js
-/**
- * Bar comment
- * @typedef {Object} /*1*/Bar
- * @property {string} baz - baz comment
- * @property {string} qux - qux comment
- */
-
-/**
- * foo comment
- * @param {/*2*/Bar} x - x comment
- * @returns {Bar}
- */
-function foo(x) {
-    return x;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

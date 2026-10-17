@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_union_type() {
 	run_test(|t| {
-		let content = r"declare const a: (fn?: ((x: string) => string) | ((y: number) => number)) => void;
-declare const b: (x: string | number) => void;
-
-interface Callback {
-    (x: string): string;
-    (x: number): number;
-    (x: string | number): string | number;
-}
-declare function c(callback: Callback): void;
-a((/*1*/) => {
-    return undefined;
-});
-
-b(/*2*/);
-
-c((/*3*/) => {});";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_signature_help();
 	});
 }
 

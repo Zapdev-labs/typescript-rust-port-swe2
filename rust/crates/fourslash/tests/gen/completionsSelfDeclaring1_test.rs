@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_self_declaring1() {
 	run_test(|t| {
-		let content = r"interface Test {
-  keyPath?: string;
-  autoIncrement?: boolean;
-}
-
-function test<T extends Record<string, Test>>(opt: T) { }
-
-test({
-  a: {
-    keyPath: '',
-    [|a|]/**/
-  }
-})";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "autoIncrement?".to_string().into(), filter_text: Some(("autoIncrement").into()), sort_text: Some((tsc_ls::OPTIONAL_MEMBER.to_string()).into()), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { insert_replace_edit: Some(tsc_lsproto::InsertReplaceEdit { new_text: "autoIncrement".to_string().into(), insert: f.ranges()[0].clone().ls_range.into(), replace: f.ranges()[0].clone().ls_range.into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

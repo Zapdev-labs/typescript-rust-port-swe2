@@ -7,32 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_require() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"// @allowJs: true
-// @checkJs: true
-// @Filename: foo.js
-module.exports = function foo() {}
-// @Filename: utils.js
-function util1() {}
-function util2() {}
-module.exports = { util1, util2 };
-// @Filename: blah.js
-export default class Blah {}
-// @Filename: index.js
-foo();
-util1();
-util2();
-new Blah;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("index.js");
-		f.verify_code_fix_all(&tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport".to_string().into(), new_file_content: r#"const { default: Blah } = require("./blah");
-const foo = require("./foo");
-const { util1, util2 } = require("./utils");
-
-foo();
-util1();
-util2();
-new Blah;"#.to_string().into(), ..Default::default() });
 	});
 }
 

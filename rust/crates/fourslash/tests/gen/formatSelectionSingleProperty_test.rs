@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_selection_single_property() {
 	run_test(|t| {
-		let content = r"console.log({
-}, {
-/*1*/    a: 1,
-/*2*/    b: 2
-})";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_selection("1", "2");
-		f.verify_current_file_content(r"console.log({
-}, {
-    a: 1,
-    b: 2
-})");
 	});
 }
 

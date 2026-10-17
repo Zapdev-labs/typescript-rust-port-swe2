@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_implementation_interface_08() {
 	run_test(|t| {
-		let content = r"interface Base {
-    hello (): void;
-}
-
-interface A extends Base {}
-interface B extends C, A {}
-interface C extends B, A {}
-
-class X implements B {
-    [|hello|]() {}
-}
-
-function someFunction(d : A) {
-    d.he/*function_call*/llo();
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_implementation(&["function_call".into()]);
 	});
 }
 

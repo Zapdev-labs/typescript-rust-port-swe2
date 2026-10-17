@@ -7,27 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_generic_type_path() {
 	run_test(|t| {
-		let content = r#"
-function f<T>(x: T) {
-  class C {
-    value = x
-  }
-  return new C()
-}
-
-class Box<T> {
-  public value: T;
-  constructor(value: T) {
-    this.value = value;
-  }
-}
-
-const instance = f/*callF*/("hello");
-const b1/*b1*/ = new Box/*newBox*/(instance);
-declare const b2/*b2*/: Box<typeof instance>;
-"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

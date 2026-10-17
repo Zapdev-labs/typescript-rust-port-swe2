@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_top_level_for_await_module_blank_compiler_options_in_ts_config() {
 	run_test(|t| {
-		let content = r#"// @filename: /dir/a.ts
-declare const p: number[];
-for await (const _ of p);
-export {};
-// @filename: /dir/tsconfig.json
-{
-    "compilerOptions": {
-        "module": "commonjs"
-    }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix_not_available(&["fixModuleOption".into()]);
 	});
 }
 

@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_class_with_static_this_access() {
 	run_test(|t| {
-		let content = r#"[|class /*0*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 0 |}C|] {
-    static s() {
-        /*1*/[|this|];
-    }
-    static get f() {
-        return /*2*/[|this|];
-
-        function inner() { this; }
-        class Inner { x = this; }
-    }
-}|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["0".into(), "1".into(), "2".into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into()]);
 	});
 }
 

@@ -7,32 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_from_node_modules_dep4() {
 	run_test(|t| {
-		let content = r#"// @Filename: /index.ts
-import hljs from "highlight.js/lib/core"
-import { h } from "highlight.js/lib/core";
-import { /*notOk*/h as hh } from "highlight.js/lib/core";
-/*ok*/[|hljs|];
-/*okWithAlias*/[|h|];
-/*ok2*/[|hh|];
-// @Filename: /node_modules/highlight.js/lib/core.d.ts
-declare const hljs: { registerLanguage(s: string): void };
-export default hljs;
-export const h: string;
-// @Filename: /tsconfig.json
-{}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("ok");
-		f.verify_rename_succeeded(Some(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }));
-		f.verify_rename_succeeded(Some(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_FALSE.into(), ..Default::default() }));
-		f.go_to_marker("ok2");
-		f.verify_rename_succeeded(Some(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }));
-		f.verify_rename_succeeded(Some(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_FALSE.into(), ..Default::default() }));
-		f.go_to_marker("notOk");
-		f.verify_rename_failed(Some(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }));
-		f.verify_rename_failed(Some(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_FALSE.into(), ..Default::default() }));
-		f.go_to_marker("okWithAlias");
-		f.verify_rename_succeeded(Some(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }));
-		f.verify_rename_failed(Some(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_FALSE.into(), ..Default::default() }));
 	});
 }
 

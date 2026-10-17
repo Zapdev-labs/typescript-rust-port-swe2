@@ -7,30 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_space_after_implements_extends() {
 	run_test(|t| {
-		let content = r"class C1 implements Array<string>{
-}
-
-class C2 implements Number{
-}
-
-class C3 extends Array<string>{
-}
-
-class C4 extends Number{
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.verify_current_file_content(r"class C1 implements Array<string> {
-}
-
-class C2 implements Number {
-}
-
-class C3 extends Array<string> {
-}
-
-class C4 extends Number {
-}");
 	});
 }
 

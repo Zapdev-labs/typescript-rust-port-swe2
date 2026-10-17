@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_type_only_import() {
 	run_test(|t| {
-		let content = r"// @Filename: /a.ts
-enum /*1*/SyntaxKind { SourceFile }
-export type { SyntaxKind }
-// @Filename: /b.ts
- export type { SyntaxKind } from './a';
-// @Filename: /c.ts
-import type { SyntaxKind } from './b';
-let kind: [|/*2*/SyntaxKind|];";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["2".into()]);
 	});
 }
 

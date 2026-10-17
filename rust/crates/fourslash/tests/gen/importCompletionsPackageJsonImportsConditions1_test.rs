@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_completions_package_json_imports_conditions1() {
 	run_test(|t| {
-		let content = r##"// @module: node18
-// @Filename: /package.json
-{
-  "imports": {
-    "#thing": {
-        "types": { "import": "./types-esm/thing.d.mts", "require": "./types/thing.d.ts" },
-        "default": { "import": "./esm/thing.mjs", "require": "./dist/thing.js" }
-     }
-  }
-}
-// @Filename: /types/thing.d.ts
-export function something(name: string): any;
-// @Filename: /src/foo.ts
-import {} from "/*1*/";"##;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["1"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["#thing".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

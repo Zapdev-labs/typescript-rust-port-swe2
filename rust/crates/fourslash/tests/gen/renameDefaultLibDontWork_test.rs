@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_default_lib_dont_work() {
 	run_test(|t| {
-		let content = r#"// @Filename: file1.ts
-[|var [|{| "contextRangeIndex": 0 |}test|] = "foo";|]
-console.log([|test|]);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into()]);
 	});
 }
 

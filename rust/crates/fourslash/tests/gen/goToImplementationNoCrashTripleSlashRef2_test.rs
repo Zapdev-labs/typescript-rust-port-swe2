@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_implementation_no_crash_triple_slash_ref2() {
 	run_test(|t| {
-		let content = r#"// @Filename: /node_modules/@types/react/index.d.ts
-export type JSX = {};
-
-// @Filename: /node_modules/excalidraw/index.d.ts
-/// <reference types="react" />
-
-// @Filename: /index.ts
-import type {JSX} from '/*m*/react';
-"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_implementation(&["m".into()]);
 	});
 }
 

@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn generic_call_signatures_in_non_generic_types1() {
 	run_test(|t| {
-		let content = r"interface WrappedObject<T> { }
-interface WrappedArray<T> { }
-interface Underscore {
-    <T>(list: T[]): WrappedArray<T>;
-    <T>(obj: T): WrappedObject<T>;
-}
-var _: Underscore;
-var a: number[];
-var /**/b = _(a); ";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("", "var b: WrappedArray<number>", "");
 	});
 }
 

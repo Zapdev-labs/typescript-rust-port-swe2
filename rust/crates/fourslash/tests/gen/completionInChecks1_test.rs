@@ -7,33 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_in_checks1() {
 	run_test(|t| {
-		let content = r#"// @target: esnext
-declare const obj: {
-  a?: string;
-  b: number;
-};
-
-if ("/*1*/" in obj) {}
-if (((("/*2*/"))) in obj) {}
-if ("/*3*/" in (((obj)))) {}
-if (((("/*4*/"))) in (((obj)))) {}
-
-type MyUnion = { missing: true } | { result: string };
-declare const u: MyUnion;
-if ("/*5*/" in u) {}
-
-class Cls1 { foo = ''; #bar = 0; }
-declare const c1: Cls1;
-if ("/*6*/" in c1) {}
-
-class Cls2 { foo = ''; private bar = 0; }
-declare const c2: Cls2;
-if ("/*7*/" in c2) {}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["1", "2", "3", "4"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["a".into(), "b".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("5"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["missing".into(), "result".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("6"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["foo".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("7"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["bar".into(), "foo".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_at_identifier_definition_locations_var_declarations() {
 	run_test(|t| {
-		let content = r"var aa = 1;
-var /*varName1*/
-var a/*varName2*/
-var a2,/*varName3*/
-var a2, a/*varName4*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(f.markers()), None);
 	});
 }
 

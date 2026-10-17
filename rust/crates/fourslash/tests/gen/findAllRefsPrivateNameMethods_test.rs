@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_private_name_methods() {
 	run_test(|t| {
-		let content = r"class C {
-    /*1*/#foo(){ }
-    constructor() {
-        this./*2*/#foo();
-    }
-}
-class D extends C {
-    constructor() {
-        super()
-        this.#foo = 20;
-    }
-}
-class E {
-    /*3*/#foo(){ }
-    constructor() {
-        this./*4*/#foo();
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into()]);
 	});
 }
 

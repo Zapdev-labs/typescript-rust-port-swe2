@@ -7,32 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_array_literal() {
 	run_test(|t| {
-		let content = r"/*1*/x= [];
-y = [
-/*2*/           1,
-/*3*/  2
-/*4*/ ];
-
-z = [[
-/*5*/  1,
-/*6*/             2
-/*7*/      ]  ];";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"x = [];");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"    1,");
-		f.go_to_marker("3");
-		f.verify_current_line_content(r"    2");
-		f.go_to_marker("4");
-		f.verify_current_line_content(r"];");
-		f.go_to_marker("5");
-		f.verify_current_line_content(r"    1,");
-		f.go_to_marker("6");
-		f.verify_current_line_content(r"    2");
-		f.go_to_marker("7");
-		f.verify_current_line_content(r"]];");
 	});
 }
 

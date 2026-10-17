@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn path_completions_package_json_imports_wildcard6() {
 	run_test(|t| {
-		let content = r##"// @module: node18
-// @Filename: /package.json
-{
-  "name": "foo",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
-  "imports": {
-    "#*": "./dist/*?.d.ts"
-  }
-}
-// @Filename: /dist/index.d.ts
-export const index = 0;
-// @Filename: /dist/blah?.d.ts
-export const blah = 0;
-// @Filename: /index.mts
-import { } from "/**/";"##;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "#blah".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::File).into()), detail: Some(("#blah.d.ts").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

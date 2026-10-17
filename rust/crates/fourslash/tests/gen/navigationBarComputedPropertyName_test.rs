@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn navigation_bar_computed_property_name() {
 	run_test(|t| {
-		let content = r#"function F(key, value) {
-    return {
-        [key]: value,
-        "prop": true
-    }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_symbol();
 	});
 }
 

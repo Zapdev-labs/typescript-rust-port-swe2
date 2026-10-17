@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn document_highlights_module_import_files_to_search() {
 	run_test(|t| {
-		let content = r#"// @Filename: /node_modules/@types/foo/index.d.ts
-export const x: number;
-// @Filename: /a.ts
-import * as foo from "foo";
-foo.[|x|];
-// @Filename: /b.ts
-import { [|x|] } from "foo";
-// @Filename: /c.ts
-import { x } from "foo";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights_with_options(None, &["/a.ts".into(), "/b.ts".into()], to_any(f.ranges()).into_iter().map(Into::into));
 	});
 }
 

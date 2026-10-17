@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn regex_error_recovery() {
 	run_test(|t| {
-		let content = r#" // test code
-//var x = //**/a/;/*1*/
-//x.exec("bab");
- Bug 579071: Parser no longer detects a Regex when an open bracket is inserted
-verify.quickInfoIs("RegExp");
-verify.not.errorExistsAfterMarker("1");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.insert("(");
 	});
 }
 

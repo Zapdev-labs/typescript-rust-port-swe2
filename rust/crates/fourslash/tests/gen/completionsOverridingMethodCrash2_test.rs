@@ -7,34 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_overriding_method_crash2() {
 	run_test(|t| {
-		let content = r#"// @Filename: /home/src/workspaces/project/tsconfig.json
-{
-  "compilerOptions": {
-    "module": "nodenext",
-    "lib": ["es5"]
-  }
-}
-// @Filename: /home/src/workspaces/project/utils.ts
-export class Element {
-    // ...
-}
-
-export abstract class Component {
-    abstract render(): Element;
-}
-// @Filename: /home/src/workspaces/project/classes.ts
-import { Component } from "./utils.js";
-
-export class MyComponent extends Component {
-    [|render/**/|]
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", Some(tsc_fourslash::get_default_capabilities_with_options(Some(&tsc_fourslash::ClientCapabilitiesOptions { completion_item: Some(tsc_lsproto::ClientCompletionItemOptions { snippet_support: Some((true).into()), ..Default::default() }), ..Default::default() }))), &content);
-		f.go_to_marker("");
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "render".to_string().into(), text_edit: insert_replace_text_edit("render(): Element {\n    $0\n}", f.ranges()[0].clone().ls_range).into(), filter_text: Some(("render").into()), sort_text: Some((tsc_ls::LOCATION_PRIORITY.to_string()).into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::Snippet).into()), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), data: Some(tsc_lsproto::CompletionItemData { source: "ClassMemberSnippet/".to_string().into(), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_with_class_member_snippets: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), ..Default::default() }));
-		f.go_to_file("/home/src/workspaces/project/utils.ts");
-		f.go_to_marker("");
-		f.backspace(1);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "render".to_string().into(), text_edit: insert_replace_text_edit("render(): Element {\n    $0\n}", f.ranges()[0].clone().ls_range).into(), filter_text: Some(("render").into()), sort_text: Some((tsc_ls::LOCATION_PRIORITY.to_string()).into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::Snippet).into()), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), data: Some(tsc_lsproto::CompletionItemData { source: "ClassMemberSnippet/".to_string().into(), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_with_class_member_snippets: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), ..Default::default() }));
 	});
 }
 

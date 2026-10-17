@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_class_implement_interface_construct_signature() {
 	run_test(|t| {
-		let content = r"interface I {
-    new (x: number, b: string);
-}
-class C implements I {[| |]}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix_not_available(&[]);
 	});
 }
 

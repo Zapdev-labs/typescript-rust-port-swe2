@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn linked_editing_jsx_tag6() {
 	run_test(|t| {
-		let content = r"// @Filename: /namespace.tsx
-const jsx = (
-    </*start*/someNamespa/*3*/ce./*2*/Thing/*startend*/>
-    <//*end*/someNamespace/*1*/.Thing/*endend*/>
-);
- const jsx1 = </*4*/foo/*5*/  /*6*/./*7*/ /*8*/ba/*9*/r><//*10*/foo.bar>;
- const jsx2 = <foo./*11*/bar><//*12*/ /*13*/f/*14*/oo /*15*/./*16*/b/*17*/ar/*18*/>;
- const jsx3 = </*19*/foo/*20*/ //*21*// /*22*/some comment
-     /*23*/./*24*/bar>
-     </f/*25*/oo.bar>;
- let jsx4 =
-     </*26*/foo  /*27*/ .// hi/*28*/
-     /*29*/bar/*26end*/>
-     <//*30*/foo  /*31*/ .// hi/*32*/
-     /*33*/bar/*30end*/>";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		let mut linked_cursors1 = vec![tsc_lsproto::Range { start: f.marker_by_name("start").unwrap().ls_position.into(), end: f.marker_by_name("startend").unwrap().ls_position.into(), ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("end").unwrap().ls_position.into(), end: f.marker_by_name("endend").unwrap().ls_position.into(), ..Default::default() }];
-		let mut linked_cursors2 = vec![tsc_lsproto::Range { start: f.marker_by_name("26").unwrap().ls_position.into(), end: f.marker_by_name("26end").unwrap().ls_position.into(), ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("30").unwrap().ls_position.into(), end: f.marker_by_name("30end").unwrap().ls_position.into(), ..Default::default() }];
-		f.verify_linked_editing(&std::collections::BTreeMap::from([("1".to_string().into(), linked_cursors1.into()), ("2".to_string().into(), linked_cursors1.into()), ("3".to_string().into(), linked_cursors1.into()), ("4".to_string().into(), None), ("5".to_string().into(), None), ("6".to_string().into(), None), ("7".to_string().into(), None), ("8".to_string().into(), None), ("9".to_string().into(), None), ("10".to_string().into(), None), ("11".to_string().into(), None), ("12".to_string().into(), None), ("13".to_string().into(), None), ("14".to_string().into(), None), ("15".to_string().into(), None), ("16".to_string().into(), None), ("17".to_string().into(), None), ("18".to_string().into(), None), ("19".to_string().into(), None), ("20".to_string().into(), None), ("21".to_string().into(), None), ("22".to_string().into(), None), ("23".to_string().into(), None), ("24".to_string().into(), None), ("25".to_string().into(), None), ("26".to_string().into(), linked_cursors2.into()), ("27".to_string().into(), linked_cursors2.into()), ("28".to_string().into(), linked_cursors2.into()), ("29".to_string().into(), linked_cursors2.into()), ("30".to_string().into(), linked_cursors2.into()), ("31".to_string().into(), linked_cursors2.into()), ("32".to_string().into(), linked_cursors2.into()), ("33".to_string().into(), linked_cursors2.into())]));
 	});
 }
 

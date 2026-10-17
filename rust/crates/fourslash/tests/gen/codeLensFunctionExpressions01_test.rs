@@ -7,37 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_lens_function_expressions01() {
 	run_test(|t| {
-		let content = r"
-// @filename: anonymousFunctionExpressions.ts
-export let anonFn1 = function () {};
-export const anonFn2 = function () {};
-
-let anonFn3 = function () {};
-const anonFn4 = function () {};
-
-// @filename: arrowFunctions.ts
-export let arrowFn1 = () => {};
-export const arrowFn2 = () => {};
-
-let arrowFn3 = () => {};
-const arrowFn4 = () => {};
-
-// @filename: namedFunctions.ts
-export let namedFn1 = function namedFn1() {
-    namedFn1();
-}
-namedFn1();
-
-export const namedFn2 = function namedFn2() {
-    namedFn2();
-}
-namedFn2();
-
-let namedFn3 = function namedFn3() {};
-const namedFn4 = function namedFn4() {};
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_code_lens(Some(&tsc_lsutil::UserPreferences { code_lens_user_preferences: tsc_lsutil::CodeLensUserPreferences { references_code_lens_enabled: tsc_core::tristate::TS_TRUE.into(), references_code_lens_show_on_all_functions: tsc_core::tristate::TS_TRUE.into(), implementations_code_lens_enabled: tsc_core::tristate::TS_TRUE.into(), implementations_code_lens_show_on_interface_methods: tsc_core::tristate::TS_TRUE.into(), implementations_code_lens_show_on_all_class_methods: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 

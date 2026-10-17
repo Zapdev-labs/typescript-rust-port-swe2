@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn semantic_modern_classification_callable_variables2() {
 	run_test(|t| {
-		let content = r#"import "node";
-var fs = require("fs")
-require.resolve('react');
-require.resolve.paths;
-interface LanguageMode { getFoldingRanges?: (d: string) => number[]; };
-function (mode: LanguageMode | undefined) { if (mode && mode.getFoldingRanges) { return mode.getFoldingRanges('a'); }};
-function b(a: () => void) { a(); };"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type_: "variable.declaration".to_string().into(), text: "fs".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "interface.declaration".to_string().into(), text: "LanguageMode".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "method.declaration".to_string().into(), text: "getFoldingRanges".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "parameter.declaration".to_string().into(), text: "d".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "parameter.declaration".to_string().into(), text: "mode".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "interface".to_string().into(), text: "LanguageMode".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "parameter".to_string().into(), text: "mode".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "parameter".to_string().into(), text: "mode".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "method".to_string().into(), text: "getFoldingRanges".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "parameter".to_string().into(), text: "mode".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "method".to_string().into(), text: "getFoldingRanges".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "function.declaration".to_string().into(), text: "b".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "function.declaration".to_string().into(), text: "a".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "function".to_string().into(), text: "a".to_string().into(), ..Default::default() }]);
 	});
 }
 

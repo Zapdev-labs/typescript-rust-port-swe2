@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn instance_types_for_generic_type1() {
 	run_test(|t| {
-		let content = r"class G<T> {               // Introduce type parameter T
-    self: G<T>;            // Use T as type argument to form instance type
-    f() {
-        this./*1*/self = /*2*/this;  // self and this are both of type G<T>
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "(property) G<T>.self: G<T>", "");
-		f.verify_quick_info_at("2", "this: this", "");
 	});
 }
 

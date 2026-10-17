@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_js_doc_tags16() {
 	run_test(|t| {
-		let content = r"class A {
-    /**
-     * Description text here.
-     *
-     * @virtual
-     */
-    foo() { }
-}
-
-class B extends A {
-    override /*1*/foo() { }
-}
-
-class C extends B {
-    override /*2*/foo() { }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

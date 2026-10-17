@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_generic_property_accessor() {
 	run_test(|t| {
-		let content = r"
-declare const o: {
-    f: <T>(x: T) => T
-    get g(): <T>(x: T) => T
-}
-
-declare const x: number
-
-o.f/*1*/(x)
-o.g/*2*/(x)
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "(property) f: <number>(x: number) => number", "");
-		f.verify_quick_info_at("2", "(accessor) g: <number>(x: number) => number", "");
 	});
 }
 

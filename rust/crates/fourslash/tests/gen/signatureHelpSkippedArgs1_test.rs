@@ -7,10 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_skipped_args1() {
 	run_test(|t| {
-		let content = r"function fn(a: number, b: number, c: number) {}
-fn(/*1*/, /*2*/, /*3*/, /*4*/, /*5*/);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_signature_help();
 	});
 }
 

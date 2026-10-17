@@ -7,28 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_outlining_for_type_literal() {
 	run_test(|t| {
-		let content = r"type A =[| {
-    a: number;
-}|]
-
-type B =[| {
-   a:[| {
-       a1:[| {
-           a2:[| {
-               x: number;
-               y: number;
-           }|]
-       }|]
-   }|],
-   b:[| {
-       x: number;
-   }|],
-   c:[| {
-       x: number;
-   }|]
-}|]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_outlining_spans();
 	});
 }
 

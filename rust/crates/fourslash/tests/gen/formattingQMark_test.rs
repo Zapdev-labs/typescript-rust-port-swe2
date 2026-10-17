@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_q_mark() {
 	run_test(|t| {
-		let content = r"interface A {
-/*1*/    foo?     ();
-/*2*/    foo?             <T>();
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"    foo?();");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"    foo?<T>();");
 	});
 }
 

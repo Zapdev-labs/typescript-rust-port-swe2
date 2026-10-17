@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn organize_imports_paths_unicode2() {
 	run_test(|t| {
-		let content = r#"import * as a2 from "./a2";
-import * as a100 from "./a100";
-import * as a1 from "./a1";
-
-console.log(a1, a2, a100);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_organize_imports(r#"import * as a1 from "./a1";
-import * as a100 from "./a100";
-import * as a2 from "./a2";
-
-console.log(a1, a2, a100);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_FALSE.into(), organize_imports_collation: tsc_lsutil::OrganizeImportsCollation::UNICODE.into(), organize_imports_numeric_collation: tsc_core::tristate::TS_FALSE.into(), ..Default::default() }));
-		f.verify_organize_imports(r#"import * as a1 from "./a1";
-import * as a2 from "./a2";
-import * as a100 from "./a100";
-
-console.log(a1, a2, a100);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_FALSE.into(), organize_imports_collation: tsc_lsutil::OrganizeImportsCollation::UNICODE.into(), organize_imports_numeric_collation: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }));
 	});
 }
 

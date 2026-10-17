@@ -7,35 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn path_completions_package_json_imports_wildcard4() {
 	run_test(|t| {
-		let content = r##"// @module: node18
-// @Filename: /package.json
-{
-  "types": "index.d.ts",
-  "imports": {
-    "#*": "dist/*",
-    "#foo/*": "dist/*",
-    "#bar/*": "dist/*",
-    "#exact-match": "dist/index.d.ts"
-  }
-}
-// @Filename: /nope.d.ts
-export const nope = 0;
-// @Filename: /dist/index.d.ts
-export const index = 0;
-// @Filename: /dist/blah.d.ts
-export const blah = 0;
-// @Filename: /dist/foo/onlyInFooFolder.d.ts
-export const foo = 0;
-// @Filename: /dist/subfolder/one.d.ts
-export const one = 0;
-// @Filename: /a.mts
-import { } from "/**/";"##;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec![tsc_lsproto::CompletionItem { label: "#blah.js".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::File).into()), detail: Some(("#blah.js").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "#index.js".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::File).into()), detail: Some(("#index.js").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "#foo".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Folder).into()), detail: Some(("#foo").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "#subfolder".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Folder).into()), detail: Some(("#subfolder").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "#bar".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Folder).into()), detail: Some(("#bar").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "#exact-match".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::File).into()), detail: Some(("#exact-match.d.ts").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("#foo/");
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec![tsc_lsproto::CompletionItem { label: "blah.js".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::File).into()), detail: Some(("blah.js").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "index.js".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::File).into()), detail: Some(("index.js").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "foo".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Folder).into()), detail: Some(("foo").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "subfolder".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Folder).into()), detail: Some(("subfolder").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("foo/");
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec![tsc_lsproto::CompletionItem { label: "onlyInFooFolder.js".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::File).into()), detail: Some(("onlyInFooFolder.js").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

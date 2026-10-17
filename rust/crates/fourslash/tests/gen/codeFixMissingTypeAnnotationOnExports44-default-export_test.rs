@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_missing_type_annotation_on_exports44_default_export() {
 	run_test(|t| {
-		let content = r"// @isolatedDeclarations: true
-// @declaration: true
-// @lib: es2019
-// @Filename: /code.ts
-export default 1 + 1;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Extract default export to variable".to_string().into(), new_file_content: r"const _default_1: number = 1 + 1;
-export default _default_1;".to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

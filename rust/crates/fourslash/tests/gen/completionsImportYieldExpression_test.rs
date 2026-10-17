@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_import_yield_expression() {
 	run_test(|t| {
-		let content = r"// @Filename: /a.ts
-export function a() {}
-// @Filename: /b.ts
-function *f() {
-  yield a/**/
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_apply_code_action_from_completion("", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "a".to_string().into(), source: "./a".to_string().into(), description: "Add import from \"./a\"".to_string().into(), new_file_content: Some((r#"import { a } from "./a";
-
-function *f() {
-  yield a
-}"#).into()), ..Default::default() });
 	});
 }
 

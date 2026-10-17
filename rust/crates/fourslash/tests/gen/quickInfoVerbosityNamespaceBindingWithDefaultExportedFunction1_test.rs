@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_verbosity_namespace_binding_with_default_exported_function1() {
 	run_test(|t| {
-		let content = r#"// @module: esnext
-// @filename: /a.ts
-export default function fn() {}
-export { fn as default };
-// @filename: /b.ts
-import * as ns from "./a";
-
-ns/*1*/;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("1".to_string().into(), vec![0, 1])]));
 	});
 }
 

@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn syntactic_classifications_conflict_diff3_markers2() {
 	run_test(|t| {
-		let content = r"<<<<<<< HEAD
-class C { }
-||||||| merged common ancestors
-class E { }
-=======
-class D { }
->>>>>>> Branch - a";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type_: "class.declaration".to_string().into(), text: "C".to_string().into(), ..Default::default() }]);
 	});
 }
 

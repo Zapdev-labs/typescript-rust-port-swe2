@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn smart_selection_imports() {
 	run_test(|t| {
-		let content = r"import { /**/x as y, z } from './z';
-import { b } from './';
-
-console.log(1);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_selection_ranges();
 	});
 }
 

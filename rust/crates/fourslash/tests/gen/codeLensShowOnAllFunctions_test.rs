@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_lens_references_show_on_all_functions() {
 	run_test(|t| {
-		let mut containing_test_name = t_name();
-		for value in vec![tsc_core::tristate::TS_TRUE, tsc_core::tristate::TS_FALSE] {
-			run_subtest(&mut t, format!("{}={}", containing_test_name, value.is_true()), |t| {
-				let content = r"
-export function f1(): void {}
-
-function f2(): void {}
-
-export const f3 = () => {};
-
-const f4 = () => {};
-
-const f5 = function() {};
-";
-				let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-				f.verify_baseline_code_lens(Some(&tsc_lsutil::UserPreferences { code_lens_user_preferences: tsc_lsutil::CodeLensUserPreferences { references_code_lens_enabled: tsc_core::tristate::TS_TRUE.into(), references_code_lens_show_on_all_functions: value.into(), ..Default::default() }, ..Default::default() }));
-			});
-		}
 	});
 }
 

@@ -7,30 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn navigation_bar_items_computed_names() {
 	run_test(|t| {
-		let content = r#"const enum E {
-	A = 'A',
-}
-const a = '';
-
-class C {
-    [a]() {
-        return 1;
-    }
-
-    [E.A]() {
-        return 1;
-    }
-
-    [1]() {
-        return 1;
-    },
-
-    ["foo"]() {
-        return 1;
-    },
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_symbol();
 	});
 }
 

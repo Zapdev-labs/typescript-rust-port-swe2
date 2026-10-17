@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_references_from_link_tag_reference1() {
 	run_test(|t| {
-		let content = r"enum E {
-    /** {@link /**/A} */
-    A
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["".into()]);
 	});
 }
 

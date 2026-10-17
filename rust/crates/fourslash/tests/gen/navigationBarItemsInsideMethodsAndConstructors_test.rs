@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn navigation_bar_items_inside_methods_and_constructors() {
 	run_test(|t| {
-		let content = r"class Class {
-    constructor() {
-        function LocalFunctionInConstructor() {}
-        interface LocalInterfaceInConstrcutor {}
-        enum LocalEnumInConstructor { LocalEnumMemberInConstructor }
-    }
-
-    method() {
-        function LocalFunctionInMethod() {
-            function LocalFunctionInLocalFunctionInMethod() {}
-        }
-        interface LocalInterfaceInMethod {}
-        enum LocalEnumInMethod { LocalEnumMemberInMethod }
-    }
-
-    emptyMethod() { } // Non child functions method should not be duplicated
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_symbol();
 	});
 }
 

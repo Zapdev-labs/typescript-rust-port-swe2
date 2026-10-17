@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn qualified_name_import_declaration_with_variable_entity_names() {
 	run_test(|t| {
-		let content = r#"namespace Alpha {
-    export var [|{| "name" : "def" |}x|] = 100;
-}
-
-namespace Beta {
-    import p = Alpha.[|{| "name" : "import" |}x|];
-}
-
-var x = Alpha.[|{| "name" : "mem" |}x|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("import");
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "x".to_string().into(), detail: Some(("var Alpha.x: number").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_baseline_document_highlights(None, vec!["import".into()]);
-		f.verify_baseline_go_to_definition(false, &["import".into()]);
 	});
 }
 

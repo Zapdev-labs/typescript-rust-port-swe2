@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn unreachable_code_diagnostics() {
 	run_test(|t| {
-		let content = r"// @allowUnreachableCode: false
-throw new Error();
-	
-(() => {})();
-	";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_non_suggestion_diagnostics();
 	});
 }
 

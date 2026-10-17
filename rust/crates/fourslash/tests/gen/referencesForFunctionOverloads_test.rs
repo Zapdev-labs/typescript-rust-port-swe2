@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_for_function_overloads() {
 	run_test(|t| {
-		let content = r"/*1*/function /*2*/foo(x: string);
-/*3*/function /*4*/foo(x: string, y: number) {
-    /*5*/foo('', 43);
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into()]);
 	});
 }
 

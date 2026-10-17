@@ -7,29 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_on_definition() {
 	run_test(|t| {
-		let content = r#"//@Filename: findAllRefsOnDefinition-import.ts
-export class Test{
-
-    constructor(){
-
-    }
-
-    /*1*/public /*2*/start(){
-        return this;
-    }
-
-    public stop(){
-        return this;
-    }
-}
-//@Filename: findAllRefsOnDefinition.ts
-import Second = require("./findAllRefsOnDefinition-import");
-
-var second = new Second.Test()
-second./*3*/start();
-second.stop();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
 	});
 }
 

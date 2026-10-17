@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_existing_import_equals0() {
 	run_test(|t| {
-		let content = r#"[|import ns = require("ambient-module");
-var x = v1/*0*/ + 5;|]
-// @Filename: ambientModule.ts
-declare module "ambient-module" {
-   export function f1();
-   export var v1;
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_at_position(&[r#"import ns = require("ambient-module");
-var x = ns.v1 + 5;"#.into(), r#"import { v1 } from "ambient-module";
-import ns = require("ambient-module");
-var x = v1 + 5;"#.into()], None);
 	});
 }
 

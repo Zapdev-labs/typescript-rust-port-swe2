@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn hover_over_comment() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"export function f() {}
-//foo
-/**///moo";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_quick_info_is("", "");
-		f.verify_baseline_find_all_references(&["".into()]);
-		f.verify_baseline_go_to_definition(false, &["".into()]);
 	});
 }
 

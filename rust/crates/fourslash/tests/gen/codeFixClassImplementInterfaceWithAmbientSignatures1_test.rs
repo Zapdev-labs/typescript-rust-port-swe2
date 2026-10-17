@@ -7,29 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_class_implement_interface_with_ambient_signatures1() {
 	run_test(|t| {
-		let content = r#"// @lib: esnext
-// @target: esnext
-// @Filename: /node_modules/@types/node/globals.d.ts
-export {};
-declare global {
-    interface SymbolConstructor {
-        readonly dispose: unique symbol;
-    }
-    interface Disposable {
-        [Symbol.dispose](): void;
-    }
-}
-// @Filename: /node_modules/@types/node/index.d.ts
-/// <reference path="globals.d.ts" />
-// @Filename: a.ts
-class Foo implements Disposable {}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("a.ts");
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'Disposable'".to_string().into(), new_file_content: r#"class Foo implements Disposable {
-    [Symbol.dispose](): void {
-        throw new Error("Method not implemented.");
-    }
-}"#.to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

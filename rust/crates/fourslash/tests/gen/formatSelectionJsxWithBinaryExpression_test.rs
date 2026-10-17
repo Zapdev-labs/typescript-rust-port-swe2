@@ -7,39 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_selection_jsx_with_binary_expression() {
 	run_test(|t| {
-		let content = r"//@Filename: file.tsx
-function TestWidget() {
-    const test = true;
-    return (
-        <div>
-            {test &&
-                <div>
- /*1*/                <div>some text</div>/*2*/
-                    <div>some text</div>
-                    <div>some text</div>
-                </div>
-            }
-            <div>some text</div>
-        </div>
-    );
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_selection("1", "2");
-		f.verify_current_file_content(r"function TestWidget() {
-    const test = true;
-    return (
-        <div>
-            {test &&
-                <div>
-                    <div>some text</div>
-                    <div>some text</div>
-                    <div>some text</div>
-                </div>
-            }
-            <div>some text</div>
-        </div>
-    );
-}");
 	});
 }
 

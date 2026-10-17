@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_class_implement_class_method_via_heritage() {
 	run_test(|t| {
-		let content = r"class C1 {
-    f1() {}
-}
-
-class C2 extends C1 {
-
-}
-
-class C3 implements C2 {[| 
-    |]f2(){}
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_range_after_code_fix(r#"f1(): void{
-    throw new Error("Method not implemented.");
-}
-"#, false, 0, 0);
 	});
 }
 

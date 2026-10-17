@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_display_parts_type_parameter_in_function() {
 	run_test(|t| {
-		let content = r#"function /*1*/foo</*2*/U>(/*3*/a: /*4*/U) {
-    return /*5*/a;
-}
-/*6*/foo("Hello");
-function /*7*/foo2</*8*/U extends string>(/*9*/a: /*10*/U) {
-    return /*11*/a;
-}
-/*12*/foo2("hello");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

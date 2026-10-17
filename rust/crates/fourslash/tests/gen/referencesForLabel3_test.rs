@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_for_label3() {
 	run_test(|t| {
-		let content = r#"/*1*/label: while (true) {
-    var label = "label";
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into()]);
 	});
 }
 

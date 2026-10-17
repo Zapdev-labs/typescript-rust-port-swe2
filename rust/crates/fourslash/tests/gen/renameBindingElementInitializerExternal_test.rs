@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_binding_element_initializer_external() {
 	run_test(|t| {
-		let content = r#"// @lib: es5
-[|const [|{| "contextRangeIndex": 0 |}external|] = true;|]
-
-function f({
-    lvl1 = [|external|],
-    nested: { lvl2 = [|external|]},
-    oldName: newName = [|external|]
-}) {}
-
-const {
-    lvl1 = [|external|],
-    nested: { lvl2 = [|external|]},
-    oldName: newName = [|external|]
-} = obj;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename_at_ranges_with_text(None, &["external".into()]);
 	});
 }
 

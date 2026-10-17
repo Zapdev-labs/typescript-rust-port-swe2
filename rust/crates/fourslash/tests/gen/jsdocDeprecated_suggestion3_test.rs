@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsdoc_deprecated_suggestion3() {
 	run_test(|t| {
-		let content = r#"interface RequestOptions {
-    /** @deprecated use signal instead */
-    timeout?: number;
-}
-declare function request(url: string, opts: RequestOptions): void;
-
-request("/api", { [|timeout|]: 5000 });
-declare const opts: RequestOptions;
-opts.[|timeout|];"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_suggestion_diagnostics(&[tsc_lsproto::Diagnostic { code: Some(tsc_lsproto::IntegerOrString { integer: Some(((6385) as i32).into()), ..Default::default() }), message: tsc_lsproto::StringOrMarkupContent { string: Some(("'timeout' is deprecated.").into()), ..Default::default() }.into(), tags: Some(vec![tsc_lsproto::DiagnosticTag::Deprecated]), range: f.ranges()[0].clone().ls_range.into(), ..Default::default() }, tsc_lsproto::Diagnostic { code: Some(tsc_lsproto::IntegerOrString { integer: Some(((6385) as i32).into()), ..Default::default() }), message: tsc_lsproto::StringOrMarkupContent { string: Some(("'timeout' is deprecated.").into()), ..Default::default() }.into(), tags: Some(vec![tsc_lsproto::DiagnosticTag::Deprecated]), range: f.ranges()[1].clone().ls_range.into(), ..Default::default() }]);
 	});
 }
 

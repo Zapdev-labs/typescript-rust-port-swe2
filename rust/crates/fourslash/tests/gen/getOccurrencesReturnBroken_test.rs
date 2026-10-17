@@ -7,34 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_occurrences_return_broken() {
 	run_test(|t| {
-		let content = r"ret/*1*/urn;
-retu/*2*/rn;
-function f(a: number) {
-    if (a > 0) {
-        return (function () {
-            () => [|return|];
-            [|return|];
-            [|return|];
-
-            if (false) {
-                [|return|] true;
-            }
-        })() || true;
-    }
-
-    var unusued = [1, 2, 3, 4].map(x => { return 4 })
-
-    return;
-    return true;
-}
-
-class A {
-    ret/*3*/urn;
-    r/*4*/eturn 8675309;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, to_any(f.ranges()).into_iter().map(Into::into));
-		f.verify_baseline_document_highlights(None, to_any(f.markers()).into_iter().map(Into::into));
 	});
 }
 

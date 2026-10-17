@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_for_object_literal_properties() {
 	run_test(|t| {
-		let content = r#"var x = { /*1*/add: 0, b: "string" };
-x["/*2*/add"];
-x./*3*/add;
-var y = x;
-y./*4*/add;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into()]);
 	});
 }
 

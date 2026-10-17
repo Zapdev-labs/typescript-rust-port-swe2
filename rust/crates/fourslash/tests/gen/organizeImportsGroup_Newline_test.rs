@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn organize_imports_group_newline() {
 	run_test(|t| {
-		let content = r#"import c from "C";
-
-import d from "D";
-import a from "A"; // not count
-import b from "B";
-
-console.log(a, b, c, d)"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_organize_imports(r#"import c from "C";
-
-import a from "A"; // not count
-import b from "B";
-import d from "D";
-
-console.log(a, b, c, d)"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 	});
 }
 

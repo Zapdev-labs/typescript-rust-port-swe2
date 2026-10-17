@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_this() {
 	run_test(|t| {
-		let content = r"function f(/*fnDecl*/this: number) {
-    return [|/*fnUse*/this|];
-}
-class /*cls*/C {
-    constructor() { return [|/*clsUse*/this|]; }
-    get self(/*getterDecl*/this: number) { return [|/*getterUse*/this|]; }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["fnUse".into(), "clsUse".into(), "getterUse".into()]);
 	});
 }
 

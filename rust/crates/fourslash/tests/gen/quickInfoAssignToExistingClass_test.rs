@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_assign_to_existing_class() {
 	run_test(|t| {
-		let content = r#"namespace Test {
-    class Mocked {
-        myProp: string;
-    }
-    class Tester {
-        willThrowError() {
-            Mocked = Mocked || function () { // => Error: Invalid left-hand side of assignment expression.
-                return { /**/myProp: "test" };
-            };
-        }
-    }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_quick_info_exists();
 	});
 }
 

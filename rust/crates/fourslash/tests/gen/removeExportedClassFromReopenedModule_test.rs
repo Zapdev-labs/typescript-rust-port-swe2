@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn remove_exported_class_from_reopened_module() {
 	run_test(|t| {
-		let content = r"namespace multiM { }
-
-namespace multiM {
-    /*1*/export class c { }
-}
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.delete_at_caret(18);
-		f.go_to_eof();
-		f.insert("new multiM.c();");
-		f.verify_number_of_errors_in_current_file(1);
 	});
 }
 

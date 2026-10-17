@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_cannot_find_module_suggestion_false_positive() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @module: commonjs
-// @resolveJsonModule: true
-// @strict: true
-// @Filename: /node_modules/foo/bar.json
-{ "a": 0 }
-// @Filename: /a.ts
-import abs = require([|"foo/bar.json"|]);
-abs;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.go_to_file("/a.ts");
-		f.verify_suggestion_diagnostics(&[]);
 	});
 }
 

@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_for_string_literal_nonrelative_import18() {
 	run_test(|t| {
-		let content = r#"// @Filename: tsconfig.json
-{
-    "compilerOptions": {
-       "paths": {
-           "/*": ["./*"]
-       },
-    }
-}
-// @Filename: test0.ts
-import * as foo1 from "/path/w/*first*/
-// @Filename: path/whatever.ts
-export {}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["first"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["whatever".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

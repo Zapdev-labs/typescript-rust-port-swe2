@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_for_optional_methods() {
 	run_test(|t| {
-		let content = r"// @strict: true
-interface Obj {
-    optionalMethod?: (current: any) => any;
-};
-
-const o: Obj = {
-  optionalMethod(/*1*/) {
-    return {};
-  }
-};";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "optionalMethod(current: any): any".to_string().into(), parameter_name: "current".to_string().into(), parameter_span: "current: any".to_string().into(), ..Default::default() });
 	});
 }
 

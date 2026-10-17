@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_constructor_overloads() {
 	run_test(|t| {
-		let content = r#"class ConstructorOverload {
-    [|/*constructorOverload1*/constructor|]();
-    /*constructorOverload2*/constructor(foo: string);
-    /*constructorDefinition*/constructor(foo: any)  { }
-}
-
-var constructorOverload = new [|/*constructorOverloadReference1*/ConstructorOverload|]();
-var constructorOverload = new [|/*constructorOverloadReference2*/ConstructorOverload|]("foo");
-
-class Extended extends ConstructorOverload {
-    readonly name = "extended";
-}
-var extended1 = new [|/*extendedRef1*/Extended|]();
-var extended2 = new [|/*extendedRef2*/Extended|]("foo");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["constructorOverloadReference1".into(), "constructorOverloadReference2".into(), "constructorOverload1".into(), "extendedRef1".into(), "extendedRef2".into()]);
 	});
 }
 

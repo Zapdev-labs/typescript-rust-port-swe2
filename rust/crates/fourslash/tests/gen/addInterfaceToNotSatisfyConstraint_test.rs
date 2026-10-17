@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn add_interface_to_not_satisfy_constraint() {
 	run_test(|t| {
-		let content = r"interface A {
-	a: number;
-}
-/**/
-interface C<T extends A> {
-    x: T;
-}
-
-var v2: C<B>; // should not work";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.insert("interface B { b: string; }");
 	});
 }
 

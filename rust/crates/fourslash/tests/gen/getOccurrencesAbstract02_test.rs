@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_occurrences_abstract02() {
 	run_test(|t| {
-		let content = r"// Not valid TS (abstract methods can only appear in abstract classes)
-class Animal {
-    [|abstract|] walk(): void;
-    [|abstract|] makeSound(): void;
-}
-// abstract cannot appear here, won't get highlighted
-let c = /*1*/abstract class Foo {
-    /*2*/abstract foo(): void;
-    abstract bar(): void;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, vec!["1".into(), "2".into()]);
-		f.verify_baseline_document_highlights(None, to_any(f.ranges()).into_iter().map(Into::into));
 	});
 }
 

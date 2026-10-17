@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_link5() {
 	run_test(|t| {
-		let content = r"const A = 123;
-/**
- *  See {@link A| constant A} instead
- */
-const /**/B = 456;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

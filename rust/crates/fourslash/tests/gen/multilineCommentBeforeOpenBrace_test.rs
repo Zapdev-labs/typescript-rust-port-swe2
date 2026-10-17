@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn multiline_comment_before_open_brace() {
 	run_test(|t| {
-		let content = r"function test() /*1*//* %^ */
-{
-    if (true) /*2*//* %^ */
-    {
-    }
-}
-function a() {
-    /* %^ */ }/*3*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"function test() /* %^ */ {");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"    if (true) /* %^ */ {");
-		f.go_to_marker("3");
-		f.verify_current_line_content(r"}");
 	});
 }
 

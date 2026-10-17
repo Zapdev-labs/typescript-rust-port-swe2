@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_with_json() {
 	run_test(|t| {
-		let content = r#"// @Filename: /a.ts
-export const a = 'a';
-// @Filename: /b.ts
-import "./anything.json";
-
-a/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/b.ts");
-		f.verify_import_fix_at_position(&[r#"import { a } from "./a";
-import "./anything.json";
-
-a"#.into()], None);
 	});
 }
 

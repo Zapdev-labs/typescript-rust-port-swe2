@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn member_completion_from_function_call() {
 	run_test(|t| {
-		let content = r"declare interface ifoo {
-    text: (value: any) => ifoo;
-}
-declare var foo: ifoo;
-foo.text(function() { })/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.insert(".");
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["text".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

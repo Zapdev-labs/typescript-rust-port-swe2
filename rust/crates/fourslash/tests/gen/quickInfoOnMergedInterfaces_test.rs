@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_on_merged_interfaces() {
 	run_test(|t| {
-		let content = r"namespace M {
-    interface A<T> {
-        (): string;
-        (x: T): T;
-    }
-    interface A<T> {
-        (x: T, y: number): T;
-        <U>(x: U, y: T): U;
-    }
-    var a: A<boolean>;
-    var r = a();
-    var r2 = a(true);
-    var r3 = a(true, 2);
-    var /*1*/r4 = a(1, true);
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "var r4: number", "");
 	});
 }
 

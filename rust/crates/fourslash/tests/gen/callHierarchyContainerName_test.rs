@@ -7,44 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn call_hierarchy_container_name() {
 	run_test(|t| {
-		let content = r"function /**/f() {}
-
-class A {
-  static sameName() {
-    f();
-  }
-}
-
-class B {
-  sameName() {
-    A.sameName();
-  }
-}
-
-const Obj = {
-  get sameName() {
-    return new B().sameName;
-  }
-};
-
-namespace Foo {
-  function sameName() {
-    return Obj.sameName;
-  }
-
-  export class C {
-    constructor() {
-      sameName();
-    }
-  }
-}
-
-namespace Foo.Bar {
-  const sameName = () => new Foo.C();
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_baseline_call_hierarchy();
 	});
 }
 

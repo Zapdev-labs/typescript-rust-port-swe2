@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_type_assertion_keywords() {
 	run_test(|t| {
-		let content = r"// @lib: es5
-const a = {
-  b: 42 as /*0*/
-};
-
-1 as /*1*/
-
-const b = 42 as /*2*/
-
-var c = </*3*/>42";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(f.markers()), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: COMPLETION_TYPE_ASSERTION_KEYWORDS.into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

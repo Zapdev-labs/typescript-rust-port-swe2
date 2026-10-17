@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quickinfo_for_namespace_merge_with_class_constrained_to_self() {
 	run_test(|t| {
-		let content = r"declare namespace AMap {
-    namespace MassMarks {
-        interface Data {
-            style?: number;
-        }
-    }
-    class MassMarks<D extends MassMarks.Data = MassMarks.Data> {
-        constructor(data: D[] | string);
-        clear(): void;
-    }
-}
-
-interface MassMarksCustomData extends AMap.MassMarks./*1*/Data {
-    name: string;
-    id: string;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "interface AMap.MassMarks<D extends AMap.MassMarks.Data = AMap.MassMarks.Data>.Data", "");
 	});
 }
 

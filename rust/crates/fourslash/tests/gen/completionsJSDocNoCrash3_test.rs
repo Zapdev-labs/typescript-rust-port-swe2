@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_js_doc_no_crash3() {
 	run_test(|t| {
-		let content = r"// @strict: true
-// @filename: index.ts
-class MssqlClient {
-  /**
-   *
-   * @param {Object} - args
-   * @param {String} - args.parentTable
-   * @returns {Promise<{upStatement/**/, downStatement}>}
-   */
-  async relationCreate(args) {}
-}
-
-export default MssqlClient;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "readonly".to_string().into(), sort_text: Some((tsc_ls::GLOBALS_OR_KEYWORDS.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

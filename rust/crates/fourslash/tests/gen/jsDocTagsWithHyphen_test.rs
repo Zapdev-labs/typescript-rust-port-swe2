@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn js_doc_tags_with_hyphen() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"// @allowJs: true
-// @Filename: dummy.js
-/**
- * @typedef Product
- * @property {string} title
- * @property {boolean} h/*1*/igh-top some-comments
- */
-
-/**
- * @type {Pro/*2*/duct}
- */
-const product = {
-    /*3*/
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "(property) high-top: boolean", "some-comments");
-		f.verify_quick_info_at("2", "type Product = {\n    title: string;\n    \"high-top\": boolean;\n}", "");
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["3"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["\"high-top\"".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

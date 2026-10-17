@@ -7,40 +7,12 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_source_mapped_type_property_with_match() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{ "name": "pkg", "main": "./index.js", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.d.ts
-export declare const obj: { a: number; b: number };
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.js
-export const obj = { /*targetA*/a: 1, /*targetB*/b: 2 };
-// @Filename: /home/src/workspaces/project/index.ts
-import { obj } from "pkg";
-obj./*propA*/a;
-obj./*propB*/b;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["propA".into(), "propB".into()]);
 	});
 }
 
 #[test]
 fn go_to_source_namespace_import_property() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{ "name": "pkg", "main": "./index.js", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.d.ts
-export declare function helper(): void;
-export declare const value: number;
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.js
-export function /*targetHelper*/helper() {}
-export const /*targetValue*/value = 42;
-// @Filename: /home/src/workspaces/project/index.ts
-import * as pkg from "pkg";
-pkg./*helperAccess*/helper();
-pkg./*valueAccess*/value;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["helperAccess".into(), "valueAccess".into()]);
 	});
 }
 

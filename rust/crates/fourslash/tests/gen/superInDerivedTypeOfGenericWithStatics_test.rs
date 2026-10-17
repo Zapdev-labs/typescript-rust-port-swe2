@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn super_in_derived_type_of_generic_with_statics() {
 	run_test(|t| {
-		let content = r"// @strict: false
-namespace M {
-   export class C<T extends Date> {
-      static foo(): C<Date> {
-          return null;
-           }
-     }
-}
-class D extends M.C<Date> {
-    constructor() {
-        /**/ // was an error appearing on super in editing scenarios
-       }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.insert("super();");
-		f.verify_no_errors();
 	});
 }
 

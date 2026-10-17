@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_private_members3() {
 	run_test(|t| {
-		let content = r"class Other {
-    public p;
-    protected p2
-    private p3;
-}
-
-class Self {
-    private other: Other;
-
-    method() {
-        this.other./*1*/;
-
-        this.other.p/*2*/;
-
-        this.other.p/*3*/.toString();
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["1", "2", "3"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["p".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

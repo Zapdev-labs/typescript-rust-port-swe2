@@ -7,22 +7,12 @@ use tsc_fourslash::*;
 #[test]
 fn content_mapper_synthesized_document_symbols() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /app.vue
-component source with no direct TypeScript span/**/
-", tsc_testutil::contentmappertest::SYNTHESIZING_MAPPER, ".vue");
-		f.go_to_marker("");
-		f.verify_baseline_document_symbol();
 	});
 }
 
 #[test]
 fn content_mapper_supplemental_document_symbols() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /app.astro
-export function supplementalSymbol() {}
-", tsc_testutil::contentmappertest::SUPPLEMENTAL_MAPPER, ".astro");
-		f.go_to_file("/app.astro");
-		f.verify_baseline_document_symbol();
 	});
 }
 

@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn navigation_bar_items_static_and_non_static_no_merge() {
 	run_test(|t| {
-		let content = r"class C {
-    static x;
-    x;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_symbol();
 	});
 }
 

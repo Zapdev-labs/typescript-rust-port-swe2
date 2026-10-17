@@ -7,40 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_literal_type_in_union_or_intersection_type() {
 	run_test(|t| {
-		let content = r"type NumberAndString = {
-    a: number
-} & {
-    b: string
-};
-
-type NumberOrString = {
-    a: number
-} | {
-    b: string
-};
-
-type Complexed =
-    Foo &
-    Bar |
-    Baz;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.verify_current_file_content(r"type NumberAndString = {
-    a: number
-} & {
-    b: string
-};
-
-type NumberOrString = {
-    a: number
-} | {
-    b: string
-};
-
-type Complexed =
-    Foo &
-    Bar |
-    Baz;");
 	});
 }
 

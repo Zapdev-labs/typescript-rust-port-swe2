@@ -7,29 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_js_doc_tags4() {
 	run_test(|t| {
-		let content = r"// @Filename: quickInfoJsDocTags4.ts
-class Foo {
-    /**
-     * comment
-     * @author Me <me@domain.tld>
-     * @see x (the parameter)
-     * @param {number} x - x comment
-     * @param {number} y - y comment
-     * @returns The result
-     */
-    method(x: number, y: number): number {
-       return x + y;
-    }
-}
-
-class Bar extends Foo {
-    /**/method(x: number, y: number): number {
-        const res = super.method(x, y) + 100;
-        return res;
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

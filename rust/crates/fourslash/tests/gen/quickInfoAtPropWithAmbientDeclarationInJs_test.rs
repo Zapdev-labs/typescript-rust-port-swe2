@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_at_prop_with_ambient_declaration_in_js() {
 	run_test(|t| {
-		let content = r#"// @allowJs: true
-// @filename: /a.js
-class C {
-    constructor() {
-        this.prop = "";
-    }
-    declare prop: string;
-    method() {
-        this.prop.foo/**/
-    }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

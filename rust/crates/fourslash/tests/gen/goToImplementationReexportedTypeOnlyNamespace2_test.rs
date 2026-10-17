@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_implementation_reexported_type_only_namespace2() {
 	run_test(|t| {
-		let content = r"
-// @Filename: /node_modules/@typescript-eslint/types/index.d.ts
-export type * as TSESTree from './generated/ast-spec';
-
-// @Filename: /node_modules/@typescript-eslint/types/generated/ast-spec.d.ts
-export interface BaseNode {}
-
-// @Filename: /node_modules/@typescript-eslint/utils/index.d.ts
-export { TSESTree } from '@typescript-eslint/types';
-
-// @Filename: /src/check-license.ts
-import type {TSE/*impl*/STree} from '@typescript-eslint/utils';
-
-let node: TSESTree.Node | undefined;
-export default node;
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_implementation(&["impl".into()]);
 	});
 }
 

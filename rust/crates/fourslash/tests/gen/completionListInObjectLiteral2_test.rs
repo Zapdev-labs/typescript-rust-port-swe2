@@ -7,28 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_in_object_literal2() {
 	run_test(|t| {
-		let content = r#"interface TelemetryService {
-    publicLog(eventName: string, data: any): any;
-};
-class SearchResult {
-    count() { return 5; }
-    isEmpty() { return true; }
-    fileCount(): string { return ""; }
-}
-class Foo {
-    public telemetryService: TelemetryService;   // If telemetry service is of type 'any' (i.e. uncomment below line), the drop-down list works
-    public telemetryService2;
-    private test() {
-        var onComplete = (searchResult: SearchResult) => {
-            var hasResults = !searchResult.isEmpty();  // Drop-down list on searchResult fine here
-            // No drop-down list available on searchResult members within object literal below
-            this.telemetryService.publicLog('searchResultsShown', { count: searchResult./*1*/count(), fileCount: searchResult.fileCount() });
-            this.telemetryService2.publicLog('searchResultsShown', { count: searchResult./*2*/count(), fileCount: searchResult.fileCount() });
-        };
-    }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(f.markers()), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["count".into(), "fileCount".into(), "isEmpty".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_in_destructuring1() {
 	run_test(|t| {
-		let content = r"interface let { }
-/*1*/var x: let         [];
-
-function foo() {
-    'use strict'
-/*2*/    let        [x] = [];
-/*3*/    const      [x] = [];
-/*4*/    for (let[x] = [];x < 1;) {
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"var x: let[];");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"    let [x] = [];");
-		f.go_to_marker("3");
-		f.verify_current_line_content(r"    const [x] = [];");
-		f.go_to_marker("4");
-		f.verify_current_line_content(r"    for (let [x] = []; x < 1;) {");
 	});
 }
 

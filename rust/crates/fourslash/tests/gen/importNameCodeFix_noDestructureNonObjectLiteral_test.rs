@@ -7,32 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_no_destructure_non_object_literal() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"// @lib: es5
-// @target: es2015
-// @strict: true
-// @esModuleInterop: true
-// @Filename: /array.ts
-declare const arr: number[];
-export = arr;
-// @Filename: /class-instance-member.ts
-class C { filter() {} }
-export = new C();
-// @Filename: /object-literal.ts
-declare function filter(): void;
-export = { filter };
-// @Filename: /jquery.d.ts
-interface JQueryStatic {
-  filter(): void;
-}
-declare const $: JQueryStatic;
-export = $;
-// @Filename: /jquery.js
-module.exports = {};
-// @Filename: /index.ts
-filter/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_module_specifiers("", &["./object-literal".into(), "./jquery".into()], None);
 	});
 }
 

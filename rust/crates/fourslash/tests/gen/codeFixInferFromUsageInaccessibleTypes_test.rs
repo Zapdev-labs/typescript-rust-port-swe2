@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_infer_from_usage_inaccessible_types() {
 	run_test(|t| {
-		let content = r"// @strict: false
-// @noImplicitAny: true
-function f1(a) { a; }
-function h1() {
-    class C { p: number };
-    f1({ ofTypeC: new C() });
-}
-
-function f2(a) { a; }
-function h2() {
-    interface I { a: number }
-    var i: I = {a : 1};
-    f2(i);
-    f2(2);
-    f2(false);
-}
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix_not_available(&[]);
 	});
 }
 

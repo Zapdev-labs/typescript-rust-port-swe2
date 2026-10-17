@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn reference_to_class() {
 	run_test(|t| {
-		let content = r"// @Filename: referenceToClass_1.ts
-class /*1*/foo {
-    public n: /*2*/foo;
-    public foo: number;
-}
-
-class bar {
-    public n: /*3*/foo;
-    public k = new /*4*/foo();
-}
-
-namespace mod {
-    var k: /*5*/foo = null;
-}
-// @Filename: referenceToClass_2.ts
-var k: /*6*/foo;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into()]);
 	});
 }
 

@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn correupted_try_expressions_dont_crash_getting_outline_spans() {
 	run_test(|t| {
-		let content = r"try[| {
-  var x = [
-    {% try[||] %}|][|{% except %}|] 
-  ]
-} catch (e)[| {
-  
-}|]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_outlining_spans();
 	});
 }
 

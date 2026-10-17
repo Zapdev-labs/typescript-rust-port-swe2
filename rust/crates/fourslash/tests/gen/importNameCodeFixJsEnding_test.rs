@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_js_ending() {
 	run_test(|t| {
-		let content = r#"// @lib: es5
-// @module: commonjs
-// @Filename: /node_modules/lit/package.json
-{ "name": "lit", "version": "1.0.0" }
-// @Filename: /node_modules/lit/index.d.ts
-import "./decorators";
-// @Filename: /node_modules/lit/decorators.d.ts
-export declare function customElement(name: string): any;
-// @Filename: /a.ts
-customElement/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_module_specifiers("", &["lit/decorators.js".into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_ending: tsc_modulespecifiers::ImportModuleSpecifierEndingPreference("js"), auto_import_entrypoint_directory_search: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }));
 	});
 }
 

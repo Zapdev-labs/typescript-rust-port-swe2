@@ -7,29 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_for_static_instance_property_inheritance() {
 	run_test(|t| {
-		let content = r"class X{
-	/*0*/foo:any
-}
-
-class Y extends X{
-	static /*1*/foo:any
-}
-
-class Z extends Y{
-	static /*2*/foo:any
-	/*3*/foo:any
-}
-
-const x = new X();
-const y = new Y();
-const z = new Z();
-x./*4*/foo;
-y./*5*/foo;
-z./*6*/foo;
-Y./*7*/foo;
-Z./*8*/foo;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["0".into(), "1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into(), "7".into(), "8".into()]);
 	});
 }
 

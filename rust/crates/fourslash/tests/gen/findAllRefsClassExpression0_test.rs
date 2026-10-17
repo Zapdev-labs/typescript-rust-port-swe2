@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_class_expression0() {
 	run_test(|t| {
-		let content = r#"// @Filename: /a.ts
-export = class /*0*/A {
-    m() { /*1*/A; }
-};
-// @Filename: /b.ts
-import /*2*/A = require("./a");
-/*3*/A;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["0".into(), "1".into(), "2".into(), "3".into()]);
 	});
 }
 

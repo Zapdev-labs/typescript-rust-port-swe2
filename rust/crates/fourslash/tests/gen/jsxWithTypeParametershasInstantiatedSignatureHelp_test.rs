@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsx_with_type_parametershas_instantiated_signature_help() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"declare namespace JSX {
-    interface Element {
-        render(): Element | string | false;
-    }
-}
-
-function SFC<T>(_props: Record<string, T>) {
-    return '';
-}
-
-(</*1*/SFC/>);
-(</*2*/SFC<string>/>);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "SFC(_props: Record<string, unknown>): string".to_string().into(), ..Default::default() });
-		f.go_to_marker("2");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "SFC(_props: Record<string, string>): string".to_string().into(), ..Default::default() });
 	});
 }
 

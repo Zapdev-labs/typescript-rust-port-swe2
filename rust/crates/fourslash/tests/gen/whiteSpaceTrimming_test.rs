@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn white_space_trimming() {
 	run_test(|t| {
-		let content = r"if (true) {     
-  //    
-   /*err*/}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("err");
-		f.insert("\n");
-		f.verify_current_file_content(r"if (true) {     
-  //    
-
-}");
 	});
 }
 

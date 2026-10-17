@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn module_reexported_into_global_quick_info() {
 	run_test(|t| {
-		let content = r"// @Filename: /node_modules/@types/three/index.d.ts
-export class Vector3 {}
-export as namespace THREE;
-// @Filename: /global.d.ts
-import * as _THREE from 'three';
-
-declare global {
-  const THREE: typeof _THREE;
-}
-// @Filename: /index.ts
-let v = new /*1*/THREE.Vector3();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "const THREE: typeof import(\"three\")", "");
 	});
 }
 

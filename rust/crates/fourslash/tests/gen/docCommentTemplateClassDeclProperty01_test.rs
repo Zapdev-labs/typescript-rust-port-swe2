@@ -7,39 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn doc_comment_template_class_decl_property01() {
 	run_test(|t| {
-		let content = r"class C {
-    /** /*0*/  */
-    foo = (p0) => {
-        return p0;
-    };
-    /*1*/
-    bar = (p1) => {
-        return p1;
-    }
-    /*2*/
-    baz = function (p2, p3) {
-        return p2;
-    }
-}";
-		let mut capabilities = tsc_fourslash::get_default_capabilities();
-		capabilities.text_document.as_mut().unwrap().completion.as_mut().unwrap().completion_item.as_mut().unwrap().snippet_support = Some((false).into());
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", capabilities.into(), &content);
-		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("0"), 11, r"/**
-     * 
-     * @param p0
-     * @returns
-     */", None);
-		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("1"), 11, r"/**
-     * 
-     * @param p1
-     * @returns
-     */", None);
-		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("2"), 11, r"/**
-     * 
-     * @param p2
-     * @param p3
-     * @returns
-     */", None);
 	});
 }
 

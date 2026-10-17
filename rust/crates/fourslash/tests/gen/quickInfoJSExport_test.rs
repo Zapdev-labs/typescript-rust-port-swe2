@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_js_export() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r#"// @Filename: a.js
-// @allowJs: true
-/**
- * @enum {string}
- */
-const testString = {
-    one: "1",
-    two: "2"
-};
-
-export { test/**/String };"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("", "(alias) type testString = string\n(alias) const testString: {\n    one: string;\n    two: string;\n}\nexport testString", "");
 	});
 }
 

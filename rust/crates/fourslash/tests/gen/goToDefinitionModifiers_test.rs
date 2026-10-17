@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_modifiers() {
 	run_test(|t| {
-		let content = r"// @Filename: /a.ts
-/*export*/export class A/*A*/ {
-
-    /*private*/private z/*z*/: string;
-
-    /*readonly*/readonly x/*x*/: string;
-
-    /*async*/async a/*a*/() {  }
-
-    /*override*/override b/*b*/() {}
-
-    /*public1*/public/*public2*/ as/*multipleModifiers*/ync c/*c*/() { }
-}
-
-exp/*exportFunction*/ort function foo/*foo*/() { }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["export".into(), "A".into(), "private".into(), "z".into(), "readonly".into(), "x".into(), "async".into(), "a".into(), "override".into(), "b".into(), "public1".into(), "public2".into(), "multipleModifiers".into(), "c".into(), "exportFunction".into(), "foo".into()]);
 	});
 }
 

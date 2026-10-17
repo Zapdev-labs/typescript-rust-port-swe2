@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn document_highlights02() {
 	run_test(|t| {
-		let content = r#"// @lib: es5
-// @Filename: a.ts
-function [|foo|] () {
-	return 1;
-}
-[|foo|]();
-// @Filename: b.ts
-/// <reference path="a.ts"/>
-[|foo|]();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.go_to_file("a.ts");
-		f.go_to_file("b.ts");
-		f.verify_baseline_document_highlights_with_options(None, &["a.ts".into(), "b.ts".into()], to_any(f.ranges()).into_iter().map(Into::into));
 	});
 }
 

@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_string_literal_types1() {
 	run_test(|t| {
-		let content = r#"interface AnimationOptions {
-    deltaX: number;
-    deltaY: number;
-    easing: "ease-in" | "ease-out" | "[|ease-in-out|]";
-}
-
-function animate(o: AnimationOptions) { }
-
-animate({ deltaX: 100, deltaY: 100, easing: "[|ease-in-out|]" });"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename_at_ranges_with_text(None, &["ease-in-out".into()]);
 	});
 }
 

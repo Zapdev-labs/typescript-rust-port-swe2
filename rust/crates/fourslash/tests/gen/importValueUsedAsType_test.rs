@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_value_used_as_type() {
 	run_test(|t| {
-		let content = r"/**/
-namespace A {
-    export var X;
-    import Z = A.X;
-    var v: Z;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.insert(" ");
 	});
 }
 

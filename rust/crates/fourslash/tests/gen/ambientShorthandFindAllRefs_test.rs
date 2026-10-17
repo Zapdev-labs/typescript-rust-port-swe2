@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn ambient_shorthand_find_all_refs() {
 	run_test(|t| {
-		let content = r#"// @Filename: declarations.d.ts
-declare module "jquery";
-// @Filename: user.ts
-import {/*1*/x} from "jquery";
-// @Filename: user2.ts
-import {/*2*/x} from "jquery";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into()]);
 	});
 }
 

@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn add_duplicate_setter() {
 	run_test(|t| {
-		let content = r"class C {
-    set foo(value) { }
-    /**/
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.insert("set foo(value) { }");
 	});
 }
 

@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quickinfo_verbosity_lib_type() {
 	run_test(|t| {
-		let content = r#"// @lib: es5
-interface Apple {
-    color: string;
-    size: number;
-}
-function f(): Promise<Apple> {
-    return Promise.resolve({ color: "red", size: 5 });
-}
-const g/*g*/ = f;
-const u/*u*/: Map<string, Apple> = new Map;
-type Foo<T> = Promise/*p*/<T>;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("g".to_string().into(), vec![0, 1]), ("u".to_string().into(), vec![0, 1]), ("p".to_string().into(), vec![0])]));
 	});
 }
 

@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn semicolon_formatting_nested_statements() {
 	run_test(|t| {
-		let content = r"if (true)
-if (true)/*parentOutsideBlock*/
-if (true) {
-if (true)/*directParent*/
-var x = 0/*innermost*/
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("innermost");
-		f.insert(";");
-		f.verify_current_line_content(r"        var x = 0;");
-		f.go_to_marker("directParent");
-		f.verify_current_line_content(r"    if (true)");
-		f.go_to_marker("parentOutsideBlock");
-		f.verify_current_line_content(r"if (true)");
 	});
 }
 

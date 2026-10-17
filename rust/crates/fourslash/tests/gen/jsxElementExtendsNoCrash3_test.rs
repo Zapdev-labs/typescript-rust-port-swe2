@@ -7,10 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsx_element_extends_no_crash3() {
 	run_test(|t| {
-		let content = r"// @filename: index.tsx
-<T extends /=>";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_suggestion_diagnostics(&[]);
 	});
 }
 

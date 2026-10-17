@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn unused_imports1_fs() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r#"// @noUnusedLocals: true
-// @Filename: file2.ts
-  [|import { Calculator } from "./file1" |]
-// @Filename: file1.ts
-   export class Calculator {
-
-   }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_range_after_code_fix(r"", false, 0, 0);
 	});
 }
 

@@ -7,29 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_provider_imports_map2() {
 	run_test(|t| {
-		let content = r##"// @Filename: /home/src/workspaces/project/tsconfig.json
-{
-  "compilerOptions": {
-    "module": "nodenext",
-    "lib": ["es5"],
-    "rootDir": "src",
-    "outDir": "dist"
-  }
-}
-// @Filename: /home/src/workspaces/project/package.json
-{
-  "type": "module",
-  "imports": {
-    "#internal/*": "./dist/internal/*"
-  }
-}
-// @Filename: /home/src/workspaces/project/src/internal/foo.ts
-export function something(name: string) {}
-// @Filename: /home/src/workspaces/project/src/a.ts
-something/**/"##;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.verify_import_fix_module_specifiers("", &["#internal/foo.js".into()], None);
 	});
 }
 

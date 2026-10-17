@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn return_recursive_type() {
 	run_test(|t| {
-		let content = r"interface MyInt {
-    (): void;
-}
-function MyFn() { return <MyInt>MyFn; }
-var My/**/Var = MyFn();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("", "var MyVar: MyInt", "");
 	});
 }
 

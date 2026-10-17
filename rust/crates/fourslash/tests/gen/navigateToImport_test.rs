@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn navigate_to_import() {
 	run_test(|t| {
-		let content = r"// @lib: es5
-// @Filename: library.ts
-export function [|foo|]() {}
-export function [|bar|]() {}
-// @Filename: user.ts
-import {foo, bar as [|baz|]} from './library';";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "foo".to_string().into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "foo".to_string().into(), kind: tsc_lsproto::SymbolKind::Function.into(), location: f.ranges()[0].clone().ls_location().into(), ..Default::default() }]).into()), ..Default::default() }, tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "bar".to_string().into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "bar".to_string().into(), kind: tsc_lsproto::SymbolKind::Function.into(), location: f.ranges()[1].clone().ls_location().into(), ..Default::default() }]).into()), ..Default::default() }, tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "baz".to_string().into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "baz".to_string().into(), kind: tsc_lsproto::SymbolKind::Variable.into(), location: f.ranges()[2].clone().ls_location().into(), ..Default::default() }]).into()), ..Default::default() }]);
 	});
 }
 

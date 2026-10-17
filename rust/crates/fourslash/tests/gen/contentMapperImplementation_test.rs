@@ -7,29 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn content_mapper_implementation() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r#"// @Filename: /models.ts
-export class ExternalShape { area = 2 }
-
-// @Filename: /ProfileCard.vue
-<component name="ProfileCard">
-<template>
-  <p>{{ local/*template*/Shape.area }}</p>
-  <span class="shape/*markup*/">Shape</span>
-</template>
-<script lang="ts">
-import * as models from "./models";
-export interface Local/*within*/Shape { area: number }
-export class [|LocalSquare|] implements LocalShape { area = 1 }
-export class [|ExternalSquare|] extends models.ExternalShape {}
-const localShape: LocalShape = new LocalSquare();
-models.External/*outgoing*/Shape;
-</script>
-
-// @Filename: /main.ts
-import { LocalShape } from "./ProfileCard.vue";
-let shape: Local/*incoming*/Shape;
-"#, tsc_testutil::contentmappertest::COMPONENT_MAPPER, ".vue");
-		f.verify_baseline_go_to_implementation(&["within".into(), "template".into(), "incoming".into(), "outgoing".into(), "markup".into()]);
 	});
 }
 

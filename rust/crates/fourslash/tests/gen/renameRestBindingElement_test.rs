@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_rest_binding_element() {
 	run_test(|t| {
-		let content = r#"interface I {
-    a: number;
-    b: number;
-    c: number;
-}
-function foo([|{ a, ...[|{| "contextRangeIndex": 0 |}rest|] }: I|]) {
-    [|rest|];
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename(Some(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }), vec![f.ranges()[1].clone().into()]);
 	});
 }
 

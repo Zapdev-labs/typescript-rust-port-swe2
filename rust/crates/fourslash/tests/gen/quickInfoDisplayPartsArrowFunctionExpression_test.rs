@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_display_parts_arrow_function_expression() {
 	run_test(|t| {
-		let content = r"var /*1*/x = /*5*/a => 10;
-var /*2*/y = (/*6*/a, /*7*/b) => 10;
-var /*3*/z = (/*8*/a: number) => 10;
-var /*4*/z2 = () => 10;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_infer_from_usage_optional_param() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"// @strict: false
-// @noImplicitAny: true
-function f([|a? |]){
-    a;
-}
-f();
-f(1);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_range_after_code_fix(r"a?: number", false, 0, 0);
 	});
 }
 

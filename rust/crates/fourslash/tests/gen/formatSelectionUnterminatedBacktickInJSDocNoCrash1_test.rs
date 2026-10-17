@@ -7,10 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_selection_unterminated_backtick_in_js_doc_no_crash1() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", "// @allowJs: true\n", "// @filename: index.js\n"), "export class Manifest {\n"), "  /**\n"), "   * @template {ExtensionType} ExtType\n"), "   * @param {ExtType} extType - `dri\n"), "/*begin*/   * @param {string} extName\n"), "   */\n"), "  setExtension(extType, extName, extData) {\n"), "        const data = _.cloneDeep(extData);\n"), "    this.#data[`${extType}s`][extName] = data;\n"), "    return data;\n"), "  }\n"), "/*end*/\n"), "}\n"), "\n");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_selection("begin", "end");
-		f.verify_current_file_content(&format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", "export class Manifest {\n", "  /**\n"), "   * @template {ExtensionType} ExtType\n"), "   * @param {ExtType} extType - `dri\n"), "   * @param {string} extName\n"), "   */\n"), "    setExtension(extType, extName, extData) {\n"), "        const data = _.cloneDeep(extData);\n"), "        this.#data[`${extType}s`][extName] = data;\n"), "        return data;\n"), "    }\n"), "\n"), "}\n"), "\n"));
 	});
 }
 

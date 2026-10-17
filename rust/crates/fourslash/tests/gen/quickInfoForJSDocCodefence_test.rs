@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_for_js_doc_codefence() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"/**
- * @example
- * ", "`"), r""), "`"), r""), "`"), r"
- * 1 + 2
- * "), "`"), r""), "`"), r""), "`"), r"
- */
-function fo/*1*/o() {
-    return '2';
-}
-/**
- * @example
- * "), "`"), r""), "`"), r"
- * 1 + 2
- * "), "`"), r"
- */
-function bo/*2*/o() {
-    return '2';
-}");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

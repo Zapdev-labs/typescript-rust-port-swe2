@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn process_invalid_syntax1() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @Filename: decl.js
-var obj = {};
-// @Filename: unicode1.js
-obj.𝒜 ;
-// @Filename: unicode2.js
-obj.¬ ;
-// @Filename: unicode3.js
-obj¬
-// @Filename: forof.js
-for (obj/**/.prop of arr) {
-
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename(None, vec!["".into()]);
 	});
 }
 

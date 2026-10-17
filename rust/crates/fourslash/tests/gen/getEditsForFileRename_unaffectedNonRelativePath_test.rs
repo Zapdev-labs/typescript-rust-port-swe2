@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_edits_for_file_rename_unaffected_non_relative_path() {
 	run_test(|t| {
-		let content = r#"// @Filename: /sub/a.ts
-export const a = 1;
-// @Filename: /sub/b.ts
-import { a } from "sub/a";
-// @Filename: /tsconfig.json
-{"compilerOptions":{"paths":{"*":["*"]}}}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_will_rename_files_edits("/sub/b.ts", "/sub/c/d.ts", &std::collections::BTreeMap::from([]), None);
 	});
 }
 

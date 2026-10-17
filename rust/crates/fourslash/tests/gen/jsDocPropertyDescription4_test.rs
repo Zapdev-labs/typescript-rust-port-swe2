@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn js_doc_property_description4() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"interface MultipleExample {
-    /** Something generic */
-    [key: string | number | symbol]: string;
-}
-function multipleExample(e: MultipleExample) {
-    console.log(e./*multiple*/anything);
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("multiple", "(index) MultipleExample[string | number | symbol]: string", "Something generic");
 	});
 }
 

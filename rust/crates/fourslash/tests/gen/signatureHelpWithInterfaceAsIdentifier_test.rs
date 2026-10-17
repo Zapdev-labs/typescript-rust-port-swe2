@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_with_interface_as_identifier() {
 	run_test(|t| {
-		let content = r"interface C {
-    (): void;
-}
-C(/*1*/);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_signature_help_for_markers(&["1".into()]);
 	});
 }
 

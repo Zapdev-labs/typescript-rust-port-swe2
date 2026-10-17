@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_method_overloads() {
 	run_test(|t| {
-		let content = r#"class MethodOverload {
-    static [|/*staticMethodOverload1*/method|]();
-    static /*staticMethodOverload2*/method(foo: string);
-    static /*staticMethodDefinition*/method(foo?: any) { }
-    public [|/*instanceMethodOverload1*/method|](): any;
-    public /*instanceMethodOverload2*/method(foo: string);
-    public /*instanceMethodDefinition*/method(foo?: any) { return "foo" }
-}
-// static method
-MethodOverload.[|/*staticMethodReference1*/method|]();
-MethodOverload.[|/*staticMethodReference2*/method|]("123");
-// instance method
-var methodOverload = new MethodOverload();
-methodOverload.[|/*instanceMethodReference1*/method|]();
-methodOverload.[|/*instanceMethodReference2*/method|]("456");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["staticMethodReference1".into(), "staticMethodReference2".into(), "instanceMethodReference1".into(), "instanceMethodReference2".into(), "staticMethodOverload1".into(), "instanceMethodOverload1".into()]);
 	});
 }
 

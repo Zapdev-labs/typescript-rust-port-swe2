@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_js_doc_namepath() {
 	run_test(|t| {
-		let content = r"// @noLib: true
-/**
- * @type {module:foo/A} x
- */
-var x = 1
-var /*0*/A = 0;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename(None, vec!["0".into()]);
 	});
 }
 

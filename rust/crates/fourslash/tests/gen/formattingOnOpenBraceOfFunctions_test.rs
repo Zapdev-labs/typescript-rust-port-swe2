@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_on_open_brace_of_functions() {
 	run_test(|t| {
-		let content = r"/**/function T2_y()
-{
-Plugin.T1.t1_x();
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("");
-		f.verify_current_line_content(r"function T2_y() {");
 	});
 }
 

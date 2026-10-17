@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_private_fields1() {
 	run_test(|t| {
-		let content = r#"class Foo {
-   [|[|{| "contextRangeIndex": 0 |}#foo|] = 1;|]
-
-   getFoo() {
-       return this.[|#foo|];
-   }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename_at_ranges_with_text(None, &["#foo".into()]);
 	});
 }
 

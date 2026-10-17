@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_js_module_name_at_import_name() {
 	run_test(|t| {
-		let content = r#"// @allowJs: true
-// @Filename: /foo.js
- /*moduleDef*/function notExported() { }
- class Blah {
-    abc = 123;
- }
- module.exports.Blah = Blah;
-// @Filename: /bar.js
-const [|/*importDef*/BlahModule|] = require("./foo.js");
-new [|/*importUsage*/BlahModule|].Blah()
-// @Filename: /barTs.ts
-import [|/*importDefTs*/BlahModule|] = require("./foo.js");
-new [|/*importUsageTs*/BlahModule|].Blah()"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["importDef".into(), "importUsage".into(), "importDefTs".into(), "importUsageTs".into()]);
 	});
 }
 

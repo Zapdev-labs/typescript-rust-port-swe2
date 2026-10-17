@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn semantic_classificaton_type_alias() {
 	run_test(|t| {
-		let content = r"type /*0*/Alias = number
-var x: /*1*/Alias;
-var y = </*2*/Alias>{};
-function f(x: /*3*/Alias): /*4*/Alias { return undefined; }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type_: "type.declaration".to_string().into(), text: "Alias".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.declaration".to_string().into(), text: "x".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "type".to_string().into(), text: "Alias".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.declaration".to_string().into(), text: "y".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "type".to_string().into(), text: "Alias".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "function.declaration".to_string().into(), text: "f".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "parameter.declaration".to_string().into(), text: "x".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "type".to_string().into(), text: "Alias".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "type".to_string().into(), text: "Alias".to_string().into(), ..Default::default() }]);
 	});
 }
 

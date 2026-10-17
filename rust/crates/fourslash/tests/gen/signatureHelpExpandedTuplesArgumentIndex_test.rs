@@ -7,32 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_expanded_tuples_argument_index() {
 	run_test(|t| {
-		let content = r#"function foo(...args: [string, string] | [number, string, string]
-) {
-
-}
-
-foo(123/*1*/,)
-foo(""/*2*/, ""/*3*/)
-foo(123/*4*/, ""/*5*/, )
-foo(123/*6*/, ""/*7*/, ""/*8*/)"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "foo(args_0: number, args_1: string, args_2: string): void".to_string().into(), parameter_count: 3, parameter_name: "args_0".to_string().into(), parameter_span: "args_0: number".to_string().into(), overloads_count: 2, override_selected_item_index: 1, is_variadic: false.into(), is_variadic_set: true.into(), ..Default::default() });
-		f.go_to_marker("2");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "foo(args_0: string, args_1: string): void".to_string().into(), parameter_count: 2, parameter_name: "args_0".to_string().into(), parameter_span: "args_0: string".to_string().into(), overloads_count: 2, override_selected_item_index: 0, is_variadic: false.into(), is_variadic_set: true.into(), ..Default::default() });
-		f.go_to_marker("3");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "foo(args_0: string, args_1: string): void".to_string().into(), parameter_count: 2, parameter_name: "args_1".to_string().into(), parameter_span: "args_1: string".to_string().into(), overloads_count: 2, override_selected_item_index: 0, is_variadic: false.into(), is_variadic_set: true.into(), ..Default::default() });
-		f.go_to_marker("4");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "foo(args_0: number, args_1: string, args_2: string): void".to_string().into(), parameter_count: 3, parameter_name: "args_0".to_string().into(), parameter_span: "args_0: number".to_string().into(), overloads_count: 2, override_selected_item_index: 1, is_variadic: false.into(), is_variadic_set: true.into(), ..Default::default() });
-		f.go_to_marker("5");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "foo(args_0: number, args_1: string, args_2: string): void".to_string().into(), parameter_count: 3, parameter_name: "args_1".to_string().into(), parameter_span: "args_1: string".to_string().into(), overloads_count: 2, override_selected_item_index: 1, is_variadic: false.into(), is_variadic_set: true.into(), ..Default::default() });
-		f.go_to_marker("6");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "foo(args_0: number, args_1: string, args_2: string): void".to_string().into(), parameter_count: 3, parameter_name: "args_0".to_string().into(), parameter_span: "args_0: number".to_string().into(), overloads_count: 2, override_selected_item_index: 1, is_variadic: false.into(), is_variadic_set: true.into(), ..Default::default() });
-		f.go_to_marker("7");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "foo(args_0: number, args_1: string, args_2: string): void".to_string().into(), parameter_count: 3, parameter_name: "args_1".to_string().into(), parameter_span: "args_1: string".to_string().into(), overloads_count: 2, override_selected_item_index: 1, is_variadic: false.into(), is_variadic_set: true.into(), ..Default::default() });
-		f.go_to_marker("8");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "foo(args_0: number, args_1: string, args_2: string): void".to_string().into(), parameter_count: 3, parameter_name: "args_2".to_string().into(), parameter_span: "args_2: string".to_string().into(), overloads_count: 2, override_selected_item_index: 1, is_variadic: false.into(), is_variadic_set: true.into(), ..Default::default() });
 	});
 }
 

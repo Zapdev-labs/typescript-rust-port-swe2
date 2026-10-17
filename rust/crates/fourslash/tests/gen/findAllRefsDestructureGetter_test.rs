@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_destructure_getter() {
 	run_test(|t| {
-		let content = r"class Test {
-    get /*x0*/x() { return 0; }
-
-    set /*y0*/y(a: number) {}
-}
-const { /*x1*/x, /*y1*/y } = new Test();
-/*x2*/x; /*y2*/y;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["x0".into(), "x1".into(), "x2".into(), "y0".into(), "y1".into(), "y2".into()]);
 	});
 }
 

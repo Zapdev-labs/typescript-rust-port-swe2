@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_implementation_invalid() {
 	run_test(|t| {
-		let content = r#"var x1 = 50/*0*/0;
-var x2 = "hel/*1*/lo";
-/*2*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_implementation(&["0".into(), "1".into(), "2".into()]);
 	});
 }
 

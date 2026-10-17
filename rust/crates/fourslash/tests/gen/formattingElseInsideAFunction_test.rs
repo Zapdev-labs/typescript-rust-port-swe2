@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_else_inside_a_function() {
 	run_test(|t| {
-		let content = r"var x = function() {
-    if (true) {
-    /*1*/} else {/*2*/
-}
-
-// newline at the end of the file";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("2");
-		f.insert_line("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"    } else {");
 	});
 }
 

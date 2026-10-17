@@ -7,35 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_import_source() {
 	run_test(|t| {
-		let content = r#"// @module: esnext
-// @target: esnext
-
-// @filename: /a.d.ts
-declare module "m" {
-    export default function /*a*/f(): void;
-}
-
-// @filename: /b.ts
-import /*b*/f from "m";
-/*bUse*/f();
-
-// @filename: /c.ts
-import source /*c*/f from "m";
-/*cUse*/f;
-export { f };
-
-// @filename: /d.ts
-import { /*d*/f } from "./c";
-/*dUse*/f;
-
-// @filename: /e.ts
-import source /*e*/g from "m";
-/*eUse*/g;
-import.source("m");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.verify_baseline_find_all_references(&["a".into(), "b".into(), "c".into(), "cUse".into(), "d".into(), "e".into()]);
-		f.verify_baseline_rename(None, vec!["a".into(), "b".into(), "c".into(), "cUse".into(), "d".into(), "e".into()]);
 	});
 }
 

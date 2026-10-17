@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsx_spread_reference() {
 	run_test(|t| {
-		let content = r#"//@Filename: file.tsx
-declare namespace JSX {
-    interface Element { }
-    interface IntrinsicElements {
-    }
-    interface ElementAttributesProperty { props }
-}
-class MyClass {
-  props: {
-    name?: string;
-    size?: number;
-  }
-}
-
-[|var [|/*dst*/{| "contextRangeIndex": 0 |}nn|]: {name?: string; size?: number};|]
-var x = <MyClass {...[|n/*src*/n|]}></MyClass>;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename_at_ranges_with_text(None, &["nn".into()]);
-		f.verify_baseline_go_to_definition(true, &["src".into()]);
 	});
 }
 

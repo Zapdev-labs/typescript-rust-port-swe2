@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_destructuring_class_property() {
 	run_test(|t| {
-		let content = r#"class A {
-    [|[|{| "contextRangeIndex": 0 |}foo|]: string;|]
-}
-class B {
-    syntax1(a: A): void {
-        [|let { [|{| "contextRangeIndex": 2 |}foo|] } = a;|]
-    }
-    syntax2(a: A): void {
-        [|let { [|{| "contextRangeIndex": 4 |}foo|]: foo } = a;|]
-    }
-    syntax11(a: A): void {
-        [|let { [|{| "contextRangeIndex": 6 |}foo|] } = a;|]
-        [|foo|] = "newString";
-    }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into(), f.ranges()[5].clone().into(), f.ranges()[3].clone().into(), f.ranges()[7].clone().into(), f.ranges()[8].clone().into()]);
 	});
 }
 

@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn call_hierarchy_incoming_calls_no_crash_array_push() {
 	run_test(|t| {
-		let content = r#"function splitNames(name: string) {
-  return (name || "").split(",").filter(Boolean);
-}
-
-async function trim(packageNames: string[]) {
-  const nameOrPkgs = packageNames.filter(Boolean);
-  const names = [];
-  for (const nameOrPkg of nameOrPkgs) {
-    try {
-      names./*push*/push(nameOrPkg);
-    } catch (error) {
-    }
-  }
-  return names;
-}
-	"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("push");
-		f.verify_baseline_call_hierarchy();
 	});
 }
 

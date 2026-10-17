@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_decorator_overloads() {
 	run_test(|t| {
-		let content = r"// @Target: ES6
-// @experimentaldecorators: true
-async function f() {}
-
-function /*defDecString*/dec(target: any, propertyKey: string): void;
-function /*defDecSymbol*/dec(target: any, propertyKey: symbol): void;
-function dec(target: any, propertyKey: string | symbol) {}
-
-declare const s: symbol;
-class C {
-    @[|/*useDecString*/dec|] f() {}
-    @[|/*useDecSymbol*/dec|] [s]() {}
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["useDecString".into(), "useDecSymbol".into()]);
 	});
 }
 

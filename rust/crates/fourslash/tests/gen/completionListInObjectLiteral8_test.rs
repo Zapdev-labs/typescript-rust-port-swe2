@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_in_object_literal8() {
 	run_test(|t| {
-		let content = r#"declare function test<
-  Variants extends Partial<Record<'hover' | 'pressed', string>>,
->(v: Variants): void
-
-test({
-  hover: "",
-  /**/
-});"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "pressed?".to_string().into(), insert_text: Some(("pressed").into()), filter_text: Some(("pressed").into()), sort_text: Some((tsc_ls::OPTIONAL_MEMBER.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

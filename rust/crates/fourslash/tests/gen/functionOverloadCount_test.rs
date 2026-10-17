@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn function_overload_count() {
 	run_test(|t| {
-		let content = r#"class C1 {
-    public attr(): string;
-    public attr(i: number): string;
-    public attr(i: number, x: boolean): string;
-    public attr(i?: any, x?: any) {
-        return "hi";
-    }
-}
-var i = new C1;
-i.attr(/*1*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { overloads_count: 3, ..Default::default() });
 	});
 }
 

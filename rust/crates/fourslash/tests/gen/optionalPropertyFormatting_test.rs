@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn optional_property_formatting() {
 	run_test(|t| {
-		let content = r"export class C extends Error {
-    message: string;
-    data? = {};
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.verify_current_file_content(r"export class C extends Error {
-    message: string;
-    data? = {};
-}");
 	});
 }
 

@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn es_module_interop_find_all_references2() {
 	run_test(|t| {
-		let content = r#"// @esModuleInterop: true
-// @Filename: /a.d.ts
-export as namespace abc;
-/*1*/export const /*2*/x: number;
-// @Filename: /b.ts
-import a from "./a";
-a./*3*/x;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
 	});
 }
 

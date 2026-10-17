@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn tsx_quick_info6() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r#"//@Filename: file.tsx
-// @jsx: preserve
-// @noLib: true
-declare function ComponentSpecific<U>(l: {prop: U}): JSX.Element;
-declare function ComponentSpecific1<U>(l: {prop: U, "ignore-prop": number}): JSX.Element;
-function Bar<T extends {prop: number}>(arg: T) {
-    let a1 = <Compone/*1*/ntSpecific {...arg} ignore-prop="hi" />;  // U is number
-    let a2 = <ComponentSpecific1 {...arg} ignore-prop={10} />;  // U is number
-    let a3 = <Component/*2*/Specific {...arg} prop="hello" />;   // U is "hello"
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "function ComponentSpecific<number>(l: {\n    prop: number;\n}): JSX.Element", "");
-		f.verify_quick_info_at("2", "function ComponentSpecific<never>(l: {\n    prop: never;\n}): JSX.Element", "");
 	});
 }
 

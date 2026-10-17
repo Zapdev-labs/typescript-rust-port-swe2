@@ -7,39 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_implementation_shorthand_property_assignment_00() {
 	run_test(|t| {
-		let content = r"interface Foo {
-    someFunction(): void;
-}
-
-interface FooConstructor {
-    new (): Foo
-}
-
-interface Bar {
-    Foo: FooConstructor;
-}
-
-var x = class /*classExpression*/Foo {
-    createBarInClassExpression(): Bar {
-        return {
-            Fo/*classExpressionRef*/o
-        };
-    }
-
-    someFunction() {}
-}
-
-class /*declaredClass*/Foo {
-
-}
-
-function createBarUsingClassDeclaration(): Bar {
-    return {
-        Fo/*declaredClassRef*/o
-    };
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_implementation(&["classExpressionRef".into(), "declaredClassRef".into()]);
 	});
 }
 

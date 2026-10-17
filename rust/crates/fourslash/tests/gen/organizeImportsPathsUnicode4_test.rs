@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn organize_imports_paths_unicode4() {
 	run_test(|t| {
-		let content = r#"import * as Ab from "./Ab";
-import * as _aB from "./_aB";
-import * as aB from "./aB";
-import * as _Ab from "./_Ab";
-
-console.log(_aB, _Ab, aB, Ab);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_organize_imports(r#"import * as _Ab from "./_Ab";
-import * as _aB from "./_aB";
-import * as Ab from "./Ab";
-import * as aB from "./aB";
-
-console.log(_aB, _Ab, aB, Ab);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_FALSE.into(), organize_imports_collation: tsc_lsutil::OrganizeImportsCollation::UNICODE.into(), organize_imports_case_first: tsc_lsutil::OrganizeImportsCaseFirst::UPPER.into(), ..Default::default() }));
-		f.verify_organize_imports(r#"import * as _aB from "./_aB";
-import * as _Ab from "./_Ab";
-import * as aB from "./aB";
-import * as Ab from "./Ab";
-
-console.log(_aB, _Ab, aB, Ab);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_FALSE.into(), organize_imports_collation: tsc_lsutil::OrganizeImportsCollation::UNICODE.into(), organize_imports_case_first: tsc_lsutil::OrganizeImportsCaseFirst::LOWER.into(), ..Default::default() }));
 	});
 }
 

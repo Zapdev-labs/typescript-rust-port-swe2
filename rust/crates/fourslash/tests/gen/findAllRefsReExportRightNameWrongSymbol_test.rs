@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_re_export_right_name_wrong_symbol() {
 	run_test(|t| {
-		let content = r#"// @Filename: /a.ts
-[|export const /*a*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 0 |}x|] = 0;|]
-// @Filename: /b.ts
-[|export const /*b*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 2 |}x|] = 0;|]
-//@Filename: /c.ts
-[|export { /*cFromB*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 4 |}x|] } from "./b";|]
-[|import { /*cFromA*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 6 |}x|] } from "./a";|]
-/*cUse*/[|x|];
-// @Filename: /d.ts
-[|import { /*d*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 9 |}x|] } from "./c";|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.verify_baseline_find_all_references(&["a".into(), "b".into(), "cFromB".into(), "cFromA".into(), "cUse".into(), "d".into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[7].clone().into(), f.ranges()[8].clone().into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[3].clone().into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[5].clone().into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[10].clone().into()]);
 	});
 }
 

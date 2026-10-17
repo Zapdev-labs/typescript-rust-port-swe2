@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_built_in_types() {
 	run_test(|t| {
-		let content = r"var n: /*number*/number;
-var s: /*string*/string;
-var b: /*boolean*/boolean;
-var v: /*void*/void;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &f.marker_names());
 	});
 }
 

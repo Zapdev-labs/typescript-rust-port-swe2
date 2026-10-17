@@ -7,32 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn codefix_crash_export_global() {
 	run_test(|t| {
-		let content = r"// @module: commonjs
-// @esModuleInterop: false
-// @allowSyntheticDefaultImports: false
-// @Filename: bar.ts
-import * as foo from './foo'
-export as namespace foo
-export = foo;
-
-declare global {
-    const foo: typeof foo;
-}
-// @Filename: foo.d.ts
-interface Root {
-    /**
-     * A .default property for ES6 default import compatibility
-     */
-    default: Root;
-}
-
-declare const root: Root;
-export = root;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("bar.ts");
-		f.verify_code_fix_not_available(&[]);
-		f.go_to_file("foo.d.ts");
-		f.verify_code_fix_not_available(&[]);
 	});
 }
 

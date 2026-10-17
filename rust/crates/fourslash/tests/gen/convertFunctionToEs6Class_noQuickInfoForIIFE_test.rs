@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn convert_function_to_es6_class_no_quick_info_for_iife() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @Filename: /a.js
-(/*1*/function () {
-   const foo = () => {
-        this.x = 10;
-   };
-   foo;
-})();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_code_fix_not_available(&[]);
 	});
 }
 

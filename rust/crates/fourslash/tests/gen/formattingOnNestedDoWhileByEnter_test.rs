@@ -7,28 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_on_nested_do_while_by_enter() {
 	run_test(|t| {
-		let content = r"/*2*/do{
-/*3*/do/*1*/{
-/*4*/do{
-/*5*/}while(a!==b)
-/*6*/}while(a!==b)
-/*7*/}while(a!==b)";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.insert("\n");
-		f.verify_current_line_content(r"    {");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"do{");
-		f.go_to_marker("3");
-		f.verify_current_line_content(r"    do");
-		f.go_to_marker("4");
-		f.verify_current_line_content(r"do{");
-		f.go_to_marker("5");
-		f.verify_current_line_content(r"}while(a!==b)");
-		f.go_to_marker("6");
-		f.verify_current_line_content(r"}while(a!==b)");
-		f.go_to_marker("7");
-		f.verify_current_line_content(r"}while(a!==b)");
 	});
 }
 

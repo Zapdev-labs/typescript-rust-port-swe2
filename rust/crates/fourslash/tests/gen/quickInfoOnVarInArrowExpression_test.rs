@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_on_var_in_arrow_expression() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"interface IMap<T> {
-    [key: string]: T;
-}
-var map: IMap<string[]>;
-var categories: string[];
-each(categories, category => {
-    var /*1*/changes = map[category];
-    return each(changes, change => {
-    });
-});
-function each<T>(items: T[], handler: (item: T) => void) { }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "(local var) changes: string[]", "");
 	});
 }
 

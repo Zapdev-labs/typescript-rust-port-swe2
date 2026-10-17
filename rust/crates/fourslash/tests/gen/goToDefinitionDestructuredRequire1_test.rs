@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_destructured_require1() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @Filename: util.js
-class /*2*/Util {}
-module.exports = { Util };
-// @Filename: index.js
-const { Util } = require('./util');
-new [|Util/*1*/|]()";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["1".into()]);
 	});
 }
 

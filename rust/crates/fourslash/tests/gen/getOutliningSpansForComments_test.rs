@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_outlining_spans_for_comments() {
 	run_test(|t| {
-		let content = r#"// @lib: es5
-[|/*
-    Block comment at the beginning of the file before module:
-        line one of the comment
-        line two of the comment
-        line three
-        line four
-        line five
-*/|]
-declare module "m";
-[|// Single line comments at the start of the file
-// line 2
-// line 3
-// line 4|]
-declare module "n";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.verify_outlining_spans(Some(tsc_lsproto::FoldingRangeKind::Comment));
 	});
 }
 

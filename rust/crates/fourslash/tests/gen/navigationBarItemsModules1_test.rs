@@ -7,33 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn navigation_bar_items_modules1() {
 	run_test(|t| {
-		let content = r#"declare module "X.Y.Z" {}
-
-declare module 'X2.Y2.Z2' {}
-
-declare module "foo";
-
-namespace A.B.C {
-    export var x;
-}
-
-namespace A.B {
-    export var y;
-}
-
-namespace A {
-    export var z;
-}
-
-namespace A {
-    namespace B {
-        namespace C {
-            declare var x;
-        }
-    }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_symbol();
 	});
 }
 

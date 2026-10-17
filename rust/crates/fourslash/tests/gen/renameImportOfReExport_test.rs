@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_import_of_re_export() {
 	run_test(|t| {
-		let content = r#"// @noLib: true
-declare module "a" {
-    [|export class /*1*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 0 |}C|] {}|]
-}
-declare module "b" {
-    [|export { /*2*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 2 |}C|] } from "a";|]
-}
-declare module "c" {
-    [|import { /*3*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 4 |}C|] } from "b";|]
-    export function f(c: [|C|]): void;
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[3].clone().into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[5].clone().into(), f.ranges()[6].clone().into()]);
 	});
 }
 

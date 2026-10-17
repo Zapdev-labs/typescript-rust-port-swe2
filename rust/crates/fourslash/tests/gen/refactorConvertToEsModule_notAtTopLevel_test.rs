@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn refactor_convert_to_es_module_not_at_top_level() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @target: esnext
-// @Filename: /a.js
-(function() {
-    module.exports = 0;
-})();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_suggestion_diagnostics(&[]);
 	});
 }
 

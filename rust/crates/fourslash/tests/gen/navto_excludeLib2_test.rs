@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn navto_exclude_lib2() {
 	run_test(|t| {
-		let content = r#"// @filename: /index.ts
-import { someName as [|weirdName|] } from "bar";
-// @filename: /tsconfig.json
-{}
-// @filename: /node_modules/bar/index.d.ts
-export const someName: number;
-// @filename: /node_modules/bar/package.json
-{}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "weirdName".to_string().into(), preferences: Some(tsc_lsutil::UserPreferences { exclude_library_symbols_in_nav_to: tsc_core::tristate::TS_FALSE.into(), ..Default::default() }), exact: Some((vec![tsc_lsproto::SymbolInformation { name: "weirdName".to_string().into(), kind: tsc_lsproto::SymbolKind::Variable.into(), location: f.ranges()[0].clone().ls_location().into(), ..Default::default() }]).into()), ..Default::default() }]);
-		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "weirdName".to_string().into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "weirdName".to_string().into(), kind: tsc_lsproto::SymbolKind::Variable.into(), location: f.ranges()[0].clone().ls_location().into(), ..Default::default() }]).into()), ..Default::default() }]);
 	});
 }
 

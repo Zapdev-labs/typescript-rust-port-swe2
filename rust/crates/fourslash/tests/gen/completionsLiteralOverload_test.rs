@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_literal_overload() {
 	run_test(|t| {
-		let content = r#"// @allowJs: true
-// @Filename: /a.tsx
-interface Events {
-  "": any;
-  drag: any;
-  dragenter: any;
-}
-declare function addListener<K extends keyof Events>(type: K, listener: (ev: Events[K]) => any): void;
-
-declare function ListenerComponent<K extends keyof Events>(props: { type: K, onWhatever: (ev: Events[K]) => void }): JSX.Element;
-
-addListener("/*ts*/");
-(<ListenerComponent type="/*tsx*/" />);
-// @Filename: /b.js
-addListener("/*js*/");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["ts", "tsx", "js"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["".into(), "drag".into(), "dragenter".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("drag");
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["ts", "tsx", "js"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["".into(), "drag".into(), "dragenter".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

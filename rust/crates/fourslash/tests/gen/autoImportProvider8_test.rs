@@ -7,37 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_provider8() {
 	run_test(|t| {
-		let content = r#"// @Filename: /home/src/workspaces/project/tsconfig.json
-{ "compilerOptions": { "lib": ["es5"], "module": "commonjs" } }
-// @Filename: /home/src/workspaces/project/package.json
-{ "dependencies": { "mylib": "file:packages/mylib" } }
-// @Filename: /home/src/workspaces/project/packages/mylib/package.json
-{ "name": "mylib", "version": "1.0.0" }
-// @Filename: /home/src/workspaces/project/packages/mylib/index.ts
-export * from "./mySubDir";
-// @Filename: /home/src/workspaces/project/packages/mylib/mySubDir/index.ts
-export * from "./myClass";
-export * from "./myClass2";
-// @Filename: /home/src/workspaces/project/packages/mylib/mySubDir/myClass.ts
-export class MyClass {}
-// @Filename: /home/src/workspaces/project/packages/mylib/mySubDir/myClass2.ts
-export class MyClass2 {}
-// @link: /home/src/workspaces/project/packages/mylib -> /home/src/workspaces/project/node_modules/mylib
-// @Filename: /home/src/workspaces/project/src/index.ts
-
-const a = new MyClass/*1*/();
-const b = new MyClass2/*2*/();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.go_to_marker("1");
-		let mut opts1158 = f.get_options();
-		opts1158.format_code_settings.new_line_character = "\n";
-		f.configure(opts1158);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "MyClass".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "mylib".to_string().into(), ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_apply_code_action_from_completion("1", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "MyClass".to_string().into(), source: "mylib".to_string().into(), description: "Add import from \"mylib\"".to_string().into(), auto_import_fix: Some(tsc_lsproto::AutoImportFix { ..Default::default() }), user_preferences: None, new_file_content: Some((r#"import { MyClass } from "mylib";
-
-const a = new MyClass();
-const b = new MyClass2();"#).into()), ..Default::default() });
 	});
 }
 

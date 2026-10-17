@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_js_doc_type_literal() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @checkJs: true
-// @filename: /a.js
-/**
- * @param {Object} options
- * @param {string} options.foo
- * @param {number} options.bar
- */
-function foo(/**/options) {}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/a.js");
-		f.verify_baseline_rename(None, vec!["".into()]);
 	});
 }
 

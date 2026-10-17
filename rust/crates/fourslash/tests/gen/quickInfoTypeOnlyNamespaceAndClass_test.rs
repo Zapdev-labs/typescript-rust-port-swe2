@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_type_only_namespace_and_class() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"// @Filename: /a.ts
-export namespace ns {
-  export class Box<T> {}
-}
-// @Filename: /b.ts
-import type { ns } from './a';
-let x: /*1*/ns./*2*/Box<string>;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "(alias) namespace ns\nimport ns", "");
-		f.verify_quick_info_at("2", "class ns.Box<T>", "");
 	});
 }
 

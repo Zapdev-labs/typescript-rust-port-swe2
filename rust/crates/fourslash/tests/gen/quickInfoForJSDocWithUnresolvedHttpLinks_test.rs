@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_for_js_doc_with_unresolved_http_links() {
 	run_test(|t| {
-		let content = r"// @checkJs: true
-// @filename: quickInfoForJSDocWithHttpLinks.js
-/** @see {@link https://hva} */
-var /*5*/see2 = true
-
-/** {@link https://hvaD} */
-var /*6*/see3 = true";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

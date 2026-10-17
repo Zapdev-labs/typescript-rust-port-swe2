@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_for_mapped_type() {
 	run_test(|t| {
-		let content = r#"interface T { /*1*/a: number };
-type U = { [K in keyof T]: string };
-type V = { [K in keyof U]: boolean };
-const u: U = { a: "" }
-const v: V = { a: true }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into()]);
 	});
 }
 

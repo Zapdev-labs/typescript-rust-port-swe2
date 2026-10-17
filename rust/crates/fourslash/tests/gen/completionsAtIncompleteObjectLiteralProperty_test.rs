@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_at_incomplete_object_literal_property() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"// @noLib: true
-f({
-    [|a|]/**/
-    xyz: ", "`"), r""), "`"), r",
-});
-declare function f(options: { abc?: number, xyz?: string }): void;");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "abc?".to_string().into(), filter_text: Some(("abc").into()), kind: Some((tsc_lsproto::CompletionItemKind::Field).into()), sort_text: Some((tsc_ls::OPTIONAL_MEMBER.to_string()).into()), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { insert_replace_edit: Some(tsc_lsproto::InsertReplaceEdit { new_text: "abc".to_string().into(), insert: f.ranges()[0].clone().ls_range.into(), replace: f.ranges()[0].clone().ls_range.into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

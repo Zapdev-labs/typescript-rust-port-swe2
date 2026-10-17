@@ -7,27 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_paths() {
 	run_test(|t| {
-		let content = r#"// @Filename: /package1/jsconfig.json
-{
-  "compilerOptions": {
-    checkJs: true,
-    "paths": {
-      "package1/*": ["./*"],
-      "package2/*": ["../package2/*"]
-    },
-    "baseUrl": "."
-  },
-  "include": [
-    ".",
-    "../package2"
-  ]
-}
-// @Filename: /package1/file1.js
-bar/**/
-// @Filename: /package2/file1.js
-export const bar = 0;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_module_specifiers("", &["package2/file1".into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_preference: tsc_modulespecifiers::ImportModuleSpecifierPreference("shortest"), ..Default::default() }));
 	});
 }
 

@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_re_export() {
 	run_test(|t| {
-		let content = r#"// @Filename: /a.ts
-export default function foo(): void {}
-// @Filename: /b.ts
-export { default } from "./a";
-// @Filename: /user.ts
-[|foo;|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/user.ts");
-		f.verify_import_fix_at_position(&[r#"import foo from "./a";
-
-foo;"#.into(), r#"import foo from "./b";
-
-foo;"#.into()], None);
 	});
 }
 

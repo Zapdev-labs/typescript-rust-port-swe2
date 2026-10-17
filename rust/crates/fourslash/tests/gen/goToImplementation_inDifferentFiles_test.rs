@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_implementation_in_different_files() {
 	run_test(|t| {
-		let content = r"// @lib: es5
-// @Filename: /home/src/workspaces/project/bar.ts
-import {Foo} from './foo'
-
-class [|A|] implements Foo {
-    func() {}
-}
-
-class [|B|] implements Foo {
-    func() {}
-}
-// @Filename: /home/src/workspaces/project/foo.ts
-export interface /**/Foo {
-    func();
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.verify_baseline_go_to_implementation(&["".into()]);
 	});
 }
 

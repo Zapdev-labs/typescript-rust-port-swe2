@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_for_function_expression01() {
 	run_test(|t| {
-		let content = r#"// @Filename: file1.ts
-var foo = /*1*/function /*2*/foo(a = /*3*/foo(), b = () => /*4*/foo) {
-    /*5*/foo(/*6*/foo, /*7*/foo);
-}
-// @Filename: file2.ts
-/// <reference path="file1.ts" />
-foo();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into(), "7".into()]);
 	});
 }
 

@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_js_doc_function_new() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"// @allowJs: true
-// @Filename: Foo.js
-/** @type {function (new: string, string): string} */
-var f/**/;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_quick_info_is("var f: new (arg1: string) => string", "");
 	});
 }
 

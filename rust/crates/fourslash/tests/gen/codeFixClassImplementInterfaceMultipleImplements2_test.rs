@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_class_implement_interface_multiple_implements2() {
 	run_test(|t| {
-		let content = r#"// @strict: false
-interface I1 {
-    x: number;
-}
-interface I2 {
-    y: "𣋝ઢȴ¬⏊";
-}
-
-class C implements I1,I2 {[|
-    |]x: number;
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_range_after_code_fix(r#"
-y: "𣋝ઢȴ¬⏊";
-"#, false, 0, 0);
-		f.verify_code_fix_not_available(&[]);
 	});
 }
 

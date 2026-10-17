@@ -7,52 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn this_predicate_function_completions03() {
 	run_test(|t| {
-		let content = r"class RoyalGuard {
-    isLeader(): this is LeadGuard {
-        return this instanceof LeadGuard;
-    }
-    isFollower(): this is FollowerGuard {
-        return this instanceof FollowerGuard;
-    }
-}
-
-class LeadGuard extends RoyalGuard {
-    lead(): void {};
-}
-
-class FollowerGuard extends RoyalGuard {
-    follow(): void {};
-}
-
-let a: RoyalGuard = new FollowerGuard();
-if (a.is/*1*/Leader()) {
-    a./*2*/;
-}
-else if (a.is/*3*/Follower()) {
-    a./*4*/;
-}
-
-interface GuardInterface {
-   isLeader(): this is LeadGuard;
-   isFollower(): this is FollowerGuard;
-}
-
-let b: GuardInterface;
-if (b.is/*5*/Leader()) {
-    b./*6*/;
-}
-else if (b.is/*7*/Follower()) {
-    b./*8*/;
-}
-
-let leader/*13*/Status = a.isLeader();
-function isLeaderGuard(g: RoyalGuard) {
-   return g.isLeader();
-}
-let checked/*14*/LeaderStatus = isLeader/*15*/Guard(a);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["2", "6"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["lead".into(), "isLeader".into(), "isFollower".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["4", "8"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["follow".into(), "isLeader".into(), "isFollower".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

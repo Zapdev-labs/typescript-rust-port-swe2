@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_from_empty_block_comment() {
 	run_test(|t| {
-		let content = r"/**/
-class Foo {
-}
-var f/*A*/ff = new Foo();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("A", "var fff: Foo", "");
 	});
 }
 

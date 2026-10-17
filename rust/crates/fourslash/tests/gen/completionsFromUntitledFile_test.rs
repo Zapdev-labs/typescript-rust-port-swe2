@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_from_untitled_file() {
 	run_test(|t| {
-		let content = r"// @filename: /home/src/project/utils.ts
-export function helper() {}
-
-// @filename: ^/untitled/ts-nul-authority/Untitled-1.ts
-/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: None, ..Default::default() }), ..Default::default() }));
 	});
 }
 

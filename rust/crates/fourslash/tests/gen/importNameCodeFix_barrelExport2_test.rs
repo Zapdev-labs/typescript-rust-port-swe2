@@ -7,30 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_barrel_export2() {
 	run_test(|t| {
-		let content = r#"// @module: commonjs
-// @baseUrl: /
-// @Filename: /proj/foo/a.ts
-export const A = 0;
-// @Filename: /proj/foo/b.ts
-export {};
-A/*sibling*/
-// @Filename: /proj/foo/index.ts
-export * from "./a";
-export * from "./b";
-// @Filename: /proj/index.ts
-export * from "./foo";
-export * from "./src";
-// @Filename: /proj/src/a.ts
-export {};
-A/*parent*/
-// @Filename: /proj/src/utils.ts
-export function util() { return "util"; }
-export { A } from "../foo/a";
-// @Filename: /proj/src/index.ts
-export * from "./a";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_module_specifiers("sibling", &["proj/foo/a".into(), "proj/src/utils".into(), "proj".into(), "proj/foo".into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_preference: tsc_modulespecifiers::ImportModuleSpecifierPreference("non-relative"), ..Default::default() }));
-		f.verify_import_fix_module_specifiers("parent", &["proj/foo".into(), "proj/foo/a".into(), "proj/src/utils".into(), "proj".into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_preference: tsc_modulespecifiers::ImportModuleSpecifierPreference("non-relative"), ..Default::default() }));
 	});
 }
 

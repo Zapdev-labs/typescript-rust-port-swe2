@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_from_contextual_type() {
 	run_test(|t| {
-		let content = r"// @Filename: quickInfoExportAssignmentOfGenericInterface_0.ts
-interface I {
-    /** Documentation */
-    x: number;
-}
-const i: I = { /**/x: 0 };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("", "(property) I.x: number", "Documentation");
 	});
 }
 

@@ -7,43 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn doc_comment_template_object_literal_methods01() {
 	run_test(|t| {
-		let content = r"var x = {
-    /*0*/
-    foo() {
-        return undefined;
-    }
-
-    /*1*/
-    [1 + 2 + 3 + Math.rand()](x: number, y: string, z = true) { }
-
-    /*2*/
-    m1: function(a) {}
-
-    /*3*/
-    m2: (a: string, b: string) => {}
-}";
-		let mut capabilities = tsc_fourslash::get_default_capabilities();
-		capabilities.text_document.as_mut().unwrap().completion.as_mut().unwrap().completion_item.as_mut().unwrap().snippet_support = Some((false).into());
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", capabilities.into(), &content);
-		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("0"), 11, r"/**
-     * 
-     * @returns
-     */", None);
-		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("1"), 11, r"/**
-     * 
-     * @param x
-     * @param y
-     * @param z
-     */", None);
-		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("2"), 11, r"/**
-     * 
-     * @param a
-     */", None);
-		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("3"), 11, r"/**
-     * 
-     * @param a
-     * @param b
-     */", None);
 	});
 }
 

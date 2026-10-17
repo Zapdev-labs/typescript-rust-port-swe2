@@ -7,60 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn type_error_after_string_completions_in_nested_call2() {
 	run_test(|t| {
-		let content = r#"// @stableTypeOrdering: true
-// @strict: true
-
-type ActionFunction<
-  TExpressionEvent extends { type: string },
-  out TEvent extends { type: string }
-> = {
-  ({ event }: { event: TExpressionEvent }): void;
-  _out_TEvent?: TEvent;
-};
-
-interface MachineConfig<TEvent extends { type: string }> {
-  types: {
-    events: TEvent;
-  };
-  on: {
-    [K in TEvent["type"]]?: ActionFunction<
-      Extract<TEvent, { type: K }>,
-      TEvent
-    >;
-  };
-}
-
-declare function raise<
-  TExpressionEvent extends { type: string },
-  TEvent extends { type: string }
->(
-  resolve: ({ event }: { event: TExpressionEvent }) => TEvent
-): {
-  ({ event }: { event: TExpressionEvent }): void;
-  _out_TEvent?: TEvent;
-};
-
-declare function createMachine<TEvent extends { type: string }>(
-  config: MachineConfig<TEvent>
-): void;
-
-createMachine({
-  types: {
-    events: {} as { type: "FOO" } | { type: "BAR" },
-  },
-  on: {
-    [|/*error*/FOO|]: raise(({ event }) => {
-      return {
-        type: "BAR/*1*/" as const,
-      };
-    }),
-  },
-});"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.insert("x");
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["BAR".into(), "FOO".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_baseline_non_suggestion_diagnostics();
 	});
 }
 

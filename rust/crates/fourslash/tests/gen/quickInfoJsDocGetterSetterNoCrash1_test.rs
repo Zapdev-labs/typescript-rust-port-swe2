@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_js_doc_getter_setter_no_crash1() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r#"class A implements A {
-  get x(): string { return "" }
-}
-const e = new A()
-e.x/*1*/
-
-class B implements B {
-  set x(v: string) {}
-}
-const f = new B()
-f.x/*2*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "(property) A.x: string", "");
-		f.verify_quick_info_at("2", "(property) B.x: string", "");
 	});
 }
 

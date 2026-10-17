@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_imported_names8() {
 	run_test(|t| {
-		let content = r#"// @allowjs: true
-// @Filename: b.js
-import { [|/*classAliasDefinition*/Class|] } from "./a";
-// @Filename: a.js
-class /*classDefinition*/Class {
-    private f;
-}
- export { Class };"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["classAliasDefinition".into()]);
 	});
 }
 

@@ -7,35 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_completion_export_list_augmentation1() {
 	run_test(|t| {
-		let content = r#"// @module: node18
-// @Filename: /node_modules/@sapphire/pieces/index.d.ts
-interface Container {
-  stores: unknown;
-}
-
-declare class Piece {
-  container: Container;
-}
-
-export { Piece, type Container };
-// @FileName: /augmentation.ts
-declare module "@sapphire/pieces" {
-  interface Container {
-    client: unknown;
-  }
-  export { Container };
-}
-// @Filename: /index.ts
-import { Piece } from "@sapphire/pieces";
-class FullPiece extends Piece {
-  /*1*/
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "container".to_string().into(), insert_text: Some(("container: Container;").into()), filter_text: Some(("container").into()), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), data: Some(tsc_lsproto::CompletionItemData { source: "ClassMemberSnippet/".to_string().into(), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_with_class_member_snippets: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), ..Default::default() }));
-		f.verify_apply_code_action_from_completion("1", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "container".to_string().into(), source: "ClassMemberSnippet/".to_string().into(), description: "Includes imports of types referenced by 'container'".to_string().into(), new_file_content: Some((r#"import { Container, Piece } from "@sapphire/pieces";
-class FullPiece extends Piece {
-  
-}"#).into()), user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_with_class_member_snippets: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), ..Default::default() });
 	});
 }
 

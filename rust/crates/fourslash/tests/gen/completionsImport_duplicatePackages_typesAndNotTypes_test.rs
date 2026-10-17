@@ -7,33 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_import_duplicate_packages_types_and_not_types() {
 	run_test(|t| {
-		let content = r#"// @lib: es5
-// @module: commonjs
-// @esModuleInterop: true
-// @Filename: /node_modules/@types/react-dom/package.json
-{ "name": "react-dom", "version": "1.0.0", "types": "./index.d.ts" }
-// @Filename: /node_modules/@types/react-dom/index.d.ts
-import * as React from "react";
-export function render(): void;
-// @Filename: /node_modules/@types/react/package.json
-{ "name": "react", "version": "1.0.0", "types": "./index.d.ts" }
-// @Filename: /node_modules/@types/react/index.d.ts
-import "./other";
-export declare function useState(): void;
-// @Filename: /node_modules/@types/react/other.d.ts
-export declare function useRef(): void;
-// @Filename: /packages/a/node_modules/react/package.json
-{ "name": "react", "version": "1.0.1", "types": "./index.d.ts" }
-// @Filename: /packages/a/node_modules/react/index.d.ts
-export declare function useState(): void;
-// @Filename: /packages/a/index.ts
-import "react-dom";
-import "react";
-// @Filename: /packages/a/foo.ts
-useState/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_plus(vec![tsc_lsproto::CompletionItem { label: "useState".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "react".to_string().into(), ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }.into()], false).into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

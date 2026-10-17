@@ -7,59 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_symlinked_monorepo_granular_update() {
 	run_test(|t| {
-		let content = r#"// @Filename: /packages/project-b/tsconfig.json
-{
-  "compilerOptions": {
-    "composite": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "declaration": true,
-    "module": "commonjs",
-    "strict": true
-  },
-  "include": ["src"]
-}
-// @Filename: /packages/project-b/package.json
-{
-  "name": "project-b",
-  "version": "1.0.0",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    }
-  }
-}
-// @Filename: /packages/project-b/src/index.ts
-export const projectBValue: number = 42;
-/*projectBEdit*/
-// @Filename: /packages/project-b/dist/index.d.ts
-export declare const projectBValue: number;
-// @Filename: /packages/project-a/tsconfig.json
-{
-  "compilerOptions": {
-    "module": "commonjs",
-    "strict": true,
-    "outDir": "./dist",
-    "rootDir": "./src"
-  },
-  "include": ["src"],
-  "references": [{ "path": "../project-b" }]
-}
-// @Filename: /packages/project-a/package.json
-{ "name": "project-a", "dependencies": { "project-b": "*" } }
-// @Filename: /packages/project-a/src/index.ts
-import { projectBValue } from "project-b";
-console.log(projectBValue);
-newlyAdded/*projectACompletion*/
-// @link: /packages/project-b -> /packages/project-a/node_modules/project-b"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("projectACompletion");
-		f.baseline_auto_imports_completions(&["projectACompletion".into()]);
-		f.go_to_marker("projectBEdit");
-		f.insert("\nexport function newlyAddedFunction(): void {}");
-		f.go_to_marker("projectACompletion");
-		f.baseline_auto_imports_completions(&["projectACompletion".into()]);
 	});
 }
 

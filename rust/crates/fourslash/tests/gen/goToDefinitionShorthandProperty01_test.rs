@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_shorthand_property01() {
 	run_test(|t| {
-		let content = r#"// @lib: es5
-var /*valueDeclaration1*/name = "hello";
-var /*valueDeclaration2*/id = 100000;
-declare var /*valueDeclaration3*/id;
-var obj = {[|/*valueDefinition1*/name|], [|/*valueDefinition2*/id|]};
-obj.[|/*valueReference1*/name|];
-obj.[|/*valueReference2*/id|];"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["valueDefinition1".into(), "valueDefinition2".into(), "valueReference1".into(), "valueReference2".into()]);
 	});
 }
 

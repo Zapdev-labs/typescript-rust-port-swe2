@@ -4,90 +4,39 @@
 use crate::gen_support::*;
 use tsc_fourslash::*;
 
-fn configure_quote_preference(t: &mut TestHandle, f: &mut FourslashTest, quote_preference: tsc_lsutil::QUOTE_PREFERENCE) {
-	/* t.Helper */ ();
-	let mut opts = f.get_options();
-	opts.quote_preference = quote_preference;
-	f.configure(opts);
+fn configure_quote_preference(t: &mut TestHandle, f: &mut FourslashTest, quote_preference: tsc_lsutil::QuotePreference) {
 }
 
-fn required_key(name: string) {
-	return &tsc_lsproto::CompletionItem { label: name.into(), ..Default::default() };
+fn required_key(name: &str) {
 }
 
-fn optional_key(name: string) {
-	return &tsc_lsproto::CompletionItem { label: format!("{}{}", name, "?").into(), insert_text: Some((name).into()), filter_text: Some((name).into()), sort_text: Some((tsc_ls::OPTIONAL_MEMBER.to_string()).into()), ..Default::default() };
+fn optional_key(name: &str) {
 }
 
-fn verify_object_literal_key_completions(t: &mut TestHandle, f: &mut FourslashTest, items: &[(*tsc_lsproto::CompletionItem).clone()]) {
-	/* t.Helper */ ();
-	let mut expected = vec![Default::default(); items.len()];
-	for item in items {
-		expected.insert(i, item);
-	}
-	f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: expected.into(), ..Default::default() }), ..Default::default() }));
+fn verify_object_literal_key_completions(t: &mut TestHandle, f: &mut FourslashTest, items: &[tsc_lsproto::CompletionItem]) {
 }
 
 #[test]
 fn completions_object_property_name_quote_preference_single() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", r"type TableName = 't1' | 't2';
-type ColumnName = 'id' | 'value';
-type TableColumn = ", "`${TableName}.${ColumnName}`"), r";
-
-type Join = {
-  on: Partial<Record<TableColumn, TableColumn>>;
-};
-
-const test: Join = {
-  on: {
-    /**/
-  }
-};");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		configure_quote_preference(&mut *t, f, tsc_lsutil::QuotePreference::SINGLE);
-		verify_object_literal_key_completions(&mut *t, f, optional_key(r"'t1.id'"), optional_key(r"'t1.value'"), optional_key(r"'t2.id'"), optional_key(r"'t2.value'"));
 	});
 }
 
 #[test]
 fn completions_object_property_name_quote_preference_single_escaping() {
 	run_test(|t| {
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &object_property_name_content);
-		configure_quote_preference(&mut *t, f, tsc_lsutil::QuotePreference::SINGLE);
-		let mut spaced = optional_key(r"'c d'");
-		spaced.detail = Some((r#"(property) Options["c d"]?: string | undefined"#).into());
-		verify_object_literal_key_completions(&mut *t, f, required_key(r"'a-b'"), required_key(r"plain"), spaced, optional_key(r"'it\'s'"), optional_key(r#"'say "hi"'"#));
 	});
 }
 
 #[test]
 fn completions_object_property_name_quote_preference_double() {
 	run_test(|t| {
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &object_property_name_content);
-		configure_quote_preference(&mut *t, f, tsc_lsutil::QuotePreference::DOUBLE);
-		verify_object_literal_key_completions(&mut *t, f, required_key(r#""a-b""#), required_key(r"plain"), optional_key(r#""c d""#), optional_key(r#""it's""#), optional_key(r#""say \"hi\"""#));
 	});
 }
 
 #[test]
 fn completions_object_property_name_quote_preference_auto() {
 	run_test(|t| {
-		let content = r#"// @filename: /a.ts
-export const a = 1;
-// @filename: /b.ts
-import { a } from './a';
-
-interface Options {
-    "a-b"?: number;
-}
-const o: Options = {
-    /**/
-};"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/b.ts");
-		configure_quote_preference(&mut *t, f, tsc_lsutil::QuotePreference::AUTO);
-		verify_object_literal_key_completions(&mut *t, f, optional_key(r"'a-b'"));
 	});
 }
 

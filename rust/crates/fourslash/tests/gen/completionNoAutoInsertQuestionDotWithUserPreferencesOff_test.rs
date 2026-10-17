@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_no_auto_insert_question_dot_with_user_preferences_off() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r#"// @strict: true
-interface User {
-    address?: {
-        city: string;
-        "postal code": string;
-    }
-};
-declare const user: User;
-user.address[|./**/|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

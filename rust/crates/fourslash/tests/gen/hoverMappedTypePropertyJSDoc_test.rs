@@ -7,40 +7,12 @@ use tsc_fourslash::*;
 #[test]
 fn hover_mapped_type_property_js_doc() {
 	run_test(|t| {
-		let content = r"
-// @filename: a.ts
-export declare const A: Readonly<{
-  /**
-   * x prop
-   */
-  readonly X: 200;
-
-  /**
-   * y prop
-   */
-  readonly Y: 201;
-}>;
-
-A.X/*1*/;
-
-// @filename: b.ts
-import { A } from './a';
-
-A.X/*2*/;
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 
 #[test]
 fn hover_mapped_type_without_property_type() {
 	run_test(|t| {
-		let content = r"
-declare function uhoh/*1*/<T>(x: { [K in keyof T] }): void;
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

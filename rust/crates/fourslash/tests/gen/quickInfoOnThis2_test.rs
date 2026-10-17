@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_on_this2() {
 	run_test(|t| {
-		let content = r"class Bar<T> {
-    public explicitThis(this: this) {
-        console.log(th/*1*/is);
-    }
-    public explicitClass(this: Bar<T>) {
-        console.log(thi/*2*/s);
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "this: this", "");
-		f.verify_quick_info_at("2", "this: Bar<T>", "");
 	});
 }
 

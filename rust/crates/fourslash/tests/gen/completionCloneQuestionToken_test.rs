@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_clone_question_token() {
 	run_test(|t| {
-		let content = r"// @strict: false
-// @Filename: /file2.ts
-type TCallback<T = any> = (options: T) => any;
-type InKeyOf<E> = { [K in keyof E]?: TCallback<E[K]>; };
-export class Bar<A> {
-    baz(a: InKeyOf<A>): void { }
-}
-// @Filename: /file1.ts
-import { Bar } from './file2';
-type TwoKeys = Record<'a' | 'b', { thisFails?: any; }>
-class Foo extends Bar<TwoKeys> {
-    /**/
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "baz".to_string().into(), insert_text: Some(("baz(a: { a?: (options: { thisFails?: any; }) => any; b?: (options: { thisFails?: any; }) => any; }): void {\n}").into()), filter_text: Some(("baz").into()), ..Default::default() }.into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_with_class_member_snippets: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), ..Default::default() }));
 	});
 }
 

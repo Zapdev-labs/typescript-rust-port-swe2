@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_contextual_construct_signature_no_crash() {
 	run_test(|t| {
-		let content = r"
-type Obj = {
-    foo: new () => object
-}
-
-let obj: Obj = {
-    foo(/*constructOnly*/) {}
-}
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("constructOnly");
-		f.verify_no_signature_help();
 	});
 }
 

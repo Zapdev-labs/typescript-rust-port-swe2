@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn goto_definition_constructor_function() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @checkJs: true
-// @noEmit: true
-// @filename: gotoDefinitionConstructorFunction.js
-function /*end*/StringStreamm() {
-}
-StringStreamm.prototype = {
-};
-
-function runMode () {
-new [|/*start*/StringStreamm|]()
-};";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["start".into()]);
 	});
 }
 

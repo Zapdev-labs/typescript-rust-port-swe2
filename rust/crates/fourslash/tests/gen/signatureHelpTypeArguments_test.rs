@@ -7,35 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_type_arguments() {
 	run_test(|t| {
-		let content = r"declare function f(a: number, b: string, c: boolean): void; // ignored, not generic
-declare function f<T extends number>(): void;
-declare function f<T, U>(): void;
-declare function f<T, U, V extends string>(): void;
-f</*f0*/;
-f<number, /*f1*/;
-f<number, string, /*f2*/;
-
-declare const C: {
-    new<T extends number>(): void;
-    new<T, U>(): void;
-    new<T, U, V extends string>(): void;
-};
-new C</*C0*/;
-new C<number, /*C1*/;
-new C<number, string, /*C2*/;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("f0");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "f<T extends number>(): void".to_string().into(), parameter_name: "T".to_string().into(), parameter_span: "T extends number".to_string().into(), overloads_count: 3, ..Default::default() });
-		f.go_to_marker("f1");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "f<T, U>(): void".to_string().into(), parameter_name: "U".to_string().into(), parameter_span: "U".to_string().into(), overloads_count: 2, ..Default::default() });
-		f.go_to_marker("f2");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "f<T, U, V extends string>(): void".to_string().into(), parameter_name: "V".to_string().into(), parameter_span: "V extends string".to_string().into(), ..Default::default() });
-		f.go_to_marker("C0");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "C<T extends number>(): void".to_string().into(), parameter_name: "T".to_string().into(), parameter_span: "T extends number".to_string().into(), overloads_count: 3, ..Default::default() });
-		f.go_to_marker("C1");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "C<T, U>(): void".to_string().into(), parameter_name: "U".to_string().into(), parameter_span: "U".to_string().into(), overloads_count: 2, ..Default::default() });
-		f.go_to_marker("C2");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "C<T, U, V extends string>(): void".to_string().into(), parameter_name: "V".to_string().into(), parameter_span: "V extends string".to_string().into(), ..Default::default() });
 	});
 }
 

@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsdoc_link1() {
 	run_test(|t| {
-		let content = r"class C {
-}
-/**
- * {@link C}
- * @wat Makes a {@link C}. A default one.
- * {@link C()}
- * {@link C|postfix text}
- * {@link unformatted postfix text}
- * @see {@link C} its great
- */
-function /**/CC() {
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

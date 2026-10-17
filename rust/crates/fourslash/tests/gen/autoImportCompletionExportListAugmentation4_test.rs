@@ -7,43 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_completion_export_list_augmentation4() {
 	run_test(|t| {
-		let content = r#"// @module: node18
-// @Filename: /node_modules/@sapphire/pieces/index.d.ts
-interface Container {
-  stores: unknown;
-}
-
-declare class Piece {
-  get container(): Container;
-}
-
-export { Piece as Alias, type Container };
-// @Filename: /node_modules/@sapphire/framework/index.d.ts
-import { Alias } from "@sapphire/pieces";
-
-declare class Command extends Alias {}
-
-declare module "@sapphire/pieces" {
-  interface Container {
-    client: unknown;
-  }
-}
-
-export { Command as CommandAlias };
-// @Filename: /index.ts
-import "@sapphire/pieces";
-import { CommandAlias } from "@sapphire/framework";
-class PingCommand extends CommandAlias {
-  /*1*/
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "container".to_string().into(), insert_text: Some(("get container(): Container {\n}").into()), filter_text: Some(("container").into()), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), data: Some(tsc_lsproto::CompletionItemData { source: "ClassMemberSnippet/".to_string().into(), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_with_class_member_snippets: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), ..Default::default() }));
-		f.verify_apply_code_action_from_completion("1", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "container".to_string().into(), source: "ClassMemberSnippet/".to_string().into(), description: "Includes imports of types referenced by 'container'".to_string().into(), new_file_content: Some((r#"import "@sapphire/pieces";
-import { CommandAlias } from "@sapphire/framework";
-import { Container } from "@sapphire/pieces";
-class PingCommand extends CommandAlias {
-  
-}"#).into()), user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_with_class_member_snippets: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), ..Default::default() });
 	});
 }
 

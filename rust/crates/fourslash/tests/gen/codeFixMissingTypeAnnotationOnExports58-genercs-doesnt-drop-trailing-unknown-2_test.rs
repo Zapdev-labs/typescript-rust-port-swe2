@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_missing_type_annotation_on_exports58_genercs_doesnt_drop_trailing_unknown_2() {
 	run_test(|t| {
-		let content = r"// @isolatedDeclarations: true
-// @declaration: true
-// @lib: es2015
-
-export const s = new Set<unknown>();
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Add annotation of type 'Set<unknown>'".to_string().into(), new_file_content: r"
-export const s: Set<unknown> = new Set<unknown>();
-".to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

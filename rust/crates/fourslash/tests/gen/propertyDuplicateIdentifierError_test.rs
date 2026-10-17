@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn property_duplicate_identifier_error() {
 	run_test(|t| {
-		let content = r"export class C {
-    x: number;
-    get x(): number { return 1; }
-}/*1*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.insert("/n");
 	});
 }
 

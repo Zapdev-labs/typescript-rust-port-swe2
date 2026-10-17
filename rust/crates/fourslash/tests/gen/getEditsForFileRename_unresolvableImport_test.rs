@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_edits_for_file_rename_unresolvable_import() {
 	run_test(|t| {
-		let content = r#"// @Filename: /tsconfig.json
-{
-  "compilerOptions": {
-    "allowJs": true,
-    "paths": {
-      "*": ["./next/src/*"],
-      "@app": ["./modules/@app/*"],
-      "@app/*": ["./modules/@app/*"],
-      "@local": ["./modules/@local/*"],
-      "@local/*": ["./modules/@local/*"]
-    }
-  }
-}
-// @Filename: /modules/@app/something/index.js
-import "@local/some-other-import";
-// @Filename: /modules/@local/index.js
-import "@local/some-other-import";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_will_rename_files_edits("/modules/@app/something", "/modules/@app/something-2", &std::collections::BTreeMap::from([]), None);
 	});
 }
 

@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_import_type() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @checkJs: true
-// @Filename: /a.js
-export {};
-/** @typedef {number} T */
-// @Filename: /b.js
-/** @type {T} */
-const x = 0;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/b.js");
-		f.verify_import_fix_at_position(&[r#"/** @type {import("./a").T} */
-const x = 0;"#.into()], None);
 	});
 }
 

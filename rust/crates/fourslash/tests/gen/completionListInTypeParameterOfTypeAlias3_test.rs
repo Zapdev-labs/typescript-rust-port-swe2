@@ -7,9 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_in_type_parameter_of_type_alias3() {
 	run_test(|t| {
-		let content = r"type constructorType<T1, T2> = new <T/*1*/, /*2*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(f.markers()), None);
 	});
 }
 

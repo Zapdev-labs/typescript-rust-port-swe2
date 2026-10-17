@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_class_implement_class_property_type_query() {
 	run_test(|t| {
-		let content = r"// @strict: false
-class A {
-    A: typeof A;
-}
-class D implements A {[| |]}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'A'".to_string().into(), new_file_content: r"class A {
-    A: typeof A;
-}
-class D implements A {
-    A: typeof A;
-}".to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

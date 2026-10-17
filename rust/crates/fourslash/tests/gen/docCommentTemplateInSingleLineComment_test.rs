@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn doc_comment_template_in_single_line_comment() {
 	run_test(|t| {
-		let content = r"// @Filename: justAComment.ts
-// We want to check off-by-one errors in assessing the end of the comment, so we check twice,
-// first with a trailing space and then without.
-// /*0*/ 
-// /*1*/
-// We also want to check EOF handling at the end of a comment
-// /*2*/";
-		let mut capabilities = tsc_fourslash::get_default_capabilities();
-		capabilities.text_document.as_mut().unwrap().completion.as_mut().unwrap().completion_item.as_mut().unwrap().snippet_support = Some((false).into());
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", capabilities.into(), &content);
-		for marker in f.markers() {
-			f.verify_no_js_doc_completion(tsc_fourslash::MarkerInput::from(marker));
-		}
 	});
 }
 

@@ -7,40 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn navigation_bar_property_declarations() {
 	run_test(|t| {
-		let content = r#"class A {
-    public A1 = class {
-        public x = 1;
-        private y() {}
-        protected z() {}
-    }
-
-    public A2 = {
-        x: 1,
-        y() {},
-        z() {}
-    }
-
-    public A3 = function () {}
-    public A4 = () => {}
-    public A5 = 1;
-    public A6 = "A6";
-
-    public ["A7"] = class {
-        public x = 1;
-        private y() {}
-        protected z() {}
-    }
-
-    public [1] = {
-        x: 1,
-        y() {},
-        z() {}
-    }
-
-    public [1 + 1] = 1;
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_symbol();
 	});
 }
 

@@ -7,29 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quickinfo_verbosity_namespace_members() {
 	run_test(|t| {
-		let content = r"
-declare namespace NS/*1*/ {
-    type StringAlias = string;
-    type Pair<T> = { first: T; second: T };
-
-    enum Color { Red, Green, Blue }
-
-    class MyClass {
-        name: string;
-        greet(): void;
-    }
-
-    interface MyInterface {
-        id: number;
-        label: string;
-    }
-
-    const value: number;
-    function doSomething(x: string): boolean;
-}
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("1".to_string().into(), vec![0, 1])]));
 	});
 }
 

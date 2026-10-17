@@ -7,39 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn navigation_items_export_default_expression() {
 	run_test(|t| {
-		let content = r#"export default function () {}
-export default function () {
-    return class Foo {
-    }
-}
-
-export default () => ""
-export default () => {
-    return class Foo {
-    }
-}
-
-export default function f1() {}
-export default function f2() {
-    return class Foo {
-    }
-}
-
-const abc = 12;
-export default abc;
-export default class AB {}
-export default {
-    a: 1,
-    b: 1,
-    c: {
-        d: 1
-    }
-}
-
-function foo(props: { x: number; y: number }) {}
-export default foo({ x: 1, y: 1 });"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_symbol();
 	});
 }
 

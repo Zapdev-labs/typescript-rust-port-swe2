@@ -7,33 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn unused_function_in_namespace5() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"// @noUnusedLocals: true
-// @noUnusedParameters:true
-namespace Validation {
-    var function1 = function() {
-    }
-
-    export function function2() {
-
-    }
-
-    [| function function3() {
-        function1();
-    }
-
-    function function4() {
-
-    }
-
-    export let a = function3; |]
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_range_after_code_fix(r"function function3() {
-        function1();
-    }
-
-    export let a = function3;", false, 0, 0);
 	});
 }
 

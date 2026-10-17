@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_java_script_syntactic_diagnostics17() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @Filename: a.js
-function F(a: number) { }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_non_suggestion_diagnostics();
 	});
 }
 

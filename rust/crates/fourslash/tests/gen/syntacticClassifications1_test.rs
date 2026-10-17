@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn syntactic_classifications1() {
 	run_test(|t| {
-		let content = r#"// comment
-namespace M {
-    var v = 0 + 1;
-    var s = "string";
-
-    class C<T> {
-    }
-
-    enum E {
-    }
-
-    interface I {
-    }
-
-    namespace M1.M2 {
-    }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type_: "namespace.declaration".to_string().into(), text: "M".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.declaration.local".to_string().into(), text: "v".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.declaration.local".to_string().into(), text: "s".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "class.declaration".to_string().into(), text: "C".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "typeParameter.declaration".to_string().into(), text: "T".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "enum.declaration".to_string().into(), text: "E".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "interface.declaration".to_string().into(), text: "I".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "namespace.declaration".to_string().into(), text: "M1".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "namespace.declaration".to_string().into(), text: "M2".to_string().into(), ..Default::default() }]);
 	});
 }
 

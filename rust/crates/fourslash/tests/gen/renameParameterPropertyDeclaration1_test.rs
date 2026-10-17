@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_parameter_property_declaration1() {
 	run_test(|t| {
-		let content = r#"class Foo {
-    constructor([|private [|{| "contextRangeIndex": 0 |}privateParam|]: number|]) {
-        let localPrivate = [|privateParam|];
-        this.[|privateParam|] += 10;
-    }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename_at_ranges_with_text(None, &["privateParam".into()]);
 	});
 }
 

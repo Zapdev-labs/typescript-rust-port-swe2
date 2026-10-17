@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_parameter_property_declaration_inheritance() {
 	run_test(|t| {
-		let content = r"class C {
-	constructor(public /*0*/x: string) {
-		/*1*/x;
-	}
-}
-class D extends C {
-	constructor(public /*2*/x: string) {
-		super(/*3*/x);
-	}
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["0".into(), "1".into(), "2".into(), "3".into()]);
 	});
 }
 

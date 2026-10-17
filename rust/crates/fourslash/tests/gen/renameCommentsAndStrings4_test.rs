@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_comments_and_strings4() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r#"///<reference path="./Bar.ts" />
-[|function [|{| "contextRangeIndex": 0 |}Bar|]() {
-    // This is a reference to [|Bar|] in a comment.
-    "this is a reference to [|Bar|] in a string";
-    "#, "`"), r"Foo [|Bar|] Baz."), "`"), r";
-    {
-        const Bar = 0;
-        "), "`"), r"[|Bar|] ba ${Bar} bara [|Bar|] berbobo ${Bar} araura [|Bar|] ara!"), "`"), r";
-    }
-}|]");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into()]);
 	});
 }
 

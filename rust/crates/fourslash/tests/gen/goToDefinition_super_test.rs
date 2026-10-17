@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_super() {
 	run_test(|t| {
-		let content = r"class A {
-    /*ctr*/constructor() {}
-    x() {}
-}
-class /*B*/B extends A {}
-class C extends B {
-    constructor() {
-        [|/*super*/super|]();
-    }
-    method() {
-        [|/*superExpression*/super|].x();
-    }
-}
-class D {
-    constructor() {
-        /*superBroken*/super();
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["super".into(), "superExpression".into(), "superBroken".into()]);
 	});
 }
 

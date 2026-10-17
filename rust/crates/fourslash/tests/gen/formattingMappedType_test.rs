@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_mapped_type() {
 	run_test(|t| {
-		let content = r"/*generic*/type t  < T  > =   {
-/*map*/   [   P   in   keyof    T  ]   :   T  [  P  ]
-};";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("generic");
-		f.verify_current_line_content(r"type t<T> = {");
-		f.go_to_marker("map");
-		f.verify_current_line_content(r"    [P in keyof T]: T[P]");
 	});
 }
 

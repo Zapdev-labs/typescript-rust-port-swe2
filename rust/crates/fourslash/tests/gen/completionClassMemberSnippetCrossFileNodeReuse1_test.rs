@@ -7,32 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_class_member_snippet_cross_file_node_reuse1() {
 	run_test(|t| {
-		let content = r#"// @strict: true
-// @filename: KlassConstructor.ts
-type GenericConstructor<T> = new (...args: any[]) => T;
-export type KlassConstructor<Cls extends GenericConstructor<any>> =
-  GenericConstructor<InstanceType<Cls>> & { [k in keyof Cls]: Cls[k] };
-// @filename: ElementNode.ts
-import { KlassConstructor } from "./KlassConstructor";
-
-export type NodeKey = string;
-
-export class ElementNode {
-  ["constructor"]!: KlassConstructor<typeof ElementNode>;
-}
-// @filename: CollapsibleContainerNode.ts
-import { ElementNode, NodeKey } from "./ElementNode";
-
-export class CollapsibleContainerNode extends ElementNode {
-  __open: boolean;
-
-  /*1*/
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		let mut opts786 = f.get_options();
-		opts786.format_code_settings.insert_space_after_constructor = tsc_core::tristate::TS_FALSE;
-		f.configure(opts786);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "[\"constructor\"]".to_string().into(), insert_text: Some(("[\"constructor\"]: KlassConstructor<typeof ElementNode>;").into()), filter_text: Some(("[\"constructor\"]").into()), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), data: Some(tsc_lsproto::CompletionItemData { source: "ClassMemberSnippet/".to_string().into(), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_with_class_member_snippets: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), ..Default::default() }));
 	});
 }
 

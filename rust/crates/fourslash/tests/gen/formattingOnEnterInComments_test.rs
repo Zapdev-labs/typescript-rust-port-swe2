@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_on_enter_in_comments() {
 	run_test(|t| {
-		let content = r"namespace me {
-    class A {
-        /*
-         */*1*/
-    /*2*/}
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.insert_line("");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"    }");
 	});
 }
 

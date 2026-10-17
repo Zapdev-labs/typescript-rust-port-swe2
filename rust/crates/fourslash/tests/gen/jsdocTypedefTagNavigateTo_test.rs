@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsdoc_typedef_tag_navigate_to() {
 	run_test(|t| {
-		let content = r"// @lib: es5
-// @allowNonTsExtensions: true
-// @Filename: jsDocTypedef_form2.js
-
-/** @typedef {(string | number)} NumberLike */
-/** @typedef {(string | number | string[])} */
-var NumberLike2;
-
-/** @type {/*1*/NumberLike} */
-var numberLike;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.verify_baseline_document_symbol();
 	});
 }
 

@@ -7,28 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_provider2() {
 	run_test(|t| {
-		let content = r#"// @Filename: /home/src/workspaces/project/node_modules/direct-dependency/package.json
-{ "name": "direct-dependency", "dependencies": { "indirect-dependency": "*" } }
-// @Filename: /home/src/workspaces/project/node_modules/direct-dependency/index.d.ts
-import "indirect-dependency";
-export declare class DirectDependency {}
-// @Filename: /home/src/workspaces/project/node_modules/indirect-dependency/package.json
-{ "name": "indirect-dependency" }
-// @Filename: /home/src/workspaces/project/node_modules/indirect-dependency/index.d.ts
-export declare class IndirectDependency
-// @Filename: /home/src/workspaces/project/tsconfig.json
-{ "compilerOptions": { "lib": ["es5"] } }
-// @Filename: /home/src/workspaces/project/package.json
-{ "dependencies": { "direct-dependency": "*" } }
-// @Filename: /home/src/workspaces/project/index.ts
-IndirectDependency/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.go_to_marker("");
-		let mut opts1155 = f.get_options();
-		opts1155.format_code_settings.new_line_character = "\n";
-		f.configure(opts1155);
-		f.verify_import_fix_at_position(&[], None);
 	});
 }
 

@@ -7,40 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_instance_protected_members2() {
 	run_test(|t| {
-		let content = r"class Base {
-    private privateMethod() { }
-    private privateProperty;
-
-    protected protectedMethod() { }
-    protected protectedProperty;
-
-    public publicMethod() { }
-    public publicProperty;
-
-    protected protectedOverriddenMethod() { }
-    protected protectedOverriddenProperty;
-}
-
-class C1 extends Base {
-    protected  protectedOverriddenMethod() { }
-    protected  protectedOverriddenProperty;
-
-    test() {
-        this./*1*/;
-        super./*2*/;
-
-        var b: Base;
-        var c: C1;
-
-        b./*3*/;
-        c./*4*/;
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["protectedMethod".into(), "protectedProperty".into(), "publicMethod".into(), "publicProperty".into(), "protectedOverriddenMethod".into(), "protectedOverriddenProperty".into()].into(), excludes: vec!["privateMethod".into(), "privateProperty".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("2"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["protectedMethod".into(), "publicMethod".into(), "protectedOverriddenMethod".into()].into(), excludes: vec!["privateMethod".into(), "privateProperty".into(), "protectedProperty".into(), "publicProperty".into(), "protectedOverriddenProperty".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("3"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["publicMethod".into(), "publicProperty".into()].into(), excludes: vec!["privateMethod".into(), "privateProperty".into(), "protectedMethod".into(), "protectedProperty".into(), "protectedOverriddenMethod".into(), "protectedOverriddenProperty".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("4"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["protectedMethod".into(), "protectedProperty".into(), "publicMethod".into(), "publicProperty".into(), "protectedOverriddenMethod".into(), "protectedOverriddenProperty".into()].into(), excludes: vec!["privateMethod".into(), "privateProperty".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

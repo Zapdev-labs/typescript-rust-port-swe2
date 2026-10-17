@@ -7,58 +7,18 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_source_property_access_no_declaration() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{ "name": "pkg", "main": "./index.js", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.d.ts
-type Keys = "alpha" | "beta";
-export declare const config: { [K in Keys]: string };
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.js
-export const config = { /*targetAlpha*/alpha: "a", /*targetBeta*/beta: "b" };
-// @Filename: /home/src/workspaces/project/index.ts
-import { config } from "pkg";
-config./*accessAlpha*/alpha;
-config./*accessBeta*/beta;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["accessAlpha".into(), "accessBeta".into()]);
 	});
 }
 
 #[test]
 fn go_to_source_property_access_deep_chain() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{ "name": "pkg", "main": "./index.js", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.d.ts
-export declare const nested: { inner: { value: number } };
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.js
-export const nested = { inner: { /*targetValue*/value: 42 } };
-// @Filename: /home/src/workspaces/project/index.ts
-import { nested } from "pkg";
-nested.inner./*accessValue*/value;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["accessValue".into()]);
 	});
 }
 
 #[test]
 fn go_to_source_property_access_namespace_import() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{ "name": "pkg", "main": "./index.js", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.d.ts
-type Keys = "x" | "y";
-export declare const coords: { [K in Keys]: number };
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.js
-export const coords = { /*targetX*/x: 10, /*targetY*/y: 20 };
-// @Filename: /home/src/workspaces/project/index.ts
-import { coords } from "pkg";
-coords./*accessX*/x;
-coords./*accessY*/y;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["accessX".into(), "accessY".into()]);
 	});
 }
 

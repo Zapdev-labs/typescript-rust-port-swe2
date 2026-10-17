@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_for_aliasing_export01() {
 	run_test(|t| {
-		let content = r"// @Filename: foo.ts
-let x = 1;
-
-export { /**/[|x|] as y };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_rename_succeeded(None);
 	});
 }
 

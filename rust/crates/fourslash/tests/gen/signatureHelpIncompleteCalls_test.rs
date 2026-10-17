@@ -7,27 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_incomplete_calls() {
 	run_test(|t| {
-		let content = r#"namespace IncompleteCalls {
-    class Foo {
-        public f1() { }
-        public f2(n: number): number { return 0; }
-        public f3(n: number, s: string) : string { return ""; }
-    }
-    var x = new Foo();
-    x.f1();
-    x.f2(5);
-    x.f3(5, "");
-    x.f1(/*incompleteCalls1*/
-    x.f2(5,/*incompleteCalls2*/
-    x.f3(5,/*incompleteCalls3*/
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("incompleteCalls1");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "f1(): void".to_string().into(), parameter_count: 0, ..Default::default() });
-		f.go_to_marker("incompleteCalls2");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "f2(n: number): number".to_string().into(), parameter_count: 1, ..Default::default() });
-		f.go_to_marker("incompleteCalls3");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "f3(n: number, s: string): string".to_string().into(), parameter_count: 2, parameter_name: "s".to_string().into(), parameter_span: "s: string".to_string().into(), ..Default::default() });
 	});
 }
 

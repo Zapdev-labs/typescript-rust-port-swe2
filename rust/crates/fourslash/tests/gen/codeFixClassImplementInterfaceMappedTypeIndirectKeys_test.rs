@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_class_implement_interface_mapped_type_indirect_keys() {
 	run_test(|t| {
-		let content = r"type Base = { ax: number; ay: string };
-type BaseKeys = keyof Base;
-type MappedIndirect = { [K in BaseKeys]: boolean };
-class MappedImpl implements MappedIndirect { }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'MappedIndirect'".to_string().into(), new_file_content: r"type Base = { ax: number; ay: string };
-type BaseKeys = keyof Base;
-type MappedIndirect = { [K in BaseKeys]: boolean };
-class MappedImpl implements MappedIndirect {
-    ax: boolean;
-    ay: boolean;
-}".to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

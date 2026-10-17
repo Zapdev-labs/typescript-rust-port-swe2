@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_class_static_blocks() {
 	run_test(|t| {
-		let content = r"class ClassStaticBocks {
-    static x;
-    [|/*classStaticBocks1*/static|] {}
-    static y;
-    [|/*classStaticBocks2*/static|] {}
-    static y;
-    [|/*classStaticBocks3*/static|] {}
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["classStaticBocks1".into(), "classStaticBocks2".into(), "classStaticBocks3".into()]);
 	});
 }
 

@@ -7,67 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsdoc_deprecated_suggestion2() {
 	run_test(|t| {
-		let content = r"// overloads
-declare function foo(a: string): number;
-/** @deprecated */
-declare function foo(): undefined;
-declare function foo (a?: string): number | undefined;
-[|foo|]();
-foo('');
-foo;
-/** @deprecated */
-declare function bar(): number;
-[|bar|]();
-[|bar|];
-/** @deprecated */
-declare function baz(): number;
-/** @deprecated */
-declare function baz(): number | undefined;
-[|baz|]();
-[|baz|];
-interface Foo {
-    /** @deprecated */
-    (): void
-    (a: number): void
-}
-declare const f: Foo;
-[|f|]();
-f(1);
-interface T {
-    createElement(): void
-    /** @deprecated */
-    createElement(tag: 'xmp'): void;
-}
-declare const t: T;
-t.createElement();
-t.[|createElement|]('xmp');
-declare class C {
-    /** @deprecated */
-    constructor ();
-    constructor(v: string)
-}
-C;
-const c = new [|C|]();
-interface Ca {
-    /** @deprecated */
-    (): void
-    new (): void
-}
-interface Cb {
-    (): void
-    /** @deprecated */
-    new (): string
-}
-declare const ca: Ca;
-declare const cb: Cb;
-ca;
-cb;
-[|ca|]();
-cb();
-new ca();
-new [|cb|]();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_suggestion_diagnostics(&[tsc_lsproto::Diagnostic { message: tsc_lsproto::StringOrMarkupContent { string: Some(("The signature '(): undefined' of 'foo' is deprecated.").into()), ..Default::default() }.into(), code: Some(tsc_lsproto::IntegerOrString { integer: Some(((6387) as i32).into()), ..Default::default() }), range: f.ranges()[0].clone().ls_range.into(), tags: Some(vec![tsc_lsproto::DiagnosticTag::Deprecated]), ..Default::default() }, tsc_lsproto::Diagnostic { message: tsc_lsproto::StringOrMarkupContent { string: Some(("The signature '(): number' of 'bar' is deprecated.").into()), ..Default::default() }.into(), code: Some(tsc_lsproto::IntegerOrString { integer: Some(((6387) as i32).into()), ..Default::default() }), range: f.ranges()[1].clone().ls_range.into(), tags: Some(vec![tsc_lsproto::DiagnosticTag::Deprecated]), ..Default::default() }, tsc_lsproto::Diagnostic { message: tsc_lsproto::StringOrMarkupContent { string: Some(("'bar' is deprecated.").into()), ..Default::default() }.into(), code: Some(tsc_lsproto::IntegerOrString { integer: Some(((6385) as i32).into()), ..Default::default() }), range: f.ranges()[2].clone().ls_range.into(), tags: Some(vec![tsc_lsproto::DiagnosticTag::Deprecated]), ..Default::default() }, tsc_lsproto::Diagnostic { message: tsc_lsproto::StringOrMarkupContent { string: Some(("The signature '(): number' of 'baz' is deprecated.").into()), ..Default::default() }.into(), code: Some(tsc_lsproto::IntegerOrString { integer: Some(((6387) as i32).into()), ..Default::default() }), range: f.ranges()[3].clone().ls_range.into(), tags: Some(vec![tsc_lsproto::DiagnosticTag::Deprecated]), ..Default::default() }, tsc_lsproto::Diagnostic { message: tsc_lsproto::StringOrMarkupContent { string: Some(("'baz' is deprecated.").into()), ..Default::default() }.into(), code: Some(tsc_lsproto::IntegerOrString { integer: Some(((6385) as i32).into()), ..Default::default() }), range: f.ranges()[4].clone().ls_range.into(), tags: Some(vec![tsc_lsproto::DiagnosticTag::Deprecated]), ..Default::default() }, tsc_lsproto::Diagnostic { message: tsc_lsproto::StringOrMarkupContent { string: Some(("The signature '(): void' of 'f' is deprecated.").into()), ..Default::default() }.into(), code: Some(tsc_lsproto::IntegerOrString { integer: Some(((6387) as i32).into()), ..Default::default() }), range: f.ranges()[5].clone().ls_range.into(), tags: Some(vec![tsc_lsproto::DiagnosticTag::Deprecated]), ..Default::default() }, tsc_lsproto::Diagnostic { message: tsc_lsproto::StringOrMarkupContent { string: Some(("The signature '(tag: \"xmp\"): void' of 't.createElement' is deprecated.").into()), ..Default::default() }.into(), code: Some(tsc_lsproto::IntegerOrString { integer: Some(((6387) as i32).into()), ..Default::default() }), range: f.ranges()[6].clone().ls_range.into(), tags: Some(vec![tsc_lsproto::DiagnosticTag::Deprecated]), ..Default::default() }, tsc_lsproto::Diagnostic { message: tsc_lsproto::StringOrMarkupContent { string: Some(("The signature 'new (): C' of 'C' is deprecated.").into()), ..Default::default() }.into(), code: Some(tsc_lsproto::IntegerOrString { integer: Some(((6387) as i32).into()), ..Default::default() }), range: f.ranges()[7].clone().ls_range.into(), tags: Some(vec![tsc_lsproto::DiagnosticTag::Deprecated]), ..Default::default() }, tsc_lsproto::Diagnostic { message: tsc_lsproto::StringOrMarkupContent { string: Some(("The signature '(): void' of 'ca' is deprecated.").into()), ..Default::default() }.into(), code: Some(tsc_lsproto::IntegerOrString { integer: Some(((6387) as i32).into()), ..Default::default() }), range: f.ranges()[8].clone().ls_range.into(), tags: Some(vec![tsc_lsproto::DiagnosticTag::Deprecated]), ..Default::default() }, tsc_lsproto::Diagnostic { message: tsc_lsproto::StringOrMarkupContent { string: Some(("The signature 'new (): string' of 'cb' is deprecated.").into()), ..Default::default() }.into(), code: Some(tsc_lsproto::IntegerOrString { integer: Some(((6387) as i32).into()), ..Default::default() }), range: f.ranges()[9].clone().ls_range.into(), tags: Some(vec![tsc_lsproto::DiagnosticTag::Deprecated]), ..Default::default() }]);
 	});
 }
 

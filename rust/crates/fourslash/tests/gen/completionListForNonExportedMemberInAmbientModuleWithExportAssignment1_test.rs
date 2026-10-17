@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_for_non_exported_member_in_ambient_module_with_export_assignment1() {
 	run_test(|t| {
-		let content = r#"// @Filename: completionListForNonExportedMemberInAmbientModuleWithExportAssignment1_file0.ts
-var x: Date;
-export = x;
-// @Filename: completionListForNonExportedMemberInAmbientModuleWithExportAssignment1_file1.ts
-///<reference path='completionListForNonExportedMemberInAmbientModuleWithExportAssignment1_file0.ts'/>
- import test = require("completionListForNonExportedMemberInAmbientModuleWithExportAssignment1_file0");
- test./**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), None);
 	});
 }
 

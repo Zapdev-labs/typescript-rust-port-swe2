@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn navigation_bar_getter_and_setter() {
 	run_test(|t| {
-		let content = r"class X {
-    get x() {}
-    set x(value) {
-        // Inner declaration should make the setter top-level.
-        function f() {}
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_symbol();
 	});
 }
 

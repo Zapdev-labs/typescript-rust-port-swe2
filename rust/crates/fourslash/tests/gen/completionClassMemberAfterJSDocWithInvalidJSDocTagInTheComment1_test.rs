@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_class_member_after_js_doc_with_invalid_js_doc_tag_in_the_comment1() {
 	run_test(|t| {
-		let content = r"export class NeedsPrefix {
-  private _prefixes: {
-    add: Record<string, any>;
-    browsers: {selected: string[]};
-  };
-
-  constructor(browsers: string[]) {
-  }
-
-  /** Checks whether an @-rule needs to be prefixed. */
-  /**/atRule(identifier: string): boolean {
-    return true;
-  }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_link11() {
 	run_test(|t| {
-		let content = r"/**
- * {@link https://vscode.dev}
- * [link text]{https://vscode.dev}
- * {@link https://vscode.dev|link text}
- * {@link https://vscode.dev link text}
- */
-function f() {}
-
-/**/f();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

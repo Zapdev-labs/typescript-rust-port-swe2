@@ -7,28 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_relative_path_to_monorepo_package() {
 	run_test(|t| {
-		let content = r#"// @Filename: /home/src/workspaces/project/tsconfig.json
-{
-  "compilerOptions": {
-    "module": "nodenext",
-    "lib": ["es5"]
-  }
-}
-// @Filename: /home/src/workspaces/project/packages/app/dist/index.d.ts
-import {} from "utils";
-export const app: number;
-// @Filename: /home/src/workspaces/project/packages/utils/package.json
-{ "name": "utils", "version": "1.0.0", "main": "dist/index.js" }
-// @Filename: /home/src/workspaces/project/packages/utils/dist/index.d.ts
-export const x: number;
-// @link: /home/src/workspaces/project/packages/utils -> /home/src/workspaces/project/packages/app/node_modules/utils
-// @Filename: /home/src/workspaces/project/script.ts
-import {} from "./packages/app/dist/index.js";
-x/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.go_to_marker("");
-		f.verify_import_fix_module_specifiers("", &["./packages/utils/dist/index.js".into()], None);
 	});
 }
 

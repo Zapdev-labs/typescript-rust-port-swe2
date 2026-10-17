@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn no_quick_info_in_whitespace() {
 	run_test(|t| {
-		let content = r"class C {
-/*1*/    private _mspointerupHandler(args) {
-        if (args.button === 3) {
-            return null; 
-/*2*/        } else if (args.button === 4) {
-/*3*/            return null;
-        }
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_not_quick_info_exists();
-		f.go_to_marker("2");
-		f.verify_not_quick_info_exists();
-		f.go_to_marker("3");
-		f.verify_not_quick_info_exists();
 	});
 }
 

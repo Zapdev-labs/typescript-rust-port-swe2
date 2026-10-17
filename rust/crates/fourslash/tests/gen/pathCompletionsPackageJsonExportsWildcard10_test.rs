@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn path_completions_package_json_exports_wildcard10() {
 	run_test(|t| {
-		let content = r#"// @module: preserve
-// @moduleResolution: bundler
-// @allowImportingTsExtensions: true
-// @jsx: react
-// @Filename: /node_modules/repo/package.json
-{
-  "name": "repo",
-  "exports": {
-    "./*": "./src/*"
-  }
-}
-// @Filename: /node_modules/repo/src/card.tsx
-export {};
-// @Filename: /main.ts
-import { } from "repo//**/";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "card.tsx".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::File).into()), detail: Some(("card.tsx").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

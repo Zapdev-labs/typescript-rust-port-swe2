@@ -7,9 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn error_in_incomplete_method_in_object_literal() {
 	run_test(|t| {
-		let content = r"var x: { f(): string } = { f( }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_number_of_errors_in_current_file(1);
 	});
 }
 

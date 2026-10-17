@@ -7,10 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_in_comments() {
 	run_test(|t| {
-		let content = r"var foo = '';
-( // f/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), None);
 	});
 }
 

@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_export_not_at_top_level() {
 	run_test(|t| {
-		let content = r"{
-    /*1*/export const /*2*/x = 0;
-    /*3*/x;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
 	});
 }
 

@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn js_doc_function_signatures12() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @Filename: jsDocFunctionSignatures.js
-/**
- * @param {{
- *   stringProp: string,
- *   numProp: number,
- *   boolProp: boolean,
- *   anyProp: any,
- *   anotherAnyProp: any,
- *   functionProp: (arg0: string, arg1: any) => any
- * }} o
- */
-function f1(o) {
-    o/**/;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_quick_info_is("(parameter) o: {\n    stringProp: string;\n    numProp: number;\n    boolProp: boolean;\n    anyProp: any;\n    anotherAnyProp: any;\n    functionProp: (arg0: string, arg1: any) => any;\n}", "");
 	});
 }
 

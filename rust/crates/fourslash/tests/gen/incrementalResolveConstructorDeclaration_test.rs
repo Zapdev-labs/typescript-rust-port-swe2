@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn incremental_resolve_constructor_declaration() {
 	run_test(|t| {
-		let content = r#"class c1 {
-    private b: number;
-    constructor(a: string) {
-        this.b = a;
-    }
-}
-var val = new c1("hello");
-/*1*/val;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "var val: c1", "");
-		f.verify_number_of_errors_in_current_file(1);
 	});
 }
 

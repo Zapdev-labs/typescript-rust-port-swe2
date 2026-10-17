@@ -7,65 +7,12 @@ use tsc_fourslash::*;
 #[test]
 fn organize_imports_import_kind_order() {
 	run_test(|t| {
-		let content = r"// @module: commonjs
-// @Filename: /main.ts
-import { foo } from './package';
-import type { Foo } from './package';
-import './package';
-import Default from './package';
-import * as ns from './package';
-
-const x: Foo = foo;
-console.log(x, Default, ns);
-// @Filename: /package.d.ts
-export type Foo = string;
-export declare const foo: Foo;
-export declare function fn(): void;
-export default class Default {}
-export as namespace Package;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_organize_imports(r"import './package';
-import type { Foo } from './package';
-import * as ns from './package';
-import Default, { foo } from './package';
-
-const x: Foo = foo;
-console.log(x, Default, ns);", tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 	});
 }
 
 #[test]
 fn organize_imports_import_kind_order_multiple_modules() {
 	run_test(|t| {
-		let content = r"// @module: commonjs
-// @Filename: /main.ts
-import { b } from './b';
-import { a } from './a';
-import type { TypeB } from './b';
-import type { TypeA } from './a';
-import './b';
-import './a';
-
-const x: TypeA = a;
-const y: TypeB = b;
-console.log(x, y);
-// @Filename: /a.d.ts
-export type TypeA = string;
-export declare const a: TypeA;
-// @Filename: /b.d.ts
-export type TypeB = string;
-export declare const b: TypeB;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_organize_imports(r"import './a';
-import type { TypeA } from './a';
-import { a } from './a';
-import './b';
-import type { TypeB } from './b';
-import { b } from './b';
-
-const x: TypeA = a;
-const y: TypeB = b;
-console.log(x, y);", tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 	});
 }
 

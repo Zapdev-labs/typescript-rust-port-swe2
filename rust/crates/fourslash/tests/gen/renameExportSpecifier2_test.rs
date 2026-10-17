@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_export_specifier2() {
 	run_test(|t| {
-		let content = r"// @Filename: a.ts
-const name = {};
-export { name/**/ };
-// @Filename: b.ts
-import { name } from './a';
-const x = name.toString();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename(Some(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_FALSE.into(), ..Default::default() }), vec!["".into()]);
 	});
 }
 

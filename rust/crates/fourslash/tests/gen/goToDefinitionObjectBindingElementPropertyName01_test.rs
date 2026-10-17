@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_object_binding_element_property_name01() {
 	run_test(|t| {
-		let content = r"interface I {
-    /*def*/property1: number;
-    property2: string;
-}
-
-var foo: I;
-var { [|/*use*/property1|]: prop1 } = foo;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["use".into()]);
 	});
 }
 

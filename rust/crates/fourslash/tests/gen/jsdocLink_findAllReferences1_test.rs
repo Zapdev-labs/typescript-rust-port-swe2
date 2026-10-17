@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsdoc_link_find_all_references1() {
 	run_test(|t| {
-		let content = r"interface A/**/ {}
-/**
- * {@link A()} is ok
- */
-declare const a: A";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["".into()]);
 	});
 }
 

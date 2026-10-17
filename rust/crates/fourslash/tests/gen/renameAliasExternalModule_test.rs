@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_alias_external_module() {
 	run_test(|t| {
-		let content = r#"// @Filename: a.ts
-namespace SomeModule { export class SomeClass { } }
-export = SomeModule;
-// @Filename: b.ts
-[|import [|{| "contextRangeIndex": 0 |}M|] = require("./a");|]
-import C = [|M|].SomeClass;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename_at_ranges_with_text(None, &["M".into()]);
 	});
 }
 

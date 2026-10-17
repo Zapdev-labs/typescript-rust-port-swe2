@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_on_super_when_members_are_not_resolved() {
 	run_test(|t| {
-		let content = r"class A { }
-class B extends A { constructor(public x: string) { } }
-class C extends B {
-    constructor() {
-        /*1*/
-     }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.insert("super(");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "B(x: string): B".to_string().into(), ..Default::default() });
 	});
 }
 

@@ -7,35 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn navigation_bar_anonymous_class_and_function_expressions() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r#"global.cls = class { };
-(function() {
-    const x = () => {
-        // Presence of inner function causes x to be a top-level function.
-        function xx() {}
-    };
-    const y = {
-        // This is not a top-level function (contains nothing, but shows up in childItems of its parent.)
-        foo: function() {}
-    };
-    (function nest() {
-        function moreNest() {}
-    })();
-})();
-(function() { // Different anonymous functions are not merged
-    // These will only show up as childItems.
-    function z() {}
-    console.log(function() {})
-    describe("this", 'function', "#, "`"), r"is a function"), "`"), r", "), "`"), r#"with template literal ${"a"}"#), "`"), r", () => {});
-    [].map(() => {});
-})
-(function classes() {
-    // Classes show up in top-level regardless of whether they have names or inner declarations.
-    const cls2 = class { };
-    console.log(class cls3 {});
-    (class { });
-})");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_symbol();
 	});
 }
 

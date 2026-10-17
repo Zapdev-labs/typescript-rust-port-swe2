@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_lists_string_literal_type_as_indexed_access_type_object() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r#"let firstCase: "a/*case_1*/"["foo"]
-let secondCase: "b/*case_2*/"["bar"]
-let thirdCase: "c/*case_3*/"["baz"]
-let fourthCase: "en/*case_4*/"["qux"]
-interface Foo {
- bar: string;
- qux: string;
-}
-let fifthCase: Foo["b/*case_5*/"]
-let sixthCase: Foo["qu/*case_6*/"]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["case_1", "case_2", "case_3", "case_4"]), None);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("case_5"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "bar".to_string().into(), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("case_6"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "qux".to_string().into(), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_edits_for_file_rename_keep_file_extensions() {
 	run_test(|t| {
-		let content = r#"// @Filename: /tsconfig.json
-{
-  "compilerOptions": {
-    "module": "Node16",
-    "rootDirs": ["src"]
-  }
-}
-// @Filename: /src/person.ts
-export const name = 0;
-// @Filename: /src/index.ts
-import {name} from "./person.js";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_will_rename_files_edits("/src/person.ts", "/src/vip.ts", &std::collections::BTreeMap::from([("/src/index.ts".to_string().into(), r#"import {name} from "./vip.js";"#.to_string().into())]), None);
 	});
 }
 

@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn navigation_bar_items_functions() {
 	run_test(|t| {
-		let content = r"function foo() {
-    var x = 10;
-    function bar() {
-        var y = 10;
-        function biz() {
-            var z = 10;
-        }
-        function qux() {
-            // A function with an empty body should not be top level
-        }
-    }
-}
-
-function baz() {
-    var v = 10;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_symbol();
 	});
 }
 

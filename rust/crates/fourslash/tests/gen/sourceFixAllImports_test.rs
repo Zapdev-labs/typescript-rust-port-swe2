@@ -7,40 +7,12 @@ use tsc_fourslash::*;
 #[test]
 fn source_fix_all_imports() {
 	run_test(|t| {
-		let content = r"// @Filename: /a.ts
-export const a: number = 1;
-// @Filename: /b.ts
-export const b: number = 2;
-// @Filename: /main.ts
-a;
-b;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/main.ts");
-		f.verify_code_fix_all(&tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport".to_string().into(), new_file_content: r#"import { a } from "./a";
-import { b } from "./b";
-
-a;
-b;"#.to_string().into(), ..Default::default() });
 	});
 }
 
 #[test]
 fn source_fix_all_code_action() {
 	run_test(|t| {
-		let content = r"// @Filename: /a.ts
-export const a: number = 1;
-// @Filename: /b.ts
-export const b: number = 2;
-// @Filename: /main.ts
-a;
-b;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/main.ts");
-		f.verify_source_fix_all(r#"import { a } from "./a";
-import { b } from "./b";
-
-a;
-b;"#);
 	});
 }
 

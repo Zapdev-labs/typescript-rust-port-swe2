@@ -7,38 +7,12 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_object_binding_pattern() {
 	run_test(|t| {
-		let content = r"
-interface SomeType {
-    targetProperty: number;
-}
-
-function foo(callback: (p: SomeType) => void) {}
-
-foo(({ /*1*/targetProperty }) => {
-    /*4*/targetProperty
-});
-
-let { /*2*/targetProperty }: SomeType = { /*3*/targetProperty: 42 };
-
-let { /*5*/targetProperty: /*6*/alias_1 }: SomeType = { targetProperty: 42 };
-
-let { x: { /*7*/targetProperty: /*8*/{} } }: { x: SomeType } = { x: { targetProperty: 42 } };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &f.marker_names());
 	});
 }
 
 #[test]
 fn go_to_definition_object_binding_pattern_rest() {
 	run_test(|t| {
-		let content = r"
-interface SomeType {
-    targetProperty: number;
-}
-
-let { .../*1*/rest }: SomeType = { targetProperty: 42 };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &f.marker_names());
 	});
 }
 

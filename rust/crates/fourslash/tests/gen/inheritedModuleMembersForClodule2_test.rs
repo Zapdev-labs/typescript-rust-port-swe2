@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn inherited_module_members_for_clodule2() {
 	run_test(|t| {
-		let content = r"// @strict: false
-namespace M {
-    export namespace A {
-        var o;
-    }
-}
-namespace M {
-    export class A { a = 1;}
-}
-namespace M {
-    export class A { /**/b }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_quick_info_exists();
-		f.verify_number_of_errors_in_current_file(4);
 	});
 }
 

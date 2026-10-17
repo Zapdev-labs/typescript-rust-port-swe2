@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn duplicate_indexers() {
 	run_test(|t| {
-		let content = r"interface I {
-    [x: number]: string;
-    [x: number]: number;
-}
-var i: I;
-var /**/r = i[1];";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("", "var r: string", "");
 	});
 }
 

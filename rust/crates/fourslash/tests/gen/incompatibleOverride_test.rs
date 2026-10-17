@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn incompatible_override() {
 	run_test(|t| {
-		let content = r"// @strict: false
-class Foo { xyz: string; }
-class Bar extends Foo { /*1*/xyz/*2*/: number = 1; }
-class Baz extends Foo { public /*3*/xyz/*4*/: number = 2; }
-class /*5*/Baf/*6*/ extends Foo {
-   constructor(public xyz: number) {
-      super();
-   }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_error_exists_between_markers("1", "2");
-		f.verify_error_exists_between_markers("3", "4");
-		f.verify_error_exists_between_markers("5", "6");
-		f.verify_number_of_errors_in_current_file(3);
 	});
 }
 

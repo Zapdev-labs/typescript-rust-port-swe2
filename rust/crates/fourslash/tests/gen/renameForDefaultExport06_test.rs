@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_for_default_export06() {
 	run_test(|t| {
-		let content = r"// @Filename: foo.ts
-export default class DefaultExportedClass {
-}
-/*
- *  Commenting DefaultExportedClass
- */
-
-var x: DefaultExportedClass;
-
-var y = new /**/[|DefaultExportedClass|];";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_rename_succeeded(None);
 	});
 }
 

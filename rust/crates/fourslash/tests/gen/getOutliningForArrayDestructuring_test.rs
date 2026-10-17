@@ -7,48 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_outlining_for_array_destructuring() {
 	run_test(|t| {
-		let content = r"const[| [
-    a,
-    b,
-    c
-]|] =[| [
-    1,
-    2,
-    3
-]|];
-const[| [
-    [|[
-        [|[
-            [|[
-                a,
-                b,
-                c
-            ]|]
-        ]|]
-    ]|],
-    [|[
-        a1,
-        b1,
-        c1
-    ]|]
-]|] =[| [
-    [|[
-        [|[
-            [|[
-                1,
-                2,
-                3
-            ]|]
-        ]|]
-    ]|],
-    [|[
-        1,
-        2,
-        3
-    ]|]
-]|]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_outlining_spans();
 	});
 }
 

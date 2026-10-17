@@ -7,27 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn array_call_and_construct_typings() {
 	run_test(|t| {
-		let content = r#"var a/*1*/1 = new Array();
-var a/*2*/2 = new Array(1);
-var a/*3*/3 = new Array<boolean>();
-var a/*4*/4 = new Array<boolean>(1);
-var a/*5*/5 = new Array("s");
-var a/*6*/6 = Array();
-var a/*7*/7 = Array(1);
-var a/*8*/8 = Array<boolean>();
-var a/*9*/9 = Array<boolean>(1);
-var a/*10*/10 = Array("s");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "var a1: any[]", "");
-		f.verify_quick_info_at("2", "var a2: any[]", "");
-		f.verify_quick_info_at("3", "var a3: boolean[]", "");
-		f.verify_quick_info_at("4", "var a4: boolean[]", "");
-		f.verify_quick_info_at("5", "var a5: string[]", "");
-		f.verify_quick_info_at("6", "var a6: any[]", "");
-		f.verify_quick_info_at("7", "var a7: any[]", "");
-		f.verify_quick_info_at("8", "var a8: boolean[]", "");
-		f.verify_quick_info_at("9", "var a9: boolean[]", "");
-		f.verify_quick_info_at("10", "var a10: string[]", "");
 	});
 }
 

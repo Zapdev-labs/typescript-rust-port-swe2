@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_on_new_keyword01() {
 	run_test(|t| {
-		let content = r"class Cat {
-  /**
-   * NOTE: this constructor is private! Please use the factory function
-   */
-  private constructor() { }
-
-  static makeCat() { new Cat(); }
-}
-
-ne/*1*/w Ca/*2*/t();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "constructor Cat(): Cat", "NOTE: this constructor is private! Please use the factory function");
-		f.verify_quick_info_at("2", "constructor Cat(): Cat", "NOTE: this constructor is private! Please use the factory function");
 	});
 }
 

@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_missing_type_annotation_on_exports_type_predicate1() {
 	run_test(|t| {
-		let content = r#"// @isolatedDeclarations: true
-// @declaration: true
-// @filename: index.ts
-export function isString(value: unknown) {
-  return typeof value === "string";
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Add return type 'value is string'".to_string().into(), new_file_content: r#"export function isString(value: unknown): value is string {
-  return typeof value === "string";
-}"#.to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

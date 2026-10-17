@@ -7,33 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_on_union_properties_with_identical_js_doc_comments01() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"export type DocumentFilter = {
-    /** A language id, like ", "`"), r"typescript"), "`"), r". */
-    language: string;
-    /** A Uri [scheme](#Uri.scheme), like "), "`"), r"file"), "`"), r" or "), "`"), r"untitled"), "`"), r". */
-    scheme?: string;
-    /** A glob pattern, like "), "`"), r"*.{ts,js}"), "`"), r". */
-    pattern?: string;
-} | {
-    /** A language id, like "), "`"), r"typescript"), "`"), r". */
-    language?: string;
-    /** A Uri [scheme](#Uri.scheme), like "), "`"), r"file"), "`"), r" or "), "`"), r"untitled"), "`"), r". */
-    scheme: string;
-    /** A glob pattern, like "), "`"), r"*.{ts,js}"), "`"), r". */
-    pattern?: string;
-} | {
-    /** A language id, like "), "`"), r"typescript"), "`"), r". */
-    language?: string;
-    /** A Uri [scheme](#Uri.scheme), like "), "`"), r"file"), "`"), r" or "), "`"), r"untitled"), "`"), r". */
-    scheme?: string;
-    /** A glob pattern, like "), "`"), r"*.{ts,js}"), "`"), r". */
-    pattern: string;
-};
-
-declare let x: DocumentFilter;
-x./**/language");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

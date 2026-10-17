@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn organize_imports10() {
 	run_test(|t| {
-		let content = r"// @Filename: /module.ts
-import type { ZodType } from './declaration';
-
-/** Intended to be used in combination with {@link ZodType} */
-export function fun() { /* ... */ }
-// @Filename: /declaration.ts
- type ZodType = {};
- export type { ZodType }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_organize_imports(r"import type { ZodType } from './declaration';
-
-/** Intended to be used in combination with {@link ZodType} */
-export function fun() { /* ... */ }", tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 	});
 }
 

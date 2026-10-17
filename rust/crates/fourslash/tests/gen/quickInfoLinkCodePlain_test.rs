@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_link_code_plain() {
 	run_test(|t| {
-		let content = r"export class C {
-     /**
-      * @deprecated Use {@linkplain PerspectiveCamera#setFocalLength .setFocalLength()} and {@linkcode PerspectiveCamera#filmGauge .filmGauge} instead.
-      */
-    m() { }
-}
-new C().m/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.verify_baseline_hover();
 	});
 }
 

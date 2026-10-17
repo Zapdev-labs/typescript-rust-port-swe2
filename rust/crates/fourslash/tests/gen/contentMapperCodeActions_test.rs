@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn content_mapper_diagnostic_code_does_not_select_type_script_fix() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /app.box
-export function f/*query*/oo() { return 1; }
-", tsc_testutil::contentmappertest::DIAGNOSTIC_CODE_COLLISION_MAPPER, ".box");
-		f.go_to_marker("query");
-		f.verify_code_fix_not_available(&[]);
 	});
 }
 

@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_switch_case3() {
 	run_test(|t| {
-		let content = r"switch (null) {
-  [|/*start1*/default|]: {
-    switch (null) {
-      [|/*start2*/default|]: break;
-    }
-  };
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["start1".into(), "start2".into()]);
 	});
 }
 

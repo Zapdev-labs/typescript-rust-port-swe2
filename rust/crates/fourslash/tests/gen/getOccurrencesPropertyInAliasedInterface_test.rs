@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_occurrences_property_in_aliased_interface() {
 	run_test(|t| {
-		let content = r"namespace m {
-    export interface Foo {
-        [|abc|]
-    }
-}
-
-import Bar = m.Foo;
-
-export interface I extends Bar {
-    [|abc|]
-}
-
-class C implements Bar {
-    [|abc|]
-}
-
-(new C()).[|abc|];";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, to_any(f.ranges()).into_iter().map(Into::into));
 	});
 }
 

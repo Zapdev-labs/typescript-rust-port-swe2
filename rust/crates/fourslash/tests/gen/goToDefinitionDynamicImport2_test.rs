@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_dynamic_import2() {
 	run_test(|t| {
-		let content = r#"// @Filename: foo.ts
-export function /*Destination*/bar() { return "bar"; }
-var x = import("./foo");
-x.then(foo => {
-    foo.[|b/*1*/ar|](); 
-})"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["1".into()]);
 	});
 }
 

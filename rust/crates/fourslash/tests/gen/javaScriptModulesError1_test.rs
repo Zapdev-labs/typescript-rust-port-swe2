@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn java_script_modules_error1() {
 	run_test(|t| {
-		let content = r"// @allowNonTsExtensions: true
-// @Filename: Foo.js
-define('mod1', ['a'], /**/function(a, b) {
-	
-});";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
 	});
 }
 

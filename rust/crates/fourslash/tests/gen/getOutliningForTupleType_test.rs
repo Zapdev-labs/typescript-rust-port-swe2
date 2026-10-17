@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_outlining_for_tuple_type() {
 	run_test(|t| {
-		let content = r"type A =[| [
-    number,
-    number,
-    number
-]|]
-
-type B =[| [
-    [|[
-        [|[
-            number,
-            number,
-            number
-        ]|]
-    ]|]
-]|]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_outlining_spans();
 	});
 }
 

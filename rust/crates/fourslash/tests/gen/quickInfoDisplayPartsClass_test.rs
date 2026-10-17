@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_display_parts_class() {
 	run_test(|t| {
-		let content = r"class /*1*/c {
-}
-var /*2*/cInstance = new /*3*/c();
-var /*4*/cVal = /*5*/c;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

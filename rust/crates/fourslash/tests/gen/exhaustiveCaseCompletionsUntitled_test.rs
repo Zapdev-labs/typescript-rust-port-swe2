@@ -7,77 +7,24 @@ use tsc_fourslash::*;
 #[test]
 fn exhaustive_case_completions_untitled_local_enum() {
 	run_test(|t| {
-		let content = r#"// @newline: LF
-// @filename: ^/untitled/ts-nul-authority/Untitled-1.ts
-enum E {
-    A = "A",
-    B = "B",
-    C = "C",
-}
-declare const e: E;
-switch (e) {
-    case/**/
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", Some(tsc_fourslash::get_default_capabilities_with_options(Some(&tsc_fourslash::ClientCapabilitiesOptions { completion_item: Some(tsc_lsproto::ClientCompletionItemOptions { snippet_support: Some((true).into()), ..Default::default() }), ..Default::default() }))), &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "case E.A: ...".to_string().into(), insert_text: Some(("case E.A:$1\ncase E.B:$2\ncase E.C:$3").into()), sort_text: Some((tsc_ls::GLOBALS_OR_KEYWORDS.to_string()).into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::Snippet).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 
 #[test]
 fn exhaustive_case_completions_untitled_global_enum() {
 	run_test(|t| {
-		let content = r#"// @newline: LF
-// @filename: /home/src/project/globals.d.ts
-declare enum Direction {
-	Up = "Up",
-	Down = "Down",
-	Left = "Left",
-	Right = "Right",
-}
-declare const direction: Direction;
-
-// @filename: ^/untitled/ts-nul-authority/Untitled-1.ts
-switch (direction) {
-    case/**/
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", Some(tsc_fourslash::get_default_capabilities_with_options(Some(&tsc_fourslash::ClientCapabilitiesOptions { completion_item: Some(tsc_lsproto::ClientCompletionItemOptions { snippet_support: Some((true).into()), ..Default::default() }), ..Default::default() }))), &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "case Direction.Up: ...".to_string().into(), insert_text: Some(("case Direction.Up:$1\ncase Direction.Down:$2\ncase Direction.Left:$3\ncase Direction.Right:$4").into()), sort_text: Some((tsc_ls::GLOBALS_OR_KEYWORDS.to_string()).into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::Snippet).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 
 #[test]
 fn exhaustive_case_completions_untitled_string_literals() {
 	run_test(|t| {
-		let content = r#"// @newline: LF
-// @filename: ^/untitled/ts-nul-authority/Untitled-1.ts
-export {};
-declare const status: "pending" | "success" | "error";
-switch (status) {
-    case/**/
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", Some(tsc_fourslash::get_default_capabilities_with_options(Some(&tsc_fourslash::ClientCapabilitiesOptions { completion_item: Some(tsc_lsproto::ClientCompletionItemOptions { snippet_support: Some((true).into()), ..Default::default() }), ..Default::default() }))), &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: r#"case "error": ..."#.to_string().into(), insert_text: Some((format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r#"case "error":$1"#, "\n"), r#"case "pending":$2"#), "\n"), r#"case "success":$3"#)).into()), sort_text: Some((tsc_ls::GLOBALS_OR_KEYWORDS.to_string()).into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::Snippet).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 
 #[test]
 fn exhaustive_case_completions_untitled_imported_enum() {
 	run_test(|t| {
-		let content = r#"// @newline: LF
-// @filename: /home/src/project/enums.ts
-export enum Status {
-    Active,
-    Inactive,
-    Pending,
-}
-
-// @filename: ^/untitled/ts-nul-authority/Untitled-1.ts
-declare const s: import("/home/src/project/enums").Status;
-switch (s) {
-    case/**/
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", Some(tsc_fourslash::get_default_capabilities_with_options(Some(&tsc_fourslash::ClientCapabilitiesOptions { completion_item: Some(tsc_lsproto::ClientCompletionItemOptions { snippet_support: Some((true).into()), ..Default::default() }), ..Default::default() }))), &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "case Status.Active: ...".to_string().into(), insert_text: Some(("case Status.Active:$1\ncase Status.Inactive:$2\ncase Status.Pending:$3").into()), sort_text: Some((tsc_ls::GLOBALS_OR_KEYWORDS.to_string()).into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::Snippet).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

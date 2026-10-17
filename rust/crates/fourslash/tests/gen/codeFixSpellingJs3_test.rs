@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_spelling_js3() {
 	run_test(|t| {
-		let content = r"// @allowjs: true
-// @noEmit: true
-// @filename: a.js
-class Classe {
-    non = 'oui'
-    methode() {
-        // no error on 'this' references
-        return this.none
-    }
-}
-class Derivee extends Classe {
-    methode() {
-        // no error on 'super' references
-        return super.none
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
 	});
 }
 

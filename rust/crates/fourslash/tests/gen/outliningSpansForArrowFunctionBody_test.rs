@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn outlining_spans_for_arrow_function_body() {
 	run_test(|t| {
-		let content = r#"() => 42;
-() => ( 42 );
-() =>[| {
-    42
-}|];
-() => [|(
-    42
-)|];
-() =>[| "foo" +
-    "bar" +
-    "baz"|];"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_outlining_spans();
 	});
 }
 

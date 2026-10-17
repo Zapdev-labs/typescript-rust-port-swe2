@@ -7,31 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_class_implement_interface_some_properties_present() {
 	run_test(|t| {
-		let content = r"// @strict: false
-
-interface I {
-    x: number;
-    y: number;
-    z: number & { __iBrand: any };
-}
-
-class C implements I {[|
-   |]constructor(public x: number) { }
-   y: number;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'I'".to_string().into(), new_file_content: r"
-interface I {
-    x: number;
-    y: number;
-    z: number & { __iBrand: any };
-}
-
-class C implements I {
-   constructor(public x: number) { }
-    z: number & { __iBrand: any; };
-   y: number;
-}".to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

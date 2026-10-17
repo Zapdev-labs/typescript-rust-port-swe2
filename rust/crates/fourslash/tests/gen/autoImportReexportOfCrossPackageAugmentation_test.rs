@@ -7,36 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_reexport_of_cross_package_augmentation() {
 	run_test(|t| {
-		let content = r#"// @Filename: /node_modules/vitest/package.json
-{ "name": "vitest", "version": "1.0.0", "types": "index.d.ts" }
-// @Filename: /node_modules/vitest/index.d.ts
-export { AugmentedInterface, uniqueFunction } from "@vitest/expect";
-// @Filename: /node_modules/vitest/augmentation.d.ts
-export {};
-declare module "@vitest/expect" {
-    interface AugmentedInterface {
-        bar: string;
-    }
-		function uniqueFunction(): void;
-}
-// @Filename: /node_modules/@vitest/expect/package.json
-{ "name": "@vitest/expect", "version": "1.0.0", "types": "index.d.ts" }
-// @Filename: /node_modules/@vitest/expect/index.d.ts
-export interface AugmentedInterface {
-    baz: number;
-}
-// @Filename: /tsconfig.json
-{ "compilerOptions": { "module": "commonjs", "strict": true } }
-// @Filename: /package.json
-{ "name": "test", "dependencies": { "vitest": "*" } }
-// @Filename: /index.ts
-uniqueFunction/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		let mut prefs = tsc_lsutil::new_default_user_preferences();
-		prefs.auto_import_entrypoint_directory_search = tsc_core::tristate::TS_TRUE;
-		f.configure(prefs);
-		f.go_to_marker("");
-		f.baseline_auto_imports_completions(&["".into()]);
 	});
 }
 

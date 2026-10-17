@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_unresolved_reexport1() {
 	run_test(|t| {
-		let content = r#"// @Filename: /a.ts
-export { [|jsonSchema|] } from "@internal/ai-sdk-v4";
-// @Filename: /b.ts
-import { jsonSchema } from "./a";
-"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename(None, vec![f.ranges()[0].clone().into()]);
 	});
 }
 

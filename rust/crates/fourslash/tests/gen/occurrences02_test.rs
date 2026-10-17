@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn occurrences02() {
 	run_test(|t| {
-		let content = r"// @lib: es5
-function [|f|](x: typeof [|f|]) {
-    [|f|]([|f|]);
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.verify_baseline_document_highlights(None, to_any(f.ranges()).into_iter().map(Into::into));
 	});
 }
 

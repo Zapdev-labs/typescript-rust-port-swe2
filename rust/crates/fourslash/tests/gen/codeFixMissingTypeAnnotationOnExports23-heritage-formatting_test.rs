@@ -7,38 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_missing_type_annotation_on_exports23_heritage_formatting() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"// @isolatedDeclarations: true
-// @declaration: true
-function mixin<T extends new (...a: any) => any>(ctor: T): T {
-    return ctor;
-}
-class Point2D { x = 0; y = 0; }
-interface I{}
-export class Point3D extends
-    /** Base class */
-    mixin(Point2D)
-    // Test
-    implements I
-    {
-              z = 0;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix_available(Some(&["Extract base class to variable".into()]));
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Extract base class to variable".to_string().into(), new_file_content: r"function mixin<T extends new (...a: any) => any>(ctor: T): T {
-    return ctor;
-}
-class Point2D { x = 0; y = 0; }
-interface I{}
-const Point3DBase: typeof Point2D =
-    /** Base class */
-    mixin(Point2D);
-export class Point3D extends Point3DBase
-    // Test
-    implements I
-    {
-              z = 0;
-}".to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

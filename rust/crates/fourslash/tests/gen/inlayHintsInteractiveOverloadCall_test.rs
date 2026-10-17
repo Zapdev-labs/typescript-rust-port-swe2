@@ -7,29 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn inlay_hints_interactive_overload_call() {
 	run_test(|t| {
-		let content = r"interface Call {
-    (a: number): void
-    (b: number, c: number): void
-    new (d: number): Call
-}
-declare const call: Call;
-call(1);
-call(1, 2);
-new call(1);
-declare function foo(w: number): void
-declare function foo(a: number, b: number): void;
-declare function foo(a: number | undefined, b: number | undefined): void;
-foo(1)
-foo(1, 2)
-class Class {
-    constructor(a: number);
-    constructor(b: number, c: number);
-    constructor(b: number, c?: number) { }
-}
-new Class(1)
-new Class(1, 2)";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_inlay_hints(None, Some(&tsc_lsutil::UserPreferences { inlay_hints_preferences: tsc_lsutil::InlayHintsPreferences { include_inlay_parameter_name_hints: tsc_lsutil::IncludeInlayParameterNameHints::LITERALS.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 

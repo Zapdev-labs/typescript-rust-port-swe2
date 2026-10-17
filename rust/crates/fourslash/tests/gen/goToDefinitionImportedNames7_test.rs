@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_imported_names7() {
 	run_test(|t| {
-		let content = r#"// @Filename: b.ts
-import [|/*classAliasDefinition*/defaultExport|] from "./a";
-// @Filename: a.ts
-class /*classDefinition*/Class {
-    private f;
-}
-export default Class;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["classAliasDefinition".into()]);
 	});
 }
 

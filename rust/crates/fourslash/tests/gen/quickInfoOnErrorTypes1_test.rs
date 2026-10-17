@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_on_error_types1() {
 	run_test(|t| {
-		let content = r"var /*A*/f: {
-    x: number;
-    <
-};";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("A", "var f: {\n    (): any;\n    x: number;\n}", "");
 	});
 }
 

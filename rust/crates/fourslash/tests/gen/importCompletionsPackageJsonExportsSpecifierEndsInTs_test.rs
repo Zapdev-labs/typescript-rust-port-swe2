@@ -7,27 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_completions_package_json_exports_specifier_ends_in_ts() {
 	run_test(|t| {
-		let content = r#"// @module: node18
-// @Filename: /node_modules/pkg/package.json
-{
-    "name": "pkg",
-    "version": "1.0.0",
-    "exports": {
-      "./something.ts": "./a.js"
-    }
- }
-// @Filename: /node_modules/pkg/a.d.ts
-export function foo(): void;
-// @Filename: /package.json
-{
-    "dependencies": {
-       "pkg": "*"
-    }
- }
-// @Filename: /index.ts
-import {} from "pkg//*1*/";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["1"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["something.ts".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

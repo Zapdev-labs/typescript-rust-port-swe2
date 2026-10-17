@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_export_import() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"// @lib: es5
-declare global {
-    namespace N {
-        const foo: number;
-    }
-}
-export import foo = N.foo;
-/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_plus(vec![tsc_lsproto::CompletionItem { label: "foo".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Variable).into()), detail: Some(("(alias) const foo: number\nimport foo = N.foo").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "N".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Module).into()), detail: Some(("namespace N").into()), ..Default::default() }.into()], false).into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

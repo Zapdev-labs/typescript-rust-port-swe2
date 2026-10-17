@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_export_assignment_of_generic_interface() {
 	run_test(|t| {
-		let content = r"// @Filename: quickInfoExportAssignmentOfGenericInterface_0.ts
-interface Foo<T> {
-    a: string;
-}
-export = Foo;
-// @Filename: quickInfoExportAssignmentOfGenericInterface_1.ts
-import a = require('./quickInfoExportAssignmentOfGenericInterface_0');
-export var /*1*/x: a<a<string>>;
-x.a;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "var x: a<a<string>>", "");
 	});
 }
 

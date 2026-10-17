@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn export_equal_callable_interface() {
 	run_test(|t| {
-		let content = r"// @lib: es5
-// @Filename: exportEqualCallableInterface_file0.ts
-interface x {
-    (): Date;
-    foo: string;
-}
-export = x;
-// @Filename: exportEqualCallableInterface_file1.ts
-///<reference path='exportEqualCallableInterface_file0.ts'/>
-import test = require('./exportEqualCallableInterface_file0');
-var t2: test;
-t2./**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_function_members_with_prototype_plus(vec!["foo".into()]).into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

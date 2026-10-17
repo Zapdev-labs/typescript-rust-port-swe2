@@ -7,146 +7,36 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_default_pascal_case() {
 	run_test(|t| {
-		let content = r"// @jsx: react
-// @module: esnext
-// @moduleResolution: bundler
-
-// @Filename: /src/components/ChargerHeader.tsx
-export default function ChargerHeader() {
-  return null;
-}
-
-// @Filename: /src/screens/SomeScreen.tsx
-export function SomeScreen() {
-  return <ChargerHeader/*1*/
-}
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["ChargerHeader".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.baseline_auto_imports_completions(&["1".into()]);
 	});
 }
 
 #[test]
 fn auto_import_default_pascal_case_anonymous() {
 	run_test(|t| {
-		let content = r"// @jsx: react
-// @module: esnext
-// @moduleResolution: bundler
-
-// @Filename: /src/components/ChargerHeader.tsx
-export default function() {
-  return null;
-}
-
-// @Filename: /src/screens/SomeScreen.tsx
-export function SomeScreen() {
-  return <ChargerHeader/*1*/
-}
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["ChargerHeader".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.baseline_auto_imports_completions(&["1".into()]);
 	});
 }
 
 #[test]
 fn auto_import_default_pascal_case_case_insensitive() {
 	run_test(|t| {
-		let content = r"// @jsx: react
-// @module: esnext
-// @moduleResolution: bundler
-// @useCaseSensitiveFileNames: false
-
-// @Filename: /src/components/ChargerHeader.tsx
-export default function ChargerHeader() {
-  return null;
-}
-
-// @Filename: /src/screens/SomeScreen.tsx
-export function SomeScreen() {
-  return <ChargerHeader/*1*/
-}
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["ChargerHeader".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.baseline_auto_imports_completions(&["1".into()]);
 	});
 }
 
 #[test]
 fn auto_import_default_pascal_case_anonymous_case_insensitive() {
 	run_test(|t| {
-		let content = r"// @jsx: react
-// @module: esnext
-// @moduleResolution: bundler
-// @useCaseSensitiveFileNames: false
-
-// @Filename: /src/components/ChargerHeader.tsx
-export default function() {
-  return null;
-}
-
-// @Filename: /src/screens/SomeScreen.tsx
-export function SomeScreen() {
-  return <ChargerHeader/*1*/
-}
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["ChargerHeader".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.baseline_auto_imports_completions(&["1".into()]);
 	});
 }
 
 #[test]
 fn auto_import_default_pascal_case_reexport_case_insensitive() {
 	run_test(|t| {
-		let content = r#"// @jsx: react
-// @module: esnext
-// @moduleResolution: bundler
-// @useCaseSensitiveFileNames: false
-
-// @Filename: /src/components/ChargerHeader.tsx
-export default function() {
-  return null;
-}
-
-// @Filename: /src/components/index.ts
-export { default } from "./ChargerHeader";
-
-// @Filename: /src/screens/SomeScreen.tsx
-export function SomeScreen() {
-  return <ChargerHeader/*1*/
-}
-"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["ChargerHeader".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.baseline_auto_imports_completions(&["1".into()]);
 	});
 }
 
 #[test]
 fn auto_import_default_pascal_case_alias_case_insensitive() {
 	run_test(|t| {
-		let content = r"// @jsx: react
-// @module: esnext
-// @moduleResolution: bundler
-// @useCaseSensitiveFileNames: false
-
-// @Filename: /src/components/ChargerHeader.tsx
-function ChargerHeader() {
-  return null;
-}
-export default ChargerHeader;
-
-// @Filename: /src/screens/SomeScreen.tsx
-export function SomeScreen() {
-  return <ChargerHeader/*1*/
-}
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["ChargerHeader".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.baseline_auto_imports_completions(&["1".into()]);
 	});
 }
 

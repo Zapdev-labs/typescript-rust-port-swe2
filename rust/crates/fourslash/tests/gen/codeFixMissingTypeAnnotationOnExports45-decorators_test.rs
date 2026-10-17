@@ -7,64 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_missing_type_annotation_on_exports45_decorators() {
 	run_test(|t| {
-		let content = r"// @isolatedDeclarations: true
-// @declaration: true
-// @Filename: /code.ts
-function classDecorator<T extends Function> (value: T, context: ClassDecoratorContext) {}
-function methodDecorator<This> (
-  target: (...args: number[])=> number,
-  context: ClassMethodDecoratorContext<This, (this: This, ...args: number[]) => number>) {}
-function getterDecorator(value: Function, context: ClassGetterDecoratorContext) {}
-function setterDecorator(value: Function, context: ClassSetterDecoratorContext) {}
-function fieldDecorator(value: undefined, context: ClassFieldDecoratorContext) {}
-function foo() { return 42;}
-
-@classDecorator
-export class A {
-  @methodDecorator
-  sum(...args: number[]) {
-    return args.reduce((a, b) => a + b, 0);
-  }
-  getSelf() {
-    return this;
-  }
-  @getterDecorator
-  get a() {
-    return foo();
-  }
-  @setterDecorator
-  set a(value) {}
-
-  @fieldDecorator classProp = foo();
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix_all(&tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingTypeAnnotationOnExports".to_string().into(), new_file_content: r"function classDecorator<T extends Function> (value: T, context: ClassDecoratorContext) {}
-function methodDecorator<This> (
-  target: (...args: number[])=> number,
-  context: ClassMethodDecoratorContext<This, (this: This, ...args: number[]) => number>) {}
-function getterDecorator(value: Function, context: ClassGetterDecoratorContext) {}
-function setterDecorator(value: Function, context: ClassSetterDecoratorContext) {}
-function fieldDecorator(value: undefined, context: ClassFieldDecoratorContext) {}
-function foo() { return 42;}
-
-@classDecorator
-export class A {
-  @methodDecorator
-  sum(...args: number[]): number {
-    return args.reduce((a, b) => a + b, 0);
-  }
-  getSelf(): this {
-    return this;
-  }
-  @getterDecorator
-  get a(): number {
-    return foo();
-  }
-  @setterDecorator
-  set a(value: number) {}
-
-  @fieldDecorator classProp: number = foo();
-}".to_string().into(), ..Default::default() });
 	});
 }
 

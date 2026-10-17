@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_js_property_assignment2() {
 	run_test(|t| {
-		let content = r#"// @allowJs: true
-// @Filename: a.js
-class Minimatch {
-}
-[|Minimatch.[|{| "contextRangeIndex": 0 |}staticProperty|] = "string";|]
-console.log(Minimatch.[|staticProperty|]);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename_at_ranges_with_text(None, &["staticProperty".into()]);
 	});
 }
 

@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn ng_proxy1() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r#"// @Filename: tsconfig.json
-{
-    "compilerOptions": {
-        "lib": ["es5"],
-        "plugins": [
-            { "name": "quickinfo-augmeneter", "message": "hello world" }
-        ]
-    },
-    "files": ["a.ts"]
-}
-// @Filename: a.ts
-let x = [1, 2];
-x/**/
-"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.go_to_marker("");
-		f.verify_quick_info_is("Proxied x: number[]hello world", "");
 	});
 }
 

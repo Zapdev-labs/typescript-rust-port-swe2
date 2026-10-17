@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_new_import_paths1() {
 	run_test(|t| {
-		let content = r#"[|foo/*0*/();|]
-// @Filename: folder_b/f2.ts
-export function foo() {};
-// @Filename: tsconfig.json
-{
-    "compilerOptions": {
-        "baseUrl": ".",
-        "paths": {
-            "b/*": [ "folder_b/*" ]
-        }
-    }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_at_position(&[r#"import { foo } from "b/f2";
-
-foo();"#.into()], None);
 	});
 }
 

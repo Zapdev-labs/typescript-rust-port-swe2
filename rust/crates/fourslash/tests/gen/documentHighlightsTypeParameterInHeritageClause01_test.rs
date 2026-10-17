@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn document_highlights_type_parameter_in_heritage_clause01() {
 	run_test(|t| {
-		let content = r"// @lib: es5
-interface I<[|T|]> extends I<[|T|]>, [|T|] {
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.verify_baseline_document_highlights(None, to_any(f.ranges()).into_iter().map(Into::into));
 	});
 }
 

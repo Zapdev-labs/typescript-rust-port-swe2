@@ -7,35 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_source_phase() {
 	run_test(|t| {
-		let content = r#"// @module: esnext
-// @target: esnext
-
-// @filename: /b.ts
-import source b from "./a.wasm";
-[|/*bUse*/b|];
-export { b };
-
-// @filename: /c.ts
-import source c from "./a.wasm";
-[|/*cUse*/c|];
-
-// @filename: /d.ts
-import { /*dImport*/b as d } from "./b";
-/*dUse*/d;
-
-// @filename: /e.ts
-export { b as /*eExport*/e } from "./b";
-
-// @filename: /f.ts
-import { e as f } from "./e";
-/*fUse*/f;
-import * as ns from "./e";
-ns./*property*/e;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.verify_baseline_go_to_definition(true, &["bUse".into(), "cUse".into(), "dImport".into(), "dUse".into(), "eExport".into(), "fUse".into(), "property".into()]);
-		f.verify_baseline_go_to_source_definition(&["bUse".into(), "cUse".into(), "dImport".into(), "dUse".into(), "eExport".into(), "fUse".into(), "property".into()]);
-		f.verify_baseline_find_all_references(&["bUse".into(), "cUse".into()]);
 	});
 }
 

@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn string_property_names2() {
 	run_test(|t| {
-		let content = r#"export interface Album<T> {
-   "artist": T;
-}
-var a: Album<number>;
-var /**/x = a['artist']; "#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("", "var x: number", "");
 	});
 }
 

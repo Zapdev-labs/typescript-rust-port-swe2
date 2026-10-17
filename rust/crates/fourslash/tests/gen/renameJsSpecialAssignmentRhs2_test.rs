@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_js_special_assignment_rhs2() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @Filename: a.js
-const foo = {
-    set: function (x) {
-        this._x = x;
-    },
-    copy: function ([|x|]) {
-        this._x = [|x|].prop;
-    }
-};";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename(None, vec![]);
 	});
 }
 

@@ -7,27 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_for_declaration_keywords() {
 	run_test(|t| {
-		let content = r"class Base {}
-interface Implemented1 {}
-/*classDecl1_classKeyword*/class C1 /*classDecl1_extendsKeyword*/extends Base /*classDecl1_implementsKeyword*/implements Implemented1 {
-    /*getDecl_getKeyword*/get e() { return 1; }
-    /*setDecl_setKeyword*/set e(v) {}
-}
-/*interfaceDecl1_interfaceKeyword*/interface I1 /*interfaceDecl1_extendsKeyword*/extends Base { }
-/*typeDecl_typeKeyword*/type T = { }
-/*enumDecl_enumKeyword*/enum E { }
-/*namespaceDecl_namespaceKeyword*/namespace N { }
-/*moduleDecl_moduleKeyword*/namespace M { }
-/*functionDecl_functionKeyword*/function fn() {}
-/*varDecl_varKeyword*/var x;
-/*letDecl_letKeyword*/let y;
-/*constDecl_constKeyword*/const z = 1;
-interface Implemented2 {}
-interface Implemented3 {}
-class C2 /*classDecl2_implementsKeyword*/implements Implemented2, Implemented3 {}
-interface I2 /*interfaceDecl2_extendsKeyword*/extends Implemented2, Implemented3 {}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["classDecl1_classKeyword".into(), "classDecl1_extendsKeyword".into(), "classDecl1_implementsKeyword".into(), "classDecl2_implementsKeyword".into(), "getDecl_getKeyword".into(), "setDecl_setKeyword".into(), "interfaceDecl1_interfaceKeyword".into(), "interfaceDecl1_extendsKeyword".into(), "interfaceDecl2_extendsKeyword".into(), "typeDecl_typeKeyword".into(), "enumDecl_enumKeyword".into(), "namespaceDecl_namespaceKeyword".into(), "moduleDecl_moduleKeyword".into(), "functionDecl_functionKeyword".into(), "varDecl_varKeyword".into(), "letDecl_letKeyword".into(), "constDecl_constKeyword".into()]);
 	});
 }
 

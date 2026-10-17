@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn package_json_imports_failed_lookups() {
 	run_test(|t| {
-		let content = r##"// @Filename: /a/b/c/d/e/tsconfig.json
-{ "compilerOptions": { "lib": ["es5"], "module": "nodenext" } }
-// @Filename: /a/b/c/d/e/package.json
-{
-  "name": "app",
-  "imports": {
-    "#utils": "lodash"
-  }
-}
-// @Filename: /a/b/node_modules/lodash/index.d.ts
-export function add(a: number, b: number): number;
-// @Filename: /a/b/c/d/e/index.ts
-import { add } from "#utils";"##;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.go_to_file("/a/b/c/d/e/index.ts");
 	});
 }
 

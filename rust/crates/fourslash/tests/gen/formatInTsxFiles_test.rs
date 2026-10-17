@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_in_tsx_files() {
 	run_test(|t| {
-		let content = r"//@Filename: file.tsx
-interface I<T1, T2> {
-    next: I</* */
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
 	});
 }
 

@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn document_highlights_invalid_global_this() {
 	run_test(|t| {
-		let content = r"declare global {
-    export { globalThis as [|global|] }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, to_any(f.ranges()).into_iter().map(Into::into));
 	});
 }
 

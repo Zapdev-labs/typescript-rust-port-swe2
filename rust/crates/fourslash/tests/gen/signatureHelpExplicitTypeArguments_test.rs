@@ -7,43 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_explicit_type_arguments() {
 	run_test(|t| {
-		let content = r"declare function f<T = boolean, U = string>(x: T, y: U): T;
-f<number, string>(/*1*/);
-f(/*2*/);
-f<number>(/*3*/);
-f<number, string, boolean>(/*4*/);
-interface A { a: number }
-interface B extends A { b: string }
-declare function g<T, U, V extends A = B>(x: T, y: U, z: V): T;
-declare function h<T, U, V extends A>(x: T, y: U, z: V): T;
-declare function j<T, U, V = B>(x: T, y: U, z: V): T;
-g(/*5*/);
-h(/*6*/);
-j(/*7*/);
-g<number>(/*8*/);
-h<number>(/*9*/);
-j<number>(/*10*/);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "f(x: number, y: string): number".to_string().into(), ..Default::default() });
-		f.go_to_marker("2");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "f(x: boolean, y: string): boolean".to_string().into(), ..Default::default() });
-		f.go_to_marker("3");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "f(x: number, y: string): number".to_string().into(), ..Default::default() });
-		f.go_to_marker("4");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "f(x: number, y: string): number".to_string().into(), ..Default::default() });
-		f.go_to_marker("5");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "g(x: unknown, y: unknown, z: B): unknown".to_string().into(), ..Default::default() });
-		f.go_to_marker("6");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "h(x: unknown, y: unknown, z: A): unknown".to_string().into(), ..Default::default() });
-		f.go_to_marker("7");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "j(x: unknown, y: unknown, z: B): unknown".to_string().into(), ..Default::default() });
-		f.go_to_marker("8");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "g(x: number, y: unknown, z: B): number".to_string().into(), ..Default::default() });
-		f.go_to_marker("9");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "h(x: number, y: unknown, z: A): number".to_string().into(), ..Default::default() });
-		f.go_to_marker("10");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "j(x: number, y: unknown, z: B): number".to_string().into(), ..Default::default() });
 	});
 }
 

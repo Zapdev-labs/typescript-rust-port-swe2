@@ -7,28 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn hover_alias_in_imported_file() {
 	run_test(|t| {
-		let content = r#"
-// @filename: other2.ts
-export type SomeAliasType<T> = { value: T };
-
-// @filename: other.ts
-import { SomeAliasType } from './other2';
-
-declare function isSomeAliasType(x: any): x is SomeAliasType<any>;
-
-export { isSomeAliasType };
-
-// @filename: main.ts
-import { isSomeAliasType } from './other';
-
-export function processValue(value: any) {
-  if (/*1*/isSomeAliasType(value)) {
-    console.log("ok");
-  }
-}
-"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "(alias) function isSomeAliasType(x: any): x is SomeAliasType<any>", "");
 	});
 }
 

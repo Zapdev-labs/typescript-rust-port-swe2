@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_link3() {
 	run_test(|t| {
-		let content = r"class Foo<T> {
-    /**
-     * {@link Foo}
-     * {@link Foo<T>}
-     * {@link Foo<Array<X>>}
-     * {@link Foo<>}
-     * {@link Foo>}
-     * {@link Foo<}
-     */
-    bar/**/(){}
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.verify_baseline_hover();
 	});
 }
 

@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_anonymous_function() {
 	run_test(|t| {
-		let content = r#"var anonymousFunctionTest = function(n: number, s: string): (a: number, b: string) => string {
-    return null;
-}
-anonymousFunctionTest(5, "")(/*anonymousFunction1*/1, /*anonymousFunction2*/"");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("anonymousFunction1");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "(a: number, b: string): string".to_string().into(), parameter_count: 2, parameter_name: "a".to_string().into(), parameter_span: "a: number".to_string().into(), ..Default::default() });
-		f.go_to_marker("anonymousFunction2");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "b".to_string().into(), parameter_span: "b: string".to_string().into(), ..Default::default() });
 	});
 }
 

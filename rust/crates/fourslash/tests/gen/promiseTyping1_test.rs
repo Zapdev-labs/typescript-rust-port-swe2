@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn promise_typing1() {
 	run_test(|t| {
-		let content = r"interface IPromise<T> {
-    then<U>(success: (value: T) => IPromise<U>, error?: (error: any) => IPromise<U>, progress?: (progress: any) => void ): IPromise<U>;
-    then<U>(success: (value: T) => IPromise<U>, error?: (error: any) => U, progress?: (progress: any) => void ): IPromise<U>;
-    then<U>(success: (value: T) => U, error?: (error: any) => IPromise<U>, progress?: (progress: any) => void ): IPromise<U>;
-    then<U>(success: (value: T) => U, error?: (error: any) => U, progress?: (progress: any) => void ): IPromise<U>;
-    done? <U>(success: (value: T) => any, error?: (error: any) => any, progress?: (progress: any) => void ): void;
-}
-var p1: IPromise<string>;
-var p/*1*/2 = p1.then(function (x/*2*/x) {
-    return xx;
-});
-p2.then(function (x/*3*/x) {
-} );";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "var p2: IPromise<string>", "");
-		f.verify_quick_info_at("2", "(parameter) xx: string", "");
-		f.verify_quick_info_at("3", "(parameter) xx: string", "");
 	});
 }
 

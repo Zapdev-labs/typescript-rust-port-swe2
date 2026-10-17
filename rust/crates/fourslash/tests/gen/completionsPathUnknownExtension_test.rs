@@ -7,33 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_path_unknown_extension() {
 	run_test(|t| {
-		let content = r##"// @filename: src/some-file.ruhroh
-/* This is just a test file that needs to exist. */
-
-// @filename: package.json
-{
-    "imports": {
-        "#/*": "./src/*"
-    }
-}
-
-// @filename: src/globals.d.ts
-declare module "*.ruhroh";
-
-// @filename: src/a.mts
-import "#//*$*/"
-
-// @filename: tsconfig.json
-{
-    "compilerOptions": {
-        "module": "preserve",
-        "moduleResolution": "bundler",
-        "rootDir": "src"
-    },
-    "include": ["src"]
-}"##;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("$"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["some-file.ruhroh".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

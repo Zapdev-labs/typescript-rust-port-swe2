@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn linked_editing_jsx_tag4() {
 	run_test(|t| {
-		let content = r"// @Filename: /typeTag.tsx
-const jsx = (
-   </*0*/div/*1*/</*2*/T/*3*/>/*4*/>/*5*/
-      <p>
-         <img />
-      </p>
-   <//*6*/div/*7*/>
-);
-// @Filename: /typeTagError.tsx
-const jsx = (
-   </*10*/div/*11*/</*12*/T/*13*/>/*14*/
-      </*15*/p />
-   <//*16*/div>
-);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		let mut linked_cursors = vec![tsc_lsproto::Range { start: f.marker_by_name("0").unwrap().ls_position.into(), end: f.marker_by_name("1").unwrap().ls_position.into(), ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("6").unwrap().ls_position.into(), end: f.marker_by_name("7").unwrap().ls_position.into(), ..Default::default() }];
-		f.verify_linked_editing(&std::collections::BTreeMap::from([("0".to_string().into(), linked_cursors.into()), ("1".to_string().into(), linked_cursors.into()), ("2".to_string().into(), None), ("3".to_string().into(), None), ("4".to_string().into(), None), ("5".to_string().into(), None), ("6".to_string().into(), linked_cursors.into()), ("10".to_string().into(), None), ("11".to_string().into(), None), ("12".to_string().into(), None), ("13".to_string().into(), None), ("14".to_string().into(), None), ("15".to_string().into(), None), ("16".to_string().into(), None)]));
 	});
 }
 

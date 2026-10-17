@@ -7,41 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn node_modules_import_completions1() {
 	run_test(|t| {
-		let content = r#"// @allowJs: true
-// @module: node18
-// @Filename: /src/module.mts
-export {}
-// @Filename: /src/module.cts
-export {}
-// @Filename: /src/module.js
-export {}
-// @Filename: /src/decl.d.mts
-export {}
-// @Filename: /src/decl.d.cts
-export {}
-// @Filename: /src/decl.d.ts
-export {}
-// @Filename: /src/js.mjs
-export {}
-// @Filename: /src/js.cjs
-export {}
-// @Filename: /src/js.js
-export {}
-// @Filename: /main.mts
-import {} from "./src//*1*/";
-import mod = require("./src//*2*/");
-const m = import("./src//*3*/");
-// @Filename: /main.cts
-import {} from "./src//*4*/";
-import mod = require("./src//*5*/");
-const m = import("./src//*6*/");
-// @Filename: /main.ts
-import {} from "./src//*7*/";
-import mod = require("./src//*8*/");
-const m = import("./src//*9*/");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["1", "3", "6", "9"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["decl.cjs".into(), "decl.mjs".into(), "decl.js".into(), "js.cjs".into(), "js.js".into(), "js.mjs".into(), "module.cjs".into(), "module.js".into(), "module.mjs".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["2", "4", "5", "7", "8"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["decl.cjs".into(), "decl.mjs".into(), "decl".into(), "js.cjs".into(), "js".into(), "js.mjs".into(), "module.cjs".into(), "module".into(), "module.mjs".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

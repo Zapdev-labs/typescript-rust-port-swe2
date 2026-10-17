@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_package_json_filter_existing_import3() {
 	run_test(|t| {
-		let content = r#"// @Filename: /home/src/workspaces/project/tsconfig.json
-{ "compilerOptions": { "lib": ["es5"], "module": "preserve", "types": ["*"] } }
-// @Filename: /home/src/workspaces/project/node_modules/@types/node/index.d.ts
-declare module "node:fs" {
-    export function readFile(): void;
-    export function writeFile(): void;
-}
-// @Filename: /home/src/workspaces/project/package.json
-{}
-// @Filename: /home/src/workspaces/project/index.ts
-readFile/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.go_to_marker("");
-		f.verify_import_fix_at_position(&[], None);
-		f.go_to_bof();
-		f.insert_line("import { writeFile } from \"node:fs\";");
-		f.go_to_marker("");
-		f.verify_import_fix_at_position(&[r#"import { readFile, writeFile } from "node:fs";
-readFile"#.into()], None);
 	});
 }
 

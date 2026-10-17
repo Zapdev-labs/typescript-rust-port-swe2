@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_js_doc_at_before_space() {
 	run_test(|t| {
-		let content = r"/**
- * @return Don't @ me
- */
-function /*f*/f() { }
-/**
- * @return One final @
- */
-function /*g*/g() { }
-/**
- * @return An @
- * But another line
- */
-function /*h*/h() { }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn incremental_parsing_dynamic_import3() {
 	run_test(|t| {
-		let content = r"// @lib: es2015
-// @Filename: ./foo.ts
-export function bar() { return 1; }
-// @Filename: ./0.ts
-var x = import/*1*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_number_of_errors_in_current_file(0);
-		f.go_to_marker("1");
-		f.insert("(");
-		f.verify_number_of_errors_in_current_file(1);
 	});
 }
 

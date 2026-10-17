@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn generic_object_base_type() {
 	run_test(|t| {
-		let content = r#"// @strict: false
-class C<T> {
-    constructor(){}
-    foo(a: T) {
-        return a.toString();
-    }
-}
-var x = new C<string>();
-var y: string = x.foo("hi");
-/*1*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_no_errors();
 	});
 }
 

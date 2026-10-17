@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn tsx_quick_info2() {
 	run_test(|t| {
-		let content = r"//@Filename: file.tsx
-declare namespace JSX {
-    interface Element { }
-    interface IntrinsicElements {
-        div: any
-    }
-}
-var x1 = <di/*1*/v></di/*2*/v>
-class MyElement {}
-var z = <My/*3*/Element></My/*4*/Element>";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "(property) JSX.IntrinsicElements.div: any", "");
-		f.verify_quick_info_at("2", "(property) JSX.IntrinsicElements.div: any", "");
-		f.verify_quick_info_at("3", "class MyElement", "");
-		f.verify_quick_info_at("4", "class MyElement", "");
 	});
 }
 

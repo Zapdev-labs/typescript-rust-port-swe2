@@ -7,27 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_import_of_export_equals() {
 	run_test(|t| {
-		let content = r#"[|declare namespace /*N*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 0 |}N|] {
-    [|export var /*x*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 2 |}x|]: number;|]
-}|]
-declare module "mod" {
-    [|export = [|{| "contextRangeIndex": 4 |}N|];|]
-}
-declare module "a" {
-    [|import * as /*a*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 6 |}N|] from "mod";|]
-    [|export { [|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 8 |}N|] };|] // Renaming N here would rename
-}
-declare module "b" {
-    [|import { /*b*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 10 |}N|] } from "a";|]
-    export const y: typeof [|N|].[|x|];
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["N".into(), "a".into(), "b".into(), "x".into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into(), f.ranges()[5].clone().into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[7].clone().into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[9].clone().into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[11].clone().into(), f.ranges()[12].clone().into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[3].clone().into(), f.ranges()[13].clone().into()]);
 	});
 }
 

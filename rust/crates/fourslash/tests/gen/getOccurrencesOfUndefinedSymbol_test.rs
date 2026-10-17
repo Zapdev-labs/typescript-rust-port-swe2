@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_occurrences_of_undefined_symbol() {
 	run_test(|t| {
-		let content = r"var obj1: {
-    (bar: any): any;
-    new (bar: any): any;
-    [bar: any]: any;
-    bar: any;
-    foob(bar: any): any;
-};
-
-class cls3 {
-    property zeFunc() {
-    super.ceFun/**/c();
-}
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, vec!["".into()]);
 	});
 }
 

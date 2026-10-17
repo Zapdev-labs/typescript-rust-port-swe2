@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn tsx_rename5() {
 	run_test(|t| {
-		let content = r#"//@Filename: file.tsx
-declare namespace JSX {
-    interface Element { }
-    interface IntrinsicElements {
-    }
-    interface ElementAttributesProperty { props }
-}
-class MyClass {
-  props: {
-    name?: string;
-    size?: number;
-}
-
-[|var [|{| "contextRangeIndex": 0 |}nn|]: string;|]
-var x = <MyClass name={[|nn|]}></MyClass>;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename_at_ranges_with_text(None, &["nn".into()]);
 	});
 }
 

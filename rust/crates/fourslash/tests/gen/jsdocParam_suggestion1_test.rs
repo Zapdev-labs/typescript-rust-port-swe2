@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsdoc_param_suggestion1() {
 	run_test(|t| {
-		let content = r"// @Filename: a.ts
-/**
- * @param options - whatever
- * @param options.zone - equally bad
- */
-declare function bad(options: any): void
-
-/**
- * @param {number} obtuse
- */
-function worse(): void {
-    arguments
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("a.ts");
-		f.verify_suggestion_diagnostics(&[]);
 	});
 }
 

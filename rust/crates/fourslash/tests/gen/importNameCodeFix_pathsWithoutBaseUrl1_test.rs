@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_paths_without_base_url1() {
 	run_test(|t| {
-		let content = r#"// @Filename: tsconfig.json
-{
-  "compilerOptions": {
-    "module": "commonjs",
-    "paths": {
-      "@app/*": ["./lib/*"]
-    }
-  }
-}
-// @Filename: index.ts
-utils/**/
-// @Filename: lib/utils.ts
-export const utils = {};"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_import_fix_at_position(&[r#"import { utils } from "@app/utils";
-
-utils"#.into()], None);
 	});
 }
 

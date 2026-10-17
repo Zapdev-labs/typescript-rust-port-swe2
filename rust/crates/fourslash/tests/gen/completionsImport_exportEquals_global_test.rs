@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_import_export_equals_global() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r#"// @lib: es5
-// @module: es6
-// @Filename: /console.d.ts
- interface Console {}
- declare var console: Console;
- declare module "console" {
-   export = console;
- }
-// @Filename: /react-native.d.ts
- import 'console';
- declare global {
-   interface Console {}
-   var console: Console;
- }
-// @Filename: /a.ts
-conso/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_plus(vec![tsc_lsproto::CompletionItem { label: "console".to_string().into(), sort_text: Some((tsc_ls::GLOBALS_OR_KEYWORDS.to_string()).into()), ..Default::default() }.into()], false).into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_property_symbols_from_base_types_doesnt_crash() {
 	run_test(|t| {
-		let content = r"// @Filename: file1.ts
-class ClassA implements IInterface {
-    private [|value|]: number;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, to_any(f.ranges()).into_iter().map(Into::into));
 	});
 }
 

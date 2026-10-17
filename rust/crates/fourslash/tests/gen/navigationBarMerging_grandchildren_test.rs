@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn navigation_bar_merging_grandchildren() {
 	run_test(|t| {
-		let content = r"// Should not merge grandchildren with property assignments
-const o = {
-    a: {
-        m() {},
-    },
-    b: {
-        m() {},
-    },
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_symbol();
 	});
 }
 

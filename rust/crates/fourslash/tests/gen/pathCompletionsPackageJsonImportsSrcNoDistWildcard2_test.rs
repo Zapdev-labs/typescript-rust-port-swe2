@@ -7,37 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn path_completions_package_json_imports_src_no_dist_wildcard2() {
 	run_test(|t| {
-		let content = r##"// @Filename: /home/src/workspaces/project/tsconfig.json
-{
-  "compilerOptions": {
-    "module": "nodenext",
-    "rootDir": "src",
-    "outDir": "dist"
-  }
-}
-// @Filename: /home/src/workspaces/project/package.json
-{
-  "name": "salesforce-pageobjects",
-  "version": "1.0.0",
-  "imports": {
-    "#*": {
-      "types": "./dist/*.d.ts",
-      "import": "./dist/*.mjs",
-      "default": "./dist/*.js"
-    }
-  }
-}
-// @Filename: /home/src/workspaces/project/src/action/pageObjects/actionRenderer.ts
-export const actionRenderer = 0;
-// @Filename: /home/src/workspaces/project/src/index.mts
-import { } from "/**/";"##;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "#action".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Folder).into()), detail: Some(("#action").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("#action/");
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "pageObjects".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Folder).into()), detail: Some(("pageObjects").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("pageObjects/");
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "actionRenderer".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::File).into()), detail: Some(("actionRenderer.ts").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

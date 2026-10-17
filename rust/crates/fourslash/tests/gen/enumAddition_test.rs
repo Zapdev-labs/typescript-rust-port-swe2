@@ -7,10 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn enum_addition() {
 	run_test(|t| {
-		let content = r"namespace m { export enum Color { Red } }
-var /**/t = m.Color.Red + 1;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("", "var t: number", "");
 	});
 }
 

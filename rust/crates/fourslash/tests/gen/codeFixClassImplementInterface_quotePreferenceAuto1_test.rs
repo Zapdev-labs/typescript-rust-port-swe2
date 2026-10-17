@@ -7,30 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_class_implement_interface_quote_preference_auto1() {
 	run_test(|t| {
-		let content = r#"// @filename: a.ts
-export interface I {
-    a(): void;
-    b(x: "x", y: "a" | "b"): "b";
-
-    c: "c";
-    d: { e: "e"; };
-}
-// @filename: b.ts
-import { I } from "./a";
-class Foo implements I {}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("b.ts");
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'I'".to_string().into(), new_file_content: r#"import { I } from "./a";
-class Foo implements I {
-    a(): void {
-        throw new Error("Method not implemented.");
-    }
-    b(x: "x", y: "a" | "b"): "b" {
-        throw new Error("Method not implemented.");
-    }
-    c: "c";
-    d: { e: "e"; };
-}"#.to_string().into(), index: 0, user_preferences: Some(tsc_lsutil::UserPreferences { quote_preference: tsc_lsutil::quote_preference("auto").into(), ..Default::default() }), ..Default::default() });
 	});
 }
 

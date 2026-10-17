@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_common_js_require() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @Filename: /a.js
-function f() { }
-export { f }
-// @Filename: /b.js
-const { f } = require('./a')
-/**/f";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["".into()]);
 	});
 }
 

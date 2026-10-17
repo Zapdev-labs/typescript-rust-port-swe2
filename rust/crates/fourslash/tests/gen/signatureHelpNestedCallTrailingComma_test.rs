@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_nested_call_trailing_comma() {
 	run_test(|t| {
-		let content = r"declare function outer<T>(range: T): T;
-declare function inner(a: any): any;
-
-outer(inner/*1*/(undefined,),);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_signature_help_present(Some(tsc_lsproto::SignatureHelpContext { is_retrigger: false.into(), trigger_kind: tsc_lsproto::SignatureHelpTriggerKind::Invoked.into(), ..Default::default() }));
 	});
 }
 

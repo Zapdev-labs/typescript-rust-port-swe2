@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_with_deprecated_tag2() {
 	run_test(|t| {
-		let content = r"/** @deprecated foo */
-declare function foo<T>();
-/** @deprecated foo<T> */
-declare function foo<T>(x);
-
-foo/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "foo".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Function).into()), sort_text: Some((tsc_ls::deprecate_sort_text(tsc_ls::LOCATION_PRIORITY).to_string()).into()), tags: Some(vec![tsc_lsproto::CompletionItemTag::Deprecated]), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

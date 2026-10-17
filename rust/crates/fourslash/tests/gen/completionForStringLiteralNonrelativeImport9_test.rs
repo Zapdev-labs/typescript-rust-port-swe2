@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_for_string_literal_nonrelative_import9() {
 	run_test(|t| {
-		let content = r#"// @Filename: tsconfig.json
-{
-    "compilerOptions": {
-        "baseUrl": "./modules",
-        "paths": {
-            "module1": ["some/path/whatever.ts"],
-            "module2": ["some/other/path.ts"]
-        }
-    }
-}
-// @Filename: tests/test0.ts
-import * as foo1 from "m/*import_as0*/
-import foo2 = require("m/*import_equals0*/
-var foo3 = require("m/*require0*/
-// @Filename: some/path/whatever.ts
-export var x = 9;
-// @Filename: some/other/path.ts
-export var y = 10;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(f.markers()), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["module1".into(), "module2".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

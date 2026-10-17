@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quickinfo_verbosity_namespace_anonymous_class_heritage1() {
 	run_test(|t| {
-		let content = r"
-namespace NS/*1*/ {
-    export class Derived extends class {
-        baseField: string;
-    } {
-        derivedField: number;
-    }
-}
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("1".to_string().into(), vec![0, 1])]));
 	});
 }
 

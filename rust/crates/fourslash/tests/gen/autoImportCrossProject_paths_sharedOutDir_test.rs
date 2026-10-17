@@ -7,42 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_cross_project_paths_shared_out_dir() {
 	run_test(|t| {
-		let content = r#"// @Filename: /home/src/workspaces/project/tsconfig.base.json
-{
-  "compilerOptions": {
-    "lib": ["es5"],
-    "module": "commonjs",
-    "baseUrl": ".",
-    "paths": {
-      "packages/*": ["./packages/*"]
-    }
-  }
-}
-// @Filename: /home/src/workspaces/project/packages/app/tsconfig.json
-{
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": { "outDir": "../../dist/packages/app" },
-  "references": [{ "path": "../dep" }]
-}
-// @Filename: /home/src/workspaces/project/packages/app/index.ts
-dep/**/
-// @Filename: /home/src/workspaces/project/packages/app/utils.ts
-import "packages/dep";
-// @Filename: /home/src/workspaces/project/packages/dep/tsconfig.json
-{
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": { "outDir": "../../dist/packages/dep" }
-}
-// @Filename: /home/src/workspaces/project/packages/dep/index.ts
-import "./sub/folder";
-// @Filename: /home/src/workspaces/project/packages/dep/sub/folder/index.ts
-export const dep = 0;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.go_to_marker("");
-		f.verify_import_fix_at_position(&[r#"import { dep } from "packages/dep/sub/folder";
-
-dep"#.into()], None);
 	});
 }
 

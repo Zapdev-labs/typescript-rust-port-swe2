@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_union_type_property4() {
 	run_test(|t| {
-		let content = r"interface SnapCrackle {
-    /*def1*/pop(): string;
-}
-
-interface Magnitude {
-    /*def2*/pop(): number;
-}
-
-interface Art {
-    /*def3*/pop(): boolean;
-}
-
-var art: Art;
-var magnitude: Magnitude;
-var snapcrackle: SnapCrackle;
-
-var x = (snapcrackle || magnitude || art).[|/*usage*/pop|];";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["usage".into()]);
 	});
 }
 

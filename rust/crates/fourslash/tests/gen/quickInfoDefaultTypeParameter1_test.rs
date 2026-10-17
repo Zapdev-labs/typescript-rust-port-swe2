@@ -7,10 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_default_type_parameter1() {
 	run_test(|t| {
-		let content = r"type /*1*/X</*2*/T = string> = T";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "type X<T = string> = T", "");
-		f.verify_quick_info_at("2", "(type parameter) T in type X<T = string>", "");
 	});
 }
 

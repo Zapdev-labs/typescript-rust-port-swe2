@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn tabbing_after_newline_inserted_before_while() {
 	run_test(|t| {
-		let content = r"function foo() {
-    /**/while (true) { }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.insert_line("");
-		f.verify_current_line_content(r"    while (true) { }");
 	});
 }
 

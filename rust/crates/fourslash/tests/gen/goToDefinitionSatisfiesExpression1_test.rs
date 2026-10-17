@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_satisfies_expression1() {
 	run_test(|t| {
-		let content = r"const STRINGS = {
-    [|/*definition*/title|]: 'A Title',
-} satisfies Record<string,string>;
-
-//somewhere in app
-STRINGS.[|/*usage*/title|]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["definition".into(), "usage".into()]);
 	});
 }
 

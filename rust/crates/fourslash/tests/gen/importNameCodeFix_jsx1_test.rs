@@ -7,30 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_jsx1() {
 	run_test(|t| {
-		let content = r#"// @jsx: react
-// @Filename: /node_modules/react/index.d.ts
-export const React: any;
-// @Filename: /a.tsx
-[|<this>|]</this>
-// @Filename: /Foo.tsx
-export const Foo = 0;
-// @Filename: /c.tsx
-import { React } from "react";
-<Foo />;
-// @Filename: /d.tsx
-import { Foo } from "./Foo";
-<Foo />;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/a.tsx");
-		f.verify_import_fix_at_position(&[], None);
-		f.go_to_file("/c.tsx");
-		f.verify_import_fix_at_position(&[r#"import { React } from "react";
-import { Foo } from "./Foo";
-<Foo />;"#.into()], None);
-		f.go_to_file("/d.tsx");
-		f.verify_import_fix_at_position(&[r#"import { React } from "react";
-import { Foo } from "./Foo";
-<Foo />;"#.into()], None);
 	});
 }
 

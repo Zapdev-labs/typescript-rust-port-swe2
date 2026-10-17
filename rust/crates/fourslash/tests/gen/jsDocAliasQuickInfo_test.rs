@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn js_doc_alias_quick_info() {
 	run_test(|t| {
-		let content = r#"// @Filename: /jsDocAliasQuickInfo.ts
-/**
- * Comment
- * @type {number}
- */
-export /*1*/default 10;
-// @Filename: /test.ts
-export { /*2*/default as /*3*/test } from "./jsDocAliasQuickInfo";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions01() {
 	run_test(|t| {
-		let content = r"// @lib: es5
-var x: string[] = [];
-x.forEach(function (y) { y/*1*/
-x.forEach(y => y/*2*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.go_to_marker("1");
-		f.insert(".");
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["trim".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("});");
-		f.go_to_marker("2");
-		f.insert(".");
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["trim".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

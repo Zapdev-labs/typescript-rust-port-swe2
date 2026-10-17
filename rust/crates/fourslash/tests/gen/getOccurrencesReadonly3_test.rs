@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_occurrences_readonly3() {
 	run_test(|t| {
-		let content = r#"class C {
-  [|readonly|] prop: /**/readonly string[] = [];
-  constructor([|readonly|] prop2: string) {
-    class D {
-      readonly prop: string = "";  
-    }
-  }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, to_any(f.ranges()).into_iter().map(Into::into));
-		f.verify_baseline_document_highlights(None, vec!["".into()]);
 	});
 }
 

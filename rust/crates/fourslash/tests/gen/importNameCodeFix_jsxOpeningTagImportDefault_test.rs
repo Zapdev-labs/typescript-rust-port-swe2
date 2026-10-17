@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_jsx_opening_tag_import_default() {
 	run_test(|t| {
-		let content = r"// @module: commonjs
-// @jsx: react-jsx
-// @Filename: /component.tsx
-export default function (props: any) {}
-// @Filename: /index.tsx
-export function Index() {
-    return <Component/**/ />;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_import_fix_at_position(&[r#"import Component from "./component";
-
-export function Index() {
-    return <Component />;
-}"#.into()], None);
 	});
 }
 

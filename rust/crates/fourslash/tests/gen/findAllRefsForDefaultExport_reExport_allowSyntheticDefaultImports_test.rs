@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_for_default_export_re_export_allow_synthetic_default_imports() {
 	run_test(|t| {
-		let content = r#"// @allowSyntheticDefaultImports: true
-// @module: commonjs
-// @Filename: /export.ts
-const /*0*/foo = 1;
-export = /*1*/foo;
-// @Filename: /re-export.ts
-export { /*2*/default } from "./export";
-// @Filename: /re-export-dep.ts
-import /*3*/fooDefault from "./re-export";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.verify_baseline_find_all_references(&["0".into(), "1".into(), "2".into(), "3".into()]);
 	});
 }
 

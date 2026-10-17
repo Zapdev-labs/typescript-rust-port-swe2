@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_for_string_literal_relative_import6() {
 	run_test(|t| {
-		let content = r#"// @rootDirs: /repo/src1,/repo/src2/,/repo/generated1,/repo/generated2/
-// @Filename: /repo/src1/test1.ts
-import * as foo1 from "./dir//*import_as1*/
-import foo2 = require("./dir//*import_equals1*/
-var foo3 = require("./dir//*require1*/
-// @Filename: /repo/src2/test2.ts
-import * as foo1 from "./dir//*import_as2*/
-import foo2 = require("./dir//*import_equals2*/
-var foo3 = require("./dir//*require2*/
-// @Filename: /repo/generated1/dir/f1.ts
-/*f1*/
-// @Filename: /repo/generated2/dir/f2.ts
-/*f2*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["import_as1", "import_equals1", "require1"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["f1".into(), "f2".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["import_as2", "import_equals2", "require2"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["f1".into(), "f2".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

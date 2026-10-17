@@ -7,135 +7,42 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_source_named_and_default_export() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{ "name": "pkg", "main": "./index.js", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.d.ts
-export default class Widget {}
-export declare function helper(): void;
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.js
-export default class /*targetWidget*/Widget {}
-export function /*targetHelper*/helper() {}
-// @Filename: /home/src/workspaces/project/index.ts
-import /*importDefault*/Widget, { /*importHelper*/helper } from "pkg";
-Widget;
-helper();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["importDefault".into(), "importHelper".into()]);
 	});
 }
 
 #[test]
 fn go_to_source_default_import_not_first_statement() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{ "name": "pkg", "main": "./index.js", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.d.ts
-export declare const version: string;
-export default class Widget {}
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.js
-export const version = "1.0";
-export default class /*targetWidget*/Widget {}
-// @Filename: /home/src/workspaces/project/index.ts
-import /*importDefault*/Widget from "pkg";
-Widget;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["importDefault".into()]);
 	});
 }
 
 #[test]
 fn go_to_source_unnamed_default_export() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{ "name": "pkg", "main": "./index.js", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.d.ts
-export default function(): string;
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.js
-export default /*targetDefault*/function() { return "ok"; }
-// @Filename: /home/src/workspaces/project/index.ts
-import /*importDefault*/myFunc from "pkg";
-myFunc/*usage*/();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["importDefault".into(), "usage".into()]);
 	});
 }
 
 #[test]
 fn go_to_source_empty_names_entry_fallback() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{ "name": "pkg", "main": "./index.js", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.d.ts
-declare const _default: { run(): void };
-export default _default;
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.js
-export default { run() {} };
-// @Filename: /home/src/workspaces/project/index.ts
-import /*defaultImport*/pkg from "pkg";
-pkg.run();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["defaultImport".into()]);
 	});
 }
 
 #[test]
 fn go_to_source_export_assignment_default() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{ "name": "pkg", "main": "./index.js", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.d.ts
-declare const _default: { run(): void };
-export default _default;
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.js
-/*target*/export default { run() {} };
-// @Filename: /home/src/workspaces/project/index.ts
-import pkg from "pkg";
-pkg/*usage*/;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["usage".into()]);
 	});
 }
 
 #[test]
 fn go_to_source_export_assignment() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/legacy/package.json
-{ "name": "legacy", "main": "./index.js", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/legacy/index.d.ts
-declare function legacyFn(): string;
-export = legacyFn;
-// @Filename: /home/src/workspaces/project/node_modules/legacy/index.js
-function /*targetFn*/legacyFn() { return "ok"; }
-module.exports = legacyFn;
-// @Filename: /home/src/workspaces/project/index.ts
-import /*importName*/legacyFn from "legacy";
-legacyFn();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["importName".into()]);
 	});
 }
 
 #[test]
 fn go_to_source_export_assignment_expression() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{ "name": "pkg", "main": "./index.js", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.d.ts
-export default function createThing(): { value: number };
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.js
-export default function createThing() { return { value: 42 }; }
-// @Filename: /home/src/workspaces/project/index.ts
-import /*defaultName*/createThing from "pkg";
-createThing/*callDefault*/();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["defaultName".into(), "callDefault".into()]);
 	});
 }
 

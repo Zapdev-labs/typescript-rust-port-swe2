@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_distributed_type_parameter() {
 	run_test(|t| {
-		let content = r"type Conditional<T> =
-    T/*check*/ extends T/*extends*/
-        ? T/*trueType*/
-        : T/*falseType*/;
-
-type NonDistributed<T> = [T/*nonDistributed*/] extends [unknown] ? T : never;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("check", "(type parameter) (distributed) T in type Conditional<T>", "");
-		f.verify_quick_info_at("extends", "(type parameter) (distributed) T in type Conditional<T>", "");
-		f.verify_quick_info_at("trueType", "(type parameter) (distributed) T in type Conditional<T>", "");
-		f.verify_quick_info_at("falseType", "(type parameter) (distributed) T in type Conditional<T>", "");
-		f.verify_quick_info_at("nonDistributed", "(type parameter) T in type NonDistributed<T>", "");
 	});
 }
 

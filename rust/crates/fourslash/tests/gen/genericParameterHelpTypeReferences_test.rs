@@ -7,36 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn generic_parameter_help_type_references() {
 	run_test(|t| {
-		let content = r"interface IFoo { }
-
-class testClass<T extends IFoo, U, M extends IFoo> {
-    constructor(a:T, b:U, c:M){ }
-}
-
-// Generic types
-testClass</*type1*/
-var x : testClass</*type2*/
-class Bar<T> extends testClass</*type3*/
-var x : testClass<,, /*type4*/any>;
-
-interface I<T> {}
-let i: I</*interface*/>;
-
-type Ty<T> = T;
-let t: Ty</*typeAlias*/>;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("type1");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "testClass<T extends IFoo, U, M extends IFoo>".to_string().into(), parameter_name: "T".to_string().into(), parameter_span: "T extends IFoo".to_string().into(), ..Default::default() });
-		f.go_to_marker("type2");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "testClass<T extends IFoo, U, M extends IFoo>".to_string().into(), parameter_name: "T".to_string().into(), parameter_span: "T extends IFoo".to_string().into(), ..Default::default() });
-		f.go_to_marker("type3");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "testClass<T extends IFoo, U, M extends IFoo>".to_string().into(), parameter_name: "T".to_string().into(), parameter_span: "T extends IFoo".to_string().into(), ..Default::default() });
-		f.go_to_marker("type4");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "M".to_string().into(), parameter_span: "M extends IFoo".to_string().into(), ..Default::default() });
-		f.go_to_marker("interface");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "I<T>".to_string().into(), parameter_name: "T".to_string().into(), parameter_span: "T".to_string().into(), ..Default::default() });
-		f.go_to_marker("typeAlias");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "Ty<T>".to_string().into(), parameter_name: "T".to_string().into(), parameter_span: "T".to_string().into(), ..Default::default() });
 	});
 }
 

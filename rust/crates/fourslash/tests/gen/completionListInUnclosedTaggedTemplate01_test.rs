@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_in_unclosed_tagged_template01() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = format!("{}{}", format!("{}{}", r"var x;
-var y = (p) => x ", "`"), r"abc ${ /*1*/");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["p".into(), "x".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -7,54 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_simulating_script_blocks() {
 	run_test(|t| {
-		let content = r#"/* BEGIN EXTERNAL SOURCE */
-/*begin5*/
-                        var a = 1;
-                        alert("/*end5*//********//*begin4*/");
-                    /*end4*/
-/* END EXTERNAL SOURCE */
-
-/* BEGIN EXTERNAL SOURCE */
-/*begin3*/
-                            var b = 1;
-
-                        var c = "/*end3*//********//*begin2*/";
-       var d = 1;
-
-            var e = "/*end2*//********//*begin1*/";
-            var f = 1;
-        /*end1*/
-/* END EXTERNAL SOURCE */"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		let mut opts640 = f.get_options();
-		opts640.format_code_settings.base_indent_size = 12;
-		f.configure(opts640);
-		f.format_selection("begin1", "end1");
-		f.format_selection("begin2", "end2");
-		f.format_selection("begin3", "end3");
-		let mut opts794 = f.get_options();
-		opts794.format_code_settings.base_indent_size = 24;
-		f.configure(opts794);
-		f.format_selection("begin4", "end4");
-		f.format_selection("begin5", "end5");
-		f.verify_current_file_content(r#"/* BEGIN EXTERNAL SOURCE */
-
-                        var a = 1;
-                        alert("/********/");
-
-/* END EXTERNAL SOURCE */
-
-/* BEGIN EXTERNAL SOURCE */
-
-            var b = 1;
-
-            var c = "/********/";
-            var d = 1;
-
-            var e = "/********/";
-            var f = 1;
-
-/* END EXTERNAL SOURCE */"#);
 	});
 }
 

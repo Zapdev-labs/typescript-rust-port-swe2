@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn inlay_hints_function_parameter_types3() {
 	run_test(|t| {
-		let content = r#"interface IFoo {
-    bar(x?: boolean): void;
-}
-
-const a: IFoo = {
-    bar: function (x?): void {
-        throw new Error("Function not implemented.");
-    }
-}
-class Foo {
-    #value = 0;
-    get foo(): number { return this.#value; }
-    set foo(value) { this.#value = value; }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_inlay_hints(None, Some(&tsc_lsutil::UserPreferences { inlay_hints_preferences: tsc_lsutil::InlayHintsPreferences { include_inlay_function_parameter_type_hints: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 

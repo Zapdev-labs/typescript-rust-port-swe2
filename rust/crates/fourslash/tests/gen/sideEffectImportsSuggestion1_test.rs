@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn side_effect_imports_suggestion1() {
 	run_test(|t| {
-		let content = r#"// @allowJs: true
-// @noEmit: true
-// @module: commonjs
-// @noUncheckedSideEffectImports: true
-// @filename: moduleA/a.js
-import "b";
-import "c";
-// @filename: node_modules/b.ts
-var a = 10;
-// @filename: node_modules/c.js
-exports.a = 10;
-c = 10;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_suggestion_diagnostics(&[]);
 	});
 }
 

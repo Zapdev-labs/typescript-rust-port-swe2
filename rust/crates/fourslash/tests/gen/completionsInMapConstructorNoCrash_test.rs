@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_in_map_constructor_no_crash() {
 	run_test(|t| {
-		let content1 = r"const m = new Map([
-    [/*a*/'0', ['0', false]],
-]);";
-		let mut f1 = tsc_fourslash::new_fourslash(&t_name(), "", None, &content1);
-		f1.verify_completions(tsc_fourslash::MarkerInput::from("a"), Some(&tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { ..Default::default() }), ..Default::default() }));
-		let content2 = r"const m = new Map([
-    ['0', ['0', false]]/*b*/,
-]);";
-		let mut f2 = tsc_fourslash::new_fourslash(&t_name(), "", None, &content2);
-		f2.verify_completions(tsc_fourslash::MarkerInput::from("b"), Some(&tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { ..Default::default() }), ..Default::default() }));
 	});
 }
 

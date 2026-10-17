@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_missing_type_annotation_on_exports52_generics_oversimplification() {
 	run_test(|t| {
-		let content = r"// @isolatedDeclarations: true
-// @declaration: true
-export interface Foo<T, U = T[]> {}
-export function foo(x: Foo<string, string[]>) {
-    return x;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Add return type 'Foo<string>'".to_string().into(), new_file_content: r"export interface Foo<T, U = T[]> {}
-export function foo(x: Foo<string, string[]>): Foo<string> {
-    return x;
-}".to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

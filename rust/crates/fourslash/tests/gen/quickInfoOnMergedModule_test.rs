@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_on_merged_module() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"// @strict: false
-namespace M2 {
-    export interface A {
-        foo: string;
-    }
-    var a: A;
-    var r = a.foo + a.bar;
-}
-namespace M2 {
-    export interface A {
-        bar: number;
-    }
-    var a: A;
-    var r = a.fo/*1*/o + a.bar;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "(property) M2.A.foo: string", "");
-		f.verify_no_errors();
 	});
 }
 

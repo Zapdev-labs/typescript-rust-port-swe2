@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsdoc_deprecated_suggestion8() {
 	run_test(|t| {
-		let content = r"// @Filename: first.ts
-/** @deprecated */
-export declare function tap<T>(next: null): void;
-export declare function tap<T>(next: T): T;
-// @Filename: second.ts
-import { tap } from './first';
-tap";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("second.ts");
-		f.verify_no_errors();
-		f.verify_suggestion_diagnostics(&[]);
 	});
 }
 

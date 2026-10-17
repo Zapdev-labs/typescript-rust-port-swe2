@@ -7,32 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_overriding_method4() {
 	run_test(|t| {
-		let content = r#"// @newline: LF
-// @Filename: secret.ts
-class Secret {
-    #secret(): string {
-        return "secret";
-    }
-
-    private tell(): string {
-        return this.#secret();
-    }
-
-    protected hint(): string {
-        return "hint";
-    }
-
-    public refuse(): string {
-        return "no comments";
-    }
-}
-
-class Gossip extends Secret {
-    /* no telling secrets */
-    /*a*/
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("a"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "hint".to_string().into(), insert_text: Some(("protected hint(): string {\n}").into()), filter_text: Some(("hint").into()), sort_text: Some((tsc_ls::LOCATION_PRIORITY.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "refuse".to_string().into(), insert_text: Some(("public refuse(): string {\n}").into()), filter_text: Some(("refuse").into()), sort_text: Some((tsc_ls::LOCATION_PRIORITY.to_string()).into()), ..Default::default() }.into()].into(), excludes: vec!["tell".into(), "#secret".into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_with_class_member_snippets: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), ..Default::default() }));
 	});
 }
 

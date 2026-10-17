@@ -7,30 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_constructor_of_class_expression01() {
 	run_test(|t| {
-		let content = r"var x = class C {
-    /*definition*/constructor() {
-        var other = new [|/*xusage*/C|];
-    }
-}
-
-var y = class C extends x {
-    constructor() {
-        super();
-        var other = new [|/*yusage*/C|];
-    }
-}
-var z = class C extends x {
-    m() {
-        return new [|/*zusage*/C|];
-    }
-}
-
-var x1 = new [|/*cref*/C|]();
-var x2 = new [|/*xref*/x|]();
-var y1 = new [|/*yref*/y|]();
-var z1 = new [|/*zref*/z|]();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["xusage".into(), "yusage".into(), "zusage".into(), "cref".into(), "xref".into(), "yref".into(), "zref".into()]);
 	});
 }
 

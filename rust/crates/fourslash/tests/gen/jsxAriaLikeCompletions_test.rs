@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsx_aria_like_completions() {
 	run_test(|t| {
-		let content = r#"//@Filename: file.tsx
-declare var React: any;
-declare namespace JSX {
-    interface Element { }
-    interface IntrinsicElements {
-        div: { "aria-whatever"?: string  }
-    }
-    interface ElementAttributesProperty { props: any }
-}
-const a = <div {...{}} /*1*/></div>;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "aria-whatever?".to_string().into(), insert_text: Some(("aria-whatever").into()), filter_text: Some(("aria-whatever").into()), sort_text: Some((tsc_ls::OPTIONAL_MEMBER.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

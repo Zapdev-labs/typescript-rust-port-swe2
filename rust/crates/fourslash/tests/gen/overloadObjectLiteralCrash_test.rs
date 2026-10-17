@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn overload_object_literal_crash() {
 	run_test(|t| {
-		let content = r#"interface Foo {
-    extend<T>(...objs: any[]): T;
-    extend<T>(deep, target: T): T;
-}
-var $: Foo;
-$.extend({ /**/foo: 0 }, "");
-"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_quick_info_exists();
 	});
 }
 

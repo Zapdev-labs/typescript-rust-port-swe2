@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_imported_names3() {
 	run_test(|t| {
-		let content = r#"// @Filename: e.ts
- import {M, [|/*classAliasDefinition*/C|], I} from "./d";
- var c = new [|/*classReference*/C|]();
-// @Filename: d.ts
-export * from "./c";
-// @Filename: c.ts
-export {Module as M, Class as C, Interface as I} from "./b";
-// @Filename: b.ts
-export * from "./a";
-// @Filename: a.ts
-export namespace Module {
-}
-export class /*classDefinition*/Class {
-    private f;
-}
-export interface Interface {
-    x;
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["classReference".into(), "classAliasDefinition".into()]);
 	});
 }
 

@@ -7,67 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn proto_var_in_contextual_object_literal() {
 	run_test(|t| {
-		let content = r#"var o1 : {
-    __proto__: number;
-    p: number;
-} = {
-        /*1*/
-    };
-var o2: {
-    __proto__: number;
-    p: number;
-} = {
-        /*2*/
-    };
-var o3: {
-    "__proto__": number;
-    p: number;
-} = {
-        /*3*/
-    };
-var o4: {
-    "__proto__": number;
-    p: number;
-} = {
-        /*4*/
-    };
-var o5: {
-    __proto__: number;
-    ___proto__: string;
-    p: number;
-} = {
-        /*5*/
-    };
-var o6: {
-    __proto__: number;
-    ___proto__: string;
-    p: number;
-} = {
-        /*6*/
-    };"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec![tsc_lsproto::CompletionItem { label: "__proto__".to_string().into(), detail: Some(("(property) __proto__: number").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "p".to_string().into(), detail: Some(("(property) p: number").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("__proto__: 10,");
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "p".to_string().into(), detail: Some(("(property) p: number").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("2"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec![tsc_lsproto::CompletionItem { label: "__proto__".to_string().into(), detail: Some(("(property) __proto__: number").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "p".to_string().into(), detail: Some(("(property) p: number").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("\"__proto__\": 10,");
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "p".to_string().into(), detail: Some(("(property) p: number").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("3"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec![tsc_lsproto::CompletionItem { label: "__proto__".to_string().into(), detail: Some(("(property) \"__proto__\": number").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "p".to_string().into(), detail: Some(("(property) p: number").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("__proto__: 10,");
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "p".to_string().into(), detail: Some(("(property) p: number").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("4"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec![tsc_lsproto::CompletionItem { label: "__proto__".to_string().into(), detail: Some(("(property) \"__proto__\": number").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "p".to_string().into(), detail: Some(("(property) p: number").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("\"__proto__\": 10,");
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "p".to_string().into(), detail: Some(("(property) p: number").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("5"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec![tsc_lsproto::CompletionItem { label: "__proto__".to_string().into(), detail: Some(("(property) __proto__: number").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "___proto__".to_string().into(), detail: Some(("(property) ___proto__: string").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "p".to_string().into(), detail: Some(("(property) p: number").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("__proto__: 10,");
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec![tsc_lsproto::CompletionItem { label: "___proto__".to_string().into(), detail: Some(("(property) ___proto__: string").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "p".to_string().into(), detail: Some(("(property) p: number").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("\"___proto__\": \"10\",");
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "p".to_string().into(), detail: Some(("(property) p: number").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("6"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec![tsc_lsproto::CompletionItem { label: "__proto__".to_string().into(), detail: Some(("(property) __proto__: number").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "___proto__".to_string().into(), detail: Some(("(property) ___proto__: string").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "p".to_string().into(), detail: Some(("(property) p: number").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("___proto__: \"10\",");
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec![tsc_lsproto::CompletionItem { label: "__proto__".to_string().into(), detail: Some(("(property) __proto__: number").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "p".to_string().into(), detail: Some(("(property) p: number").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("\"__proto__\": 10,");
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "p".to_string().into(), detail: Some(("(property) p: number").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

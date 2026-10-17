@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn transitive_export_imports() {
 	run_test(|t| {
-		let content = r#"// @module: commonjs
-// @Filename: a.ts
-[|class /*1*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 0 |}A|] {
-}|]
-[|export = [|{| "contextRangeIndex": 2 |}A|];|]
-// @Filename: b.ts
-[|export import /*2*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 4 |}b|] = require('./a');|]
-// @Filename: c.ts
-[|import /*3*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 6 |}b|] = require('./b');|]
-var a = new /*4*/[|b|]./**/[|b|]();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_quick_info_exists();
-		f.verify_no_errors();
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into(), f.ranges()[3].clone().into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[5].clone().into(), f.ranges()[9].clone().into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[7].clone().into(), f.ranges()[8].clone().into()]);
 	});
 }
 

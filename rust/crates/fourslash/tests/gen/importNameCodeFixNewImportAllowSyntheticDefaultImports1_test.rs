@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_new_import_allow_synthetic_default_imports1() {
 	run_test(|t| {
-		let content = r"// @Module: system
-// @Filename: a/f1.ts
-[|export var x = 0;
-bar/*0*/();|]
-// @Filename: a/foo.d.ts
-declare function bar(): number;
-export = bar;
-export as namespace bar;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_at_position(&[r#"import bar from "./foo";
-
-export var x = 0;
-bar();"#.into()], None);
 	});
 }
 

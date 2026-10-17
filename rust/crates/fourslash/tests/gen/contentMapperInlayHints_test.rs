@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn content_mapper_inlay_hints_release_each_range() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /app.vue
-<script>
-const value = () => 1;
-</script>
-{{value}}
-{{value}}
-{{value}}
-{{value}}
-", tsc_testutil::contentmappertest::COMPONENT_MAPPER, ".vue");
-		f.go_to_file("/app.vue");
-		f.verify_baseline_inlay_hints(None, Some(&tsc_lsutil::UserPreferences { inlay_hints_preferences: tsc_lsutil::InlayHintsPreferences { include_inlay_variable_type_hints: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 

@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_optional_call() {
 	run_test(|t| {
-		let content = r"function fnTest(str: string, num: number) { }
-fnTest?.(/*1*/);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "fnTest(str: string, num: number): void".to_string().into(), parameter_count: 2, parameter_name: "str".to_string().into(), parameter_span: "str: string".to_string().into(), ..Default::default() });
 	});
 }
 

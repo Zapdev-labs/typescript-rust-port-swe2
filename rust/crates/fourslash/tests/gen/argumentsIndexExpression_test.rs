@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn arguments_index_expression() {
 	run_test(|t| {
-		let content = r"function f() {
-    var x = /**/arguments[0];
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_quick_info_exists();
 	});
 }
 

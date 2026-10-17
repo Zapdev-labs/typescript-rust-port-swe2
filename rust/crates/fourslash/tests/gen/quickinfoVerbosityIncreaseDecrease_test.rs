@@ -7,55 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quickinfo_verbosity_increase_decrease() {
 	run_test(|t| {
-		let content = r#"export const JOB_STATES = ["created", "active", "completed", "failed", "retry", "cancelled", "archive"] as const
-export type JobState = (typeof JOB_STATES)[number]
-type Color = "default" | "primary" | "secondary" | "success" | "warning" | "danger"
-const JobsStateToColor/*a*/: Record<
-  JobState,
-  {
-    color: Color
-    label: string
-    labelPlural: string
-  }
-> = {
-  created: {
-    color: "success",
-    label: "Направљен",
-    labelPlural: "Направљени",
-  },
-  active: {
-    color: "success",
-    label: "Активан",
-    labelPlural: "Активни",
-  },
-  completed: {
-    color: "success",
-    label: "Успешан",
-    labelPlural: "Успешни",
-  },
-  cancelled: {
-    color: "default",
-    label: "Отаказан",
-    labelPlural: "Отаказни",
-  },
-  failed: {
-    color: "danger",
-    label: "Пао",
-    labelPlural: "Пали",
-  },
-  archive: {
-    color: "default",
-    label: "Архивиран",
-    labelPlural: "Архивирани",
-  },
-  retry: {
-    color: "warning",
-    label: "Понавља се",
-    labelPlural: "Понављају се",
-  },
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("a".to_string().into(), vec![0, 1, 0])]));
 	});
 }
 

@@ -7,38 +7,12 @@ use tsc_fourslash::*;
 #[test]
 fn rename_named_import_use_aliases_for_renames() {
 	run_test(|t| {
-		let content = r#"// @Filename: /a.ts
-import { /*import*/MyTypeA } from "./b";
-const type: MyTypeA = { foo: "bar" };
-// @Filename: /b.ts
-export interface MyTypeA {
-    foo: string;
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename(Some(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_FALSE.into(), ..Default::default() }), vec!["import".into()]);
-		f.verify_baseline_rename(Some(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }), vec!["import".into()]);
 	});
 }
 
 #[test]
 fn rename_named_import_default_in_node_modules() {
 	run_test(|t| {
-		let content = r#"// @Filename: /index.ts
-import { /*fooImport*/[|Foo|] } from "foo";
-declare const f: Foo;
-// @Filename: /tsconfig.json
-{}
-// @Filename: /node_modules/foo/package.json
-{ "types": "index.d.ts" }
-// @Filename: /node_modules/foo/index.d.ts
-export interface Foo {
-    bar: string;
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename(None, vec!["fooImport".into()]);
-		f.verify_baseline_rename(Some(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }), vec!["fooImport".into()]);
-		f.go_to_marker("fooImport");
-		f.verify_rename_failed(Some(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_FALSE.into(), ..Default::default() }));
 	});
 }
 

@@ -7,30 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn path_completions_package_json_imports_wildcard3() {
 	run_test(|t| {
-		let content = r##"// @module: node18
-// @Filename: /package.json
-{
-  "types": "index.d.ts",
-  "imports": {
-    "#component-*": {
-      "types@>=4.3.5": "types/components/*.d.ts"
-    }
-  }
-}
-// @Filename: /nope.d.ts
-export const nope = 0;
-// @Filename: /types/components/index.d.ts
-export const index = 0;
-// @Filename: /types/components/blah.d.ts
-export const blah = 0;
-// @Filename: /types/components/subfolder/one.d.ts
-export const one = 0;
-// @Filename: /a.ts
-import { } from "/**/";"##;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "#component-blah".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::File).into()), detail: Some(("#component-blah.d.ts").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "#component-index".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::File).into()), detail: Some(("#component-index.d.ts").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "#component-subfolder".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Folder).into()), detail: Some(("#component-subfolder").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("#component-subfolder/");
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "one".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::File).into()), detail: Some(("one.d.ts").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

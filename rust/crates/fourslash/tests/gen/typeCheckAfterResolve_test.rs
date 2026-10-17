@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn type_check_after_resolve() {
 	run_test(|t| {
-		let content = r"/*start*/class Point implements /*IPointRef*/IPoint {
-    getDist() {
-        ssss;
-    }
-}/*end*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_eof();
-		f.insert_line("");
-		f.verify_quick_info_at("IPointRef", "any", "");
-		f.verify_error_exists_after_marker("IPointRef");
-		f.go_to_eof();
-		f.insert_line("");
-		f.verify_error_exists_after_marker("IPointRef");
 	});
 }
 

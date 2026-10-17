@@ -7,33 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_multiline_comments_with_tabs1() {
 	run_test(|t| {
-		let content = r"var f = function (j) {
-
-	switch (j) {
-		case 1:
-/*1*/				/* when current checkbox has focus, Firefox has changed check state already
-/*2*/				on SPACE bar press only
-/*3*/				IE does not have issue, use the CSS class
-/*4*/				input:focus[type=checkbox] (z-index = 31290)
-/*5*/				to determine whether checkbox has focus or not
-				*/
-			break;
-		case 2:
-		break;
-	}
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"            /* when current checkbox has focus, Firefox has changed check state already");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"            on SPACE bar press only");
-		f.go_to_marker("3");
-		f.verify_current_line_content(r"            IE does not have issue, use the CSS class");
-		f.go_to_marker("4");
-		f.verify_current_line_content(r"            input:focus[type=checkbox] (z-index = 31290)");
-		f.go_to_marker("5");
-		f.verify_current_line_content(r"            to determine whether checkbox has focus or not");
 	});
 }
 

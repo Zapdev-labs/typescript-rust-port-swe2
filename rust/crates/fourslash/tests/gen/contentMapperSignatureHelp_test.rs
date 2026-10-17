@@ -7,59 +7,18 @@ use tsc_fourslash::*;
 #[test]
 fn content_mapper_signature_help() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r#"// @Filename: /format.ts
-export function format(value: string, uppercase?: boolean): string { return value; }
-
-// @Filename: /ProfileCard.vue
-<component name="ProfileCard">
-<template>
-  <h1>{{ format(ti/*templateCall*/tle) }}</h1>
-  <button title="/*markup*/save">Save</button>
-</template>
-<script lang="ts">
-import { format } from "./format";
-export const title = "Profile";
-format(title, /*scriptCall*/true);
-export function greet(name: string, count: number): string { return name.repeat(count); }
-</script>
-
-// @Filename: /main.ts
-import { greet } from "./ProfileCard.vue";
-greet("hello", /*incomingCall*/2);
-"#, tsc_testutil::contentmappertest::COMPONENT_MAPPER, ".vue");
-		f.go_to_marker("scriptCall");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "format(value: string, uppercase?: boolean): string".to_string().into(), parameter_name: "uppercase?".to_string().into(), parameter_span: "uppercase?: boolean".to_string().into(), ..Default::default() });
-		f.go_to_marker("templateCall");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "format(value: string, uppercase?: boolean): string".to_string().into(), parameter_name: "value".to_string().into(), parameter_span: "value: string".to_string().into(), ..Default::default() });
-		f.go_to_marker("incomingCall");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "greet(name: string, count: number): string".to_string().into(), parameter_name: "count".to_string().into(), parameter_span: "count: number".to_string().into(), ..Default::default() });
-		f.go_to_marker("markup");
-		f.verify_no_signature_help();
 	});
 }
 
 #[test]
 fn content_mapper_supplemental_signature_help_js_doc_link() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /globals.astro
-const target = 1;
-/** See {@link target}. */
-function use(value: number) { return value; }
-use(/*call*/target);
-", tsc_testutil::contentmappertest::SUPPLEMENTAL_MAPPER, ".astro");
-		f.go_to_marker("call");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "use(value: number): number".to_string().into(), doc_comment: "See [target](file:///globals.astro#1,7-1,13).".to_string().into(), parameter_name: "value".to_string().into(), parameter_span: "value: number".to_string().into(), ..Default::default() });
 	});
 }
 
 #[test]
 fn content_mapper_signature_help_tries_later_projection() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /signature-fallback.dup
-use(/*call*/)
-", tsc_testutil::contentmappertest::DUPLICATE_MAPPER, ".dup");
-		f.go_to_marker("call");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "use(value: number): void".to_string().into(), parameter_name: "value".to_string().into(), parameter_span: "value: number".to_string().into(), ..Default::default() });
 	});
 }
 

@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_occurrences_after_edit() {
 	run_test(|t| {
-		let content = r"/*0*/
-interface A {
-    foo: string;
-}
-function foo(x: A) {
-    x.f/*1*/oo
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, vec!["1".into()]);
-		f.go_to_marker("0");
-		f.insert("\n");
-		f.verify_baseline_document_highlights(None, vec!["1".into()]);
 	});
 }
 

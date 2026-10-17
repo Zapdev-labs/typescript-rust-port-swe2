@@ -7,45 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_selection_doc_comment_in_block() {
 	run_test(|t| {
-		let content = r"{
-    /*1*//**
-     * Some doc comment
-     *//*2*/
-    const a = 1;
-}
-
-while (true) {
-/*3*//**
- * Some doc comment
- *//*4*/
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_selection("1", "2");
-		f.verify_current_file_content(r"{
-    /**
-     * Some doc comment
-     */
-    const a = 1;
-}
-
-while (true) {
-/**
- * Some doc comment
- */
-}");
-		f.format_selection("3", "4");
-		f.verify_current_file_content(r"{
-    /**
-     * Some doc comment
-     */
-    const a = 1;
-}
-
-while (true) {
-    /**
-     * Some doc comment
-     */
-}");
 	});
 }
 

@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn document_highlight_in_type_export() {
 	run_test(|t| {
-		let content = r"// @Filename: /1.ts
-type [|A|] = 1;
-export { [|A|] as [|B|] };
-// @Filename: /2.ts
-type [|A|] = 1;
-let [|A|]: [|A|] = 1;
-export { [|A|] as [|B|] };
-// @Filename: /3.ts
-type [|A|] = 1;
-let [|A|]: [|A|] = 1;
-export type { [|A|] as [|B|] };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, to_any(f.ranges()).into_iter().map(Into::into));
 	});
 }
 

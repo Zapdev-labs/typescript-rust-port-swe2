@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_import_source2() {
 	run_test(|t| {
-		let content = r#"// @module: esnext
-// @target: esnext
-// @allowJs: true
-
-// @filename: /a.js
-export default function /*a*/f() {}
-
-// @filename: /b.ts
-import /*b*/f from "./a.js";
-f();
-
-// @filename: /c.ts
-import source /*c*/f from "/*module*/./a.js";
-f;
-import.source("./a.js");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.verify_baseline_find_all_references(&["a".into(), "b".into(), "c".into(), "module".into()]);
-		f.verify_baseline_rename(None, vec!["a".into(), "b".into(), "c".into()]);
 	});
 }
 

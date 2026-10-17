@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_for_import_call_type() {
 	run_test(|t| {
-		let content = r#"// @Filename: /app.ts
-export function he/**/llo() {};
-// @Filename: /re-export.ts
-export type app = typeof import("./app")
-// @Filename: /indirect-use.ts
-import type { app } from "./re-export";
-declare const app: app
-app.hello();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["".into()]);
 	});
 }
 

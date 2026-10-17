@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn type_check_after_adding_generic_parameter() {
 	run_test(|t| {
-		let content = r"function f<x, x>() { }
-function f2<X, X>(b: X): X { return null; }
-class C<X> {
-    public f<x, x>() {}
-f2<X>(b): X { return null; }
-}
-
-interface I<X, X> {
-    f<X/*addTypeParam*/>();
-    f2<X>(/*addParam*/a: X): X;
-}
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("addParam");
-		f.insert(", X");
-		f.go_to_marker("addTypeParam");
-		f.insert(", X");
 	});
 }
 

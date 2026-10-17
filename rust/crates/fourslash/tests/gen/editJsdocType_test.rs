@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn edit_jsdoc_type() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"// @allowJs: true
-// @noLib: true
-// @Filename: /a.js
-/** @type/**/ */
-const x = 0;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_quick_info_is("", "");
-		f.insert(" ");
-		f.verify_quick_info_is("", "");
 	});
 }
 

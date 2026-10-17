@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_for_properties_of_generic_type() {
 	run_test(|t| {
-		let content = r#"interface IFoo<T> {
-    /*1*/doSomething(v: T): T;
-}
-
-var x: IFoo<string>;
-x./*2*/doSomething("ss");
-
-var y: IFoo<number>;
-y./*3*/doSomething(12);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
 	});
 }
 

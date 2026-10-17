@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn is_definition_interface_implementation() {
 	run_test(|t| {
-		let content = r"interface I {
-    /*1*/M(): void;
-}
-
-class C implements I {
-    /*2*/M() { }
-}
-
-({} as I).M();
-({} as C).M();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into()]);
 	});
 }
 

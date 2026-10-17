@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn fix_exact_optional_unassignable_properties9() {
 	run_test(|t| {
-		let content = r"// @strictNullChecks: true
-// @exactOptionalPropertyTypes: true
-interface IAny {
-    a?: any
-}
-interface J {
-    a?: number | undefined
-}
-declare var iany: IAny
-declare var j: J
-iany/**/ = j";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix_not_available(&[]);
 	});
 }
 

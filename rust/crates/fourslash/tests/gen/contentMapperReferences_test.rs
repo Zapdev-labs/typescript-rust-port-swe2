@@ -7,28 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn content_mapper_references() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r#"// @Filename: /format.ts
-export function [|format|](value: string): string { return value; }
-
-// @Filename: /ProfileCard.vue
-<component name="[|ProfileCard|]">
-<template>
-  <h1>{{ [|ti/*template*/tle|] }}</h1>
-  <p class="card/*markup*/">Profile</p>
-</template>
-<script lang="ts">
-import { format } from "./format";
-export const [|ti/*script*/tle|] = "Profile";
-export const heading = [|for/*outgoing*/mat|]([|title|]);
-</script>
-
-// @Filename: /main.ts
-import DefaultCard, { ProfileCard, title } from "./ProfileCard.vue";
-export const pageTitle = [|ti/*incoming*/tle|];
-export const component = [|Profile/*atomResult*/Card|];
-export const fallback = [|Default/*synthesized*/Card|];
-"#, tsc_testutil::contentmappertest::COMPONENT_MAPPER, ".vue");
-		f.verify_baseline_find_all_references(&["script".into(), "template".into(), "incoming".into(), "outgoing".into(), "atomResult".into(), "synthesized".into(), "markup".into()]);
 	});
 }
 

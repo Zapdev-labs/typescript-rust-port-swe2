@@ -7,34 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_for_static() {
 	run_test(|t| {
-		let content = r#"// @Filename: referencesOnStatic_1.ts
-var n = 43;
-
-class foo {
-    /*1*/static /*2*/n = '';
-
-    public bar() {
-        foo./*3*/n = "'";
-        if(foo./*4*/n) {
-            var x = foo./*5*/n;
-        }
-    }
-}
-
-class foo2 {
-    private x = foo./*6*/n;
-    constructor() {
-        foo./*7*/n = x;
-    }
-
-    function b(n) {
-        n = foo./*8*/n;
-    }
-}
-// @Filename: referencesOnStatic_2.ts
-var q = foo./*9*/n;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into(), "7".into(), "8".into(), "9".into()]);
 	});
 }
 

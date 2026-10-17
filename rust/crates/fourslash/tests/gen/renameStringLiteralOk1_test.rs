@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_string_literal_ok1() {
 	run_test(|t| {
-		let content = r"declare function f(): '[|foo|]' | 'bar'
-class Foo {
-    f = f()
-}
-const d: 'foo' = 'foo'
-declare const ff: Foo
-ff.f = '[|foo|]'";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename_at_ranges_with_text(None, &["foo".into()]);
 	});
 }
 

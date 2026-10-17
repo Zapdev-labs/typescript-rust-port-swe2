@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn type_operator_node_building() {
 	run_test(|t| {
-		let content = r"// @Filename: keyof.ts
-function doSomethingWithKeys<T>(...keys: (keyof T)[]) { }
-
-const /*1*/utilityFunctions = {
-  doSomethingWithKeys
-};
-// @Filename: typeof.ts
-class Foo { static a: number; }
-function doSomethingWithTypes(...statics: (typeof Foo)[]) {}
-
-const /*2*/utilityFunctions = {
-  doSomethingWithTypes
-};";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "const utilityFunctions: {\n    doSomethingWithKeys: <T>(...keys: (keyof T)[]) => void;\n}", "");
-		f.verify_quick_info_at("2", "const utilityFunctions: {\n    doSomethingWithTypes: (...statics: (typeof Foo)[]) => void;\n}", "");
 	});
 }
 

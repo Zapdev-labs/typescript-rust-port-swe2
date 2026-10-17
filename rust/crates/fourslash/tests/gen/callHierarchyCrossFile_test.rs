@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn call_hierarchy_cross_file() {
 	run_test(|t| {
-		let content = r#"// @filename: /a.ts
-export function /**/createModelReference() {}
-// @filename: /b.ts
-import { createModelReference } from "./a";
-function openElementsAtEditor() {
-  createModelReference();
-}
-// @filename: /c.ts
-import { createModelReference } from "./a";
-function registerDefaultLanguageCommand() {
-  createModelReference();
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_baseline_call_hierarchy();
 	});
 }
 

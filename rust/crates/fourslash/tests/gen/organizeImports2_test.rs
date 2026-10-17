@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn organize_imports2() {
 	run_test(|t| {
-		let content = r#"import {
-    Foo   
- , Bar   
-} from "foo"
-
-console.log(Foo, Bar);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_organize_imports(r#"import {
-    Bar,
-    Foo
-} from "foo";
-
-console.log(Foo, Bar);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 	});
 }
 

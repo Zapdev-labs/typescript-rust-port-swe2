@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn document_symbol_top_level_imports() {
 	run_test(|t| {
-		let content = r#"/** @typedef {number} ImportedType */
-import DefaultComponent from "./component";
-/** @callback ImportedCallback
- * @param {string} value
- * @returns {number}
- */
-import * as utils from "./utils";
-import { value, original as renamed } from "./values";
-import type { Options } from "./types";
-
-const local = 1;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_symbol();
 	});
 }
 

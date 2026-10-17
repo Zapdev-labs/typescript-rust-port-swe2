@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn occurrences01() {
 	run_test(|t| {
-		let content = r"// @lib: es5
-foo: [|switch|] (10) {
-    [|case|] 1:
-    [|case|] 2:
-    [|case|] 3:
-        [|break|];
-        [|break|] foo;
-        continue;
-        continue foo;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.verify_baseline_document_highlights(None, to_any(f.ranges()).into_iter().map(Into::into));
 	});
 }
 

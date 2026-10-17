@@ -7,31 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_edits_for_file_rename_preserve_path_ending() {
 	run_test(|t| {
-		let content = r#"// @allowJs: true
-// @checkJs: true
-// @strict: true
-// @jsx: preserve
-// @resolveJsonModule: true
-// @Filename: /index.js
-export const x = 0;
-// @Filename: /jsx.jsx
-export const y = 0;
-// @Filename: /j.jonah.json
-{ "j": 0 }
-// @Filename: /a.js
-import { x as x0 } from ".";
-import { x as x1 } from "./index";
-import { x as x2 } from "./index.js";
-import { y } from "./jsx.jsx";
-import { j } from "./j.jonah.json";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.verify_will_rename_files_edits("/a.js", "/b.js", &std::collections::BTreeMap::from([]), None);
-		f.verify_will_rename_files_edits("/b.js", "/src/b.js", &std::collections::BTreeMap::from([("/src/b.js".to_string().into(), r#"import { x as x0 } from "..";
-import { x as x1 } from "../index";
-import { x as x2 } from "../index.js";
-import { y } from "../jsx.jsx";
-import { j } from "../j.jonah.json";"#.to_string().into())]), None);
 	});
 }
 

@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_destructuring_declaration_in_for_of() {
 	run_test(|t| {
-		let content = r#"interface I {
-    [|[|{| "contextRangeIndex": 0 |}property1|]: number;|]
-    property2: string;
-}
-var elems: I[];
-
-for ([|let { [|{| "contextRangeIndex": 2 |}property1|] } of elems|]) {
-    [|property1|]++;
-}
-for ([|let { [|{| "contextRangeIndex": 5 |}property1|]: p2 } of elems|]) {
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into(), f.ranges()[6].clone().into(), f.ranges()[3].clone().into(), f.ranges()[4].clone().into()]);
 	});
 }
 

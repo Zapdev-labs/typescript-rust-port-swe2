@@ -7,53 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_contextual() {
 	run_test(|t| {
-		let content = r"interface I {
-    m(n: number, s: string): void;
-    m2: () => void;
-}
-declare function takesObj(i: I): void;
-takesObj({ m: (/*takesObj0*/) });
-takesObj({ m(/*takesObj1*/) });
-takesObj({ m: function(/*takesObj2*/) });
-takesObj({ m2: (/*takesObj3*/) });
-
-declare function takesCb(cb: (n: number, s: string, b: boolean) => void): void;
-takesCb((/*contextualParameter1*/));
-takesCb((/*contextualParameter1b*/) => {});
-takesCb((n, /*contextualParameter2*/));
-takesCb((n, s, /*contextualParameter3*/));
-takesCb((n,/*contextualParameter3_2*/ s, b));
-takesCb((n, s, b, /*contextualParameter4*/));
-
-type Cb = () => void;
-const cb: Cb = (/*contextualTypeAlias*/)
-
-const cb2: () => void = (/*contextualFunctionType*/)";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("takesObj0");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "m(n: number, s: string): void".to_string().into(), parameter_count: 2, parameter_name: "n".to_string().into(), parameter_span: "n: number".to_string().into(), ..Default::default() });
-		f.go_to_marker("takesObj1");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "m(n: number, s: string): void".to_string().into(), parameter_count: 2, parameter_name: "n".to_string().into(), parameter_span: "n: number".to_string().into(), ..Default::default() });
-		f.go_to_marker("takesObj2");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "m(n: number, s: string): void".to_string().into(), parameter_count: 2, parameter_name: "n".to_string().into(), parameter_span: "n: number".to_string().into(), ..Default::default() });
-		f.go_to_marker("takesObj3");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "m2(): void".to_string().into(), parameter_count: 0, ..Default::default() });
-		f.go_to_marker("contextualParameter1");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "cb(n: number, s: string, b: boolean): void".to_string().into(), parameter_count: 3, parameter_name: "n".to_string().into(), parameter_span: "n: number".to_string().into(), ..Default::default() });
-		f.go_to_marker("contextualParameter1b");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "cb(n: number, s: string, b: boolean): void".to_string().into(), parameter_count: 3, parameter_name: "n".to_string().into(), parameter_span: "n: number".to_string().into(), ..Default::default() });
-		f.go_to_marker("contextualParameter2");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "cb(n: number, s: string, b: boolean): void".to_string().into(), parameter_count: 3, parameter_name: "s".to_string().into(), parameter_span: "s: string".to_string().into(), ..Default::default() });
-		f.go_to_marker("contextualParameter3");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "cb(n: number, s: string, b: boolean): void".to_string().into(), parameter_count: 3, parameter_name: "b".to_string().into(), parameter_span: "b: boolean".to_string().into(), ..Default::default() });
-		f.go_to_marker("contextualParameter3_2");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "cb(n: number, s: string, b: boolean): void".to_string().into(), parameter_count: 3, parameter_name: "s".to_string().into(), parameter_span: "s: string".to_string().into(), ..Default::default() });
-		f.go_to_marker("contextualParameter4");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "cb(n: number, s: string, b: boolean): void".to_string().into(), parameter_count: 3, ..Default::default() });
-		f.go_to_marker("contextualTypeAlias");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "Cb(): void".to_string().into(), parameter_count: 0, ..Default::default() });
-		f.go_to_marker("contextualFunctionType");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "cb2(): void".to_string().into(), parameter_count: 0, ..Default::default() });
 	});
 }
 

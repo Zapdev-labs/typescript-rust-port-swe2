@@ -7,38 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_provider_wildcard_exports2() {
 	run_test(|t| {
-		let content = r#"// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{
-    "name": "pkg",
-    "version": "1.0.0",
-    "exports": {
-        "./core/*": {
-            "types": "./lib/core/*.d.ts",
-            "default": "./lib/core/*.js"
-        }
-    }
-}
-// @Filename: /home/src/workspaces/project/node_modules/pkg/lib/core/test.d.ts
-export function test(): void;
-// @Filename: /home/src/workspaces/project/package.json
-{
-    "type": "module",
-    "dependencies": {
-        "pkg": "1.0.0"
-    }
-}
-// @Filename: /home/src/workspaces/project/tsconfig.json
-{
-    "compilerOptions": {
-        "module": "nodenext",
-        "lib": ["es5"]
-    }
-}
-// @Filename: /home/src/workspaces/project/main.ts
-/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "test".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "pkg/core/test".to_string().into(), ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

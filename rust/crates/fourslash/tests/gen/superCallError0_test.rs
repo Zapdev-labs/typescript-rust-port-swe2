@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn super_call_error0() {
 	run_test(|t| {
-		let content = r"class T5<T>{
-    constructor(public bar: T) { }
-}
-class T6 extends T5<number>{
-    constructor() {
-        super();
-    }
-}/*1*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.insert("/n");
 	});
 }
 

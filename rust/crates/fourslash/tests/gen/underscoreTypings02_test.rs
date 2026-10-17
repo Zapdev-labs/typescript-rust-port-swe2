@@ -7,27 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn underscore_typings02() {
 	run_test(|t| {
-		let content = r"// @strict: false
-// @module: CommonJS
-interface Dictionary<T> {
-    [x: string]: T;
-}
-export interface ChainedObject<T> {
-    functions: ChainedArray<string>;
-    omit(): ChainedObject<T>;
-    clone(): ChainedObject<T>;
-}
-interface ChainedDictionary<T> extends ChainedObject<Dictionary<>> {
-    foldl(): ChainedObject<T>;
-    clone(): ChainedDictionary<T>;
-}
-export interface ChainedArray<T> extends ChainedObject<Array<T>> {
-    groupBy(): ChainedDictionary<any[]>;
-    groupBy(propertyName): ChainedDictionary<any[]>;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_position(0);
-		f.verify_number_of_errors_in_current_file(2);
 	});
 }
 

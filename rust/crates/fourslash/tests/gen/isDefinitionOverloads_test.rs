@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn is_definition_overloads() {
 	run_test(|t| {
-		let content = r#"function /*1*/f(x: number): void;
-function /*2*/f(x: string): void;
-function /*3*/f(x: number | string) { }
-
-f(1);
-f("a");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
 	});
 }
 

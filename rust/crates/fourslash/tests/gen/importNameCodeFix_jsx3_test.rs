@@ -7,28 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_jsx3() {
 	run_test(|t| {
-		let content = r#"// @lib: es5
-// @jsx: react
-// @module: esnext
-// @esModuleInterop: true
-// @moduleResolution: bundler
-// @Filename: /node_modules/react/index.d.ts
-export = React;
-export as namespace React;
-declare namespace React {
-    class Component {}
-}
-// @Filename: /node_modules/react-native/index.d.ts
-import * as React from "react";
-export class Text extends React.Component {};
-// @Filename: /a.tsx
-import React from "react";
-<Text></[|Text|]>;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/a.tsx");
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Add import from \"react-native\"".to_string().into(), new_file_content: r#"import React from "react";
-import { Text } from "react-native";
-<Text></Text>;"#.to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

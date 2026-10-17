@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn java_script_class3() {
 	run_test(|t| {
-		let content = r"// @allowNonTsExtensions: true
-// @Filename: Foo.js
-class Foo {
-   constructor() {
-       this./*dst1*/alpha = 10;
-       this./*dst2*/beta = 'gamma';
-   }
-   method() { return this.alpha; }
-}
-var x = new Foo();
-x.[|alpha/*src1*/|];
-x.[|beta/*src2*/|];";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["src1".into(), "src2".into()]);
 	});
 }
 

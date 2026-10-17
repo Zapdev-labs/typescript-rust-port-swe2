@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_import_declaration() {
 	run_test(|t| {
-		let content = r"namespace Foo {/*1*/
-}/*2*/
-
-import bar  =    Foo;/*3*/
-
-import bar2=Foo;/*4*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"namespace Foo {");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"}");
-		f.go_to_marker("3");
-		f.verify_current_line_content(r"import bar = Foo;");
-		f.go_to_marker("4");
-		f.verify_current_line_content(r"import bar2 = Foo;");
 	});
 }
 

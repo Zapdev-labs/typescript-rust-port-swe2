@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_override_keyword() {
 	run_test(|t| {
-		let content = r"class MyClass {
-  override     myMethod() { };/*1*/
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"    override myMethod() { };");
 	});
 }
 

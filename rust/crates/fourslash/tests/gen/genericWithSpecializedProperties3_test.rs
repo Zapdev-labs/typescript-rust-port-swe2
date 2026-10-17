@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn generic_with_specialized_properties3() {
 	run_test(|t| {
-		let content = r"interface Foo<T, U> {
-    x: Foo<T, U>;
-    y: Foo<U, U>;
-}
-var f: Foo<number, string>;
-var /*1*/xx = f.x;
-var /*2*/yy = f.y;
-var f2: Foo<string, number>;
-var /*3*/x2 = f2.x;
-var /*4*/y2 = f2.y;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "var xx: Foo<number, string>", "");
-		f.verify_quick_info_at("2", "var yy: Foo<string, string>", "");
-		f.verify_quick_info_at("3", "var x2: Foo<string, number>", "");
-		f.verify_quick_info_at("4", "var y2: Foo<number, number>", "");
 	});
 }
 

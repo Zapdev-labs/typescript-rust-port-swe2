@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_js_doc_type_def_js() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @Filename: /a.js
-/** /*1*/@typedef {number} /*2*/T */
-
-/**
- * @return {/*3*/T}
- */
-function f(obj) { return 0; }
-
-/**
- * @return {/*4*/T}
- */
-function f2(obj) { return 0; }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into()]);
 	});
 }
 

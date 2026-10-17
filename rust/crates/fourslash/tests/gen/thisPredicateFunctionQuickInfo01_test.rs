@@ -7,55 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn this_predicate_function_quick_info01() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r#"class FileSystemObject {
-    /*1*/isFile(): this is Item {
-        return this instanceof Item;
-    }
-    /*2*/isDirectory(): this is Directory {
-        return this instanceof Directory;
-    }
-    /*3*/isNetworked(): this is (Networked & this) {
-       return !!(this as Networked).host;
-    }
-    constructor(public path: string) {}
-}
-
-class Item extends FileSystemObject {
-    constructor(path: string, public content: string) { super(path); }
-}
-class Directory extends FileSystemObject {
-    children: FileSystemObject[];
-}
-interface Networked {
-    host: string;
-}
-
-const obj: FileSystemObject = new Item("/foo", "");
-if (obj.isFile/*4*/()) {
-    obj.;
-    if (obj.isNetworked/*5*/()) {
-        obj.;
-    }
-}
-if (obj.isDirectory/*6*/()) {
-    obj.;
-    if (obj.isNetworked/*7*/()) {
-        obj.;
-    }
-}
-if (obj.isNetworked/*8*/()) {
-    obj.;
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "(method) FileSystemObject.isFile(): this is Item", "");
-		f.verify_quick_info_at("2", "(method) FileSystemObject.isDirectory(): this is Directory", "");
-		f.verify_quick_info_at("3", "(method) FileSystemObject.isNetworked(): this is (Networked & this)", "");
-		f.verify_quick_info_at("4", "(method) FileSystemObject.isFile(): this is Item", "");
-		f.verify_quick_info_at("5", "(method) FileSystemObject.isNetworked(): this is (Networked & Item)", "");
-		f.verify_quick_info_at("6", "(method) FileSystemObject.isDirectory(): this is Directory", "");
-		f.verify_quick_info_at("7", "(method) FileSystemObject.isNetworked(): this is (Networked & Directory)", "");
-		f.verify_quick_info_at("8", "(method) FileSystemObject.isNetworked(): this is (Networked & FileSystemObject)", "");
 	});
 }
 

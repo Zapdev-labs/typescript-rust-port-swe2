@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_property_tag() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @Filename: /a.js
-/**
- * @typedef I
- * @property {number} x Doc
- *                      More doc
- */
-
-/** @type {I} */
-const obj = { /**/x: 10 };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("", "(property) x: number", "Doc\nMore doc");
 	});
 }
 

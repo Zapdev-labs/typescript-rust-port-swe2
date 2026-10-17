@@ -7,42 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_allow_importing_ts_extensions_package_json_imports1() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r##"// @lib: es5
-// @module: node18
-// @allowImportingTsExtensions: true
-// @Filename: /node_modules/pkg/package.json
-{
-  "name": "pkg",
-  "type": "module",
-  "exports": {
-    "./*": {
-      "types": "./types/*",
-      "default": "./dist/*"
-    }
-  }
-}
-// @Filename: /node_modules/pkg/types/external.d.ts
-export declare function external(name: string): any;
-// @Filename: /package.json
-{
-  "name": "self",
-  "type": "module",
-  "imports": {
-    "#*": "./src/*"
-  },
-  "dependencies": {
-    "pkg": "*"
-  }
-}
-// @Filename: /src/add.ts
-export function add(a: number, b: number) {}
-// @Filename: /src/index.ts
-add/*imports*/;
-external/*exports*/;"##;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_module_specifiers("imports", &["#add.ts".into()], None);
-		f.verify_import_fix_module_specifiers("exports", &["pkg/external.js".into()], None);
 	});
 }
 

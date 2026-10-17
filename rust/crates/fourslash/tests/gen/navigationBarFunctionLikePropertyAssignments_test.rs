@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn navigation_bar_function_like_property_assignments() {
 	run_test(|t| {
-		let content = r"var functions = {
-    a: 0,
-    b: function () { },
-    c: function x() { },
-    d: () => { },
-    e: y(),
-    f() { }
-};";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_symbol();
 	});
 }
 

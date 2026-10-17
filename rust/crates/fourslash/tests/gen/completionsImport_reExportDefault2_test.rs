@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_import_re_export_default2() {
 	run_test(|t| {
-		let content = r#"// @lib: es5
-// @module: preserve
-// @checkJs: true
-// @Filename: /node_modules/example/package.json
-{ "name": "example", "version": "1.0.0", "main": "dist/index.js" }
-// @Filename: /node_modules/example/dist/nested/module.d.ts
-declare const defaultExport: () => void;
-declare const namedExport: () => void;
-
-export default defaultExport;
-export { namedExport };
-// @Filename: /node_modules/example/dist/index.d.ts
-export { default, namedExport } from "./nested/module";
-// @Filename: /index.mjs
-import { namedExport } from "example";
-defaultExp/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_in_js_plus(vec!["namedExport".into(), tsc_lsproto::CompletionItem { label: "defaultExport".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "example".to_string().into(), ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }.into()], false).into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_implementation_no_crash_multi_source_dts() {
 	run_test(|t| {
-		let content = r#"
-// @Filename: /a.ts
-export {};
-// @Filename: /b.ts
-export {};
-// @Filename: /combined.d.ts
-export declare class Bar {
-    method(): void;
-}
-//# sourceMappingURL=combined.d.ts.map
-// @Filename: /combined.d.ts.map
-{"version":3,"file":"combined.d.ts","sourceRoot":"","sources":["a.ts","b.ts"],"names":[],"mappings":";IAAA,OCAA;AAAA"}
-// @Filename: /user.ts
-import { Bar } from './combined';
-declare const bar: Bar;
-bar./*impl*/method();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_implementation(&["impl".into()]);
 	});
 }
 

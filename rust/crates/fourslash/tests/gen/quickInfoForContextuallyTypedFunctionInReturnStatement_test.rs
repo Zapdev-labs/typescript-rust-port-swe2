@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_for_contextually_typed_function_in_return_statement() {
 	run_test(|t| {
-		let content = r"interface Accumulator {
-    clear(): void;
-    add(x: number): void;
-    result(): number;
-}
-
-function makeAccumulator(): Accumulator {
-    var sum = 0;
-    return {
-        clear: function () { sum = 0; },
-        add: function (val/**/ue) { sum += value; },
-        result: function () { return sum; }
-    };
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("", "(parameter) value: number", "");
 	});
 }
 

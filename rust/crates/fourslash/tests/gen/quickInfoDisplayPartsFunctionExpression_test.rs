@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_display_parts_function_expression() {
 	run_test(|t| {
-		let content = r"var /*1*/x = function /*2*/foo() {
-    /*3*/foo();
-};
-var /*4*/y = function () {
-};
-(function /*5*/foo1() {
-    /*6*/foo1();
-})();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

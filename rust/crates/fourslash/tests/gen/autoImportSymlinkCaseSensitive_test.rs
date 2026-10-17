@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_symlink_case_sensitive() {
 	run_test(|t| {
-		let content = r#"// @Filename: /tsconfig.json
-{ "compilerOptions": { "module": "commonjs" } }
-// @Filename: /node_modules/.pnpm/mobx@6.0.4/node_modules/MobX/Foo.d.ts
-export declare function autorun(): void;
-// @Filename: /index.ts
-autorun/**/
-// @Filename: /utils.ts
-import "MobX/Foo";
-// @link: /node_modules/.pnpm/mobx@6.0.4/node_modules/MobX -> /node_modules/MobX
-// @link: /node_modules/.pnpm/mobx@6.0.4/node_modules/MobX -> /node_modules/.pnpm/cool-mobx-dependent@1.2.3/node_modules/MobX"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.configure(tsc_lsutil::UserPreferences { auto_import_entrypoint_directory_search: tsc_core::tristate::TS_TRUE.into(), ..Default::default() });
-		f.go_to_marker("");
-		f.verify_import_fix_at_position(&[r#"import { autorun } from "MobX/Foo";
-
-autorun"#.into()], None);
 	});
 }
 

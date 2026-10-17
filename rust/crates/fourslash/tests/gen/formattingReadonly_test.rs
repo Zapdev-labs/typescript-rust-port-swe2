@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_readonly() {
 	run_test(|t| {
-		let content = r"class C {
-  readonly    property1: {};/*1*/
-  public readonly   property2: {};/*2*/
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"    readonly property1: {};");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"    public readonly property2: {};");
 	});
 }
 

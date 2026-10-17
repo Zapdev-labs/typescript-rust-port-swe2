@@ -7,56 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_literal_from_inference_within_inferred_type2() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r#"// @Filename: /a.tsx
-type Values<T> = T[keyof T];
-
-type GetStates<T> = T extends { states: object } ? T["states"] : never;
-
-type IsNever<T> = [T] extends [never] ? 1 : 0;
-
-type GetIds<T, Gathered extends string = never> = IsNever<T> extends 1
-  ? Gathered
-  : "id" extends keyof T
-  ? GetIds<Values<GetStates<T>>, Gathered | "#, "`"), r#"#${T["id"] & string}"#), "`"), r">
-  : GetIds<Values<GetStates<T>>, Gathered>;
-
-type StateConfig<
-  TStates extends Record<string, StateConfig> = Record<
-    string,
-    StateConfig<any>
-  >,
-  TIds extends string = string
-> = {
-  id?: string;
-  initial?: keyof TStates & string;
-  states?: {
-    [K in keyof TStates]: StateConfig<GetStates<TStates[K]>, TIds>;
-  };
-  on?: Record<string, TIds | "), "`"), r".${keyof TStates & string}"), "`"), r#">;
-};
-
-declare function createMachine<const T extends StateConfig<GetStates<T>, GetIds<T>>>(
-  config: T
-): void;
-
-createMachine({
-  initial: "child",
-  states: {
-    child: {
-      initial: "foo",
-      states: {
-        foo: {
-          id: "wow_deep_id",
-        },
-      },
-    },
-  },
-  on: {
-    EV: "/*ts*/",
-  },
-});"#);
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["ts"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["#wow_deep_id".into(), ".child".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

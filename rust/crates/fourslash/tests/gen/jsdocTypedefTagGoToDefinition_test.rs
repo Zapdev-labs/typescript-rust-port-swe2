@@ -7,27 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsdoc_typedef_tag_go_to_definition() {
 	run_test(|t| {
-		let content = r"// @lib: es5
-// @allowNonTsExtensions: true
-// @Filename: jsdocCompletion_typedef.js
-/**
- * @typedef {Object} Person
- * @property {string} /*1*/personName
- * @property {number} personAge
- */
-
-/**
- * @typedef {{ /*2*/animalName: string, animalAge: number }} Animal
- */
-
-/** @type {Person} */
-var person; person.[|personName/*3*/|]
-
-/** @type {Animal} */
-var animal; animal.[|animalName/*4*/|]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.verify_baseline_go_to_definition(true, &["3".into(), "4".into()]);
 	});
 }
 

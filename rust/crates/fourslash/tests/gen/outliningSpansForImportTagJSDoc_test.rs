@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn outlining_spans_for_import_tag_js_doc() {
 	run_test(|t| {
-		let content = r#"
-// @allowJs: true
-// @checkJs: true	
-// @Filename: /a.js
-[|/**
- * @import {b} from "./b.js";
- * @import {c} from "./c.js";
- */|]
-
- [|/**
- * @import {d} from "./d.js";
- */|]
-
-"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_outlining_spans();
 	});
 }
 

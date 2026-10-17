@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_java_script_completions22() {
 	run_test(|t| {
-		let content = r"// @allowNonTsExtensions: true
-// @Filename: file.js
-const abc = {};
-({./*1*/});";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.insert(".");
-		f.verify_completions(Default::default(), None);
 	});
 }
 

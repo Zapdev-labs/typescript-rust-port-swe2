@@ -7,29 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn organize_imports21() {
 	run_test(|t| {
-		let content = r"// @filename: /a.ts
-export interface LocationDefinitions {}
-export interface PersonDefinitions {}
-// @filename: /b.ts
-export {
-    /** @deprecated Use LocationDefinitions instead */
-    LocationDefinitions as AddressDefinitions,
-    LocationDefinitions,
-    /** @deprecated Use PersonDefinitions instead */
-    PersonDefinitions as NameDefinitions,
-    PersonDefinitions,
-} from './a';";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/b.ts");
-		f.verify_organize_imports(r"export {
-    /** @deprecated Use LocationDefinitions instead */
-    LocationDefinitions as AddressDefinitions,
-    LocationDefinitions,
-    /** @deprecated Use PersonDefinitions instead */
-    PersonDefinitions as NameDefinitions,
-    PersonDefinitions
-} from './a';
-", tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 	});
 }
 

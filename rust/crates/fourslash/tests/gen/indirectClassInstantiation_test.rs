@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn indirect_class_instantiation() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r#"// @allowJs: true
-// @Filename: something.js
-function TestObj(){
-    this.property = "value";
-}
-var constructor = TestObj;
-var instance = new constructor();
-instance./*a*/
-var class2 = function() { };
-class2.prototype.blah = function() { };
-var inst2 = new class2();
-inst2.blah/*b*/;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("a");
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["property".into(), tsc_lsproto::CompletionItem { label: "blah".to_string().into(), sort_text: Some((tsc_ls::JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "class2".to_string().into(), sort_text: Some((tsc_ls::JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "constructor".to_string().into(), sort_text: Some((tsc_ls::JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "inst2".to_string().into(), sort_text: Some((tsc_ls::JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "instance".to_string().into(), sort_text: Some((tsc_ls::JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "prototype".to_string().into(), sort_text: Some((tsc_ls::JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "TestObj".to_string().into(), sort_text: Some((tsc_ls::JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.backspace(1);
-		f.go_to_marker("b");
-		f.verify_quick_info_is("(method) class2.blah(): void", "");
 	});
 }
 

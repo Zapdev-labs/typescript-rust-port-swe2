@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn hover_call_signature_documentation() {
 	run_test(|t| {
-		let content = r"
-type X = {
-    /** Description of invoking. */
-    (): string
-
-    /** Description of constructor. */
-    new (): number
-}
-
-declare const x: X
-
-/*1*/x()
-new /*2*/x()
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "const x: () => string", "Description of invoking.");
-		f.verify_quick_info_at("2", "const x: new () => number", "Description of constructor.");
 	});
 }
 

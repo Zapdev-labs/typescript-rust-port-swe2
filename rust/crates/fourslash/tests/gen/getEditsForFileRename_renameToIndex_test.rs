@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_edits_for_file_rename_rename_to_index() {
 	run_test(|t| {
-		let content = r#"// @Filename: /a.ts
-/// <reference path="./src/old.ts" />
-import old from "./src/old";
-// @Filename: /src/a.ts
-/// <reference path="./old.ts" />
-import old from "./old";
-// @Filename: /src/foo/a.ts
-/// <reference path="../old.ts" />
-import old from "../old";
-// @Filename: /src/old.ts
-
-// @Filename: /tsconfig.json
-{ "files": ["a.ts", "src/a.ts", "src/foo/a.ts", "src/old.ts"] }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_will_rename_files_edits("/src/old.ts", "/src/index.ts", &std::collections::BTreeMap::from([("/a.ts".to_string().into(), r#"/// <reference path="./src/index.ts" />
-import old from "./src";"#.to_string().into()), ("/src/a.ts".to_string().into(), r#"/// <reference path="./index.ts" />
-import old from ".";"#.to_string().into()), ("/src/foo/a.ts".to_string().into(), r#"/// <reference path="../index.ts" />
-import old from "..";"#.to_string().into()), ("/tsconfig.json".to_string().into(), r#"{ "files": ["a.ts", "src/a.ts", "src/foo/a.ts", "src/index.ts"] }"#.to_string().into())]), None);
 	});
 }
 

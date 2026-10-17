@@ -7,27 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_merged_declarations1() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"// @lib: es5
-interface Point {
-    x: number;
-    y: number;
-}
-function point(x: number, y: number): Point {
-    return { x: x, y: y };
-}
-namespace point {
-    export var origin = point(0, 0);
-    export function equals(p1: Point, p2: Point) {
-        return p1.x == p2.x && p1.y == p2.y;
-    }
-}
-var p1 = /*1*/point(0, 0);
-var p2 = point./*2*/origin;
-var b = point./*3*/equals(p1, p2);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["point".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["2", "3"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_function_members_with_prototype_plus(vec!["equals".into(), "origin".into()]).into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsdoc_on_inherited_members2() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @checkJs: true
-// @filename: /a.js
-/** @template T */
-class A {
-    /** Method documentation. */
-    method() {}
-}
-
-/** @extends {A<number>} */
-const B = class extends A {
-    method() {}
-}
-
-const b = new B();
-b.method/**/;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

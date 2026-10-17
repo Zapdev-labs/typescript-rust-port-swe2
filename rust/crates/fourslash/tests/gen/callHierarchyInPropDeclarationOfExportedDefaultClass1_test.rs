@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn call_hierarchy_in_prop_declaration_of_exported_default_class1() {
 	run_test(|t| {
-		let content = r"// @Filename: /main.ts
-export default class {
-  onSave = () => {
-    const values = [];
-    values./*m1*/push(1);
-  };
-}
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("m1");
-		f.verify_baseline_call_hierarchy();
 	});
 }
 

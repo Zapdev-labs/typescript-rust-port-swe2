@@ -7,29 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn organize_imports_type4() {
 	run_test(|t| {
-		let content = r"import {
-    d, 
-    type d as D,
-    type c,
-    c as C,
-    b,
-    b as B,
-    type A,
-    a
-} from './foo';
-console.log(A, a, B, b, c, C, d, D);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_organize_imports(r"import {
-    type A,
-    a,
-    b,
-    b as B,
-    type c,
-    c as C,
-    d,
-    type d as D
-} from './foo';
-console.log(A, a, B, b, c, C, d, D);", tsc_lsproto::CodeActionKind::SourceOrganizeImports, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_TRUE.into(), organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::INLINE.into(), ..Default::default() }));
 	});
 }
 

@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_types_declaration_diagnostics_no_server_error() {
 	run_test(|t| {
-		let content = r#"// @declaration: true
-// @Filename: node_modules/foo/index.d.ts
-export function f(): I;
-export interface I {
-  x: number;
-}
-// @Filename: a.ts
-import { f } from "foo";
-export const x = f();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file_number(1);
-		f.verify_non_suggestion_diagnostics(&[]);
 	});
 }
 

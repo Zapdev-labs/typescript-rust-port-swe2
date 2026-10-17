@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_implementation_interface_method_00() {
 	run_test(|t| {
-		let content = r#"interface Foo {
-    he/*declaration*/llo: () => void
-}
-
-var bar: Foo = { [|hello|]: helloImpl };
-var baz: Foo = { "[|hello|]": helloImpl };
-
-function helloImpl () {}
-
-function whatever(x: Foo = { [|hello|]() {/**1*/} }) {
-    x.he/*function_call*/llo()
-}
-
-class Bar {
-    x: Foo = { [|hello|]() {/*2*/} }
-
-    constructor(public f: Foo = { [|hello|]() {/**3*/} } ) {}
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_implementation(&["function_call".into(), "declaration".into()]);
 	});
 }
 

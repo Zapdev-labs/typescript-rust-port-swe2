@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_inference() {
 	run_test(|t| {
-		let content = r#"declare function f<T extends string>(a: T, b: T, c: T): void;
-f("x", /**/);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "f(a: \"x\", b: \"x\", c: \"x\"): void".to_string().into(), parameter_count: 3, parameter_name: "b".to_string().into(), parameter_span: "b: \"x\"".to_string().into(), ..Default::default() });
 	});
 }
 

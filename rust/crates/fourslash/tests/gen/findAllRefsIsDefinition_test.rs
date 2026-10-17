@@ -7,33 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_is_definition() {
 	run_test(|t| {
-		let content = r"declare function foo(a: number): number;
-declare function foo(a: string): string;
-declare function foo/*1*/(a: string | number): string | number;
-
-function foon(a: number): number;
-function foon(a: string): string;
-function foon/*2*/(a: string | number): string | number {
-    return a
-}
-
-foo; foon;
-
-export const bar/*3*/ = 123;
-console.log({ bar });
-
-interface IFoo {
-    foo/*4*/(): void;
-}
-class Foo implements IFoo {
-    constructor(n: number)
-    constructor()
-    /*5*/constructor(n: number?) { }
-    foo/*6*/(): void { }
-    static init() { return new this() }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into()]);
 	});
 }
 

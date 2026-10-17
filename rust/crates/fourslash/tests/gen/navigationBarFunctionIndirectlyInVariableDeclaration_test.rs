@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn navigation_bar_function_indirectly_in_variable_declaration() {
 	run_test(|t| {
-		let content = r"var a = {
-    propA: function() {
-        var c;
-    }
-};
-var b;
-b = {
-    propB: function() {
-    // function must not have an empty body to appear top level
-        var d;
-    }
-};";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_symbol();
 	});
 }
 

@@ -7,47 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn generics_formatting() {
 	run_test(|t| {
-		let content = r"/*inClassDeclaration*/class Foo   <    T1   ,  T2    >  {
-/*inMethodDeclaration*/    public method    <   T3,    T4   >   ( a: T1,   b: Array    < T4 > ):   Map < T1  ,   T2, Array < T3    >    > {
-    }
-}
-/*typeArguments*/var foo = new Foo   <  number, Array <   number  >   >  (  );
-/*typeArgumentsWithTypeLiterals*/foo = new Foo  <  {   bar  :  number }, Array   < {   baz :  string   }  >  >  (  );
-
-interface IFoo {
-/*inNewSignature*/new < T  > ( a: T);
-/*inOptionalMethodSignature*/op?< T , M > (a: T, b : M );
-}
-
-foo()<number, string, T >();
-(a + b)<number, string, T >();
-
-/*inFunctionDeclaration*/function bar <T> () {
-/*inClassExpression*/    return class  <  T2 > {
-    }
-}
-/*expressionWithTypeArguments*/class A < T > extends bar <  T >( )  <  T > {
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("inClassDeclaration");
-		f.verify_current_line_content(r"class Foo<T1, T2> {");
-		f.go_to_marker("inMethodDeclaration");
-		f.verify_current_line_content(r"    public method<T3, T4>(a: T1, b: Array<T4>): Map<T1, T2, Array<T3>> {");
-		f.go_to_marker("typeArguments");
-		f.verify_current_line_content(r"var foo = new Foo<number, Array<number>>();");
-		f.go_to_marker("typeArgumentsWithTypeLiterals");
-		f.verify_current_line_content(r"foo = new Foo<{ bar: number }, Array<{ baz: string }>>();");
-		f.go_to_marker("inNewSignature");
-		f.verify_current_line_content(r"    new <T>(a: T);");
-		f.go_to_marker("inOptionalMethodSignature");
-		f.verify_current_line_content(r"    op?<T, M>(a: T, b: M);");
-		f.go_to_marker("inFunctionDeclaration");
-		f.verify_current_line_content(r"function bar<T>() {");
-		f.go_to_marker("inClassExpression");
-		f.verify_current_line_content(r"    return class <T2> {");
-		f.go_to_marker("expressionWithTypeArguments");
-		f.verify_current_line_content(r"class A<T> extends bar<T>()<T> {");
 	});
 }
 

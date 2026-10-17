@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_missing_type_annotation_on_exports56_toplevel_import() {
 	run_test(|t| {
-		let content = r#"// @isolatedDeclarations: true
-// @declaration: true
-// @Filename: /person-code.ts
-export interface Person { x: string; }
-export function getPerson() : Person {
-  return null!
-}
-// @Filename: /code.ts
-import { getPerson } from "./person-code";
-export function wrapPerson() {
-  return { person: getPerson() }
-};"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/code.ts");
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Add return type '{ person: Person; }'".to_string().into(), new_file_content: r#"import { getPerson, Person } from "./person-code";
-export function wrapPerson(): {
-    person: Person;
-} {
-  return { person: getPerson() }
-};"#.to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

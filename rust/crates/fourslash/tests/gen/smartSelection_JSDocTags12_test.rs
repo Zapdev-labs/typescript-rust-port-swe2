@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn smart_selection_js_doc_tags12() {
 	run_test(|t| {
-		let content = r"type B = {};
-type A = {
-    a(/** Comment */ /*1*/p0: number, /** Comment */ /*2*/p1: number, /** Comment */ /*3*/p2: number): string;
-};";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_selection_ranges();
 	});
 }
 

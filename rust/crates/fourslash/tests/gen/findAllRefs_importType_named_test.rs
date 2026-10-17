@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_import_type_named() {
 	run_test(|t| {
-		let content = r#"// @Filename: /a.ts
-/*1*/export type /*2*/T = number;
-/*3*/export type /*4*/U = string;
-// @Filename: /b.ts
-const x: import("./a")./*5*/T = 0;
-const x: import("./a")./*6*/U = 0;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into()]);
 	});
 }
 

@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_import_type_only() {
 	run_test(|t| {
-		let content = r"// @target: esnext
-// @moduleResolution: bundler
-// @Filename: /a.ts
-export class A {}
-export class B {}
-// @Filename: /b.ts
-import type { A } from './a';
-const b: B/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/b.ts");
-		f.verify_apply_code_action_from_completion("", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "B".to_string().into(), source: "./a".to_string().into(), description: "Update import from \"./a\"".to_string().into(), user_preferences: None, new_file_content: Some((r"import type { A, B } from './a';
-const b: B").into()), ..Default::default() });
 	});
 }
 

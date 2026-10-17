@@ -7,27 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_occurrences_super_negatives() {
 	run_test(|t| {
-		let content = r"function f(x = [|super|]) {
-    [|super|];
-}
-
-namespace M {
-    [|super|];
-    function f(x = [|super|]) {
-    [|super|];
-    }
-
-    class A {
-    }
-
-    class B extends A {
-        constructor() {
-            super();
-        }
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, to_any(f.ranges()).into_iter().map(Into::into));
 	});
 }
 

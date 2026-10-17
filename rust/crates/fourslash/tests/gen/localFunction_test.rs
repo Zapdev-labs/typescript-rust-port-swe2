@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn local_function() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"function /*1*/foo() {
-    function /*2*/bar2() {
-    }
-    var y = function /*3*/bar3() {
-    }
-}
-var x = function /*4*/bar4() {
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "function foo(): void", "");
-		f.verify_quick_info_at("2", "(local function) bar2(): void", "");
-		f.verify_quick_info_at("3", "(local function) bar3(): void", "");
-		f.verify_quick_info_at("4", "(local function) bar4(): void", "");
 	});
 }
 

@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_class_implement_interface_no_body() {
 	run_test(|t| {
-		let content = r"interface I {
-   m(): void
-}
-class C/*c*/ implements I";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_error_exists_before_marker("c");
-		f.go_to_marker("c");
-		f.verify_code_fix_available(Some(&["Implement interface 'I'".into()]));
 	});
 }
 

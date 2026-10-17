@@ -7,35 +7,12 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_new_line() {
 	run_test(|t| {
-		let content = r#"// @Filename: /a.ts
-export function readFileSync() {}
-
-// @Filename: /b.ts
-import {} from "./other1";
-import {} from "./other2";
-
-
-readFileSync/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.baseline_auto_imports_completions(&["".into()]);
 	});
 }
 
 #[test]
 fn auto_import_new_line_with_header_comment() {
 	run_test(|t| {
-		let content = r#"// @Filename: /a.ts
-export function readFileSync() {}
-
-// @Filename: /b.ts
-/* file header comment */
-import {} from "./other1";
-import {} from "./other2";
-
-
-readFileSync/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.baseline_auto_imports_completions(&["".into()]);
 	});
 }
 

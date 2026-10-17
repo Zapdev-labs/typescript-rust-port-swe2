@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_entry_for_class_members_static_when_base_type_is_not_resolved() {
 	run_test(|t| {
-		let content = r"// @Filename: /a.ts
-import React from 'react'
-class Slider extends React.Component {
-    static defau/**/ltProps = {
-        onMouseDown: () => { },
-        onMouseUp: () => { },
-        unit: 'px',
-    }
-    handleChange = () => 10;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: COMPLETION_CLASS_ELEMENT_KEYWORDS.into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

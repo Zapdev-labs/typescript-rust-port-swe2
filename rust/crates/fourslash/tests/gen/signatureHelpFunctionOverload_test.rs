@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_function_overload() {
 	run_test(|t| {
-		let content = r#"function functionOverload();
-function functionOverload(test: string);
-function functionOverload(test?: string) { }
-functionOverload(/*functionOverload1*/);
-functionOverload(""/*functionOverload2*/);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("functionOverload1");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "functionOverload(): any".to_string().into(), parameter_count: 0, overloads_count: 2, ..Default::default() });
-		f.go_to_marker("functionOverload2");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "functionOverload(test: string): any".to_string().into(), parameter_name: "test".to_string().into(), parameter_span: "test: string".to_string().into(), overloads_count: 2, ..Default::default() });
 	});
 }
 

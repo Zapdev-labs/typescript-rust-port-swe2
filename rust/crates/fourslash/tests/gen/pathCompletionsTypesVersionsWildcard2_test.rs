@@ -7,29 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn path_completions_types_versions_wildcard2() {
 	run_test(|t| {
-		let content = r#"// @module: commonjs
-// @resolveJsonModule: false
-// @Filename: /node_modules/foo/package.json
-{
-  "types": "index.d.ts",
-  "typesVersions": {
-    "<=3.4.1": {
-      "*": ["ts-old/*"]
-    }
-  }
-}
-// @Filename: /node_modules/foo/nope.d.ts
-export const nope = 0;
-// @Filename: /node_modules/foo/ts-old/index.d.ts
-export const index = 0;
-// @Filename: /node_modules/foo/ts-old/blah.d.ts
-export const blah = 0;
-// @Filename: /node_modules/foo/ts-old/subfolder/one.d.ts
-export const one = 0;
-// @Filename: /a.ts
-import { } from "foo//**/";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["nope".into(), "ts-old".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -7,32 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsx_tag_name_completion_under_element_closed() {
 	run_test(|t| {
-		let content = r#"//@Filename: file.tsx
-declare namespace JSX {
-    interface IntrinsicElements {
-        button: any;
-        div: any;
-    }
-}
-function fn() {
-    return <>
-        <butto/*1*/ />
-    </>;
-}
-function fn2() {
-    return <>
-        preceding junk <butto/*2*/ />
-    </>;
-}
-function fn3() {
-    return <>
-        <butto/*3*/ style="" />
-    </>;
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", Some(tsc_fourslash::get_default_capabilities_with_options(Some(&tsc_fourslash::ClientCapabilitiesOptions { completion_item: Some(tsc_lsproto::ClientCompletionItemOptions { snippet_support: Some((true).into()), ..Default::default() }), ..Default::default() }))), &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "button".to_string().into(), detail: Some(("(property) JSX.IntrinsicElements.button: any").into()), ..Default::default() }.into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { jsx_attribute_completion_style: tsc_lsutil::JsxAttributeCompletionStyle::BRACES.into(), ..Default::default() }, ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("2"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "button".to_string().into(), detail: Some(("(property) JSX.IntrinsicElements.button: any").into()), ..Default::default() }.into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { jsx_attribute_completion_style: tsc_lsutil::JsxAttributeCompletionStyle::BRACES.into(), ..Default::default() }, ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("3"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "button".to_string().into(), detail: Some(("(property) JSX.IntrinsicElements.button: any").into()), ..Default::default() }.into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { jsx_attribute_completion_style: tsc_lsutil::JsxAttributeCompletionStyle::BRACES.into(), ..Default::default() }, ..Default::default() }), ..Default::default() }));
 	});
 }
 

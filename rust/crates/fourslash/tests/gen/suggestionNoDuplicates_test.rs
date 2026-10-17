@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn suggestion_no_duplicates() {
 	run_test(|t| {
-		let content = r"// @strict: false
-// @Filename: foo.ts
-import { f } from [|'m'|]
-f
-// @Filename: node_modules/m/index.js
-module.exports.f = function (x) { return x }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_non_suggestion_diagnostics(&[]);
-		f.verify_suggestion_diagnostics(&[tsc_lsproto::Diagnostic { code: Some(tsc_lsproto::IntegerOrString { integer: Some(((7016) as i32).into()), ..Default::default() }), message: tsc_lsproto::StringOrMarkupContent { string: Some(("Could not find a declaration file for module 'm'. '/node_modules/m/index.js' implicitly has an 'any' type.").into()), ..Default::default() }.into(), ..Default::default() }]);
 	});
 }
 

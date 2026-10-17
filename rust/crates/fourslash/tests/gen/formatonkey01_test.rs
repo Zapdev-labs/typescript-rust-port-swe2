@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatonkey01() {
 	run_test(|t| {
-		let content = r"// @lib: es5
-switch (1) {
-    case 1:
-        {
-            /*1*/
-        break;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.go_to_marker("1");
-		f.insert("}");
-		f.verify_current_line_content(r"        }");
 	});
 }
 

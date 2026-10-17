@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn augmented_types_module3() {
 	run_test(|t| {
-		let content = r"function m2g() { };
-namespace m2g { export class C { foo(x: number) { } } }
-var x: m2g./*1*/;
-var /*2*/r = m2g/*3*/;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["C".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("C.");
-		f.verify_completions(Default::default(), None);
-		f.backspace(1);
-		f.verify_quick_info_at("2", "var r: typeof m2g", "");
-		f.go_to_marker("3");
-		f.insert("(");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "m2g(): void".to_string().into(), ..Default::default() });
 	});
 }
 

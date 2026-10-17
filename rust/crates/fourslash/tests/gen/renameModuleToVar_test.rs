@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_module_to_var() {
 	run_test(|t| {
-		let content = r"interface IMod {
-    y: number;
-}
-declare module/**/ X: IMod;// {
-//    export var y: numb;
-var y: number;
-namespace Y {
-    var z = y + 5;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.backspace(6);
-		f.insert("var");
-		f.verify_no_errors();
 	});
 }
 

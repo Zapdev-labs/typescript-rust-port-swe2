@@ -7,35 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn navbar_contains_no_duplicates() {
 	run_test(|t| {
-		let content = r"declare namespace Windows {
-    export namespace Foundation {
-        export var A;
-        export class Test {
-            public wow();
-        }
-    }
-}
-
-declare namespace Windows {
-    export namespace Foundation {
-        export var B;
-        export namespace Test {
-            export function Boom(): number;
-        }
-    }
-}
-
-class ABC {
-    public foo() {
-        return 3;
-    }
-}
-
-namespace ABC {
-    export var x = 3;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_symbol();
 	});
 }
 

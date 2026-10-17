@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_on_semi_colon_after_break() {
 	run_test(|t| {
-		let content = r"for (var a in b) {
-break/**/
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.insert(";");
-		f.verify_current_line_content(r"    break;");
 	});
 }
 

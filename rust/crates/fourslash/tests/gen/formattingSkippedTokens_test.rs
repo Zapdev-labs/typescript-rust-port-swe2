@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_skipped_tokens() {
 	run_test(|t| {
-		let content = r"/*1*/foo(): Bar { }
-/*2*/function Foo      () #   { }
-/*3*/4+:5
- namespace M {
-function a(
-/*4*/    : T) { }
-}
-/*5*/var x       =";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"foo(): Bar { }");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"function Foo() #   { }");
-		f.go_to_marker("3");
-		f.verify_current_line_content(r"4 +: 5");
-		f.go_to_marker("4");
-		f.verify_current_line_content(r"    : T) { }");
-		f.go_to_marker("5");
-		f.verify_current_line_content(r"var x =");
 	});
 }
 

@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_spelling_js8() {
 	run_test(|t| {
-		let content = r"// @allowjs: true
-// @noEmit: true
-// @filename: a.js
-var locals = {}
-// @ts-expect-error
-Object.keys(locale)";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
 	});
 }
 

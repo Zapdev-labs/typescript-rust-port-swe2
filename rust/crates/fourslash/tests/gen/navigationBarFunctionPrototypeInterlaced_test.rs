@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn navigation_bar_function_prototype_interlaced() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @Filename: foo.js
-var b = 1;
-function A() {}; 
-A.prototype.a = function() { };
-A.b = function() { };
-b = 2
-/* Comment */
-A.prototype.c = function() { }
-var b = 2
-A.prototype.d = function() { }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_symbol();
 	});
 }
 

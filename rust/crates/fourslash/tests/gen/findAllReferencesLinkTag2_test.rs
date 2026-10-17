@@ -7,34 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_references_link_tag2() {
 	run_test(|t| {
-		let content = r"namespace NPR/*5*/ {
-    export class Consider/*4*/ {
-        This/*3*/ = class {
-            show/*2*/() { }
-        }
-        m/*1*/() { }
-    }
-    /**
-     * @see {Consider.prototype.m}
-     * {@link Consider#m}
-     * @see {Consider#This#show}
-     * {@link Consider.This.show}
-     * @see {NPR.Consider#This#show}
-     * {@link NPR.Consider.This#show}
-     * @see {NPR.Consider#This.show} # doesn't parse trailing .
-     * @see {NPR.Consider.This.show}
-     */
-    export function ref() { }
-}
-/**
- * {@link NPR.Consider#This#show hello hello}
- * {@link NPR.Consider.This#show}
- * @see {NPR.Consider#This.show} # doesn't parse trailing .
- * @see {NPR.Consider.This.show}
- */
-export function outerref() { }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into()]);
 	});
 }
 

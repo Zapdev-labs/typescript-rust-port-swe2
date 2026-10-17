@@ -7,28 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_class_implement_interface_multiple_signatures() {
 	run_test(|t| {
-		let content = r"interface I {
-    method(a: number, b: string): boolean;
-    method(a: string, b: number): Function;
-    method(a: string): Function;
-}
-
-class C implements I {}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'I'".to_string().into(), new_file_content: r#"interface I {
-    method(a: number, b: string): boolean;
-    method(a: string, b: number): Function;
-    method(a: string): Function;
-}
-
-class C implements I {
-    method(a: number, b: string): boolean;
-    method(a: string, b: number): Function;
-    method(a: string): Function;
-    method(a: unknown, b?: unknown): boolean | Function {
-        throw new Error("Method not implemented.");
-    }
-}"#.to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

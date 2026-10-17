@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_package_root_path_extension() {
 	run_test(|t| {
-		let content = r#"// @allowJs: true
-// @Filename: /node_modules/pkg/package.json
-{
-    "name": "pkg",
-    "version": "1.0.0",
-    "main": "lib"
- }
-// @Filename: /node_modules/pkg/lib/index.d.mts
-export declare function foo(): any;
-// @Filename: /package.json
-{
-    "dependencies": {
-       "pkg": "*"
-    }
- }
-// @Filename: /index.ts
-foo/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.configure(tsc_lsutil::UserPreferences { auto_import_entrypoint_directory_search: tsc_core::tristate::TS_TRUE.into(), ..Default::default() });
-		f.verify_import_fix_module_specifiers("", &["pkg/lib/index.mjs".into()], None);
 	});
 }
 

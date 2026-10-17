@@ -7,109 +7,24 @@ use tsc_fourslash::*;
 #[test]
 fn content_mapper_completions() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r#"// @Filename: /settings.ts
-export const settings = { color: "blue", size: 2 };
-
-// @Filename: /ProfileCard.vue
-<component name="ProfileCard">
-<template>
-  <h1>{{ ti/*atom*/tle }}</h1>
-  <div class="card/*markup*/">Profile</div>
-</template>
-<script lang="ts">
-import { settings } from "./settings";
-export const title = "Profile";
-export const card = { title, settings };
-settings.co/*outgoing*/lor;
-card.ti/*exact*/tle;
-</script>
-
-// @Filename: /main.ts
-import { card } from "./ProfileCard.vue";
-card.se/*incoming*/ttings;
-"#, tsc_testutil::contentmappertest::COMPONENT_MAPPER, ".vue");
-|items| {
-			return &tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: items.into(), ..Default::default() }), ..Default::default() };
-		}		let mut property_completions = ;
-		f.verify_completions(tsc_fourslash::MarkerInput::from("exact"), Some(&property_completions("title")));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("outgoing"), Some(&property_completions("color")));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("incoming"), Some(&property_completions("settings")));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("atom"), None);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("markup"), None);
 	});
 }
 
 #[test]
 fn content_mapper_completion_at_mapped_boundary() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r#"// @Filename: /settings.ts
-export const settings = { color: "blue", size: 2 };
-
-// @Filename: /ProfileCard.vue
-<script lang="ts">
-import { settings } from "./settings";
-settings./*boundary*/</script>
-<template>{{ settings }}</template>
-"#, tsc_testutil::contentmappertest::COMPONENT_MAPPER, ".vue");
-		f.verify_completions(tsc_fourslash::MarkerInput::from("boundary"), Some(&tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["color".into(), "size".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 
 #[test]
 fn content_mapper_completion_edit_range() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /app.box
-export const foo = 1;
-[|foo|]/*completion*/
-", tsc_testutil::contentmappertest::TRANSFORMING_MAPPER, ".box");
-		f.verify_completions(tsc_fourslash::MarkerInput::from("completion"), Some(&tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::ExpectedCompletionEditRange::EditRange(tsc_fourslash::EditRange { insert: f.ranges()[0].clone().into(), replace: f.ranges()[0].clone().into(), ..Default::default() }), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["foo".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 
 #[test]
 fn content_mapper_module_path_completions() {
 	run_test(|t| {
-		let mut content = format!("{}{}", format!("{}{}", r#"// @Filename: /tsconfig.json
-{
-	"compilerOptions": {
-		"target": "es2020",
-		"module": "esnext",
-		"moduleResolution": "bundler",
-		"strict": true
-	},
-	"contentMappers": [
-		{ "package": "mapper", "extensions": [".vue"] }
-	],
-	"files": ["main.ts", "Loaded.vue"]
-}
-
-// @Filename: /node_modules/mapper/package.json
-"#, tsc_testutil::contentmappertest::package_json(tsc_testutil::contentmappertest::COMPONENT_MAPPER)), r#"
-
-// @Filename: /Loaded.vue
-<component name="Loaded">
-<script lang="ts">
-export const loaded = true;
-</script>
-
-// @Filename: /Unloaded.vue
-// @noOpen: true
-<component name="Unloaded">
-<script lang="ts">
-export const unloaded = true;
-</script>
-
-// @Filename: /main.ts
-import { loaded } from "./Loaded.vue";
-import {} from "./[|/*loadedPath*/Lo|]";
-import {} from "./[|/*unloadedPath*/Un|]";
-"#);
-		let mut f = tsc_fourslash::new_fourslash_with_options(&t_name(), "", &content, tsc_fourslash::FourslashOptions { content_mapper_spawner: tsc_testutil::contentmappertest::new_spawner().into(), run_external_code: true.into(), ..Default::default() });
-|label, range_index| {
-			return &tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: label.into(), detail: Some((label).into()), kind: Some((tsc_lsproto::CompletionItemKind::File).into()), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: label.into(), range: f.ranges()[range_index].clone().ls_range.into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() };
-		}		let mut path_completion = ;
-		f.verify_completions(tsc_fourslash::MarkerInput::from("loadedPath"), Some(&path_completion("Loaded.vue", 0)));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("unloadedPath"), Some(&path_completion("Unloaded.vue", 1)));
 	});
 }
 

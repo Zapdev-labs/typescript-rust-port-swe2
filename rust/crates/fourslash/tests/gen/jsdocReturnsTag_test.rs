@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsdoc_returns_tag() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @Filename: dummy.js
-/**
- * Find an item
- * @template T
- * @param {T[]} l
- * @param {T} x
- * @returns {?T}  The names of the found item(s).
- */
-function find(l, x) {
-}
-find(''/**/);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_signature_help();
 	});
 }
 

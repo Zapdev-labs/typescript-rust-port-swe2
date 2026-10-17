@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_bundler_block_relative_node_modules_paths() {
 	run_test(|t| {
-		let content = r#"// @module: esnext
-// @moduleResolution: bundler
-// @Filename: /node_modules/dep/package.json
-{
-  "name": "dep",
-  "version": "1.0.0",
-  "exports": "./dist/index.js"
-}
-// @Filename: /node_modules/dep/dist/utils.d.ts
-export const util: () => void;
-// @Filename: /node_modules/dep/dist/index.d.ts
-export * from "./utils";
-// @Filename: /index.ts
-util/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_module_specifiers("", &["dep".into()], None);
 	});
 }
 

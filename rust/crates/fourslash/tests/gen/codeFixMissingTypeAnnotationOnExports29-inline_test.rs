@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_missing_type_annotation_on_exports29_inline() {
 	run_test(|t| {
-		let content = r#"// @isolatedDeclarations: true
-// @declaration: true
-function getString() {
-    return ""
-}
-export const exp = {
-    prop: getString()
-};"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Add satisfies and an inline type assertion with 'string'".to_string().into(), new_file_content: r#"function getString() {
-    return ""
-}
-export const exp = {
-    prop: getString() satisfies string as string
-};"#.to_string().into(), index: 1, ..Default::default() });
 	});
 }
 

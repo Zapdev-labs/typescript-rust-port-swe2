@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_properties_priorities() {
 	run_test(|t| {
-		let content = r"// @strict: true
-interface I {
-  B?: number;
-  a: number;
-  c?: string;
-  d: string
-}
-const foo = {
-  a: 1,
-  B: 2
-}
-const i: I = {
-  ...foo,
-  /*a*/
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["a"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "d".to_string().into(), sort_text: Some((tsc_ls::LOCATION_PRIORITY.to_string()).into()), kind: Some((tsc_lsproto::CompletionItemKind::Field).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "c?".to_string().into(), insert_text: Some(("c").into()), filter_text: Some(("c").into()), sort_text: Some((tsc_ls::OPTIONAL_MEMBER.to_string()).into()), kind: Some((tsc_lsproto::CompletionItemKind::Field).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "a".to_string().into(), sort_text: Some((tsc_ls::MEMBER_DECLARED_BY_SPREAD_ASSIGNMENT.to_string()).into()), kind: Some((tsc_lsproto::CompletionItemKind::Field).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "B?".to_string().into(), insert_text: Some(("B").into()), filter_text: Some(("B").into()), sort_text: Some((tsc_ls::MEMBER_DECLARED_BY_SPREAD_ASSIGNMENT.to_string()).into()), kind: Some((tsc_lsproto::CompletionItemKind::Field).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

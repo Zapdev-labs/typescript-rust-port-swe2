@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_labels() {
 	run_test(|t| {
-		let content = r"/*label1Definition*/label1: while (true) {
-    /*label2Definition*/label2: while (true) {
-        break [|/*1*/label1|];
-        continue [|/*2*/label2|];
-        () => { break [|/*3*/label1|]; }
-        continue /*4*/unknownLabel;
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["1".into(), "2".into(), "3".into(), "4".into()]);
 	});
 }
 

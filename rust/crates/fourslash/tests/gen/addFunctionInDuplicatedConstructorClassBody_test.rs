@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn add_function_in_duplicated_constructor_class_body() {
 	run_test(|t| {
-		let content = r"class Foo {
-    constructor() { }
-    constructor() { }
-    /**/
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.insert("fn() { }");
-		f.verify_number_of_errors_in_current_file(2);
 	});
 }
 

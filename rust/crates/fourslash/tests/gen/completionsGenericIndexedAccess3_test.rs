@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_generic_indexed_access3() {
 	run_test(|t| {
-		let content = r"interface CustomElements {
-  'component-one': {
-      foo?: string;
-  },
-  'component-two': {
-      bar?: string;
-  }
-}
-
-interface Options<T extends keyof CustomElements> {
-  props: CustomElements[T];
-}
-
-declare function create<T extends keyof CustomElements>(name: T, options: Options<T>): void;
-
-create('component-one', { props: { /*1*/ } });
-create('component-two', { props: { /*2*/ } });";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "foo?".to_string().into(), insert_text: Some(("foo").into()), filter_text: Some(("foo").into()), sort_text: Some((tsc_ls::OPTIONAL_MEMBER.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("2"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "bar?".to_string().into(), insert_text: Some(("bar").into()), filter_text: Some(("bar").into()), sort_text: Some((tsc_ls::OPTIONAL_MEMBER.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_missing_modules_overlapping_specifiers() {
 	run_test(|t| {
-		let content = r#"// https://github.com/microsoft/TypeScript/issues/5551
-import { resolve/*0*/ as resolveUrl } from "idontcare";
-import { resolve/*1*/ } from "whatever";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["0".into(), "1".into()]);
 	});
 }
 

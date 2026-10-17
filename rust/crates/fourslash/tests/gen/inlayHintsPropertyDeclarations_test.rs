@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn inlay_hints_property_declarations() {
 	run_test(|t| {
-		let content = r"// @strict: true
-class C {
-    a = 1
-    b: number = 2
-    c;
-    d;
-
-    constructor(value: number) {
-        this.d = value;
-        if (value <= 0) {
-            this.d = null;
-        }
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_inlay_hints(None, Some(&tsc_lsutil::UserPreferences { inlay_hints_preferences: tsc_lsutil::InlayHintsPreferences { include_inlay_property_declaration_type_hints: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 

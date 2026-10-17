@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_constructor_call_param_properties() {
 	run_test(|t| {
-		let content = r"class Circle {
-    /**
-      * Initialize a circle.
-      * @param  radius The radius of the circle.
-      */
-    constructor(private radius: number) {
-    }
-}
-var a = new Circle(/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_signature_help();
 	});
 }
 

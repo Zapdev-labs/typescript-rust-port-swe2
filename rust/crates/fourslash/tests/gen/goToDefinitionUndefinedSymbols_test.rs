@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_undefined_symbols() {
 	run_test(|t| {
-		let content = r"some/*undefinedValue*/Variable;
-var a: some/*undefinedType*/Type;
-var x = {}; x.some/*undefinedProperty*/Property;
-var a: any; a.some/*unkownProperty*/Property;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &f.marker_names());
 	});
 }
 

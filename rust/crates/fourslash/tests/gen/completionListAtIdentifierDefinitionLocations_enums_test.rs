@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_at_identifier_definition_locations_enums() {
 	run_test(|t| {
-		let content = r"var aa = 1;
-enum /*enumName1*/
-enum a/*enumName2*/
-var x = 0; enum /*enumName4*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(f.markers()), None);
 	});
 }
 

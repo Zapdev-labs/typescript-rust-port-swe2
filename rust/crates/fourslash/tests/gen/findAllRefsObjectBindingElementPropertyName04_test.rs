@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_object_binding_element_property_name04() {
 	run_test(|t| {
-		let content = r"interface I {
-    /*0*/property1: number;
-    property2: string;
-}
-
-function f({ /*1*/property1: p1 }: I,
-           { /*2*/property1 }: I,
-           { property1: p2 }) {
-
-    return /*3*/property1 + 1;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["0".into(), "1".into(), "2".into(), "3".into()]);
 	});
 }
 

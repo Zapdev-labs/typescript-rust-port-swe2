@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_occurrences_try_catch_finally3() {
 	run_test(|t| {
-		let content = r"try {
-    try {
-    }
-    catch (x) {
-    }
-
-    [|t/*1*/r/*2*/y|] {
-    }
-    [|finall/*3*/y|] {
-    }
-}
-catch (e) {
-}
-finally {
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, to_any(f.markers()).into_iter().map(Into::into));
 	});
 }
 

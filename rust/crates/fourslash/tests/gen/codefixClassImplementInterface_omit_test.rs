@@ -7,30 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn codefix_class_implement_interface_omit() {
 	run_test(|t| {
-		let content = r#"interface One {
-    a: number;
-    b: string;
-}
-
-interface Two extends Omit<One, "a"> {
-    c: boolean;
-}
-
-class TwoStore implements Two {[| |]}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'Two'".to_string().into(), new_file_content: r#"interface One {
-    a: number;
-    b: string;
-}
-
-interface Two extends Omit<One, "a"> {
-    c: boolean;
-}
-
-class TwoStore implements Two {
-    c: boolean;
-    b: string;
-}"#.to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

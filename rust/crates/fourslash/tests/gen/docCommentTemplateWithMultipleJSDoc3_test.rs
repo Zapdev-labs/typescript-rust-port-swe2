@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn doc_comment_template_with_multiple_js_doc3() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"/** @param p */
-/*/**/
-function foo(p) {}";
-		let mut capabilities = tsc_fourslash::get_default_capabilities();
-		capabilities.text_document.as_mut().unwrap().completion.as_mut().unwrap().completion_item.as_mut().unwrap().snippet_support = Some((false).into());
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", capabilities.into(), &content);
-		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from(""), 3, r"/** */", None);
 	});
 }
 

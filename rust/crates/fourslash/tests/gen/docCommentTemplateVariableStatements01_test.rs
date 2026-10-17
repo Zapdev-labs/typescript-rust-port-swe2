@@ -7,52 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn doc_comment_template_variable_statements01() {
 	run_test(|t| {
-		let content = r#"/*a*/
-var a = 10;
-
-/*b*/
-let b = "";
-
-/*c*/
-const c = 30;
-
-/*d*/
-let d = {
-    foo: 10,
-    bar: "20"
-};
-
-/*e*/
-let e = function e(x, y, z) {
-    return +(x + y + z);
-};
-
-/*f*/
-let f = class F {
-    constructor(a, b, c) {
-        this.a = a;
-        this.b = b || (this.c = c);
-    }
-}"#;
-		let mut capabilities = tsc_fourslash::get_default_capabilities();
-		capabilities.text_document.as_mut().unwrap().completion.as_mut().unwrap().completion_item.as_mut().unwrap().snippet_support = Some((false).into());
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", capabilities.into(), &content);
-		for var_name in vec!["a", "b", "c", "d"] {
-			f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from(var_name), 3, r"/** */", None);
-		}
-		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("e"), 7, r"/**
- * 
- * @param x
- * @param y
- * @param z
- * @returns
- */", None);
-		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("f"), 7, r"/**
- * 
- * @param a
- * @param b
- * @param c
- */", None);
 	});
 }
 

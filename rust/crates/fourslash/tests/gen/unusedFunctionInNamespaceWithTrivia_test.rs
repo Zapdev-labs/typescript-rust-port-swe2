@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn unused_function_in_namespace_with_trivia() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"// @noUnusedLocals: true
-[| namespace greeter {
-  // Do not remove
-  /**
-   * JSDoc Comment
-   */
-  function function1() {
-  }/*1*/
-} |]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_range_after_code_fix(r"namespace greeter {
-    // Do not remove
- }", false, 0, 0);
 	});
 }
 

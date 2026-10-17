@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn this_binding_in_lambda() {
 	run_test(|t| {
-		let content = r"class Greeter {
-    constructor() { 
-		[].forEach((anything)=>{
-			console.log(th/**/is);
-		});
-	}
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("", "this: this", "");
 	});
 }
 

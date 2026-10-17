@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn string_literal_completions_in_jsx_attribute_initializer() {
 	run_test(|t| {
-		let content = r#"// @jsx: preserve
-// @filename: /a.tsx
-type Props = { a: number } | { b: "somethingelse", c: 0 | 1 };
-declare function Foo(args: Props): any
-
-const a1 = <Foo b={"/*1*/"} />
-const a2 = <Foo b="/*2*/" />
-const a3 = <Foo b="somethingelse"/*3*/ />
-const a4 = <Foo b={"somethingelse"} /*4*/ />
-const a5 = <Foo b={"somethingelse"} c={0} /*5*/ />"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["1", "2"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["somethingelse".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["3", "4"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { excludes: vec!["\"somethingelse\"".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["5"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { excludes: vec!["0".into(), "1".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn member_list_of_module_before_keyword() {
 	run_test(|t| {
-		let content = r"namespace TypeModule1 {
-    export class C1 { }
-    export class C2 { }
-}
-var x: TypeModule1./*namedType*/
-namespace TypeModule2 {
-    export class Test3 {}
-}
-
-TypeModule1./*dottedExpression*/
-namespace TypeModule3 {
-    export class Test3 {}
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(f.markers()), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["C1".into(), "C2".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

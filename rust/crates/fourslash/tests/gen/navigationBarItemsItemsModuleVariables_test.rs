@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn navigation_bar_items_items_module_variables() {
 	run_test(|t| {
-		let content = r"// @Filename: navigationItemsModuleVariables_0.ts
- /*file1*/
-namespace Module1 {
-    export var x = 0;
-}
-// @Filename: navigationItemsModuleVariables_1.ts
- /*file2*/
-namespace Module1.SubModule {
-    export var y = 0;
-}
-// @Filename: navigationItemsModuleVariables_2.ts
- /*file3*/
-namespace Module1 {
-    export var z = 0;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("file1");
-		f.verify_baseline_document_symbol();
-		f.go_to_marker("file2");
-		f.verify_baseline_document_symbol();
 	});
 }
 

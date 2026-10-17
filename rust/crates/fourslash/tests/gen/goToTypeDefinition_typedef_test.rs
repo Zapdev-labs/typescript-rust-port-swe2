@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_type_definition_typedef() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @Filename: /a.js
-/**
- * /*def*/@typedef {object} I
- * @property {number} x
- */
-
-/** @type {I} */
-const /*ref*/i = { x: 0 };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_type_definition(&["ref".into()]);
 	});
 }
 

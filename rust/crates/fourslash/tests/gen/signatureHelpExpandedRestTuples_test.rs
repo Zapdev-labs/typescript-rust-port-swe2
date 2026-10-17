@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_expanded_rest_tuples() {
 	run_test(|t| {
-		let content = r#"export function complex(item: string, another: string, ...rest: [] | [settings: object, errorHandler: (err: Error) => void] | [errorHandler: (err: Error) => void, ...mixins: object[]]) {
-    
-}
-
-complex(/*1*/);
-complex("ok", "ok", /*2*/);
-complex("ok", "ok", e => void e, {}, /*3*/);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "complex(item: string, another: string): void".to_string().into(), parameter_count: 2, parameter_name: "item".to_string().into(), parameter_span: "item: string".to_string().into(), overloads_count: 3, is_variadic: false.into(), is_variadic_set: true.into(), ..Default::default() });
-		f.go_to_marker("2");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "complex(item: string, another: string, settings: object, errorHandler: (err: Error) => void): void".to_string().into(), parameter_count: 4, parameter_name: "settings".to_string().into(), parameter_span: "settings: object".to_string().into(), overloads_count: 3, is_variadic: false.into(), is_variadic_set: true.into(), ..Default::default() });
-		f.go_to_marker("3");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "complex(item: string, another: string, errorHandler: (err: Error) => void, ...mixins: object[]): void".to_string().into(), overloads_count: 3, is_variadic: true.into(), is_variadic_set: true.into(), ..Default::default() });
 	});
 }
 

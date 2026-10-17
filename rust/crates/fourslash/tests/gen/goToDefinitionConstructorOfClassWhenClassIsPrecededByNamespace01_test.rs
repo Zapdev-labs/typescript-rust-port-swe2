@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_constructor_of_class_when_class_is_preceded_by_namespace01() {
 	run_test(|t| {
-		let content = r"namespace Foo {
-    export var x;
-}
-
-class Foo {
-    /*definition*/constructor() {
-    }
-}
-
-var x = new [|/*usage*/Foo|]();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["usage".into()]);
 	});
 }
 

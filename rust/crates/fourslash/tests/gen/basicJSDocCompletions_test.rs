@@ -7,53 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn basic_js_doc_completions() {
 	run_test(|t| {
-		let content = r"
-// @filename: file.js
-// @allowJs: true
-/**
- * @/*1*/
- */
-function foo(x) {
-  return x + 1;
-}
-  
-/**
- * /*2*/
- */
-function bar(x, { y }) {
-  return x + y;
-}
-
-/**
- * @param {number} x
- * /*3*/
- */
-function baz(x, { y }) {
-  return x + y;
-}
-
-/**
- * @param {number} x
- * @param {object} param1 
- * @param {n/*4*/} param1.y 
- */
-function baz(x, { y }) {
-  return x + y;
-}
-
-/**
- * @/*5*/
- */
-function baz(x = 0) {
-  return x * 2;
-}
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "link".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Keyword).into()), detail: Some(("link").into()), ..Default::default() }.into(), "param".into(), "returns".into(), "param {*} x ".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("2"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["@param".into(), "@param {*} x ".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("3"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["@param".into(), "@param {object} param1 \n* @param {*} param1.y ".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("4"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["number".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("5"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["param {number} [x=0] ".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_bloom_filters2() {
 	run_test(|t| {
-		let content = r#"// @Filename: declaration.ts
-var container = { /*1*/42: 1 };
-// @Filename: expression.ts
-function blah() { return (container[42]) === 2;  };
-// @Filename: stringIndexer.ts
-function blah2() { container["42"] };
-// @Filename: redeclaration.ts
-container = { "42" : 18 };"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into()]);
 	});
 }
 

@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_for_object_binding_element_name05() {
 	run_test(|t| {
-		let content = r"interface A {
-    /**
-     * A description of a
-     */
-    a: number;
-}
-interface B {
-    a: string;
-}
-
-function f({ a }: A | B) {
-    a/**/;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

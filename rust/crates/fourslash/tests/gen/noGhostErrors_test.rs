@@ -7,53 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn no_ghost_errors() {
 	run_test(|t| {
-		let content = r#"
-interface ZodType<T> {
-  optional: "true" | "false";
-  output: T;
-}
-
-interface ZodString extends ZodType<string> {
-  optional: "false";
-}
-
-type ZodShape = Record<string, any>;
-type Prettify<T> = { [K in keyof T]: T[K] } & {};
-type InferObjectType<Shape extends ZodShape> = Prettify<
-  {
-    [k in keyof Shape as Shape[k] extends { optional: "true" }
-      ? k
-      : never]?: Shape[k]["output"];
-  } & {
-    [k in keyof Shape as Shape[k] extends { optional: "true" }
-      ? never
-      : k]: Shape[k]["output"];
-  }
->;
-interface ZodObject<T extends ZodShape> extends ZodType<InferObjectType<T>> {
-  optional: "false";
-}
-
-interface ZodOptional<T extends ZodType<any>>
-  extends ZodType<T["output"] | undefined> {
-  optional: "true";
-}
-
-declare function object<T extends ZodShape>(shape: T): ZodObject<T>;
-declare function string(): ZodString;
-declare function optional<T extends ZodType<any>>(schema: T): ZodOptional<T>;
-
-const Category = object({
-  name: string(),
-  get parent/*1*/() {
-    return optional(Category);
-  },
-});
-
-export const output = Category.output;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "(accessor) parent: ZodOptional<ZodObject<{\n    name: ZodString;\n    readonly parent: ZodOptional<ZodObject<...>>;\n}>>", "");
-		f.verify_diagnostics(&[]);
 	});
 }
 

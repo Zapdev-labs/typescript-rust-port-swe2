@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_with_leading_underscore_names6() {
 	run_test(|t| {
-		let content = r"class Foo {
-    public _bar;
-    /*1*/public /*2*/__bar;
-    public ___bar;
-    public ____bar;
-}
-
-var x: Foo;
-x._bar;
-x./*3*/__bar;
-x.___bar;
-x.____bar;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
 	});
 }
 

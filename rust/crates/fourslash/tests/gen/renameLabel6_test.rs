@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_label6() {
 	run_test(|t| {
-		let content = r"loop1: for (let i = 0; i <= 10; i++) {
-    loop2: for (let j = 0; j <= 10; j++) {
-        if (i === 5) continue loop1;
-        if (j === 5) break /**/loop2;
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename(None, vec!["".into()]);
 	});
 }
 

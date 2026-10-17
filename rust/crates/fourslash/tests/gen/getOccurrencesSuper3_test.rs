@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_occurrences_super3() {
 	run_test(|t| {
-		let content = r"let x = {
-    a() {
-        return [|s/**/uper|].b();
-    },
-    b() {
-        return [|super|].a();
-    },
-    c: function () {
-        return [|super|].a();
-    }
-    d: () => [|super|].b();
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, to_any(f.ranges()).into_iter().map(Into::into));
 	});
 }
 

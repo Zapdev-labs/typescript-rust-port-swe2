@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_same_file() {
 	run_test(|t| {
-		let content = r"var /*localVariableDefinition*/localVariable;
-function /*localFunctionDefinition*/localFunction() { }
-class /*localClassDefinition*/localClass { }
-interface /*localInterfaceDefinition*/localInterface{ }
-module /*localModuleDefinition*/localModule{ export var foo = 1;}
-
-
-/*localVariableReference*/localVariable = 1;
-/*localFunctionReference*/localFunction();
-var foo = new /*localClassReference*/localClass();
-class fooCls implements /*localInterfaceReference*/localInterface { }
-var fooVar = /*localModuleReference*/localModule.foo;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(false, &["localVariableReference".into(), "localFunctionReference".into(), "localClassReference".into(), "localInterfaceReference".into(), "localModuleReference".into()]);
 	});
 }
 

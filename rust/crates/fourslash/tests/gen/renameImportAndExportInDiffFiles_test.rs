@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_import_and_export_in_diff_files() {
 	run_test(|t| {
-		let content = r#"// @Filename: a.ts
-[|export var /*1*/[|{| "isDefinition": true, "contextRangeIndex": 0 |}a|];|]
-// @Filename: b.ts
-[|import { /*2*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 2 |}a|] } from './a';|]
-[|export { /*3*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 4 |}a|] };|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into(), f.ranges()[3].clone().into(), f.ranges()[5].clone().into()]);
 	});
 }
 

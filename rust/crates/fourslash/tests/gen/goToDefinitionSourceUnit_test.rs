@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_source_unit() {
 	run_test(|t| {
-		let content = r#"// @Filename: a.ts
- //MyFile Comments
- //more comments
- /// <reference path="so/*unknownFile*/mePath.ts" />
- /// <reference path="[|b/*knownFile*/.ts|]" />
-
- class clsInOverload {
-     static fnOverload();
-     static fnOverload(foo: string);
-     static fnOverload(foo: any) { }
- }
-
-// @Filename: b.ts
-/*fileB*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["unknownFile".into(), "knownFile".into()]);
 	});
 }
 

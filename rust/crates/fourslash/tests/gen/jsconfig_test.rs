@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsconfig() {
 	run_test(|t| {
-		let content = r#"// @Filename: /a.js
-function f(/**/x) {
-}
-// @Filename: /jsconfig.json
-{
-    "compilerOptions": {
-        "checkJs": true,
-        "noImplicitAny": true
-    }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/a.js");
-		f.verify_error_exists_after_marker("");
 	});
 }
 

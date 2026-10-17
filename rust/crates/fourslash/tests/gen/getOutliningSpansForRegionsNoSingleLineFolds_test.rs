@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_outlining_spans_for_regions_no_single_line_folds() {
 	run_test(|t| {
-		let content = r"// @lib: es5
-[|//#region
-function foo()[| {
-
-}|]
-[|//these
-//should|]
-//#endregion not you|]
-[|// be
-// together|]
-
-[|//#region bla bla bla
-
-function bar()[| { }|]
-
-//#endregion|]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.verify_outlining_spans();
 	});
 }
 

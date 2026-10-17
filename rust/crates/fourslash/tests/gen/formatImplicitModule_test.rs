@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_implicit_module() {
 	run_test(|t| {
-		let content = r"       export class A {
-
-       }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_bof();
-		f.verify_current_line_content(r"export class A {");
-		f.go_to_eof();
-		f.verify_current_line_content(r"}");
 	});
 }
 

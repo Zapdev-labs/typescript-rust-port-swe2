@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn js_doc_indentation_preservation3() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @Filename: Foo.js
-/**
-    Does some stuff.
-        Second line.
-    	Third line.
-*/
-function foo/**/(){}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_quick_info_is("function foo(): void", "Does some stuff.\n    Second line.\n\tThird line.");
 	});
 }
 

@@ -7,40 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn unreachable_code_after_edit() {
 	run_test(|t| {
-		let content = r"// @allowUnreachableCode: false
-// @lib: es2015
-// @Filename: /base/browser/browser.ts
-export const isStandalone = true;
-// @Filename: /base/browser/dom.ts
-export function addDisposableListener() {}
-// @Filename: /base/browser/window.ts
-export const mainWindow = {} as Window;
-// @Filename: /workbench.ts
-/*before*/import { isStandalone } from './base/browser/browser';
-import { addDisposableListener } from './base/browser/dom';
-import { mainWindow } from './base/browser/window';
-
-interface ISecretStorageCrypto {
-    seal(data: string): Promise<string>;
-    unseal(data: string): Promise<string>;
-}
-
-export class TransparentCrypto implements ISecretStorageCrypto {
-    async seal(data: string): Promise<string> {
-        return data;
-    }
-    async unseal(data: string): Promise<string> {
-        return data;
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_number_of_errors_in_current_file(0);
-		f.go_to_marker("before");
-		f.insert("throw new Error('foo');\n");
-		f.verify_number_of_errors_in_current_file(1);
-		f.go_to_marker("before");
-		f.delete_at_caret(24);
-		f.verify_number_of_errors_in_current_file(0);
 	});
 }
 

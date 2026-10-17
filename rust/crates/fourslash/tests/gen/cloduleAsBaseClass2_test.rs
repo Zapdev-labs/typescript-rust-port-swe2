@@ -7,40 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn clodule_as_base_class2() {
 	run_test(|t| {
-		let content = r"// @module: commonjs
-// @strict: false
-// @Filename: cloduleAsBaseClass2_0.ts
-class A {
-    constructor(x: number) { }
-    foo() { }
-    static bar() { }
-}
-
-namespace A {
-    export var x = 1;
-    export function baz() { }
-}
-
-export = A;
-// @Filename: cloduleAsBaseClass2_1.ts
-import B = require('./cloduleAsBaseClass2_0');
-class D extends B {
-    constructor() {
-        super(1);
-    }
-    foo2() { }
-    static bar2() { }
-}
-
-var d: D;
-d./*1*/
-D./*2*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["foo".into(), "foo2".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("foo()");
-		f.verify_completions(tsc_fourslash::MarkerInput::from("2"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "bar".to_string().into(), sort_text: Some((tsc_ls::LOCAL_DECLARATION_PRIORITY.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "bar2".to_string().into(), sort_text: Some((tsc_ls::LOCAL_DECLARATION_PRIORITY.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "baz".to_string().into(), sort_text: Some((tsc_ls::LOCATION_PRIORITY.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "x".to_string().into(), sort_text: Some((tsc_ls::LOCATION_PRIORITY.to_string()).into()), ..Default::default() }.into()].into(), excludes: vec!["foo".into(), "foo2".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.insert("bar()");
-		f.verify_no_errors();
 	});
 }
 

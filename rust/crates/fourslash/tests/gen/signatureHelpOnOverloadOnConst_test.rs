@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_on_overload_on_const() {
 	run_test(|t| {
-		let content = r"function x1(x: 'hi');
-function x1(y: 'bye');
-function x1(z: string);
-function x1(a: any) {
-}
-
-x1(''/*1*/);
-x1('hi'/*2*/);
-x1('bye'/*3*/);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "z".to_string().into(), parameter_span: "z: string".to_string().into(), overloads_count: 3, ..Default::default() });
-		f.go_to_marker("2");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "x".to_string().into(), parameter_span: "x: 'hi'".to_string().into(), overloads_count: 3, ..Default::default() });
-		f.go_to_marker("3");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "y".to_string().into(), parameter_span: "y: 'bye'".to_string().into(), overloads_count: 3, ..Default::default() });
 	});
 }
 

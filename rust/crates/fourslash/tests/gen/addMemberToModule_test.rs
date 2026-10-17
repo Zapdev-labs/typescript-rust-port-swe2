@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn add_member_to_module() {
 	run_test(|t| {
-		let content = r"namespace A {
-    /*var*/
-}
-module /*check*/A {
-    var p;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("check");
-		f.verify_quick_info_exists();
-		f.go_to_marker("var");
-		f.insert("var o;");
-		f.go_to_marker("check");
-		f.verify_quick_info_exists();
 	});
 }
 

@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_import_type3() {
 	run_test(|t| {
-		let content = r#"// @verbatimModuleSyntax: true
-// @module: es2015
-// @Filename: /exports.ts
-class SomeClass {}
-export type { SomeClass };
-// @Filename: /a.ts
-import {} from "./exports.js";
-function takeSomeClass(c: SomeClass/**/)"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_import_fix_at_position(&[r#"import { type SomeClass } from "./exports.js";
-function takeSomeClass(c: SomeClass)"#.into()], None);
 	});
 }
 

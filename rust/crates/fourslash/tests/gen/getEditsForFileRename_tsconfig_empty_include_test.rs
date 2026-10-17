@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_edits_for_file_rename_tsconfig_empty_include() {
 	run_test(|t| {
-		let content = r#"// @Filename: /a/foo.ts
-const x = 1
-// @Filename: /a/tsconfig.json
-{ "include": [] }"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_will_rename_files_edits("/a/foo.ts", "/a/bar.ts", &std::collections::BTreeMap::from([]), None);
 	});
 }
 

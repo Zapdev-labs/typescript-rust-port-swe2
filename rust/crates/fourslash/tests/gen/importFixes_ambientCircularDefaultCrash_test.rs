@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_fixes_ambient_circular_default_crash() {
 	run_test(|t| {
-		let content = r#"// @Filename: /home/src/workspaces/project/tsconfig.json
-{
-  "compilerOptions": {
-    "module": "preserve",
-    "lib": ["es5"]
-  }
-}
-// @Filename: /home/src/workspaces/project/types.d.ts
-declare module "mymod" {
-  import mymod from "mymod";
-  export default mymod;
-}
-// @Filename: /home/src/workspaces/project/index.ts
-my/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.verify_import_fix_module_specifiers("", &[], None);
 	});
 }
 

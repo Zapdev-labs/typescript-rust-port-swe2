@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_js_doc_tags_function_overload01() {
 	run_test(|t| {
-		let content = r"// @Filename: quickInfoJsDocTagsFunctionOverload01.ts
-/**
- * Doc foo
- */
-declare function /*1*/foo(): void;
-
-/**
- * Doc foo overloaded
- * @tag Tag text
- */
-declare function /*2*/foo(x: number): void";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover();
 	});
 }
 

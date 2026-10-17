@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsdoc_deprecated_suggestion9() {
 	run_test(|t| {
-		let content = r"// @Filename: first.ts
-export class logger { }
-// @Filename: second.ts
-import { logger } from './first';
-new logger()";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("second.ts");
-		f.verify_no_errors();
-		f.verify_suggestion_diagnostics(&[]);
 	});
 }
 

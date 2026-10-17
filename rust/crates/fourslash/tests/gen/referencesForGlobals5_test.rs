@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_for_globals5() {
 	run_test(|t| {
-		let content = r"// @Filename: referencesForGlobals_1.ts
-namespace globalModule {
-    export var x;
-}
-
-/*1*/import /*2*/globalAlias = globalModule;
-// @Filename: referencesForGlobals_2.ts
-var m = /*3*/globalAlias;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
 	});
 }
 

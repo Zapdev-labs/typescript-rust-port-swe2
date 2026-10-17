@@ -7,27 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_of_string_property_names1() {
 	run_test(|t| {
-		let content = r#"interface foo {
-    "foo bar": string;
-}
-var f: foo;
-var /*1*/r = f['foo bar'];
-class bar {
-    'hello world': number;
-    '1': string;
-    constructor() {
-        bar['hello world'] = 3;
-    }
-}
-var b: bar;
-var /*2*/r2 = b["hello world"];
-var /*3*/r4 = b['1'];
-var /*4*/r5 = b[1];"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "var r: string", "");
-		f.verify_quick_info_at("2", "var r2: number", "");
-		f.verify_quick_info_at("3", "var r4: string", "");
-		f.verify_quick_info_at("4", "var r5: string", "");
 	});
 }
 

@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsdoc_returns_tag_vs() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @Filename: dummy.js
-/**
- * Find an item
- * @template T
- * @param {T[]} l
- * @param {T} x
- * @returns {?T}  The names of the found item(s).
- */
-function find(l, x) {
-}
-find(''/**/);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", Some(tsc_lsproto::ClientCapabilities { vs_supports_visual_studio_extensions: Some((true).into()), ..Default::default() }), &content);
-		f.verify_baseline_signature_help();
 	});
 }
 

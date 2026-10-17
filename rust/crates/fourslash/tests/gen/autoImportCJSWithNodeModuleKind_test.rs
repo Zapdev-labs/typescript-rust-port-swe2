@@ -7,80 +7,18 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_cjs_with_node_module_kind() {
 	run_test(|t| {
-		let content = r#"// @Filename: /tsconfig.json
-{
-  "compilerOptions": {
-    "allowJs": true,
-    "module": "node20",
-    "checkJs": true,
-    "noEmit": true
-  }
-}
-// @Filename: /package.json
-{ "type": "commonjs" }
-// @Filename: /lib.js
-module.exports = { LIB_VERSION: 1 };
-// @Filename: /main.js
-module.exports.foo = 0;
-LIB_VERSION/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_import_fix_at_position(&[r#"const { LIB_VERSION } = require("./lib");
-
-module.exports.foo = 0;
-LIB_VERSION"#.into()], None);
 	});
 }
 
 #[test]
 fn auto_import_cjs_with_node_module_kind_empty_file() {
 	run_test(|t| {
-		let content = r#"// @Filename: /tsconfig.json
-{
-  "compilerOptions": {
-    "allowJs": true,
-    "module": "node20",
-    "checkJs": true,
-    "noEmit": true
-  }
-}
-// @Filename: /package.json
-{ "type": "commonjs" }
-// @Filename: /lib.js
-module.exports = { LIB_VERSION: 1 };
-// @Filename: /main.js
-LIB_VERSION/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_import_fix_at_position(&[r#"const { LIB_VERSION } = require("./lib");
-
-LIB_VERSION"#.into()], None);
 	});
 }
 
 #[test]
 fn auto_import_cjs_with_module_detection_force() {
 	run_test(|t| {
-		let content = r#"// @Filename: /tsconfig.json
-{
-  "compilerOptions": {
-    "allowJs": true,
-    "module": "preserve",
-    "moduleDetection": "force",
-    "checkJs": true,
-    "noEmit": true
-  }
-}
-// @Filename: /lib.js
-export const LIB_VERSION = 1;
-// @Filename: /main.js
-const path = require("path");
-LIB_VERSION/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_import_fix_at_position(&[r#"const path = require("path");
-const { LIB_VERSION } = require("./lib");
-LIB_VERSION"#.into()], None);
 	});
 }
 

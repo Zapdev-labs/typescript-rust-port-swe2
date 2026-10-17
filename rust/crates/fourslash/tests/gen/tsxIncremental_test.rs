@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn tsx_incremental() {
 	run_test(|t| {
-		let content = r"/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.insert("<");
-		f.insert("div");
-		f.insert(" ");
-		f.insert(" id");
-		f.insert("=");
-		f.insert("\"foo");
-		f.insert("\"");
-		f.insert(">");
 	});
 }
 

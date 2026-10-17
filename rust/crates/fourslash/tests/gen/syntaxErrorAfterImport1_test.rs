@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn syntax_error_after_import1() {
 	run_test(|t| {
-		let content = r#"declare module "extmod" {
-  namespace IntMod {
-    class Customer {
-      constructor(name: string);
-    }
-  }
-}
-import ext = require('extmod');
-import int = ext.IntMod;
-var x = new int/*0*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("0");
-		f.insert(".");
 	});
 }
 

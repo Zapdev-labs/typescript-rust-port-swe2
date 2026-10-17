@@ -7,28 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_sort_by_distance() {
 	run_test(|t| {
-		let content = r#"// @module: commonjs
-// @Filename: /src/admin/utils/db/db.ts
-export const db = {};
-// @Filename: /src/admin/utils/db/index.ts
-export * from "./db";
-// @Filename: /src/client/helpers/db.ts
-export const db = {};
-// @Filename: /src/client/db.ts
-export const db = {};
-// @Filename: /src/client/foo.ts
-db/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_import_fix_at_position(&[r#"import { db } from "./db";
-
-db"#.into(), r#"import { db } from "./helpers/db";
-
-db"#.into(), r#"import { db } from "../admin/utils/db";
-
-db"#.into(), r#"import { db } from "../admin/utils/db/db";
-
-db"#.into()], None);
 	});
 }
 

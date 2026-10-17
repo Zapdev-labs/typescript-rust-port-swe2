@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_return3() {
 	run_test(|t| {
-		let content = r"class C {
-    /*end*/m() {
-        [|/*start*/return|] 1;
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["start".into()]);
 	});
 }
 

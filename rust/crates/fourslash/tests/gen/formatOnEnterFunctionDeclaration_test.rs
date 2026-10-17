@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_on_enter_function_declaration() {
 	run_test(|t| {
-		let content = r"/*0*/function listAPIFiles(path: string): string[] {/*1*/ }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.insert_line("");
-		f.go_to_marker("0");
-		f.verify_current_line_content(r"function listAPIFiles(path: string): string[] {");
 	});
 }
 

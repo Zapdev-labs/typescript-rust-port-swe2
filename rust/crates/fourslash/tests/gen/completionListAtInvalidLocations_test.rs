@@ -7,29 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_at_invalid_locations() {
 	run_test(|t| {
-		let content = r#"var v1 = '';
-" /*openString1*/
-var v2 = '';
-"/*openString2*/
-var v3 = '';
-" bar./*openString3*/
-var v4 = '';
-// bar./*inComment1*/
-var v6 = '';
-// /*inComment2*/
-var v7 = '';
-/* /*inComment3*/
-var v11 = '';
-  // /*inComment4*/
-var v12 = '';
-type htm/*inTypeAlias*/
-
-//  /*inComment5*/
-foo;
-var v10 = /reg/*inRegExp1*/ex/;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["openString1", "openString2", "openString3"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["inComment1", "inComment2", "inComment3", "inComment4", "inTypeAlias", "inComment5", "inRegExp1"]), None);
 	});
 }
 

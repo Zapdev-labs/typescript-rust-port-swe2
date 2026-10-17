@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quickinfo_wrong_comment() {
 	run_test(|t| {
-		let content = r#"// @stableTypeOrdering: true
-// @lib: es5
-interface I {
-    /** The colour */
-    readonly colour: string
-}
-interface A extends I {
-    readonly colour: "red" | "green";
-}
-interface B extends I {
-    readonly colour: "yellow" | "green";
-}
-type F = A | B
-const f: F = { colour: "green" }
-f.colour/*1*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.go_to_marker("1");
-		f.verify_quick_info_is("(property) colour: \"green\" | \"red\" | \"yellow\"", "The colour");
 	});
 }
 

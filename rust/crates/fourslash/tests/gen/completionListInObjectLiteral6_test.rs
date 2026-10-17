@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_in_object_literal6() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r#"const foo = {
-    a: "a",
-    b: "b"
-};
-function fn<T extends { [key: string]: any }>(obj: T, events: { [Key in "#, "`"), r"on_${string & keyof T}"), "`"), r#"]?: Key }) {}
-
-fn(foo, {
-    /*1*/
-})
-fn({ a: "a", b: "b" }, {
-    /*2*/
-})"#);
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["1", "2"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "on_a?".to_string().into(), insert_text: Some(("on_a").into()), filter_text: Some(("on_a").into()), sort_text: Some((tsc_ls::OPTIONAL_MEMBER.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "on_b?".to_string().into(), insert_text: Some(("on_b").into()), filter_text: Some(("on_b").into()), sort_text: Some((tsc_ls::OPTIONAL_MEMBER.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

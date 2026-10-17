@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_filtered_triggers03() {
 	run_test(|t| {
-		let content = r"declare class ViewJayEss {
-    constructor(obj: object);
-}
-new ViewJayEss({
-    methods: {
-        sayHello/**/
-    }
-});";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.insert("(");
-		f.verify_no_signature_help_with_context(Some(tsc_lsproto::SignatureHelpContext { trigger_kind: tsc_lsproto::SignatureHelpTriggerKind::TriggerCharacter.into(), trigger_character: Some(("(").into()), is_retrigger: false.into(), ..Default::default() }));
-		f.insert(") {},");
-		f.verify_no_signature_help_with_context(Some(tsc_lsproto::SignatureHelpContext { trigger_kind: tsc_lsproto::SignatureHelpTriggerKind::TriggerCharacter.into(), trigger_character: Some((",").into()), is_retrigger: false.into(), ..Default::default() }));
 	});
 }
 

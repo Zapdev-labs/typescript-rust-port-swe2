@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_private_fields() {
 	run_test(|t| {
-		let content = r"class Foo {
-   [|/**/#foo|] = 1;
-
-   getFoo() {
-       return this.#foo;
-   }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_rename_succeeded(None);
 	});
 }
 

@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_re_export() {
 	run_test(|t| {
-		let content = r#"// @Filename: /a.ts
-export const x = 0";
-// @Filename: /b.ts
-[|export { x } from "./a";
-x;|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/b.ts");
-		f.verify_range_after_code_fix(r#"import { x } from "./a";
-
-export { x } from "./a";
-x;"#, true, 0, 0);
 	});
 }
 

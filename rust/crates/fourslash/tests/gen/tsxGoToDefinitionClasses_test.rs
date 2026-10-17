@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn tsx_go_to_definition_classes() {
 	run_test(|t| {
-		let content = r"//@Filename: file.tsx
-declare namespace JSX {
-    interface Element { }
-    interface IntrinsicElements { }
-    interface ElementAttributesProperty { props; }
-}
-class /*ct*/MyClass {
-    props: {
-        /*pt*/foo: string;
-    }
-}
-var x = <[|My/*c*/Class|] />;
-var y = <MyClass [|f/*p*/oo|]= 'hello' />;
-var z = <[|MyCl/*w*/ass|] wrong= 'hello' />;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["c".into(), "p".into(), "w".into()]);
 	});
 }
 

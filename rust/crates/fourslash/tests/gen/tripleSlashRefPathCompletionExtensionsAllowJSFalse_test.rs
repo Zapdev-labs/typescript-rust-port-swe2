@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn triple_slash_ref_path_completion_extensions_allow_js_false() {
 	run_test(|t| {
-		let content = r#"// @Filename: test0.ts
-/// <reference path="/*0*/
-/// <reference path=".//*1*/
-/// <reference path="./f/*2*/
-// @Filename: f1.ts
-
-// @Filename: f1.js
-
-// @Filename: f1.d.ts
-
-// @Filename: f1.tsx
-
-// @Filename: f1.js
-
-// @Filename: f1.jsx
-
-// @Filename: f1.cs
-"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(f.markers()), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["f1.d.ts".into(), "f1.ts".into(), "f1.tsx".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

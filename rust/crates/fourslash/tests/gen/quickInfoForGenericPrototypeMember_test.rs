@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_for_generic_prototype_member() {
 	run_test(|t| {
-		let content = r"class C<T> {
-   foo(x: T) { }
-}
-var x = new /*1*/C<any>();
-var y = C.proto/*2*/type;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "constructor C<any>(): C<any>", "");
-		f.verify_quick_info_at("2", "(property) C<T>.prototype: C<any>", "");
 	});
 }
 

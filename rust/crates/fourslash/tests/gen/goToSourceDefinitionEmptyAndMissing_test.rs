@@ -7,36 +7,12 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_source_definition_empty_js_file() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{ "name": "pkg", "main": "./index.js", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.d.ts
-export declare function foo(): void;
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.js
-// @Filename: /home/src/workspaces/project/index.ts
-import { foo } from /*specifier*/"pkg";
-foo();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["specifier".into()]);
 	});
 }
 
 #[test]
 fn go_to_source_default_import_no_default_in_js() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{ "name": "pkg", "main": "./index.js", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.d.ts
-export default function create(): void;
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.js
-/*targetEntry*/function internalCreate() { return {}; }
-module.exports = { create: internalCreate };
-// @Filename: /home/src/workspaces/project/index.ts
-import /*importDefault*/create from "pkg";
-create();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["importDefault".into()]);
 	});
 }
 

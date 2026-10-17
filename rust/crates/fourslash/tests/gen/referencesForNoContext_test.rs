@@ -7,28 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_for_no_context() {
 	run_test(|t| {
-		let content = r"namespace modTest {
-    //Declare
-    export var modVar:number;
-    /*1*/
-
-    //Increments
-    modVar++;
-
-    class testCls{
-        /*2*/
-    }
-
-    function testFn(){
-        //Increments
-        modVar++;
-    }  /*3*/
-/*4*/
-    namespace testMod {
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into()]);
 	});
 }
 

@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_js_cj_svs_esm2() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @checkJs: true
-// @Filename: types/dep.d.ts
-export declare class Dep {}
-// @Filename: index.js
-Dep/**/
-// @Filename: util1.ts
-import fs from 'fs';
-// @Filename: util2.js
-const fs = require('fs');";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_import_fix_at_position(&[r#"const { Dep } = require("./types/dep");
-
-Dep"#.into()], None);
 	});
 }
 

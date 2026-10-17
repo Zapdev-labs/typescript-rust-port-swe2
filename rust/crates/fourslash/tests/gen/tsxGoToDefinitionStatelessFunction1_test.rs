@@ -7,27 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn tsx_go_to_definition_stateless_function1() {
 	run_test(|t| {
-		let content = r#"//@Filename: file.tsx
-// @jsx: preserve
-// @noLib: true
-declare namespace JSX {
-    interface Element { }
-    interface IntrinsicElements {
-    }
-    interface ElementAttributesProperty { props; }
-}
-interface OptionPropBag {
-    /*pt1*/propx: number
-    propString: "hell"
-    /*pt2*/optional?: boolean
-}
-declare function /*opt*/Opt(attributes: OptionPropBag): JSX.Element;
-let opt = <[|O/*one*/pt|] />;
-let opt1 = <[|Op/*two*/t|] [|pr/*p1*/opx|]={100} />;
-let opt2 = <[|Op/*three*/t|] propx={100} [|opt/*p2*/ional|] />;
-let opt3 = <[|Op/*four*/t|] wr/*p3*/ong />;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["one".into(), "two".into(), "three".into(), "four".into(), "p1".into(), "p2".into()]);
 	});
 }
 

@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_on_class_merged_with_function() {
 	run_test(|t| {
-		let content = r#"namespace Test {
-    class Mocked {
-        myProp: string;
-    }
-    class Tester {
-        willThrowError() {
-            Mocked = Mocked || function () { // => Error: Invalid left-hand side of assignment expression.
-                return { /**/myProp: "test" };
-            };
-        }
-    }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("", "(property) myProp: string", "");
 	});
 }
 

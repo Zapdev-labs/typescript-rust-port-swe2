@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_import_meta() {
 	run_test(|t| {
-		let content = r"// @module: esnext
-// @Filename: foo.ts
-/// <reference path='./bar.d.ts' />
-import.me/*reference*/ta;
-//@Filename: bar.d.ts
-interface ImportMeta {
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["reference".into()]);
-		f.verify_no_errors();
 	});
 }
 

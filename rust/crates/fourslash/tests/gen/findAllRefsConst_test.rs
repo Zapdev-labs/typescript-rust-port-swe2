@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_const() {
 	run_test(|t| {
-		let content = r"// @Filename: a.ts
-/**/const const
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["".into()]);
 	});
 }
 

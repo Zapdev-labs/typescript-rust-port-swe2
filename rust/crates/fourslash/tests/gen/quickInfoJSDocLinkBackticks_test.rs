@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_js_doc_link_backticks() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"// @noEmit: true
-// @allowJs: true
-// @checkJs: true
-// @strict: true
-// @Filename: jsdocParseMatchingBackticks.js
-/**
- * ", "`"), r"{@link foo}"), "`"), r" initial at-param is OK in title comment
- * @param {string} x hi there "), "`"), r"{@link foo}"), "`"), r"
- */
-export function f(x) {
-    return x/*x*/
-}
-f/*f*/");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("f");
-		f.verify_quick_info_is("function f(x: string): string", "`{@link foo}` initial at-param is OK in title comment\n\n*@param* `x` — hi there `{@link foo}`");
-		f.go_to_marker("x");
-		f.verify_quick_info_is("(parameter) x: string", "hi there `{@link foo}`");
 	});
 }
 

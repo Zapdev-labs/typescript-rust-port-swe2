@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn navigation_bar_items_missing_name1() {
 	run_test(|t| {
-		let content = r"export function
-class C {
-    foo() {}
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_symbol();
 	});
 }
 

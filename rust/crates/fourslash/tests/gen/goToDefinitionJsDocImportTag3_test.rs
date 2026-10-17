@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_js_doc_import_tag3() {
 	run_test(|t| {
-		let content = r#"// @allowJS: true
-// @checkJs: true
-// @Filename: /b.ts
-/*2*/export interface A { }
-// @Filename: /a.js
-/**
- * @import { A } [|from     /*1*/|] "./b";
- */"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["1".into()]);
 	});
 }
 

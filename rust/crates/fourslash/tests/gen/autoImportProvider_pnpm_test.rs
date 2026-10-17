@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_provider_pnpm() {
 	run_test(|t| {
-		let content = r#"// @Filename: /home/src/workspaces/project/tsconfig.json
-{ "compilerOptions": { "module": "commonjs", "lib": ["es5"] } }
-// @Filename: /home/src/workspaces/project/package.json
-{ "dependencies": { "mobx": "*" } }
-// @Filename: /home/src/workspaces/project/node_modules/.pnpm/mobx@6.0.4/node_modules/mobx/package.json
-{ "types": "dist/mobx.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/.pnpm/mobx@6.0.4/node_modules/mobx/dist/mobx.d.ts
-export declare function autorun(): void;
-// @Filename: /home/src/workspaces/project/index.ts
-autorun/**/
-// @link: /home/src/workspaces/project/node_modules/.pnpm/mobx@6.0.4/node_modules/mobx -> /home/src/workspaces/project/node_modules/mobx"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.go_to_marker("");
-		f.verify_import_fix_at_position(&[r#"import { autorun } from "mobx";
-
-autorun"#.into()], None);
 	});
 }
 

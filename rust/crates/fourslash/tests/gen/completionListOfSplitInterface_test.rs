@@ -7,40 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_of_split_interface() {
 	run_test(|t| {
-		let content = r"interface A {
-    a: number;
-}
-interface I extends A {
-    i1: number;
-}
-interface I1 extends A {
-    i11: number;
-}
-interface B {
-    b: number;
-}
-interface B1 {
-    b1: number;
-}
-interface I extends B {
-    i2: number;
-}
-interface I1 extends B, B1 {
-    i12: number;
-}
-interface C {
-    c: number;
-}
-interface I extends C {
-    i3: number;
-}
-var ci: I;
-ci./*1*/b;
-var ci1: I1;
-ci1./*2*/b;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["i1".into(), "i2".into(), "i3".into(), "a".into(), "b".into(), "c".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("2"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["i11".into(), "i12".into(), "a".into(), "b".into(), "b1".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

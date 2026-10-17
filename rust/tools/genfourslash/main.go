@@ -105,6 +105,8 @@ type translator struct {
 	localStructs map[string][]string
 	// optionVars: var names holding Option<T> (from Option-returning calls).
 	optionVars map[string]bool
+	// inLvalue suppresses .clone() suffixes while rendering assignment targets.
+	inLvalue bool
 }
 
 // flushDecls emits synthesized declarations pending before the next stmt.
@@ -262,18 +264,65 @@ func (tr *translator) paramType(e ast.Expr) string {
 				return "&mut FourslashTest"
 			}
 		}
-		return "&mut " + tr.expr(t.X)
+		return tr.typeName(t.X)
 	case *ast.SelectorExpr:
+		if relocate, ok := relocatedTypes[identName(t.X)+"."+t.Sel.Name]; ok {
+			return relocate
+		}
+		if p := tr.imports[identName(t.X)]; p != "" {
+			return p + "::" + t.Sel.Name
+		}
 		return tr.expr(t)
 	case *ast.Ident:
+		switch t.Name {
+		case "string":
+			return "&str"
+		case "int", "int32", "int16", "int8":
+			return "i32"
+		case "int64":
+			return "i64"
+		case "uint", "uint32":
+			return "u32"
+		case "uint64":
+			return "u64"
+		case "float64":
+			return "f64"
+		case "bool":
+			return "bool"
+		case "byte", "rune":
+			return "u8"
+		case "any", "interface{}":
+			return "serde_json::Value"
+		case "Marker":
+			return "Rc<tsc_fourslash::Marker>"
+		case "RangeMarker":
+			return "Rc<tsc_fourslash::RangeMarker>"
+		}
 		return tr.expr(t)
 	case *ast.ArrayType:
-		return "Vec<" + tr.expr(t.Elt) + ">"
+		return "&[" + tr.paramType(t.Elt) + "]"
 	case *ast.Ellipsis:
-		return "&[" + tr.expr(t.Elt) + "]"
+		return "&[" + tr.paramType(t.Elt) + "]"
+	case *ast.MapType:
+		return "&std::collections::BTreeMap<" + tr.paramType(t.Key) + ", " +
+			tr.paramType(t.Value) + ">"
 	}
 	note(tr.fset, e, "unhandled param type %T", e)
 	return "/* ? */"
+}
+
+// typeName renders a Go type expression in type position (preserves type
+// names; builtins map to Rust primitives).
+func (tr *translator) typeName(e ast.Expr) string {
+	switch t := e.(type) {
+	case *ast.Ident:
+		return tr.paramType(t)
+	case *ast.SelectorExpr:
+		return tr.paramType(t)
+	case *ast.StarExpr:
+		return tr.paramType(t)
+	}
+	return tr.expr(e)
 }
 
 // emitLocalStruct emits `type X struct{...}` (a fn-local Go type) as a Rust
@@ -382,7 +431,17 @@ func (tr *translator) emitBlock(stmts []ast.Stmt) {
 }
 
 func (tr *translator) emitStmt(s ast.Stmt) {
-	tr.flushDecls()
+	tr.flushDecls() // decls queued by previous statements
+	var buf strings.Builder
+	saved := tr.out
+	tr.out = buf
+	tr.emitStmtInner(s)
+	tr.out = saved
+	tr.flushDecls() // decls queued by THIS stmt's own expressions go first
+	tr.out.WriteString(buf.String())
+}
+
+func (tr *translator) emitStmtInner(s ast.Stmt) {
 	switch st := s.(type) {
 	case *ast.ExprStmt:
 		if call, ok := st.X.(*ast.CallExpr); ok {
@@ -688,14 +747,14 @@ func (tr *translator) expr(e ast.Expr) string {
 				}
 			}
 		}
-		tr.out.WriteString("|")
-		tr.out.WriteString(strings.Join(params, ", "))
-		tr.out.WriteString("| {\n")
+		var body strings.Builder
+		saved := tr.out
+		tr.out = body
 		tr.depth++
 		tr.emitBlock(x.Body.List)
 		tr.depth--
-		tr.out.WriteString(tr.indent() + "}")
-		return "" // caller emitted inline — signal via sentinel
+		tr.out = saved
+		return "|" + strings.Join(params, ", ") + "| {\n" + body.String() + tr.indent() + "}"
 	}
 	note(tr.fset, e, "unhandled expr %T", e)
 	return "/* ? */"
@@ -826,6 +885,9 @@ func (tr *translator) selector(x *ast.SelectorExpr) string {
 		// package-level member: type names stay CamelCase; Go enum consts
 		// `TypeNameVariant` map to `Type::VARIANT`; vars/fns -> snake.
 		name := x.Sel.Name
+		if ov, ok := selectorExprOverride[pkg+"."+name]; ok {
+			return ov
+		}
 		if pkg == "ls" && strings.HasPrefix(name, "SortText") &&
 			len(name) > len("SortText") && unicode.IsUpper(rune(name[len("SortText")])) {
 			return "tsc_ls::" + screaming(name[len("SortText"):])
@@ -867,7 +929,11 @@ func (tr *translator) selector(x *ast.SelectorExpr) string {
 	if capOptionFields[last] {
 		recv += ".as_mut().unwrap()"
 	}
-	return recv + "." + snake(x.Sel.Name)
+	fname := snake(x.Sel.Name)
+	if nonCopyFields[fname] && !tr.inLvalue {
+		return recv + "." + fname + ".clone()"
+	}
+	return recv + "." + fname
 }
 
 // optionReturnCalls: methods returning Option<...> that need `.unwrap()`
@@ -878,6 +944,17 @@ var optionReturnCalls = map[string]bool{
 
 // capOptionFields: lsproto client-capability fields typed Option<T> that need
 // `.as_mut().unwrap()` when used as intermediate receivers.
+// nonCopyFields — fields on Rc-wrapped marker/range/completion types that
+// cannot be moved out of the smart pointer.
+var nonCopyFields = map[string]bool{
+	"ls_range": true, "file_name": true, "ls_position": true, "position": true,
+	"name": true, "text": true, "replacement_span": true, "new_text": true,
+	"insert_text": true, "filter_text": true, "sort_text": true,
+	"message": true, "description": true, "detail": true, "label": true,
+	"module_specifier": true, "kind_name": true, "code": true, "source": true,
+	"full_name": true, "marker_name": true, "verbatim_module_specifier": true,
+}
+
 var capOptionFields = map[string]bool{
 	"text_document": true, "completion": true, "completion_item": true,
 	"completion_item_kind": true, "completion_list": true, "context_support": true,
@@ -946,6 +1023,23 @@ var rustEnumType = map[string]string{
 
 // pascalVariantAlias fixes Go enum const suffixes that differ from the Rust
 // PascalCase variant names (e.g. `...OrganizeImportsTs` vs `OrganizeImports`).
+// selectorExprOverride replaces `pkg.Name` entirely (for Go consts that
+// have no Rust analog — e.g. TypeScript-extension CodeActionKind strings).
+var selectorExprOverride = map[string]string{
+	"lsproto.CodeActionKindSourceOrganizeImportsTs": `tsc_lsproto::CodeActionKind(std::borrow::Cow::Borrowed("source.organizeImports.ts"))`,
+	"lsproto.CodeActionKindSourceSortImportsTs":     `tsc_lsproto::CodeActionKind(std::borrow::Cow::Borrowed("source.sortImports.ts"))`,
+	"lsproto.CodeActionKindSourceMissingImportsTs":  `tsc_lsproto::CodeActionKind(std::borrow::Cow::Borrowed("source.missingImports.ts"))`,
+	"lsproto.CodeActionKindSourceFixAllTs":          `tsc_lsproto::CodeActionKind(std::borrow::Cow::Borrowed("source.fixAll.ts"))`,
+}
+
+// typeConvConsts maps `pkg.Type("value")` conversions to enum-like const
+// variants where the Rust type is a newtype without a From<&str> ctor.
+var typeConvConsts = map[string]map[string]string{
+	"lsutil.QuotePreference": {"single": "SINGLE", "double": "DOUBLE", "auto": "AUTO"},
+	"lsutil.SemicolonPreference": {"remove": "REMOVE", "insert": "INSERT", "ignore": "IGNORE"},
+	"lsutil.JsxAttributeCompletionStyle": {"auto": "AUTO", "braces": "BRACES", "none": "NONE"},
+}
+
 var pascalVariantAlias = map[string]string{
 	"CodeActionKind.SourceOrganizeImportsTs": "SourceOrganizeImports",
 	"CodeActionKind.SourceSortImportsTs":     "SourceSortImports",
@@ -1047,6 +1141,15 @@ func (tr *translator) call(c *ast.CallExpr) string {
 		case pkg == "stringtestutil" && sel.Sel.Name == "Dedent":
 			return "dedent(" + tr.args(c.Args, 0) + ")"
 		case tr.imports[pkg] != "":
+			if conv, ok := typeConvConsts[pkg+"."+sel.Sel.Name]; ok {
+				if lit, ok2 := c.Args[0].(*ast.BasicLit); ok2 {
+					v := strings.Trim(lit.Value, "`\"")
+					if variant, ok3 := conv[v]; ok3 {
+						return tr.imports[pkg] + "::" + sel.Sel.Name + "::" + variant
+					}
+				}
+				return tr.imports[pkg] + "::" + sel.Sel.Name + "(" + tr.args(c.Args, 0) + ")"
+			}
 			// `pkg.Type(x)` conversion -> `path::Type(x)` (newtype ctors);
 			// known vars/fns take snake names instead.
 			if isTypeName(sel.Sel.Name) && !snakeNames[sel.Sel.Name] {
@@ -1230,6 +1333,7 @@ var variadicSlice = map[string]int{
 	"verify_no_signature_help_for_markers": 0,
 	"verify_signature_help_with_cases": 0, "will_rename_files": 0,
 	"verify_baseline_rename_at_ranges_with_text": 1,
+	"new_content_mapper_fourslash": 3,
 }
 
 // variadicIter — Go `...any` params mapped to `impl IntoIterator<Item=_>`:

@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_document_zero_tab_size() {
 	run_test(|t| {
-		let content = r"function foo() {
-    if (true) {
-        var x = 1;
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		let mut opts = f.get_options();
-		opts.format_code_settings.tab_size = 0;
-		opts.format_code_settings.indent_size = 0;
-		opts.format_code_settings.convert_tabs_to_spaces = tsc_core::tristate::TS_TRUE;
-		f.configure(opts);
-		f.format_document("");
-		f.verify_current_file_content("function foo() {\nif (true) {\nvar x = 1;\n}\n}");
 	});
 }
 

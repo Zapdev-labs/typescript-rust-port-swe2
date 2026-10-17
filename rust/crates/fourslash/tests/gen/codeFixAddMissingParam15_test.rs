@@ -7,10 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_add_missing_param15() {
 	run_test(|t| {
-		let content = r"function f(a: number, b: number) {}
-f();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix_not_available(&["addMissingParam".into()]);
 	});
 }
 

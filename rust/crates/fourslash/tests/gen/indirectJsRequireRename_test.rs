@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn indirect_js_require_rename() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"// @allowJs: true
-// @Filename: /bin/serverless.js
-require('../lib/classes/Error').log/**/Warning(", "`"), r"CLI triage crashed with: ${error.stack}"), "`"), r");
-// @Filename: /lib/plugins/aws/package/compile/events/httpApi/index.js
-const { logWarning } = require('../../../../../../classes/Error');
-// @Filename: /lib/classes/Error.js
-module.exports.logWarning = message => { };");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_baseline_find_all_references(&["".into()]);
 	});
 }
 

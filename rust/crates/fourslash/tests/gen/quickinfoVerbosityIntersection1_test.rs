@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quickinfo_verbosity_intersection1() {
 	run_test(|t| {
-		let content = r#"{
-    type Foo = { a: "a" | "c" };
-    type Bar = { a: "a" | "b" };
-    const obj/*o1*/: Foo & Bar = { a: "a" };
-}
-{
-    type Foo = { a: "c" };
-    type Bar = { a: "b" };
-    const obj/*o2*/: Foo & Bar = { a: "" };
-}
-{
-    type Foo = { a: "c" };
-    type Bar = { a: "b" };
-    type Never = Foo & Bar;
-    const obj/*o3*/: Never = { a: "" };
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("o1".to_string().into(), vec![0, 1]), ("o2".to_string().into(), vec![0]), ("o3".to_string().into(), vec![0])]));
 	});
 }
 

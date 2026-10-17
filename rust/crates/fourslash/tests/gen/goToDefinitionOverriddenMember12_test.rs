@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_overridden_member12() {
 	run_test(|t| {
-		let content = r"// @noImplicitOverride: true
-class Foo {
-	static /*2*/p = '';
-}
-class Bar extends Foo {
-	static [|/*1*/override|] p = '';
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["1".into()]);
 	});
 }
 

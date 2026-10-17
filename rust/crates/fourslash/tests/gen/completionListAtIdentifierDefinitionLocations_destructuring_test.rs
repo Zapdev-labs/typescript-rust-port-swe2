@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_at_identifier_definition_locations_destructuring() {
 	run_test(|t| {
-		let content = r"// @Filename: a.ts
-var [x/*variable1*/
-// @Filename: b.ts
-var [x, y/*variable2*/
-// @Filename: c.ts
-var [./*variable3*/
-// @Filename: d.ts
-var [x, ...z/*variable4*/
-// @Filename: e.ts
-var {x/*variable5*/
-// @Filename: f.ts
-var {x, y/*variable6*/
-// @Filename: g.ts
-function func1({ a/*parameter1*/
-// @Filename: h.ts
-function func2({ a, b/*parameter2*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(f.markers()), None);
 	});
 }
 

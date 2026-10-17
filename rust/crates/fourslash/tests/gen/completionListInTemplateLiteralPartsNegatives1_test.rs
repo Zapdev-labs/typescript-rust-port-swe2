@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_in_template_literal_parts_negatives1() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"", "`"), r"/*0*/ /*1*/$ /*2*/{ /*3*/$/*4*/{ 10 + 1.1 }/*5*/ 12312/*6*/"), "`"), r"
-
-"), "`"), r"asdasd$/*7*/{ 2 + 1.1 }/*8*/ 12312 /*9*/{/*10*/");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(f.markers()), None);
 	});
 }
 

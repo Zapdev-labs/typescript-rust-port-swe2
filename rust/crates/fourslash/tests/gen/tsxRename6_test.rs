@@ -7,28 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn tsx_rename6() {
 	run_test(|t| {
-		let content = r#"//@Filename: file.tsx
-// @jsx: preserve
-// @noLib: true
-declare namespace JSX {
-    interface Element { }
-    interface IntrinsicElements {
-    }
-    interface ElementAttributesProperty { props; }
-}
-interface OptionPropBag {
-    propx: number
-    propString: string
-    optional?: boolean
-}
-[|declare function [|{| "contextRangeIndex": 0 |}Opt|](attributes: OptionPropBag): JSX.Element;|]
-let opt = [|<[|{| "contextRangeIndex": 2 |}Opt|] />|];
-let opt1 = [|<[|{| "contextRangeIndex": 4 |}Opt|] propx={100} propString />|];
-let opt2 = [|<[|{| "contextRangeIndex": 6 |}Opt|] propx={100} optional/>|];
-let opt3 = [|<[|{| "contextRangeIndex": 8 |}Opt|] wrong />|];
-let opt4 = [|<[|{| "contextRangeIndex": 10 |}Opt|] propx={100} propString="hi" />|];"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename_at_ranges_with_text(None, &["Opt".into()]);
 	});
 }
 

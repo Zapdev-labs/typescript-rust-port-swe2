@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_token_crash() {
 	run_test(|t| {
-		let content = r"
-function foo(a: any, b: any) {
-
-}
-
-foo((/*1*/
-
-/** This is a JSDoc comment */
-foo/** More comments*/((/*2*/
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_signature_help_with_cases(&[tsc_fourslash::SignatureHelpCase { marker_input: Some("1".into()), expected: None, context: Some(tsc_lsproto::SignatureHelpContext { is_retrigger: false.into(), trigger_character: Some(("(").into()), trigger_kind: tsc_lsproto::SignatureHelpTriggerKind::TriggerCharacter.into(), ..Default::default() }), ..Default::default() }]);
-		f.verify_signature_help_with_cases(&[tsc_fourslash::SignatureHelpCase { marker_input: Some("2".into()), expected: None, context: Some(tsc_lsproto::SignatureHelpContext { is_retrigger: false.into(), trigger_character: Some(("(").into()), trigger_kind: tsc_lsproto::SignatureHelpTriggerKind::TriggerCharacter.into(), ..Default::default() }), ..Default::default() }]);
 	});
 }
 

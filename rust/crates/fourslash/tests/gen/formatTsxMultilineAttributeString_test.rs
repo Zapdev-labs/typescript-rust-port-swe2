@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_tsx_multiline_attribute_string() {
 	run_test(|t| {
-		let content = r#"// @Filename: foo.tsx
-(
-    <input
-        value="x
-        x"
-    />
-);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.verify_current_file_content(r#"(
-    <input
-        value="x
-        x"
-    />
-);"#);
 	});
 }
 

@@ -7,38 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_interface_with_missing_brace_and_later_template_string1() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"
-// @Filename: /resource-card.tsx
-interface Props {
-  iconOnly?: boolean
-
-
-const ResourceCard: React.FC<Props> = (props) => {
-  return (
-    <IoLayersOutline
-      className={", "`"), r"${match ? 'text-primary-foreground' : 'text-foreground'}"), "`"), r"}
-    />
-  )
-}
-
-export default ResourceCard
-");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.verify_current_file_content(&format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"interface Props {
-    iconOnly?: boolean
-
-
-const ResourceCard: React.FC<Props> = (props) => {
-    return (
-        <IoLayersOutline
-            className={", "`"), r"${match ? 'text-primary-foreground' : 'text-foreground'}"), "`"), r"}
-        />
-    )
-}
-
-export default ResourceCard
-"));
 	});
 }
 

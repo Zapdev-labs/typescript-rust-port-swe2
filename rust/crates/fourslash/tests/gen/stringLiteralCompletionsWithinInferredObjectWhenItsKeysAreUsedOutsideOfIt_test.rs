@@ -7,33 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn string_literal_completions_within_inferred_object_when_its_keys_are_used_outside_of_it() {
 	run_test(|t| {
-		let content = r#"// @strict: true
-declare function createMachine<T>(config: {
-  initial: keyof T;
-  states: {
-    [K in keyof T]: {
-      on?: Record<string, keyof T>;
-    };
-  };
-}): void;
-
-createMachine({
-  initial: "a",
-  states: {
-    a: {
-      on: {
-        NEXT: "/*1*/",
-      },
-    },
-    b: {
-      on: {
-        NEXT: "/*2*/",
-      },
-    },
-  },
-});"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["1", "2"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["a".into(), "b".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

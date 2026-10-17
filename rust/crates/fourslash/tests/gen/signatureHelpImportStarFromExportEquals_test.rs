@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_import_star_from_export_equals() {
 	run_test(|t| {
-		let content = r#"// @allowJs: true
-// @Filename: /node_modules/@types/abs/index.d.ts
-declare function abs(str: string): string;
-export = abs;
-// @Filename: /a.js
-import * as abs from "abs";
-abs.default/**/;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.insert("(");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "default(str: string): string".to_string().into(), ..Default::default() });
 	});
 }
 

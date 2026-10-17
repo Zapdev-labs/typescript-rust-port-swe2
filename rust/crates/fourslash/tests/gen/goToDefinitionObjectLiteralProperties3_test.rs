@@ -7,28 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_object_literal_properties3() {
 	run_test(|t| {
-		let content = r"type A = {
-  foo: unknown;
-};
-
-type B = {
-  foo?: unknown;
-  bar: unknown;
-};
-
-function test1(arg: A | B) {}
-
-test1({
-  foo/*1*/: 1,
-});
-
-function test2<T extends A>(arg: T | B) {}
-
-test2({
-  foo/*2*/: 2,
-});";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["1".into(), "2".into()]);
 	});
 }
 

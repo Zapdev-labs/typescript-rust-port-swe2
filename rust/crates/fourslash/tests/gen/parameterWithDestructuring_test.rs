@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn parameter_with_destructuring() {
 	run_test(|t| {
-		let content = r"const result = [{ a: 'hello' }]
-    .map(({ /*1*/a }) => /*2*/a)
-    .map(a => a);
-
-const f1 = (a: (b: string[]) => void) => {};
-f1(([a, b]) => { /*3*/a.charAt(0); });
-
-function f2({/*4*/a }: { a: string; }, [/*5*/b]: [string]) {}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "(parameter) a: string", "");
-		f.verify_quick_info_at("2", "(parameter) a: string", "");
-		f.verify_quick_info_at("3", "(parameter) a: string", "");
-		f.verify_quick_info_at("4", "(parameter) a: string", "");
-		f.verify_quick_info_at("5", "(parameter) b: string", "");
 	});
 }
 

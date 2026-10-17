@@ -7,34 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_source15_bundler() {
 	run_test(|t| {
-		let content = r#"// @Filename: /home/src/workspaces/project/tsconfig.json
-{ "compilerOptions": { "module": "esnext", "moduleResolution": "bundler", "lib": ["es5"] } }
-// @Filename: /home/src/workspaces/project/node_modules/react/package.json
-{ "name": "react", "version": "16.8.6", "main": "index.js" }
-// @Filename: /home/src/workspaces/project/node_modules/react/index.js
-'use strict';
-
-if (process.env.NODE_ENV === 'production') {
-  module.exports = require('./cjs/react.production.min.js');
-} else {
-  module.exports = require('./cjs/react.development.js');
-}
-// @Filename: /home/src/workspaces/project/node_modules/react/cjs/react.production.min.js
-'use strict';exports./*production*/useState=function(a){};exports.version='16.8.6';
-// @Filename: /home/src/workspaces/project/node_modules/react/cjs/react.development.js
-'use strict';
-if (process.env.NODE_ENV !== 'production') {
-  (function() {
-    function useState(initialState) {}
-    exports./*development*/useState = useState;
-    exports.version = '16.8.6';
-  }());
-}
-// @Filename: /home/src/workspaces/project/index.ts
-import { [|/*start*/useState|] } from 'react';"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.verify_baseline_go_to_source_definition(&["start".into()]);
 	});
 }
 

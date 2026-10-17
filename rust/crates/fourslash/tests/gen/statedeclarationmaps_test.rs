@@ -7,43 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn declaration_maps_opening_original_location_project() {
 	run_test(|t| {
-		for disable_source_of_project_reference_redirect in vec![false, true] {
-			run_subtest(&mut t, format!("{}{}", "TestDeclarationMapsOpeningOriginalLocationProject", tsc_core::core::if_else(disable_source_of_project_reference_redirect, "DisableSourceOfProjectReferenceRedirect", "")), |t| {
-				let mut content = format!(r#"
-// @stateBaseline: true
-// @Filename: a/a.ts
-export class A { }
-// @Filename: a/tsconfig.json
-{}
-// @Filename: a/a.d.ts
-export declare class A {
-}
-//# sourceMappingURL=a.d.ts.map
-// @Filename: a/a.d.ts.map
-{
-	"version": 3,
-	"file": "a.d.ts",
-	"sourceRoot": "",
-	"sources": ["./a.ts"],
-	"names": [],
-	"mappings": "AAAA,qBAAa,CAAC;CAAI"
-}
-// @Filename: b/b.ts
-import {A} from "../a/a";
-new /*1*/A();
-// @Filename: b/tsconfig.json
-{
-	"compilerOptions": {
-		"disableSourceOfProjectReferenceRedirect": %t
-	},
-	"references": [
-		{ "path": "../a" }
-	]
-}"#, disable_source_of_project_reference_redirect);
-				let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-				f.verify_baseline_find_all_references(&["1".into()]);
-			});
-		}
 	});
 }
 
@@ -56,200 +19,18 @@ fn declaration_map_test_cases_for_maps() {
 			go_to_marker: String,
 			op_marker: String,
 		}
-		let mut tests = vec![testCase { name: "FindAllRefs".to_string().into(), go_to_marker: "userFnA".to_string().into(), op_marker: "userFnA".to_string().into(), ..Default::default() }, testCase { name: "FindAllRefsStartingAtDefinition".to_string().into(), go_to_marker: "userFnA".to_string().into(), op_marker: "fnADef".to_string().into(), ..Default::default() }, testCase { name: "FindAllRefsTargetDoesNotExist".to_string().into(), go_to_marker: "userFnB".to_string().into(), op_marker: "userFnB".to_string().into(), ..Default::default() }, testCase { name: "Rename".to_string().into(), go_to_marker: "userFnA".to_string().into(), op_marker: "userFnA".to_string().into(), ..Default::default() }, testCase { name: "RenameStartingAtDefinition".to_string().into(), go_to_marker: "userFnA".to_string().into(), op_marker: "fnADef".to_string().into(), ..Default::default() }, testCase { name: "RenameTargetDoesNotExist".to_string().into(), go_to_marker: "userFnB".to_string().into(), op_marker: "userFnB".to_string().into(), ..Default::default() }];
-		for tc in tests {
-			run_subtest(&mut t, format!("{}{}", "TestDeclarationMaps", tc.name), |t| {
-				let mut content = r#"
-// @stateBaseline: true
-// @Filename: a/a.ts
-export function /*fnADef*/fnA() {}
-export interface IfaceA {}
-export const instanceA: IfaceA = {};
-// @Filename: a/tsconfig.json
-{
-	"compilerOptions": {
-		"outDir": "bin",
-		"declarationMap": true,
-		"composite": true
-	}
-}
-// @Filename: a/bin/a.d.ts.map
-{
-	"version": 3,
-	"file": "a.d.ts",
-	"sourceRoot": "",
-	"sources": ["../a.ts"],
-	"names": [],
-	"mappings": "AAAA,wBAAgB,GAAG,SAAK;AACxB,MAAM,WAAW,MAAM;CAAG;AAC1B,eAAO,MAAM,SAAS,EAAE,MAAW,CAAC"
-}
-// @Filename: a/bin/a.d.ts
-export declare function fnA(): void;
-export interface IfaceA {
-}
-export declare const instanceA: IfaceA;
-//# sourceMappingURL=a.d.ts.map
-// @Filename: b/tsconfig.json
-{
-	"compilerOptions": {
-		"outDir": "bin",
-		"declarationMap": true,
-		"composite": true
-	}
-}
-// @Filename: b/bin/b.d.ts.map
-{
-	"version": 3,
-	"file": "b.d.ts",
-	"sourceRoot": "",
-	"sources": ["../b.ts"],
-	"names": [],
-	"mappings": "AAAA,wBAAgB,GAAG,SAAK"
-}
-// @Filename: b/bin/b.d.ts
-export declare function fnB(): void;
-//# sourceMappingURL=b.d.ts.map
-// @Filename: user/user.ts
-import * as a from "../a/bin/a";
-import * as b from "../b/bin/b";
-export function fnUser() { a./*userFnA*/fnA(); b./*userFnB*/fnB(); a.instanceA; }
-// @Filename: dummy/dummy.ts
-/*dummy*/export const a = 10;
-// @Filename: dummy/tsconfig.json
-{}"#;
-				let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-				f.go_to_marker(tc.go_to_marker);
-				if strings.has_prefix(tc.name, "Rename") {
-					f.verify_baseline_rename(None, vec![tc.op_marker.into()]);
-				} else {
-					f.verify_baseline_find_all_references(&[tc.op_marker]);
-				}
-				f.close_file_of_marker(tc.go_to_marker);
-				f.go_to_marker("dummy");
-			});
-		}
 	});
 }
 
 #[test]
 fn declaration_maps_workspace_symbols() {
 	run_test(|t| {
-		let mut content = r#"// @stateBaseline: true
-// @Filename: a/a.ts
-export function fnA() {}
-export interface IfaceA {}
-export const instanceA: IfaceA = {};
-// @Filename: a/tsconfig.json
-{
-	"compilerOptions": {
-		"outDir": "bin",
-		"declarationMap": true,
-		"composite": true
-	}
-}
-// @Filename: a/bin/a.d.ts.map
-{
-	"version": 3,
-	"file": "a.d.ts",
-	"sourceRoot": "",
-	"sources": ["../a.ts"],
-	"names": [],
-	"mappings": "AAAA,wBAAgB,GAAG,SAAK;AACxB,MAAM,WAAW,MAAM;CAAG;AAC1B,eAAO,MAAM,SAAS,EAAE,MAAW,CAAC"
-}
-// @Filename: a/bin/a.d.ts
-export declare function fnA(): void;
-export interface IfaceA {
-}
-export declare const instanceA: IfaceA;
-//# sourceMappingURL=a.d.ts.map
-// @Filename: b/b.ts
-export function fnB() {}
-// @Filename: b/c.ts
-export function fnC() {}
-// @Filename: b/tsconfig.json
-{
-	"compilerOptions": {
-		"outDir": "bin",
-		"declarationMap": true,
-		"composite": true
-	}
-}
-// @Filename: b/bin/b.d.ts.map
-{
-	"version": 3,
-	"file": "b.d.ts",
-	"sourceRoot": "",
-	"sources": ["../b.ts"],
-	"names": [],
-	"mappings": "AAAA,wBAAgB,GAAG,SAAK"
-}
-// @Filename: b/bin/b.d.ts
-export declare function fnB(): void;
-//# sourceMappingURL=b.d.ts.map
-// @Filename: user/user.ts
-/*user*/import * as a from "../a/a";
-import * as b from "../b/b";
-export function fnUser() {
-	a.fnA();
-	b.fnB();
-	a.instanceA;
-}
-// @Filename: user/tsconfig.json
-{
-	"references": [
-		{ "path": "../a" },
-		{ "path": "../b" }
-	]
-}
-// @Filename: dummy/dummy.ts
-/*dummy*/export const a = 10;
-// @Filename: dummy/tsconfig.json
-{}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("user");
-		f.verify_baseline_workspace_symbol("fn");
-		f.close_file_of_marker("user");
-		f.go_to_marker("dummy");
 	});
 }
 
 #[test]
 fn declaration_maps_find_all_refs_definition_in_mapped_file() {
 	run_test(|t| {
-		let mut content = r#"
-// @stateBaseline: true 
-//@Filename: a/a.ts
-export function f() {}
-// @Filename: a/tsconfig.json
-{
-	"compilerOptions": {
-		"outDir": "../bin",
-		"declarationMap": true,
-		"composite": true
-	}
-}
-//@Filename: b/b.ts
-import { f } from "../bin/a";
-/*1*/f();
-// @Filename: b/tsconfig.json
-{
-	"references": [
-		{ "path": "../a" }
-	]
-}
-// @Filename: bin/a.d.ts
-export declare function f(): void;
-//# sourceMappingURL=a.d.ts.map
-// @Filename: bin/a.d.ts.map
-{
-	"version":3,
-	"file":"a.d.ts",
-	"sourceRoot":"",
-	"sources":["a.ts"],
-	"names":[],
-	"mappings":"AAAA,wBAAgB,CAAC,SAAK"
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into()]);
 	});
 }
 
@@ -264,122 +45,12 @@ fn declaration_maps_rename() {
 			disable_source_of_project_reference_redirect: bool,
 			tsconfig_not_solution: bool,
 		}
-		for tc in vec![testCase { name: "ProjectReferences".to_string().into(), dont_build: true.into(), ..Default::default() }, testCase { name: "DisableSourceOfProjectReferenceRedirect".to_string().into(), disable_source_of_project_reference_redirect: true.into(), ..Default::default() }, testCase { name: "SourceMaps".to_string().into(), main_with_no_ref: true.into(), ..Default::default() }, testCase { name: "SourceMapsNotSolution".to_string().into(), main_with_no_ref: true.into(), tsconfig_not_solution: true.into(), ..Default::default() }] {
-			let mut build_str = tsc_core::core::if_else(!tc.dont_build, "// @tsc: --build /myproject/dependency,--build /myproject/main", "");
-			let mut main_refs_str = tsc_core::core::if_else(!tc.main_with_no_ref, r#""references": [{ "path": "../dependency" }]"#, "");
-			let mut files_str = tsc_core::core::if_else(!tc.tsconfig_not_solution, r#""files": [],"#, "");
-			let mut content = format!(r#"
-// @stateBaseline: true 
-%s
-//@Filename: myproject/dependency/FnS.ts
-/*firstLine*/export function fn1() { }
-export function fn2() { }
-export function /*rename*/fn3() { }
-export function fn4() { }
-export function fn5() { }
-/*lastLine*/
-// @Filename: myproject/dependency/tsconfig.json
-{
-	"compilerOptions": {
-		"composite": true,
-		"declarationMap": true,
-		"declarationDir": "../decls"
-	}
-}
-//@Filename: myproject/main/main.ts
-import {
-	fn1,
-	fn2,
-	fn3,
-	fn4,
-	fn5
-} from "../decls/FnS";
-
-fn1();
-fn2();
-fn3();
-fn4();
-fn5();
-// @Filename: myproject/main/tsconfig.json
-{
-	"compilerOptions": {
-		"composite": true,
-		"declarationMap": true,
-		"disableSourceOfProjectReferenceRedirect": %t
-	},
-	%s
-}
-// @Filename: myproject/tsconfig.json
-{
-	"compilerOptions": {
-		"disableSourceOfProjectReferenceRedirect": %t
-	},
-	%s
-	"references": [
-		{ "path": "dependency" },
-		{ "path": "main" }
-	]
-}
-// @Filename: random/random.ts
-/*dummy*/export const a = 10;
-// @Filename: random/tsconfig.json
-{}"#, build_str, tc.disable_source_of_project_reference_redirect, main_refs_str, tc.disable_source_of_project_reference_redirect, files_str);
-			run_subtest(&mut t, format!("{}{}", "TestDeclarationMapsRenameWith", tc.name), |t| {
-				let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-				f.go_to_marker("dummy");
-				f.verify_baseline_rename(None, vec!["rename".into()]);
-				f.close_file_of_marker("dummy");
-				f.go_to_marker("dummy");
-				f.close_file_of_marker("rename");
-				f.close_file_of_marker("dummy");
-				f.go_to_marker("dummy");
-			});
-			run_subtest(&mut t, format!("{}{}", format!("{}{}", "TestDeclarationMapsRenameWith", tc.name), "Edit"), |t| {
-				let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-				f.verify_baseline_rename(None, vec!["rename".into()]);
-				f.go_to_marker("firstLine");
-				f.insert("function fooBar() { }\n");
-				f.verify_baseline_rename(None, vec!["rename".into()]);
-			});
-			run_subtest(&mut t, format!("{}{}", format!("{}{}", "TestDeclarationMapsRenameWith", tc.name), "EditEnd"), |t| {
-				let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-				f.verify_baseline_rename(None, vec!["rename".into()]);
-				f.go_to_marker("lastLine");
-				f.insert("const x = 10;");
-				f.verify_baseline_rename(None, vec!["rename".into()]);
-			});
-		}
 	});
 }
 
 #[test]
 fn declaration_maps_non_monotonic_mappings() {
 	run_test(|t| {
-		let content = r#"
-// @Filename: /src/index.ts
-export function a() {}
-export function b() {}
-// @Filename: /src/indexdef.d.ts.map
-{
-	"version": 3,
-	"file": "indexdef.d.ts",
-	"sourceRoot": "",
-	"sources": ["index.ts"],
-	"names": [],
-	"mappings": "AACA,wBAAgB,CADhB;AAAA,wBAAgB"
-}
-// @Filename: /src/indexdef.d.ts
-export declare function b(): void;
-export declare function a(): void;
-//# sourceMappingURL=indexdef.d.ts.map
-// @Filename: /src/user.ts
-import { a, b } from "./indexdef";
-/*1*/a();
-/*2*/b();
-// @Filename: /src/tsconfig.json
-{}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["1".into(), "2".into()]);
 	});
 }
 

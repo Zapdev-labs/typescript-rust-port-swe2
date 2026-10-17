@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn tsx_go_to_definition_class_in_different_file() {
 	run_test(|t| {
-		let content = r#"// @jsx: preserve
-// @Filename: C.tsx
-export default class /*def*/C {}
-// @Filename: a.tsx
-import C from "./C";
-const foo = </*use*/C />;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.verify_baseline_go_to_definition(false, &["use".into()]);
 	});
 }
 

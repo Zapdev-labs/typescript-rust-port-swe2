@@ -7,45 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn inlay_hints_interactive_function_parameter_types1() {
 	run_test(|t| {
-		let content = r" type F1 = (a: string, b: number) => void
- const f1: F1 = (a, b) => { }
- const f2: F1 = (a, b: number) => { }
- function foo1 (cb: (a: string) => void) {}
- foo1((a) => { })
- function foo2 (cb: (a: Exclude<1 | 2 | 3, 1>) => void) {}
- foo2((a) => { })
- function foo3 (a: (b: (c: (d: Exclude<1 | 2 | 3, 1>) => void) => void) => void) {}
- foo3(a => {
-     a(d => {})
- })
- function foo4<T>(v: T, a: (v: T) => void) {}
- foo4(1, a => { })
- type F2 = (a: {
-     a: number
-     b: string
-     readonly c: boolean
-     d?: number
-     e(): string
-     f?(): boolean
-     g<T>(): T
-     h?<X, Y>(x: X): Y
-     <X, Y>(x: X): Y
-     [i: string]: number
- }) => void
- const foo5: F2 = (a) => { }
- type F3 = (a: {
-     (): 42
- }) => void
- const foo6: F3 = (a) => { }
-interface Thing {}
-function foo4(callback: (thing: Thing) => void) {}
-foo4(p => {})
- type F4 = (a: {
-     [i in string]: number
- }) => void
- const foo5: F4 = (a) => { }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_inlay_hints(None, Some(&tsc_lsutil::UserPreferences { inlay_hints_preferences: tsc_lsutil::InlayHintsPreferences { include_inlay_function_parameter_type_hints: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 

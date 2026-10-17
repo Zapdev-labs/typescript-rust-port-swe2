@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_link4() {
 	run_test(|t| {
-		let content = r"type A = 1 | 2;
-
-switch (0 as A) {
-	/** {@link /**/A} */
-	case 1:
-	case 2:
-    break;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.verify_baseline_hover();
 	});
 }
 

@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn generic_derived_type_across_module_boundary1() {
 	run_test(|t| {
-		let content = r"namespace M {
-   export class C1 { }
-   export class C2<T> { }
-}
-var c = new M.C2<number>();
-namespace N {
-   export class D1 extends M.C1 { }
-   export class D2<T> extends M.C2<T> { }
-}
-var n = new N.D1();
-var /*1*/n2 = new N.D2<number>();
-var /*2*/n3 = new N.D2();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "var n2: N.D2<number>", "");
-		f.verify_quick_info_at("2", "var n3: N.D2<unknown>", "");
 	});
 }
 

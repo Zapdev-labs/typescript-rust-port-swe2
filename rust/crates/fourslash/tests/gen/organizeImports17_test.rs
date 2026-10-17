@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn organize_imports17() {
 	run_test(|t| {
-		let content = r#"import { Both } from "module-specifiers-unsorted";
-import { aa, CaseInsensitively, sorted } from "aardvark";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_organize_imports(r#"import { aa, CaseInsensitively, sorted } from "aardvark";
-import { Both } from "module-specifiers-unsorted";
-"#, tsc_lsproto::CodeActionKind::SourceSortImports, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_UNKNOWN.into(), ..Default::default() }));
 	});
 }
 

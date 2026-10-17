@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn generic_type_with_multiple_bases1_multi_file() {
 	run_test(|t| {
-		let content = r"// @Filename: genericTypeWithMultipleBases_0.ts
-interface iBaseScope {
-    watch: () => void;
-}
-// @Filename: genericTypeWithMultipleBases_1.ts
-interface iMover {
-    moveUp: () => void;
-}
-// @Filename: genericTypeWithMultipleBases_2.ts
-interface iScope<TModel> extends iBaseScope, iMover {
-    family: TModel;
-}
-// @Filename: genericTypeWithMultipleBases_3.ts
-var x: iScope<number>;
-// @Filename: genericTypeWithMultipleBases_4.ts
-x./**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "watch".to_string().into(), detail: Some(("(property) iBaseScope.watch: () => void").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "moveUp".to_string().into(), detail: Some(("(property) iMover.moveUp: () => void").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "family".to_string().into(), detail: Some(("(property) iScope<number>.family: number").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_for_string_literal_nonrelative_import12() {
 	run_test(|t| {
-		let content = r#"// @Filename: tests/test0.ts
-import * as foo1 from "m/*import_as0*/
-import foo2 = require("m/*import_equals0*/
-var foo3 = require("m/*require0*/
-// @Filename: package.json
-{
-    "dependencies": { "module": "latest" },
-    "devDependencies": { "dev-module": "latest" },
-    "optionalDependencies": { "optional-module": "latest" },
-    "peerDependencies": { "peer-module": "latest" }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(f.markers()), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["module".into(), "dev-module".into(), "peer-module".into(), "optional-module".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

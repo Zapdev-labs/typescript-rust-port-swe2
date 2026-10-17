@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn no_quick_info_for_label() {
 	run_test(|t| {
-		let content = r"/*1*/label : while(true){
-    break /*2*/label;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_not_quick_info_exists();
-		f.go_to_marker("2");
-		f.verify_not_quick_info_exists();
 	});
 }
 

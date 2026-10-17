@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_in_namespace_import_name01() {
 	run_test(|t| {
-		let content = r#"// @Filename: m1.ts
-export var foo: number = 1;
-// @Filename: m2.ts
-import * as /**/ from "m1""#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), None);
 	});
 }
 

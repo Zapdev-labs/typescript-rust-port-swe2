@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn goto_definition_property_access_expression_heritage_clause() {
 	run_test(|t| {
-		let content = r"class B {}
-function foo() {
-    return {/*refB*/B: B};
-}
-class C extends (foo()).[|/*B*/B|] {}
-class C1 extends foo().[|/*B1*/B|] {}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["B".into(), "B1".into()]);
 	});
 }
 

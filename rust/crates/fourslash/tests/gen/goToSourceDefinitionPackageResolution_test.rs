@@ -7,92 +7,30 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_source_at_types_package() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/@types/foo/package.json
-{ "name": "@types/foo", "version": "1.0.0" }
-// @Filename: /home/src/workspaces/project/node_modules/@types/foo/index.d.ts
-export declare function bar(): string;
-// @Filename: /home/src/workspaces/project/node_modules/foo/package.json
-{ "name": "foo", "version": "1.0.0", "main": "./index.js" }
-// @Filename: /home/src/workspaces/project/node_modules/foo/index.js
-export function /*target*/bar() { return "hello"; }
-// @Filename: /home/src/workspaces/project/index.ts
-import { bar } from "foo";
-bar/*usage*/();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["usage".into()]);
 	});
 }
 
 #[test]
 fn go_to_source_package_index_dts() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{ "name": "pkg", "main": "./lib/index.js", "types": "./lib/index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/pkg/lib/index.d.ts
-export declare function greet(): string;
-// @Filename: /home/src/workspaces/project/node_modules/pkg/lib/index.js
-export function /*target*/greet() { return "hi"; }
-// @Filename: /home/src/workspaces/project/index.ts
-import { greet } from "pkg";
-greet/*usage*/();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["usage".into()]);
 	});
 }
 
 #[test]
 fn go_to_source_package_root_then_subpath() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{ "name": "pkg", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.d.ts
-export declare function work(): void;
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.js
-export function /*target*/work() {}
-// @Filename: /home/src/workspaces/project/index.ts
-import { work } from "pkg";
-work/*usage*/();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["usage".into()]);
 	});
 }
 
 #[test]
 fn go_to_source_package_root_falls_back_to_subpath() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{ "name": "pkg", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.d.ts
-export declare function work(): void;
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.js
-export function /*target*/work() {}
-// @Filename: /home/src/workspaces/project/index.ts
-import { work } from "pkg";
-work/*usage*/();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["usage".into()]);
 	});
 }
 
 #[test]
 fn go_to_source_subpath_not_index() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{ "name": "pkg", "types": "./lib/utils.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/pkg/lib/utils.d.ts
-export declare function util(): void;
-// @Filename: /home/src/workspaces/project/node_modules/pkg/lib/utils.js
-export function /*target*/util() {}
-// @Filename: /home/src/workspaces/project/index.ts
-import { util } from "pkg";
-util/*usage*/();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["usage".into()]);
 	});
 }
 

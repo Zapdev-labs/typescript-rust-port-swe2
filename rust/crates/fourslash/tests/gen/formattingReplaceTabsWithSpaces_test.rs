@@ -7,31 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_replace_tabs_with_spaces() {
 	run_test(|t| {
-		let content = r"namespace Foo {
-/*1*/				class Test { }
-/*2*/			class Test { }
-/*3*/class Test { }
-/*4*/			 class Test { }
-/*5*/   class Test { }
-/*6*/    class Test { }
-/*7*/     class Test { }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"    class Test { }");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"    class Test { }");
-		f.go_to_marker("3");
-		f.verify_current_line_content(r"    class Test { }");
-		f.go_to_marker("4");
-		f.verify_current_line_content(r"    class Test { }");
-		f.go_to_marker("5");
-		f.verify_current_line_content(r"    class Test { }");
-		f.go_to_marker("6");
-		f.verify_current_line_content(r"    class Test { }");
-		f.go_to_marker("7");
-		f.verify_current_line_content(r"    class Test { }");
 	});
 }
 

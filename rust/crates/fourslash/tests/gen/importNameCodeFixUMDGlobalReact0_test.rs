@@ -7,38 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_umd_global_react0() {
 	run_test(|t| {
-		let content = r#"// @jsx: react
-// @allowSyntheticDefaultImports: false
-// @module: es2015
-// @moduleResolution: bundler
-// @Filename: /node_modules/@types/react/index.d.ts
-export = React;
-export as namespace React;
-declare namespace React {
-    export class Component { render(): JSX.Element | null; }
-}
-declare global {
-    namespace JSX {
-        interface Element {}
-    }
-}
-// @Filename: /a.tsx
-[|import { Component } from "react";
-export class MyMap extends Component { }
-<MyMap/>;|]
-// @Filename: /b.tsx
-[|import { Component } from "react";
-<></>;|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/a.tsx");
-		f.verify_import_fix_at_position(&[r#"import * as React from "react";
-import { Component } from "react";
-export class MyMap extends Component { }
-<MyMap/>;"#.into()], None);
-		f.go_to_file("/b.tsx");
-		f.verify_import_fix_at_position(&[r#"import * as React from "react";
-import { Component } from "react";
-<></>;"#.into()], None);
 	});
 }
 

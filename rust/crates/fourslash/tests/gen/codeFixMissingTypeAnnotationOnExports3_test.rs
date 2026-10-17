@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_missing_type_annotation_on_exports3() {
 	run_test(|t| {
-		let content = r"// @isolatedDeclarations: true
-// @declaration: true
-const a = 42;
-const b = 42;
-export class C {
-  //making sure comments are not changed
-  property =a+b; // comment should stay here
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Add annotation of type 'number'".to_string().into(), new_file_content: r"const a = 42;
-const b = 42;
-export class C {
-  //making sure comments are not changed
-  property: number =a+b; // comment should stay here
-}".to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

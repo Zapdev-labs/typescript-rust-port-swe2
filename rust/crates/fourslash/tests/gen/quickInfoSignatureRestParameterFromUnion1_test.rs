@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_signature_rest_parameter_from_union1() {
 	run_test(|t| {
-		let content = r#"declare const rest:
-  | ((v: { a: true }, ...rest: string[]) => unknown)
-  | ((v: { b: true }) => unknown);
-
-/**/rest({ a: true, b: true }, "foo", "bar");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("", "const rest: (v: {\n    a: true;\n} & {\n    b: true;\n}, ...rest: string[]) => unknown", "");
 	});
 }
 

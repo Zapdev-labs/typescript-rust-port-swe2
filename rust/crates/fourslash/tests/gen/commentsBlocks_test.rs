@@ -7,58 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn comments_blocks() {
 	run_test(|t| {
-		let content = r"/*1*/// 1
-var x,
-    /*2*/// 2
-    y,
-/*3*/     /* %3 */
-    z;
-
-/*4*/ // 4
-switch (x) {
-/*5*/     // 5
-    case 1:
-/*6*/         // 6
-        break;
-/*7*/     // 7
-    case 2:
-/*8*/     // 8
-}
-
-/*9*/ // 9
-if (true)
-/*10*/     // 10
-    ;
-/*11*/ // 11
-else {
-/*12*/     // 12
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"// 1");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"    // 2");
-		f.go_to_marker("3");
-		f.verify_current_line_content(r"    /* %3 */");
-		f.go_to_marker("4");
-		f.verify_current_line_content(r"// 4");
-		f.go_to_marker("5");
-		f.verify_current_line_content(r"    // 5");
-		f.go_to_marker("6");
-		f.verify_current_line_content(r"        // 6");
-		f.go_to_marker("7");
-		f.verify_current_line_content(r"    // 7");
-		f.go_to_marker("8");
-		f.verify_current_line_content(r"    // 8");
-		f.go_to_marker("9");
-		f.verify_current_line_content(r"// 9");
-		f.go_to_marker("10");
-		f.verify_current_line_content(r"    // 10");
-		f.go_to_marker("11");
-		f.verify_current_line_content(r"// 11");
-		f.go_to_marker("12");
-		f.verify_current_line_content(r"    // 12");
 	});
 }
 

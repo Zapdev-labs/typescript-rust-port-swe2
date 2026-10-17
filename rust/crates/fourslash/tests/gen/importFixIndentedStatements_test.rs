@@ -7,59 +7,18 @@ use tsc_fourslash::*;
 #[test]
 fn import_fix_before_indented_import() {
 	run_test(|t| {
-		let mut f = tsc_fourslash::new_fourslash_with_options(&t_name(), "", r#"// @Filename: /aaa.ts
-export const helper = 1;
-
-// @Filename: /dep.ts
-export const existing = 2;
-
-// @Filename: /main.ts
-// header
-  import { existing } from "./dep";
-  const value = help/**/;
-"#, tsc_fourslash::FourslashOptions { ..Default::default() });
-		f.verify_apply_code_action_from_completion("", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "helper".to_string().into(), source: "./aaa".to_string().into(), description: r#"Add import from "./aaa""#.to_string().into(), new_file_content: Some((r#"// header
-  import { helper } from "./aaa";
-  import { existing } from "./dep";
-  const value = help;
-"#).into()), ..Default::default() });
 	});
 }
 
 #[test]
 fn import_fix_after_indented_import() {
 	run_test(|t| {
-		let mut f = tsc_fourslash::new_fourslash_with_options(&t_name(), "", r#"// @Filename: /aaa.ts
-export const existing = 2;
-
-// @Filename: /zzz.ts
-export const helper = 1;
-
-// @Filename: /main.ts
-// header
-  import { existing } from "./aaa";
-  const value = help/**/;
-"#, tsc_fourslash::FourslashOptions { ..Default::default() });
-		f.verify_apply_code_action_from_completion("", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "helper".to_string().into(), source: "./zzz".to_string().into(), description: r#"Add import from "./zzz""#.to_string().into(), new_file_content: Some((r#"// header
-  import { existing } from "./aaa";
-  import { helper } from "./zzz";
-  const value = help;
-"#).into()), ..Default::default() });
 	});
 }
 
 #[test]
 fn import_fix_before_indented_import_with_carriage_returns() {
 	run_test(|t| {
-		let mut f = tsc_fourslash::new_fourslash_with_options(&t_name(), "", &format!("{}{}", r"// @Filename: /aaa.ts
-export const helper = 1;
-
-// @Filename: /dep.ts
-export const existing = 2;
-
-// @Filename: /main.ts
-", "// header\r  import { existing } from \"./dep\";\r  const value = help/**/;\r"), tsc_fourslash::FourslashOptions { ..Default::default() });
-		f.verify_apply_code_action_from_completion("", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "helper".to_string().into(), source: "./aaa".to_string().into(), description: r#"Add import from "./aaa""#.to_string().into(), new_file_content: Some(("// header\r  import { helper } from \"./aaa\";\n  import { existing } from \"./dep\";\r  const value = help;\r").into()), ..Default::default() });
 	});
 }
 

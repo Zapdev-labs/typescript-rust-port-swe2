@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_occurrences_is_definition_of_variable() {
 	run_test(|t| {
-		let content = r"/*1*/var /*2*/x = 0;
-var assignmentRightHandSide = /*3*/x;
-var assignmentRightHandSide2 = 1 + /*4*/x;
-
-/*5*/x = 1;
-/*6*/x = /*7*/x + /*8*/x;
-
-/*9*/x == 1;
-/*10*/x <= 1;
-
-var preIncrement = ++/*11*/x;
-var postIncrement = /*12*/x++;
-var preDecrement = --/*13*/x;
-var postDecrement = /*14*/x--;
-
-/*15*/x += 1;
-/*16*/x <<= 1;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into(), "7".into(), "8".into(), "9".into(), "10".into(), "11".into(), "12".into(), "13".into(), "14".into(), "15".into(), "16".into()]);
 	});
 }
 

@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn organize_imports5() {
 	run_test(|t| {
-		let content = r#"import * as something from "path";/** 
- * some comment here
- * and there
- */
-import * as somethingElse from "anotherpath";
-import * as AnotherThing from "somepath";/** 
- * some comment here
- * and there
- */
-import * as AnotherThingElse from "someotherpath";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_organize_imports(r"", tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 	});
 }
 

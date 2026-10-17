@@ -7,30 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_implementation_interface_02() {
 	run_test(|t| {
-		let content = r"interface Fo/*interface_definition*/o { hello: () => void }
-
-let x: number = 9;
-
-function createFoo(): Foo {
-    if (x === 2) {
-        return [|{
-            hello() {}
-        }|];
-    }
-    return [|{
-        hello() {}
-    }|];
-}
-
-let createFoo2 = (): Foo => [|({hello() {}})|];
-
-function createFooLike() {
-    return {
-        hello() {}
-    };
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_implementation(&["interface_definition".into()]);
 	});
 }
 

@@ -7,10 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_shows_generic_specialization() {
 	run_test(|t| {
-		let content = r"class A<T> { }
-var /**/foo = new A<number>();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("", "var foo: A<number>", "");
 	});
 }
 

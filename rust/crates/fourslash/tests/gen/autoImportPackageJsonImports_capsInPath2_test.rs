@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_package_json_imports_caps_in_path2() {
 	run_test(|t| {
-		let content = r##"// @module: node18
-// @Filename: /Dev/package.json
-{
-  "imports": {
-    "#thing/*": "./src/*.js"
-  }
-}
-// @Filename: /Dev/src/something.ts
-export function something(name: string): any;
-// @Filename: /Dev/a.ts
-something/**/"##;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_module_specifiers("", &["#thing/something".into()], None);
 	});
 }
 

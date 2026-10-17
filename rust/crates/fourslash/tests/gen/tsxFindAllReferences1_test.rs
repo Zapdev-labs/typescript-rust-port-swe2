@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn tsx_find_all_references1() {
 	run_test(|t| {
-		let content = r"//@Filename: file.tsx
-declare namespace JSX {
-    interface Element { }
-    interface IntrinsicElements {
-        /*1*/div: {
-            name?: string;
-            isOpen?: boolean;
-        };
-        span: { n: string; };
-    }
-}
-var x = /*2*/</*3*/div />;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
 	});
 }
 

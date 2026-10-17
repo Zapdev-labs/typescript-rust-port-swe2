@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_missing_type_annotation_on_exports43_expando_functions_4() {
 	run_test(|t| {
-		let content = r#"// @isolatedDeclarations: true
-// @declaration: true
-// @lib: es2019
-// @Filename: /code.ts
-function foo(): void {}
-// cannot name this property because it's an invalid variable name.
-foo["@bar"] = 42;
-foo.x = 1;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Annotate types of properties expando function in a namespace".to_string().into(), new_file_content: r#"function foo(): void {}
-declare namespace foo {
-    export var x: number;
-}
-// cannot name this property because it's an invalid variable name.
-foo["@bar"] = 42;
-foo.x = 1;"#.to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

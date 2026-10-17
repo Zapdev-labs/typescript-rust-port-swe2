@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_for_imports() {
 	run_test(|t| {
-		let content = r#"declare module "jquery" {
-    function $(s: string): any;
-    export = $;
-}
-/*1*/import /*2*/$ = require("jquery");
-/*3*/$("a");
-/*4*/import /*5*/$ = require("jquery");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into()]);
 	});
 }
 

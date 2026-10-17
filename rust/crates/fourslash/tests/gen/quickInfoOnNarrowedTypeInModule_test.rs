@@ -7,52 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_on_narrowed_type_in_module() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r#"// @strict: false
-var strOrNum: string | number;
-namespace m {
-    var nonExportedStrOrNum: string | number;
-    export var exportedStrOrNum: string | number;
-    var num: number;
-    var str: string;
-    if (typeof /*1*/nonExportedStrOrNum === "number") {
-        num = /*2*/nonExportedStrOrNum;
-    }
-    else {
-        str = /*3*/nonExportedStrOrNum.length;
-    }
-    if (typeof /*4*/exportedStrOrNum === "number") {
-        strOrNum = /*5*/exportedStrOrNum;
-    }
-    else {
-        strOrNum = /*6*/exportedStrOrNum;
-    }
-}
-if (typeof m./*7*/exportedStrOrNum === "number") {
-    strOrNum = m./*8*/exportedStrOrNum;
-}
-else {
-    strOrNum = m./*9*/exportedStrOrNum;
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "var nonExportedStrOrNum: string | number", "");
-		f.verify_quick_info_at("2", "var nonExportedStrOrNum: number", "");
-		f.verify_quick_info_at("3", "var nonExportedStrOrNum: string", "");
-		f.verify_quick_info_at("4", "var m.exportedStrOrNum: string | number", "");
-		f.verify_quick_info_at("5", "var m.exportedStrOrNum: number", "");
-		f.verify_quick_info_at("6", "var m.exportedStrOrNum: string", "");
-		f.verify_quick_info_at("7", "var m.exportedStrOrNum: string | number", "");
-		f.verify_quick_info_at("8", "var m.exportedStrOrNum: number", "");
-		f.verify_quick_info_at("9", "var m.exportedStrOrNum: string", "");
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "nonExportedStrOrNum".to_string().into(), detail: Some(("var nonExportedStrOrNum: string | number").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("2"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "nonExportedStrOrNum".to_string().into(), detail: Some(("var nonExportedStrOrNum: number").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("3"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "nonExportedStrOrNum".to_string().into(), detail: Some(("var nonExportedStrOrNum: string").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("4"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "exportedStrOrNum".to_string().into(), detail: Some(("var exportedStrOrNum: string | number").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("5"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "exportedStrOrNum".to_string().into(), detail: Some(("var exportedStrOrNum: number").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("6"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "exportedStrOrNum".to_string().into(), detail: Some(("var exportedStrOrNum: string").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("7"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "exportedStrOrNum".to_string().into(), detail: Some(("var m.exportedStrOrNum: string | number").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("8"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "exportedStrOrNum".to_string().into(), detail: Some(("var m.exportedStrOrNum: number").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("9"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "exportedStrOrNum".to_string().into(), detail: Some(("var m.exportedStrOrNum: string").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

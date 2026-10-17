@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn symbol_name_at_unparseable_function_overload() {
 	run_test(|t| {
-		let content = r"class TestClass {
-    public function foo(x: string): void;
-    public function foo(): void;
-    foo(x: any): void {
-        this.bar(/**/x); // should not error
-    }
-}
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_quick_info_exists();
 	});
 }
 

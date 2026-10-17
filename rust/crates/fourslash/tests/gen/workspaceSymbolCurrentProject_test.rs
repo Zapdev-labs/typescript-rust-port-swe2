@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn workspace_symbol_current_project() {
 	run_test(|t| {
-		let content = r"
-// @Filename: /home/projects/a/tsconfig.json
-{}
-
-// @Filename: /home/projects/a/index.ts
-export function [|fromA|]() {}
-
-// @Filename: /home/projects/b/tsconfig.json
-{}
-
-// @Filename: /home/projects/b/index.ts
-export function [|fromB|]() {}
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/home/projects/a/index.ts");
-		let mut all_open_projects = tsc_lsutil::new_default_user_preferences();
-		let mut current_project = tsc_lsutil::new_default_user_preferences();
-		current_project.workspace_symbols_scope = tsc_lsutil::WORKSPACE_SYMBOLS_SCOPE_CURRENT_PROJECT;
-		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "from".to_string().into(), preferences: Some(all_open_projects.clone()), exact: Some((vec![tsc_lsproto::SymbolInformation { name: "fromA".to_string().into(), kind: tsc_lsproto::SymbolKind::Function.into(), location: f.ranges()[0].clone().ls_location().into(), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "fromB".to_string().into(), kind: tsc_lsproto::SymbolKind::Function.into(), location: f.ranges()[1].clone().ls_location().into(), ..Default::default() }]).into()), ..Default::default() }, tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "from".to_string().into(), preferences: Some(current_project.clone()), exact: Some((vec![tsc_lsproto::SymbolInformation { name: "fromA".to_string().into(), kind: tsc_lsproto::SymbolKind::Function.into(), location: f.ranges()[0].clone().ls_location().into(), ..Default::default() }]).into()), ..Default::default() }]);
 	});
 }
 

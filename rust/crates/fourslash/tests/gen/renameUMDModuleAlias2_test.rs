@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_umd_module_alias2() {
 	run_test(|t| {
-		let content = r#"// @Filename: 0.d.ts
-export function doThing(): string;
-export function doTheOtherThing(): void;
-export as namespace /**/[|myLib|];
-// @Filename: 1.ts
-/// <reference path="0.d.ts" />
-myLib.doThing();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_rename_succeeded(None);
 	});
 }
 

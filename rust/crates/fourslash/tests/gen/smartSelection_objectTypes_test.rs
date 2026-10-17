@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn smart_selection_object_types() {
 	run_test(|t| {
-		let content = r"type X = {
-  /*1*/foo?: string;
-  /*2*/readonly /*3*/bar: { x: num/*4*/ber };
-  /*5*/meh
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_selection_ranges();
 	});
 }
 

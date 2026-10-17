@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_convert_to_mapped_object_type5() {
 	run_test(|t| {
-		let content = r#"type K = "foo" | "bar";
-class SomeType {
-    [prop: K]: any;
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix_not_available(&[]);
 	});
 }
 

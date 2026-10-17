@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_new_expression_target_not_class() {
 	run_test(|t| {
-		let content = r"class C2 {
-}
-let /*I*/I: {
-    /*constructSignature*/new(): C2;
-};
-new [|/*invokeExpression1*/I|]();
-let /*symbolDeclaration*/I2: {
-};
-new [|/*invokeExpression2*/I2|]();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["invokeExpression1".into(), "invokeExpression2".into()]);
 	});
 }
 

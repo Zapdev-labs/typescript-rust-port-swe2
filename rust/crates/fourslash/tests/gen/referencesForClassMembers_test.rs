@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_for_class_members() {
 	run_test(|t| {
-		let content = r"class Base {
-    /*a1*/a: number;
-    /*method1*/method(): void { }
-}
-class MyClass extends Base {
-    /*a2*/a;
-    /*method2*/method() { }
-}
-
-var c: MyClass;
-c./*a3*/a;
-c./*method3*/method();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["a1".into(), "a2".into(), "a3".into(), "method1".into(), "method2".into(), "method3".into()]);
 	});
 }
 

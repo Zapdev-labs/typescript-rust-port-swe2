@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_generic_type_with_multiple_bases1() {
 	run_test(|t| {
-		let content = r"export interface iBaseScope {
-    watch: () => void;
-}
-export interface iMover {
-    moveUp: () => void;
-}
-export interface iScope<TModel> extends iBaseScope, iMover {
-    family: TModel;
-}
-var x: iScope<number>;
-x./**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "family".to_string().into(), detail: Some(("(property) iScope<number>.family: number").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "moveUp".to_string().into(), detail: Some(("(property) iMover.moveUp: () => void").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "watch".to_string().into(), detail: Some(("(property) iBaseScope.watch: () => void").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

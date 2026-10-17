@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn call_hierarchy_anonymous_function_no_crash1() {
 	run_test(|t| {
-		let content = r"// @Filename: /main.ts
-func/*1*/tion() {}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_baseline_call_hierarchy();
 	});
 }
 

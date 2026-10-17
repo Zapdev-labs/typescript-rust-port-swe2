@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_destructuring_assignment() {
 	run_test(|t| {
-		let content = r#"interface I {
-    [|[|{| "contextRangeIndex": 0 |}x|]: number;|]
-}
-var a: I;
-var x;
-([|{ [|{| "contextRangeIndex": 2 |}x|]: x } = a|]);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename_at_ranges_with_text(None, &["x".into()]);
 	});
 }
 

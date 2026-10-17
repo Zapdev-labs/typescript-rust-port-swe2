@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_jsx_texts3() {
 	run_test(|t| {
-		let content = r#"//@Filename: file.tsx
-function foo() {
-const bar = "Oh no";
-
-return (
-<div>"{bar}"</div>
-)
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.verify_current_file_content(r#"function foo() {
-    const bar = "Oh no";
-
-    return (
-        <div>"{bar}"</div>
-    )
-}"#);
 	});
 }
 

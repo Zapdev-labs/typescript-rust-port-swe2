@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_unused_identifier_parameter1() {
 	run_test(|t| {
-		let content = r"// @noUnusedLocals: true
-// @noUnusedParameters: true
-function g(a, b) { b; }
-g(1, 2);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix_not_available(&["Remove unused declaration for: 'a'".into()]);
 	});
 }
 

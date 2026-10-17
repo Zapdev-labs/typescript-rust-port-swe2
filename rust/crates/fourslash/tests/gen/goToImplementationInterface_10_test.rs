@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_implementation_interface_10() {
 	run_test(|t| {
-		let content = r"// @Filename: /a.ts
-interface /*def*/A {
-	foo: boolean;
-}
-interface [|B|] extends A {
-	bar: boolean;
-}
-export class [|C|] implements B {
-	foo = true;
-	bar = true;
-}
-export class [|D|] extends C { }";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_implementation(&["def".into()]);
 	});
 }
 

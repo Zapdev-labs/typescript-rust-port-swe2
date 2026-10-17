@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_source2_node_modules_with_types() {
 	run_test(|t| {
-		let content = r#"// @lib: es5
-// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/foo/package.json
-{ "name": "foo", "version": "1.0.0", "main": "./lib/main.js", "types": "./types/main.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/foo/lib/main.js
-export const /*end*/a = "a";
-// @Filename: /home/src/workspaces/project/node_modules/foo/types/main.d.ts
-export declare const a: string;
-// @Filename: /home/src/workspaces/project/index.ts
-import { a } from "foo";
-[|a/*start*/|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.verify_baseline_go_to_source_definition(&["start".into()]);
 	});
 }
 

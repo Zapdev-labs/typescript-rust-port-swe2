@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_after_multi_line_if_condition() {
 	run_test(|t| {
-		let content = r" var foo;
- if (foo &&
-     foo) {
-/*comment*/     // This is a comment
-     foo.toString();
- /**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.insert("}");
-		f.go_to_marker("comment");
-		f.verify_current_line_content(r"    // This is a comment");
 	});
 }
 

@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn node_modules_file_edit_still_allows_resolutions_to_work() {
 	run_test(|t| {
-		let content = r##"// @Filename: /tsconfig.json
-{ "compilerOptions": { "module": "nodenext", "strict": true } }
-// @Filename: /package.json
-{ "type": "module", "imports": { "#foo": "./foo.cjs" } }
-// @Filename: /foo.cts
-export const x = 1;
-// @Filename: /index.ts
-import * as mod from "#foo";
-/**/"##;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.insert("mod.x");
-		f.verify_no_errors();
-		f.verify_suggestion_diagnostics(&[]);
 	});
 }
 

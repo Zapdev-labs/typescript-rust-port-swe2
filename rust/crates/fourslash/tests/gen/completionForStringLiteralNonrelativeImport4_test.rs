@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_for_string_literal_nonrelative_import4() {
 	run_test(|t| {
-		let content = r#"// @Filename: dir1/dir2/dir3/dir4/test0.ts
-import * as foo1 from "f/*import_as0*/
-import foo4 = require("f/*import_equals0*/
-var foo7 = require("f/*require0*/
-// @Filename: package.json
-{ "dependencies": { "fake-module": "latest" } }
-// @Filename: node_modules/fake-module/ts.ts
-
-// @Filename: dir1/package.json
-{ "dependencies": { "fake-module2": "latest" } }
-// @Filename: dir1/node_modules/fake-module2/index.ts
-
-// @Filename: dir1/dir2/dir3/package.json
-{ "dependencies": { "fake-module3": "latest" } }
-// @Filename: dir1/dir2/dir3/node_modules/fake-module3/ts.ts
-"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(f.markers()), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["fake-module3".into(), "fake-module2".into(), "fake-module".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

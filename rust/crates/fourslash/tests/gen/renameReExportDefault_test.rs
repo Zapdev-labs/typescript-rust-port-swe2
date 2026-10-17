@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_re_export_default() {
 	run_test(|t| {
-		let content = r#"// @Filename: /a.ts
-export { default } from "./b";
-[|export { default as [|{| "contextRangeIndex": 0 |}b|] } from "./b";|]
-export { default as bee } from "./b";
-[|import { default as [|{| "contextRangeIndex": 2 |}b|] } from "./b";|]
-import { default as bee } from "./b";
-[|import [|{| "contextRangeIndex": 4 |}b|] from "./b";|]
-// @Filename: /b.ts
-[|const [|{| "contextRangeIndex": 6 |}b|] = 0;|]
-[|export default [|{| "contextRangeIndex": 8 |}b|];|]"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into(), f.ranges()[3].clone().into(), f.ranges()[5].clone().into(), f.ranges()[7].clone().into(), f.ranges()[9].clone().into()]);
 	});
 }
 

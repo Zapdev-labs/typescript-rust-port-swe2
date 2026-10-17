@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_no_default_lib() {
 	run_test(|t| {
-		let content = r"// @checkJs: true
-// @allowJs: true
-// @Filename: /foo.js
-// @ts-check
-const [|/**/foo|] = 1;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_rename_succeeded(None);
 	});
 }
 

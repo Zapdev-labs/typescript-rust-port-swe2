@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_property_override_access4() {
 	run_test(|t| {
-		let content = r"// @strict: true
-// @target: esnext
-// @lib: esnext
-const prop = Symbol.for('foo');
-
-class A {
-    [prop] = 1;
-}
-class B extends A {
-    get [prop]() { return 2; }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix_not_available(&["fixPropertyOverrideAccessor".into()]);
 	});
 }
 

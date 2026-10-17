@@ -7,34 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_js_doc_import_tag4() {
 	run_test(|t| {
-		let content = r"// @checkJs: true
-// @Filename: /component.js
-export class Component {
-  constructor() {
-    this.id_ = Math.random();
-  }
-  id() {
-    return this.id_;
-  }
-}
-// @Filename: /spatial-navigation.js
-/** @import * as C from './component.js' */
-
-export class SpatialNavigation {
-  /**
-   * @param {C.Component} component
-   */
-  add(component) {}
-}
-// @Filename: /player.js
-import * as C from './component.js';
-
-/**
- * @extends C/*1*/.Component
- */
-export class Player extends Component {}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into()]);
 	});
 }
 

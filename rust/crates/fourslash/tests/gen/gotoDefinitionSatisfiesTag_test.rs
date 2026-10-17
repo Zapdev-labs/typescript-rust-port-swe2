@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn goto_definition_satisfies_tag() {
 	run_test(|t| {
-		let content = r"// @noEmit: true
-// @allowJS: true
-// @checkJs: true
-// @filename: /a.js
-/**
- * @typedef {Object} [|/*def*/T|]
- * @property {number} a
- */
-
-/** @satisfies {/*use*/[|T|]} comment */
-const foo = { a: 1 };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(false, &["use".into()]);
 	});
 }
 

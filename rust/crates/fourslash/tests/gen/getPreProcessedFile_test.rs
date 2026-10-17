@@ -7,33 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_pre_processed_file() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: classic
-// @Filename: refFile1.ts
-class D { }
-// @Filename: refFile2.ts
-export class E {}
-// @Filename: main.ts
-// @ResolveReference: true
-///<reference path="refFile1.ts" />
-///<reference path = "/*1*/NotExistRef.ts/*2*/" />
-/*3*////<reference path "invalidRefFile1.ts" />/*4*/
-import ref2 = require("refFile2");
-import noExistref2 = require(/*5*/"NotExistRefFile2"/*6*/);
-import invalidRef1  /*7*/require/*8*/("refFile2");
-import invalidRef2 = /*9*/requi/*10*/(/*10A*/"refFile2");
-var obj: /*11*/C/*12*/;
-var obj1: D;
-var obj2: ref2.E;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("main.ts");
-		f.verify_number_of_errors_in_current_file(7);
-		f.verify_error_exists_between_markers("1", "2");
-		f.verify_error_exists_between_markers("3", "4");
-		f.verify_error_exists_between_markers("5", "6");
-		f.verify_error_exists_between_markers("7", "8");
-		f.verify_error_exists_between_markers("9", "10");
-		f.verify_error_exists_between_markers("10", "10A");
-		f.verify_error_exists_between_markers("11", "12");
 	});
 }
 

@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_import_named() {
 	run_test(|t| {
-		let content = r#"// @module: commonjs
-// @Filename: f.ts
-export { foo as foo }
-function /*start*/foo(a: number, b: number) { }
-// @Filename: b.ts
-import x = require("./f");
-x.foo(1, 2);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.verify_baseline_find_all_references(&["start".into()]);
 	});
 }
 

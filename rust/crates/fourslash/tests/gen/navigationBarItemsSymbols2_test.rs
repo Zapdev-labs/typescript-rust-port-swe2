@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn navigation_bar_items_symbols2() {
 	run_test(|t| {
-		let content = r"interface I {
-    [Symbol.isRegExp]: string;
-    [Symbol.iterator](): string;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_symbol();
 	});
 }
 

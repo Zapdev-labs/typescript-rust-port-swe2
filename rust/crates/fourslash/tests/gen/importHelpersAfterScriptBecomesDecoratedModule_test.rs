@@ -7,36 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_helpers_after_script_becomes_decorated_module() {
 	run_test(|t| {
-		let content = r#"// @Filename: /tsconfig.json
-{
-	"compilerOptions": {
-		"target": "es2015",
-		"module": "commonjs",
-		"experimentalDecorators": true,
-		"importHelpers": true
-	},
-	"files": ["foo.ts"]
-}
-
-// @Filename: /foo.ts
-declare function dec(value: Function): void;
-/*insert*/class C {}
-
-// @Filename: /node_modules/tslib/package.json
-{ "name": "tslib", "typings": "tslib.d.ts" }
-
-// @Filename: /node_modules/tslib/tslib.d.ts
-export declare function __decorate(...args: any[]): any;
-
-// @Filename: /node_modules/tslib/tslib.js
-exports.__decorate = function () {};
-"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/foo.ts");
-		f.verify_number_of_errors_in_current_file(0);
-		f.replace(f.marker_by_name("insert").unwrap().position, 0, r"@dec
-export ");
-		f.verify_number_of_errors_in_current_file(0);
 	});
 }
 

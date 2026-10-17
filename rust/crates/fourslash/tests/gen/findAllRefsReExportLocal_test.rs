@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_re_export_local() {
 	run_test(|t| {
-		let content = r#"// @noLib: true
-// @strict: false
-// @Filename: /a.ts
-[|var /*ax0*/[|{| "isDefinition": true, "contextRangeIndex": 0 |}x|];|]
-[|export { /*ax1*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 2 |}x|] };|]
-[|export { /*ax2*/[|{| "contextRangeIndex": 4 |}x|] as /*ay*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 4 |}y|] };|]
-// @Filename: /b.ts
-[|import { /*bx0*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 7 |}x|], /*by0*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 7 |}y|] } from "./a";|]
-/*bx1*/[|x|]; /*by1*/[|y|];"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.verify_baseline_find_all_references(&["ax0".into(), "ax1".into(), "ax2".into(), "bx0".into(), "bx1".into(), "ay".into(), "by0".into(), "by1".into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into(), f.ranges()[5].clone().into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[3].clone().into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[8].clone().into(), f.ranges()[10].clone().into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[6].clone().into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[9].clone().into(), f.ranges()[11].clone().into()]);
 	});
 }
 

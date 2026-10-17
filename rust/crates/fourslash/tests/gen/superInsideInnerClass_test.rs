@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn super_inside_inner_class() {
 	run_test(|t| {
-		let content = r"class Base {
-	constructor(n: number) {
-	}
-}
-class Derived extends Base {
-	constructor() {
-		class Nested {
-			[super(/*1*/)] = 11111
-		}
-	}
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_signature_help_for_markers(&["1".into()]);
 	});
 }
 

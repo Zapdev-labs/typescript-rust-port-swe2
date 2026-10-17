@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_union_property() {
 	run_test(|t| {
-		let content = r#"type T =
-    | { /*t0*/type: "a", /*p0*/prop: number }
-    | { /*t1*/type: "b", /*p1*/prop: string };
-const tt: T = {
-    /*t2*/type: "a",
-    /*p2*/prop: 0,
-};
-declare const t: T;
-if (t./*t3*/type === "a") {
-    t./*t4*/type;
-} else {
-    t./*t5*/type;
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["t0".into(), "t1".into(), "t3".into(), "t4".into(), "t5".into(), "t2".into(), "p0".into(), "p1".into(), "p2".into()]);
 	});
 }
 

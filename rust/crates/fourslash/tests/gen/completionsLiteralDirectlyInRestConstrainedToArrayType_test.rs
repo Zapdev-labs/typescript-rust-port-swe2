@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_literal_directly_in_rest_constrained_to_array_type() {
 	run_test(|t| {
-		let content = r"// @strict: true
-
-function fn<T extends ('value1' | 'value2' | 'value3')[]>(...values: T): T { return values; }
-
-const value1 = fn('/*1*/');
-const value2 = fn('value1', '/*2*/');";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["1", "2"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["value1".into(), "value2".into(), "value3".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

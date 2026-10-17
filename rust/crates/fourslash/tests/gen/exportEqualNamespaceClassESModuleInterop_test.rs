@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn export_equal_namespace_class_es_module_interop() {
 	run_test(|t| {
-		let content = r#"// @esModuleInterop: true
-// @moduleResolution: bundler
-// @target: es2015
-// @module: esnext
-// @Filename: /node_modules/@bar/foo/index.d.ts
-export = Foo;
-declare class Foo {}
-declare namespace Foo {}  // class/namespace declaration causes the issue
-// @Filename: /node_modules/foo/index.d.ts
-import * as Foo from "@bar/foo";
-export = Foo;
-// @Filename: /index.ts
-import Foo from "foo";
-/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/index.ts");
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["Foo".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

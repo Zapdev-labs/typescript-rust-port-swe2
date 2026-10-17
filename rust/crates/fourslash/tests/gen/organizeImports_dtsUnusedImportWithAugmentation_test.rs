@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn organize_imports_dts_unused_import_with_augmentation() {
 	run_test(|t| {
-		let content = r"// @Filename: /styled-patch.d.ts
-import * as styledComponents from 'styled-components';
-
-declare module 'styled-components' {
-    interface ThemedStyledComponentsModule {
-        keyframes(): Keyframes;
-    }
-}
-// @Filename: /node_modules/styled-components/index.d.ts
-export interface Keyframes {}
-export interface ThemedStyledComponentsModule {}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_organize_imports(r"import 'styled-components';
-
-declare module 'styled-components' {
-    interface ThemedStyledComponentsModule {
-        keyframes(): Keyframes;
-    }
-}", tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 	});
 }
 

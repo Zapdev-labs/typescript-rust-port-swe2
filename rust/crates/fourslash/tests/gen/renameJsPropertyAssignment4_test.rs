@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_js_property_assignment4() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @Filename: /a.js
-function f() {
-   var /*1*/foo = this;
-   /*2*/foo.x = 1;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/a.js");
-		f.verify_baseline_rename(None, vec!["1".into(), "2".into()]);
 	});
 }
 

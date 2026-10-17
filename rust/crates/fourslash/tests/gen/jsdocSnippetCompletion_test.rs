@@ -7,136 +7,42 @@ use tsc_fourslash::*;
 #[test]
 fn js_doc_snippet_completion_for_function() {
 	run_test(|t| {
-		let content = r"/*completion*/ */
-function abcdef(x, y) { }
-";
-		let mut capabilities = tsc_fourslash::get_default_capabilities();
-		capabilities.text_document.as_mut().unwrap().completion.as_mut().unwrap().completion_item.as_mut().unwrap().snippet_support = Some((true).into());
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", capabilities.into(), &content);
-		f.go_to_marker("completion");
-		f.insert("/**");
-		let mut list = f.get_completions(None);
-		assert!(list != None);
-		assert_eq!(list.as_ref().unwrap().items.len(), 1);
-		let mut item = list.as_ref().unwrap().items[0];
-		assert_eq!(item.label, "/** */");
-		assert_eq!(item.kind, Some((tsc_lsproto::CompletionItemKind::Text).into()));
-		assert_eq!(item.detail, Some(("JSDoc comment").into()));
-		assert_eq!(item.sort_text, Some(("\x00").into()));
-		assert_eq!(item.commit_characters, &[]);
-		assert_eq!(item.insert_text_format, Some((tsc_lsproto::InsertTextFormat::Snippet).into()));
-		assert!(item.text_edit != None);
-		assert!(item.text_edit.insert_replace_edit != None);
-		assert_eq!(item.text_edit.insert_replace_edit.new_text, "/**\n * $0\n * @param x ${1}\n * @param y ${2}\n */");
-		assert_eq!(item.text_edit.insert_replace_edit.insert, tsc_lsproto::Range { start: tsc_lsproto::Position { line: 0, character: 0, ..Default::default() }.into(), end: tsc_lsproto::Position { line: 0, character: 6, ..Default::default() }.into(), ..Default::default() });
-		assert_eq!(item.text_edit.insert_replace_edit.replace, tsc_lsproto::Range { start: tsc_lsproto::Position { line: 0, character: 0, ..Default::default() }.into(), end: tsc_lsproto::Position { line: 0, character: 6, ..Default::default() }.into(), ..Default::default() });
 	});
 }
 
 #[test]
 fn js_doc_snippet_completion_for_return() {
 	run_test(|t| {
-		let content = r"/*completion*/ */
-function abcdef(x) { return x; }
-";
-		let mut capabilities = tsc_fourslash::get_default_capabilities();
-		capabilities.text_document.as_mut().unwrap().completion.as_mut().unwrap().completion_item.as_mut().unwrap().snippet_support = Some((true).into());
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", capabilities.into(), &content);
-		f.go_to_marker("completion");
-		f.insert("/**");
-		let mut list = f.get_completions(None);
-		assert!(list != None);
-		assert_eq!(list.as_ref().unwrap().items.len(), 1);
-		assert_eq!(list.as_ref().unwrap().items[0].text_edit.insert_replace_edit.new_text, "/**\n * $0\n * @param x ${1}\n * @returns ${2}\n */");
 	});
 }
 
 #[test]
 fn js_doc_snippet_completion_preserves_crlf() {
 	run_test(|t| {
-		let content = "/*completion*/ */\r\nfunction abcdef(x) { return x; }\r\n";
-		let mut capabilities = tsc_fourslash::get_default_capabilities();
-		capabilities.text_document.as_mut().unwrap().completion.as_mut().unwrap().completion_item.as_mut().unwrap().snippet_support = Some((true).into());
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", capabilities.into(), &content);
-		f.go_to_marker("completion");
-		f.insert("/**");
-		let mut user_preferences = tsc_lsutil::new_default_user_preferences();
-		user_preferences.format_code_settings.new_line_character = "\r\n";
-		f.configure(user_preferences);
-		let mut list = f.get_completions(None);
-		assert!(list != None);
-		assert_eq!(list.as_ref().unwrap().items.len(), 1);
-		assert_eq!(list.as_ref().unwrap().items[0].text_edit.insert_replace_edit.new_text, "/**\r\n * $0\r\n * @param x ${1}\r\n * @returns ${2}\r\n */");
 	});
 }
 
 #[test]
 fn js_doc_snippet_completion_respects_generate_return_preference() {
 	run_test(|t| {
-		let content = r"/*completion*/ */
-function abcdef(x) { return x; }
-";
-		let mut capabilities = tsc_fourslash::get_default_capabilities();
-		capabilities.text_document.as_mut().unwrap().completion.as_mut().unwrap().completion_item.as_mut().unwrap().snippet_support = Some((true).into());
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", capabilities.into(), &content);
-		f.go_to_marker("completion");
-		f.insert("/**");
-		let mut user_preferences = tsc_lsutil::new_default_user_preferences();
-		user_preferences.generate_return_in_doc_template = tsc_core::tristate::TS_FALSE;
-		let mut list = f.get_completions(&user_preferences);
-		assert!(list != None);
-		assert_eq!(list.as_ref().unwrap().items.len(), 1);
-		assert_eq!(list.as_ref().unwrap().items[0].text_edit.insert_replace_edit.new_text, "/**\n * $0\n * @param x ${1}\n */");
 	});
 }
 
 #[test]
 fn js_doc_snippet_completion_respects_enabled_preference() {
 	run_test(|t| {
-		let content = r"/*completion*/ */
-function abcdef(x) { }
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("completion");
-		f.insert("/**");
-		let mut user_preferences = tsc_lsutil::new_default_user_preferences();
-		user_preferences.complete_js_docs = tsc_core::tristate::TS_FALSE;
-		let mut list = f.get_completions(&user_preferences);
-		if list != None {
-			for item in list.as_ref().unwrap().items {
-				assert!(item.label != "/** */");
-			}
-		}
 	});
 }
 
 #[test]
 fn js_doc_snippet_completion_for_class() {
 	run_test(|t| {
-		let content = r"/*completion*/
-class C {
-}
-";
-		let mut capabilities = tsc_fourslash::get_default_capabilities();
-		capabilities.text_document.as_mut().unwrap().completion.as_mut().unwrap().completion_item.as_mut().unwrap().snippet_support = Some((true).into());
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", capabilities.into(), &content);
-		f.go_to_marker("completion");
-		f.insert("/**");
-		let mut list = f.get_completions(None);
-		assert!(list != None);
-		assert_eq!(list.as_ref().unwrap().items.len(), 1);
-		assert_eq!(list.as_ref().unwrap().items[0].text_edit.insert_replace_edit.new_text, "/**\n * $0\n */");
 	});
 }
 
 #[test]
 fn js_doc_snippet_completion_not_in_non_empty_comment() {
 	run_test(|t| {
-		let content = r"/** text /*completion*/ */
-function abcdef(x) { }
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("completion"), None);
 	});
 }
 

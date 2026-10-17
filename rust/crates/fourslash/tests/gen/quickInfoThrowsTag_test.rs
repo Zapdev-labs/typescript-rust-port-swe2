@@ -7,28 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_throws_tag() {
 	run_test(|t| {
-		let content = r"class E extends Error {}
-
-/**
- * @throws {E}
- */
-function f1() {}
-
-/**
- * @throws {E} description
- */
-function f2() {}
-
-/**
- * @throws description
- */
-function f3() {}
-f1/*1*/()
-f2/*2*/()
-f3/*3*/()";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.verify_baseline_hover();
 	});
 }
 

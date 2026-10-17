@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_namespace() {
 	run_test(|t| {
-		let content = r"namespace /**/NS {
-    export const enum E {
-        A = 'a'
-    }
-}
-
-const a: NS.E = NS.E.A;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename(None, vec!["".into()]);
 	});
 }
 

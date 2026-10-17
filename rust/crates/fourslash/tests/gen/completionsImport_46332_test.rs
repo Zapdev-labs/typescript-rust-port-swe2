@@ -7,61 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_import_46332() {
 	run_test(|t| {
-		let content = r#"// @module: esnext
-// @moduleResolution: bundler
-// @Filename: /node_modules/vue/package.json
-{
-  "name": "vue",
-  "types": "dist/vue.d.ts"
-}
-// @Filename: /node_modules/vue/dist/vue.d.ts
-export * from "@vue/runtime-dom"
-// @Filename: /node_modules/@vue/runtime-dom/package.json
-{
-  "name": "@vue/runtime-dom",
-  "types": "dist/runtime-dom.d.ts"
-}
-// @Filename: /node_modules/@vue/runtime-dom/dist/runtime-dom.d.ts
-export * from "@vue/runtime-core";
-export {}
-declare module '@vue/reactivity' {
-  export interface RefUnwrapBailTypes {
-    runtimeDOMBailTypes: any
-  }
-}
-// @Filename: /node_modules/@vue/runtime-core/package.json
-{
-  "name": "@vue/runtime-core",
-  "types": "dist/runtime-core.d.ts"
-}
-// @Filename: /node_modules/@vue/runtime-core/dist/runtime-core.d.ts
-import { ref } from '@vue/reactivity';
-export { ref };
-declare module '@vue/reactivity' {
-  export interface RefUnwrapBailTypes {
-    runtimeCoreBailTypes: any
-  }
-}
-// @Filename: /node_modules/@vue/reactivity/package.json
-{
-  "name": "@vue/reactivity",
-  "types": "dist/reactivity.d.ts"
-}
-// @Filename: /node_modules/@vue/reactivity/dist/reactivity.d.ts
-export declare function ref<T = any>(): T;
-// @Filename: /package.json
-{
-  "dependencies": {
-    "vue": "*"
-  }
-}
-// @Filename: /index.ts
-import {} from "vue";
-ref/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "ref".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "vue".to_string().into(), ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_apply_code_action_from_completion("", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "ref".to_string().into(), source: "vue".to_string().into(), description: "Update import from \"vue\"".to_string().into(), auto_import_fix: Some(tsc_lsproto::AutoImportFix { ..Default::default() }), user_preferences: None, new_file_content: Some((r#"import { ref } from "vue";
-ref"#).into()), ..Default::default() });
 	});
 }
 

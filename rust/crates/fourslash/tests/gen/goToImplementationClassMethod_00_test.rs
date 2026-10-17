@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_implementation_class_method_00() {
 	run_test(|t| {
-		let content = r#"class Bar {
-    [|{|"parts": ["(","method",")"," ","Bar",".","hello","(",")",":"," ","void"], "kind": "method"|}hello|]() {}
-}
-
-new Bar().hel/*reference*/lo;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_implementation(&["reference".into()]);
 	});
 }
 

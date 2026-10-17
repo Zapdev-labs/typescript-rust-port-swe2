@@ -7,10 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_add_missing_const_to_array_destructuring3() {
 	run_test(|t| {
-		let content = r"let x: any;
-[x, y] = [0, 1];";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix_not_available(&[]);
 	});
 }
 

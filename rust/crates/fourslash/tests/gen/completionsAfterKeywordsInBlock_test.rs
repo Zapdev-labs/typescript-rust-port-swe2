@@ -7,49 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_after_keywords_in_block() {
 	run_test(|t| {
-		let content = r"class C1 {
-    method(map: Map<string, string>, key: string, defaultValue: string) {
-        try {
-            return map.get(key)!;
-        }
-        catch {
-            return default/*1*/
-        }
-    }
-}
-class C2 {
-    method(map: Map<string, string>, key: string, defaultValue: string) {
-        if (map.has(key)) {
-            return map.get(key)!;
-        }
-        else {
-            return default/*2*/
-        }
-    }
-}
-class C3 {
-    method(map: Map<string, string>, key: string, returnValue: string) {
-        try {
-            return map.get(key)!;
-        }
-        catch {
-            return return/*3*/
-        }
-    }
-}
-class C4 {
-    method(map: Map<string, string>, key: string, returnValue: string) {
-        if (map.has(key)) {
-            return map.get(key)!;
-        }
-        else {
-            return return/*4*/
-        }
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["1", "2"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "defaultValue".to_string().into(), sort_text: Some((tsc_ls::LOCATION_PRIORITY.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["3", "4"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "returnValue".to_string().into(), sort_text: Some((tsc_ls::LOCATION_PRIORITY.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

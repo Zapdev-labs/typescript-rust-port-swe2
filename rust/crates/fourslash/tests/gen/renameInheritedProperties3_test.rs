@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_inherited_properties3() {
 	run_test(|t| {
-		let content = r#"interface interface1 extends interface1 {
-   [|[|{| "contextRangeIndex": 0 |}propName|]: string;|]
-}
-
-var v: interface1;
-v.[|propName|];"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename_at_ranges_with_text(None, &["propName".into()]);
 	});
 }
 

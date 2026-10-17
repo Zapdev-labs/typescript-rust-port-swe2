@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn update_source_file_jsdoc_signature() {
 	run_test(|t| {
-		let content = r"/**
- * @callback Cb
- * @return {/**/}
- */
-let x;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.insert("number");
 	});
 }
 

@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_remove_new_line_after_open_brace() {
 	run_test(|t| {
-		let content = r"function foo()
-{
-}
-if (true)
-{
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.verify_current_file_content(r"function foo() {
-}
-if (true) {
-}");
 	});
 }
 

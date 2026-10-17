@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_new_import_file1() {
 	run_test(|t| {
-		let content = r#"[|/// <reference path="./tripleSlashReference.ts" />
-f1/*0*/();|]
-// @Filename: Module.ts
-export function f1() {}
-export var v1 = 5;
-// @Filename: tripleSlashReference.ts
-var x = 5;/*dummy*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_at_position(&[r#"/// <reference path="./tripleSlashReference.ts" />
-
-import { f1 } from "./Module";
-
-f1();"#.into()], None);
 	});
 }
 

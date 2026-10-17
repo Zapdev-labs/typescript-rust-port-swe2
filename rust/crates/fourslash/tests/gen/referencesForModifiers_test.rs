@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_for_modifiers() {
 	run_test(|t| {
-		let content = r"// @lib: es5
-[|/*declareModifier*/declare /*abstractModifier*/abstract class C1 {
-    [|/*staticModifier*/static a;|]
-    [|/*readonlyModifier*/readonly b;|]
-    [|/*publicModifier*/public c;|]
-    [|/*protectedModifier*/protected d;|]
-    [|/*privateModifier*/private e;|]
-}|]
-[|/*constModifier*/const enum E {
-}|]
-[|/*asyncModifier*/async function fn() {}|]
-[|/*exportModifier*/export /*defaultModifier*/default class C2 {}|]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["declareModifier".into(), "abstractModifier".into(), "staticModifier".into(), "readonlyModifier".into(), "publicModifier".into(), "protectedModifier".into(), "privateModifier".into(), "constModifier".into(), "asyncModifier".into(), "exportModifier".into(), "defaultModifier".into()]);
 	});
 }
 

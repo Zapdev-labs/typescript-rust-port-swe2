@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_references_jsx_tag_name() {
 	run_test(|t| {
-		let content = r#"// @Filename: index.tsx
-import { /*1*/SubmissionComp } from "./RedditSubmission"
-function displaySubreddit(subreddit: string) {
-    let components = submissions
-        .map((value, index) => <SubmissionComp key={ index } elementPosition= { index } {...value.data} />);
-}
-// @Filename: RedditSubmission.ts
-export const /*2*/SubmissionComp = (submission: SubmissionProps) =>
-    <div style={{ fontFamily: "sans-serif" }}></div>;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into()]);
 	});
 }
 

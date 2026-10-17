@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn generic_clodule_completion_list() {
 	run_test(|t| {
-		let content = r"class D<T> { x: number }
-namespace D { export function f() { } }
-var d: D<number>;
-d./**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["x".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_require_umd() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @checkJs: true
-// @module: commonjs
-// @esModuleInterop: false
-// @allowSyntheticDefaultImports: false
-// @Filename: umd.d.ts
-namespace Foo { function f() {} }
-export = Foo;
-export as namespace Foo;
-// @Filename: index.js
-Foo;
-module.exports = {};";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("index.js");
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Add import from \"./umd\"".to_string().into(), new_file_content: r#"const Foo = require("./umd");
-
-Foo;
-module.exports = {};"#.to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

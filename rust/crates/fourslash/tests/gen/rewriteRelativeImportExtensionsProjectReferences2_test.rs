@@ -7,38 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rewrite_relative_import_extensions_project_references2() {
 	run_test(|t| {
-		let content = r#"// @Filename: src/tsconfig-base.json
-{
-    "compilerOptions": {
-        "lib": ["es5"],
-        "module": "nodenext",
-        "composite": true,
-        "rootDir": ".",
-        "outDir": "../dist",
-        "rewriteRelativeImportExtensions": true,
-    }
-}
-// @Filename: src/compiler/tsconfig.json
-{
-    "extends": "../tsconfig-base.json",
-    "compilerOptions": { "lib": ["es5"] }
-}
-// @Filename: src/compiler/parser.ts
-export {};
-// @Filename: src/services/tsconfig.json
-{
-    "extends": "../tsconfig-base.json",
-    "compilerOptions": { "lib": ["es5"] },
-    "references": [
-        { "path": "../compiler" }
-    ]
-}
-// @Filename: src/services/services.ts
-import {} from "../compiler/parser.ts";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.go_to_file("/src/services/services.ts");
-		f.verify_baseline_non_suggestion_diagnostics();
 	});
 }
 

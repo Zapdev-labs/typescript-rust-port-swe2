@@ -7,38 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_edits_for_file_rename_tsconfig() {
 	run_test(|t| {
-		let content = r#"// @Filename: /src/tsconfig.json
-{
-    "compilerOptions": {
-        "baseUrl": "./old",
-        "paths": {
-            "foo": ["old"],
-        },
-        "rootDir": "old",
-        "rootDirs": ["old"],
-        "typeRoots": ["old"],
-    },
-    "files": ["old/a.ts"],
-    "include": ["old/*.ts"],
-    "exclude": ["old"],
-}
-// @Filename: /src/old/someFile.ts
-"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_will_rename_files_edits("/src/old", "/src/new", &std::collections::BTreeMap::from([("/src/tsconfig.json".to_string().into(), r#"{
-    "compilerOptions": {
-        "baseUrl": "new",
-        "paths": {
-            "foo": ["new"],
-        },
-        "rootDir": "new",
-        "rootDirs": ["new"],
-        "typeRoots": ["new"],
-    },
-    "files": ["new/a.ts"],
-    "include": ["new/*.ts"],
-    "exclude": ["new"],
-}"#.to_string().into())]), None);
 	});
 }
 

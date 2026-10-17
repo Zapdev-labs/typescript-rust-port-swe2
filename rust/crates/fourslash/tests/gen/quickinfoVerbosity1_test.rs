@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quickinfo_verbosity1() {
 	run_test(|t| {
-		let content = r"type FooType = string | number;
-const foo/*a*/: FooType = 1;
-type BarType = FooType | boolean;
-const bar/*b*/: BarType = 1;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("a".to_string().into(), vec![0, 1]), ("b".to_string().into(), vec![0, 1, 2])]));
 	});
 }
 

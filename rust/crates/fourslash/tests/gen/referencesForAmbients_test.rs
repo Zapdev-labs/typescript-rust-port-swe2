@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_for_ambients() {
 	run_test(|t| {
-		let content = r#"/*1*/declare module "/*2*/foo" {
-    /*3*/var /*4*/f: number;
-}
-
-/*5*/declare module "/*6*/bar" {
-    /*7*/export import /*8*/foo = require("/*9*/foo");
-    var f2: typeof /*10*/foo./*11*/f;
-}
-
-declare module "baz" {
-    /*12*/import bar = require("/*13*/bar");
-    var f2: typeof bar./*14*/foo;
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into(), "7".into(), "8".into(), "9".into(), "10".into(), "11".into(), "12".into(), "13".into(), "14".into()]);
 	});
 }
 

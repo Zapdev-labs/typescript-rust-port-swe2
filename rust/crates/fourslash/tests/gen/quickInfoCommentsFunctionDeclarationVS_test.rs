@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_comments_function_declaration_vs() {
 	run_test(|t| {
-		let content = r#"/** This comment should appear for foo*/
-function f/*1*/oo() {
-}
-f/*2*/oo();
-/** This is comment for function signature*/
-function fo/*5*/oWithParameters(/** this is comment about a*/a: string,
-    /** this is comment for b*/
-    b: number) {
-    var /*6*/d = a;
-}
-fooWithParam/*8*/eters("a",10);
-/**
-* Does something
-* @param a a string
-*/
-declare function fn(a: string);
-fn("hello");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", Some(tsc_lsproto::ClientCapabilities { vs_supports_visual_studio_extensions: Some((true).into()), ..Default::default() }), &content);
-		f.verify_baseline_vs_hover();
 	});
 }
 

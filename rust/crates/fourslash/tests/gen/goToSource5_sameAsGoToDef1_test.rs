@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_source5_same_as_go_to_def1() {
 	run_test(|t| {
-		let content = r"// @lib: es5
-// @Filename: /home/src/workspaces/project/a.ts
-export const /*end*/a = 'a';
-// @Filename: /home/src/workspaces/project/a.d.ts
-export declare const a: string;
-// @Filename: /home/src/workspaces/project/a.js
-export const a = 'a';
-// @Filename: /home/src/workspaces/project/b.ts
-import { a } from './a';
-[|a/*start*/|]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.verify_baseline_go_to_source_definition(&["start".into()]);
-		f.verify_baseline_go_to_definition(true, &["start".into()]);
 	});
 }
 

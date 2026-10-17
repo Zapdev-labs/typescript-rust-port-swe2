@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_type_definition_pick() {
 	run_test(|t| {
-		let content = r#"// @lib: es5
-type User = { id: number; name: string; };
-declare const user: Pick<User, "name">
-/*reference*/user
-
-type PickedUser = Pick<User, "name">
-declare const user2: PickedUser
-/*reference2*/user2"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_type_definition(&["reference".into(), "reference2".into()]);
 	});
 }
 

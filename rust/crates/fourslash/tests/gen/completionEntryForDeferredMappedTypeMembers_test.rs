@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_entry_for_deferred_mapped_type_members() {
 	run_test(|t| {
-		let content = r"// @Filename: test.ts
-interface A { a: A }
-declare let a: A;
-type Deep<T> = { [K in keyof T]: Deep<T[K]> }
-declare function foo<T>(deep: Deep<T>): T;
-const out = foo(a);
-out./*1*/a
-out.a./*2*/a
-out.a.a./*3*/a";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(f.markers()), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["a".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

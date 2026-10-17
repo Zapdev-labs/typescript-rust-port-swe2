@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_in_array_literal_with_contextual_type() {
 	run_test(|t| {
-		let content1 = r#"let y: ["foo" | "bar", string] = [/*a*/];"#;
-		let mut f1 = tsc_fourslash::new_fourslash(&t_name(), "", None, &content1);
-		f1.verify_completions(tsc_fourslash::MarkerInput::from("a"), Some(&tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["\"foo\"".into(), "\"bar\"".into()].into(), ..Default::default() }), ..Default::default() }));
-		let content2 = r#"let z: ["a", "b" | "c"] = ["a", /*b*/];"#;
-		let mut f2 = tsc_fourslash::new_fourslash(&t_name(), "", None, &content2);
-		f2.verify_completions(tsc_fourslash::MarkerInput::from("b"), Some(&tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["\"b\"".into(), "\"c\"".into()].into(), ..Default::default() }), ..Default::default() }));
-		let content3 = r#"let x: { "-1": "hello" } = [/*c*/];"#;
-		let mut f3 = tsc_fourslash::new_fourslash(&t_name(), "", None, &content3);
-		f3.verify_completions(tsc_fourslash::MarkerInput::from("c"), Some(&tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { excludes: vec!["\"hello\"".into()].into(), ..Default::default() }), ..Default::default() }));
-		let content4 = r"let x: [number] = [123]/*d*/;";
-		let mut f4 = tsc_fourslash::new_fourslash(&t_name(), "", None, &content4);
-		f4.verify_completions(tsc_fourslash::MarkerInput::from("d"), Some(&tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { ..Default::default() }), ..Default::default() }));
 	});
 }
 

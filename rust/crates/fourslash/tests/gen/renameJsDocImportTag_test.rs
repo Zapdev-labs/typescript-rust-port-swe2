@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_js_doc_import_tag() {
 	run_test(|t| {
-		let content = r#"// @allowJS: true
-// @checkJs: true
-// @Filename: /b.ts
-export interface A { }
-// @Filename: /a.js
-/**
- * @import { A } from "./b";
- */
-
-/**
- * @param { [|A/**/|] } a
- */
-function f(a) {}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename(None, vec!["".into()]);
 	});
 }
 

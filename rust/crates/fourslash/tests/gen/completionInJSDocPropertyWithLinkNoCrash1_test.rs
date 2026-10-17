@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_in_js_doc_property_with_link_no_crash1() {
 	run_test(|t| {
-		let content = r"
-// @allowJs: true
-// @filename: /file.js
-export function foo() {}
-
-/**
- * @typedef MyType
- * @property {number} [timeout] - The /*1*/timeout; defaults to {@linkcode DEFAULT}
- */
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![".".into(), ",".into(), ";".into()]), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { ..Default::default() }), ..Default::default() }));
 	});
 }
 

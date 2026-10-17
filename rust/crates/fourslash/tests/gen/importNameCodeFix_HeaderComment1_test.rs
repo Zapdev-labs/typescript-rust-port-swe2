@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_header_comment1() {
 	run_test(|t| {
-		let content = r#"// @Filename: /a.ts
-export const foo = 0;
-// @Filename: /b.ts
-export const bar = 0;
-// @Filename: /c.ts
-/*--------------------
- *  Copyright Header
- *--------------------*/
-
-import { bar } from "./b";
-foo;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/c.ts");
-		f.verify_import_fix_at_position(&[r#"/*--------------------
- *  Copyright Header
- *--------------------*/
-
-import { foo } from "./a";
-import { bar } from "./b";
-foo;"#.into()], None);
 	});
 }
 

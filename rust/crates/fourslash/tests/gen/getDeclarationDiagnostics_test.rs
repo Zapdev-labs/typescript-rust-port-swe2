@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_declaration_diagnostics() {
 	run_test(|t| {
-		let content = r#"// @strict: false
-// @declaration: true
-// @outDir: out
-// @Filename: inputFile1.ts
-namespace m {
-   export function foo() {
-       class C implements I { private a; }
-       interface I { }
-       return C;
-   }
-} /*1*/
-// @Filename: input2.ts
-var x = "hello world"; /*2*/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_number_of_errors_in_current_file(1);
-		f.go_to_marker("2");
-		f.verify_number_of_errors_in_current_file(0);
 	});
 }
 

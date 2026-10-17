@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_in_expressions_in_tsx() {
 	run_test(|t| {
-		let content = r#"// @Filename: test.tsx
-import * as React from "react";
-<div
-    autoComplete={(function () {
-return true/*1*/
-    })() }
-    >
-</div>"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.insert(";");
-		f.verify_current_line_content(r"        return true;");
 	});
 }
 

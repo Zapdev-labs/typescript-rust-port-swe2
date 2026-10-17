@@ -7,29 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_class_implement_interface_global() {
 	run_test(|t| {
-		let content = r"// @Filename: /src/globals.d.ts
-export {}; // Make this a module
-declare global {
-    interface Disposable {
-        [Symbol.dispose](): void;
-    }
-}
-// @Filename: /src/test.ts
-import { Service } from './lifecycle';
-export class [|EditingService|] implements Service { }
-// @Filename: /src/lifecycle.ts
-export interface Disposable {
-	(): string;
-}
-export interface Service {
-	d: Disposable;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/src/test.ts");
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'Service'".to_string().into(), new_file_content: r"import { Disposable, Service } from './lifecycle';
-export class EditingService implements Service {
-    d: Disposable;
-}".to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

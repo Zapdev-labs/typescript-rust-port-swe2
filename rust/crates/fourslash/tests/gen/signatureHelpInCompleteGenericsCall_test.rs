@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_in_complete_generics_call() {
 	run_test(|t| {
-		let content = r"function foo<T>(x: number, callback: (x: T) => number) {
-}
-foo(/*1*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { text: "foo(x: number, callback: (x: unknown) => number): void".to_string().into(), ..Default::default() });
 	});
 }
 

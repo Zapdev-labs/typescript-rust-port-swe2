@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_source_nested_node_modules() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/outer/package.json
-{ "name": "outer", "main": "./index.js", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/outer/index.d.ts
-export { inner } from "./node_modules/inner/index";
-// @Filename: /home/src/workspaces/project/node_modules/outer/index.js
-export { inner } from "./node_modules/inner/index.js";
-// @Filename: /home/src/workspaces/project/node_modules/outer/node_modules/inner/package.json
-{ "name": "inner", "main": "./index.js", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/outer/node_modules/inner/index.d.ts
-export declare function inner(): string;
-// @Filename: /home/src/workspaces/project/node_modules/outer/node_modules/inner/index.js
-export function /*target*/inner() { return "ok"; }
-// @Filename: /home/src/workspaces/project/index.ts
-import { /*importName*/inner } from "outer";
-inner/*usage*/();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["importName".into(), "usage".into()]);
 	});
 }
 

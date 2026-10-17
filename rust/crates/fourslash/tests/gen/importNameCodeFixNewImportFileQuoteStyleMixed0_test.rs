@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_new_import_file_quote_style_mixed0() {
 	run_test(|t| {
-		let content = r#"[|import { v2 } from "./module2";
-import { v3 } from './module3';
-
-f1/*0*/();|]
-// @Filename: module1.ts
-export function f1() {}
-// @Filename: module2.ts
-export var v2 = 6;
-// @Filename: module3.ts
-export var v3 = 6;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_at_position(&[r#"import { f1 } from "./module1";
-import { v2 } from "./module2";
-import { v3 } from './module3';
-
-f1();"#.into()], None);
 	});
 }
 

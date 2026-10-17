@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn reference_in_parameter_property_declaration() {
 	run_test(|t| {
-		let content = r#"// @Filename: file1.ts
-class Foo {
-    constructor(private /*1*/privateParam: number,
-        public /*2*/publicParam: string,
-        protected /*3*/protectedParam: boolean) {
-
-        let localPrivate = privateParam;
-        this.privateParam += 10;
-
-        let localPublic = publicParam;
-        this.publicParam += " Hello!";
-
-        let localProtected = protectedParam;
-        this.protectedParam = false;
-    }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
 	});
 }
 

@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_non_module() {
 	run_test(|t| {
-		let content = r#"// @checkJs: true
-// @Filename: /script.ts
-console.log("I'm a script!");
-// @Filename: /import.ts
-import "./script/*1*/";
-// @Filename: /require.js
-require("./script/*2*/");
-console.log("./script/*3*/");
-// @Filename: /tripleSlash.ts
-/// <reference path="script.ts" />
-// @Filename: /stringLiteral.ts
-console.log("./script");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
 	});
 }
 

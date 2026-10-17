@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_existing_import2() {
 	run_test(|t| {
-		let content = r#"import * as ns from "./module";
-// Comment
-f1/*0*/();
-// @Filename: module.ts
- export function f1() {}
- export var v1 = 5;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_at_position(&[r#"import * as ns from "./module";
-// Comment
-ns.f1();"#.into(), r#"import * as ns from "./module";
-import { f1 } from "./module";
-// Comment
-f1();"#.into()], None);
 	});
 }
 

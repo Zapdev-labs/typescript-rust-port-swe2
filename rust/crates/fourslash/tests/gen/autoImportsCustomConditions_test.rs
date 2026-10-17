@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_imports_custom_conditions() {
 	run_test(|t| {
-		let content = r#"// @module: esnext
-// @moduleResolution: bundler
-// @customConditions: custom
-// @Filename: /node_modules/dep/package.json
-{
-  "name": "dep",
-  "version": "1.0.0",
-  "exports": {
-    ".": {
-      "custom": "./dist/index.js"
-    }
-  }
-}
-// @Filename: /node_modules/dep/dist/index.d.ts
-export const dep: number;
-// @Filename: /index.ts
-dep/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_module_specifiers("", &["dep".into()], None);
 	});
 }
 

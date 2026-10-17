@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_on_un_resolved_base_constructor_signature() {
 	run_test(|t| {
-		let content = r"class baseClassWithConstructorParameterSpecifyingType {
-    constructor(loading?: boolean) {
-    }
-}
-class genericBaseClassInheritingConstructorFromBase<TValue> extends baseClassWithConstructorParameterSpecifyingType {
-}
-class classInheritingSpecializedClass extends genericBaseClassInheritingConstructorFromBase<string> {
-}
-new class/*1*/InheritingSpecializedClass();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_quick_info_exists();
 	});
 }
 

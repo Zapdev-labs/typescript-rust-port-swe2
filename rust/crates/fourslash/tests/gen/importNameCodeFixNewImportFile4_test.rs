@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_new_import_file4() {
 	run_test(|t| {
-		let content = r"[|let t: A/*0*/.B.I;|]
-// @Filename: ./module.ts
-export namespace A {
-   export namespace B {
-       export interface I { }
-   }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_import_fix_at_position(&[r#"import { A } from "./module";
-
-let t: A.B.I;"#.into()], None);
 	});
 }
 

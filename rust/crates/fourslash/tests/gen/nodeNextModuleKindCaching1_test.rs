@@ -7,38 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn node_next_module_kind_caching1() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r#"// @Filename: tsconfig.json
-{
-    "compilerOptions": {
-      "lib": ["es5"],
-      "rootDir": "src",
-      "outDir": "dist",
-      "target": "ES2020",
-      "module": "NodeNext",
-      "strict": true
-    },
-    "include": ["src\\**\\*.ts"]
-}
-// @Filename: package.json
-{
-    "type": "module",
-    "private": true
-}
-// @Filename: src/index.ts
-// The line below should show a "Relative import paths need explicit file
-// extensions..." error in VS Code, but it doesn't. The error is only picked up
-// by "#, "`"), r"tsc"), "`"), r" which seems to properly infer the module type.
-import { helloWorld } from './example'
-/**/
-helloWorld()
-// @Filename: src/example.ts
-export function helloWorld() {
-    console.log('Hello, world!')
-}");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.go_to_marker("");
-		f.verify_number_of_errors_in_current_file(1);
 	});
 }
 

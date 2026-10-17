@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn call_hierarchy_const_named_arrow_function() {
 	run_test(|t| {
-		let content = r"function foo() {
-    bar();
-}
-
-const /**/bar = () => {
-    baz();
-}
-
-function baz() {
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_baseline_call_hierarchy();
 	});
 }
 

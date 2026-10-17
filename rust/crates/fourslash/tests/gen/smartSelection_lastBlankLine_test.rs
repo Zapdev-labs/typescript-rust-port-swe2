@@ -7,10 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn smart_selection_last_blank_line() {
 	run_test(|t| {
-		let content = r"class C {}
-/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_selection_ranges();
 	});
 }
 

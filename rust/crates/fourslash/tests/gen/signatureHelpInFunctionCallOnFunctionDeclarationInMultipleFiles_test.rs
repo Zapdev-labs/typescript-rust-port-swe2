@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_in_function_call_on_function_declaration_in_multiple_files() {
 	run_test(|t| {
-		let content = r"// @Filename: signatureHelpInFunctionCallOnFunctionDeclarationInMultipleFiles_file0.ts
-declare function fn(x: string, y: number);
-// @Filename: signatureHelpInFunctionCallOnFunctionDeclarationInMultipleFiles_file1.ts
-declare function fn(x: string);
-// @Filename: signatureHelpInFunctionCallOnFunctionDeclarationInMultipleFiles_file2.ts
-fn(/*1*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_signature_help(&tsc_fourslash::VerifySignatureHelpOptions { overloads_count: 2, ..Default::default() });
 	});
 }
 

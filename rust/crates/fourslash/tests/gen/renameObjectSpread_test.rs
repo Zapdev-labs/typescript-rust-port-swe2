@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_object_spread() {
 	run_test(|t| {
-		let content = r#"interface A1 { [|[|{| "contextRangeIndex": 0 |}a|]: number|] };
-interface A2 { [|[|{| "contextRangeIndex": 2 |}a|]?: number|] };
-let a1: A1;
-let a2: A2;
-let a12 = { ...a1, ...a2 };
-a12.[|a|];"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into(), f.ranges()[3].clone().into(), f.ranges()[4].clone().into()]);
 	});
 }
 

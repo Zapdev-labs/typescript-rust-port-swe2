@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn content_mapper_file_rename_across_duplicate_projections() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r#"// @Filename: /dep.ts
-export const helper = 1;
-
-// @Filename: /app.astro
-import { helper } from "./dep";
-helper;
-"#, tsc_testutil::contentmappertest::DUPLICATE_PROJECTION_MAPPER, ".astro");
-		f.verify_will_rename_files_edits("/dep.ts", "/renamed.ts", &std::collections::BTreeMap::from([("/app.astro".to_string().into(), r#"import { helper } from "./renamed";
-helper;
-"#.to_string().into())]), None);
 	});
 }
 

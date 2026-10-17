@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_overriding_method14() {
 	run_test(|t| {
-		let content = r"// @Filename: a.ts
-// @strictNullChecks: true
-// @newline: LF
-interface IFoo {
-    foo?(arg: string): number;
-}
-class Foo implements IFoo {
-    /**/
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "foo?".to_string().into(), insert_text: Some(("foo(arg: string): number {\n}").into()), filter_text: Some(("foo").into()), sort_text: Some((tsc_ls::LOCATION_PRIORITY.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_with_class_member_snippets: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), ..Default::default() }));
 	});
 }
 

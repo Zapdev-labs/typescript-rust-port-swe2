@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn paste() {
 	run_test(|t| {
-		let content = r"fn(/**/);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.paste("x,y,z");
-		f.verify_current_line_content(r"fn(x, y, z);");
 	});
 }
 

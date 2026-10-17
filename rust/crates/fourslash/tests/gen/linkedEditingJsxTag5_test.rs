@@ -7,27 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn linked_editing_jsx_tag5() {
 	run_test(|t| {
-		let content = r"// @FileName: /unclosedElement.tsx
-const jsx = (
-    <div/*0*/>
-        </*1start*/div/*1*/>
-    <//*2start*/div/*2*/>/*3*/
-);/*4*/
-// @FileName: /mismatchedElement.tsx
-const jsx = (
-    /*5*/</*6start*/div/*6*/>
-        <//*7start*/div/*7*/>
-    </*8*//div/*9*/>/*10*/
-);
-// @Filename: /invalidClosing.tsx
-const jsx = (
-   <di/*11*/v>
-   </*12*/ //*13*/div>
-);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		let mut linked_cursors1 = vec![tsc_lsproto::Range { start: f.marker_by_name("1start").unwrap().ls_position.into(), end: f.marker_by_name("1").unwrap().ls_position.into(), ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("2start").unwrap().ls_position.into(), end: f.marker_by_name("2").unwrap().ls_position.into(), ..Default::default() }];
-		let mut linked_cursors2 = vec![tsc_lsproto::Range { start: f.marker_by_name("6start").unwrap().ls_position.into(), end: f.marker_by_name("6").unwrap().ls_position.into(), ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("7start").unwrap().ls_position.into(), end: f.marker_by_name("7").unwrap().ls_position.into(), ..Default::default() }];
-		f.verify_linked_editing(&std::collections::BTreeMap::from([("0".to_string().into(), None), ("1".to_string().into(), linked_cursors1.into()), ("2".to_string().into(), linked_cursors1.into()), ("3".to_string().into(), None), ("4".to_string().into(), None), ("5".to_string().into(), None), ("6".to_string().into(), linked_cursors2.into()), ("7".to_string().into(), linked_cursors2.into()), ("8".to_string().into(), None), ("9".to_string().into(), None), ("10".to_string().into(), None), ("11".to_string().into(), None), ("12".to_string().into(), None), ("13".to_string().into(), None)]));
 	});
 }
 

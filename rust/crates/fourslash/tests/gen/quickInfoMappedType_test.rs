@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_mapped_type() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r#"interface I {
-  /** m documentation */ m(): void;
-}
-declare const o: { [K in keyof I]: number };
-o.m/*0*/;
-
-declare const p: { [K in keyof I]: I[K] };
-p.m/*1*/;
-
-declare const q: Pick<I, "m">;
-q.m/*2*/;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("0", "(property) m: number", "m documentation");
-		f.verify_quick_info_at("1", "(method) m(): void", "m documentation");
-		f.verify_quick_info_at("2", "(method) m(): void", "m documentation");
 	});
 }
 

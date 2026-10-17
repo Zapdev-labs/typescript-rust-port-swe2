@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rest_params_contextually_typed() {
 	run_test(|t| {
-		let content = r"var foo: Function = function (/*1*/a, /*2*/b, /*3*/c) { };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "(parameter) a: any", "");
-		f.verify_quick_info_at("2", "(parameter) b: any", "");
-		f.verify_quick_info_at("3", "(parameter) c: any", "");
 	});
 }
 

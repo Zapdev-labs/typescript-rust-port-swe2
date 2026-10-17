@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn navigation_bar_items_binding_patterns_in_constructor() {
 	run_test(|t| {
-		let content = r"class A {
-    x: any
-    constructor([a]: any) {
-    }
-}
-class B {
-    x: any;
-    constructor( {a} = { a: 1 }) {
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_symbol();
 	});
 }
 

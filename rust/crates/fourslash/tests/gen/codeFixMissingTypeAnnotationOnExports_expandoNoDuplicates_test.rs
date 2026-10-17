@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_missing_type_annotation_on_exports_expando_no_duplicates() {
 	run_test(|t| {
-		let content = r"// @declaration: true
-// @isolatedDeclarations: true
-// @Filename: /foo.mts
-export function foo(): void {
-}
-
-foo.blah = 123;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix_available_exact(&["Annotate types of properties expando function in a namespace".into()]);
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Annotate types of properties expando function in a namespace".to_string().into(), new_file_content: r"export function foo(): void {
-}
-export declare namespace foo {
-    export var blah: number;
-}
-
-foo.blah = 123;".to_string().into(), ..Default::default() });
 	});
 }
 

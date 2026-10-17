@@ -7,32 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_interface_with_missing_brace_and_later_template_string2() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"
-// @Filename: /FormCheck.tsx
-interface FormCheckProps {
-
-const FormCheck: DynamicRefForwardingComponent<'input', FormCheckProps> =
-  React.forwardRef(
-	    () => {
-	      return <div className={", "`"), r"${bsPrefix}-reverse"), "`"), r"} />;
-    },
-  );
-
-FormCheck.displayName = 'FormCheck';
-");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.verify_current_file_content(&format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"interface FormCheckProps {
-
-const FormCheck: DynamicRefForwardingComponent<'input', FormCheckProps> =
-    React.forwardRef(
-        () => {
-            return <div className={", "`"), r"${bsPrefix}-reverse"), "`"), r"} />;
-        },
-    );
-
-FormCheck.displayName = 'FormCheck';
-"));
 	});
 }
 

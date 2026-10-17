@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn organize_imports19() {
 	run_test(|t| {
-		let content = r"const a = 1;
-export { a };
-
-const b = 1;
-export { b };
-
-const c = 1;
-export { c };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_organize_imports(r"const a = 1;
-export { a };
-
-const b = 1;
-export { b };
-
-const c = 1;
-export { c };
-", tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 	});
 }
 

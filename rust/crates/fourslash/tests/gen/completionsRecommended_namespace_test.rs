@@ -7,27 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_recommended_namespace() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r#"// @noLib: true
-// @Filename: /a.ts
-export namespace Name {
-    export class C {}
-}
-export function f(c: Name.C) {}
-f(new N/*a0*/);
-f(new /*a1*/);
-// @Filename: /b.ts
-import { f } from "./a";
-f(new N/*b0*/);
-f(new /*b1*/);
-// @Filename: /c.ts
-import * as alpha from "./a";
-alpha.f(new a/*c0*/);
-alpha.f(new /*c1*/);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["a0", "a1"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "Name".to_string().into(), detail: Some(("namespace Name").into()), kind: Some((tsc_lsproto::CompletionItemKind::Module).into()), preselect: Some((true).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["b0", "b1"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "Name".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./a".to_string().into(), ..Default::default() }), ..Default::default() }), detail: Some(("namespace Name").into()), kind: Some((tsc_lsproto::CompletionItemKind::Module).into()), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), preselect: Some((true).into()), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["c0", "c1"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "alpha".to_string().into(), detail: Some(("import alpha").into()), kind: Some((tsc_lsproto::CompletionItemKind::Variable).into()), preselect: Some((true).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

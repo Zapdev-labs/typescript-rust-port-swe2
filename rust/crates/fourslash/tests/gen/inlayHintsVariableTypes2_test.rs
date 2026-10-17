@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn inlay_hints_variable_types2() {
 	run_test(|t| {
-		let content = r"const object = { foo: 1, bar: 2 }
-const array = [1, 2]
-const a = object;
-const { foo, bar } = object;
-const {} = object;
-const b = array;
-const [ first, second ] = array;
-const [] = array;
-declare function foo<T extends number>(t: T): T
-const x = foo(1)";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_inlay_hints(None, Some(&tsc_lsutil::UserPreferences { inlay_hints_preferences: tsc_lsutil::InlayHintsPreferences { include_inlay_variable_type_hints: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 

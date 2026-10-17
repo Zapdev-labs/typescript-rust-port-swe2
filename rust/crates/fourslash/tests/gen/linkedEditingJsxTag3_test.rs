@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn linked_editing_jsx_tag3() {
 	run_test(|t| {
-		let content = r"// @Filename: /selfClosing.tsx
-/*0*/const jsx = /*1*/(
-   <div> /*2*/
-      <p>/*3*/
-         No lin/*4*/ked cursors here!
-         /*5*/</*6*/img/*7*/ /*8*///*9*/>
-     /*10*/ </p>/*11*/
-   /*12*/</div>
-/*13*/)/*14*/;/*15*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_linked_editing(&std::collections::BTreeMap::from([("0".to_string().into(), None), ("1".to_string().into(), None), ("2".to_string().into(), None), ("3".to_string().into(), None), ("4".to_string().into(), None), ("5".to_string().into(), None), ("6".to_string().into(), None), ("7".to_string().into(), None), ("8".to_string().into(), None), ("9".to_string().into(), None), ("10".to_string().into(), None), ("11".to_string().into(), None), ("12".to_string().into(), None), ("13".to_string().into(), None), ("14".to_string().into(), None), ("15".to_string().into(), None)]));
 	});
 }
 

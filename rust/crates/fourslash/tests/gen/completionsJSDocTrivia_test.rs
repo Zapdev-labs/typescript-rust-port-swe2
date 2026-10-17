@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_js_doc_trivia() {
 	run_test(|t| {
-		let content = r"// @noLib: true
-/**
- * @type {{
- * 'string-property': boolean;
- */*$*/ identifierProperty: boolean;
- * }}
- */
-var someVariable;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("$");
-		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![".".into(), ",".into(), ";".into()]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -7,31 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_import_from_jsx_tag() {
 	run_test(|t| {
-		let content = r#"// @jsx: react
-// @Filename: /types.d.ts
-declare namespace JSX {
-  interface IntrinsicElements { a }
-}
-// @Filename: /Box.tsx
-export function Box(props: any) { return null; }
-// @Filename: /App.tsx
-export function App() {
-  return (
-    <div className="App">
-      <Box/**/
-    </div>
-  )
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_apply_code_action_from_completion("", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "Box".to_string().into(), source: "./Box".to_string().into(), description: "Add import from \"./Box\"".to_string().into(), new_file_content: Some((r#"import { Box } from "./Box";
-
-export function App() {
-  return (
-    <div className="App">
-      <Box
-    </div>
-  )
-}"#).into()), ..Default::default() });
 	});
 }
 

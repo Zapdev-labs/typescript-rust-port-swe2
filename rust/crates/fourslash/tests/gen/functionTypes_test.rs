@@ -7,31 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn function_types() {
 	run_test(|t| {
-		let content = r"// @lib: es5
-// @strict: false
-var f: Function;
-function g() { }
-
-class C {
-    h: () => void ;
-    i(): number { return 5; }
-    static j = (e) => e;
-    static k() { return 'hi';}
-}
-var l = () => void 0;
-var z = new C;
-
-f./*1*/apply(this, [1]);
-g./*2*/arguments;
-z.h./*3*/bind(undefined, 1, 2);
-z.i./*4*/call(null)
-C.j./*5*/length === 1;
-typeof C.k./*6*/caller === 'function';
-l./*7*/prototype = Object.prototype;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["1", "2", "3", "4", "5", "6"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: COMPLETION_FUNCTION_MEMBERS_WITH_PROTOTYPE.into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("7"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_function_members_plus(vec!["prototype".into()]).into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

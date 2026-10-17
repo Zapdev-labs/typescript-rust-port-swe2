@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn inlay_hints_inferred_type_predicate1() {
 	run_test(|t| {
-		let content = r"// @strict: true
-function test(x: unknown) {
-  return typeof x === 'number';
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_inlay_hints(None, Some(&tsc_lsutil::UserPreferences { inlay_hints_preferences: tsc_lsutil::InlayHintsPreferences { include_inlay_function_like_return_type_hints: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 

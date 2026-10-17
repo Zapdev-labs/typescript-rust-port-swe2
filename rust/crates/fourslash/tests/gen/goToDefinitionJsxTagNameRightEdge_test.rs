@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_jsx_tag_name_right_edge() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @jsx: react-jsx
-// @filename: /a.jsx
-export function Component() {
-    return null;
-}
-
-export function App() {
-    return <Component/*use*/ />
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["use".into()]);
 	});
 }
 

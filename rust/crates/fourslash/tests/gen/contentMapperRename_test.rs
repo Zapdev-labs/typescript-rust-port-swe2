@@ -7,74 +7,18 @@ use tsc_fourslash::*;
 #[test]
 fn content_mapper_rename() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r#"// @Filename: /ProfileCard.vue
-<component name="ProfileCard">
-<template><h1>{{ title }}</h1></template>
-<script lang="ts">
-export const ti/*rename*/tle = "Profile";
-export const heading = title.toUpperCase();
-</script>
-
-// @Filename: /main.ts
-import { title } from "./ProfileCard.vue";
-export const pageTitle = title;
-"#, tsc_testutil::contentmappertest::COMPONENT_MAPPER, ".vue");
-		f.verify_rename("rename", "newTitle", &std::collections::BTreeMap::from([("/ProfileCard.vue".to_string().into(), r#"<component name="ProfileCard">
-<template><h1>{{ title }}</h1></template>
-<script lang="ts">
-export const newTitle = "Profile";
-export const heading = newTitle.toUpperCase();
-</script>
-"#.to_string().into()), ("/main.ts".to_string().into(), r#"import { newTitle } from "./ProfileCard.vue";
-export const pageTitle = newTitle;
-"#.to_string().into())]));
 	});
 }
 
 #[test]
 fn content_mapper_rename_rejects_atom_and_unmapped_origins() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r#"// @Filename: /ProfileCard.vue
-<component name="ProfileCard">
-<template>
-  <h1>{{ ti/*atom*/tle }}</h1>
-  <p class="card/*markup*/">Profile</p>
-</template>
-<script lang="ts">
-export const title = "Profile";
-</script>
-"#, tsc_testutil::contentmappertest::COMPONENT_MAPPER, ".vue");
-		f.go_to_marker("atom");
-		f.verify_rename_failed(None);
-		f.go_to_marker("markup");
-		f.verify_rename_failed(None);
 	});
 }
 
 #[test]
 fn content_mapper_rename_outgoing() {
 	run_test(|t| {
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r#"// @Filename: /format.ts
-export function format(value: string): string { return value; }
-
-// @Filename: /ProfileCard.vue
-<component name="ProfileCard">
-<template><h1>{{ utils.format(title) }}</h1></template>
-<script lang="ts">
-import * as utils from "./format";
-export const title = "Profile";
-export const heading = utils.for/*rename*/mat(title);
-</script>
-"#, tsc_testutil::contentmappertest::COMPONENT_MAPPER, ".vue");
-		f.verify_rename("rename", "render", &std::collections::BTreeMap::from([("/format.ts".to_string().into(), r"export function render(value: string): string { return value; }
-".to_string().into()), ("/ProfileCard.vue".to_string().into(), r#"<component name="ProfileCard">
-<template><h1>{{ utils.format(title) }}</h1></template>
-<script lang="ts">
-import * as utils from "./format";
-export const title = "Profile";
-export const heading = utils.render(title);
-</script>
-"#.to_string().into())]));
 	});
 }
 

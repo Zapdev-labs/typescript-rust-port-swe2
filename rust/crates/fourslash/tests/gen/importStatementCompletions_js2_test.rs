@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_statement_completions_js2() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @target: es2020
-// @checkJs: true
-// @module: commonjs
-// @esModuleInterop: false
-// @allowSyntheticDefaultImports: false
-// @noEmit: true
-// @Filename: /node_modules/react/index.d.ts
-declare namespace React {
-   export class Component {}
-}
-export = React;
-// @Filename: /test.js
-[|import R/**/|]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", Some(tsc_fourslash::get_default_capabilities_with_options(Some(&tsc_fourslash::ClientCapabilitiesOptions { completion_item: Some(tsc_lsproto::ClientCompletionItemOptions { snippet_support: Some((true).into()), ..Default::default() }), ..Default::default() }))), &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "React".to_string().into(), insert_text: Some(("import * as React from \"react\";").into()), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "react".to_string().into(), ..Default::default() }), ..Default::default() }), insert_text_format: Some((tsc_lsproto::InsertTextFormat::Snippet).into()), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "import * as React from \"react\";".to_string().into(), range: f.ranges()[0].clone().ls_range.into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

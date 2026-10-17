@@ -7,30 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn unused_class_in_namespace3() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"// @noUnusedLocals: true
-// @noUnusedParameters:true
- [| namespace Validation {
-    class c1 {
-
-    }
-
-    export class c2 {
-
-    }
-
-    class c3 extends c1 {
-
-    }
-} |]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_range_after_code_fix(r"namespace Validation {
-    class c1 {
-    }
-
-    export class c2 {
-    }
-}", false, 0, 0);
 	});
 }
 

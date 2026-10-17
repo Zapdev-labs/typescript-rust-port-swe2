@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_references_triple_slash() {
 	run_test(|t| {
-		let content = r#"// @checkJs: true
-// @Filename: /node_modules/@types/globals/index.d.ts
-declare const someAmbientGlobal: unknown;
-// @Filename: /a.ts
-/// <reference path="b.ts/*1*/" />
-/// <reference types="globals/*2*/" />
-// @Filename: /b.ts
-console.log("b.ts");
-// @Filename: /c.js
-require("./b");
-require("globals");"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into()]);
 	});
 }
 

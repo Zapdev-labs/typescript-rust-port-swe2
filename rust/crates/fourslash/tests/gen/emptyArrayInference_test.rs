@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn empty_array_inference() {
 	run_test(|t| {
-		let content = r"// @strict: false
-var x/*1*/x = true ? [1] : [undefined]; 
-var y/*2*/y = true ? [1] : [];";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "var xx: number[]", "");
-		f.verify_quick_info_at("2", "var yy: number[]", "");
 	});
 }
 

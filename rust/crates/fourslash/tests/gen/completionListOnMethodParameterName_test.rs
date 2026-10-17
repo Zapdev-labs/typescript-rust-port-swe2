@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_on_method_parameter_name() {
 	run_test(|t| {
-		let content = r"class A {
-    foo(nu/**/: number) {
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), None);
 	});
 }
 

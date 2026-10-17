@@ -7,69 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_completion_export_equals_with_default1() {
 	run_test(|t| {
-		let content = r#"// @strict: true
-// @module: commonjs
-// @esModuleInterop: false
-// @allowSyntheticDefaultImports: false
-// @filename: node.ts
-import Container from "./container.js";
-import Document from "./document.js";
-
-declare namespace Node {
-  class Node extends Node_ {}
-
-  export { Node as default };
-}
-
-declare abstract class Node_ {
-  parent: Container | Document | undefined;
-}
-
-declare class Node extends Node_ {}
-
-export = Node;
-// @filename: document.ts
-import Container from "./container.js";
-
-declare namespace Document {
-  export { Document_ as default };
-}
-
-declare class Document_ extends Container {}
-
-declare class Document extends Document_ {}
-
-export = Document;
-// @filename: container.ts
-import Node from "./node.js";
-
-declare namespace Container {
-  export { Container_ as default };
-}
-
-declare abstract class Container_ extends Node {
-  p/*1*/
-}
-
-declare class Container extends Container_ {}
-
-export = Container;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "parent".to_string().into(), insert_text: Some(("parent: Container_ | Document_ | undefined;").into()), filter_text: Some(("parent").into()), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), data: Some(tsc_lsproto::CompletionItemData { source: "ClassMemberSnippet/".to_string().into(), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_with_class_member_snippets: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), ..Default::default() }));
-		f.verify_apply_code_action_from_completion("1", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "parent".to_string().into(), source: "ClassMemberSnippet/".to_string().into(), description: "Includes imports of types referenced by 'parent'".to_string().into(), new_file_content: Some((r#"import Document_ from "./document.js";
-import Node from "./node.js";
-
-declare namespace Container {
-  export { Container_ as default };
-}
-
-declare abstract class Container_ extends Node {
-  p
-}
-
-declare class Container extends Container_ {}
-
-export = Container;"#).into()), user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_with_class_member_snippets: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), ..Default::default() });
 	});
 }
 

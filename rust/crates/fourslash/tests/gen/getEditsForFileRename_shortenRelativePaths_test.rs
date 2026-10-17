@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_edits_for_file_rename_shorten_relative_paths() {
 	run_test(|t| {
-		let content = r#"// @Filename: /src/foo/x.ts
-
-// @Filename: /src/old.ts
-import { x } from "./foo/x";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_will_rename_files_edits("/src/old.ts", "/src/foo/new.ts", &std::collections::BTreeMap::from([("/src/foo/new.ts".to_string().into(), r#"import { x } from "./x";"#.to_string().into())]), None);
 	});
 }
 

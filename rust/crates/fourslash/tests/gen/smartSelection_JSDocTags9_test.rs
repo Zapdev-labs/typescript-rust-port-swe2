@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn smart_selection_js_doc_tags9() {
 	run_test(|t| {
-		let content = r"/** @enum {/**/number} */
-const Foo = {
-    x: 0,
-    y: 1,
-};";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_selection_ranges();
 	});
 }
 

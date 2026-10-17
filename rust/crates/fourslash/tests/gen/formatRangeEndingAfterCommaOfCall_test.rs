@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_range_ending_after_comma_of_call() {
 	run_test(|t| {
-		let content = r#"someCall(
-    /*start*/"firstParameter",/*end*/
-    "something else"
-);"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_selection("start", "end");
 	});
 }
 

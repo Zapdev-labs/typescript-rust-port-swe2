@@ -133,7 +133,7 @@ mod gen_support;
 #[path = "gen/completionsImport_default_anonymous_test.rs"] mod completionsImport_default_anonymous_test;
 #[path = "gen/completionsImport_default_symbolName_test.rs"] mod completionsImport_default_symbolName_test;
 #[path = "gen/completionsImport_exportEquals_global_test.rs"] mod completionsImport_exportEquals_global_test;
-#[path = "gen/completionsImport_filteredByPackageJson_@typesImplicit_test.rs"] mod completionsImport_filteredByPackageJson_@typesImplicit_test;
+#[path = "gen/completionsImport_filteredByPackageJson_@typesImplicit_test.rs"] mod completionsImport_filteredByPackageJson__typesImplicit_test;
 #[path = "gen/completionsImportModuleAugmentationWithJS_test.rs"] mod completionsImportModuleAugmentationWithJS_test;
 #[path = "gen/completionsImport_noSemicolons_test.rs"] mod completionsImport_noSemicolons_test;
 #[path = "gen/completionsImport_promoteTypeOnly2_test.rs"] mod completionsImport_promoteTypeOnly2_test;

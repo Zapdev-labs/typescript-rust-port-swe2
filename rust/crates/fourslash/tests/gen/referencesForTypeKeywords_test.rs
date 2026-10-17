@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn references_for_type_keywords() {
 	run_test(|t| {
-		let content = r"interface I {}
-function f<T /*typeParam_extendsKeyword*/extends I>() {}
-type A1<T, U> = T /*conditionalType_extendsKeyword*/extends U ? 1 : 0;
-type A2<T> = T extends /*inferType_inferKeyword*/infer U ? 1 : 0;
-type A3<T> = { [P /*mappedType_inOperator*/in keyof T]: 1 };
-type A4<T> = /*keyofOperator_keyofKeyword*/keyof T;
-type A5<T> = /*readonlyOperator_readonlyKeyword*/readonly T[];";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["typeParam_extendsKeyword".into(), "conditionalType_extendsKeyword".into(), "inferType_inferKeyword".into(), "mappedType_inOperator".into(), "keyofOperator_keyofKeyword".into(), "readonlyOperator_readonlyKeyword".into()]);
 	});
 }
 

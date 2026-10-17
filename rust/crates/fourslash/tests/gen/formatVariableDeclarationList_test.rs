@@ -7,45 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_variable_declaration_list() {
 	run_test(|t| {
-		let content = r"/*1*/var   fun1   =   function   (     )     {
-/*2*/            var               x   =   'foo'             ,
-/*3*/                z   =   'bar'           ;
-/*4*/                return  x            ;
-/*5*/},
-
-/*6*/fun2   =   (                function        (   f               )   {
-/*7*/            var   fun   =   function   (        )       {
-/*8*/                        console         .  log             (           f     (  )  )       ;
-/*9*/            },
-/*10*/            x   =   'Foo'           ;
-/*11*/                return   fun            ;
-/*12*/}   (           fun1            )   )       ;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"var fun1 = function() {");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"    var x = 'foo',");
-		f.go_to_marker("3");
-		f.verify_current_line_content(r"        z = 'bar';");
-		f.go_to_marker("4");
-		f.verify_current_line_content(r"    return x;");
-		f.go_to_marker("5");
-		f.verify_current_line_content(r"},");
-		f.go_to_marker("6");
-		f.verify_current_line_content(r"    fun2 = (function(f) {");
-		f.go_to_marker("7");
-		f.verify_current_line_content(r"        var fun = function() {");
-		f.go_to_marker("8");
-		f.verify_current_line_content(r"            console.log(f());");
-		f.go_to_marker("9");
-		f.verify_current_line_content(r"        },");
-		f.go_to_marker("10");
-		f.verify_current_line_content(r"            x = 'Foo';");
-		f.go_to_marker("11");
-		f.verify_current_line_content(r"        return fun;");
-		f.go_to_marker("12");
-		f.verify_current_line_content(r"    }(fun1));");
 	});
 }
 

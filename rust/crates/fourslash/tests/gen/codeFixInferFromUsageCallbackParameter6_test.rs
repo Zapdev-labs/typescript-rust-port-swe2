@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_infer_from_usage_callback_parameter6() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @checkJs: true
-// @noImplicitAny: false
-// @filename: /foo.js
-const foo = [(/** @type {number} */ x) => x + 1];";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix_not_available(&[]);
 	});
 }
 

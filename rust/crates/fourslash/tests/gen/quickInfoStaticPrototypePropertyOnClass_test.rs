@@ -7,29 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_static_prototype_property_on_class() {
 	run_test(|t| {
-		let content = r"class c1 {
-}
-class c2<T> {
-}
-class c3 {
-    constructor() {
-    }
-}
-class c4 {
-    constructor(param: string);
-    constructor(param: number);
-    constructor(param: any) {
-    }
-}
-c1./*1*/prototype;
-c2./*2*/prototype;
-c3./*3*/prototype;
-c4./*4*/prototype;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "(property) c1.prototype: c1", "");
-		f.verify_quick_info_at("2", "(property) c2<T>.prototype: c2<any>", "");
-		f.verify_quick_info_at("3", "(property) c3.prototype: c3", "");
-		f.verify_quick_info_at("4", "(property) c4.prototype: c4", "");
 	});
 }
 

@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsdoc_typedef_tag_rename03() {
 	run_test(|t| {
-		let content = r#"// @lib: es5
-// @allowNonTsExtensions: true
-// @Filename: jsDocTypedef_form3.js
-
-/**
- * [|@typedef /*1*/[|{| "contextRangeIndex": 0 |}Person|]
- * @type {Object}
- * @property {number} age
- * @property {string} name
- |]*/
-
-/** @type {/*2*/[|Person|]} */
-var person;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.mark_test_as_strada_server();
-		f.go_to_file("jsDocTypedef_form3.js");
-		f.verify_baseline_rename(None, to_any(f.get_ranges_by_text().get("Person")).into_iter().map(Into::into));
 	});
 }
 

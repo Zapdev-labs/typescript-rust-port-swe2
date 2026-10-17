@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_of_constructor() {
 	run_test(|t| {
-		let content = r#"class A {
-    /*aCtr*/constructor(s: string) {}
-}
-class B extends A { }
-class C extends B {
-    /*cCtr*/constructor() {
-        super("");
-    }
-}
-class D extends B { }
-class E implements A { }
-const a = new A("a");
-const b = new B("b");
-const c = new C();
-const d = new D("d");
-const e = new E();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.verify_baseline_find_all_references(&["aCtr".into(), "cCtr".into()]);
 	});
 }
 

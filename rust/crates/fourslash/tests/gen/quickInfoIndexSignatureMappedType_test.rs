@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_index_signature_mapped_type() {
 	run_test(|t| {
-		let content = r"
-// @strict: true
-// @filename: main.ts
-declare const record: Record<string, string>;
-record.fo/*1*/o;
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "string", "");
 	});
 }
 

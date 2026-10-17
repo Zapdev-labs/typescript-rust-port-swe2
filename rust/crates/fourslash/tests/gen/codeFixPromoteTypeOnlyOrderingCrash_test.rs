@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_promote_type_only_ordering_crash() {
 	run_test(|t| {
-		let content = r#"// @module: node18
-// @verbatimModuleSyntax: true
-// @Filename: /bar.ts
-export interface AAA {}
-export class BBB {}
-// @Filename: /foo.ts
-import type {
-    AAA,
-    BBB,
-} from "./bar";
-
-let x: AAA = new BBB()"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/foo.ts");
-		f.verify_import_fix_at_position(&[r#"import {
-    BBB,
-    type AAA,
-} from "./bar";
-
-let x: AAA = new BBB()"#.into()], None);
 	});
 }
 

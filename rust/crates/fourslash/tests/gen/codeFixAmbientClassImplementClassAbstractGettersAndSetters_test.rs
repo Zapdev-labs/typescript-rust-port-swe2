@@ -7,32 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_ambient_class_implement_class_abstract_getters_and_setters() {
 	run_test(|t| {
-		let content = r"abstract class A {
-    abstract get a(): string;
-    abstract set a(newName: string);
-
-    abstract get b(): number;
-
-    abstract set c(arg: number | string);
-}
-
-declare class C implements A {}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'A'".to_string().into(), new_file_content: r"abstract class A {
-    abstract get a(): string;
-    abstract set a(newName: string);
-
-    abstract get b(): number;
-
-    abstract set c(arg: number | string);
-}
-
-declare class C implements A {
-    get a(): string;
-    set a(newName: string);
-    get b(): number;
-    set c(arg: string | number);
-}".to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

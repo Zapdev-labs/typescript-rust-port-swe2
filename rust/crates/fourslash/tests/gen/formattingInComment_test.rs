@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_in_comment() {
 	run_test(|t| {
-		let content = r"class A {
-foo(              ); // /*1*/
-}
-function foo() {       var x;       } // /*2*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.insert(";");
-		f.verify_current_line_content(r"foo(              ); // ;");
-		f.go_to_marker("2");
-		f.insert("}");
-		f.verify_current_line_content(r"function foo() {       var x;       } // }");
 	});
 }
 

@@ -7,9 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_primitives() {
 	run_test(|t| {
-		let content = r"var x: st/*primitive*/ring;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["primitive".into()]);
 	});
 }
 

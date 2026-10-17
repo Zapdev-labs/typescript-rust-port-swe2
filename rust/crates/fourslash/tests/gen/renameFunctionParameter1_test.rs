@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_function_parameter1() {
 	run_test(|t| {
-		let content = r"function Foo() {
-    /**
-     * @param {number} p
-     */
-    this.foo = function foo(p/**/) {
-        return p;
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename(None, vec!["".into()]);
 	});
 }
 

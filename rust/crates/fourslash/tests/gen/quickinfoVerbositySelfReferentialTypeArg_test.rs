@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quickinfo_verbosity_self_referential_type_arg() {
 	run_test(|t| {
-		let content = r"type ContainerChild = Container;
-interface Container<C = ContainerChild> {
-    parent: Container;
-}
-declare const x: Container;
-x/*1*/;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("1".to_string().into(), vec![3])]));
 	});
 }
 

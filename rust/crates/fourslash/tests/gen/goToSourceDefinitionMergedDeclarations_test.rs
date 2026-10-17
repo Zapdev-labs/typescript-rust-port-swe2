@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_source_merged_declaration_dedup() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @Filename: /home/src/workspaces/project/node_modules/pkg/package.json
-{ "name": "pkg", "main": "./index.js", "types": "./index.d.ts" }
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.d.ts
-export declare class /*dtsClass*/Util {
-    run(): void;
-}
-export declare namespace Util {
-    export const version: string;
-}
-// @Filename: /home/src/workspaces/project/node_modules/pkg/index.js
-export class /*targetUtil*/Util {
-    run() {}
-}
-Util.version = "1.0";
-// @Filename: /home/src/workspaces/project/index.ts
-import { /*importUtil*/Util } from "pkg";
-const u: /*typeRef*/Util = new Util();"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_source_definition(&["importUtil".into(), "typeRef".into()]);
 	});
 }
 

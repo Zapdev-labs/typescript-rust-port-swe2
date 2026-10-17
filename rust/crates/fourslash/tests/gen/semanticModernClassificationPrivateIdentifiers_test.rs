@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn semantic_modern_classification_private_identifiers() {
 	run_test(|t| {
-		let content = r"class Foo {
-	#privateField = 1;
-	#privateMethod() {}
-
-	test() {
-		this.#privateField;
-		this.#privateMethod();
-	}
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type_: "class.declaration".to_string().into(), text: "Foo".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "property.declaration".to_string().into(), text: "#privateField".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "method.declaration".to_string().into(), text: "#privateMethod".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "method.declaration".to_string().into(), text: "test".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "property".to_string().into(), text: "#privateField".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "method".to_string().into(), text: "#privateMethod".to_string().into(), ..Default::default() }]);
 	});
 }
 

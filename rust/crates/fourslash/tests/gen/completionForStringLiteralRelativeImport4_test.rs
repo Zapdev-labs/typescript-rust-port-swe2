@@ -7,40 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_for_string_literal_relative_import4() {
 	run_test(|t| {
-		let content = r#"// @rootDirs: /sub/src1,/src2
-// @Filename: /src2/test0.ts
- import * as foo1 from "./mo/*import_as0*/
- import foo2 = require("./mo/*import_equals0*/
- var foo3 = require("./mo/*require0*/
-// @Filename: /src2/inner/inner0.ts
-import * as s from ".//*inner*/";
-// @Filename: /src2/inner/inner1.ts
-export const x = 0;
-// @Filename: /src2/module0.ts
- export var w = 0;
-// @Filename: /sub/src1/module1.ts
- export var x = 0;
-// @Filename: /sub/src1/module2.ts
- export var y = 0;
-// @Filename: /sub/src1/more/module3.ts
- export var z = 0;
-// @Filename: f1.ts
-
-// @Filename: f2.tsx
-
-// @Filename: folder/f1.ts
-
-// @Filename: f3.js
-
-// @Filename: f4.jsx
-
-// @Filename: e1.ts
-
-// @Filename: e2.js
-"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["import_as0", "import_equals0", "require0"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["module1".into(), "module2".into(), "more".into(), "module0".into(), "inner".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from("inner"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["inner1".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

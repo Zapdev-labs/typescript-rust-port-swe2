@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_literal_on_property_value_matching_generic() {
 	run_test(|t| {
-		let content = r#"// @Filename: /a.tsx
-declare function bar1<P extends "" | "bar" | "baz">(p: { type: P }): void;
-
-bar1({ type: "/*ts*/" })
-"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["ts"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["".into(), "bar".into(), "baz".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

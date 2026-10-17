@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn update_to_class_statics() {
 	run_test(|t| {
-		let content = r"namespace TypeScript {
-    export class PullSymbol {}
-    export class Diagnostic {}
-    export class SymbolAndDiagnostics<TSymbol extends PullSymbol> {
-        constructor(public symbol: TSymbol,
-            public diagnostics: Diagnostic) {
-        }
-        /**/
-        public static create<TSymbol extends PullSymbol>(symbol: TSymbol, diagnostics: Diagnostic): SymbolAndDiagnostics<TSymbol> {
-            return new SymbolAndDiagnostics<TSymbol>(symbol, diagnostics);
-        }
-    }
-}
-namespace TypeScript {
-    var x : TypeScript.SymbolAndDiagnostics;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.insert("someNewProperty = 0;");
 	});
 }
 

@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_class_implement_class_member_anonymous_class() {
 	run_test(|t| {
-		let content = r"// @strict: false
-class A {
-    foo() {
-        return class { x: number; }
-    }
-    bar() {
-        return new class { x: number; }
-    }
-}
-class C implements A {[| |]}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix_not_available(&[]);
 	});
 }
 

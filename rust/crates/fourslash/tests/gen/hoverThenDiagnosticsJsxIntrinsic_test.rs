@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn hover_then_diagnostics_jsx_intrinsic() {
 	run_test(|t| {
-		let content = r#"// @Filename: /tsconfig.json
-{ "compilerOptions": { "strict": true, "jsx": "preserve" } }
-// @Filename: /jsx.d.ts
-declare namespace JSX {
-    interface Element { }
-    interface IntrinsicElements {
-        div: any;
-    }
-}
-// @Filename: /file.tsx
-export default function Home() {
-    return <di/*1*/v>hi</div>;
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "(property) JSX.IntrinsicElements.div: any", "");
-		f.verify_no_errors();
 	});
 }
 

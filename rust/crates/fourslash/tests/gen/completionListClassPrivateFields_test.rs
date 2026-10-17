@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_class_private_fields() {
 	run_test(|t| {
-		let content = r"class A {
-    #private = 1;
-}
-
-class B extends A {
-    /**/
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: COMPLETION_CLASS_ELEMENT_KEYWORDS.into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

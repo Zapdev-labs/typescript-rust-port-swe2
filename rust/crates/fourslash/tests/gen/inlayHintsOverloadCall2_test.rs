@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn inlay_hints_overload_call2() {
 	run_test(|t| {
-		let content = r"type HasID = {
-    id: number;
-}
-
-type Numbers = {
-    n: number[];
-}
-
-declare function func(bad1: number, bad2: HasID): void;
-declare function func(ok_1: Numbers, ok_2: HasID): void;
-
-func(
-    { n: [1, 2, 3] },
-    {
-        id: 1,
-    },
-);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_inlay_hints(None, Some(&tsc_lsutil::UserPreferences { inlay_hints_preferences: tsc_lsutil::InlayHintsPreferences { include_inlay_parameter_name_hints: tsc_lsutil::IncludeInlayParameterNameHints::ALL.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 

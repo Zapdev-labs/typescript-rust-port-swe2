@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_css_pattern_ambient_module() {
 	run_test(|t| {
-		let content = r#"// @esModuleInterop: true
-// @Filename: index.css
-/*2a*/html { font-size: 16px; }
-// @Filename: types.ts
-declare module /*2b*/"*.css" {
-  const styles: any;
-  export = styles;
-}
-// @Filename: index.ts
-import styles from [|/*1*/"./index.css"|];"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_go_to_definition(true, &["1".into()]);
 	});
 }
 

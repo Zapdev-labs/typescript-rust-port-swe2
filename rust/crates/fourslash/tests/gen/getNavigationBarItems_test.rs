@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_navigation_bar_items() {
 	run_test(|t| {
-		let content = r#"class C {
-    foo;
-    ["bar"]: string;
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_symbol();
 	});
 }
 

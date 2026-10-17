@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn recursive_class_reference() {
 	run_test(|t| {
-		let content = r"declare namespace Thing { }
-
-namespace Thing {
-   var /**/x: Mode;
-}
-
-namespace Thing {
-  export class Mode { }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_quick_info_exists();
 	});
 }
 

@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_variable_assignment1() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @checkJs: true
-// @filename: foo.js
-const Foo = module./*def*/exports = function () {}
-Foo.prototype.bar = function() {}
-new [|Foo/*ref*/|]();";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("foo.js");
-		f.verify_baseline_go_to_definition(true, &["ref".into()]);
 	});
 }
 

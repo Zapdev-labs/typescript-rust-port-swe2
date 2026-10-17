@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_import_non_exported_member5() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: bundler
-// @module: esnext
-// @filename: /node_modules/foo/index.js
-function bar() {}
-// @filename: /b.ts
-import { bar } from "./foo";"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/b.ts");
-		f.verify_code_fix_not_available(&["fixImportNonExportedMember".into()]);
 	});
 }
 

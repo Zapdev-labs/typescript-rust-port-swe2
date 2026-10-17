@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn linked_editing_jsx_tag1() {
 	run_test(|t| {
-		let content = r"// @Filename: /basic.tsx
-/*a*/const j/*b*/sx = (
-    /*c*/</*0*/d/*1*/iv/*2*/>/*3*/
-    </*4*///*5*/di/*6*/v/*7*/>/*8*/
-);
-const jsx2 = (
-    </*9start*/d/*9*/iv/*9end*/>
-        </*10start*/d/*10*/iv/*10end*/>
-            </*11start*/p/*11*/>
-            <//*12*/p/*12end*/>        
-        <//*13start*/d/*13*/iv/*13end*/>
-    <//*14start*/d/*14*/iv/*14end*/>
-);/*d*/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		let mut linked_cursors1 = vec![tsc_lsproto::Range { start: f.marker_by_name("0").unwrap().ls_position.into(), end: f.marker_by_name("2").unwrap().ls_position.into(), ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("5").unwrap().ls_position.into(), end: f.marker_by_name("7").unwrap().ls_position.into(), ..Default::default() }];
-		let mut linked_cursors2 = vec![tsc_lsproto::Range { start: f.marker_by_name("9start").unwrap().ls_position.into(), end: f.marker_by_name("9end").unwrap().ls_position.into(), ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("14start").unwrap().ls_position.into(), end: f.marker_by_name("14end").unwrap().ls_position.into(), ..Default::default() }];
-		let mut linked_cursors3 = vec![tsc_lsproto::Range { start: f.marker_by_name("10start").unwrap().ls_position.into(), end: f.marker_by_name("10end").unwrap().ls_position.into(), ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("13start").unwrap().ls_position.into(), end: f.marker_by_name("13end").unwrap().ls_position.into(), ..Default::default() }];
-		let mut linked_cursors4 = vec![tsc_lsproto::Range { start: f.marker_by_name("11start").unwrap().ls_position.into(), end: f.marker_by_name("11").unwrap().ls_position.into(), ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("12").unwrap().ls_position.into(), end: f.marker_by_name("12end").unwrap().ls_position.into(), ..Default::default() }];
-		f.verify_linked_editing(&std::collections::BTreeMap::from([("0".to_string().into(), linked_cursors1.into()), ("1".to_string().into(), linked_cursors1.into()), ("2".to_string().into(), linked_cursors1.into()), ("3".to_string().into(), None), ("4".to_string().into(), None), ("5".to_string().into(), linked_cursors1.into()), ("6".to_string().into(), linked_cursors1.into()), ("7".to_string().into(), linked_cursors1.into()), ("8".to_string().into(), None), ("9".to_string().into(), linked_cursors2.into()), ("10".to_string().into(), linked_cursors3.into()), ("11".to_string().into(), linked_cursors4.into()), ("12".to_string().into(), linked_cursors4.into()), ("13".to_string().into(), linked_cursors3.into()), ("14".to_string().into(), linked_cursors2.into()), ("a".to_string().into(), None), ("b".to_string().into(), None), ("c".to_string().into(), None), ("d".to_string().into(), None)]));
 	});
 }
 

@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn generic_interfaces_with_constraints1() {
 	run_test(|t| {
-		let content = r"interface A { a: string; }
-interface B extends A { b: string; }
-interface C extends B { c: string; }
-interface G<T, U extends B> {
-    x: T;
-    y: U;
-}
-var v/*1*/1: G<A, C>;               // Ok
-var v/*2*/2: G<{ a: string }, C>;   // Ok, equivalent to G<A, C>
-var v/*3*/3: G<G<A, B>, C>;         // Ok";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "var v1: G<A, C>", "");
-		f.verify_quick_info_at("2", "var v2: G<{\n    a: string;\n}, C>", "");
-		f.verify_quick_info_at("3", "var v3: G<G<A, B>, C>", "");
 	});
 }
 

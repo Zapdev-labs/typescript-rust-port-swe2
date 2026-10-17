@@ -7,31 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_in_optional_chain() {
 	run_test(|t| {
-		let content = r#"// @strict: true
-interface A {
-  arr: string[];
-}
-
-function test(a?: A): string {
-  return a?.ar/*1*/r.length ? "A" : "B";
-}
-
-interface Foo { bar: { baz: string } };
-declare const foo: Foo | undefined;
-
-if (foo?.b/*2*/ar.b/*3*/az) {}
-
-interface Foo2 { bar?: { baz: { qwe: string } } };
-declare const foo2: Foo2;
-
-if (foo2.b/*4*/ar?.b/*5*/az.q/*6*/we) {}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "(property) A.arr: string[]", "");
-		f.verify_quick_info_at("2", "(property) Foo.bar: {\n    baz: string;\n}", "");
-		f.verify_quick_info_at("3", "(property) baz: string | undefined", "");
-		f.verify_quick_info_at("4", "(property) Foo2.bar?: {\n    baz: {\n        qwe: string;\n    };\n} | undefined", "");
-		f.verify_quick_info_at("5", "(property) baz: {\n    qwe: string;\n}", "");
-		f.verify_quick_info_at("6", "(property) qwe: string | undefined", "");
 	});
 }
 

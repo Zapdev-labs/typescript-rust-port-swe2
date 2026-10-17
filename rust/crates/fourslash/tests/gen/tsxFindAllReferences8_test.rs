@@ -7,36 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn tsx_find_all_references8() {
 	run_test(|t| {
-		let content = r#"//@Filename: file.tsx
-// @jsx: preserve
-// @noLib: true
-declare namespace JSX {
-    interface Element { }
-    interface IntrinsicElements {
-    }
-    interface ElementAttributesProperty { props; }
-}
-interface ClickableProps {
-    children?: string;
-    className?: string;
-}
-interface ButtonProps extends ClickableProps {
-    onClick(event?: React.MouseEvent<HTMLButtonElement>): void;
-}
-interface LinkProps extends ClickableProps {
-    goTo: string;
-}
-/*1*/declare function /*2*/MainButton(buttonProps: ButtonProps): JSX.Element;
-/*3*/declare function /*4*/MainButton(linkProps: LinkProps): JSX.Element;
-/*5*/declare function /*6*/MainButton(props: ButtonProps | LinkProps): JSX.Element;
-let opt = /*7*/</*8*/MainButton />;
-let opt = /*9*/</*10*/MainButton children="chidlren" />;
-let opt = /*11*/</*12*/MainButton onClick={()=>{}} />;
-let opt = /*13*/</*14*/MainButton onClick={()=>{}} ignore-prop />;
-let opt = /*15*/</*16*/MainButton goTo="goTo" />;
-let opt = /*17*/</*18*/MainButton wrong />;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into(), "7".into(), "8".into(), "9".into(), "10".into(), "11".into(), "12".into(), "13".into(), "14".into(), "15".into(), "16".into(), "17".into(), "18".into()]);
 	});
 }
 

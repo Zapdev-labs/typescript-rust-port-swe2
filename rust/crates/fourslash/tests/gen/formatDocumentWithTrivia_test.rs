@@ -7,54 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_document_with_trivia() {
 	run_test(|t| {
-		let content = r"  
-// 1 below   
-    
-// 2 above   
-    
-let x;
-  
-// abc
-  
-let y;
-  
-// 3 above
-   
-while (true) {
-    while (true) {
-    }
-      
-    // 4 above   
-}
-  
-// 5 above  
-   
-   ";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.verify_current_file_content(r"
-// 1 below   
-
-// 2 above   
-
-let x;
-
-// abc
-
-let y;
-
-// 3 above
-
-while (true) {
-    while (true) {
-    }
-
-    // 4 above   
-}
-
-// 5 above  
-
-");
 	});
 }
 

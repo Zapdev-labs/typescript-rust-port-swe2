@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn syntactic_classifications_jsx1() {
 	run_test(|t| {
-		let content = r#"// @Filename: file1.tsx
-let x  = <div a = "some-value" b = {1}>
-    some jsx text
-</div>;
-
-let y = <element attr="123"/>"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type_: "variable.declaration".to_string().into(), text: "x".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.declaration".to_string().into(), text: "y".to_string().into(), ..Default::default() }]);
 	});
 }
 

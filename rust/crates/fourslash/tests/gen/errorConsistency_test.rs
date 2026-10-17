@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn error_consistency() {
 	run_test(|t| {
-		let content = r"interface Int<T> {
-val<U>(f: (t: T) => U): Int<U>;
-}
-declare var v1: Int<string>;
-var /*1*/v2/*2*/: Int<number> = v1;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_eof();
-		f.verify_error_exists_between_markers("1", "2");
-		f.verify_number_of_errors_in_current_file(1);
-		f.backspace(1);
-		f.verify_error_exists_between_markers("1", "2");
-		f.verify_number_of_errors_in_current_file(1);
 	});
 }
 

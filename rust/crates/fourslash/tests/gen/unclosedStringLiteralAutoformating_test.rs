@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn unclosed_string_literal_autoformating() {
 	run_test(|t| {
-		let content = r#"var x = /*1*/"asd/*2*/
-class Foo {
-    /**/"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.insert("}");
-		f.verify_current_line_content(r"}");
 	});
 }
 

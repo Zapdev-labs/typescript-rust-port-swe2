@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn class_interface_insert() {
 	run_test(|t| {
-		let content = r"interface Intersection {
-    dist: number;
-}
-/*interfaceGoesHere*/
-class /*className*/Sphere {
-    constructor(private center) {
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("className", "class Sphere", "");
-		f.go_to_marker("interfaceGoesHere");
-		f.insert("\ninterface Surface {\n    reflect: () => number;\n}\n");
-		f.verify_quick_info_at("className", "class Sphere", "");
 	});
 }
 

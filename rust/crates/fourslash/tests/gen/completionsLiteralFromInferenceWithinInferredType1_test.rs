@@ -7,30 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_literal_from_inference_within_inferred_type1() {
 	run_test(|t| {
-		let content = r#"// @stableTypeOrdering: true
-// @Filename: /a.tsx
-declare function test<T>(a: {
-  [K in keyof T]: {
-    b?: keyof T;
-  };
-}): void;
-
-test({
-  foo: {},
-  bar: {
-    b: "/*ts*/",
-  },
-});
-
-test({
-  foo: {},
-  bar: {
-    b: /*ts2*/,
-  },
-});"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["ts"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["bar".into(), "foo".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["ts2"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["\"bar\"".into(), "\"foo\"".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

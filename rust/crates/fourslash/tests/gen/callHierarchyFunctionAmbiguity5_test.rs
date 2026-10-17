@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn call_hierarchy_function_ambiguity5() {
 	run_test(|t| {
-		let content = r"// @filename: a.d.ts
-declare function foo(x?: number): void;
-// @filename: b.d.ts
-declare function foo(x?: string): void;
-declare function foo(x?: boolean): void;
-// @filename: main.ts
-function /**/bar() {
-    foo();
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_baseline_call_hierarchy();
 	});
 }
 

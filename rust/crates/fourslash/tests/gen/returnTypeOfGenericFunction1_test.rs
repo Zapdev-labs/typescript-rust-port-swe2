@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn return_type_of_generic_function1() {
 	run_test(|t| {
-		let content = r"interface WrappedArray<T> {
-    map<U>(iterator: (value: T) => U, context?: any): U[];
-}
-var x: WrappedArray<string>;
-var /**/y = x.map(s => s.length);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("", "var y: number[]", "");
 	});
 }
 

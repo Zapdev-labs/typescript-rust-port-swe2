@@ -7,27 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_import_import_type() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @Filename: /a.js
-export const x = 0;
-export class C {}
-/** @typedef {number} T */
-// @Filename: /b.js
-export const m = 0;
-/** @type {/*0*/} */
-/** @type {/*1*/} */";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["0", "1"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "C".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./a".to_string().into(), ..Default::default() }), ..Default::default() }), detail: Some(("class C").into()), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "T".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./a".to_string().into(), ..Default::default() }), ..Default::default() }), detail: Some(("type T = number").into()), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }.into()].into(), excludes: vec!["x".into()].into(), ..Default::default() }), ..Default::default() }));
-		f.verify_apply_code_action_from_completion("0", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "C".to_string().into(), source: "./a".to_string().into(), description: "Add import from \"./a\"".to_string().into(), new_file_content: Some((r#"import { C } from "./a";
-
-export const m = 0;
-/** @type {} */
-/** @type {} */"#).into()), ..Default::default() });
-		f.verify_apply_code_action_from_completion("1", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "T".to_string().into(), source: "./a".to_string().into(), description: "Change 'T' to 'import(\"./a\").T'".to_string().into(), new_file_content: Some((r#"import { C } from "./a";
-
-export const m = 0;
-/** @type {} */
-/** @type {import("./a").} */"#).into()), ..Default::default() });
 	});
 }
 

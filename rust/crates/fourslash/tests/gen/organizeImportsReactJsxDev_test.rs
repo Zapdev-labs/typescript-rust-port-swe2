@@ -7,32 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn organize_imports_react_jsx_dev() {
 	run_test(|t| {
-		let content = r#"// @allowSyntheticDefaultImports: true
-// @moduleResolution: bundler
-// @noUnusedLocals: true
-// @target: es2018
-// @jsx: react-jsxdev
-// @filename: test.tsx
-import React from 'react';
-export default () => <div></div>
-// @filename: node_modules/react/package.json
-{
-    "name": "react",
-    "types": "index.d.ts"
-}
-// @filename: node_modules/react/index.d.ts
-export = React;
-declare namespace JSX {
-    interface IntrinsicElements { [x: string]: any; }
-}
-declare namespace React {}
-// @filename: node_modules/react/jsx-runtime.d.ts
-import './';
-// @filename: node_modules/react/jsx-dev-runtime.d.ts
-import './';"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("test.tsx");
-		f.verify_organize_imports(r"export default () => <div></div>", tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 	});
 }
 

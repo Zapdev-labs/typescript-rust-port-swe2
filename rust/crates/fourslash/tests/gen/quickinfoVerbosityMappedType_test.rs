@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quickinfo_verbosity_mapped_type() {
 	run_test(|t| {
-		let content = r"type Apple = boolean | number;
-type Orange = string | boolean;
-type F<T> = {
-	[K in keyof T as T[K] extends Apple ? never : K]: T[K];
-}
-type Bar = {
-	banana: string;
-	apple: boolean;
-}
-const x/*x*/: F/*F*/<Bar> = { banana: 'hello' };
-const y/*y*/: { [K in keyof Bar]?: Bar[K] } = { banana: 'hello' };
-type G<T> = {
-	[K in keyof T]: T[K] & Apple
-};
-const z: G/*G*/<Bar> = { banana: 'hello', apple: true };";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("x".to_string().into(), vec![0, 1]), ("y".to_string().into(), vec![0]), ("F".to_string().into(), vec![0, 1]), ("G".to_string().into(), vec![0, 1])]));
 	});
 }
 

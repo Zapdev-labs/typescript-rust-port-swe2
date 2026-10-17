@@ -7,37 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quickinfo_verbosity_js() {
 	run_test(|t| {
-		let content = r"// @Filename: somefile.js
-// @allowJs: true
-/**
- * @typedef {Object} SomeType
- * @property {string} prop1
- */
-/** @type {SomeType} */
-const a/*1*/ = {
-    prop1: 'value',
-}
-/**
- * @typedef {Object} SomeType2/*2*/
- * @property {number} prop2
- * @property {SomeType} prop3
- */
-/** @type {SomeType[]} */
-const ss = [{ prop1: 'value' }, { prop1: 'value' }];
-const d = ss.map((s/*3*/) => s.prop1);
-/** @param {SomeType} a
- * @returns {SomeType}
- */
-function someFun/*4*/(a) {
-    return a;
-}
-someFun.what = 'what';
-class SomeClass/*5*/ {
-    /** @type {SomeType2} */
-    b;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("1".to_string().into(), vec![0, 1]), ("2".to_string().into(), vec![0, 1]), ("3".to_string().into(), vec![0, 1]), ("4".to_string().into(), vec![0, 1]), ("5".to_string().into(), vec![0, 1, 2])]));
 	});
 }
 

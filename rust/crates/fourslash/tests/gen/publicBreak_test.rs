@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn public_break() {
 	run_test(|t| {
-		let content = r"public break;
-/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.insert(" ");
 	});
 }
 

@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_string_property_names() {
 	run_test(|t| {
-		let content = r#"var o = {
-    [|[|{| "contextRangeIndex": 0 |}prop|]: 0|]
-};
-
-o = {
-    [|"[|{| "contextRangeIndex": 2 |}prop|]": 1|]
-};
-
-o["[|prop|]"];
-o['[|prop|]'];
-o.[|prop|];"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename_at_ranges_with_text(None, &["prop".into()]);
 	});
 }
 

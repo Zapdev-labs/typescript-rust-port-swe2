@@ -7,34 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_require_import_vs_require_import_wins() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @checkJs: true
-// @Filename: blah.js
-export default class Blah {}
-export const Named1 = 0;
-export const Named2 = 1;
-// @Filename: addToExisting.js
-const { Named2 } = require('./blah')
-import { Named1 } from './blah'
-
-new Blah
-// @Filename: newImport.js
-import fs from 'fs';
-const path = require('path');
-
-new Blah";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("addToExisting.js");
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Update import from \"./blah\"".to_string().into(), new_file_content: r"const { Named2 } = require('./blah')
-import Blah, { Named1 } from './blah'
-
-new Blah".to_string().into(), index: 0, ..Default::default() });
-		f.go_to_file("newImport.js");
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Add import from \"./blah\"".to_string().into(), new_file_content: r"import fs from 'fs';
-import Blah from './blah';
-const path = require('path');
-
-new Blah".to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

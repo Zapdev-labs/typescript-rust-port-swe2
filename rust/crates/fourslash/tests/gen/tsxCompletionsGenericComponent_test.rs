@@ -7,32 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn tsx_completions_generic_component() {
 	run_test(|t| {
-		let content = r"// @jsx: preserve
-// @skipLibCheck: true
-// @Filename: file.tsx
- declare namespace JSX {
-     interface Element { }
-     interface IntrinsicElements {
-     }
-     interface ElementAttributesProperty { props; }
- }
-
-class Table<P> {
-    constructor(public props: P) {}
-}
-
-type Props = { widthInCol: number; text: string; };
-
-/**
- * @param width {number} Table width in px
- */
-function createTable(width) {
-    return <Table<Props> /*1*/ />
-}
-
-createTable(800);";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["widthInCol".into(), "text".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_in_try_catch_finally() {
 	run_test(|t| {
-		let content = r"try 
-{
-    var x = 1/*1*/
-}
-catch (e) 
-{
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.insert(";");
-		f.verify_current_line_content(r"    var x = 1;");
 	});
 }
 

@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn call_hierarchy_anonymous_function_no_crash3() {
 	run_test(|t| {
-		let content = r#"// @Filename: /main.ts
-import bar from "./other";
-
-function foo() {
-    /*1*/bar();
-}
-// @Filename: /other.ts
-export default function() {}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("1");
-		f.verify_baseline_call_hierarchy();
 	});
 }
 

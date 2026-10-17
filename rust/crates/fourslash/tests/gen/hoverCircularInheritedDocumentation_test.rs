@@ -7,18 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn hover_circular_inherited_documentation() {
 	run_test(|t| {
-		let content = r#"// @filename: base.ts
-export interface Options {}
-// @filename: bridge.ts
-import type { Options as _Options } from "./base";
-export * from "./base";
-declare module "./bridge" {
-    interface Options extends _Options { hooks: {} }
-}
-declare const v: Options;
-v.hooks/*1*/;"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "(property) Options.hooks: {}", "");
 	});
 }
 

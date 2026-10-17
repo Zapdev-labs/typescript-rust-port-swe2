@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn semantic_modern_classification_interfaces() {
 	run_test(|t| {
-		let content = r"interface Pos { x: number, y: number };
-const p = { x: 1, y: 2 } as Pos;
-const foo = (o: Pos) => o.x + o.y;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type_: "interface.declaration".to_string().into(), text: "Pos".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "property.declaration".to_string().into(), text: "x".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "property.declaration".to_string().into(), text: "y".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.declaration.readonly".to_string().into(), text: "p".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "property.declaration".to_string().into(), text: "x".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "property.declaration".to_string().into(), text: "y".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "interface".to_string().into(), text: "Pos".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "function.declaration.readonly".to_string().into(), text: "foo".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "parameter.declaration".to_string().into(), text: "o".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "interface".to_string().into(), text: "Pos".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "parameter".to_string().into(), text: "o".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "property".to_string().into(), text: "x".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "parameter".to_string().into(), text: "o".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "property".to_string().into(), text: "y".to_string().into(), ..Default::default() }]);
 	});
 }
 

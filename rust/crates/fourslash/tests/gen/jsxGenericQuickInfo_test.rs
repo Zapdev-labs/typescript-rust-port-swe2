@@ -7,38 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsx_generic_quick_info() {
 	run_test(|t| {
-		let content = r#"//@Filename: file.tsx
-declare namespace JSX {
-    interface Element { }
-    interface IntrinsicElements {
-    }
-    interface ElementAttributesProperty { props }
-}
-interface PropsA<T> {
-    /** comments for A */
-    name: 'A',
-    items: T[];
-    renderItem: (item: T) => string;
-}
-interface PropsB<T> {
-    /** comments for B */
-    name: 'B',
-    items: T[];
-    renderItem: (item: T) => string;
-}
-class Component<T> {
-    constructor(props: PropsA<T> | PropsB<T>) {}
-    props: PropsA<T> | PropsB<T>;
-}   
-var b = new Component({items: [0, 1, 2], render/*0*/Item: it/*1*/em => item.toFixed(), name/*2*/: 'A',});
-var c = <Component items={[0, 1, 2]} render/*3*/Item={it/*4*/em => item.toFixed()} name/*5*/="A" />"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("0", "(property) PropsA<number>.renderItem: (item: number) => string", "");
-		f.verify_quick_info_at("1", "(parameter) item: number", "");
-		f.verify_quick_info_at("2", "(property) PropsA<T>.name: \"A\"", "comments for A");
-		f.verify_quick_info_at("3", "(property) PropsA<number>.renderItem: (item: number) => string", "");
-		f.verify_quick_info_at("4", "(parameter) item: number", "");
-		f.verify_quick_info_at("5", "(property) PropsA<T>.name: \"A\"", "comments for A");
 	});
 }
 

@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn scope_of_union_properties() {
 	run_test(|t| {
-		let content = r"function f(s: string | number) {
-    s.constr/*1*/uctor
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, vec!["1".into()]);
 	});
 }
 

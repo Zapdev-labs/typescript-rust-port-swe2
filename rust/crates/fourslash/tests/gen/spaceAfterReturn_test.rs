@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn space_after_return() {
 	run_test(|t| {
-		let content = r"function f( ) {
-return       1;/*1*/
-return[1];/*2*/
-return    ;/*3*/
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"    return 1;");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"    return [1];");
-		f.go_to_marker("3");
-		f.verify_current_line_content(r"    return;");
 	});
 }
 

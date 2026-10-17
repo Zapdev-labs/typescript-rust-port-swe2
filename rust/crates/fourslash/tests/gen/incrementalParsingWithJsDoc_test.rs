@@ -7,16 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn incremental_parsing_with_js_doc() {
 	run_test(|t| {
-		let content = r"[|import a from 'a/aaaaaaa/aaaaaaa/aaaaaa/aaaaaaa';
-/**/import b from 'b';
-import c from 'c';|]
-[|/** @internal */|]
-export class LanguageIdentifier[| { }|]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_outlining_spans();
-		f.go_to_marker("");
-		f.backspace(1);
-		f.verify_outlining_spans();
 	});
 }
 

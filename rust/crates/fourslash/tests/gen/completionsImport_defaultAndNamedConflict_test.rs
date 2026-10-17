@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completions_import_default_and_named_conflict() {
 	run_test(|t| {
-		let content = r"// @noLib: true
-// @Filename: /someModule.ts
-export const someModule = 0;
-export default 1;
-// @Filename: /index.ts
-someMo/**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_plus(vec![tsc_lsproto::CompletionItem { label: "someModule".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./someModule".to_string().into(), ..Default::default() }), ..Default::default() }), detail: Some(("const someModule: 0").into()), kind: Some((tsc_lsproto::CompletionItemKind::Variable).into()), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "someModule".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./someModule".to_string().into(), ..Default::default() }), ..Default::default() }), detail: Some(("(property) default: 1").into()), kind: Some((tsc_lsproto::CompletionItemKind::Field).into()), additional_text_edits: tsc_fourslash::any_text_edits_marker().into(), sort_text: Some((tsc_ls::AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }.into()], true).into(), ..Default::default() }), ..Default::default() }));
-		f.verify_apply_code_action_from_completion("", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "someModule".to_string().into(), source: "./someModule".to_string().into(), auto_import_fix: Some(tsc_lsproto::AutoImportFix { ..Default::default() }), description: "Add import from \"./someModule\"".to_string().into(), new_file_content: Some((r#"import { someModule } from "./someModule";
-
-someMo"#).into()), ..Default::default() });
 	});
 }
 

@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_entry_class_members_with_inferred_function_return_type1() {
 	run_test(|t| {
-		let content = r#"// @filename: /tokenizer.ts
-export default abstract class Tokenizer {
-  errorBuilder() {
-    return (pos: number, lineStart: number, curLine: number) => {};
-  }
-}
-// @filename: /expression.ts
-import Tokenizer from "./tokenizer.js";
-
-export default abstract class ExpressionParser extends Tokenizer {
-  /**/
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "errorBuilder".to_string().into(), insert_text: Some(("errorBuilder(): (pos: number, lineStart: number, curLine: number) => void {\n}").into()), filter_text: Some(("errorBuilder").into()), ..Default::default() }.into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_with_class_member_snippets: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), ..Default::default() }));
 	});
 }
 

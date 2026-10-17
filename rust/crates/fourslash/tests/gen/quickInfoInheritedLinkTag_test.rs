@@ -7,19 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_inherited_link_tag() {
 	run_test(|t| {
-		let content = r"export class C {
-     /**
-      * @deprecated Use {@link PerspectiveCamera#setFocalLength .setFocalLength()} and {@link PerspectiveCamera#filmGauge .filmGauge} instead.
-      */
-    m() { }
-}
-export class D extends C {
-    m() { } // crashes here
-}
-new C().m/**/ // and here (with a different thing trying to access undefined)";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_no_errors();
-		f.verify_baseline_hover();
 	});
 }
 

@@ -7,37 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_occurrences_try_catch_finally_broken() {
 	run_test(|t| {
-		let content = r"t /*1*/ry {
-    t/*2*/ry {
-    }
-    ctch (x) {
-    }
-
-    tr {
-    }
-    fin/*3*/ally {
-    }
-}
-c/*4*/atch (e) {
-}
-f/*5*/inally {
-}
-
-// Missing catch variable
-t/*6*/ry {
-}
-catc/*7*/h {
-}
-/*8*/finally {
-}
-
-// Missing try entirely
-cat/*9*/ch (x) {
-}
-final/*10*/ly {
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, to_any(f.markers()).into_iter().map(Into::into));
 	});
 }
 

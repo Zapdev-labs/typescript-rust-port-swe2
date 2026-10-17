@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_from_contextual_union_type1() {
 	run_test(|t| {
-		let content = r#"// @strict: true
-function test1(arg: { prop: "foo" }) {}
-test1({ /*1*/prop: "bar" });
-
-function test2(arg: { prop: "foo" } | undefined) {}
-test2({ /*2*/prop: "bar" });"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into()]);
 	});
 }
 

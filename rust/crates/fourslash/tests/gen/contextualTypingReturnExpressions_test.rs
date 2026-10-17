@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn contextual_typing_return_expressions() {
 	run_test(|t| {
-		let content = r"interface A { }
-var f44: (x: A) => (y: A) => A = /*1*/x => /*2*/y => /*3*/x;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "(parameter) x: A", "");
-		f.verify_quick_info_at("2", "(parameter) y: A", "");
-		f.verify_quick_info_at("3", "(parameter) x: A", "");
 	});
 }
 

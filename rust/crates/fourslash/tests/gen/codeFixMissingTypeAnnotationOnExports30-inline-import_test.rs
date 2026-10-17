@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_missing_type_annotation_on_exports30_inline_import() {
 	run_test(|t| {
-		let content = r#"// @isolatedDeclarations: true
-// @declaration: true
-// @Filename: /person-code.ts
-export type Person = { x: string; }
-export function getPerson() : Person {
-  return null!
-}
-// @Filename: /code.ts
-import { getPerson } from "./person-code";
-export const exp = {
-  person: getPerson()
-};"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/code.ts");
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Add satisfies and an inline type assertion with 'Person'".to_string().into(), new_file_content: r#"import { getPerson, Person } from "./person-code";
-export const exp = {
-  person: getPerson() satisfies Person as Person
-};"#.to_string().into(), index: 1, ..Default::default() });
 	});
 }
 

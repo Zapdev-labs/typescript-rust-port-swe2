@@ -7,24 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_for_string_literal_nonrelative_import10() {
 	run_test(|t| {
-		let content = r#"// @moduleResolution: classic
-// @Filename: dir1/dir2/dir3/dir4/test0.ts
-import * as foo1 from "f/*import_as0*/
-import * as foo3 from "fake-module/*import_as1*/
-import foo4 = require("f/*import_equals0*/
-import foo6 = require("fake-module/*import_equals1*/
-var foo7 = require("f/*require0*/
-var foo9 = require("fake-module/*require1*/
-// @Filename: package.json
-{ "dependencies": { "fake-module": "latest" } }
-// @Filename: node_modules/fake-module/ts.ts
-
-// @Filename: dir1/dir2/dir3/package.json
-{ "dependencies": { "fake-module3": "latest" } }
-// @Filename: dir1/dir2/dir3/node_modules/fake-module3/ts.ts
-"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(f.markers()), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

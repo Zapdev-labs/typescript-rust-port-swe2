@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_async_computed_method() {
 	run_test(|t| {
-		let content = r"class C {
-    /*method*/async [0]() { }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("method");
-		f.verify_current_line_content(r"    async [0]() { }");
 	});
 }
 

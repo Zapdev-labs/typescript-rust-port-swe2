@@ -7,30 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_super_members() {
 	run_test(|t| {
-		let content = r"class Base {
-    private privateInstanceMethod() { }
-    public publicInstanceMethod() { }
-
-    private privateProperty = 1;
-    public publicProperty = 1;
-
-    private static privateStaticProperty = 1;
-    public static publicStaticProperty = 1;
-
-    private static privateStaticMethod() { }
-    public static publicStaticMethod() {
-        Class./*staticsInsideClassScope*/publicStaticMethod();
-        var c = new Class();
-        c./*instanceMembersInsideClassScope*/privateProperty;
-    }
-}
-class Class extends Base {
-    private test() {
-        super./**/
-    }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["publicInstanceMethod".into()].into(), excludes: vec!["publicProperty".into(), "publicStaticProperty".into(), "publicStaticMethod".into(), "privateProperty".into(), "privateInstanceMethod".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -7,43 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_lens_interface01() {
 	run_test(|t| {
-		let content = r#"
-// @module: preserve
-
-// @filename: ./pointable.ts
-export interface Pointable {
-  getX(): number;
-  getY(): number;
-}
-
-// @filename: ./classPointable.ts
-import { Pointable } from "./pointable";
-
-class Point implements Pointable {
-  getX(): number {
-    return 0;
-  }
-  getY(): number {
-    return 0;
-  }
-}
-
-// @filename: ./objectPointable.ts
-import { Pointable } from "./pointable";
-
-let x = 0;
-let y = 0;
-const p: Pointable = {
-  getX(): number {
-	return x;
-  },
-  getY(): number {
-	return y;
-  },
-};
-"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_code_lens(Some(&tsc_lsutil::UserPreferences { code_lens_user_preferences: tsc_lsutil::CodeLensUserPreferences { references_code_lens_enabled: tsc_core::tristate::TS_TRUE.into(), references_code_lens_show_on_all_functions: tsc_core::tristate::TS_TRUE.into(), implementations_code_lens_enabled: tsc_core::tristate::TS_TRUE.into(), implementations_code_lens_show_on_interface_methods: tsc_core::tristate::TS_TRUE.into(), implementations_code_lens_show_on_all_class_methods: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 

@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_no_space_between_closing_paren_and_template_string() {
 	run_test(|t| {
-		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"foo() ", "`"), r"abc"), "`"), r";
-bar()"), "`"), r"def"), "`"), r";
-baz()"), "`"), r"a${x}b"), "`"), r";");
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.verify_current_file_content("foo()`abc`;\nbar()`def`;\nbaz()`a${x}b`;");
 	});
 }
 

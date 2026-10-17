@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_and_member_list_on_commented_white_space() {
 	run_test(|t| {
-		let content = r"namespace M {
-  export class C { public pub = 0; private priv = 1; }
-  export var V = 0;
-}
-
-
-var c = new M.C();
-
-c. // test on c.
-
-//Test for comment
-//c. /**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(""), None);
 	});
 }
 

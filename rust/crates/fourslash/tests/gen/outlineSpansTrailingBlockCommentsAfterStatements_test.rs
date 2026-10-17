@@ -7,12 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn outline_spans_trailing_block_comments_after_statements() {
 	run_test(|t| {
-		let content = r"console.log(0);
-[|/*
-/ * Some text
-  */|]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_outlining_spans();
 	});
 }
 

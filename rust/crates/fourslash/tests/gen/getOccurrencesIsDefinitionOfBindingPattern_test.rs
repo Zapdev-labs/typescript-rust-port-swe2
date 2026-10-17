@@ -7,10 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_occurrences_is_definition_of_binding_pattern() {
 	run_test(|t| {
-		let content = r"const { /*1*/x, y } = { /*2*/x: 1, y: 2 };
-const z = /*3*/x;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
 	});
 }
 

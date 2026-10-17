@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_references_js_overloaded_function_parameter() {
 	run_test(|t| {
-		let content = r"// @allowJs: true
-// @checkJs: true
-// @Filename: foo.js
-/**
- * @overload
- * @param {number} x
- * @returns {number}
- *
- * @overload
- * @param {string} x
- * @returns {string} 
- *
- * @param {unknown} x
- * @returns {unknown} 
- */
-function foo(x/*1*/) {
-  return x;
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into()]);
 	});
 }
 

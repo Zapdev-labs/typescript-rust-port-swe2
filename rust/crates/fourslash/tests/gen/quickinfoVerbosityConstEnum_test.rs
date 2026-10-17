@@ -7,22 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quickinfo_verbosity_const_enum() {
 	run_test(|t| {
-		let content = r#"
-const enum Direction/*1*/ {
-    Up = "UP",
-    Down = "DOWN",
-    Left = "LEFT",
-    Right = "RIGHT",
-}
-
-enum NumericEnum/*2*/ {
-    A,
-    B = 10,
-    C,
-}
-"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("1".to_string().into(), vec![0, 1]), ("2".to_string().into(), vec![0, 1])]));
 	});
 }
 

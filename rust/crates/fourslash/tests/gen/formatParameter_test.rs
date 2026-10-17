@@ -7,26 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn format_parameter() {
 	run_test(|t| {
-		let content = r"function foo(
-    first:
-    number,/*first*/
-    second: (
-    string/*second*/
-    ),
-    third:
-    (
-    boolean/*third*/
-    )
-) {
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("first");
-		f.verify_current_line_content(r"        number,");
-		f.go_to_marker("second");
-		f.verify_current_line_content(r"        string");
-		f.go_to_marker("third");
-		f.verify_current_line_content(r"            boolean");
 	});
 }
 

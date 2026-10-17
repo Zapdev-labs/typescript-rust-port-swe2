@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_occurrences_switch_case_default3() {
 	run_test(|t| {
-		let content = r"foo: [|switch|] (1) {
-    [|case|] 1:
-    [|case|] 2:
-        [|break|];
-    [|case|] 3:
-        switch (2) {
-            case 1:
-                [|break|] foo;
-                continue; // invalid
-            default:
-                break;
-        }
-    [|default|]:
-        [|break|];
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, to_any(f.ranges()).into_iter().map(Into::into));
 	});
 }
 

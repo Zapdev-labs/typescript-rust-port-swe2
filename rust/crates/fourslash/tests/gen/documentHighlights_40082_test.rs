@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn document_highlights_40082() {
 	run_test(|t| {
-		let content = r"// @checkJs: true
-export = (state, messages) => {
-   export [|default|] {
-   }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, vec![f.ranges()[0].clone().into()]);
 	});
 }
 

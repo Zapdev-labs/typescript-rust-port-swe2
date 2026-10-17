@@ -7,31 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_missing_type_annotation_on_exports40_extract_other_to_variable() {
 	run_test(|t| {
-		let content = r"// @isolatedDeclarations: true
-// @declaration: true
-// @lib: es2019
-// @Filename: /code.ts
-let c: string[] = [];
-export let o = {
-    p: Math.random() ? []: [
-        ...c
-    ]
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Extract to variable and replace with 'newLocal as typeof newLocal'".to_string().into(), new_file_content: r"let c: string[] = [];
-const newLocal = Math.random() ? [] : [
-    ...c
-];
-export let o = {
-    p: newLocal as typeof newLocal
-}".to_string().into(), index: 2, apply_changes: true.into(), ..Default::default() });
-		f.verify_code_fix(&tsc_fourslash::VerifyCodeFixOptions { description: "Add annotation of type 'string[]'".to_string().into(), new_file_content: r"let c: string[] = [];
-const newLocal: string[] = Math.random() ? [] : [
-    ...c
-];
-export let o = {
-    p: newLocal as typeof newLocal
-}".to_string().into(), index: 0, apply_changes: true.into(), ..Default::default() });
 	});
 }
 

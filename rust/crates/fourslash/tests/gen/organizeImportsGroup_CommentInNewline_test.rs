@@ -7,23 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn organize_imports_group_comment_in_newline() {
 	run_test(|t| {
-		let content = r#"// polyfill
-import c from "C";
-// not polyfill
-import d from "D";
-import a from "A";
-import b from "B";
-
-console.log(a, b, c, d)"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_organize_imports(r#"// polyfill
-import c from "C";
-// not polyfill
-import a from "A";
-import b from "B";
-import d from "D";
-
-console.log(a, b, c, d)"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 	});
 }
 

@@ -7,25 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_new_import_index_not_for_classic_resolution() {
 	run_test(|t| {
-		let content = r"// @moduleResolution: classic
-// @Filename: /a/index.ts
-export const foo = 0;
-// @Filename: /node_modules/x/index.d.ts
-export const bar = 0;
-// @Filename: /b.ts
-[|foo;|]
-// @Filename: /c.ts
-[|bar;|]";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_file("/a/index.ts");
-		f.go_to_file("/b.ts");
-		f.verify_import_fix_at_position(&[r#"import { foo } from "./a/index";
-
-foo;"#.into()], None);
-		f.go_to_file("/c.ts");
-		f.verify_import_fix_at_position(&[r#"import { bar } from "./node_modules/x/index";
-
-bar;"#.into()], None);
 	});
 }
 

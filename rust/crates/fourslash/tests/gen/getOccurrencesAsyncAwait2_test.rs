@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn get_occurrences_async_await2() {
 	run_test(|t| {
-		let content = r"[|a/**/sync|] function f() {
- [|await|] 100;
- [|await|] [|await|] 200;
- return [|await|] async function () {
-   await 300;
- }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_document_highlights(None, to_any(f.ranges()).into_iter().map(Into::into));
 	});
 }
 

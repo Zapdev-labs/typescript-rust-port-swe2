@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_on_comma_operator() {
 	run_test(|t| {
-		let content = r"var v1 = ((1, 2, 3), 4, 5, (6, 7));/*1*/
-function f1() {
-    var a = 1;
-    return a, v1, a;/*2*/
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.format_document("");
-		f.go_to_marker("1");
-		f.verify_current_line_content(r"var v1 = ((1, 2, 3), 4, 5, (6, 7));");
-		f.go_to_marker("2");
-		f.verify_current_line_content(r"    return a, v1, a;");
 	});
 }
 

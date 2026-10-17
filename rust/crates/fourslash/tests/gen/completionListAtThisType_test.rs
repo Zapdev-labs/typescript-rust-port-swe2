@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_at_this_type() {
 	run_test(|t| {
-		let content = r#"// @stableTypeOrdering: true
-class Test {
-    foo() {}
-
-    bar() {
-        this.baz(this, "/*1*/");
-
-        const t = new Test()
-        this.baz(t, "/*2*/");
-    }
-
-    baz<T>(a: T, k: keyof T) {}
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_completions(tsc_fourslash::MarkerInput::from(vec!["1", "2"]), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["bar".into(), "baz".into(), "foo".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

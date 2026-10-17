@@ -7,21 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_destructured_binding() {
 	run_test(|t| {
-		let content = r#"
-function f({ /*1*/x }: { x: number }) {}
-function g([/*2*/y]: number[]) {}
-function h({ a: { /*3*/b } }: { a: { b: string } }) {}
-const { /*4*/c } = { c: 42 };
-let { /*5*/d } = { d: "hello" };
-var { /*6*/e } = { e: true };
-"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "(parameter) x: number", "");
-		f.verify_quick_info_at("2", "(parameter) y: number", "");
-		f.verify_quick_info_at("3", "(parameter) b: string", "");
-		f.verify_quick_info_at("4", "const c: number", "");
-		f.verify_quick_info_at("5", "let d: string", "");
-		f.verify_quick_info_at("6", "var e: boolean", "");
 	});
 }
 

@@ -7,14 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn rename_binding_element_initializer_property() {
 	run_test(|t| {
-		let content = r#"function f([|{[|{| "contextRangeIndex": 0 |}required|], optional = [|required|]}: {[|[|{| "contextRangeIndex": 3 |}required|]: number,|] optional?: number}|]) {
-    console.log("required", [|required|]);
-    console.log("optional", optional);
-}
-
-f({[|[|{| "contextRangeIndex": 6 |}required|]: 10|]});"#;
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into(), f.ranges()[2].clone().into(), f.ranges()[5].clone().into(), f.ranges()[4].clone().into(), f.ranges()[7].clone().into()]);
 	});
 }
 

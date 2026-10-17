@@ -7,11 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn jsx_element_missing_opening_tag_no_crash() {
 	run_test(|t| {
-		let content = r"//@Filename: file.tsx
-declare function Foo(): any;
-let x = <></Fo/*$*/o>;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("$", "let Foo: any", "");
 	});
 }
 

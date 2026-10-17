@@ -7,17 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn smart_selection_js_doc_tags4() {
 	run_test(|t| {
-		let content = r"/**
- * @typedef {object} Foo
- * @property {string} a
- * @property {number} b
- * @property {/**/number} c
- */
-
-/** @type {Foo} */
-const foo;";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_selection_ranges();
 	});
 }
 

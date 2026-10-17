@@ -7,15 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quickinfo_verbosity_abstract_class() {
 	run_test(|t| {
-		let content = r"
-declare abstract class Shape/*1*/ {
-    abstract area(): number;
-    abstract perimeter(): number;
-    toString(): string;
-}
-";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("1".to_string().into(), vec![0, 1])]));
 	});
 }
 

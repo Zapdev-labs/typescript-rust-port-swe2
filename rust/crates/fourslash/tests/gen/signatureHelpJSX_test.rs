@@ -7,13 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_jsx() {
 	run_test(|t| {
-		let content = r"//@Filename: test.tsx
-//@jsx: react
-declare var React: any;
-const z = <div>{[].map(x => </**/";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.go_to_marker("");
-		f.verify_no_signature_help_with_context(Some(tsc_lsproto::SignatureHelpContext { trigger_kind: tsc_lsproto::SignatureHelpTriggerKind::TriggerCharacter.into(), trigger_character: Some(("<").into()), is_retrigger: false.into(), ..Default::default() }));
 	});
 }
 

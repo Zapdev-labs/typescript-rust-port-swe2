@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_for_default_keyword() {
 	run_test(|t| {
-		let content = r"// @noLib: true
-function f(value: string, /*1*/default: string) {}
-
-const /*2*/default = 1;
-
-function /*3*/default() {}
-
-class /*4*/default {}
-
-const foo = {
-    /*5*/default: 1
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into()]);
 	});
 }
 

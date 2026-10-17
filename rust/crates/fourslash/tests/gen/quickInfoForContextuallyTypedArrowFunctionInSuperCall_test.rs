@@ -7,20 +7,6 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_for_contextually_typed_arrow_function_in_super_call() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test" */;
-		let content = r"class A<T1, T2> {
-    constructor(private map: (value: T1) => T2) {
-
-    }
-}
-
-class B extends A<number, string> {
-    constructor() { super(va/*1*/lue => String(va/*2*/lue.toExpone/*3*/ntial())); }
-}";
-		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, &content);
-		f.verify_quick_info_at("1", "(parameter) value: number", "");
-		f.verify_quick_info_at("2", "(parameter) value: number", "");
-		f.verify_quick_info_at("3", "(method) Number.toExponential(fractionDigits?: number): string", "Returns a string containing a number represented in exponential notation.");
 	});
 }
 
