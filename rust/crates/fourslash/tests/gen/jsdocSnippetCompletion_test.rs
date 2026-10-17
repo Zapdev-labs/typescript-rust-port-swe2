@@ -16,20 +16,20 @@ function abcdef(x, y) { }
 		f.go_to_marker("completion");
 		f.insert("/**");
 		let mut list = f.get_completions(None);
-		assert.assert(&mut *t, list != None);
-		assert.equal(&mut *t, list.items.len(), 1);
+		assert!(list != None);
+		assert_eq!(list.items.len(), 1);
 		let mut item = list.items[0];
-		assert.equal(&mut *t, item.label, "/** */");
-		assert.deep_equal(&mut *t, item.kind, Some((tsc_lsproto::CompletionItemKind::Text).into()));
-		assert.deep_equal(&mut *t, item.detail, Some(("JSDoc comment").into()));
-		assert.deep_equal(&mut *t, item.sort_text, Some(("\x00").into()));
-		assert.deep_equal(&mut *t, item.commit_characters, &[]);
-		assert.deep_equal(&mut *t, item.insert_text_format, Some((tsc_lsproto::InsertTextFormat::Snippet).into()));
-		assert.assert(&mut *t, item.text_edit != None);
-		assert.assert(&mut *t, item.text_edit.insert_replace_edit != None);
-		assert.equal(&mut *t, item.text_edit.insert_replace_edit.new_text, "/**\n * $0\n * @param x ${1}\n * @param y ${2}\n */");
-		assert.deep_equal(&mut *t, item.text_edit.insert_replace_edit.insert, tsc_lsproto::Range { start: tsc_lsproto::Position { line: 0, character: 0, ..Default::default() }.into(), end: tsc_lsproto::Position { line: 0, character: 6, ..Default::default() }.into(), ..Default::default() });
-		assert.deep_equal(&mut *t, item.text_edit.insert_replace_edit.replace, tsc_lsproto::Range { start: tsc_lsproto::Position { line: 0, character: 0, ..Default::default() }.into(), end: tsc_lsproto::Position { line: 0, character: 6, ..Default::default() }.into(), ..Default::default() });
+		assert_eq!(item.label, "/** */");
+		assert_eq!(item.kind, Some((tsc_lsproto::CompletionItemKind::Text).into()));
+		assert_eq!(item.detail, Some(("JSDoc comment").into()));
+		assert_eq!(item.sort_text, Some(("\x00").into()));
+		assert_eq!(item.commit_characters, &[]);
+		assert_eq!(item.insert_text_format, Some((tsc_lsproto::InsertTextFormat::Snippet).into()));
+		assert!(item.text_edit != None);
+		assert!(item.text_edit.insert_replace_edit != None);
+		assert_eq!(item.text_edit.insert_replace_edit.new_text, "/**\n * $0\n * @param x ${1}\n * @param y ${2}\n */");
+		assert_eq!(item.text_edit.insert_replace_edit.insert, tsc_lsproto::Range { start: tsc_lsproto::Position { line: 0, character: 0, ..Default::default() }.into(), end: tsc_lsproto::Position { line: 0, character: 6, ..Default::default() }.into(), ..Default::default() });
+		assert_eq!(item.text_edit.insert_replace_edit.replace, tsc_lsproto::Range { start: tsc_lsproto::Position { line: 0, character: 0, ..Default::default() }.into(), end: tsc_lsproto::Position { line: 0, character: 6, ..Default::default() }.into(), ..Default::default() });
 	});
 }
 
@@ -45,9 +45,9 @@ function abcdef(x) { return x; }
 		f.go_to_marker("completion");
 		f.insert("/**");
 		let mut list = f.get_completions(None);
-		assert.assert(&mut *t, list != None);
-		assert.equal(&mut *t, list.items.len(), 1);
-		assert.equal(&mut *t, list.items[0].text_edit.insert_replace_edit.new_text, "/**\n * $0\n * @param x ${1}\n * @returns ${2}\n */");
+		assert!(list != None);
+		assert_eq!(list.items.len(), 1);
+		assert_eq!(list.items[0].text_edit.insert_replace_edit.new_text, "/**\n * $0\n * @param x ${1}\n * @returns ${2}\n */");
 	});
 }
 
@@ -64,9 +64,9 @@ fn js_doc_snippet_completion_preserves_crlf() {
 		user_preferences.format_code_settings.new_line_character = "\r\n";
 		f.configure(user_preferences);
 		let mut list = f.get_completions(None);
-		assert.assert(&mut *t, list != None);
-		assert.equal(&mut *t, list.items.len(), 1);
-		assert.equal(&mut *t, list.items[0].text_edit.insert_replace_edit.new_text, "/**\r\n * $0\r\n * @param x ${1}\r\n * @returns ${2}\r\n */");
+		assert!(list != None);
+		assert_eq!(list.items.len(), 1);
+		assert_eq!(list.items[0].text_edit.insert_replace_edit.new_text, "/**\r\n * $0\r\n * @param x ${1}\r\n * @returns ${2}\r\n */");
 	});
 }
 
@@ -84,9 +84,9 @@ function abcdef(x) { return x; }
 		let mut user_preferences = tsc_lsutil::new_default_user_preferences();
 		user_preferences.generate_return_in_doc_template = tsc_core::tristate::TS_FALSE;
 		let mut list = f.get_completions(&user_preferences);
-		assert.assert(&mut *t, list != None);
-		assert.equal(&mut *t, list.items.len(), 1);
-		assert.equal(&mut *t, list.items[0].text_edit.insert_replace_edit.new_text, "/**\n * $0\n * @param x ${1}\n */");
+		assert!(list != None);
+		assert_eq!(list.items.len(), 1);
+		assert_eq!(list.items[0].text_edit.insert_replace_edit.new_text, "/**\n * $0\n * @param x ${1}\n */");
 	});
 }
 
@@ -104,7 +104,7 @@ function abcdef(x) { }
 		let mut list = f.get_completions(&user_preferences);
 		if list != None {
 			for item in list.items {
-				assert.assert(&mut *t, item.label != "/** */");
+				assert!(item.label != "/** */");
 			}
 		}
 	});
@@ -123,9 +123,9 @@ class C {
 		f.go_to_marker("completion");
 		f.insert("/**");
 		let mut list = f.get_completions(None);
-		assert.assert(&mut *t, list != None);
-		assert.equal(&mut *t, list.items.len(), 1);
-		assert.equal(&mut *t, list.items[0].text_edit.insert_replace_edit.new_text, "/**\n * $0\n */");
+		assert!(list != None);
+		assert_eq!(list.items.len(), 1);
+		assert_eq!(list.items[0].text_edit.insert_replace_edit.new_text, "/**\n * $0\n */");
 	});
 }
 

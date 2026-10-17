@@ -13,7 +13,7 @@ interface A2 { a?: number };
 [|let [|{| "contextRangeIndex": 2 |}a2|]: A2;|]
 let a12 = { ...[|a1|], ...[|a2|] };"#;
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_baseline_rename(None, vec![f.ranges()[1].into(), f.ranges()[4].into(), f.ranges()[3].into(), f.ranges()[5].into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into(), f.ranges()[4].clone().into(), f.ranges()[3].clone().into(), f.ranges()[5].clone().into()]);
 	});
 }
 

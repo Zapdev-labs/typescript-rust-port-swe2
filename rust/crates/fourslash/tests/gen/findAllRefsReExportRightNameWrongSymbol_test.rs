@@ -20,11 +20,11 @@ fn find_all_refs_re_export_right_name_wrong_symbol() {
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_no_errors();
 		f.verify_baseline_find_all_references(&["a".into(), "b".into(), "cFromB".into(), "cFromA".into(), "cUse".into(), "d".into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[1].into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[7].into(), f.ranges()[8].into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[3].into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[5].into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[10].into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[7].clone().into(), f.ranges()[8].clone().into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[3].clone().into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[5].clone().into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[10].clone().into()]);
 	});
 }
 

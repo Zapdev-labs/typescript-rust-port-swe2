@@ -28,7 +28,7 @@ import * as anotherThing from "someopath"; /* small comment */ // single line on
 * and there
 */
 
-anotherThing;"#, tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, None);
+anotherThing;"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 	});
 }
 

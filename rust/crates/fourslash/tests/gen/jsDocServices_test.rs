@@ -19,8 +19,8 @@ function f([|[|/*def*/{| "contextRangeIndex": 1 |}foo|]: I|]) {
 		f.go_to_marker("use");
 		f.verify_quick_info_is("(parameter) foo: I", "I pity the foo");
 		f.verify_baseline_find_all_references(&["use".into(), "def".into(), "use2".into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[0].into(), f.ranges()[2].into(), f.ranges()[3].into()]);
-		f.verify_baseline_document_highlights(None, vec![f.ranges()[0].into(), f.ranges()[2].into(), f.ranges()[3].into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[0].clone().into(), f.ranges()[2].clone().into(), f.ranges()[3].clone().into()]);
+		f.verify_baseline_document_highlights(None, vec![f.ranges()[0].clone().into(), f.ranges()[2].clone().into(), f.ranges()[3].clone().into()]);
 		f.verify_baseline_go_to_type_definition(&["use".into()]);
 		f.verify_baseline_go_to_definition(false, &["use".into()]);
 	});

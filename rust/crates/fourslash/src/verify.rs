@@ -119,8 +119,10 @@ pub struct ExpectedCompletionItem {
 
 impl From<CompletionItem> for ExpectedCompletionItem {
     fn from(item: CompletionItem) -> Self {
+        let expectation = text_edits_expectation(&item.additional_text_edits);
         ExpectedCompletionItem {
-            additional_text_edits: ExpectedTextEdits::Edits(item.additional_text_edits.clone()),
+            additional_text_edits: expectation
+                .unwrap_or_else(|| ExpectedTextEdits::Edits(item.additional_text_edits.clone())),
             item,
         }
     }
@@ -139,6 +141,36 @@ pub enum ExpectedTextEdits {
 
 /// Go's `Ignored{}` sentinel for `CompletionsExpectedItemDefaults.EditRange`.
 pub const IGNORED: ExpectedCompletionEditRange = ExpectedCompletionEditRange::Ignored;
+/// Sentinel `new_text` marking Go's `AnyTextEdits`/`NoTextEdits` pointer
+/// sentinels inside an `Option<Vec<TextEdit>>` (Rust has no pointer identity).
+pub const ANY_TEXT_EDITS_SENTINEL: &str = "\u{0}__any_text_edits";
+/// Sentinel `new_text` marking `NoTextEdits`.
+pub const NO_TEXT_EDITS_SENTINEL: &str = "\u{0}__no_text_edits";
+
+/// Marker `Option<Vec<TextEdit>>` encoding Go's `AnyTextEdits` sentinel.
+pub fn any_text_edits_marker() -> Option<Vec<TextEdit>> {
+    Some(vec![TextEdit {
+        new_text: ANY_TEXT_EDITS_SENTINEL.to_string(),
+        ..Default::default()
+    }])
+}
+
+/// Marker `Option<Vec<TextEdit>>` encoding Go's `NoTextEdits` sentinel.
+pub fn no_text_edits_marker() -> Option<Vec<TextEdit>> {
+    Some(vec![TextEdit {
+        new_text: NO_TEXT_EDITS_SENTINEL.to_string(),
+        ..Default::default()
+    }])
+}
+
+fn text_edits_expectation(edits: &Option<Vec<TextEdit>>) -> Option<ExpectedTextEdits> {
+    match edits.as_deref() {
+        Some([e]) if e.new_text == ANY_TEXT_EDITS_SENTINEL => Some(ExpectedTextEdits::Any),
+        Some([e]) if e.new_text == NO_TEXT_EDITS_SENTINEL => Some(ExpectedTextEdits::None),
+        _ => None,
+    }
+}
+
 /// Go's `AnyTextEdits` sentinel.
 pub const ANY_TEXT_EDITS: ExpectedTextEdits = ExpectedTextEdits::Any;
 /// Go's `NoTextEdits` sentinel.

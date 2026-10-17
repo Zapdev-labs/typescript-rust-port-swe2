@@ -32,7 +32,7 @@ f2<any, () =>/*1z*/T/*2z*/y/*3z*/"#;
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 |marker, index| {
 			let mut marker_name = marker.name;
-			let mut value_only = marker_name != None && strings.has_suffix(*marker_name, "ValueOnly");
+			let mut value_only = marker_name != None && strings.has_suffix((*marker_name).clone(), "ValueOnly");
 			let mut commit_characters = Some(tsc_fourslash::default_commit_characters().clone());
 			if marker.data != None {
 				let mut new_id = marker.data["newId"];

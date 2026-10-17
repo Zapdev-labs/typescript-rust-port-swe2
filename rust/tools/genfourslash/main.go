@@ -147,6 +147,7 @@ func translateFile(path, outDir string) error {
 			"stringutil": "tsc_stringutil",
 			"lsconv":    "tsc_lsconv",
 			"stringtestutil": "tsc_testutil::stringtestutil",
+			"assert":   "", // gotest.tools asserts -> assert!/assert_eq!
 			"fourslashUtil":  "tsc_fourslash::testsutil",
 			"fourslash_util": "tsc_fourslash::testsutil",
 			"fmt":       "", // mapped via builtins
@@ -611,7 +612,7 @@ func (tr *translator) expr(e ast.Expr) string {
 		return tr.call(x)
 
 	case *ast.StarExpr:
-		return "*" + tr.expr(x.X)
+		return "(*" + tr.expr(x.X) + ").clone()"
 
 	case *ast.UnaryExpr:
 		switch x.Op {
@@ -640,6 +641,13 @@ func (tr *translator) expr(e ast.Expr) string {
 		return tr.composite(x)
 
 	case *ast.IndexExpr:
+		if c, ok := x.X.(*ast.CallExpr); ok {
+			if fs, ok2 := c.Fun.(*ast.SelectorExpr); ok2 &&
+				(fs.Sel.Name == "Ranges" || fs.Sel.Name == "Markers" ||
+					snake(fs.Sel.Name) == "ranges" || snake(fs.Sel.Name) == "markers") {
+				return tr.expr(x.X) + "[" + tr.expr(x.Index) + "].clone()"
+			}
+		}
 		return tr.expr(x.X) + "[" + tr.expr(x.Index) + "]"
 
 	case *ast.SliceExpr:
@@ -740,8 +748,8 @@ var snakeNames = map[string]bool{
 // sentinels) to fully-qualified Rust expressions.
 var identOverrides = map[string]string{
 	"Ignored":                  "tsc_fourslash::IGNORED",
-	"AnyTextEdits":             "tsc_fourslash::ANY_TEXT_EDITS",
-	"NoTextEdits":              "tsc_fourslash::NO_TEXT_EDITS",
+	"AnyTextEdits":             "tsc_fourslash::any_text_edits_marker()",
+	"NoTextEdits":              "tsc_fourslash::no_text_edits_marker()",
 	"DefaultCommitCharacters":  "tsc_fourslash::default_commit_characters()",
 	"Dedent":                   "dedent",
 	"RunFourslash":             "tsc_fourslash::run_fourslash",
@@ -810,6 +818,9 @@ func (tr *translator) selector(x *ast.SelectorExpr) string {
 				rt = t
 			}
 			if path == "tsc_lsproto" {
+				if av, ok := pascalVariantAlias[t+"."+v]; ok {
+					v = av
+				}
 				return path + "::" + rt + "::" + v // PascalCase consts
 			}
 			return path + "::" + rt + "::" + screaming(v)
@@ -866,8 +877,8 @@ var relocatedTypes = map[string]string{
 	"core.TSTrue":  "tsc_core::tristate::TS_TRUE",
 	"core.TSFalse": "tsc_core::tristate::TS_FALSE",
 	"core.TSUnknown": "tsc_core::tristate::TS_UNKNOWN",
-	"fourslash.AnyTextEdits":  "tsc_fourslash::ANY_TEXT_EDITS",
-	"fourslash.NoTextEdits":   "tsc_fourslash::NO_TEXT_EDITS",
+	"fourslash.AnyTextEdits":  "tsc_fourslash::any_text_edits_marker()",
+	"fourslash.NoTextEdits":   "tsc_fourslash::no_text_edits_marker()",
 	"fourslash.Ignored":       "tsc_fourslash::IGNORED",
 	"util.Ignored":            "tsc_fourslash::IGNORED",
 	"fourslashUtil.Ignored":   "tsc_fourslash::IGNORED",
@@ -901,6 +912,15 @@ var enumTypes = []string{
 var rustEnumType = map[string]string{
 	"SemanticTokenTypes":     "SemanticTokenType",
 	"SemanticTokenModifiers": "SemanticTokenModifier",
+}
+
+// pascalVariantAlias fixes Go enum const suffixes that differ from the Rust
+// PascalCase variant names (e.g. `...OrganizeImportsTs` vs `OrganizeImports`).
+var pascalVariantAlias = map[string]string{
+	"CodeActionKind.SourceOrganizeImportsTs": "SourceOrganizeImports",
+	"CodeActionKind.SourceSortImportsTs":     "SourceSortImports",
+	"CodeActionKind.SourceMissingImportsTs":  "SourceMissingImports",
+	"CodeActionKind.SourceFixAllTs":          "SourceFixAll",
 }
 
 func enumConst(name string) (string, string, bool) {
@@ -965,6 +985,20 @@ func (tr *translator) call(c *ast.CallExpr) string {
 		case pkg == "t" && sel.Sel.Name == "Helper":
 			return "/* t.Helper */ ()"
 
+		case pkg == "assert":
+			args := tr.args(c.Args, 1)
+			switch sel.Sel.Name {
+			case "Assert":
+				return "assert!(" + args + ")"
+			case "Equal", "DeepEqual", "ErrorContains", "Error":
+				return "assert_eq!(" + args + ")"
+			case "NilError":
+				return "assert!(" + args + ".is_none())"
+			case "Check":
+				return "assert!(" + args + ")"
+			default:
+				return "assert!(" + args + ")"
+			}
 		case pkg == "testing" || pkg == "testutil" || pkg == "util":
 			path := tr.imports[pkg]
 			if path == "" {
@@ -1013,7 +1047,7 @@ func (tr *translator) call(c *ast.CallExpr) string {
 		case "make":
 			return tr.make(c)
 		}
-		return snake(id.Name) + "(" + tr.args(c.Args, 0) + ")"
+		return snake(id.Name) + "(" + tr.callArgs(snake(id.Name), c.Args, 0, c.Ellipsis.IsValid()) + ")"
 	}
 	note(tr.fset, c, "unhandled call fun %T", c.Fun)
 	return tr.expr(c.Fun) + "(" + tr.args(c.Args, 0) + ")"
@@ -1371,6 +1405,9 @@ func (tr *translator) iterVec(cl *ast.CompositeLit) string {
 func (tr *translator) packSlice(list []ast.Expr, spread bool) string {
 	if spread && len(list) == 1 {
 		return "&" + tr.expr(list[0])
+	}
+	if len(list) == 0 {
+		return "&[]"
 	}
 	var parts []string
 	for _, e := range list {

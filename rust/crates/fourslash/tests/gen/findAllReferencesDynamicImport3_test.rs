@@ -12,7 +12,7 @@ fn find_all_references_dynamic_import3() {
 import('./foo').then(([|{ /*1*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 2 |}bar|] }|]) => undefined);"#;
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_find_all_references(&["0".into(), "1".into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[1].into(), f.ranges()[3].into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into(), f.ranges()[3].clone().into()]);
 	});
 }
 

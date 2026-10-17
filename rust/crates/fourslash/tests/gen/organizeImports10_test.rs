@@ -19,7 +19,7 @@ export function fun() { /* ... */ }
 		f.verify_organize_imports(r"import type { ZodType } from './declaration';
 
 /** Intended to be used in combination with {@link ZodType} */
-export function fun() { /* ... */ }", tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, None);
+export function fun() { /* ... */ }", tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 	});
 }
 

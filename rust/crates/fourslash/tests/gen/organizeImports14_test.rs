@@ -35,7 +35,7 @@ import { foo } from "./a";"#;
 
 // comment 2
 
-", tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, None);
+", tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 	});
 }
 

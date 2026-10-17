@@ -23,10 +23,10 @@ log(/*q3*/[|q|] + 1);"#;
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_no_errors();
 		f.verify_baseline_find_all_references(&["q0".into(), "q1".into(), "q2".into(), "q3".into(), "z0".into(), "z1".into(), "z2".into()]);
-		f.verify_baseline_rename(Some(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }), vec![f.ranges()[1].into(), f.ranges()[3].into(), f.ranges()[10].into(), f.ranges()[11].into()]);
-		f.verify_baseline_rename(Some(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_FALSE.into(), ..Default::default() }), vec![f.ranges()[1].into(), f.ranges()[3].into(), f.ranges()[10].into(), f.ranges()[11].into()]);
-		f.verify_baseline_rename(Some(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }), vec![f.ranges()[5].into(), f.ranges()[7].into(), f.ranges()[8].into()]);
-		f.verify_baseline_rename(Some(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_FALSE.into(), ..Default::default() }), vec![f.ranges()[5].into(), f.ranges()[7].into(), f.ranges()[8].into()]);
+		f.verify_baseline_rename(Some(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }), vec![f.ranges()[1].clone().into(), f.ranges()[3].clone().into(), f.ranges()[10].clone().into(), f.ranges()[11].clone().into()]);
+		f.verify_baseline_rename(Some(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_FALSE.into(), ..Default::default() }), vec![f.ranges()[1].clone().into(), f.ranges()[3].clone().into(), f.ranges()[10].clone().into(), f.ranges()[11].clone().into()]);
+		f.verify_baseline_rename(Some(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }), vec![f.ranges()[5].clone().into(), f.ranges()[7].clone().into(), f.ranges()[8].clone().into()]);
+		f.verify_baseline_rename(Some(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_FALSE.into(), ..Default::default() }), vec![f.ranges()[5].clone().into(), f.ranges()[7].clone().into(), f.ranges()[8].clone().into()]);
 	});
 }
 

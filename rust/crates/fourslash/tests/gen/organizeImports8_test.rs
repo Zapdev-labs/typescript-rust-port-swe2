@@ -11,7 +11,7 @@ fn organize_imports8() {
 foo;"#;
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_organize_imports(r#"import { foo } from "foo";
-foo;"#, tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, None);
+foo;"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 	});
 }
 

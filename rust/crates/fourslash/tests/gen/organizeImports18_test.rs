@@ -33,7 +33,7 @@ export { C } from "./C";
 export { bFuncA } from "./A";
 export { bFuncB } from "./B";
 export { bFuncC } from "./C";
-"#, tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, None);
+"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 	});
 }
 

@@ -23,11 +23,11 @@ declare module "b" {
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_find_all_references(&["N".into(), "a".into(), "b".into(), "x".into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[1].into(), f.ranges()[5].into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[7].into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[9].into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[11].into(), f.ranges()[12].into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[3].into(), f.ranges()[13].into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into(), f.ranges()[5].clone().into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[7].clone().into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[9].clone().into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[11].clone().into(), f.ranges()[12].clone().into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[3].clone().into(), f.ranges()[13].clone().into()]);
 	});
 }
 

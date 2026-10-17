@@ -13,7 +13,7 @@ export const x = 0;
 // @Filename: /b.ts
 import { x } from "[|./a|]";"#;
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_baseline_document_highlights(None, vec![f.ranges()[0].into()]);
+		f.verify_baseline_document_highlights(None, vec![f.ranges()[0].clone().into()]);
 	});
 }
 

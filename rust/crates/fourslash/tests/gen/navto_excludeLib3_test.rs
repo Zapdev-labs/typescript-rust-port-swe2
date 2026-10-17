@@ -10,7 +10,7 @@ fn navto_exclude_lib3() {
 		let content = r"// @filename: /index.ts
 function [|parseInt|](s: string): number {}";
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "parseInt".to_string().into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "parseInt".to_string().into(), kind: tsc_lsproto::SYMBOL_KIND_FUNCTION.into(), location: f.ranges()[0].ls_location().into(), ..Default::default() }]).into()), ..Default::default() }]);
+		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "parseInt".to_string().into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "parseInt".to_string().into(), kind: tsc_lsproto::SYMBOL_KIND_FUNCTION.into(), location: f.ranges()[0].clone().ls_location().into(), ..Default::default() }]).into()), ..Default::default() }]);
 	});
 }
 

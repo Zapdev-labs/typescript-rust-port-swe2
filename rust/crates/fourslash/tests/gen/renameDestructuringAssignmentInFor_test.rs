@@ -22,7 +22,7 @@ for ([|{ [|{| "contextRangeIndex": 7 |}property1|]: p2 } = elems[0]|]; p2 < 100;
 }"#;
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_no_errors();
-		f.verify_baseline_rename(None, vec![f.ranges()[1].into(), f.ranges()[8].into(), f.ranges()[3].into(), f.ranges()[5].into(), f.ranges()[6].into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into(), f.ranges()[8].clone().into(), f.ranges()[3].clone().into(), f.ranges()[5].clone().into(), f.ranges()[6].clone().into()]);
 	});
 }
 

@@ -27,7 +27,7 @@ supplementalV/*completion*/;
 		if completion == None {
 			panic!("supplementalValue completion not found");
 		}
-		if completion.as_mut().unwrap().data.file_name != "/globals.astro" || completion.as_mut().unwrap().data.supplemental_file_index == None || *completion.as_mut().unwrap().data.supplemental_file_index != 0 {
+		if completion.as_mut().unwrap().data.file_name != "/globals.astro" || completion.as_mut().unwrap().data.supplemental_file_index == None || (*completion.as_mut().unwrap().data.supplemental_file_index).clone() != 0 {
 			panic!("unexpected completion content mapper file data: %#v", completion.as_mut().unwrap().data);
 		}
 		f.resolve_completion_item(completion);

@@ -23,7 +23,7 @@ import * as something from "path"; /**
  */
 
 something;
-somethingElse;"#, tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, None);
+somethingElse;"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 	});
 }
 

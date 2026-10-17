@@ -51,7 +51,7 @@ console.log(func1, func2, func3, func4, func5, func6, func7, func8, func9);"#;
     func9,
 } from "foo";
 interface Use extends Type1, Type2, Type3, Type4, Type5, Type6, Type7, Type8, Type9 {}
-console.log(func1, func2, func3, func4, func5, func6, func7, func8, func9);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, None);
+console.log(func1, func2, func3, func4, func5, func6, func7, func8, func9);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 		f.verify_organize_imports(r#"import {
     func1,
     func2,
@@ -73,7 +73,7 @@ console.log(func1, func2, func3, func4, func5, func6, func7, func8, func9);"#, t
     Type9,
 } from "foo";
 interface Use extends Type1, Type2, Type3, Type4, Type5, Type6, Type7, Type8, Type9 {}
-console.log(func1, func2, func3, func4, func5, func6, func7, func8, func9);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }));
+console.log(func1, func2, func3, func4, func5, func6, func7, func8, func9);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }));
 	});
 }
 

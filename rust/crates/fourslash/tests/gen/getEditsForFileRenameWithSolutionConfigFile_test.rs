@@ -86,7 +86,7 @@ helper;"#;
 		if result.workspace_edit == None || result.workspace_edit.document_changes == None {
 			panic!("workspace/willRenameFiles returned no document changes");
 		}
-		for change in *result.workspace_edit.document_changes {
+		for change in (*result.workspace_edit.document_changes).clone() {
 			if change.text_document_edit != None && change.text_document_edit.text_document.as_mut().unwrap().uri.file_name() == "/app/main.ts" {
 				for edit in change.text_document_edit.edits {
 					if edit.text_edit != None && edit.text_edit.new_text == "../lib/renamed-helper" {

@@ -25,7 +25,7 @@ declare module 'styled-components' {
     interface ThemedStyledComponentsModule {
         keyframes(): Keyframes;
     }
-}", tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, None);
+}", tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 	});
 }
 

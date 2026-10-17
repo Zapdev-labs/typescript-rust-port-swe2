@@ -23,7 +23,7 @@ fn rename_declaration_keywords() {
 [|{| "id": "letDecl" |}[|let|] [|{| "isWriteAccess": false, "isDefinition": true, "contextRangeId": "letDecl" |}y|];|]
 [|{| "id": "constDecl" |}[|const|] [|{| "isWriteAccess": true, "isDefinition": true, "contextRangeId": "constDecl" |}z|] = 1;|]"#;
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_baseline_rename(None, vec![f.ranges()[5].into(), f.ranges()[7].into(), f.ranges()[9].into(), f.ranges()[12].into(), f.ranges()[15].into(), f.ranges()[18].into(), f.ranges()[20].into(), f.ranges()[23].into(), f.ranges()[26].into(), f.ranges()[29].into(), f.ranges()[32].into(), f.ranges()[35].into(), f.ranges()[38].into(), f.ranges()[41].into(), f.ranges()[44].into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[5].clone().into(), f.ranges()[7].clone().into(), f.ranges()[9].clone().into(), f.ranges()[12].clone().into(), f.ranges()[15].clone().into(), f.ranges()[18].clone().into(), f.ranges()[20].clone().into(), f.ranges()[23].clone().into(), f.ranges()[26].clone().into(), f.ranges()[29].clone().into(), f.ranges()[32].clone().into(), f.ranges()[35].clone().into(), f.ranges()[38].clone().into(), f.ranges()[41].clone().into(), f.ranges()[44].clone().into()]);
 	});
 }
 

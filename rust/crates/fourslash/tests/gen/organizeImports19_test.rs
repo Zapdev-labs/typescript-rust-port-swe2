@@ -24,7 +24,7 @@ export { b };
 
 const c = 1;
 export { c };
-", tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, None);
+", tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 	});
 }
 

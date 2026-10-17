@@ -15,7 +15,7 @@ var elems: I[], p1: number, [|[|{| "contextRangeIndex": 2 |}property1|]: number|
 [|[{ [|{| "contextRangeIndex": 4 |}property1|]: p1 }] = elems;|]
 [|[{ [|{| "contextRangeIndex": 6 |}property1|] }] = elems;|]"#;
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_baseline_rename(None, vec![f.ranges()[1].into(), f.ranges()[5].into(), f.ranges()[3].into(), f.ranges()[7].into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into(), f.ranges()[5].clone().into(), f.ranges()[3].clone().into(), f.ranges()[7].clone().into()]);
 	});
 }
 

@@ -64,7 +64,7 @@ export class MyClass {
     }
     someFunction();
   }
-}", tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, None);
+}", tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 	});
 }
 

@@ -20,11 +20,11 @@ type fullType2 = import('./foo/types')./*foo4*/[|foo|]./*full2*/[|Full|];"#;
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_no_errors();
 		f.verify_baseline_find_all_references(&["full0".into(), "full1".into(), "full2".into(), "foo0".into(), "foo1".into(), "foo2".into(), "foo3".into(), "foo4".into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[1].into(), f.ranges()[9].into(), f.ranges()[11].into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[3].into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[5].into(), f.ranges()[10].into()]);
-		f.verify_baseline_rename(None, vec![f.ranges()[7].into(), f.ranges()[8].into()]);
-		f.verify_baseline_rename(Some(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_FALSE.into(), ..Default::default() }), vec![f.ranges()[7].into(), f.ranges()[8].into(), f.ranges()[10].into(), f.ranges()[3].into(), f.ranges()[5].into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[1].clone().into(), f.ranges()[9].clone().into(), f.ranges()[11].clone().into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[3].clone().into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[5].clone().into(), f.ranges()[10].clone().into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[7].clone().into(), f.ranges()[8].clone().into()]);
+		f.verify_baseline_rename(Some(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_FALSE.into(), ..Default::default() }), vec![f.ranges()[7].clone().into(), f.ranges()[8].clone().into(), f.ranges()[10].clone().into(), f.ranges()[3].clone().into(), f.ranges()[5].clone().into()]);
 	});
 }
 

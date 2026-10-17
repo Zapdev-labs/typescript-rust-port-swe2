@@ -19,13 +19,13 @@ import * as _Ab from "./_Ab";
 import * as _aB from "./_aB";
 import * as aB from "./aB";
 
-console.log(_aB, _Ab, aB, Ab);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_FALSE.into(), organize_imports_collation: tsc_lsutil::OrganizeImportsCollation::ORDINAL.into(), ..Default::default() }));
+console.log(_aB, _Ab, aB, Ab);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_FALSE.into(), organize_imports_collation: tsc_lsutil::OrganizeImportsCollation::ORDINAL.into(), ..Default::default() }));
 		f.verify_organize_imports(r#"import * as _aB from "./_aB";
 import * as _Ab from "./_Ab";
 import * as aB from "./aB";
 import * as Ab from "./Ab";
 
-console.log(_aB, _Ab, aB, Ab);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_FALSE.into(), organize_imports_collation: tsc_lsutil::OrganizeImportsCollation::UNICODE.into(), ..Default::default() }));
+console.log(_aB, _Ab, aB, Ab);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_FALSE.into(), organize_imports_collation: tsc_lsutil::OrganizeImportsCollation::UNICODE.into(), ..Default::default() }));
 	});
 }
 

@@ -29,7 +29,7 @@ export {
     PersonDefinitions as NameDefinitions,
     PersonDefinitions
 } from './a';
-", tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, None);
+", tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 	});
 }
 

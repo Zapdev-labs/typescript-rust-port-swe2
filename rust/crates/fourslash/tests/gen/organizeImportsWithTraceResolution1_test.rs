@@ -19,7 +19,7 @@ import "./dep.js";
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.go_to_file("/project/main.ts");
 		f.verify_organize_imports(r#"import "./dep.js";
-"#, tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, None);
+"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 	});
 }
 

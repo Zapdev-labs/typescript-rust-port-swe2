@@ -23,7 +23,7 @@ import { C, D, E } from "./a" with { bar: "foo", foo: "bar" };
 import { F, Z } from "./a" with { foo: "42" };
 import { Y } from "./a" with { foo: 42 };
 
-export type G = A | B | C | D | E | F | Y | Z;"#, tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, None);
+export type G = A | B | C | D | E | F | Y | Z;"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 	});
 }
 

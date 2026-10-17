@@ -29,7 +29,7 @@ console.log(A, a, B, b, c, C, d, D);";
     d,
     type d as D
 } from './foo';
-console.log(A, a, B, b, c, C, d, D);", tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_UNKNOWN.into(), organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::INLINE.into(), ..Default::default() }));
+console.log(A, a, B, b, c, C, d, D);", tsc_lsproto::CodeActionKind::SourceOrganizeImports, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_UNKNOWN.into(), organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::INLINE.into(), ..Default::default() }));
 		f.verify_organize_imports(r"import {
     type A,
     a,
@@ -40,7 +40,7 @@ console.log(A, a, B, b, c, C, d, D);", tsc_lsproto::CodeActionKind::SourceOrgani
     d,
     type d as D
 } from './foo';
-console.log(A, a, B, b, c, C, d, D);", tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_UNKNOWN.into(), organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::INLINE.into(), ..Default::default() }));
+console.log(A, a, B, b, c, C, d, D);", tsc_lsproto::CodeActionKind::SourceOrganizeImports, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_UNKNOWN.into(), organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::INLINE.into(), ..Default::default() }));
 	});
 }
 

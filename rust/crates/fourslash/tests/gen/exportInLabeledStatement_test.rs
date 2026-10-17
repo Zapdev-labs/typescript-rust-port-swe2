@@ -11,7 +11,7 @@ fn export_in_labeled_statement() {
 subTitle:
 [|export|] const title: string";
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_baseline_document_highlights_with_options(None, &[f.ranges()[0].file_name().as_string()], vec![f.ranges()[0].into()]);
+		f.verify_baseline_document_highlights_with_options(None, &[f.ranges()[0].clone().file_name().as_string()], vec![f.ranges()[0].clone().into()]);
 	});
 }
 

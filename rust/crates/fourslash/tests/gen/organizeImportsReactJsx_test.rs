@@ -32,7 +32,7 @@ import './';
 import './';"#;
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.go_to_file("test.tsx");
-		f.verify_organize_imports(r"export default () => <div></div>", tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, None);
+		f.verify_organize_imports(r"export default () => <div></div>", tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 	});
 }
 

@@ -19,7 +19,7 @@ import y from "./y";
 
 y().[|foo|]();"#;
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_baseline_document_highlights_with_options(None, &["/x.ts".into()], vec![f.ranges()[0].into()]);
+		f.verify_baseline_document_highlights_with_options(None, &["/x.ts".into()], vec![f.ranges()[0].clone().into()]);
 	});
 }
 

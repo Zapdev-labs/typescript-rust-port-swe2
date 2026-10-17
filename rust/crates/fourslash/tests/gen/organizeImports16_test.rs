@@ -13,19 +13,19 @@ console.log(a, b);"#;
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_organize_imports(r#"import { a, A, b } from "foo";
 interface Use extends A {}
-console.log(a, b);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, None);
+console.log(a, b);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 		f.replace_line(0, "import { a, A, b } from \"foo1\";");
 		f.verify_organize_imports(r#"import { a, A, b } from "foo1";
 interface Use extends A {}
-console.log(a, b);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_UNKNOWN.into(), ..Default::default() }));
+console.log(a, b);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_UNKNOWN.into(), ..Default::default() }));
 		f.replace_line(0, "import { a, A, b } from \"foo2\";");
 		f.verify_organize_imports(r#"import { a, A, b } from "foo2";
 interface Use extends A {}
-console.log(a, b);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }));
+console.log(a, b);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }));
 		f.replace_line(0, "import { a, A, b } from \"foo3\";");
 		f.verify_organize_imports(r#"import { A, a, b } from "foo3";
 interface Use extends A {}
-console.log(a, b);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_FALSE.into(), ..Default::default() }));
+console.log(a, b);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_FALSE.into(), ..Default::default() }));
 	});
 }
 

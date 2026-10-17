@@ -21,7 +21,7 @@ import Foo from "foo";
 
 import Foobar from "foobar";
 
-console.log(Foo, Bar, Foobar);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, None);
+console.log(Foo, Bar, Foobar);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 	});
 }
 

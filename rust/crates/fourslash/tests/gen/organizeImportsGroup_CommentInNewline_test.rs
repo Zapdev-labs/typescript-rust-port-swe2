@@ -23,7 +23,7 @@ import a from "A";
 import b from "B";
 import d from "D";
 
-console.log(a, b, c, d)"#, tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, None);
+console.log(a, b, c, d)"#, tsc_lsproto::CodeActionKind::SourceOrganizeImports, None);
 	});
 }
 
