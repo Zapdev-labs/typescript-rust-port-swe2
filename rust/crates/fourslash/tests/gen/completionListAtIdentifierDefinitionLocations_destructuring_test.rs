@@ -23,8 +23,8 @@ var {x, y/*variable6*/
 function func1({ a/*parameter1*/
 // @Filename: h.ts
 function func2({ a, b/*parameter2*/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions(f.markers(), None);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions(f.markers().into(), None);
 	});
 }
 

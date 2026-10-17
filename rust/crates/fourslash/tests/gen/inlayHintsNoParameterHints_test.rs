@@ -9,8 +9,8 @@ fn inlay_hints_no_parameter_hints() {
 	run_test(|t| {
 		let content = r"function foo (a: number, b: number) {}
 foo(1, 2);";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_inlay_hints(None, &tsc_lsutil::UserPreferences { include_inlay_parameter_name_hints: tsc_lsutil::IncludeInlayParameterNameHints::NONE, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_inlay_hints(None, Some(&tsc_lsutil::UserPreferences { inlay_hints_preferences: tsc_lsutil::InlayHintsPreferences { include_inlay_parameter_name_hints: tsc_lsutil::IncludeInlayParameterNameHints::NONE.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 

@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_cross_project_symlinks_to_dist() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r#"// @Filename: /home/src/workspaces/project/packages/app/package.json
 { "name": "app", "dependencies": { "dep": "*" } }
 // @Filename: /home/src/workspaces/project/packages/app/tsconfig.json
@@ -37,12 +37,12 @@ import "./sub/folder";
 // @Filename: /home/src/workspaces/project/packages/dep/src/sub/folder/index.ts
 export const dep = 0;
 // @link: /home/src/workspaces/project/packages/dep -> /home/src/workspaces/project/packages/app/node_modules/dep"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_marker("".into());
+		f.go_to_marker("");
 		f.verify_import_fix_at_position(&[r#"import { dep } from "dep/dist/sub/folder";
 
-dep"#], None);
+dep"#.into()], None);
 	});
 }
 

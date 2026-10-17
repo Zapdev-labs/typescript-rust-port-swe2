@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_jsdoc_enum() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"// @allowJs: true
 // @noLib: true
 // @Filename: /a.js
@@ -21,10 +21,10 @@ const E = {
 
 /** @type {/*type*/E} */
 const x = /*value*/E.A;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_no_errors();
-		f.verify_quick_info_at("type".into(), "type E = number".into(), "Doc".into());
-		f.verify_quick_info_at("value".into(), "const E: {\n    A: number;\n}".into(), "Doc".into());
+		f.verify_quick_info_at("type", "type E = number", "Doc");
+		f.verify_quick_info_at("value", "const E: {\n    A: number;\n}", "Doc");
 	});
 }
 

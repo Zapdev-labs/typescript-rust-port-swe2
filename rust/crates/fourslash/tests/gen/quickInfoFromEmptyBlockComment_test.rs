@@ -11,8 +11,8 @@ fn quick_info_from_empty_block_comment() {
 class Foo {
 }
 var f/*A*/ff = new Foo();";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("A".into(), "var fff: Foo".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("A", "var fff: Foo", "");
 	});
 }
 

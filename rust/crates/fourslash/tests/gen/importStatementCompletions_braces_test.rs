@@ -6,23 +6,23 @@ use tsc_fourslash::*;
 
 fn verify_import_statement_filter_text(t: &mut TestHandle, typed: string) {
 	/* t.Helper */ ();
-	let mut content = "// @Filename: /mod.ts\nexport const foo = 0;\n// @Filename: /index.ts\n[|" + typed + "|]";
-	let mut f = tsc_fourslash::new_fourslash(t_name(), "", tsc_fourslash::get_default_capabilities_with_options(&tsc_fourslash::ClientCapabilitiesOptions { completion_item: &tsc_lsproto::ClientCompletionItemOptions { snippet_support: Some((true).into()), ..Default::default() }, ..Default::default() }), content);
+	let mut content = format!("{}{}", format!("{}{}", "// @Filename: /mod.ts\nexport const foo = 0;\n// @Filename: /index.ts\n[|", typed), "|]");
+	let mut f = tsc_fourslash::new_fourslash(&t_name(), "", Some(tsc_fourslash::get_default_capabilities_with_options(Some(&tsc_fourslash::ClientCapabilitiesOptions { completion_item: Some(tsc_lsproto::ClientCompletionItemOptions { snippet_support: Some((true).into()), ..Default::default() }), ..Default::default() }))), content);
 	let text = r#"import { foo$1 } from "./mod";"#;
-	f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "foo", insert_text: Some((text).into()), filter_text: Some((text).into()), data: &tsc_lsproto::CompletionItemData { auto_import: &tsc_lsproto::AutoImportFix { module_specifier: "./mod", ..Default::default() }, ..Default::default() }, insert_text_format: Some((tsc_lsproto::InsertTextFormat::SNIPPET).into()), text_edit: &tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: &tsc_lsproto::TextEdit { new_text: text, range: f.ranges()[0].ls_range, ..Default::default() }, ..Default::default() }, ..Default::default() }], ..Default::default() }, ..Default::default() });
+	f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "foo".to_string().into(), insert_text: Some((text).into()), filter_text: Some((text).into()), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./mod".to_string().into(), ..Default::default() }), ..Default::default() }), insert_text_format: Some((tsc_lsproto::InsertTextFormat::Snippet).into()), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: text.into(), range: f.ranges()[0].ls_range.into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 }
 
 #[test]
 fn import_statement_completions_bare_brace() {
 	run_test(|t| {
-		verify_import_statement_filter_text(&mut *t, "import {/**/".into());
+		verify_import_statement_filter_text(&mut *t, "import {/**/");
 	});
 }
 
 #[test]
 fn import_statement_completions_brace_prefix() {
 	run_test(|t| {
-		verify_import_statement_filter_text(&mut *t, "import { fo/**/".into());
+		verify_import_statement_filter_text(&mut *t, "import { fo/**/");
 	});
 }
 

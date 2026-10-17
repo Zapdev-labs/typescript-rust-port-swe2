@@ -26,22 +26,22 @@ const x: OtherType/*c*/
 // @Filename: /d.ts
 import type { OtherType } from "./exports1.js";
 const x: OtherOtherType/*d*/"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("a".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("a");
 		f.verify_import_fix_at_position(&[r#"import type SomeType from "./exports1.js";
 import { someValue } from "./exports1.js";
-someValue"#], None);
-		f.go_to_marker("b".into());
+someValue"#.into()], None);
+		f.go_to_marker("b");
 		f.verify_import_fix_at_position(&[r#"import type SomeType from "./exports1.js";
 import { someValue } from "./exports1.js";
-const b: SomeType = someValue;"#], None);
-		f.go_to_marker("c".into());
+const b: SomeType = someValue;"#.into()], None);
+		f.go_to_marker("c");
 		f.verify_import_fix_at_position(&[r#"import type { OtherType } from "./exports1.js";
 import type SomeType from "./exports1.js";
-const x: OtherType"#], None);
-		f.go_to_marker("d".into());
+const x: OtherType"#.into()], None);
+		f.go_to_marker("d");
 		f.verify_import_fix_at_position(&[r#"import type { OtherOtherType, OtherType } from "./exports1.js";
-const x: OtherOtherType"#], None);
+const x: OtherOtherType"#.into()], None);
 	});
 }
 

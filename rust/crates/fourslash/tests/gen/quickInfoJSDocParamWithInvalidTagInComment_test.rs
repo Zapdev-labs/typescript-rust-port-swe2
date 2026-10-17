@@ -18,13 +18,13 @@ fn quick_info_js_doc_param_with_invalid_tag_in_comment() {
  */
 function /*fn*/foo(/**/x, /*a*/a, /*b*/b, /*c*/c, /*d*/d) {}
 ";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("fn".into(), "function foo(x: string, a: string, b: string, c: string, d: string): void".into(), "" + "\n\n*@param* `x` — Checks @-rule here\n" + "\n*@param* `a` — see" + "\n\n*@foo* — *bar here\n" + "\n*@param* `b` — see" + "\n\n*@test* — (something) here" + "\n\n*@param* `c` — see @*not-ident here" + "\n\n*@param* `d` — see @(paren) here");
-		f.verify_quick_info_at("".into(), "(parameter) x: string".into(), "Checks @-rule here".into());
-		f.verify_quick_info_at("a".into(), "(parameter) a: string".into(), "see".into());
-		f.verify_quick_info_at("b".into(), "(parameter) b: string".into(), "see".into());
-		f.verify_quick_info_at("c".into(), "(parameter) c: string".into(), "see @*not-ident here".into());
-		f.verify_quick_info_at("d".into(), "(parameter) d: string".into(), "see @(paren) here".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("fn", "function foo(x: string, a: string, b: string, c: string, d: string): void", &format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", "", "\n\n*@param* `x` — Checks @-rule here\n"), "\n*@param* `a` — see"), "\n\n*@foo* — *bar here\n"), "\n*@param* `b` — see"), "\n\n*@test* — (something) here"), "\n\n*@param* `c` — see @*not-ident here"), "\n\n*@param* `d` — see @(paren) here"));
+		f.verify_quick_info_at("", "(parameter) x: string", "Checks @-rule here");
+		f.verify_quick_info_at("a", "(parameter) a: string", "see");
+		f.verify_quick_info_at("b", "(parameter) b: string", "see");
+		f.verify_quick_info_at("c", "(parameter) c: string", "see @*not-ident here");
+		f.verify_quick_info_at("d", "(parameter) d: string", "see @(paren) here");
 	});
 }
 

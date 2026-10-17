@@ -11,10 +11,10 @@ fn basic_class_members() {
     constructor (public x: number, public y: number, private z: string) { }
 }
 var t = new n(0, 1, '');";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.go_to_eof();
-		f.insert("t.".into());
-		f.verify_completions(None, &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["x", "y"], excludes: vec!["z"], ..Default::default() }, ..Default::default() });
+		f.insert("t.");
+		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["x".into(), "y".into()].into(), excludes: vec!["z".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

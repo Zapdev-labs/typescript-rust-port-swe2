@@ -26,14 +26,14 @@ export function greet(name: string, count: number): string { return name.repeat(
 // @Filename: /main.ts
 import { greet } from "./ProfileCard.vue";
 greet("hello", /*incomingCall*/2);
-"#.into(), contentmappertest.component_mapper, ".vue".into());
-		f.go_to_marker("scriptCall".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "format(value: string, uppercase?: boolean): string", parameter_name: "uppercase?", parameter_span: "uppercase?: boolean", ..Default::default() });
-		f.go_to_marker("templateCall".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "format(value: string, uppercase?: boolean): string", parameter_name: "value", parameter_span: "value: string", ..Default::default() });
-		f.go_to_marker("incomingCall".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "greet(name: string, count: number): string", parameter_name: "count", parameter_span: "count: number", ..Default::default() });
-		f.go_to_marker("markup".into());
+"#, tsc_testutil::contentmappertest::COMPONENT_MAPPER, ".vue");
+		f.go_to_marker("scriptCall");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "format(value: string, uppercase?: boolean): string".to_string().into(), parameter_name: "uppercase?".to_string().into(), parameter_span: "uppercase?: boolean".to_string().into(), ..Default::default() });
+		f.go_to_marker("templateCall");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "format(value: string, uppercase?: boolean): string".to_string().into(), parameter_name: "value".to_string().into(), parameter_span: "value: string".to_string().into(), ..Default::default() });
+		f.go_to_marker("incomingCall");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "greet(name: string, count: number): string".to_string().into(), parameter_name: "count".to_string().into(), parameter_span: "count: number".to_string().into(), ..Default::default() });
+		f.go_to_marker("markup");
 		f.verify_no_signature_help();
 	});
 }
@@ -46,9 +46,9 @@ const target = 1;
 /** See {@link target}. */
 function use(value: number) { return value; }
 use(/*call*/target);
-".into(), contentmappertest.supplemental_mapper, ".astro".into());
-		f.go_to_marker("call".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "use(value: number): number", doc_comment: "See [target](file:///globals.astro#1,7-1,13).", parameter_name: "value", parameter_span: "value: number", ..Default::default() });
+", tsc_testutil::contentmappertest::SUPPLEMENTAL_MAPPER, ".astro");
+		f.go_to_marker("call");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "use(value: number): number".to_string().into(), doc_comment: "See [target](file:///globals.astro#1,7-1,13).".to_string().into(), parameter_name: "value".to_string().into(), parameter_span: "value: number".to_string().into(), ..Default::default() });
 	});
 }
 
@@ -57,9 +57,9 @@ fn content_mapper_signature_help_tries_later_projection() {
 	run_test(|t| {
 		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /signature-fallback.dup
 use(/*call*/)
-".into(), contentmappertest.duplicate_mapper, ".dup".into());
-		f.go_to_marker("call".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "use(value: number): void", parameter_name: "value", parameter_span: "value: number", ..Default::default() });
+", tsc_testutil::contentmappertest::DUPLICATE_MAPPER, ".dup");
+		f.go_to_marker("call");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "use(value: number): void".to_string().into(), parameter_name: "value".to_string().into(), parameter_span: "value: number".to_string().into(), ..Default::default() });
 	});
 }
 

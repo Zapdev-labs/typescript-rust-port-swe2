@@ -18,8 +18,8 @@ export const obj = { /*targetA*/a: 1, /*targetB*/b: 2 };
 import { obj } from "pkg";
 obj./*propA*/a;
 obj./*propB*/b;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("propA".into(), "propB".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_source_definition(&["propA".into(), "propB".into()]);
 	});
 }
 
@@ -39,8 +39,8 @@ export const /*targetValue*/value = 42;
 import * as pkg from "pkg";
 pkg./*helperAccess*/helper();
 pkg./*valueAccess*/value;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("helperAccess".into(), "valueAccess".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_source_definition(&["helperAccess".into(), "valueAccess".into()]);
 	});
 }
 

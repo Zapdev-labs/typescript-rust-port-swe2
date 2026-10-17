@@ -20,8 +20,8 @@ export function foo(): number { return 0; }
 export const bar = (a = foo()) =>
    a;
 // Trivia";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add return type 'number'", new_file_content: r"/**
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add return type 'number'".to_string().into(), new_file_content: r"/**
  * Test
  */
 export function foo(): number { return 0; }
@@ -30,8 +30,8 @@ export function foo(): number { return 0; }
 */
 export const bar = (a = foo()): number =>
    a;
-// Trivia", index: 0, apply_changes: true, ..Default::default() });
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add annotation of type 'number'", new_file_content: r"/**
+// Trivia".to_string().into(), index: 0, apply_changes: true.into(), ..Default::default() });
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add annotation of type 'number'".to_string().into(), new_file_content: r"/**
  * Test
  */
 export function foo(): number { return 0; }
@@ -40,7 +40,7 @@ export function foo(): number { return 0; }
 */
 export const bar = (a: number = foo()): number =>
    a;
-// Trivia", index: 0, apply_changes: true, ..Default::default() });
+// Trivia".to_string().into(), index: 0, apply_changes: true.into(), ..Default::default() });
 	});
 }
 

@@ -390,26 +390,26 @@ pub(crate) struct KeywordCompletionFilters(pub i32);
 
 impl KeywordCompletionFilters {
     /// `KeywordCompletionFiltersNone` — no keywords.
-    pub(crate) const NONE: Self = Self(0);
+    pub const NONE: Self = Self(0);
     /// `KeywordCompletionFiltersAll` — every possible keyword.
-    pub(crate) const ALL: Self = Self(1);
+    pub const ALL: Self = Self(1);
     /// `KeywordCompletionFiltersClassElementKeywords` — keywords inside class body.
-    pub(crate) const CLASS_ELEMENT_KEYWORDS: Self = Self(2);
+    pub const CLASS_ELEMENT_KEYWORDS: Self = Self(2);
     /// `KeywordCompletionFiltersInterfaceElementKeywords` — keywords inside interface body.
-    pub(crate) const INTERFACE_ELEMENT_KEYWORDS: Self = Self(3);
+    pub const INTERFACE_ELEMENT_KEYWORDS: Self = Self(3);
     /// `KeywordCompletionFiltersConstructorParameterKeywords` — keywords at constructor parameter.
-    pub(crate) const CONSTRUCTOR_PARAMETER_KEYWORDS: Self = Self(4);
+    pub const CONSTRUCTOR_PARAMETER_KEYWORDS: Self = Self(4);
     /// `KeywordCompletionFiltersFunctionLikeBodyKeywords` — keywords at function like body.
-    pub(crate) const FUNCTION_LIKE_BODY_KEYWORDS: Self = Self(5);
+    pub const FUNCTION_LIKE_BODY_KEYWORDS: Self = Self(5);
     /// `KeywordCompletionFiltersTypeAssertionKeywords`.
-    pub(crate) const TYPE_ASSERTION_KEYWORDS: Self = Self(6);
+    pub const TYPE_ASSERTION_KEYWORDS: Self = Self(6);
     /// `KeywordCompletionFiltersTypeKeywords`.
-    pub(crate) const TYPE_KEYWORDS: Self = Self(7);
+    pub const TYPE_KEYWORDS: Self = Self(7);
     /// `KeywordCompletionFiltersTypeKeyword` — literally just `type`.
-    pub(crate) const TYPE_KEYWORD: Self = Self(8);
+    pub const TYPE_KEYWORD: Self = Self(8);
     /// `KeywordCompletionFiltersLast`.
     #[allow(dead_code)]
-    pub(crate) const LAST: Self = Self::TYPE_KEYWORD;
+    pub const LAST: Self = Self::TYPE_KEYWORD;
 }
 
 /// `keywordFiltersFromSyntaxKind`.
@@ -467,25 +467,25 @@ fn empty_commit_characters() -> &'static [&'static str] {
 /// (`ObjectLiteralPropertySortText` etc.), so this is an owned string.
 pub(crate) type SortText = String;
 
-pub(crate) mod sort_text {
+pub mod sort_text {
     /// `SortTextLocalDeclarationPriority`.
-    pub(crate) const LOCAL_DECLARATION_PRIORITY: &str = "10";
+    pub const LOCAL_DECLARATION_PRIORITY: &str = "10";
     /// `SortTextLocationPriority`.
-    pub(crate) const LOCATION_PRIORITY: &str = "11";
+    pub const LOCATION_PRIORITY: &str = "11";
     /// `SortTextOptionalMember`.
-    pub(crate) const OPTIONAL_MEMBER: &str = "12";
+    pub const OPTIONAL_MEMBER: &str = "12";
     /// `SortTextMemberDeclaredBySpreadAssignment`.
-    pub(crate) const MEMBER_DECLARED_BY_SPREAD_ASSIGNMENT: &str = "13";
+    pub const MEMBER_DECLARED_BY_SPREAD_ASSIGNMENT: &str = "13";
     /// `SortTextSuggestedClassMembers`.
-    pub(crate) const SUGGESTED_CLASS_MEMBERS: &str = "14";
+    pub const SUGGESTED_CLASS_MEMBERS: &str = "14";
     /// `SortTextGlobalsOrKeywords`.
-    pub(crate) const GLOBALS_OR_KEYWORDS: &str = "15";
+    pub const GLOBALS_OR_KEYWORDS: &str = "15";
     /// `SortTextAutoImportSuggestions`.
-    pub(crate) const AUTO_IMPORT_SUGGESTIONS: &str = "16";
+    pub const AUTO_IMPORT_SUGGESTIONS: &str = "16";
     /// `SortTextClassMemberSnippets`.
-    pub(crate) const CLASS_MEMBER_SNIPPETS: &str = "17";
+    pub const CLASS_MEMBER_SNIPPETS: &str = "17";
     /// `SortTextJavascriptIdentifiers`.
-    pub(crate) const JAVASCRIPT_IDENTIFIERS: &str = "18";
+    pub const JAVASCRIPT_IDENTIFIERS: &str = "18";
 }
 
 /// `DeprecateSortText`.
@@ -512,21 +512,21 @@ pub(crate) struct SymbolOriginInfoKind(pub i32);
 
 impl SymbolOriginInfoKind {
     /// `symbolOriginInfoKindThisType`.
-    pub(crate) const THIS_TYPE: Self = Self(1 << 0);
+    pub const THIS_TYPE: Self = Self(1 << 0);
     /// `symbolOriginInfoKindSymbolMember`.
-    pub(crate) const SYMBOL_MEMBER: Self = Self(1 << 1);
+    pub const SYMBOL_MEMBER: Self = Self(1 << 1);
     /// `symbolOriginInfoKindPromise`.
-    pub(crate) const PROMISE: Self = Self(1 << 2);
+    pub const PROMISE: Self = Self(1 << 2);
     /// `symbolOriginInfoKindNullable`.
-    pub(crate) const NULLABLE: Self = Self(1 << 3);
+    pub const NULLABLE: Self = Self(1 << 3);
     /// `symbolOriginInfoKindTypeOnlyAlias`.
-    pub(crate) const TYPE_ONLY_ALIAS: Self = Self(1 << 4);
+    pub const TYPE_ONLY_ALIAS: Self = Self(1 << 4);
     /// `symbolOriginInfoKindObjectLiteralMethod`.
-    pub(crate) const OBJECT_LITERAL_METHOD: Self = Self(1 << 5);
+    pub const OBJECT_LITERAL_METHOD: Self = Self(1 << 5);
     /// `symbolOriginInfoKindIgnore`.
-    pub(crate) const IGNORE: Self = Self(1 << 6);
+    pub const IGNORE: Self = Self(1 << 6);
     /// `symbolOriginInfoKindComputedPropertyName`.
-    pub(crate) const COMPUTED_PROPERTY_NAME: Self = Self(1 << 7);
+    pub const COMPUTED_PROPERTY_NAME: Self = Self(1 << 7);
 
     /// `kind & other`.
     pub(crate) fn intersects(self, other: Self) -> bool {
@@ -612,19 +612,19 @@ pub(crate) type CompletionSource = &'static str;
 /// `completionSource*` constants.
 pub(crate) mod completion_source {
     /// `completionSourceThisProperty` — completions that require `this.` insertion text.
-    pub(crate) const THIS_PROPERTY: &str = "ThisProperty/";
+    pub const THIS_PROPERTY: &str = "ThisProperty/";
     /// `completionSourceClassMemberSnippet` — auto-import that comes attached to a class member snippet.
-    pub(crate) const CLASS_MEMBER_SNIPPET: &str = "ClassMemberSnippet/";
+    pub const CLASS_MEMBER_SNIPPET: &str = "ClassMemberSnippet/";
     /// `completionSourceTypeOnlyAlias` — a type-only import that needs to be promoted
     /// in order to be used at the completion location.
-    pub(crate) const TYPE_ONLY_ALIAS: &str = "TypeOnlyAlias/";
+    pub const TYPE_ONLY_ALIAS: &str = "TypeOnlyAlias/";
     /// `completionSourceObjectLiteralMethodSnippet` — auto-import that comes
     /// attached to an object literal method snippet.
-    pub(crate) const OBJECT_LITERAL_METHOD_SNIPPET: &str = "ObjectLiteralMethodSnippet/";
+    pub const OBJECT_LITERAL_METHOD_SNIPPET: &str = "ObjectLiteralMethodSnippet/";
     /// `completionSourceSwitchCases` — case completions for switch statements.
-    pub(crate) const SWITCH_CASES: &str = "SwitchCases/";
+    pub const SWITCH_CASES: &str = "SwitchCases/";
     /// `completionSourceObjectLiteralMemberWithComma` — completions for an object literal expression.
-    pub(crate) const OBJECT_LITERAL_MEMBER_WITH_COMMA: &str = "ObjectLiteralMemberWithComma/";
+    pub const OBJECT_LITERAL_MEMBER_WITH_COMMA: &str = "ObjectLiteralMemberWithComma/";
 }
 
 /// `type uniqueNamesMap` — value is false for global variables or completions

@@ -11,8 +11,8 @@ fn go_to_type_definition_type_reference() {
 type Box<T> = { value: T };
 declare const boxedUser: Box<User>
 /*reference*/boxedUser";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_type_definition("reference".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_type_definition(&["reference".into()]);
 	});
 }
 

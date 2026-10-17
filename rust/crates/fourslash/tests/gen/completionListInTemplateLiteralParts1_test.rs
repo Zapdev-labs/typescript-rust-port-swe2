@@ -7,14 +7,14 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_in_template_literal_parts1() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
-		let content = r"// @lib: es5
-/*0*/" + "`" + r"  $ { ${/*1*/ 10/*2*/ + 1.1/*3*/ /*4*/} 12312" + "`" + r"/*5*/
+		return /* skip: "Known failing fourslash test" */;
+		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"// @lib: es5
+/*0*/", "`"), r"  $ { ${/*1*/ 10/*2*/ + 1.1/*3*/ /*4*/} 12312"), "`"), r"/*5*/
 
-/*6*/" + "`" + r"asdasd${/*7*/ 2 + 1.1 /*8*/} 12312 {";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions(&["1", "7"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: COMPLETION_GLOBALS, ..Default::default() }, ..Default::default() });
-		f.verify_completions(&["2", "3", "4", "5", "6", "8"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: COMPLETION_GLOBALS, ..Default::default() }, ..Default::default() });
+/*6*/"), "`"), r"asdasd${/*7*/ 2 + 1.1 /*8*/} 12312 {");
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions(vec!["1", "7"].into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: tsc_fourslash::completion_globals.into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions(vec!["2", "3", "4", "5", "6", "8"].into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: tsc_fourslash::completion_globals.into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -15,12 +15,12 @@ new ViewJayEss({
         sayHello/**/
     }
 });";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
-		f.insert("(".into());
-		f.verify_no_signature_help_with_context(&tsc_lsproto::SignatureHelpContext { trigger_kind: tsc_lsproto::SignatureHelpTriggerKind::TRIGGER_CHARACTER, trigger_character: Some(("(").into()), is_retrigger: false, ..Default::default() });
-		f.insert(") {},".into());
-		f.verify_no_signature_help_with_context(&tsc_lsproto::SignatureHelpContext { trigger_kind: tsc_lsproto::SignatureHelpTriggerKind::TRIGGER_CHARACTER, trigger_character: Some((",").into()), is_retrigger: false, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
+		f.insert("(");
+		f.verify_no_signature_help_with_context(Some(tsc_lsproto::SignatureHelpContext { trigger_kind: tsc_lsproto::SignatureHelpTriggerKind::TriggerCharacter.into(), trigger_character: Some(("(").into()), is_retrigger: false.into(), ..Default::default() }));
+		f.insert(") {},");
+		f.verify_no_signature_help_with_context(Some(tsc_lsproto::SignatureHelpContext { trigger_kind: tsc_lsproto::SignatureHelpTriggerKind::TriggerCharacter.into(), trigger_character: Some((",").into()), is_retrigger: false.into(), ..Default::default() }));
 	});
 }
 

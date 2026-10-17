@@ -24,12 +24,12 @@ export interface Disposable {
 export interface Service {
 	d: Disposable;
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/src/test.ts".into());
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'Service'", new_file_content: r"import { Disposable, Service } from './lifecycle';
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("/src/test.ts");
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'Service'".to_string().into(), new_file_content: r"import { Disposable, Service } from './lifecycle';
 export class EditingService implements Service {
     d: Disposable;
-}", index: 0, ..Default::default() });
+}".to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

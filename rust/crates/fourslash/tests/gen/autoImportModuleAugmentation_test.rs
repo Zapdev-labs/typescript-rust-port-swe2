@@ -21,8 +21,8 @@ declare module "./a" {
 // @Filename: /c.ts
 Foo/**/
 "#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.baseline_auto_imports_completions(&[""]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.baseline_auto_imports_completions(&["".into()]);
 	});
 }
 

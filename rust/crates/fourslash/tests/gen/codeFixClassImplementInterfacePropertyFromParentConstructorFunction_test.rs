@@ -12,7 +12,7 @@ fn code_fix_class_implement_interface_property_from_parent_constructor_function(
 }
 
 class B implements A {[| |]}";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_code_fix_not_available();
 	});
 }

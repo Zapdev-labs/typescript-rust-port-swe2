@@ -8,7 +8,7 @@ use tsc_fourslash::*;
 fn smart_selection_binding_patterns() {
 	run_test(|t| {
 		let content = r"const { /*1*/x, y: /*2*/a, .../*3*/zs = {} } = {};";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_selection_ranges();
 	});
 }

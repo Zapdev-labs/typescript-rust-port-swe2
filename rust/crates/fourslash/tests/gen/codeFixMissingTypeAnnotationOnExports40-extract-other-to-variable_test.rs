@@ -17,21 +17,21 @@ export let o = {
         ...c
     ]
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Extract to variable and replace with 'newLocal as typeof newLocal'", new_file_content: r"let c: string[] = [];
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Extract to variable and replace with 'newLocal as typeof newLocal'".to_string().into(), new_file_content: r"let c: string[] = [];
 const newLocal = Math.random() ? [] : [
     ...c
 ];
 export let o = {
     p: newLocal as typeof newLocal
-}", index: 2, apply_changes: true, ..Default::default() });
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add annotation of type 'string[]'", new_file_content: r"let c: string[] = [];
+}".to_string().into(), index: 2, apply_changes: true.into(), ..Default::default() });
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add annotation of type 'string[]'".to_string().into(), new_file_content: r"let c: string[] = [];
 const newLocal: string[] = Math.random() ? [] : [
     ...c
 ];
 export let o = {
     p: newLocal as typeof newLocal
-}", index: 0, apply_changes: true, ..Default::default() });
+}".to_string().into(), index: 0, apply_changes: true.into(), ..Default::default() });
 	});
 }
 

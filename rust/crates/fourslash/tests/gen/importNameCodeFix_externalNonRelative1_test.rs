@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_external_non_relative1() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r#"// @Filename: /home/src/workspaces/project/tsconfig.base.json
 {
   "compilerOptions": {
@@ -44,19 +44,19 @@ export const Pkg2 = {};
 // @Filename: /home/src/workspaces/project/packages/pkg-2/src/blah/foo/data.ts
 Pkg2/*internal*/
 // @link: /home/src/workspaces/project/packages/pkg-2 -> /home/src/workspaces/project/packages/pkg-1/node_modules/pkg-2"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.mark_test_as_strada_server();
 		let mut opts1534 = f.get_options();
 		opts1534.format_code_settings.new_line_character = "\n";
 		f.configure(opts1534);
-		f.go_to_marker("external".into());
+		f.go_to_marker("external");
 		f.verify_import_fix_at_position(&[r#"import { Pkg2 } from "pkg-2/utils";
 
-Pkg2"#], &tsc_lsutil::UserPreferences { import_module_specifier_preference: "project-relative", ..Default::default() });
-		f.go_to_marker("internal".into());
+Pkg2"#.into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_preference: "project-relative".to_string().into(), ..Default::default() }));
+		f.go_to_marker("internal");
 		f.verify_import_fix_at_position(&[r#"import { Pkg2 } from "../../utils";
 
-Pkg2"#], &tsc_lsutil::UserPreferences { import_module_specifier_preference: "project-relative", ..Default::default() });
+Pkg2"#.into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_preference: "project-relative".to_string().into(), ..Default::default() }));
 	});
 }
 

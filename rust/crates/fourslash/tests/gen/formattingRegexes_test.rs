@@ -8,10 +8,10 @@ use tsc_fourslash::*;
 fn formatting_regexes() {
 	run_test(|t| {
 		let content = r"removeAllButLast(sortedTypes, undefinedType, /keepNullableType**/ true)/*1*/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1".into());
-		f.insert(";".into());
-		f.verify_current_line_content(r"removeAllButLast(sortedTypes, undefinedType, /keepNullableType**/ true);".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("1");
+		f.insert(";");
+		f.verify_current_line_content(r"removeAllButLast(sortedTypes, undefinedType, /keepNullableType**/ true);");
 	});
 }
 

@@ -17,15 +17,15 @@ export const c: number;
 a;
 b;
 c;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/main.ts".into());
-		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport", new_file_content: r#"import { a } from "./a";
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("/main.ts");
+		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport".to_string().into(), new_file_content: r#"import { a } from "./a";
 import { b } from "./b";
 import { c } from "./c";
 
 a;
 b;
-c;"#, ..Default::default() });
+c;"#.to_string().into(), ..Default::default() });
 	});
 }
 

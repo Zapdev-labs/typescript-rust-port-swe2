@@ -21,13 +21,13 @@ declare module "b" {
     [|import { /*b*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 10 |}N|] } from "a";|]
     export const y: typeof [|N|].[|x|];
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("N".into(), "a".into(), "b".into(), "x".into());
-		f.verify_baseline_rename(None, f.ranges()[1], f.ranges()[5]);
-		f.verify_baseline_rename(None, f.ranges()[7]);
-		f.verify_baseline_rename(None, f.ranges()[9]);
-		f.verify_baseline_rename(None, f.ranges()[11], f.ranges()[12]);
-		f.verify_baseline_rename(None, f.ranges()[3], f.ranges()[13]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["N".into(), "a".into(), "b".into(), "x".into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[1].into(), f.ranges()[5].into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[7].into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[9].into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[11].into(), f.ranges()[12].into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[3].into(), f.ranges()[13].into()]);
 	});
 }
 

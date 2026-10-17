@@ -7,21 +7,21 @@ use tsc_fourslash::*;
 #[test]
 fn document_highlight_template_strings() {
 	run_test(|t| {
-		let content = r#"type Foo = "[|a|]" | "b";
+		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r#"type Foo = "[|a|]" | "b";
 
 class C {
-   p: Foo = "# + "`" + r"[|a|]" + "`" + r";
+   p: Foo = "#, "`"), r"[|a|]"), "`"), r";
    m() {
        switch (this.p) {
-           case " + "`" + r"[|a|]" + "`" + r#":
+           case "), "`"), r"[|a|]"), "`"), r#":
                return 1;
            case "b":
                return 2;
        }
    }
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_document_highlights(None, f.ranges()[2]);
+}"#);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_document_highlights(None, vec![f.ranges()[2].into()]);
 	});
 }
 

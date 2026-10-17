@@ -8,10 +8,10 @@ use tsc_fourslash::*;
 fn format_array_or_object_literals_in_variable_list() {
 	run_test(|t| {
 		let content = r"var v30 = [1, 2], v31, v32, v33 = [0], v34 = {'a': true}, v35;/**/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
-		f.go_to_marker("".into());
-		f.verify_current_line_content(r"var v30 = [1, 2], v31, v32, v33 = [0], v34 = { 'a': true }, v35;".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
+		f.go_to_marker("");
+		f.verify_current_line_content(r"var v30 = [1, 2], v31, v32, v33 = [0], v34 = { 'a': true }, v35;");
 	});
 }
 

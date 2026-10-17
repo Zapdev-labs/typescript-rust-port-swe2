@@ -13,8 +13,8 @@ fn go_to_definition_type_reference_directive() {
 // @Filename: src/app.ts
  /// <reference types="[|lib/*1*/|]"/>
  $.x;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "1".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_definition(true, &["1".into()]);
 	});
 }
 

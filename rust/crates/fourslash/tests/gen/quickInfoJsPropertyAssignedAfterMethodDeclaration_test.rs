@@ -16,9 +16,9 @@ const o = {
         this./*2*/test = 0;
     }
 };";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1".into(), "(method) test(): void".into(), "".into());
-		f.verify_quick_info_at("2".into(), "(method) test(): void".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("1", "(method) test(): void", "");
+		f.verify_quick_info_at("2", "(method) test(): void", "");
 	});
 }
 

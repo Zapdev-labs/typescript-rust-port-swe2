@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn member_list_in_reopened_enum() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"namespace M {
     enum E {
         A, B
@@ -17,8 +17,8 @@ fn member_list_in_reopened_enum() {
     }
     var x = E./*1*/
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("1".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec![&tsc_lsproto::CompletionItem { label: "A", detail: Some(("(enum member) E.A = 0").into()), ..Default::default() }, &tsc_lsproto::CompletionItem { label: "B", detail: Some(("(enum member) E.B = 1").into()), ..Default::default() }, &tsc_lsproto::CompletionItem { label: "C", detail: Some(("(enum member) E.C = 0").into()), ..Default::default() }, &tsc_lsproto::CompletionItem { label: "D", detail: Some(("(enum member) E.D = 1").into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions("1".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "A".to_string().into(), detail: Some(("(enum member) E.A = 0").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "B".to_string().into(), detail: Some(("(enum member) E.B = 1").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "C".to_string().into(), detail: Some(("(enum member) E.C = 0").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "D".to_string().into(), detail: Some(("(enum member) E.D = 1").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

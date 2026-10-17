@@ -51,9 +51,9 @@ const Category = object({
 });
 
 export const output = Category.output;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1".into(), "(accessor) parent: ZodOptional<ZodObject<{\n    name: ZodString;\n    readonly parent: ZodOptional<ZodObject<...>>;\n}>>".into(), "".into());
-		f.verify_diagnostics(None);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("1", "(accessor) parent: ZodOptional<ZodObject<{\n    name: ZodString;\n    readonly parent: ZodOptional<ZodObject<...>>;\n}>>", "");
+		f.verify_diagnostics(&[]);
 	});
 }
 

@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_package_json_imports_case_sensitivity() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r##"// @module: node18
 // @allowImportingTsExtensions: true
 // @Filename: /package.json
@@ -21,8 +21,8 @@ fn auto_import_package_json_imports_case_sensitivity() {
 export function add(a: number, b: number) {}
 // @Filename: /src/index.ts
 add/*imports*/;"##;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_module_specifiers("imports".into(), &["#src/add.ts"], &tsc_lsutil::UserPreferences { import_module_specifier_preference: "non-relative", ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_import_fix_module_specifiers("imports", &["#src/add.ts".into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_preference: "non-relative".to_string().into(), ..Default::default() }));
 	});
 }
 

@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn exhaustive_case_completions4() {
 	run_test(|t| {
-		let content = r#"// @lib: es5
+		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r#"// @lib: es5
 // @newline: LF
 enum E {
     A = 0,
@@ -22,14 +22,14 @@ switch (u) {
     case 1n:
     case 0x1n:
     case "1":
-    case "# + "`1`" + r":
-    case " + "`1${u}`" + r#":
+    case "#, "`1`"), r":
+    case "), "`1${u}`"), r#":
     case/*1*/
 }
 declare const v: E.A | "1" | "2";
 switch (v) {
     case 0:
-    case "# + "`1`" + r#":
+    case "#), "`1`"), r#":
     /*2*/
 }
 // Filtering repeated enum members
@@ -73,14 +73,14 @@ switch (z) {
     case H.B:
     case H.C:
     /*6*/
-}"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", tsc_fourslash::get_default_capabilities_with_options(&tsc_fourslash::ClientCapabilitiesOptions { completion_item: &tsc_lsproto::ClientCompletionItemOptions { snippet_support: Some((true).into()), ..Default::default() }, ..Default::default() }), content);
-		f.verify_completions("1".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "case E.B: ...", insert_text: Some(("case E.B:$1").into()), sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::SNIPPET).into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
-		f.verify_completions("2".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: r#"case "2": ..."#, insert_text: Some((r#"case "2":$1"#).into()), sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::SNIPPET).into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
-		f.verify_completions("3".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "case F.A: ...", insert_text: Some(("case F.A:$1\ncase F.B:$2").into()), sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::SNIPPET).into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
-		f.verify_completions("4".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "case G.C: ...", insert_text: Some(("case G.C:$1\ncase G.D:$2\ncase G.E:$3\ncase G.DorE:$4").into()), sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::SNIPPET).into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
-		f.verify_completions("5".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "case G.D: ...", insert_text: Some(("case G.D:$1\ncase G.E:$2\ncase G.DorE:$3").into()), sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::SNIPPET).into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
-		f.verify_completions("6".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec!["E", "F", "G", "H", "u", "v", "x", "y", "z"].push(COMPLETION_GLOBALS), ..Default::default() }, ..Default::default() });
+}"#);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", Some(tsc_fourslash::get_default_capabilities_with_options(Some(&tsc_fourslash::ClientCapabilitiesOptions { completion_item: Some(tsc_lsproto::ClientCompletionItemOptions { snippet_support: Some((true).into()), ..Default::default() }), ..Default::default() }))), content);
+		f.verify_completions("1".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "case E.B: ...".to_string().into(), insert_text: Some(("case E.B:$1").into()), sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::Snippet).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions("2".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: r#"case "2": ..."#.to_string().into(), insert_text: Some((r#"case "2":$1"#).into()), sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::Snippet).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions("3".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "case F.A: ...".to_string().into(), insert_text: Some(("case F.A:$1\ncase F.B:$2").into()), sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::Snippet).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions("4".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "case G.C: ...".to_string().into(), insert_text: Some(("case G.C:$1\ncase G.D:$2\ncase G.E:$3\ncase G.DorE:$4").into()), sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::Snippet).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions("5".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "case G.D: ...".to_string().into(), insert_text: Some(("case G.D:$1\ncase G.E:$2\ncase G.DorE:$3").into()), sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), insert_text_format: Some((tsc_lsproto::InsertTextFormat::Snippet).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions("6".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["E", "F", "G", "H", "u", "v", "x", "y", "z"].push(tsc_fourslash::completion_globals).into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

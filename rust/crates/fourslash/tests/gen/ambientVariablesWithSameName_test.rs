@@ -11,9 +11,9 @@ fn ambient_variables_with_same_name() {
     export var x: string;
 }
 declare var x: number;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.go_to_eof();
-		f.insert_line("".into());
+		f.insert_line("");
 		f.verify_no_errors();
 	});
 }

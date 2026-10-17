@@ -11,12 +11,12 @@ fn identifier_error_recovery() {
 var foo;
 var /*3*/class/*4*/;
 var bar;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_error_exists_between_markers("1".into(), "2".into());
-		f.verify_error_exists_between_markers("3".into(), "4".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_error_exists_between_markers("1", "2");
+		f.verify_error_exists_between_markers("3", "4");
 		f.verify_number_of_errors_in_current_file(3);
 		f.go_to_eof();
-		f.verify_completions(None, &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["foo", "bar"], ..Default::default() }, ..Default::default() });
+		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["foo".into(), "bar".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

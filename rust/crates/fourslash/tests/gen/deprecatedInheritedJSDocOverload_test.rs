@@ -33,7 +33,7 @@ declare const a: ThingWithDeprecations<void>
 a.subscribe/**/(() => {
   console.log('something happened');
 });";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_hover();
 	});
 }

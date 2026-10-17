@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn completions_literal_from_inference_within_inferred_type2() {
 	run_test(|t| {
-		let content = r#"// @Filename: /a.tsx
+		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r#"// @Filename: /a.tsx
 type Values<T> = T[keyof T];
 
 type GetStates<T> = T extends { states: object } ? T["states"] : never;
@@ -17,7 +17,7 @@ type IsNever<T> = [T] extends [never] ? 1 : 0;
 type GetIds<T, Gathered extends string = never> = IsNever<T> extends 1
   ? Gathered
   : "id" extends keyof T
-  ? GetIds<Values<GetStates<T>>, Gathered | "# + "`" + r#"#${T["id"] & string}"# + "`" + r">
+  ? GetIds<Values<GetStates<T>>, Gathered | "#, "`"), r#"#${T["id"] & string}"#), "`"), r">
   : GetIds<Values<GetStates<T>>, Gathered>;
 
 type StateConfig<
@@ -32,7 +32,7 @@ type StateConfig<
   states?: {
     [K in keyof TStates]: StateConfig<GetStates<TStates[K]>, TIds>;
   };
-  on?: Record<string, TIds | " + "`" + r".${keyof TStates & string}" + "`" + r#">;
+  on?: Record<string, TIds | "), "`"), r".${keyof TStates & string}"), "`"), r#">;
 };
 
 declare function createMachine<const T extends StateConfig<GetStates<T>, GetIds<T>>>(
@@ -54,9 +54,9 @@ createMachine({
   on: {
     EV: "/*ts*/",
   },
-});"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions(&["ts"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec!["#wow_deep_id", ".child"], ..Default::default() }, ..Default::default() });
+});"#);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions(vec!["ts"].into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["#wow_deep_id".into(), ".child".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -11,11 +11,11 @@ fn import_name_code_fix_quote_style() {
 export const foo: number;
 // @Filename: /b.ts
 [|foo;|]";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/b.ts".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("/b.ts");
 		f.verify_import_fix_at_position(&[r"import { foo } from './a';
 
-foo;"], &tsc_lsutil::UserPreferences { quote_preference: tsc_lsutil::quote_preference("single".into()), ..Default::default() });
+foo;".into()], Some(&tsc_lsutil::UserPreferences { quote_preference: tsc_lsutil::quote_preference("single").into(), ..Default::default() }));
 	});
 }
 

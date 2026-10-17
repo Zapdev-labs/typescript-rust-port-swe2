@@ -14,9 +14,9 @@ export const foo = 0;
 import {} from 'node:path';
 
 fo/**/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
-		f.verify_apply_code_action_from_completion(Some(("").into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "foo", source: "./a", description: "Add import from \"./a\"", new_file_content: Some((r"import {} from 'node:path';
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
+		f.verify_apply_code_action_from_completion("", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "foo".to_string().into(), source: "./a".to_string().into(), description: "Add import from \"./a\"".to_string().into(), new_file_content: Some((r"import {} from 'node:path';
 import { foo } from './a';
 
 fo").into()), ..Default::default() });

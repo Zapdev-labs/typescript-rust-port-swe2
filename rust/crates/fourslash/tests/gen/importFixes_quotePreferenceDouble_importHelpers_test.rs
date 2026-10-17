@@ -15,10 +15,10 @@ export default () => {};
 // @filename: /test.ts
 import a from "./a";
 [|b|];"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/test.ts".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("/test.ts");
 		f.verify_import_fix_at_position(&[r#"import b from "./b";
-b"#], None);
+b"#.into()], None);
 	});
 }
 

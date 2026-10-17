@@ -9,11 +9,11 @@ fn format01() {
 	run_test(|t| {
 		let content = r"// @lib: es5
 /**/namespace Default{var x= ( { } ) ;}";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.format_document("".into());
-		f.go_to_marker("".into());
-		f.verify_current_line_content(r"namespace Default { var x = ({}); }".into());
+		f.format_document("");
+		f.go_to_marker("");
+		f.verify_current_line_content(r"namespace Default { var x = ({}); }");
 	});
 }
 

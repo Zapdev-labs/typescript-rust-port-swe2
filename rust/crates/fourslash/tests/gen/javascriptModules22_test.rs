@@ -26,14 +26,14 @@ var x = {name: 'test'};
 import {a} from "./mod"
 import def, {sausages} from "./mod2"
 a./**/"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["toString"], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["toString".into()].into(), ..Default::default() }), ..Default::default() }));
 		f.backspace(2);
-		f.insert("def.".into());
-		f.verify_completions(None, &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["name"], ..Default::default() }, ..Default::default() });
-		f.insert("name;\nsausages.".into());
-		f.verify_completions(None, &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["eggs"], ..Default::default() }, ..Default::default() });
-		f.insert("eggs;".into());
+		f.insert("def.");
+		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["name".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.insert("name;\nsausages.");
+		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["eggs".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.insert("eggs;");
 		f.verify_no_errors();
 	});
 }

@@ -18,10 +18,10 @@ import {someVar} from "./a.ts";
 someVar;
 a/**/
 "#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { user_preferences: &tsc_lsutil::UserPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE, include_completions_for_import_statements: tsc_core::tristate::TS_TRUE, ..Default::default() }, is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["someVar", "anotherVar"], ..Default::default() }, ..Default::default() });
-		f.baseline_auto_imports_completions(&[""]);
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { user_preferences: &tsc_lsutil::UserPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_FALSE, include_completions_for_import_statements: tsc_core::tristate::TS_FALSE, ..Default::default() }, is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { excludes: vec!["anotherVar"], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["someVar".into(), "anotherVar".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.baseline_auto_imports_completions(&["".into()]);
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_FALSE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_FALSE.into(), ..Default::default() }, ..Default::default() }), is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { excludes: vec!["anotherVar".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 
@@ -37,9 +37,9 @@ import {someVar} from "./a.ts";
 someVar;
 a/**/
 "#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { user_preferences: &tsc_lsutil::UserPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE, include_completions_for_import_statements: tsc_core::tristate::TS_TRUE, ..Default::default() }, is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["someVar", "anotherVar"], ..Default::default() }, ..Default::default() });
-		f.baseline_auto_imports_completions(&[""]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["someVar".into(), "anotherVar".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.baseline_auto_imports_completions(&["".into()]);
 	});
 }
 
@@ -56,9 +56,9 @@ import { aa, someVar } from "./a.ts";
 someVar;
 b/**/
 "#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { user_preferences: &tsc_lsutil::UserPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE, include_completions_for_import_statements: tsc_core::tristate::TS_TRUE, ..Default::default() }, is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["bb"], ..Default::default() }, ..Default::default() });
-		f.baseline_auto_imports_completions(&[""]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["bb".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.baseline_auto_imports_completions(&["".into()]);
 	});
 }
 

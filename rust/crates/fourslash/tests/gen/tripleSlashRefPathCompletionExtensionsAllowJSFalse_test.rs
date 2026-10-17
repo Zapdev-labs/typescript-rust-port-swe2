@@ -25,8 +25,8 @@ fn triple_slash_ref_path_completion_extensions_allow_js_false() {
 
 // @Filename: f1.cs
 "#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions(f.markers(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec!["f1.d.ts", "f1.ts", "f1.tsx"], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions(f.markers().into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["f1.d.ts".into(), "f1.ts".into(), "f1.tsx".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

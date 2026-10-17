@@ -21,14 +21,14 @@ const jsx3 = (
     <>/*7*/
     </>
 );/*e*/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		let mut start_range = f.marker_by_name("0".into()).ls_position;
-		let mut end_range = f.marker_by_name("3".into()).ls_position;
-		let mut linked_cursors1 = vec![tsc_lsproto::Range { start: start_range, end: start_range, ..Default::default() }, tsc_lsproto::Range { start: end_range, end: end_range, ..Default::default() }];
-		let mut start_range2 = f.marker_by_name("10".into()).ls_position;
-		let mut end_range2 = f.marker_by_name("14".into()).ls_position;
-		let mut linked_cursors2 = vec![tsc_lsproto::Range { start: start_range2, end: start_range2, ..Default::default() }, tsc_lsproto::Range { start: end_range2, end: end_range2, ..Default::default() }];
-		f.verify_linked_editing(vec![("0", linked_cursors1), ("1", None), ("2", None), ("3", linked_cursors1), ("4", None), ("5", None), ("6", None), ("7", None), ("8", None), ("9", None), ("10", linked_cursors2), ("11", None), ("12", None), ("13", None), ("14", linked_cursors2), ("15", None), ("16", None), ("17", None), ("18", None), ("a", None), ("b", None), ("c", None), ("d", None), ("e", None)].into_iter().collect::<FxHashMap<_, _>>());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut start_range = f.marker_by_name("0").unwrap().ls_position;
+		let mut end_range = f.marker_by_name("3").unwrap().ls_position;
+		let mut linked_cursors1 = vec![tsc_lsproto::Range { start: start_range.into(), end: start_range.into(), ..Default::default() }, tsc_lsproto::Range { start: end_range.into(), end: end_range.into(), ..Default::default() }];
+		let mut start_range2 = f.marker_by_name("10").unwrap().ls_position;
+		let mut end_range2 = f.marker_by_name("14").unwrap().ls_position;
+		let mut linked_cursors2 = vec![tsc_lsproto::Range { start: start_range2.into(), end: start_range2.into(), ..Default::default() }, tsc_lsproto::Range { start: end_range2.into(), end: end_range2.into(), ..Default::default() }];
+		f.verify_linked_editing(&std::collections::BTreeMap::from([("0".to_string().into(), linked_cursors1.into()), ("1".to_string().into(), None), ("2".to_string().into(), None), ("3".to_string().into(), linked_cursors1.into()), ("4".to_string().into(), None), ("5".to_string().into(), None), ("6".to_string().into(), None), ("7".to_string().into(), None), ("8".to_string().into(), None), ("9".to_string().into(), None), ("10".to_string().into(), linked_cursors2.into()), ("11".to_string().into(), None), ("12".to_string().into(), None), ("13".to_string().into(), None), ("14".to_string().into(), linked_cursors2.into()), ("15".to_string().into(), None), ("16".to_string().into(), None), ("17".to_string().into(), None), ("18".to_string().into(), None), ("a".to_string().into(), None), ("b".to_string().into(), None), ("c".to_string().into(), None), ("d".to_string().into(), None), ("e".to_string().into(), None)]));
 	});
 }
 

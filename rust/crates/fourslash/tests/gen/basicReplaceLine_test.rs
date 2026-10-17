@@ -14,10 +14,10 @@ interface Point {
 }
 declare const p: Point;
 p./*a*/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("a".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["y"], ..Default::default() }, ..Default::default() });
-		f.replace_line(3, "	z: number;".into());
-		f.verify_completions("a".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { excludes: vec!["y"], includes: vec!["z"], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions("a".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["y".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.replace_line(3, "	z: number;");
+		f.verify_completions("a".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { excludes: vec!["y".into()].into(), includes: vec!["z".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

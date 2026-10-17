@@ -15,8 +15,8 @@ enum E {
 interface [|/*2*/Foo|] {
     foo: E.Foo;
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(false, "1".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_definition(false, &["1".into()]);
 	});
 }
 

@@ -27,8 +27,8 @@ const l = ((({ a: 1, b: 1 })));
  const o = () => -1 as const;
  const p = ([a]: Foo[]) => a;
  const q = ({ a }: { a: Foo }) => a;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_inlay_hints(None, &tsc_lsutil::UserPreferences { include_inlay_variable_type_hints: tsc_core::tristate::TS_TRUE, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_inlay_hints(None, Some(&tsc_lsutil::UserPreferences { inlay_hints_preferences: tsc_lsutil::InlayHintsPreferences { include_inlay_variable_type_hints: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 

@@ -12,11 +12,11 @@ const a = 1;
 export default a;
 // @Filename: /b.ts
 const b = { /**/a };";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/b.ts".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("/b.ts");
 		f.verify_import_fix_at_position(&[r#"import a from "./a";
 
-const b = { a };"#], None);
+const b = { a };"#.into()], None);
 	});
 }
 

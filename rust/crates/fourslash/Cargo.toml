@@ -25,6 +25,7 @@ tsc-ls = { path = "../ls" }
 tsc-lsconv = { path = "../lsconv" }
 tsc-lsproto = { path = "../lsproto" }
 tsc-lsutil = { path = "../lsutil" }
+tsc-modulespecifiers = { path = "../modulespecifiers" }
 tsc-project = { path = "../project" }
 tsc-spanmap = { path = "../spanmap" }
 tsc-stringutil = { path = "../stringutil" }

@@ -11,8 +11,8 @@ fn quick_info_on_protected_constructor_call() {
     protected constructor() {}
 }
 var x = new A(/*1*/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_no_signature_help_for_markers("1".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_no_signature_help_for_markers(&["1".into()]);
 	});
 }
 

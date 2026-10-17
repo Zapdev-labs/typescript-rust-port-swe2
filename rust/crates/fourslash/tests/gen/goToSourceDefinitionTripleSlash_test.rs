@@ -20,8 +20,8 @@ export function /*target*/bar() { return "hello"; }
 /// <reference types="[|foo/*refTypes*/|]" />
 import { bar } from "foo";
 bar();"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("refTypes".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_source_definition(&["refTypes".into()]);
 	});
 }
 
@@ -43,8 +43,8 @@ export function main() {}
 // @Filename: /home/src/workspaces/project/index.ts
 /// <reference path="./node_modules/pkg/[|lib.d.ts/*refPath*/|]" />
 declare function helper(): string;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("refPath".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_source_definition(&["refPath".into()]);
 	});
 }
 

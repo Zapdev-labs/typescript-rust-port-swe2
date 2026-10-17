@@ -13,10 +13,10 @@ declare module "ambient-module" {
    export function f1();
    export var v1;
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_import_fix_at_position(&[r#"import { f1 } from "ambient-module";
 
-f1();"#], None);
+f1();"#.into()], None);
 	});
 }
 

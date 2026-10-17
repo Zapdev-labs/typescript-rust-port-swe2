@@ -15,10 +15,10 @@ class C<T> {
 }
 var c = new C();
 c.obj = <S>(/*3*/x) => x;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1".into(), "(parameter) x: any".into(), "".into());
-		f.verify_quick_info_at("2".into(), "(parameter) x: any".into(), "".into());
-		f.verify_quick_info_at("3".into(), "(parameter) x: any".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("1", "(parameter) x: any", "");
+		f.verify_quick_info_at("2", "(parameter) x: any", "");
+		f.verify_quick_info_at("3", "(parameter) x: any", "");
 	});
 }
 

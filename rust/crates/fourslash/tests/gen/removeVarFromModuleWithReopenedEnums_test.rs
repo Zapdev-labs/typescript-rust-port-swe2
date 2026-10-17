@@ -17,8 +17,8 @@ enum A {
 namespace A {
     var p;
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
 		f.delete_at_caret(6);
 	});
 }

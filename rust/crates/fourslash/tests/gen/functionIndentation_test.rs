@@ -45,46 +45,46 @@ var t,
 u = 1,
 v;
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
-		f.verify_current_file_content(r"namespace M {
-" + r"    export =
-" + r"        C;
-" + r"    class C {
-" + r"        constructor(b
-" + r"        ) {
-" + r"        }
-" + r"        foo(a
-" + r"            : string) {
-" + r"            return a
-" + r"                || true;
-" + r"        }
-" + r"        get bar(
-" + r"        ) {
-" + r"            return 1;
-" + r"        }
-" + r"    }
-" + r"    function foo(a,
-" + r"        b?) {
-" + r"        new M.C(
-" + r#"            "hello");
-"# + r"    }
-" + r"    {
-" + r"        {
-" + r"        }
-" + r"    }
-" + r"    foo(
-" + r"        function() {
-" + r#"            "hello";
-"# + r"        });
-" + r"    foo(
-" + r"        () => {
-" + r#"            "hello";
-"# + r"        });
-" + r"    var t,
-" + r"        u = 1,
-" + r"        v;
-" + r"}");
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
+		f.verify_current_file_content(&format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"namespace M {
+", r"    export =
+"), r"        C;
+"), r"    class C {
+"), r"        constructor(b
+"), r"        ) {
+"), r"        }
+"), r"        foo(a
+"), r"            : string) {
+"), r"            return a
+"), r"                || true;
+"), r"        }
+"), r"        get bar(
+"), r"        ) {
+"), r"            return 1;
+"), r"        }
+"), r"    }
+"), r"    function foo(a,
+"), r"        b?) {
+"), r"        new M.C(
+"), r#"            "hello");
+"#), r"    }
+"), r"    {
+"), r"        {
+"), r"        }
+"), r"    }
+"), r"    foo(
+"), r"        function() {
+"), r#"            "hello";
+"#), r"        });
+"), r"    foo(
+"), r"        () => {
+"), r#"            "hello";
+"#), r"        });
+"), r"    var t,
+"), r"        u = 1,
+"), r"        v;
+"), r"}"));
 	});
 }
 

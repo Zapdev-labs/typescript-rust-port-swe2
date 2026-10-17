@@ -18,8 +18,8 @@ fn get_edits_for_file_rename_keep_file_extensions() {
 export const name = 0;
 // @Filename: /src/index.ts
 import {name} from "./person.js";"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_will_rename_files_edits("/src/person.ts".into(), "/src/vip.ts".into(), vec![("/src/index.ts", r#"import {name} from "./vip.js";"#)].into_iter().collect::<FxHashMap<_, _>>(), None);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_will_rename_files_edits("/src/person.ts", "/src/vip.ts", &std::collections::BTreeMap::from([("/src/index.ts".to_string().into(), r#"import {name} from "./vip.js";"#.to_string().into())]), None);
 	});
 }
 

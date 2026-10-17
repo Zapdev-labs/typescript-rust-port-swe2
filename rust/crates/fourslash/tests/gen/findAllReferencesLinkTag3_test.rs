@@ -33,8 +33,8 @@ fn find_all_references_link_tag3() {
  * {@linkcode NPR.Consider.This.show}
  */
 export function outerref() { }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1".into(), "2".into(), "3".into(), "4".into(), "5".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into()]);
 	});
 }
 

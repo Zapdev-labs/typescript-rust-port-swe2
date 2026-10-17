@@ -8,8 +8,8 @@ use tsc_fourslash::*;
 fn formatting_hex_literal() {
 	run_test(|t| {
 		let content = r"var x =  0x1,y;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
 	});
 }
 

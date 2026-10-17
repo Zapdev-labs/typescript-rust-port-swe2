@@ -13,8 +13,8 @@ function f(a: string, b?: number): string {
     return "";
 }
 f("", "", 1);"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix_not_available("addOptionalParam".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_code_fix_not_available(&["addOptionalParam".into()]);
 	});
 }
 

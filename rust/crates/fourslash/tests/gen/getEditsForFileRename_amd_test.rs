@@ -12,8 +12,8 @@ fn get_edits_for_file_rename_amd() {
 import { x } from "old";
 // @Filename: /src/old.ts
 export const x = 0;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_will_rename_files_edits("/src/old.ts".into(), "/src/new.ts".into(), vec![("/src/user.ts", r#"import { x } from "./new";"#)].into_iter().collect::<FxHashMap<_, _>>(), None);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_will_rename_files_edits("/src/old.ts", "/src/new.ts", &std::collections::BTreeMap::from([("/src/user.ts".to_string().into(), r#"import { x } from "./new";"#.to_string().into())]), None);
 	});
 }
 

@@ -9,8 +9,8 @@ fn remove_declare_keyword() {
 	run_test(|t| {
 		let content = r"/**/declare var y;
 var x = new y;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
 		f.delete_at_caret(7);
 	});
 }

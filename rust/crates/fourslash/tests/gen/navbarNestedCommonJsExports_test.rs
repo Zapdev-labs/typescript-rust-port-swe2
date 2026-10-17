@@ -10,7 +10,7 @@ fn navbar_nested_common_js_exports() {
 		let content = r"// @allowJs: true
 // @Filename: /a.js
 exports.a = exports.b = exports.c = 0;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_document_symbol();
 	});
 }

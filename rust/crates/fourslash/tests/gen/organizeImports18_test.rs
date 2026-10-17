@@ -24,8 +24,8 @@ export { A } from "./A";
 export { bFuncC } from "./C";
 export { bFuncB } from "./B";
 export { bFuncA } from "./A";"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/test.ts".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("/test.ts");
 		f.verify_organize_imports(r#"export { A } from "./A";
 export { B } from "./B";
 export { C } from "./C";
@@ -33,7 +33,7 @@ export { C } from "./C";
 export { bFuncA } from "./A";
 export { bFuncB } from "./B";
 export { bFuncC } from "./C";
-"#.into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
+"#, tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, None);
 	});
 }
 

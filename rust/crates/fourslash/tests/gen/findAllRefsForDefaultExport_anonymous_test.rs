@@ -11,8 +11,8 @@ fn find_all_refs_for_default_export_anonymous() {
 export /*1*/default 1;
 // @Filename: /b.ts
 import a from "./a";"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["1".into()]);
 	});
 }
 

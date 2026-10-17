@@ -7,15 +7,15 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_jsdoc_typedef_missing_type() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"// @allowJs: true
 // @Filename: /a.js
 /**
  * @typedef /**/A
  */
 var x;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("".into(), "type A = any".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("", "type A = any", "");
 	});
 }
 

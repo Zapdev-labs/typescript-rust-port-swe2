@@ -21,14 +21,14 @@ import * as g from "global"; // Global imports skipped
 import { a } from "./a.js";
 import { a as a2 } from "./a"; // Ignored, only the first relative import is considered
 b; c;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/c.ts".into());
-		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport", new_file_content: r#"import * as g from "global"; // Global imports skipped
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("/c.ts");
+		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport".to_string().into(), new_file_content: r#"import * as g from "global"; // Global imports skipped
 import { a } from "./a.js";
 import { a as a2 } from "./a"; // Ignored, only the first relative import is considered
 import { b } from "./b.js";
 import { c } from "./c.jsx";
-b; c;"#, ..Default::default() });
+b; c;"#.to_string().into(), ..Default::default() });
 	});
 }
 

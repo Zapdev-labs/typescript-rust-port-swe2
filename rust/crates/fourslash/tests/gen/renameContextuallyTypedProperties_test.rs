@@ -61,8 +61,8 @@ var o10: I = {
     [|set ["[|{| "contextRangeIndex": 20 |}prop1|]"](v) { }|],
     set ["prop2"](v) { }
 };"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_rename_at_ranges_with_text(None, "prop1".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_rename_at_ranges_with_text(None, &["prop1".into()]);
 	});
 }
 

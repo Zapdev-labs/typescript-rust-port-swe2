@@ -7,14 +7,14 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_infer_from_usage_rest_param3() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"// @noImplicitAny: true
 function f(a: number, [|...rest |]){
     a;
     rest.push(22);
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_range_after_code_fix(r"...rest: number[]".into(), false, 0, 0);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_range_after_code_fix(r"...rest: number[]", false, 0, 0);
 	});
 }
 

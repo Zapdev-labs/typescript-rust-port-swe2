@@ -15,8 +15,8 @@ namespace globalModule {
 /*1*/import /*2*/globalAlias = globalModule;
 // @Filename: referencesForGlobals_2.ts
 var m = /*3*/globalAlias;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1".into(), "2".into(), "3".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
 	});
 }
 

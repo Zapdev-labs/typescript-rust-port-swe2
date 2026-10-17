@@ -16,8 +16,8 @@ fn find_all_refs_this_keyword_multiple_files() {
  ((x = /*5*/this, y) => /*6*/this)(/*7*/this, /*8*/this);
  // different 'this'
  function f(this) { return this; }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into(), "7".into(), "8".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into(), "7".into(), "8".into()]);
 	});
 }
 

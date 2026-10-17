@@ -9,8 +9,8 @@ fn completion_list_after_regular_expression_literal1() {
 	run_test(|t| {
 		let content = r"// @lib: es5
 /a/./**/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["exec", "test", "source", "global", "ignoreCase", "multiline", "lastIndex", &tsc_lsproto::CompletionItem { label: "compile", sort_text: Some((tsc_ls::deprecate_sort_text(tsc_ls::SORT_TEXT_LOCATION_PRIORITY).to_string()).into()), tags: &vec![tsc_lsproto::COMPLETION_ITEM_TAG_DEPRECATED], ..Default::default() }], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["exec".into(), "test".into(), "source".into(), "global".into(), "ignoreCase".into(), "multiline".into(), "lastIndex".into(), tsc_lsproto::CompletionItem { label: "compile".to_string().into(), sort_text: Some((tsc_ls::deprecate_sort_text(tsc_ls::SORT_TEXT_LOCATION_PRIORITY).to_string()).into()), tags: Some(vec![tsc_lsproto::COMPLETION_ITEM_TAG_DEPRECATED]), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

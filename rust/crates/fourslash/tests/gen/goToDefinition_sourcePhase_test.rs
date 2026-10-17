@@ -31,11 +31,11 @@ import { e as f } from "./e";
 /*fUse*/f;
 import * as ns from "./e";
 ns./*property*/e;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_no_errors();
-		f.verify_baseline_go_to_definition(true, "bUse".into(), "cUse".into(), "dImport".into(), "dUse".into(), "eExport".into(), "fUse".into(), "property".into());
-		f.verify_baseline_go_to_source_definition("bUse".into(), "cUse".into(), "dImport".into(), "dUse".into(), "eExport".into(), "fUse".into(), "property".into());
-		f.verify_baseline_find_all_references("bUse".into(), "cUse".into());
+		f.verify_baseline_go_to_definition(true, &["bUse".into(), "cUse".into(), "dImport".into(), "dUse".into(), "eExport".into(), "fUse".into(), "property".into()]);
+		f.verify_baseline_go_to_source_definition(&["bUse".into(), "cUse".into(), "dImport".into(), "dUse".into(), "eExport".into(), "fUse".into(), "property".into()]);
+		f.verify_baseline_find_all_references(&["bUse".into(), "cUse".into()]);
 	});
 }
 

@@ -21,8 +21,8 @@ export const util: () => void;
 export * from "./utils";
 // @Filename: /index.ts
 util/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_module_specifiers("".into(), &["dep"], None);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_import_fix_module_specifiers("", &["dep".into()], None);
 	});
 }
 

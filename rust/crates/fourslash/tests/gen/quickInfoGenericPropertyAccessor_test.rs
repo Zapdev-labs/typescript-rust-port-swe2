@@ -18,9 +18,9 @@ declare const x: number
 o.f/*1*/(x)
 o.g/*2*/(x)
 ";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1".into(), "(property) f: <number>(x: number) => number".into(), "".into());
-		f.verify_quick_info_at("2".into(), "(accessor) g: <number>(x: number) => number".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("1", "(property) f: <number>(x: number) => number", "");
+		f.verify_quick_info_at("2", "(accessor) g: <number>(x: number) => number", "");
 	});
 }
 

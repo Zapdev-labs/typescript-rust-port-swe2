@@ -11,18 +11,18 @@ fn formatting_on_do_while_no_semicolon() {
 /*3*/    for (var i = 0; i < 10; i++)
 /*4*/        i -= 2
 /*5*/        }/*1*/while (1 !== 1)";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1".into());
-		f.insert("\n".into());
-		f.verify_current_line_content(r"while (1 !== 1)".into());
-		f.go_to_marker("2".into());
-		f.verify_current_line_content(r"do {".into());
-		f.go_to_marker("3".into());
-		f.verify_current_line_content(r"    for (var i = 0; i < 10; i++)".into());
-		f.go_to_marker("4".into());
-		f.verify_current_line_content(r"        i -= 2".into());
-		f.go_to_marker("5".into());
-		f.verify_current_line_content(r"}".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("1");
+		f.insert("\n");
+		f.verify_current_line_content(r"while (1 !== 1)");
+		f.go_to_marker("2");
+		f.verify_current_line_content(r"do {");
+		f.go_to_marker("3");
+		f.verify_current_line_content(r"    for (var i = 0; i < 10; i++)");
+		f.go_to_marker("4");
+		f.verify_current_line_content(r"        i -= 2");
+		f.go_to_marker("5");
+		f.verify_current_line_content(r"}");
 	});
 }
 

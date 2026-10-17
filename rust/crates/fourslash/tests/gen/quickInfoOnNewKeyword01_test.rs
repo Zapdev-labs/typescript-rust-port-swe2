@@ -17,9 +17,9 @@ fn quick_info_on_new_keyword01() {
 }
 
 ne/*1*/w Ca/*2*/t();";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1".into(), "constructor Cat(): Cat".into(), "NOTE: this constructor is private! Please use the factory function".into());
-		f.verify_quick_info_at("2".into(), "constructor Cat(): Cat".into(), "NOTE: this constructor is private! Please use the factory function".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("1", "constructor Cat(): Cat", "NOTE: this constructor is private! Please use the factory function");
+		f.verify_quick_info_at("2", "constructor Cat(): Cat", "NOTE: this constructor is private! Please use the factory function");
 	});
 }
 

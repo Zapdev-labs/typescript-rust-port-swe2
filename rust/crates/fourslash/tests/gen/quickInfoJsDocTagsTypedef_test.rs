@@ -25,7 +25,7 @@ fn quick_info_js_doc_tags_typedef() {
 function foo(x) {
     return x;
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_hover();
 	});
 }

@@ -10,8 +10,8 @@ fn find_all_references_import_meta() {
 		let content = r"// Haha that's so meta!
 
 let x = import.meta/**/;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["".into()]);
 	});
 }
 

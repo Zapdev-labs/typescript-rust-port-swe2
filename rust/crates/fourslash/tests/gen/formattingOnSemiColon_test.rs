@@ -8,10 +8,10 @@ use tsc_fourslash::*;
 fn formatting_on_semi_colon() {
 	run_test(|t| {
 		let content = r"var  a=b+c^d-e*++f";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.go_to_eof();
-		f.insert(";".into());
-		f.verify_current_file_content(r"var a = b + c ^ d - e * ++f;".into());
+		f.insert(";");
+		f.verify_current_file_content(r"var a = b + c ^ d - e * ++f;");
 	});
 }
 

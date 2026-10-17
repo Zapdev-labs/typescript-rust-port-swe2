@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_no_destructure_non_object_literal() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"// @lib: es5
 // @target: es2015
 // @strict: true
@@ -31,8 +31,8 @@ export = $;
 module.exports = {};
 // @Filename: /index.ts
 filter/**/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_module_specifiers("".into(), &["./object-literal", "./jquery"], None);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_import_fix_module_specifiers("", &["./object-literal".into(), "./jquery".into()], None);
 	});
 }
 

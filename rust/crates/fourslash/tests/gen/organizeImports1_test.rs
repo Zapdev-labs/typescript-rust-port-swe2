@@ -22,7 +22,7 @@ import {
 
 console.log(a, B, b, c, C, d, D);
 console.log(e, f, F, g, G, H, h);";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_organize_imports_with_request_kind(r"import {
     a,
     b,
@@ -39,7 +39,7 @@ console.log(e, f, F, g, G, H, h);";
 } from './foo';
 
 console.log(a, B, b, c, C, d, D);
-console.log(e, f, F, g, G, H, h);".into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS, tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_TRUE, ..Default::default() });
+console.log(e, f, F, g, G, H, h);", tsc_lsproto::CodeActionKind::SourceOrganizeImports, tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }));
 		f.verify_organize_imports(r"import {
     b as B,
     c as C,
@@ -58,7 +58,7 @@ console.log(e, f, F, g, G, H, h);".into(), tsc_lsproto::CodeActionKind::SOURCE_O
 } from './foo';
 
 console.log(a, B, b, c, C, d, D);
-console.log(e, f, F, g, G, H, h);".into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_FALSE, ..Default::default() });
+console.log(e, f, F, g, G, H, h);", tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_FALSE.into(), ..Default::default() }));
 	});
 }
 

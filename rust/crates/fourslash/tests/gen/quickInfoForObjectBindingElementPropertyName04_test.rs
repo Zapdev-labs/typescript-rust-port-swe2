@@ -14,9 +14,9 @@ fn quick_info_for_object_binding_element_property_name04() {
 
 function f ({ /*1*/next: { /*2*/next: x} }) {
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1".into(), "(property) next: {\n    next: any;\n}".into(), "".into());
-		f.verify_quick_info_at("2".into(), "(property) next: any".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("1", "(property) next: {\n    next: any;\n}", "");
+		f.verify_quick_info_at("2", "(property) next: any", "");
 	});
 }
 

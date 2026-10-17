@@ -21,8 +21,8 @@ const b = (
                </div>
 )
 ";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
 		f.verify_current_file_content(r"
 const a = (
     <div>
@@ -35,7 +35,7 @@ const b = (
         twice
     </div>
 )
-".into());
+");
 	});
 }
 

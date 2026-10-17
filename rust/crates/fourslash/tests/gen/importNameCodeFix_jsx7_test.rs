@@ -15,8 +15,8 @@ fn import_name_code_fix_jsx7() {
 // React was not defined
 // @Filename: /a.tsx
 <[|Text|]></Text>;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/a.tsx".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("/a.tsx");
 		f.verify_code_fix_not_available();
 	});
 }

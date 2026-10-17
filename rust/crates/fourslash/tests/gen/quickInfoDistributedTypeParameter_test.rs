@@ -13,12 +13,12 @@ fn quick_info_distributed_type_parameter() {
         : T/*falseType*/;
 
 type NonDistributed<T> = [T/*nonDistributed*/] extends [unknown] ? T : never;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("check".into(), "(type parameter) (distributed) T in type Conditional<T>".into(), "".into());
-		f.verify_quick_info_at("extends".into(), "(type parameter) (distributed) T in type Conditional<T>".into(), "".into());
-		f.verify_quick_info_at("trueType".into(), "(type parameter) (distributed) T in type Conditional<T>".into(), "".into());
-		f.verify_quick_info_at("falseType".into(), "(type parameter) (distributed) T in type Conditional<T>".into(), "".into());
-		f.verify_quick_info_at("nonDistributed".into(), "(type parameter) T in type NonDistributed<T>".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("check", "(type parameter) (distributed) T in type Conditional<T>", "");
+		f.verify_quick_info_at("extends", "(type parameter) (distributed) T in type Conditional<T>", "");
+		f.verify_quick_info_at("trueType", "(type parameter) (distributed) T in type Conditional<T>", "");
+		f.verify_quick_info_at("falseType", "(type parameter) (distributed) T in type Conditional<T>", "");
+		f.verify_quick_info_at("nonDistributed", "(type parameter) T in type NonDistributed<T>", "");
 	});
 }
 

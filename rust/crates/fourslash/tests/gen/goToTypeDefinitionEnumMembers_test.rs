@@ -14,8 +14,8 @@ fn go_to_type_definition_enum_members() {
 var x = E.value2;
 
 /*reference*/x;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_type_definition("reference".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_type_definition(&["reference".into()]);
 	});
 }
 

@@ -34,8 +34,8 @@ import * as /*4*/c from "./c"
 import /*5*/cDefault from "./c"
 import * as /*6*/d from "./d"
 import /*7*/dDefault from "./d""#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("0".into(), "1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into(), "7".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["0".into(), "1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into(), "7".into()]);
 	});
 }
 

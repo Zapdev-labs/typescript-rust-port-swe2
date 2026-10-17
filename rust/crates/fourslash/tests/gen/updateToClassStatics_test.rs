@@ -23,9 +23,9 @@ fn update_to_class_statics() {
 namespace TypeScript {
     var x : TypeScript.SymbolAndDiagnostics;
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
-		f.insert("someNewProperty = 0;".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
+		f.insert("someNewProperty = 0;");
 	});
 }
 

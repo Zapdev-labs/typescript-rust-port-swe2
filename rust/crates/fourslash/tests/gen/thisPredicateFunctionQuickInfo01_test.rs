@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn this_predicate_function_quick_info01() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r#"class FileSystemObject {
     /*1*/isFile(): this is Item {
         return this instanceof Item;
@@ -47,15 +47,15 @@ if (obj.isDirectory/*6*/()) {
 if (obj.isNetworked/*8*/()) {
     obj.;
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1".into(), "(method) FileSystemObject.isFile(): this is Item".into(), "".into());
-		f.verify_quick_info_at("2".into(), "(method) FileSystemObject.isDirectory(): this is Directory".into(), "".into());
-		f.verify_quick_info_at("3".into(), "(method) FileSystemObject.isNetworked(): this is (Networked & this)".into(), "".into());
-		f.verify_quick_info_at("4".into(), "(method) FileSystemObject.isFile(): this is Item".into(), "".into());
-		f.verify_quick_info_at("5".into(), "(method) FileSystemObject.isNetworked(): this is (Networked & Item)".into(), "".into());
-		f.verify_quick_info_at("6".into(), "(method) FileSystemObject.isDirectory(): this is Directory".into(), "".into());
-		f.verify_quick_info_at("7".into(), "(method) FileSystemObject.isNetworked(): this is (Networked & Directory)".into(), "".into());
-		f.verify_quick_info_at("8".into(), "(method) FileSystemObject.isNetworked(): this is (Networked & FileSystemObject)".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("1", "(method) FileSystemObject.isFile(): this is Item", "");
+		f.verify_quick_info_at("2", "(method) FileSystemObject.isDirectory(): this is Directory", "");
+		f.verify_quick_info_at("3", "(method) FileSystemObject.isNetworked(): this is (Networked & this)", "");
+		f.verify_quick_info_at("4", "(method) FileSystemObject.isFile(): this is Item", "");
+		f.verify_quick_info_at("5", "(method) FileSystemObject.isNetworked(): this is (Networked & Item)", "");
+		f.verify_quick_info_at("6", "(method) FileSystemObject.isDirectory(): this is Directory", "");
+		f.verify_quick_info_at("7", "(method) FileSystemObject.isNetworked(): this is (Networked & Directory)", "");
+		f.verify_quick_info_at("8", "(method) FileSystemObject.isNetworked(): this is (Networked & FileSystemObject)", "");
 	});
 }
 

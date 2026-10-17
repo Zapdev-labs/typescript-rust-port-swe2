@@ -39,10 +39,10 @@ import { square } from "../../common/dist/src/MyModule";
 export function saveMe() {
   square/**/(2);
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_file("/home/src/workspaces/project/web/src/Helper.ts".into());
-		f.verify_import_fix_module_specifiers("".into(), &["../../common/src/MyModule"], &tsc_lsutil::UserPreferences { import_module_specifier_preference: "non-relative", ..Default::default() });
+		f.go_to_file("/home/src/workspaces/project/web/src/Helper.ts");
+		f.verify_import_fix_module_specifiers("", &["../../common/src/MyModule".into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_preference: "non-relative".to_string().into(), ..Default::default() }));
 	});
 }
 

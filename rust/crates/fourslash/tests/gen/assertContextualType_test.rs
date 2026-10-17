@@ -8,8 +8,8 @@ use tsc_fourslash::*;
 fn assert_contextual_type() {
 	run_test(|t| {
 		let content = r"<(aa: number) =>void >(function myFn(b/**/b) { });";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("".into(), "(parameter) bb: number".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("", "(parameter) bb: number", "");
 	});
 }
 

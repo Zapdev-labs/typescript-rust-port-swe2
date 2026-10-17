@@ -21,9 +21,9 @@ fn completion_list_after_numeric_literal() {
 (0.)./*validDotOnNumberExpressions2*/
 // @Filename: f7.ts
 (0.0)./*validDotOnNumberExpressions3*/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions(&["dotOnNumberExpressions1", "dotOnNumberExpressions4"], None);
-		f.verify_completions(&["dotOnNumberExpressions2", "dotOnNumberExpressions3", "validDotOnNumberExpressions1", "validDotOnNumberExpressions2", "validDotOnNumberExpressions3"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["toExponential"], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions(vec!["dotOnNumberExpressions1", "dotOnNumberExpressions4"].into(), None);
+		f.verify_completions(vec!["dotOnNumberExpressions2", "dotOnNumberExpressions3", "validDotOnNumberExpressions1", "validDotOnNumberExpressions2", "validDotOnNumberExpressions3"].into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["toExponential".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn js_doc_augments_and_extends() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"// @allowJs: true
 // @checkJs: true
 // @Filename: dummy.js
@@ -26,10 +26,10 @@ class MyStringThing extends Thing {
 declare class Thing<T> {
     mine: T;
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
-		f.verify_quick_info_is("(local var) x: number".into(), "".into());
-		f.verify_non_suggestion_diagnostics(&[tsc_lsproto::Diagnostic { message: tsc_lsproto::StringOrMarkupContent { string: Some(("Class declarations cannot have more than one '@augments' or '@extends' tag.").into()), ..Default::default() }, code: Some(tsc_lsproto::IntegerOrString { integer: Some(((8025) as i32).into()), ..Default::default() }), ..Default::default() }]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
+		f.verify_quick_info_is("(local var) x: number", "");
+		f.verify_non_suggestion_diagnostics(&[tsc_lsproto::Diagnostic { message: tsc_lsproto::StringOrMarkupContent { string: Some(("Class declarations cannot have more than one '@augments' or '@extends' tag.").into()), ..Default::default() }.into(), code: Some(tsc_lsproto::IntegerOrString { integer: Some(((8025) as i32).into()), ..Default::default() }), ..Default::default() }]);
 	});
 }
 

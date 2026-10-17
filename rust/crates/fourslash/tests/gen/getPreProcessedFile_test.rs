@@ -24,16 +24,16 @@ import invalidRef2 = /*9*/requi/*10*/(/*10A*/"refFile2");
 var obj: /*11*/C/*12*/;
 var obj1: D;
 var obj2: ref2.E;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("main.ts".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("main.ts");
 		f.verify_number_of_errors_in_current_file(7);
-		f.verify_error_exists_between_markers("1".into(), "2".into());
-		f.verify_error_exists_between_markers("3".into(), "4".into());
-		f.verify_error_exists_between_markers("5".into(), "6".into());
-		f.verify_error_exists_between_markers("7".into(), "8".into());
-		f.verify_error_exists_between_markers("9".into(), "10".into());
-		f.verify_error_exists_between_markers("10".into(), "10A".into());
-		f.verify_error_exists_between_markers("11".into(), "12".into());
+		f.verify_error_exists_between_markers("1", "2");
+		f.verify_error_exists_between_markers("3", "4");
+		f.verify_error_exists_between_markers("5", "6");
+		f.verify_error_exists_between_markers("7", "8");
+		f.verify_error_exists_between_markers("9", "10");
+		f.verify_error_exists_between_markers("10", "10A");
+		f.verify_error_exists_between_markers("11", "12");
 	});
 }
 

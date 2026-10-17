@@ -7,14 +7,14 @@ use tsc_fourslash::*;
 #[test]
 fn unused_constant_in_function1() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r#"// @noUnusedLocals: true
 [| function f1 () {
     const x: string = "x";
 } |]"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_range_after_code_fix(r"function f1 () {
-}".into(), false, 0, 0);
+}", false, 0, 0);
 	});
 }
 

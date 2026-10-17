@@ -11,9 +11,9 @@ fn semantic_classification_jsx() {
 const Component = () => <div>Hello</div>;
 const afterJSX = 42;
 const alsoAfterJSX = "test";"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/a.tsx".into());
-		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type: "function.declaration.readonly".into(), text: "Component".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.declaration.readonly".into(), text: "afterJSX".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.declaration.readonly".into(), text: "alsoAfterJSX".into(), ..Default::default() }]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("/a.tsx");
+		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type_: "function.declaration.readonly".to_string().into(), text: "Component".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.declaration.readonly".to_string().into(), text: "afterJSX".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.declaration.readonly".to_string().into(), text: "alsoAfterJSX".to_string().into(), ..Default::default() }]);
 	});
 }
 

@@ -12,9 +12,9 @@ export const helper = 1;
 
 // @Filename: /app.astro
 const value = help/**/;
-".into(), contentmappertest.prefixed_supplemental_mapper, ".astro".into());
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { user_preferences: &tsc_lsutil::UserPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE, include_completions_for_import_statements: tsc_core::tristate::TS_TRUE, ..Default::default() }, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["helper"], ..Default::default() }, ..Default::default() });
-		f.verify_apply_code_action_from_completion(Some(("").into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "helper", source: "./dep", description: "Add import from \"./dep\"", new_file_content: Some((r#"import { helper } from "./dep";
+", tsc_testutil::contentmappertest::PREFIXED_SUPPLEMENTAL_MAPPER, ".astro");
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["helper".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_apply_code_action_from_completion("", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "helper".to_string().into(), source: "./dep".to_string().into(), description: "Add import from \"./dep\"".to_string().into(), new_file_content: Some((r#"import { helper } from "./dep";
 
 const value = help;
 "#).into()), ..Default::default() });
@@ -26,9 +26,9 @@ fn content_mapper_drops_unmapped_folding_ranges() {
 	run_test(|t| {
 		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /app.fold
 host markup
-".into(), contentmappertest.unmapped_folding_mapper, ".fold".into());
-		f.go_to_file("/app.fold".into());
-		f.verify_folding_range_lines(None);
+", tsc_testutil::contentmappertest::UNMAPPED_FOLDING_MAPPER, ".fold");
+		f.go_to_file("/app.fold");
+		f.verify_folding_range_lines(&[]);
 	});
 }
 
@@ -39,8 +39,8 @@ fn content_mapper_supplemental_folding_ranges() {
 function outer() {
     const value = 1;
 }
-".into(), contentmappertest.prefixed_supplemental_mapper, ".astro".into());
-		f.go_to_file("/app.astro".into());
+", tsc_testutil::contentmappertest::PREFIXED_SUPPLEMENTAL_MAPPER, ".astro");
+		f.go_to_file("/app.astro");
 		f.verify_folding_range_lines(&[tsc_fourslash::FoldingRangeLineExpected { start_line: 0, end_line: 2, ..Default::default() }]);
 	});
 }
@@ -52,9 +52,9 @@ fn content_mapper_disabled_supplemental_folding_ranges() {
 function outer() {
     const value = 1;
 }
-".into(), contentmappertest.prefixed_supplemental_mapper, ".astro".into());
-		f.go_to_file("/folding-disabled.astro".into());
-		f.verify_folding_range_lines(None);
+", tsc_testutil::contentmappertest::PREFIXED_SUPPLEMENTAL_MAPPER, ".astro");
+		f.go_to_file("/folding-disabled.astro");
+		f.verify_folding_range_lines(&[]);
 	});
 }
 
@@ -65,8 +65,8 @@ fn content_mapper_deduplicates_projected_folding_ranges() {
 function outer() {
     const value = 1;
 }
-".into(), contentmappertest.prefixed_supplemental_mapper, ".astro".into());
-		f.go_to_file("/folding-duplicate.astro".into());
+", tsc_testutil::contentmappertest::PREFIXED_SUPPLEMENTAL_MAPPER, ".astro");
+		f.go_to_file("/folding-duplicate.astro");
 		f.verify_folding_range_lines(&[tsc_fourslash::FoldingRangeLineExpected { start_line: 0, end_line: 2, ..Default::default() }]);
 	});
 }
@@ -77,8 +77,8 @@ fn content_mapper_supplemental_code_lens() {
 		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /codelens-supplemental.astro
 function outer() {}
 outer();
-".into(), contentmappertest.prefixed_supplemental_mapper, ".astro".into());
-		f.verify_baseline_code_lens(&tsc_lsutil::UserPreferences { references_code_lens_enabled: tsc_core::tristate::TS_TRUE, references_code_lens_show_on_all_functions: tsc_core::tristate::TS_TRUE, ..Default::default() });
+", tsc_testutil::contentmappertest::PREFIXED_SUPPLEMENTAL_MAPPER, ".astro");
+		f.verify_baseline_code_lens(Some(&tsc_lsutil::UserPreferences { code_lens_user_preferences: tsc_lsutil::CodeLensUserPreferences { references_code_lens_enabled: tsc_core::tristate::TS_TRUE.into(), references_code_lens_show_on_all_functions: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 
@@ -88,8 +88,8 @@ fn content_mapper_disabled_supplemental_code_lens() {
 		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /codelens-disabled.astro
 function outer() {}
 outer();
-".into(), contentmappertest.prefixed_supplemental_mapper, ".astro".into());
-		f.verify_baseline_code_lens(&tsc_lsutil::UserPreferences { references_code_lens_enabled: tsc_core::tristate::TS_TRUE, references_code_lens_show_on_all_functions: tsc_core::tristate::TS_TRUE, ..Default::default() });
+", tsc_testutil::contentmappertest::PREFIXED_SUPPLEMENTAL_MAPPER, ".astro");
+		f.verify_baseline_code_lens(Some(&tsc_lsutil::UserPreferences { code_lens_user_preferences: tsc_lsutil::CodeLensUserPreferences { references_code_lens_enabled: tsc_core::tristate::TS_TRUE.into(), references_code_lens_show_on_all_functions: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 
@@ -99,8 +99,8 @@ fn content_mapper_deduplicates_projected_code_lens() {
 		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /codelens-duplicate.astro
 function outer() {}
 outer();
-".into(), contentmappertest.prefixed_supplemental_mapper, ".astro".into());
-		f.verify_baseline_code_lens(&tsc_lsutil::UserPreferences { references_code_lens_enabled: tsc_core::tristate::TS_TRUE, references_code_lens_show_on_all_functions: tsc_core::tristate::TS_TRUE, ..Default::default() });
+", tsc_testutil::contentmappertest::PREFIXED_SUPPLEMENTAL_MAPPER, ".astro");
+		f.verify_baseline_code_lens(Some(&tsc_lsutil::UserPreferences { code_lens_user_preferences: tsc_lsutil::CodeLensUserPreferences { references_code_lens_enabled: tsc_core::tristate::TS_TRUE.into(), references_code_lens_show_on_all_functions: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 
@@ -110,8 +110,8 @@ fn content_mapper_supplemental_implementation_code_lens() {
 		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /codelens-implementation.astro
 interface Service { run(): void }
 class Impl implements Service { run() {} }
-".into(), contentmappertest.prefixed_supplemental_mapper, ".astro".into());
-		f.verify_baseline_code_lens(&tsc_lsutil::UserPreferences { implementations_code_lens_enabled: tsc_core::tristate::TS_TRUE, ..Default::default() });
+", tsc_testutil::contentmappertest::PREFIXED_SUPPLEMENTAL_MAPPER, ".astro");
+		f.verify_baseline_code_lens(Some(&tsc_lsutil::UserPreferences { code_lens_user_preferences: tsc_lsutil::CodeLensUserPreferences { implementations_code_lens_enabled: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 
@@ -122,13 +122,13 @@ fn content_mapper_formats_supplemental_verbatim_range() {
 function outer(){
 const value={a:1};
 }
-".into(), contentmappertest.prefixed_supplemental_mapper, ".astro".into());
-		f.go_to_file("/formatting.astro".into());
-		f.format_document("/formatting.astro".into());
+", tsc_testutil::contentmappertest::PREFIXED_SUPPLEMENTAL_MAPPER, ".astro");
+		f.go_to_file("/formatting.astro");
+		f.format_document("/formatting.astro");
 		f.verify_current_file_content(r"function outer() {
     const value = { a: 1 };
 }
-".into());
+");
 	});
 }
 
@@ -139,10 +139,10 @@ fn content_mapper_skips_formatting_disabled_verbatim_range() {
 const value={a:1};
 }
 ";
-		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /formatting-disabled.astro
-" + content, contentmappertest.prefixed_supplemental_mapper, ".astro".into());
-		f.go_to_file("/formatting-disabled.astro".into());
-		f.format_document("/formatting-disabled.astro".into());
+		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, &format!("{}{}", r"// @Filename: /formatting-disabled.astro
+", content), tsc_testutil::contentmappertest::PREFIXED_SUPPLEMENTAL_MAPPER, ".astro");
+		f.go_to_file("/formatting-disabled.astro");
+		f.format_document("/formatting-disabled.astro");
 		f.verify_current_file_content(content);
 	});
 }
@@ -153,12 +153,12 @@ fn content_mapper_formats_each_supplemental_verbatim_range() {
 		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /formatting-split.astro
 function first(){return 1;}
 function second(){return 2;}
-".into(), contentmappertest.prefixed_supplemental_mapper, ".astro".into());
-		f.go_to_file("/formatting-split.astro".into());
-		f.format_document("/formatting-split.astro".into());
+", tsc_testutil::contentmappertest::PREFIXED_SUPPLEMENTAL_MAPPER, ".astro");
+		f.go_to_file("/formatting-split.astro");
+		f.format_document("/formatting-split.astro");
 		f.verify_current_file_content(r"function first() { return 1; }
 function second() { return 2; }
-".into());
+");
 	});
 }
 
@@ -169,13 +169,13 @@ fn content_mapper_formats_only_first_overlapping_projection() {
 function first(){return 1;}
 function second(){return 2;}
 function third(){return 3;}
-".into(), contentmappertest.prefixed_supplemental_mapper, ".astro".into());
-		f.go_to_file("/formatting-overlap.astro".into());
-		f.format_document("/formatting-overlap.astro".into());
+", tsc_testutil::contentmappertest::PREFIXED_SUPPLEMENTAL_MAPPER, ".astro");
+		f.go_to_file("/formatting-overlap.astro");
+		f.format_document("/formatting-overlap.astro");
 		f.verify_current_file_content(r"function first() { return 1; }
 function second() { return 2; }
     function third() { return 3; }
-".into());
+");
 	});
 }
 
@@ -185,12 +185,12 @@ fn content_mapper_formats_supplemental_original_selection() {
 		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /formatting-selection.astro
 function first(){return 1;}
 /*start*/function second(){return 2;}/*end*/
-".into(), contentmappertest.prefixed_supplemental_mapper, ".astro".into());
-		f.go_to_file("/formatting-selection.astro".into());
-		f.format_selection("start".into(), "end".into());
+", tsc_testutil::contentmappertest::PREFIXED_SUPPLEMENTAL_MAPPER, ".astro");
+		f.go_to_file("/formatting-selection.astro");
+		f.format_selection("start", "end");
 		f.verify_current_file_content(r"function first(){return 1;}
 function second() { return 2; }
-".into());
+");
 	});
 }
 

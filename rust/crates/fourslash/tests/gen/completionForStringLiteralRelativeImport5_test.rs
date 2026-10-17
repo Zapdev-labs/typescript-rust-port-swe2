@@ -26,10 +26,10 @@ var foo3 = require(".//*require3*/
 /*f1*/
 // @Filename: /repo/generated2/dir/f2.ts
 /*f2*/"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions(&["import_as1", "import_equals1", "require1"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["f1", "f2", "test2"], ..Default::default() }, ..Default::default() });
-		f.verify_completions(&["import_as2", "import_equals2", "require2"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["dir", "index"], ..Default::default() }, ..Default::default() });
-		f.verify_completions(&["import_as3", "import_equals3", "require3"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["dir"], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions(vec!["import_as1", "import_equals1", "require1"].into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["f1".into(), "f2".into(), "test2".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions(vec!["import_as2", "import_equals2", "require2"].into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["dir".into(), "index".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions(vec!["import_as3", "import_equals3", "require3"].into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["dir".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

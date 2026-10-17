@@ -10,8 +10,8 @@ fn find_all_refs_object_binding_element_property_name07() {
 		let content = r"let p, b;
 
 p, [{ /*1*/a: p, b }] = [{ a: 10, b: true }];";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["1".into()]);
 	});
 }
 

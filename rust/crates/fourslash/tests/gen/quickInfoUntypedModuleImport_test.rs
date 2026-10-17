@@ -7,22 +7,22 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_untyped_module_import() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r#"// @strict: false
 // @Filename: node_modules/foo/index.js
  /*index*/{}
 // @Filename: a.ts
 import /*foo*/foo from /*fooModule*/"foo";
 /*fooCall*/foo();"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("a.ts".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("a.ts");
 		f.verify_number_of_errors_in_current_file(0);
-		f.go_to_marker("fooModule".into());
-		f.verify_quick_info_is("".into(), "".into());
-		f.go_to_marker("foo".into());
-		f.verify_quick_info_is("import foo".into(), "".into());
-		f.verify_baseline_find_all_references("foo".into(), "fooModule".into(), "fooCall".into());
-		f.verify_baseline_go_to_definition(false, "fooModule".into(), "foo".into());
+		f.go_to_marker("fooModule");
+		f.verify_quick_info_is("", "");
+		f.go_to_marker("foo");
+		f.verify_quick_info_is("import foo", "");
+		f.verify_baseline_find_all_references(&["foo".into(), "fooModule".into(), "fooCall".into()]);
+		f.verify_baseline_go_to_definition(false, &["fooModule".into(), "foo".into()]);
 	});
 }
 

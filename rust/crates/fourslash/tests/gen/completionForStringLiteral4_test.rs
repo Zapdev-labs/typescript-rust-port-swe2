@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn completion_for_string_literal4() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r#"// @allowJs: true
 // @Filename: in.js
 /** I am documentation
@@ -21,11 +21,11 @@ function f(p1, p2, p3, p4, p5) {
     return p1 + p2 + p3 + p4 + p5 + '.';
 }
 f/*1*/('literal', 'literal', "[|o/*2*/ther1|]", 12);"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("1");
 		f.verify_quick_info_exists();
-		f.verify_quick_info_is("function f(p1: \"literal\", p2: \"literal\", p3: \"other1\" | \"other2\", p4: \"literal\" | number, p5: 12 | true): string".into(), "I am documentation".into());
-		f.verify_completions("2".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec![&tsc_lsproto::CompletionItem { label: "other1", text_edit: &tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: &tsc_lsproto::TextEdit { new_text: "other1", range: f.ranges()[0].ls_range, ..Default::default() }, ..Default::default() }, ..Default::default() }, &tsc_lsproto::CompletionItem { label: "other2", text_edit: &tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: &tsc_lsproto::TextEdit { new_text: "other2", range: f.ranges()[0].ls_range, ..Default::default() }, ..Default::default() }, ..Default::default() }], ..Default::default() }, ..Default::default() });
+		f.verify_quick_info_is("function f(p1: \"literal\", p2: \"literal\", p3: \"other1\" | \"other2\", p4: \"literal\" | number, p5: 12 | true): string", "I am documentation");
+		f.verify_completions("2".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "other1".to_string().into(), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "other1".to_string().into(), range: f.ranges()[0].ls_range.into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "other2".to_string().into(), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "other2".to_string().into(), range: f.ranges()[0].ls_range.into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

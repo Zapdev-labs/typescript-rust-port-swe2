@@ -33,8 +33,8 @@ const m/*m*/: TreeNode<number> = {
     right: undefined,
     orange: { name: "orange" },
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_hover_with_verbosity(vec![("N", vec![0]), ("n", vec![0, 1]), ("t", vec![0, 1]), ("m", vec![0, 1, 2])].into_iter().collect::<FxHashMap<_, _>>());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("N".to_string().into(), vec![0]), ("n".to_string().into(), vec![0, 1]), ("t".to_string().into(), vec![0, 1]), ("m".to_string().into(), vec![0, 1, 2])]));
 	});
 }
 

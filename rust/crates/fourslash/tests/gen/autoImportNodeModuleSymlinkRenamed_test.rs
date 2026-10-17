@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_node_module_symlink_renamed() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r#"// @Filename: /home/src/workspaces/solution/package.json
 {
     "name": "monorepo",
@@ -61,10 +61,10 @@ gainUtility/**/
 // @link: /home/src/workspaces/solution/packages/utils -> /home/src/workspaces/solution/node_modules/utils
 // @link: /home/src/workspaces/solution/packages/utils -> /home/src/workspaces/solution/node_modules/@monorepo/utils
 // @link: /home/src/workspaces/solution/packages/web -> /home/src/workspaces/solution/node_modules/web"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_marker("".into());
-		f.verify_import_fix_module_specifiers("".into(), &["@monorepo/utils"], None);
+		f.go_to_marker("");
+		f.verify_import_fix_module_specifiers("", &["@monorepo/utils".into()], None);
 	});
 }
 

@@ -16,8 +16,8 @@ export { sum } from "./sum.js";
 export const sum = 0;
 // @Filename: /utils/sumAB.ts
 sum/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_module_specifiers("".into(), &["./sum/index.js", "./sum/sum.js"], &tsc_lsutil::UserPreferences { import_module_specifier_ending: "js", ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_import_fix_module_specifiers("", &["./sum/index.js".into(), "./sum/sum.js".into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_ending: "js".to_string().into(), ..Default::default() }));
 	});
 }
 

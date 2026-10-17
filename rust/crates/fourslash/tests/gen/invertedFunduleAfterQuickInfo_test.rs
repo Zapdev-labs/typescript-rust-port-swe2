@@ -13,8 +13,8 @@ fn inverted_fundule_after_quick_info() {
     }
     function A(/**/x: number): void { }
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
 		f.verify_quick_info_exists();
 		f.verify_number_of_errors_in_current_file(1);
 	});

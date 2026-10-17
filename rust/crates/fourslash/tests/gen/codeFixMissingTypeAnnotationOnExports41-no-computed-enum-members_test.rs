@@ -14,7 +14,7 @@ fn code_fix_missing_type_annotation_on_exports41_no_computed_enum_members() {
 enum E {
     A = "foo".length
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_code_fix_not_available();
 	});
 }

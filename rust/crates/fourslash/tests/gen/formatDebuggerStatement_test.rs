@@ -9,12 +9,12 @@ fn format_debugger_statement() {
 	run_test(|t| {
 		let content = r"if(false){debugger;}
   if    (   false   )   {    debugger  ;   }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
 		f.go_to_bof();
-		f.verify_current_line_content(r"if (false) { debugger; }".into());
+		f.verify_current_line_content(r"if (false) { debugger; }");
 		f.go_to_eof();
-		f.verify_current_line_content(r"if (false) { debugger; }".into());
+		f.verify_current_line_content(r"if (false) { debugger; }");
 	});
 }
 

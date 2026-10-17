@@ -7,12 +7,12 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_spelling_case_sensitive3() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"class Node {}
 let node = new Node();
 [|nodes|]";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_range_after_code_fix(r"node".into(), false, 0, 0);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_range_after_code_fix(r"node", false, 0, 0);
 	});
 }
 

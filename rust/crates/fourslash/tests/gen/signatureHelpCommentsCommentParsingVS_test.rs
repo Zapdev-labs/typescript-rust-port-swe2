@@ -208,7 +208,7 @@ jsDocCommentAlignmentTest3(/*47*/"hello",/*48*/1, /*49*/2);
 /**/
 class NoQuickInfoClass {
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", &tsc_lsproto::ClientCapabilities { vs_supports_visual_studio_extensions: Some((true).into()), ..Default::default() }, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", Some(tsc_lsproto::ClientCapabilities { vs_supports_visual_studio_extensions: Some((true).into()), ..Default::default() }), content);
 		f.verify_baseline_signature_help();
 	});
 }

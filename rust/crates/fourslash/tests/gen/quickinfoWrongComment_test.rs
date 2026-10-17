@@ -22,10 +22,10 @@ interface B extends I {
 type F = A | B
 const f: F = { colour: "green" }
 f.colour/*1*/"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_marker("1".into());
-		f.verify_quick_info_is("(property) colour: \"green\" | \"red\" | \"yellow\"".into(), "The colour".into());
+		f.go_to_marker("1");
+		f.verify_quick_info_is("(property) colour: \"green\" | \"red\" | \"yellow\"", "The colour");
 	});
 }
 

@@ -8,8 +8,8 @@ use tsc_fourslash::*;
 fn quick_info_function() {
 	run_test(|t| {
 		let content = r#"/**/function foo() { return "hi"; }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("".into(), "function foo(): string".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("", "function foo(): string", "");
 	});
 }
 

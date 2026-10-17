@@ -29,8 +29,8 @@ external/*outgoing*/Shape;
 import { ProfileCard, localShape } from "./ProfileCard.vue";
 local/*incoming*/Shape;
 Profile/*atomTarget*/Card;
-"#.into(), contentmappertest.component_mapper, ".vue".into());
-		f.verify_baseline_go_to_type_definition("within".into(), "template".into(), "incoming".into(), "outgoing".into(), "atomTarget".into(), "markup".into());
+"#, tsc_testutil::contentmappertest::COMPONENT_MAPPER, ".vue");
+		f.verify_baseline_go_to_type_definition(&["within".into(), "template".into(), "incoming".into(), "outgoing".into(), "atomTarget".into(), "markup".into()]);
 	});
 }
 

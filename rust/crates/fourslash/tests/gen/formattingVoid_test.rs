@@ -14,20 +14,20 @@ fn formatting_void() {
 /*5*/  void    a    ;
 /*6*/  void        (0);
 /*7*/  b=void(c=1,d=2);";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
-		f.go_to_marker("1".into());
-		f.verify_current_line_content(r"var x: () => void;".into());
-		f.go_to_marker("2".into());
-		f.verify_current_line_content(r"var y: void;".into());
-		f.go_to_marker("3".into());
-		f.verify_current_line_content(r"function test(a: void, b: string) { }".into());
-		f.go_to_marker("5".into());
-		f.verify_current_line_content(r"void a;".into());
-		f.go_to_marker("6".into());
-		f.verify_current_line_content(r"void (0);".into());
-		f.go_to_marker("7".into());
-		f.verify_current_line_content(r"b = void (c = 1, d = 2);".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
+		f.go_to_marker("1");
+		f.verify_current_line_content(r"var x: () => void;");
+		f.go_to_marker("2");
+		f.verify_current_line_content(r"var y: void;");
+		f.go_to_marker("3");
+		f.verify_current_line_content(r"function test(a: void, b: string) { }");
+		f.go_to_marker("5");
+		f.verify_current_line_content(r"void a;");
+		f.go_to_marker("6");
+		f.verify_current_line_content(r"void (0);");
+		f.go_to_marker("7");
+		f.verify_current_line_content(r"b = void (c = 1, d = 2);");
 	});
 }
 

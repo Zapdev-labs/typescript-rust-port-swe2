@@ -15,7 +15,7 @@ fn navigation_bar_function_like_property_assignments() {
     e: y(),
     f() { }
 };";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_document_symbol();
 	});
 }

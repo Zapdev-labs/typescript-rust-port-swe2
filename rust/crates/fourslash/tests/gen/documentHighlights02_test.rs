@@ -16,11 +16,11 @@ function [|foo|] () {
 // @Filename: b.ts
 /// <reference path="a.ts"/>
 [|foo|]();"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_file("a.ts".into());
-		f.go_to_file("b.ts".into());
-		f.verify_baseline_document_highlights_with_options(None, &["a.ts", "b.ts"], to_any(f.ranges()));
+		f.go_to_file("a.ts");
+		f.go_to_file("b.ts");
+		f.verify_baseline_document_highlights_with_options(None, &["a.ts".into(), "b.ts".into()], to_any(f.ranges()).into_iter().map(Into::into));
 	});
 }
 

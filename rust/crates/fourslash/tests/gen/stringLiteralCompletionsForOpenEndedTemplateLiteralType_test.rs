@@ -7,11 +7,11 @@ use tsc_fourslash::*;
 #[test]
 fn string_literal_completions_for_open_ended_template_literal_type() {
 	run_test(|t| {
-		let content = r#"// @stableTypeOrdering: true
-function conversionTest(groupName: | "downcast" | "dataDowncast" | "editingDowncast" | "# + "`" + r"${string}Downcast" + "`" + r#" & {}) {}
-conversionTest("/**/");"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec!["dataDowncast", "downcast", "editingDowncast"], ..Default::default() }, ..Default::default() });
+		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r#"// @stableTypeOrdering: true
+function conversionTest(groupName: | "downcast" | "dataDowncast" | "editingDowncast" | "#, "`"), r"${string}Downcast"), "`"), r#" & {}) {}
+conversionTest("/**/");"#);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["dataDowncast".into(), "downcast".into(), "editingDowncast".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

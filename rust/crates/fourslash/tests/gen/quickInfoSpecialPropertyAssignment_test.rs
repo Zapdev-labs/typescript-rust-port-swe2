@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_special_property_assignment() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"// @allowJs: true
 // @Filename: /a.js
 class C {
@@ -17,9 +17,9 @@ class C {
       this./*read*/x;
     }
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("write".into(), "(property) C.x: any".into(), "Doc".into());
-		f.verify_quick_info_at("read".into(), "(property) C.x: number".into(), "Doc".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("write", "(property) C.x: any", "Doc");
+		f.verify_quick_info_at("read", "(property) C.x: number", "Doc");
 	});
 }
 

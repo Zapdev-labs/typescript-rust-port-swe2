@@ -9,9 +9,9 @@ fn recursive_generics2() {
 	run_test(|t| {
 		let content = r"class S18<B, B, A, B> extends S18<A[], { S19: A; (): A }[]> { }
 /**/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
-		f.insert("(new S18()).S18 = 0;".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
+		f.insert("(new S18()).S18 = 0;");
 	});
 }
 

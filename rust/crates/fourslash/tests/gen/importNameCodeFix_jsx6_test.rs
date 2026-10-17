@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_jsx6() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r#"// @lib: es5
 // @jsx: react
 // @module: esnext
@@ -24,14 +24,14 @@ import * as React from "react";
 export class Text extends React.Component {};
 // @Filename: /a.tsx
 <[|Text|]></Text>;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/a.tsx".into());
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add import from \"react-native\"", new_file_content: r#"import { Text } from "react-native";
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("/a.tsx");
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add import from \"react-native\"".to_string().into(), new_file_content: r#"import { Text } from "react-native";
 
-<Text></Text>;"#, index: 0, ..Default::default() });
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Import 'React' from \"react\"", new_file_content: r#"import React from "react";
+<Text></Text>;"#.to_string().into(), index: 0, ..Default::default() });
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Import 'React' from \"react\"".to_string().into(), new_file_content: r#"import React from "react";
 
-<Text></Text>;"#, index: 1, ..Default::default() });
+<Text></Text>;"#.to_string().into(), index: 1, ..Default::default() });
 	});
 }
 

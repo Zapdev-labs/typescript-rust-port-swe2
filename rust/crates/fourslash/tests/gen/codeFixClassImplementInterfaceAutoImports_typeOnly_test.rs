@@ -28,9 +28,9 @@ export interface Base {
 import type { Base } from './interface';
 
 export class C implements Base {[| |]}";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("index.ts".into());
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'Base'", new_file_content: r"import type { Base } from './interface';
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("index.ts");
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'Base'".to_string().into(), new_file_content: r"import type { Base } from './interface';
 import type A from './types1';
 import type { B, C, D } from './types2';
 
@@ -39,7 +39,7 @@ export class C implements Base {
     b<T extends B = B>(p1: C): D<C> {
         throw new Error('Method not implemented.');
     }
-}", index: 0, ..Default::default() });
+}".to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

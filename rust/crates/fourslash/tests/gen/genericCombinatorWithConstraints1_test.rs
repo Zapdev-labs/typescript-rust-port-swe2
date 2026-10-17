@@ -7,14 +7,14 @@ use tsc_fourslash::*;
 #[test]
 fn generic_combinator_with_constraints1() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"function apply<T, U extends Date>(source: T[], selector: (x: T) => U) {
     var /*1*/xs = source.map(selector); // any[]
     var /*2*/xs2 = source.map((x: T, a, b): U => { return null }); // any[] 
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1".into(), "(local var) xs: U[]".into(), "".into());
-		f.verify_quick_info_at("2".into(), "(local var) xs2: U[]".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("1", "(local var) xs: U[]", "");
+		f.verify_quick_info_at("2", "(local var) xs2: U[]", "");
 	});
 }
 

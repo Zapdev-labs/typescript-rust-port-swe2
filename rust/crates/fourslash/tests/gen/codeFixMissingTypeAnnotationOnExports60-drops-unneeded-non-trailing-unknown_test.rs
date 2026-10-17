@@ -13,11 +13,11 @@ fn code_fix_missing_type_annotation_on_exports60_drops_unneeded_non_trailing_unk
 export interface Foo<S = string, T = unknown> {}
 export function f(x: Foo<string, unknown>) { return x; }
 ";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add return type 'Foo'", new_file_content: r"
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add return type 'Foo'".to_string().into(), new_file_content: r"
 export interface Foo<S = string, T = unknown> {}
 export function f(x: Foo<string, unknown>): Foo { return x; }
-", index: 0, ..Default::default() });
+".to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

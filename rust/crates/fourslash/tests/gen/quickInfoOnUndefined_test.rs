@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_on_undefined() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"function foo(a: string) {
 }
 foo(/*1*/undefined);
@@ -15,9 +15,9 @@ var x = {
     undefined: 10
 };
 x./*2*/undefined = 30;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1".into(), "var undefined".into(), "".into());
-		f.verify_quick_info_at("2".into(), "(property) undefined: number".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("1", "var undefined", "");
+		f.verify_quick_info_at("2", "(property) undefined: number", "");
 	});
 }
 

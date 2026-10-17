@@ -17,27 +17,27 @@ export let o = {
         ...c
     ]
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Mark array literal as const", new_file_content: r"let c: string[] = [];
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Mark array literal as const".to_string().into(), new_file_content: r"let c: string[] = [];
 export let o = {
     p: [
         ...c
     ] as const
-}", index: 2, apply_changes: true, ..Default::default() });
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Extract to variable and replace with 'newLocal as typeof newLocal'", new_file_content: r"let c: string[] = [];
+}".to_string().into(), index: 2, apply_changes: true.into(), ..Default::default() });
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Extract to variable and replace with 'newLocal as typeof newLocal'".to_string().into(), new_file_content: r"let c: string[] = [];
 const newLocal = [
     ...c
 ] as const;
 export let o = {
     p: newLocal as typeof newLocal
-}", index: 1, apply_changes: true, ..Default::default() });
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add annotation of type 'readonly string[]'", new_file_content: r"let c: string[] = [];
+}".to_string().into(), index: 1, apply_changes: true.into(), ..Default::default() });
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add annotation of type 'readonly string[]'".to_string().into(), new_file_content: r"let c: string[] = [];
 const newLocal: readonly string[] = [
     ...c
 ] as const;
 export let o = {
     p: newLocal as typeof newLocal
-}", index: 0, apply_changes: true, ..Default::default() });
+}".to_string().into(), index: 0, apply_changes: true.into(), ..Default::default() });
 	});
 }
 

@@ -31,9 +31,9 @@ fn auto_import_provider_imports_map5() {
 export const isBrowser = true;
 // @Filename: /home/src/workspaces/project/src/a.ts
 isBrowser/**/"##;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.verify_import_fix_module_specifiers("".into(), &["#is-browser"], None);
+		f.verify_import_fix_module_specifiers("", &["#is-browser".into()], None);
 	});
 }
 

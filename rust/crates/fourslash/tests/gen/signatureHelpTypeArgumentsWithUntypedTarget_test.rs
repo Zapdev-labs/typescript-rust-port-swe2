@@ -10,10 +10,10 @@ fn signature_help_on_type_arguments_with_unresolved_target() {
 		let content = r"
 /*1*/un/*2*/resolvedVal/*3*/</*4*/Un/*5*/resolvedType/*6*/>/*7*/(/*8*/un/*9*/resolvedVal/*10*/);
 ";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 |marker, index| {
 			f.verify_no_signature_help();
-		}		f.go_to_each_marker(None, );
+		}		f.go_to_each_marker(&[], );
 	});
 }
 

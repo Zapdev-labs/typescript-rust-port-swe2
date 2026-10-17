@@ -11,8 +11,8 @@ fn go_to_implementation_no_crash_triple_slash_ref() {
 export declare function foo(): void;
 // @Filename: /main.d.ts
 /// <reference types="/*m*/mymod" />"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_implementation("m".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_implementation(&["m".into()]);
 	});
 }
 

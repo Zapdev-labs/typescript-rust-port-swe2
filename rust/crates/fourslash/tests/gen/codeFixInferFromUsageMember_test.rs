@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_infer_from_usage_member() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"// @noImplicitAny: true
 class C {
     [|p;|]
@@ -15,8 +15,8 @@ class C {
         this.p.push(10);
     }
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_range_after_code_fix(r"p: number[];".into(), false, 0, 0);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_range_after_code_fix(r"p: number[];", false, 0, 0);
 	});
 }
 

@@ -12,8 +12,8 @@ export interface Interface { P: number }
 // @Filename: ref.ts
 import { Interface } from "./def";
 const c: I/*ref*/nterface = [|{ P: 2 }|];"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_implementation("ref".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_implementation(&["ref".into()]);
 	});
 }
 

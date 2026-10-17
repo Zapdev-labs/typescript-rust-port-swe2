@@ -11,8 +11,8 @@ fn go_to_definition_index_signature2() {
 // @Filename: /a.js
 const o = {};
 o.[|/*use*/foo|];";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "use".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_definition(true, &["use".into()]);
 	});
 }
 

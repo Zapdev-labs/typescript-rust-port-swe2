@@ -13,7 +13,7 @@ fn code_fix_negative_replace_qualified_name_with_indexed_access_type01() {
     }
 }
 const x: [|Container.Foo.bar|] = """#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_code_fix_not_available();
 	});
 }

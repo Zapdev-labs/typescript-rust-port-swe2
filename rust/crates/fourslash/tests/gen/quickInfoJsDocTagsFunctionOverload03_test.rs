@@ -15,7 +15,7 @@ declare function /*1*/foo(): void;
  * @tag Tag text
  */
 declare function /*2*/foo(x: number): void";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_hover();
 	});
 }

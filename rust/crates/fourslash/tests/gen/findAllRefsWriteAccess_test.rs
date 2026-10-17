@@ -7,12 +7,12 @@ use tsc_fourslash::*;
 #[test]
 fn find_all_refs_write_access() {
 	run_test(|t| {
-		let content = r"interface Obj {
-    [" + "`" + r"/*1*/num" + "`" + r"]: number;
+		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"interface Obj {
+    [", "`"), r"/*1*/num"), "`"), r"]: number;
 }
 
 let o: Obj = {
-    [" + "`" + r"num" + "`" + r"]: 0
+    ["), "`"), r"num"), "`"), r"]: 0
 };
 
 o = {
@@ -20,12 +20,12 @@ o = {
 };
 
 o['num'] = 2;
-o[" + "`" + r"num" + "`" + r"] = 3;
+o["), "`"), r"num"), "`"), r"] = 3;
 
 o['num'];
-o[" + "`" + r"num" + "`" + r"];";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1".into());
+o["), "`"), r"num"), "`"), r"];");
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["1".into()]);
 	});
 }
 

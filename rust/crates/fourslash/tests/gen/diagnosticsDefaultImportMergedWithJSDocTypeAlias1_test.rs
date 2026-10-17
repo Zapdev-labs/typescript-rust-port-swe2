@@ -38,8 +38,8 @@ const createStatsCollector = (runner) => runner && Runner;
 
 export { createStatsCollector };
 "#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/lib/stats-collector.mjs".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("/lib/stats-collector.mjs");
 		f.verify_number_of_errors_in_current_file(2);
 	});
 }

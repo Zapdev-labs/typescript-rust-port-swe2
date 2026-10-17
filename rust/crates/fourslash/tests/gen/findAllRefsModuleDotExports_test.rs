@@ -12,8 +12,8 @@ fn find_all_refs_module_dot_exports() {
 /*1*/const b = require("/*2*/./b");
 // @Filename: /b.js
 /*3*/module.exports = 0;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1".into(), "2".into(), "3".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
 	});
 }
 

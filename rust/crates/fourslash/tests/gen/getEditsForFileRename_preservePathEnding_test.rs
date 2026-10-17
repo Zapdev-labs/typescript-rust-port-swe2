@@ -24,14 +24,14 @@ import { x as x1 } from "./index";
 import { x as x2 } from "./index.js";
 import { y } from "./jsx.jsx";
 import { j } from "./j.jonah.json";"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_no_errors();
-		f.verify_will_rename_files_edits("/a.js".into(), "/b.js".into(), vec![].into_iter().collect::<FxHashMap<_, _>>(), None);
-		f.verify_will_rename_files_edits("/b.js".into(), "/src/b.js".into(), vec![("/src/b.js", r#"import { x as x0 } from "..";
+		f.verify_will_rename_files_edits("/a.js", "/b.js", &std::collections::BTreeMap::from([]), None);
+		f.verify_will_rename_files_edits("/b.js", "/src/b.js", &std::collections::BTreeMap::from([("/src/b.js".to_string().into(), r#"import { x as x0 } from "..";
 import { x as x1 } from "../index";
 import { x as x2 } from "../index.js";
 import { y } from "../jsx.jsx";
-import { j } from "../j.jonah.json";"#)].into_iter().collect::<FxHashMap<_, _>>(), None);
+import { j } from "../j.jonah.json";"#.to_string().into())]), None);
 	});
 }
 

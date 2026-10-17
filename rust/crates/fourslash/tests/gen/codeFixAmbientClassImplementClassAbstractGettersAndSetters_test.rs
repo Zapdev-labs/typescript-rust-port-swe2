@@ -17,8 +17,8 @@ fn code_fix_ambient_class_implement_class_abstract_getters_and_setters() {
 }
 
 declare class C implements A {}";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'A'", new_file_content: r"abstract class A {
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'A'".to_string().into(), new_file_content: r"abstract class A {
     abstract get a(): string;
     abstract set a(newName: string);
 
@@ -32,7 +32,7 @@ declare class C implements A {
     set a(newName: string);
     get b(): number;
     set c(arg: string | number);
-}", index: 0, ..Default::default() });
+}".to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

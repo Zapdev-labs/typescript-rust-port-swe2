@@ -8,16 +8,16 @@ use tsc_fourslash::*;
 fn tsx_incremental() {
 	run_test(|t| {
 		let content = r"/**/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
-		f.insert("<".into());
-		f.insert("div".into());
-		f.insert(" ".into());
-		f.insert(" id".into());
-		f.insert("=".into());
-		f.insert("\"foo".into());
-		f.insert("\"".into());
-		f.insert(">".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
+		f.insert("<");
+		f.insert("div");
+		f.insert(" ");
+		f.insert(" id");
+		f.insert("=");
+		f.insert("\"foo");
+		f.insert("\"");
+		f.insert(">");
 	});
 }
 

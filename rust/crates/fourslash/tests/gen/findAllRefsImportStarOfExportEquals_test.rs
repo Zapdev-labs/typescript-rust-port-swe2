@@ -22,12 +22,12 @@ fn find_all_refs_import_star_of_export_equals() {
 [|import /*c0*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 10 |}a|] from "a";|]
 /*c1*/[|a|]();
 /*c2*/[|a|].x;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_no_errors();
-		f.verify_baseline_find_all_references("a0".into(), "a1".into(), "a2".into(), "b0".into(), "b1".into(), "c0".into(), "c1".into(), "c2".into());
-		f.verify_baseline_rename(None, f.ranges()[1], f.ranges()[3], f.ranges()[5]);
-		f.verify_baseline_rename(None, f.ranges()[7], f.ranges()[8], f.ranges()[9]);
-		f.verify_baseline_rename(None, f.ranges()[11], f.ranges()[12], f.ranges()[13]);
+		f.verify_baseline_find_all_references(&["a0".into(), "a1".into(), "a2".into(), "b0".into(), "b1".into(), "c0".into(), "c1".into(), "c2".into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[1].into(), f.ranges()[3].into(), f.ranges()[5].into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[7].into(), f.ranges()[8].into(), f.ranges()[9].into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[11].into(), f.ranges()[12].into(), f.ranges()[13].into()]);
 	});
 }
 

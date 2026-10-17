@@ -16,12 +16,12 @@ export const Named2 = 1;
 // @Filename: index.js
 Named1 + Named2;
 new Blah;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("index.js".into());
-		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport", new_file_content: r#"const { default: Blah, Named1, Named2 } = require("./blah");
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("index.js");
+		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport".to_string().into(), new_file_content: r#"const { default: Blah, Named1, Named2 } = require("./blah");
 
 Named1 + Named2;
-new Blah;"#, ..Default::default() });
+new Blah;"#.to_string().into(), ..Default::default() });
 	});
 }
 

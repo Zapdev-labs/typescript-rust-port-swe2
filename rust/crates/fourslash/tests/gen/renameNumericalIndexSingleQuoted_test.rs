@@ -9,8 +9,8 @@ fn rename_numerical_index_single_quoted() {
 	run_test(|t| {
 		let content = r"const foo = { [|0|]: true };
 foo[[|0|]];";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_rename_at_ranges_with_text(&tsc_lsutil::UserPreferences { quote_preference: tsc_lsutil::quote_preference("single".into()), ..Default::default() }, "0".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_rename_at_ranges_with_text(Some(&tsc_lsutil::UserPreferences { quote_preference: tsc_lsutil::quote_preference("single").into(), ..Default::default() }), &["0".into()]);
 	});
 }
 

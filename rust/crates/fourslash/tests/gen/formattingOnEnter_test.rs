@@ -10,13 +10,13 @@ fn formatting_on_enter() {
 		let content = r"class foo { }
 class bar {/**/ }
 // new line here";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
-		f.insert_line("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
+		f.insert_line("");
 		f.verify_current_file_content(r"class foo { }
 class bar {
 }
-// new line here".into());
+// new line here");
 	});
 }
 

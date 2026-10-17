@@ -20,10 +20,10 @@ exports.f1 = f1;
   "main": "bin/lib/index.js",
   "types": "bin/lib/index.d.ts"
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_import_fix_at_position(&[r#"import { f1 } from "@scope/package-name";
 
-f1('');"#], None);
+f1('');"#.into()], None);
 	});
 }
 

@@ -10,13 +10,13 @@ fn format_on_enter_in_comment() {
 		let content = r"   /**
     * /*1*/
     */";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1".into());
-		f.insert_line("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("1");
+		f.insert_line("");
 		f.verify_current_file_content(r"  /**
    * 
 
-   */".into());
+   */");
 	});
 }
 

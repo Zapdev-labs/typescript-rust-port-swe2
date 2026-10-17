@@ -10,17 +10,17 @@ fn formatting_space_between_parent() {
 		let content = r"/*1*/foo(() => 1);
 /*2*/foo(1);
 /*3*/if((true)){}";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		let mut opts180 = f.get_options();
 		opts180.format_code_settings.insert_space_after_opening_and_before_closing_nonempty_parenthesis = tsc_core::tristate::TS_TRUE;
 		f.configure(opts180);
-		f.format_document("".into());
-		f.go_to_marker("1".into());
-		f.verify_current_line_content(r"foo( () => 1 );".into());
-		f.go_to_marker("2".into());
-		f.verify_current_line_content(r"foo( 1 );".into());
-		f.go_to_marker("3".into());
-		f.verify_current_line_content(r"if ( ( true ) ) { }".into());
+		f.format_document("");
+		f.go_to_marker("1");
+		f.verify_current_line_content(r"foo( () => 1 );");
+		f.go_to_marker("2");
+		f.verify_current_line_content(r"foo( 1 );");
+		f.go_to_marker("3");
+		f.verify_current_line_content(r"if ( ( true ) ) { }");
 	});
 }
 

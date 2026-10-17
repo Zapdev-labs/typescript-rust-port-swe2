@@ -21,10 +21,10 @@ fn ng_proxy2() {
 let x = [1, 2];
 x/**/
 "#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_marker("".into());
-		f.verify_quick_info_is("let x: number[]".into(), "".into());
+		f.go_to_marker("");
+		f.verify_quick_info_is("let x: number[]", "");
 	});
 }
 

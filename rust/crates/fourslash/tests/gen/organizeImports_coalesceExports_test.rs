@@ -9,9 +9,9 @@ fn organize_imports_coalesce_exports_sort_specifiers_case_insensitive() {
 	run_test(|t| {
 		let content = r#"export { default as M, a as n, B, y, Z as O } from "lib";
 void 0;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_organize_imports(r#"export { B, default as M, a as n, Z as O, y } from "lib";
-void 0;"#.into(), tsc_lsproto::CodeActionKind::SOURCE_SORT_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE, ..Default::default() });
+void 0;"#, tsc_lsproto::CodeActionKind::SourceSortImportsTs, Some(&tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE.into(), ..Default::default() }));
 	});
 }
 
@@ -21,9 +21,9 @@ fn organize_imports_coalesce_exports_combine_namespace_re_exports() {
 		let content = r#"export * from "lib";
 export * from "lib";
 void 0;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_organize_imports(r#"export * from "lib";
-void 0;"#.into(), tsc_lsproto::CodeActionKind::SOURCE_SORT_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE, ..Default::default() });
+void 0;"#, tsc_lsproto::CodeActionKind::SourceSortImportsTs, Some(&tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE.into(), ..Default::default() }));
 	});
 }
 
@@ -34,10 +34,10 @@ fn organize_imports_coalesce_exports_combine_property_exports() {
 export { x };
 export { z as y };
 void 0;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_organize_imports(r"const x = 1, z = 2;
 export { x, z as y };
-void 0;".into(), tsc_lsproto::CodeActionKind::SOURCE_SORT_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE, ..Default::default() });
+void 0;", tsc_lsproto::CodeActionKind::SourceSortImportsTs, Some(&tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE.into(), ..Default::default() }));
 	});
 }
 
@@ -47,9 +47,9 @@ fn organize_imports_coalesce_exports_combine_property_re_exports() {
 		let content = r#"export { x } from "lib";
 export { y as z } from "lib";
 void 0;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_organize_imports(r#"export { x, y as z } from "lib";
-void 0;"#.into(), tsc_lsproto::CodeActionKind::SOURCE_SORT_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE, ..Default::default() });
+void 0;"#, tsc_lsproto::CodeActionKind::SourceSortImportsTs, Some(&tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE.into(), ..Default::default() }));
 	});
 }
 
@@ -60,11 +60,11 @@ fn organize_imports_coalesce_exports_namespace_with_property_re_export() {
 export { y } from "lib";
 export { z } from "aaa";
 void 0;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_organize_imports(r#"export { z } from "aaa";
 export * from "lib";
 export { y } from "lib";
-void 0;"#.into(), tsc_lsproto::CodeActionKind::SOURCE_SORT_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE, ..Default::default() });
+void 0;"#, tsc_lsproto::CodeActionKind::SourceSortImportsTs, Some(&tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE.into(), ..Default::default() }));
 	});
 }
 
@@ -76,10 +76,10 @@ export { x };
 export { w as y, z as default };
 export { q as w };
 void 0;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_organize_imports(r"const x = 1, w = 2, z = 3, q = 4;
 export { z as default, q as w, x, w as y };
-void 0;".into(), tsc_lsproto::CodeActionKind::SOURCE_SORT_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE, ..Default::default() });
+void 0;", tsc_lsproto::CodeActionKind::SourceSortImportsTs, Some(&tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE.into(), ..Default::default() }));
 	});
 }
 
@@ -90,10 +90,10 @@ fn organize_imports_coalesce_exports_combine_many_re_exports() {
 export * from "lib";
 export { z as b } from "lib";
 void 0;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_organize_imports(r#"export * from "lib";
 export { x as a, z as b, y } from "lib";
-void 0;"#.into(), tsc_lsproto::CodeActionKind::SOURCE_SORT_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE, ..Default::default() });
+void 0;"#, tsc_lsproto::CodeActionKind::SourceSortImportsTs, Some(&tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE.into(), ..Default::default() }));
 	});
 }
 
@@ -106,13 +106,13 @@ export { x };
 export type { y };
 export { z } from "aaa";
 void 0;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_organize_imports(r#"const x = 1;
 type y = string;
 export { z } from "aaa";
 export { x };
 export type { y };
-void 0;"#.into(), tsc_lsproto::CodeActionKind::SOURCE_SORT_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE, ..Default::default() });
+void 0;"#, tsc_lsproto::CodeActionKind::SourceSortImportsTs, Some(&tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE.into(), ..Default::default() }));
 	});
 }
 
@@ -124,11 +124,11 @@ type y = number;
 export type { x };
 export type { y };
 void 0;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_organize_imports(r"type x = string;
 type y = number;
 export type { x, y };
-void 0;".into(), tsc_lsproto::CodeActionKind::SOURCE_SORT_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE, ..Default::default() });
+void 0;", tsc_lsproto::CodeActionKind::SourceSortImportsTs, Some(&tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE.into(), ..Default::default() }));
 	});
 }
 

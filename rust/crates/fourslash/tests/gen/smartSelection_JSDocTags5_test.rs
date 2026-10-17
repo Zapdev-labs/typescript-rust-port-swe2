@@ -16,7 +16,7 @@ fn smart_selection_js_doc_tags5() {
 
 /** @type {Foo} */
 const foo = s => !(s.length % 2);";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_selection_ranges();
 	});
 }

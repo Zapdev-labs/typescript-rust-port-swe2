@@ -11,13 +11,13 @@ fn formatting_in_comment() {
 foo(              ); // /*1*/
 }
 function foo() {       var x;       } // /*2*/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1".into());
-		f.insert(";".into());
-		f.verify_current_line_content(r"foo(              ); // ;".into());
-		f.go_to_marker("2".into());
-		f.insert("}".into());
-		f.verify_current_line_content(r"function foo() {       var x;       } // }".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("1");
+		f.insert(";");
+		f.verify_current_line_content(r"foo(              ); // ;");
+		f.go_to_marker("2");
+		f.insert("}");
+		f.verify_current_line_content(r"function foo() {       var x;       } // }");
 	});
 }
 

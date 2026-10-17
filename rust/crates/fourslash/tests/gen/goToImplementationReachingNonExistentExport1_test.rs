@@ -18,8 +18,8 @@ const methods = { github: {
     transformData: /*impl*/transformGitHub,
 }};
 ";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_implementation("impl".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_implementation(&["impl".into()]);
 	});
 }
 

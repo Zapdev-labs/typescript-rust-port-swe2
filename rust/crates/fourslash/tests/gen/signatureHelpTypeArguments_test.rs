@@ -23,19 +23,19 @@ declare const C: {
 new C</*C0*/;
 new C<number, /*C1*/;
 new C<number, string, /*C2*/;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("f0".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f<T extends number>(): void", parameter_name: "T", parameter_span: "T extends number", overloads_count: 3, ..Default::default() });
-		f.go_to_marker("f1".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f<T, U>(): void", parameter_name: "U", parameter_span: "U", overloads_count: 2, ..Default::default() });
-		f.go_to_marker("f2".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f<T, U, V extends string>(): void", parameter_name: "V", parameter_span: "V extends string", ..Default::default() });
-		f.go_to_marker("C0".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "C<T extends number>(): void", parameter_name: "T", parameter_span: "T extends number", overloads_count: 3, ..Default::default() });
-		f.go_to_marker("C1".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "C<T, U>(): void", parameter_name: "U", parameter_span: "U", overloads_count: 2, ..Default::default() });
-		f.go_to_marker("C2".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "C<T, U, V extends string>(): void", parameter_name: "V", parameter_span: "V extends string", ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("f0");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f<T extends number>(): void".to_string().into(), parameter_name: "T".to_string().into(), parameter_span: "T extends number".to_string().into(), overloads_count: 3, ..Default::default() });
+		f.go_to_marker("f1");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f<T, U>(): void".to_string().into(), parameter_name: "U".to_string().into(), parameter_span: "U".to_string().into(), overloads_count: 2, ..Default::default() });
+		f.go_to_marker("f2");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f<T, U, V extends string>(): void".to_string().into(), parameter_name: "V".to_string().into(), parameter_span: "V extends string".to_string().into(), ..Default::default() });
+		f.go_to_marker("C0");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "C<T extends number>(): void".to_string().into(), parameter_name: "T".to_string().into(), parameter_span: "T extends number".to_string().into(), overloads_count: 3, ..Default::default() });
+		f.go_to_marker("C1");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "C<T, U>(): void".to_string().into(), parameter_name: "U".to_string().into(), parameter_span: "U".to_string().into(), overloads_count: 2, ..Default::default() });
+		f.go_to_marker("C2");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "C<T, U, V extends string>(): void".to_string().into(), parameter_name: "V".to_string().into(), parameter_span: "V extends string".to_string().into(), ..Default::default() });
 	});
 }
 

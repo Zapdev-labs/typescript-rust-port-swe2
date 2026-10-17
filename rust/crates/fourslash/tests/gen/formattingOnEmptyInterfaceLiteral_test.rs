@@ -17,20 +17,20 @@ fn formatting_on_empty_interface_literal() {
 /*4*/                x   :    {     }   ;
 /*5*/       y  :       (         )    =>    {     }   ;
 /*6*/                                                    }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
-		f.go_to_marker("1".into());
-		f.verify_current_line_content(r"function foo(x: {}) { }".into());
-		f.go_to_marker("2".into());
-		f.verify_current_line_content(r"foo({});".into());
-		f.go_to_marker("3".into());
-		f.verify_current_line_content(r"interface bar {".into());
-		f.go_to_marker("4".into());
-		f.verify_current_line_content(r"    x: {};".into());
-		f.go_to_marker("5".into());
-		f.verify_current_line_content(r"    y: () => {};".into());
-		f.go_to_marker("6".into());
-		f.verify_current_line_content(r"}".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
+		f.go_to_marker("1");
+		f.verify_current_line_content(r"function foo(x: {}) { }");
+		f.go_to_marker("2");
+		f.verify_current_line_content(r"foo({});");
+		f.go_to_marker("3");
+		f.verify_current_line_content(r"interface bar {");
+		f.go_to_marker("4");
+		f.verify_current_line_content(r"    x: {};");
+		f.go_to_marker("5");
+		f.verify_current_line_content(r"    y: () => {};");
+		f.go_to_marker("6");
+		f.verify_current_line_content(r"}");
 	});
 }
 

@@ -49,17 +49,17 @@ declare const callableThing5:
 
 callableThing5(/*5*/1)
 ";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "callableThing1(o1: { x: number; } & { y: number; }): void", ..Default::default() });
-		f.go_to_marker("2".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "callableThing2(arg0: { x: number; } & { y: number; }): void", ..Default::default() });
-		f.go_to_marker("3".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "callableThing3(arg0: { x: number; } & { y: number; } & { z: number; } & { u: number; } & { v: number; }): void", ..Default::default() });
-		f.go_to_marker("4".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "callableThing4(arg0: { x: number; } & { y: number; } & { z: number; } & { u: number; } & { v: number; } & { w: number; }): void", ..Default::default() });
-		f.go_to_marker("5".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "callableThing5(a1: number): void", ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("1");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "callableThing1(o1: { x: number; } & { y: number; }): void".to_string().into(), ..Default::default() });
+		f.go_to_marker("2");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "callableThing2(arg0: { x: number; } & { y: number; }): void".to_string().into(), ..Default::default() });
+		f.go_to_marker("3");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "callableThing3(arg0: { x: number; } & { y: number; } & { z: number; } & { u: number; } & { v: number; }): void".to_string().into(), ..Default::default() });
+		f.go_to_marker("4");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "callableThing4(arg0: { x: number; } & { y: number; } & { z: number; } & { u: number; } & { v: number; } & { w: number; }): void".to_string().into(), ..Default::default() });
+		f.go_to_marker("5");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "callableThing5(a1: number): void".to_string().into(), ..Default::default() });
 	});
 }
 

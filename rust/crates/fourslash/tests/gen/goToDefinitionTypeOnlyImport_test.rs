@@ -15,8 +15,8 @@ export type { SyntaxKind }
 // @Filename: /c.ts
 import type { SyntaxKind } from './b';
 let kind: [|/*2*/SyntaxKind|];";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "2".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_definition(true, &["2".into()]);
 	});
 }
 

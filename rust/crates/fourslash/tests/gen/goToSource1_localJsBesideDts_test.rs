@@ -15,9 +15,9 @@ export declare const a: string;
 // @Filename: /home/src/workspaces/project/index.ts
 import { a } from [|"./a"/*moduleSpecifier*/|];
 [|a/*identifier*/|]"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.verify_baseline_go_to_source_definition("identifier".into(), "moduleSpecifier".into());
+		f.verify_baseline_go_to_source_definition(&["identifier".into(), "moduleSpecifier".into()]);
 	});
 }
 

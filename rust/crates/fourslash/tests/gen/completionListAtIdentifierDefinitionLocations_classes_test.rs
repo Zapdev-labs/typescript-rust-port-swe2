@@ -10,8 +10,8 @@ fn completion_list_at_identifier_definition_locations_classes() {
 		let content = r"var aa = 1;
 class /*className1*/
 class a/*className2*/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions(f.markers(), None);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions(f.markers().into(), None);
 	});
 }
 

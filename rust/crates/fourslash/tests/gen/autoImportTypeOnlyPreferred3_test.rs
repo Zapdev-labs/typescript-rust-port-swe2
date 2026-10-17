@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_type_only_preferred3() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r#"// @module: esnext
 // @moduleResolution: bundler
 // @Filename: /a.ts
@@ -26,24 +26,24 @@ let x: B;
 export * as default from "./a";
 // @Filename: /e.ts
 let x: /*e*/ns.A;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("b".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("b");
 		f.verify_import_fix_at_position(&[r#"import type { A } from "./a";
 
-let x: A;"#], &tsc_lsutil::UserPreferences { prefer_type_only_auto_imports: tsc_core::tristate::TS_TRUE, ..Default::default() });
-		f.go_to_marker("c".into());
+let x: A;"#.into()], Some(&tsc_lsutil::UserPreferences { prefer_type_only_auto_imports: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }));
+		f.go_to_marker("c");
 		f.verify_import_fix_at_position(&[r#"import { A, type B } from "./a";
 new A();
-let x: B;"#], &tsc_lsutil::UserPreferences { prefer_type_only_auto_imports: tsc_core::tristate::TS_TRUE, ..Default::default() });
-		f.go_to_file("/d.ts".into());
-		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport", new_file_content: r#"import { A, type B } from "./a";
+let x: B;"#.into()], Some(&tsc_lsutil::UserPreferences { prefer_type_only_auto_imports: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }));
+		f.go_to_file("/d.ts");
+		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport".to_string().into(), new_file_content: r#"import { A, type B } from "./a";
 
 new A();
-let x: B;"#, ..Default::default() });
-		f.go_to_marker("e".into());
+let x: B;"#.to_string().into(), ..Default::default() });
+		f.go_to_marker("e");
 		f.verify_import_fix_at_position(&[r#"import type ns from "./ns";
 
-let x: ns.A;"#], &tsc_lsutil::UserPreferences { prefer_type_only_auto_imports: tsc_core::tristate::TS_TRUE, ..Default::default() });
+let x: ns.A;"#.into()], Some(&tsc_lsutil::UserPreferences { prefer_type_only_auto_imports: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }));
 	});
 }
 

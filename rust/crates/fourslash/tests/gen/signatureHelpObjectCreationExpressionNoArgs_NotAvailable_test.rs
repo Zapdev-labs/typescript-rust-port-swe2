@@ -9,8 +9,8 @@ fn signature_help_object_creation_expression_no_args_not_available() {
 	run_test(|t| {
 		let content = r"class sampleCls { constructor(str: string, num: number) { } }
 var x = new sampleCls/**/;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_no_signature_help_for_markers("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_no_signature_help_for_markers(&["".into()]);
 	});
 }
 

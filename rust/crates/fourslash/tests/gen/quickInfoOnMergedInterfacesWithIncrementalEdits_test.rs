@@ -19,18 +19,18 @@ namespace MM {
     var r3 = b.foo; // number
     var r/*2*/4 = b.b/*1*/ar; // string
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1".into());
-		f.verify_quick_info_is("(property) B<string>.bar: string".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("1");
+		f.verify_quick_info_is("(property) B<string>.bar: string", "");
 		f.delete_at_caret(1);
-		f.insert("z".into());
-		f.verify_quick_info_is("any".into(), "".into());
+		f.insert("z");
+		f.verify_quick_info_is("any", "");
 		f.verify_number_of_errors_in_current_file(1);
 		f.backspace(1);
-		f.insert("a".into());
-		f.verify_quick_info_is("(property) B<string>.bar: string".into(), "".into());
-		f.go_to_marker("2".into());
-		f.verify_quick_info_is("var r4: string".into(), "".into());
+		f.insert("a");
+		f.verify_quick_info_is("(property) B<string>.bar: string", "");
+		f.go_to_marker("2");
+		f.verify_quick_info_is("var r4: string", "");
 		f.verify_no_errors();
 	});
 }

@@ -18,8 +18,8 @@ export { bar as foo };
 // @Filename: b.ts
 foo/**/
 ";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.baseline_auto_imports_completions(&[""]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.baseline_auto_imports_completions(&["".into()]);
 	});
 }
 

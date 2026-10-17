@@ -26,8 +26,8 @@ export const [|myValueA|]: number = 1;
 // @Filename: /home/src/projects/project-b/index.ts
 export const [|myValueB|]: string = "hello";
 "#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "myValue".into(), includes: Some((vec![tsc_lsproto::SymbolInformation { name: "myValueA".into(), kind: tsc_lsproto::SYMBOL_KIND_VARIABLE, location: f.ranges()[0].ls_location(), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "myValueB".into(), kind: tsc_lsproto::SYMBOL_KIND_VARIABLE, location: f.ranges()[1].ls_location(), ..Default::default() }]).into()), ..Default::default() }]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "myValue".to_string().into(), includes: Some((vec![tsc_lsproto::SymbolInformation { name: "myValueA".to_string().into(), kind: tsc_lsproto::SYMBOL_KIND_VARIABLE.into(), location: f.ranges()[0].ls_location().into(), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "myValueB".to_string().into(), kind: tsc_lsproto::SYMBOL_KIND_VARIABLE.into(), location: f.ranges()[1].ls_location().into(), ..Default::default() }]).into()), ..Default::default() }]);
 	});
 }
 

@@ -7,15 +7,15 @@ use tsc_fourslash::*;
 #[test]
 fn contextual_typing_of_generic_call_signatures2() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"interface I {
     <T>(x: T): void
 }
 function f6(x: <T extends I>(p: T) => void) { }
 // x should not be contextually typed so this should be an error
 f6(/**/x => x<number>())";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("".into(), "(parameter) x: T extends I".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("", "(parameter) x: T extends I", "");
 		f.verify_number_of_errors_in_current_file(1);
 	});
 }

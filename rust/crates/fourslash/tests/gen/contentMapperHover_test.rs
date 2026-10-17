@@ -25,12 +25,12 @@ export const heading = for/*outgoing*/mat(title);
 // @Filename: /main.ts
 import { title } from "./ProfileCard.vue";
 export const pageTitle = ti/*incoming*/tle;
-"#.into(), contentmappertest.component_mapper, ".vue".into());
-		f.verify_quick_info_at("scriptTitle".into(), "const title: string".into(), "".into());
-		f.verify_quick_info_at("templateTitle".into(), "const title: string".into(), "".into());
-		f.verify_quick_info_at("outgoing".into(), "(alias) function format(value: string): string".into(), "".into());
-		f.verify_quick_info_at("incoming".into(), "(alias) const title: string".into(), "".into());
-		f.go_to_marker("markup".into());
+"#, tsc_testutil::contentmappertest::COMPONENT_MAPPER, ".vue");
+		f.verify_quick_info_at("scriptTitle", "const title: string", "");
+		f.verify_quick_info_at("templateTitle", "const title: string", "");
+		f.verify_quick_info_at("outgoing", "(alias) function format(value: string): string", "");
+		f.verify_quick_info_at("incoming", "(alias) const title: string", "");
+		f.go_to_marker("markup");
 		f.verify_not_quick_info_exists();
 	});
 }
@@ -42,8 +42,8 @@ fn content_mapper_supplemental_hover_js_doc_link() {
 const target = 1;
 /** See {@link target}. */
 const val/*hover*/ue = target;
-".into(), contentmappertest.supplemental_mapper, ".astro".into());
-		f.verify_quick_info_at("hover".into(), "const value: 1".into(), "See [target](file:///globals.astro#1,7-1,13).".into());
+", tsc_testutil::contentmappertest::SUPPLEMENTAL_MAPPER, ".astro");
+		f.verify_quick_info_at("hover", "const value: 1", "See [target](file:///globals.astro#1,7-1,13).");
 	});
 }
 
@@ -52,8 +52,8 @@ fn content_mapper_hover_tries_later_projection() {
 	run_test(|t| {
 		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /hover-fallback.dup
 val/*hover*/ue
-".into(), contentmappertest.duplicate_mapper, ".dup".into());
-		f.verify_quick_info_at("hover".into(), "const value: 1".into(), "".into());
+", tsc_testutil::contentmappertest::DUPLICATE_MAPPER, ".dup");
+		f.verify_quick_info_at("hover", "const value: 1", "");
 	});
 }
 
@@ -62,7 +62,7 @@ fn content_mapper_hover_concatenates_projections() {
 	run_test(|t| {
 		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /hover-concat.dup
 val/*hover*/ue
-".into(), contentmappertest.duplicate_mapper, ".dup".into());
+", tsc_testutil::contentmappertest::DUPLICATE_MAPPER, ".dup");
 		f.verify_baseline_hover();
 	});
 }

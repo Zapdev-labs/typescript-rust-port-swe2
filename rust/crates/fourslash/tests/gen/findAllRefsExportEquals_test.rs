@@ -12,8 +12,8 @@ type /*0*/T = number;
 /*1*/export = /*2*/T;
 // @Filename: /b.ts
 import /*3*/T = require("/*4*/./a");"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("0".into(), "1".into(), "2".into(), "3".into(), "4".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["0".into(), "1".into(), "2".into(), "3".into(), "4".into()]);
 	});
 }
 

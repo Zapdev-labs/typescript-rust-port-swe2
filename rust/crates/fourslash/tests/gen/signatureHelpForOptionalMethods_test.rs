@@ -17,9 +17,9 @@ const o: Obj = {
     return {};
   }
 };";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "optionalMethod(current: any): any", parameter_name: "current", parameter_span: "current: any", ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("1");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "optionalMethod(current: any): any".to_string().into(), parameter_name: "current".to_string().into(), parameter_span: "current: any".to_string().into(), ..Default::default() });
 	});
 }
 

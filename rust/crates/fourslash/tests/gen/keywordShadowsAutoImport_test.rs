@@ -15,8 +15,8 @@ export { value as function }
 // @Filename: /index.ts
 function/**/
 ";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { user_preferences: &tsc_lsutil::UserPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE, include_completions_for_import_statements: tsc_core::tristate::TS_TRUE, ..Default::default() }, is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "function", kind: Some((tsc_lsproto::CompletionItemKind::KEYWORD).into()), sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), ..Default::default() }], excludes: vec!["function"], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "function".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Keyword).into()), sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), ..Default::default() }.into()].into(), excludes: vec!["function".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

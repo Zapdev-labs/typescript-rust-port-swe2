@@ -17,8 +17,8 @@ declare module "./bridge" {
 }
 declare const v: Options;
 v.hooks/*1*/;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1".into(), "(property) Options.hooks: {}".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("1", "(property) Options.hooks: {}", "");
 	});
 }
 

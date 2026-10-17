@@ -7,13 +7,13 @@ use tsc_fourslash::*;
 #[test]
 fn document_highlight_multiline_template_strings() {
 	run_test(|t| {
-		let content = r"const foo = " + "`" + r"
+		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"const foo = ", "`"), r"
     a
     [|b|]
     c
-" + "`" + r"";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_document_highlights(None, f.ranges()[0]);
+"), "`"), r"");
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_document_highlights(None, vec![f.ranges()[0].into()]);
 	});
 }
 

@@ -18,15 +18,15 @@ declare module "node:fs" {
 {}
 // @Filename: /home/src/workspaces/project/index.ts
 readFile/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_marker("".into());
+		f.go_to_marker("");
 		f.verify_import_fix_at_position(&[], None);
 		f.go_to_bof();
-		f.insert_line("import { writeFile } from \"node:fs\";".into());
-		f.go_to_marker("".into());
+		f.insert_line("import { writeFile } from \"node:fs\";");
+		f.go_to_marker("");
 		f.verify_import_fix_at_position(&[r#"import { readFile, writeFile } from "node:fs";
-readFile"#], None);
+readFile"#.into()], None);
 	});
 }
 

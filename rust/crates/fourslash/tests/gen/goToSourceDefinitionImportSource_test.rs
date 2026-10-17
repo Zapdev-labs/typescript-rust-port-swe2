@@ -27,9 +27,9 @@ import source /*g*/g from "/*js*/./a.js";
 import source /*h*/h from "/*wasm*/./a.wasm";
 /*hUse*/h;
 import.source("/*dynamic*/./a.js");"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "f".into(), "fUse".into(), "g".into(), "gUse".into(), "h".into(), "hUse".into(), "js".into(), "wasm".into(), "dynamic".into());
-		f.verify_baseline_go_to_source_definition("f".into(), "fUse".into(), "g".into(), "gUse".into(), "h".into(), "hUse".into(), "js".into(), "wasm".into(), "dynamic".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_definition(true, &["f".into(), "fUse".into(), "g".into(), "gUse".into(), "h".into(), "hUse".into(), "js".into(), "wasm".into(), "dynamic".into()]);
+		f.verify_baseline_go_to_source_definition(&["f".into(), "fUse".into(), "g".into(), "gUse".into(), "h".into(), "hUse".into(), "js".into(), "wasm".into(), "dynamic".into()]);
 	});
 }
 

@@ -7,12 +7,12 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_in_named_function_expression1() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"var x = function foo() {
    /*1*/
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("1".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "foo", detail: Some(("(local function) foo(): void").into()), kind: Some((tsc_lsproto::CompletionItemKind::FUNCTION).into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions("1".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "foo".to_string().into(), detail: Some(("(local function) foo(): void").into()), kind: Some((tsc_lsproto::CompletionItemKind::Function).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

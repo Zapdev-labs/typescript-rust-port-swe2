@@ -16,16 +16,16 @@ class Point2D { x = 0; y = 0; }
 export class Point3D2 extends mixin(Point2D) {
     z = 0;
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix_available(&["Extract base class to variable"]);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Extract base class to variable", new_file_content: r"function mixin<T extends new (...a: any) => any>(ctor: T): T {
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_code_fix_available(Some(&["Extract base class to variable".into()]));
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Extract base class to variable".to_string().into(), new_file_content: r"function mixin<T extends new (...a: any) => any>(ctor: T): T {
     return ctor;
 }
 class Point2D { x = 0; y = 0; }
 const Point3D2Base: typeof Point2D = mixin(Point2D);
 export class Point3D2 extends Point3D2Base {
     z = 0;
-}", index: 0, ..Default::default() });
+}".to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

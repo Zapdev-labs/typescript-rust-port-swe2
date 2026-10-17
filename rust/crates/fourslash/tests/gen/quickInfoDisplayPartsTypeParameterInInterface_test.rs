@@ -25,7 +25,7 @@ var /*53*/iVal1: /*54*/I1</*55*/I<string>>;
 new /*56*/iVal1(/*57*/iVal, /*58*/iVal);
 /*59*/iVal1(/*60*/iVal, /*61*/iVal);
 /*62*/iVal1./*63*/method(/*64*/iVal, /*65*/iVal);"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_hover();
 	});
 }

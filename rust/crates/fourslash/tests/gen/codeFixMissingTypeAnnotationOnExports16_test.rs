@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_missing_type_annotation_on_exports16() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r#"// @isolatedDeclarations: true
 // @declaration: true
 function foo() {
@@ -17,8 +17,8 @@ function foo3(): "42" {
     return "42";
 }
 export const { x: a , y: { [foo3()]: {dd: e} } } = foo();"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Extract binding expressions to variable", new_file_content: r#"function foo() {
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Extract binding expressions to variable".to_string().into(), new_file_content: r#"function foo() {
     return { x: 1, y: {42: {dd: "45"}, b: 2} };
 }
 function foo3(): "42" {
@@ -27,7 +27,7 @@ function foo3(): "42" {
 const dest = foo();
 export const a: number = dest.x;
 const _a = foo3();
-export const e: string = (dest.y)[_a].dd;"#, index: 0, ..Default::default() });
+export const e: string = (dest.y)[_a].dd;"#.to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

@@ -17,12 +17,12 @@ declare module "c" {
     [|import { /*3*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 5 |}D|] } from "b";|]
     export function f(c: [|D|]): void;
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_no_errors();
-		f.verify_baseline_find_all_references("1".into(), "2".into(), "3".into());
-		f.verify_baseline_rename(None, to_any(f.get_ranges_by_text().get("C".into())));
-		f.verify_baseline_rename(None, f.get_ranges_by_text().get("D".into())[0]);
-		f.verify_baseline_rename(None, f.get_ranges_by_text().get("D".into())[1], f.get_ranges_by_text().get("D".into())[2]);
+		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
+		f.verify_baseline_rename(None, to_any(f.get_ranges_by_text().get("C")).into_iter().map(Into::into));
+		f.verify_baseline_rename(None, vec![f.get_ranges_by_text().get("D")[0].into()]);
+		f.verify_baseline_rename(None, vec![f.get_ranges_by_text().get("D")[1].into(), f.get_ranges_by_text().get("D")[2].into()]);
 	});
 }
 

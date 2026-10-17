@@ -11,8 +11,8 @@ fn quick_info_mapped_type_methods() {
 const x: M = {
   /**/one() {}
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("".into(), "(property) one: any".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("", "(property) one: any", "");
 	});
 }
 

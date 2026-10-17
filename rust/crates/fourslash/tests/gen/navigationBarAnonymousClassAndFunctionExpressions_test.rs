@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn navigation_bar_anonymous_class_and_function_expressions() {
 	run_test(|t| {
-		let content = r#"global.cls = class { };
+		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r#"global.cls = class { };
 (function() {
     const x = () => {
         // Presence of inner function causes x to be a top-level function.
@@ -25,7 +25,7 @@ fn navigation_bar_anonymous_class_and_function_expressions() {
     // These will only show up as childItems.
     function z() {}
     console.log(function() {})
-    describe("this", 'function', "# + "`" + r"is a function" + "`" + r", " + "`" + r#"with template literal ${"a"}"# + "`" + r", () => {});
+    describe("this", 'function', "#, "`"), r"is a function"), "`"), r", "), "`"), r#"with template literal ${"a"}"#), "`"), r", () => {});
     [].map(() => {});
 })
 (function classes() {
@@ -33,8 +33,8 @@ fn navigation_bar_anonymous_class_and_function_expressions() {
     const cls2 = class { };
     console.log(class cls3 {});
     (class { });
-})";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+})");
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_document_symbol();
 	});
 }

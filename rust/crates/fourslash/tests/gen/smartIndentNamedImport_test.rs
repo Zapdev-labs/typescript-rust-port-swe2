@@ -11,16 +11,16 @@ fn smart_indent_named_import() {
     numbers as bn,/*1*/
     list/*2*/
 } from '@bykov/basics';/*3*/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
-		f.go_to_marker("0".into());
-		f.verify_current_line_content(r"import {".into());
-		f.go_to_marker("1".into());
-		f.verify_current_line_content(r"    numbers as bn,".into());
-		f.go_to_marker("2".into());
-		f.verify_current_line_content(r"    list".into());
-		f.go_to_marker("3".into());
-		f.verify_current_line_content(r"} from '@bykov/basics';".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
+		f.go_to_marker("0");
+		f.verify_current_line_content(r"import {");
+		f.go_to_marker("1");
+		f.verify_current_line_content(r"    numbers as bn,");
+		f.go_to_marker("2");
+		f.verify_current_line_content(r"    list");
+		f.go_to_marker("3");
+		f.verify_current_line_content(r"} from '@bykov/basics';");
 	});
 }
 

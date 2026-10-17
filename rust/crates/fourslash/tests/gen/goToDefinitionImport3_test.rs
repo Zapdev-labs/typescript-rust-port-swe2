@@ -11,8 +11,8 @@ fn go_to_definition_import3() {
 /*2*/export const foo = 1;
 // @Filename: /a.ts
 import { foo } [|from     /*1*/|] "./b";"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "1".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_definition(true, &["1".into()]);
 	});
 }
 

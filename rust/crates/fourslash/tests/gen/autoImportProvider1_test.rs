@@ -17,15 +17,15 @@ export class PatternValidator {}
 { "dependencies": { "@angular/forms": "*" } }
 // @Filename: /home/src/workspaces/project/index.ts
 PatternValidator/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_marker("".into());
+		f.go_to_marker("");
 		let mut opts654 = f.get_options();
 		opts654.format_code_settings.new_line_character = "\n";
 		f.configure(opts654);
 		f.verify_import_fix_at_position(&[r#"import { PatternValidator } from "@angular/forms";
 
-PatternValidator"#], None);
+PatternValidator"#.into()], None);
 	});
 }
 

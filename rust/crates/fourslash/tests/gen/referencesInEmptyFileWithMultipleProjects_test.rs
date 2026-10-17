@@ -16,9 +16,9 @@ fn references_in_empty_file_with_multiple_projects() {
 { "files": ["b.ts"], "compilerOptions": { "lib": ["es5"] } }
 // @Filename: /home/src/workspaces/project/b/b.ts
 /*2*/;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.verify_baseline_find_all_references("1".into(), "2".into());
+		f.verify_baseline_find_all_references(&["1".into(), "2".into()]);
 	});
 }
 

@@ -13,8 +13,8 @@ exports./*0*/A = class {};
 // @Filename: /b.js
 import { /*1*/A } from "./a";
 /*2*/A;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("0".into(), "1".into(), "2".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["0".into(), "1".into(), "2".into()]);
 	});
 }
 

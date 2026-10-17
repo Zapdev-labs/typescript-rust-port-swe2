@@ -7,15 +7,15 @@ use tsc_fourslash::*;
 #[test]
 fn completions_import_no_semicolons() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"// @Filename: /a.ts
 export function foo() {}
 // @Filename: /b.ts
 const x = 0
 const y = 1
 const z = fo/**/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_apply_code_action_from_completion(Some(("").into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "foo", source: "./a", description: "Add import from \"./a\"", new_file_content: Some((r#"import { foo } from "./a"
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_apply_code_action_from_completion("", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "foo".to_string().into(), source: "./a".to_string().into(), description: "Add import from \"./a\"".to_string().into(), new_file_content: Some((r#"import { foo } from "./a"
 
 const x = 0
 const y = 1

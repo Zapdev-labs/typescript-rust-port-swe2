@@ -12,16 +12,16 @@ interface Foo {
     x: number;
     y?: number;
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		let mut opts207 = f.get_options();
 		opts207.format_code_settings.insert_space_before_type_annotation = tsc_core::tristate::TS_TRUE;
 		f.configure(opts207);
-		f.format_document("".into());
+		f.format_document("");
 		f.verify_current_file_content(r"function foo(x : number, y ?: string) : number { }
 interface Foo {
     x : number;
     y ?: number;
-}".into());
+}");
 	});
 }
 

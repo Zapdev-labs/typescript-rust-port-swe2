@@ -7,14 +7,14 @@ use tsc_fourslash::*;
 #[test]
 fn completion_for_meta_property() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"import./*1*/;
 new./*2*/;
 function test() { new./*3*/ }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("1".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec![&tsc_lsproto::CompletionItem { label: "meta", detail: Some(("(property) ImportMetaExpression.meta: ImportMeta").into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
-		f.verify_completions("2".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec![], ..Default::default() }, ..Default::default() });
-		f.verify_completions("3".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec![&tsc_lsproto::CompletionItem { label: "target", detail: Some(("(property) NewTargetExpression.target: () => void").into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions("1".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "meta".to_string().into(), detail: Some(("(property) ImportMetaExpression.meta: ImportMeta").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions("2".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions("3".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "target".to_string().into(), detail: Some(("(property) NewTargetExpression.target: () => void").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

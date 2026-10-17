@@ -7,12 +7,12 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_tagged_templates_negatives5() {
 	run_test(|t| {
-		let content = r"function foo(strs, ...rest) {
+		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"function foo(strs, ...rest) {
 }
 
-/*1*/fo/*2*/o /*3*/" + "`" + r"abcd" + "`" + r"/*4*/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_no_signature_help_for_markers(f.marker_names());
+/*1*/fo/*2*/o /*3*/", "`"), r"abcd"), "`"), r"/*4*/");
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_no_signature_help_for_markers(&f.marker_names());
 	});
 }
 

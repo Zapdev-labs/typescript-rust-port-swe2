@@ -12,11 +12,11 @@ declare function fn(x: string, y: number);
 declare function fn2(x: string);
 declare function fn2(x: string, y: number);
 fn('', fn2(/*1*/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "fn2(x: string): any", parameter_name: "x", parameter_span: "x: string", overloads_count: 2, ..Default::default() });
-		f.insert("'',".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "fn2(x: string, y: number): any", parameter_name: "y", parameter_span: "y: number", overloads_count: 2, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("1");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "fn2(x: string): any".to_string().into(), parameter_name: "x".to_string().into(), parameter_span: "x: string".to_string().into(), overloads_count: 2, ..Default::default() });
+		f.insert("'',");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "fn2(x: string, y: number): any".to_string().into(), parameter_name: "y".to_string().into(), parameter_span: "y: number".to_string().into(), overloads_count: 2, ..Default::default() });
 	});
 }
 

@@ -14,15 +14,15 @@ fn import_name_code_fix_indented_identifier() {
 }|]
 // @Filename: /b.ts
 export const x = 0;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_import_fix_at_position(&[r#"import * as b from "./b";
 {
     b.x
-}"#, r#"import * as b from "./b";
+}"#.into(), r#"import * as b from "./b";
 import { x } from "./b";
 {
     x
-}"#], None);
+}"#.into()], None);
 	});
 }
 

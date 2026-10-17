@@ -20,10 +20,10 @@ namespace M {
 		return M.E.A;
 	}
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_no_errors();
-		f.go_to_marker("1".into());
-		f.insert("D = C << 1,".into());
+		f.go_to_marker("1");
+		f.insert("D = C << 1,");
 		f.verify_no_errors();
 	});
 }

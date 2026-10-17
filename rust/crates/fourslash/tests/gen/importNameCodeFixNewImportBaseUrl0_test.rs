@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_new_import_base_url0() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r#"[|f1/*0*/();|]
 // @Filename: tsconfig.json
 {
@@ -17,10 +17,10 @@ fn import_name_code_fix_new_import_base_url0() {
 }
 // @Filename: a/b.ts
 export function f1() { };"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_import_fix_at_position(&[r#"import { f1 } from "b";
 
-f1();"#], None);
+f1();"#.into()], None);
 	});
 }
 

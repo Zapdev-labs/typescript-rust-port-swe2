@@ -7,20 +7,20 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_class_implement_interface_mapped_type2() {
 	run_test(|t| {
-		let content = r#"type ListenerTemplate<T, S extends string, I extends string = "${1}"> = {
+		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r#"type ListenerTemplate<T, S extends string, I extends string = "${1}"> = {
     [K in keyof T as K extends string
-        ? S extends "# + "`" + r"${infer F}${I}${infer R}" + "`" + r" ? " + "`" + r"${F}${K}${R}" + "`" + r#" : K : K]
+        ? S extends "#, "`"), r"${infer F}${I}${infer R}"), "`"), r" ? "), "`"), r"${F}${K}${R}"), "`"), r#" : K : K]
         : (listener: (payload: T[K]) => void) => void;
 };
 type ListenActionable<E> = ListenerTemplate<E, "add*Listener" | "remove*Listener", "*">;
 type ClickEventSupport = ListenActionable<{ Click: 'some-click-event-payload' }>;
 
-[|class C implements ClickEventSupport { }|]"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'ClickEventSupport'", new_range_content: r#"class C implements ClickEventSupport {
+[|class C implements ClickEventSupport { }|]"#);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'ClickEventSupport'".to_string().into(), new_range_content: r#"class C implements ClickEventSupport {
     addClickListener: (listener: (payload: "some-click-event-payload") => void) => void;
     removeClickListener: (listener: (payload: "some-click-event-payload") => void) => void;
-}"#, index: 0, ..Default::default() });
+}"#.to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

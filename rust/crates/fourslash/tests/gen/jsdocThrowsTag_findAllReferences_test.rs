@@ -12,8 +12,8 @@ fn jsdoc_throws_tag_find_all_references() {
  * @throws {E}
  */
 function f() {}";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["".into()]);
 	});
 }
 

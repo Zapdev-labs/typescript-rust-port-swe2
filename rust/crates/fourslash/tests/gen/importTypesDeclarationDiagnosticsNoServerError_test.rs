@@ -16,9 +16,9 @@ export interface I {
 // @Filename: a.ts
 import { f } from "foo";
 export const x = f();"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.go_to_file_number(1);
-		f.verify_non_suggestion_diagnostics(None);
+		f.verify_non_suggestion_diagnostics(&[]);
 	});
 }
 

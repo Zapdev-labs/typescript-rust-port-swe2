@@ -18,8 +18,8 @@ interface B<T> extends A<T> {
 }
 var b: B<number>;
 var /**/x = b.foo2().foo(5).foo(); // 'x' is of type 'void'";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("".into(), "var x: void".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("", "var x: void", "");
 		f.verify_no_errors();
 	});
 }

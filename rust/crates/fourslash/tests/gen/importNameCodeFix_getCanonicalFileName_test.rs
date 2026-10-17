@@ -11,11 +11,11 @@ fn import_name_code_fix_get_canonical_file_name() {
 export const foo: number;
 // @Filename: /howNow/a.ts
 foo;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/howNow/a.ts".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("/howNow/a.ts");
 		f.verify_import_fix_at_position(&[r#"import { foo } from "brownCow";
 
-foo;"#], None);
+foo;"#.into()], None);
 	});
 }
 

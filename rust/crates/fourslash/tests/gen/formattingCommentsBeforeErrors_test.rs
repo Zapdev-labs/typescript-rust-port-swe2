@@ -20,11 +20,11 @@ fn formatting_comments_before_errors() {
         bar();
     }
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1".into());
-		f.insert("\n".into());
-		f.go_to_marker("0".into());
-		f.verify_current_line_content(r"        // d ".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("1");
+		f.insert("\n");
+		f.go_to_marker("0");
+		f.verify_current_line_content(r"        // d ");
 	});
 }
 

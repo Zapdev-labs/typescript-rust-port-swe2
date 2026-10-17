@@ -9,17 +9,17 @@ fn tsx_incremental_server() {
 	run_test(|t| {
 		let content = r"// @lib: es5
 /**/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_marker("".into());
-		f.insert("<".into());
-		f.insert("div".into());
-		f.insert(" ".into());
-		f.insert(" id".into());
-		f.insert("=".into());
-		f.insert("\"foo".into());
-		f.insert("\"".into());
-		f.insert(">".into());
+		f.go_to_marker("");
+		f.insert("<");
+		f.insert("div");
+		f.insert(" ");
+		f.insert(" id");
+		f.insert("=");
+		f.insert("\"foo");
+		f.insert("\"");
+		f.insert(">");
 	});
 }
 

@@ -19,8 +19,8 @@ declare namespace JSX {
     }
 }
 var x = <div [|[|{| "contextRangeIndex": 2 |}name|]="hello"|] />;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_rename_at_ranges_with_text(None, "name".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_rename_at_ranges_with_text(None, &["name".into()]);
 	});
 }
 

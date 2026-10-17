@@ -31,11 +31,11 @@ declare function createMachine<TEvent extends { type: string }>(config: {
 createMachine<GreetingEvent>({
   [|/*error*/actions|]: raise({ type: "ALOHA/*1*/" }),
 });"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1".into());
-		f.insert("x".into());
-		f.verify_completions(None, &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec!["ALOHA", "ALOHAx", "LUNCH_TIME", "MORNING"], ..Default::default() }, ..Default::default() });
-		f.verify_non_suggestion_diagnostics(&[tsc_lsproto::Diagnostic { code: Some(tsc_lsproto::IntegerOrString { integer: Some(((2322) as i32).into()), ..Default::default() }), message: tsc_lsproto::StringOrMarkupContent { string: Some(("Type 'RaiseActionObject<{ type: \"ALOHAx\"; }>' is not assignable to type 'RaiseActionObject<GreetingEvent>'.\n  Type '{ type: \"ALOHAx\"; }' is not assignable to type 'GreetingEvent'.\n    Type '{ type: \"ALOHAx\"; }' is not assignable to type '{ type: \"ALOHA\"; }'.\n      Types of property 'type' are incompatible.\n        Type '\"ALOHAx\"' is not assignable to type '\"ALOHA\"'.").into()), ..Default::default() }, ..Default::default() }]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("1");
+		f.insert("x");
+		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["ALOHA".into(), "ALOHAx".into(), "LUNCH_TIME".into(), "MORNING".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_non_suggestion_diagnostics(&[tsc_lsproto::Diagnostic { code: Some(tsc_lsproto::IntegerOrString { integer: Some(((2322) as i32).into()), ..Default::default() }), message: tsc_lsproto::StringOrMarkupContent { string: Some(("Type 'RaiseActionObject<{ type: \"ALOHAx\"; }>' is not assignable to type 'RaiseActionObject<GreetingEvent>'.\n  Type '{ type: \"ALOHAx\"; }' is not assignable to type 'GreetingEvent'.\n    Type '{ type: \"ALOHAx\"; }' is not assignable to type '{ type: \"ALOHA\"; }'.\n      Types of property 'type' are incompatible.\n        Type '\"ALOHAx\"' is not assignable to type '\"ALOHA\"'.").into()), ..Default::default() }.into(), ..Default::default() }]);
 	});
 }
 

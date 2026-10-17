@@ -16,8 +16,8 @@ declare namespace JSX {
 }
 let y = { ONE: '' };
 var x = <div {...y} /**/ />;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec![&tsc_lsproto::CompletionItem { label: "TWO", kind: Some((tsc_lsproto::CompletionItemKind::FIELD).into()), sort_text: Some((tsc_ls::SORT_TEXT_LOCATION_PRIORITY.to_string()).into()), ..Default::default() }, &tsc_lsproto::CompletionItem { label: "ONE", kind: Some((tsc_lsproto::CompletionItemKind::FIELD).into()), sort_text: Some((tsc_ls::SORT_TEXT_MEMBER_DECLARED_BY_SPREAD_ASSIGNMENT.to_string()).into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "TWO".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Field).into()), sort_text: Some((tsc_ls::SORT_TEXT_LOCATION_PRIORITY.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "ONE".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Field).into()), sort_text: Some((tsc_ls::SORT_TEXT_MEMBER_DECLARED_BY_SPREAD_ASSIGNMENT.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -80,15 +80,15 @@ export function getMyConst() {
 	],
 }
 "#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("find".into());
-		f.go_to_marker("temp".into());
-		f.verify_baseline_rename(None, "find".into());
-		f.close_file_of_marker("temp".into());
-		f.go_to_marker("temp".into());
-		f.close_file_of_marker("find".into());
-		f.close_file_of_marker("temp".into());
-		f.go_to_marker("temp".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("find");
+		f.go_to_marker("temp");
+		f.verify_baseline_rename(None, vec!["find".into()]);
+		f.close_file_of_marker("temp");
+		f.go_to_marker("temp");
+		f.close_file_of_marker("find");
+		f.close_file_of_marker("temp");
+		f.go_to_marker("temp");
 	});
 }
 
@@ -112,14 +112,14 @@ console.log(C)
 // @Filename: /projects/c/fc.ts
 export const /*find*/C = 42;
 "#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("aTs".into());
-		f.go_to_marker("bTs".into());
-		let mut find_marker = f.marker_by_name("find".into());
-		let mut a_fc_marker = find_marker.maker_with_symlink("/projects/a/c/fc.ts".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("aTs");
+		f.go_to_marker("bTs");
+		let mut find_marker = f.marker_by_name("find");
+		let mut a_fc_marker = find_marker.maker_with_symlink("/projects/a/c/fc.ts");
 		f.go_to_marker_or_range(a_fc_marker);
-		f.go_to_marker_or_range(find_marker.maker_with_symlink("/projects/b/c/fc.ts".into()));
-		f.verify_baseline_rename(None, a_fc_marker);
+		f.go_to_marker_or_range(find_marker.maker_with_symlink("/projects/b/c/fc.ts"));
+		f.verify_baseline_rename(None, vec![a_fc_marker.into()]);
 	});
 }
 

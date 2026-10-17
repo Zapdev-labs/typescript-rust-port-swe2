@@ -16,15 +16,15 @@ export declare function useState(): void;
 {}
 // @Filename: /home/src/workspaces/project/index.ts
 useMemo/**/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_marker("".into());
+		f.go_to_marker("");
 		f.verify_import_fix_at_position(&[], None);
 		f.go_to_bof();
-		f.insert_line("import { useState } from \"react\";".into());
-		f.go_to_marker("".into());
+		f.insert_line("import { useState } from \"react\";");
+		f.go_to_marker("");
 		f.verify_import_fix_at_position(&[r#"import { useMemo, useState } from "react";
-useMemo"#], None);
+useMemo"#.into()], None);
 	});
 }
 

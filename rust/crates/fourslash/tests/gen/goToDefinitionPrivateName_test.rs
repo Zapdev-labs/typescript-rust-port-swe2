@@ -18,8 +18,8 @@ fn go_to_definition_private_name() {
         this.[|/*pnPropUse*/#prop|]
     }
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "pnFieldUse".into(), "pnMethodUse".into(), "pnPropUse".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_definition(true, &["pnFieldUse".into(), "pnMethodUse".into(), "pnPropUse".into()]);
 	});
 }
 

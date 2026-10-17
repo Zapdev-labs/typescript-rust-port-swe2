@@ -13,8 +13,8 @@ class Test {
     constructor(public [|search2|]: boolean, readonly [|search3|]: string, search4: string) {
     }
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "search".into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "search1".into(), kind: tsc_lsproto::SYMBOL_KIND_PROPERTY, location: f.ranges()[0].ls_location(), container_name: Some(("Test").into()), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "search2".into(), kind: tsc_lsproto::SYMBOL_KIND_PROPERTY, location: f.ranges()[1].ls_location(), container_name: Some(("Test").into()), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "search3".into(), kind: tsc_lsproto::SYMBOL_KIND_PROPERTY, location: f.ranges()[2].ls_location(), container_name: Some(("Test").into()), ..Default::default() }]).into()), ..Default::default() }]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "search".to_string().into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "search1".to_string().into(), kind: tsc_lsproto::SYMBOL_KIND_PROPERTY.into(), location: f.ranges()[0].ls_location().into(), container_name: Some(("Test").into()), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "search2".to_string().into(), kind: tsc_lsproto::SYMBOL_KIND_PROPERTY.into(), location: f.ranges()[1].ls_location().into(), container_name: Some(("Test").into()), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "search3".to_string().into(), kind: tsc_lsproto::SYMBOL_KIND_PROPERTY.into(), location: f.ranges()[2].ls_location().into(), container_name: Some(("Test").into()), ..Default::default() }]).into()), ..Default::default() }]);
 	});
 }
 

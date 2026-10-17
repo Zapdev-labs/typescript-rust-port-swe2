@@ -15,10 +15,10 @@ export type { SomeClass };
 // @Filename: /a.ts
 import {} from "./exports.js";
 function takeSomeClass(c: SomeClass/**/)"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
 		f.verify_import_fix_at_position(&[r#"import { type SomeClass } from "./exports.js";
-function takeSomeClass(c: SomeClass)"#], None);
+function takeSomeClass(c: SomeClass)"#.into()], None);
 	});
 }
 

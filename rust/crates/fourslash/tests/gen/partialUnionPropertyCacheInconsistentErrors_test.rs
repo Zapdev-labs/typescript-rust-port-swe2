@@ -42,10 +42,10 @@ export function withInstall<C extends Component, T extends WithInstallPlugin>(
 
   return "";
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_no_errors();
-		f.go_to_marker("".into());
-		f.insert("type C = Component['name']".into());
+		f.go_to_marker("");
+		f.insert("type C = Component['name']");
 		f.verify_no_errors();
 	});
 }

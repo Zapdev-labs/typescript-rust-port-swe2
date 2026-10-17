@@ -20,10 +20,10 @@ fn jsdoc_typedef_tag_rename03() {
 
 /** @type {/*2*/[|Person|]} */
 var person;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_file("jsDocTypedef_form3.js".into());
-		f.verify_baseline_rename(None, to_any(f.get_ranges_by_text().get("Person".into())));
+		f.go_to_file("jsDocTypedef_form3.js");
+		f.verify_baseline_rename(None, to_any(f.get_ranges_by_text().get("Person")).into_iter().map(Into::into));
 	});
 }
 

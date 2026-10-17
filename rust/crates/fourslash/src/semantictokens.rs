@@ -11,9 +11,10 @@ use tsc_lsproto::{Position, SemanticTokensParams, TextDocumentIdentifier};
 use crate::fourslash::FourslashTest;
 
 /// `type SemanticToken struct` — `Type` → `type_` (keyword).
+#[derive(Default)]
 pub struct SemanticToken {
     pub type_: String,
-    pub(crate) text: String,
+    pub text: String,
 }
 
 impl FourslashTest {

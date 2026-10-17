@@ -12,8 +12,8 @@ not read
 // @Filename: /a.ts
 import { /*def*/f } from "foo";
 [|/*use*/f|]();"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "use".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_definition(true, &["use".into()]);
 	});
 }
 

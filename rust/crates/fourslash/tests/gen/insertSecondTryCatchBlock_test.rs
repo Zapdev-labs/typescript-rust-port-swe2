@@ -9,9 +9,9 @@ fn insert_second_try_catch_block() {
 	run_test(|t| {
 		let content = r"try {} catch(e) { }
 /**/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
-		f.insert("try {} catch(e) { }".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
+		f.insert("try {} catch(e) { }");
 	});
 }
 

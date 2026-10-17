@@ -15,9 +15,9 @@ export const profileTitle = "Profile";
 
 // @Filename: /main.ts
 profileTi/**/
-"#.into(), contentmappertest.component_mapper, ".vue".into());
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { user_preferences: &tsc_lsutil::UserPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE, include_completions_for_import_statements: tsc_core::tristate::TS_TRUE, ..Default::default() }, is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["profileTitle"], ..Default::default() }, ..Default::default() });
-		f.baseline_auto_imports_completions(&[""]);
+"#, tsc_testutil::contentmappertest::COMPONENT_MAPPER, ".vue");
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["profileTitle".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.baseline_auto_imports_completions(&["".into()]);
 	});
 }
 
@@ -31,9 +31,9 @@ export default {};
 
 // @Filename: /main.ts
 Comp/**/
-"#.into(), contentmappertest.component_mapper, ".vue".into());
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { user_preferences: &tsc_lsutil::UserPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE, include_completions_for_import_statements: tsc_core::tristate::TS_TRUE, ..Default::default() }, is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["Component"], excludes: vec!["ComponentVue"], ..Default::default() }, ..Default::default() });
-		f.verify_apply_code_action_from_completion(Some(("").into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "Component", source: "./Component.vue", description: "Add import from \"./Component.vue\"", new_file_content: Some((r#"import Component from "./Component.vue";
+"#, tsc_testutil::contentmappertest::COMPONENT_MAPPER, ".vue");
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["Component".into()].into(), excludes: vec!["ComponentVue".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_apply_code_action_from_completion("", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "Component".to_string().into(), source: "./Component.vue".to_string().into(), description: "Add import from \"./Component.vue\"".to_string().into(), new_file_content: Some((r#"import Component from "./Component.vue";
 
 Comp
 "#).into()), ..Default::default() });
@@ -53,9 +53,9 @@ export const helper = 2;
 import { existing } from "./dep";
 export const profileTitle = help/**/;
 </script>
-"#.into(), contentmappertest.component_mapper, ".vue".into());
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { user_preferences: &tsc_lsutil::UserPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE, include_completions_for_import_statements: tsc_core::tristate::TS_TRUE, ..Default::default() }, is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["helper"], ..Default::default() }, ..Default::default() });
-		f.baseline_auto_imports_completions(&[""]);
+"#, tsc_testutil::contentmappertest::COMPONENT_MAPPER, ".vue");
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["helper".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.baseline_auto_imports_completions(&["".into()]);
 	});
 }
 
@@ -67,9 +67,9 @@ export const helper = 1;
 
 // @Filename: /app.box
 const value = help/**/;
-".into(), contentmappertest.transforming_mapper, ".box".into());
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { user_preferences: &tsc_lsutil::UserPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE, include_completions_for_import_statements: tsc_core::tristate::TS_TRUE, ..Default::default() }, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["helper"], ..Default::default() }, ..Default::default() });
-		f.verify_apply_code_action_from_completion(Some(("").into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "helper", source: "./dep", description: "Add import from \"./dep\"", new_file_content: Some((r#"import { helper } from "./dep";
+", tsc_testutil::contentmappertest::TRANSFORMING_MAPPER, ".box");
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["helper".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_apply_code_action_from_completion("", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "helper".to_string().into(), source: "./dep".to_string().into(), description: "Add import from \"./dep\"".to_string().into(), new_file_content: Some((r#"import { helper } from "./dep";
 
 const value = help;
 "#).into()), ..Default::default() });
@@ -84,8 +84,8 @@ export const helper = 1;
 
 // @Filename: /app.astro
 const value = help/**/;
-".into(), contentmappertest.supplemental_mapper, ".astro".into());
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { user_preferences: &tsc_lsutil::UserPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE, include_completions_for_import_statements: tsc_core::tristate::TS_TRUE, ..Default::default() }, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "helper", sort_text: Some((tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string()).into()), data: &tsc_lsproto::CompletionItemData { auto_import: &tsc_lsproto::AutoImportFix { module_specifier: "./dep", ..Default::default() }, ..Default::default() }, additional_text_edits: tsc_fourslash::AnyTextEdits, ..Default::default() }], ..Default::default() }, ..Default::default() });
+", tsc_testutil::contentmappertest::SUPPLEMENTAL_MAPPER, ".astro");
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "helper".to_string().into(), sort_text: Some((tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string()).into()), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./dep".to_string().into(), ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::ANY_TEXT_EDITS.into(), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 
@@ -97,8 +97,8 @@ export const supplementalOnly = 1;
 
 // @Filename: /main.ts
 supplementalOn/**/
-".into(), contentmappertest.supplemental_mapper, ".astro".into());
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { user_preferences: &tsc_lsutil::UserPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE, include_completions_for_import_statements: tsc_core::tristate::TS_TRUE, ..Default::default() }, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { excludes: vec!["supplementalOnly"], ..Default::default() }, ..Default::default() });
+", tsc_testutil::contentmappertest::SUPPLEMENTAL_MAPPER, ".astro");
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { excludes: vec!["supplementalOnly".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 
@@ -128,9 +128,9 @@ import "profile-package/ProfileCard.vue";
 
 // @Filename: /main.ts
 profileTi/**/
-"#.into(), contentmappertest.component_mapper, ".vue".into());
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { user_preferences: &tsc_lsutil::UserPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE, include_completions_for_import_statements: tsc_core::tristate::TS_TRUE, ..Default::default() }, is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["profileTitle"], excludes: vec!["hiddenTitle"], ..Default::default() }, ..Default::default() });
-		f.baseline_auto_imports_completions(&[""]);
+"#, tsc_testutil::contentmappertest::COMPONENT_MAPPER, ".vue");
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["profileTitle".into()].into(), excludes: vec!["hiddenTitle".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.baseline_auto_imports_completions(&["".into()]);
 	});
 }
 
@@ -148,9 +148,9 @@ export const existing = 2;
   import { existing } from "./dep";
   const value = help/**/;
 </script>
-"#.into(), contentmappertest.hoisting_mapper, ".svelte".into());
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { user_preferences: &tsc_lsutil::UserPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE, include_completions_for_import_statements: tsc_core::tristate::TS_TRUE, ..Default::default() }, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "helper", sort_text: Some((tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string()).into()), data: &tsc_lsproto::CompletionItemData { auto_import: &tsc_lsproto::AutoImportFix { module_specifier: "./aaa", ..Default::default() }, ..Default::default() }, additional_text_edits: tsc_fourslash::AnyTextEdits, ..Default::default() }], ..Default::default() }, ..Default::default() });
-		f.verify_apply_code_action_from_completion(Some(("").into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "helper", source: "./aaa", description: r#"Add import from "./aaa""#, new_file_content: Some((r#"<script lang="ts">
+"#, tsc_testutil::contentmappertest::HOISTING_MAPPER, ".svelte");
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "helper".to_string().into(), sort_text: Some((tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string()).into()), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./aaa".to_string().into(), ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::ANY_TEXT_EDITS.into(), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_apply_code_action_from_completion("", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "helper".to_string().into(), source: "./aaa".to_string().into(), description: r#"Add import from "./aaa""#.to_string().into(), new_file_content: Some((r#"<script lang="ts">
   import { helper } from "./aaa";
   import { existing } from "./dep";
   const value = help;

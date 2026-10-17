@@ -10,7 +10,7 @@ fn unclosed_comments_in_constructor() {
 		let content = r"class Foo {
     constructor(/* /**/) { }
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_completions("".into(), None);
 	});
 }

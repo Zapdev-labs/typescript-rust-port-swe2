@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_module_none2() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"// @module: none
 // @moduleResolution: bundler
 // @target: es2015
@@ -15,10 +15,10 @@ fn auto_import_module_none2() {
 export const x: number;
 // @Filename: /index.ts
  x/**/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "x", data: &tsc_lsproto::CompletionItemData { auto_import: &tsc_lsproto::AutoImportFix { module_specifier: "dep", ..Default::default() }, ..Default::default() }, additional_text_edits: tsc_fourslash::AnyTextEdits, sort_text: Some((tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
-		f.replace_line(0, "import { x } from 'dep'; x;".into());
-		f.verify_non_suggestion_diagnostics(None);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "x".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "dep".to_string().into(), ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::ANY_TEXT_EDITS.into(), sort_text: Some((tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
+		f.replace_line(0, "import { x } from 'dep'; x;");
+		f.verify_non_suggestion_diagnostics(&[]);
 	});
 }
 

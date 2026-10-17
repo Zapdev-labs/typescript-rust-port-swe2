@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn overload_quick_info() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"function Foo(a: string, b: number, c: boolean);
 function Foo(a: any, name: string, age: number);
 function Foo(fred: any[], name: string, age: number);
@@ -24,8 +24,8 @@ function Foo();
 function Foo(x?: any, y?: any, z?: any) {
 }
 Fo/**/o();";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("".into(), "function Foo(): any (+12 overloads)".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("", "function Foo(): any (+12 overloads)", "");
 	});
 }
 

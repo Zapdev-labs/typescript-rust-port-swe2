@@ -11,8 +11,8 @@ fn get_java_script_syntactic_diagnostics21() {
 // @experimentalDecorators: true
 // @Filename: a.js
 @internal class C {}";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_non_suggestion_diagnostics(None);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_non_suggestion_diagnostics(&[]);
 	});
 }
 

@@ -11,10 +11,10 @@ fn quick_info_in_with_block() {
     function /*1*/f() { }
     var /*2*/b = /*3*/f;
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1".into(), "any".into(), "".into());
-		f.verify_quick_info_at("2".into(), "any".into(), "".into());
-		f.verify_quick_info_at("3".into(), "any".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("1", "any", "");
+		f.verify_quick_info_at("2", "any", "");
+		f.verify_quick_info_at("3", "any", "");
 	});
 }
 

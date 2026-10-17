@@ -10,8 +10,8 @@ fn code_fix_missing_type_annotation_on_exports_arrow_parens() {
 		let content = r#"// @isolatedDeclarations: true
 // @declaration: true
 export const func = x => x.substring("foo");"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingTypeAnnotationOnExports", new_file_content: r#"export const func = (x: any): any => x.substring("foo");"#, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingTypeAnnotationOnExports".to_string().into(), new_file_content: r#"export const func = (x: any): any => x.substring("foo");"#.to_string().into(), ..Default::default() });
 	});
 }
 

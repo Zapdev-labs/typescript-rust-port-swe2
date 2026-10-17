@@ -19,14 +19,14 @@ import type {
 } from "./bar";
 
 let x: AAA = new BBB()"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/foo.ts".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("/foo.ts");
 		f.verify_import_fix_at_position(&[r#"import {
     BBB,
     type AAA,
 } from "./bar";
 
-let x: AAA = new BBB()"#], None);
+let x: AAA = new BBB()"#.into()], None);
 	});
 }
 

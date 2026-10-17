@@ -8,9 +8,9 @@ use tsc_fourslash::*;
 fn format_export_assignment() {
 	run_test(|t| {
 		let content = r"export='foo';";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
-		f.verify_current_file_content(r"export = 'foo';".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
+		f.verify_current_file_content(r"export = 'foo';");
 	});
 }
 

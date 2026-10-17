@@ -12,8 +12,8 @@ fn get_occurrences_is_definition_of_enum() {
     Second
 }
 let first = /*3*/E.First;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1".into(), "2".into(), "3".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
 	});
 }
 

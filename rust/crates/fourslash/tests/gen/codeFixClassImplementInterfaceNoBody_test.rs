@@ -11,10 +11,10 @@ fn code_fix_class_implement_interface_no_body() {
    m(): void
 }
 class C/*c*/ implements I";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_error_exists_before_marker("c".into());
-		f.go_to_marker("c".into());
-		f.verify_code_fix_available(&["Implement interface 'I'"]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_error_exists_before_marker("c");
+		f.go_to_marker("c");
+		f.verify_code_fix_available(Some(&["Implement interface 'I'".into()]));
 	});
 }
 

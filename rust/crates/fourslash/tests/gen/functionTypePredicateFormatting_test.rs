@@ -8,10 +8,10 @@ use tsc_fourslash::*;
 fn function_type_predicate_formatting() {
 	run_test(|t| {
 		let content = r"/**/function bar(a: A):     a        is       B    {}";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
-		f.format_document("".into());
-		f.verify_current_line_content(r"function bar(a: A): a is B { }".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
+		f.format_document("");
+		f.verify_current_line_content(r"function bar(a: A): a is B { }");
 	});
 }
 

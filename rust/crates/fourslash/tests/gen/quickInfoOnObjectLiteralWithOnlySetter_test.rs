@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_on_object_literal_with_only_setter() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"function /*1*/makePoint(x: number) {
     return {
         b: 10,
@@ -16,11 +16,11 @@ fn quick_info_on_object_literal_with_only_setter() {
 };
 var /*3*/point = makePoint(2);
 point./*2*/x = 30;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("2".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec![&tsc_lsproto::CompletionItem { label: "b", detail: Some(("(property) b: number").into()), ..Default::default() }, &tsc_lsproto::CompletionItem { label: "x", detail: Some(("(property) x: number").into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
-		f.verify_quick_info_at("1".into(), "function makePoint(x: number): {\n    b: number;\n    x: number;\n}".into(), "".into());
-		f.verify_quick_info_at("2".into(), "(property) x: number".into(), "".into());
-		f.verify_quick_info_at("3".into(), "var point: {\n    b: number;\n    x: number;\n}".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions("2".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "b".to_string().into(), detail: Some(("(property) b: number").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "x".to_string().into(), detail: Some(("(property) x: number").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_quick_info_at("1", "function makePoint(x: number): {\n    b: number;\n    x: number;\n}", "");
+		f.verify_quick_info_at("2", "(property) x: number", "");
+		f.verify_quick_info_at("3", "var point: {\n    b: number;\n    x: number;\n}", "");
 	});
 }
 

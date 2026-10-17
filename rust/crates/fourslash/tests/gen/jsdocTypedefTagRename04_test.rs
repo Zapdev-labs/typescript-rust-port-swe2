@@ -23,13 +23,13 @@ function test2() {
    /** @type {NumberLike2} */
    var n/*2*/umberLike2;
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_marker("2".into());
+		f.go_to_marker("2");
 		f.verify_quick_info_exists();
-		f.go_to_marker("1".into());
-		f.insert("111".into());
-		f.go_to_marker("2".into());
+		f.go_to_marker("1");
+		f.insert("111");
+		f.go_to_marker("2");
 		f.verify_quick_info_exists();
 	});
 }

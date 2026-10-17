@@ -11,8 +11,8 @@ fn find_all_references_js_doc_function_this() {
 // @Filename: Foo.js
 /** @type {function (this: string, string): string} */
 var f = function (s) { return /*0*/this + s; }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("0".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["0".into()]);
 	});
 }
 

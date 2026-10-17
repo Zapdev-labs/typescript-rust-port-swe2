@@ -20,17 +20,17 @@ import { React } from "react";
 // @Filename: /d.tsx
 import { Foo } from "./Foo";
 <Foo />;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/a.tsx".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("/a.tsx");
 		f.verify_import_fix_at_position(&[], None);
-		f.go_to_file("/c.tsx".into());
+		f.go_to_file("/c.tsx");
 		f.verify_import_fix_at_position(&[r#"import { React } from "react";
 import { Foo } from "./Foo";
-<Foo />;"#], None);
-		f.go_to_file("/d.tsx".into());
+<Foo />;"#.into()], None);
+		f.go_to_file("/d.tsx");
 		f.verify_import_fix_at_position(&[r#"import { React } from "react";
 import { Foo } from "./Foo";
-<Foo />;"#], None);
+<Foo />;"#.into()], None);
 	});
 }
 

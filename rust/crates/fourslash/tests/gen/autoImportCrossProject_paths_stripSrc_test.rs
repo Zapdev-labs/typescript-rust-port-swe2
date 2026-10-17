@@ -41,16 +41,16 @@ import "./sub/folder";
 export const dep1 = 0;
 // @Filename: /home/src/workspaces/project/packages/dep/src/sub/folder/index.ts
 export const dep2 = 0;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_marker("1".into());
+		f.go_to_marker("1");
 		f.verify_import_fix_at_position(&[r#"import { dep1 } from "dep";
 
-dep1;"#], None);
-		f.go_to_marker("2".into());
+dep1;"#.into()], None);
+		f.go_to_marker("2");
 		f.verify_import_fix_at_position(&[r#"import { dep2 } from "dep/sub/folder";
 
-dep2;"#], None);
+dep2;"#.into()], None);
 	});
 }
 

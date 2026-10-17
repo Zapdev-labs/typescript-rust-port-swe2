@@ -22,8 +22,8 @@ var x = 0;
 import d from "mod";
 import { a, b, c } from "mod";
 import r = require("mod");|]"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_outlining_spans(tsc_lsproto::FOLDING_RANGE_KIND_IMPORTS);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_outlining_spans(Some(tsc_lsproto::FoldingRangeKind::Imports));
 	});
 }
 

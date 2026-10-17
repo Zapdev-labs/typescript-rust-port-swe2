@@ -11,8 +11,8 @@ fn quick_info_on_element_access_in_write_location1() {
 // @exactOptionalPropertyTypes: true
 declare const xx: { prop?: number };
 xx['prop'/*1*/] = 1;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1".into(), "(property) prop?: number".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("1", "(property) prop?: number", "");
 	});
 }
 

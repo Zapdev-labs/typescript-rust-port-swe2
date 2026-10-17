@@ -11,7 +11,7 @@ fn completion_in_type_of1() {
     export interface I { foo(): void; }
 }
 var x: typeof m1c./*1*/;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_completions("1".into(), None);
 	});
 }

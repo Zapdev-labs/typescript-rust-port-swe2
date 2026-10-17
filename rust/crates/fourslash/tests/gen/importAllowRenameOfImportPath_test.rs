@@ -18,18 +18,18 @@ import * as dir2 from "./dir/[|index|]";
 // @Filename: /c.js
 const a = require("./[|a|]");
 "#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		let mut prefs_true = tsc_lsutil::UserPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE, include_completions_for_import_statements: tsc_core::tristate::TS_TRUE, allow_rename_of_import_path: tsc_core::tristate::TS_TRUE, ..Default::default() };
-		let mut prefs_false = tsc_lsutil::UserPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE, include_completions_for_import_statements: tsc_core::tristate::TS_TRUE, allow_rename_of_import_path: tsc_core::tristate::TS_FALSE, ..Default::default() };
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut prefs_true = tsc_lsutil::UserPreferences { allow_rename_of_import_path: tsc_core::tristate::TS_TRUE.into(), completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() };
+		let mut prefs_false = tsc_lsutil::UserPreferences { allow_rename_of_import_path: tsc_core::tristate::TS_FALSE.into(), completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() };
 		let mut markers = vec!["a", "dir", "index"];
 		f.configure(prefs_true);
 |marker, index| {
-			f.verify_rename_succeeded(Some(prefs_true.clone()));
-		}		f.go_to_each_marker(markers, );
+			f.verify_rename_succeeded(Some(&prefs_true));
+		}		f.go_to_each_marker(&markers, );
 		f.configure(prefs_false);
 |marker, index| {
-			f.verify_rename_failed(Some(prefs_false.clone()));
-		}		f.go_to_each_marker(markers, );
+			f.verify_rename_failed(Some(&prefs_false));
+		}		f.go_to_each_marker(&markers, );
 	});
 }
 
@@ -41,9 +41,9 @@ export const foo = "bar";
 // @Filename: /index.ts
 export * from "./[|lib/*rename*/rary|]";
 "#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("rename".into());
-		f.verify_rename_range(f.ranges()[0].ls_range, "library".into(), &tsc_lsutil::UserPreferences { allow_rename_of_import_path: tsc_core::tristate::TS_TRUE, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("rename");
+		f.verify_rename_range(f.ranges()[0].ls_range, "library", Some(&tsc_lsutil::UserPreferences { allow_rename_of_import_path: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }));
 	});
 }
 

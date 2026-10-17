@@ -65,7 +65,7 @@ foo./*7*/property1;
 foo./*8*/property2;
 foo./*9*/method5();
 foo.newMet/*14*/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_hover();
 	});
 }

@@ -13,22 +13,22 @@ fn formatting_on_nested_do_while_by_enter() {
 /*5*/}while(a!==b)
 /*6*/}while(a!==b)
 /*7*/}while(a!==b)";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1".into());
-		f.insert("\n".into());
-		f.verify_current_line_content(r"    {".into());
-		f.go_to_marker("2".into());
-		f.verify_current_line_content(r"do{".into());
-		f.go_to_marker("3".into());
-		f.verify_current_line_content(r"    do".into());
-		f.go_to_marker("4".into());
-		f.verify_current_line_content(r"do{".into());
-		f.go_to_marker("5".into());
-		f.verify_current_line_content(r"}while(a!==b)".into());
-		f.go_to_marker("6".into());
-		f.verify_current_line_content(r"}while(a!==b)".into());
-		f.go_to_marker("7".into());
-		f.verify_current_line_content(r"}while(a!==b)".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("1");
+		f.insert("\n");
+		f.verify_current_line_content(r"    {");
+		f.go_to_marker("2");
+		f.verify_current_line_content(r"do{");
+		f.go_to_marker("3");
+		f.verify_current_line_content(r"    do");
+		f.go_to_marker("4");
+		f.verify_current_line_content(r"do{");
+		f.go_to_marker("5");
+		f.verify_current_line_content(r"}while(a!==b)");
+		f.go_to_marker("6");
+		f.verify_current_line_content(r"}while(a!==b)");
+		f.go_to_marker("7");
+		f.verify_current_line_content(r"}while(a!==b)");
 	});
 }
 

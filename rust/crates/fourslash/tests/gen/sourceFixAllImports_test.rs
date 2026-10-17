@@ -14,13 +14,13 @@ export const b: number = 2;
 // @Filename: /main.ts
 a;
 b;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/main.ts".into());
-		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport", new_file_content: r#"import { a } from "./a";
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("/main.ts");
+		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport".to_string().into(), new_file_content: r#"import { a } from "./a";
 import { b } from "./b";
 
 a;
-b;"#, ..Default::default() });
+b;"#.to_string().into(), ..Default::default() });
 	});
 }
 
@@ -34,13 +34,13 @@ export const b: number = 2;
 // @Filename: /main.ts
 a;
 b;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/main.ts".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("/main.ts");
 		f.verify_source_fix_all(r#"import { a } from "./a";
 import { b } from "./b";
 
 a;
-b;"#.into());
+b;"#);
 	});
 }
 

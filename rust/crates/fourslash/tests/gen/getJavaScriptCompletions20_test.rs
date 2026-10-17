@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn get_java_script_completions20() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"// @lib: es5
 // @allowNonTsExtensions: true
 // @Filename: file.js
@@ -25,8 +25,8 @@ function Person(name, age) {
 
 Person.getName = 10;
 Person.getNa/**/ = 10;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: completion_function_members_with_prototype_plus(&["getName", "getNa", &tsc_lsproto::CompletionItem { label: "Person", sort_text: Some((tsc_ls::SORT_TEXT_JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() }, &tsc_lsproto::CompletionItem { label: "name", sort_text: Some((tsc_ls::SORT_TEXT_JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() }, &tsc_lsproto::CompletionItem { label: "age", sort_text: Some((tsc_ls::SORT_TEXT_JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() }]), ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_function_members_with_prototype_plus(&["getName".into(), "getNa".into(), tsc_lsproto::CompletionItem { label: "Person".to_string().into(), sort_text: Some((tsc_ls::SORT_TEXT_JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() }, tsc_lsproto::CompletionItem { label: "name".to_string().into(), sort_text: Some((tsc_ls::SORT_TEXT_JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() }, tsc_lsproto::CompletionItem { label: "age".to_string().into(), sort_text: Some((tsc_ls::SORT_TEXT_JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() }]).into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

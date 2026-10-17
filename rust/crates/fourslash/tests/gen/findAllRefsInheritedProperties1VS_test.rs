@@ -15,8 +15,8 @@ fn find_all_refs_inherited_properties1_vs() {
 var v: class1;
 v./*3*/doStuff();
 v./*4*/propName;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", &tsc_lsproto::ClientCapabilities { vs_supports_visual_studio_extensions: Some((true).into()), ..Default::default() }, content);
-		f.verify_baseline_vs_find_all_references("1".into(), "2".into(), "3".into(), "4".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", Some(tsc_lsproto::ClientCapabilities { vs_supports_visual_studio_extensions: Some((true).into()), ..Default::default() }), content);
+		f.verify_baseline_vs_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into()]);
 	});
 }
 

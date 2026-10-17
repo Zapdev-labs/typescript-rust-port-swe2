@@ -70,17 +70,17 @@ class GenericPlanet2<T extends Food, V>{
     constructor(public name: string, public solarSystem: string, public species: GenericMonster<T, V>) { }
 }
  /*1*/"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_no_errors();
-		f.go_to_marker("1".into());
-		f.insert_line("".into());
-		f.insert_line("".into());
+		f.go_to_marker("1");
+		f.insert_line("");
+		f.insert_line("");
 		f.verify_no_errors();
-		f.go_to_marker("2".into());
+		f.go_to_marker("2");
 		f.delete_at_caret(6);
-		f.insert("any".into());
+		f.insert("any");
 		f.verify_no_errors();
-		f.insert_line("var narnia = new GenericPlanet2<Cookie, string>(".into());
+		f.insert_line("var narnia = new GenericPlanet2<Cookie, string>(");
 	});
 }
 

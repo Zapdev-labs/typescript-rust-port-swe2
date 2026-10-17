@@ -17,9 +17,9 @@ foo: [|switch|] (10) {
         continue;
         continue foo;
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.verify_baseline_document_highlights(None, to_any(f.ranges()));
+		f.verify_baseline_document_highlights(None, to_any(f.ranges()).into_iter().map(Into::into));
 	});
 }
 

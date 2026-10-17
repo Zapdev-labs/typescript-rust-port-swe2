@@ -27,8 +27,8 @@ declare class Mixed extends Mix(BaseClass) {
 
 Mixed./*1*/method;
 ";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1".into(), "(method) Mixed.method(): number".into(), "some documentation".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("1", "(method) Mixed.method(): number", "some documentation");
 	});
 }
 

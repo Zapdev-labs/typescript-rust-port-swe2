@@ -24,9 +24,9 @@ export {};
 A/*parent*/
 // @Filename: /src/index.ts
 export * from "./a";"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_module_specifiers("sibling".into(), &["./a", ".", ".."], None);
-		f.verify_import_fix_module_specifiers("parent".into(), &["../foo", "../foo/a", ".."], None);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_import_fix_module_specifiers("sibling", &["./a".into(), ".".into(), "..".into()], None);
+		f.verify_import_fix_module_specifiers("parent", &["../foo".into(), "../foo/a".into(), "..".into()], None);
 	});
 }
 

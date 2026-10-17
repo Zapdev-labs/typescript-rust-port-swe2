@@ -19,11 +19,11 @@ interface I<X, X> {
     f2<X>(/*addParam*/a: X): X;
 }
 ";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("addParam".into());
-		f.insert(", X".into());
-		f.go_to_marker("addTypeParam".into());
-		f.insert(", X".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("addParam");
+		f.insert(", X");
+		f.go_to_marker("addTypeParam");
+		f.insert(", X");
 	});
 }
 

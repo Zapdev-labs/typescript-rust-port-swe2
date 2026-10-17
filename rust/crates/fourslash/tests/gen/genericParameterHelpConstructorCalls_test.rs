@@ -19,17 +19,17 @@ new testClass<IFoo, /*constructor2*/
 new testClass</*constructor3*/>(null, null, null)
 new testClass<,,/*constructor4*/>(null, null, null)
 new testClass<IFoo,/*constructor5*/IFoo,IFoo>(null, null, null)";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("constructor1".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "testClass<T extends IFoo, U, M extends IFoo>(a: T, b: U, c: M): testClass<T, U, M>", parameter_name: "T", parameter_span: "T extends IFoo", ..Default::default() });
-		f.go_to_marker("constructor2".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "U", parameter_span: "U", ..Default::default() });
-		f.go_to_marker("constructor3".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "T", parameter_span: "T extends IFoo", ..Default::default() });
-		f.go_to_marker("constructor4".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "M", parameter_span: "M extends IFoo", ..Default::default() });
-		f.go_to_marker("constructor5".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "U", parameter_span: "U", ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("constructor1");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "testClass<T extends IFoo, U, M extends IFoo>(a: T, b: U, c: M): testClass<T, U, M>".to_string().into(), parameter_name: "T".to_string().into(), parameter_span: "T extends IFoo".to_string().into(), ..Default::default() });
+		f.go_to_marker("constructor2");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "U".to_string().into(), parameter_span: "U".to_string().into(), ..Default::default() });
+		f.go_to_marker("constructor3");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "T".to_string().into(), parameter_span: "T extends IFoo".to_string().into(), ..Default::default() });
+		f.go_to_marker("constructor4");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "M".to_string().into(), parameter_span: "M extends IFoo".to_string().into(), ..Default::default() });
+		f.go_to_marker("constructor5");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "U".to_string().into(), parameter_span: "U".to_string().into(), ..Default::default() });
 	});
 }
 

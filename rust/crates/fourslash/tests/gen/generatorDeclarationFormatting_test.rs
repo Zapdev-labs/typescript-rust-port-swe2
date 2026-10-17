@@ -9,12 +9,12 @@ fn generator_declaration_formatting() {
 	run_test(|t| {
 		let content = r"function    *g() { }/*1*/
 var v = function    *() { };/*2*/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
-		f.go_to_marker("1".into());
-		f.verify_current_line_content(r"function* g() { }".into());
-		f.go_to_marker("2".into());
-		f.verify_current_line_content(r"var v = function*() { };".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
+		f.go_to_marker("1");
+		f.verify_current_line_content(r"function* g() { }");
+		f.go_to_marker("2");
+		f.verify_current_line_content(r"var v = function*() { };");
 	});
 }
 

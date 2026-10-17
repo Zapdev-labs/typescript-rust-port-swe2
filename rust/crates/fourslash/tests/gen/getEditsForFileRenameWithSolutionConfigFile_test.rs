@@ -30,10 +30,10 @@ b;
 
 // @Filename: /src/b.ts
 export const b = 0;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_will_rename_files_edits("/src/b.ts".into(), "/src/c.ts".into(), vec![("/src/a.ts", r#"import { b } from "./c";
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_will_rename_files_edits("/src/b.ts", "/src/c.ts", &std::collections::BTreeMap::from([("/src/a.ts".to_string().into(), r#"import { b } from "./c";
 b;
-"#)].into_iter().collect::<FxHashMap<_, _>>(), None);
+"#.to_string().into())]), None);
 	});
 }
 
@@ -80,14 +80,14 @@ helper;
 // @Filename: /app/main.ts
 import { helper } from "../lib/helper";
 helper;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("helper".into());
-		let mut result = f.will_rename_files(&tsc_lsproto::FileRename { old_uri: lsconv.file_name_to_document_uri("/lib/helper.ts".into()), new_uri: lsconv.file_name_to_document_uri("/lib/renamed-helper.ts".into()), ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("helper");
+		let mut result = f.will_rename_files(&[tsc_lsproto::FileRename { old_uri: tsc_lsconv::file_name_to_document_uri("/lib/helper.ts").into(), new_uri: tsc_lsconv::file_name_to_document_uri("/lib/renamed-helper.ts").into(), ..Default::default() }]);
 		if result.workspace_edit == None || result.workspace_edit.document_changes == None {
-			panic!("workspace/willRenameFiles returned no document changes".into());
+			panic!("workspace/willRenameFiles returned no document changes");
 		}
 		for change in *result.workspace_edit.document_changes {
-			if change.text_document_edit != None && change.text_document_edit.text_document.uri.file_name() == "/app/main.ts" {
+			if change.text_document_edit != None && change.text_document_edit.text_document.as_mut().unwrap().uri.file_name() == "/app/main.ts" {
 				for edit in change.text_document_edit.edits {
 					if edit.text_edit != None && edit.text_edit.new_text == "../lib/renamed-helper" {
 						return;
@@ -95,7 +95,7 @@ helper;"#;
 				}
 			}
 		}
-		panic!("workspace/willRenameFiles returned no import update for /app/main.ts".into());
+		panic!("workspace/willRenameFiles returned no import update for /app/main.ts");
 	});
 }
 

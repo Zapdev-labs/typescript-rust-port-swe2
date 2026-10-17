@@ -18,9 +18,9 @@ export interface I {
 // @filename: b.ts
 import { I } from './a';
 class Foo implements I {}";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("b.ts".into());
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'I'", new_file_content: r"import { I } from './a';
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("b.ts");
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'I'".to_string().into(), new_file_content: r"import { I } from './a';
 class Foo implements I {
     a(): void {
         throw new Error('Method not implemented.');
@@ -30,7 +30,7 @@ class Foo implements I {
     }
     c: 'c';
     d: { e: 'e'; };
-}", index: 0, user_preferences: &tsc_lsutil::UserPreferences { quote_preference: tsc_lsutil::quote_preference("auto".into()), ..Default::default() }, ..Default::default() });
+}".to_string().into(), index: 0, user_preferences: Some(tsc_lsutil::UserPreferences { quote_preference: tsc_lsutil::quote_preference("auto").into(), ..Default::default() }), ..Default::default() });
 	});
 }
 

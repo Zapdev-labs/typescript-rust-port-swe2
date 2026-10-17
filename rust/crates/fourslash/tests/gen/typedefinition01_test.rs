@@ -13,9 +13,9 @@ import n = require('./a');
 var x/*1*/ = new n.Foo();
 // @Filename: a.ts
 export class /*2*/Foo {}";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.verify_baseline_go_to_type_definition("1".into());
+		f.verify_baseline_go_to_type_definition(&["1".into()]);
 	});
 }
 

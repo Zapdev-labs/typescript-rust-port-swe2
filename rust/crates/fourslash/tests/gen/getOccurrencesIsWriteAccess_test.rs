@@ -24,8 +24,8 @@ var postDecrement = [|{| "isWriteAccess": true |}x|]--;
 
 [|{| "isWriteAccess": true |}x|] += 1;
 [|{| "isWriteAccess": true |}x|] <<= 1;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_document_highlights(None, f.ranges()[0]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_document_highlights(None, vec![f.ranges()[0].into()]);
 	});
 }
 

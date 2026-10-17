@@ -9,8 +9,8 @@ fn code_fix_unused_label_no_suggestion_if_disabled() {
 	run_test(|t| {
 		let content = r"// @allowUnusedLabels: true
 [|foo|]: while (true) {}";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_suggestion_diagnostics(None);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_suggestion_diagnostics(&[]);
 	});
 }
 

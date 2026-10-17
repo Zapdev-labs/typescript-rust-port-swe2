@@ -10,12 +10,12 @@ fn formatting_mapped_type() {
 		let content = r"/*generic*/type t  < T  > =   {
 /*map*/   [   P   in   keyof    T  ]   :   T  [  P  ]
 };";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
-		f.go_to_marker("generic".into());
-		f.verify_current_line_content(r"type t<T> = {".into());
-		f.go_to_marker("map".into());
-		f.verify_current_line_content(r"    [P in keyof T]: T[P]".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
+		f.go_to_marker("generic");
+		f.verify_current_line_content(r"type t<T> = {");
+		f.go_to_marker("map");
+		f.verify_current_line_content(r"    [P in keyof T]: T[P]");
 	});
 }
 

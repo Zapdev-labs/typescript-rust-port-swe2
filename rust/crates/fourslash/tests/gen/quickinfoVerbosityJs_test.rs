@@ -36,8 +36,8 @@ class SomeClass/*5*/ {
     /** @type {SomeType2} */
     b;
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_hover_with_verbosity(vec![("1", vec![0, 1]), ("2", vec![0, 1]), ("3", vec![0, 1]), ("4", vec![0, 1]), ("5", vec![0, 1, 2])].into_iter().collect::<FxHashMap<_, _>>());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("1".to_string().into(), vec![0, 1]), ("2".to_string().into(), vec![0, 1]), ("3".to_string().into(), vec![0, 1]), ("4".to_string().into(), vec![0, 1]), ("5".to_string().into(), vec![0, 1, 2])]));
 	});
 }
 

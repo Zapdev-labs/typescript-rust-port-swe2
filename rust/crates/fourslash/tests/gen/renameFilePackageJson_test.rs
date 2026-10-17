@@ -11,8 +11,8 @@ fn rename_file_package_json() {
 import brushPackageJson from './visx-brush//*rename*/package.json';
 // @Filename: /src/visx-brush/package.json
 { "name": "brush" }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_rename("rename".into(), "package2.json".into(), vec![("/src/example.ts", r"import brushPackageJson from './visx-brush/package2.json';"), ("/src/visx-brush/package2.json", r#"{ "name": "brush" }"#)].into_iter().collect::<FxHashMap<_, _>>());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_rename("rename", "package2.json", &std::collections::BTreeMap::from([("/src/example.ts".to_string().into(), r"import brushPackageJson from './visx-brush/package2.json';".to_string().into()), ("/src/visx-brush/package2.json".to_string().into(), r#"{ "name": "brush" }"#.to_string().into())]));
 	});
 }
 
@@ -24,14 +24,14 @@ fn rename_file_empty_and_dot_stems() {
 				let mut content = format!(r#"// @Filename: /src/%s
 export declare const value: number;
 // @Filename: /src/main.ts
-import { value } from ".//*rename*/%s.js";"#.into(), file_name, tspath.remove_file_extension(file_name));
-				let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+import { value } from ".//*rename*/%s.js";"#, file_name, tsc_tspath::remove_file_extension(file_name));
+				let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 				f.verify_no_errors();
 				let mut extension = ".ts";
-				if tspath.is_declaration_file_name(file_name) {
+				if tsc_tspath::is_declaration_file_name(file_name) {
 					extension = ".d.ts";
 				}
-				f.verify_rename("rename".into(), "renamed.js".into(), vec![("/src/main.ts", r#"import { value } from "./renamed.js";"#), ("/src/renamed" + extension, r"export declare const value: number;")].into_iter().collect::<FxHashMap<_, _>>());
+				f.verify_rename("rename", "renamed.js", &std::collections::BTreeMap::from([("/src/main.ts".to_string().into(), r#"import { value } from "./renamed.js";"#.to_string().into()), (format!("{}{}", "/src/renamed", extension).into(), r"export declare const value: number;".to_string().into())]));
 			});
 		}
 	});

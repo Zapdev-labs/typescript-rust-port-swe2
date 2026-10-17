@@ -14,8 +14,8 @@ fn quick_info_for_object_binding_element_property_name02() {
 
 var foo: I;
 var { /**/property1: {} } = foo;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("".into(), "(property) I.property1: number".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("", "(property) I.property1: number", "");
 	});
 }
 

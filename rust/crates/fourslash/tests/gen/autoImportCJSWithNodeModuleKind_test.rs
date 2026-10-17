@@ -23,12 +23,12 @@ module.exports = { LIB_VERSION: 1 };
 // @Filename: /main.js
 module.exports.foo = 0;
 LIB_VERSION/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
 		f.verify_import_fix_at_position(&[r#"const { LIB_VERSION } = require("./lib");
 
 module.exports.foo = 0;
-LIB_VERSION"#], None);
+LIB_VERSION"#.into()], None);
 	});
 }
 
@@ -50,11 +50,11 @@ fn auto_import_cjs_with_node_module_kind_empty_file() {
 module.exports = { LIB_VERSION: 1 };
 // @Filename: /main.js
 LIB_VERSION/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
 		f.verify_import_fix_at_position(&[r#"const { LIB_VERSION } = require("./lib");
 
-LIB_VERSION"#], None);
+LIB_VERSION"#.into()], None);
 	});
 }
 
@@ -76,11 +76,11 @@ export const LIB_VERSION = 1;
 // @Filename: /main.js
 const path = require("path");
 LIB_VERSION/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
 		f.verify_import_fix_at_position(&[r#"const path = require("path");
 const { LIB_VERSION } = require("./lib");
-LIB_VERSION"#], None);
+LIB_VERSION"#.into()], None);
 	});
 }
 

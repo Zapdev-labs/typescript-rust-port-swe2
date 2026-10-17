@@ -27,8 +27,8 @@ fn formatting_chaining_methods() {
 1
     .toFixed(
         2);";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
 		f.verify_current_file_content(r"z$ = this.store.select(this.fake())
     .ofType(
         'ACTION',
@@ -48,7 +48,7 @@ fn formatting_chaining_methods() {
 
 1
     .toFixed(
-        2);".into());
+        2);");
 	});
 }
 

@@ -10,8 +10,8 @@ fn go_to_definition_implicit_constructor() {
 		let content = r"class /*constructorDefinition*/ImplicitConstructor {
 }
 var implicitConstructor = new /*constructorReference*/ImplicitConstructor();";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(false, "constructorReference".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_definition(false, &["constructorReference".into()]);
 	});
 }
 

@@ -10,8 +10,8 @@ fn find_all_refs_export_default_class_constructor() {
 		let content = r"export default class {
     /*1*/constructor() {}
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["1".into()]);
 	});
 }
 

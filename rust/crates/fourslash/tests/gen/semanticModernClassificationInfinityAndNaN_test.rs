@@ -31,8 +31,8 @@ const obj2 = {
 
 obj2.Infinity;
 obj2.NaN;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type: "variable.declaration.readonly".into(), text: "obj1".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.readonly".into(), text: "obj1".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.readonly".into(), text: "obj1".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.readonly".into(), text: "obj1".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.declaration.readonly".into(), text: "obj2".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.readonly".into(), text: "obj2".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.readonly".into(), text: "obj2".into(), ..Default::default() }]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type_: "variable.declaration.readonly".to_string().into(), text: "obj1".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.readonly".to_string().into(), text: "obj1".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.readonly".to_string().into(), text: "obj1".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.readonly".to_string().into(), text: "obj1".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.declaration.readonly".to_string().into(), text: "obj2".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.readonly".to_string().into(), text: "obj2".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.readonly".to_string().into(), text: "obj2".to_string().into(), ..Default::default() }]);
 	});
 }
 

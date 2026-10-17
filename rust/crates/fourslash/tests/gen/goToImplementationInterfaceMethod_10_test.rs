@@ -47,8 +47,8 @@ function someFunction(x: Foo | Bar) {
 function anotherFunction(x: Foo & Bar) {
 	 x.he/*function_call1*/llo();
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_implementation("function_call0".into(), "function_call1".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_implementation(&["function_call0".into(), "function_call1".into()]);
 	});
 }
 

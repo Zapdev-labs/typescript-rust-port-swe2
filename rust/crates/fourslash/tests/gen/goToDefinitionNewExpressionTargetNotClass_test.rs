@@ -16,8 +16,8 @@ new [|/*invokeExpression1*/I|]();
 let /*symbolDeclaration*/I2: {
 };
 new [|/*invokeExpression2*/I2|]();";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "invokeExpression1".into(), "invokeExpression2".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_definition(true, &["invokeExpression1".into(), "invokeExpression2".into()]);
 	});
 }
 

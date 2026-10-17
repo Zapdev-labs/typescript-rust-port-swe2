@@ -16,14 +16,14 @@ var y = 10;
 // @Filename: consumer.js
 var x = require('./myMod');
 /**/;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("consumer.js".into());
-		f.go_to_marker("".into());
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "y", sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), ..Default::default() }], excludes: vec!["invisible"], ..Default::default() }, ..Default::default() });
-		f.insert("x.".into());
-		f.verify_completions(None, &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "a", kind: Some((tsc_lsproto::CompletionItemKind::FIELD).into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
-		f.insert("a.".into());
-		f.verify_completions(None, &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "toFixed", kind: Some((tsc_lsproto::CompletionItemKind::METHOD).into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("consumer.js");
+		f.go_to_marker("");
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "y".to_string().into(), sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), ..Default::default() }.into()].into(), excludes: vec!["invisible".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.insert("x.");
+		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "a".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Field).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
+		f.insert("a.");
+		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "toFixed".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Method).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

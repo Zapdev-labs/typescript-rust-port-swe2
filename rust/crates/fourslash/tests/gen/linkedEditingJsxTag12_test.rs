@@ -55,8 +55,8 @@ function Test() {
         </div>
     </div>
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_linked_editing(vec![("0", None)].into_iter().collect::<FxHashMap<_, _>>());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_linked_editing(&std::collections::BTreeMap::from([("0".to_string().into(), None)]));
 		f.verify_baseline_linked_editing();
 	});
 }

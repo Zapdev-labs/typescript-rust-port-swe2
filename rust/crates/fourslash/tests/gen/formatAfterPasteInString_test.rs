@@ -8,12 +8,12 @@ use tsc_fourslash::*;
 fn format_after_paste_in_string() {
 	run_test(|t| {
 		let content = r"/*2*/const x = f('aa/*1*/a').x()";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1".into());
-		f.paste("bb".into());
-		f.format_document("".into());
-		f.go_to_marker("2".into());
-		f.verify_current_line_content(r"const x = f('aabba').x()".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("1");
+		f.paste("bb");
+		f.format_document("");
+		f.go_to_marker("2");
+		f.verify_current_line_content(r"const x = f('aabba').x()");
 	});
 }
 

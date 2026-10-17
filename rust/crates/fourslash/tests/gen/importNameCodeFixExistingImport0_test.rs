@@ -12,8 +12,8 @@ f1/*0*/();
 // @Filename: module.ts
 export function f1() {}
 export var v1 = 5;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_at_position(&[r"{ f1, v1 }"], None);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_import_fix_at_position(&[r"{ f1, v1 }".into()], None);
 	});
 }
 

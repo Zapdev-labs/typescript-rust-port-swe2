@@ -11,8 +11,8 @@ fn get_edits_for_file_rename_shorten_relative_paths() {
 
 // @Filename: /src/old.ts
 import { x } from "./foo/x";"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_will_rename_files_edits("/src/old.ts".into(), "/src/foo/new.ts".into(), vec![("/src/foo/new.ts", r#"import { x } from "./x";"#)].into_iter().collect::<FxHashMap<_, _>>(), None);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_will_rename_files_edits("/src/old.ts", "/src/foo/new.ts", &std::collections::BTreeMap::from([("/src/foo/new.ts".to_string().into(), r#"import { x } from "./x";"#.to_string().into())]), None);
 	});
 }
 

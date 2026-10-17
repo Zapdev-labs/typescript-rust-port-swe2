@@ -25,9 +25,9 @@ export declare const value2: {
 export declare const value3: {
     sliceSelectors: <FuncMap extends [|SelectorMap<FuncMap>|]>(selectorsBySlice: FuncMap) => { [P in keyof FuncMap]: Parameters<FuncMap[P]> };
 };";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("index.ts".into());
-		f.verify_suggestion_diagnostics(&[tsc_lsproto::Diagnostic { code: Some(tsc_lsproto::IntegerOrString { integer: Some(((6385) as i32).into()), ..Default::default() }), message: tsc_lsproto::StringOrMarkupContent { string: Some(("'SelectorMap' is deprecated.").into()), ..Default::default() }, tags: Some(vec![tsc_lsproto::DiagnosticTag::DEPRECATED]), range: f.ranges()[0].ls_range, ..Default::default() }, tsc_lsproto::Diagnostic { code: Some(tsc_lsproto::IntegerOrString { integer: Some(((6385) as i32).into()), ..Default::default() }), message: tsc_lsproto::StringOrMarkupContent { string: Some(("'SelectorMap' is deprecated.").into()), ..Default::default() }, tags: Some(vec![tsc_lsproto::DiagnosticTag::DEPRECATED]), range: f.ranges()[1].ls_range, ..Default::default() }]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("index.ts");
+		f.verify_suggestion_diagnostics(&[tsc_lsproto::Diagnostic { code: Some(tsc_lsproto::IntegerOrString { integer: Some(((6385) as i32).into()), ..Default::default() }), message: tsc_lsproto::StringOrMarkupContent { string: Some(("'SelectorMap' is deprecated.").into()), ..Default::default() }.into(), tags: Some(vec![tsc_lsproto::DiagnosticTag::Deprecated]), range: f.ranges()[0].ls_range.into(), ..Default::default() }, tsc_lsproto::Diagnostic { code: Some(tsc_lsproto::IntegerOrString { integer: Some(((6385) as i32).into()), ..Default::default() }), message: tsc_lsproto::StringOrMarkupContent { string: Some(("'SelectorMap' is deprecated.").into()), ..Default::default() }.into(), tags: Some(vec![tsc_lsproto::DiagnosticTag::Deprecated]), range: f.ranges()[1].ls_range.into(), ..Default::default() }]);
 	});
 }
 

@@ -28,26 +28,26 @@ foo()<number, string, T >();
 }
 /*expressionWithTypeArguments*/class A < T > extends bar <  T >( )  <  T > {
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
-		f.go_to_marker("inClassDeclaration".into());
-		f.verify_current_line_content(r"class Foo<T1, T2> {".into());
-		f.go_to_marker("inMethodDeclaration".into());
-		f.verify_current_line_content(r"    public method<T3, T4>(a: T1, b: Array<T4>): Map<T1, T2, Array<T3>> {".into());
-		f.go_to_marker("typeArguments".into());
-		f.verify_current_line_content(r"var foo = new Foo<number, Array<number>>();".into());
-		f.go_to_marker("typeArgumentsWithTypeLiterals".into());
-		f.verify_current_line_content(r"foo = new Foo<{ bar: number }, Array<{ baz: string }>>();".into());
-		f.go_to_marker("inNewSignature".into());
-		f.verify_current_line_content(r"    new <T>(a: T);".into());
-		f.go_to_marker("inOptionalMethodSignature".into());
-		f.verify_current_line_content(r"    op?<T, M>(a: T, b: M);".into());
-		f.go_to_marker("inFunctionDeclaration".into());
-		f.verify_current_line_content(r"function bar<T>() {".into());
-		f.go_to_marker("inClassExpression".into());
-		f.verify_current_line_content(r"    return class <T2> {".into());
-		f.go_to_marker("expressionWithTypeArguments".into());
-		f.verify_current_line_content(r"class A<T> extends bar<T>()<T> {".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
+		f.go_to_marker("inClassDeclaration");
+		f.verify_current_line_content(r"class Foo<T1, T2> {");
+		f.go_to_marker("inMethodDeclaration");
+		f.verify_current_line_content(r"    public method<T3, T4>(a: T1, b: Array<T4>): Map<T1, T2, Array<T3>> {");
+		f.go_to_marker("typeArguments");
+		f.verify_current_line_content(r"var foo = new Foo<number, Array<number>>();");
+		f.go_to_marker("typeArgumentsWithTypeLiterals");
+		f.verify_current_line_content(r"foo = new Foo<{ bar: number }, Array<{ baz: string }>>();");
+		f.go_to_marker("inNewSignature");
+		f.verify_current_line_content(r"    new <T>(a: T);");
+		f.go_to_marker("inOptionalMethodSignature");
+		f.verify_current_line_content(r"    op?<T, M>(a: T, b: M);");
+		f.go_to_marker("inFunctionDeclaration");
+		f.verify_current_line_content(r"function bar<T>() {");
+		f.go_to_marker("inClassExpression");
+		f.verify_current_line_content(r"    return class <T2> {");
+		f.go_to_marker("expressionWithTypeArguments");
+		f.verify_current_line_content(r"class A<T> extends bar<T>()<T> {");
 	});
 }
 

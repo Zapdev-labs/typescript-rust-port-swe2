@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn local_get_references() {
 	run_test(|t| {
-		let content = r#"// @Filename: localGetReferences_1.ts
+		let content = format!("{}{}", format!("{}{}", r#"// @Filename: localGetReferences_1.ts
 // Comment Refence Test: g/*43*/lobalVar
 // References to a variable declared in global.
 /*1*/var /*2*/globalVar: number = 2;
@@ -176,7 +176,7 @@ namespace remotemodTest {
 	class remotetestCls {
 		static remoteboo = remotefoo;
 	}
-"# + "`" + r"
+"#, "`"), r"
 	function remotetestFn(){
         static remoteboo = remotefoo;
 
@@ -189,9 +189,9 @@ namespace remotemodTest {
 	namespace remotetestMod {
 		var remoteboo = remotefoo;
 	}
-}";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into(), "7".into(), "8".into(), "9".into(), "10".into(), "11".into(), "12".into(), "13".into(), "14".into(), "15".into(), "16".into(), "17".into(), "18".into(), "19".into(), "20".into(), "21".into(), "22".into(), "23".into(), "24".into(), "25".into(), "26".into(), "27".into(), "28".into(), "29".into(), "30".into(), "31".into(), "32".into(), "33".into(), "34".into(), "35".into(), "36".into(), "37".into(), "38".into(), "39".into(), "40".into(), "41".into(), "42".into(), "43".into(), "44".into(), "45".into());
+}");
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into(), "7".into(), "8".into(), "9".into(), "10".into(), "11".into(), "12".into(), "13".into(), "14".into(), "15".into(), "16".into(), "17".into(), "18".into(), "19".into(), "20".into(), "21".into(), "22".into(), "23".into(), "24".into(), "25".into(), "26".into(), "27".into(), "28".into(), "29".into(), "30".into(), "31".into(), "32".into(), "33".into(), "34".into(), "35".into(), "36".into(), "37".into(), "38".into(), "39".into(), "40".into(), "41".into(), "42".into(), "43".into(), "44".into(), "45".into()]);
 	});
 }
 

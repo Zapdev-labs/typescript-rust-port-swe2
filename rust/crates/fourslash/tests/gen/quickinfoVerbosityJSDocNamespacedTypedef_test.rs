@@ -20,8 +20,8 @@ fn quick_info_verbosity_js_doc_namespaced_typedef() {
 // Namespaced typedef aliased to implicitly-resolved typedef.
 /** @typedef {U} NS./*v*/V */
 ";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_hover_with_verbosity(vec![("ns", vec![0, 1]), ("t", vec![0, 1]), ("u", vec![0, 1]), ("v", vec![0, 1])].into_iter().collect::<FxHashMap<_, _>>());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("ns".to_string().into(), vec![0, 1]), ("t".to_string().into(), vec![0, 1]), ("u".to_string().into(), vec![0, 1]), ("v".to_string().into(), vec![0, 1])]));
 	});
 }
 

@@ -28,8 +28,8 @@ else/*11*/
 if/*12*/ (false) {
 }
 else/*13*/ { }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_document_highlights(None, to_any(f.markers()));
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_document_highlights(None, to_any(f.markers()).into_iter().map(Into::into));
 	});
 }
 

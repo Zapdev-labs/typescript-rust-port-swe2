@@ -16,8 +16,8 @@ fn import_type_node_go_to_definition() {
 // @Filename: /usage.ts
 type A = typeof import([|/*1*/"./ns"|]).[|/*2*/Foo|].[|/*3*/Bar|];
 type B = import([|/*4*/"./ns"|]).[|/*5*/Foo|].[|/*6*/Bar|].[|/*7*/Baz|];"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into(), "7".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_definition(true, &["1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into(), "7".into()]);
 	});
 }
 

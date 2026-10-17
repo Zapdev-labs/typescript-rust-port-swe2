@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn import_fixes_global_typings_cache() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r#"// @Filename: /project/tsconfig.json
  { "compilerOptions": { "allowJs": true, "checkJs": true, "module": "commonjs" } }
 // @Filename: /home/src/Library/Caches/typescript/node_modules/@types/react-router-dom/package.json
@@ -20,11 +20,11 @@ export class BrowserRouter {}
  export const BrowserRouter = () => null;
 // @Filename: /project/index.js
 BrowserRouter/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/project/index.js".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("/project/index.js");
 		f.verify_import_fix_at_position(&[r#"const { BrowserRouter } = require("react-router-dom");
 
-BrowserRouter"#], None);
+BrowserRouter"#.into()], None);
 	});
 }
 

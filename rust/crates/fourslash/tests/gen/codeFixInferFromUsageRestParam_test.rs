@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_infer_from_usage_rest_param() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r#"// @strict: false
 // @noImplicitAny: true
 function f(a: number, [|...rest |]){
@@ -17,8 +17,8 @@ f(1);
 f(2, "s1");
 f(3, "s1", "s2");
 f(3, "s1", "s2", "s3", "s4");"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_range_after_code_fix(r"...rest: string[]".into(), false, 0, 0);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_range_after_code_fix(r"...rest: string[]", false, 0, 0);
 	});
 }
 

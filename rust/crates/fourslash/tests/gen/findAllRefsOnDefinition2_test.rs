@@ -19,8 +19,8 @@ import Second = require("./findAllRefsOnDefinition2-import");
 
 var start: Second.Test./*3*/start;
 var stop: Second.Test.stop;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1".into(), "2".into(), "3".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
 	});
 }
 

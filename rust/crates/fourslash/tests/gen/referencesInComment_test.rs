@@ -11,8 +11,8 @@ fn references_in_comment() {
 /* in comments should not find fo/*3*/o or bar/*4*/ */
 class foo { }
 var bar = 0;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1".into(), "2".into(), "3".into(), "4".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into()]);
 	});
 }
 

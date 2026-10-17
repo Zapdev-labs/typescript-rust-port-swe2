@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_for_indexer_result_with_constraint() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"function foo<T>(x: T) {
         return x;
 }
@@ -15,8 +15,8 @@ function other2<T extends Date>(arg: T) {
     var b: { [x: string]: T };
     var /*1*/r2 = foo(b); // just shows T
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1".into(), "(local var) r2: {\n    [x: string]: T;\n}".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("1", "(local var) r2: {\n    [x: string]: T;\n}", "");
 	});
 }
 

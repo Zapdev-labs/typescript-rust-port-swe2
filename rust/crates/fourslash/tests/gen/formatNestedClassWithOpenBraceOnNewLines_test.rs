@@ -12,21 +12,21 @@ fn format_nested_class_with_open_brace_on_new_lines() {
     class B {
         /*1*/
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		let mut opts168 = f.get_options();
 		opts168.format_code_settings.place_open_brace_on_new_line_for_control_blocks = tsc_core::tristate::TS_TRUE;
 		f.configure(opts168);
 		let mut opts232 = f.get_options();
 		opts232.format_code_settings.place_open_brace_on_new_line_for_functions = tsc_core::tristate::TS_TRUE;
 		f.configure(opts232);
-		f.go_to_marker("1".into());
-		f.insert("}".into());
+		f.go_to_marker("1");
+		f.insert("}");
 		f.verify_current_file_content(r"module A
 {
     class B
     {
     }
-}".into());
+}");
 	});
 }
 

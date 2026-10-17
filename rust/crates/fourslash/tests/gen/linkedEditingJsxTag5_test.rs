@@ -24,10 +24,10 @@ const jsx = (
    <di/*11*/v>
    </*12*/ //*13*/div>
 );";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		let mut linked_cursors1 = vec![tsc_lsproto::Range { start: f.marker_by_name("1start".into()).ls_position, end: f.marker_by_name("1".into()).ls_position, ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("2start".into()).ls_position, end: f.marker_by_name("2".into()).ls_position, ..Default::default() }];
-		let mut linked_cursors2 = vec![tsc_lsproto::Range { start: f.marker_by_name("6start".into()).ls_position, end: f.marker_by_name("6".into()).ls_position, ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("7start".into()).ls_position, end: f.marker_by_name("7".into()).ls_position, ..Default::default() }];
-		f.verify_linked_editing(vec![("0", None), ("1", linked_cursors1), ("2", linked_cursors1), ("3", None), ("4", None), ("5", None), ("6", linked_cursors2), ("7", linked_cursors2), ("8", None), ("9", None), ("10", None), ("11", None), ("12", None), ("13", None)].into_iter().collect::<FxHashMap<_, _>>());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut linked_cursors1 = vec![tsc_lsproto::Range { start: f.marker_by_name("1start").unwrap().ls_position.into(), end: f.marker_by_name("1").unwrap().ls_position.into(), ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("2start").unwrap().ls_position.into(), end: f.marker_by_name("2").unwrap().ls_position.into(), ..Default::default() }];
+		let mut linked_cursors2 = vec![tsc_lsproto::Range { start: f.marker_by_name("6start").unwrap().ls_position.into(), end: f.marker_by_name("6").unwrap().ls_position.into(), ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("7start").unwrap().ls_position.into(), end: f.marker_by_name("7").unwrap().ls_position.into(), ..Default::default() }];
+		f.verify_linked_editing(&std::collections::BTreeMap::from([("0".to_string().into(), None), ("1".to_string().into(), linked_cursors1.into()), ("2".to_string().into(), linked_cursors1.into()), ("3".to_string().into(), None), ("4".to_string().into(), None), ("5".to_string().into(), None), ("6".to_string().into(), linked_cursors2.into()), ("7".to_string().into(), linked_cursors2.into()), ("8".to_string().into(), None), ("9".to_string().into(), None), ("10".to_string().into(), None), ("11".to_string().into(), None), ("12".to_string().into(), None), ("13".to_string().into(), None)]));
 	});
 }
 

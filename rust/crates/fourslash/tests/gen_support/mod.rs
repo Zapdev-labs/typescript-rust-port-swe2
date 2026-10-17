@@ -53,3 +53,8 @@ pub fn run_subtest(_t: &mut TestHandle, _name: String, f: impl FnOnce(&mut TestH
         tsc_testutil::recover_and_fail(&format!("Panic on fourslash subtest {_name}"), &payload);
     }
 }
+
+/// `stringtestutil.Dedent` — string in, string out (Go strings are UTF-8).
+pub fn dedent(text: &str) -> String {
+    String::from_utf8(tsc_testutil::stringtestutil::dedent(text.as_bytes())).unwrap()
+}

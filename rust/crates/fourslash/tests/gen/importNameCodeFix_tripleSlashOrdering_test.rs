@@ -45,47 +45,47 @@ const y = x + 1;
 /// <amd-dependency path="legacy/moduleA" name="moduleA" />
 
 const y = x + 1;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/b.ts".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("/b.ts");
 		f.verify_import_fix_at_position(&[r#"// some comment
 
 /// <reference lib="es2017.string" />
 
 import { x } from "./a";
 
-const y = x + 1;"#], None);
-		f.go_to_file("/c.ts".into());
+const y = x + 1;"#.into()], None);
+		f.go_to_file("/c.ts");
 		f.verify_import_fix_at_position(&[r#"// some comment
 
 /// <reference path="jquery-1.8.3.js" />
 
 import { x } from "./a";
 
-const y = x + 1;"#], None);
-		f.go_to_file("/d.ts".into());
+const y = x + 1;"#.into()], None);
+		f.go_to_file("/d.ts");
 		f.verify_import_fix_at_position(&[r#"// some comment
 
 /// <reference types="node" />
 
 import { x } from "./a";
 
-const y = x + 1;"#], None);
-		f.go_to_file("/f.ts".into());
+const y = x + 1;"#.into()], None);
+		f.go_to_file("/f.ts");
 		f.verify_import_fix_at_position(&[r#"// some comment
 
 /// <amd-module name="NamedModule" />
 
 import { x } from "./a";
 
-const y = x + 1;"#], None);
-		f.go_to_file("/g.ts".into());
+const y = x + 1;"#.into()], None);
+		f.go_to_file("/g.ts");
 		f.verify_import_fix_at_position(&[r#"// some comment
 
 /// <amd-dependency path="legacy/moduleA" name="moduleA" />
 
 import { x } from "./a";
 
-const y = x + 1;"#], None);
+const y = x + 1;"#.into()], None);
 	});
 }
 

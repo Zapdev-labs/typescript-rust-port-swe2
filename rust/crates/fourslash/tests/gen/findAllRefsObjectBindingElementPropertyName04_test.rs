@@ -18,8 +18,8 @@ function f({ /*1*/property1: p1 }: I,
 
     return /*3*/property1 + 1;
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("0".into(), "1".into(), "2".into(), "3".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["0".into(), "1".into(), "2".into(), "3".into()]);
 	});
 }
 

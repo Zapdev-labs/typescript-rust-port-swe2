@@ -14,8 +14,8 @@ function /*functionOverloadDefinition*/functionOverload() {}
 [|/*functionOverloadReference1*/functionOverload|](123);
 [|/*functionOverloadReference2*/functionOverload|]("123");
 [|/*brokenOverload*/functionOverload|]({});"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "functionOverloadReference1".into(), "functionOverloadReference2".into(), "brokenOverload".into(), "functionOverload1".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_definition(true, &["functionOverloadReference1".into(), "functionOverloadReference2".into(), "brokenOverload".into(), "functionOverload1".into()]);
 	});
 }
 

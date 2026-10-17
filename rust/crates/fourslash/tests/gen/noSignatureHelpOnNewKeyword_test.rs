@@ -10,10 +10,10 @@ fn no_signature_help_on_new_keyword() {
 		let content = r"class Foo { }
 new/*1*/ Foo
 new /*2*/Foo(/*3*/)";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_no_signature_help_for_markers("1".into(), "2".into());
-		f.go_to_marker("3".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "Foo(): Foo", ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_no_signature_help_for_markers(&["1".into(), "2".into()]);
+		f.go_to_marker("3");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "Foo(): Foo".to_string().into(), ..Default::default() });
 	});
 }
 

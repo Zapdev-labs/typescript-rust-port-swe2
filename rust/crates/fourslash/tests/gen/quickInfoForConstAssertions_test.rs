@@ -11,7 +11,7 @@ fn quick_info_for_const_assertions() {
 const b = 1 as /*2*/const;
 const c = "c" as /*3*/const;
 const d = [1, 2] as /*4*/const;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_hover();
 	});
 }

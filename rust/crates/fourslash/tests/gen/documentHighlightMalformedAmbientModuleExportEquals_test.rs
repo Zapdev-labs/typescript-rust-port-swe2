@@ -13,8 +13,8 @@ declare moduleu "m" {
   function f(): A[];
   /*m*/export = f;
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_document_highlights(None, "m".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_document_highlights(None, vec!["m".into()]);
 	});
 }
 

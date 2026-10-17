@@ -23,14 +23,14 @@ import old2 from "../index";
 
 // @Filename: /tsconfig.json
 { "files": ["a.ts", "src/a.ts", "src/foo/a.ts", "src/index.ts"] }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_will_rename_files_edits("/src/index.ts".into(), "/src/new.ts".into(), vec![("/a.ts", r#"/// <reference path="./src/new.ts" />
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_will_rename_files_edits("/src/index.ts", "/src/new.ts", &std::collections::BTreeMap::from([("/a.ts".to_string().into(), r#"/// <reference path="./src/new.ts" />
 import old from "./src/new";
-import old2 from "./src/new";"#), ("/src/a.ts", r#"/// <reference path="./new.ts" />
+import old2 from "./src/new";"#.to_string().into()), ("/src/a.ts".to_string().into(), r#"/// <reference path="./new.ts" />
 import old from "./new";
-import old2 from "./new";"#), ("/src/foo/a.ts", r#"/// <reference path="../new.ts" />
+import old2 from "./new";"#.to_string().into()), ("/src/foo/a.ts".to_string().into(), r#"/// <reference path="../new.ts" />
 import old from "../new";
-import old2 from "../new";"#), ("/tsconfig.json", r#"{ "files": ["a.ts", "src/a.ts", "src/foo/a.ts", "src/new.ts"] }"#)].into_iter().collect::<FxHashMap<_, _>>(), None);
+import old2 from "../new";"#.to_string().into()), ("/tsconfig.json".to_string().into(), r#"{ "files": ["a.ts", "src/a.ts", "src/foo/a.ts", "src/new.ts"] }"#.to_string().into())]), None);
 	});
 }
 

@@ -10,24 +10,24 @@ fn formatting_for_loop_semicolons() {
 		let content = r"/*1*/for (;;) { }
 /*2*/for (var x;x<0;x++) { }
 /*3*/for (var x ;x<0 ;x++) { }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
-		f.go_to_marker("1".into());
-		f.verify_current_line_content(r"for (; ;) { }".into());
-		f.go_to_marker("2".into());
-		f.verify_current_line_content(r"for (var x; x < 0; x++) { }".into());
-		f.go_to_marker("3".into());
-		f.verify_current_line_content(r"for (var x; x < 0; x++) { }".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
+		f.go_to_marker("1");
+		f.verify_current_line_content(r"for (; ;) { }");
+		f.go_to_marker("2");
+		f.verify_current_line_content(r"for (var x; x < 0; x++) { }");
+		f.go_to_marker("3");
+		f.verify_current_line_content(r"for (var x; x < 0; x++) { }");
 		let mut opts444 = f.get_options();
 		opts444.format_code_settings.insert_space_after_semicolon_in_for_statements = tsc_core::tristate::TS_FALSE;
 		f.configure(opts444);
-		f.format_document("".into());
-		f.go_to_marker("1".into());
-		f.verify_current_line_content(r"for (;;) { }".into());
-		f.go_to_marker("2".into());
-		f.verify_current_line_content(r"for (var x;x < 0;x++) { }".into());
-		f.go_to_marker("3".into());
-		f.verify_current_line_content(r"for (var x;x < 0;x++) { }".into());
+		f.format_document("");
+		f.go_to_marker("1");
+		f.verify_current_line_content(r"for (;;) { }");
+		f.go_to_marker("2");
+		f.verify_current_line_content(r"for (var x;x < 0;x++) { }");
+		f.go_to_marker("3");
+		f.verify_current_line_content(r"for (var x;x < 0;x++) { }");
 	});
 }
 

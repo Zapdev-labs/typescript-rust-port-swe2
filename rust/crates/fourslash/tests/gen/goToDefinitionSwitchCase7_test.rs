@@ -10,8 +10,8 @@ fn go_to_definition_switch_case7() {
 		let content = r"switch (null) {
   case null:
     export [|/*start*/default|] 123;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "start".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_definition(true, &["start".into()]);
 	});
 }
 

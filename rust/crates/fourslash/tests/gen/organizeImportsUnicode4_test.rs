@@ -15,7 +15,7 @@ fn organize_imports_unicode4() {
 } from './foo';
 
 console.log(_aB, _Ab, aB, Ab);";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_organize_imports(r"import {
     _Ab,
     _aB,
@@ -23,7 +23,7 @@ console.log(_aB, _Ab, aB, Ab);";
     aB,
 } from './foo';
 
-console.log(_aB, _Ab, aB, Ab);".into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_FALSE, organize_imports_collation: tsc_lsutil::OrganizeImportsCollation::UNICODE, organize_imports_case_first: tsc_lsutil::OrganizeImportsCaseFirst::UPPER, ..Default::default() });
+console.log(_aB, _Ab, aB, Ab);", tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_FALSE.into(), organize_imports_collation: tsc_lsutil::OrganizeImportsCollation::UNICODE.into(), organize_imports_case_first: tsc_lsutil::OrganizeImportsCaseFirst::UPPER.into(), ..Default::default() }));
 		f.verify_organize_imports(r"import {
     _aB,
     _Ab,
@@ -31,7 +31,7 @@ console.log(_aB, _Ab, aB, Ab);".into(), tsc_lsproto::CodeActionKind::SOURCE_ORGA
     Ab,
 } from './foo';
 
-console.log(_aB, _Ab, aB, Ab);".into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_FALSE, organize_imports_collation: tsc_lsutil::OrganizeImportsCollation::UNICODE, organize_imports_case_first: tsc_lsutil::OrganizeImportsCaseFirst::LOWER, ..Default::default() });
+console.log(_aB, _Ab, aB, Ab);", tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_FALSE.into(), organize_imports_collation: tsc_lsutil::OrganizeImportsCollation::UNICODE.into(), organize_imports_case_first: tsc_lsutil::OrganizeImportsCaseFirst::LOWER.into(), ..Default::default() }));
 	});
 }
 

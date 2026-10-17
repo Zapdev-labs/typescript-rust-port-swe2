@@ -29,11 +29,11 @@ f2<typeof /*1uValueOnly*/x, {| "newId": true |}T{| "newId": true |}y{| "newId": 
 f2</*1x*/T/*2x*/y/*3x*/, () =>/*4x*/T/*5x*/y/*6x*/
 f2<() =>/*1y*/T/*2y*/y/*3y*/, () =>/*4y*/T/*5y*/y/*6y*/
 f2<any, () =>/*1z*/T/*2z*/y/*3z*/"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 |marker, index| {
 			let mut marker_name = marker.name;
-			let mut value_only = marker_name != None && strings.has_suffix(*marker_name, "ValueOnly".into());
-			let mut commit_characters = Some(default_commit_characters.clone());
+			let mut value_only = marker_name != None && strings.has_suffix(*marker_name, "ValueOnly");
+			let mut commit_characters = Some(tsc_fourslash::default_commit_characters().clone());
 			if marker.data != None {
 				let mut new_id = marker.data["newId"];
 				let mut type_only = marker.data["typeOnly"];
@@ -50,8 +50,8 @@ f2<any, () =>/*1z*/T/*2z*/y/*3z*/"#;
 				includes = vec!["Type"];
 				excludes = vec!["x"];
 			}
-			f.verify_completions(marker, &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: commit_characters, edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: includes, excludes: excludes, ..Default::default() }, ..Default::default() });
-		}		f.go_to_each_marker(None, );
+			f.verify_completions(marker.into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: commit_characters.into(), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: includes.into(), excludes: excludes.into(), ..Default::default() }), ..Default::default() }));
+		}		f.go_to_each_marker(&[], );
 	});
 }
 

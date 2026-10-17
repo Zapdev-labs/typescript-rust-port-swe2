@@ -10,7 +10,7 @@ fn get_semantic_diagnostic_for_declaration1() {
 		let content = r"// @declaration: true
 // @Filename: File.d.ts
 declare var v: string;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_no_errors();
 	});
 }

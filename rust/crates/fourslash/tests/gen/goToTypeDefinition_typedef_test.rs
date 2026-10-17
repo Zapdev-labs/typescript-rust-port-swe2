@@ -16,8 +16,8 @@ fn go_to_type_definition_typedef() {
 
 /** @type {I} */
 const /*ref*/i = { x: 0 };";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_type_definition("ref".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_type_definition(&["ref".into()]);
 	});
 }
 

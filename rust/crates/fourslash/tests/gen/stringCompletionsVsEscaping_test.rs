@@ -7,29 +7,29 @@ use tsc_fourslash::*;
 #[test]
 fn string_completions_vs_escaping() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
-		let content = r"type Value<P extends string> = " + "`" + r"var(--\\\\, ${P})" + "`" + r#"
+		return /* skip: "Known failing fourslash test" */;
+		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"type Value<P extends string> = ", "`"), r"var(--\\\\, ${P})"), "`"), r#"
 export const value: Value<'one' | 'two'> = "/*1*/"
 
-export const test: "# + "`" + r"\ntest\n" + "`" + r" = '/*2*/'
+export const test: "#), "`"), r"\ntest\n"), "`"), r" = '/*2*/'
 
-export const doubleQuoted1: " + "`" + r#""double-quoted""# + "`" + r" = '/*3*/'
-export const doubleQuoted2: " + "`" + r#""double-quoted""# + "`" + r#" = "/*4*/"
+export const doubleQuoted1: "), "`"), r#""double-quoted""#), "`"), r" = '/*3*/'
+export const doubleQuoted2: "), "`"), r#""double-quoted""#), "`"), r#" = "/*4*/"
 
-export const singleQuoted2: "# + "`" + r"'single-quoted'" + "`" + r#" = "/*5*/"
-export const singleQuoted2: "# + "`" + r"'single-quoted'" + "`" + r" = '/*6*/'
+export const singleQuoted2: "#), "`"), r"'single-quoted'"), "`"), r#" = "/*5*/"
+export const singleQuoted2: "#), "`"), r"'single-quoted'"), "`"), r" = '/*6*/'
 
-export const backtickQuoted1: '" + "`" + r"backtick-quoted" + "`" + r#"' = "/*7*/"
-export const backtickQuoted2: '"# + "`" + r"backtick-quoted" + "`" + r"' = " + "`" + r"/*8*/" + "`" + r"";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("1".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec!["var(--\\\\\\\\, one)", "var(--\\\\\\\\, two)"], ..Default::default() }, ..Default::default() });
-		f.verify_completions("2".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec!["\\ntest\\n"], ..Default::default() }, ..Default::default() });
-		f.verify_completions("3".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec!["\"double-quoted\""], ..Default::default() }, ..Default::default() });
-		f.verify_completions("4".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec!["\\\"double-quoted\\\""], ..Default::default() }, ..Default::default() });
-		f.verify_completions("5".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec!["'single-quoted'"], ..Default::default() }, ..Default::default() });
-		f.verify_completions("6".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec!["\\'single-quoted\\'"], ..Default::default() }, ..Default::default() });
-		f.verify_completions("7".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec!["`backtick-quoted`"], ..Default::default() }, ..Default::default() });
-		f.verify_completions("8".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec!["\\`backtick-quoted\\`"], ..Default::default() }, ..Default::default() });
+export const backtickQuoted1: '"), "`"), r"backtick-quoted"), "`"), r#"' = "/*7*/"
+export const backtickQuoted2: '"#), "`"), r"backtick-quoted"), "`"), r"' = "), "`"), r"/*8*/"), "`"), r"");
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions("1".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["var(--\\\\\\\\, one)".into(), "var(--\\\\\\\\, two)".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions("2".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["\\ntest\\n".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions("3".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["\"double-quoted\"".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions("4".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["\\\"double-quoted\\\"".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions("5".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["'single-quoted'".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions("6".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["\\'single-quoted\\'".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions("7".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["`backtick-quoted`".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions("8".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["\\`backtick-quoted\\`".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -18,7 +18,7 @@ import d2, { c, d as D } from "a"
 import e = require("a");
 
 import * as ns from "a";"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_document_symbol();
 	});
 }

@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn code_fix_missing_type_annotation_on_exports28_long_types() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"// @strict: false
 // @isolatedDeclarations: true
 // @declaration: true
@@ -45,9 +45,9 @@ export const sessionLoader = {
         };
     },
 };";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix_available(&["Add return type 'Promise<{\n    PROP_1: {\n        name: boolean;\n    };\n    PROPERTY_2: {\n        name: number;\n    };\n    PROPERTY_3: {\n        name: number;\n    };\n    PROPE...'"]);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add return type 'Promise<{\n    PROP_1: {\n        name: boolean;\n    };\n    PROPERTY_2: {\n        name: number;\n    };\n    PROPERTY_3: {\n        name: number;\n    };\n    PROPE...'", new_file_content: r"export const sessionLoader = {
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_code_fix_available(Some(&["Add return type 'Promise<{\n    PROP_1: {\n        name: boolean;\n    };\n    PROPERTY_2: {\n        name: number;\n    };\n    PROPERTY_3: {\n        name: number;\n    };\n    PROPE...'".into()]));
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add return type 'Promise<{\n    PROP_1: {\n        name: boolean;\n    };\n    PROPERTY_2: {\n        name: number;\n    };\n    PROPERTY_3: {\n        name: number;\n    };\n    PROPE...'".to_string().into(), new_file_content: r"export const sessionLoader = {
     async loadSession(): Promise<{
         PROP_1: {
             name: boolean;
@@ -106,7 +106,7 @@ export const sessionLoader = {
             },
         };
     },
-};", index: 0, ..Default::default() });
+};".to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

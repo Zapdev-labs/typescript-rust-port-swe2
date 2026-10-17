@@ -8,10 +8,10 @@ use tsc_fourslash::*;
 fn formatting_keyword_as_identifier() {
 	run_test(|t| {
 		let content = r"declare var module/*1*/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1".into());
-		f.insert(";".into());
-		f.verify_current_line_content(r"declare var module;".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("1");
+		f.insert(";");
+		f.verify_current_line_content(r"declare var module;");
 	});
 }
 

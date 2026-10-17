@@ -14,15 +14,15 @@ const x = 1;
 export default {
   x
 };";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add satisfies and an inline type assertion with 'number'", new_file_content: r"const x = 1;
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add satisfies and an inline type assertion with 'number'".to_string().into(), new_file_content: r"const x = 1;
 export default {
   x: x as number
-};", index: 1, ..Default::default() });
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add satisfies and an inline type assertion with 'typeof x'", new_file_content: r"const x = 1;
+};".to_string().into(), index: 1, ..Default::default() });
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add satisfies and an inline type assertion with 'typeof x'".to_string().into(), new_file_content: r"const x = 1;
 export default {
   x: x as typeof x
-};", index: 2, ..Default::default() });
+};".to_string().into(), index: 2, ..Default::default() });
 	});
 }
 

@@ -14,9 +14,9 @@ export const Foo: () => Thing = null as any;
 import {Foo} from "./exporter"
 function f(p = Foo()): void {}
 f(/*1*/"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f(p?: Thing): void", ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("1");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "f(p?: Thing): void".to_string().into(), ..Default::default() });
 	});
 }
 

@@ -7,15 +7,15 @@ use tsc_fourslash::*;
 #[test]
 fn js_doc_property_description10() {
 	run_test(|t| {
-		let content = r"class MultipleClass {
+		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"class MultipleClass {
     /** Something generic */
-    [key: number | symbol | " + "`" + r"data-${string}" + "`" + r" | " + "`" + r"data-${number}" + "`" + r"]: string;
+    [key: number | symbol | ", "`"), r"data-${string}"), "`"), r" | "), "`"), r"data-${number}"), "`"), r"]: string;
 }
 function multipleClass(e: typeof MultipleClass) {
     console.log(e./*multipleClass*/anything);
-}";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("multipleClass".into(), "any".into(), "".into());
+}");
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("multipleClass", "any", "");
 	});
 }
 

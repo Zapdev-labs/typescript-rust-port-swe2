@@ -14,8 +14,8 @@ fn go_to_implementation_this_00() {
 
     whatever() {}
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_implementation("this_call".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_implementation(&["this_call".into()]);
 	});
 }
 

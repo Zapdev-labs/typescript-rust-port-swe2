@@ -11,8 +11,8 @@ fn syntactic_classification_with_errors() {
     a:
 }
 c =";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type: "class.declaration".into(), text: "A".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "property.declaration".into(), text: "a".into(), ..Default::default() }]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type_: "class.declaration".to_string().into(), text: "A".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "property.declaration".to_string().into(), text: "a".to_string().into(), ..Default::default() }]);
 	});
 }
 

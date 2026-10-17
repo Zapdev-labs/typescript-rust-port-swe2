@@ -7,16 +7,16 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_from_contextual_union_type2() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r#"// @strict: true
 function test1(arg: { prop: "foo" }) {}
 test1({ /*1*/prop: "bar" });
 
 function test2(arg: { prop: "foo" } | undefined) {}
 test2({ /*2*/prop: "bar" });"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1".into(), "(property) prop: \"foo\"".into(), "".into());
-		f.verify_quick_info_at("2".into(), "(property) prop: \"foo\"".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("1", "(property) prop: \"foo\"", "");
+		f.verify_quick_info_at("2", "(property) prop: \"foo\"", "");
 	});
 }
 

@@ -13,8 +13,8 @@ fn rename_destructuring_assignment() {
 var a: I;
 var x;
 ([|{ [|{| "contextRangeIndex": 2 |}x|]: x } = a|]);"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_rename_at_ranges_with_text(None, "x".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_rename_at_ranges_with_text(None, &["x".into()]);
 	});
 }
 

@@ -18,8 +18,8 @@ fn auto_import_package_json_imports_pattern_js_ts() {
 export function something(name: string): any;
 // @Filename: /a.ts
 something/**/"##;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_module_specifiers("".into(), &["#something.js"], None);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_import_fix_module_specifiers("", &["#something.js".into()], None);
 	});
 }
 

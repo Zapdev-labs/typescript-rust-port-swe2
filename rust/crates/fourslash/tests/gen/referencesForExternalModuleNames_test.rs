@@ -13,8 +13,8 @@ fn references_for_external_module_names() {
 }
 // @Filename: referencesForGlobals_2.ts
 /*3*/import f = require("/*4*/foo");"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1".into(), "2".into(), "3".into(), "4".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into()]);
 	});
 }
 

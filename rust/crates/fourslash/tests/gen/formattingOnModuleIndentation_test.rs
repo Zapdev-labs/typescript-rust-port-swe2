@@ -10,14 +10,14 @@ fn formatting_on_module_indentation() {
 		let content = r"  namespace     Foo    {
     export    namespace    A  .   B  .   C     {      }/**/
                }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
 		f.go_to_bof();
-		f.verify_current_line_content(r"namespace Foo {".into());
-		f.go_to_marker("".into());
-		f.verify_current_line_content(r"    export namespace A.B.C { }".into());
+		f.verify_current_line_content(r"namespace Foo {");
+		f.go_to_marker("");
+		f.verify_current_line_content(r"    export namespace A.B.C { }");
 		f.go_to_eof();
-		f.verify_current_line_content(r"}".into());
+		f.verify_current_line_content(r"}");
 	});
 }
 

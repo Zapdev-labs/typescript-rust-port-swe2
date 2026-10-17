@@ -13,13 +13,13 @@ fn signature_help_leading_rest_tuple() {
 leading(/*1*/);
 leading("ok", /*2*/);
 leading("ok", "ok", /*3*/);"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "leading(...names: string[], allCaps: boolean): void", parameter_count: 2, overloads_count: 1, is_variadic: true, is_variadic_set: true, ..Default::default() });
-		f.go_to_marker("2".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "leading(...names: string[], allCaps: boolean): void", parameter_count: 2, overloads_count: 1, is_variadic: true, is_variadic_set: true, ..Default::default() });
-		f.go_to_marker("3".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "leading(...names: string[], allCaps: boolean): void", parameter_count: 2, overloads_count: 1, is_variadic: true, is_variadic_set: true, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("1");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "leading(...names: string[], allCaps: boolean): void".to_string().into(), parameter_count: 2, overloads_count: 1, is_variadic: true.into(), is_variadic_set: true.into(), ..Default::default() });
+		f.go_to_marker("2");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "leading(...names: string[], allCaps: boolean): void".to_string().into(), parameter_count: 2, overloads_count: 1, is_variadic: true.into(), is_variadic_set: true.into(), ..Default::default() });
+		f.go_to_marker("3");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "leading(...names: string[], allCaps: boolean): void".to_string().into(), parameter_count: 2, overloads_count: 1, is_variadic: true.into(), is_variadic_set: true.into(), ..Default::default() });
 	});
 }
 

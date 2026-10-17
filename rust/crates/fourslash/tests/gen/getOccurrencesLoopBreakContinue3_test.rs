@@ -69,8 +69,8 @@ label1: for (var n in arr) {
 label5: while (true) break label5;
 
 label7: while (true) continue label5;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_document_highlights(None, to_any(f.ranges()));
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_document_highlights(None, to_any(f.ranges()).into_iter().map(Into::into));
 	});
 }
 

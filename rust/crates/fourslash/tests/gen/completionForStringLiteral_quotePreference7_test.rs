@@ -14,9 +14,9 @@ import { a } from './a';
 
 const foo = { '#': null };
 foo[|./**/|]";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/b.ts".into());
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec![&tsc_lsproto::CompletionItem { label: "#", insert_text: Some(("['#']").into()), text_edit: &tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: &tsc_lsproto::TextEdit { new_text: "['#']", range: f.ranges()[0].ls_range, ..Default::default() }, ..Default::default() }, ..Default::default() }], ..Default::default() }, user_preferences: &tsc_lsutil::UserPreferences { quote_preference: tsc_lsutil::quote_preference("auto".into()), ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("/b.ts");
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "#".to_string().into(), insert_text: Some(("['#']").into()), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "['#']".to_string().into(), range: f.ranges()[0].ls_range.into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { quote_preference: tsc_lsutil::quote_preference("auto").into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

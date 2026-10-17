@@ -15,8 +15,8 @@ function blah() { return (1 + 2 + container.searchProp()) === 2;  };
 function blah2() { container["searchProp"] };
 // @Filename: redeclaration.ts
 container = { "searchProp" : 18 };"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["1".into()]);
 	});
 }
 

@@ -18,7 +18,7 @@ fn organize_imports_type3() {
     a
 } from './foo';
 console.log(A, a, B, b, c, C, d, D);";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_organize_imports(r"import {
     type A,
     b as B,
@@ -29,7 +29,7 @@ console.log(A, a, B, b, c, C, d, D);";
     type c,
     d
 } from './foo';
-console.log(A, a, B, b, c, C, d, D);".into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_FALSE, organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::INLINE, ..Default::default() });
+console.log(A, a, B, b, c, C, d, D);", tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_FALSE.into(), organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::INLINE.into(), ..Default::default() }));
 	});
 }
 

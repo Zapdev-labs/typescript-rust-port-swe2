@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn completions_unique_symbol_import() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r#"// @noLib: true
 // @Filename: /globals.d.ts
 declare const Symbol: () => symbol;
@@ -24,9 +24,9 @@ export const i: I;
 // @Filename: /user.ts
 import { i } from "./a";
 i[|./**/|];"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec!["n", &tsc_lsproto::CompletionItem { label: "publicSym", insert_text: Some(("[publicSym]").into()), data: &tsc_lsproto::CompletionItemData { auto_import: &tsc_lsproto::AutoImportFix { module_specifier: "./a", ..Default::default() }, ..Default::default() }, sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), additional_text_edits: tsc_fourslash::AnyTextEdits, text_edit: &tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: &tsc_lsproto::TextEdit { new_text: "[publicSym]", range: f.ranges()[0].ls_range, ..Default::default() }, ..Default::default() }, ..Default::default() }], ..Default::default() }, ..Default::default() });
-		f.verify_apply_code_action_from_completion(Some(("").into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "publicSym", source: "./a", description: "Update import from \"./a\"", new_file_content: Some((r#"import { i, publicSym } from "./a";
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["n".into(), tsc_lsproto::CompletionItem { label: "publicSym".to_string().into(), insert_text: Some(("[publicSym]").into()), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./a".to_string().into(), ..Default::default() }), ..Default::default() }), sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), additional_text_edits: tsc_fourslash::ANY_TEXT_EDITS.into(), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "[publicSym]".to_string().into(), range: f.ranges()[0].ls_range.into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_apply_code_action_from_completion("", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "publicSym".to_string().into(), source: "./a".to_string().into(), description: "Update import from \"./a\"".to_string().into(), new_file_content: Some((r#"import { i, publicSym } from "./a";
 i.;"#).into()), ..Default::default() });
 	});
 }

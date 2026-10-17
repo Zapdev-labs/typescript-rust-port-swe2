@@ -14,14 +14,14 @@ fn code_fix_missing_type_annotation_on_exports43_expando_functions_2() {
 const foo = () => {}
 foo/*a*/["a"] = "A";
 foo["b"] = "C""#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add annotation of type '{ (): void; a: string; b: string; }'", new_file_content: r#"const foo: {
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add annotation of type '{ (): void; a: string; b: string; }'".to_string().into(), new_file_content: r#"const foo: {
     (): void;
     a: string;
     b: string;
 } = () => {}
 foo["a"] = "A";
-foo["b"] = "C""#, index: 1, ..Default::default() });
+foo["b"] = "C""#.to_string().into(), index: 1, ..Default::default() });
 	});
 }
 

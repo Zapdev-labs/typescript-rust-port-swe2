@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn completion_after_question_dot() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r#"// @strict: true
 class User {
     #foo: User;
@@ -22,10 +22,10 @@ class User {
         this?.bar[|?./*3*/|];
     }
 };"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("1".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec![&tsc_lsproto::CompletionItem { label: "city", detail: Some(("(property) city: string").into()), ..Default::default() }, &tsc_lsproto::CompletionItem { label: "postal code", insert_text: Some(("?.[\"postal code\"]").into()), detail: Some(("(property) \"postal code\": string").into()), text_edit: &tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: &tsc_lsproto::TextEdit { new_text: "?.[\"postal code\"]", range: f.ranges()[0].ls_range, ..Default::default() }, ..Default::default() }, ..Default::default() }], ..Default::default() }, ..Default::default() });
-		f.verify_completions("2".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec![&tsc_lsproto::CompletionItem { label: "address", ..Default::default() }, &tsc_lsproto::CompletionItem { label: "bar", ..Default::default() }], ..Default::default() }, ..Default::default() });
-		f.verify_completions("3".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec![&tsc_lsproto::CompletionItem { label: "address", ..Default::default() }, &tsc_lsproto::CompletionItem { label: "bar", ..Default::default() }], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions("1".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "city".to_string().into(), detail: Some(("(property) city: string").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "postal code".to_string().into(), insert_text: Some(("?.[\"postal code\"]").into()), detail: Some(("(property) \"postal code\": string").into()), text_edit: Some(tsc_lsproto::TextEditOrInsertReplaceEdit { text_edit: Some(tsc_lsproto::TextEdit { new_text: "?.[\"postal code\"]".to_string().into(), range: f.ranges()[0].ls_range.into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions("2".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "address".to_string().into(), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "bar".to_string().into(), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions("3".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "address".to_string().into(), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "bar".to_string().into(), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

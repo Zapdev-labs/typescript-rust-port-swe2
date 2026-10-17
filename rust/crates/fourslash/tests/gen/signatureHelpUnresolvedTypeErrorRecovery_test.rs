@@ -12,7 +12,7 @@ fn signature_help_unresolved_type_in_error_recovered_signature() {
     b?: (p: U) => void
 }) {}
 f(/*a*/);";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_signature_help();
 	});
 }

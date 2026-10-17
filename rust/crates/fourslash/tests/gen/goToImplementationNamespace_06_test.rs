@@ -13,8 +13,8 @@ fn go_to_implementation_namespace_06() {
 
 
 let x: typeof Foo = [|{ hello() {} }|];";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_implementation("declaration".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_implementation(&["declaration".into()]);
 	});
 }
 

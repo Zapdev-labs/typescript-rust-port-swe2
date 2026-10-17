@@ -18,8 +18,8 @@ fn jsdoc_satisfies_tag_rename() {
 
 /** @satisfies {/**/T} comment */
 const foo = { a: 1 };";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_rename(None, "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_rename(None, vec!["".into()]);
 	});
 }
 

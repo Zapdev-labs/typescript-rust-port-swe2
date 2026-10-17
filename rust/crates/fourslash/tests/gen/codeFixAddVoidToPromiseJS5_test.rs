@@ -15,8 +15,8 @@ fn code_fix_add_void_to_promise_js5() {
 // @filename: main.js
 /** @type {Promise<number>} */
 const p2 = new Promise(resolve => resolve());";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix_not_available("Add 'void' to Promise resolved without a value".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_code_fix_not_available(&["Add 'void' to Promise resolved without a value".into()]);
 	});
 }
 

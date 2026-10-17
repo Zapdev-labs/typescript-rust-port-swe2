@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn get_jsx_outlining_spans() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r#"import React, { Component } from 'react';
 
 export class Home extends Component[| {
@@ -42,7 +42,7 @@ export class Home extends Component[| {
     )|];
   }|]
 }|]"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_outlining_spans();
 	});
 }

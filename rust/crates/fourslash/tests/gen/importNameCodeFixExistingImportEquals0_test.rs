@@ -14,11 +14,11 @@ declare module "ambient-module" {
    export function f1();
    export var v1;
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_import_fix_at_position(&[r#"import ns = require("ambient-module");
-var x = ns.v1 + 5;"#, r#"import { v1 } from "ambient-module";
+var x = ns.v1 + 5;"#.into(), r#"import { v1 } from "ambient-module";
 import ns = require("ambient-module");
-var x = v1 + 5;"#], None);
+var x = v1 + 5;"#.into()], None);
 	});
 }
 

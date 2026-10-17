@@ -10,8 +10,8 @@ fn code_fix_infer_from_usage_binding_element() {
 		let content = r"function f([car, cdr]) {
     return car + cdr + 1
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_suggestion_diagnostics(None);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_suggestion_diagnostics(&[]);
 	});
 }
 

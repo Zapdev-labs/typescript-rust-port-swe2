@@ -13,8 +13,8 @@ declare const optionals:
   | ((b?: { b: true }) => unknown);
 
 /**/optionals();";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("".into(), "const optionals: (arg0?: {\n    a: true;\n} & {\n    b: true;\n}) => unknown".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("", "const optionals: (arg0?: {\n    a: true;\n} & {\n    b: true;\n}) => unknown", "");
 	});
 }
 

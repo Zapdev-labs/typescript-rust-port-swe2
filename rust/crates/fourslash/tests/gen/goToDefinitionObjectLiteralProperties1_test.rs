@@ -18,8 +18,8 @@ function bar(firstarg: boolean, secondarg: PropsBag) {}
 bar(true, {
    [|pr/*p2*/opx|]: 10
 })";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "p1".into(), "p2".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_definition(true, &["p1".into(), "p2".into()]);
 	});
 }
 

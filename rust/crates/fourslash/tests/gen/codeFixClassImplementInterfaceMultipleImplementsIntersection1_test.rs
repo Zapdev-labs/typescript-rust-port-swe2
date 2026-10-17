@@ -15,8 +15,8 @@ interface I2 {
 }
 
 class C implements I1,I2 {[| |]}";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix_available(&["Implement interface 'I1'", "Implement interface 'I2'"]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_code_fix_available(Some(&["Implement interface 'I1'".into(), "Implement interface 'I2'".into()]));
 	});
 }
 

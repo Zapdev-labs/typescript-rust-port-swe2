@@ -12,19 +12,19 @@ fn doc_comment_template_function_with_parameters() {
     /*1*/
         function foo(x: number, y: string): boolean {}";
 		let mut capabilities = tsc_fourslash::get_default_capabilities();
-		capabilities.text_document.completion.completion_item.snippet_support = Some((false).into());
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", capabilities, content);
-		f.go_to_marker("0".into());
+		capabilities.text_document.as_mut().unwrap().completion.as_mut().unwrap().completion_item.as_mut().unwrap().snippet_support = Some((false).into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", capabilities.into(), content);
+		f.go_to_marker("0");
 		f.verify_js_doc_completion("0".into(), 7, r"/**
  * 
  * @param x
  * @param y
- */".into(), None);
+ */", None);
 		f.verify_js_doc_completion("1".into(), 0, r"/**
      * 
      * @param x
      * @param y
-     */".into(), None);
+     */", None);
 	});
 }
 

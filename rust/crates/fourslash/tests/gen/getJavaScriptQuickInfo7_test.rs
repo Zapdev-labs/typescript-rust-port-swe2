@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn get_java_script_quick_info7() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"// @allowNonTsExtensions: true
 // @Filename: file.js
 /**
@@ -23,8 +23,8 @@ function a1(p) {
 }
 
 x - /**/a1()";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("".into(), "function a1(p: any): number".into(), "This is a very cool function that is very nice.".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("", "function a1(p: any): number", "This is a very cool function that is very nice.");
 	});
 }
 

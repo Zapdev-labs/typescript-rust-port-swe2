@@ -27,8 +27,8 @@ fn format_multiple_function_arguments() {
        prop2: 6
      }
  );";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
 		f.verify_current_file_content(r"
 someRandomFunction({
     prop1: 1,
@@ -48,7 +48,7 @@ someRandomFunction(
         prop11: 5,
         prop2: 6
     }
-);".into());
+);");
 	});
 }
 

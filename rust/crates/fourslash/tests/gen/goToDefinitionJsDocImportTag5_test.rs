@@ -20,8 +20,8 @@ export interface /*2*/A { }
  * @param { [|A/*1*/|] } a
  */
 function f(a) {}"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "1".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_definition(true, &["1".into()]);
 	});
 }
 

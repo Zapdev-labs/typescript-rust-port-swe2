@@ -7,16 +7,16 @@ use tsc_fourslash::*;
 #[test]
 fn string_literal_completions_for_generic_conditional_types_using_template_literal_types() {
 	run_test(|t| {
-		let content = r#"type PathOf<T, K extends string, P extends string = ""> =
-  K extends "# + "`" + r"${infer U}.${infer V}" + "`" + r"
-    ? U extends keyof T ? PathOf<T[U], V, " + "`" + r"${P}${U}." + "`" + r"> : " + "`" + r"${P}${keyof T & (string | number)}" + "`" + r"
-    : K extends keyof T ? " + "`" + r"${P}${K}" + "`" + r" : " + "`" + r"${P}${keyof T & (string | number)}" + "`" + r";
+		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r#"type PathOf<T, K extends string, P extends string = ""> =
+  K extends "#, "`"), r"${infer U}.${infer V}"), "`"), r"
+    ? U extends keyof T ? PathOf<T[U], V, "), "`"), r"${P}${U}."), "`"), r"> : "), "`"), r"${P}${keyof T & (string | number)}"), "`"), r"
+    : K extends keyof T ? "), "`"), r"${P}${K}"), "`"), r" : "), "`"), r"${P}${keyof T & (string | number)}"), "`"), r";
 
 declare function consumer<K extends string>(path: PathOf<{a: string, b: {c: string}}, K>) : number;
 
-consumer('b./*ts*/')";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions(&["ts"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec!["a", "b", "b.c"], ..Default::default() }, ..Default::default() });
+consumer('b./*ts*/')");
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions(vec!["ts"].into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["a".into(), "b".into(), "b.c".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

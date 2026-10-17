@@ -16,8 +16,8 @@ function foo() {}
 //global foo references
 fo/*global*/o();
 var f = foo;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_document_highlights(None, "local".into(), "global".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_document_highlights(None, vec!["local".into(), "global".into()]);
 	});
 }
 

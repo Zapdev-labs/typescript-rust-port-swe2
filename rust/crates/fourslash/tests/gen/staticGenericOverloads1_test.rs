@@ -16,15 +16,15 @@ fn static_generic_overloads1() {
 }
 var a = new A<number>();
 A.B(/**/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
 		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { overloads_count: 2, ..Default::default() });
-		f.insert("a".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "B(v: A<number>): A<number>", overloads_count: 2, ..Default::default() });
-		f.insert("); A.B(".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "B(v: A<unknown>): A<unknown>", overloads_count: 2, ..Default::default() });
-		f.insert("a".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "B(v: A<number>): A<number>", overloads_count: 2, ..Default::default() });
+		f.insert("a");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "B(v: A<number>): A<number>".to_string().into(), overloads_count: 2, ..Default::default() });
+		f.insert("); A.B(");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "B(v: A<unknown>): A<unknown>".to_string().into(), overloads_count: 2, ..Default::default() });
+		f.insert("a");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "B(v: A<number>): A<number>".to_string().into(), overloads_count: 2, ..Default::default() });
 	});
 }
 

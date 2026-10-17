@@ -21,13 +21,13 @@ declare const css: {
 export default css;
 // @Filename: /a.ts
 import styles from ".//*rename*/app.css";"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_rename("rename".into(), "app2.css".into(), vec![("/a.ts", r#"import styles from "./app2.css";"#), ("/app2.d.css.ts", r"declare const css: {
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_rename("rename", "app2.css", &std::collections::BTreeMap::from([("/a.ts".to_string().into(), r#"import styles from "./app2.css";"#.to_string().into()), ("/app2.d.css.ts".to_string().into(), r"declare const css: {
   cookieBanner: string;
 };
-export default css;"), ("/app2.css", r".cookie-banner {
+export default css;".to_string().into()), ("/app2.css".to_string().into(), r".cookie-banner {
   display: none;
-}")].into_iter().collect::<FxHashMap<_, _>>());
+}".to_string().into())]));
 	});
 }
 

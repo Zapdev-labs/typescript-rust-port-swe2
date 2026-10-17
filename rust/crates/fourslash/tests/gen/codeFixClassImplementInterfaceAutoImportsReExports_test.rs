@@ -20,15 +20,15 @@ export interface A {
 // @Filename: b.ts
 import { A } from "./a";
 export class B implements A {}"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("b.ts".into());
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'A'", new_file_content: r#"import { Foo } from "test-module";
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("b.ts");
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'A'".to_string().into(), new_file_content: r#"import { Foo } from "test-module";
 import { A } from "./a";
 export class B implements A {
     foo(): Foo {
         throw new Error("Method not implemented.");
     }
-}"#, index: 0, ..Default::default() });
+}"#.to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

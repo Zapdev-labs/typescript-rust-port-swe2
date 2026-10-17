@@ -7,23 +7,23 @@ use tsc_fourslash::*;
 #[test]
 fn get_outlining_spans_for_template_literal() {
 	run_test(|t| {
-		let content = r"declare function tag(...args: any[]): void
-const a = [|" + "`" + r"signal line" + "`" + r"|]
-const b = [|" + "`" + r"multi
-line" + "`" + r"|]
-const c = tag[|" + "`" + r"signal line" + "`" + r"|]
-const d = tag[|" + "`" + r"multi
-line" + "`" + r"|]
-const e = [|" + "`" + r"signal ${1} line" + "`" + r"|]
-const f = [|" + "`" + r"multi
+		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"declare function tag(...args: any[]): void
+const a = [|", "`"), r"signal line"), "`"), r"|]
+const b = [|"), "`"), r"multi
+line"), "`"), r"|]
+const c = tag[|"), "`"), r"signal line"), "`"), r"|]
+const d = tag[|"), "`"), r"multi
+line"), "`"), r"|]
+const e = [|"), "`"), r"signal ${1} line"), "`"), r"|]
+const f = [|"), "`"), r"multi
 ${1}
-line" + "`" + r"|]
-const g = tag[|" + "`" + r"signal ${1} line" + "`" + r"|]
-const h = tag[|" + "`" + r"multi
+line"), "`"), r"|]
+const g = tag[|"), "`"), r"signal ${1} line"), "`"), r"|]
+const h = tag[|"), "`"), r"multi
 ${1}
-line" + "`" + r"|]
-const i = " + "`" + r"" + "`" + r"";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+line"), "`"), r"|]
+const i = "), "`"), r""), "`"), r"");
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_outlining_spans();
 	});
 }

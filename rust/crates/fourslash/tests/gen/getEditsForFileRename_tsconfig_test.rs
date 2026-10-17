@@ -24,8 +24,8 @@ fn get_edits_for_file_rename_tsconfig() {
 }
 // @Filename: /src/old/someFile.ts
 "#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_will_rename_files_edits("/src/old".into(), "/src/new".into(), vec![("/src/tsconfig.json", r#"{
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_will_rename_files_edits("/src/old", "/src/new", &std::collections::BTreeMap::from([("/src/tsconfig.json".to_string().into(), r#"{
     "compilerOptions": {
         "baseUrl": "new",
         "paths": {
@@ -38,7 +38,7 @@ fn get_edits_for_file_rename_tsconfig() {
     "files": ["new/a.ts"],
     "include": ["new/*.ts"],
     "exclude": ["new"],
-}"#)].into_iter().collect::<FxHashMap<_, _>>(), None);
+}"#.to_string().into())]), None);
 	});
 }
 

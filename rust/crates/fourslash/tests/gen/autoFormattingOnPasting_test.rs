@@ -10,15 +10,15 @@ fn auto_formatting_on_pasting() {
 		let content = r"namespace TestModule {
 /**/
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
-		f.paste(" class TestClass{\nprivate   foo;\npublic testMethod( )\n{}\n}".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
+		f.paste(" class TestClass{\nprivate   foo;\npublic testMethod( )\n{}\n}");
 		f.verify_current_file_content(r"namespace TestModule {
     class TestClass {
         private foo;
         public testMethod() { }
     }
-}".into());
+}");
 	});
 }
 

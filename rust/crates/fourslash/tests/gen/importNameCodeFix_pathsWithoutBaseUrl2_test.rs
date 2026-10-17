@@ -20,11 +20,11 @@ fn import_name_code_fix_paths_without_base_url2() {
 export class Logger {};
 // @Filename: /packages/test-package-1/src/something/index.ts
 Logger/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
 		f.verify_import_fix_at_position(&[r#"import { Logger } from "../common/logging";
 
-Logger"#], None);
+Logger"#.into()], None);
 	});
 }
 

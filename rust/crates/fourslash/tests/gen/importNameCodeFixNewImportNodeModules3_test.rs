@@ -12,10 +12,10 @@ fn import_name_code_fix_new_import_node_modules3() {
 // @Filename: /node_modules/@types/random/index.d.ts
 export var v1 = 5;
 export function f1();";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_import_fix_at_position(&[r#"import { f1 } from "random";
 
-f1();"#], None);
+f1();"#.into()], None);
 	});
 }
 

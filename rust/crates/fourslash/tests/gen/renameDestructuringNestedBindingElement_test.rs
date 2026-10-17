@@ -21,8 +21,8 @@ for ([|let { skills: {[|{| "contextRangeIndex": 2|}primary|]: primaryA, secondar
 for ([|let { skills: {[|{| "contextRangeIndex": 4|}primary|], secondary } } of multiRobots|]) {
     console.log([|primary|]);
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_rename(None, f.ranges()[1], f.ranges()[3], f.ranges()[5], f.ranges()[6]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_rename(None, vec![f.ranges()[1].into(), f.ranges()[3].into(), f.ranges()[5].into(), f.ranges()[6].into()]);
 	});
 }
 

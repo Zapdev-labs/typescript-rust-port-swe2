@@ -35,8 +35,8 @@ let opt = <MainButton onClick={()=>{}} />;
 let opt = <MainButton onClick={()=>{}} ignore-prop />;
 let opt = <MainButton goTo="goTo" />;
 let opt = <MainButton wrong />;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["1".into()]);
 	});
 }
 

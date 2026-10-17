@@ -10,10 +10,10 @@ fn organize_imports_source_phase_imports_are_not_coalesced() {
 		let content = r#"import source b from "lib";
 import source a from "lib";
 a; b;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_organize_imports(r#"import source a from "lib";
 import source b from "lib";
-a; b;"#.into(), tsc_lsproto::CodeActionKind::SOURCE_SORT_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE, ..Default::default() });
+a; b;"#, tsc_lsproto::CodeActionKind::SourceSortImportsTs, Some(&tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE.into(), ..Default::default() }));
 	});
 }
 
@@ -24,10 +24,10 @@ fn organize_imports_source_and_evaluation_phase_imports_are_not_coalesced() {
 import source b from "lib";
 import { a } from "lib";
 a; b; c;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_organize_imports(r#"import source b from "lib";
 import { a, c } from "lib";
-a; b; c;"#.into(), tsc_lsproto::CodeActionKind::SOURCE_SORT_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE, ..Default::default() });
+a; b; c;"#, tsc_lsproto::CodeActionKind::SourceSortImportsTs, Some(&tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::ORDINAL_IGNORE_CASE.into(), ..Default::default() }));
 	});
 }
 
@@ -48,34 +48,34 @@ import source k from "lib";
 import source l from "lib";
 import source m from "lib";
 "#;
-		for test in vec![anon_1 { name: "case insensitive bindings".into(), content: r#"import { b, D } from "B";
+		for test in vec![anon_1 { name: "case insensitive bindings".to_string().into(), content: r#"import { b, D } from "B";
 import "a";
 import source C from "lib";
-import source a from "lib";"#.into(), expected: r#"import { b, D } from "B";
+import source a from "lib";"#.to_string().into(), expected: r#"import { b, D } from "B";
 import "a";
 import source a from "lib";
-import source C from "lib";"#.into(), ..Default::default() }, anon_1 { name: "case sensitive bindings".into(), content: r#"import { D, b } from "a";
+import source C from "lib";"#.to_string().into(), ..Default::default() }, anon_1 { name: "case sensitive bindings".to_string().into(), content: r#"import { D, b } from "a";
 import "B";
 import source a from "lib";
-import source C from "lib";"#.into(), expected: r#"import { D, b } from "a";
+import source C from "lib";"#.to_string().into(), expected: r#"import { D, b } from "a";
 import "B";
 import source C from "lib";
-import source a from "lib";"#.into(), ..Default::default() }, anon_1 { name: "no named imports".into(), content: r#"import source a from "lib";
-import source B from "lib";"#.into(), expected: r#"import source B from "lib";
-import source a from "lib";"#.into(), ..Default::default() }, anon_1 { name: "mixed import kinds".into(), content: r#"import { n } from "lib";
-"# + imports + r#"import * as o from "lib";
-import type { T } from "lib";"#, expected: r#"import type { T } from "lib";
+import source a from "lib";"#.to_string().into(), ..Default::default() }, anon_1 { name: "no named imports".to_string().into(), content: r#"import source a from "lib";
+import source B from "lib";"#.to_string().into(), expected: r#"import source B from "lib";
+import source a from "lib";"#.to_string().into(), ..Default::default() }, anon_1 { name: "mixed import kinds".to_string().into(), content: (format!("{}{}", format!("{}{}", r#"import { n } from "lib";
+"#, imports), r#"import * as o from "lib";
+import type { T } from "lib";"#)).into(), expected: (format!("{}{}", format!("{}{}", r#"import type { T } from "lib";
 import * as o from "lib";
-"# + imports + r#"import { n } from "lib";"#, ..Default::default() }] {
+"#, imports), r#"import { n } from "lib";"#)).into(), ..Default::default() }] {
 			#[derive(Default, Clone, Debug)]
 			struct anon_1 {
-				name: &'static str,
-				content: &'static str,
-				expected: &'static str,
+				name: String,
+				content: String,
+				expected: String,
 			}
 			run_subtest(&mut t, test.name, |t| {
-				let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, test.content);
-				f.verify_organize_imports(test.expected + "\n", tsc_lsproto::CodeActionKind::SOURCE_SORT_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::AUTO, ..Default::default() });
+				let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, test.content);
+				f.verify_organize_imports(&format!("{}{}", test.expected, "\n"), tsc_lsproto::CodeActionKind::SourceSortImportsTs, Some(&tsc_lsutil::UserPreferences { organize_imports_sort: tsc_lsutil::OrganizeImportsSort::AUTO.into(), ..Default::default() }));
 			});
 		}
 	});

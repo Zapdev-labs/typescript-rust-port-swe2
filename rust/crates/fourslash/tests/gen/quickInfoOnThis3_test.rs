@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_on_this3() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"interface Restricted {
     n: number;
 }
@@ -23,14 +23,14 @@ function explicitInterface(th/*4*/is: Restricted): void {
 function explicitLiteral(th/*6*/is: { n: number }): void {
     console.log(th/*7*/is);
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1".into(), "any".into(), "".into());
-		f.verify_quick_info_at("2".into(), "(parameter) this: void".into(), "".into());
-		f.verify_quick_info_at("3".into(), "this: void".into(), "".into());
-		f.verify_quick_info_at("4".into(), "(parameter) this: Restricted".into(), "".into());
-		f.verify_quick_info_at("5".into(), "this: Restricted".into(), "".into());
-		f.verify_quick_info_at("6".into(), "(parameter) this: {\n    n: number;\n}".into(), "".into());
-		f.verify_quick_info_at("7".into(), "this: {\n    n: number;\n}".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("1", "any", "");
+		f.verify_quick_info_at("2", "(parameter) this: void", "");
+		f.verify_quick_info_at("3", "this: void", "");
+		f.verify_quick_info_at("4", "(parameter) this: Restricted", "");
+		f.verify_quick_info_at("5", "this: Restricted", "");
+		f.verify_quick_info_at("6", "(parameter) this: {\n    n: number;\n}", "");
+		f.verify_quick_info_at("7", "this: {\n    n: number;\n}", "");
 	});
 }
 

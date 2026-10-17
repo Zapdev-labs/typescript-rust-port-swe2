@@ -64,14 +64,14 @@ function isLeaderGuard(g: RoyalGuard) {
    return g.isLeader();
 }
 let checked/*14*/LeaderStatus = isLeader/*15*/Guard(a);"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1".into(), "(method) RoyalGuard.isLeader(): this is LeadGuard".into(), "".into());
-		f.verify_quick_info_at("3".into(), "(method) RoyalGuard.isFollower(): this is FollowerGuard".into(), "".into());
-		f.verify_quick_info_at("5".into(), "(method) GuardInterface.isLeader(): this is LeadGuard".into(), "".into());
-		f.verify_quick_info_at("7".into(), "(method) GuardInterface.isFollower(): this is FollowerGuard".into(), "".into());
-		f.verify_quick_info_at("13".into(), "let leaderStatus: boolean".into(), "".into());
-		f.verify_quick_info_at("14".into(), "let checkedLeaderStatus: boolean".into(), "".into());
-		f.verify_quick_info_at("15".into(), "function isLeaderGuard(g: RoyalGuard): g is LeadGuard".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("1", "(method) RoyalGuard.isLeader(): this is LeadGuard", "");
+		f.verify_quick_info_at("3", "(method) RoyalGuard.isFollower(): this is FollowerGuard", "");
+		f.verify_quick_info_at("5", "(method) GuardInterface.isLeader(): this is LeadGuard", "");
+		f.verify_quick_info_at("7", "(method) GuardInterface.isFollower(): this is FollowerGuard", "");
+		f.verify_quick_info_at("13", "let leaderStatus: boolean", "");
+		f.verify_quick_info_at("14", "let checkedLeaderStatus: boolean", "");
+		f.verify_quick_info_at("15", "function isLeaderGuard(g: RoyalGuard): g is LeadGuard", "");
 	});
 }
 

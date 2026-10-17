@@ -22,8 +22,8 @@ fn quick_info_on_merged_interfaces() {
     var r3 = a(true, 2);
     var /*1*/r4 = a(1, true);
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1".into(), "var r4: number".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("1", "var r4: number", "");
 	});
 }
 

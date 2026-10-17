@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn auto_import_provider_export_map9() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r#"// @Filename: /home/src/workspaces/project/tsconfig.json
 {
   "compilerOptions": {
@@ -39,10 +39,10 @@ export function fooFromLol(): void;
 import { fooFromIndex } from "dependency";
 // @Filename: /home/src/workspaces/project/src/foo.ts
 fooFrom/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_marker("".into());
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "fooFromIndex", data: &tsc_lsproto::CompletionItemData { auto_import: &tsc_lsproto::AutoImportFix { module_specifier: "dependency/lol", ..Default::default() }, ..Default::default() }, sort_text: Some((tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string()).into()), additional_text_edits: tsc_fourslash::AnyTextEdits, ..Default::default() }], excludes: vec!["fooFromLol"], ..Default::default() }, ..Default::default() });
+		f.go_to_marker("");
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "fooFromIndex".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "dependency/lol".to_string().into(), ..Default::default() }), ..Default::default() }), sort_text: Some((tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string()).into()), additional_text_edits: tsc_fourslash::ANY_TEXT_EDITS.into(), ..Default::default() }.into()].into(), excludes: vec!["fooFromLol".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

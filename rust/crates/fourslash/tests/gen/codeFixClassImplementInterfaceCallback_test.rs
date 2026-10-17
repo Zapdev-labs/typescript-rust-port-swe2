@@ -34,8 +34,8 @@ interface IFoo4 {
 
 class Foo4 implements IFoo4 {
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixClassIncorrectlyImplementsInterface", new_file_content: r#"interface IFoo1 {
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixClassIncorrectlyImplementsInterface".to_string().into(), new_file_content: r#"interface IFoo1 {
     parse(reviver: () => any): void;
 }
 
@@ -73,7 +73,7 @@ class Foo4 implements IFoo4 {
     parse(reviver: { new(): any; }): void {
         throw new Error("Method not implemented.");
     }
-}"#, ..Default::default() });
+}"#.to_string().into(), ..Default::default() });
 	});
 }
 

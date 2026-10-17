@@ -11,8 +11,8 @@ fn find_all_refs_in_class_expression() {
 new class C implements I {
    /*1*/boom(){}
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("0".into(), "1".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["0".into(), "1".into()]);
 	});
 }
 

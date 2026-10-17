@@ -20,7 +20,7 @@ fn find_all_refs_js_doc_namespaced_typedef() {
 // Namespaced typedef aliased to implicitly-resolved typedef.
 /** @typedef {U} NS.[|V|] */
 ";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_find_all_references();
 	});
 }

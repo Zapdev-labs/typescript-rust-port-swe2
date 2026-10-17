@@ -37,8 +37,8 @@ export class A {
 
   @fieldDecorator classProp = foo();
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingTypeAnnotationOnExports", new_file_content: r"function classDecorator<T extends Function> (value: T, context: ClassDecoratorContext) {}
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingTypeAnnotationOnExports".to_string().into(), new_file_content: r"function classDecorator<T extends Function> (value: T, context: ClassDecoratorContext) {}
 function methodDecorator<This> (
   target: (...args: number[])=> number,
   context: ClassMethodDecoratorContext<This, (this: This, ...args: number[]) => number>) {}
@@ -64,7 +64,7 @@ export class A {
   set a(value: number) {}
 
   @fieldDecorator classProp: number = foo();
-}", ..Default::default() });
+}".to_string().into(), ..Default::default() });
 	});
 }
 

@@ -16,16 +16,16 @@ export const bar = 0;
 [|foo;|]
 // @Filename: /c.ts
 [|bar;|]";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/a/index.ts".into());
-		f.go_to_file("/b.ts".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("/a/index.ts");
+		f.go_to_file("/b.ts");
 		f.verify_import_fix_at_position(&[r#"import { foo } from "./a/index";
 
-foo;"#], None);
-		f.go_to_file("/c.ts".into());
+foo;"#.into()], None);
+		f.go_to_file("/c.ts");
 		f.verify_import_fix_at_position(&[r#"import { bar } from "./node_modules/x/index";
 
-bar;"#], None);
+bar;"#.into()], None);
 	});
 }
 

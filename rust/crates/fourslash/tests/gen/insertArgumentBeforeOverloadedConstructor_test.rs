@@ -13,9 +13,9 @@ class OverloadedMonster {
     constructor();
     constructor(name) { }
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
-		f.insert("'1', ".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
+		f.insert("'1', ");
 	});
 }
 

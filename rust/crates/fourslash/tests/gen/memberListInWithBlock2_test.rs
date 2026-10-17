@@ -14,7 +14,7 @@ fn member_list_in_with_block2() {
 with (x) {
     var y: IFoo = { /*1*/ };
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_completions("1".into(), None);
 	});
 }

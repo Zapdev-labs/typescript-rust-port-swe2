@@ -20,8 +20,8 @@ declare module "baz" {
     /*12*/import bar = require("/*13*/bar");
     var f2: typeof bar./*14*/foo;
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into(), "7".into(), "8".into(), "9".into(), "10".into(), "11".into(), "12".into(), "13".into(), "14".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into(), "7".into(), "8".into(), "9".into(), "10".into(), "11".into(), "12".into(), "13".into(), "14".into()]);
 	});
 }
 

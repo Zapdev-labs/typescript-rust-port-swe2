@@ -32,17 +32,17 @@ export default 0;
 export default 0;
 // @Filename: /tsconfig.json
 { "files": ["a.ts", "src/b.ts", "src/foo/c.ts", "src/old/index.ts", "src/old/file.ts"] }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_will_rename_files_edits("/src/old".into(), "/src/new".into(), vec![("/a.ts", r#"/// <reference path="./src/new/file.ts" />
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_will_rename_files_edits("/src/old", "/src/new", &std::collections::BTreeMap::from([("/a.ts".to_string().into(), r#"/// <reference path="./src/new/file.ts" />
 import old from "./src/new";
 import old2 from "./src/new/file";
-export default 0;"#), ("/src/b.ts", r#"/// <reference path="./new/file.ts" />
+export default 0;"#.to_string().into()), ("/src/b.ts".to_string().into(), r#"/// <reference path="./new/file.ts" />
 import old from "./new";
 import old2 from "./new/file";
-export default 0;"#), ("/src/foo/c.ts", r#"/// <reference path="../new/file.ts" />
+export default 0;"#.to_string().into()), ("/src/foo/c.ts".to_string().into(), r#"/// <reference path="../new/file.ts" />
 import old from "../new";
 import old2 from "../new/file";
-export default 0;"#), ("/tsconfig.json", r#"{ "files": ["a.ts", "src/b.ts", "src/foo/c.ts", "src/new/index.ts", "src/new/file.ts"] }"#)].into_iter().collect::<FxHashMap<_, _>>(), None);
+export default 0;"#.to_string().into()), ("/tsconfig.json".to_string().into(), r#"{ "files": ["a.ts", "src/b.ts", "src/foo/c.ts", "src/new/index.ts", "src/new/file.ts"] }"#.to_string().into())]), None);
 	});
 }
 

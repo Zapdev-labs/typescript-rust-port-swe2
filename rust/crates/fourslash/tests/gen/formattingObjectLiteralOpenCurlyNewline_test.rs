@@ -18,8 +18,8 @@ var clear =
     }
 };
 ";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
 		f.verify_current_file_content(r"
 var clear =
 {
@@ -30,11 +30,11 @@ var clear =
             2
     }
 };
-".into());
+");
 		let mut opts444 = f.get_options();
 		opts444.format_code_settings.indent_multi_line_object_literal_beginning_on_blank_line = tsc_core::tristate::TS_TRUE;
 		f.configure(opts444);
-		f.format_document("".into());
+		f.format_document("");
 		f.verify_current_file_content(r"
 var clear =
     {
@@ -45,7 +45,7 @@ var clear =
                     2
             }
     };
-".into());
+");
 	});
 }
 

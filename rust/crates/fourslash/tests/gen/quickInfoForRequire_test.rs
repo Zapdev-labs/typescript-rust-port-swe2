@@ -7,16 +7,16 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_for_require() {
 	run_test(|t| {
-		let content = r#"//@Filename: AA/BB.ts
+		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r#"//@Filename: AA/BB.ts
 export class a{}
 //@Filename: quickInfoForRequire_input.ts
 import a = require("./AA/B/*1*/B");
-import b = require("# + "`" + r"./AA/B/*2*/B" + "`" + r");";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1".into());
-		f.verify_quick_info_is("module a".into(), "".into());
-		f.go_to_marker("2".into());
-		f.verify_quick_info_is("module a".into(), "".into());
+import b = require("#, "`"), r"./AA/B/*2*/B"), "`"), r");");
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("1");
+		f.verify_quick_info_is("module a", "");
+		f.go_to_marker("2");
+		f.verify_quick_info_is("module a", "");
 	});
 }
 

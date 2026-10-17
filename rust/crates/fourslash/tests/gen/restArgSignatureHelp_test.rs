@@ -9,9 +9,9 @@ fn rest_arg_signature_help() {
 	run_test(|t| {
 		let content = r"function f(...x: any[]) { }
 f(/**/);";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "x", is_variadic: true, is_variadic_set: true, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "x".to_string().into(), is_variadic: true.into(), is_variadic_set: true.into(), ..Default::default() });
 	});
 }
 

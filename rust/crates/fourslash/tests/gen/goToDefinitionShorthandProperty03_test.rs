@@ -13,8 +13,8 @@ fn go_to_definition_shorthand_property03() {
 let /*letDef*/y = {
     [|/*letProp*/y|]
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "varProp".into(), "letProp".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_definition(true, &["varProp".into(), "letProp".into()]);
 	});
 }
 

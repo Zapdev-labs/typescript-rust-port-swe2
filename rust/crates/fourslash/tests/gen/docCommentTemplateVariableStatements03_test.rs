@@ -36,36 +36,36 @@ const g = ((class G {
     }
 }))"#;
 		let mut capabilities = tsc_fourslash::get_default_capabilities();
-		capabilities.text_document.completion.completion_item.snippet_support = Some((false).into());
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", capabilities, content);
+		capabilities.text_document.as_mut().unwrap().completion.as_mut().unwrap().completion_item.as_mut().unwrap().snippet_support = Some((false).into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", capabilities.into(), content);
 		f.verify_js_doc_completion("a".into(), 7, r"/**
  * 
  * @param x
  * @returns
- */".into(), None);
+ */", None);
 		f.verify_js_doc_completion("b".into(), 7, r"/**
  * 
  * @param x
  * @param y
  * @param z
  * @returns
- */".into(), None);
+ */", None);
 		f.verify_js_doc_completion("c".into(), 7, r"/**
  * 
  * @param x
  * @returns
- */".into(), None);
-		f.verify_js_doc_completion("d".into(), 3, r"/** */".into(), None);
+ */", None);
+		f.verify_js_doc_completion("d".into(), 3, r"/** */", None);
 		f.verify_js_doc_completion("e".into(), 7, r"/**
  * 
  * @param param0
  * @returns
- */".into(), None);
-		f.verify_js_doc_completion("f".into(), 3, r"/** */".into(), None);
+ */", None);
+		f.verify_js_doc_completion("f".into(), 3, r"/** */", None);
 		f.verify_js_doc_completion("g".into(), 7, r"/**
  * 
  * @param x
- */".into(), None);
+ */", None);
 	});
 }
 

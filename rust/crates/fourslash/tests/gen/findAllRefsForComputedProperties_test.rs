@@ -18,8 +18,8 @@ class C implements I {
 var x: I = {
     ["/*2*/prop1"]: function () { },
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("0".into(), "1".into(), "2".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["0".into(), "1".into(), "2".into()]);
 	});
 }
 

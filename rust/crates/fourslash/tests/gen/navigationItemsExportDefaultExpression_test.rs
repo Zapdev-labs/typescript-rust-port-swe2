@@ -38,7 +38,7 @@ export default {
 
 function foo(props: { x: number; y: number }) {}
 export default foo({ x: 1, y: 1 });"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_document_symbol();
 	});
 }

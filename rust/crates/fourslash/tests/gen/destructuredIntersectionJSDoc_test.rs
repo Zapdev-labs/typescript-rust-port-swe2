@@ -17,7 +17,7 @@ type Y = X & { a: {} }
 
 declare function f({ /*1*/a }: Y): void
 ";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_hover();
 	});
 }
@@ -36,7 +36,7 @@ type Y = X & { a: {} }
 declare const y: Y;
 const { /*1*/a } = y;
 ";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_hover();
 	});
 }

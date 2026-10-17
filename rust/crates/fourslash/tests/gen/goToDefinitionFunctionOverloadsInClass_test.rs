@@ -17,8 +17,8 @@ fn go_to_definition_function_overloads_in_class() {
 
     constructor() { }
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "staticFunctionOverload".into(), "functionOverload".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_definition(true, &["staticFunctionOverload".into(), "functionOverload".into()]);
 	});
 }
 

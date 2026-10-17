@@ -31,8 +31,8 @@ fn references_for_statics_and_members_with_same_names() {
 		MixedStaticsClassTest.Foo./*11*/bar;
 	}
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into(), "7".into(), "8".into(), "9".into(), "10".into(), "11".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into(), "7".into(), "8".into(), "9".into(), "10".into(), "11".into()]);
 	});
 }
 

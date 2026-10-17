@@ -16,13 +16,13 @@ fn generic_function_return_type2() {
 var x = new C(1);
 var /*2*/r = x.foo(/*1*/3);
 var /*4*/r2 = r(/*3*/4);";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "foo(x: number): (a: number) => number", ..Default::default() });
-		f.verify_quick_info_at("2".into(), "var r: (a: number) => number".into(), "".into());
-		f.go_to_marker("3".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "r(a: number): number", ..Default::default() });
-		f.verify_quick_info_at("4".into(), "var r2: number".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("1");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "foo(x: number): (a: number) => number".to_string().into(), ..Default::default() });
+		f.verify_quick_info_at("2", "var r: (a: number) => number", "");
+		f.go_to_marker("3");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "r(a: number): number".to_string().into(), ..Default::default() });
+		f.verify_quick_info_at("4", "var r2: number", "");
 	});
 }
 

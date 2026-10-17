@@ -18,14 +18,14 @@ module.exports = 0;
 module.exports = 0;
 // @Filename: /d.cts
 module.exports = 0;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/a.js".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("/a.js");
 		f.verify_code_fix_not_available();
-		f.go_to_file("/b.ts".into());
+		f.go_to_file("/b.ts");
 		f.verify_code_fix_not_available();
-		f.go_to_file("/c.cjs".into());
+		f.go_to_file("/c.cjs");
 		f.verify_code_fix_not_available();
-		f.go_to_file("/d.cts".into());
+		f.go_to_file("/d.cts");
 		f.verify_code_fix_not_available();
 	});
 }

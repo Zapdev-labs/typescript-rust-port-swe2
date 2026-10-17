@@ -25,10 +25,10 @@ export const x: number;
 // @Filename: /home/src/workspaces/project/script.ts
 import {} from "./packages/app/dist/index.js";
 x/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_marker("".into());
-		f.verify_import_fix_module_specifiers("".into(), &["./packages/utils/dist/index.js"], None);
+		f.go_to_marker("");
+		f.verify_import_fix_module_specifiers("", &["./packages/utils/dist/index.js".into()], None);
 	});
 }
 

@@ -21,7 +21,7 @@ declare const stringValidator: (input: unknown) => string | undefined;
 const /*deep*/deep = decode({ a: { b: { c: { d: stringValidator } } } });
 deep.a.b.c./*leaf*/d;
 "#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_no_errors();
 		f.verify_baseline_hover();
 	});

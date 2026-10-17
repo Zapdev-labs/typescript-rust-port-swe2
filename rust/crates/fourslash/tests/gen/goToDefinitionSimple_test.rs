@@ -12,8 +12,8 @@ class /*2*/c { }
 // @Filename: Consumption.ts
  var n = new [|/*1*/c|]();
  var n = new [|c/*3*/|]();";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "1".into(), "3".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_definition(true, &["1".into(), "3".into()]);
 	});
 }
 

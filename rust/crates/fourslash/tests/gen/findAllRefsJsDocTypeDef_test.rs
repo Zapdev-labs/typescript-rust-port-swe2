@@ -9,8 +9,8 @@ fn find_all_refs_js_doc_type_def() {
 	run_test(|t| {
 		let content = r"/** @typedef {Object} /*0*/T */
 function foo() {}";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("0".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["0".into()]);
 	});
 }
 

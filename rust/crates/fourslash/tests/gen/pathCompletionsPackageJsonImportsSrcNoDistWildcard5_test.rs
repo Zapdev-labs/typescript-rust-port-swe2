@@ -53,9 +53,9 @@ export const blah = 0;
 export const onlyInCjs = 0;
 // @Filename: /home/src/workspaces/project/src/index.mts
 import { } from "/**/";"##;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec![&tsc_lsproto::CompletionItem { label: "#blah", kind: Some((tsc_lsproto::CompletionItemKind::FILE).into()), detail: Some(("#blah.mts").into()), ..Default::default() }, &tsc_lsproto::CompletionItem { label: "#index", kind: Some((tsc_lsproto::CompletionItemKind::FILE).into()), detail: Some(("#index.mts").into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "#blah".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::File).into()), detail: Some(("#blah.mts").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "#index".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::File).into()), detail: Some(("#index.mts").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

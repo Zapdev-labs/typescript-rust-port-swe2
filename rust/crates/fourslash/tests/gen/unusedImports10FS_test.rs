@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn unused_imports10_fs() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"// @noUnusedLocals: true
 namespace A {
    export class Calculator {
@@ -18,8 +18,8 @@ namespace A {
 namespace B {
     [|import a = A;|]
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_range_after_code_fix(r"".into(), false, 0, 0);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_range_after_code_fix(r"", false, 0, 0);
 	});
 }
 

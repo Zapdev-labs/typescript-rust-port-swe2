@@ -14,13 +14,13 @@ foo/*0*/();|]
 export function foo() {};
 // @Filename: a/foo.ts
 export { foo } from "./foo/bar";"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_import_fix_at_position(&[r#"import * as ns from "./foo";
-ns.foo();"#, r#"import * as ns from "./foo";
+ns.foo();"#.into(), r#"import * as ns from "./foo";
 import { foo } from "./foo";
-foo();"#, r#"import * as ns from "./foo";
+foo();"#.into(), r#"import * as ns from "./foo";
 import { foo } from "./foo/bar";
-foo();"#], None);
+foo();"#.into()], None);
 	});
 }
 

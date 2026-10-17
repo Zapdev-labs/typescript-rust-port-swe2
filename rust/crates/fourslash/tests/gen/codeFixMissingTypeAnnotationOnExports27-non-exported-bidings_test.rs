@@ -13,13 +13,13 @@ let p = { x: 1, y: 2}
 const a = 1, b = 10, { x, y } = p, c = 1;
 export { x, y }
 export const d = a + b + c;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingTypeAnnotationOnExports", new_file_content: r"let p = { x: 1, y: 2}
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingTypeAnnotationOnExports".to_string().into(), new_file_content: r"let p = { x: 1, y: 2}
 const x: number = p.x;
 const y: number = p.y;
 const a = 1, b = 10, c = 1;
 export { x, y }
-export const d: number = a + b + c;", ..Default::default() });
+export const d: number = a + b + c;".to_string().into(), ..Default::default() });
 	});
 }
 

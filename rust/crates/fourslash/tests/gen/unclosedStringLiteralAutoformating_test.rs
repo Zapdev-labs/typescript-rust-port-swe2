@@ -10,10 +10,10 @@ fn unclosed_string_literal_autoformating() {
 		let content = r#"var x = /*1*/"asd/*2*/
 class Foo {
     /**/"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
-		f.insert("}".into());
-		f.verify_current_line_content(r"}".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
+		f.insert("}");
+		f.verify_current_line_content(r"}");
 	});
 }
 

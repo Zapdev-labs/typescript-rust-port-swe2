@@ -10,11 +10,11 @@ fn format_remove_space_between_dot_dot_dot_and_type_name() {
 		let content = r"let a: [... any[]];
 let b: [...   number[]];
 let c: [...     string[]];";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
 		f.verify_current_file_content(r"let a: [...any[]];
 let b: [...number[]];
-let c: [...string[]];".into());
+let c: [...string[]];");
 	});
 }
 

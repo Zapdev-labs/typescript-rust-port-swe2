@@ -11,9 +11,9 @@ fn signature_help_no_arguments() {
 }
 
 foo(/**/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "foo(n: number): string", parameter_name: "n", parameter_span: "n: number", ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "foo(n: number): string".to_string().into(), parameter_name: "n".to_string().into(), parameter_span: "n: number".to_string().into(), ..Default::default() });
 	});
 }
 

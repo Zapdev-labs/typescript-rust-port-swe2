@@ -10,8 +10,8 @@ fn navto_empty_pattern() {
 		let content = r"// @filename: foo.ts
 const [|x|]: number = 1;
 function [|y|](x: string): string { return x; }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "".into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "x".into(), kind: tsc_lsproto::SYMBOL_KIND_VARIABLE, location: f.ranges()[0].ls_location(), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "y".into(), kind: tsc_lsproto::SYMBOL_KIND_FUNCTION, location: f.ranges()[1].ls_location(), ..Default::default() }]).into()), ..Default::default() }]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "".to_string().into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "x".to_string().into(), kind: tsc_lsproto::SYMBOL_KIND_VARIABLE.into(), location: f.ranges()[0].ls_location().into(), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "y".to_string().into(), kind: tsc_lsproto::SYMBOL_KIND_FUNCTION.into(), location: f.ranges()[1].ls_location().into(), ..Default::default() }]).into()), ..Default::default() }]);
 	});
 }
 

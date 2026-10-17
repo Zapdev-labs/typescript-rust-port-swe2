@@ -14,8 +14,8 @@ const jsx = (
     </*8*/A>
     </B>
 );";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_linked_editing(vec![("8", None)].into_iter().collect::<FxHashMap<_, _>>());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_linked_editing(&std::collections::BTreeMap::from([("8".to_string().into(), None)]));
 	});
 }
 

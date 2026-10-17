@@ -19,8 +19,8 @@ export {v1 as v2};
 // @Filename: goToTypeDefinitioAliases_module3.ts
 import {/*reference1*/v2 as v3} from "./goToTypeDefinitioAliases_module2";
 /*reference2*/v3;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_type_definition("reference1".into(), "reference2".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_type_definition(&["reference1".into(), "reference2".into()]);
 	});
 }
 

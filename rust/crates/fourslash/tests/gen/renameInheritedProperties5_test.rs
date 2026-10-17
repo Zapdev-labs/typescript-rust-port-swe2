@@ -15,8 +15,8 @@ interface D extends C {
 }
 var d: D;
 d.[|propD|];"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_rename_at_ranges_with_text(None, "propD".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_rename_at_ranges_with_text(None, &["propD".into()]);
 	});
 }
 

@@ -12,9 +12,9 @@ fn add_function_in_duplicated_constructor_class_body() {
     constructor() { }
     /**/
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
-		f.insert("fn() { }".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
+		f.insert("fn() { }");
 		f.verify_number_of_errors_in_current_file(2);
 	});
 }

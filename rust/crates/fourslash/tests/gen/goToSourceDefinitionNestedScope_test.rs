@@ -21,8 +21,8 @@ function unrelated() {
 // @Filename: /home/src/workspaces/project/index.ts
 import { /*importHelper*/helper } from "pkg";
 helper/*usage*/();"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("importHelper".into(), "usage".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_source_definition(&["importHelper".into(), "usage".into()]);
 	});
 }
 
@@ -43,8 +43,8 @@ function factory() {
 // @Filename: /home/src/workspaces/project/index.ts
 import { /*importWidget*/Widget } from "pkg";
 new Widget();"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("importWidget".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_source_definition(&["importWidget".into()]);
 	});
 }
 

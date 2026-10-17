@@ -13,13 +13,13 @@ export default function foo(): void {}
 export { default } from "./a";
 // @Filename: /user.ts
 [|foo;|]"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/user.ts".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("/user.ts");
 		f.verify_import_fix_at_position(&[r#"import foo from "./a";
 
-foo;"#, r#"import foo from "./b";
+foo;"#.into(), r#"import foo from "./b";
 
-foo;"#], None);
+foo;"#.into()], None);
 	});
 }
 

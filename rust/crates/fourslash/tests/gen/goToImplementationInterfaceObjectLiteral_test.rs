@@ -16,8 +16,8 @@ import { MyInterface } from "./file1";
 
 const x: /*impl*/MyInterface = { P: 2 };
 "#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_implementation("impl".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_implementation(&["impl".into()]);
 	});
 }
 

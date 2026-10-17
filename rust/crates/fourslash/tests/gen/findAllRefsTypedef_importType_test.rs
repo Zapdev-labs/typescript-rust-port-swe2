@@ -15,8 +15,8 @@ const dummy = 0;
 // @Filename: /b.js
 /** @type {import('./a')./*3*/Foo} */
 const x = 0;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1".into(), "2".into(), "3".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
 	});
 }
 

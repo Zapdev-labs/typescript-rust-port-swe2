@@ -13,14 +13,14 @@ if (true) {
 if (true)/*directParent*/
 var x = 0/*innermost*/
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("innermost".into());
-		f.insert(";".into());
-		f.verify_current_line_content(r"        var x = 0;".into());
-		f.go_to_marker("directParent".into());
-		f.verify_current_line_content(r"    if (true)".into());
-		f.go_to_marker("parentOutsideBlock".into());
-		f.verify_current_line_content(r"if (true)".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("innermost");
+		f.insert(";");
+		f.verify_current_line_content(r"        var x = 0;");
+		f.go_to_marker("directParent");
+		f.verify_current_line_content(r"    if (true)");
+		f.go_to_marker("parentOutsideBlock");
+		f.verify_current_line_content(r"if (true)");
 	});
 }
 

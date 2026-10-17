@@ -11,8 +11,8 @@ fn get_edits_for_file_rename_tsconfig_empty_include() {
 const x = 1
 // @Filename: /a/tsconfig.json
 { "include": [] }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_will_rename_files_edits("/a/foo.ts".into(), "/a/bar.ts".into(), vec![].into_iter().collect::<FxHashMap<_, _>>(), None);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_will_rename_files_edits("/a/foo.ts", "/a/bar.ts", &std::collections::BTreeMap::from([]), None);
 	});
 }
 

@@ -10,18 +10,18 @@ fn completion_list_in_function_declaration() {
 		let content = r"// @lib: es5
 var a = 0;
 function foo(/**/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_completions("".into(), None);
-		f.insert("a".into());
-		f.verify_completions(None, None);
-		f.insert(" , ".into());
-		f.verify_completions(None, None);
-		f.insert("b".into());
-		f.verify_completions(None, None);
-		f.insert(":".into());
-		f.verify_completions(None, &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: COMPLETION_GLOBAL_TYPES, ..Default::default() }, ..Default::default() });
-		f.insert("number, ".into());
-		f.verify_completions(None, None);
+		f.insert("a");
+		f.verify_completions(Default::default(), None);
+		f.insert(" , ");
+		f.verify_completions(Default::default(), None);
+		f.insert("b");
+		f.verify_completions(Default::default(), None);
+		f.insert(":");
+		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: tsc_fourslash::completion_global_types.into(), ..Default::default() }), ..Default::default() }));
+		f.insert("number, ");
+		f.verify_completions(Default::default(), None);
 	});
 }
 

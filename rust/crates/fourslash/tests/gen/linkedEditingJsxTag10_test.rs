@@ -39,7 +39,7 @@ const jsx = </*13*/> //*13a*/>;
 const jsx = </*14*/> </*14a*/div> <//*14b*/> <//*14c*/div>;
 // @Filename: /jsx15.tsx
 const jsx = </*15*/div> </*15a*/> <//*15b*/div> <//*15c*/>;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_linked_editing();
 	});
 }

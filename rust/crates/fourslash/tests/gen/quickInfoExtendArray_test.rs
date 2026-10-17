@@ -13,9 +13,9 @@ var /*1*/r = x[0];
 interface Foo2 extends Array<string> { }
 var x2: Foo2;
 var /*2*/r2 = x2[0];";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1".into(), "var r: string".into(), "".into());
-		f.verify_quick_info_at("2".into(), "var r2: string".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("1", "var r: string", "");
+		f.verify_quick_info_at("2", "var r2: string", "");
 	});
 }
 

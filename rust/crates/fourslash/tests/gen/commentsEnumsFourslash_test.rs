@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn comments_enums_fourslash() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"/** Enum of colors*/
 enum /*1*/Colors {
     /** Fancy name for 'blue'*/
@@ -17,16 +17,16 @@ enum /*1*/Colors {
 }
 var /*4*/x = /*5*/Colors./*6*/Cornflower;
 x = Colors./*7*/FancyPink;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1".into(), "enum Colors".into(), "Enum of colors".into());
-		f.verify_quick_info_at("2".into(), "(enum member) Colors.Cornflower = 0".into(), "Fancy name for 'blue'".into());
-		f.verify_quick_info_at("3".into(), "(enum member) Colors.FancyPink = 1".into(), "Fancy name for 'pink'".into());
-		f.verify_quick_info_at("4".into(), "var x: Colors".into(), "".into());
-		f.verify_quick_info_at("5".into(), "enum Colors".into(), "Enum of colors".into());
-		f.verify_quick_info_at("6".into(), "(enum member) Colors.Cornflower = 0".into(), "Fancy name for 'blue'".into());
-		f.verify_quick_info_at("7".into(), "(enum member) Colors.FancyPink = 1".into(), "Fancy name for 'pink'".into());
-		f.verify_completions("5".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "Colors", detail: Some(("enum Colors").into()), documentation: &tsc_lsproto::StringOrMarkupContent { markup_content: &tsc_lsproto::MarkupContent { kind: tsc_lsproto::MarkupKind::MARKDOWN, value: "Enum of colors", ..Default::default() }, ..Default::default() }, ..Default::default() }], ..Default::default() }, ..Default::default() });
-		f.verify_completions(&["6", "7"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec![&tsc_lsproto::CompletionItem { label: "Cornflower", detail: Some(("(enum member) Colors.Cornflower = 0").into()), documentation: &tsc_lsproto::StringOrMarkupContent { markup_content: &tsc_lsproto::MarkupContent { kind: tsc_lsproto::MarkupKind::MARKDOWN, value: "Fancy name for 'blue'", ..Default::default() }, ..Default::default() }, ..Default::default() }, &tsc_lsproto::CompletionItem { label: "FancyPink", detail: Some(("(enum member) Colors.FancyPink = 1").into()), documentation: &tsc_lsproto::StringOrMarkupContent { markup_content: &tsc_lsproto::MarkupContent { kind: tsc_lsproto::MarkupKind::MARKDOWN, value: "Fancy name for 'pink'", ..Default::default() }, ..Default::default() }, ..Default::default() }], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("1", "enum Colors", "Enum of colors");
+		f.verify_quick_info_at("2", "(enum member) Colors.Cornflower = 0", "Fancy name for 'blue'");
+		f.verify_quick_info_at("3", "(enum member) Colors.FancyPink = 1", "Fancy name for 'pink'");
+		f.verify_quick_info_at("4", "var x: Colors", "");
+		f.verify_quick_info_at("5", "enum Colors", "Enum of colors");
+		f.verify_quick_info_at("6", "(enum member) Colors.Cornflower = 0", "Fancy name for 'blue'");
+		f.verify_quick_info_at("7", "(enum member) Colors.FancyPink = 1", "Fancy name for 'pink'");
+		f.verify_completions("5".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "Colors".to_string().into(), detail: Some(("enum Colors").into()), documentation: Some(tsc_lsproto::StringOrMarkupContent { markup_content: Some(tsc_lsproto::MarkupContent { kind: tsc_lsproto::MarkupKind::Markdown.into(), value: "Enum of colors".to_string().into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions(vec!["6", "7"].into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "Cornflower".to_string().into(), detail: Some(("(enum member) Colors.Cornflower = 0").into()), documentation: Some(tsc_lsproto::StringOrMarkupContent { markup_content: Some(tsc_lsproto::MarkupContent { kind: tsc_lsproto::MarkupKind::Markdown.into(), value: "Fancy name for 'blue'".to_string().into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "FancyPink".to_string().into(), detail: Some(("(enum member) Colors.FancyPink = 1").into()), documentation: Some(tsc_lsproto::StringOrMarkupContent { markup_content: Some(tsc_lsproto::MarkupContent { kind: tsc_lsproto::MarkupKind::Markdown.into(), value: "Fancy name for 'pink'".to_string().into(), ..Default::default() }), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

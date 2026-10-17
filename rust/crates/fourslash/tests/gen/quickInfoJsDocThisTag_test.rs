@@ -13,7 +13,7 @@ fn quick_info_js_doc_this_tag() {
 function f/**/() {
     this
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_hover();
 	});
 }

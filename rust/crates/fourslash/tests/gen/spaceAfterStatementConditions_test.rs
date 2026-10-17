@@ -29,8 +29,8 @@ for(let foo of [1, 2]) --i;
 for(let j = 0; j < 10; j++) ++i;
 for(let j = 0; j < 10; j++) --i;
 ";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
 		f.verify_current_file_content(r"let i = 0;
 
 if (i < 0) ++i;
@@ -52,7 +52,7 @@ for (let foo of [1, 2]) --i;
 
 for (let j = 0; j < 10; j++) ++i;
 for (let j = 0; j < 10; j++) --i;
-".into());
+");
 	});
 }
 

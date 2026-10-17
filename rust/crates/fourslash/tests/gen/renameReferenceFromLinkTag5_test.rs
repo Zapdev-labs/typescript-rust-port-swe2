@@ -11,8 +11,8 @@ fn rename_reference_from_link_tag5() {
     /** {@link E./**/A} */
     A
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_rename(None, "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_rename(None, vec!["".into()]);
 	});
 }
 

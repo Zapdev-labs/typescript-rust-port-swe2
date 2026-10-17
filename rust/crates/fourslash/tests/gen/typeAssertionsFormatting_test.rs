@@ -9,12 +9,12 @@ fn type_assertions_formatting() {
 	run_test(|t| {
 		let content = r"( <  any   >      publisher);/*1*/
  <  any  >      3;/*2*/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
-		f.go_to_marker("1".into());
-		f.verify_current_line_content(r"(<any>publisher);".into());
-		f.go_to_marker("2".into());
-		f.verify_current_line_content(r"<any>3;".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
+		f.go_to_marker("1");
+		f.verify_current_line_content(r"(<any>publisher);");
+		f.go_to_marker("2");
+		f.verify_current_line_content(r"<any>3;");
 	});
 }
 

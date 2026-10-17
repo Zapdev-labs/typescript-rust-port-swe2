@@ -19,8 +19,8 @@ var a = 10;
 // @filename: node_modules/c.js
 exports.a = 10;
 c = 10;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_suggestion_diagnostics(None);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_suggestion_diagnostics(&[]);
 	});
 }
 

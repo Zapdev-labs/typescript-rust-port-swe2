@@ -34,13 +34,13 @@ namespace a {
 // @Filename: file4.ts
 namespace A { export var x; }
 namespace A.B { export var y; }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_document_symbol();
-		f.go_to_file("file2.ts".into());
+		f.go_to_file("file2.ts");
 		f.verify_baseline_document_symbol();
-		f.go_to_file("file3.ts".into());
+		f.go_to_file("file3.ts");
 		f.verify_baseline_document_symbol();
-		f.go_to_file("file4.ts".into());
+		f.go_to_file("file4.ts");
 		f.verify_baseline_document_symbol();
 	});
 }

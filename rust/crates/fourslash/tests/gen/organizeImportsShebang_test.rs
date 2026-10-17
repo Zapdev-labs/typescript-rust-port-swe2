@@ -14,14 +14,14 @@ import Bar from "bar";
 import Foobar from "foobar";
 
 console.log(Foo, Bar, Foobar);"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_organize_imports(r#"#!/usr/bin/env node
 import Bar from "bar";
 import Foo from "foo";
 
 import Foobar from "foobar";
 
-console.log(Foo, Bar, Foobar);"#.into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
+console.log(Foo, Bar, Foobar);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, None);
 	});
 }
 

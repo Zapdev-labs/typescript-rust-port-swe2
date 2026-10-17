@@ -15,13 +15,13 @@ function getString() {
 export const exp = {
     prop: getString()
 };"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add satisfies and an inline type assertion with 'string'", new_file_content: r#"function getString() {
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add satisfies and an inline type assertion with 'string'".to_string().into(), new_file_content: r#"function getString() {
     return ""
 }
 export const exp = {
     prop: getString() satisfies string as string
-};"#, index: 1, ..Default::default() });
+};"#.to_string().into(), index: 1, ..Default::default() });
 	});
 }
 

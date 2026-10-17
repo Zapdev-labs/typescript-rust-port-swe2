@@ -14,11 +14,11 @@ export const ignoredSymbol = 2;
 // @Filename: bar.ts
 mySym/*1*/
 ignoredSym/*2*/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.configure(tsc_lsutil::UserPreferences { auto_import_specifier_exclude_regexes: vec![".*ignoreme.*"], include_completions_for_module_exports: tsc_core::tristate::TS_TRUE, include_completions_for_import_statements: tsc_core::tristate::TS_TRUE, ..Default::default() });
-		f.verify_completions("1".into(), &tsc_fourslash::CompletionsExpectedList { item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["mySymbol"], ..Default::default() }, ..Default::default() });
-		f.verify_completions("2".into(), &tsc_fourslash::CompletionsExpectedList { item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { excludes: vec!["ignoredSymbol"], ..Default::default() }, ..Default::default() });
-		f.baseline_auto_imports_completions(&["1", "2"]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.configure(tsc_lsutil::UserPreferences { auto_import_specifier_exclude_regexes: vec![".*ignoreme.*".into()].into(), completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() });
+		f.verify_completions("1".into(), Some(&tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["mySymbol".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions("2".into(), Some(&tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { excludes: vec!["ignoredSymbol".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.baseline_auto_imports_completions(&["1".into(), "2".into()]);
 	});
 }
 

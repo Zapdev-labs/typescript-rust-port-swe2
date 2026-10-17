@@ -7,32 +7,32 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_object_literal_open_curly_newline_typing() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"
 var varName =/**/
 ";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
-		f.insert("\n{".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
+		f.insert("\n{");
 		f.verify_current_file_content(r"
 var varName =
     {
-".into());
-		f.insert("\na: 1".into());
-		f.format_document("".into());
+");
+		f.insert("\na: 1");
+		f.format_document("");
 		f.verify_current_file_content(r"
 var varName =
 {
     a: 1
-".into());
-		f.insert("\n};".into());
-		f.format_document("".into());
+");
+		f.insert("\n};");
+		f.format_document("");
 		f.verify_current_file_content(r"
 var varName =
 {
     a: 1
 };
-".into());
+");
 	});
 }
 

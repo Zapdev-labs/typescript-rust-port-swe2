@@ -13,8 +13,8 @@ fn rename_parameter_property_declaration3() {
         this.[|protectedParam|] += 10;
     }
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_rename_at_ranges_with_text(None, "protectedParam".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_rename_at_ranges_with_text(None, &["protectedParam".into()]);
 	});
 }
 

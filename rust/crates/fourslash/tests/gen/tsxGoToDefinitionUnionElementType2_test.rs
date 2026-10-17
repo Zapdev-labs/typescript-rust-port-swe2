@@ -23,8 +23,8 @@ class RC2 extends React.Component<{}, {}> {
 }
 var /*pt1*/RCComp = RC1 || RC2;
 <[|RC/*one*/Comp|] />";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "one".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_definition(true, &["one".into()]);
 	});
 }
 

@@ -11,13 +11,13 @@ fn code_fix_class_implement_interface_qualified_name() {
     export interface I { y: I; }
 }
 class C1 implements N.I {}";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'N.I'", new_file_content: r"namespace N {
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'N.I'".to_string().into(), new_file_content: r"namespace N {
     export interface I { y: I; }
 }
 class C1 implements N.I {
     y: N.I;
-}", index: 0, ..Default::default() });
+}".to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

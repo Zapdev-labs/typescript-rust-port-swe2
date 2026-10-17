@@ -13,11 +13,11 @@ export interface Foo<T, U = T[]> {}
 export function foo(x: Foo<string, string[]>) {
     return x;
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add return type 'Foo<string>'", new_file_content: r"export interface Foo<T, U = T[]> {}
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add return type 'Foo<string>'".to_string().into(), new_file_content: r"export interface Foo<T, U = T[]> {}
 export function foo(x: Foo<string, string[]>): Foo<string> {
     return x;
-}", index: 0, ..Default::default() });
+}".to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

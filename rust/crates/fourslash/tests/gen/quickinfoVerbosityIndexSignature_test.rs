@@ -15,8 +15,8 @@ interface Foo {
     [a/*a*/: Key]: Apple;
 }
 const f/*f*/: Foo = {};";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_hover_with_verbosity(vec![("a", vec![0, 1]), ("f", vec![0, 1, 2])].into_iter().collect::<FxHashMap<_, _>>());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("a".to_string().into(), vec![0, 1]), ("f".to_string().into(), vec![0, 1, 2])]));
 	});
 }
 

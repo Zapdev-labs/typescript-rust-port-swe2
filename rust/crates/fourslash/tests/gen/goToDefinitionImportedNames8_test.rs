@@ -15,8 +15,8 @@ class /*classDefinition*/Class {
     private f;
 }
  export { Class };"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "classAliasDefinition".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_definition(true, &["classAliasDefinition".into()]);
 	});
 }
 

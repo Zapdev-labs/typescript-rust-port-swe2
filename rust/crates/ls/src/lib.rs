@@ -51,6 +51,8 @@ mod utilities;
 // Re-exports used by the `tsc-lsp` server port (`server.go` calls these as
 // `ls.X` package members).
 pub use crate::api::Error;
+#[doc(hidden)]
+pub use crate::completions::sort_text::*;
 pub use crate::completions::{ERR_NEEDS_AUTO_IMPORTS, completion_trigger_characters};
 pub use crate::semantictokens::semantic_tokens_legend;
 pub use crate::signaturehelp::{

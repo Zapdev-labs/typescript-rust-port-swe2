@@ -17,10 +17,10 @@ function f1(text) {}
 exports.f1 = f1;
 // @Filename: node_modules/package-name/package.json
 { "main": "bin/lib/libfile.js" }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_import_fix_at_position(&[r#"import { f1 } from "package-name";
 
-f1('');"#], None);
+f1('');"#.into()], None);
 	});
 }
 

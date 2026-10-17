@@ -24,19 +24,19 @@ let i: I</*interface*/>;
 
 type Ty<T> = T;
 let t: Ty</*typeAlias*/>;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("type1".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "testClass<T extends IFoo, U, M extends IFoo>", parameter_name: "T", parameter_span: "T extends IFoo", ..Default::default() });
-		f.go_to_marker("type2".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "testClass<T extends IFoo, U, M extends IFoo>", parameter_name: "T", parameter_span: "T extends IFoo", ..Default::default() });
-		f.go_to_marker("type3".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "testClass<T extends IFoo, U, M extends IFoo>", parameter_name: "T", parameter_span: "T extends IFoo", ..Default::default() });
-		f.go_to_marker("type4".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "M", parameter_span: "M extends IFoo", ..Default::default() });
-		f.go_to_marker("interface".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "I<T>", parameter_name: "T", parameter_span: "T", ..Default::default() });
-		f.go_to_marker("typeAlias".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "Ty<T>", parameter_name: "T", parameter_span: "T", ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("type1");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "testClass<T extends IFoo, U, M extends IFoo>".to_string().into(), parameter_name: "T".to_string().into(), parameter_span: "T extends IFoo".to_string().into(), ..Default::default() });
+		f.go_to_marker("type2");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "testClass<T extends IFoo, U, M extends IFoo>".to_string().into(), parameter_name: "T".to_string().into(), parameter_span: "T extends IFoo".to_string().into(), ..Default::default() });
+		f.go_to_marker("type3");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "testClass<T extends IFoo, U, M extends IFoo>".to_string().into(), parameter_name: "T".to_string().into(), parameter_span: "T extends IFoo".to_string().into(), ..Default::default() });
+		f.go_to_marker("type4");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { parameter_name: "M".to_string().into(), parameter_span: "M extends IFoo".to_string().into(), ..Default::default() });
+		f.go_to_marker("interface");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "I<T>".to_string().into(), parameter_name: "T".to_string().into(), parameter_span: "T".to_string().into(), ..Default::default() });
+		f.go_to_marker("typeAlias");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "Ty<T>".to_string().into(), parameter_name: "T".to_string().into(), parameter_span: "T".to_string().into(), ..Default::default() });
 	});
 }
 

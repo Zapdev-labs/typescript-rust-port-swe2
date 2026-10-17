@@ -18,16 +18,16 @@ Foo/*c1*/; // should get "x", "prototype"
 var s: Foo/*c2*/; // no types, in Foo, so shouldnt have anything
 var f = new Foo();
 f/*c3*/;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("c1".into());
-		f.insert(".".into());
-		f.verify_completions(None, &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "x", sort_text: Some((tsc_ls::SORT_TEXT_LOCATION_PRIORITY.to_string()).into()), ..Default::default() }, &tsc_lsproto::CompletionItem { label: "prototype", sort_text: Some((tsc_ls::SORT_TEXT_LOCATION_PRIORITY.to_string()).into()), ..Default::default() }, &tsc_lsproto::CompletionItem { label: "staticMethod", sort_text: Some((tsc_ls::SORT_TEXT_LOCAL_DECLARATION_PRIORITY.to_string()).into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
-		f.go_to_marker("c2".into());
-		f.insert(".".into());
-		f.verify_completions(None, None);
-		f.go_to_marker("c3".into());
-		f.insert(".".into());
-		f.verify_completions(None, &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec!["doStuff"], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("c1");
+		f.insert(".");
+		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "x".to_string().into(), sort_text: Some((tsc_ls::SORT_TEXT_LOCATION_PRIORITY.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "prototype".to_string().into(), sort_text: Some((tsc_ls::SORT_TEXT_LOCATION_PRIORITY.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "staticMethod".to_string().into(), sort_text: Some((tsc_ls::SORT_TEXT_LOCAL_DECLARATION_PRIORITY.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
+		f.go_to_marker("c2");
+		f.insert(".");
+		f.verify_completions(Default::default(), None);
+		f.go_to_marker("c3");
+		f.insert(".");
+		f.verify_completions(Default::default(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["doStuff".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -10,8 +10,8 @@ fn semantic_classification_class_expression() {
 		let content = r"var x = class /*0*/C {}
 class /*1*/C {}
 class /*2*/D extends class /*3*/B{} { }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type: "class.declaration".into(), text: "x".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "class.declaration".into(), text: "C".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "class.declaration".into(), text: "C".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "class.declaration".into(), text: "D".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "class.declaration".into(), text: "B".into(), ..Default::default() }]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type_: "class.declaration".to_string().into(), text: "x".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "class.declaration".to_string().into(), text: "C".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "class.declaration".to_string().into(), text: "C".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "class.declaration".to_string().into(), text: "D".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "class.declaration".to_string().into(), text: "B".to_string().into(), ..Default::default() }]);
 	});
 }
 

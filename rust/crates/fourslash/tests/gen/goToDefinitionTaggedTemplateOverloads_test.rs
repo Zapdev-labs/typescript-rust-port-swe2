@@ -7,14 +7,14 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_tagged_template_overloads() {
 	run_test(|t| {
-		let content = r"function /*defFNumber*/f(strs: TemplateStringsArray, x: number): void;
+		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"function /*defFNumber*/f(strs: TemplateStringsArray, x: number): void;
 function /*defFBool*/f(strs: TemplateStringsArray, x: boolean): void;
 function f(strs: TemplateStringsArray, x: number | boolean) {}
 
-[|/*useFNumber*/f|]" + "`" + r"${0}" + "`" + r";
-[|/*useFBool*/f|]" + "`" + r"${false}" + "`" + r";";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "useFNumber".into(), "useFBool".into());
+[|/*useFNumber*/f|]", "`"), r"${0}"), "`"), r";
+[|/*useFBool*/f|]"), "`"), r"${false}"), "`"), r";");
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_definition(true, &["useFNumber".into(), "useFBool".into()]);
 	});
 }
 

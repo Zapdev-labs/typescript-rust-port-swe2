@@ -12,8 +12,8 @@ fn get_edits_for_file_rename_case_insensitive() {
 export const a = 0;
 // @Filename: /b.ts
 import { a } from "./A";"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_will_rename_files_edits("/a.ts".into(), "/eh.ts".into(), vec![("/b.ts", r#"import { a } from "./eh";"#)].into_iter().collect::<FxHashMap<_, _>>(), None);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_will_rename_files_edits("/a.ts", "/eh.ts", &std::collections::BTreeMap::from([("/b.ts".to_string().into(), r#"import { a } from "./eh";"#.to_string().into())]), None);
 	});
 }
 

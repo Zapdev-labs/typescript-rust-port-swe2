@@ -70,7 +70,7 @@ logFruitTuple11("apple", { color: "red" }, /*26*/);
 function withPair(...[first, second]: [number, named: string]) {}
 withPair(/*27*/);
 withPair(101, /*28*/);"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_signature_help();
 	});
 }

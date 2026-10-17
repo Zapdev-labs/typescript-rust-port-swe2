@@ -14,13 +14,13 @@ export const concat = 0;
 // @Filename: /a.ts
 export {};
 conca/**/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		let mut prefs = tsc_lsutil::new_default_user_preferences();
 		prefs.auto_import_entrypoint_directory_search = tsc_core::tristate::TS_TRUE;
 		f.configure(prefs);
-		f.go_to_file("/a.ts".into());
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "concat", data: &tsc_lsproto::CompletionItemData { auto_import: &tsc_lsproto::AutoImportFix { module_specifier: "bar/concat", ..Default::default() }, ..Default::default() }, detail: Some(("const concat: 0").into()), kind: Some((tsc_lsproto::CompletionItemKind::VARIABLE).into()), additional_text_edits: tsc_fourslash::AnyTextEdits, sort_text: Some((tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
-		f.verify_apply_code_action_from_completion(Some(("").into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "concat", source: "bar/concat", description: "Add import from \"bar/concat\"", user_preferences: Some(prefs.clone()), new_file_content: Some((r#"import { concat } from "bar/concat";
+		f.go_to_file("/a.ts");
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "concat".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "bar/concat".to_string().into(), ..Default::default() }), ..Default::default() }), detail: Some(("const concat: 0").into()), kind: Some((tsc_lsproto::CompletionItemKind::Variable).into()), additional_text_edits: tsc_fourslash::ANY_TEXT_EDITS.into(), sort_text: Some((tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_apply_code_action_from_completion("", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "concat".to_string().into(), source: "bar/concat".to_string().into(), description: "Add import from \"bar/concat\"".to_string().into(), user_preferences: Some(prefs.clone()), new_file_content: Some((r#"import { concat } from "bar/concat";
 
 export {};
 conca"#).into()), ..Default::default() });

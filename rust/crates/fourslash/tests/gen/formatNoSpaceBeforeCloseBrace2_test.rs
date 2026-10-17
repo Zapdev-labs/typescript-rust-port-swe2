@@ -8,9 +8,9 @@ use tsc_fourslash::*;
 fn format_no_space_before_close_brace2() {
 	run_test(|t| {
 		let content = r"new Foo(1,     );";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
-		f.verify_current_file_content(r"new Foo(1,);".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
+		f.verify_current_file_content(r"new Foo(1,);");
 	});
 }
 

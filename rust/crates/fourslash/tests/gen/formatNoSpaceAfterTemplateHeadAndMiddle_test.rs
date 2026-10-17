@@ -7,42 +7,42 @@ use tsc_fourslash::*;
 #[test]
 fn format_no_space_after_template_head_and_middle() {
 	run_test(|t| {
-		let content = r"const a1 = " + "`" + r"${ 1 }${ 1 }" + "`" + r";
-const a2 = " + "`" + r"
+		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"const a1 = ", "`"), r"${ 1 }${ 1 }"), "`"), r";
+const a2 = "), "`"), r"
     ${ 1 }${ 1 }
-" + "`" + r";
-const a3 = " + "`" + r"
+"), "`"), r";
+const a3 = "), "`"), r"
 
-
-    ${ 1 }${ 1 }
-" + "`" + r";
-const a4 = " + "`" + r"
 
     ${ 1 }${ 1 }
+"), "`"), r";
+const a4 = "), "`"), r"
 
-" + "`" + r";
-const a5 = " + "`" + r"text ${ 1 } text ${ 1 } text" + "`" + r";
-const a6 = " + "`" + r"
+    ${ 1 }${ 1 }
+
+"), "`"), r";
+const a5 = "), "`"), r"text ${ 1 } text ${ 1 } text"), "`"), r";
+const a6 = "), "`"), r"
     text ${ 1 }
     text ${ 1 }
     text
-" + "`" + r";";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+"), "`"), r";");
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		let mut opts429 = f.get_options();
 		opts429.format_code_settings.insert_space_after_opening_and_before_closing_template_string_braces = tsc_core::tristate::TS_FALSE;
 		f.configure(opts429);
-		f.format_document("".into());
-		f.verify_current_file_content("const a1 = `${1}${1}`;\n" + "const a2 = `\n" + r"    ${1}${1}
-" + "`;\n" + "const a3 = `\n" + r"
-" + r"
-" + r"    ${1}${1}
-" + "`;\n" + "const a4 = `\n" + r"
-" + r"    ${1}${1}
-" + r"
-" + "`;\n" + "const a5 = `text ${1} text ${1} text`;\n" + "const a6 = `\n" + r"    text ${1}
-" + r"    text ${1}
-" + r"    text
-" + "`;");
+		f.format_document("");
+		f.verify_current_file_content(&format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", "const a1 = `${1}${1}`;\n", "const a2 = `\n"), r"    ${1}${1}
+"), "`;\n"), "const a3 = `\n"), r"
+"), r"
+"), r"    ${1}${1}
+"), "`;\n"), "const a4 = `\n"), r"
+"), r"    ${1}${1}
+"), r"
+"), "`;\n"), "const a5 = `text ${1} text ${1} text`;\n"), "const a6 = `\n"), r"    text ${1}
+"), r"    text ${1}
+"), r"    text
+"), "`;"));
 	});
 }
 

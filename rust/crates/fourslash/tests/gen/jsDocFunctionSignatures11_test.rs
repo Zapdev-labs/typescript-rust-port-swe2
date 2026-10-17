@@ -13,9 +13,9 @@ fn js_doc_function_signatures11() {
  * @type {{ [name: string]: string; }} variables
  */
 const vari/**/ables = {};";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
-		f.verify_quick_info_is("const variables: {\n    [name: string]: string;\n}".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
+		f.verify_quick_info_is("const variables: {\n    [name: string]: string;\n}", "");
 	});
 }
 

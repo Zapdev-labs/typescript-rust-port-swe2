@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_source8_map_from_at_types() {
 	run_test(|t| {
-		let content = r#"// @lib: es5
+		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r#"// @lib: es5
 // @moduleResolution: bundler
 // @Filename: /home/src/workspaces/project/node_modules/lodash/package.json
 { "name": "lodash", "version": "4.17.15", "main": "./lodash.js" }
@@ -35,15 +35,15 @@ fn go_to_source8_map_from_at_types() {
     function lodash(value) {}
     lodash.[|/*property*/add|] = add;
 
-    /** Detect free variable "# + "`" + r"global" + "`" + r" from Node.js. */
+    /** Detect free variable "#, "`"), r"global"), "`"), r" from Node.js. */
     var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
-    /** Detect free variable " + "`" + r"self" + "`" + r". */
+    /** Detect free variable "), "`"), r"self"), "`"), r". */
     var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
     /** Used as a reference to the global object. */
     var root = freeGlobal || freeSelf || Function('return this')();
-    /** Detect free variable " + "`" + r"exports" + "`" + r". */
+    /** Detect free variable "), "`"), r"exports"), "`"), r". */
     var freeExports = typeof exports == 'object' && exports && !exports.nodeType && exports;////     
-    /** Detect free variable " + "`" + r"module" + "`" + r#". */
+    /** Detect free variable "), "`"), r"module"), "`"), r#". */
     var freeModule = freeExports && typeof module == 'object' && module && !module.nodeType && module;
     if (freeModule) {
       // Export for Node.js.
@@ -74,10 +74,10 @@ declare module "../index" {
     }
 }
 // @Filename: /home/src/workspaces/project/index.ts
-import { [|/*start*/add|] } from 'lodash';"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+import { [|/*start*/add|] } from 'lodash';"#);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.verify_baseline_go_to_source_definition("start".into());
+		f.verify_baseline_go_to_source_definition(&["start".into()]);
 	});
 }
 

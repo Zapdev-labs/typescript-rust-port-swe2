@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_uri_style_node_core_modules2() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r#"// @module: commonjs
 // @Filename: /node_modules/@types/node/index.d.ts
 declare module "fs" { function writeFile(): void }
@@ -18,16 +18,16 @@ declare module "node:fs/promises" { export * from "fs/promises"; }
 import "node:fs/promises";
 // @Filename: /index.ts
 writeFile/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_module_specifiers("".into(), &["node:fs", "node:fs/promises"], None);
-		f.go_to_file("/other.ts".into());
-		f.replace_line(0, "\n".into());
-		f.go_to_file("/index.ts".into());
-		f.verify_import_fix_module_specifiers("".into(), &["fs", "fs/promises", "node:fs", "node:fs/promises"], None);
-		f.go_to_file("/other.ts".into());
-		f.replace_line(0, "import \"node:fs/promises\";\n".into());
-		f.go_to_file("/index.ts".into());
-		f.verify_import_fix_module_specifiers("".into(), &["node:fs", "node:fs/promises"], None);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_import_fix_module_specifiers("", &["node:fs".into(), "node:fs/promises".into()], None);
+		f.go_to_file("/other.ts");
+		f.replace_line(0, "\n");
+		f.go_to_file("/index.ts");
+		f.verify_import_fix_module_specifiers("", &["fs".into(), "fs/promises".into(), "node:fs".into(), "node:fs/promises".into()], None);
+		f.go_to_file("/other.ts");
+		f.replace_line(0, "import \"node:fs/promises\";\n");
+		f.go_to_file("/index.ts");
+		f.verify_import_fix_module_specifiers("", &["node:fs".into(), "node:fs/promises".into()], None);
 	});
 }
 

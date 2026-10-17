@@ -18,10 +18,10 @@ import yadda3 from "yadda" with {attr: /*attrValue*/}
 // @filename: yadda
 export default {};
 "#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 |marker, index| {
-			f.verify_completions(marker, None);
-		}		f.go_to_each_marker(None, );
+			f.verify_completions(marker.into(), None);
+		}		f.go_to_each_marker(&[], );
 	});
 }
 

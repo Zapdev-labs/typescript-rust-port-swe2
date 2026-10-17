@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn completions_import_named_did_not_exist_before() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r#"// @noLib: true
 // @Filename: /a.ts
 export function Test1() {}
@@ -15,9 +15,9 @@ export function Test2() {}
 // @Filename: /b.ts
 import { Test2 } from "./a";
 t/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_plus(&[&tsc_lsproto::CompletionItem { label: "Test2", detail: Some(("(alias) function Test2(): void\nimport Test2").into()), kind: Some((tsc_lsproto::CompletionItemKind::VARIABLE).into()), ..Default::default() }, &tsc_lsproto::CompletionItem { label: "Test1", data: &tsc_lsproto::CompletionItemData { auto_import: &tsc_lsproto::AutoImportFix { module_specifier: "./a", ..Default::default() }, ..Default::default() }, detail: Some(("function Test1(): void").into()), kind: Some((tsc_lsproto::CompletionItemKind::FUNCTION).into()), additional_text_edits: tsc_fourslash::AnyTextEdits, sort_text: Some((tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string()).into()), label_details: &tsc_lsproto::CompletionItemLabelDetails { description: Some(("./a").into()), ..Default::default() }, ..Default::default() }], true), ..Default::default() }, ..Default::default() }).and_apply_code_action(&mut *t, &tsc_fourslash::CompletionsExpectedCodeAction { name: "Test1", source: "./a", description: "Update import from \"./a\"", new_file_content: r#"import { Test1, Test2 } from "./a";
-t"#, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_plus(&[tsc_lsproto::CompletionItem { label: "Test2".to_string().into(), detail: Some(("(alias) function Test2(): void\nimport Test2").into()), kind: Some((tsc_lsproto::CompletionItemKind::Variable).into()), ..Default::default() }, tsc_lsproto::CompletionItem { label: "Test1".to_string().into(), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "./a".to_string().into(), ..Default::default() }), ..Default::default() }), detail: Some(("function Test1(): void").into()), kind: Some((tsc_lsproto::CompletionItemKind::Function).into()), additional_text_edits: tsc_fourslash::ANY_TEXT_EDITS.into(), sort_text: Some((tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string()).into()), label_details: Some(tsc_lsproto::CompletionItemLabelDetails { description: Some(("./a").into()), ..Default::default() }), ..Default::default() }], true).into(), ..Default::default() }), ..Default::default() })).and_apply_code_action(&mut *t, &tsc_fourslash::CompletionsExpectedCodeAction { name: "Test1".to_string().into(), source: "./a".to_string().into(), description: "Update import from \"./a\"".to_string().into(), new_file_content: r#"import { Test1, Test2 } from "./a";
+t"#.to_string().into(), ..Default::default() });
 	});
 }
 

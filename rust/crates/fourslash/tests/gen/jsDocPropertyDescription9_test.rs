@@ -7,22 +7,22 @@ use tsc_fourslash::*;
 #[test]
 fn js_doc_property_description9() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
-		let content = r"class LiteralClass {
+		return /* skip: "Known failing fourslash test" */;
+		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"class LiteralClass {
     /** Something generic */
-    static [key: " + "`" + r"prefix${string}" + "`" + r"]: any;
+    static [key: ", "`"), r"prefix${string}"), "`"), r"]: any;
     /** Something else */
-    static [key: " + "`" + r"prefix${number}" + "`" + r"]: number;
+    static [key: "), "`"), r"prefix${number}"), "`"), r"]: number;
 }
 function literalClass(e: typeof LiteralClass) {
     console.log(e./*literal1Class*/prefixMember); 
     console.log(e./*literal2Class*/anything);
     console.log(e./*literal3Class*/prefix0);
-}";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("literal1Class".into(), "(index) LiteralClass[`prefix${string}`]: any".into(), "Something generic".into());
-		f.verify_quick_info_at("literal2Class".into(), "any".into(), "".into());
-		f.verify_quick_info_at("literal3Class".into(), "(index) LiteralClass[`prefix${string}` | `prefix${number}`]: any".into(), "Something generic\nSomething else".into());
+}");
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("literal1Class", "(index) LiteralClass[`prefix${string}`]: any", "Something generic");
+		f.verify_quick_info_at("literal2Class", "any", "");
+		f.verify_quick_info_at("literal3Class", "(index) LiteralClass[`prefix${string}` | `prefix${number}`]: any", "Something generic\nSomething else");
 	});
 }
 

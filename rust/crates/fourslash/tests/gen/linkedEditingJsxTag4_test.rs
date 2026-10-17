@@ -21,9 +21,9 @@ const jsx = (
       </*15*/p />
    <//*16*/div>
 );";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		let mut linked_cursors = vec![tsc_lsproto::Range { start: f.marker_by_name("0".into()).ls_position, end: f.marker_by_name("1".into()).ls_position, ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("6".into()).ls_position, end: f.marker_by_name("7".into()).ls_position, ..Default::default() }];
-		f.verify_linked_editing(vec![("0", linked_cursors), ("1", linked_cursors), ("2", None), ("3", None), ("4", None), ("5", None), ("6", linked_cursors), ("10", None), ("11", None), ("12", None), ("13", None), ("14", None), ("15", None), ("16", None)].into_iter().collect::<FxHashMap<_, _>>());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		let mut linked_cursors = vec![tsc_lsproto::Range { start: f.marker_by_name("0").unwrap().ls_position.into(), end: f.marker_by_name("1").unwrap().ls_position.into(), ..Default::default() }, tsc_lsproto::Range { start: f.marker_by_name("6").unwrap().ls_position.into(), end: f.marker_by_name("7").unwrap().ls_position.into(), ..Default::default() }];
+		f.verify_linked_editing(&std::collections::BTreeMap::from([("0".to_string().into(), linked_cursors.into()), ("1".to_string().into(), linked_cursors.into()), ("2".to_string().into(), None), ("3".to_string().into(), None), ("4".to_string().into(), None), ("5".to_string().into(), None), ("6".to_string().into(), linked_cursors.into()), ("10".to_string().into(), None), ("11".to_string().into(), None), ("12".to_string().into(), None), ("13".to_string().into(), None), ("14".to_string().into(), None), ("15".to_string().into(), None), ("16".to_string().into(), None)]));
 	});
 }
 

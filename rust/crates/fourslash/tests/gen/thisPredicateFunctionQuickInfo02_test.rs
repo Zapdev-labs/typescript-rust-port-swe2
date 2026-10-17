@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn this_predicate_function_quick_info02() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"interface Sundries {
     broken: boolean;
 }
@@ -38,15 +38,15 @@ if (crate.isSupplies/*7*/()) {
        crate.;
     }
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1".into(), "(method) Crate<T>.isSundries(): this is Crate<Sundries>".into(), "".into());
-		f.verify_quick_info_at("2".into(), "(method) Crate<T>.isSupplies(): this is Crate<Supplies>".into(), "".into());
-		f.verify_quick_info_at("3".into(), "(method) Crate<T>.isPackedTight(): this is (this & {\n    extraContents: T;\n})".into(), "".into());
-		f.verify_quick_info_at("4".into(), "(method) Crate<any>.isPackedTight(): this is (Crate<any> & {\n    extraContents: any;\n})".into(), "".into());
-		f.verify_quick_info_at("5".into(), "(method) Crate<any>.isSundries(): this is Crate<Sundries>".into(), "".into());
-		f.verify_quick_info_at("6".into(), "(method) Crate<Sundries>.isPackedTight(): this is (Crate<Sundries> & {\n    extraContents: Sundries;\n})".into(), "".into());
-		f.verify_quick_info_at("7".into(), "(method) Crate<any>.isSupplies(): this is Crate<Supplies>".into(), "".into());
-		f.verify_quick_info_at("8".into(), "(method) Crate<Supplies>.isPackedTight(): this is (Crate<Supplies> & {\n    extraContents: Supplies;\n})".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("1", "(method) Crate<T>.isSundries(): this is Crate<Sundries>", "");
+		f.verify_quick_info_at("2", "(method) Crate<T>.isSupplies(): this is Crate<Supplies>", "");
+		f.verify_quick_info_at("3", "(method) Crate<T>.isPackedTight(): this is (this & {\n    extraContents: T;\n})", "");
+		f.verify_quick_info_at("4", "(method) Crate<any>.isPackedTight(): this is (Crate<any> & {\n    extraContents: any;\n})", "");
+		f.verify_quick_info_at("5", "(method) Crate<any>.isSundries(): this is Crate<Sundries>", "");
+		f.verify_quick_info_at("6", "(method) Crate<Sundries>.isPackedTight(): this is (Crate<Sundries> & {\n    extraContents: Sundries;\n})", "");
+		f.verify_quick_info_at("7", "(method) Crate<any>.isSupplies(): this is Crate<Supplies>", "");
+		f.verify_quick_info_at("8", "(method) Crate<Supplies>.isPackedTight(): this is (Crate<Supplies> & {\n    extraContents: Supplies;\n})", "");
 	});
 }
 

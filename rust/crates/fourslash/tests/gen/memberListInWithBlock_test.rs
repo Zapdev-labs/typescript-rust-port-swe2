@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn member_list_in_with_block() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"class c {
     static x: number;
     public foo() {
@@ -18,9 +18,9 @@ fn member_list_in_with_block() {
         }
     }
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_completions("1".into(), None);
-		f.verify_completions("2".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { excludes: vec!["foo", "f", "c", "d", "x", "Object"], ..Default::default() }, ..Default::default() });
+		f.verify_completions("2".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { excludes: vec!["foo".into(), "f".into(), "c".into(), "d".into(), "x".into(), "Object".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

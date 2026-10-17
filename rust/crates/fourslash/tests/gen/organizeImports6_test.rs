@@ -19,7 +19,7 @@ import * as anotherThing from "someopath"; /* small comment */ // single line on
 import * as anotherThingElse from "someotherpath";
 
 anotherThing;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_organize_imports(r#"/* some comment here
 * and there
 */
@@ -28,7 +28,7 @@ import * as anotherThing from "someopath"; /* small comment */ // single line on
 * and there
 */
 
-anotherThing;"#.into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, None);
+anotherThing;"#, tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, None);
 	});
 }
 

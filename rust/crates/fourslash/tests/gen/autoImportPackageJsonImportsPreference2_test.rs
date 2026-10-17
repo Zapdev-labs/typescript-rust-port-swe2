@@ -18,8 +18,8 @@ fn auto_import_package_json_imports_preference2() {
 export function something(name: string): any;
 // @Filename: /a.ts
 something/**/"##;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_module_specifiers("".into(), &["./src/a/b/c/something"], &tsc_lsutil::UserPreferences { import_module_specifier_preference: "project-relative", ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_import_fix_module_specifiers("", &["./src/a/b/c/something".into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_preference: "project-relative".to_string().into(), ..Default::default() }));
 	});
 }
 

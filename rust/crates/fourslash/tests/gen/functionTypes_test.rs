@@ -28,10 +28,10 @@ z.i./*4*/call(null)
 C.j./*5*/length === 1;
 typeof C.k./*6*/caller === 'function';
 l./*7*/prototype = Object.prototype;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_no_errors();
-		f.verify_completions(&["1", "2", "3", "4", "5", "6"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: COMPLETION_FUNCTION_MEMBERS_WITH_PROTOTYPE, ..Default::default() }, ..Default::default() });
-		f.verify_completions("7".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: completion_function_members_plus(&["prototype"]), ..Default::default() }, ..Default::default() });
+		f.verify_completions(vec!["1", "2", "3", "4", "5", "6"].into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: COMPLETION_FUNCTION_MEMBERS_WITH_PROTOTYPE.into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions("7".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_function_members_plus(&["prototype".into()]).into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

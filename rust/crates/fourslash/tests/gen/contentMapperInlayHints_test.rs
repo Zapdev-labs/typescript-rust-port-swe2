@@ -15,9 +15,9 @@ const value = () => 1;
 {{value}}
 {{value}}
 {{value}}
-".into(), contentmappertest.component_mapper, ".vue".into());
-		f.go_to_file("/app.vue".into());
-		f.verify_baseline_inlay_hints(None, &tsc_lsutil::UserPreferences { include_inlay_variable_type_hints: tsc_core::tristate::TS_TRUE, ..Default::default() });
+", tsc_testutil::contentmappertest::COMPONENT_MAPPER, ".vue");
+		f.go_to_file("/app.vue");
+		f.verify_baseline_inlay_hints(None, Some(&tsc_lsutil::UserPreferences { inlay_hints_preferences: tsc_lsutil::InlayHintsPreferences { include_inlay_variable_type_hints: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 

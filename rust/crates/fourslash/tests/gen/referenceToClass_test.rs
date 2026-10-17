@@ -23,8 +23,8 @@ namespace mod {
 }
 // @Filename: referenceToClass_2.ts
 var k: /*6*/foo;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into()]);
 	});
 }
 

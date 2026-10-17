@@ -7,13 +7,13 @@ use tsc_fourslash::*;
 #[test]
 fn generic_function_with_generic_params1() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"var obj = function f<T>(a: T) {
     var x/**/x: T;
     return a;
 };";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("".into(), "(local var) xx: T".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("", "(local var) xx: T", "");
 	});
 }
 

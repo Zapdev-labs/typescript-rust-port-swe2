@@ -28,7 +28,7 @@ import { A } from './a';
 
 A.X/*2*/;
 ";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_hover();
 	});
 }
@@ -39,7 +39,7 @@ fn hover_mapped_type_without_property_type() {
 		let content = r"
 declare function uhoh/*1*/<T>(x: { [K in keyof T] }): void;
 ";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_hover();
 	});
 }

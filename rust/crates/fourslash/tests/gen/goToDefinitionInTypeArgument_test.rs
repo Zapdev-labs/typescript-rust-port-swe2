@@ -12,8 +12,8 @@ fn go_to_definition_in_type_argument() {
 class /*barDefinition*/Bar { }
 
 var x = new Fo/*fooReference*/o<Ba/*barReference*/r>();";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(false, "barReference".into(), "fooReference".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_definition(false, &["barReference".into(), "fooReference".into()]);
 	});
 }
 

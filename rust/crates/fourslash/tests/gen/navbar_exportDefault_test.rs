@@ -15,14 +15,14 @@ export default class C { }
 export default function { }
 // @Filename: d.ts
 export default function Func { }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("a.ts".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("a.ts");
 		f.verify_baseline_document_symbol();
-		f.go_to_file("b.ts".into());
+		f.go_to_file("b.ts");
 		f.verify_baseline_document_symbol();
-		f.go_to_file("c.ts".into());
+		f.go_to_file("c.ts");
 		f.verify_baseline_document_symbol();
-		f.go_to_file("d.ts".into());
+		f.go_to_file("d.ts");
 		f.verify_baseline_document_symbol();
 	});
 }

@@ -14,9 +14,9 @@ const type: MyTypeA = { foo: "bar" };
 export interface MyTypeA {
     foo: string;
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_rename(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_FALSE, ..Default::default() }, "import".into());
-		f.verify_baseline_rename(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_TRUE, ..Default::default() }, "import".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_rename(Some(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_FALSE.into(), ..Default::default() }), vec!["import".into()]);
+		f.verify_baseline_rename(Some(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }), vec!["import".into()]);
 	});
 }
 
@@ -34,11 +34,11 @@ declare const f: Foo;
 export interface Foo {
     bar: string;
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_rename(None, "fooImport".into());
-		f.verify_baseline_rename(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_TRUE, ..Default::default() }, "fooImport".into());
-		f.go_to_marker("fooImport".into());
-		f.verify_rename_failed(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_FALSE, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_rename(None, vec!["fooImport".into()]);
+		f.verify_baseline_rename(Some(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }), vec!["fooImport".into()]);
+		f.go_to_marker("fooImport");
+		f.verify_rename_failed(Some(&tsc_lsutil::UserPreferences { provide_prefix_and_suffix_text_for_rename: tsc_core::tristate::TS_FALSE.into(), ..Default::default() }));
 	});
 }
 

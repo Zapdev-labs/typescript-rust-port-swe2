@@ -13,7 +13,7 @@ const map1: /*2*/Map<string, number> = new Map();
 const prom: /*3*/Promise<void> = Promise.resolve();
 const str: /*4*/string = "hello";
 "#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		for marker in vec!["1", "2", "3", "4"] {
 			f.go_to_marker(marker);
 			f.verify_rename_failed(None);

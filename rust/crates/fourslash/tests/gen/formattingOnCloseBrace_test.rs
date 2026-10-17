@@ -9,11 +9,11 @@ fn formatting_on_close_brace() {
 	run_test(|t| {
 		let content = r"class foo    {
     /**/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
-		f.insert("}".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
+		f.insert("}");
 		f.go_to_bof();
-		f.verify_current_line_content(r"class foo {".into());
+		f.verify_current_line_content(r"class foo {");
 	});
 }
 

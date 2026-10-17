@@ -11,8 +11,8 @@ fn completion_list_at_identifier_definition_locations_infers() {
 type Bar<T> = T extends { a: (x: infer /*1*/) => void; b: (x: infer U/*2*/) => void }
    ? U
    : never;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions(f.markers(), None);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions(f.markers().into(), None);
 	});
 }
 

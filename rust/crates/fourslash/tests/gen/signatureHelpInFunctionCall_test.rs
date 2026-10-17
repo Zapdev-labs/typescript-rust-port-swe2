@@ -11,8 +11,8 @@ fn signature_help_in_function_call() {
 items.forEach(item => {
     for (/**/
 });";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_no_signature_help_for_markers("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_no_signature_help_for_markers(&["".into()]);
 	});
 }
 

@@ -25,8 +25,8 @@ fn get_occurrences_return4() {
     return/*6*/;
     return/*7*/ true;
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_document_highlights(None, to_any(f.markers()));
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_document_highlights(None, to_any(f.markers()).into_iter().map(Into::into));
 	});
 }
 

@@ -27,9 +27,9 @@ var x : Module./*TypeReference*/
 class TestClass extends Module./*TypeReferenceInExtendsList*/ { }
 
 interface TestInterface implements Module./*TypeReferenceInImplementsList*/ { }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions(&["ValueReference", "TypeReferenceInExtendsList"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["exportedFunction", "exportedVariable", "exportedClass", "exportedModule"], ..Default::default() }, ..Default::default() });
-		f.verify_completions(&["TypeReference", "TypeReferenceInImplementsList"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["exportedClass", "exportedInterface"], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions(vec!["ValueReference", "TypeReferenceInExtendsList"].into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["exportedFunction".into(), "exportedVariable".into(), "exportedClass".into(), "exportedModule".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions(vec!["TypeReference", "TypeReferenceInImplementsList"].into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { unsorted: vec!["exportedClass".into(), "exportedInterface".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

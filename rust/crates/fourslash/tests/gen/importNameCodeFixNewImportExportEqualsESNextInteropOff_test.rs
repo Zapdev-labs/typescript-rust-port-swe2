@@ -15,11 +15,11 @@ declare module "foo" {
 }
 // @Filename: /index.ts
 foo"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/index.ts".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("/index.ts");
 		f.verify_import_fix_at_position(&[r#"import foo from "foo";
 
-foo"#], None);
+foo"#.into()], None);
 	});
 }
 

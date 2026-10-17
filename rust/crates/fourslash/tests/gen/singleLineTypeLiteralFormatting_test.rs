@@ -8,10 +8,10 @@ use tsc_fourslash::*;
 fn single_line_type_literal_formatting() {
 	run_test(|t| {
 		let content = r"function of1(b: { r: { c: number/**/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
-		f.insert(";".into());
-		f.verify_current_line_content(r"function of1(b: { r: { c: number;".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
+		f.insert(";");
+		f.verify_current_line_content(r"function of1(b: { r: { c: number;");
 	});
 }
 

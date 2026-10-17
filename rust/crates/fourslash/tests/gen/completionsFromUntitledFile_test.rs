@@ -12,8 +12,8 @@ export function helper() {}
 
 // @filename: ^/untitled/ts-nul-authority/Untitled-1.ts
 /**/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: None, ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: None, ..Default::default() }), ..Default::default() }));
 	});
 }
 

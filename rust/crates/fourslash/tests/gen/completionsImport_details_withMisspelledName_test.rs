@@ -7,20 +7,20 @@ use tsc_fourslash::*;
 #[test]
 fn completions_import_details_with_misspelled_name() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"// @Filename: /a.ts
 export const abc = 0;
 // @Filename: /b.ts
 acb/*1*/;
 // @Filename: /c.ts
 acb/*2*/;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1".into());
-		f.verify_apply_code_action_from_completion(Some(("1").into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "abc", source: "./a", description: "Add import from \"./a\"", new_file_content: Some((r#"import { abc } from "./a";
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("1");
+		f.verify_apply_code_action_from_completion("1", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "abc".to_string().into(), source: "./a".to_string().into(), description: "Add import from \"./a\"".to_string().into(), new_file_content: Some((r#"import { abc } from "./a";
 
 acb;"#).into()), ..Default::default() });
-		f.go_to_marker("2".into());
-		f.verify_apply_code_action_from_completion(Some(("2").into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "abc", source: "./a", auto_import_fix: &tsc_lsproto::AutoImportFix { module_specifier: "./a", ..Default::default() }, description: "Add import from \"./a\"", new_file_content: Some((r#"import { abc } from "./a";
+		f.go_to_marker("2");
+		f.verify_apply_code_action_from_completion("2", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "abc".to_string().into(), source: "./a".to_string().into(), auto_import_fix: Some(tsc_lsproto::AutoImportFix { module_specifier: "./a".to_string().into(), ..Default::default() }), description: "Add import from \"./a\"".to_string().into(), new_file_content: Some((r#"import { abc } from "./a";
 
 acb;"#).into()), ..Default::default() });
 	});

@@ -13,8 +13,8 @@ fn go_to_implementation_local_05() {
 
 var [|someVar|] = new Bar();
 someVa/*reference*/r.hello();";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_implementation("reference".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_implementation(&["reference".into()]);
 	});
 }
 

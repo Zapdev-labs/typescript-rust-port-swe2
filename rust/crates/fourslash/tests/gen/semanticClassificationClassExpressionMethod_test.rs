@@ -10,8 +10,8 @@ fn semantic_classification_class_expression_method() {
 		let content = r"var x = class C {
   equals(other: C) { return this == other; }
 };";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type: "class.declaration".into(), text: "x".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "class.declaration".into(), text: "C".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "method.declaration".into(), text: "equals".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "parameter.declaration".into(), text: "other".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "class".into(), text: "C".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "parameter".into(), text: "other".into(), ..Default::default() }]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type_: "class.declaration".to_string().into(), text: "x".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "class.declaration".to_string().into(), text: "C".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "method.declaration".to_string().into(), text: "equals".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "parameter.declaration".to_string().into(), text: "other".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "class".to_string().into(), text: "C".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "parameter".to_string().into(), text: "other".to_string().into(), ..Default::default() }]);
 	});
 }
 

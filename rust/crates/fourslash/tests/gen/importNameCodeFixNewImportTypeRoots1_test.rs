@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_new_import_type_roots1() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r#"// @Filename: a/f1.ts
 [|foo/*0*/();|]
 // @Filename: types/random/index.ts
@@ -21,10 +21,10 @@ export function foo() {};
         ]
     }
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_import_fix_at_position(&[r#"import { foo } from "types/random";
 
-foo();"#], None);
+foo();"#.into()], None);
 	});
 }
 

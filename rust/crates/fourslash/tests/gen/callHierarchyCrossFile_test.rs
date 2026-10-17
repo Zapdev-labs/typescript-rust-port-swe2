@@ -19,8 +19,8 @@ import { createModelReference } from "./a";
 function registerDefaultLanguageCommand() {
   createModelReference();
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
 		f.verify_baseline_call_hierarchy();
 	});
 }

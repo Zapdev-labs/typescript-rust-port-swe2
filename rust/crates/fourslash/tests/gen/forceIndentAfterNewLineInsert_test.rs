@@ -17,8 +17,8 @@ function g()
 { function h() {
 return 0;
 }}";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
 		f.verify_current_file_content(r"function f1() { return 0; }
 function f2() {
     return 0;
@@ -27,7 +27,7 @@ function g() {
     function h() {
         return 0;
     }
-}".into());
+}");
 	});
 }
 

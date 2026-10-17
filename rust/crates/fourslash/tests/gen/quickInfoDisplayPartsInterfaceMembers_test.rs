@@ -17,7 +17,7 @@ var iInstance: I;
 /*3*/iInstance./*4*/property = /*5*/iInstance./*6*/method();
 /*7*/iInstance();
 var /*8*/anotherInstance = new /*9*/iInstance();";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_hover();
 	});
 }

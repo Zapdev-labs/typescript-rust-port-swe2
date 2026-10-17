@@ -14,8 +14,8 @@ fn js_doc_property_description8() {
 function symbolClass(e: typeof SymbolClass) {
     console.log(e./*symbolClass*/anything);
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("symbolClass".into(), "any".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("symbolClass", "any", "");
 	});
 }
 

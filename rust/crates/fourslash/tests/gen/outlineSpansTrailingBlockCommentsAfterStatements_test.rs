@@ -11,7 +11,7 @@ fn outline_spans_trailing_block_comments_after_statements() {
 [|/*
 / * Some text
   */|]";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_outlining_spans();
 	});
 }

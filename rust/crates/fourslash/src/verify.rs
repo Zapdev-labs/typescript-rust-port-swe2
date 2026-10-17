@@ -137,6 +137,8 @@ pub enum ExpectedTextEdits {
     Edits(Option<Vec<TextEdit>>),
 }
 
+/// Go's `Ignored{}` sentinel for `CompletionsExpectedItemDefaults.EditRange`.
+pub const IGNORED: ExpectedCompletionEditRange = ExpectedCompletionEditRange::Ignored;
 /// Go's `AnyTextEdits` sentinel.
 pub const ANY_TEXT_EDITS: ExpectedTextEdits = ExpectedTextEdits::Any;
 /// Go's `NoTextEdits` sentinel.
@@ -280,6 +282,26 @@ impl From<Vec<Rc<Marker>>> for MarkerInput {
         MarkerInput::Markers(markers)
     }
 }
+
+impl<const N: usize> From<&[&str; N]> for MarkerInput {
+    fn from(names: &[&str; N]) -> Self {
+        MarkerInput::from(&names[..])
+    }
+}
+
+impl From<Option<()>> for MarkerInput {
+    /// Go `nil` marker input — treated as "no markers".
+    fn from(_: Option<()>) -> Self {
+        MarkerInput::Names(Vec::new())
+    }
+}
+
+impl Default for MarkerInput {
+    fn default() -> Self {
+        MarkerInput::Names(Vec::new())
+    }
+}
+
 
 impl FourslashTest {
     /// `VerifyCompletions`

@@ -7,15 +7,15 @@ use tsc_fourslash::*;
 #[test]
 fn go_to_definition_index_signature() {
 	run_test(|t| {
-		let content = r"interface I {
+		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"interface I {
     /*defI*/[x: string]: boolean;
 }
 interface J {
     /*defJ*/[x: string]: number;
 }
 interface K {
-    /*defa*/[x: " + "`" + r"a${string}" + "`" + r"]: string;
-    /*defb*/[x: " + "`" + r"${string}b" + "`" + r"]: string;
+    /*defa*/[x: ", "`"), r"a${string}"), "`"), r"]: string;
+    /*defb*/[x: "), "`"), r"${string}b"), "`"), r"]: string;
 }
 declare const i: I;
 i.[|/*useI*/foo|];
@@ -24,9 +24,9 @@ ij.[|/*useIJ*/foo|];
 declare const k: K;
 k.[|/*usea*/a|];
 k.[|/*useb*/b|];
-k.[|/*useab*/ab|];";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "useI".into(), "useIJ".into(), "usea".into(), "useb".into(), "useab".into());
+k.[|/*useab*/ab|];");
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_definition(true, &["useI".into(), "useIJ".into(), "usea".into(), "useb".into(), "useab".into()]);
 	});
 }
 

@@ -22,8 +22,8 @@ for (var { /*3*/property1: p1 } of elems) {
 var p2;
 for ({ /*4*/property1 : p2 } of elems) {
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("0".into(), "1".into(), "3".into(), "4".into(), "2".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["0".into(), "1".into(), "3".into(), "4".into(), "2".into()]);
 	});
 }
 

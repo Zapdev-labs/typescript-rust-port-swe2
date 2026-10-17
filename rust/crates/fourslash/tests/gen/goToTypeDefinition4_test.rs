@@ -13,9 +13,9 @@ export const /*def1*/T = "";
 // @Filename: bar.ts
 import { T } from "./foo";
 let x: [|/*reference*/T|];"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_type_definition("reference".into());
-		f.verify_baseline_go_to_definition(true, "reference".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_type_definition(&["reference".into()]);
+		f.verify_baseline_go_to_definition(true, &["reference".into()]);
 	});
 }
 

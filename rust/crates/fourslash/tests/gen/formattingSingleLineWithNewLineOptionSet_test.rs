@@ -12,22 +12,22 @@ fn formatting_single_line_with_new_line_option_set() {
 /*3*/if (true){}
 /*4*/function boo() {
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		let mut opts211 = f.get_options();
 		opts211.format_code_settings.place_open_brace_on_new_line_for_functions = tsc_core::tristate::TS_TRUE;
 		f.configure(opts211);
 		let mut opts279 = f.get_options();
 		opts279.format_code_settings.place_open_brace_on_new_line_for_control_blocks = tsc_core::tristate::TS_TRUE;
 		f.configure(opts279);
-		f.format_document("".into());
-		f.go_to_marker("1".into());
-		f.verify_current_line_content(r"namespace Default { }".into());
-		f.go_to_marker("2".into());
-		f.verify_current_line_content(r"function foo() { }".into());
-		f.go_to_marker("3".into());
-		f.verify_current_line_content(r"if (true) { }".into());
-		f.go_to_marker("4".into());
-		f.verify_current_line_content(r"function boo()".into());
+		f.format_document("");
+		f.go_to_marker("1");
+		f.verify_current_line_content(r"namespace Default { }");
+		f.go_to_marker("2");
+		f.verify_current_line_content(r"function foo() { }");
+		f.go_to_marker("3");
+		f.verify_current_line_content(r"if (true) { }");
+		f.go_to_marker("4");
+		f.verify_current_line_content(r"function boo()");
 	});
 }
 

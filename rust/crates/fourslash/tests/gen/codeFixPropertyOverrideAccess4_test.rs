@@ -18,8 +18,8 @@ class A {
 class B extends A {
     get [prop]() { return 2; }
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix_not_available("fixPropertyOverrideAccessor".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_code_fix_not_available(&["fixPropertyOverrideAccessor".into()]);
 	});
 }
 

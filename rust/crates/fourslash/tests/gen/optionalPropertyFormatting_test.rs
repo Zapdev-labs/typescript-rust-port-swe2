@@ -11,12 +11,12 @@ fn optional_property_formatting() {
     message: string;
     data? = {};
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
 		f.verify_current_file_content(r"export class C extends Error {
     message: string;
     data? = {};
-}".into());
+}");
 	});
 }
 

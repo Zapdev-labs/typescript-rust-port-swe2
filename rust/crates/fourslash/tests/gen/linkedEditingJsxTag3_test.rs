@@ -16,8 +16,8 @@ fn linked_editing_jsx_tag3() {
      /*10*/ </p>/*11*/
    /*12*/</div>
 /*13*/)/*14*/;/*15*/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_linked_editing(vec![("0", None), ("1", None), ("2", None), ("3", None), ("4", None), ("5", None), ("6", None), ("7", None), ("8", None), ("9", None), ("10", None), ("11", None), ("12", None), ("13", None), ("14", None), ("15", None)].into_iter().collect::<FxHashMap<_, _>>());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_linked_editing(&std::collections::BTreeMap::from([("0".to_string().into(), None), ("1".to_string().into(), None), ("2".to_string().into(), None), ("3".to_string().into(), None), ("4".to_string().into(), None), ("5".to_string().into(), None), ("6".to_string().into(), None), ("7".to_string().into(), None), ("8".to_string().into(), None), ("9".to_string().into(), None), ("10".to_string().into(), None), ("11".to_string().into(), None), ("12".to_string().into(), None), ("13".to_string().into(), None), ("14".to_string().into(), None), ("15".to_string().into(), None)]));
 	});
 }
 

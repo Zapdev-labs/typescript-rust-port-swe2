@@ -29,16 +29,16 @@ export class MyMap extends Component { }
 // @Filename: /b.tsx
 [|import { Component } from "react";
 <></>;|]"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/a.tsx".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("/a.tsx");
 		f.verify_import_fix_at_position(&[r#"import * as React from "react";
 import { Component } from "react";
 export class MyMap extends Component { }
-<MyMap/>;"#], None);
-		f.go_to_file("/b.tsx".into());
+<MyMap/>;"#.into()], None);
+		f.go_to_file("/b.tsx");
 		f.verify_import_fix_at_position(&[r#"import * as React from "react";
 import { Component } from "react";
-<></>;"#], None);
+<></>;"#.into()], None);
 	});
 }
 

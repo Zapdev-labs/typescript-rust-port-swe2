@@ -23,8 +23,8 @@ class class2 extends class1 implements interface1 {
 var v: class2;
 v./*6*/doStuff();
 v./*7*/propName;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("0".into(), "1".into(), "2".into(), "3".into(), "4".into(), "6".into(), "5".into(), "7".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["0".into(), "1".into(), "2".into(), "3".into(), "4".into(), "6".into(), "5".into(), "7".into()]);
 	});
 }
 

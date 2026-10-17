@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn inlay_hints_parameter_names() {
 	run_test(|t| {
-		let content = r#" function foo1 (a: number, b: number) {}
+		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r#" function foo1 (a: number, b: number) {}
  foo1(1, 2);
  function foo2 (a: number, { c }: any) {}
  foo2(1, { c: 1 });
@@ -46,8 +46,8 @@ foo5(
  declare const unknownCall: any;
  unknownCall();
 function trace(message: string) {}
-trace("# + "`" + r"${1}" + "`" + r");
-trace(" + "`" + r"" + "`" + r");
+trace("#, "`"), r"${1}"), "`"), r");
+trace("), "`"), r""), "`"), r");
 function func(
     param1: number,
     param2: string,
@@ -58,9 +58,9 @@ func(
     param1,
     'foo',
     true,
-)";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_inlay_hints(None, &tsc_lsutil::UserPreferences { include_inlay_parameter_name_hints: tsc_lsutil::IncludeInlayParameterNameHints::LITERALS, ..Default::default() });
+)");
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_inlay_hints(None, Some(&tsc_lsutil::UserPreferences { inlay_hints_preferences: tsc_lsutil::InlayHintsPreferences { include_inlay_parameter_name_hints: tsc_lsutil::IncludeInlayParameterNameHints::LITERALS.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 

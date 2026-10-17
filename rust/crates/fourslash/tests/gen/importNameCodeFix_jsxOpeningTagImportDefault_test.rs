@@ -15,13 +15,13 @@ export default function (props: any) {}
 export function Index() {
     return <Component/**/ />;
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
 		f.verify_import_fix_at_position(&[r#"import Component from "./component";
 
 export function Index() {
     return <Component />;
-}"#], None);
+}"#.into()], None);
 	});
 }
 

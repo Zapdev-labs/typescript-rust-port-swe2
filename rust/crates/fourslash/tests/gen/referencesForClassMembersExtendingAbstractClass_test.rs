@@ -19,8 +19,8 @@ class MyClass extends Base {
 var c: MyClass;
 c./*a3*/a;
 c./*method3*/method();";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("a1".into(), "a2".into(), "a3".into(), "method1".into(), "method2".into(), "method3".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["a1".into(), "a2".into(), "a3".into(), "method1".into(), "method2".into(), "method3".into()]);
 	});
 }
 

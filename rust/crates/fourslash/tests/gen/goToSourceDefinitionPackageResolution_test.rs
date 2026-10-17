@@ -19,8 +19,8 @@ export function /*target*/bar() { return "hello"; }
 // @Filename: /home/src/workspaces/project/index.ts
 import { bar } from "foo";
 bar/*usage*/();"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("usage".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_source_definition(&["usage".into()]);
 	});
 }
 
@@ -37,8 +37,8 @@ export function /*target*/greet() { return "hi"; }
 // @Filename: /home/src/workspaces/project/index.ts
 import { greet } from "pkg";
 greet/*usage*/();"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("usage".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_source_definition(&["usage".into()]);
 	});
 }
 
@@ -55,8 +55,8 @@ export function /*target*/work() {}
 // @Filename: /home/src/workspaces/project/index.ts
 import { work } from "pkg";
 work/*usage*/();"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("usage".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_source_definition(&["usage".into()]);
 	});
 }
 
@@ -73,8 +73,8 @@ export function /*target*/work() {}
 // @Filename: /home/src/workspaces/project/index.ts
 import { work } from "pkg";
 work/*usage*/();"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("usage".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_source_definition(&["usage".into()]);
 	});
 }
 
@@ -91,8 +91,8 @@ export function /*target*/util() {}
 // @Filename: /home/src/workspaces/project/index.ts
 import { util } from "pkg";
 util/*usage*/();"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("usage".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_source_definition(&["usage".into()]);
 	});
 }
 

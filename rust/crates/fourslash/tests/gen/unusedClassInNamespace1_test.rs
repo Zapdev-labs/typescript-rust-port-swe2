@@ -7,15 +7,15 @@ use tsc_fourslash::*;
 #[test]
 fn unused_class_in_namespace1() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"// @noUnusedLocals: true
 [| namespace greeter {
   class class1 {
   }
 } |]";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_range_after_code_fix(r"namespace greeter {
-}".into(), false, 0, 0);
+}", false, 0, 0);
 	});
 }
 

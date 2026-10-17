@@ -26,10 +26,10 @@ fn member_constructor_edits() {
 	 var a = new A("s");
 	 var b = new B("s");
  }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_no_errors();
-		f.go_to_marker("1".into());
-		f.insert("public m(n: number) { return 0; }".into());
+		f.go_to_marker("1");
+		f.insert("public m(n: number) { return 0; }");
 		f.verify_no_errors();
 	});
 }

@@ -29,22 +29,22 @@ foo4<string>(1,/*4*/     // signature help shows y as string
 foo5<string>(1, (/*5*/   // signature help shows y as T
 foo6(1, </*6*/           // signature help shows y as {}
 foo7(1, <string>(/*7*/   // signature help shows y as T";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "foo1(x: number, callback: (y1: unknown) => number): void", ..Default::default() });
-		f.go_to_marker("2".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "foo2(x: number, callback: (y2: unknown) => number): void", ..Default::default() });
-		f.go_to_marker("3".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "callback(y3: unknown): number", ..Default::default() });
-		f.go_to_marker("4".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "foo4(x: number, callback: (y4: string) => number): void", ..Default::default() });
-		f.go_to_marker("5".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "callback(y5: string): number", ..Default::default() });
-		f.go_to_marker("6".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "foo6(x: number, callback: (y6: unknown) => number): void", ..Default::default() });
-		f.insert("string>(null,null);".into());
-		f.go_to_marker("7".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "foo7(x: number, callback: (y7: unknown) => number): void", ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("1");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "foo1(x: number, callback: (y1: unknown) => number): void".to_string().into(), ..Default::default() });
+		f.go_to_marker("2");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "foo2(x: number, callback: (y2: unknown) => number): void".to_string().into(), ..Default::default() });
+		f.go_to_marker("3");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "callback(y3: unknown): number".to_string().into(), ..Default::default() });
+		f.go_to_marker("4");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "foo4(x: number, callback: (y4: string) => number): void".to_string().into(), ..Default::default() });
+		f.go_to_marker("5");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "callback(y5: string): number".to_string().into(), ..Default::default() });
+		f.go_to_marker("6");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "foo6(x: number, callback: (y6: unknown) => number): void".to_string().into(), ..Default::default() });
+		f.insert("string>(null,null);");
+		f.go_to_marker("7");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "foo7(x: number, callback: (y7: unknown) => number): void".to_string().into(), ..Default::default() });
 	});
 }
 

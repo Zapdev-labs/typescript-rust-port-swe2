@@ -14,12 +14,12 @@ fn code_fix_missing_type_annotation_on_exports22_formatting() {
  * Test
  */
 export function foo(){}";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix_available(&["Add return type 'void'"]);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add return type 'void'", new_file_content: r"/**
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_code_fix_available(Some(&["Add return type 'void'".into()]));
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add return type 'void'".to_string().into(), new_file_content: r"/**
  * Test
  */
-export function foo(): void{}", index: 0, ..Default::default() });
+export function foo(): void{}".to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

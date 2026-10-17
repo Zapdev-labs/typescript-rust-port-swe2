@@ -8,8 +8,8 @@ use tsc_fourslash::*;
 fn quick_info_named_tuple_members() {
 	run_test(|t| {
 		let content = r"export type /*1*/Segment = [length: number, count: number];";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1".into(), "type Segment = [length: number, count: number]".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("1", "type Segment = [length: number, count: number]", "");
 	});
 }
 

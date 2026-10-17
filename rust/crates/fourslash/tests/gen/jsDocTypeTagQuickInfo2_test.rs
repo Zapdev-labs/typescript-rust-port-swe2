@@ -35,7 +35,7 @@ var /*10*/func;
 var /*11*/func1;
 /** @type {string | number} */
 var /*12*/sOrn;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_hover();
 	});
 }

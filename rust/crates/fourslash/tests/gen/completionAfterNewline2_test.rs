@@ -10,9 +10,9 @@ fn completion_after_newline2() {
 		let content = r"// @lib: es5
 let foo = 5 as const /*1*/
 /*2*/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_completions("1".into(), None);
-		f.verify_completions("2".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_plus(&[&tsc_lsproto::CompletionItem { label: "foo", ..Default::default() }], false), ..Default::default() }, ..Default::default() });
+		f.verify_completions("2".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_globals_plus(&[tsc_lsproto::CompletionItem { label: "foo".to_string().into(), ..Default::default() }], false).into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

@@ -25,8 +25,8 @@ function someFun(a: SomeType): SomeType {
     return a;
 }
 someFun/*s*/.what = 'what';";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_hover_with_verbosity(vec![("o", vec![0, 1, 2]), ("f", vec![0, 1]), ("s", vec![0, 1])].into_iter().collect::<FxHashMap<_, _>>());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("o".to_string().into(), vec![0, 1, 2]), ("f".to_string().into(), vec![0, 1]), ("s".to_string().into(), vec![0, 1])]));
 	});
 }
 

@@ -42,8 +42,8 @@ const f = {
 } satisfies {
   [index: string]: string
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
 		f.verify_current_file_content(r"type Z = 'z'
 type A = {
     a: 'a'
@@ -78,7 +78,7 @@ const f = {
     f: 'f'
 } satisfies {
     [index: string]: string
-}".into());
+}");
 	});
 }
 

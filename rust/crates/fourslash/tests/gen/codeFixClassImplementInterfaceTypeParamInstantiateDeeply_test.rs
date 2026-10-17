@@ -11,13 +11,13 @@ fn code_fix_class_implement_interface_type_param_instantiate_deeply() {
     x: { y: T, z: T[] };
 }
 class C implements I<number> {[| |]}";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'I<number>'", new_file_content: r"interface I<T> {
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'I<number>'".to_string().into(), new_file_content: r"interface I<T> {
     x: { y: T, z: T[] };
 }
 class C implements I<number> {
     x: { y: number; z: number[]; };
-}", index: 0, ..Default::default() });
+}".to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

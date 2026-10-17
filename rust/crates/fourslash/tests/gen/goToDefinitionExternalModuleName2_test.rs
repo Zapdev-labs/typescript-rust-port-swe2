@@ -13,8 +13,8 @@ var x = new n.Foo();
 // @Filename: a.ts
 /*2*/class Foo {}
 export var x = 0;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "1".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_definition(true, &["1".into()]);
 	});
 }
 

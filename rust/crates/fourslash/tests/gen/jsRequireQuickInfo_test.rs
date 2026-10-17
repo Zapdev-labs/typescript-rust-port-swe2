@@ -7,14 +7,14 @@ use tsc_fourslash::*;
 #[test]
 fn js_require_quick_info() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r#"// @allowJs: true
 // @Filename: a.js
 const /**/x = require("./b");
 // @Filename: b.js
 exports.x = 0;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("".into(), "import x".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("", "import x", "");
 	});
 }
 

@@ -14,7 +14,7 @@ let b: {
     /** Comment */ /*3*/p2: number
 };
 let c;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_selection_ranges();
 	});
 }

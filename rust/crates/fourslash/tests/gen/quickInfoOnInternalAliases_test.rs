@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_on_internal_aliases() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"/** Module comment*/
 export namespace m1 {
     /** m2 comments*/
@@ -26,20 +26,20 @@ var /*6*/anotherAliasVar = /*7*/internalAlias;
 import /*8*/internalFoo = m1./*9*/foo;
 var /*10*/callVar = /*11*/internalFoo();
 var /*12*/anotherAliasFoo = /*13*/internalFoo;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1".into(), "class m1.m2.c".into(), "class comment;".into());
-		f.verify_quick_info_at("2".into(), "(alias) class internalAlias\nimport internalAlias = m1.m2.c".into(), "This is on import declaration".into());
-		f.verify_quick_info_at("3".into(), "class m1.m2.c".into(), "class comment;".into());
-		f.verify_quick_info_at("4".into(), "var newVar: internalAlias".into(), "".into());
-		f.verify_quick_info_at("5".into(), "(alias) new internalAlias(): internalAlias\nimport internalAlias = m1.m2.c".into(), "This is on import declaration".into());
-		f.verify_quick_info_at("6".into(), "var anotherAliasVar: typeof internalAlias".into(), "".into());
-		f.verify_quick_info_at("7".into(), "(alias) class internalAlias\nimport internalAlias = m1.m2.c".into(), "This is on import declaration".into());
-		f.verify_quick_info_at("8".into(), "(alias) function internalFoo(): void\nimport internalFoo = m1.foo".into(), "".into());
-		f.verify_quick_info_at("9".into(), "function m1.foo(): void".into(), "".into());
-		f.verify_quick_info_at("10".into(), "var callVar: void".into(), "".into());
-		f.verify_quick_info_at("11".into(), "(alias) internalFoo(): void\nimport internalFoo = m1.foo".into(), "".into());
-		f.verify_quick_info_at("12".into(), "var anotherAliasFoo: () => void".into(), "".into());
-		f.verify_quick_info_at("13".into(), "(alias) function internalFoo(): void\nimport internalFoo = m1.foo".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("1", "class m1.m2.c", "class comment;");
+		f.verify_quick_info_at("2", "(alias) class internalAlias\nimport internalAlias = m1.m2.c", "This is on import declaration");
+		f.verify_quick_info_at("3", "class m1.m2.c", "class comment;");
+		f.verify_quick_info_at("4", "var newVar: internalAlias", "");
+		f.verify_quick_info_at("5", "(alias) new internalAlias(): internalAlias\nimport internalAlias = m1.m2.c", "This is on import declaration");
+		f.verify_quick_info_at("6", "var anotherAliasVar: typeof internalAlias", "");
+		f.verify_quick_info_at("7", "(alias) class internalAlias\nimport internalAlias = m1.m2.c", "This is on import declaration");
+		f.verify_quick_info_at("8", "(alias) function internalFoo(): void\nimport internalFoo = m1.foo", "");
+		f.verify_quick_info_at("9", "function m1.foo(): void", "");
+		f.verify_quick_info_at("10", "var callVar: void", "");
+		f.verify_quick_info_at("11", "(alias) internalFoo(): void\nimport internalFoo = m1.foo", "");
+		f.verify_quick_info_at("12", "var anotherAliasFoo: () => void", "");
+		f.verify_quick_info_at("13", "(alias) function internalFoo(): void\nimport internalFoo = m1.foo", "");
 	});
 }
 

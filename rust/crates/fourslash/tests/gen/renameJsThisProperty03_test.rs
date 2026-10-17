@@ -16,8 +16,8 @@ class C {
 }
 var t = new C(12);
 [|t.[|{| "contextRangeIndex": 2 |}x|] = 11;|]"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_rename_at_ranges_with_text(None, "x".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_rename_at_ranges_with_text(None, &["x".into()]);
 	});
 }
 

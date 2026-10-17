@@ -32,8 +32,8 @@ export const All = [
   ...End,
   1,
 ] as const;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add annotation of type '[...typeof All_Part1_1, ...typeof Start, ...typeof All_Part3, ...typeof All_Part4, ...typeof End, ...typeof All_Part6]'", new_file_content: r#"const Start = [
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add annotation of type '[...typeof All_Part1_1, ...typeof Start, ...typeof All_Part3, ...typeof All_Part4, ...typeof End, ...typeof All_Part6]'".to_string().into(), new_file_content: r#"const Start = [
   'A',
   'B',
 ] as const;
@@ -71,7 +71,7 @@ export const All: [
     ...All_Part4,
     ...End,
     ...All_Part6
-] as const;"#, index: 1, ..Default::default() });
+] as const;"#.to_string().into(), index: 1, ..Default::default() });
 	});
 }
 

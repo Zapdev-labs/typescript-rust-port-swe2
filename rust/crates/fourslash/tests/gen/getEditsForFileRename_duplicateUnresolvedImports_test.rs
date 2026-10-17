@@ -10,23 +10,23 @@ fn get_edits_for_file_rename_duplicate_unresolved_imports() {
 		let num_files = 60;
 		let num_imports = 60;
 		let content = Default::default();
-		content.write_string("// @Filename: /tsconfig.json\n{ \"compilerOptions\": { \"allowJs\": true } }\n".into());
+		content.write_string("// @Filename: /tsconfig.json\n{ \"compilerOptions\": { \"allowJs\": true } }\n");
 		for i in num_files {
 			let mut fi = itoa_small(i);
-			content.write_string("// @Filename: /src/file" + fi + ".ts\nexport const v" + fi + " = " + fi + ";\n");
+			content.write_string(&format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", "// @Filename: /src/file", fi), ".ts\nexport const v"), fi), " = "), fi), ";\n"));
 		}
-		content.write_string("// @Filename: /pkg/ugly.ts\n".into());
+		content.write_string("// @Filename: /pkg/ugly.ts\n");
 		for _ in num_imports {
-			content.write_string("import \"@some/unresolved-module\";\n".into());
+			content.write_string("import \"@some/unresolved-module\";\n");
 		}
-		content.write_string("import { v0 } from \"../src/file0\";\n".into());
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content.string());
+		content.write_string("import { v0 } from \"../src/file0\";\n");
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content.string());
 		let expected = Default::default();
 		for _ in num_imports {
-			expected.write_string("import \"@some/unresolved-module\";\n".into());
+			expected.write_string("import \"@some/unresolved-module\";\n");
 		}
-		expected.write_string("import { v0 } from \"../src/file0-renamed\";\n".into());
-		f.verify_will_rename_files_edits("/src/file0.ts".into(), "/src/file0-renamed.ts".into(), vec![("/pkg/ugly.ts", expected.string())].into_iter().collect::<FxHashMap<_, _>>(), None);
+		expected.write_string("import { v0 } from \"../src/file0-renamed\";\n");
+		f.verify_will_rename_files_edits("/src/file0.ts", "/src/file0-renamed.ts", &std::collections::BTreeMap::from([("/pkg/ugly.ts".to_string().into(), expected.string().into())]), None);
 	});
 }
 

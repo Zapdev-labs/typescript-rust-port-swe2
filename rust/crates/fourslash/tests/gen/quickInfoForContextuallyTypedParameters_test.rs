@@ -32,11 +32,11 @@ function q<T extends { name: string }>(x: T): T["name"] {
 }
 
 foof/*4*/(o => ({ value: o.name, func: x => 'foo' }), new Error(), "name");"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1".into(), "(parameter) o: Error".into(), "".into());
-		f.verify_quick_info_at("2".into(), "(parameter) o: Error".into(), "".into());
-		f.verify_quick_info_at("3".into(), "function foof<T, \"name\">(settings: (row: T) => {\n    value: T[\"name\"];\n    func?: Function;\n}, obj: T, key: \"name\"): \"name\"".into(), "".into());
-		f.verify_quick_info_at("4".into(), "function foof<Error, \"name\">(settings: (row: Error) => {\n    value: string;\n    func?: Function;\n}, obj: Error, key: \"name\"): \"name\"".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("1", "(parameter) o: Error", "");
+		f.verify_quick_info_at("2", "(parameter) o: Error", "");
+		f.verify_quick_info_at("3", "function foof<T, \"name\">(settings: (row: T) => {\n    value: T[\"name\"];\n    func?: Function;\n}, obj: T, key: \"name\"): \"name\"", "");
+		f.verify_quick_info_at("4", "function foof<Error, \"name\">(settings: (row: Error) => {\n    value: string;\n    func?: Function;\n}, obj: Error, key: \"name\"): \"name\"", "");
 	});
 }
 

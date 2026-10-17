@@ -7,17 +7,17 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_multiline_template_literals() {
 	run_test(|t| {
-		let content = r"/*1*/new Error(" + "`" + r"Failed to expand glob: ${projectSpec.filesGlob}
+		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"/*1*/new Error(", "`"), r"Failed to expand glob: ${projectSpec.filesGlob}
 /*2*/                at projectPath : ${projectFile}
-/*3*/                with error: ${ex.message}" + "`" + r")";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
-		f.go_to_marker("1".into());
-		f.verify_current_line_content("new Error(`Failed to expand glob: ${projectSpec.filesGlob}".into());
-		f.go_to_marker("2".into());
-		f.verify_current_line_content(r"                at projectPath : ${projectFile}".into());
-		f.go_to_marker("3".into());
-		f.verify_current_line_content("                with error: ${ex.message}`)".into());
+/*3*/                with error: ${ex.message}"), "`"), r")");
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
+		f.go_to_marker("1");
+		f.verify_current_line_content("new Error(`Failed to expand glob: ${projectSpec.filesGlob}");
+		f.go_to_marker("2");
+		f.verify_current_line_content(r"                at projectPath : ${projectFile}");
+		f.go_to_marker("3");
+		f.verify_current_line_content("                with error: ${ex.message}`)");
 	});
 }
 

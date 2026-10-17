@@ -13,7 +13,7 @@ fn code_fix_spelling_js8() {
 var locals = {}
 // @ts-expect-error
 Object.keys(locale)";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_no_errors();
 	});
 }

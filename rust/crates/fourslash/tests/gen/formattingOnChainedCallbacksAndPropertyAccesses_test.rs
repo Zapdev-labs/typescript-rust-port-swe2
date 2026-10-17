@@ -20,24 +20,24 @@ x
 /*6*/.toFixed
 /*7*/.toString()
 /*8*/.length;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
-		f.go_to_marker("1".into());
-		f.verify_current_line_content(r"    .toFixed".into());
-		f.go_to_marker("2".into());
-		f.verify_current_line_content(r"    .toFixed()".into());
-		f.go_to_marker("3".into());
-		f.verify_current_line_content(r"    .toFixed()".into());
-		f.go_to_marker("4".into());
-		f.verify_current_line_content(r"    .length".into());
-		f.go_to_marker("5".into());
-		f.verify_current_line_content(r"    .toString();".into());
-		f.go_to_marker("6".into());
-		f.verify_current_line_content(r"    .toFixed".into());
-		f.go_to_marker("7".into());
-		f.verify_current_line_content(r"    .toString()".into());
-		f.go_to_marker("8".into());
-		f.verify_current_line_content(r"    .length;".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
+		f.go_to_marker("1");
+		f.verify_current_line_content(r"    .toFixed");
+		f.go_to_marker("2");
+		f.verify_current_line_content(r"    .toFixed()");
+		f.go_to_marker("3");
+		f.verify_current_line_content(r"    .toFixed()");
+		f.go_to_marker("4");
+		f.verify_current_line_content(r"    .length");
+		f.go_to_marker("5");
+		f.verify_current_line_content(r"    .toString();");
+		f.go_to_marker("6");
+		f.verify_current_line_content(r"    .toFixed");
+		f.go_to_marker("7");
+		f.verify_current_line_content(r"    .toString()");
+		f.go_to_marker("8");
+		f.verify_current_line_content(r"    .length;");
 	});
 }
 

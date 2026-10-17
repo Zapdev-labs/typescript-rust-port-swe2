@@ -7,8 +7,8 @@ use tsc_fourslash::*;
 #[test]
 fn call_hierarchy_tagged_template() {
 	run_test(|t| {
-		let content = r"function foo() {
-    bar" + "`" + r"a${1}b" + "`" + r";
+		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"function foo() {
+    bar", "`"), r"a${1}b"), "`"), r";
 }
 
 function /**/bar(array: TemplateStringsArray, ...args: any[]) {
@@ -16,9 +16,9 @@ function /**/bar(array: TemplateStringsArray, ...args: any[]) {
 }
 
 function baz() {
-}";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
+}");
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
 		f.verify_baseline_call_hierarchy();
 	});
 }

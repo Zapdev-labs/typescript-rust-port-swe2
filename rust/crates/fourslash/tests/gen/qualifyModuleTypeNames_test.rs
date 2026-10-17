@@ -10,9 +10,9 @@ fn qualify_module_type_names() {
 		let content = r"namespace m { export class c { } };
 function x(arg: m.c) { return arg; }
 x(/**/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "x(arg: m.c): m.c", ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "x(arg: m.c): m.c".to_string().into(), ..Default::default() });
 	});
 }
 

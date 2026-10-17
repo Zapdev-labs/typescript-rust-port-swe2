@@ -13,11 +13,11 @@ fn formatting_in_multiline_comments() {
 }
 
 // newline at the end of the file";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("2".into());
-		f.insert_line("".into());
-		f.go_to_marker("1".into());
-		f.verify_current_line_content(r"    } else {".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("2");
+		f.insert_line("");
+		f.go_to_marker("1");
+		f.verify_current_line_content(r"    } else {");
 	});
 }
 

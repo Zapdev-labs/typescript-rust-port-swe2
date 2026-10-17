@@ -9,7 +9,7 @@ fn code_fix_implicit_this_ts_cant_fix_non_function() {
 	run_test(|t| {
 		let content = r"// @noImplicitThis: true
 this;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_code_fix_not_available();
 	});
 }

@@ -24,11 +24,11 @@ export class Text extends React.Component {};
 // @Filename: /a.tsx
 import React from "react";
 <[|Text|] />;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/a.tsx".into());
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add import from \"react-native\"", new_file_content: r#"import React from "react";
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("/a.tsx");
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add import from \"react-native\"".to_string().into(), new_file_content: r#"import React from "react";
 import { Text } from "react-native";
-<Text />;"#, index: 0, ..Default::default() });
+<Text />;"#.to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

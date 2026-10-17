@@ -17,9 +17,9 @@ function /*f*/f<T>(t: T) {
 
 var x = f(0);
 var y = makeA(0);";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("makeA".into(), "function makeA<T>(t: T): A<T>".into(), "".into());
-		f.verify_quick_info_at("f".into(), "function f<T>(t: T): A<T>".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("makeA", "function makeA<T>(t: T): A<T>", "");
+		f.verify_quick_info_at("f", "function f<T>(t: T): A<T>", "");
 	});
 }
 

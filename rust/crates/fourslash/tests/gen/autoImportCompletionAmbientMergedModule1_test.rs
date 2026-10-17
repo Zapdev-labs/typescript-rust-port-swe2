@@ -36,14 +36,14 @@ import { MoveQuoteMatch } from "./motion";
 export class MoveInsideNextQuote extends MoveQuoteMatch {/*1*/
   keys = ["i", "n", "q"];
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("1".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: &vec![], edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "execActionWithCount", insert_text: Some(("public execActionWithCount(position: Position): Promise<void> {\n}").into()), filter_text: Some(("execActionWithCount").into()), additional_text_edits: tsc_fourslash::AnyTextEdits, data: &tsc_lsproto::CompletionItemData { source: "ClassMemberSnippet/", ..Default::default() }, ..Default::default() }], ..Default::default() }, user_preferences: &tsc_lsutil::UserPreferences { include_completions_with_class_member_snippets: tsc_core::tristate::TS_TRUE, ..Default::default() }, ..Default::default() });
-		f.verify_apply_code_action_from_completion(Some(("1").into()), &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "execActionWithCount", source: "ClassMemberSnippet/", description: "Includes imports of types referenced by 'execActionWithCount'", new_file_content: Some((r#"import { Position } from "vscode";
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions("1".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![]), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "execActionWithCount".to_string().into(), insert_text: Some(("public execActionWithCount(position: Position): Promise<void> {\n}").into()), filter_text: Some(("execActionWithCount").into()), additional_text_edits: tsc_fourslash::ANY_TEXT_EDITS.into(), data: Some(tsc_lsproto::CompletionItemData { source: "ClassMemberSnippet/".to_string().into(), ..Default::default() }), ..Default::default() }.into()].into(), ..Default::default() }), user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_with_class_member_snippets: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), ..Default::default() }));
+		f.verify_apply_code_action_from_completion("1", &tsc_fourslash::ApplyCodeActionFromCompletionOptions { name: "execActionWithCount".to_string().into(), source: "ClassMemberSnippet/".to_string().into(), description: "Includes imports of types referenced by 'execActionWithCount'".to_string().into(), new_file_content: Some((r#"import { Position } from "vscode";
 import { MoveQuoteMatch } from "./motion";
 
 export class MoveInsideNextQuote extends MoveQuoteMatch {
   keys = ["i", "n", "q"];
-}"#).into()), user_preferences: &tsc_lsutil::UserPreferences { include_completions_with_class_member_snippets: tsc_core::tristate::TS_TRUE, ..Default::default() }, ..Default::default() });
+}"#).into()), user_preferences: Some(tsc_lsutil::UserPreferences { completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_with_class_member_snippets: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }), ..Default::default() });
 	});
 }
 

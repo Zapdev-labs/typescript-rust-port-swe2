@@ -9,8 +9,8 @@ fn inlay_hints_interactive_function_parameter_types5() {
 	run_test(|t| {
 		let content = r"const foo: 1n = 1n;
 export function fn(b = foo) {}";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_inlay_hints(None, &tsc_lsutil::UserPreferences { include_inlay_function_parameter_type_hints: tsc_core::tristate::TS_TRUE, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_inlay_hints(None, Some(&tsc_lsutil::UserPreferences { inlay_hints_preferences: tsc_lsutil::InlayHintsPreferences { include_inlay_function_parameter_type_hints: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 

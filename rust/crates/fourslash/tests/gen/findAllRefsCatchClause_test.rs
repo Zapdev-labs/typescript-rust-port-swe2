@@ -11,8 +11,8 @@ fn find_all_refs_catch_clause() {
 catch (/*1*/err) {
     /*2*/err;
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1".into(), "2".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["1".into(), "2".into()]);
 	});
 }
 

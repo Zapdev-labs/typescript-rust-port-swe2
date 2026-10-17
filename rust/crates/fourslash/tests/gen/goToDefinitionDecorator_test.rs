@@ -20,8 +20,8 @@ function /*decoratorDefinition*/decorator(target) {
 function /*decoratorFactoryDefinition*/decoratorFactory(...args) {
     return target => target;
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "decoratorUse".into(), "decoratorFactoryUse".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_definition(true, &["decoratorUse".into(), "decoratorFactoryUse".into()]);
 	});
 }
 

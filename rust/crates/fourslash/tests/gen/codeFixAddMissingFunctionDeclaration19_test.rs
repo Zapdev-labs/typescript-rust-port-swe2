@@ -9,8 +9,8 @@ fn code_fix_add_missing_function_declaration19() {
 	run_test(|t| {
 		let content = r"declare function f(x: number): any;
 f(foo);";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix_not_available("fixMissingFunctionDeclaration".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_code_fix_not_available(&["fixMissingFunctionDeclaration".into()]);
 	});
 }
 

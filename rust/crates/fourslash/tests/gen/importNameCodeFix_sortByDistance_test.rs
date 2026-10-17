@@ -18,17 +18,17 @@ export const db = {};
 export const db = {};
 // @Filename: /src/client/foo.ts
 db/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
 		f.verify_import_fix_at_position(&[r#"import { db } from "./db";
 
-db"#, r#"import { db } from "./helpers/db";
+db"#.into(), r#"import { db } from "./helpers/db";
 
-db"#, r#"import { db } from "../admin/utils/db";
+db"#.into(), r#"import { db } from "../admin/utils/db";
 
-db"#, r#"import { db } from "../admin/utils/db/db";
+db"#.into(), r#"import { db } from "../admin/utils/db/db";
 
-db"#], None);
+db"#.into()], None);
 	});
 }
 

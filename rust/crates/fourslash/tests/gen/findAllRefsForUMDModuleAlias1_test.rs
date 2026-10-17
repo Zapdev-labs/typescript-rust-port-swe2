@@ -14,8 +14,8 @@ export function doTheOtherThing(): void;
 // @Filename: 1.ts
 /// <reference path="0.d.ts" />
 /*3*/myLib.doThing();"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1".into(), "2".into(), "3".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into()]);
 	});
 }
 

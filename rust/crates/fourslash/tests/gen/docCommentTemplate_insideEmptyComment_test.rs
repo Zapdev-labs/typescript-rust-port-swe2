@@ -13,13 +13,13 @@ function f(p) { return p; }
 /** Doc/*1*/ */
 function g(p) { return p; }";
 		let mut capabilities = tsc_fourslash::get_default_capabilities();
-		capabilities.text_document.completion.completion_item.snippet_support = Some((false).into());
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", capabilities, content);
+		capabilities.text_document.as_mut().unwrap().completion.as_mut().unwrap().completion_item.as_mut().unwrap().snippet_support = Some((false).into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", capabilities.into(), content);
 		f.verify_js_doc_completion("".into(), 7, r"/**
  * 
  * @param p
  * @returns
- */".into(), None);
+ */", None);
 		f.verify_no_js_doc_completion("1".into());
 	});
 }

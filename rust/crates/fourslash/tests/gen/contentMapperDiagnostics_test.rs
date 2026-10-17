@@ -19,7 +19,7 @@ const title = "Profile";
 const suffix = "!";
 function takesNumber(value: number) { return value; }
 </script>
-"#.into(), contentmappertest.component_mapper, ".vue".into());
+"#, tsc_testutil::contentmappertest::COMPONENT_MAPPER, ".vue");
 		f.verify_baseline_non_suggestion_diagnostics();
 	});
 }
@@ -29,7 +29,7 @@ fn content_mapper_synthesized_diagnostics() {
 	run_test(|t| {
 		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /ProfileCard.vue
 <template><h1>Profile</h1></template>
-".into(), contentmappertest.synthesizing_mapper, ".vue".into());
+", tsc_testutil::contentmappertest::SYNTHESIZING_MAPPER, ".vue");
 		f.verify_baseline_non_suggestion_diagnostics();
 	});
 }
@@ -39,9 +39,9 @@ fn content_mapper_transform_failure_diagnostics() {
 	run_test(|t| {
 		let (mut f, _done) = new_content_mapper_fourslash(&mut *t, r"// @Filename: /app.vue
 [||]<template>hi</template>
-".into(), contentmappertest.failing_mapper, ".vue".into());
-		f.go_to_file("/app.vue".into());
-		f.verify_non_suggestion_diagnostics(&[tsc_lsproto::Diagnostic { code: Some(tsc_lsproto::IntegerOrString { integer: Some(((18069) as i32).into()), ..Default::default() }), message: tsc_lsproto::StringOrMarkupContent { string: Some(("The content mapper 'mapper' failed to transform this file.\n  The content mapper process failed while handling the transform request.").into()), ..Default::default() }, range: f.ranges()[0].ls_range, ..Default::default() }]);
+", tsc_testutil::contentmappertest::FAILING_MAPPER, ".vue");
+		f.go_to_file("/app.vue");
+		f.verify_non_suggestion_diagnostics(&[tsc_lsproto::Diagnostic { code: Some(tsc_lsproto::IntegerOrString { integer: Some(((18069) as i32).into()), ..Default::default() }), message: tsc_lsproto::StringOrMarkupContent { string: Some(("The content mapper 'mapper' failed to transform this file.\n  The content mapper process failed while handling the transform request.").into()), ..Default::default() }.into(), range: f.ranges()[0].ls_range.into(), ..Default::default() }]);
 	});
 }
 

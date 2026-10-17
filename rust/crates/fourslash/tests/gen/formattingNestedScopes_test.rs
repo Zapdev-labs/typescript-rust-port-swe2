@@ -14,22 +14,22 @@ fn formatting_nested_scopes() {
 /*5*/($stateProvider);
 /*6*/}]).run(My.App.setup);
 /*7*/      }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
-		f.go_to_marker("1".into());
-		f.verify_current_line_content(r"namespace My.App {".into());
-		f.go_to_marker("2".into());
-		f.verify_current_line_content(r#"    export var appModule = angular.module("app", ["#.into());
-		f.go_to_marker("3".into());
-		f.verify_current_line_content(r"    ]).config([() => {".into());
-		f.go_to_marker("4".into());
-		f.verify_current_line_content(r"        configureStates".into());
-		f.go_to_marker("5".into());
-		f.verify_current_line_content(r"            ($stateProvider);".into());
-		f.go_to_marker("6".into());
-		f.verify_current_line_content(r"    }]).run(My.App.setup);".into());
-		f.go_to_marker("7".into());
-		f.verify_current_line_content(r"}".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
+		f.go_to_marker("1");
+		f.verify_current_line_content(r"namespace My.App {");
+		f.go_to_marker("2");
+		f.verify_current_line_content(r#"    export var appModule = angular.module("app", ["#);
+		f.go_to_marker("3");
+		f.verify_current_line_content(r"    ]).config([() => {");
+		f.go_to_marker("4");
+		f.verify_current_line_content(r"        configureStates");
+		f.go_to_marker("5");
+		f.verify_current_line_content(r"            ($stateProvider);");
+		f.go_to_marker("6");
+		f.verify_current_line_content(r"    }]).run(My.App.setup);");
+		f.go_to_marker("7");
+		f.verify_current_line_content(r"}");
 	});
 }
 

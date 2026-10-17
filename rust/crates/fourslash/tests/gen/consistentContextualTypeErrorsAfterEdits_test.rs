@@ -16,14 +16,14 @@ class C {
 }
 var xs /*1*/ = [(x: A) => { return x.foo; }, (x: C) => { return x.foo; }];
 xs.forEach(y => y(new /*2*/A()));";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_number_of_errors_in_current_file(0);
-		f.go_to_marker("1".into());
-		f.insert(": {}[]".into());
+		f.go_to_marker("1");
+		f.insert(": {}[]");
 		f.verify_number_of_errors_in_current_file(1);
-		f.go_to_marker("2".into());
+		f.go_to_marker("2");
 		f.delete_at_caret(1);
-		f.insert("C".into());
+		f.insert("C");
 		f.verify_number_of_errors_in_current_file(1);
 	});
 }

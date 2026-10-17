@@ -29,13 +29,13 @@ export declare var React: any;
     "react": "*"
   }
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("bar.tsx".into());
-		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport", new_file_content: r#"import Foo from "./foo";
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("bar.tsx");
+		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport".to_string().into(), new_file_content: r#"import Foo from "./foo";
 
 export default function Bar(){
     return <Foo></Foo>;
-}"#, ..Default::default() });
+}"#.to_string().into(), ..Default::default() });
 	});
 }
 

@@ -32,11 +32,11 @@ const u2: U = {
     /*u2Kind*/kind: "bogus",
     /*u2Prop*/prop: 1,
 };"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("uKind".into(), "(property) A.kind: \"a\"".into(), "Kind A".into());
-		f.verify_quick_info_at("uProp".into(), "(property) A.prop: number".into(), "Prop A".into());
-		f.verify_quick_info_at("u2Kind".into(), "(property) kind: \"bogus\"".into(), "".into());
-		f.verify_quick_info_at("u2Prop".into(), "(property) prop: number".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("uKind", "(property) A.kind: \"a\"", "Kind A");
+		f.verify_quick_info_at("uProp", "(property) A.prop: number", "Prop A");
+		f.verify_quick_info_at("u2Kind", "(property) kind: \"bogus\"", "");
+		f.verify_quick_info_at("u2Prop", "(property) prop: number", "");
 	});
 }
 

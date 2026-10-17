@@ -11,8 +11,8 @@ fn format_in_tsx_files() {
 interface I<T1, T2> {
     next: I</* */
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
 	});
 }
 

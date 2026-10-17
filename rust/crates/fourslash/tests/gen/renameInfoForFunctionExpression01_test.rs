@@ -10,8 +10,8 @@ fn rename_info_for_function_expression01() {
 		let content = r"var x = function /**/[|f|](g: any, h: any) {
     f(f, g);
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
 		f.verify_rename_succeeded(None);
 	});
 }

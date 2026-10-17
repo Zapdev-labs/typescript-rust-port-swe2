@@ -19,8 +19,8 @@ fn find_all_references_js_doc_type_literal() {
  * @param {number} o.nested.times - twice? probably!??
  */
  function f(o) { return o.nested./*2*/great; }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1".into(), "2".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["1".into(), "2".into()]);
 	});
 }
 

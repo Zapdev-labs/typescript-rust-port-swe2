@@ -22,8 +22,8 @@ type G<T> = {
 	[K in keyof T]: T[K] & Apple
 };
 const z: G/*G*/<Bar> = { banana: 'hello', apple: true };";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_hover_with_verbosity(vec![("x", vec![0, 1]), ("y", vec![0]), ("F", vec![0, 1]), ("G", vec![0, 1])].into_iter().collect::<FxHashMap<_, _>>());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_hover_with_verbosity(&std::collections::BTreeMap::from([("x".to_string().into(), vec![0, 1]), ("y".to_string().into(), vec![0]), ("F".to_string().into(), vec![0, 1]), ("G".to_string().into(), vec![0, 1])]));
 	});
 }
 

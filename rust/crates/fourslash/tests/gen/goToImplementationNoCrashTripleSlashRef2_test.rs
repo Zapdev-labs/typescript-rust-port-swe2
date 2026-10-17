@@ -16,8 +16,8 @@ export type JSX = {};
 // @Filename: /index.ts
 import type {JSX} from '/*m*/react';
 "#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_implementation("m".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_implementation(&["m".into()]);
 	});
 }
 

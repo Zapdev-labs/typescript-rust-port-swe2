@@ -16,7 +16,7 @@ f1/*0*/();|]
 // @Filename: module.ts
 export function f1() {}
 export var v1 = 5;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_import_fix_at_position(&[r#"import { f1 } from "./module";
 
 /**
@@ -24,7 +24,7 @@ export var v1 = 5;";
  */
 export interface SomeInterface {
 }
-f1();"#], None);
+f1();"#.into()], None);
 	});
 }
 

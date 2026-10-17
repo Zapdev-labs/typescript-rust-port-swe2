@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn import_name_code_fix_order2() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r#"// @Filename: /a.ts
 export const _aB: number;
 export const _Ab: number;
@@ -27,23 +27,23 @@ aB;|]
     Ab,
 } from "./a";
 aB;|]"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/b.ts".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("/b.ts");
 		f.verify_import_fix_at_position(&[r#"import {
     _aB,
     _Ab,
     Ab,
     aB,
 } from "./a";
-aB;"#], None);
-		f.go_to_file("/c.ts".into());
+aB;"#.into()], None);
+		f.go_to_file("/c.ts");
 		f.verify_import_fix_at_position(&[r#"import {
     _aB,
     _Ab,
     aB,
     Ab,
 } from "./a";
-aB;"#], None);
+aB;"#.into()], None);
 	});
 }
 

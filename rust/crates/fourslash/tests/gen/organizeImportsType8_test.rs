@@ -9,24 +9,24 @@ fn organize_imports_type8() {
 	run_test(|t| {
 		let content = r#"import { type A, type a, b, B } from "foo";
 console.log(a, b, A, B);"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_organize_imports(r#"import { type A, type a, b, B } from "foo";
-console.log(a, b, A, B);"#.into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_UNKNOWN, organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::INLINE, ..Default::default() });
-		f.replace_line(0, "import { type A, type a, b, B } from \"foo1\";".into());
+console.log(a, b, A, B);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_UNKNOWN.into(), organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::INLINE.into(), ..Default::default() }));
+		f.replace_line(0, "import { type A, type a, b, B } from \"foo1\";");
 		f.verify_organize_imports(r#"import { type A, type a, b, B } from "foo1";
-console.log(a, b, A, B);"#.into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_UNKNOWN, organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::FIRST, ..Default::default() });
-		f.replace_line(0, "import { type A, type a, b, B } from \"foo2\";".into());
+console.log(a, b, A, B);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_UNKNOWN.into(), organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::FIRST.into(), ..Default::default() }));
+		f.replace_line(0, "import { type A, type a, b, B } from \"foo2\";");
 		f.verify_organize_imports(r#"import { b, B, type A, type a } from "foo2";
-console.log(a, b, A, B);"#.into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_UNKNOWN, organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::LAST, ..Default::default() });
-		f.replace_line(0, "import { type A, type a, b, B } from \"foo3\";".into());
+console.log(a, b, A, B);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_UNKNOWN.into(), organize_imports_type_order: tsc_lsutil::OrganizeImportsTypeOrder::LAST.into(), ..Default::default() }));
+		f.replace_line(0, "import { type A, type a, b, B } from \"foo3\";");
 		f.verify_organize_imports(r#"import { type A, type a, b, B } from "foo3";
-console.log(a, b, A, B);"#.into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_UNKNOWN, ..Default::default() });
-		f.replace_line(0, "import { type A, type a, b, B } from \"foo4\";".into());
+console.log(a, b, A, B);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_UNKNOWN.into(), ..Default::default() }));
+		f.replace_line(0, "import { type A, type a, b, B } from \"foo4\";");
 		f.verify_organize_imports(r#"import { type A, type a, b, B } from "foo4";
-console.log(a, b, A, B);"#.into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_TRUE, ..Default::default() });
-		f.replace_line(0, "import { type A, type a, b, B } from \"foo5\";".into());
+console.log(a, b, A, B);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }));
+		f.replace_line(0, "import { type A, type a, b, B } from \"foo5\";");
 		f.verify_organize_imports(r#"import { type A, B, type a, b } from "foo5";
-console.log(a, b, A, B);"#.into(), tsc_lsproto::CodeActionKind::SOURCE_ORGANIZE_IMPORTS_TS, &tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_FALSE, ..Default::default() });
+console.log(a, b, A, B);"#, tsc_lsproto::CodeActionKind::SourceOrganizeImportsTs, Some(&tsc_lsutil::UserPreferences { organize_imports_ignore_case: tsc_core::tristate::TS_FALSE.into(), ..Default::default() }));
 	});
 }
 

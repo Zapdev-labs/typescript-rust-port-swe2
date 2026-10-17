@@ -10,8 +10,8 @@ fn find_all_refs_global_this_keyword_in_module() {
 		let content = r"// @noLib: true
 /*1*/this;
 export const c = 1;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["1".into()]);
 	});
 }
 

@@ -13,8 +13,8 @@ export const a = 1;
 import { a } from "sub/a";
 // @Filename: /tsconfig.json
 {"compilerOptions":{"paths":{"*":["*"]}}}"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_will_rename_files_edits("/sub/b.ts".into(), "/sub/c/d.ts".into(), vec![].into_iter().collect::<FxHashMap<_, _>>(), None);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_will_rename_files_edits("/sub/b.ts", "/sub/c/d.ts", &std::collections::BTreeMap::from([]), None);
 	});
 }
 

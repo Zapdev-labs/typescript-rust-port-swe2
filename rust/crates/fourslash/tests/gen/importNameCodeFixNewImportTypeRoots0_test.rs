@@ -19,10 +19,10 @@ export function foo() {};
         ]
     }
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_import_fix_at_position(&[r#"import { foo } from "../types/random";
 
-foo();"#], None);
+foo();"#.into()], None);
 	});
 }
 

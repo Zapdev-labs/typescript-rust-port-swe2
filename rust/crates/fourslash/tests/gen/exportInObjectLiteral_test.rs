@@ -11,8 +11,8 @@ fn export_in_object_literal() {
 const k = {
     [|export|] f() { }
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_document_highlights_with_options(None, &[f.ranges()[0].file_name().as_string()], f.ranges()[0]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_document_highlights_with_options(None, &[f.ranges()[0].file_name().as_string()], vec![f.ranges()[0].into()]);
 	});
 }
 

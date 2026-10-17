@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn suggestion_of_unused_variable_with_external_module() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r#"//@allowJs: true
 //@module: commonjs
 // @Filename: /mymodule.js
@@ -20,11 +20,11 @@ fn suggestion_of_unused_variable_with_external_module() {
 // @Filename: /app.js
 //@ts-check
 [|require("./mymodule")|];"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/app.js".into());
-		f.verify_suggestion_diagnostics(&[tsc_lsproto::Diagnostic { code: Some(tsc_lsproto::IntegerOrString { integer: Some(((80001) as i32).into()), ..Default::default() }), message: tsc_lsproto::StringOrMarkupContent { string: Some(("File is a CommonJS module; it may be converted to an ES module.").into()), ..Default::default() }, range: f.ranges()[2].ls_range, ..Default::default() }]);
-		f.go_to_file("/mymodule.js".into());
-		f.verify_suggestion_diagnostics(&[tsc_lsproto::Diagnostic { message: tsc_lsproto::StringOrMarkupContent { string: Some(("'root' is declared but its value is never read.").into()), ..Default::default() }, code: Some(tsc_lsproto::IntegerOrString { integer: Some(((6133) as i32).into()), ..Default::default() }), range: f.ranges()[0].ls_range, tags: Some(vec![tsc_lsproto::DiagnosticTag::UNNECESSARY]), ..Default::default() }, tsc_lsproto::Diagnostic { message: tsc_lsproto::StringOrMarkupContent { string: Some(("'unusedVar' is declared but its value is never read.").into()), ..Default::default() }, code: Some(tsc_lsproto::IntegerOrString { integer: Some(((6133) as i32).into()), ..Default::default() }), range: f.ranges()[1].ls_range, tags: Some(vec![tsc_lsproto::DiagnosticTag::UNNECESSARY]), ..Default::default() }]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("/app.js");
+		f.verify_suggestion_diagnostics(&[tsc_lsproto::Diagnostic { code: Some(tsc_lsproto::IntegerOrString { integer: Some(((80001) as i32).into()), ..Default::default() }), message: tsc_lsproto::StringOrMarkupContent { string: Some(("File is a CommonJS module; it may be converted to an ES module.").into()), ..Default::default() }.into(), range: f.ranges()[2].ls_range.into(), ..Default::default() }]);
+		f.go_to_file("/mymodule.js");
+		f.verify_suggestion_diagnostics(&[tsc_lsproto::Diagnostic { message: tsc_lsproto::StringOrMarkupContent { string: Some(("'root' is declared but its value is never read.").into()), ..Default::default() }.into(), code: Some(tsc_lsproto::IntegerOrString { integer: Some(((6133) as i32).into()), ..Default::default() }), range: f.ranges()[0].ls_range.into(), tags: Some(vec![tsc_lsproto::DiagnosticTag::Unnecessary]), ..Default::default() }, tsc_lsproto::Diagnostic { message: tsc_lsproto::StringOrMarkupContent { string: Some(("'unusedVar' is declared but its value is never read.").into()), ..Default::default() }.into(), code: Some(tsc_lsproto::IntegerOrString { integer: Some(((6133) as i32).into()), ..Default::default() }), range: f.ranges()[1].ls_range.into(), tags: Some(vec![tsc_lsproto::DiagnosticTag::Unnecessary]), ..Default::default() }]);
 	});
 }
 

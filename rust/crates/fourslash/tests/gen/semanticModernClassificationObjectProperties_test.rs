@@ -10,8 +10,8 @@ fn semantic_modern_classification_object_properties() {
 		let content = r"let x = 1, y = 1;
 const a1 = { e: 1 };
 var a2 = { x };";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type: "variable.declaration".into(), text: "x".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.declaration".into(), text: "y".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.declaration.readonly".into(), text: "a1".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "property.declaration".into(), text: "e".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.declaration".into(), text: "a2".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "property.declaration".into(), text: "x".into(), ..Default::default() }]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type_: "variable.declaration".to_string().into(), text: "x".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.declaration".to_string().into(), text: "y".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.declaration.readonly".to_string().into(), text: "a1".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "property.declaration".to_string().into(), text: "e".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.declaration".to_string().into(), text: "a2".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "property.declaration".to_string().into(), text: "x".to_string().into(), ..Default::default() }]);
 	});
 }
 

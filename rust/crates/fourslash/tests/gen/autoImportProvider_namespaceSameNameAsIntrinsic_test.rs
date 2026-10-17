@@ -20,10 +20,10 @@ export type SafeString = string;
 { "compilerOptions": { "module": "commonjs", "lib": ["es5"] } }
 // @Filename: /home/src/workspaces/project/index.ts
 type A = { name: string/**/ }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.go_to_marker("".into());
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "string", sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), ..Default::default() }, &tsc_lsproto::CompletionItem { label: "string", sort_text: Some((tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string()).into()), data: &tsc_lsproto::CompletionItemData { auto_import: &tsc_lsproto::AutoImportFix { module_specifier: "fp-ts", ..Default::default() }, ..Default::default() }, additional_text_edits: tsc_fourslash::AnyTextEdits, ..Default::default() }], ..Default::default() }, ..Default::default() });
+		f.go_to_marker("");
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "string".to_string().into(), sort_text: Some((tsc_ls::SORT_TEXT_GLOBALS_OR_KEYWORDS.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "string".to_string().into(), sort_text: Some((tsc_ls::SORT_TEXT_AUTO_IMPORT_SUGGESTIONS.to_string()).into()), data: Some(tsc_lsproto::CompletionItemData { auto_import: Some(tsc_lsproto::AutoImportFix { module_specifier: "fp-ts".to_string().into(), ..Default::default() }), ..Default::default() }), additional_text_edits: tsc_fourslash::ANY_TEXT_EDITS.into(), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

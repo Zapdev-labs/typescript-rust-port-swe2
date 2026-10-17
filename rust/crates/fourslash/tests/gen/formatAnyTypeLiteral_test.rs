@@ -9,11 +9,11 @@ fn format_any_type_literal() {
 	run_test(|t| {
 		let content = r"function foo(x: { } /*objLit*/){
 /**/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
-		f.insert("}".into());
-		f.go_to_marker("objLit".into());
-		f.verify_current_line_content(r"function foo(x: {}) {".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
+		f.insert("}");
+		f.go_to_marker("objLit");
+		f.verify_current_line_content(r"function foo(x: {}) {");
 	});
 }
 

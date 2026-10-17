@@ -9,9 +9,9 @@ fn signature_help_with_invalid_argument_list1() {
 	run_test(|t| {
 		let content = r"function foo(a) { }
 foo(hello my name /**/is";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "foo(a: any): void", ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "foo(a: any): void".to_string().into(), ..Default::default() });
 	});
 }
 

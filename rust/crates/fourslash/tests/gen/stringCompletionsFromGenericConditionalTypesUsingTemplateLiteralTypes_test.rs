@@ -7,16 +7,16 @@ use tsc_fourslash::*;
 #[test]
 fn string_completions_from_generic_conditional_types_using_template_literal_types() {
 	run_test(|t| {
-		let content = r#"// @stableTypeOrdering: true
+		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r#"// @stableTypeOrdering: true
 // @strict: true
 type keyword = "foo" | "bar" | "baz"
 
 type validateString<s> = s extends keyword
     ? s
-    : s extends "# + "`" + r"${infer left extends keyword}|${infer right}" + "`" + r"
+    : s extends "#, "`"), r"${infer left extends keyword}|${infer right}"), "`"), r"
     ? right extends keyword
         ? s
-        : " + "`" + r"${left}|${keyword}" + "`" + r#"
+        : "), "`"), r"${left}|${keyword}"), "`"), r#"
     : keyword
 
 type isUnknown<t> = unknown extends t
@@ -34,10 +34,10 @@ type validate<def> = def extends string
       }
 const parse = <def>(def: validate<def>) => def
 const shallowExpression = parse("foo|/*ts*/")
-const nestedExpression = parse({ prop: "foo|/*ts2*/" })"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions(&["ts"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec!["bar", "baz", "foo", "foo|bar", "foo|baz", "foo|foo"], ..Default::default() }, ..Default::default() });
-		f.verify_completions(&["ts2"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { exact: vec!["foo|bar", "foo|baz", "foo|foo"], ..Default::default() }, ..Default::default() });
+const nestedExpression = parse({ prop: "foo|/*ts2*/" })"#);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions(vec!["ts"].into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["bar".into(), "baz".into(), "foo".into(), "foo|bar".into(), "foo|baz".into(), "foo|foo".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions(vec!["ts2"].into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec!["foo|bar".into(), "foo|baz".into(), "foo|foo".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

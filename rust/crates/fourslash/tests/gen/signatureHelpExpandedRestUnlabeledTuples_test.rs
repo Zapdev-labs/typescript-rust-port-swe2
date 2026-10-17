@@ -14,13 +14,13 @@ fn signature_help_expanded_rest_unlabeled_tuples() {
 complex(/*1*/);
 complex("ok", "ok", /*2*/);
 complex("ok", "ok", e => void e, {}, /*3*/);"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "complex(item: string, another: string): void", parameter_count: 2, parameter_name: "item", parameter_span: "item: string", overloads_count: 3, is_variadic: false, is_variadic_set: true, ..Default::default() });
-		f.go_to_marker("2".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "complex(item: string, another: string, rest_0: object, rest_1: (err: Error) => void): void", parameter_count: 4, parameter_name: "rest_0", parameter_span: "rest_0: object", overloads_count: 3, is_variadic: false, is_variadic_set: true, ..Default::default() });
-		f.go_to_marker("3".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "complex(item: string, another: string, rest_0: (err: Error) => void, ...rest: object[]): void", overloads_count: 3, is_variadic: true, is_variadic_set: true, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("1");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "complex(item: string, another: string): void".to_string().into(), parameter_count: 2, parameter_name: "item".to_string().into(), parameter_span: "item: string".to_string().into(), overloads_count: 3, is_variadic: false.into(), is_variadic_set: true.into(), ..Default::default() });
+		f.go_to_marker("2");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "complex(item: string, another: string, rest_0: object, rest_1: (err: Error) => void): void".to_string().into(), parameter_count: 4, parameter_name: "rest_0".to_string().into(), parameter_span: "rest_0: object".to_string().into(), overloads_count: 3, is_variadic: false.into(), is_variadic_set: true.into(), ..Default::default() });
+		f.go_to_marker("3");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "complex(item: string, another: string, rest_0: (err: Error) => void, ...rest: object[]): void".to_string().into(), overloads_count: 3, is_variadic: true.into(), is_variadic_set: true.into(), ..Default::default() });
 	});
 }
 

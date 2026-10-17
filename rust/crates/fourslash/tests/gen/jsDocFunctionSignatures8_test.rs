@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn js_doc_function_signatures8() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"// @allowJs: true
 // @Filename: Foo.js
 /**
@@ -22,9 +22,9 @@ function Person(name, age) {
     this.age = age;
 }
 var p = new Pers/**/on();";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
-		f.verify_quick_info_is("constructor Person(name: string, age: number): Person".into(), "Represents a person\na b multiline test".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
+		f.verify_quick_info_is("constructor Person(name: string, age: number): Person", "Represents a person\na b multiline test");
 	});
 }
 

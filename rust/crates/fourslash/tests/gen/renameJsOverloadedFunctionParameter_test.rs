@@ -25,8 +25,8 @@ fn rename_js_overloaded_function_parameter() {
 function foo(x/**/) {
   return x;
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_rename(None, "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_rename(None, vec!["".into()]);
 	});
 }
 

@@ -23,9 +23,9 @@ declare namespace JSX {
     }
 }
 <foo:ba/*tag*/r fo/*attr*/o />"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("tag".into(), "(property) JSX.IntrinsicElements[\"foo:bar\"]: {\n    foo: boolean;\n    bar: string;\n}".into(), "Element docs".into());
-		f.verify_quick_info_at("attr".into(), "(property) foo: boolean".into(), "Foo docs".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("tag", "(property) JSX.IntrinsicElements[\"foo:bar\"]: {\n    foo: boolean;\n    bar: string;\n}", "Element docs");
+		f.verify_quick_info_at("attr", "(property) foo: boolean", "Foo docs");
 	});
 }
 

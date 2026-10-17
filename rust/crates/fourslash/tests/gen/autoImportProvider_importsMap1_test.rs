@@ -32,9 +32,9 @@ export const isBrowser = true;
 export const isBrowser = false;
 // @Filename: /home/src/workspaces/project/src/a.ts
 isBrowser/**/"##;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.mark_test_as_strada_server();
-		f.verify_import_fix_module_specifiers("".into(), &["#is-browser", "./env/browser.js"], None);
+		f.verify_import_fix_module_specifiers("", &["#is-browser".into(), "./env/browser.js".into()], None);
 	});
 }
 

@@ -30,11 +30,11 @@ import * as css from "./style.asset" with { type: "css" };
 import * as text from "./copy.asset" with { type: "text" };
 css./*css*/cssOnly;
 text./*text*/textOnly;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("attributeName".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["outerAttributeName"], excludes: vec!["CssAttributeValue", "cssOnly", "shared"], ..Default::default() }, ..Default::default() });
-		f.verify_completions("attributeValue".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["OuterAttributeValue"], excludes: vec!["CssAttributeValue", "TextAttributeValue"], ..Default::default() }, ..Default::default() });
-		f.verify_completions("css".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["cssOnly", "shared"], excludes: vec!["textOnly"], ..Default::default() }, ..Default::default() });
-		f.verify_completions("text".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["shared", "textOnly"], excludes: vec!["cssOnly"], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions("attributeName".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["outerAttributeName".into()].into(), excludes: vec!["CssAttributeValue".into(), "cssOnly".into(), "shared".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions("attributeValue".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["OuterAttributeValue".into()].into(), excludes: vec!["CssAttributeValue".into(), "TextAttributeValue".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions("css".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["cssOnly".into(), "shared".into()].into(), excludes: vec!["textOnly".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions("text".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["shared".into(), "textOnly".into()].into(), excludes: vec!["cssOnly".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 
@@ -59,14 +59,14 @@ import * as css from /*cssModule*/"./style.asset" with { type: "css" };
 import * as text from /*textModule*/"./copy.asset" with { type: "text" };
 css./*cssUse*/shared;
 text./*textUse*/shared;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_no_errors();
 		f.verify_baseline_hover();
-		f.verify_baseline_go_to_definition(true, "cssModule".into(), "textModule".into(), "cssUse".into(), "textUse".into());
-		f.verify_baseline_go_to_type_definition("cssUse".into(), "textUse".into());
-		f.verify_baseline_find_all_references("cssUse".into(), "textUse".into());
-		f.verify_baseline_rename(None, "cssUse".into(), "textUse".into());
-		f.verify_baseline_document_highlights(None, "cssUse".into(), "textUse".into());
+		f.verify_baseline_go_to_definition(true, &["cssModule".into(), "textModule".into(), "cssUse".into(), "textUse".into()]);
+		f.verify_baseline_go_to_type_definition(&["cssUse".into(), "textUse".into()]);
+		f.verify_baseline_find_all_references(&["cssUse".into(), "textUse".into()]);
+		f.verify_baseline_rename(None, vec!["cssUse".into(), "textUse".into()]);
+		f.verify_baseline_document_highlights(None, vec!["cssUse".into(), "textUse".into()]);
 	});
 }
 

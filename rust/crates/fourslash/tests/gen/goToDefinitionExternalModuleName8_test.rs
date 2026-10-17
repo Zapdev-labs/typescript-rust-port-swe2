@@ -13,8 +13,8 @@ export {Foo, Bar} from [|'e/*1*/'|];
 declare module /*2*/"e" {
     class Foo { }
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "1".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_definition(true, &["1".into()]);
 	});
 }
 

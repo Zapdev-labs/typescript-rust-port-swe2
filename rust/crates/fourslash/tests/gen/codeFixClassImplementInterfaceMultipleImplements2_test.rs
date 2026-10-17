@@ -18,10 +18,10 @@ interface I2 {
 class C implements I1,I2 {[|
     |]x: number;
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_range_after_code_fix(r#"
 y: "𣋝ઢȴ¬⏊";
-"#.into(), false, 0, 0);
+"#, false, 0, 0);
 		f.verify_code_fix_not_available();
 	});
 }

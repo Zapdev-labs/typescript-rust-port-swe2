@@ -11,15 +11,15 @@ fn code_fix_class_implement_interface_with_ambient_signatures2() {
     method(): void;
 }
 class B implements A {}";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'A'", new_file_content: r#"declare class A {
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'A'".to_string().into(), new_file_content: r#"declare class A {
     method(): void;
 }
 class B implements A {
     method(): void {
         throw new Error("Method not implemented.");
     }
-}"#, index: 0, ..Default::default() });
+}"#.to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

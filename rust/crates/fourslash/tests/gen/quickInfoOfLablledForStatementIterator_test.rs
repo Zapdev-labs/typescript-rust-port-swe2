@@ -8,8 +8,8 @@ use tsc_fourslash::*;
 fn quick_info_of_lablled_for_statement_iterator() {
 	run_test(|t| {
 		let content = r"label1: for(var /**/i = 0; i < 1; i++) { }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
 		f.verify_quick_info_exists();
 	});
 }

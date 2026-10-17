@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn signature_help_call_expression_js() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"// @strict: false
 // @checkJs: true
 // @allowJs: true
@@ -19,12 +19,12 @@ function someOptional(x, y) { arguments; }
 someOptional(/*2*/);
 someOptional(1, 2, 3);
 someOptional(); // no error here; x and y are optional in JS";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_no_errors();
-		f.go_to_marker("1".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "allOptional(...args: any[]): void", parameter_count: 1, parameter_name: "args", parameter_span: "...args: any[]", is_variadic: true, is_variadic_set: true, ..Default::default() });
-		f.go_to_marker("2".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "someOptional(x: any, y: any, ...args: any[]): void", parameter_count: 3, parameter_name: "x", parameter_span: "x: any", is_variadic: true, is_variadic_set: true, ..Default::default() });
+		f.go_to_marker("1");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "allOptional(...args: any[]): void".to_string().into(), parameter_count: 1, parameter_name: "args".to_string().into(), parameter_span: "...args: any[]".to_string().into(), is_variadic: true.into(), is_variadic_set: true.into(), ..Default::default() });
+		f.go_to_marker("2");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "someOptional(x: any, y: any, ...args: any[]): void".to_string().into(), parameter_count: 3, parameter_name: "x".to_string().into(), parameter_span: "x: any".to_string().into(), is_variadic: true.into(), is_variadic_set: true.into(), ..Default::default() });
 	});
 }
 

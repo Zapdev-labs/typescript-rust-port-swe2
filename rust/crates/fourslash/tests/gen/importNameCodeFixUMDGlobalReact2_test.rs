@@ -18,11 +18,11 @@ declare global {
 }
 // @Filename: /a.tsx
 [|<div/>|]";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/a.tsx".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("/a.tsx");
 		f.verify_import_fix_at_position(&[r#"import { factory } from "./factory";
 
-<div/>"#], None);
+<div/>"#.into()], None);
 	});
 }
 

@@ -27,8 +27,8 @@ import DefaultCard, { ProfileCard, title } from "./ProfileCard.vue";
 export const pageTitle = [|ti/*incoming*/tle|];
 export const component = [|Profile/*atomResult*/Card|];
 export const fallback = [|Default/*synthesized*/Card|];
-"#.into(), contentmappertest.component_mapper, ".vue".into());
-		f.verify_baseline_find_all_references("script".into(), "template".into(), "incoming".into(), "outgoing".into(), "atomResult".into(), "synthesized".into(), "markup".into());
+"#, tsc_testutil::contentmappertest::COMPONENT_MAPPER, ".vue");
+		f.verify_baseline_find_all_references(&["script".into(), "template".into(), "incoming".into(), "outgoing".into(), "atomResult".into(), "synthesized".into(), "markup".into()]);
 	});
 }
 

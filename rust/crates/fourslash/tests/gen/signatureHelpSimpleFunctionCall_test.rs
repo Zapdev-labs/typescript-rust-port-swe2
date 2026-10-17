@@ -12,11 +12,11 @@ function functionCall(str: string, num: number) {
 }
 functionCall(/*functionCall1*/);
 functionCall("", /*functionCall2*/1);"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("functionCall1".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "functionCall(str: string, num: number): void", parameter_name: "str", parameter_span: "str: string", ..Default::default() });
-		f.go_to_marker("functionCall2".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "functionCall(str: string, num: number): void", parameter_name: "num", parameter_span: "num: number", ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("functionCall1");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "functionCall(str: string, num: number): void".to_string().into(), parameter_name: "str".to_string().into(), parameter_span: "str: string".to_string().into(), ..Default::default() });
+		f.go_to_marker("functionCall2");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "functionCall(str: string, num: number): void".to_string().into(), parameter_name: "num".to_string().into(), parameter_span: "num: number".to_string().into(), ..Default::default() });
 	});
 }
 

@@ -15,14 +15,14 @@ fn multiline_comment_before_open_brace() {
 }
 function a() {
     /* %^ */ }/*3*/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
-		f.go_to_marker("1".into());
-		f.verify_current_line_content(r"function test() /* %^ */ {".into());
-		f.go_to_marker("2".into());
-		f.verify_current_line_content(r"    if (true) /* %^ */ {".into());
-		f.go_to_marker("3".into());
-		f.verify_current_line_content(r"}".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
+		f.go_to_marker("1");
+		f.verify_current_line_content(r"function test() /* %^ */ {");
+		f.go_to_marker("2");
+		f.verify_current_line_content(r"    if (true) /* %^ */ {");
+		f.go_to_marker("3");
+		f.verify_current_line_content(r"}");
 	});
 }
 

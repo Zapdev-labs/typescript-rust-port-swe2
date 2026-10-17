@@ -10,8 +10,8 @@ fn rename_destructuring_function_parameter() {
 		let content = r#"function f([|{[|{| "contextRangeIndex": 0 |}a|]}: {[|a|]}|]) {
     f({[|a|]});
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_rename(None, f.ranges()[1], f.ranges()[3], f.ranges()[2]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_rename(None, vec![f.ranges()[1].into(), f.ranges()[3].into(), f.ranges()[2].into()]);
 	});
 }
 

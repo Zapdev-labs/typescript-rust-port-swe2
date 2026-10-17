@@ -13,12 +13,12 @@ import * as f from "baz";
 import { g } from "foo";
 
 export { g, e, b, c };"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_organize_imports(r#"import { c, b } from "foo";
 import { e } from "bar";
 import { g } from "foo";
 
-export { g, e, b, c };"#.into(), tsc_lsproto::CodeActionKind::SOURCE_REMOVE_UNUSED_IMPORTS_TS, None);
+export { g, e, b, c };"#, tsc_lsproto::CodeActionKind::SourceRemoveUnusedImportsTs, None);
 	});
 }
 

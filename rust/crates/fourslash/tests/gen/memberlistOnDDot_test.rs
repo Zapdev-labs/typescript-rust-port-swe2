@@ -9,11 +9,11 @@ fn memberlist_on_d_dot() {
 	run_test(|t| {
 		let content = r"var q = '';
 q/**/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
-		f.insert(".".into());
-		f.insert(".".into());
-		f.verify_completions(None, None);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
+		f.insert(".");
+		f.insert(".");
+		f.verify_completions(Default::default(), None);
 	});
 }
 

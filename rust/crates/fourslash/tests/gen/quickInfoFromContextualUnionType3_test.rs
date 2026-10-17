@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_from_contextual_union_type3() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r#"// @strict: true
 declare const foo1: <D extends Foo1<D>>(definition: D) => D;
 
@@ -34,9 +34,9 @@ type Prop<T, K> = K extends keyof T ? T[K] : never;
 foo1({ bar: { /*1*/X: "test" } });
 
 foo2({ bar: { /*2*/X: "test" } });"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1".into(), "(property) X: \"Error: bar should be boolean\"".into(), "".into());
-		f.verify_quick_info_at("2".into(), "(property) X: \"Error: bar should be boolean\"".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("1", "(property) X: \"Error: bar should be boolean\"", "");
+		f.verify_quick_info_at("2", "(property) X: \"Error: bar should be boolean\"", "");
 	});
 }
 

@@ -11,7 +11,7 @@ fn quick_info_nested_export_equal_export_default() {
    export/*1*/ default/*2*/ {
    }
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_hover();
 	});
 }

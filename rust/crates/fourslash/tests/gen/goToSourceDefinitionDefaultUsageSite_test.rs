@@ -22,8 +22,8 @@ export default class /*targetWidget*/Widget {
 import Widget from "pkg";
 const w = new Widget/*constructUsage*/("test");
 w./*methodUsage*/render();"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("constructUsage".into(), "methodUsage".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_source_definition(&["constructUsage".into(), "methodUsage".into()]);
 	});
 }
 
@@ -40,8 +40,8 @@ export default function /*targetGreet*/greet(name) { return "Hello, " + name; }
 // @Filename: /home/src/workspaces/project/index.ts
 import greet from "pkg";
 greet/*callUsage*/("world");"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_source_definition("callUsage".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_source_definition(&["callUsage".into()]);
 	});
 }
 

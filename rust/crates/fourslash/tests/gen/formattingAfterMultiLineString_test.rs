@@ -13,11 +13,11 @@ fn formatting_after_multi_line_string() {
 "/*2*/
     }
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("2".into());
-		f.insert_line("".into());
-		f.go_to_marker("1".into());
-		f.verify_current_line_content("        var s = \"hello\\".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("2");
+		f.insert_line("");
+		f.go_to_marker("1");
+		f.verify_current_line_content("        var s = \"hello\\");
 	});
 }
 

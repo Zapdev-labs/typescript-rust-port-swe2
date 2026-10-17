@@ -8,7 +8,7 @@ use tsc_fourslash::*;
 fn declaration_maps_opening_original_location_project() {
 	run_test(|t| {
 		for disable_source_of_project_reference_redirect in vec![false, true] {
-			run_subtest(&mut t, "TestDeclarationMapsOpeningOriginalLocationProject" + tsc_core::if_else(disable_source_of_project_reference_redirect, "DisableSourceOfProjectReferenceRedirect".into(), "".into()), |t| {
+			run_subtest(&mut t, format!("{}{}", "TestDeclarationMapsOpeningOriginalLocationProject", tsc_core::if_else(disable_source_of_project_reference_redirect, "DisableSourceOfProjectReferenceRedirect", "")), |t| {
 				let mut content = format!(r#"
 // @stateBaseline: true
 // @Filename: a/a.ts
@@ -39,9 +39,9 @@ new /*1*/A();
 	"references": [
 		{ "path": "../a" }
 	]
-}"#.into(), disable_source_of_project_reference_redirect);
-				let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-				f.verify_baseline_find_all_references("1".into());
+}"#, disable_source_of_project_reference_redirect);
+				let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+				f.verify_baseline_find_all_references(&["1".into()]);
 			});
 		}
 	});
@@ -52,7 +52,7 @@ fn declaration_map_test_cases_for_maps() {
 	run_test(|t| {
 		let mut tests = vec![testCase { "FindAllRefs", "userFnA", "userFnA", ..Default::default() }, testCase { "FindAllRefsStartingAtDefinition", "userFnA", "fnADef", ..Default::default() }, testCase { "FindAllRefsTargetDoesNotExist", "userFnB", "userFnB", ..Default::default() }, testCase { "Rename", "userFnA", "userFnA", ..Default::default() }, testCase { "RenameStartingAtDefinition", "userFnA", "fnADef", ..Default::default() }, testCase { "RenameTargetDoesNotExist", "userFnB", "userFnB", ..Default::default() }];
 		for tc in tests {
-			run_subtest(&mut t, "TestDeclarationMaps" + tc.name, |t| {
+			run_subtest(&mut t, format!("{}{}", "TestDeclarationMaps", tc.name), |t| {
 				let mut content = r#"
 // @stateBaseline: true
 // @Filename: a/a.ts
@@ -110,15 +110,15 @@ export function fnUser() { a./*userFnA*/fnA(); b./*userFnB*/fnB(); a.instanceA; 
 /*dummy*/export const a = 10;
 // @Filename: dummy/tsconfig.json
 {}"#;
-				let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+				let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 				f.go_to_marker(tc.go_to_marker);
-				if strings.has_prefix(tc.name, "Rename".into()) {
-					f.verify_baseline_rename(None, tc.op_marker);
+				if strings.has_prefix(tc.name, "Rename") {
+					f.verify_baseline_rename(None, vec![tc.op_marker.into()]);
 				} else {
-					f.verify_baseline_find_all_references(tc.op_marker);
+					f.verify_baseline_find_all_references(&[tc.op_marker]);
 				}
 				f.close_file_of_marker(tc.go_to_marker);
-				f.go_to_marker("dummy".into());
+				f.go_to_marker("dummy");
 			});
 		}
 	});
@@ -198,11 +198,11 @@ export function fnUser() {
 /*dummy*/export const a = 10;
 // @Filename: dummy/tsconfig.json
 {}"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("user".into());
-		f.verify_baseline_workspace_symbol("fn".into());
-		f.close_file_of_marker("user".into());
-		f.go_to_marker("dummy".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("user");
+		f.verify_baseline_workspace_symbol("fn");
+		f.close_file_of_marker("user");
+		f.go_to_marker("dummy");
 	});
 }
 
@@ -242,18 +242,18 @@ export declare function f(): void;
 	"names":[],
 	"mappings":"AAAA,wBAAgB,CAAC,SAAK"
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["1".into()]);
 	});
 }
 
 #[test]
 fn declaration_maps_rename() {
 	run_test(|t| {
-		for tc in vec![testCase { name: "ProjectReferences".into(), dont_build: true, ..Default::default() }, testCase { name: "DisableSourceOfProjectReferenceRedirect".into(), disable_source_of_project_reference_redirect: true, ..Default::default() }, testCase { name: "SourceMaps".into(), main_with_no_ref: true, ..Default::default() }, testCase { name: "SourceMapsNotSolution".into(), main_with_no_ref: true, tsconfig_not_solution: true, ..Default::default() }] {
-			let mut build_str = tsc_core::if_else(!tc.dont_build, "// @tsc: --build /myproject/dependency,--build /myproject/main".into(), "".into());
-			let mut main_refs_str = tsc_core::if_else(!tc.main_with_no_ref, r#""references": [{ "path": "../dependency" }]"#.into(), "".into());
-			let mut files_str = tsc_core::if_else(!tc.tsconfig_not_solution, r#""files": [],"#.into(), "".into());
+		for tc in vec![testCase { name: "ProjectReferences".to_string().into(), dont_build: true.into(), ..Default::default() }, testCase { name: "DisableSourceOfProjectReferenceRedirect".to_string().into(), disable_source_of_project_reference_redirect: true.into(), ..Default::default() }, testCase { name: "SourceMaps".to_string().into(), main_with_no_ref: true.into(), ..Default::default() }, testCase { name: "SourceMapsNotSolution".to_string().into(), main_with_no_ref: true.into(), tsconfig_not_solution: true.into(), ..Default::default() }] {
+			let mut build_str = tsc_core::if_else(!tc.dont_build, "// @tsc: --build /myproject/dependency,--build /myproject/main", "");
+			let mut main_refs_str = tsc_core::if_else(!tc.main_with_no_ref, r#""references": [{ "path": "../dependency" }]"#, "");
+			let mut files_str = tsc_core::if_else(!tc.tsconfig_not_solution, r#""files": [],"#, "");
 			let mut content = format!(r#"
 // @stateBaseline: true 
 %s
@@ -309,30 +309,30 @@ fn5();
 // @Filename: random/random.ts
 /*dummy*/export const a = 10;
 // @Filename: random/tsconfig.json
-{}"#.into(), build_str, tc.disable_source_of_project_reference_redirect, main_refs_str, tc.disable_source_of_project_reference_redirect, files_str);
-			run_subtest(&mut t, "TestDeclarationMapsRenameWith" + tc.name, |t| {
-				let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-				f.go_to_marker("dummy".into());
-				f.verify_baseline_rename(None, "rename".into());
-				f.close_file_of_marker("dummy".into());
-				f.go_to_marker("dummy".into());
-				f.close_file_of_marker("rename".into());
-				f.close_file_of_marker("dummy".into());
-				f.go_to_marker("dummy".into());
+{}"#, build_str, tc.disable_source_of_project_reference_redirect, main_refs_str, tc.disable_source_of_project_reference_redirect, files_str);
+			run_subtest(&mut t, format!("{}{}", "TestDeclarationMapsRenameWith", tc.name), |t| {
+				let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+				f.go_to_marker("dummy");
+				f.verify_baseline_rename(None, vec!["rename".into()]);
+				f.close_file_of_marker("dummy");
+				f.go_to_marker("dummy");
+				f.close_file_of_marker("rename");
+				f.close_file_of_marker("dummy");
+				f.go_to_marker("dummy");
 			});
-			run_subtest(&mut t, "TestDeclarationMapsRenameWith" + tc.name + "Edit", |t| {
-				let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-				f.verify_baseline_rename(None, "rename".into());
-				f.go_to_marker("firstLine".into());
-				f.insert("function fooBar() { }\n".into());
-				f.verify_baseline_rename(None, "rename".into());
+			run_subtest(&mut t, format!("{}{}", format!("{}{}", "TestDeclarationMapsRenameWith", tc.name), "Edit"), |t| {
+				let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+				f.verify_baseline_rename(None, vec!["rename".into()]);
+				f.go_to_marker("firstLine");
+				f.insert("function fooBar() { }\n");
+				f.verify_baseline_rename(None, vec!["rename".into()]);
 			});
-			run_subtest(&mut t, "TestDeclarationMapsRenameWith" + tc.name + "EditEnd", |t| {
-				let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-				f.verify_baseline_rename(None, "rename".into());
-				f.go_to_marker("lastLine".into());
-				f.insert("const x = 10;".into());
-				f.verify_baseline_rename(None, "rename".into());
+			run_subtest(&mut t, format!("{}{}", format!("{}{}", "TestDeclarationMapsRenameWith", tc.name), "EditEnd"), |t| {
+				let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+				f.verify_baseline_rename(None, vec!["rename".into()]);
+				f.go_to_marker("lastLine");
+				f.insert("const x = 10;");
+				f.verify_baseline_rename(None, vec!["rename".into()]);
 			});
 		}
 	});
@@ -364,8 +364,8 @@ import { a, b } from "./indexdef";
 /*2*/b();
 // @Filename: /src/tsconfig.json
 {}"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "1".into(), "2".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_definition(true, &["1".into(), "2".into()]);
 	});
 }
 

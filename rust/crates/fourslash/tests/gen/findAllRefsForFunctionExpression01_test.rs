@@ -14,8 +14,8 @@ var foo = /*1*/function /*2*/foo(a = /*3*/foo(), b = () => /*4*/foo) {
 // @Filename: file2.ts
 /// <reference path="file1.ts" />
 foo();"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into(), "7".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into(), "5".into(), "6".into(), "7".into()]);
 	});
 }
 

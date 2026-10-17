@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_meaning() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r#"// @lib: es5
 // @module: commonjs
 // @Filename: foo.d.ts
@@ -32,19 +32,19 @@ const i: foo/*foo_type*/ = { x: 1, y: 2 };
 [|import bar = require("bar_module");|]
 const x = bar/*bar_value*/;
 const i: bar/*bar_type*/ = { x: 1, y: 2 };"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_no_errors();
-		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "foo".into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "foo".into(), kind: tsc_lsproto::SYMBOL_KIND_VARIABLE, location: f.ranges()[0].ls_location(), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "foo".into(), kind: tsc_lsproto::SYMBOL_KIND_VARIABLE, location: f.ranges()[2].ls_location(), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "foo_module".into(), kind: tsc_lsproto::SYMBOL_KIND_NAMESPACE, location: f.ranges()[1].ls_location(), ..Default::default() }]).into()), ..Default::default() }]);
-		f.go_to_marker("foo_value".into());
-		f.verify_quick_info_is("const foo: number".into(), "".into());
-		f.go_to_marker("foo_type".into());
-		f.verify_quick_info_is("(alias) interface foo\nimport foo = require(\"foo_module\")".into(), "".into());
-		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "bar".into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "bar".into(), kind: tsc_lsproto::SYMBOL_KIND_INTERFACE, location: f.ranges()[3].ls_location(), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "bar".into(), kind: tsc_lsproto::SYMBOL_KIND_VARIABLE, location: f.ranges()[5].ls_location(), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "bar_module".into(), kind: tsc_lsproto::SYMBOL_KIND_NAMESPACE, location: f.ranges()[4].ls_location(), ..Default::default() }]).into()), ..Default::default() }]);
-		f.go_to_marker("bar_value".into());
-		f.verify_quick_info_is("(alias) const bar: number\nimport bar = require(\"bar_module\")".into(), "".into());
-		f.go_to_marker("bar_type".into());
-		f.verify_quick_info_is("interface bar".into(), "".into());
-		f.verify_baseline_go_to_definition(false, "foo_value".into(), "foo_type".into(), "bar_value".into(), "bar_type".into());
+		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "foo".to_string().into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "foo".to_string().into(), kind: tsc_lsproto::SYMBOL_KIND_VARIABLE.into(), location: f.ranges()[0].ls_location().into(), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "foo".to_string().into(), kind: tsc_lsproto::SYMBOL_KIND_VARIABLE.into(), location: f.ranges()[2].ls_location().into(), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "foo_module".to_string().into(), kind: tsc_lsproto::SYMBOL_KIND_NAMESPACE.into(), location: f.ranges()[1].ls_location().into(), ..Default::default() }]).into()), ..Default::default() }]);
+		f.go_to_marker("foo_value");
+		f.verify_quick_info_is("const foo: number", "");
+		f.go_to_marker("foo_type");
+		f.verify_quick_info_is("(alias) interface foo\nimport foo = require(\"foo_module\")", "");
+		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "bar".to_string().into(), preferences: None, exact: Some((vec![tsc_lsproto::SymbolInformation { name: "bar".to_string().into(), kind: tsc_lsproto::SYMBOL_KIND_INTERFACE.into(), location: f.ranges()[3].ls_location().into(), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "bar".to_string().into(), kind: tsc_lsproto::SYMBOL_KIND_VARIABLE.into(), location: f.ranges()[5].ls_location().into(), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "bar_module".to_string().into(), kind: tsc_lsproto::SYMBOL_KIND_NAMESPACE.into(), location: f.ranges()[4].ls_location().into(), ..Default::default() }]).into()), ..Default::default() }]);
+		f.go_to_marker("bar_value");
+		f.verify_quick_info_is("(alias) const bar: number\nimport bar = require(\"bar_module\")", "");
+		f.go_to_marker("bar_type");
+		f.verify_quick_info_is("interface bar", "");
+		f.verify_baseline_go_to_definition(false, &["foo_value".into(), "foo_type".into(), "bar_value".into(), "bar_type".into()]);
 	});
 }
 

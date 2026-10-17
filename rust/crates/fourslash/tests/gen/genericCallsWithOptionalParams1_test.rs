@@ -17,9 +17,9 @@ var c = new Collection<string>();
 var utils: Utils;
 var /*1*/r = utils.fold(c, (s, t) => t, "");
 var /*2*/r2 = utils.fold(c, (s, t) => t);"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1".into(), "var r: string".into(), "".into());
-		f.verify_quick_info_at("2".into(), "var r2: string".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("1", "var r: string", "");
+		f.verify_quick_info_at("2", "var r2: string", "");
 	});
 }
 

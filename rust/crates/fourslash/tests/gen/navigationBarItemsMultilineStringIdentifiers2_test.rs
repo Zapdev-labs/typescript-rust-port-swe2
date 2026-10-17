@@ -7,20 +7,20 @@ use tsc_fourslash::*;
 #[test]
 fn navigation_bar_items_multiline_string_identifiers2() {
 	run_test(|t| {
-		let content = r"function f(p1: () => any, p2: string) { }
-f(() => { }, " + "`" + r"line1\
+		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"function f(p1: () => any, p2: string) { }
+f(() => { }, ", "`"), r"line1\
 line2\
-line3" + "`" + r");
+line3"), "`"), r");
 
 class c1 {
     const a = ' ''line1\
         line2';
 }
 
-f(() => { }, " + "`" + r"unterminated backtick 1
+f(() => { }, "), "`"), r"unterminated backtick 1
 unterminated backtick 2
-unterminated backtick 3";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+unterminated backtick 3");
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_document_symbol();
 	});
 }

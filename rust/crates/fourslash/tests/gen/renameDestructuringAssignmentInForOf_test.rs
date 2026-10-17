@@ -20,9 +20,9 @@ for ([|{ [|{| "contextRangeIndex": 4 |}property1|] } of elems|]) {
 }
 for ([|{ [|{| "contextRangeIndex": 7 |}property1|]: p2 } of elems|]) {
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_no_errors();
-		f.verify_baseline_rename(None, f.ranges()[1], f.ranges()[8], f.ranges()[3], f.ranges()[5], f.ranges()[6]);
+		f.verify_baseline_rename(None, vec![f.ranges()[1].into(), f.ranges()[8].into(), f.ranges()[3].into(), f.ranges()[5].into(), f.ranges()[6].into()]);
 	});
 }
 

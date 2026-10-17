@@ -14,28 +14,28 @@ fn formatting_space_before_function_paren() {
 /*5*/function tmpl <T> () { }
 /*6*/var f = function*() { };
 /*7*/function* g () { }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		let mut opts333 = f.get_options();
 		opts333.format_code_settings.insert_space_before_function_parenthesis = tsc_core::tristate::TS_TRUE;
 		f.configure(opts333);
 		let mut opts414 = f.get_options();
 		opts414.format_code_settings.insert_space_after_function_keyword_for_anonymous_functions = tsc_core::tristate::TS_FALSE;
 		f.configure(opts414);
-		f.format_document("".into());
-		f.go_to_marker("1".into());
-		f.verify_current_line_content(r"function foo () { }".into());
-		f.go_to_marker("2".into());
-		f.verify_current_line_content(r"function boo () { }".into());
-		f.go_to_marker("3".into());
-		f.verify_current_line_content(r"var bar = function foo () { };".into());
-		f.go_to_marker("4".into());
-		f.verify_current_line_content(r"var foo = { bar () { } };".into());
-		f.go_to_marker("5".into());
-		f.verify_current_line_content(r"function tmpl<T> () { }".into());
-		f.go_to_marker("6".into());
-		f.verify_current_line_content(r"var f = function*() { };".into());
-		f.go_to_marker("7".into());
-		f.verify_current_line_content(r"function* g () { }".into());
+		f.format_document("");
+		f.go_to_marker("1");
+		f.verify_current_line_content(r"function foo () { }");
+		f.go_to_marker("2");
+		f.verify_current_line_content(r"function boo () { }");
+		f.go_to_marker("3");
+		f.verify_current_line_content(r"var bar = function foo () { };");
+		f.go_to_marker("4");
+		f.verify_current_line_content(r"var foo = { bar () { } };");
+		f.go_to_marker("5");
+		f.verify_current_line_content(r"function tmpl<T> () { }");
+		f.go_to_marker("6");
+		f.verify_current_line_content(r"var f = function*() { };");
+		f.go_to_marker("7");
+		f.verify_current_line_content(r"function* g () { }");
 	});
 }
 

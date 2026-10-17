@@ -15,8 +15,8 @@ interface /*def*/I {
 function f() {
     const foo = { foo: '' } satisfies [|I|];
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_implementation("def".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_implementation(&["def".into()]);
 	});
 }
 

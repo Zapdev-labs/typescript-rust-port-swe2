@@ -11,7 +11,7 @@ fn smart_selection_js_doc_tags12() {
 type A = {
     a(/** Comment */ /*1*/p0: number, /** Comment */ /*2*/p1: number, /** Comment */ /*3*/p2: number): string;
 };";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_selection_ranges();
 	});
 }

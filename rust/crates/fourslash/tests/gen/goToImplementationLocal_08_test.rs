@@ -9,8 +9,8 @@ fn go_to_implementation_local_08() {
 	run_test(|t| {
 		let content = r"declare function [|someFunction|](): () => void;
 someFun/*reference*/ction();";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_implementation("reference".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_implementation(&["reference".into()]);
 	});
 }
 

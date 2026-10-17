@@ -13,8 +13,8 @@ fn semantic_classification2() {
 
 var Thing = 0;
 Thing.toExponential();";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type: "interface.declaration".into(), text: "Thing".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "method.declaration".into(), text: "toExponential".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable.declaration".into(), text: "Thing".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "variable".into(), text: "Thing".into(), ..Default::default() }, tsc_fourslash::SemanticToken { type: "method.defaultLibrary".into(), text: "toExponential".into(), ..Default::default() }]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_semantic_tokens(&[tsc_fourslash::SemanticToken { type_: "interface.declaration".to_string().into(), text: "Thing".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "method.declaration".to_string().into(), text: "toExponential".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable.declaration".to_string().into(), text: "Thing".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "variable".to_string().into(), text: "Thing".to_string().into(), ..Default::default() }, tsc_fourslash::SemanticToken { type_: "method.defaultLibrary".to_string().into(), text: "toExponential".to_string().into(), ..Default::default() }]);
 	});
 }
 

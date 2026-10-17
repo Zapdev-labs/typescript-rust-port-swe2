@@ -13,10 +13,10 @@ export const helper = 1;
 // @Filename: /app.astro
 import { helper } from "./dep";
 helper;
-"#.into(), contentmappertest.duplicate_projection_mapper, ".astro".into());
-		f.verify_will_rename_files_edits("/dep.ts".into(), "/renamed.ts".into(), vec![("/app.astro", r#"import { helper } from "./renamed";
+"#, tsc_testutil::contentmappertest::DUPLICATE_PROJECTION_MAPPER, ".astro");
+		f.verify_will_rename_files_edits("/dep.ts", "/renamed.ts", &std::collections::BTreeMap::from([("/app.astro".to_string().into(), r#"import { helper } from "./renamed";
 helper;
-"#)].into_iter().collect::<FxHashMap<_, _>>(), None);
+"#.to_string().into())]), None);
 	});
 }
 

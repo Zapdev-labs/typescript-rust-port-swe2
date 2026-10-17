@@ -19,14 +19,14 @@ fn format_parameter() {
     )
 ) {
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
-		f.go_to_marker("first".into());
-		f.verify_current_line_content(r"        number,".into());
-		f.go_to_marker("second".into());
-		f.verify_current_line_content(r"        string".into());
-		f.go_to_marker("third".into());
-		f.verify_current_line_content(r"            boolean".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
+		f.go_to_marker("first");
+		f.verify_current_line_content(r"        number,");
+		f.go_to_marker("second");
+		f.verify_current_line_content(r"        string");
+		f.go_to_marker("third");
+		f.verify_current_line_content(r"            boolean");
 	});
 }
 

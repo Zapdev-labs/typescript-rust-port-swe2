@@ -20,15 +20,15 @@ fn doc_comment_template_constructor01() {
     }
 }";
 		let mut capabilities = tsc_fourslash::get_default_capabilities();
-		capabilities.text_document.completion.completion_item.snippet_support = Some((false).into());
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", capabilities, content);
+		capabilities.text_document.as_mut().unwrap().completion.as_mut().unwrap().completion_item.as_mut().unwrap().snippet_support = Some((false).into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", capabilities.into(), content);
 		f.verify_js_doc_completion("0".into(), 11, r"/**
      * 
      * @param a
      * @param b
      * @param c
      * @param d
-     */".into(), None);
+     */", None);
 		f.verify_js_doc_completion("1".into(), 11, r"/**
      * 
      * @param a
@@ -36,7 +36,7 @@ fn doc_comment_template_constructor01() {
      * @param c
      * @param d
      * @param e
-     */".into(), None);
+     */", None);
 	});
 }
 

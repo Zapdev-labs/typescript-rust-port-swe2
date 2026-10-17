@@ -19,8 +19,8 @@ fn quick_info_on_class_merged_with_function() {
         }
     }
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("".into(), "(property) myProp: string".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("", "(property) myProp: string", "");
 	});
 }
 

@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_generics() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"class Con/*1*/tainer<T> {
     x: T;
 }
@@ -32,22 +32,22 @@ var y = x./*14*/getItem(10);
 var x2: IList<IList<number>>;
 var x3: IList<number>;
 var y2 = x./*15*/method(x2, [x3, x3]);";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1".into(), "class Container<T>".into(), "".into());
-		f.verify_quick_info_at("2".into(), "(type parameter) T in IList<T>".into(), "".into());
-		f.verify_quick_info_at("3".into(), "(type parameter) T in IList<T>".into(), "".into());
-		f.verify_quick_info_at("4".into(), "(type parameter) T in List2<T extends IList<number>>".into(), "".into());
-		f.verify_quick_info_at("5".into(), "(type parameter) T in List2<T extends IList<number>>".into(), "".into());
-		f.verify_quick_info_at("6".into(), "(property) List2<T extends IList<number>>.__item: T[]".into(), "".into());
-		f.verify_quick_info_at("7".into(), "(method) List2<T extends IList<number>>.getItem(i: number): T".into(), "".into());
-		f.verify_quick_info_at("8".into(), "(method) List2<T extends IList<number>>.method<S extends IList<T>>(s: S, p: T[]): S".into(), "".into());
-		f.verify_quick_info_at("9".into(), "(type parameter) S in List2<T extends IList<number>>.method<S extends IList<T>>(s: S, p: T[]): S".into(), "".into());
-		f.verify_quick_info_at("10".into(), "(type parameter) T in List2<T extends IList<number>>".into(), "".into());
-		f.verify_quick_info_at("11".into(), "(type parameter) T in foo4<T extends Date>(test: T): T".into(), "".into());
-		f.verify_quick_info_at("12".into(), "(type parameter) S in foo4<S extends string>(test: S): S".into(), "".into());
-		f.verify_quick_info_at("13".into(), "(type parameter) T in foo4<T extends Date>(test: any): any".into(), "".into());
-		f.verify_quick_info_at("14".into(), "(method) List2<IList<number>>.getItem(i: number): IList<number>".into(), "".into());
-		f.verify_quick_info_at("15".into(), "(method) List2<IList<number>>.method<IList<IList<number>>>(s: IList<IList<number>>, p: IList<number>[]): IList<IList<number>>".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("1", "class Container<T>", "");
+		f.verify_quick_info_at("2", "(type parameter) T in IList<T>", "");
+		f.verify_quick_info_at("3", "(type parameter) T in IList<T>", "");
+		f.verify_quick_info_at("4", "(type parameter) T in List2<T extends IList<number>>", "");
+		f.verify_quick_info_at("5", "(type parameter) T in List2<T extends IList<number>>", "");
+		f.verify_quick_info_at("6", "(property) List2<T extends IList<number>>.__item: T[]", "");
+		f.verify_quick_info_at("7", "(method) List2<T extends IList<number>>.getItem(i: number): T", "");
+		f.verify_quick_info_at("8", "(method) List2<T extends IList<number>>.method<S extends IList<T>>(s: S, p: T[]): S", "");
+		f.verify_quick_info_at("9", "(type parameter) S in List2<T extends IList<number>>.method<S extends IList<T>>(s: S, p: T[]): S", "");
+		f.verify_quick_info_at("10", "(type parameter) T in List2<T extends IList<number>>", "");
+		f.verify_quick_info_at("11", "(type parameter) T in foo4<T extends Date>(test: T): T", "");
+		f.verify_quick_info_at("12", "(type parameter) S in foo4<S extends string>(test: S): S", "");
+		f.verify_quick_info_at("13", "(type parameter) T in foo4<T extends Date>(test: any): any", "");
+		f.verify_quick_info_at("14", "(method) List2<IList<number>>.getItem(i: number): IList<number>", "");
+		f.verify_quick_info_at("15", "(method) List2<IList<number>>.method<IList<IList<number>>>(s: IList<IList<number>>, p: IList<number>[]): IList<IList<number>>", "");
 	});
 }
 

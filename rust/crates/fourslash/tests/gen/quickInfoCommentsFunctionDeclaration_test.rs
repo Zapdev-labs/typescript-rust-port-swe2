@@ -24,7 +24,7 @@ fooWithParam/*8*/eters("a",10);
 */
 declare function fn(a: string);
 fn("hello");"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_hover();
 	});
 }

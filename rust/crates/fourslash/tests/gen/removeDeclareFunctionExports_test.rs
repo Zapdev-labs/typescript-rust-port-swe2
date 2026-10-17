@@ -11,7 +11,7 @@ fn remove_declare_function_exports() {
     function RegExp2(pattern: string): RegExp2;
     export function RegExp2(pattern: string, flags: string): RegExp2;
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.go_to_bof();
 		f.delete_at_caret(8);
 	});

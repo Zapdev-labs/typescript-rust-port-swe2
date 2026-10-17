@@ -20,7 +20,7 @@ const standardElement =
            Next
        </Button>
    </Link>;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_linked_editing();
 	});
 }

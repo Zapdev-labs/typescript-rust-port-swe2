@@ -31,8 +31,8 @@ let x11 = class [|{|"parts": ["(","local class",")"," ","C"], "kind": "local cla
 function isFoo(a: any): a is Foo {
     return true;
 }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_implementation("interface_definition".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_implementation(&["interface_definition".into()]);
 	});
 }
 

@@ -23,9 +23,9 @@ class Foo/*3*/ {
 	#bar: string;
 }
 ";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1".into(), "var someVar: number".into(), "Some var".into());
-		f.verify_quick_info_at("2".into(), "var otherVar: number".into(), "Other var\nSee [someVar](file:///basicQuickInfo.ts#5,5-5,12)".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("1", "var someVar: number", "Some var");
+		f.verify_quick_info_at("2", "var otherVar: number", "Other var\nSee [someVar](file:///basicQuickInfo.ts#5,5-5,12)");
 	});
 }
 

@@ -12,13 +12,13 @@ interface Foo {
     x : number;
     y ?: number;
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
 		f.verify_current_file_content(r"function foo(x: number, y?: string): number { }
 interface Foo {
     x: number;
     y?: number;
-}".into());
+}");
 	});
 }
 

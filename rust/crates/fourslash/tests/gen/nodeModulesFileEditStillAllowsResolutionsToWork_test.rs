@@ -16,11 +16,11 @@ export const x = 1;
 // @Filename: /index.ts
 import * as mod from "#foo";
 /**/"##;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
-		f.insert("mod.x".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
+		f.insert("mod.x");
 		f.verify_no_errors();
-		f.verify_suggestion_diagnostics(None);
+		f.verify_suggestion_diagnostics(&[]);
 	});
 }
 

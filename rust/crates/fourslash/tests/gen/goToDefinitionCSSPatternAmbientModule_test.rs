@@ -17,8 +17,8 @@ declare module /*2b*/"*.css" {
 }
 // @Filename: index.ts
 import styles from [|/*1*/"./index.css"|];"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "1".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_definition(true, &["1".into()]);
 	});
 }
 

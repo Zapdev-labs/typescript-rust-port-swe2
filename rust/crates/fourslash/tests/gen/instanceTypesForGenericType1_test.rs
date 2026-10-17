@@ -13,9 +13,9 @@ fn instance_types_for_generic_type1() {
         this./*1*/self = /*2*/this;  // self and this are both of type G<T>
     }
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1".into(), "(property) G<T>.self: G<T>".into(), "".into());
-		f.verify_quick_info_at("2".into(), "this: this".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("1", "(property) G<T>.self: G<T>", "");
+		f.verify_quick_info_at("2", "this: this", "");
 	});
 }
 

@@ -19,12 +19,12 @@ export as namespace Foo;
 // @Filename: index.js
 Foo;
 module.exports = {};";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("index.js".into());
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add import from \"./umd\"", new_file_content: r#"const Foo = require("./umd");
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("index.js");
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add import from \"./umd\"".to_string().into(), new_file_content: r#"const Foo = require("./umd");
 
 Foo;
-module.exports = {};"#, index: 0, ..Default::default() });
+module.exports = {};"#.to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

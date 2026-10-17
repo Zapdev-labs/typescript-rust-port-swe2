@@ -11,8 +11,8 @@ fn refactor_convert_to_es_module_not_in_commonjs_project() {
 // @target: es5
 // @Filename: /a.js
 exports.x = 0;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_suggestion_diagnostics(None);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_suggestion_diagnostics(&[]);
 	});
 }
 

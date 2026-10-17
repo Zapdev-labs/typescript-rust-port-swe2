@@ -12,8 +12,8 @@ fn go_to_definition_return5() {
         static { [|/*start*/return|]; }
     }
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_definition(true, "start".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_definition(true, &["start".into()]);
 	});
 }
 

@@ -16,11 +16,11 @@ bar/*0*/();|]
 declare function bar(): number;
 export = bar;
 export as namespace bar;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_import_fix_at_position(&[r#"import bar = require("./foo");
 
 export var x = 0;
-bar();"#], None);
+bar();"#.into()], None);
 	});
 }
 

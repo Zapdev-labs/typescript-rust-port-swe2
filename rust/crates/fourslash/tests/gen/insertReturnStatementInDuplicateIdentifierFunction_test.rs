@@ -10,10 +10,10 @@ fn insert_return_statement_in_duplicate_identifier_function() {
 		let content = r"// @strict: true
 class foo { };
 function foo() { /**/ }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
 		f.verify_number_of_errors_in_current_file(2);
-		f.insert("return null;".into());
+		f.insert("return null;");
 		f.verify_number_of_errors_in_current_file(2);
 	});
 }

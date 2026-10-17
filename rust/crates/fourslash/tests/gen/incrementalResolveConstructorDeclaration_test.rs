@@ -15,8 +15,8 @@ fn incremental_resolve_constructor_declaration() {
 }
 var val = new c1("hello");
 /*1*/val;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1".into(), "var val: c1".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("1", "var val: c1", "");
 		f.verify_number_of_errors_in_current_file(1);
 	});
 }

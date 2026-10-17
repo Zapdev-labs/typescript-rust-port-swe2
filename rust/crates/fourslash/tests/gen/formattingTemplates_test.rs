@@ -7,15 +7,15 @@ use tsc_fourslash::*;
 #[test]
 fn formatting_templates() {
 	run_test(|t| {
-		let content = r"String.call " + "`" + r"${123}" + "`" + r"/*1*/
-String.call " + "`" + r"${123} ${456}" + "`" + r"/*2*/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1".into());
-		f.insert(";".into());
-		f.verify_current_line_content("String.call`${123}`;".into());
-		f.go_to_marker("2".into());
-		f.insert(";".into());
-		f.verify_current_line_content("String.call`${123} ${456}`;".into());
+		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"String.call ", "`"), r"${123}"), "`"), r"/*1*/
+String.call "), "`"), r"${123} ${456}"), "`"), r"/*2*/");
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("1");
+		f.insert(";");
+		f.verify_current_line_content("String.call`${123}`;");
+		f.go_to_marker("2");
+		f.insert(";");
+		f.verify_current_line_content("String.call`${123} ${456}`;");
 	});
 }
 

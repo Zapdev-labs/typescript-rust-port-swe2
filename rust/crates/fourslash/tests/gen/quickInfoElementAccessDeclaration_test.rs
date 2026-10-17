@@ -7,16 +7,16 @@ use tsc_fourslash::*;
 #[test]
 fn quick_info_element_access_declaration() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r#"// @checkJs: true
 // @allowJs: true
 // @Filename: a.js
 const mod = {};
 mod["@@thing1"] = {};
 mod["/**/@@thing1"]["@@thing2"] = 0;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
-		f.verify_quick_info_is("module mod[\"@@thing1\"]\n(property) mod[\"@@thing1\"]: typeof mod.@@thing1".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
+		f.verify_quick_info_is("module mod[\"@@thing1\"]\n(property) mod[\"@@thing1\"]: typeof mod.@@thing1", "");
 	});
 }
 

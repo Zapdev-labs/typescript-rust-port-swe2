@@ -17,14 +17,14 @@ fn transitive_export_imports() {
 // @Filename: c.ts
 [|import /*3*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 6 |}b|] = require('./b');|]
 var a = new /*4*/[|b|]./**/[|b|]();"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
 		f.verify_quick_info_exists();
 		f.verify_no_errors();
-		f.verify_baseline_find_all_references("1".into(), "2".into(), "3".into(), "4".into());
-		f.verify_baseline_rename(None, f.ranges()[1], f.ranges()[3]);
-		f.verify_baseline_rename(None, f.ranges()[5], f.ranges()[9]);
-		f.verify_baseline_rename(None, f.ranges()[7], f.ranges()[8]);
+		f.verify_baseline_find_all_references(&["1".into(), "2".into(), "3".into(), "4".into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[1].into(), f.ranges()[3].into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[5].into(), f.ranges()[9].into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[7].into(), f.ranges()[8].into()]);
 	});
 }
 

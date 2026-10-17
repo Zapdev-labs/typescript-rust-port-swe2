@@ -23,8 +23,8 @@ namespace N {
         /**close-brace prefix*/ }
 /**close-brace prefix*/ }
 class C implements N.I {}";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'N.I'", new_file_content: r#"namespace N {
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'N.I'".to_string().into(), new_file_content: r#"namespace N {
     /**enum prefix */
     export enum /**enum identifier prefix */ E /**open-brace prefix*/ {
     /* literal prefix */ a /** comma prefix */,
@@ -44,7 +44,7 @@ class C implements N.I {
     foo<X /** closing angle prefix */>(a: X /** close paren prefix */): string /** semicolon prefix */ {
         throw new Error("Method not implemented.");
     }
-}"#, index: 0, ..Default::default() });
+}"#.to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

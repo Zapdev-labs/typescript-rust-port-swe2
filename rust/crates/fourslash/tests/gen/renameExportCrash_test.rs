@@ -12,8 +12,8 @@ fn rename_export_crash() {
 let a;
 module.exports = /**/a;
 exports["foo"] = a;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_rename(None, "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_rename(None, vec!["".into()]);
 	});
 }
 

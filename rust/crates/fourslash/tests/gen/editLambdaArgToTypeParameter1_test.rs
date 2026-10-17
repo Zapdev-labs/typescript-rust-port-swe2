@@ -13,13 +13,13 @@ fn edit_lambda_arg_to_type_parameter1() {
     }
 }
 /*2*/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("1".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("1");
 		f.backspace(6);
-		f.insert("T".into());
+		f.insert("T");
 		f.verify_no_errors();
-		f.go_to_marker("2".into());
-		f.insert_line("".into());
+		f.go_to_marker("2");
+		f.insert_line("");
 		f.verify_no_errors();
 	});
 }

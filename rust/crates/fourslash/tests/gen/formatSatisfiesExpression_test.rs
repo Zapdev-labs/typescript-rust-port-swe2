@@ -11,12 +11,12 @@ fn format_satisfies_expression() {
 const foo1 = ["a"] satisfies Foo[];
 const foo2 = ["a"]satisfies Foo[];
 const foo3 = ["a"]  satisfies Foo[];"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
 		f.verify_current_file_content(r#"type Foo = "a" | "b" | "c";
 const foo1 = ["a"] satisfies Foo[];
 const foo2 = ["a"] satisfies Foo[];
-const foo3 = ["a"] satisfies Foo[];"#.into());
+const foo3 = ["a"] satisfies Foo[];"#);
 	});
 }
 

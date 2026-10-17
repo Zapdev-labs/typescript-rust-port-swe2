@@ -17,8 +17,8 @@ const foo: {
 } = (a: string, b: string | number) => a + b;
 
 [|foo|](1, 1);";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_suggestion_diagnostics(None);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_suggestion_diagnostics(&[]);
 	});
 }
 

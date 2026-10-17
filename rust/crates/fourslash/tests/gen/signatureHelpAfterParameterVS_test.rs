@@ -11,7 +11,7 @@ fn signature_help_after_parameter_vs() {
 const a: Type = (a/*1*/, b/*2*/) => {}
 const b: Type = function (a/*3*/, b/*4*/) {}
 const c: Type = ({ /*5*/a: { b/*6*/ }}/*7*/ = { }/*8*/, [b/*9*/]/*10*/, .../*11*/c/*12*/) => {}";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", &tsc_lsproto::ClientCapabilities { vs_supports_visual_studio_extensions: Some((true).into()), ..Default::default() }, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", Some(tsc_lsproto::ClientCapabilities { vs_supports_visual_studio_extensions: Some((true).into()), ..Default::default() }), content);
 		f.verify_baseline_signature_help();
 	});
 }

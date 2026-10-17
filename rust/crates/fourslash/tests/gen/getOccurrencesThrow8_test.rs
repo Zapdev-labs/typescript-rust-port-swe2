@@ -25,8 +25,8 @@ finally {
 }
 
 throw 10;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_document_highlights(None, to_any(f.ranges()));
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_document_highlights(None, to_any(f.ranges()).into_iter().map(Into::into));
 	});
 }
 

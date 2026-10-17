@@ -13,13 +13,13 @@ function foo() {
     return { x: 1, y: 1 };
 }
 export const { x, y } = foo();";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Extract binding expressions to variable", new_file_content: r"function foo() {
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Extract binding expressions to variable".to_string().into(), new_file_content: r"function foo() {
     return { x: 1, y: 1 };
 }
 const dest = foo();
 export const x: number = dest.x;
-export const y: number = dest.y;", index: 0, ..Default::default() });
+export const y: number = dest.y;".to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

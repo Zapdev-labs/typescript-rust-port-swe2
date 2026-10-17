@@ -10,8 +10,8 @@ fn get_java_script_syntactic_diagnostics22() {
 		let content = r"// @allowJs: true
 // @Filename: a.js
 function foo(...a) {}";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_non_suggestion_diagnostics(None);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_non_suggestion_diagnostics(&[]);
 	});
 }
 

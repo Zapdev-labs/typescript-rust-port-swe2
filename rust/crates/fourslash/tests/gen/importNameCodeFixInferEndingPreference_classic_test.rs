@@ -19,8 +19,8 @@ export const b = 0;
 import { a } from "./a.js";
 
 b/**/;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_import_fix_module_specifiers("".into(), &["./b.js"], None);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_import_fix_module_specifiers("", &["./b.js".into()], None);
 	});
 }
 

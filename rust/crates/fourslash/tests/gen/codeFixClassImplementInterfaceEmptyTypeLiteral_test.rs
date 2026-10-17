@@ -15,8 +15,8 @@ interface I {
 class C implements I {[|
    |]constructor() { }
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'I'", new_file_content: r"
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Implement interface 'I'".to_string().into(), new_file_content: r"
 interface I {
     x: {};
 }
@@ -24,7 +24,7 @@ interface I {
 class C implements I {
    constructor() { }
     x: {};
-}", index: 0, ..Default::default() });
+}".to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

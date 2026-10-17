@@ -18,16 +18,16 @@ export const heading = title.toUpperCase();
 // @Filename: /main.ts
 import { title } from "./ProfileCard.vue";
 export const pageTitle = title;
-"#.into(), contentmappertest.component_mapper, ".vue".into());
-		f.verify_rename("rename".into(), "newTitle".into(), vec![("/ProfileCard.vue", r#"<component name="ProfileCard">
+"#, tsc_testutil::contentmappertest::COMPONENT_MAPPER, ".vue");
+		f.verify_rename("rename", "newTitle", &std::collections::BTreeMap::from([("/ProfileCard.vue".to_string().into(), r#"<component name="ProfileCard">
 <template><h1>{{ title }}</h1></template>
 <script lang="ts">
 export const newTitle = "Profile";
 export const heading = newTitle.toUpperCase();
 </script>
-"#), ("/main.ts", r#"import { newTitle } from "./ProfileCard.vue";
+"#.to_string().into()), ("/main.ts".to_string().into(), r#"import { newTitle } from "./ProfileCard.vue";
 export const pageTitle = newTitle;
-"#)].into_iter().collect::<FxHashMap<_, _>>());
+"#.to_string().into())]));
 	});
 }
 
@@ -43,10 +43,10 @@ fn content_mapper_rename_rejects_atom_and_unmapped_origins() {
 <script lang="ts">
 export const title = "Profile";
 </script>
-"#.into(), contentmappertest.component_mapper, ".vue".into());
-		f.go_to_marker("atom".into());
+"#, tsc_testutil::contentmappertest::COMPONENT_MAPPER, ".vue");
+		f.go_to_marker("atom");
 		f.verify_rename_failed(None);
-		f.go_to_marker("markup".into());
+		f.go_to_marker("markup");
 		f.verify_rename_failed(None);
 	});
 }
@@ -65,16 +65,16 @@ import * as utils from "./format";
 export const title = "Profile";
 export const heading = utils.for/*rename*/mat(title);
 </script>
-"#.into(), contentmappertest.component_mapper, ".vue".into());
-		f.verify_rename("rename".into(), "render".into(), vec![("/format.ts", r"export function render(value: string): string { return value; }
-"), ("/ProfileCard.vue", r#"<component name="ProfileCard">
+"#, tsc_testutil::contentmappertest::COMPONENT_MAPPER, ".vue");
+		f.verify_rename("rename", "render", &std::collections::BTreeMap::from([("/format.ts".to_string().into(), r"export function render(value: string): string { return value; }
+".to_string().into()), ("/ProfileCard.vue".to_string().into(), r#"<component name="ProfileCard">
 <template><h1>{{ utils.format(title) }}</h1></template>
 <script lang="ts">
 import * as utils from "./format";
 export const title = "Profile";
 export const heading = utils.render(title);
 </script>
-"#)].into_iter().collect::<FxHashMap<_, _>>());
+"#.to_string().into())]));
 	});
 }
 

@@ -19,9 +19,9 @@ class B3 extends B2 {
         super(/*indirectSuperCall*/3);
     }
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("indirectSuperCall".into());
-		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "B2(n: number): B2", parameter_count: 1, parameter_name: "n", parameter_span: "n: number", overloads_count: 2, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("indirectSuperCall");
+		f.verify_signature_help(tsc_fourslash::VerifySignatureHelpOptions { text: "B2(n: number): B2".to_string().into(), parameter_count: 1, parameter_name: "n".to_string().into(), parameter_span: "n: number".to_string().into(), overloads_count: 2, ..Default::default() });
 	});
 }
 

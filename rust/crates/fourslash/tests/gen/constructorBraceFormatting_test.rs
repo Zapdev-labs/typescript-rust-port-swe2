@@ -10,11 +10,11 @@ fn constructor_brace_formatting() {
 		let content = r"class X {
     constructor () {}/*target*/
  /**/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
-		f.insert("}".into());
-		f.go_to_marker("target".into());
-		f.verify_current_line_content(r"    constructor() { }".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
+		f.insert("}");
+		f.go_to_marker("target");
+		f.verify_current_line_content(r"    constructor() { }");
 	});
 }
 

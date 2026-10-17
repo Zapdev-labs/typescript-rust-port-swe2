@@ -19,8 +19,8 @@ declare const users2: UsersArr
 class CustomArray<T> extends Array<T> { immutableReverse() { return [...this].reverse() } }
 declare const users3: CustomArray<User>
 /*reference3*/users3";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_go_to_type_definition("reference".into(), "reference2".into(), "reference3".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_go_to_type_definition(&["reference".into(), "reference2".into(), "reference3".into()]);
 	});
 }
 

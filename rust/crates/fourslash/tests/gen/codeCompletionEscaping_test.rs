@@ -7,12 +7,12 @@ use tsc_fourslash::*;
 #[test]
 fn code_completion_escaping() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"// @Filename: a.js
 // @allowJs: true
 ___foo; __foo;/**/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec![&tsc_lsproto::CompletionItem { label: "__foo", kind: Some((tsc_lsproto::CompletionItemKind::TEXT).into()), sort_text: Some((tsc_ls::SORT_TEXT_JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() }, &tsc_lsproto::CompletionItem { label: "___foo", kind: Some((tsc_lsproto::CompletionItemKind::TEXT).into()), sort_text: Some((tsc_ls::SORT_TEXT_JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() }], ..Default::default() }, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "__foo".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Text).into()), sort_text: Some((tsc_ls::SORT_TEXT_JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "___foo".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Text).into()), sort_text: Some((tsc_ls::SORT_TEXT_JAVASCRIPT_IDENTIFIERS.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

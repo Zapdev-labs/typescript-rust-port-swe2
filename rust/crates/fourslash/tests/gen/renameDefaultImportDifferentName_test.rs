@@ -16,11 +16,11 @@ fn rename_default_import_different_name() {
 [|import /*2*/[|{| "isWriteAccess": true, "isDefinition": true, "contextRangeIndex": 2 |}B|] from "./B";|]
 let b = new [|B|]();
 b.test();"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1".into(), "2".into());
-		f.verify_baseline_rename(None, f.ranges()[1]);
-		f.verify_baseline_rename(None, f.ranges()[3], f.ranges()[4]);
-		f.verify_baseline_document_highlights(None, "1".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["1".into(), "2".into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[1].into()]);
+		f.verify_baseline_rename(None, vec![f.ranges()[3].into(), f.ranges()[4].into()]);
+		f.verify_baseline_document_highlights(None, vec!["1".into()]);
 	});
 }
 

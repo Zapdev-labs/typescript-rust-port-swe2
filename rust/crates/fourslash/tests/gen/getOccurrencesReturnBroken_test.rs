@@ -32,9 +32,9 @@ class A {
     ret/*3*/urn;
     r/*4*/eturn 8675309;
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_document_highlights(None, to_any(f.ranges()));
-		f.verify_baseline_document_highlights(None, to_any(f.markers()));
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_document_highlights(None, to_any(f.ranges()).into_iter().map(Into::into));
+		f.verify_baseline_document_highlights(None, to_any(f.markers()).into_iter().map(Into::into));
 	});
 }
 

@@ -9,12 +9,12 @@ fn formatting_space_between_optional_chaining() {
 	run_test(|t| {
 		let content = r"/*1*/a    ?.    b   ?.   c   .   d;
 /*2*/o    .  m()   ?.   length;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.format_document("".into());
-		f.go_to_marker("1".into());
-		f.verify_current_line_content(r"a?.b?.c.d;".into());
-		f.go_to_marker("2".into());
-		f.verify_current_line_content(r"o.m()?.length;".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.format_document("");
+		f.go_to_marker("1");
+		f.verify_current_line_content(r"a?.b?.c.d;");
+		f.go_to_marker("2");
+		f.verify_current_line_content(r"o.m()?.length;");
 	});
 }
 

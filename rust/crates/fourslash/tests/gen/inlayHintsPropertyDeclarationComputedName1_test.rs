@@ -13,8 +13,8 @@ fn inlay_hints_property_declaration_computed_name1() {
     [sym] = 123;
   }
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_inlay_hints(None, &tsc_lsutil::UserPreferences { include_inlay_property_declaration_type_hints: tsc_core::tristate::TS_TRUE, ..Default::default() });
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_inlay_hints(None, Some(&tsc_lsutil::UserPreferences { inlay_hints_preferences: tsc_lsutil::InlayHintsPreferences { include_inlay_property_declaration_type_hints: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() }));
 	});
 }
 

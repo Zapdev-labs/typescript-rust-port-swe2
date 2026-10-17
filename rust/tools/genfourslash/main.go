@@ -101,6 +101,8 @@ type translator struct {
 	// that must precede the current statement.
 	pendingDecls []string
 	anonCounter  int
+	// localStructs: fn-local Go `type X struct{...}` names -> ordered field list.
+	localStructs map[string][]string
 }
 
 // flushDecls emits synthesized declarations pending before the next stmt.
@@ -129,6 +131,7 @@ func translateFile(path, outDir string) error {
 	tr := &translator{
 		fset: fset,
 		src:  src,
+		localStructs: map[string][]string{},
 		imports: map[string]string{
 			"fourslash": "tsc_fourslash",
 			"testutil":  "tsc_testutil",
@@ -137,6 +140,15 @@ func translateFile(path, outDir string) error {
 			"lsproto":   "tsc_lsproto",
 			"ls":        "tsc_ls",
 			"core":      "tsc_core",
+			"contentmappertest": "tsc_testutil::contentmappertest",
+			"modulespecifiers":  "tsc_modulespecifiers",
+			"tspath":    "tsc_tspath",
+			"baseline":  "tsc_testutil::baseline",
+			"stringutil": "tsc_stringutil",
+			"lsconv":    "tsc_lsconv",
+			"stringtestutil": "tsc_testutil::stringtestutil",
+			"fourslashUtil":  "tsc_fourslash::testsutil",
+			"fourslash_util": "tsc_fourslash::testsutil",
 			"fmt":       "", // mapped via builtins
 			"testing":   "",
 			"strings":   "",
@@ -260,6 +272,53 @@ func (tr *translator) paramType(e ast.Expr) string {
 	return "/* ? */"
 }
 
+// emitLocalStruct emits `type X struct{...}` (a fn-local Go type) as a Rust
+// struct decl; positional `X{a, b}` literals then resolve field names.
+func (tr *translator) emitLocalStruct(name string, st *ast.StructType) {
+	var fields []string
+	tr.localStructs[name] = fields
+	var b strings.Builder
+	b.WriteString("#[derive(Default, Clone, Debug)]\nstruct " + name + " {\n")
+	for _, f := range st.Fields.List {
+		typ := tr.localFieldType(f.Type)
+		for _, n := range f.Names {
+			rn := fieldName(n.Name)
+			tr.localStructs[name] = append(tr.localStructs[name], rn)
+			fmt.Fprintf(&b, "\t%s: %s,\n", rn, typ)
+		}
+	}
+	b.WriteString("}")
+	tr.pendingDecls = append(tr.pendingDecls, b.String())
+}
+
+// localFieldType maps Go field types in local struct decls to Rust types.
+func (tr *translator) localFieldType(e ast.Expr) string {
+	if s, ok := e.(*ast.StarExpr); ok {
+		return "Option<" + tr.localFieldType(s.X) + ">"
+	}
+	switch t := e.(type) {
+	case *ast.Ident:
+		switch t.Name {
+		case "string":
+			return "String"
+		case "bool":
+			return "bool"
+		case "int", "int32":
+			return "i32"
+		case "int64":
+			return "i64"
+		case "float64":
+			return "f64"
+		}
+		return tr.expr(e)
+	case *ast.SelectorExpr:
+		return tr.expr(e)
+	case *ast.ArrayType:
+		return "Vec<" + tr.localFieldType(t.Elt) + ">"
+	}
+	return "serde_json::Value"
+}
+
 // stripBoilerplate removes `t.Parallel()` and `defer testutil.RecoverAndFail(...)`
 // leading statements (RecoverAndFail is subsumed by the run_test wrapper).
 func (tr *translator) stripBoilerplate(stmts []ast.Stmt) []ast.Stmt {
@@ -361,7 +420,15 @@ func (tr *translator) emitStmt(s ast.Stmt) {
 	case *ast.AssignStmt:
 		if len(st.Lhs) == 1 && len(st.Rhs) == 1 {
 			lhs := tr.expr(st.Lhs[0])
-			rhs := tr.expr(st.Rhs[0])
+			rhsExpr := st.Rhs[0]
+			if st.Tok == token.DEFINE {
+				if u, ok := rhsExpr.(*ast.UnaryExpr); ok && u.Op == token.AND {
+					if _, ok2 := u.X.(*ast.CompositeLit); ok2 {
+						rhsExpr = u.X // &T{...} -> owned T{...}
+					}
+				}
+			}
+			rhs := tr.expr(rhsExpr)
 			switch st.Tok {
 			case token.DEFINE:
 				fmt.Fprintf(&tr.out, "%slet mut %s = %s;\n", tr.indent(), lhs, rhs)
@@ -561,6 +628,9 @@ func (tr *translator) expr(e ast.Expr) string {
 		return x.Op.String() + tr.expr(x.X)
 
 	case *ast.BinaryExpr:
+		if x.Op == token.ADD && tr.isConcat(x) {
+			return "format!(\"{}{}\", " + tr.expr(x.X) + ", " + tr.expr(x.Y) + ")"
+		}
 		return tr.expr(x.X) + " " + x.Op.String() + " " + tr.expr(x.Y)
 
 	case *ast.ParenExpr:
@@ -601,6 +671,27 @@ func (tr *translator) expr(e ast.Expr) string {
 	}
 	note(tr.fset, e, "unhandled expr %T", e)
 	return "/* ? */"
+}
+
+// isConcat reports whether the `+` expression involves a string literal
+// (or another concat), meaning it is string concatenation, not arithmetic.
+func (tr *translator) isConcat(x *ast.BinaryExpr) bool {
+	if x.Op != token.ADD {
+		return false
+	}
+	if lit, ok := x.X.(*ast.BasicLit); ok && lit.Kind == token.STRING {
+		return true
+	}
+	if lit, ok := x.Y.(*ast.BasicLit); ok && lit.Kind == token.STRING {
+		return true
+	}
+	if bx, ok := x.X.(*ast.BinaryExpr); ok && tr.isConcat(bx) {
+		return true
+	}
+	if bx, ok := x.Y.(*ast.BinaryExpr); ok && tr.isConcat(bx) {
+		return true
+	}
+	return false
 }
 
 // lit translates a Go literal to its Rust form.
@@ -645,6 +736,30 @@ var snakeNames = map[string]bool{
 }
 
 
+// identOverrides maps unqualified Go identifiers (dot-imported util values,
+// sentinels) to fully-qualified Rust expressions.
+var identOverrides = map[string]string{
+	"Ignored":                  "tsc_fourslash::IGNORED",
+	"AnyTextEdits":             "tsc_fourslash::ANY_TEXT_EDITS",
+	"NoTextEdits":              "tsc_fourslash::NO_TEXT_EDITS",
+	"DefaultCommitCharacters":  "tsc_fourslash::default_commit_characters()",
+	"Dedent":                   "dedent",
+	"RunFourslash":             "tsc_fourslash::run_fourslash",
+	"RecoverAndFail":           "testutil::recover_and_fail",
+	"NewLSPClient":             "testutil::lsptestutil::new_lsp_client",
+	"ClientCapabilitiesOptions": "tsc_fourslash::ClientCapabilitiesOptions",
+	"FourslashOptions":         "tsc_fourslash::FourslashOptions",
+	"CompletionGlobals":        "tsc_fourslash::completion_globals",
+	"CompletionFunctionMembers": "tsc_fourslash::completion_function_members",
+	"CompletionEnumMembers":    "tsc_fourslash::completion_enum_members",
+	"CompletionGlobalTypes":    "tsc_fourslash::completion_global_types",
+	"CompletionKeywords":       "tsc_fourslash::completion_keywords",
+	"CompletionGlobalVars":     "tsc_fourslash::completion_global_vars",
+	"CompletionMemberKeywords": "tsc_fourslash::completion_member_keywords",
+	"CompletionGlobalsInJs":    "tsc_fourslash::completion_globals_in_js",
+	"CompletionTypeKeywords":   "tsc_fourslash::completion_type_keywords",
+}
+
 // rustIdent maps a Go identifier to its Rust form.
 func rustIdent(name string) string {
 	switch name {
@@ -656,6 +771,9 @@ func rustIdent(name string) string {
 		return "t"
 	case "done":
 		return "_done"
+	}
+	if v, ok := identOverrides[name]; ok {
+		return v
 	}
 	if len(name) > 0 && unicode.IsUpper(rune(name[0])) {
 		if snakeNames[name] {
@@ -687,11 +805,57 @@ func (tr *translator) selector(x *ast.SelectorExpr) string {
 			return path + "::" + snake(name)
 		}
 		if t, v, ok := enumConst(name); ok {
-			return path + "::" + t + "::" + screaming(v)
+			rt := rustEnumType[t]
+			if rt == "" {
+				rt = t
+			}
+			if path == "tsc_lsproto" {
+				return path + "::" + rt + "::" + v // PascalCase consts
+			}
+			return path + "::" + rt + "::" + screaming(v)
 		}
 		return path + "::" + screaming(name)
 	}
-	return tr.expr(x.X) + "." + snake(x.Sel.Name)
+	recv := tr.expr(x.X)
+	// `f.MarkerByName("n").field` — Option-returning accessor needs unwrap.
+	if call, ok := x.X.(*ast.CallExpr); ok {
+		if fs, ok2 := call.Fun.(*ast.SelectorExpr); ok2 &&
+			optionReturnCalls[snake(fs.Sel.Name)] {
+			recv += ".unwrap()"
+		}
+	}
+	// LSP client-capability fields are Option<T>; unwrap intermediate hops.
+	last := recv[strings.LastIndex(recv, ".")+1:]
+	if capOptionFields[last] {
+		recv += ".as_mut().unwrap()"
+	}
+	return recv + "." + snake(x.Sel.Name)
+}
+
+// optionReturnCalls: methods returning Option<...> that need `.unwrap()`
+// when a field/method is accessed on the result.
+var optionReturnCalls = map[string]bool{
+	"marker_by_name": true,
+}
+
+// capOptionFields: lsproto client-capability fields typed Option<T> that need
+// `.as_mut().unwrap()` when used as intermediate receivers.
+var capOptionFields = map[string]bool{
+	"text_document": true, "completion": true, "completion_item": true,
+	"completion_item_kind": true, "completion_list": true, "context_support": true,
+	"insert_text_mode": true, "signature_help": true, "hover": true,
+	"publish_diagnostics": true, "definition": true, "declaration": true,
+	"references": true, "document_highlight": true, "document_symbol": true,
+	"code_action": true, "code_lens": true, "document_link": true,
+	"color_provider": true, "formatting": true, "range_formatting": true,
+	"on_type_formatting": true, "rename": true, "folding_range": true,
+	"selection_range": true, "call_hierarchy": true, "semantic_tokens": true,
+	"linked_editing_range": true, "moniker": true, "type_hierarchy": true,
+	"inlay_hint": true, "inline_value": true, "inline_completion": true,
+	"diagnostic": true, "workspace_symbol": true, "execute_command": true,
+	"notebook_document": true, "experimental": true, "synchronization": true,
+	"filters": true, "workspace": true, "window": true, "general": true,
+	"type_definition": true, "implementation": true, "link_support": true,
 }
 
 // enumConst splits `TypeNameVariant` Go enum constants into
@@ -702,6 +866,14 @@ var relocatedTypes = map[string]string{
 	"core.TSTrue":  "tsc_core::tristate::TS_TRUE",
 	"core.TSFalse": "tsc_core::tristate::TS_FALSE",
 	"core.TSUnknown": "tsc_core::tristate::TS_UNKNOWN",
+	"fourslash.AnyTextEdits":  "tsc_fourslash::ANY_TEXT_EDITS",
+	"fourslash.NoTextEdits":   "tsc_fourslash::NO_TEXT_EDITS",
+	"fourslash.Ignored":       "tsc_fourslash::IGNORED",
+	"util.Ignored":            "tsc_fourslash::IGNORED",
+	"fourslashUtil.Ignored":   "tsc_fourslash::IGNORED",
+	"verify.Ignored":          "tsc_fourslash::IGNORED",
+	"util.DefaultCommitCharacters": "tsc_fourslash::default_commit_characters()",
+	"fourslashUtil.DefaultCommitCharacters": "tsc_fourslash::default_commit_characters()",
 	"util.UserPreferences":           "tsc_lsutil::UserPreferences",
 	"util.NewDefaultUserPreferences": "tsc_lsutil::new_default_user_preferences",
 	"util.ClientCapabilitiesOptions": "tsc_fourslash::testsutil::ClientCapabilitiesOptions",
@@ -717,6 +889,18 @@ var enumTypes = []string{
 	"CompletionTriggerKind", "SignatureHelpTriggerKind", "CodeActionKind",
 	"ScriptKind", "ScriptTarget", "ModuleKind", "ModuleResolutionKind",
 	"ImportAttributeKind", "TextSpanKind", "DisplayPartKind",
+	"FoldingRangeKind", "SemicolonPreference", "IndentStyle",
+	"ImportModuleSpecifierPreference", "ImportModuleSpecifierEndingPreference",
+	"DiagnosticSeverity", "InsertTextMode", "TokenType", "WatchFileKind",
+	"FilePreprocessingDiagnosticsKind", "DocumentHighlightsKind",
+	"SignatureHelpTriggerReasonKind", "InlayHintKind",
+}
+
+// rustEnumType maps Go enum-type prefixes to the Rust type name where they
+// differ (e.g. Go plural `SemanticTokenTypes` vs Rust `SemanticTokenType`).
+var rustEnumType = map[string]string{
+	"SemanticTokenTypes":     "SemanticTokenType",
+	"SemanticTokenModifiers": "SemanticTokenModifier",
 }
 
 func enumConst(name string) (string, string, bool) {
@@ -756,7 +940,7 @@ func (tr *translator) call(c *ast.CallExpr) string {
 		switch {
 		case pkg == "f" || pkg == "this":
 			// f.Method(t, args...) -> f.method(args...)
-			args := tr.args(c.Args, 1)
+			args := tr.callArgs(snake(sel.Sel.Name), c.Args, 1, c.Ellipsis.IsValid())
 			return "f." + snake(sel.Sel.Name) + "(" + args + ")"
 
 		case pkg == "fmt" && sel.Sel.Name == "Sprintf":
@@ -789,14 +973,19 @@ func (tr *translator) call(c *ast.CallExpr) string {
 			return path + "::" + snake(sel.Sel.Name) + "(" + tr.args(c.Args, 0) + ")"
 
 		case pkg == "fourslash" && sel.Sel.Name == "NewFourslash":
-			return "tsc_fourslash::new_fourslash(t_name(), \"\", " +
-				tr.expr(c.Args[1]) + ", " + tr.expr(c.Args[2]) + ")"
+			// NewFourslash(t, *ClientCapabilities, content)
+			return "tsc_fourslash::new_fourslash(&t_name(), \"\", " +
+				tr.optOwnedArg(c.Args[1]) + ", " + tr.expr(c.Args[2]) + ")"
 		case pkg == "fourslash" && sel.Sel.Name == "NewFourslashWithOptions":
-			return "tsc_fourslash::new_fourslash_with_options(t_name(), \"\", " +
-				tr.expr(c.Args[1]) + ", " + tr.expr(c.Args[2]) + ")"
+			// NewFourslashWithOptions(t, content, *FourslashOptions)
+			return "tsc_fourslash::new_fourslash_with_options(&t_name(), \"\", " +
+				tr.expr(c.Args[1]) + ", " + tr.ownedArg(c.Args[2]) + ")"
+		case pkg == "stringtestutil" && sel.Sel.Name == "Dedent":
+			return "dedent(" + tr.args(c.Args, 0) + ")"
 		case tr.imports[pkg] != "":
 			// package function call
-			return tr.imports[pkg] + "::" + snake(sel.Sel.Name) + "(" + tr.args(c.Args, 0) + ")"
+			return tr.imports[pkg] + "::" + snake(sel.Sel.Name) + "(" +
+				tr.callArgs(snake(sel.Sel.Name), c.Args, 0, c.Ellipsis.IsValid()) + ")"
 		}
 		// method call on other receivers: x.Method(...) -> x.method(...)
 		return tr.expr(sel.X) + "." + snake(sel.Sel.Name) + "(" + tr.args(c.Args, 0) + ")"
@@ -862,6 +1051,366 @@ func (tr *translator) make(c *ast.CallExpr) string {
 	return "Default::default()"
 }
 
+
+// ---------------------------------------------------------------------------
+// Argument-shape tables: Go pointer/variadic params mapped onto the Rust API.
+// Indices are positions within the Go arg list AFTER `t` is dropped.
+// ---------------------------------------------------------------------------
+
+// optRefArgs — `Option<&T>` params: `&T{...}` -> Some(&T{...}), `x` -> Some(&x),
+// `nil` -> None, `[]T{...}` -> Some(&[..]).
+var optRefArgs = map[string][]int{
+	"verify_completions": {1}, "get_completions_public": {0},
+	"verify_code_fix_available": {0}, "verify_organize_imports": {2},
+	"verify_organize_imports_with_request_kind": {3},
+	"verify_import_fix_at_position": {1}, "verify_import_fix_module_specifiers": {2},
+	"verify_rename_succeeded": {0}, "verify_rename_range": {2},
+	"verify_will_rename_files_edits": {4}, "verify_rename_failed": {0},
+	"get_default_capabilities_with_options": {0},
+	"verify_baseline_code_lens": {0}, "verify_baseline_document_highlights": {0},
+	"verify_baseline_document_highlights_with_options": {0},
+	"verify_baseline_rename": {0}, "verify_baseline_rename_at_ranges_with_text": {0},
+	"verify_baseline_inlay_hints": {1},
+}
+
+// optOwnedArgs — `Option<T>` params: `&T{...}` -> Some(T{...}), `x` -> x.into(),
+// `nil` -> None.
+var optOwnedArgs = map[string][]int{
+	"verify_js_doc_completion": {3},
+	"verify_no_signature_help_with_context": {0},
+	"verify_no_signature_help_for_markers_with_context": {0},
+	"verify_signature_help_present": {0},
+	"verify_signature_help_present_for_markers": {0},
+	"verify_outlining_spans": {0},
+	"verify_baseline_inlay_hints": {0},
+}
+
+// markerArgs — `impl Into<MarkerInput>` params: values get `.into()`,
+// `nil` -> `Default::default()`.
+var markerArgs = map[string][]int{
+	"verify_completions": {0}, "verify_js_doc_completion": {0},
+	"verify_no_js_doc_completion": {0},
+}
+
+// rcRefArgs — `&Rc<...>` params: `x` -> `&x`.
+var rcRefArgs = map[string][]int{
+	"verify_error_exists_at_range": {0}, "go_to_range_start": {0},
+	"go_to_select_range": {0}, "go_to_range_end": {0},
+}
+
+// strPtrArgs — `&str` params where Go passes `*string` via `new("x")`.
+var strPtrArgs = map[string][]int{
+	"verify_apply_code_action_from_completion": {0},
+}
+
+// ownedArgs — `T` params where Go passes `*T`: `&x`/`x` -> x.clone()/x.
+var ownedArgs = map[string][]int{
+	"configure": {0}, "configure_with_reset": {0}, "verify_rename_range": {0},
+	"and_apply_code_action": {1}, "and_has_no_code_action": {0},
+	"verify_code_fix": {0}, "verify_code_fix_all": {0}, "verify_signature_help": {0},
+	"resolve_completion_item": {0},
+}
+
+// fmutArgs — `&mut FourslashTest` params (Go `f` receiver passed as arg).
+var fmutArgs = map[string][]int{
+	"and_apply_code_action": {0},
+}
+
+// mapArgs — `&BTreeMap<...>` params: `nil` -> `&Default::default()`.
+var mapArgs = map[string][]int{
+	"verify_jsx_closing_tag": {0}, "verify_linked_editing": {0},
+	"verify_rename": {2}, "verify_will_rename_files_edits": {2},
+	"verify_baseline_hover_with_verbosity": {0},
+}
+
+// sliceArgs — `&[T]` params (non-variadic): `nil` -> `&[]`, `x` -> `&x`.
+var sliceArgs = map[string][]int{
+	"verify_import_fix_at_position": {0},
+	"verify_import_fix_module_specifiers": {1},
+	"verify_code_fix_available_exact": {0}, "verify_diagnostics": {0},
+	"verify_non_suggestion_diagnostics": {0}, "verify_suggestion_diagnostics": {0},
+	"verify_folding_range_lines": {0}, "verify_workspace_symbol": {0},
+	"go_to_each_marker": {0}, "baseline_auto_imports_completions": {0},
+	"verify_baseline_document_highlights_with_options": {1},
+	"get_code_fix_actions": {0}, "get_all_quick_fix_actions": {0},
+}
+
+// variadicSlice — Go `...T` params mapped to `&[T]`: pack the tail args.
+var variadicSlice = map[string]int{
+	"verify_code_fix_not_available": 0, "verify_baseline_find_all_references": 0,
+	"verify_baseline_vs_find_all_references": 0,
+	"verify_baseline_go_to_implementation": 0,
+	"verify_baseline_go_to_definition": 1, "verify_baseline_go_to_type_definition": 0,
+	"verify_baseline_go_to_source_definition": 0,
+	"verify_no_signature_help_for_markers_with_context": 1,
+	"verify_signature_help_present_for_markers": 1,
+	"verify_no_signature_help_for_markers": 0,
+	"verify_signature_help_with_cases": 0, "will_rename_files": 0,
+	"verify_baseline_rename_at_ranges_with_text": 1,
+}
+
+// variadicIter — Go `...any` params mapped to `impl IntoIterator<Item=_>`:
+// pack the tail args; `x...` spreads -> `x.into_iter().map(Into::into)`.
+var variadicIter = map[string]int{
+	"verify_baseline_document_highlights": 1,
+	"verify_baseline_document_highlights_with_options": 2,
+	"verify_baseline_rename": 1,
+}
+
+// iterArgs — `impl IntoIterator<Item=_>` params with a Go slice arg:
+// `[]T{...}`/`&[]T{...}` -> `vec![x.into(), ...]`; `nil` -> `vec![]`.
+var iterArgs = map[string][]int{
+	"completion_globals_plus": {0}, "completion_global_types_plus": {0},
+	"completion_globals_in_js_plus": {0}, "completion_function_members_plus": {0},
+	"completion_function_members_with_prototype_plus": {0},
+	"completion_type_keywords_plus": {0},
+}
+
+func containsInt(list []int, i int) bool {
+	for _, v := range list {
+		if v == i {
+			return true
+		}
+	}
+	return false
+}
+
+// callArgs renders the argument list of a call to a fourslash-harness method,
+// dispatching each argument through the arg-shape tables above. `spread`
+// reports whether the Go call ended in `x...`.
+func (tr *translator) callArgs(name string, list []ast.Expr, skip int, spread bool) string {
+	if skip > len(list) {
+		skip = len(list)
+	}
+	args := list[skip:]
+
+	var out []string
+	vSlice, hasVSlice := variadicSlice[name]
+	vIter, hasVIter := variadicIter[name]
+	for i, a := range args {
+		if identName(a) == "t" {
+			out = append(out, "&mut *t")
+			continue
+		}
+		if (hasVSlice || hasVIter) && i >= vSlice && i >= vIter {
+			break // tail packed below
+		}
+		out = append(out, tr.argFor(name, i, a))
+	}
+
+	if hasVSlice && len(args) > vSlice {
+		out = append(out, tr.packSlice(args[vSlice:], spread))
+	}
+	if hasVIter && len(args) > vIter {
+		out = append(out, tr.packIter(args[vIter:], spread))
+	}
+	return strings.Join(out, ", ")
+}
+
+// argFor renders one argument in the shape its param position demands.
+func (tr *translator) argFor(name string, i int, e ast.Expr) string {
+	if containsInt(optRefArgs[name], i) {
+		return tr.optRefArg(e)
+	}
+	if containsInt(optOwnedArgs[name], i) {
+		return tr.optOwnedArg(e)
+	}
+	if containsInt(markerArgs[name], i) {
+		if id, ok := e.(*ast.Ident); ok && id.Name == "nil" {
+			return "Default::default()"
+		}
+		return tr.expr(e) + ".into()"
+	}
+	if containsInt(rcRefArgs[name], i) {
+		return "&" + tr.expr(e)
+	}
+	if containsInt(strPtrArgs[name], i) {
+		if c, ok := e.(*ast.CallExpr); ok {
+			if id, ok2 := c.Fun.(*ast.Ident); ok2 && id.Name == "new" {
+				return tr.expr(c.Args[0]) // new("x") -> "x" for &str params
+			}
+		}
+		return tr.exprArg(e)
+	}
+	if containsInt(ownedArgs[name], i) {
+		if u, ok := e.(*ast.UnaryExpr); ok && u.Op == token.AND {
+			return tr.expr(u.X) // &T{...} -> T{...}
+		}
+		return tr.expr(e)
+	}
+	if containsInt(fmutArgs[name], i) {
+		return "&mut " + tr.expr(e)
+	}
+	if containsInt(mapArgs[name], i) {
+		if id, ok := e.(*ast.Ident); ok && id.Name == "nil" {
+			return "&Default::default()"
+		}
+		return "&" + tr.expr(e)
+	}
+	if containsInt(sliceArgs[name], i) {
+		return tr.sliceArg(e)
+	}
+	if containsInt(iterArgs[name], i) {
+		return tr.iterArg(e)
+	}
+	return tr.exprArg(e)
+}
+
+// ownedArg renders an argument for an owned `T` param where Go passed `*T`.
+func (tr *translator) ownedArg(e ast.Expr) string {
+	if u, ok := e.(*ast.UnaryExpr); ok && u.Op == token.AND {
+		return tr.expr(u.X)
+	}
+	return tr.expr(e)
+}
+
+// optRefArg renders `x`/`&x`/`nil`/literals for `Option<&T>` params.
+func (tr *translator) optRefArg(e ast.Expr) string {
+	if id, ok := e.(*ast.Ident); ok && id.Name == "nil" {
+		return "None"
+	}
+	if u, ok := e.(*ast.UnaryExpr); ok && u.Op == token.AND {
+		if cl, ok2 := u.X.(*ast.CompositeLit); ok2 {
+			if _, isArr := cl.Type.(*ast.ArrayType); isArr {
+				return "Some(&" + tr.sliceLit(cl) + ")"
+			}
+			return "Some(&" + tr.expr(cl) + ")"
+		}
+		return "Some(&" + tr.expr(u.X) + ")"
+	}
+	if cl, ok := e.(*ast.CompositeLit); ok {
+		if _, isArr := cl.Type.(*ast.ArrayType); isArr {
+			return "Some(&" + tr.sliceLit(cl) + ")"
+		}
+	}
+	return "Some(&" + tr.expr(e) + ")"
+}
+
+// optOwnedArg renders `x`/`&x`/`nil` for `Option<T>` (owned) params.
+func (tr *translator) optOwnedArg(e ast.Expr) string {
+	if id, ok := e.(*ast.Ident); ok && id.Name == "nil" {
+		return "None"
+	}
+	if u, ok := e.(*ast.UnaryExpr); ok && u.Op == token.AND {
+		return "Some(" + tr.expr(u.X) + ")"
+	}
+	if _, ok := e.(*ast.Ident); ok {
+		return tr.expr(e) + ".into()"
+	}
+	if c, ok := e.(*ast.CallExpr); ok {
+		if id, ok2 := c.Fun.(*ast.Ident); ok2 && id.Name == "new" {
+			return "Some((" + tr.expr(c.Args[0]) + ").into())"
+		}
+	}
+	return "Some(" + tr.expr(e) + ")"
+}
+
+// sliceArg renders an argument for `&[T]` params.
+func (tr *translator) sliceArg(e ast.Expr) string {
+	if id, ok := e.(*ast.Ident); ok && id.Name == "nil" {
+		return "&[]"
+	}
+	if cl, ok := e.(*ast.CompositeLit); ok {
+		if _, isArr := cl.Type.(*ast.ArrayType); isArr {
+			return "&" + tr.sliceLit(cl)
+		}
+	}
+	if u, ok := e.(*ast.UnaryExpr); ok && u.Op == token.AND {
+		if cl, ok2 := u.X.(*ast.CompositeLit); ok2 {
+			if _, isArr := cl.Type.(*ast.ArrayType); isArr {
+				return "&" + tr.sliceLit(cl)
+			}
+		}
+	}
+	return "&" + tr.expr(e)
+}
+
+// iterArg renders an argument for `impl IntoIterator<Item=_>` params.
+func (tr *translator) iterArg(e ast.Expr) string {
+	if id, ok := e.(*ast.Ident); ok && id.Name == "nil" {
+		return "vec![]"
+	}
+	if u, ok := e.(*ast.UnaryExpr); ok && u.Op == token.AND {
+		if cl, ok2 := u.X.(*ast.CompositeLit); ok2 {
+			if _, isArr := cl.Type.(*ast.ArrayType); isArr {
+				return tr.iterVec(cl)
+			}
+		}
+		return tr.expr(u.X)
+	}
+	if cl, ok := e.(*ast.CompositeLit); ok {
+		if _, isArr := cl.Type.(*ast.ArrayType); isArr {
+			return tr.iterVec(cl)
+		}
+	}
+	return tr.expr(e)
+}
+
+// iterVec renders `[]any{...}`/`[]T{...}` as `vec![e.into(), ...]`.
+func (tr *translator) iterVec(cl *ast.CompositeLit) string {
+	eltType := tr.litEltType(cl)
+	var parts []string
+	for _, e := range cl.Elts {
+		if u, ok := e.(*ast.UnaryExpr); ok && u.Op == token.AND {
+			if ecl, ok2 := u.X.(*ast.CompositeLit); ok2 && ecl.Type == nil {
+				parts = append(parts, tr.compositeAs(ecl, eltType)+".into()")
+			} else {
+				parts = append(parts, tr.expr(u.X)+".into()")
+			}
+		} else if ecl, ok := e.(*ast.CompositeLit); ok && ecl.Type == nil {
+			parts = append(parts, tr.compositeAs(ecl, eltType)+".into()")
+		} else {
+			parts = append(parts, tr.expr(e)+".into()")
+		}
+	}
+	return "vec![" + strings.Join(parts, ", ") + "]"
+}
+
+// packSlice packs Go `...T` variadic args into `&[a, b]`; a `x...` spread
+// becomes `&x`.
+func (tr *translator) packSlice(list []ast.Expr, spread bool) string {
+	if spread && len(list) == 1 {
+		return "&" + tr.expr(list[0])
+	}
+	var parts []string
+	for _, e := range list {
+		if u, ok := e.(*ast.UnaryExpr); ok && u.Op == token.AND {
+			parts = append(parts, tr.expr(u.X))
+		} else if lit, ok := e.(*ast.BasicLit); ok && lit.Kind == token.STRING {
+			parts = append(parts, tr.lit(lit)+".into()")
+		} else {
+			parts = append(parts, tr.expr(e))
+		}
+	}
+	return "&[" + strings.Join(parts, ", ") + "]"
+}
+
+// packIter packs Go `...any` variadic args into `vec![a.into(), ...]`; `x...`
+// spreads chain onto the vec.
+func (tr *translator) packIter(list []ast.Expr, spread bool) string {
+	if spread && len(list) == 1 {
+		return tr.expr(list[0]) + ".into_iter().map(Into::into)"
+	}
+	var parts []string
+	var spreadTail string
+	for _, e := range list {
+		if id, ok := e.(*ast.Ident); ok && id.Name == "nil" {
+			continue
+		}
+		parts = append(parts, tr.expr(e)+".into()")
+	}
+	if spread {
+		last := list[len(list)-1]
+		parts = parts[:len(parts)-1]
+		spreadTail = tr.expr(last) + ".into_iter().map(Into::into)"
+	}
+	head := "vec![" + strings.Join(parts, ", ") + "]"
+	if spreadTail != "" {
+		return head + ".into_iter().chain(" + spreadTail + ")"
+	}
+	return head
+}
+
 // args renders a comma-separated arg list, skipping the first `skip` args.
 // A bare `t` argument is the *testing.T -> `&mut t`.
 func (tr *translator) args(list []ast.Expr, skip int) string {
@@ -879,29 +1428,146 @@ func (tr *translator) args(list []ast.Expr, skip int) string {
 	return strings.Join(out, ", ")
 }
 
-// exprArg renders an argument — string literals get `.into()` so they
-// satisfy `String` fields while remaining valid `&str` elsewhere.
+// exprArg renders a call argument: `&T{...}` keeps its borrow, `[]T{...}`
+// becomes `&[..]`, `&x` stays `&x`, and string literals stay `&str`.
 func (tr *translator) exprArg(e ast.Expr) string {
-	if lit, ok := e.(*ast.BasicLit); ok && lit.Kind == token.STRING {
-		return tr.lit(lit) + ".into()"
-	}
 	if u, ok := e.(*ast.UnaryExpr); ok && u.Op == token.AND {
 		if lit, ok2 := u.X.(*ast.BasicLit); ok2 && lit.Kind == token.STRING {
-			return "&" + tr.lit(lit) + ".into()"
+			return tr.lit(lit)
 		}
 		if cl, ok2 := u.X.(*ast.CompositeLit); ok2 {
+			if _, isArr := cl.Type.(*ast.ArrayType); isArr {
+				return "&" + tr.sliceLit(cl)
+			}
 			return "&" + tr.expr(cl)
 		}
+		return "&" + tr.expr(u.X)
 	}
 	if cl, ok := e.(*ast.CompositeLit); ok {
 		if _, isArr := cl.Type.(*ast.ArrayType); isArr {
-			s := tr.expr(cl)
-			if strings.HasPrefix(s, "vec![") {
-				return "&[" + s[5:]
-			}
+			return "&" + tr.sliceLit(cl)
+		}
+		if _, isMap := cl.Type.(*ast.MapType); isMap {
+			return "&" + tr.expr(cl)
 		}
 	}
+	if b, ok := e.(*ast.BinaryExpr); ok && b.Op == token.ADD && tr.isConcat(b) {
+		return "&" + tr.expr(e) // &format!(..) -> &str coercion
+	}
 	return tr.expr(e)
+}
+
+// sliceLit renders `[]T{a, b}` as `[a, b]` for `&[..]` argument positions.
+// String elements get `.into()` so `&[String]` and `&[&str]` both work;
+// `&T{}` elements drop the borrow.
+func (tr *translator) sliceLit(cl *ast.CompositeLit) string {
+	eltType := tr.litEltType(cl)
+	var parts []string
+	for _, e := range cl.Elts {
+		if u, ok := e.(*ast.UnaryExpr); ok && u.Op == token.AND {
+			if ecl, ok2 := u.X.(*ast.CompositeLit); ok2 && ecl.Type == nil {
+				parts = append(parts, tr.compositeAs(ecl, eltType))
+			} else {
+				parts = append(parts, tr.expr(u.X))
+			}
+		} else if lit, ok := e.(*ast.BasicLit); ok && lit.Kind == token.STRING {
+			parts = append(parts, tr.lit(lit)+".into()")
+		} else if ecl, ok := e.(*ast.CompositeLit); ok && ecl.Type == nil {
+			parts = append(parts, tr.compositeAs(ecl, eltType))
+		} else {
+			parts = append(parts, tr.expr(e))
+		}
+	}
+	return "[" + strings.Join(parts, ", ") + "]"
+}
+
+// litEltType resolves the element type path of `[]T{...}` literals.
+func (tr *translator) litEltType(cl *ast.CompositeLit) string {
+	at, ok := cl.Type.(*ast.ArrayType)
+	if !ok {
+		return ""
+	}
+	if st, ok2 := at.Elt.(*ast.StructType); ok2 {
+		return tr.anonStruct(st, cl)
+	}
+	return tr.elemRustType(at.Elt)
+}
+
+
+// exprField renders a struct-field value. Rust field types are dominated by
+// `String`/`Option<String>`/`Vec<T>`/`Option<Vec<T>>`/`Option<T>`; emitting
+// `.into()`/`.to_string().into()`/`vec![..].into()` covers owned and Option
+// shapes uniformly (`From<T> for Option<T>` wraps in Some, owned->owned is
+// identity). `&X` field values become `Some(X)`.
+func (tr *translator) exprField(e ast.Expr) string {
+	if u, ok := e.(*ast.UnaryExpr); ok && u.Op == token.AND {
+		if cl, ok2 := u.X.(*ast.CompositeLit); ok2 {
+			if _, isArr := cl.Type.(*ast.ArrayType); isArr {
+				return "Some(" + tr.fieldVec(cl) + ")"
+			}
+			return "Some(" + tr.expr(cl) + ")"
+		}
+		return "Some(" + tr.expr(u.X) + ".clone())"
+	}
+	if lit, ok := e.(*ast.BasicLit); ok {
+		if lit.Kind == token.STRING {
+			return tr.lit(lit) + ".to_string().into()"
+		}
+		return tr.lit(lit) // numeric/char literals: inference picks the field type
+	}
+	if cl, ok := e.(*ast.CompositeLit); ok {
+		if _, isArr := cl.Type.(*ast.ArrayType); isArr {
+			return tr.fieldVec(cl) + ".into()"
+		}
+		return tr.expr(cl) + ".into()"
+	}
+	if id, ok := e.(*ast.Ident); ok && id.Name == "nil" {
+		return "None"
+	}
+	v := tr.expr(e)
+	if strings.HasPrefix(v, "Some(") || v == "None" {
+		return v
+	}
+	if strings.Contains(v, " as ") {
+		v = "(" + v + ")"
+	}
+	return v + ".into()"
+}
+
+// fieldVec renders `[]T{...}` field values as `vec![..]` whose elements each
+// `.into()` the element type (Vec<T> / Option<Vec<T>> targets both work).
+func (tr *translator) fieldVec(cl *ast.CompositeLit) string {
+	var eltType string
+	if at, ok := cl.Type.(*ast.ArrayType); ok {
+		if st, ok2 := at.Elt.(*ast.StructType); ok2 {
+			eltType = tr.anonStruct(st, cl)
+		} else {
+			eltType = tr.elemRustType(at.Elt)
+		}
+	}
+	var parts []string
+	for _, el := range cl.Elts {
+		if u, ok2 := el.(*ast.UnaryExpr); ok2 && u.Op == token.AND {
+			if ecl, ok3 := u.X.(*ast.CompositeLit); ok3 && ecl.Type == nil {
+				parts = append(parts, tr.compositeAs(ecl, eltType)+".into()")
+			} else {
+				parts = append(parts, tr.expr(u.X)+".into()")
+			}
+		} else if ecl, ok2 := el.(*ast.CompositeLit); ok2 {
+			if ecl.Type == nil {
+				parts = append(parts, tr.compositeAs(ecl, eltType)+".into()")
+			} else {
+				parts = append(parts, tr.expr(ecl)+".into()")
+			}
+		} else if lit, ok2 := el.(*ast.BasicLit); ok2 && lit.Kind == token.STRING {
+			parts = append(parts, tr.lit(lit)+".into()")
+		} else if id, ok2 := el.(*ast.Ident); ok2 && id.Name == "nil" {
+			parts = append(parts, "None")
+		} else {
+			parts = append(parts, tr.expr(el))
+		}
+	}
+	return "vec![" + strings.Join(parts, ", ") + "]"
 }
 
 // mutNames prefixes `mut ` on every binding except `_done`/`_`.
@@ -987,6 +1653,144 @@ func (tr *translator) composite(x *ast.CompositeLit) string {
 	return tr.compositeAs(x, "")
 }
 
+// fieldName sanitizes Go struct field names into Rust field identifiers.
+func fieldName(goName string) string {
+	rn := snake(goName)
+	if rustKeywords[rn] {
+		return rn + "_"
+	}
+	return rn
+}
+
+// optionFromFields — fields typed `Option<Enum>` where the Go value is the
+// union's `any` type: `x` -> `Some(x.into())`.
+var optionFromFields = map[string]bool{
+	"marker_input": true,
+}
+
+var rustKeywords = map[string]bool{
+	"type": true, "ref": true, "match": true, "loop": true, "box": true,
+	"self": true, "mod": true, "use": true, "move": true, "in": true,
+	"impl": true, "trait": true, "where": true, "async": true, "dyn": true,
+	"const": true, "enum": true, "extern": true, "fn": true, "for": true,
+	"if": true, "else": true, "let": true, "pub": true, "static": true,
+	"struct": true, "super": true, "unsafe": true, "while": true,
+	"crate": true, "await": true, "abstract": true, "become": true,
+	"do": true, "final": true, "macro": true, "override": true,
+	"priv": true, "typeof": true, "unsized": true, "virtual": true,
+	"yield": true, "try": true, "macro_rules": true,
+}
+
+// prefsGroupField maps promoted Go UserPreferences/FormatCodeSettings fields
+// (snake_case) to the nested Rust group struct field and type that owns them.
+// (groupField, groupTypePath)
+var prefsGroupField = map[string][2]string{
+	"include_automatic_optional_chain_completions": {"completion_preferences", "tsc_lsutil::CompletionPreferences"},
+	"include_completions_for_import_statements":    {"completion_preferences", "tsc_lsutil::CompletionPreferences"},
+	"include_completions_for_module_exports":       {"completion_preferences", "tsc_lsutil::CompletionPreferences"},
+	"include_completions_with_class_member_snippets": {"completion_preferences", "tsc_lsutil::CompletionPreferences"},
+	"include_completions_with_object_literal_method_snippets": {"completion_preferences", "tsc_lsutil::CompletionPreferences"},
+	"jsx_attribute_completion_style":               {"completion_preferences", "tsc_lsutil::CompletionPreferences"},
+	"include_inlay_enum_member_value_hints":        {"inlay_hints_preferences", "tsc_lsutil::InlayHintsPreferences"},
+	"include_inlay_function_like_return_type_hints": {"inlay_hints_preferences", "tsc_lsutil::InlayHintsPreferences"},
+	"include_inlay_function_parameter_type_hints":  {"inlay_hints_preferences", "tsc_lsutil::InlayHintsPreferences"},
+	"include_inlay_parameter_name_hints":           {"inlay_hints_preferences", "tsc_lsutil::InlayHintsPreferences"},
+	"include_inlay_parameter_name_hints_when_argument_matches_name": {"inlay_hints_preferences", "tsc_lsutil::InlayHintsPreferences"},
+	"include_inlay_property_declaration_type_hints": {"inlay_hints_preferences", "tsc_lsutil::InlayHintsPreferences"},
+	"include_inlay_variable_type_hints":            {"inlay_hints_preferences", "tsc_lsutil::InlayHintsPreferences"},
+	"include_inlay_variable_type_hints_when_type_matches_name": {"inlay_hints_preferences", "tsc_lsutil::InlayHintsPreferences"},
+	"implementations_code_lens_enabled":            {"code_lens_user_preferences", "tsc_lsutil::CodeLensUserPreferences"},
+	"implementations_code_lens_show_on_all_class_methods": {"code_lens_user_preferences", "tsc_lsutil::CodeLensUserPreferences"},
+	"implementations_code_lens_show_on_interface_methods": {"code_lens_user_preferences", "tsc_lsutil::CodeLensUserPreferences"},
+	"references_code_lens_enabled":                 {"code_lens_user_preferences", "tsc_lsutil::CodeLensUserPreferences"},
+	"references_code_lens_show_on_all_functions":   {"code_lens_user_preferences", "tsc_lsutil::CodeLensUserPreferences"},
+	"indent_multi_line_object_literal_beginning_on_blank_line": {"format_code_settings", "tsc_lsutil::FormatCodeSettings"},
+	"indent_switch_case":                           {"format_code_settings", "tsc_lsutil::FormatCodeSettings"},
+	"insert_space_after_comma_delimiter":           {"format_code_settings", "tsc_lsutil::FormatCodeSettings"},
+	"insert_space_after_constructor":               {"format_code_settings", "tsc_lsutil::FormatCodeSettings"},
+	"insert_space_after_function_keyword_for_anonymous_functions": {"format_code_settings", "tsc_lsutil::FormatCodeSettings"},
+	"insert_space_after_keywords_in_control_flow_statements": {"format_code_settings", "tsc_lsutil::FormatCodeSettings"},
+	"insert_space_after_opening_and_before_closing_empty_braces": {"format_code_settings", "tsc_lsutil::FormatCodeSettings"},
+	"insert_space_after_opening_and_before_closing_jsx_expression_braces": {"format_code_settings", "tsc_lsutil::FormatCodeSettings"},
+	"insert_space_after_opening_and_before_closing_nonempty_braces": {"format_code_settings", "tsc_lsutil::FormatCodeSettings"},
+	"insert_space_after_opening_and_before_closing_nonempty_brackets": {"format_code_settings", "tsc_lsutil::FormatCodeSettings"},
+	"insert_space_after_opening_and_before_closing_nonempty_parenthesis": {"format_code_settings", "tsc_lsutil::FormatCodeSettings"},
+	"insert_space_after_opening_and_before_closing_template_string_braces": {"format_code_settings", "tsc_lsutil::FormatCodeSettings"},
+	"insert_space_after_semicolon_in_for_statements": {"format_code_settings", "tsc_lsutil::FormatCodeSettings"},
+	"insert_space_after_type_assertion":            {"format_code_settings", "tsc_lsutil::FormatCodeSettings"},
+	"insert_space_before_and_after_binary_operators": {"format_code_settings", "tsc_lsutil::FormatCodeSettings"},
+	"insert_space_before_function_parenthesis":     {"format_code_settings", "tsc_lsutil::FormatCodeSettings"},
+	"insert_space_before_type_annotation":          {"format_code_settings", "tsc_lsutil::FormatCodeSettings"},
+	"place_open_brace_on_new_line_for_control_blocks": {"format_code_settings", "tsc_lsutil::FormatCodeSettings"},
+	"place_open_brace_on_new_line_for_functions":   {"format_code_settings", "tsc_lsutil::FormatCodeSettings"},
+	"semicolons":                                   {"format_code_settings", "tsc_lsutil::FormatCodeSettings"},
+}
+
+// editorSettingsField: fields promoted into FormatCodeSettings that belong to
+// the nested `editor_settings` struct in Rust.
+var editorSettingsField = map[string]bool{
+	"base_indent_size": true, "convert_tabs_to_spaces": true,
+	"indent_size": true, "indent_style": true, "new_line_character": true,
+	"tab_size": true, "trim_trailing_whitespace": true,
+}
+
+// emitFields renders the `f: v, ...` portion of a struct literal, routing
+// promoted Go fields of UserPreferences/FormatCodeSettings into nested group
+// literals. `selfPath` is the resolved Rust type path ("" for elided).
+func (tr *translator) emitFields(b *strings.Builder, x *ast.CompositeLit, selfPath string) {
+	isPrefs := strings.HasSuffix(selfPath, "UserPreferences")
+	isFmt := strings.HasSuffix(selfPath, "FormatCodeSettings")
+	type gf struct {
+		key string
+		val string
+	}
+	groups := map[string][]gf{}
+	groupType := map[string]string{}
+	var groupOrder []string
+	for _, e := range x.Elts {
+		kv, ok := e.(*ast.KeyValueExpr)
+		if !ok {
+			b.WriteString(tr.expr(e) + ", ")
+			continue
+		}
+		fname := fieldName(identName(kv.Key))
+		val := tr.exprField(kv.Value)
+		if optionFromFields[fname] {
+			if id, ok := kv.Value.(*ast.Ident); ok && id.Name == "nil" {
+				val = "None"
+			} else {
+				val = "Some(" + tr.expr(kv.Value) + ".into())"
+			}
+		}
+		if isPrefs {
+			if g, ok := prefsGroupField[fname]; ok {
+				if _, seen := groups[g[0]]; !seen {
+					groupOrder = append(groupOrder, g[0])
+				}
+				groups[g[0]] = append(groups[g[0]], gf{fname, val})
+				groupType[g[0]] = g[1]
+				continue
+			}
+		}
+		if isFmt && editorSettingsField[fname] {
+			if _, seen := groups["editor_settings"]; !seen {
+				groupOrder = append(groupOrder, "editor_settings")
+			}
+			groups["editor_settings"] = append(groups["editor_settings"], gf{fname, val})
+			groupType["editor_settings"] = "tsc_lsutil::EditorSettings"
+			continue
+		}
+		b.WriteString(fname + ": " + val + ", ")
+	}
+	for _, g := range groupOrder {
+		b.WriteString(g + ": " + groupType[g] + " { ")
+		for _, f := range groups[g] {
+			b.WriteString(f.key + ": " + f.val + ", ")
+		}
+		b.WriteString("..Default::default() }, ")
+	}
+}
+
 // compositeAs translates a composite literal; expectedType supplies the Rust
 // type path when Go elides the literal type (e.g. `{...}` inside `[]T{...}`).
 func (tr *translator) compositeAs(x *ast.CompositeLit, expectedType string) string {
@@ -994,17 +1798,7 @@ func (tr *translator) compositeAs(x *ast.CompositeLit, expectedType string) stri
 		if expectedType != "" {
 			var b strings.Builder
 			b.WriteString(expectedType + " { ")
-			for _, e := range x.Elts {
-				if kv, ok := e.(*ast.KeyValueExpr); ok {
-					v2 := tr.exprArg(kv.Value)
-					if strings.HasPrefix(v2, "&") && len(v2) > 1 {
-						v2 = "Some(" + v2[1:] + ")"
-					}
-					b.WriteString(snake(identName(kv.Key)) + ": " + v2 + ", ")
-				} else {
-					b.WriteString(tr.expr(e) + ", ")
-				}
-			}
+			tr.emitFields(&b, x, expectedType)
 			b.WriteString("..Default::default() }")
 			return b.String()
 		}
@@ -1020,32 +1814,29 @@ func (tr *translator) compositeAs(x *ast.CompositeLit, expectedType string) stri
 			path = pkg
 		}
 		var b strings.Builder
-		b.WriteString(path + "::" + t.Sel.Name + " { ")
-		for _, e := range x.Elts {
-			if kv, ok := e.(*ast.KeyValueExpr); ok {
-				b.WriteString(snake(identName(kv.Key)) + ": " + tr.expr(kv.Value) + ", ")
-			} else {
-				b.WriteString(tr.expr(e) + ", ")
-			}
-		}
+		full := path + "::" + t.Sel.Name
+		b.WriteString(full + " { ")
+		tr.emitFields(&b, x, full)
 		b.WriteString("..Default::default() }")
 		return b.String()
 
 	case *ast.Ident:
 		var b strings.Builder
 		b.WriteString(t.Name + " { ")
-		for _, e := range x.Elts {
-			if kv, ok := e.(*ast.KeyValueExpr); ok {
-				v := tr.exprArg(kv.Value)
-				if strings.HasPrefix(v, "&") && len(v) > 1 {
-					// &T{...} field -> Option<T>
-					v = "Some(" + v[1:] + ")"
+		if fields, ok := tr.localStructs[t.Name]; ok {
+			i := 0
+			for _, e := range x.Elts {
+				if kv, ok2 := e.(*ast.KeyValueExpr); ok2 {
+					b.WriteString(fieldName(identName(kv.Key)) + ": " + tr.exprField(kv.Value) + ", ")
+				} else if i < len(fields) {
+					b.WriteString(fields[i] + ": " + tr.exprField(e) + ", ")
 				}
-				b.WriteString(snake(identName(kv.Key)) + ": " + v + ", ")
-			} else {
-				b.WriteString(tr.expr(e) + ", ")
+				i++
 			}
+			b.WriteString("..Default::default() }")
+			return b.String()
 		}
+		tr.emitFields(&b, x, t.Name)
 		b.WriteString("..Default::default() }")
 		return b.String()
 
@@ -1079,12 +1870,12 @@ func (tr *translator) compositeAs(x *ast.CompositeLit, expectedType string) stri
 						v = tr.compositeAs(cl, tr.elemRustType(t.Value))
 					}
 				} else {
-					v = tr.expr(kv.Value)
+					v = tr.exprField(kv.Value)
 				}
-				parts = append(parts, "("+tr.expr(kv.Key)+", "+v+")")
+				parts = append(parts, "("+tr.exprField(kv.Key)+", "+v+")")
 			}
 		}
-		return "vec![" + strings.Join(parts, ", ") + "].into_iter().collect::<FxHashMap<_, _>>()"
+		return "std::collections::BTreeMap::from([" + strings.Join(parts, ", ") + "])"
 	}
 	note(tr.fset, x, "composite lit type %T", x.Type)
 	return "/* lit */"
@@ -1137,7 +1928,7 @@ func (tr *translator) anonStruct(st *ast.StructType, lit *ast.CompositeLit) stri
 		case *ast.BasicLit:
 			switch e.Kind {
 			case token.STRING:
-				return "&'static str"
+				return "String"
 			case token.INT:
 				return "i64"
 			case token.FLOAT:
@@ -1172,7 +1963,7 @@ func (tr *translator) anonStruct(st *ast.StructType, lit *ast.CompositeLit) stri
 			if fn == "" {
 				continue
 			}
-			rn := snake(fn)
+			rn := fieldName(fn)
 			if _, seen := fields[rn]; !seen {
 				fields[rn] = &fv{rname: rn, rtype: guess(k.Value)}
 				order = append(order, rn)
@@ -1185,7 +1976,7 @@ func (tr *translator) anonStruct(st *ast.StructType, lit *ast.CompositeLit) stri
 	if st.Fields != nil {
 		for _, f := range st.Fields.List {
 			for _, n := range f.Names {
-				rn := snake(n.Name)
+				rn := fieldName(n.Name)
 				if _, seen := fields[rn]; !seen {
 					fields[rn] = &fv{rname: rn, rtype: "serde_json::Value"}
 					order = append(order, rn)

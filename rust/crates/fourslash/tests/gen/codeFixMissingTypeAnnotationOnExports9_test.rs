@@ -14,12 +14,12 @@ function foo( ){
 }
 const a = foo();
 export = a;";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add annotation of type 'number'", new_file_content: r"function foo( ){
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_code_fix(tsc_fourslash::VerifyCodeFixOptions { description: "Add annotation of type 'number'".to_string().into(), new_file_content: r"function foo( ){
     return 42;
 }
 const a: number = foo();
-export = a;", index: 0, ..Default::default() });
+export = a;".to_string().into(), index: 0, ..Default::default() });
 	});
 }
 

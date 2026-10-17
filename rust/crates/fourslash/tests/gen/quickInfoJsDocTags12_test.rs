@@ -16,7 +16,7 @@ fn quick_info_js_doc_tags12() {
  */
 function /**/f(options, callback = null) {
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_hover();
 	});
 }

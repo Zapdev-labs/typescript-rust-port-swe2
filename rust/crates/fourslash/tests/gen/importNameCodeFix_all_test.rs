@@ -41,9 +41,9 @@ cd; cd; c0; c0;
 dd; dd; d0; d0; d1; d1;
 e; e;
 class X extends Disposable { }"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_file("/user.ts".into());
-		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport", new_file_content: r#"import ad, { a0 } from "./a";
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_file("/user.ts");
+		f.verify_code_fix_all(tsc_fourslash::VerifyCodeFixAllOptions { fix_id: "fixMissingImport".to_string().into(), new_file_content: r#"import ad, { a0 } from "./a";
 import bd, * as b from "./b";
 import cd, { c0 } from "./c";
 import dd, { d0, d1 } from "./d";
@@ -55,7 +55,7 @@ bd; bd; b.b0; b.b0;
 cd; cd; c0; c0;
 dd; dd; d0; d0; d1; d1;
 e; e;
-class X extends Disposable { }"#, ..Default::default() });
+class X extends Disposable { }"#.to_string().into(), ..Default::default() });
 	});
 }
 

@@ -17,11 +17,11 @@ interface A {
 function foo(x: A) {
     x./*2*/foo
 }";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_find_all_references("1".into(), "2".into());
-		f.go_to_marker("".into());
-		f.insert("\n".into());
-		f.verify_baseline_find_all_references("1".into(), "2".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_find_all_references(&["1".into(), "2".into()]);
+		f.go_to_marker("");
+		f.insert("\n");
+		f.verify_baseline_find_all_references(&["1".into(), "2".into()]);
 	});
 }
 

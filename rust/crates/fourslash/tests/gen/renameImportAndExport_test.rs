@@ -9,8 +9,8 @@ fn rename_import_and_export() {
 	run_test(|t| {
 		let content = r#"[|import [|{| "contextRangeIndex": 0 |}a|] from "module";|]
 [|export { [|{| "contextRangeIndex": 2 |}a|] };|]"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_baseline_rename(None, f.ranges()[1], f.ranges()[3]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_baseline_rename(None, vec![f.ranges()[1].into(), f.ranges()[3].into()]);
 	});
 }
 

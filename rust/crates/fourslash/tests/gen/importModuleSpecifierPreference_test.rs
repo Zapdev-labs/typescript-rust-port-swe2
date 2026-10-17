@@ -11,10 +11,10 @@ fn import_module_specifier_preference_shortest() {
 export const helperFunc = () => {};
 // @Filename: /project/src/index.ts
 helper/**/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.configure(tsc_lsutil::UserPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE, include_completions_for_import_statements: tsc_core::tristate::TS_TRUE, import_module_specifier_preference: modulespecifiers.import_module_specifier_preference_shortest, ..Default::default() });
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["helperFunc"], ..Default::default() }, ..Default::default() });
-		f.baseline_auto_imports_completions(&[""]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.configure(tsc_lsutil::UserPreferences { import_module_specifier_preference: tsc_modulespecifiers::ImportModuleSpecifierPreference::SHORTEST.into(), completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() });
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["helperFunc".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.baseline_auto_imports_completions(&["".into()]);
 	});
 }
 
@@ -25,10 +25,10 @@ fn import_module_specifier_preference_project_relative() {
 export const helperFunc = () => {};
 // @Filename: /project/tests/index.ts
 helper/**/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.configure(tsc_lsutil::UserPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE, include_completions_for_import_statements: tsc_core::tristate::TS_TRUE, import_module_specifier_preference: modulespecifiers.import_module_specifier_preference_project_relative, ..Default::default() });
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["helperFunc"], ..Default::default() }, ..Default::default() });
-		f.baseline_auto_imports_completions(&[""]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.configure(tsc_lsutil::UserPreferences { import_module_specifier_preference: tsc_modulespecifiers::ImportModuleSpecifierPreference::PROJECT_RELATIVE.into(), completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() });
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["helperFunc".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.baseline_auto_imports_completions(&["".into()]);
 	});
 }
 
@@ -39,10 +39,10 @@ fn import_module_specifier_preference_relative() {
 export const helperFunc = () => {};
 // @Filename: /project/src/index.ts
 helper/**/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.configure(tsc_lsutil::UserPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE, include_completions_for_import_statements: tsc_core::tristate::TS_TRUE, import_module_specifier_preference: modulespecifiers.import_module_specifier_preference_relative, ..Default::default() });
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["helperFunc"], ..Default::default() }, ..Default::default() });
-		f.baseline_auto_imports_completions(&[""]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.configure(tsc_lsutil::UserPreferences { import_module_specifier_preference: tsc_modulespecifiers::ImportModuleSpecifierPreference::RELATIVE.into(), completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() });
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["helperFunc".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.baseline_auto_imports_completions(&["".into()]);
 	});
 }
 
@@ -62,10 +62,10 @@ fn import_module_specifier_preference_project_relative_with_paths() {
 export const helperFunc = () => {};
 // @Filename: /project/src/app/index.ts
 helper/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.configure(tsc_lsutil::UserPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE, include_completions_for_import_statements: tsc_core::tristate::TS_TRUE, import_module_specifier_preference: modulespecifiers.import_module_specifier_preference_project_relative, ..Default::default() });
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["helperFunc"], ..Default::default() }, ..Default::default() });
-		f.baseline_auto_imports_completions(&[""]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.configure(tsc_lsutil::UserPreferences { import_module_specifier_preference: tsc_modulespecifiers::ImportModuleSpecifierPreference::PROJECT_RELATIVE.into(), completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() });
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["helperFunc".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.baseline_auto_imports_completions(&["".into()]);
 	});
 }
 
@@ -85,10 +85,10 @@ fn import_module_specifier_preference_non_relative() {
 export const helperFunc = () => {};
 // @Filename: /project/src/app/index.ts
 helper/**/"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.configure(tsc_lsutil::UserPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE, include_completions_for_import_statements: tsc_core::tristate::TS_TRUE, import_module_specifier_preference: modulespecifiers.import_module_specifier_preference_non_relative, ..Default::default() });
-		f.verify_completions("".into(), &tsc_fourslash::CompletionsExpectedList { item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["helperFunc"], ..Default::default() }, ..Default::default() });
-		f.baseline_auto_imports_completions(&[""]);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.configure(tsc_lsutil::UserPreferences { import_module_specifier_preference: tsc_modulespecifiers::ImportModuleSpecifierPreference::NON_RELATIVE.into(), completion_preferences: tsc_lsutil::CompletionPreferences { include_completions_for_module_exports: tsc_core::tristate::TS_TRUE.into(), include_completions_for_import_statements: tsc_core::tristate::TS_TRUE.into(), ..Default::default() }, ..Default::default() });
+		f.verify_completions("".into(), Some(&tsc_fourslash::CompletionsExpectedList { item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["helperFunc".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.baseline_auto_imports_completions(&["".into()]);
 	});
 }
 

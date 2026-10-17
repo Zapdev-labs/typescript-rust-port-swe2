@@ -7,10 +7,10 @@ use tsc_fourslash::*;
 #[test]
 fn smart_selection_template_strings() {
 	run_test(|t| {
-		let content = r"" + "`" + r"a /*1*/b ${
+		let content = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", r"", "`"), r"a /*1*/b ${
   '/*2*/c'
-} d" + "`" + r"";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+} d"), "`"), r"");
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_baseline_selection_ranges();
 	});
 }

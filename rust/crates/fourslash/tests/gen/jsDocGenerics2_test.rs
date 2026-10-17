@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn js_doc_generics2() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r"// @allowNonTsExtensions: true
 // @Filename: Foo.js
 /**
@@ -21,10 +21,10 @@ function SortFilter(arr,valuator)
 }
 var a/*1*/ = SortFilter([0, 1, 2], q/*2*/ => q);
 var b/*3*/ = SortFilter([0, 1, 2], undefined);";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_quick_info_at("1".into(), "var a: number[]".into(), "".into());
-		f.verify_quick_info_at("2".into(), "(parameter) q: number".into(), "".into());
-		f.verify_quick_info_at("3".into(), "var b: number[]".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_quick_info_at("1", "var a: number[]", "");
+		f.verify_quick_info_at("2", "(parameter) q: number", "");
+		f.verify_quick_info_at("3", "var b: number[]", "");
 	});
 }
 

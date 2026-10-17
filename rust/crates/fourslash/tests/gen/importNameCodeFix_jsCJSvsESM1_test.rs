@@ -15,11 +15,11 @@ export declare class Dep {}
 Dep/**/
 // @Filename: util.js
 import fs from 'fs';";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
 		f.verify_import_fix_at_position(&[r#"import { Dep } from "./types/dep";
 
-Dep"#], None);
+Dep"#.into()], None);
 	});
 }
 

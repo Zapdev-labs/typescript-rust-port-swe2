@@ -11,17 +11,17 @@ fn generic_method_param() {
     /*1*/
 }
 /*2*/";
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_no_errors();
-		f.go_to_marker("1".into());
-		f.insert_line("constructor(){}".into());
-		f.insert_line("foo(a: T) {".into());
-		f.insert_line("    return a;".into());
-		f.insert_line("}".into());
+		f.go_to_marker("1");
+		f.insert_line("constructor(){}");
+		f.insert_line("foo(a: T) {");
+		f.insert_line("    return a;");
+		f.insert_line("}");
 		f.verify_no_errors();
-		f.go_to_marker("2".into());
-		f.insert_line("var x = new C<number>();".into());
-		f.insert_line("var y: number = x.foo(5);".into());
+		f.go_to_marker("2");
+		f.insert_line("var x = new C<number>();");
+		f.insert_line("var y: number = x.foo(5);");
 		f.verify_no_errors();
 	});
 }

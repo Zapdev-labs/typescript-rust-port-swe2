@@ -14,8 +14,8 @@ export as namespace /**/[|myLib|];
 // @Filename: 1.ts
 /// <reference path="0.d.ts" />
 myLib.doThing();"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.go_to_marker("".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.go_to_marker("");
 		f.verify_rename_succeeded(None);
 	});
 }

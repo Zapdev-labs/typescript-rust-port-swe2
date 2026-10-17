@@ -18,14 +18,14 @@ const x: T3/**/
 export type T1 = 0;
 export type T2 = 0;
 export type T3 = 0;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_import_fix_at_position(&[r#"import {
   T2,
   T1,
   T3,
 } from "./types";
 
-const x: T3"#], None);
+const x: T3"#.into()], None);
 	});
 }
 

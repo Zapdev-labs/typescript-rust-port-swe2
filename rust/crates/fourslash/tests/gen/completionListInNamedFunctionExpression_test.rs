@@ -7,7 +7,7 @@ use tsc_fourslash::*;
 #[test]
 fn completion_list_in_named_function_expression() {
 	run_test(|t| {
-		return /* skip: "Known failing fourslash test".into() */;
+		return /* skip: "Known failing fourslash test" */;
 		let content = r#"function foo(a: number): string {
     /*insideFunctionDeclaration*/
     return "";
@@ -21,10 +21,10 @@ fn completion_list_in_named_function_expression() {
 
 /*globalScope*/
 fo/*referenceInGlobalScope*/o;"#;
-		let mut f = tsc_fourslash::new_fourslash(t_name(), "", None, content);
-		f.verify_completions(&["globalScope", "insideFunctionDeclaration", "insideFunctionExpression"], &tsc_fourslash::CompletionsExpectedList { is_incomplete: false, item_defaults: &tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(default_commit_characters.clone()), edit_range: ignored, ..Default::default() }, items: &tsc_fourslash::CompletionsExpectedItems { includes: vec!["foo"], ..Default::default() }, ..Default::default() });
-		f.verify_quick_info_at("referenceInsideFunctionExpression".into(), "(local function) foo(): number".into(), "".into());
-		f.verify_quick_info_at("referenceInGlobalScope".into(), "function foo(a: number): string".into(), "".into());
+		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
+		f.verify_completions(vec!["globalScope", "insideFunctionDeclaration", "insideFunctionExpression"].into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["foo".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_quick_info_at("referenceInsideFunctionExpression", "(local function) foo(): number", "");
+		f.verify_quick_info_at("referenceInGlobalScope", "function foo(a: number): string", "");
 	});
 }
 
