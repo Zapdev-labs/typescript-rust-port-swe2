@@ -12,7 +12,7 @@ declare const u: "$1" | "2";
 switch (u) {
     case/*1*/
 }"#;
-		let mut capabilities = tsc_fourslash::get_default_capabilities();
+		let mut capabilities = tsc_fourslash::GetDefaultCapabilities();
 		capabilities.text_document.as_mut().unwrap().completion.as_mut().unwrap().completion_item.as_mut().unwrap().snippet_support = Some((false).into());
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", capabilities.into(), content);
 		f.verify_completions("1".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "case \"$1\": ...".to_string().into(), insert_text: Some(("case \"$1\":\ncase \"2\":").into()), sort_text: Some((tsc_ls::GLOBALS_OR_KEYWORDS.to_string()).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));

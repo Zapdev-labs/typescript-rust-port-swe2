@@ -11,7 +11,7 @@ fn doc_comment_template_function_with_parameters_js() {
 // @Filename: /a.js
 /*0*/
 function f(a, ...b): boolean {}";
-		let mut capabilities = tsc_fourslash::get_default_capabilities();
+		let mut capabilities = tsc_fourslash::GetDefaultCapabilities();
 		capabilities.text_document.as_mut().unwrap().completion.as_mut().unwrap().completion_item.as_mut().unwrap().snippet_support = Some((false).into());
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", capabilities.into(), content);
 		f.verify_js_doc_completion("0".into(), 7, r"/**

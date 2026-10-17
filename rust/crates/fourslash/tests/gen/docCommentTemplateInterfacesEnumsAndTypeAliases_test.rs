@@ -30,7 +30,7 @@ const enum Status {
 
 /*aliasBar*/
 type Bar = Foo & any;";
-		let mut capabilities = tsc_fourslash::get_default_capabilities();
+		let mut capabilities = tsc_fourslash::GetDefaultCapabilities();
 		capabilities.text_document.as_mut().unwrap().completion.as_mut().unwrap().completion_item.as_mut().unwrap().snippet_support = Some((false).into());
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", capabilities.into(), content);
 		f.verify_js_doc_completion("interfaceFoo".into(), 3, r"/** */", None);

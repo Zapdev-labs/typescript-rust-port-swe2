@@ -56,7 +56,7 @@ fn organize_imports_remove_unused_uses_language_service_format_options() {
 
 export { a, c };"#;
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		let mut preferences = tsc_lsutil::parse_user_preferences(&std::collections::BTreeMap::from([("editor".to_string().into(), std::collections::BTreeMap::from([("tabSize".to_string().into(), 2), ("insertSpaces".to_string().into(), false.into())]).into())]));
+		let mut preferences = tsc_lsutil::ParseUserPreferences(&std::collections::BTreeMap::from([("editor".to_string().into(), std::collections::BTreeMap::from([("tabSize".to_string().into(), 2), ("insertSpaces".to_string().into(), false.into())]).into())]));
 		f.verify_organize_imports("import {\n\ta,\n\tc\n} from \"module\";\n\nexport { a, c };", tsc_lsproto::CodeActionKind::SourceRemoveUnusedImportsTs, Some(&preferences));
 	});
 }

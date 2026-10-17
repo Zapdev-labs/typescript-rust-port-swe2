@@ -887,6 +887,7 @@ var relocatedTypes = map[string]string{
 	"core.TSTrue":  "tsc_core::tristate::TS_TRUE",
 	"core.TSFalse": "tsc_core::tristate::TS_FALSE",
 	"core.TSUnknown": "tsc_core::tristate::TS_UNKNOWN",
+	"core.IfElse": "tsc_core::core::if_else",
 	"fourslash.AnyTextEdits":  "tsc_fourslash::any_text_edits_marker()",
 	"fourslash.NoTextEdits":   "tsc_fourslash::no_text_edits_marker()",
 	"fourslash.Ignored":       "tsc_fourslash::IGNORED",
@@ -916,6 +917,7 @@ var enumTypes = []string{
 	"FilePreprocessingDiagnosticsKind", "DocumentHighlightsKind",
 	"SignatureHelpTriggerReasonKind", "InlayHintKind",
 	"SymbolKind", "DocumentHighlightKind", "InlayHint", "CodeLensState",
+	"CompletionItemTag", "MarkupKind", "SymbolTag",
 }
 
 // rustEnumType maps Go enum-type prefixes to the Rust type name where they
@@ -1028,6 +1030,10 @@ func (tr *translator) call(c *ast.CallExpr) string {
 		case pkg == "stringtestutil" && sel.Sel.Name == "Dedent":
 			return "dedent(" + tr.args(c.Args, 0) + ")"
 		case tr.imports[pkg] != "":
+			// `pkg.Type(x)` conversion -> `path::Type(x)` (newtype ctors)
+			if isTypeName(sel.Sel.Name) {
+				return tr.imports[pkg] + "::" + sel.Sel.Name + "(" + tr.args(c.Args, 0) + ")"
+			}
 			// package function call
 			return tr.imports[pkg] + "::" + snake(sel.Sel.Name) + "(" +
 				tr.callArgs(snake(sel.Sel.Name), c.Args, 0, c.Ellipsis.IsValid()) + ")"
