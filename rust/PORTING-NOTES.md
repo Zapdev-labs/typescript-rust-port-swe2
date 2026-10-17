@@ -2325,3 +2325,34 @@ NEXT (by class, /tmp/fsfull.txt on dih@192.168.1.15:~/TypeScript/rust):
   selfPath ends with "FormatCodeSettings" works when path is
   `tsc_lsutil::FormatCodeSettings` vs elided "").
 - `get_completions` private — made pub earlier; verify no E0624 left.
+
+## checkpoint 9 (3a06fea676) — 1219 errors
+
+Census (remote /tmp/fsfull.txt):
+- 555 E0308 — re-census needed (grep "expected"/"found" pairs).
+- 174 E0507 move out of Rc — `(*x).clone()` emitted for `*x`; some sites
+  need `.as_ref().clone()`/`.clone()` on the Rc itself — SAMPLE sites:
+  probably `*f.Markers()[i]`/`*r` patterns. In expr StarExpr emission.
+- 171 `MarkerInput: From<Vec<&str>>` — `vec!["a","b"]` marker args:
+  `vec![&str]` can't Into -> emit `vec!["a".to_string(),...]` elements
+  (Vec<String> From exists), OR add `impl From<Vec<&str>> for MarkerInput`
+  in verify.rs (cheaper — one impl covers all).
+- 47 new_content_mapper_fourslash — helper in contentMapper_test.go
+  (no Test fns -> skipped). Emit non-Test fns from skipped files into a
+  shared `gen_helpers.rs` + `mod gen_helpers;` in run.sh chunks.
+- 46 E0283 residual.
+- 35 CodeActionKind::SourceSortImports — real const name in
+  lsp_generated.rs may differ (`SourceOrganizeImports` exists; check
+  sortImports string value).
+- 21 E0061 zero-arg — sample.
+- 19 `Option<Vec<CompletionsExpectedItem>>: From<_>` — elem inference.
+- 17 quote_preference — Go `lsutil.QuotePreference("auto")` conversion;
+  type-ctor branch emits `tsc_lsutil::QuotePreference("auto")`?? or
+  still snake fn — verify emission; QuotePreference(pub Cow) ctor needs
+  `Cow::Borrowed("auto")` or From<&str>.
+- 13 `.items` on Option<CompletionList> — `.unwrap().items`.
+- 12 From<&Rc<RangeMarker>> — `&f.ranges()[0]` in packIter: strip &+
+  .into() emits `f.ranges()[0].clone().into()` — but residual `&` sites.
+- 7 `new_line_character` on FormatCodeSettings — editor_settings routing
+  failed for this literal shape — sample site.
+- MarkerInput::from landed (E0283 784->46).
