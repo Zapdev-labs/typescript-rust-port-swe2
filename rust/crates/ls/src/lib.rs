@@ -53,6 +53,8 @@ mod utilities;
 pub use crate::api::Error;
 #[doc(hidden)]
 pub use crate::completions::sort_text::*;
+#[doc(hidden)]
+pub use crate::completions::{deprecate_sort_text, object_literal_property_sort_text, sort_below};
 pub use crate::completions::{ERR_NEEDS_AUTO_IMPORTS, completion_trigger_characters};
 pub use crate::semantictokens::semantic_tokens_legend;
 pub use crate::signaturehelp::{

@@ -489,12 +489,12 @@ pub mod sort_text {
 }
 
 /// `DeprecateSortText`.
-pub(crate) fn deprecate_sort_text(original: &str) -> String {
+pub fn deprecate_sort_text(original: &str) -> String {
     format!("z{original}")
 }
 
 /// `ObjectLiteralPropertySortText`.
-pub(crate) fn object_literal_property_sort_text(
+pub fn object_literal_property_sort_text(
     preset_sort_text: &str,
     symbol_display_name: &str,
 ) -> String {
@@ -502,7 +502,7 @@ pub(crate) fn object_literal_property_sort_text(
 }
 
 /// `SortBelow`.
-pub(crate) fn sort_below(original: &str) -> String {
+pub fn sort_below(original: &str) -> String {
     format!("{original}1")
 }
 

@@ -70,6 +70,7 @@ pub enum ExpectedCompletionEditRange {
 }
 
 /// `type EditRange struct`
+#[derive(Default)]
 pub struct EditRange {
     pub insert: Rc<RangeMarker>,
     pub replace: Rc<RangeMarker>,
@@ -484,7 +485,7 @@ impl FourslashTest {
     }
 
     /// `getCompletions`
-    pub(crate) fn get_completions(
+    pub fn get_completions(
         &mut self,
         user_preferences: Option<&UserPreferences>,
     ) -> Option<CompletionList> {
@@ -2332,6 +2333,7 @@ impl FourslashTest {
 }
 
 /// `type SignatureHelpCase struct`
+#[derive(Default)]
 pub struct SignatureHelpCase {
     pub context: Option<SignatureHelpContext>,
     /// `MarkerInput` — `None` is Go's `nil` (verify at current position).
@@ -2863,6 +2865,7 @@ impl FourslashTest {
 }
 
 /// `FoldingRangeLineExpected` represents expected start and end lines for a folding range.
+#[derive(Default)]
 pub struct FoldingRangeLineExpected {
     pub start_line: u32,
     pub end_line: u32,
@@ -2871,6 +2874,7 @@ pub struct FoldingRangeLineExpected {
 // --- workspace symbols ---------------------------------------------------------
 
 /// `type VerifyWorkspaceSymbolCase struct`
+#[derive(Default)]
 pub struct VerifyWorkspaceSymbolCase {
     pub pattern: String,
     pub includes: Option<Vec<SymbolInformation>>,
