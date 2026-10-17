@@ -19,7 +19,7 @@ function c(enum: /*c*/) {}
 ";
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		for marker in f.ranges() {
-			f.verify_completions(marker.into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: tsc_fourslash::completion_globals.into(), ..Default::default() }), ..Default::default() }));
+			f.verify_completions(tsc_fourslash::MarkerInput::from(marker), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: tsc_fourslash::completion_globals.into(), ..Default::default() }), ..Default::default() }));
 		}
 	});
 }

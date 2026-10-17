@@ -423,7 +423,7 @@ export function bar() {}
 fn find_all_refs_root_of_referenced_project() {
 	run_test(|t| {
 		for disable_source_of_project_reference_redirect in vec![false, true] {
-			run_subtest(&mut t, format!("{}{}", "TestFindAllRefsRootOfReferencedProject", tsc_core::if_else(disable_source_of_project_reference_redirect, "DeclarationMaps", "")), |t| {
+			run_subtest(&mut t, format!("{}{}", "TestFindAllRefsRootOfReferencedProject", tsc_core::core::if_else(disable_source_of_project_reference_redirect, "DeclarationMaps", "")), |t| {
 				let mut content = format!(r#"
 // @stateBaseline: true
 %s
@@ -469,7 +469,7 @@ function foo() {
 	"references": [
 		{ "path": "./common" },
 	],
-}"#, tsc_core::if_else(disable_source_of_project_reference_redirect, "// @tsc: --build /src/tsconfig.json", ""), disable_source_of_project_reference_redirect, disable_source_of_project_reference_redirect);
+}"#, tsc_core::core::if_else(disable_source_of_project_reference_redirect, "// @tsc: --build /src/tsconfig.json", ""), disable_source_of_project_reference_redirect, disable_source_of_project_reference_redirect);
 				let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 				f.go_to_marker("keyboard");
 				f.go_to_marker("terminal");
@@ -483,7 +483,7 @@ function foo() {
 fn find_all_refs_ancestor_sibling_projects_loading() {
 	run_test(|t| {
 		for disable_solution_searching in vec![false, true] {
-			run_subtest(&mut t, format!("{}{}", "TestFindAllRefsAncestorSiblingProjectsLoading", tsc_core::if_else(disable_solution_searching, "DisableSolutionSearching", "")), |t| {
+			run_subtest(&mut t, format!("{}{}", "TestFindAllRefsAncestorSiblingProjectsLoading", tsc_core::core::if_else(disable_solution_searching, "DisableSolutionSearching", "")), |t| {
 				let mut content = format!(r#"
 // @stateBaseline: true
 // @Filename: solution/tsconfig.json
@@ -998,7 +998,7 @@ fn find_all_refs_declaration_in_other_project() {
 			dts_map_present: bool,
 		}
 		for tc in vec![testCase { project_already_loaded: true.into(), disable_referenced_project_load: true.into(), disable_source_of_project_reference_redirect: true.into(), dts_map_present: true.into(), ..Default::default() }, testCase { project_already_loaded: true.into(), disable_referenced_project_load: true.into(), disable_source_of_project_reference_redirect: true.into(), dts_map_present: false.into(), ..Default::default() }, testCase { project_already_loaded: true.into(), disable_referenced_project_load: true.into(), disable_source_of_project_reference_redirect: false.into(), dts_map_present: true.into(), ..Default::default() }, testCase { project_already_loaded: true.into(), disable_referenced_project_load: true.into(), disable_source_of_project_reference_redirect: false.into(), dts_map_present: false.into(), ..Default::default() }, testCase { project_already_loaded: true.into(), disable_referenced_project_load: false.into(), disable_source_of_project_reference_redirect: true.into(), dts_map_present: true.into(), ..Default::default() }, testCase { project_already_loaded: true.into(), disable_referenced_project_load: false.into(), disable_source_of_project_reference_redirect: true.into(), dts_map_present: false.into(), ..Default::default() }, testCase { project_already_loaded: true.into(), disable_referenced_project_load: false.into(), disable_source_of_project_reference_redirect: false.into(), dts_map_present: true.into(), ..Default::default() }, testCase { project_already_loaded: true.into(), disable_referenced_project_load: false.into(), disable_source_of_project_reference_redirect: false.into(), dts_map_present: false.into(), ..Default::default() }, testCase { project_already_loaded: false.into(), disable_referenced_project_load: true.into(), disable_source_of_project_reference_redirect: true.into(), dts_map_present: true.into(), ..Default::default() }, testCase { project_already_loaded: false.into(), disable_referenced_project_load: true.into(), disable_source_of_project_reference_redirect: true.into(), dts_map_present: false.into(), ..Default::default() }, testCase { project_already_loaded: false.into(), disable_referenced_project_load: true.into(), disable_source_of_project_reference_redirect: false.into(), dts_map_present: true.into(), ..Default::default() }, testCase { project_already_loaded: false.into(), disable_referenced_project_load: true.into(), disable_source_of_project_reference_redirect: false.into(), dts_map_present: false.into(), ..Default::default() }, testCase { project_already_loaded: false.into(), disable_referenced_project_load: false.into(), disable_source_of_project_reference_redirect: true.into(), dts_map_present: true.into(), ..Default::default() }, testCase { project_already_loaded: false.into(), disable_referenced_project_load: false.into(), disable_source_of_project_reference_redirect: true.into(), dts_map_present: false.into(), ..Default::default() }, testCase { project_already_loaded: false.into(), disable_referenced_project_load: false.into(), disable_source_of_project_reference_redirect: false.into(), dts_map_present: true.into(), ..Default::default() }, testCase { project_already_loaded: false.into(), disable_referenced_project_load: false.into(), disable_source_of_project_reference_redirect: false.into(), dts_map_present: false.into(), ..Default::default() }] {
-			let mut sub_scenario = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!(r"Proj%sLoaded", tsc_core::if_else(tc.project_already_loaded, "Is", "IsNot")), r"RefdProjLoadingIs"), tsc_core::if_else(tc.disable_referenced_project_load, "Disabled", "Enabled")), r"ProjRefRedirectsAre"), tsc_core::if_else(tc.disable_source_of_project_reference_redirect, "Disabled", "Enabled")), r"DeclMapIs"), tsc_core::if_else(tc.dts_map_present, "Present", "Missing"));
+			let mut sub_scenario = format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!("{}{}", format!(r"Proj%sLoaded", tsc_core::core::if_else(tc.project_already_loaded, "Is", "IsNot")), r"RefdProjLoadingIs"), tsc_core::core::if_else(tc.disable_referenced_project_load, "Disabled", "Enabled")), r"ProjRefRedirectsAre"), tsc_core::core::if_else(tc.disable_source_of_project_reference_redirect, "Disabled", "Enabled")), r"DeclMapIs"), tsc_core::core::if_else(tc.dts_map_present, "Present", "Missing"));
 			run_subtest(&mut t, format!("{}{}", "TestFindAllRefsDeclarationInOtherProject", sub_scenario), |t| {
 				let mut content = format!(r#"
 // @stateBaseline: true

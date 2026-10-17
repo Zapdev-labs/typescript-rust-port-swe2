@@ -35,34 +35,34 @@ const g = ((class G {
     constructor(x,y,z, ...okayThatsEnough) {
     }
 }))"#;
-		let mut capabilities = tsc_fourslash::GetDefaultCapabilities();
+		let mut capabilities = tsc_fourslash::get_default_capabilities();
 		capabilities.text_document.as_mut().unwrap().completion.as_mut().unwrap().completion_item.as_mut().unwrap().snippet_support = Some((false).into());
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", capabilities.into(), content);
-		f.verify_js_doc_completion("a".into(), 7, r"/**
+		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("a"), 7, r"/**
  * 
  * @param x
  * @returns
  */", None);
-		f.verify_js_doc_completion("b".into(), 7, r"/**
+		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("b"), 7, r"/**
  * 
  * @param x
  * @param y
  * @param z
  * @returns
  */", None);
-		f.verify_js_doc_completion("c".into(), 7, r"/**
+		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("c"), 7, r"/**
  * 
  * @param x
  * @returns
  */", None);
-		f.verify_js_doc_completion("d".into(), 3, r"/** */", None);
-		f.verify_js_doc_completion("e".into(), 7, r"/**
+		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("d"), 3, r"/** */", None);
+		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("e"), 7, r"/**
  * 
  * @param param0
  * @returns
  */", None);
-		f.verify_js_doc_completion("f".into(), 3, r"/** */", None);
-		f.verify_js_doc_completion("g".into(), 7, r"/**
+		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("f"), 3, r"/** */", None);
+		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("g"), 7, r"/**
  * 
  * @param x
  */", None);

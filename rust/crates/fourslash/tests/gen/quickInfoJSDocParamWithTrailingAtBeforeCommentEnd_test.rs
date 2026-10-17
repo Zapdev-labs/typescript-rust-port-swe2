@@ -15,7 +15,7 @@ function /*fn*/foo(/*x*/x) {}
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_quick_info_at("fn", "function foo(x: string): void", "\n\n*@param* `x` — trailing @");
 		f.verify_quick_info_at("x", "(parameter) x: string", "trailing @");
-		f.verify_completions("at".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "param".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Keyword).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions(tsc_fourslash::MarkerInput::from("at"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![tsc_lsproto::CompletionItem { label: "param".to_string().into(), kind: Some((tsc_lsproto::CompletionItemKind::Keyword).into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

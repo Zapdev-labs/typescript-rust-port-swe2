@@ -1030,9 +1030,13 @@ func (tr *translator) call(c *ast.CallExpr) string {
 		case pkg == "stringtestutil" && sel.Sel.Name == "Dedent":
 			return "dedent(" + tr.args(c.Args, 0) + ")"
 		case tr.imports[pkg] != "":
-			// `pkg.Type(x)` conversion -> `path::Type(x)` (newtype ctors)
-			if isTypeName(sel.Sel.Name) {
+			// `pkg.Type(x)` conversion -> `path::Type(x)` (newtype ctors);
+			// known vars/fns take snake names instead.
+			if isTypeName(sel.Sel.Name) && !snakeNames[sel.Sel.Name] {
 				return tr.imports[pkg] + "::" + sel.Sel.Name + "(" + tr.args(c.Args, 0) + ")"
+			}
+			if relocate, ok := relocatedTypes[pkg+"."+sel.Sel.Name]; ok {
+				return relocate + "(" + tr.callArgs(snake(sel.Sel.Name), c.Args, 0, c.Ellipsis.IsValid()) + ")"
 			}
 			// package function call
 			return tr.imports[pkg] + "::" + snake(sel.Sel.Name) + "(" +
@@ -1272,7 +1276,7 @@ func (tr *translator) argFor(name string, i int, e ast.Expr) string {
 		if id, ok := e.(*ast.Ident); ok && id.Name == "nil" {
 			return "Default::default()"
 		}
-		return tr.expr(e) + ".into()"
+		return "tsc_fourslash::MarkerInput::from(" + tr.expr(e) + ")"
 	}
 	if containsInt(rcRefArgs[name], i) {
 		return "&" + tr.expr(e)

@@ -17,30 +17,30 @@ fn doc_comment_template_class_decl_methods01() {
     /*5*/foo(a?, b?, ...args) {
     }
 }";
-		let mut capabilities = tsc_fourslash::GetDefaultCapabilities();
+		let mut capabilities = tsc_fourslash::get_default_capabilities();
 		capabilities.text_document.as_mut().unwrap().completion.as_mut().unwrap().completion_item.as_mut().unwrap().snippet_support = Some((false).into());
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", capabilities.into(), content);
-		f.verify_js_doc_completion("0".into(), 3, r"/** */", None);
-		f.verify_js_doc_completion("1".into(), 3, r"/** */", None);
-		f.verify_js_doc_completion("2".into(), 11, r"/**
+		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("0"), 3, r"/** */", None);
+		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("1"), 3, r"/** */", None);
+		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("2"), 11, r"/**
      * 
      * @param a
      */
     ", None);
-		f.verify_js_doc_completion("3".into(), 11, r"/**
+		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("3"), 11, r"/**
      * 
      * @param a
      * @param b
      */
     ", None);
-		f.verify_js_doc_completion("4".into(), 11, r"/**
+		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("4"), 11, r"/**
      * 
      * @param a
      * @param param1
      * @param param2
      */
     ", None);
-		f.verify_js_doc_completion("5".into(), 11, r"/**
+		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("5"), 11, r"/**
      * 
      * @param a
      * @param b

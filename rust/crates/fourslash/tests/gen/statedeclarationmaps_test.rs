@@ -8,7 +8,7 @@ use tsc_fourslash::*;
 fn declaration_maps_opening_original_location_project() {
 	run_test(|t| {
 		for disable_source_of_project_reference_redirect in vec![false, true] {
-			run_subtest(&mut t, format!("{}{}", "TestDeclarationMapsOpeningOriginalLocationProject", tsc_core::if_else(disable_source_of_project_reference_redirect, "DisableSourceOfProjectReferenceRedirect", "")), |t| {
+			run_subtest(&mut t, format!("{}{}", "TestDeclarationMapsOpeningOriginalLocationProject", tsc_core::core::if_else(disable_source_of_project_reference_redirect, "DisableSourceOfProjectReferenceRedirect", "")), |t| {
 				let mut content = format!(r#"
 // @stateBaseline: true
 // @Filename: a/a.ts
@@ -265,9 +265,9 @@ fn declaration_maps_rename() {
 			tsconfig_not_solution: bool,
 		}
 		for tc in vec![testCase { name: "ProjectReferences".to_string().into(), dont_build: true.into(), ..Default::default() }, testCase { name: "DisableSourceOfProjectReferenceRedirect".to_string().into(), disable_source_of_project_reference_redirect: true.into(), ..Default::default() }, testCase { name: "SourceMaps".to_string().into(), main_with_no_ref: true.into(), ..Default::default() }, testCase { name: "SourceMapsNotSolution".to_string().into(), main_with_no_ref: true.into(), tsconfig_not_solution: true.into(), ..Default::default() }] {
-			let mut build_str = tsc_core::if_else(!tc.dont_build, "// @tsc: --build /myproject/dependency,--build /myproject/main", "");
-			let mut main_refs_str = tsc_core::if_else(!tc.main_with_no_ref, r#""references": [{ "path": "../dependency" }]"#, "");
-			let mut files_str = tsc_core::if_else(!tc.tsconfig_not_solution, r#""files": [],"#, "");
+			let mut build_str = tsc_core::core::if_else(!tc.dont_build, "// @tsc: --build /myproject/dependency,--build /myproject/main", "");
+			let mut main_refs_str = tsc_core::core::if_else(!tc.main_with_no_ref, r#""references": [{ "path": "../dependency" }]"#, "");
+			let mut files_str = tsc_core::core::if_else(!tc.tsconfig_not_solution, r#""files": [],"#, "");
 			let mut content = format!(r#"
 // @stateBaseline: true 
 %s

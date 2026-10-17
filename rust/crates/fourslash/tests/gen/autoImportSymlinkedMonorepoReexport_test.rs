@@ -55,7 +55,7 @@ console.log(projectBValue);
 projectBFunction/**/
 // @link: /packages/project-b -> /packages/project-a/node_modules/project-b"#;
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		let mut prefs = tsc_lsutil::NewDefaultUserPreferences();
+		let mut prefs = tsc_lsutil::new_default_user_preferences();
 		prefs.auto_import_entrypoint_directory_search = tsc_core::tristate::TS_TRUE;
 		f.configure(prefs);
 		f.go_to_marker("");

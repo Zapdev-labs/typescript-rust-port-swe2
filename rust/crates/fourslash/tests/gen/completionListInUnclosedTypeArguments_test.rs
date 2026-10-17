@@ -50,7 +50,7 @@ f2<any, () =>/*1z*/T/*2z*/y/*3z*/"#;
 				includes = vec!["Type"];
 				excludes = vec!["x"];
 			}
-			f.verify_completions(marker.into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: commit_characters.into(), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: includes.into(), excludes: excludes.into(), ..Default::default() }), ..Default::default() }));
+			f.verify_completions(tsc_fourslash::MarkerInput::from(marker), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: commit_characters.into(), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: includes.into(), excludes: excludes.into(), ..Default::default() }), ..Default::default() }));
 		}		f.go_to_each_marker(&[], );
 	});
 }

@@ -12,7 +12,7 @@ enum /*enumName1*/
 enum a/*enumName2*/
 var x = 0; enum /*enumName4*/";
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_completions(f.markers().into(), None);
+		f.verify_completions(tsc_fourslash::MarkerInput::from(f.markers()), None);
 	});
 }
 

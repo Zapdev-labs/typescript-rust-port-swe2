@@ -46,7 +46,7 @@ var e = a.map(x => x./*13*/";
 		f.verify_quick_info_at("10", "(parameter) x: any", "");
 		f.verify_quick_info_at("11", "var dd: any[]", "");
 		f.verify_quick_info_at("12", "(parameter) x: any", "");
-		f.verify_completions("13".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["length".into()].into(), excludes: vec!["toFixed".into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions(tsc_fourslash::MarkerInput::from("13"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec!["length".into()].into(), excludes: vec!["toFixed".into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

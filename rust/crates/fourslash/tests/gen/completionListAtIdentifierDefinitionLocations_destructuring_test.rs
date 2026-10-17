@@ -24,7 +24,7 @@ function func1({ a/*parameter1*/
 // @Filename: h.ts
 function func2({ a, b/*parameter2*/";
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_completions(f.markers().into(), None);
+		f.verify_completions(tsc_fourslash::MarkerInput::from(f.markers()), None);
 	});
 }
 

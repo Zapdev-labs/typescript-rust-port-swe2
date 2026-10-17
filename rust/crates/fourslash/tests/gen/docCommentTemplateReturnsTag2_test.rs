@@ -11,16 +11,16 @@ fn doc_comment_template_returns_tag2() {
 function f1(x: number, y: number) {
     return 1;
 }";
-		let mut capabilities = tsc_fourslash::GetDefaultCapabilities();
+		let mut capabilities = tsc_fourslash::get_default_capabilities();
 		capabilities.text_document.as_mut().unwrap().completion.as_mut().unwrap().completion_item.as_mut().unwrap().snippet_support = Some((false).into());
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", capabilities.into(), content);
-		f.verify_js_doc_completion("0".into(), 7, r"/**
+		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("0"), 7, r"/**
  * 
  * @param x
  * @param y
  * @returns
  */", Some((true).into()));
-		f.verify_js_doc_completion("0".into(), 7, r"/**
+		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("0"), 7, r"/**
  * 
  * @param x
  * @param y

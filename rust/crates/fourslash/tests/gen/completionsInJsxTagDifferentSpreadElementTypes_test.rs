@@ -54,7 +54,7 @@ export function ComponentNumber(props: number) {
 ";
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 |marker, index| {
-			f.verify_completions(marker.into(), None);
+			f.verify_completions(tsc_fourslash::MarkerInput::from(marker), None);
 		}		f.go_to_each_marker(&[], );
 	});
 }

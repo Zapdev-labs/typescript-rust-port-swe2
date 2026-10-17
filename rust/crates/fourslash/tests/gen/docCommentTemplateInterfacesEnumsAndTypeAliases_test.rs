@@ -30,19 +30,19 @@ const enum Status {
 
 /*aliasBar*/
 type Bar = Foo & any;";
-		let mut capabilities = tsc_fourslash::GetDefaultCapabilities();
+		let mut capabilities = tsc_fourslash::get_default_capabilities();
 		capabilities.text_document.as_mut().unwrap().completion.as_mut().unwrap().completion_item.as_mut().unwrap().snippet_support = Some((false).into());
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", capabilities.into(), content);
-		f.verify_js_doc_completion("interfaceFoo".into(), 3, r"/** */", None);
-		f.verify_js_doc_completion("propertybar".into(), 3, r"/** */", None);
-		f.verify_js_doc_completion("methodbaz".into(), 11, r"/**
+		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("interfaceFoo"), 3, r"/** */", None);
+		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("propertybar"), 3, r"/** */", None);
+		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("methodbaz"), 11, r"/**
      * 
      * @param message
      */", None);
-		f.verify_js_doc_completion("methodUnit".into(), 3, r"/** */", None);
-		f.verify_js_doc_completion("enumStatus".into(), 3, r"/** */", None);
-		f.verify_js_doc_completion("memberOpen".into(), 3, r"/** */", None);
-		f.verify_js_doc_completion("memberClosed".into(), 3, r"/** */", None);
+		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("methodUnit"), 3, r"/** */", None);
+		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("enumStatus"), 3, r"/** */", None);
+		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("memberOpen"), 3, r"/** */", None);
+		f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from("memberClosed"), 3, r"/** */", None);
 	});
 }
 

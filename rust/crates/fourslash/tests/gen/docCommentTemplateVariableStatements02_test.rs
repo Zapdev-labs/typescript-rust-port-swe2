@@ -34,11 +34,11 @@ let f1 = {
     foo: 10,
     bar: "20"
 }, f2 = null;"#;
-		let mut capabilities = tsc_fourslash::GetDefaultCapabilities();
+		let mut capabilities = tsc_fourslash::get_default_capabilities();
 		capabilities.text_document.as_mut().unwrap().completion.as_mut().unwrap().completion_item.as_mut().unwrap().snippet_support = Some((false).into());
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", capabilities.into(), content);
 		for var_name in vec!["a", "b", "c", "d", "e", "f"] {
-			f.verify_js_doc_completion(var_name.into(), 3, r"/** */", None);
+			f.verify_js_doc_completion(tsc_fourslash::MarkerInput::from(var_name), 3, r"/** */", None);
 		}
 	});
 }

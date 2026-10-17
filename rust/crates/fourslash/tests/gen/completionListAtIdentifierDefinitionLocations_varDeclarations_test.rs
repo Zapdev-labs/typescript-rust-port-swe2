@@ -13,7 +13,7 @@ var a/*varName2*/
 var a2,/*varName3*/
 var a2, a/*varName4*/";
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_completions(f.markers().into(), None);
+		f.verify_completions(tsc_fourslash::MarkerInput::from(f.markers()), None);
 	});
 }
 

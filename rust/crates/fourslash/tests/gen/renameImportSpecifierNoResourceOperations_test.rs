@@ -12,7 +12,7 @@ fn rename_import_specifier_no_resource_operations() {
 export const x = 0;
 // @Filename: /b.ts
 import * as a from ".//*rename*/a";"#;
-		let mut capabilities = tsc_fourslash::GetDefaultCapabilities();
+		let mut capabilities = tsc_fourslash::get_default_capabilities();
 		capabilities.workspace.as_mut().unwrap().workspace_edit = &tsc_lsproto::WorkspaceEditClientCapabilities { document_changes: Some((true).into()), resource_operations: Some(vec![]), ..Default::default() };
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", capabilities.into(), content);
 		f.go_to_marker("rename");

@@ -12,7 +12,7 @@ type Bar<T> = T extends { a: (x: infer /*1*/) => void; b: (x: infer U/*2*/) => v
    ? U
    : never;";
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_completions(f.markers().into(), None);
+		f.verify_completions(tsc_fourslash::MarkerInput::from(f.markers()), None);
 	});
 }
 

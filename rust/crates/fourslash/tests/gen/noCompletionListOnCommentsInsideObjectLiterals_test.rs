@@ -18,7 +18,7 @@ fn no_completion_list_on_comments_inside_object_literals() {
 	};
 }";
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_completions(f.markers().into(), None);
+		f.verify_completions(tsc_fourslash::MarkerInput::from(f.markers()), None);
 	});
 }
 

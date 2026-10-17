@@ -10,7 +10,7 @@ fn completions_dot_in_array_literal_in_object_literal() {
 		let content = r"const o = { x: [[|.|][||]/**/";
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_non_suggestion_diagnostics(&[tsc_lsproto::Diagnostic { code: Some(tsc_lsproto::IntegerOrString { integer: Some(((1109) as i32).into()), ..Default::default() }), message: tsc_lsproto::StringOrMarkupContent { string: Some(("Expression expected.").into()), ..Default::default() }.into(), range: f.ranges()[0].clone().ls_range.into(), ..Default::default() }, tsc_lsproto::Diagnostic { code: Some(tsc_lsproto::IntegerOrString { integer: Some(((1003) as i32).into()), ..Default::default() }), message: tsc_lsproto::StringOrMarkupContent { string: Some(("Identifier expected.").into()), ..Default::default() }.into(), range: f.ranges()[1].clone().ls_range.into(), ..Default::default() }]);
-		f.verify_completions("".into(), None);
+		f.verify_completions(tsc_fourslash::MarkerInput::from(""), None);
 	});
 }
 

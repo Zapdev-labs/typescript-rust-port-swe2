@@ -23,7 +23,7 @@ point./*3*/x = 30;";
 		f.verify_quick_info_at("2", "var x: number", "");
 		f.verify_quick_info_at("3", "(property) x: number", "");
 		f.verify_quick_info_at("4", "var point: {\n    b: number;\n    x: number;\n}", "");
-		f.verify_completions("3".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "b".to_string().into(), detail: Some(("(property) b: number").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "x".to_string().into(), detail: Some(("(property) x: number").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions(tsc_fourslash::MarkerInput::from("3"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: vec![tsc_lsproto::CompletionItem { label: "b".to_string().into(), detail: Some(("(property) b: number").into()), ..Default::default() }.into(), tsc_lsproto::CompletionItem { label: "x".to_string().into(), detail: Some(("(property) x: number").into()), ..Default::default() }.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 

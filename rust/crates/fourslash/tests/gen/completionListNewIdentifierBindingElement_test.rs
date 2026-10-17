@@ -9,7 +9,7 @@ fn completion_list_new_identifier_binding_element() {
 	run_test(|t| {
 		let content = r"var { x:html/*1*/";
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_completions("1".into(), None);
+		f.verify_completions(tsc_fourslash::MarkerInput::from("1"), None);
 	});
 }
 

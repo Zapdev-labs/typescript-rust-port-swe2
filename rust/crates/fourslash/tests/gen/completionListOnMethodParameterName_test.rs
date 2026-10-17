@@ -12,7 +12,7 @@ fn completion_list_on_method_parameter_name() {
     }
 }";
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_completions("".into(), None);
+		f.verify_completions(tsc_fourslash::MarkerInput::from(""), None);
 	});
 }
 

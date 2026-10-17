@@ -27,7 +27,7 @@ var /*3*/r2 = t./*4*/foo; // t should have 'foo' in dropdown list and be of type
 		f.verify_quick_info_at("1", "(alias) interface test\nimport test = require('./exportEqualTypes_file0')", "");
 		f.verify_quick_info_at("2", "var r1: Date", "");
 		f.verify_quick_info_at("3", "var r2: string", "");
-		f.verify_completions("4".into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_function_members_with_prototype_plus(vec!["foo".into()]).into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions(tsc_fourslash::MarkerInput::from("4"), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(tsc_fourslash::default_commit_characters().clone()), edit_range: tsc_fourslash::IGNORED.into(), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { exact: completion_function_members_with_prototype_plus(vec!["foo".into()]).into(), ..Default::default() }), ..Default::default() }));
 		f.verify_no_errors();
 	});
 }

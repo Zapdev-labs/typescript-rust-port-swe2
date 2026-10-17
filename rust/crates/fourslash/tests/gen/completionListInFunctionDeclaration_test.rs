@@ -11,7 +11,7 @@ fn completion_list_in_function_declaration() {
 var a = 0;
 function foo(/**/";
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_completions("".into(), None);
+		f.verify_completions(tsc_fourslash::MarkerInput::from(""), None);
 		f.insert("a");
 		f.verify_completions(Default::default(), None);
 		f.insert(" , ");

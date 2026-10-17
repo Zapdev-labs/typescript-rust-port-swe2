@@ -25,7 +25,7 @@ let x;
 /** @type {a.Blah<{ a: /*2*/ }>} */
 "#;
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_completions(f.markers().into(), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![".".into(), ",".into(), ";".into()]), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![r#""hello""#.into(), r#""world""#.into()].into(), ..Default::default() }), ..Default::default() }));
+		f.verify_completions(tsc_fourslash::MarkerInput::from(f.markers()), Some(&tsc_fourslash::CompletionsExpectedList { is_incomplete: false.into(), item_defaults: Some(tsc_fourslash::CompletionsExpectedItemDefaults { commit_characters: Some(vec![".".into(), ",".into(), ";".into()]), ..Default::default() }), items: Some(tsc_fourslash::CompletionsExpectedItems { includes: vec![r#""hello""#.into(), r#""world""#.into()].into(), ..Default::default() }), ..Default::default() }));
 	});
 }
 
