@@ -2579,3 +2579,22 @@ first profile). Rebuild running remote, then:
 PGO binary: ~/genf-rust/target-pgo/release/tsc — check 0.332s vs Go 0.210
 (same 63k symbols — ~1.5x same-work slower). Find the check hotspot.
 
+
+## checkpoint 23 — check hotspot identified: flow analysis
+
+pprof (TSC_PPROF_DIR, go tool pprof, remote):
+  check_expression_worker 62% cum
+    → check_identifier 41% → get_flow_type_of_reference_ex 21% +
+       get_resolved_symbol 10.5%
+    → check_call_expression 36%, check_binary_expression 31%,
+       check_property_access 21% (of check_expression_worker)
+  flat: eq 5.6%, memcpy/write/replace ~10%, clone(Rc) 8.5%,
+        atomic_add/sub refcount ~3%, arena_cell 2.7%
+
+Same work as Go (62950 vs 62930 symbols) — the ~1.5x check gap is the
+Rc/RefCell/dispatch tax spread through hot paths, concentrated in flow
+analysis. PGO: 0.67→0.44 wall (committed BENCH-checker.png updated).
+
+Next for more speed: get_flow_type_of_reference_ex internals —
+flow-graph node identity/comparison cost, shared-flow-type caching,
+Rc->arena for flow nodes. checker_a.rs:7485 + checker_b.rs:6725+.
