@@ -25,7 +25,7 @@ export function f1() { };
 f1();"#.into()], None);
 		f.verify_import_fix_at_position(&[r#"import { f1 } from "b/x";
 
-f1();"#.into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_preference: "non-relative".to_string().into(), ..Default::default() }));
+f1();"#.into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_preference: tsc_modulespecifiers::ImportModuleSpecifierPreference("non-relative"), ..Default::default() }));
 	});
 }
 

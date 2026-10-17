@@ -915,6 +915,7 @@ var enumTypes = []string{
 	"DiagnosticSeverity", "InsertTextMode", "TokenType", "WatchFileKind",
 	"FilePreprocessingDiagnosticsKind", "DocumentHighlightsKind",
 	"SignatureHelpTriggerReasonKind", "InlayHintKind",
+	"SymbolKind", "DocumentHighlightKind", "InlayHint", "CodeLensState",
 }
 
 // rustEnumType maps Go enum-type prefixes to the Rust type name where they
@@ -1155,9 +1156,6 @@ var strPtrArgs = map[string][]int{
 // ownedArgs — `T` params where Go passes `*T`: `&x`/`x` -> x.clone()/x.
 var ownedArgs = map[string][]int{
 	"configure": {0}, "configure_with_reset": {0}, "verify_rename_range": {0},
-	"and_apply_code_action": {1}, "and_has_no_code_action": {0},
-	"verify_code_fix": {0}, "verify_code_fix_all": {0}, "verify_signature_help": {0},
-	"resolve_completion_item": {0},
 }
 
 // fmutArgs — `&mut FourslashTest` params (Go `f` receiver passed as arg).
@@ -1449,7 +1447,11 @@ func (tr *translator) packIter(list []ast.Expr, spread bool) string {
 		if id, ok := e.(*ast.Ident); ok && id.Name == "nil" {
 			continue
 		}
-		parts = append(parts, tr.expr(e)+".into()")
+		if u, ok := e.(*ast.UnaryExpr); ok && u.Op == token.AND {
+			parts = append(parts, tr.expr(u.X)+".into()")
+		} else {
+			parts = append(parts, tr.expr(e)+".into()")
+		}
 	}
 	if spread {
 		last := list[len(list)-1]
@@ -1720,6 +1722,14 @@ var optionFromFields = map[string]bool{
 	"marker_input": true,
 }
 
+// newtypeStrFields — `&'static str` newtype fields (no From<String>):
+// emit `Type("lit")` instead of `"lit".to_string().into()`.
+var newtypeStrFields = map[string]string{
+	"import_module_specifier_preference": "tsc_modulespecifiers::ImportModuleSpecifierPreference",
+	"import_module_specifier_ending":     "tsc_modulespecifiers::ImportModuleSpecifierEndingPreference",
+	"semicolons":                         "",
+}
+
 var rustKeywords = map[string]bool{
 	"type": true, "ref": true, "match": true, "loop": true, "box": true,
 	"self": true, "mod": true, "use": true, "move": true, "in": true,
@@ -1807,6 +1817,11 @@ func (tr *translator) emitFields(b *strings.Builder, x *ast.CompositeLit, selfPa
 		}
 		fname := fieldName(identName(kv.Key))
 		val := tr.exprField(kv.Value)
+		if nt, ok := newtypeStrFields[fname]; ok && nt != "" {
+			if lit, ok2 := kv.Value.(*ast.BasicLit); ok2 && lit.Kind == token.STRING {
+				val = nt + "(" + tr.lit(lit) + ")"
+			}
+		}
 		if optionFromFields[fname] {
 			if id, ok := kv.Value.(*ast.Ident); ok && id.Name == "nil" {
 				val = "None"

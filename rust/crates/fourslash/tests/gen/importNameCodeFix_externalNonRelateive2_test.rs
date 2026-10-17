@@ -36,15 +36,15 @@ shared/*external2external*/"#;
 		f.go_to_marker("internal2external");
 		f.verify_import_fix_at_position(&[r#"import { shared } from "shared/constants";
 
-shared"#.into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_preference: "project-relative".to_string().into(), ..Default::default() }));
+shared"#.into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_preference: tsc_modulespecifiers::ImportModuleSpecifierPreference("project-relative"), ..Default::default() }));
 		f.go_to_marker("internal2internal");
 		f.verify_import_fix_at_position(&[r#"import { utils } from "./utils";
 
-utils"#.into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_preference: "project-relative".to_string().into(), ..Default::default() }));
+utils"#.into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_preference: tsc_modulespecifiers::ImportModuleSpecifierPreference("project-relative"), ..Default::default() }));
 		f.go_to_marker("external2external");
 		f.verify_import_fix_at_position(&[r#"import { shared } from "./constants";
 
-shared"#.into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_preference: "project-relative".to_string().into(), ..Default::default() }));
+shared"#.into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_preference: tsc_modulespecifiers::ImportModuleSpecifierPreference("project-relative"), ..Default::default() }));
 	});
 }
 

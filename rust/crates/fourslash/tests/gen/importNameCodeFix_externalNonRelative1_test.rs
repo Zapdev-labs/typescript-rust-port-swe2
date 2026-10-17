@@ -52,11 +52,11 @@ Pkg2/*internal*/
 		f.go_to_marker("external");
 		f.verify_import_fix_at_position(&[r#"import { Pkg2 } from "pkg-2/utils";
 
-Pkg2"#.into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_preference: "project-relative".to_string().into(), ..Default::default() }));
+Pkg2"#.into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_preference: tsc_modulespecifiers::ImportModuleSpecifierPreference("project-relative"), ..Default::default() }));
 		f.go_to_marker("internal");
 		f.verify_import_fix_at_position(&[r#"import { Pkg2 } from "../../utils";
 
-Pkg2"#.into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_preference: "project-relative".to_string().into(), ..Default::default() }));
+Pkg2"#.into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_preference: tsc_modulespecifiers::ImportModuleSpecifierPreference("project-relative"), ..Default::default() }));
 	});
 }
 

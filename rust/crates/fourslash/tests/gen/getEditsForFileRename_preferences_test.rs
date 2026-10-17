@@ -16,7 +16,7 @@ import {} from 'dir/a';
 {"compilerOptions":{"paths":{"*":["*"]}}}"#;
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
 		f.verify_will_rename_files_edits("/dir/a.ts", "/dir/a1.ts", &std::collections::BTreeMap::from([("/dir/b.ts".to_string().into(), r#"import {} from "dir/a1";
-import {} from 'dir/a1';"#.to_string().into())]), &tsc_lsutil::UserPreferences { import_module_specifier_preference: "non-relative".to_string().into(), quote_preference: tsc_lsutil::quote_preference("single").into(), ..Default::default() });
+import {} from 'dir/a1';"#.to_string().into())]), &tsc_lsutil::UserPreferences { import_module_specifier_preference: tsc_modulespecifiers::ImportModuleSpecifierPreference("non-relative"), quote_preference: tsc_lsutil::quote_preference("single").into(), ..Default::default() });
 	});
 }
 

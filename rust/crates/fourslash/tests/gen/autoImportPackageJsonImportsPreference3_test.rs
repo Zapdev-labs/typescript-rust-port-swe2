@@ -19,7 +19,7 @@ export function something(name: string): any;
 // @Filename: /src/a/b/c/d.ts
 something/**/"##;
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_import_fix_module_specifiers("", &["#a/b/c/something".into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_preference: "non-relative".to_string().into(), ..Default::default() }));
+		f.verify_import_fix_module_specifiers("", &["#a/b/c/something".into()], Some(&tsc_lsutil::UserPreferences { import_module_specifier_preference: tsc_modulespecifiers::ImportModuleSpecifierPreference("non-relative"), ..Default::default() }));
 	});
 }
 

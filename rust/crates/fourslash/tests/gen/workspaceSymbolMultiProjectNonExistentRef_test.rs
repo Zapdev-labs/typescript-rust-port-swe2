@@ -27,7 +27,7 @@ export const [|myValueA|]: number = 1;
 export const [|myValueB|]: string = "hello";
 "#;
 		let mut f = tsc_fourslash::new_fourslash(&t_name(), "", None, content);
-		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "myValue".to_string().into(), includes: Some((vec![tsc_lsproto::SymbolInformation { name: "myValueA".to_string().into(), kind: tsc_lsproto::SYMBOL_KIND_VARIABLE.into(), location: f.ranges()[0].clone().ls_location().into(), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "myValueB".to_string().into(), kind: tsc_lsproto::SYMBOL_KIND_VARIABLE.into(), location: f.ranges()[1].clone().ls_location().into(), ..Default::default() }]).into()), ..Default::default() }]);
+		f.verify_workspace_symbol(&[tsc_fourslash::VerifyWorkspaceSymbolCase { pattern: "myValue".to_string().into(), includes: Some((vec![tsc_lsproto::SymbolInformation { name: "myValueA".to_string().into(), kind: tsc_lsproto::SymbolKind::Variable.into(), location: f.ranges()[0].clone().ls_location().into(), ..Default::default() }, tsc_lsproto::SymbolInformation { name: "myValueB".to_string().into(), kind: tsc_lsproto::SymbolKind::Variable.into(), location: f.ranges()[1].clone().ls_location().into(), ..Default::default() }]).into()), ..Default::default() }]);
 	});
 }
 
