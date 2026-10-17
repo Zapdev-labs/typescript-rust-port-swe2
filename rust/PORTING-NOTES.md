@@ -2397,3 +2397,23 @@ initialize/completion request through `tsc --server`/tsserver binary),
 then remove /home/dih/TypeScript/tsc Go tree + bundled/libs symlink
 retarget + diagnostics/build.rs vendored-input fix (make it read
 vendored copies, not ../../../tsc) so the Rust tree is self-contained.
+
+## checkpoint 12 — workspace test running; env fixes applied
+
+Remote `~/genf-rust` now needs (for tests that read Go-tree data):
+- `~/genf-rust/tsc/go.mod` + `~/tsc/go.mod` (paths.rs walks ancestors for
+  `<dir>/tsc/go.mod` to find repo root)
+- `~/genf-rust/tsc/internal/diagnostics/` (diagnosticMessages.json + loc/)
+- `~/genf-rust/tools/LocProject.json`
+- `~/genf-rust/tsc/testdata/baselines/` (279M — apiencoder baseline tests)
+
+tsc-apiencoder fixed: 28/28 pass after baselines synced.
+Full `cargo test --workspace` re-running remote -> ~/ws-test.txt.
+
+In flight: subagent ff2f56f0 porting resolve_completion_item into crates/ls
++ wiring lsp server_handlers stub.
+
+Next: collect workspace results -> fix residual failures -> smoke-test
+`tsc` binary (initialize/completion JSON-RPC through tsserver) ->
+vendor diagnostics build inputs so tree is self-contained ->
+remove Go source tree -> final commit.
