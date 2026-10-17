@@ -2480,3 +2480,19 @@ inlayHint/diagnostic/willRename + serverInfo typescript 7.1.0-dev.
 REMAINING: vendor diagnostics/libs inputs for self-containment
 (diagnostics/build.rs + bundled/libs symlink currently read ../../../tsc),
 remove /home/dih/TypeScript/tsc, final commits.
+
+## checkpoint 17 — self-contained + Go removal
+
+rust/ is now self-contained: crates/bundled/libs materialized (was a
+symlink into tsc/), vendor/diagnostics + vendor/tools/LocProject.json for
+diagnostics/build.rs (falls back to Go checkout layout if present),
+testdata/ copied in (345M). repo/paths.rs resolves rust/testdata first.
+Verified: remote cargo check clean on ~/genf-rust after vendored sync.
+
+/tools/genfourslash/run.sh defaults SRC to the Go tests dir — it's a
+one-shot port tool; after tsc/ removal pass -src explicitly if regen
+is ever needed (generated tests are committed; no regen needed).
+
+Final state: all crates compile clean, 4572/4572 fourslash tests pass,
+full workspace cargo test 136 binaries 0 failures, tsc --lsp --stdio
+serves a real LSP initialize handshake with full capabilities.
