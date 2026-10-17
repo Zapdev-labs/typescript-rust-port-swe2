@@ -2446,3 +2446,24 @@ completions.rs when last checked).
 
 Then: vendor diagnostics+libs inputs (self-contained tree), remove
 /home/dih/TypeScript/tsc, final commit.
+
+## checkpoint 15 — resolve_completion_item ported + tsc binary --lsp/--api wired
+
+- Subagent ff2f56f0 ported resolve_completion_item +
+  get_completion_item_details + get_symbol_completion_from_item_data +
+  create_simple_details into crates/ls (completions.rs ~10080,
+  string_completions.rs, hover.rs pub); wired lsp handle_completion_item_resolve.
+  Committed in e23276ae1a.
+- tsc binary moved crates/execute/src/bin/tsc.rs -> crates/lsp/src/bin/tsc.rs
+  (tsc-lsp is top of dep graph: lsp -> api -> execute; execute CANNOT dep on
+  api). api/lib.rs `mod server` -> `pub mod server`.
+  run_lsp/run_api implemented (stdio msgpack/jsonrpc). Compiles clean.
+- Remote genf-rust gotcha: crates/bundled/libs is a SYMLINK -> ../../../tsc;
+  on remote always `rm -f` it then `rsync -azL crates/bundled/libs/` to
+  materialize real files (plain `rsync -az` restores the dangling symlink).
+
+NEXT: `cargo build --release --bin tsc` remote -> smoke test:
+  echo Content-Length JSON-RPC initialize + textDocument/completion
+  through `./target/release/tsc --lsp --stdio`; msgpack through `--api`.
+Then: vendor diagnostics/libs inputs for self-contained tree, remove
+/home/dih/TypeScript/tsc, final commits.
