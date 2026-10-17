@@ -2273,3 +2273,55 @@ Current census (/tmp/fsfull.txt on dih@192.168.1.15:~/TypeScript/rust):
 - 12 `From<&Rc<RangeMarker>>` — packIter &x strip landed; recheck.
 - 8 get_completions private — `f.get_completions(...)` calls: method is
   pub(crate)? make pub or route to public wrapper.
+
+## checkpoint 8 — 1684 errors (was 1733/1804/1959/2764/11803/16204)
+
+RangeMarker got derive(Default) — lib compiles again.
+
+NEXT (by class, /tmp/fsfull.txt on dih@192.168.1.15:~/TypeScript/rust):
+- 747 E0283 `.into()` ambiguity — grep "cannot infer" sites; MarkerInput::from
+  landed but residual `.into()` sites remain (iterArgs vec elems? None.into()?
+  Some(x).into()? `.to_string().into()`?). SAMPLE FIRST.
+- 552 E0308 — re-census.
+- 47 new_content_mapper_fourslash — helper fn lives in contentMapper_test.go
+  (skipped: no Test fns). Emit helper fns from no-Test files into a shared
+  `gen_helpers.rs` mod + `mod gen_helpers;` in gen_N.rs chunks.
+- 40 E0507 `*x` on Rc — `(*x).clone()` emitted; sites needing `.as_ref()`
+  remain (e.g. `*marker.Position` TextPos is Copy — `(*x).clone()` fine; sites
+  where target is `&T` or the deref is inside a bigger expr).
+- 35 CodeActionKind::SourceSortImports — wrong name; grep lsp_generated for
+  the real variant (maybe `SourceSortImports` doesn't exist — could be a
+  custom string kind like `source.sortImports.ts` — emit
+  `CodeActionKind(Cow::Borrowed("source.sortImports.ts"))` if no const).
+- 32+31 `tsc_fourslash::GetDefaultCapabilities`/`GetDefaultCapabilitiesWithOptions`
+  PascalCase — my `pkg.Type(x)` type-ctor branch misroutes them
+  (suffix "Capabilities" -> isTypeName). FIX: in that branch check
+  snakeNames[name] FIRST -> snake fn name; likewise `lsutil.NewDefaultUserPreferences`
+  -> `tsc_lsutil::new_default_user_preferences` (6 errors).
+- 21 E0061 zero-arg calls — sample sites (verify_code_fix_not_available
+  emits &[] now? check).
+- 19 `Option<Vec<CompletionsExpectedItem>>: From<_>` — vec elem type
+  inference (`vec![None]`/mixed) — sample.
+- 17 `tsc_lsutil::quote_preference("auto")` — Go `lsutil.QuotePreference("auto")`
+  conversion — my isTypeName branch emits `tsc_lsutil::QuotePreference("auto")`
+  BUT that's still wrong type? QuotePreference(pub Cow) — needs
+  `QuotePreference(Cow::Borrowed("auto"))` or `.into()` — check From impls;
+  maybe emit `tsc_lsutil::QuotePreference::AUTO`? Auto const exists?
+  Wait error says `cannot find function quote_preference` — emitted as
+  snake fn — the isTypeName fix may have resolved it; re-check.
+- 13 `no field items on Option<CompletionList>` — `result.list.items` ->
+  `.unwrap().items`/`.as_ref().unwrap().items` (optionReturnCalls:
+  add the producing method or handle .items on `list` var).
+- 12 `From<&Rc<RangeMarker>>` — `&f.ranges()[0]` in variadicIter -> strip &;
+  other `&` arg sites -> `.clone().into()`.
+- 10 `tsc_core::if_else` — `core.IfElse(x,y,z)` is a CALL — call() pkg-fn
+  branch emits `tsc_core::if_else` bypassing relocatedTypes. FIX: consult
+  relocatedTypes in the package-fn branch before emitting path::snake.
+- 6 `no field new_line_character on FormatCodeSettings` — `NewDefaultUserPreferences`
+  literal? or FormatCodeSettings w/ editor_settings field routing failed —
+  check the literal shape (maybe FormatCodeSettings nested inside
+  UserPreferences -> routed fine, but a DIRECT `editor_settings` field
+  inside FormatCodeSettings literal needs isFmt suffix check — verify
+  selfPath ends with "FormatCodeSettings" works when path is
+  `tsc_lsutil::FormatCodeSettings` vs elided "").
+- `get_completions` private — made pub earlier; verify no E0624 left.

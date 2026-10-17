@@ -109,6 +109,7 @@ pub(crate) fn root_dir() -> &'static RootedDirectoryPath {
 ///
 /// is a range with `text in range` "selected".
 #[derive(Debug)]
+#[derive(Default)]
 pub struct RangeMarker {
     /// `fileName tspath.RootedFilePath`
     pub(crate) file_name: RootedFilePath,
