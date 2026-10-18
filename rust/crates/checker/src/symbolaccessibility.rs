@@ -417,7 +417,7 @@ impl Checker {
             && container_flags.intersects(ast::SymbolFlags::TYPE)
             && {
                 let declared = self.get_declared_type_of_symbol(container);
-                self.types_handle()
+                self.types_ptr()
                     .get(declared)
                     .flags
                     .intersects(TypeFlags::OBJECT)

@@ -713,7 +713,7 @@ impl Checker {
         }
         if flags.intersects(TypeFlags::UNION) {
             let types = {
-                self.types_handle()
+                self.types_ptr()
                     .get(t)
                     .as_union_type()
                     .union_or_intersection
@@ -724,7 +724,7 @@ impl Checker {
         }
         if flags.intersects(TypeFlags::INTERSECTION) {
             let types = {
-                self.types_handle()
+                self.types_ptr()
                     .get(t)
                     .as_intersection_type()
                     .union_or_intersection

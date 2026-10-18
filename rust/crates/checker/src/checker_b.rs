@@ -273,7 +273,7 @@ impl Checker {
             return cached;
         }
         let literal_type = self.clone_type_reference(t);
-        self.types_handle()
+        self.types_ptr()
             .get_mut(literal_type)
             .object_flags
             .insert(ObjectFlags::ARRAY_LITERAL | ObjectFlags::CONTAINS_OBJECT_OR_ARRAY_LITERAL);
@@ -4491,7 +4491,7 @@ impl Checker {
                             &[],
                             &[],
                         );
-                        self.types_handle().get_mut(return_only_type).object_flags |=
+                        self.types_ptr().get_mut(return_only_type).object_flags |=
                             ObjectFlags::NON_INFERRABLE_TYPE;
                         self.context_free_types.insert(node, return_only_type);
                         return return_only_type;
@@ -4569,7 +4569,7 @@ impl Checker {
                             );
                             let rest_type = self.get_effective_rest_type(contextual_signature);
                             if rest_type.is_some_and(|t| {
-                                self.types_handle()
+                                self.types_ptr()
                                     .get(t)
                                     .flags
                                     .intersects(TypeFlags::TYPE_PARAMETER)
@@ -5771,7 +5771,7 @@ impl Checker {
                     &construct_signatures,
                     &index_infos,
                 );
-                self.types_handle()
+                self.types_ptr()
                     .get_mut(result)
                     .as_instantiation_expression_type_mut()
                     .node = Some(node);
@@ -8871,7 +8871,7 @@ impl Checker {
             let t = if ast::is_static(&nodes[container]) {
                 self.get_type_of_symbol(symbol)
             } else {
-                self.types_handle()
+                self.types_ptr()
                     .get({
                         let dt = self.get_declared_type_of_symbol(symbol);
                         dt
@@ -10422,7 +10422,7 @@ impl Checker {
         source: TypeId,
         target: TypeId,
     ) -> bool {
-        self.types_handle()
+        self.types_ptr()
             .get(target)
             .flags
             .intersects(TypeFlags::NULLABLE)
@@ -11044,17 +11044,17 @@ impl Checker {
             &[],
             &index_infos,
         );
-        self.types_handle().get_mut(result).object_flags |= object_flags
+        self.types_ptr().get_mut(result).object_flags |= object_flags
             | ObjectFlags::OBJECT_LITERAL
             | ObjectFlags::CONTAINS_OBJECT_OR_ARRAY_LITERAL;
         if contextual_type.is_none()
             && ast::is_in_js_file(Some(node), &nodes)
             && !ast::is_in_json_file(&nodes[node])
         {
-            self.types_handle().get_mut(result).object_flags |= ObjectFlags::JS_LITERAL;
+            self.types_ptr().get_mut(result).object_flags |= ObjectFlags::JS_LITERAL;
         }
         if pattern_with_computed_properties {
-            self.types_handle().get_mut(result).object_flags |=
+            self.types_ptr().get_mut(result).object_flags |=
                 ObjectFlags::OBJECT_LITERAL_PATTERN_WITH_COMPUTED_PROPERTIES;
         }
         if in_destructuring_pattern {
@@ -11078,7 +11078,7 @@ impl Checker {
             let exports = self.sym(node_symbol.unwrap()).exports.clone();
             let result = self.new_anonymous_type(node_symbol, exports, &[], &[], &[]);
             if ast::is_in_js_file(Some(node), &nodes) && !ast::is_in_json_file(&nodes[node]) {
-                self.types_handle().get_mut(result).object_flags |= ObjectFlags::JS_LITERAL;
+                self.types_ptr().get_mut(result).object_flags |= ObjectFlags::JS_LITERAL;
             }
             // An expando object literal has no property children (len == 0), so there
             // is nothing to check here.
@@ -11715,7 +11715,7 @@ impl Checker {
             .map(|&info| self.get_index_info_with_readonly(info, readonly))
             .collect();
         let spread = self.new_anonymous_type(symbol, members, &[], &[], &spread_index_infos);
-        self.types_handle().get_mut(spread).object_flags |= ObjectFlags::OBJECT_LITERAL
+        self.types_ptr().get_mut(spread).object_flags |= ObjectFlags::OBJECT_LITERAL
             | ObjectFlags::CONTAINS_OBJECT_OR_ARRAY_LITERAL
             | ObjectFlags::CONTAINS_SPREAD
             | object_flags;
@@ -11808,7 +11808,7 @@ impl Checker {
 
     /// `func (c *Checker) isNonGenericObjectType` (checker.go:13780).
     pub(crate) fn is_non_generic_object_type(&mut self, t: TypeId) -> bool {
-        self.types_handle()
+        self.types_ptr()
             .get(t)
             .flags
             .intersects(TypeFlags::OBJECT)
@@ -11893,7 +11893,7 @@ impl Checker {
         let first_symbol = self.types.get_ref(first_type).symbol;
         let index_infos = self.get_index_infos_of_type(first_type);
         let spread = self.new_anonymous_type(first_symbol, members, &[], &[], &index_infos);
-        self.types_handle().get_mut(spread).object_flags |=
+        self.types_ptr().get_mut(spread).object_flags |=
             ObjectFlags::OBJECT_LITERAL | ObjectFlags::CONTAINS_OBJECT_OR_ARRAY_LITERAL;
         spread
     }
@@ -12159,7 +12159,7 @@ impl Checker {
             let element_types = self.get_element_types(t);
             let element_infos: Vec<TupleElementInfo> = self
                 .types_handle()
-                .get_ref(self.types_handle().target_tuple_type(t).unwrap())
+                .get_ref(self.types_ptr().target_tuple_type(t).unwrap())
                 .as_tuple_type()
                 .element_infos
                 .to_vec();

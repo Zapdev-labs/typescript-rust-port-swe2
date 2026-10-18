@@ -513,7 +513,7 @@ impl Checker {
                     .intersects(TypeFlags::NEVER)
                 && {
                     let ft = self.get_type_with_facts(result_type, TypeFacts::NE_UNDEFINED_OR_NULL);
-                    self.types_handle()
+                    self.types_ptr()
                         .get(ft)
                         .flags
                         .intersects(TypeFlags::NEVER)
@@ -3318,7 +3318,7 @@ impl Checker {
             return result;
         }
         let result = self.new_object_type(ObjectFlags::EVOLVING_ARRAY, None);
-        if let TypeData::EvolvingArray(d) = &mut self.types_handle().get_mut(result).data {
+        if let TypeData::EvolvingArray(d) = &mut self.types_ptr().get_mut(result).data {
             d.element_type = Some(element_type);
         }
         self.cached_types.insert(key, result);
@@ -3441,11 +3441,11 @@ impl Checker {
                 .element_type
                 .unwrap_or(self.never_type);
             let final_array_type = self.create_final_array_type(element_type);
-            if let TypeData::EvolvingArray(d) = &mut self.types_handle().get_mut(t).data {
+            if let TypeData::EvolvingArray(d) = &mut self.types_ptr().get_mut(t).data {
                 d.final_array_type = Some(final_array_type);
             }
         }
-        self.types_handle()
+        self.types_ptr()
             .get(t)
             .as_evolving_array_type()
             .final_array_type

@@ -1839,7 +1839,7 @@ impl Checker {
                     _ => self.unknown_type,
                 }
             };
-            self.types_handle()
+            self.types_ptr()
                 .get_mut(t)
                 .as_mapped_type_mut()
                 .modifiers_type = Some(modifiers_type);
@@ -2176,22 +2176,22 @@ impl Checker {
     /// PORT(mirrored from types.go MappedType.ResolveComponents).
     pub fn resolve_mapped_type_components(&mut self, t: TypeId) {
         let type_parameter = self.get_type_parameter_from_mapped_type(t);
-        self.types_handle()
+        self.types_ptr()
             .get_mut(t)
             .as_mapped_type_mut()
             .type_parameter = type_parameter;
         let constraint_type = self.get_constraint_type_from_mapped_type(t);
-        self.types_handle()
+        self.types_ptr()
             .get_mut(t)
             .as_mapped_type_mut()
             .constraint_type = constraint_type;
         let name_type = self.get_name_type_from_mapped_type(t);
-        self.types_handle()
+        self.types_ptr()
             .get_mut(t)
             .as_mapped_type_mut()
             .name_type = name_type;
         let template_type = self.get_template_type_from_mapped_type(t);
-        self.types_handle()
+        self.types_ptr()
             .get_mut(t)
             .as_mapped_type_mut()
             .template_type = template_type;
@@ -3917,6 +3917,14 @@ impl Checker {
     /// do not hold a read guard across `get_mut`/`alloc` on the same arena.
     /// PORT: `pub` so `tsc-testrunner`'s union-ordering check can take an
     /// arena handle without borrowing the `Checker` across calls.
+    /// `types_handle` without the `Rc` clone — `self.types` is set once
+    /// (`new`), so its address is stable for the checker's lifetime; the
+    /// returned `Copy` ptr lets callers use the arena without pinning
+    /// `&self.types` across `&mut self` calls.
+    pub fn types_ptr(&self) -> crate::types::TypeArenaPtr {
+        crate::types::TypeArenaPtr::from_raw(std::ptr::from_ref(&self.types))
+    }
+
     pub fn types_handle(&self) -> crate::types::TypeArena {
         self.types.clone()
     }
@@ -4144,7 +4152,7 @@ impl Checker {
             data,
             ..Default::default()
         });
-        self.types_handle().get_mut(id).id = id;
+        self.types_ptr().get_mut(id).id = id;
         self.trace_record_type(id);
         id
     }
@@ -4180,7 +4188,7 @@ impl Checker {
             (ty.flags, ty.as_intrinsic_type().intrinsic_name.clone())
         };
         let t = self.new_intrinsic_type(flags, &intrinsic_name);
-        self.types_handle()
+        self.types_ptr()
             .get_mut(t)
             .object_flags
             .insert(ObjectFlags::CONTAINS_WIDENING_TYPE);
@@ -4216,7 +4224,7 @@ impl Checker {
             }),
         );
         let regular = regular_type.unwrap_or(t);
-        if let TypeData::Literal(d) = &mut self.types_handle().get_mut(t).data {
+        if let TypeData::Literal(d) = &mut self.types_ptr().get_mut(t).data {
             d.regular_type = Some(regular);
         }
         t
@@ -4231,7 +4239,7 @@ impl Checker {
                 name: name.to_string(),
             }),
         );
-        self.types_handle().get_mut(t).symbol = symbol;
+        self.types_ptr().get_mut(t).symbol = symbol;
         t
     }
 
@@ -4261,7 +4269,7 @@ impl Checker {
             panic!("Unhandled case in newObjectType")
         };
         let t = self.new_type(TypeFlags::OBJECT, object_flags, data);
-        self.types_handle().get_mut(t).symbol = symbol;
+        self.types_ptr().get_mut(t).symbol = symbol;
         t
     }
 
@@ -4300,14 +4308,14 @@ impl Checker {
         index_infos: &[IndexInfoId],
     ) {
         let members: Rc<SymbolTable> = members.into();
-        self.types_handle()
+        self.types_ptr()
             .get_mut(t)
             .object_flags
             .insert(ObjectFlags::MEMBERS_RESOLVED);
         // Members must be stored before get_named_members: it can re-enter
         // member resolution (alias resolution checks expressions), and Go
         // assigns `data.members` first so recursive lookups see the table.
-        if let Some(data) = self.types_handle().get_mut(t).data.as_structured_type_mut() {
+        if let Some(data) = self.types_ptr().get_mut(t).data.as_structured_type_mut() {
             data.members = members.clone();
         }
         let symbol = self.types.get_ref(t).symbol;
@@ -4325,7 +4333,7 @@ impl Checker {
             .iter()
             .map(|&id| self.index_info_arena.get(id).clone())
             .collect();
-        if let Some(data) = self.types_handle().get_mut(t).data.as_structured_type_mut() {
+        if let Some(data) = self.types_ptr().get_mut(t).data.as_structured_type_mut() {
             data.properties = properties;
             data.signatures = signatures;
             data.call_signature_count = call_signature_count;
@@ -4351,7 +4359,7 @@ impl Checker {
             ObjectFlags::NONE,
             TypeData::TypeParameter(TypeParameter::default()),
         );
-        self.types_handle().get_mut(t).symbol = symbol;
+        self.types_ptr().get_mut(t).symbol = symbol;
         t
     }
 
@@ -4465,7 +4473,7 @@ impl Checker {
                 ..Default::default()
             }),
         );
-        self.types_handle().get_mut(t).symbol = symbol;
+        self.types_ptr().get_mut(t).symbol = symbol;
         t
     }
 
@@ -4547,7 +4555,7 @@ impl Checker {
                 t,
                 Rc::new(|c: &mut Checker, s: TypeId| c.get_regular_type_of_literal_type(s)),
             );
-            if let TypeData::Union(d) = &mut self.types_handle().get_mut(t).data {
+            if let TypeData::Union(d) = &mut self.types_ptr().get_mut(t).data {
                 d.regular_type = Some(mapped);
             }
             return mapped;
@@ -4573,11 +4581,11 @@ impl Checker {
             }
             let f = self.new_literal_type(flags, value, Some(t));
             let sym = self.types.get_ref(t).symbol;
-            self.types_handle().get_mut(f).symbol = sym;
-            if let TypeData::Literal(fd) = &mut self.types_handle().get_mut(f).data {
+            self.types_ptr().get_mut(f).symbol = sym;
+            if let TypeData::Literal(fd) = &mut self.types_ptr().get_mut(f).data {
                 fd.fresh_type = Some(f);
             }
-            if let TypeData::Literal(d) = &mut self.types_handle().get_mut(t).data {
+            if let TypeData::Literal(d) = &mut self.types_ptr().get_mut(t).data {
                 d.fresh_type = Some(f);
             }
             return f;
@@ -4686,11 +4694,11 @@ impl Checker {
         let symbol = self.types.get_ref(target).symbol;
         let propagating = self.get_propagating_flags_of_types(type_arguments, TypeFlags::NONE);
         let t = self.new_object_type(ObjectFlags::REFERENCE | object_flags | propagating, symbol);
-        if let TypeData::TypeReference(d) = &mut self.types_handle().get_mut(t).data {
+        if let TypeData::TypeReference(d) = &mut self.types_ptr().get_mut(t).data {
             d.object_type.target = Some(target);
             d.resolved_type_arguments = type_arguments.into();
         }
-        self.types_handle()
+        self.types_ptr()
             .get_mut(target)
             .data
             .as_interface_type_mut()
@@ -4715,8 +4723,8 @@ impl Checker {
             )
         };
         let t = self.new_object_type(ObjectFlags::REFERENCE, symbol);
-        self.types_handle().get_mut(t).object_flags = object_flags & !ObjectFlags::MEMBERS_RESOLVED;
-        if let TypeData::TypeReference(d) = &mut self.types_handle().get_mut(t).data {
+        self.types_ptr().get_mut(t).object_flags = object_flags & !ObjectFlags::MEMBERS_RESOLVED;
+        if let TypeData::TypeReference(d) = &mut self.types_ptr().get_mut(t).data {
             d.object_type.target = target;
             d.resolved_type_arguments = resolved_type_arguments;
         }
@@ -4849,7 +4857,7 @@ impl Checker {
         );
         if state.new_texts.iter().all(|t| t.is_empty()) {
             if state.new_types.iter().all(|&t| {
-                self.types_handle()
+                self.types_ptr()
                     .get(t)
                     .flags
                     .intersects(TypeFlags::STRING)
@@ -5071,7 +5079,7 @@ impl Checker {
             return cached;
         }
         let result = self.new_type_parameter(symbol);
-        self.types_handle()
+        self.types_ptr()
             .get_mut(result)
             .as_type_parameter_mut()
             .constraint = Some(self.no_constraint_type);

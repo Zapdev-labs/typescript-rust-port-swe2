@@ -1876,7 +1876,7 @@ impl Checker {
             &[],
             &[],
         );
-        self.types_handle().get_mut(result).object_flags |= *object_flags
+        self.types_ptr().get_mut(result).object_flags |= *object_flags
             | ObjectFlags::OBJECT_LITERAL
             | ObjectFlags::CONTAINS_OBJECT_OR_ARRAY_LITERAL;
         result

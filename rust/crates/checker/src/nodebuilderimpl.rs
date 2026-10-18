@@ -8433,7 +8433,7 @@ impl Checker {
         let Some(target) = c_ref_target(&self.types, t) else {
             return 0;
         };
-        self.types_handle()
+        self.types_ptr()
             .get(target)
             .as_interface_type()
             .map(|i| i.type_parameters().len())

@@ -1421,7 +1421,7 @@ impl Checker {
                 let mut start_length = 0usize;
                 let mut end_length = 0usize;
                 let source_tuple_target = if is_tuple_type(&self.types, source) {
-                    self.types_handle().target_tuple_type(source)
+                    self.types_ptr().target_tuple_type(source)
                 } else {
                     None
                 };
@@ -1433,7 +1433,7 @@ impl Checker {
                         .fixed_length;
                     start_length = min(
                         source_fixed_length,
-                        self.types_handle()
+                        self.types_ptr()
                             .get(target_tuple)
                             .as_tuple_type()
                             .fixed_length,
@@ -1628,7 +1628,7 @@ impl Checker {
                                                 self.types.get_ref(constraint_tuple).as_tuple_type().fixed_length;
                                             let end_index = source_arity as isize
                                                 - get_end_element_count(
-                                                    self.types_handle()
+                                                    self.types_ptr()
                                                         .get(target_tuple)
                                                         .as_tuple_type(),
                                                     ElementFlags::FIXED,
@@ -2050,7 +2050,7 @@ impl Checker {
                         let type_parameter =
                             n.inferences[index].type_parameter.expect("typeParameter");
                         let priority = core::if_else(
-                            self.types_handle()
+                            self.types_ptr()
                                 .get(source)
                                 .object_flags
                                 .intersects(ObjectFlags::NON_INFERRABLE_TYPE),
@@ -2420,12 +2420,12 @@ impl Checker {
             let (mapped_type, links_constraint_type) =
                 if let Some((object_type, index_type)) = constraint_target_indexed {
                     if object_type.is_some_and(|o| {
-                        self.types_handle()
+                        self.types_ptr()
                             .get(o)
                             .flags
                             .intersects(TypeFlags::TYPE_PARAMETER)
                     }) && index_type.is_some_and(|i| {
-                        self.types_handle()
+                        self.types_ptr()
                             .get(i)
                             .flags
                             .intersects(TypeFlags::TYPE_PARAMETER)
@@ -2576,8 +2576,8 @@ impl Checker {
         if self.get_type_reference_arity(t1) != self.get_type_reference_arity(t2) {
             return false;
         }
-        let t1_infos = self.types.get_ref(self.types_handle().target_tuple_type(t1).expect("tuple")).as_tuple_type().element_infos.clone();
-        let t2_infos = self.types.get_ref(self.types_handle().target_tuple_type(t2).expect("tuple")).as_tuple_type().element_infos.clone();
+        let t1_infos = self.types.get_ref(self.types_ptr().target_tuple_type(t1).expect("tuple")).as_tuple_type().element_infos.clone();
+        let t2_infos = self.types.get_ref(self.types_ptr().target_tuple_type(t2).expect("tuple")).as_tuple_type().element_infos.clone();
         for (i, e) in t1_infos.iter().enumerate() {
             if e.flags & ElementFlags::VARIABLE != t2_infos[i].flags & ElementFlags::VARIABLE {
                 return false;

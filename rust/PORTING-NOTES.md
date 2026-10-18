@@ -2711,3 +2711,12 @@ Committed good state: .50 wall / .385 check (release), .44/.331 PGO.
 Go .30/.21. The port is functionally complete; beating Go on
 single-file check needs the slab refactor (Rc->u32 indices) that's
 the deferred structural work, not flag/accessor tuning.
+
+## checkpoint 32 — TypeArenaPtr/types_ptr (Copy *const arena handle)
+
+`types_handle()` cloned `Rc` per call (~162 sites in checker hot path).
+`Checker::types` is a field set once — `*const TypeArena` is stable;
+`TypeArenaPtr` derefs it. Replaces `self.types_handle()` ->
+`self.types_ptr()` across the checker. Compiles clean; bench running
+remote (expect ~0.50 -> ? vs Go .30). If positive, same trick for
+symbol_arena/symbol_node_links/program_ptr handles.

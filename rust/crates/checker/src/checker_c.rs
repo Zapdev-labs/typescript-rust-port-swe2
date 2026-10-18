@@ -1732,7 +1732,7 @@ impl Checker {
         let symbol = self.types.get_ref(t).symbol;
         let object_flags = self.types.get_ref(t).object_flags;
         let result = self.new_anonymous_type(symbol, members, &[], &[], &index_infos);
-        self.types_handle().get_mut(result).object_flags = object_flags;
+        self.types_ptr().get_mut(result).object_flags = object_flags;
         result
     }
 
@@ -1897,7 +1897,7 @@ impl Checker {
         if flags.intersects(TypeFlags::INTERSECTION) {
             let types = self.types.get_ref(base_constructor_type).types_rc();
             return core::find(&types, |&t| {
-                self.types_handle()
+                self.types_ptr()
                     .get(t)
                     .flags
                     .intersects(TypeFlags::TYPE_VARIABLE)
@@ -1924,7 +1924,7 @@ impl Checker {
             return resolved;
         }
         let Some(base_type_node) = crate::utilities::get_base_type_node_of_class(self, t) else {
-            self.types_handle()
+            self.types_ptr()
                 .get_mut(t)
                 .data
                 .as_interface_type_mut()
@@ -2032,7 +2032,7 @@ impl Checker {
 
     /// `(c *Checker) isFunctionType` (checker.go:17396).
     pub(crate) fn is_function_type(&mut self, t: TypeId) -> bool {
-        self.types_handle()
+        self.types_ptr()
             .get(t)
             .flags
             .intersects(TypeFlags::OBJECT)
@@ -2184,7 +2184,7 @@ impl Checker {
                 self.get_inferred_type_parameter_constraint(t, false)
             };
             let constraint = constraint.unwrap_or(self.no_constraint_type);
-            self.types_handle()
+            self.types_ptr()
                 .get_mut(t)
                 .as_type_parameter_mut()
                 .constraint = Some(constraint);
@@ -2514,7 +2514,7 @@ impl Checker {
             } else {
                 self.get_union_type(&[true_constraint, false_constraint])
             };
-            self.types_handle()
+            self.types_ptr()
                 .get_mut(t)
                 .data
                 .as_conditional_type_mut()
@@ -2591,7 +2591,7 @@ impl Checker {
                         .flags
                         .intersects(TypeFlags::NEVER)
                     {
-                        self.types_handle()
+                        self.types_ptr()
                             .get_mut(t)
                             .data
                             .as_conditional_type_mut()
@@ -2600,7 +2600,7 @@ impl Checker {
                     }
                 }
             }
-            self.types_handle()
+            self.types_ptr()
                 .get_mut(t)
                 .data
                 .as_conditional_type_mut()
@@ -2645,16 +2645,16 @@ impl Checker {
                 || kind == ObjectFlags::CLASS
                 || !self.is_thisless_interface(symbol)
             {
-                self.types_handle()
+                self.types_ptr()
                     .get_mut(t)
                     .object_flags
                     .insert(ObjectFlags::REFERENCE);
                 let this_type = self.new_type_parameter(Some(symbol));
-                self.types_handle()
+                self.types_ptr()
                     .get_mut(this_type)
                     .as_type_parameter_mut()
                     .is_this_type = true;
-                self.types_handle()
+                self.types_ptr()
                     .get_mut(this_type)
                     .as_type_parameter_mut()
                     .constraint = Some(t);
@@ -2730,7 +2730,7 @@ impl Checker {
                                 && {
                                     let declared =
                                         self.get_declared_type_of_class_or_interface(base_symbol);
-                                    self.types_handle()
+                                    self.types_ptr()
                                         .get(declared)
                                         .as_interface_type()
                                         .is_some_and(|d| d.this_type.is_none())
@@ -3111,7 +3111,7 @@ impl Checker {
         }
         let index_infos = self.get_index_infos_of_type(source);
         let result = self.new_anonymous_type(symbol, members, &[], &[], &index_infos);
-        self.types_handle()
+        self.types_ptr()
             .get_mut(result)
             .object_flags
             .insert(ObjectFlags::OBJECT_REST_TYPE);
@@ -3283,7 +3283,7 @@ impl Checker {
         let index_infos: Vec<IndexInfoId> =
             string_index_info.map(|id| vec![id]).unwrap_or_default();
         let result = self.new_anonymous_type(None, members, &[], &[], &index_infos);
-        self.types_handle()
+        self.types_ptr()
             .get_mut(result)
             .object_flags
             .insert(object_flags);
@@ -3292,7 +3292,7 @@ impl Checker {
                 .write()
                 .unwrap()
                 .insert(result, pattern);
-            self.types_handle()
+            self.types_ptr()
                 .get_mut(result)
                 .object_flags
                 .insert(ObjectFlags::CONTAINS_OBJECT_OR_ARRAY_LITERAL);
@@ -3358,7 +3358,7 @@ impl Checker {
                 .write()
                 .unwrap()
                 .insert(result, pattern);
-            self.types_handle()
+            self.types_ptr()
                 .get_mut(result)
                 .object_flags
                 .insert(ObjectFlags::CONTAINS_OBJECT_OR_ARRAY_LITERAL);
@@ -4169,7 +4169,7 @@ impl Checker {
         // Retain js literal flag through widening
         let retain = self.types.get_ref(t).object_flags
             & (ObjectFlags::JS_LITERAL | ObjectFlags::NON_INFERRABLE_TYPE);
-        self.types_handle()
+        self.types_ptr()
             .get_mut(result)
             .object_flags
             .insert(retain);
@@ -4804,7 +4804,7 @@ impl Checker {
                 let TypeSystemEntity::Type(target) = r.target else {
                     panic!("Unhandled case in typeResolutionHasProperty")
                 };
-                self.types_handle()
+                self.types_ptr()
                     .get(target)
                     .as_interface_type()
                     .is_some_and(|i| i.base_types_resolved)
@@ -4813,7 +4813,7 @@ impl Checker {
                 let TypeSystemEntity::Type(target) = r.target else {
                     panic!("Unhandled case in typeResolutionHasProperty")
                 };
-                self.types_handle()
+                self.types_ptr()
                     .get(target)
                     .as_interface_type()
                     .is_some_and(|i| i.resolved_base_constructor_type.is_some())
@@ -4831,7 +4831,7 @@ impl Checker {
                 let TypeSystemEntity::Type(target) = r.target else {
                     panic!("Unhandled case in typeResolutionHasProperty")
                 };
-                self.types_handle()
+                self.types_ptr()
                     .get(target)
                     .as_constrained_type()
                     .is_some_and(|c| c.resolved_base_constraint.is_some())
@@ -5530,7 +5530,7 @@ impl Checker {
             let symbol = self.types.get_ref(t).symbol;
             if object_flags.intersects(ObjectFlags::TUPLE) {
                 let tuple_base = self.get_tuple_base_type(t);
-                self.types_handle()
+                self.types_ptr()
                     .get_mut(t)
                     .as_interface_type_mut()
                     .expect("interface type")
@@ -5575,11 +5575,11 @@ impl Checker {
             // resolution is reset.
             // See https://github.com/microsoft/TypeScript/issues/16861 for an
             // example.
-            self.types_handle()
+            self.types_ptr()
                 .get_mut(t)
                 .object_flags
                 .remove(ObjectFlags::MEMBERS_RESOLVED);
-            self.types_handle()
+            self.types_ptr()
                 .get_mut(t)
                 .as_interface_type_mut()
                 .expect("interface type")
@@ -5722,7 +5722,7 @@ impl Checker {
             );
             return;
         }
-        self.types_handle()
+        self.types_ptr()
             .get_mut(t)
             .as_interface_type_mut()
             .expect("interface type")
@@ -5806,7 +5806,7 @@ impl Checker {
                     .get_mut(new_return_signature)
                     .type_parameters = inferred_type_parameters.into();
                 let new_return_type = self.get_or_create_type_from_signature(new_return_signature);
-                self.types_handle()
+                self.types_ptr()
                     .get_mut(new_return_type)
                     .as_object_type_mut()
                     .expect("object type")
@@ -6173,7 +6173,7 @@ impl Checker {
         let rest_type = self.get_effective_rest_type(contextual_signature);
         let mapper = inference_context.and_then(|ic| {
             if rest_type.is_some_and(|rt| {
-                self.types_handle()
+                self.types_ptr()
                     .get(rt)
                     .flags
                     .intersects(TypeFlags::TYPE_PARAMETER)
@@ -6405,7 +6405,7 @@ impl Checker {
                 .to_vec();
             if type_parameters.len() == type_arguments.len() {
                 let this_argument = this_argument.or_else(|| {
-                    self.types_handle()
+                    self.types_ptr()
                         .get(target)
                         .as_interface_type()
                         .expect("interface type")
@@ -8501,7 +8501,7 @@ impl Checker {
                 None => identity_mapper,
             });
             for &tp in &fresh_type_parameters {
-                self.types_handle()
+                self.types_ptr()
                     .get_mut(tp)
                     .as_type_parameter_mut()
                     .mapper = m;
@@ -8653,7 +8653,7 @@ impl Checker {
             let is_enum_with_number = {
                 if self.sym(symbol).flags.intersects(ast::SymbolFlags::ENUM) {
                     let declared = self.get_declared_type_of_symbol(symbol);
-                    self.types_handle()
+                    self.types_ptr()
                         .get(declared)
                         .flags
                         .intersects(TypeFlags::ENUM)
@@ -8666,7 +8666,7 @@ impl Checker {
                                 .properties
                                 .clone();
                             props.iter().any(|&prop| {
-                                self.types_handle()
+                                self.types_ptr()
                                     .get(self.get_type_of_symbol(prop))
                                     .flags
                                     .intersects(TypeFlags::NUMBER_LIKE)
@@ -8684,7 +8684,7 @@ impl Checker {
                 );
             }
         }
-        self.types_handle()
+        self.types_ptr()
             .get_mut(t)
             .as_object_type_mut()
             .expect("object type")
@@ -8721,7 +8721,7 @@ impl Checker {
             if construct_signatures.is_empty() {
                 construct_signatures = self.get_default_construct_signatures(class_type);
             }
-            self.types_handle()
+            self.types_ptr()
                 .get_mut(t)
                 .as_object_type_mut()
                 .expect("object type")
@@ -9250,7 +9250,7 @@ impl Checker {
                 crate::checker_types::TypeSystemEntity::Symbol(symbol),
                 TypeSystemPropertyName::Type,
             ) {
-                self.types_handle()
+                self.types_ptr()
                     .get_mut(mapped_type)
                     .as_mapped_type_mut()
                     .contains_error = true;
@@ -10231,7 +10231,7 @@ impl Checker {
         // eagerly compute the constraint-derived type.
         let symbol = self.types.get_ref(tp).symbol;
         let result = self.new_type_parameter(symbol);
-        self.types_handle()
+        self.types_ptr()
             .get_mut(result)
             .as_type_parameter_mut()
             .target = Some(tp);
@@ -10969,7 +10969,7 @@ impl Checker {
             return resolved;
         }
         let resolved = self.get_resolved_apparent_type_of_mapped_type(t);
-        self.types_handle()
+        self.types_ptr()
             .get_mut(t)
             .as_mapped_type_mut()
             .resolved_apparent_type = Some(resolved);
@@ -11040,7 +11040,7 @@ impl Checker {
                 return resolved;
             }
             let resolved = self.get_type_with_this_argument(t, Some(this_argument), true);
-            self.types_handle()
+            self.types_ptr()
                 .get_mut(t)
                 .as_intersection_type_mut()
                 .resolved_apparent_type = Some(resolved);
@@ -11082,7 +11082,7 @@ impl Checker {
                     return reduced_type;
                 }
                 let reduced_type = self.get_reduced_union_type(t);
-                self.types_handle()
+                self.types_ptr()
                     .get_mut(t)
                     .as_union_type_mut()
                     .resolved_reduced_type = Some(reduced_type);
@@ -11098,7 +11098,7 @@ impl Checker {
                 if reduces {
                     object_flags |= ObjectFlags::IS_NEVER_INTERSECTION;
                 }
-                self.types_handle().get_mut(t).object_flags = object_flags;
+                self.types_ptr().get_mut(t).object_flags = object_flags;
             }
             if self
                 .types_handle()
@@ -11193,7 +11193,7 @@ impl Checker {
             .flags
             .intersects(TypeFlags::UNION)
         {
-            self.types_handle()
+            self.types_ptr()
                 .get_mut(reduced)
                 .as_union_type_mut()
                 .resolved_reduced_type = Some(reduced);
@@ -11350,19 +11350,19 @@ impl Checker {
             if let Some(target) = target {
                 if let Some(target_default) = self.get_resolved_type_parameter_default(target) {
                     let result = crate::checker_c::instantiate_type(self, target_default, mapper);
-                    self.types_handle()
+                    self.types_ptr()
                         .get_mut(t)
                         .as_type_parameter_mut()
                         .resolved_default_type = Some(result);
                 } else {
-                    self.types_handle()
+                    self.types_ptr()
                         .get_mut(t)
                         .as_type_parameter_mut()
                         .resolved_default_type = Some(self.no_constraint_type);
                 }
             } else {
                 // To block recursion, set the initial value to the resolvingDefaultType.
-                self.types_handle()
+                self.types_ptr()
                     .get_mut(t)
                     .as_type_parameter_mut()
                     .resolved_default_type = Some(self.resolving_default_type);
@@ -11394,7 +11394,7 @@ impl Checker {
                     == Some(self.resolving_default_type)
                 {
                     // If we have not been called recursively, set the correct default type.
-                    self.types_handle()
+                    self.types_ptr()
                         .get_mut(t)
                         .as_type_parameter_mut()
                         .resolved_default_type = Some(default_type);
@@ -11408,7 +11408,7 @@ impl Checker {
         };
         if resolved == self.resolving_default_type {
             // If we are called recursively for this type parameter, mark the default as circular.
-            self.types_handle()
+            self.types_ptr()
                 .get_mut(t)
                 .as_type_parameter_mut()
                 .resolved_default_type = Some(self.circular_constraint_type);
@@ -12039,7 +12039,7 @@ impl Checker {
         } else {
             self.instantiate_anonymous_type(target, new_mapper, new_alias)
         };
-        self.types_handle()
+        self.types_ptr()
             .get_mut(target)
             .data
             .as_object_type_mut()
@@ -12075,7 +12075,7 @@ impl Checker {
                     // that the instantiated type doesn't reference type variables.
                     object_flags |= ObjectFlags::COULD_CONTAIN_TYPE_VARIABLES_COMPUTED;
                 }
-                self.types_handle().get_mut(result).object_flags = object_flags;
+                self.types_ptr().get_mut(result).object_flags = object_flags;
             }
         }
         result
@@ -12156,7 +12156,7 @@ impl Checker {
         let mut m = m;
         if t_object_flags.intersects(ObjectFlags::MAPPED) {
             let declaration = self.types.get_ref(t).as_mapped_type().declaration;
-            self.types_handle()
+            self.types_ptr()
                 .get_mut(result)
                 .as_mapped_type_mut()
                 .declaration = declaration;
@@ -12165,19 +12165,19 @@ impl Checker {
                 crate::checker_c::get_type_parameter_from_mapped_type(self, t)
                     .expect("type parameter");
             let fresh_type_parameter = self.clone_type_parameter(orig_type_parameter);
-            self.types_handle()
+            self.types_ptr()
                 .get_mut(result)
                 .as_mapped_type_mut()
                 .type_parameter = Some(fresh_type_parameter);
             let simple = new_simple_type_mapper(self, orig_type_parameter, fresh_type_parameter);
             m = self.combine_type_mappers(Some(simple), m);
-            self.types_handle()
+            self.types_ptr()
                 .get_mut(fresh_type_parameter)
                 .as_type_parameter_mut()
                 .mapper = Some(m);
         } else if t_object_flags.intersects(ObjectFlags::INSTANTIATION_EXPRESSION_TYPE) {
             let node = self.types.get_ref(t).as_instantiation_expression_type().node;
-            self.types_handle()
+            self.types_ptr()
                 .get_mut(result)
                 .data
                 .as_instantiation_expression_type_mut()
@@ -12190,13 +12190,13 @@ impl Checker {
                 self.instantiate_type_alias(t_alias.as_ref(), Some(m))
             }
         };
-        self.types_handle().get_mut(result).alias = alias.clone();
+        self.types_ptr().get_mut(result).alias = alias.clone();
         if let Some(alias) = &alias
             && !alias.type_arguments.is_empty()
         {
             let propagating =
                 self.get_propagating_flags_of_types(&alias.type_arguments, TypeFlags::NONE);
-            self.types_handle().get_mut(result).object_flags |= propagating;
+            self.types_ptr().get_mut(result).object_flags |= propagating;
         }
         {
             let __arena_g = self.types.clone();
@@ -12789,7 +12789,7 @@ impl Checker {
                         .get_symbol_of_declaration(parent)
                         .map(|s| self.get_declared_type_of_class_or_interface(s));
                     let this_type = declared.and_then(|t| {
-                        self.types_handle()
+                        self.types_ptr()
                             .get(t)
                             .as_interface_type()
                             .and_then(|i| i.this_type)
@@ -12854,7 +12854,7 @@ impl Checker {
                 self.empty_type_literal_type
             } else {
                 let t = self.new_object_type(ObjectFlags::ANONYMOUS, sym);
-                self.types_handle().get_mut(t).alias = alias;
+                self.types_ptr().get_mut(t).alias = alias;
                 t
             };
             self.type_node_links.get(node).resolved_type = Some(t);
@@ -13062,7 +13062,7 @@ impl Checker {
             d.is_distributed = true;
             d.constraint = Some(t);
         }
-        self.types_handle()
+        self.types_ptr()
             .get_mut(t)
             .as_type_parameter_mut()
             .distributed_type = Some(distributed);
@@ -13767,7 +13767,7 @@ impl Checker {
 
     /// `(c *Checker) isArrayOrTupleOrIntersection` (checker.go:24084).
     pub(crate) fn is_array_or_tuple_or_intersection(&self, t: TypeId) -> bool {
-        self.types_handle()
+        self.types_ptr()
             .get(t)
             .flags
             .intersects(TypeFlags::INTERSECTION)
@@ -13831,7 +13831,7 @@ impl Checker {
                 return error_type;
             }
             let error_type = self.new_intrinsic_type(TypeFlags::ANY, "error");
-            self.types_handle().get_mut(error_type).alias = Some(alias);
+            self.types_ptr().get_mut(error_type).alias = Some(alias);
             self.error_types.insert(key, error_type);
             return error_type;
         }
@@ -14189,8 +14189,8 @@ impl Checker {
                 .flags
                 .intersects(TypeFlags::UNION)
             {
-                self.types_handle().get_mut(enum_type).flags |= TypeFlags::ENUM_LITERAL;
-                self.types_handle().get_mut(enum_type).symbol = Some(symbol);
+                self.types_ptr().get_mut(enum_type).flags |= TypeFlags::ENUM_LITERAL;
+                self.types_ptr().get_mut(enum_type).symbol = Some(symbol);
             }
             self.declared_type_links.get(symbol).declared_type = Some(enum_type);
         }
@@ -14213,14 +14213,14 @@ impl Checker {
     /// `(c *Checker) createComputedEnumType` (checker.go:24451).
     pub(crate) fn create_computed_enum_type(&mut self, symbol: SymbolId) -> TypeId {
         let regular_type = self.new_literal_type(TypeFlags::ENUM, None, None);
-        self.types_handle().get_mut(regular_type).symbol = Some(symbol);
+        self.types_ptr().get_mut(regular_type).symbol = Some(symbol);
         let fresh_type = self.new_literal_type(TypeFlags::ENUM, None, Some(regular_type));
-        self.types_handle().get_mut(fresh_type).symbol = Some(symbol);
-        self.types_handle()
+        self.types_ptr().get_mut(fresh_type).symbol = Some(symbol);
+        self.types_ptr()
             .get_mut(regular_type)
             .as_literal_type_mut()
             .fresh_type = Some(fresh_type);
-        self.types_handle()
+        self.types_ptr()
             .get_mut(fresh_type)
             .as_literal_type_mut()
             .fresh_type = Some(fresh_type);

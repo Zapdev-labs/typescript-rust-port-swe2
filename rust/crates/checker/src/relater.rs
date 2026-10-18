@@ -2758,7 +2758,7 @@ impl Checker {
             let s = self.types.get_ref(source);
             (
                 s.flags,
-                self.types_handle()
+                self.types_ptr()
                     .get(target)
                     .flags
                     .intersects(TypeFlags::UNION),
@@ -4219,7 +4219,7 @@ impl Checker {
             return !is_tuple_type(&self.types, rest_type) || {
                 let __arena_target = self.types.clone();
                 let target = __arena_target.target_tuple_type(rest_type).unwrap();
-                self.types_handle()
+                self.types_ptr()
                     .get(target)
                     .as_tuple_type()
                     .combined_flags

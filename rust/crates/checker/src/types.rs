@@ -3411,6 +3411,30 @@ pub struct TypeArena {
     types: tsc_ast::chunked::ChunkedArena<Type>,
 }
 
+/// PORT(perf): `Copy` `*const TypeArena` — `types_handle()` clones the
+/// `Rc` inside `TypeArena` on every call (~800 sites in the checker hot
+/// path); `Checker::types` is a field set once, so the arena's address is
+/// stable for the checker's lifetime — `&self.types` as `*const` kills the
+/// clone/drop pair per access. Same trick as `NodeListPtr`/`FlowNodePtr`.
+#[derive(Clone, Copy)]
+pub struct TypeArenaPtr(*const TypeArena);
+
+#[allow(unsafe_code)] // stable field address — see `TypeArenaPtr`
+impl std::ops::Deref for TypeArenaPtr {
+    type Target = TypeArena;
+    fn deref(&self) -> &TypeArena {
+        unsafe { &*self.0 }
+    }
+}
+
+impl TypeArenaPtr {
+    /// Caller must guarantee the `TypeArena` outlives all derefs — callers
+    /// get this from `Checker::types_ptr` which anchors on `self.types`.
+    pub fn from_raw(p: *const TypeArena) -> Self {
+        Self(p)
+    }
+}
+
 /// Shared handle to an arena-resident `Type` — Go's `*Type`. `Copy`, no
 /// refcounting; validity is the arena's lifetime.
 #[derive(Clone, Copy)]

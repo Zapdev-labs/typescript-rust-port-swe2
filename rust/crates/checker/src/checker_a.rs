@@ -3727,7 +3727,7 @@ impl Checker {
                             .types_handle()
                             .target_tuple_type(t)
                             .is_some_and(|target| {
-                                self.types_handle()
+                                self.types_ptr()
                                     .get(target)
                                     .as_tuple_type()
                                     .combined_flags
@@ -8563,7 +8563,7 @@ impl Checker {
                 members.set(member_name.into(), member);
             }
             let t = self.new_anonymous_type(Some(symbol), members, &[], &[], &[]);
-            self.types_handle().get_mut(t).object_flags |=
+            self.types_ptr().get_mut(t).object_flags |=
                 ObjectFlags::OBJECT_LITERAL | ObjectFlags::NON_INFERRABLE_TYPE;
             self.type_node_links.get(node).resolved_type = Some(t);
         }
@@ -13050,7 +13050,7 @@ impl Checker {
                 .is_none())
         {
             debug_assert!(
-                self.types_handle()
+                self.types_ptr()
                     .get(t)
                     .symbol()
                     .is_some_and(|s| sym_flags(self, s).intersects(ast::SymbolFlags::CONST_ENUM))
@@ -13268,7 +13268,7 @@ impl Checker {
         for &tp in type_parameters {
             let name = sym_name(
                 self,
-                self.types_handle()
+                self.types_ptr()
                     .get(tp)
                     .symbol()
                     .expect("type parameter symbol"),
@@ -13284,7 +13284,7 @@ impl Checker {
                 let new_name = get_unique_type_parameter_name(self, &all, &name);
                 let symbol = self.new_symbol(ast::SymbolFlags::TYPE_PARAMETER, &new_name);
                 let new_type_parameter = self.new_type_parameter(Some(symbol));
-                self.types_handle()
+                self.types_ptr()
                     .get_mut(new_type_parameter)
                     .as_type_parameter_mut()
                     .target = Some(tp);
@@ -13302,7 +13302,7 @@ impl Checker {
                 new_type_parameters.clone(),
             );
             for &tp in &new_type_parameters {
-                self.types_handle()
+                self.types_ptr()
                     .get_mut(tp)
                     .as_type_parameter_mut()
                     .mapper = Some(mapper);

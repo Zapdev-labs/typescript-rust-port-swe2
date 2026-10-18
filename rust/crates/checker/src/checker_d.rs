@@ -622,12 +622,12 @@ impl Checker {
             let __program = self.program.as_ref().expect("program");
             let symbol = __program.nodes_ptr((node).file_index())[node].symbol();
             let t = self.new_object_type(ObjectFlags::MAPPED, symbol);
-            self.types_handle()
+            self.types_ptr()
                 .get_mut(t)
                 .as_mapped_type_mut()
                 .declaration = Some(node);
             let alias = self.get_alias_for_type_node(node);
-            self.types_handle().get_mut(t).alias = alias;
+            self.types_ptr().get_mut(t).alias = alias;
             self.type_node_links.get(node).resolved_type = Some(t);
             // Eagerly resolve the constraint type which forces an error if the constraint type circularly
             // references itself through one or more type aliases.
@@ -966,9 +966,9 @@ impl Checker {
             result =
                 self.new_conditional_type(clone_conditional_root(root), mapper, combined_mapper);
             if let Some(a) = alias {
-                self.types_handle().get_mut(result).alias = Some(a);
+                self.types_ptr().get_mut(result).alias = Some(a);
             } else {
-                self.types_handle().get_mut(result).alias =
+                self.types_ptr().get_mut(result).alias =
                     self.instantiate_type_alias(root.alias.as_ref(), mapper);
             }
             break;
@@ -1000,7 +1000,7 @@ impl Checker {
             && new_mapper.is_some()
         {
             let new_root = clone_conditional_root(
-                self.types_handle()
+                self.types_ptr()
                     .get(new_type)
                     .as_conditional_type()
                     .root
@@ -1651,7 +1651,7 @@ impl Checker {
         no_reductions: bool,
     ) -> Option<TypeId> {
         let length = self.get_type_reference_arity(t) - end_skip_count;
-        let element_infos = self.types.get_ref(self.types_handle().target_tuple_type(t).unwrap()).as_tuple_type().element_infos.clone();
+        let element_infos = self.types.get_ref(self.types_ptr().target_tuple_type(t).unwrap()).as_tuple_type().element_infos.clone();
         if index < length {
             let type_arguments = self.get_type_arguments(t);
             let mut element_types = Vec::new();
@@ -1681,7 +1681,7 @@ impl Checker {
 
     /// `(c *Checker) getRestTypeOfTupleType` (checker.go:25385).
     pub(crate) fn get_rest_type_of_tuple_type(&mut self, t: TypeId) -> Option<TypeId> {
-        let fixed_length = self.types.get_ref(self.types_handle().target_tuple_type(t).unwrap()).as_tuple_type().fixed_length;
+        let fixed_length = self.types.get_ref(self.types_ptr().target_tuple_type(t).unwrap()).as_tuple_type().fixed_length;
         self.get_element_type_of_slice_of_tuple_type(t, fixed_length, 0, false, false)
     }
 
@@ -1765,7 +1765,7 @@ impl Checker {
                         .get_generic_object_flags(base_type.unwrap_or(TypeId::NONE))
                         | self.get_generic_object_flags(constraint.unwrap_or(TypeId::NONE));
                 }
-                self.types_handle().get_mut(t).object_flags |=
+                self.types_ptr().get_mut(t).object_flags |=
                     ObjectFlags::IS_GENERIC_TYPE_COMPUTED | combined_flags;
             }
             return self.types.get_ref(t).object_flags & ObjectFlags::IS_GENERIC_TYPE;
@@ -1790,7 +1790,7 @@ impl Checker {
         crate::checker_core::is_tuple_type(&self.types, t)
             && self
                 .types_handle()
-                .get_ref(self.types_handle().target_tuple_type(t).unwrap())
+                .get_ref(self.types_ptr().target_tuple_type(t).unwrap())
                 .as_tuple_type()
                 .combined_flags
                 .intersects(ElementFlags::VARIADIC)
@@ -2046,7 +2046,7 @@ impl Checker {
                         return t;
                     }
                     let t = self.new_literal_type(flags, Some(value.clone()), None);
-                    self.types_handle().get_mut(t).symbol = Some(symbol);
+                    self.types_ptr().get_mut(t).symbol = Some(symbol);
                     self.enum_nan_literal_types.insert(enum_symbol, t);
                     return t;
                 }
@@ -2061,7 +2061,7 @@ impl Checker {
             return t;
         }
         let t = self.new_literal_type(flags, Some(value), None);
-        self.types_handle().get_mut(t).symbol = Some(symbol);
+        self.types_ptr().get_mut(t).symbol = Some(symbol);
         self.enum_literal_types.insert(key, t);
         t
     }
@@ -2724,7 +2724,7 @@ impl Checker {
             let mut g = __arena_g.get_mut(t);
             as_union_type_mut(&mut g).origin = origin;
         }
-        self.types_handle().get_mut(t).alias = alias.clone();
+        self.types_ptr().get_mut(t).alias = alias.clone();
         if types.len() == 2
             && self
                 .types_handle()
@@ -2737,7 +2737,7 @@ impl Checker {
                 .flags
                 .intersects(TypeFlags::BOOLEAN_LITERAL)
         {
-            self.types_handle().get_mut(t).flags |= TypeFlags::BOOLEAN;
+            self.types_ptr().get_mut(t).flags |= TypeFlags::BOOLEAN;
         }
         self.union_types.insert(key, t);
         t
@@ -2862,7 +2862,7 @@ impl Checker {
                         g.alias.is_some(),
                         u.origin,
                         u.origin.is_some_and(|o| {
-                            self.types_handle()
+                            self.types_ptr()
                                 .get(o)
                                 .flags
                                 .intersects(TypeFlags::UNION)
@@ -3138,7 +3138,7 @@ impl Checker {
                 // type parameter is a subtype of a union of all the other types.
                 if source_flags.intersects(TypeFlags::TYPE_PARAMETER) && {
                     let c = self.get_base_constraint_or_type(source);
-                    self.types_handle()
+                    self.types_ptr()
                         .get(c)
                         .flags
                         .intersects(TypeFlags::UNION)
@@ -3525,7 +3525,7 @@ impl Checker {
         } else {
             let propagating = self.get_propagating_flags_of_types(types, TypeFlags::NULLABLE);
             result = self.new_intersection_type(object_flags | propagating, type_set.clone());
-            self.types_handle().get_mut(result).alias = alias.clone();
+            self.types_ptr().get_mut(result).alias = alias.clone();
         }
         self.intersection_types.insert(key, result);
         result
@@ -3640,7 +3640,7 @@ impl Checker {
             .iter()
             .copied()
             .filter(|&t| {
-                self.types_handle()
+                self.types_ptr()
                     .get(t)
                     .flags
                     .intersects(TypeFlags::STRING_LITERAL)
@@ -3973,7 +3973,7 @@ impl Checker {
             }
             return seen_placeholder;
         }
-        self.types_handle()
+        self.types_ptr()
             .get(t)
             .flags
             .intersects(TypeFlags::ANY | TypeFlags::STRING | TypeFlags::NUMBER | TypeFlags::BIG_INT)
@@ -3998,7 +3998,7 @@ impl Checker {
 
     /// `(c *Checker) isGenericStringLikeType` (checker.go:27057).
     pub(crate) fn is_generic_string_like_type(&mut self, t: TypeId) -> bool {
-        self.types_handle()
+        self.types_ptr()
             .get(t)
             .flags
             .intersects(TypeFlags::TEMPLATE_LITERAL | TypeFlags::STRING_MAPPING)
@@ -4045,7 +4045,7 @@ impl Checker {
                         .iter()
                         .copied()
                         .filter(|&u| {
-                            self.types_handle()
+                            self.types_ptr()
                                 .get(u)
                                 .flags
                                 .intersects(TypeFlags::UNION)
@@ -4560,7 +4560,7 @@ impl Checker {
         let ty = self.types.get_ref(t);
         ty.flags.intersects(TypeFlags::SUBSTITUTION)
             && ty.as_substitution_type().constraint.is_some_and(|c| {
-                self.types_handle()
+                self.types_ptr()
                     .get(c)
                     .flags
                     .intersects(TypeFlags::UNKNOWN)
@@ -4769,7 +4769,7 @@ impl Checker {
         }
         let symbol = self.types.get_ref(target).symbol;
         let t = self.new_object_type(ObjectFlags::REFERENCE, symbol);
-        self.types_handle().get_mut(t).alias = alias.clone();
+        self.types_ptr().get_mut(t).alias = alias.clone();
         {
             let __arena_d = self.types.clone();
             let mut __g_d = __arena_d.get_mut(t);
@@ -4869,7 +4869,7 @@ impl Checker {
                         index_type,
                         persistent_access_flags,
                     );
-                    self.types_handle().get_mut(t).alias = alias.clone();
+                    self.types_ptr().get_mut(t).alias = alias.clone();
                     self.indexed_access_types.insert(key, t);
                     t
                 }
@@ -5208,7 +5208,7 @@ __h4858_35],
                     }) && {
                         let index_symbol = self.types.get_ref(index_type).symbol;
                         index_symbol.is_some_and(|s| {
-                            self.types_handle()
+                            self.types_ptr()
                                 .get(index_type)
                                 .flags
                                 .intersects(TypeFlags::ENUM_LITERAL)
@@ -5610,7 +5610,7 @@ __h5064_43, suggestion],
             .iter()
             .copied()
             .filter(|&t| {
-                self.types_handle()
+                self.types_ptr()
                     .get(t)
                     .flags
                     .intersects(TypeFlags::STRING_LITERAL)
@@ -6211,8 +6211,8 @@ __h5064_43, suggestion],
             // We substitute constraints for variadic elements only when the constraints are array types or
             // non-variadic tuple types as we want to avoid further (possibly unbounded) recursion.
             let element_types = self.get_element_types(t);
-            let element_infos = self.types.get_ref(self.types_handle().target_tuple_type(t).unwrap()).as_tuple_type().element_infos.clone();
-            let __guard_readonly = self.types.get_ref(self.types_handle().target_tuple_type(t).unwrap())
+            let element_infos = self.types.get_ref(self.types_ptr().target_tuple_type(t).unwrap()).as_tuple_type().element_infos.clone();
+            let __guard_readonly = self.types.get_ref(self.types_ptr().target_tuple_type(t).unwrap())
                 .clone();
             let readonly = __guard_readonly.as_tuple_type().readonly;
             let mut new_elements = Vec::with_capacity(element_types.len());
@@ -6590,7 +6590,7 @@ impl Checker {
         rest_symbol: Option<SymbolId>,
     ) -> Vec<SymbolId> {
         let element_types = self.get_type_arguments(rest_type);
-        let element_infos = self.types.get_ref(self.types_handle().target_tuple_type(rest_type).unwrap()).as_tuple_type().element_infos.clone();
+        let element_infos = self.types.get_ref(self.types_ptr().target_tuple_type(rest_type).unwrap()).as_tuple_type().element_infos.clone();
         let associated_names =
             self.get_uniq_associated_names_from_tuple_type(rest_type, rest_symbol);
         let mut expanded: Vec<SymbolId> = self.signature_arena.get(signature).parameters
@@ -6627,7 +6627,7 @@ impl Checker {
         t: TypeId,
         rest_symbol: Option<SymbolId>,
     ) -> Vec<String> {
-        let element_infos = self.types.get_ref(self.types_handle().target_tuple_type(t).unwrap()).as_tuple_type().element_infos.clone();
+        let element_infos = self.types.get_ref(self.types_ptr().target_tuple_type(t).unwrap()).as_tuple_type().element_infos.clone();
         let mut names = vec![String::new(); element_infos.len()];
         let mut counters: FxHashMap<String, i32> = FxHashMap::default();
         for (i, info) in element_infos.iter().enumerate() {
@@ -6673,7 +6673,7 @@ impl Checker {
                 .object_flags
                 .intersects(ObjectFlags::IS_UNKNOWN_LIKE_UNION_COMPUTED)
             {
-                self.types_handle().get_mut(t).object_flags |=
+                self.types_ptr().get_mut(t).object_flags |=
                     ObjectFlags::IS_UNKNOWN_LIKE_UNION_COMPUTED;
                 let types = self.types.get_ref(t).types_rc();
                 if types.len() >= 3
@@ -6691,7 +6691,7 @@ impl Checker {
                         .iter()
                         .any(|&m| self.is_empty_anonymous_object_type(m))
                 {
-                    self.types_handle().get_mut(t).object_flags |=
+                    self.types_ptr().get_mut(t).object_flags |=
                         ObjectFlags::IS_UNKNOWN_LIKE_UNION;
                 }
             }
@@ -6981,8 +6981,8 @@ impl Checker {
             {
                 0
             } else {
-                self.types_handle()
-                    .get(self.types_handle().target_tuple_type(object_type).unwrap())
+                self.types_ptr()
+                    .get(self.types_ptr().target_tuple_type(object_type).unwrap())
                     .as_tuple_type()
                     .fixed_length
             };
@@ -7272,7 +7272,7 @@ impl Checker {
         {
             return self.cached_types.get(&key).copied();
         }
-        self.types_handle().get_mut(t).object_flags |= ObjectFlags::IDENTICAL_BASE_TYPE_CALCULATED;
+        self.types_ptr().get_mut(t).object_flags |= ObjectFlags::IDENTICAL_BASE_TYPE_CALCULATED;
         let target = self.types.get_ref(t).target().unwrap();
         if self
             .types_handle()
@@ -13072,7 +13072,7 @@ impl Checker {
                 .any(|&t| self.is_generic_type_without_nullable_constraint(t));
         }
         let base_constraint = self.get_base_constraint_or_type(t);
-        self.types_handle()
+        self.types_ptr()
             .get(t)
             .flags
             .intersects(TypeFlags::INSTANTIABLE)
