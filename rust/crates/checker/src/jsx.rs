@@ -1611,7 +1611,7 @@ impl Checker {
                 if ast::is_jsx_attribute(&nodes[attribute_decl]) {
                     let member = member.expect("attribute symbol");
                     let expr_type = self.check_jsx_attribute(attribute_decl, check_mode);
-                    object_flags |= self.types_handle().get(expr_type).object_flags
+                    object_flags |= self.types.get(expr_type).object_flags
                         & ObjectFlags::PROPAGATING_FLAGS;
                     let member_flags = self.sym(member).flags;
                     let member_name = self.sym(member).name.clone();

@@ -7093,7 +7093,7 @@ impl Checker {
             let Some(index_info) = index_info else {
                 let is_unchecked_js = self.is_unchecked_js_suggestion(
                     Some(node),
-                    self.types_handle().get(left_type).symbol(),
+                    self.types.get(left_type).symbol(),
                     true, /* excludeClasses */
                 );
                 if !is_unchecked_js && self.is_js_literal_type(left_type) {

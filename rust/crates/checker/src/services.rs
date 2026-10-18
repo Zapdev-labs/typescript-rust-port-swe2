@@ -710,10 +710,10 @@ impl Checker {
         &mut self,
         resolved_external_module_type: TypeId,
     ) -> bool {
-        !self.types_handle().get(resolved_external_module_type)
+        !self.types.get(resolved_external_module_type)
             .flags
             .intersects(TypeFlags::PRIMITIVE)
-            || self.types_handle().get(resolved_external_module_type)
+            || self.types.get(resolved_external_module_type)
                 .object_flags
                 .intersects(crate::types::ObjectFlags::CLASS)
             // `isArrayOrTupleLikeType` is too expensive to use in this
@@ -797,7 +797,7 @@ impl Checker {
     pub fn get_mapped_type_symbol_of_property(&mut self, symbol: SymbolId) -> Option<SymbolId> {
         if let Some(value_links) = self.value_symbol_links.try_get(symbol) {
             let containing_type = value_links.containing_type?;
-            return self.types_handle().get(containing_type).symbol;
+            return self.types.get(containing_type).symbol;
         }
         None
     }
@@ -812,7 +812,7 @@ impl Checker {
             let name = self.sym(symbol).name.clone();
             let containing_type = self.value_symbol_links.get(symbol).containing_type;
             let types = containing_type
-                .map(|t| self.types_handle().get(t).types_rc())
+                .map(|t| self.types.get(t).types_rc())
                 .unwrap_or_default();
             return types
                 .iter()
@@ -1562,7 +1562,7 @@ impl Checker {
                         let target_symbol = __arena_target_symbol
                             .get(t)
                             .target()
-                            .and_then(|tt| self.types_handle().get(tt).symbol);
+                            .and_then(|tt| self.types.get(tt).symbol);
                         if target_symbol == Some(global_symbol) {
                             return self.get_type_arguments(t).first().copied();
                         }
@@ -1616,7 +1616,7 @@ impl Checker {
             }
             return Vec::new();
         }
-        let all_types: Vec<TypeId> = self.types_handle().get(contextual_type).types().to_vec();
+        let all_types: Vec<TypeId> = self.types.get(contextual_type).types().to_vec();
         let parent = nodes[node].parent;
         let mut filtered_types = all_types.clone();
         if parent.is_some_and(|p| {
@@ -1783,7 +1783,7 @@ impl Checker {
             {
                 guard
                     .target()
-                    .and_then(|tt| self.types_handle().get(tt).symbol)
+                    .and_then(|tt| self.types.get(tt).symbol)
             } else {
                 guard.symbol
             }

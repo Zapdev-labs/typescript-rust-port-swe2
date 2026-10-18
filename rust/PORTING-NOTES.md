@@ -2618,3 +2618,19 @@ Numbers (remote, release): wall .67 -> .52, check .405 -> .394.
 PGO build running (target-pgo). Remaining gap = distributed
 RefCell/dispatch cost + `get_flow_type_of_reference_ex` inner work —
 next: pprof on new binary to see what survived.
+
+## checkpoint 25 — perf pass continues (inline'd accessors, build running)
+
+State: f9e0b30430 committed — flow_node_ref/flow_list_ref, nodes_ptr
+(NodeListPtr Copy *const Vec<Node>), program as_ref where legal,
+types_handle single-use inlining. checker.ts .67 -> .52 wall, .394 check.
+
+In flight: `#[inline]` on flagdef::intersects + chunked::get + ast.rs
+Deref impls (per-flow-node-type access paths) — build running remote,
+then re-bench `~/genf-rust/target/release/tsc` vs `~/go-tsc` (Go .30 wall
+/ .21 check). PGO binary also exists at ~/genf-rust/target-pgo (.44/.331).
+
+If inline helps, re-run PGO build too. If not: the residual check gap is
+distributed RefCell/dispatch cost — next candidates are deeper
+(flow.rs eq/get/intersects within check_expression_worker inner loop;
+get_resolved_symbol's symbol_node_links is already O(1) paged).

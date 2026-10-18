@@ -914,7 +914,7 @@ impl Checker {
         let mut i = 0;
         while i < types.len() {
             let t = types[i];
-            flags |= self.types_handle().get(t).flags;
+            flags |= self.types.get(t).flags;
             if !self
                 .types_handle()
                 .get(t)

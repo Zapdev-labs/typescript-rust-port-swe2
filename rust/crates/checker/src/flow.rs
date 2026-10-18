@@ -1417,7 +1417,7 @@ impl Checker {
         value: NodeId,
         assume_true: bool,
     ) -> TypeId {
-        if self.types_handle().get(t).flags.intersects(TypeFlags::ANY) {
+        if self.types.get(t).flags.intersects(TypeFlags::ANY) {
             return t;
         }
         let mut assume_true = assume_true;
@@ -1601,7 +1601,7 @@ impl Checker {
                 self.narrow_type_by_type_facts(t, self.es_symbol_type, TypeFacts::TYPEOF_EQ_SYMBOL)
             }
             "object" => {
-                if self.types_handle().get(t).flags.intersects(TypeFlags::ANY) {
+                if self.types.get(t).flags.intersects(TypeFlags::ANY) {
                     return t;
                 }
                 let a = self.narrow_type_by_type_facts(
@@ -1613,7 +1613,7 @@ impl Checker {
                 self.get_union_type(&[a, b])
             }
             "function" => {
-                if self.types_handle().get(t).flags.intersects(TypeFlags::ANY) {
+                if self.types.get(t).flags.intersects(TypeFlags::ANY) {
                     return t;
                 }
                 self.narrow_type_by_type_facts(
@@ -2870,11 +2870,11 @@ impl Checker {
         let union = self.get_union_type_ex(&finalized, subtype_reduction, None, None);
         let result = self.recombine_unknown_type(union);
         if result != f.declared_type()
-            && (self.types_handle().get(result).flags
-                & self.types_handle().get(f.declared_type()).flags)
+            && (self.types.get(result).flags
+                & self.types.get(f.declared_type()).flags)
                 .intersects(TypeFlags::UNION)
-            && self.types_handle().get(result).types()
-                == self.types_handle().get(f.declared_type()).types()
+            && self.types.get(result).types()
+                == self.types.get(f.declared_type()).types()
         {
             return f.declared_type();
         }
@@ -3903,7 +3903,7 @@ impl Checker {
             .flags
             .intersects(TypeFlags::STRING_LITERAL | TypeFlags::NUMBER_LITERAL)
         {
-            if let Some(v) = self.types_handle().get(t).as_literal_type().value.as_ref() {
+            if let Some(v) = self.types.get(t).as_literal_type().value.as_ref() {
                 return (tsc_evaluator::any_to_string(v), true);
             }
         }
@@ -5164,7 +5164,7 @@ impl Checker {
             return self.is_type_assignable_to(source, target);
         }
         // Quick exit when source union contains the target type
-        if self.types_handle().get(source).types().contains(&target) {
+        if self.types.get(source).types().contains(&target) {
             return true;
         }
         // Otherwise, check if any constituent type of the source union is

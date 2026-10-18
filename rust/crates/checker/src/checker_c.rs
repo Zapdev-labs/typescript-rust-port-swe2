@@ -34,7 +34,7 @@
 //   `self.program_nodes(id)` (the per-file `Vec<ast::Node>` arena).
 // - `*ast.Symbol` → `SymbolId`; fields read/mutated through
 //   `self.symbol_arena.get_ref(s)` / `borrow_mut()`.
-// - `*Type` → `TypeId`; `self.types_handle().get(t)` / `get_mut(t)` guards.
+// - `*Type` → `TypeId`; `self.types.get(t)` / `get_mut(t)` guards.
 //   `*Signature` → `SignatureId` (`self.signature_arena`),
 //   `*IndexInfo` → `IndexInfoId` (`self.index_info_arena`),
 //   `*TypeMapper` → `TypeMapperId` (`self.type_mappers`),
@@ -1995,7 +1995,7 @@ impl Checker {
                         ctor_return = self.get_return_type_of_signature(ctor_sigs[0]);
                     }
                 }
-                if let Some(symbol) = self.types_handle().get(base_constructor_type).symbol {
+                if let Some(symbol) = self.types.get(base_constructor_type).symbol {
                     let declarations = self.sym(symbol).declarations.clone();
                     if !declarations.is_empty() {
                         let arg0 = self.symbol_to_string(symbol);
@@ -3803,7 +3803,7 @@ impl Checker {
                 .intersects(TypeFlags::UNIQUE_ES_SYMBOL)
                 && (ast::is_binding_element(&nodes[declaration])
                     || nodes[declaration].type_().is_none())
-                && self.types_handle().get(t).symbol != self.get_symbol_of_declaration(declaration)
+                && self.types.get(t).symbol != self.get_symbol_of_declaration(declaration)
             {
                 t = self.es_symbol_type;
             }
@@ -5329,7 +5329,7 @@ impl Checker {
     ///
     /// PORT: Go returns `*StructuredType` (a view into `t`); the port's type
     /// arena is a `RwLock<Vec<Type>>`, so this returns `t` itself — callers
-    /// re-read `self.types_handle().get(t).as_structured_type()`.
+    /// re-read `self.types.get(t).as_structured_type()`.
     pub(crate) fn resolve_structured_type_members(&mut self, t: TypeId) -> TypeId {
         if !self
             .types_handle()
@@ -5555,7 +5555,7 @@ impl Checker {
                 panic!("Unhandled case in getBaseTypes")
             }
             if !self.pop_type_resolution()
-                && let Some(symbol) = self.types_handle().get(t).symbol
+                && let Some(symbol) = self.types.get(t).symbol
             {
                 let declarations = self.sym(symbol).declarations.clone();
                 for declaration in declarations {

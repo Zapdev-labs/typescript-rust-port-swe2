@@ -3912,7 +3912,7 @@ impl Checker {
     /// `self.types.clone()` — clones the `Arc`-backed arena handle. The
     /// returned arena owns its `Arc`, so `get`/`get_mut` guards borrow the
     /// clone (a temporary or local) rather than `*self`. This breaks the
-    /// `self.types_handle().get(..)`-across-`&mut self`-call borrow conflict; Go has
+    /// `self.types.get(..)`-across-`&mut self`-call borrow conflict; Go has
     /// no such constraint. Guards still share the underlying `RwLock` —
     /// do not hold a read guard across `get_mut`/`alloc` on the same arena.
     /// PORT: `pub` so `tsc-testrunner`'s union-ordering check can take an

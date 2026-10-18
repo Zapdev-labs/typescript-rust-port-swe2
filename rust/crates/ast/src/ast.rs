@@ -2815,6 +2815,7 @@ impl std::ops::Deref for NodeArenaBuf {
     type Target = Vec<Node>;
 
     #[inline]
+    #[inline]
     fn deref(&self) -> &Vec<Node> {
         // SAFETY: single-threaded pipeline; mutation reaches through
         // `UnsafeCell` while readers hold `&` borrows — Go's shared-heap
@@ -2892,6 +2893,7 @@ pub struct NodeListPtr(*const Vec<Node>);
 #[allow(unsafe_code)] // stable-address arena deref — see `NodeListPtr`
 impl std::ops::Deref for NodeListPtr {
     type Target = Vec<Node>;
+    #[inline]
     fn deref(&self) -> &Vec<Node> {
         unsafe { &*self.0 }
     }
@@ -3074,6 +3076,7 @@ impl ArenaMut {
 impl std::ops::Deref for ArenaMut {
     type Target = Vec<Node>;
 
+    #[inline]
     fn deref(&self) -> &Vec<Node> {
         unsafe { &*self.work.0.get() }
     }
@@ -3081,6 +3084,7 @@ impl std::ops::Deref for ArenaMut {
 
 #[allow(unsafe_code)] // shared-heap write — see `NodeArenaBuf`
 impl std::ops::DerefMut for ArenaMut {
+    #[inline]
     fn deref_mut(&mut self) -> &mut Vec<Node> {
         self.dirty = true;
         unsafe { &mut *self.work.0.get() }
@@ -3123,6 +3127,7 @@ where
 {
     type Target = T;
 
+    #[inline]
     fn deref(&self) -> &T {
         (self.f)(&self.arena)
     }
@@ -3170,12 +3175,14 @@ impl ArenaCheckout {
 impl std::ops::Deref for ArenaCheckout {
     type Target = Vec<Node>;
 
+    #[inline]
     fn deref(&self) -> &Vec<Node> {
         &self.work
     }
 }
 
 impl std::ops::DerefMut for ArenaCheckout {
+    #[inline]
     fn deref_mut(&mut self) -> &mut Vec<Node> {
         &mut self.work
     }
@@ -3228,6 +3235,7 @@ impl ArenaAccess {
 impl std::ops::Deref for ArenaAccess {
     type Target = Vec<Node>;
 
+    #[inline]
     fn deref(&self) -> &Vec<Node> {
         match self {
             ArenaAccess::Mut(m) => m,
@@ -3237,6 +3245,7 @@ impl std::ops::Deref for ArenaAccess {
 }
 
 impl std::ops::DerefMut for ArenaAccess {
+    #[inline]
     fn deref_mut(&mut self) -> &mut Vec<Node> {
         match self {
             ArenaAccess::Mut(m) => m,

@@ -3225,7 +3225,7 @@ impl Checker {
                         }
                         if (source == self.empty_object_type
                             || source == self.unknown_empty_object_type)
-                            && self.types_handle().get(target).symbol.is_some()
+                            && self.types.get(target).symbol.is_some()
                             && self.is_empty_anonymous_object_type(target)
                         {
                             continue;
@@ -5966,7 +5966,7 @@ __h5064_43, suggestion],
 
     /// `(c *Checker) getBaseConstraintOfType` (checker.go:27970).
     pub fn get_base_constraint_of_type(&mut self, t: TypeId) -> Option<TypeId> {
-        if self.types_handle().get(t).flags.intersects(
+        if self.types.get(t).flags.intersects(
             TypeFlags::INSTANTIABLE_NON_PRIMITIVE
                 | TypeFlags::UNION_OR_INTERSECTION
                 | TypeFlags::TEMPLATE_LITERAL
@@ -7254,7 +7254,7 @@ impl Checker {
             .intersects(ObjectFlags::REFERENCE)
             || !self
                 .types_handle()
-                .get_ref(self.types_handle().get(t).target().unwrap())
+                .get_ref(self.types.get(t).target().unwrap())
                 .object_flags
                 .intersects(ObjectFlags::CLASS_OR_INTERFACE)
         {
@@ -8999,7 +8999,7 @@ impl Checker {
 
     /// `(c *Checker) getConstraintDeclaration` (checker.go:29661).
     pub(crate) fn get_constraint_declaration(&mut self, t: TypeId) -> Option<NodeId> {
-        if let Some(symbol) = self.types_handle().get(t).symbol {
+        if let Some(symbol) = self.types.get(t).symbol {
             for &d in &self.sym(symbol).declarations.clone() {
                 let __program = self.program.as_ref().expect("program");
                 let nodes = __program.nodes_ptr((d).file_index());
@@ -13418,7 +13418,7 @@ impl Checker {
                         self.get_symbol_has_instance_method_of_object_type(t)
                     {
                         if let Some(symbol) =
-                            self.types_handle().get(has_instance_method_type).symbol
+                            self.types.get(has_instance_method_type).symbol
                         {
                             return Some(symbol);
                         }

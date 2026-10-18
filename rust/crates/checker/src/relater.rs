@@ -744,8 +744,8 @@ impl Checker {
             }
             if s.intersects(TypeFlags::LITERAL)
                 && t.intersects(TypeFlags::LITERAL)
-                && self.types_handle().get(source).as_literal_type().value
-                    == self.types_handle().get(target).as_literal_type().value
+                && self.types.get(source).as_literal_type().value
+                    == self.types.get(target).as_literal_type().value
                 && self.is_enum_type_related_to(
                     source_symbol.expect("enum literal type has a symbol"),
                     target_symbol.expect("enum literal type has a symbol"),
@@ -3493,7 +3493,7 @@ impl Checker {
     /// `(c *Checker) getTypeParameterModifiers`.
     pub(crate) fn get_type_parameter_modifiers(&mut self, tp: TypeId) -> ast::ModifierFlags {
         let mut flags = ast::ModifierFlags::default();
-        if let Some(symbol) = self.types_handle().get(tp).symbol {
+        if let Some(symbol) = self.types.get(tp).symbol {
             let declarations = self.sym(symbol).declarations.clone();
             for d in declarations {
                 let __program = self.program.as_ref().expect("program");
