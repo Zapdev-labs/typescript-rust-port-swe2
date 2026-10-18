@@ -2634,3 +2634,22 @@ If inline helps, re-run PGO build too. If not: the residual check gap is
 distributed RefCell/dispatch cost — next candidates are deeper
 (flow.rs eq/get/intersects within check_expression_worker inner loop;
 get_resolved_symbol's symbol_node_links is already O(1) paged).
+
+## checkpoint 26 — perf verdict (honest)
+
+checker.ts --noEmit --skipLibCheck (remote, release):
+  Go 0.30s | Rust 0.52s release | Rust 0.44s PGO  (~1.5-1.75x on check)
+check phase: Go 0.21 vs RS 0.39 plain / 0.33 PGO — same work, ~1.5x.
+Landed wins: flow_node_ref/flow_list_ref (Ref-anchored, no Rc snapshot),
+nodes_ptr NodeListPtr (Copy *const Vec<Node>, ~1100 sites),
+program as_ref (no clone) ~1080 decls, types_handle single-use inline.
+Failed: #[inline] on accessors (icache bloat — reverted).
+
+Gap is distributed RefCell/Rc/dispatch/arena-indirection tax across
+check_expression_worker -> check_identifier/get_flow_type_of_reference_ex.
+Full parity needs the deeper refactor: flow graph/type/symbol arenas
+beyond the slab layer already in place — the deferrals noted in code.
+Perf work bench: BENCH-checker.png, TSC_PPROF_DIR profiling wired.
+
+Port is FUNCTIONALLY DONE: all crates green, 4572/4572 fourslash,
+workspace tests green, --lsp/--api validated, Go tree removed.
