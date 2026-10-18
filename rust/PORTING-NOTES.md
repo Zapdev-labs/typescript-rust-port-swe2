@@ -2699,3 +2699,15 @@ UnsafeCell get ≈ 6 ops per nodes_ptr call vs Go's 1 field access.
 Candidate: cache *const Vec<Node> per file_index in a Vec on Program —
 one index per nodes_ptr (3 ops) — or make last_arena store the ptr
 directly (bypass Rc clone) — NodeListPtr::from_raw already shows the way.
+
+## checkpoint 31 — nodes_ptr last_arena ptr cache: net negative, reverted
+
+Caching `*const Vec<Node>` in `last_arena` alongside the `Rc` — the
+extra `borrow()`+`expect` fast-path cost more than the `Rc` clone it
+saved (0.50 -> 0.61). `arena_cell`'s existing borrow+clone was already
+near-optimal. The check gap is structural, not accessor-cost.
+
+Committed good state: .50 wall / .385 check (release), .44/.331 PGO.
+Go .30/.21. The port is functionally complete; beating Go on
+single-file check needs the slab refactor (Rc->u32 indices) that's
+the deferred structural work, not flag/accessor tuning.
