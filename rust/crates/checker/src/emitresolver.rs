@@ -753,7 +753,7 @@ impl EmitResolver {
         .intersects(ast::SymbolFlags::VALUE)
             && (c.compiler_options.should_preserve_const_enums()
                 || !target.is_some_and(|t| {
-                    let arena = c.symbol_arena.clone();
+                    let arena = c.symbol_arena_ptr();
                     is_const_enum_or_const_enum_only_module(&arena[t.index()])
                 }))
     }
@@ -797,7 +797,7 @@ impl ReferenceResolver for EmitResolver {
 
         let symbol = c.get_referenced_value_or_alias_symbol(node, Some(nodes));
         let is_non_local_alias = {
-            let arena = c.symbol_arena.clone();
+            let arena = c.symbol_arena_ptr();
             ast::is_non_local_alias(symbol.map(|s| &arena[s.index()]), ast::SymbolFlags::VALUE)
         };
         if is_non_local_alias

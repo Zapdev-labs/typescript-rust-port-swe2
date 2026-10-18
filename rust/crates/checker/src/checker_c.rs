@@ -811,7 +811,7 @@ impl Checker {
             };
             let mut target = self.get_target_of_alias_declaration(node);
             let is_non_local = {
-                let arena = self.symbol_arena.clone();
+                let arena = self.symbol_arena_ptr();
                 ast::is_non_local_alias(
                     target.map(|t| &arena[t.index()]),
                     ast::SymbolFlags::VALUE | ast::SymbolFlags::TYPE | ast::SymbolFlags::NAMESPACE,
@@ -1522,7 +1522,7 @@ impl Checker {
                 let getter = {
                     let parent_symbol = self.get_symbol_of_declaration(fn_);
                     parent_symbol.and_then(|s| {
-                        let arena = self.symbol_arena.clone();
+                        let arena = self.symbol_arena_ptr();
                         ast::get_declaration_of_kind(
                             &arena[s.index()],
                             ast::Kind::GetAccessor,
@@ -6959,7 +6959,7 @@ impl Checker {
                 let nodes = __program.nodes_ptr((declaration).file_index());
                 // `ast::get_declaration_of_kind(&Symbol, kind, nodes)` needs an
                 // owned symbol clone because the arena lives in a `RefCell`.
-                let sym_ref = self.symbol_arena.clone();
+                let sym_ref = self.symbol_arena_ptr();
                 ast::get_declaration_of_kind(&sym_ref[s.index()], other_kind, &nodes)
             });
             if let Some(other) = other {

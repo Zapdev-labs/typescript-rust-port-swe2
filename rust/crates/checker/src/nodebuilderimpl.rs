@@ -384,7 +384,7 @@ fn symbol_name(c: &Checker, s: SymbolId) -> String {
 /// their declaration name node (`#context` rather than the internal
 /// `\u{FFFD}#id@#context` encoding).
 fn declaration_symbol_name(c: &Checker, s: SymbolId, nodes: &[ast::Node]) -> String {
-    let arena = c.symbol_arena.clone();
+    let arena = c.symbol_arena_ptr();
     let sym = &arena[s.index()];
     let view = match sym.value_declaration {
         Some(vd) => crate::printer_util::resolve_arena_for(
@@ -2399,7 +2399,7 @@ impl<'a> NodeBuilderImpl<'a> {
         );
         let __program = c.program.clone().expect("program");
         let file_nodes = crate::printer_util::arena_view(&__program, nodes, (context_file).file_index());
-        let symbol_arena = c.symbol_arena.clone();
+        let symbol_arena = c.symbol_arena_ptr();
         let symbol_arena_ref = symbol_arena.clone();
         let checker_adapter = CheckerShapeAdapter::new(&mut *c);
         // Node ids the specifier machinery dereferences may live in other
@@ -4206,7 +4206,7 @@ impl<'a> NodeBuilderImpl<'a> {
                     let pt = {
                         let __program = c.program.clone().expect("program");
                         let decl_nodes = crate::printer_util::arena_view(&__program, nodes, (declaration).file_index());
-                        let symbols = c.symbol_arena.clone();
+                        let symbols = c.symbol_arena_ptr();
                         self.pc
                             .get_return_type_of_signature(declaration, &decl_nodes, &symbols)
                     };
@@ -4587,7 +4587,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 let remove = symbol.map(|s| self.add_symbol_type_to_context(s, t));
                 let __program = c.program.clone().expect("program");
                 let decl_nodes = crate::printer_util::arena_view(&__program, nodes, (declaration).file_index());
-                let symbols = c.symbol_arena.clone();
+                let symbols = c.symbol_arena_ptr();
                 let mut pt = if is_accessor_decl {
                     self.pc
                         .get_type_of_accessor(declaration, &decl_nodes, &symbols)
@@ -4613,7 +4613,7 @@ impl<'a> NodeBuilderImpl<'a> {
                     // type for the rest.
                     let __program = c.program.clone().expect("program");
                     let dn = crate::printer_util::arena_view(&__program, nodes, (annotated_decl).file_index());
-                    let symbols = c.symbol_arena.clone();
+                    let symbols = c.symbol_arena_ptr();
                     pt = self
                         .pc
                         .get_type_of_declaration(annotated_decl, &dn, &symbols);
@@ -8148,7 +8148,7 @@ fn get_declaration_of_kind_of_symbol(c: &Checker, symbol: SymbolId, kind: Kind,
 fn get_source_file_of_module_symbol(c: &Checker, symbol: SymbolId,
         nodes: &[ast::Node],) -> Option<NodeId> {
     let (value_declaration, declarations) = {
-        let arena = c.symbol_arena.clone();
+        let arena = c.symbol_arena_ptr();
         let s = &arena[symbol.index()];
         (s.value_declaration, s.declarations.clone())
     };
@@ -8455,7 +8455,7 @@ impl Checker {
             return symbol_value_declaration(self, symbol);
         }
         symbol_declarations(self, symbol).into_iter().find(|&d| {
-            let __program = self.program.as_ref().expect("program");
+            let __program = self.program.clone().expect("program");
             let dn = crate::printer_util::arena_view(&__program, nodes, (d).file_index());
             if ast::is_interface_declaration(&dn[d]) {
                 return true;
@@ -8503,7 +8503,7 @@ impl Checker {
                 Some(p) => p,
                 None => return Vec::new(),
             };
-            let __program = self.program.as_ref().expect("program");
+            let __program = self.program.clone().expect("program");
             let kind = crate::printer_util::arena_view(&__program, nodes, (node).file_index())[node].kind;
             if !matches!(
                 kind,
@@ -8529,7 +8529,7 @@ impl Checker {
             let mut outer_type_parameters =
                 self.get_outer_type_parameters(node, include_this_types, nodes);
             {
-                let __program = self.program.as_ref().expect("program");
+                let __program = self.program.clone().expect("program");
                 let nn = crate::printer_util::arena_view(&__program, nodes, (node).file_index());
                 let is_fn_like = kind == Kind::FunctionExpression
                     || kind == Kind::ArrowFunction
@@ -8553,7 +8553,7 @@ impl Checker {
             }
             if kind == Kind::MappedType {
                 let mapped = {
-                    let __program = self.program.as_ref().expect("program");
+                    let __program = self.program.clone().expect("program");
                     let nn = crate::printer_util::arena_view(&__program, nodes, (node).file_index());
                     nn[node].as_mapped_type_node().type_parameter
                 };
@@ -8602,7 +8602,7 @@ impl Checker {
         nodes: &[ast::Node],) -> Vec<TypeId> {
         let mut result = Vec::new();
         let locals: Vec<SymbolId> = {
-            let __program = self.program.as_ref().expect("program");
+            let __program = self.program.clone().expect("program");
             let nn = crate::printer_util::arena_view(&__program, nodes, (node).file_index());
             nn[node]
                 .locals()
@@ -8648,7 +8648,7 @@ impl Checker {
         symbol: SymbolId,
         nodes: &[ast::Node],) -> Vec<TypeId> {
         for node in symbol_declarations(self, symbol) {
-            let __program = self.program.as_ref().expect("program");
+            let __program = self.program.clone().expect("program");
             let nn = crate::printer_util::arena_view(&__program, nodes, (node).file_index());
             let kind = nn[node].kind;
             if matches!(
@@ -8686,7 +8686,7 @@ impl Checker {
         node: NodeId,
         nodes: &[ast::Node],) -> Option<TypeId> {
         let (is_jsdoc, type_name_text, type_args) = {
-            let __program = self.program.as_ref().expect("program");
+            let __program = self.program.clone().expect("program");
             let nn = crate::printer_util::arena_view(&__program, nodes, (node).file_index());
             if !nn[node].flags.intersects(ast::NodeFlags::JSDOC)
                 || !ast::is_type_reference_node(&nn[node])

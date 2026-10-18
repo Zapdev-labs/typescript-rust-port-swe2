@@ -80,6 +80,26 @@ impl Symbol {
 /// heap address so `SymbolPtr` handles stay valid across pushes. Go
 /// semantics: every `*ast.Symbol` lives on a shared heap and mutation is in
 /// place — readers see writes immediately.
+/// `Copy` `*const SymbolArena` — see `TypeArenaPtr` (checker hot path
+/// dodged `&mut self` conflicts by cloning the inner `Rc`; `Checker::
+/// symbol_arena` is a stable field so the raw ptr is sound).
+#[derive(Clone, Copy)]
+pub struct SymbolArenaPtr(*const SymbolArena);
+
+#[allow(unsafe_code)]
+impl std::ops::Deref for SymbolArenaPtr {
+    type Target = SymbolArena;
+    fn deref(&self) -> &SymbolArena {
+        unsafe { &*self.0 }
+    }
+}
+
+impl SymbolArenaPtr {
+    pub fn from_raw(p: *const SymbolArena) -> Self {
+        Self(p)
+    }
+}
+
 #[derive(Clone, Default)]
 pub struct SymbolArena {
     symbols: ChunkedArena<Symbol>,

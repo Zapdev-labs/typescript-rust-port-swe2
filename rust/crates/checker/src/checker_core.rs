@@ -2793,7 +2793,7 @@ impl Checker {
         if type_parameter_count != arity as usize {
             if report_errors {
                 let decl = {
-                    let arena = self.symbol_arena.clone();
+                    let arena = self.symbol_arena_ptr();
                     arena[symbol.index()]
                         .declarations
                         .iter()
@@ -3040,7 +3040,7 @@ impl Checker {
                     // to be resolved.
                     for (_, &symbol) in locals.entries() {
                         let (flags, name) = {
-                            let arena = self.symbol_arena.clone();
+                            let arena = self.symbol_arena_ptr();
                             (
                                 arena[symbol.index()].flags,
                                 arena[symbol.index()].name.clone(),
@@ -3177,7 +3177,7 @@ impl Checker {
     ) -> SymbolId {
         let mut target = target;
         let (target_flags, source_flags) = {
-            let arena = self.symbol_arena.clone();
+            let arena = self.symbol_arena_ptr();
             (arena[target.index()].flags, arena[source.index()].flags)
         };
         if !target_flags.intersects(crate::checker_b::get_excluded_symbol_flags(source_flags))
@@ -3226,7 +3226,7 @@ impl Checker {
             let source_value_declaration = self.sym(source).value_declaration;
             if let Some(value_declaration) = source_value_declaration {
                 let __program = self.program.clone().expect("program");
-                let mut arena = self.symbol_arena.clone();
+                let mut arena = self.symbol_arena_ptr();
                 tsc_binder::binder::set_value_declaration(
                     &mut arena,
                     target,
@@ -3667,7 +3667,7 @@ impl Checker {
                     .unwrap_or_default(),
             ),
         };
-        let symbol_arena = self.symbol_arena.clone();
+        let symbol_arena = self.symbol_arena_ptr();
         let compiler_options = self.compiler_options.clone();
         let globals = self.globals.clone();
         let arguments_symbol = if self.arguments_symbol == SymbolId::NONE {
@@ -3917,7 +3917,16 @@ impl Checker {
     /// do not hold a read guard across `get_mut`/`alloc` on the same arena.
     /// PORT: `pub` so `tsc-testrunner`'s union-ordering check can take an
     /// arena handle without borrowing the `Checker` across calls.
-    /// `types_handle` without the `Rc` clone — `self.types` is set once
+    /// `symbol_arena` as a `Copy` ptr — same soundness as `types_ptr`.
+    pub fn symbol_arena_ptr(&self) -> ast::SymbolArenaPtr {
+        ast::SymbolArenaPtr::from_raw(std::ptr::from_ref(&self.symbol_arena))
+    }
+
+    /// `program` as `*const dyn Program` — the `Option<Rc>` field is set
+    /// once; `Copy` ptr kills the `Rc` clone in `program.clone()` decls.
+
+
+    /// `types_handle` without the `Rc` clone    /// `types_handle` without the `Rc` clone — `self.types` is set once
     /// (`new`), so its address is stable for the checker's lifetime; the
     /// returned `Copy` ptr lets callers use the arena without pinning
     /// `&self.types` across `&mut self` calls.
@@ -3972,7 +3981,7 @@ impl Checker {
     /// `ast.SymbolName(symbol)` — the port's `symbol::symbol_name` needs
     /// the value declaration's node arena.
     pub fn symbol_display_name(&self, symbol: SymbolId) -> String {
-        let arena = self.symbol_arena.clone();
+        let arena = self.symbol_arena_ptr();
         let sym = &arena[symbol.index()];
         match sym.value_declaration {
             Some(d) => {
@@ -3992,7 +4001,7 @@ impl Checker {
         let Some(s1) = s1 else { return 1 };
         let Some(s2) = s2 else { return -1 };
         let (d1, d2, n1, n2) = {
-            let arena = self.symbol_arena.clone();
+            let arena = self.symbol_arena_ptr();
             let s1 = &arena[s1.index()];
             let s2 = &arena[s2.index()];
             (

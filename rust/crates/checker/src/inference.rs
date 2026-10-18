@@ -1747,7 +1747,7 @@ impl Checker {
             .as_mapped_type()
             .declaration
             .expect("mapped type declaration");
-        let __program = self.program.as_ref().expect("program");
+        let __program = self.program.clone().expect("program");
         let nodes = __program.nodes_ptr((declaration).file_index());
         nodes[declaration].as_mapped_type_node().name_type.is_some()
     }
@@ -3131,7 +3131,7 @@ impl Checker {
                 .declarations
                 .clone();
             for d in declarations {
-                let __program = self.program.as_ref().expect("program");
+                let __program = self.program.clone().expect("program");
                 let nodes = __program.nodes_ptr((d).file_index());
                 if ast::is_type_parameter_declaration(&nodes[d])
                     && nodes[d]

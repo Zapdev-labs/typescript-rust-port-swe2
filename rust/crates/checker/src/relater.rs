@@ -1310,7 +1310,7 @@ impl Checker {
         ) {
             return true;
         }
-        let __program = self.program.as_ref().expect("program");
+        let __program = self.program.clone().expect("program");
         let nodes = __program.nodes_ptr((node).file_index());
         match nodes[node].kind {
             ast::Kind::AsExpression => {
@@ -1453,13 +1453,13 @@ impl Checker {
             return false;
         }
         let mut reported_error = false;
-        let __program = self.program.as_ref().expect("program");
+        let __program = self.program.clone().expect("program");
         let properties = __program.nodes_ptr((node).file_index())[node]
             .properties()
             .map(|p| p.to_vec())
             .unwrap_or_default();
         for prop in properties {
-            let __program = self.program.as_ref().expect("program");
+            let __program = self.program.clone().expect("program");
             let prop_nodes = __program.nodes_ptr((prop).file_index());
             if ast::is_spread_assignment(&prop_nodes[prop]) {
                 continue;
@@ -1550,14 +1550,14 @@ impl Checker {
             }
         }
         let mut reported_error = false;
-        let __program = self.program.as_ref().expect("program");
+        let __program = self.program.clone().expect("program");
         let elements = __program.nodes_ptr((node).file_index())[node]
             .elements()
             .map(|e| e.to_vec())
             .unwrap_or_default();
         for (i, element) in elements.iter().enumerate() {
             let element = *element;
-            let __program = self.program.as_ref().expect("program");
+            let __program = self.program.clone().expect("program");
             let element_nodes = __program.nodes_ptr((element).file_index());
             if ast::is_omitted_expression(&element_nodes[element])
                 || self.is_tuple_like_type(target)
@@ -1761,7 +1761,7 @@ impl Checker {
             let index_info = self.get_applicable_index_info(target, name_type);
             if let Some(index_info) = index_info {
                 if let Some(declaration) = self.index_info_arena.get(index_info).declaration {
-                    let __program = self.program.as_ref().expect("program");
+                    let __program = self.program.clone().expect("program");
                     let nodes = __program.nodes_ptr((declaration).file_index());
                     let source_file = ast::get_source_file_of_node(Some(declaration), &nodes);
                     let path_key =
@@ -1811,7 +1811,7 @@ impl Checker {
             {
                 property_name = self.type_to_string(name_type);
             }
-            let __program = self.program.as_ref().expect("program");
+            let __program = self.program.clone().expect("program");
             let nodes = __program.nodes_ptr((target_node).file_index());
             let source_file = ast::get_source_file_of_node(Some(target_node), &nodes);
             let path_key = source_file.map(|f| nodes[f].as_source_file().path_key().clone());
@@ -1895,7 +1895,7 @@ impl Checker {
         mut diagnostic_output: Option<&mut Vec<ast::diagnostic::DiagnosticRef>>,
     ) -> bool {
         // Don't elaborate blocks or functions with annotated parameter types.
-        let __program = self.program.as_ref().expect("program");
+        let __program = self.program.clone().expect("program");
         let nodes = __program.nodes_ptr((node).file_index());
         let body = nodes[node].body();
         if body.is_some_and(|b| ast::is_block(&nodes[b])) {
@@ -3174,7 +3174,7 @@ impl Checker {
         if let Some(symbol) = symbol {
             let value_declaration = self.sym(symbol).value_declaration;
             if let Some(decl) = value_declaration {
-                let __program = self.program.as_ref().expect("program");
+                let __program = self.program.clone().expect("program");
                 let nodes = __program.nodes_ptr((decl).file_index());
                 return ast::is_expression(&nodes[decl], &nodes)
                     && !self.is_context_sensitive(decl);
@@ -3496,7 +3496,7 @@ impl Checker {
         if let Some(symbol) = self.types.get(tp).symbol {
             let declarations = self.sym(symbol).declarations.clone();
             for d in declarations {
-                let __program = self.program.as_ref().expect("program");
+                let __program = self.program.clone().expect("program");
                 let nodes = __program.nodes_ptr((d).file_index());
                 flags.insert(nodes[d].modifier_flags());
             }
@@ -4383,7 +4383,7 @@ impl Checker {
 
     /// `(c *Checker) isValidDeclarationForTupleLabel`.
     fn is_valid_declaration_for_tuple_label(&mut self, d: NodeId) -> bool {
-        let __program = self.program.as_ref().expect("program");
+        let __program = self.program.clone().expect("program");
         let nodes = __program.nodes_ptr((d).file_index());
         ast::is_named_tuple_member(&nodes[d])
             || (ast::is_parameter_declaration(&nodes[d])
@@ -4546,7 +4546,7 @@ impl Checker {
         index: usize,
     ) -> String {
         if let Some(labeled) = element_info.labeled_declaration {
-            let __program = self.program.as_ref().expect("program");
+            let __program = self.program.clone().expect("program");
             let nodes = __program.nodes_ptr((labeled).file_index());
             return nodes[labeled]
                 .name()
@@ -4556,7 +4556,7 @@ impl Checker {
         if let Some(rest_symbol) = rest_symbol {
             let value_declaration = self.sym(rest_symbol).value_declaration;
             if let Some(decl) = value_declaration {
-                let __program = self.program.as_ref().expect("program");
+                let __program = self.program.clone().expect("program");
                 let nodes = __program.nodes_ptr((decl).file_index());
                 if ast::is_parameter_declaration(&nodes[decl]) {
                     return self.get_tuple_element_label_from_binding_element(
@@ -4580,7 +4580,7 @@ impl Checker {
         index: usize,
         element_flags: ElementFlags,
     ) -> String {
-        let __program = self.program.as_ref().expect("program");
+        let __program = self.program.clone().expect("program");
         let nodes = __program.nodes_ptr((node).file_index());
         if let Some(name) = nodes[node].name() {
             match nodes[name].kind {
@@ -4711,7 +4711,7 @@ impl Checker {
                 }
                 Branch::Default => {
                     if let Some(declaration) = declaration {
-                        let __program = self.program.as_ref().expect("program");
+                        let __program = self.program.clone().expect("program");
                         let nodes = __program.nodes_ptr((declaration).file_index());
                         let type_node = nodes[declaration].type_();
                         if let Some(type_node) = type_node {
@@ -4826,7 +4826,7 @@ impl Checker {
         node: NodeId,
         signature: SignatureId,
     ) -> TypePredicate {
-        let __program = self.program.as_ref().expect("program");
+        let __program = self.program.clone().expect("program");
         let nodes = __program.nodes_ptr((node).file_index());
         let predicate_node = nodes[node].as_type_predicate_node();
         let parameter_name_node = predicate_node.parameter_name;
@@ -11130,7 +11130,7 @@ impl Checker {
             && (root.check_type.is_some_and(|check_type| {
                 let node = root.node;
                 let true_type = node.and_then(|n| {
-                    let __program = self.program.as_ref().expect("program");
+                    let __program = self.program.clone().expect("program");
                     let nodes = __program.nodes_ptr((n).file_index());
                     nodes[n].as_conditional_type_node().true_type
                 });
@@ -11139,7 +11139,7 @@ impl Checker {
             }) || root.check_type.is_some_and(|check_type| {
                 let node = root.node;
                 let false_type = node.and_then(|n| {
-                    let __program = self.program.as_ref().expect("program");
+                    let __program = self.program.clone().expect("program");
                     let nodes = __program.nodes_ptr((n).file_index());
                     nodes[n].as_conditional_type_node().false_type
                 });

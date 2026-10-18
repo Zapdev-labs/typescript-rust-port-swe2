@@ -3106,7 +3106,7 @@ impl Checker {
             let symbol = self.get_symbol_of_declaration(node);
             let (getter, setter) = symbol
                 .map(|s| {
-                    let arena = self.symbol_arena.clone();
+                    let arena = self.symbol_arena_ptr();
                     (
                         ast::get_declaration_of_kind(
                             &arena[s.index()],
@@ -5814,7 +5814,7 @@ impl Checker {
                     for (caught_name, _local) in node_locals.entries() {
                         if let Some(block_local) = block_locals.get(caught_name) {
                             let (value_declaration, flags) = {
-                                let arena = self.symbol_arena.clone();
+                                let arena = self.symbol_arena_ptr();
                                 (
                                     arena[block_local.index()].value_declaration,
                                     arena[block_local.index()].flags,
@@ -6520,7 +6520,7 @@ impl Checker {
                 {
                     // property/accessor is overridden with property/accessor
                     let base_check_flags = {
-                        let arena = self.symbol_arena.clone();
+                        let arena = self.symbol_arena_ptr();
                         arena[base.index()].check_flags
                     };
                     if base_check_flags.intersects(ast::checkflags::CheckFlags::MAPPED)
@@ -6756,7 +6756,7 @@ impl Checker {
 
     /// `isPrototypeProperty` (checker.go) — pure predicate on a symbol.
     fn is_prototype_symbol(&self, symbol: SymbolId) -> bool {
-        let arena = self.symbol_arena.clone();
+        let arena = self.symbol_arena_ptr();
         let s = &arena[symbol.index()];
         s.flags.intersects(ast::SymbolFlags::METHOD)
             || s.check_flags
@@ -6938,7 +6938,7 @@ impl Checker {
         let nodes = __program.nodes_ptr((node).file_index());
         let is_js = ast::is_in_js_file(Some(node), &nodes);
         let member_value_declaration = {
-            let arena = self.symbol_arena.clone();
+            let arena = self.symbol_arena_ptr();
             arena[member.index()].value_declaration
         };
         if member_has_override_modifier
@@ -11259,7 +11259,7 @@ impl Checker {
         // otherwise it will conflict with some local declaration). Note that in addition to normal flags we include matching SymbolFlags.Export*
         // in order to prevent collisions with declarations that were exported from the current module (they still contribute to local names).
         let export_symbol = {
-            let arena = self.symbol_arena.clone();
+            let arena = self.symbol_arena_ptr();
             arena.get_ref(symbol)
                 .export_symbol
                 .unwrap_or(symbol)

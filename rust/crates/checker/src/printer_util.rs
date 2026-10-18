@@ -555,7 +555,7 @@ impl Checker {
             .e
             .clone();
         let mut emit_context = emit_context_cell.borrow_mut();
-        let symbol_arena = self.symbol_arena.clone();
+        let symbol_arena = self.symbol_arena_ptr();
         let symbols = symbol_arena.clone();
         let source_file =
             enclosing_declaration.and_then(|d| ast::get_source_file_of_node(Some(d), &nodes));
@@ -712,7 +712,7 @@ impl Checker {
             .e
             .clone();
         let mut emit_context = emit_context_cell.borrow_mut();
-        let symbol_arena = self.symbol_arena.clone();
+        let symbol_arena = self.symbol_arena_ptr();
         let symbols = symbol_arena.clone();
         // add neverAsciiEscape for GH#39027
         let enclosing_is_source_file = enclosing_declaration.is_some_and(|d| {
@@ -806,7 +806,7 @@ impl Checker {
             .e
             .clone();
         let mut emit_context = emit_context_cell.borrow_mut();
-        let symbol_arena = self.symbol_arena.clone();
+        let symbol_arena = self.symbol_arena_ptr();
         let symbols = symbol_arena.clone();
         let source_file =
             enclosing_declaration.and_then(|d| ast::get_source_file_of_node(Some(d), &nodes));
@@ -882,7 +882,7 @@ impl Checker {
             .e
             .clone();
         let mut emit_context = emit_context_cell.borrow_mut();
-        let symbol_arena = self.symbol_arena.clone();
+        let symbol_arena = self.symbol_arena_ptr();
         let symbols = symbol_arena.clone();
         let source_file =
             enclosing_declaration.and_then(|d| ast::get_source_file_of_node(Some(d), &nodes));
@@ -1095,7 +1095,7 @@ impl Checker {
             .e
             .clone();
         let mut emit_context = emit_context_cell.borrow_mut();
-        let symbol_arena = self.symbol_arena.clone();
+        let symbol_arena = self.symbol_arena_ptr();
         let symbols = symbol_arena.clone();
         let source_file = self
             .sym(symbol)
@@ -1164,7 +1164,7 @@ impl Checker {
             .e
             .clone();
         let mut emit_context = emit_context_cell.borrow_mut();
-        let symbol_arena = self.symbol_arena.clone();
+        let symbol_arena = self.symbol_arena_ptr();
         let symbols = symbol_arena.clone();
         let source_file =
             enclosing_declaration.and_then(|d| ast::get_source_file_of_node(Some(d), &nodes));

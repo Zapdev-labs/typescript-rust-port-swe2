@@ -460,7 +460,7 @@ impl Checker {
         enclosing_declaration: NodeId,
     live_nodes: Option<&[Node]>) -> Vec<SymbolId> {
         let containing_file = {
-            let __program = self.program.as_ref().expect("program");
+            let __program = self.program.clone().expect("program");
             crate::printer_util::get_source_file_of_node_resolved(
                 &__program,
                 live_nodes.unwrap_or(&[]),
@@ -479,7 +479,7 @@ impl Checker {
         }
         let mut results: Vec<SymbolId> = Vec::new();
         let imports: Vec<NodeId> = {
-            let __program = self.program.as_ref().expect("program");
+            let __program = self.program.clone().expect("program");
             let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), containing_file);
             nn[containing_file].as_source_file().imports.to_vec()
         };
@@ -487,7 +487,7 @@ impl Checker {
             // Try to make an import using an import already in the enclosing file, if possible
             for import_ref in imports {
                 if {
-                    let __program = self.program.as_ref().expect("program");
+                    let __program = self.program.clone().expect("program");
                     let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), import_ref);
                     ast::node_is_synthesized(&nn[import_ref])
                 } {
@@ -584,7 +584,7 @@ impl Checker {
         let files = self.files.clone();
         for file in files {
             let is_external = {
-                let __program = self.program.as_ref().expect("program");
+                let __program = self.program.clone().expect("program");
                 let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), file);
                 ast::is_external_module(nn[file].as_source_file())
             };
@@ -637,7 +637,7 @@ impl Checker {
         let files = self.files.clone();
         for file in files {
             let is_external = {
-                let __program = self.program.as_ref().expect("program");
+                let __program = self.program.clone().expect("program");
                 let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), file);
                 ast::is_external_module(nn[file].as_source_file())
             };
@@ -669,7 +669,7 @@ impl Checker {
         }
         let (_, decls, ..) = sym_fields(self, symbol);
         let &first_decl = decls.first()?;
-        let __program = self.program.as_ref().expect("program");
+        let __program = self.program.clone().expect("program");
         let dn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), first_decl);
         let parent = dn[first_decl].parent?;
         if !ast::is_variable_declaration(&dn[parent]) {
@@ -694,7 +694,7 @@ impl Checker {
         declaration: NodeId,
     live_nodes: Option<&[Node]>) -> Option<SymbolId> {
         let node = {
-            let __program = self.program.as_ref().expect("program");
+            let __program = self.program.clone().expect("program");
             let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), declaration);
             ast::find_ancestor(Some(declaration), &nn, &mut |n, nodes| {
                 has_external_module_symbol(n, nodes)
@@ -751,7 +751,7 @@ impl Checker {
         }
         let mut candidates: Vec<SymbolId> = Vec::new();
         for d in sym_fields(self, symbol).1 {
-            let __program = self.program.as_ref().expect("program");
+            let __program = self.program.clone().expect("program");
             let dn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), d);
             let d_parent = dn[d].parent;
             if !ast::is_ambient_module(&dn[d], &dn) && d_parent.is_some() {
@@ -1127,7 +1127,7 @@ impl Checker {
                 && st_name != ast::symbol::INTERNAL_SYMBOL_NAME_DEFAULT
                 && !(is_umd_export_symbol(self, symbol_from_symbol_table, live_nodes)
                     && ctx.enclosing_declaration.is_some_and(|ed| {
-                                                let __program = self.program.as_ref().expect("program");
+                                                let __program = self.program.clone().expect("program");
                         crate::printer_util::get_source_file_of_node_resolved(&__program, live_nodes.unwrap_or(&[]), Some(ed))
                             .is_some_and(|sf| {
                                 let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), sf);
@@ -1137,7 +1137,7 @@ impl Checker {
                 // If `!useOnlyExternalAliasing`, we can use any type of alias to get the name
                 && (!ctx.use_only_external_aliasing
                     || st_decls.iter().any(|&d| {
-                                                let __program = self.program.as_ref().expect("program");
+                                                let __program = self.program.clone().expect("program");
                         let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), d);;
                         ast::is_external_module_import_equals_declaration(&nn[d], &nn)
                     }))
@@ -1399,7 +1399,7 @@ impl Checker {
         while let Some(loc) = location {
             // Locals of a source file are not in scope (because they get merged into the global symbol table)
             let locals = {
-                let __program = self.program.as_ref().expect("program");
+                let __program = self.program.clone().expect("program");
                 let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), loc);
                 if !ast::is_global_source_file(&nn[loc], &nn) {
                     nn[loc].locals().cloned()
@@ -1420,14 +1420,14 @@ impl Checker {
                 }
             }
             let kind = {
-                let __program = self.program.as_ref().expect("program");
+                let __program = self.program.clone().expect("program");
                 let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), loc);
                 nn[loc].kind
             };
             match kind {
                 Kind::SourceFile | Kind::ModuleDeclaration => {
                     {
-                        let __program = self.program.as_ref().expect("program");
+                        let __program = self.program.clone().expect("program");
                         let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), loc);
                         if kind == Kind::SourceFile
                             && !ast::is_external_or_commonjs_module(nn[loc].as_source_file())
@@ -1436,7 +1436,7 @@ impl Checker {
                         } else {
                             drop(nn);
                             let reparsed = {
-                                let __program = self.program.as_ref().expect("program");
+                                let __program = self.program.clone().expect("program");
                                 let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), loc);
                                 ast::get_reparsed_node_for_node(loc, &nn)
                             };
@@ -1490,7 +1490,7 @@ impl Checker {
                     // scope table — the binder uses bindAnonymousDeclaration. Expose the name
                     // binding here so getAccessibleSymbolChain can resolve self-references.
                     let is_class_expr_with_name = {
-                        let __program = self.program.as_ref().expect("program");
+                        let __program = self.program.clone().expect("program");
                         let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), loc);
                         ast::is_class_expression(&nn[loc]) && nn[loc].name().is_some()
                     };
@@ -1536,7 +1536,7 @@ impl Checker {
         }
         let class_symbol = self.get_symbol_of_declaration(location)?;
         let name_text = {
-            let __program = self.program.as_ref().expect("program");
+            let __program = self.program.clone().expect("program");
             let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), location);
             let name = nn[location].name()?;
             nn[name].as_identifier().text.clone()
@@ -1605,7 +1605,7 @@ impl Checker {
                 if Some(symbol_external_module) != enclosing_external_module {
                     // name from different external module that is not visible
                     let in_js = {
-                        let __program = self.program.as_ref().expect("program");
+                        let __program = self.program.clone().expect("program");
                         let nn = crate::printer_util::resolve_arena_for(&__program, live_nodes.unwrap_or(&[]), enclosing_declaration);
                         ast::is_in_js_file(Some(enclosing_declaration), &nn)
                     };
