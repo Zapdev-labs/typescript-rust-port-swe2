@@ -64,8 +64,7 @@ impl<T> Chunked<T> {
     /// Element pointer — stable: the inner Vec was created with
     /// `with_capacity(CHUNK)` and never exceeds that capacity.
     #[inline]
-    #[inline]
-    pub fn get(&self, i: usize) -> *const T {
+        pub fn get(&self, i: usize) -> *const T {
         debug_assert!(i < self.len);
         unsafe { self.chunks.get_unchecked(i / CHUNK).as_ptr().add(i % CHUNK) }
     }
@@ -189,8 +188,7 @@ impl<T> ChunkedArena<T> {
     }
 
     /// Stable element pointer.
-    #[inline]
-    pub fn get(&self, i: usize) -> *const T {
+        pub fn get(&self, i: usize) -> *const T {
         unsafe { (*self.inner.get()).get(i) }
     }
 

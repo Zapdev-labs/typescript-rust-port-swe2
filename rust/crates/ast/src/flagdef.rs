@@ -20,8 +20,7 @@ macro_rules! flag_type {
 
             /// `self & flags != 0`
             #[inline]
-            #[inline]
-            pub const fn intersects(self, flags: Self) -> bool {
+                        pub const fn intersects(self, flags: Self) -> bool {
                 self.0 & flags.0 != 0
             }
 
