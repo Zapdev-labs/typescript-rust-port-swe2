@@ -2677,3 +2677,11 @@ Remote build ~4min; re-run same bench when done.
 `Rc::ptr_eq` invalidates caches on CoW replace). Fixed: `as_ptr()` =
 element ptr (segfault) -> `std::ptr::from_ref(&br.flow_nodes)`.
 Build+bench running remote. Go .30/.21 vs RS (was .50/.385).
+
+## checkpoint 29 — FlowNodePtr experiment: net negative, reverted
+
+Tried `*const Vec`-header ptr cache in FlowState — segfault fix needed
+element-vs-header ptr correction, then ptr_eq guard overhead made it
+0.60s vs the `Ref`-anchored flow_node_ref (0.50s). Reverted flow.rs +
+ast.rs additions. Committed state = checker.ts .50 wall / .385 check
+(release), .44/.331 PGO vs Go .30/.21 — the honest standing number.
