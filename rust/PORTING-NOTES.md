@@ -2685,3 +2685,17 @@ element-vs-header ptr correction, then ptr_eq guard overhead made it
 0.60s vs the `Ref`-anchored flow_node_ref (0.50s). Reverted flow.rs +
 ast.rs additions. Committed state = checker.ts .50 wall / .385 check
 (release), .44/.331 PGO vs Go .30/.21 — the honest standing number.
+
+## checkpoint 30 — perf loop continues (user: keep going till faster)
+
+Committed wins through fb4ed1846a: checker.ts .67 -> .50 wall,
+.385 check (release) | .44/.331 PGO. Go .30/.21.
+Reverted: FlowNodePtr ptr-cache (CoW invalidation overhead), #[inline],
+system malloc, Cow mass-swap.
+
+NEXT LEVER: arena_cell (program.rs:539) is the remaining per-access
+cost — RefCell borrow + last_arena compare + Rc clone + borrow +
+UnsafeCell get ≈ 6 ops per nodes_ptr call vs Go's 1 field access.
+Candidate: cache *const Vec<Node> per file_index in a Vec on Program —
+one index per nodes_ptr (3 ops) — or make last_arena store the ptr
+directly (bypass Rc clone) — NodeListPtr::from_raw already shows the way.
