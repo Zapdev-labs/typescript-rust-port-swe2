@@ -74,6 +74,19 @@ impl SourceFileData {
             })
     }
 
+    /// `get` but returns the `Rc` cell — callers that must pin the data
+    /// through later `get_mut` clone-on-write replacements; `downcast_ref`
+    /// recovers the typed `&T` (the `+ Send + Sync` `Rc` lacks `downcast`).
+    pub fn get_cell<T: Send + Sync + 'static>(
+        &self,
+        key: &SourceFileDataKey<T>,
+    ) -> Option<Rc<dyn Any + Send + Sync>> {
+        self.cells
+            .get(key.key as usize)
+            .and_then(|cell| cell.as_ref())
+            .cloned()
+    }
+
     /// The write half of `getDataCell` — stores the computed cell value.
     pub fn insert<T: Send + Sync + 'static>(&mut self, key: &SourceFileDataKey<T>, value: T) {
         let idx = key.key as usize;

@@ -2668,3 +2668,12 @@ IN FLIGHT: RUSTFLAGS=-Ctarget-cpu=native rebuild (target-native dir).
 Next cheap levers: system malloc vs mimalloc swap (mi_block/mi_memcpy
 ~10% in profile), jemalloc; then deep flow-graph slab refactor.
 Remote build ~4min; re-run same bench when done.
+
+## checkpoint 28 — FlowNodePtr/FlowListPtr fast path (correctness fix in flight)
+
+`flow_node`/`flow_list` now return `FlowNodePtr`/`FlowListPtr` — Copy
+`*const Vec` header ptrs into an `Rc`-pinned `BindResult` cell
+(`flow_result` re-resolves each call via `data.get_cell` ~4 ops;
+`Rc::ptr_eq` invalidates caches on CoW replace). Fixed: `as_ptr()` =
+element ptr (segfault) -> `std::ptr::from_ref(&br.flow_nodes)`.
+Build+bench running remote. Go .30/.21 vs RS (was .50/.385).

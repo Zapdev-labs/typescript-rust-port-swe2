@@ -145,6 +145,14 @@ pub struct FlowState {
     /// PORT(addition): `NodeId` of the owning file's `SourceFile` — used to
     /// reach `tsc_binder::bind_result` (the `flow_nodes`/`flow_lists` arenas).
     pub file: Option<NodeId>,
+    /// PORT(perf): the resolved `BindResult` `Rc` — pins the arena through
+    /// `bind_result_mut` clone-on-write so the ptr caches below stay valid.
+    flow_result: std::cell::RefCell<Option<Rc<dyn std::any::Any + Send + Sync>>>,
+    /// PORT(perf): cached `(base ptr, len)` for the `flow_nodes`/`flow_lists`
+    /// arenas — `*const Vec` reads the live header, so in-place pushes are
+    /// observed; only `idx >= len` re-resolves (clone-on-write append case).
+    flow_nodes_cache: std::cell::Cell<Option<(*const Vec<FlowNode>, usize)>>,
+    flow_lists_cache: std::cell::Cell<Option<(*const Vec<ast::FlowList>, usize)>>,
 }
 
 impl FlowState {
@@ -190,23 +198,64 @@ impl FlowState {
         })
     }
 
-    /// `flow.Flags`, `flow.Antecedent`, … — dereference a `FlowNodeId`.
-    pub fn flow_node(
-        &self,
-        id: FlowNodeId,
-    ) -> ast::ArenaRef<FlowNode, impl for<'a> Fn(&'a Vec<ast::Node>) -> &'a FlowNode> {
+    /// PORT(perf): the `Rc<BindResult>` behind `nodes[file]` — pins the
+    /// arena through `bind_result_mut` clone-on-write. Re-resolves each call
+    /// (a `data.get_cell` slot lookup is ~4 ops); the cached `Rc` is only a
+    /// pin, the arena ptrs are refreshed whenever the cell identity moves
+    /// (CoW replace → new `Rc` → stale `*const Vec` header).
+    fn flow_result(&self) -> Rc<dyn std::any::Any + Send + Sync> {
         let file = self.file.expect("FlowState.file unset");
-        ast::ArenaRef::new(self.nodes(), move |nodes| {
-            &tsc_binder::binder::bind_result(nodes, file)
-                .expect("flow graph without bind result")
-                .flow_nodes[id.index()]
-        })
+        let nodes_cell = self.nodes.as_ref().expect("FlowState.nodes unset");
+        let borrow = nodes_cell.0.borrow();
+        let cell = borrow[file]
+            .as_source_file()
+            .data
+            .get_cell(&*tsc_binder::binder::BIND_RESULT_KEY)
+            .expect("flow graph without bind result");
+        let mut cached = self.flow_result.borrow_mut();
+        if !cached.as_ref().is_some_and(|old| Rc::ptr_eq(old, &cell)) {
+            // Cell identity moved (CoW replace or first resolve) — refresh
+            // the pinned Rc and the arena ptr/len caches.
+            let br = cell
+                .downcast_ref::<tsc_binder::binder::BindResult>()
+                .expect("bind result cell type");
+            self.flow_nodes_cache.set(Some((
+                std::ptr::from_ref(&br.flow_nodes),
+                br.flow_nodes.len(),
+            )));
+            self.flow_lists_cache.set(Some((
+                std::ptr::from_ref(&br.flow_lists),
+                br.flow_lists.len(),
+            )));
+            *cached = Some(cell.clone());
+        }
+        cell
+    }
+
+    /// `flow.Flags`, `flow.Antecedent`, … — dereference a `FlowNodeId`.
+    /// PORT(perf): `FlowNodePtr` — Copy `*const` into the pinned arena; the
+    /// `*const Vec` deref reads the live header so in-place pushes show up.
+    pub fn flow_node(&self, id: FlowNodeId) -> ast::FlowNodePtr {
+        let idx = id.index();
+        let mut cache = self.flow_nodes_cache.get();
+        if cache.is_none() {
+            self.flow_result();
+            cache = self.flow_nodes_cache.get();
+        }
+        let (vec_ptr, len) = cache.unwrap();
+        if idx >= len {
+            // `flow_nodes` grew (in-place `alloc_flow_node` push) — the
+            // `*const Vec` header reads the live len, so a second resolve
+            // catches appends even when the cell identity is unchanged.
+            self.flow_result();
+        }
+        ast::FlowNodePtr::at(vec_ptr, idx)
     }
 
     /// PORT(perf): `flow_node` minus the per-call `Rc` snapshot — a `Ref`
     /// anchored on the `ArenaCell` borrow directly (no clone/drop, no
     /// `ArenaRef` wrapper). The borrow ties to `&self`, so this is for
-    /// immediate reads (`f.flow_node_ref(x).flags`) — sites that hold the
+    /// immediate reads (`f.flow_node(x).flags`) — sites that hold the
     /// value across a `&mut self`/`&mut f` call keep `flow_node`.
     pub fn flow_node_ref(&self, id: FlowNodeId) -> std::cell::Ref<'_, FlowNode> {
         let file = self.file.expect("FlowState.file unset");
@@ -231,6 +280,21 @@ impl FlowState {
                 .expect("flow graph without bind result")
                 .flow_lists[id.index()]
         })
+    }
+
+    /// `flow_list` — `FlowListPtr` into the pinned arena (see `flow_node`).
+    pub fn flow_list_ptr(&self, id: FlowListId) -> ast::FlowListPtr {
+        let idx = id.index();
+        let mut cache = self.flow_lists_cache.get();
+        if cache.is_none() {
+            self.flow_result();
+            cache = self.flow_lists_cache.get();
+        }
+        let (vec_ptr, len) = cache.unwrap();
+        if idx >= len {
+            self.flow_result();
+        }
+        ast::FlowListPtr::at(vec_ptr, idx)
     }
 
     /// PORT(perf): `flow_list` minus the per-call `Rc` snapshot — see
@@ -306,7 +370,7 @@ fn get_branch_label_antecedents(f: &FlowState, flow: FlowNodeId) -> Option<FlowL
             return data.1;
         }
     }
-    f.flow_node_ref(flow).antecedents
+    f.flow_node(flow).antecedents
 }
 
 /// `*ast.FlowSwitchClauseData` — `Copy` snapshot of the generated payload
@@ -487,7 +551,7 @@ impl Checker {
         f.depth += 1;
         let mut shared_flow: Option<FlowNodeId> = None;
         loop {
-            let flags = f.flow_node_ref(flow).flags;
+            let flags = f.flow_node(flow).flags;
             if flags.intersects(FlowFlags::SHARED) {
                 // We cache results of flow type resolution for shared nodes that were previously visited in
                 // the same getFlowTypeOfReference invocation. A node is considered shared when it is the
@@ -509,13 +573,13 @@ impl Checker {
             if flags.intersects(FlowFlags::ASSIGNMENT) {
                 t = self.get_type_at_flow_assignment(f, flow);
                 if t.is_nil() {
-                    flow = f.flow_node_ref(flow).antecedent.unwrap();
+                    flow = f.flow_node(flow).antecedent.unwrap();
                     continue;
                 }
             } else if flags.intersects(FlowFlags::CALL) {
                 t = self.get_type_at_flow_call(f, flow);
                 if t.is_nil() {
-                    flow = f.flow_node_ref(flow).antecedent.unwrap();
+                    flow = f.flow_node(flow).antecedent.unwrap();
                     continue;
                 }
             } else if flags.intersects(FlowFlags::CONDITION) {
@@ -526,7 +590,7 @@ impl Checker {
                 let antecedents = get_branch_label_antecedents(f, flow);
                 // `flow`/`next` are Copy — one lookup for both checks.
                 let first = antecedents.map(|a| {
-                    let fl = f.flow_list_ref(a);
+                    let fl = f.flow_list_ptr(a);
                     (fl.flow, fl.next)
                 });
                 if first.is_none_or(|(_, next)| next.is_none()) {
@@ -537,9 +601,9 @@ impl Checker {
                 }
                 t = self.get_type_at_flow_branch_label(f, flow, antecedents);
             } else if flags.intersects(FlowFlags::LOOP_LABEL) {
-                let antecedents = f.flow_node_ref(flow).antecedents;
+                let antecedents = f.flow_node(flow).antecedents;
                 let first = antecedents.map(|a| {
-                    let fl = f.flow_list_ref(a);
+                    let fl = f.flow_list_ptr(a);
                     (fl.flow, fl.next)
                 });
                 if first.is_none_or(|(_, next)| next.is_none()) {
@@ -550,12 +614,12 @@ impl Checker {
             } else if flags.intersects(FlowFlags::ARRAY_MUTATION) {
                 t = self.get_type_at_flow_array_mutation(f, flow);
                 if t.is_nil() {
-                    flow = f.flow_node_ref(flow).antecedent.unwrap();
+                    flow = f.flow_node(flow).antecedent.unwrap();
                     continue;
                 }
             } else if flags.intersects(FlowFlags::REDUCE_LABEL) {
                 let (node, antecedent) = {
-                    let fn_ = f.flow_node_ref(flow);
+                    let fn_ = f.flow_node(flow);
                     (fn_.node, fn_.antecedent)
                 };
                 f.reduce_labels.push(node.expect("reduce label node"));
@@ -564,7 +628,7 @@ impl Checker {
                 f.reduce_labels.pop();
             } else if flags.intersects(FlowFlags::START) {
                 // Check if we should continue with the control flow of the containing function.
-                let container = f.flow_node_ref(flow).node;
+                let container = f.flow_node(flow).node;
                 // `f.reference` can be foreign to the flow-graph arena —
                 // resolve it in its own arena.
                 let ref_nodes = self.program_nodes(f.reference());
@@ -615,7 +679,7 @@ impl Checker {
         // `node`/`antecedent` are Copy — single `flow_node` lookup; the
         // intervening checks don't mutate the flow node.
         let (node, flow_antecedent) = {
-            let fn_ = f.flow_node_ref(flow);
+            let fn_ = f.flow_node(flow);
             (fn_.node, fn_.antecedent)
         };
         let node = node.expect("assignment flow node");
@@ -703,7 +767,7 @@ impl Checker {
                 let init = { f.nodes()[node].initializer() };
                 if let Some(init) = init {
                     if ast::is_function_expression_or_arrow_function(&f.nodes()[init]) {
-                        let antecedent = f.flow_node_ref(flow).antecedent.unwrap();
+                        let antecedent = f.flow_node(flow).antecedent.unwrap();
                         return self.get_type_at_flow_node(f, antecedent);
                     }
                 }
@@ -731,7 +795,7 @@ impl Checker {
                 f.nodes()[for_in].expression().unwrap(),
                 f.reference(),
             ) {
-                let antecedent = f.flow_node_ref(flow).antecedent.unwrap();
+                let antecedent = f.flow_node(flow).antecedent.unwrap();
                 let at = self.get_type_at_flow_node(f, antecedent).ty();
                 let t = self.finalize_evolving_array_type(at);
                 return FlowType {
@@ -750,7 +814,7 @@ impl Checker {
         f: &mut FlowState,
         flow: FlowNodeId,
     ) -> TypeId {
-        let node = f.flow_node_ref(flow).node.expect("flow node without node");
+        let node = f.flow_node(flow).node.expect("flow node without node");
         if ast::is_variable_declaration(&f.nodes()[node])
             || ast::is_binding_element(&f.nodes()[node])
         {
@@ -784,7 +848,7 @@ impl Checker {
         flow: FlowNodeId,
     ) -> FlowType {
         let (node, flow_antecedent) = {
-            let fn_ = f.flow_node_ref(flow);
+            let fn_ = f.flow_node(flow);
             (fn_.node, fn_.antecedent)
         };
         let node = node.expect("call flow node");
@@ -936,7 +1000,7 @@ impl Checker {
         f: &mut FlowState,
         flow: FlowNodeId,
     ) -> FlowType {
-        let antecedent = f.flow_node_ref(flow).antecedent.unwrap();
+        let antecedent = f.flow_node(flow).antecedent.unwrap();
         let flow_type = self.get_type_at_flow_node(f, antecedent);
         if self
             .types_handle()
@@ -958,7 +1022,7 @@ impl Checker {
             .flags
             .intersects(FlowFlags::TRUE_CONDITION);
         let non_evolving_type = self.finalize_evolving_array_type(flow_type.ty());
-        let node = f.flow_node_ref(flow).node.expect("condition flow node");
+        let node = f.flow_node(flow).node.expect("condition flow node");
         let narrowed_type = self.narrow_type(f, non_evolving_type, node, assume_true);
         if narrowed_type == non_evolving_type {
             return flow_type;
@@ -2351,7 +2415,7 @@ impl Checker {
         flow: FlowNodeId,
     ) -> FlowType {
         let (node, flow_antecedent) = {
-            let fn_ = f.flow_node_ref(flow);
+            let fn_ = f.flow_node(flow);
             (fn_.node, fn_.antecedent)
         };
         let node = node.expect("switch clause flow node");
@@ -2932,7 +2996,7 @@ impl Checker {
         let mut antecedent_types: Vec<TypeId> = Vec::with_capacity(4);
         let mut subtype_reduction = false;
         let mut first_antecedent_type = FlowType::none();
-        let mut list = f.flow_node_ref(flow).antecedents;
+        let mut list = f.flow_node(flow).antecedents;
         while let Some(l) = list {
             // One lookup per list element — `flow`/`next` are Copy.
             let (l_flow, l_next) = {
@@ -3017,7 +3081,7 @@ impl Checker {
         flow: FlowNodeId,
     ) -> FlowType {
         if f.declared_type() == self.auto_type || f.declared_type() == self.auto_array_type {
-            let node = f.flow_node_ref(flow).node.expect("array mutation node");
+            let node = f.flow_node(flow).node.expect("array mutation node");
             let expr = if ast::is_call_expression(&f.nodes()[node]) {
                 f.nodes()[f.nodes()[node].expression().unwrap()].expression()
             } else {
@@ -3027,7 +3091,7 @@ impl Checker {
                 let e = self.get_reference_candidate(&f.nodes(), e);
                 self.is_matching_reference(&f.nodes(), f.reference(), e)
             }) {
-                let antecedent = f.flow_node_ref(flow).antecedent.unwrap();
+                let antecedent = f.flow_node(flow).antecedent.unwrap();
                 let flow_type = self.get_type_at_flow_node(f, antecedent);
                 if self
                     .types_handle()
@@ -5399,7 +5463,7 @@ impl Checker {
             if flow == self.last_flow_node {
                 return self.last_flow_node_reachable;
             }
-            let flags = f.flow_node_ref(flow).flags;
+            let flags = f.flow_node(flow).flags;
             if flags.intersects(FlowFlags::SHARED) {
                 if !no_cache_check && f.reduce_labels.is_empty() {
                     if let Some(&reachable) = self.flow_node_reachable.get(&flow) {
@@ -5414,12 +5478,12 @@ impl Checker {
             if flags.intersects(
                 FlowFlags::ASSIGNMENT | FlowFlags::CONDITION | FlowFlags::ARRAY_MUTATION,
             ) {
-                flow = f.flow_node_ref(flow).antecedent.expect("flow antecedent");
+                flow = f.flow_node(flow).antecedent.expect("flow antecedent");
             } else if flags.intersects(FlowFlags::CALL) {
                 // `node`/`antecedent` are Copy — single `flow_node` lookup;
                 // the intervening signature calls don't mutate the flow node.
                 let (node, call_antecedent) = {
-                    let fn_ = f.flow_node_ref(flow);
+                    let fn_ = f.flow_node(flow);
                     (fn_.node, fn_.antecedent)
                 };
                 let node = node.expect("call node");
@@ -5473,7 +5537,7 @@ impl Checker {
                 }
                 return reachable;
             } else if flags.intersects(FlowFlags::LOOP_LABEL) {
-                let Some(antecedents) = f.flow_node_ref(flow).antecedents else {
+                let Some(antecedents) = f.flow_node(flow).antecedents else {
                     return false;
                 };
                 // A loop is reachable if the control flow path that leads to
@@ -5484,7 +5548,7 @@ impl Checker {
                 // switch statement with no default clause is unreachable if
                 // the switch statement is exhaustive.
                 let (node, switch_antecedent) = {
-                    let fn_ = f.flow_node_ref(flow);
+                    let fn_ = f.flow_node(flow);
                     (fn_.node, fn_.antecedent)
                 };
                 let node = node.expect("switch clause node");
@@ -5501,7 +5565,7 @@ impl Checker {
                 // Cache is unreliable once we start adjusting labels
                 self.last_flow_node = FlowNodeId::NONE;
                 let (node, antecedent) = {
-                    let fn_ = f.flow_node_ref(flow);
+                    let fn_ = f.flow_node(flow);
                     (fn_.node, fn_.antecedent)
                 };
                 f.reduce_labels.push(node.expect("reduce label node"));
@@ -5567,7 +5631,7 @@ impl Checker {
         mut no_cache_check: bool,
     ) -> bool {
         loop {
-            let flags = f.flow_node_ref(flow).flags;
+            let flags = f.flow_node(flow).flags;
             if flags.intersects(FlowFlags::SHARED) {
                 if !no_cache_check {
                     if let Some(&post_super) = self.flow_node_post_super.get(&flow) {
@@ -5585,16 +5649,16 @@ impl Checker {
                     | FlowFlags::ARRAY_MUTATION
                     | FlowFlags::SWITCH_CLAUSE,
             ) {
-                flow = f.flow_node_ref(flow).antecedent.expect("flow antecedent");
+                flow = f.flow_node(flow).antecedent.expect("flow antecedent");
             } else if flags.intersects(FlowFlags::CALL) {
-                let node = f.flow_node_ref(flow).node.expect("call node");
+                let node = f.flow_node(flow).node.expect("call node");
                 if f.nodes()[node]
                     .expression()
                     .is_some_and(|e| f.nodes()[e].kind == Kind::SuperKeyword)
                 {
                     return true;
                 }
-                flow = f.flow_node_ref(flow).antecedent.expect("flow antecedent");
+                flow = f.flow_node(flow).antecedent.expect("flow antecedent");
             } else if flags.intersects(FlowFlags::BRANCH_LABEL) {
                 let mut list = get_branch_label_antecedents(f, flow);
                 let mut all_post_super = true;
@@ -5608,16 +5672,16 @@ impl Checker {
                 }
                 return all_post_super;
             } else if flags.intersects(FlowFlags::LOOP_LABEL) {
-                let Some(antecedents) = f.flow_node_ref(flow).antecedents else {
+                let Some(antecedents) = f.flow_node(flow).antecedents else {
                     return false;
                 };
                 // A loop is post-super if the control flow path that leads to
                 // the top is post-super.
                 flow = f.flow_list(antecedents).flow.expect("loop antecedent");
             } else if flags.intersects(FlowFlags::REDUCE_LABEL) {
-                let node = f.flow_node_ref(flow).node.expect("reduce label node");
+                let node = f.flow_node(flow).node.expect("reduce label node");
                 f.reduce_labels.push(node);
-                let antecedent = f.flow_node_ref(flow).antecedent.expect("flow antecedent");
+                let antecedent = f.flow_node(flow).antecedent.expect("flow antecedent");
                 let result = self.is_post_super_flow_node_worker(f, antecedent, false);
                 f.reduce_labels.pop();
                 return result;

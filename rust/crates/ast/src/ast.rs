@@ -2879,6 +2879,59 @@ impl From<std::rc::Rc<NodeArenaBuf>> for NodeArenaBuf {
 /// mutation reproduces that exactly; appended nodes are also visible to
 /// snapshot holders (Go slice copies would not see them — a strict
 /// visibility improvement; consumers re-index per access anyway).
+/// `Copy` `*const FlowNode` — `FlowState` caches the `flow_nodes` arena
+/// base per query; `bind_result_mut` clone-on-write keeps the old buffer
+/// alive through the pinned `Rc`, and in-place `Vec::push` only appends
+/// (index `< len` stays valid).
+#[derive(Clone, Copy)]
+pub struct FlowNodePtr(*const crate::FlowNode);
+
+#[allow(unsafe_code)] // stable-address arena deref — see `FlowNodePtr`
+impl std::ops::Deref for FlowNodePtr {
+    type Target = crate::FlowNode;
+    fn deref(&self) -> &crate::FlowNode {
+        unsafe { &*self.0 }
+    }
+}
+
+impl FlowNodePtr {
+    pub fn from_raw(p: *const crate::FlowNode) -> Self {
+        Self(p)
+    }
+
+    /// `&(*vec)[idx]` — `*const Vec` reads the live header so in-place
+    /// `Vec::push` appends stay visible (the header address is stable
+    /// inside the `Rc`-pinned `BindResult`).
+    #[allow(unsafe_code)]
+    pub fn at(vec: *const Vec<crate::FlowNode>, idx: usize) -> Self {
+        Self(unsafe { &(&*vec)[idx] })
+    }
+}
+
+/// Same, for `FlowList` entries.
+#[derive(Clone, Copy)]
+pub struct FlowListPtr(*const crate::FlowList);
+
+#[allow(unsafe_code)]
+impl std::ops::Deref for FlowListPtr {
+    type Target = crate::FlowList;
+    fn deref(&self) -> &crate::FlowList {
+        unsafe { &*self.0 }
+    }
+}
+
+impl FlowListPtr {
+    pub fn from_raw(p: *const crate::FlowList) -> Self {
+        Self(p)
+    }
+
+    /// `&(*vec)[idx]` — see `FlowNodePtr::at`.
+    #[allow(unsafe_code)]
+    pub fn at(vec: *const Vec<crate::FlowList>, idx: usize) -> Self {
+        Self(unsafe { &(&*vec)[idx] })
+    }
+}
+
 /// PORT(perf): `Copy` `*const Vec<Node>` for zero-clone arena reads — the
 /// checker dereferences arena nodes millions of times; `Rc` snapshot
 /// traffic showed up in profiles (`Rc` clone/drop on every `nodes()`

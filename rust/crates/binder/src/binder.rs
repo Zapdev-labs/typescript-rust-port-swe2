@@ -129,7 +129,7 @@ pub struct BindResult {
     pub flow_lists: Vec<FlowList>,
 }
 
-static BIND_RESULT_KEY: LazyLock<SourceFileDataKey<BindResult>> =
+pub static BIND_RESULT_KEY: LazyLock<SourceFileDataKey<BindResult>> =
     LazyLock::new(new_source_file_data_key);
 
 /// The bound arenas for a file, if `bind_source_file` has run.
