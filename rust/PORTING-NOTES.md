@@ -2653,3 +2653,18 @@ Perf work bench: BENCH-checker.png, TSC_PPROF_DIR profiling wired.
 
 Port is FUNCTIONALLY DONE: all crates green, 4572/4572 fourslash,
 workspace tests green, --lsp/--api validated, Go tree removed.
+
+## checkpoint 27 — perf continues (user: "keep going till we are faster")
+
+Committed wins (through ae4295d650): checker.ts .67 -> .50 wall,
+.405 -> .385 check (release) | .44/.331 PGO. Go .30/.21.
+What landed: flow_node_ref/flow_list_ref (Ref-anchored, ~40 sites),
+nodes_ptr NodeListPtr (Copy *const Vec<Node>, ~1100 sites),
+program as_ref (~1080 decls), types_handle inline (33), pprof wiring.
+Reverted: Cow into_owned mass-swap (broke non-Cow types),
+#[inline] (icache), unsafe block at call sites (deny unsafe_code).
+
+IN FLIGHT: RUSTFLAGS=-Ctarget-cpu=native rebuild (target-native dir).
+Next cheap levers: system malloc vs mimalloc swap (mi_block/mi_memcpy
+~10% in profile), jemalloc; then deep flow-graph slab refactor.
+Remote build ~4min; re-run same bench when done.
