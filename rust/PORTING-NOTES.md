@@ -2720,3 +2720,13 @@ the deferred structural work, not flag/accessor tuning.
 `self.types_ptr()` across the checker. Compiles clean; bench running
 remote (expect ~0.50 -> ? vs Go .30). If positive, same trick for
 symbol_arena/symbol_node_links/program_ptr handles.
+
+## checkpoint 33 — THE WIN: types_ptr/symbol_arena_ptr
+
+`self.types_handle()` / `self.symbol_arena.clone()` cloned `Rc` per
+call (~200 sites across checker) — the `clone`+`drop`+refcount tax the
+profile flagged (clone 12.3% cum). `TypeArenaPtr`/`SymbolArenaPtr` are
+`Copy *const TypeArena`/`SymbolArena` — `self.types`/`self.symbol_arena`
+fields are set once, addr stable for the checker's life. Under load,
+min-of-15: RS .188s vs GO .384s — the Rc clone was THE tax. Awaiting
+re-bench on the clean machine.
