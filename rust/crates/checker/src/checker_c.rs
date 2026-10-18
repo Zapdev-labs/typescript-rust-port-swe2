@@ -130,7 +130,7 @@ impl Checker {
         target_module: SymbolId,
     ) -> Option<SymbolId> {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((name).file_index());
+        let nodes = __program.nodes_ptr((name).file_index());
         let name_text = nodes[name].text(&nodes).into_owned();
         let exports = self.get_exports_of_module(target_module);
         let candidates: Vec<SymbolId> = exports.values().copied().collect();
@@ -216,7 +216,7 @@ impl Checker {
             let declarations = self.sym(symbol).declarations.clone();
             for decl in declarations {
                 let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((decl).file_index());
+                let nodes = __program.nodes_ptr((decl).file_index());
                 for member in crate::utilities::get_members_of_declaration(&nodes[decl]).iter().copied() {
                     if is_static == ast::has_static_modifier(&nodes[member]) {
                         if self.has_late_bindable_name(member) {
@@ -278,7 +278,7 @@ impl Checker {
         decl: NodeId,
     ) -> Option<SymbolId> {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((decl).file_index());
+        let nodes = __program.nodes_ptr((decl).file_index());
         debug_assert!(
             nodes[decl].symbol().is_some(),
             "The member is expected to have a symbol."
@@ -422,7 +422,7 @@ impl Checker {
         // symbol and not a single property symbol, like most consumers would
         // expect)
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((decl).file_index());
+        let nodes = __program.nodes_ptr((decl).file_index());
         let decl_symbol_flags = self.sym(nodes[decl].symbol().unwrap()).flags;
         if self.sym(index_symbol).declarations.is_empty()
             || !decl_symbol_flags.intersects(ast::SymbolFlags::REPLACEABLE_BY_METHOD)
@@ -448,7 +448,7 @@ impl Checker {
             "Expected a late-bound symbol."
         );
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((member).file_index());
+        let nodes = __program.nodes_ptr((member).file_index());
         let member_symbol = nodes[member].symbol().unwrap();
         self.late_bound_links.get(member_symbol).late_symbol = Some(symbol);
         if self.sym(symbol).declarations.is_empty()
@@ -483,7 +483,7 @@ impl Checker {
             let decls = self.sym(symbol).declarations.clone();
             for d in decls {
                 let __program = self.program.clone().expect("program");
-                let d_nodes = __program.nodes((d).file_index());
+                let d_nodes = __program.nodes_ptr((d).file_index());
                 let d_flags = self.sym(d_nodes[d].symbol().unwrap()).flags;
                 self.sym_mut(symbol).flags.insert(d_flags);
             }
@@ -500,7 +500,7 @@ impl Checker {
                 symbol,
                 member,
                 &|id| {
-                    let nodes = __program.nodes(id.file_index());
+                    let nodes = __program.nodes_ptr(id.file_index());
                     nodes[id].clone()
                 },
             );
@@ -603,7 +603,7 @@ impl Checker {
                 let star_declarations = c.sym(export_stars).declarations.clone();
                 for node in star_declarations {
                     let __program = c.program.clone().expect("program");
-                    let nodes = __program.nodes((node).file_index());
+                    let nodes = __program.nodes_ptr((node).file_index());
                     let module_specifier = nodes[node].module_specifier();
                     let attributes_type =
                         c.get_type_from_import_attributes(ast::get_import_attributes(&nodes[node]));
@@ -658,7 +658,7 @@ impl Checker {
             }
             if let Some(export_star) = export_star {
                 let __program = c.program.clone().expect("program");
-                let nodes = __program.nodes((export_star).file_index());
+                let nodes = __program.nodes_ptr((export_star).file_index());
                 if nodes[export_star].is_type_only() {
                     for name in symbols.keys() {
                         type_only_export_star_map.set(name.to_string(), export_star);
@@ -738,7 +738,7 @@ impl Checker {
         let collect = lookup_table.is_some() && export_node.is_some();
         let specifier_text = if collect {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((export_node.unwrap()).file_index());
+            let nodes = __program.nodes_ptr((export_node.unwrap()).file_index());
             nodes[export_node.unwrap()]
                 .module_specifier()
                 .map(|ms| tsc_scanner::utilities::get_text_of_node(ms, &nodes))
@@ -974,7 +974,7 @@ impl Checker {
         let declarations = self.sym(symbol).declarations.clone();
         for &d in declarations.iter().rev() {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((d).file_index());
+            let nodes = __program.nodes_ptr((d).file_index());
             if ast::is_alias_symbol_declaration(d, &nodes) {
                 return Some(d);
             }
@@ -1075,7 +1075,7 @@ impl Checker {
             .unwrap_or(self.unknown_symbol);
         if let Some(location) = location {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((location).file_index());
+            let nodes = __program.nodes_ptr((location).file_index());
             // If we have an identifier or a property access at the given
             // location, if the location is a dotted name expression, and if
             // the location is not an assignment target, obtain the type of
@@ -1266,7 +1266,7 @@ impl Checker {
             return false;
         };
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((decl).file_index());
+        let nodes = __program.nodes_ptr((decl).file_index());
         let decl = if ast::is_binding_element(&nodes[decl]) {
             ast::walk_up_binding_elements_and_patterns(decl, &nodes).unwrap_or(decl)
         } else {
@@ -1303,7 +1303,7 @@ impl Checker {
             .value_declaration
             .expect("symbol.ValueDeclaration");
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((declaration).file_index());
+        let nodes = __program.nodes_ptr((declaration).file_index());
         if ast::is_source_file(&nodes[declaration])
             && ast::is_json_source_file(nodes[declaration].as_source_file())
         {
@@ -1409,7 +1409,7 @@ impl Checker {
         check_mode: CheckMode,
     ) -> Option<TypeId> {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((declaration).file_index());
+        let nodes = __program.nodes_ptr((declaration).file_index());
         // A variable declared in a for..in statement is of type string, or of
         // type keyof T when the right hand expression is of a type parameter
         // type.
@@ -1654,7 +1654,7 @@ impl Checker {
         contextual_type: Option<TypeId>,
     ) -> TypeId {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((declaration).file_index());
+        let nodes = __program.nodes_ptr((declaration).file_index());
         let initializer = nodes[declaration].initializer().expect("initializer");
         let t = match self.get_quick_type_of_expression(initializer) {
             Some(t) => t,
@@ -1694,7 +1694,7 @@ impl Checker {
     /// `(c *Checker) padObjectLiteralType` (checker.go).
     pub(crate) fn pad_object_literal_type(&mut self, t: TypeId, pattern: NodeId) -> TypeId {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((pattern).file_index());
+        let nodes = __program.nodes_ptr((pattern).file_index());
         let mut missing_elements: Vec<NodeId> = Vec::new();
         for &e in nodes[pattern].elements().unwrap_or(&[]) {
             if crate::utilities::has_dot_dot_dot_token(&nodes[e], &nodes) {
@@ -1739,7 +1739,7 @@ impl Checker {
     /// `(c *Checker) getPropertyNameFromBindingElement` (checker.go).
     pub(crate) fn get_property_name_from_binding_element(&mut self, e: NodeId) -> String {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((e).file_index());
+        let nodes = __program.nodes_ptr((e).file_index());
         let expr_type = self.get_literal_type_from_property_name(
             nodes[e]
                 .property_name_or_name()
@@ -1754,7 +1754,7 @@ impl Checker {
     /// `(c *Checker) padTupleType` (checker.go).
     pub(crate) fn pad_tuple_type(&mut self, t: TypeId, pattern: NodeId) -> TypeId {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((pattern).file_index());
+        let nodes = __program.nodes_ptr((pattern).file_index());
         let pattern_elements = nodes[pattern].elements_rc().unwrap_or_default();
         let __arena_target = self.types.clone();
         let target = __arena_target
@@ -1806,7 +1806,7 @@ impl Checker {
     ) -> TypeId {
         let widened = self.get_widened_literal_type_for_initializer(declaration, t);
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((declaration).file_index());
+        let nodes = __program.nodes_ptr((declaration).file_index());
         if ast::is_in_js_file(Some(declaration), &nodes) {
             if self.is_empty_literal_type(widened) {
                 self.report_implicit_any(declaration, self.any_type, WideningKind::Normal);
@@ -1827,7 +1827,7 @@ impl Checker {
         t: TypeId,
     ) -> TypeId {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((declaration).file_index());
+        let nodes = __program.nodes_ptr((declaration).file_index());
         if self
             .get_combined_node_flags_cached(declaration)
             .intersects(ast::NodeFlags::CONSTANT)
@@ -1857,7 +1857,7 @@ impl Checker {
         } else if flags.intersects(ast::SymbolFlags::VALUE_MODULE)
             && self.sym(symbol).value_declaration.is_some_and(|vd| {
                 let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((vd).file_index());
+                let nodes = __program.nodes_ptr((vd).file_index());
                 ast::is_source_file(&nodes[vd])
                     && nodes[vd]
                         .as_source_file()
@@ -1940,7 +1940,7 @@ impl Checker {
         }
         let base_constructor_type = {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((base_type_node).file_index());
+            let nodes = __program.nodes_ptr((base_type_node).file_index());
             let expression = nodes[base_type_node].expression().unwrap();
             self.check_expression(expression)
         };
@@ -1977,7 +1977,7 @@ impl Checker {
             && !self.is_constructor_type(base_constructor_type)
         {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((base_type_node).file_index());
+            let nodes = __program.nodes_ptr((base_type_node).file_index());
             let expression = nodes[base_type_node].expression();
             let arg = self.type_to_string(base_constructor_type);
             let err = self.error(
@@ -2093,7 +2093,7 @@ impl Checker {
         let t = self.get_type_of_symbol(symbol);
         let add_optionality = declaration.is_some_and(|d| {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((d).file_index());
+            let nodes = __program.nodes_ptr((d).file_index());
             nodes[d].initializer().is_some()
                 || crate::utilities::is_optional_declaration(&nodes[d], &nodes)
         });
@@ -2169,7 +2169,7 @@ impl Checker {
                     // type key constraints (unknown isn't assignable to that, but
                     // `any` was), use unknown otherwise
                     let __program = self.program.clone().expect("program");
-                    let nodes = __program.nodes((constraint_declaration).file_index());
+                    let nodes = __program.nodes_ptr((constraint_declaration).file_index());
                     let grandparent = nodes[constraint_declaration]
                         .parent
                         .and_then(|p| nodes[p].parent);
@@ -2215,7 +2215,7 @@ impl Checker {
             .unwrap_or_default();
         for declaration in declarations {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((declaration).file_index());
+            let nodes = __program.nodes_ptr((declaration).file_index());
             let Some(decl_parent) = nodes[declaration].parent else {
                 continue;
             };
@@ -2413,7 +2413,7 @@ impl Checker {
         index: usize,
     ) -> TypeId {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());
+        let nodes = __program.nodes_ptr((node).file_index());
         let type_arguments = nodes[node].type_arguments_rc().unwrap_or_default();
         if index < type_arguments.len() {
             return self.get_type_from_type_node(type_arguments[index]);
@@ -2698,7 +2698,7 @@ impl Checker {
         let declarations = self.sym(symbol).declarations.clone();
         for declaration in declarations {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((declaration).file_index());
+            let nodes = __program.nodes_ptr((declaration).file_index());
             if ast::is_interface_declaration(&nodes[declaration]) {
                 if nodes[declaration]
                     .flags
@@ -2749,7 +2749,7 @@ impl Checker {
     /// `(c *Checker) isNullOrUndefined` (checker.go:18070).
     pub(crate) fn is_null_or_undefined(&mut self, node: NodeId) -> bool {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());
+        let nodes = __program.nodes_ptr((node).file_index());
         let expr = ast::skip_parentheses(node, &nodes);
         match nodes[expr].kind {
             ast::Kind::NullKeyword => true,
@@ -2761,7 +2761,7 @@ impl Checker {
     /// `(c *Checker) checkRightHandSideOfForOf` (checker.go:18081).
     pub(crate) fn check_right_hand_side_of_for_of(&mut self, statement: NodeId) -> TypeId {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((statement).file_index());
+        let nodes = __program.nodes_ptr((statement).file_index());
         let r#use = if nodes[statement]
             .as_for_in_or_of_statement()
             .await_modifier
@@ -2785,7 +2785,7 @@ impl Checker {
     /// inferred type for a binding element.
     pub(crate) fn get_type_for_binding_element(&mut self, declaration: NodeId) -> Option<TypeId> {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((declaration).file_index());
+        let nodes = __program.nodes_ptr((declaration).file_index());
         let check_mode = if crate::utilities::has_dot_dot_dot_token(&nodes[declaration], &nodes) {
             CheckMode::REST_BINDING_ELEMENT
         } else {
@@ -2818,7 +2818,7 @@ impl Checker {
                 let resolved_type = self.value_symbol_links.get(symbol).resolved_type;
                 if let Some(resolved_type) = resolved_type {
                     let __program = self.program.clone().expect("program");
-                    let nodes = __program.nodes((node).file_index());
+                    let nodes = __program.nodes_ptr((node).file_index());
                     if !(self.strict_null_checks
                         && crate::utilities::is_optional_declaration(&nodes[node], &nodes))
                     {
@@ -2845,7 +2845,7 @@ impl Checker {
             return parent_type;
         }
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((declaration).file_index());
+        let nodes = __program.nodes_ptr((declaration).file_index());
         let pattern = nodes[declaration].parent.unwrap();
         let mut parent_type = parent_type;
         // Relax null check on ambient destructuring parameters, since the
@@ -3137,7 +3137,7 @@ impl Checker {
         let parent_access = self.get_parent_element_access(node);
         if let Some(parent_access) = parent_access {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((node).file_index());
+            let nodes = __program.nodes_ptr((node).file_index());
             if crate::flow::get_flow_node_of_node(&nodes, parent_access).is_some() {
                 let (prop_name, ok) = self.get_destructuring_property_name(&nodes, node);
                 if ok {
@@ -3190,7 +3190,7 @@ impl Checker {
     /// `(c *Checker) getParentElementAccess` (checker.go:18285).
     pub(crate) fn get_parent_element_access(&mut self, node: NodeId) -> Option<NodeId> {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());
+        let nodes = __program.nodes_ptr((node).file_index());
         let ancestor = nodes[node].parent.and_then(|p| nodes[p].parent)?;
         match nodes[ancestor].kind {
             ast::Kind::BindingElement | ast::Kind::PropertyAssignment => {
@@ -3217,7 +3217,7 @@ impl Checker {
             self.contextual_binding_patterns.push(pattern);
         }
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((pattern).file_index());
+        let nodes = __program.nodes_ptr((pattern).file_index());
         let result = if ast::is_object_binding_pattern(&nodes[pattern]) {
             self.get_type_from_object_binding_pattern(
                 pattern,
@@ -3250,7 +3250,7 @@ impl Checker {
         let mut object_flags =
             ObjectFlags::OBJECT_LITERAL | ObjectFlags::CONTAINS_OBJECT_OR_ARRAY_LITERAL;
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((pattern).file_index());
+        let nodes = __program.nodes_ptr((pattern).file_index());
         let elements = nodes[pattern].elements_rc().unwrap_or_default();
         for e in elements.iter().copied() {
             let name = nodes[e].property_name_or_name().unwrap();
@@ -3309,7 +3309,7 @@ impl Checker {
         report_errors: bool,
     ) -> TypeId {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((pattern).file_index());
+        let nodes = __program.nodes_ptr((pattern).file_index());
         let elements = nodes[pattern].elements_rc().unwrap_or_default();
         let last_element = elements.last().copied();
         let rest_element = last_element.filter(|&e| {
@@ -3375,7 +3375,7 @@ impl Checker {
         report_errors: bool,
     ) -> TypeId {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((element).file_index());
+        let nodes = __program.nodes_ptr((element).file_index());
         if nodes[element].initializer().is_some() {
             // The type implied by a binding pattern is independent of context, so
             // we check the initializer with no contextual type or, if the element
@@ -3432,7 +3432,7 @@ impl Checker {
         declaration: NodeId,
     ) -> bool {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((declaration).file_index());
+        let nodes = __program.nodes_ptr((declaration).file_index());
         let mut member_declaration = ast::get_root_declaration(declaration, &nodes);
         if ast::is_parameter_declaration(&nodes[member_declaration]) {
             member_declaration = nodes[member_declaration].parent.unwrap();
@@ -3491,7 +3491,7 @@ impl Checker {
             let declaration_count = declarations.len();
             for (i, declaration) in declarations.iter().copied().enumerate() {
                 let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((declaration).file_index());
+                let nodes = __program.nodes_ptr((declaration).file_index());
                 if ast::is_binary_expression(&nodes[declaration])
                     && nodes[declaration].type_().is_some()
                 {
@@ -3559,7 +3559,7 @@ impl Checker {
         node: NodeId,
     ) -> Option<TypeId> {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());
+        let nodes = __program.nodes_ptr((node).file_index());
         if ast::is_binary_expression(&nodes[node]) {
             let t: TypeId;
             match ast::get_assignment_declaration_kind(node, &nodes) {
@@ -3618,7 +3618,7 @@ impl Checker {
             let parent_vd = self.sym(parent).value_declaration;
             if let Some(parent_vd) = parent_vd {
                 let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((parent_vd).file_index());
+                let nodes = __program.nodes_ptr((parent_vd).file_index());
                 if ast::is_function_expression_or_arrow_function(&nodes[parent_vd]) {
                     let parent_of_vd = nodes[parent_vd].parent;
                     if let Some(possibly_annotated_symbol) =
@@ -3643,7 +3643,7 @@ impl Checker {
     ) -> bool {
         fn visit(c: &mut Checker, this_property: NodeId, node: NodeId) -> bool {
             let __program = c.program.clone().expect("program");
-            let nodes = __program.nodes((node).file_index());
+            let nodes = __program.nodes_ptr((node).file_index());
             if c.is_matching_reference(&nodes, this_property, node) {
                 return true;
             }
@@ -3712,7 +3712,7 @@ impl Checker {
         let declarations = self.sym(symbol).declarations.clone();
         for declaration in declarations {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((declaration).file_index());
+            let nodes = __program.nodes_ptr((declaration).file_index());
             if !ast::is_binary_expression(&nodes[declaration]) {
                 all_this = false;
                 break;
@@ -3777,7 +3777,7 @@ impl Checker {
             // libraries that merge a `symbol` property into `SymbolConstructor`.
             // See https://github.com/microsoft/TypeScript/tsc/issues/1212
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((declaration).file_index());
+            let nodes = __program.nodes_ptr((declaration).file_index());
             if self
                 .types_handle()
                 .get(t)
@@ -3812,7 +3812,7 @@ impl Checker {
         // Rest parameters default to type any[], other parameters default to
         // type any
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((declaration).file_index());
+        let nodes = __program.nodes_ptr((declaration).file_index());
         let t = if ast::is_parameter_declaration(&nodes[declaration])
             && nodes[declaration]
                 .as_parameter_declaration()
@@ -3841,7 +3841,7 @@ impl Checker {
         widening_kind: WideningKind,
     ) {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((declaration).file_index());
+        let nodes = __program.nodes_ptr((declaration).file_index());
         if ast::is_in_js_file(Some(declaration), &nodes) {
             let source_file = ast::get_source_file_of_node(Some(declaration), &nodes);
             let check_js_enabled = source_file.is_some_and(|sf| {
@@ -4352,7 +4352,7 @@ impl Checker {
             if t.is_none() {
                 if let Some(setter) = setter {
                     let __program = self.program.clone().expect("program");
-                    let nodes = __program.nodes((setter).file_index());
+                    let nodes = __program.nodes_ptr((setter).file_index());
                     if !crate::utilities::is_private_within_ambient(&nodes[setter], &nodes) {
                         let name = self.symbol_to_string(symbol);
                         self.error_or_suggestion(
@@ -4364,7 +4364,7 @@ impl Checker {
                     }
                 } else if let Some(getter) = getter {
                     let __program = self.program.clone().expect("program");
-                    let nodes = __program.nodes((getter).file_index());
+                    let nodes = __program.nodes_ptr((getter).file_index());
                     if !crate::utilities::is_private_within_ambient(&nodes[getter], &nodes) {
                         let name = self.symbol_to_string(symbol);
                         self.error_or_suggestion(
@@ -4376,7 +4376,7 @@ impl Checker {
                     }
                 } else if let Some(accessor) = accessor {
                     let __program = self.program.clone().expect("program");
-                    let nodes = __program.nodes((accessor).file_index());
+                    let nodes = __program.nodes_ptr((accessor).file_index());
                     if !crate::utilities::is_private_within_ambient(&nodes[accessor], &nodes) {
                         let name = self.symbol_to_string(symbol);
                         self.error_or_suggestion(
@@ -4641,7 +4641,7 @@ impl Checker {
         node: NodeId,
     ) -> (String, bool) {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());
+        let nodes = __program.nodes_ptr((node).file_index());
         let name = ast::get_property_name_for_property_name_node(node, &nodes);
         if name != ast::INTERNAL_SYMBOL_NAME_MISSING {
             return (name, true);
@@ -4867,7 +4867,7 @@ impl Checker {
         // variable itself
         if let Some(declaration) = declaration {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((declaration).file_index());
+            let nodes = __program.nodes_ptr((declaration).file_index());
             if nodes[declaration].type_().is_some() {
                 let name = self.symbol_to_string(symbol);
                 self.error(
@@ -5560,7 +5560,7 @@ impl Checker {
                 let declarations = self.sym(symbol).declarations.clone();
                 for declaration in declarations {
                     let __program = self.program.clone().expect("program");
-                    let nodes = __program.nodes((declaration).file_index());
+                    let nodes = __program.nodes_ptr((declaration).file_index());
                     if ast::is_class_declaration(&nodes[declaration])
                         || ast::is_interface_declaration(&nodes[declaration])
                     {
@@ -5667,7 +5667,7 @@ impl Checker {
             // instantiated signatures return the same type.
             let type_argument_nodes = {
                 let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((base_type_node).file_index());
+                let nodes = __program.nodes_ptr((base_type_node).file_index());
                 nodes[base_type_node]
                     .type_arguments()
                     .unwrap_or(&[])
@@ -5680,7 +5680,7 @@ impl Checker {
             );
             if constructors.is_empty() {
                 let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((base_type_node).file_index());
+                let nodes = __program.nodes_ptr((base_type_node).file_index());
                 let expression = nodes[base_type_node].expression();
                 self.error(
                     expression,
@@ -5697,7 +5697,7 @@ impl Checker {
         let reduced_base_type = self.get_reduced_type(base_type);
         if !self.is_valid_base_type(reduced_base_type) {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((base_type_node).file_index());
+            let nodes = __program.nodes_ptr((base_type_node).file_index());
             let error_node = nodes[base_type_node].expression();
             let diagnostic = self.elaborate_never_intersection(None, error_node, base_type);
             let type_str = self.type_to_string(reduced_base_type);
@@ -6244,7 +6244,7 @@ impl Checker {
             .clone();
         for declaration in declarations {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((declaration).file_index());
+            let nodes = __program.nodes_ptr((declaration).file_index());
             if !ast::is_interface_declaration(&nodes[declaration]) {
                 continue;
             }
@@ -6523,7 +6523,7 @@ impl Checker {
             .clone();
         for declaration in declarations {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((declaration).file_index());
+            let nodes = __program.nodes_ptr((declaration).file_index());
             if ast::is_index_signature_declaration(&nodes[declaration]) {
                 let parameters = nodes[declaration]
                     .parameters()
@@ -6705,7 +6705,7 @@ impl Checker {
             .clone();
         if !decls.is_empty() {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((decls[0]).file_index());
+            let nodes = __program.nodes_ptr((decls[0]).file_index());
             if let Some(name) = nodes[decls[0]].name()
                 && ast::is_computed_property_name(&nodes[name])
             {
@@ -6728,7 +6728,7 @@ impl Checker {
             .clone();
         if !decls.is_empty() {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((decls[0]).file_index());
+            let nodes = __program.nodes_ptr((decls[0]).file_index());
             if let Some(name) = nodes[decls[0]].name() {
                 return self.is_numeric_name(name);
             }
@@ -6743,7 +6743,7 @@ impl Checker {
             .clone();
         if !decls.is_empty() {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((decls[0]).file_index());
+            let nodes = __program.nodes_ptr((decls[0]).file_index());
             if let Some(name) = nodes[decls[0]].name() {
                 return ast::is_computed_property_name(&nodes[name]);
             }
@@ -6754,7 +6754,7 @@ impl Checker {
     /// `(c *Checker) isNumericName` (checker.go:20167).
     pub(crate) fn is_numeric_name(&mut self, name: NodeId) -> bool {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((name).file_index());
+        let nodes = __program.nodes_ptr((name).file_index());
         match nodes[name].kind {
             ast::Kind::ComputedPropertyName => {
                 drop(nodes);
@@ -6808,7 +6808,7 @@ impl Checker {
         for i in 0..declarations.len() {
             let decl = declarations[i];
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((decl).file_index());
+            let nodes = __program.nodes_ptr((decl).file_index());
             if !ast::is_function_like(Some(decl), &nodes) {
                 continue;
             }
@@ -6857,7 +6857,7 @@ impl Checker {
         let mut min_argument_count: i32 = 0;
         let mut has_this_parameter = false;
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((declaration).file_index());
+        let nodes = __program.nodes_ptr((declaration).file_index());
         let iife = ast::get_immediately_invoked_function_expression(declaration, &nodes);
         let decl_params: Vec<NodeId> = nodes[declaration]
             .parameters()
@@ -6883,7 +6883,7 @@ impl Checker {
             flags |= SignatureFlags::IS_UNTYPED_SIGNATURE_IN_JS_FILE;
         }
         let __program = self.program.clone().expect("program");
-        let mut nodes = __program.nodes((declaration).file_index());
+        let mut nodes = __program.nodes_ptr((declaration).file_index());
         for (i, &param) in decl_params.iter().enumerate() {
             let mut param_symbol = nodes[param].symbol();
             let type_node = nodes[param].type_();
@@ -6911,7 +6911,7 @@ impl Checker {
                     false, /*excludeGlobals*/
                     None,
                 );
-                nodes = __program.nodes(declaration.file_index());
+                nodes = __program.nodes_ptr(declaration.file_index());
             }
             if i == 0
                 && param_symbol.is_some_and(|ps| {
@@ -6956,7 +6956,7 @@ impl Checker {
             let symbol = self.get_symbol_of_declaration(declaration);
             let other = symbol.and_then(|s| {
                 let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((declaration).file_index());
+                let nodes = __program.nodes_ptr((declaration).file_index());
                 // `ast::get_declaration_of_kind(&Symbol, kind, nodes)` needs an
                 // owned symbol clone because the arena lives in a `RefCell`.
                 let sym_ref = self.symbol_arena.clone();
@@ -6965,10 +6965,10 @@ impl Checker {
             if let Some(other) = other {
                 this_parameter = self.get_annotated_accessor_this_parameter(other);
             }
-            nodes = __program.nodes(declaration.file_index());
+            nodes = __program.nodes_ptr(declaration.file_index());
         }
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((declaration).file_index());
+        let nodes = __program.nodes_ptr((declaration).file_index());
         let mut class_type: Option<TypeId> = None;
         if ast::is_constructor_declaration(&nodes[declaration]) {
             let parent_symbol = nodes[declaration].parent.and_then(|p| nodes[p].symbol());
@@ -6990,12 +6990,12 @@ impl Checker {
             self.get_type_parameters_from_declaration(declaration)
         };
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((declaration).file_index());
+        let nodes = __program.nodes_ptr((declaration).file_index());
         if crate::utilities::has_rest_parameter_node(&nodes[declaration], &nodes) {
             flags |= SignatureFlags::HAS_REST_PARAMETER;
         }
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((declaration).file_index());
+        let nodes = __program.nodes_ptr((declaration).file_index());
         if ast::is_constructor_type_node(&nodes[declaration])
             || ast::is_constructor_declaration(&nodes[declaration])
             || ast::is_construct_signature_declaration(&nodes[declaration])
@@ -7037,7 +7037,7 @@ impl Checker {
         }
         let mut result: Vec<TypeId> = Vec::new();
         let __program = self.program.clone().expect("program");
-        let mut nodes = __program.nodes((declaration).file_index());
+        let mut nodes = __program.nodes_ptr((declaration).file_index());
         if let Some(tps) = nodes[declaration].type_parameters() {
             let tps: Vec<NodeId> = tps.to_vec();
             for node in tps {
@@ -7047,7 +7047,7 @@ impl Checker {
                     if !result.contains(&declared) {
                         result.push(declared);
                     }
-                    nodes = __program.nodes(declaration.file_index());
+                    nodes = __program.nodes_ptr(declaration.file_index());
                 }
             }
         }
@@ -7066,7 +7066,7 @@ impl Checker {
     /// `(c *Checker) getAccessorThisParameter` (checker.go:20329).
     pub(crate) fn get_accessor_this_parameter(&mut self, accessor: NodeId) -> Option<NodeId> {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((accessor).file_index());
+        let nodes = __program.nodes_ptr((accessor).file_index());
         let param_count = nodes[accessor].parameters().map(|p| p.len()).unwrap_or(0);
         if param_count
             == if ast::is_get_accessor_declaration(&nodes[accessor]) {
@@ -7091,7 +7091,7 @@ impl Checker {
     /// whether a declaration has a late-bindable dynamic name.
     pub(crate) fn has_late_bindable_name(&mut self, node: NodeId) -> bool {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());
+        let nodes = __program.nodes_ptr((node).file_index());
         let name = ast::get_name_of_declaration(Some(node), &nodes);
         name.is_some_and(|name| {
             drop(nodes);
@@ -7109,7 +7109,7 @@ impl Checker {
     ///   is a `unique symbol` type.
     pub(crate) fn is_late_bindable_name(&mut self, node: NodeId) -> bool {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());
+        let nodes = __program.nodes_ptr((node).file_index());
         if !is_late_bindable_ast(node, &nodes) {
             return false;
         }
@@ -7131,7 +7131,7 @@ impl Checker {
     /// `(c *Checker) hasLateBindableIndexSignature` (checker.go:20362).
     pub(crate) fn has_late_bindable_index_signature(&mut self, node: NodeId) -> bool {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());
+        let nodes = __program.nodes_ptr((node).file_index());
         let name = ast::get_name_of_declaration(Some(node), &nodes);
         name.is_some_and(|name| {
             drop(nodes);
@@ -7142,7 +7142,7 @@ impl Checker {
     /// `(c *Checker) isLateBindableIndexSignature` (checker.go:20367).
     pub(crate) fn is_late_bindable_index_signature(&mut self, node: NodeId) -> bool {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());
+        let nodes = __program.nodes_ptr((node).file_index());
         if !is_late_bindable_ast(node, &nodes) {
             return false;
         }
@@ -7210,7 +7210,7 @@ impl Checker {
             let mut resolved = self.get_return_type_from_annotation(decl);
             if resolved.is_none() {
                 let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((decl).file_index());
+                let nodes = __program.nodes_ptr((decl).file_index());
                 if !ast::node_is_missing(nodes[decl].body(), &nodes) {
                     drop(nodes);
                     resolved = Some(self.get_return_type_from_body(decl, CheckMode::NORMAL));
@@ -7228,7 +7228,7 @@ impl Checker {
         if !self.pop_type_resolution() {
             if let Some(declaration) = declaration {
                 let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((declaration).file_index());
+                let nodes = __program.nodes_ptr((declaration).file_index());
                 if let Some(type_node) = nodes[declaration].type_() {
                     drop(nodes);
                     self.error(
@@ -7281,7 +7281,7 @@ impl Checker {
         declaration: NodeId,
     ) -> Option<TypeId> {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((declaration).file_index());
+        let nodes = __program.nodes_ptr((declaration).file_index());
         if ast::is_constructor_declaration(&nodes[declaration]) {
             let parent_symbol = nodes[declaration].parent.and_then(|p| nodes[p].symbol());
             drop(nodes);
@@ -7295,14 +7295,14 @@ impl Checker {
             return Some(self.get_type_from_type_node(return_type_node));
         }
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((declaration).file_index());
+        let nodes = __program.nodes_ptr((declaration).file_index());
         if ast::is_get_accessor_declaration(&nodes[declaration])
             && self.has_bindable_name(declaration)
         {
             drop(nodes);
             let other = self.get_symbol_of_declaration(declaration).and_then(|s| {
                 let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((declaration).file_index());
+                let nodes = __program.nodes_ptr((declaration).file_index());
                 let declarations = self.symbol_arena.get_ref(s).declarations.clone();
                 declarations
                     .iter()
@@ -7321,7 +7321,7 @@ impl Checker {
         node: NodeId,
     ) -> Option<SignatureId> {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());
+        let nodes = __program.nodes_ptr((node).file_index());
         if ast::is_in_js_file(Some(node), &nodes)
             && (ast::is_function_declaration(&nodes[node])
                 || ast::is_method_declaration(&nodes[node])
@@ -7350,7 +7350,7 @@ impl Checker {
     ) -> Option<TypeId> {
         if let Some(signature) = self.get_signature_of_full_signature_type(node) {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((node).file_index());
+            let nodes = __program.nodes_ptr((node).file_index());
             let params: Vec<NodeId> = nodes[node]
                 .parameters()
                 .map(|p| p.to_vec())
@@ -7394,7 +7394,7 @@ impl Checker {
     ) -> Option<NodeId> {
         let accessor = accessor?;
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((accessor).file_index());
+        let nodes = __program.nodes_ptr((accessor).file_index());
         match nodes[accessor].kind {
             ast::Kind::GetAccessor | ast::Kind::PropertyDeclaration => nodes[accessor].type_(),
             ast::Kind::SetAccessor => {
@@ -7411,7 +7411,7 @@ impl Checker {
         check_mode: CheckMode,
     ) -> TypeId {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((fn_).file_index());
+        let nodes = __program.nodes_ptr((fn_).file_index());
         let Some(body) = nodes[fn_].body() else {
             return self.error_type;
         };
@@ -7611,7 +7611,7 @@ impl Checker {
         check_mode: CheckMode,
     ) -> (Vec<TypeId>, bool) {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((fn_).file_index());
+        let nodes = __program.nodes_ptr((fn_).file_index());
         let function_flags = ast::get_function_flags(Some(&nodes[fn_]));
         let mut aggregated_types: Vec<TypeId> = Vec::new();
         let mut has_return_with_no_expression = self.function_has_implicit_return(fn_);
@@ -7625,7 +7625,7 @@ impl Checker {
         drop(nodes);
         for return_statement in statements {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((return_statement).file_index());
+            let nodes = __program.nodes_ptr((return_statement).file_index());
             let Some(expr) = nodes[return_statement].expression() else {
                 has_return_with_no_expression = true;
                 continue;
@@ -7656,7 +7656,7 @@ impl Checker {
                     callee_type_symbol == Some(merged)
                 });
                 let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((return_statement).file_index());
+                let nodes = __program.nodes_ptr((return_statement).file_index());
                 let is_const_ref = fn_symbol
                     .and_then(|fs| self.sym(fs).value_declaration)
                     .is_some_and(|vd| {
@@ -7723,7 +7723,7 @@ impl Checker {
     /// `(c *Checker) functionHasImplicitReturn` (checker.go:20699).
     pub(crate) fn function_has_implicit_return(&mut self, fn_: NodeId) -> bool {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((fn_).file_index());
+        let nodes = __program.nodes_ptr((fn_).file_index());
         let end_flow_node = nodes[fn_].body_data().and_then(|d| d.end_flow_node);
         match end_flow_node {
             Some(flow_node) => {
@@ -7741,7 +7741,7 @@ impl Checker {
         check_mode: CheckMode,
     ) -> (Vec<TypeId>, Vec<TypeId>) {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((fn_).file_index());
+        let nodes = __program.nodes_ptr((fn_).file_index());
         let is_async =
             ast::get_function_flags(Some(&nodes[fn_])).intersects(ast::FunctionFlags::ASYNC);
         let body = nodes[fn_].body().expect("function body");
@@ -7755,7 +7755,7 @@ impl Checker {
         let mut next_types: Vec<TypeId> = Vec::new();
         for yield_expr in yield_exprs {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((yield_expr).file_index());
+            let nodes = __program.nodes_ptr((yield_expr).file_index());
             let operand = nodes[yield_expr].expression();
             let has_asterisk = nodes[yield_expr]
                 .as_yield_expression()
@@ -7857,7 +7857,7 @@ impl Checker {
         let promise_type = self.create_promise_type(promised_type);
         if promise_type == self.unknown_type {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((fn_).file_index());
+            let nodes = __program.nodes_ptr((fn_).file_index());
             let is_import_call = ast::is_import_call(&nodes[fn_], &nodes);
             drop(nodes);
             self.error(
@@ -7880,7 +7880,7 @@ impl Checker {
         };
         if ctor.is_none() {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((fn_).file_index());
+            let nodes = __program.nodes_ptr((fn_).file_index());
             let is_import_call = ast::is_import_call(&nodes[fn_], &nodes);
             drop(nodes);
             self.error(
@@ -8188,12 +8188,12 @@ impl Checker {
                                 .and_then(|ts| self.sym(ts).value_declaration);
                             let value_declaration = prop_decls.iter().copied().find(|&d| {
                                 let __program = self.program.clone().expect("program");
-                                let nodes = __program.nodes((d).file_index());
+                                let nodes = __program.nodes_ptr((d).file_index());
                                 let value_declaration = nodes[d]
                                     .symbol()
                                     .and_then(|s| self.sym(s).value_declaration);
                                 value_declaration.is_some_and(|vd| {
-                                    let vd_nodes = __program.nodes(vd.file_index());
+                                    let vd_nodes = __program.nodes_ptr(vd.file_index());
                                     vd_nodes[vd].parent == t_value_declaration
                                 })
                             });
@@ -8225,7 +8225,7 @@ impl Checker {
     /// `(c *Checker) getTypePredicateFromBody` (checker.go:20925).
     pub(crate) fn get_type_predicate_from_body(&mut self, fn_: NodeId) -> Option<TypePredicate> {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((fn_).file_index());
+        let nodes = __program.nodes_ptr((fn_).file_index());
         if matches!(
             nodes[fn_].kind,
             ast::Kind::Constructor | ast::Kind::GetAccessor | ast::Kind::SetAccessor
@@ -8269,7 +8269,7 @@ impl Checker {
         expr: NodeId,
     ) -> Option<TypePredicate> {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((expr).file_index());
+        let nodes = __program.nodes_ptr((expr).file_index());
         let expr = ast::skip_parentheses(expr, &nodes);
         let params: Vec<NodeId> = nodes[fn_]
             .parameters()
@@ -8287,7 +8287,7 @@ impl Checker {
         }
         for (i, &param) in params.iter().enumerate() {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((param).file_index());
+            let nodes = __program.nodes_ptr((param).file_index());
             let param_symbol = nodes[param].symbol();
             let name_is_identifier = nodes[param]
                 .name()
@@ -8318,7 +8318,7 @@ impl Checker {
             let true_type = self.check_if_expression_refines_parameter(fn_, expr, param, init_type);
             if let Some(true_type) = true_type {
                 let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((param).file_index());
+                let nodes = __program.nodes_ptr((param).file_index());
                 let name = nodes[nodes[param].name().unwrap()].text(&nodes).to_string();
                 drop(nodes);
                 return Some(self.new_type_predicate(
@@ -8341,7 +8341,7 @@ impl Checker {
         init_type: TypeId,
     ) -> Option<TypeId> {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((expr).file_index());
+        let nodes = __program.nodes_ptr((expr).file_index());
         let mut antecedent = crate::flow::get_flow_node_of_node(&nodes, expr);
         if antecedent.is_none()
             && nodes[expr].parent.is_some()
@@ -8363,7 +8363,7 @@ impl Checker {
         }
         drop(nodes);
         let __program = self.program.clone().expect("program");
-        let param_name = __program.nodes((param).file_index())[param].name().unwrap();
+        let param_name = __program.nodes_ptr((param).file_index())[param].name().unwrap();
         let true_condition = self.alloc_flow_node(
             expr,
             ast::FlowNode {
@@ -8424,7 +8424,7 @@ impl Checker {
         node: ast::FlowNode,
     ) -> ast::FlowNodeId {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((context).file_index());
+        let nodes = __program.nodes_ptr((context).file_index());
         let file =
             ast::get_source_file_of_node(Some(context), &nodes).expect("source file for flow node");
         let file_index = file.file_index();
@@ -8615,7 +8615,7 @@ impl Checker {
                         && !p_ref.declarations.is_empty()
                         && p_ref.declarations.iter().all(|&d| {
                             let __program = self.program.clone().expect("program");
-                            let nodes = __program.nodes((d).file_index());
+                            let nodes = __program.nodes_ptr((d).file_index());
                             ast::is_ambient_module(&nodes[d], &nodes)
                         }))
                 {
@@ -8893,13 +8893,13 @@ impl Checker {
                 let __program = self.program.clone().expect("program");
                 let s = self.sym(symbol);
                 ast::get_class_like_declaration_of_symbol_with(&s, |d| {
-                    ast::is_class_like(Some(d), &__program.nodes(d.file_index()))
+                    ast::is_class_like(Some(d), &__program.nodes_ptr(d.file_index()))
                 })
             })
         };
         let is_abstract = declaration.is_some_and(|d| {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((d).file_index());
+            let nodes = __program.nodes_ptr((d).file_index());
             ast::has_syntactic_modifier(&nodes[d], ast::ModifierFlags::ABSTRACT)
         });
         if base_signatures.is_empty() {
@@ -8927,7 +8927,7 @@ impl Checker {
         let base_type_node = crate::utilities::get_base_type_node_of_class(self, class_type);
         let is_javascript = declaration.is_some_and(|d| {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((d).file_index());
+            let nodes = __program.nodes_ptr((d).file_index());
             ast::is_in_js_file(Some(d), &nodes)
         });
         let type_arguments =
@@ -10289,7 +10289,7 @@ impl Checker {
         let constraint_declaration = self.get_constraint_declaration_for_mapped_type(t);
         constraint_declaration.is_some_and(|d| {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((d).file_index());
+            let nodes = __program.nodes_ptr((d).file_index());
             ast::is_type_operator_node(&nodes[d])
                 && nodes[d].as_type_operator_node().operator == ast::Kind::KeyOfKeyword
         })
@@ -10302,7 +10302,7 @@ impl Checker {
     ) -> Option<NodeId> {
         let declaration = self.types.get_ref(t).as_mapped_type().declaration?;
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((declaration).file_index());
+        let nodes = __program.nodes_ptr((declaration).file_index());
         nodes[declaration]
             .as_mapped_type_node()
             .type_parameter
@@ -10703,7 +10703,7 @@ impl Checker {
             let value_declaration = self.sym(single_prop).value_declaration;
             if let Some(value_declaration) = value_declaration {
                 let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((value_declaration).file_index());
+                let nodes = __program.nodes_ptr((value_declaration).file_index());
                 let parent = nodes[value_declaration]
                     .symbol()
                     .map(|decl_symbol| self.sym(decl_symbol).parent);
@@ -10781,7 +10781,7 @@ impl Checker {
                 first_value_declaration;
             // Inherit information about parent type.
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((first_value_declaration.unwrap()).file_index());
+            let nodes = __program.nodes_ptr((first_value_declaration.unwrap()).file_index());
             if let Some(decl_symbol) = nodes[first_value_declaration.unwrap()].symbol() {
                 let parent = self.sym(decl_symbol).parent;
                 self.symbol_arena.get_mut(result).parent = parent;
@@ -11320,7 +11320,7 @@ impl Checker {
     ) -> Vec<TypeId> {
         let type_arg_nodes = {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((node).file_index());
+            let nodes = __program.nodes_ptr((node).file_index());
             nodes[node]
                 .type_arguments()
                 .map(|a| a.to_vec())
@@ -11333,7 +11333,7 @@ impl Checker {
         let min_count = self.get_min_type_argument_count(type_parameters);
         let is_js = {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((node).file_index());
+            let nodes = __program.nodes_ptr((node).file_index());
             ast::is_in_js_file(Some(node), &nodes)
         };
         self.fill_missing_type_arguments(&type_arguments, type_parameters, min_count, is_js)
@@ -11372,7 +11372,7 @@ impl Checker {
                     let mut default_declaration = None;
                     for decl in declarations {
                         let __program = self.program.clone().expect("program");
-                        let nodes = __program.nodes((decl).file_index());
+                        let nodes = __program.nodes_ptr((decl).file_index());
                         if ast::is_type_parameter_declaration(&nodes[decl])
                             && let Some(d) =
                                 nodes[decl].as_type_parameter_declaration().default_type
@@ -11440,8 +11440,8 @@ impl Checker {
                 let __program = self.program.clone().expect("program");
                 // `declaration` and `d` may live in different arenas — Go
                 // compares raw `Loc` positions across files.
-                let d_nodes = __program.nodes((d).file_index());
-                let decl_nodes = __program.nodes((declaration).file_index());
+                let d_nodes = __program.nodes_ptr((d).file_index());
+                let decl_nodes = __program.nodes_ptr((declaration).file_index());
                 if decl_nodes[declaration].loc.contained_by(&d_nodes[d].loc) {
                     return true;
                 }
@@ -11636,7 +11636,7 @@ impl Checker {
             ] {
                 for &d in &declarations {
                     let __program = self.program.clone().expect("program");
-                    let nodes = __program.nodes((d).file_index());
+                    let nodes = __program.nodes_ptr((d).file_index());
                     if nodes[d].kind == kind {
                         declaration = Some(d);
                         break;
@@ -11648,7 +11648,7 @@ impl Checker {
             }
             if let Some(declaration) = declaration {
                 let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((declaration).file_index());
+                let nodes = __program.nodes_ptr((declaration).file_index());
                 return ast::find_ancestor_or_quit(
                     nodes[declaration].parent,
                     &nodes,
@@ -12099,14 +12099,14 @@ impl Checker {
             let container = {
                 let decl = self.sym(tp_symbol).declarations[0];
                 let __program = self.program.clone().expect("program");
-                let decl_nodes = __program.nodes((decl).file_index());
+                let decl_nodes = __program.nodes_ptr((decl).file_index());
                 decl_nodes[decl].parent
             };
             let mut n = Some(node);
             while n != container {
                 let Some(id) = n else { return true };
                 let __program = self.program.clone().expect("program");
-                let node_nodes = __program.nodes((id).file_index());
+                let node_nodes = __program.nodes_ptr((id).file_index());
                 if ast::is_block(&node_nodes[id])
                     || (ast::is_conditional_type_node(&node_nodes[id])
                         && node_nodes[id]
@@ -12649,7 +12649,7 @@ impl Checker {
     pub(crate) fn try_get_type_from_type_node(&mut self, node: NodeId) -> Option<TypeId> {
         let type_node = {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((node).file_index());
+            let nodes = __program.nodes_ptr((node).file_index());
             nodes[node].type_()
         };
         type_node.map(|type_node| self.get_type_from_type_node(type_node))
@@ -12658,19 +12658,19 @@ impl Checker {
     /// `(c *Checker) getTypeFromTypeNodeWorker` (checker.go:23299).
     pub(crate) fn get_type_from_type_node_worker(&mut self, node: NodeId) -> TypeId {
         let __program = self.program.clone().expect("program");
-        let kind = __program.nodes((node).file_index())[node].kind;
+        let kind = __program.nodes_ptr((node).file_index())[node].kind;
         match kind {
             ast::Kind::AnyKeyword | ast::Kind::JSDocAllType => self.any_type,
             ast::Kind::JSDocNonNullableType => {
                 let __program = self.program.clone().expect("program");
-                let type_node = __program.nodes((node).file_index())[node].type_();
+                let type_node = __program.nodes_ptr((node).file_index())[node].type_();
                 type_node
                     .map(|n| self.get_type_from_type_node(n))
                     .unwrap_or(self.error_type)
             }
             ast::Kind::JSDocNullableType => {
                 let __program = self.program.clone().expect("program");
-                let type_node = __program.nodes((node).file_index())[node].type_();
+                let type_node = __program.nodes_ptr((node).file_index())[node].type_();
                 let t = type_node
                     .map(|n| self.get_type_from_type_node(n))
                     .unwrap_or(self.error_type);
@@ -12682,7 +12682,7 @@ impl Checker {
             }
             ast::Kind::JSDocVariadicType => {
                 let __program = self.program.clone().expect("program");
-                let inner = __program.nodes((node).file_index())[node]
+                let inner = __program.nodes_ptr((node).file_index())[node]
                     .as_js_doc_variadic_type()
                     .type_;
                 let element = inner
@@ -12692,7 +12692,7 @@ impl Checker {
             }
             ast::Kind::JSDocOptionalType => {
                 let __program = self.program.clone().expect("program");
-                let type_node = __program.nodes((node).file_index())[node].type_();
+                let type_node = __program.nodes_ptr((node).file_index())[node].type_();
                 let t = type_node
                     .map(|n| self.get_type_from_type_node(n))
                     .unwrap_or(self.error_type);
@@ -12736,7 +12736,7 @@ impl Checker {
             ast::Kind::NamedTupleMember => self.get_type_from_named_tuple_type_node(node),
             ast::Kind::ParenthesizedType => {
                 let __program = self.program.clone().expect("program");
-                let type_node = __program.nodes((node).file_index())[node].type_();
+                let type_node = __program.nodes_ptr((node).file_index())[node].type_();
                 type_node
                     .map(|n| self.get_type_from_type_node(n))
                     .unwrap_or(self.error_type)
@@ -12771,7 +12771,7 @@ impl Checker {
     /// `(c *Checker) getThisType` (checker.go:23396).
     pub(crate) fn get_this_type(&mut self, node: NodeId) -> TypeId {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());
+        let nodes = __program.nodes_ptr((node).file_index());
         let container = self.get_this_container(node, false, false);
         if let Some(parent) = nodes[container].parent {
             if ast::is_class_like(Some(parent), &nodes)
@@ -12810,12 +12810,12 @@ impl Checker {
     pub(crate) fn get_type_from_literal_type_node(&mut self, node: NodeId) -> TypeId {
         let literal = {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((node).file_index());
+            let nodes = __program.nodes_ptr((node).file_index());
             nodes[node].as_literal_type_node().literal
         };
         if let Some(literal) = literal {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((literal).file_index());
+            let nodes = __program.nodes_ptr((literal).file_index());
             if nodes[literal].kind == ast::Kind::NullKeyword {
                 return self.null_type;
             }
@@ -12845,7 +12845,7 @@ impl Checker {
             // Deferred resolution of members is handled by resolveObjectTypeMembers
             let alias = self.get_alias_for_type_node(node);
             let __program = self.program.clone().expect("program");
-            let sym = __program.nodes((node).file_index())[node].symbol();
+            let sym = __program.nodes_ptr((node).file_index())[node].symbol();
             let is_empty = match sym {
                 None => true,
                 Some(sym) => self.get_members_of_symbol(sym).is_empty() && alias.is_none(),
@@ -12870,7 +12870,7 @@ impl Checker {
         if self.type_node_links.get(node).resolved_type.is_none() {
             let (object_node, index_node) = {
                 let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((node).file_index());
+                let nodes = __program.nodes_ptr((node).file_index());
                 let d = nodes[node].as_indexed_access_type_node();
                 (d.object_type, d.index_type)
             };
@@ -12901,7 +12901,7 @@ impl Checker {
         if self.type_node_links.get(node).resolved_type.is_none() {
             let (operator, arg_type) = {
                 let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((node).file_index());
+                let nodes = __program.nodes_ptr((node).file_index());
                 let d = nodes[node].as_type_operator_node();
                 (d.operator, d.type_)
             };
@@ -12914,7 +12914,7 @@ impl Checker {
                 }
                 ast::Kind::UniqueKeyword => {
                     let __program = self.program.clone().expect("program");
-                    let nodes = __program.nodes((node).file_index());
+                    let nodes = __program.nodes_ptr((node).file_index());
                     let arg_is_symbol =
                         arg_type.is_some_and(|a| nodes[a].kind == ast::Kind::SymbolKeyword);
                     if arg_is_symbol {
@@ -12945,7 +12945,7 @@ impl Checker {
     pub(crate) fn get_es_symbol_like_type_for_node(&mut self, node: NodeId) -> TypeId {
         let valid = {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((node).file_index());
+            let nodes = __program.nodes_ptr((node).file_index());
             is_valid_es_symbol_declaration(node, &nodes)
         };
         if valid {
@@ -12976,7 +12976,7 @@ impl Checker {
             // handle LS queries on the `const` in `x as const` by resolving to the type of `x`
             let resolved = {
                 let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((node).file_index());
+                let nodes = __program.nodes_ptr((node).file_index());
                 if crate::utilities::is_const_type_reference(node, &nodes)
                     && nodes[node]
                         .parent
@@ -13018,7 +13018,7 @@ impl Checker {
                 .is_distributed
         {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((node).file_index());
+            let nodes = __program.nodes_ptr((node).file_index());
             let mut n = nodes[node].parent;
             while let Some(nn) = n {
                 if ast::is_statement(&nodes[nn], &nodes) {
@@ -13075,7 +13075,7 @@ impl Checker {
         node: NodeId,
     ) -> Option<TypeId> {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());
+        let nodes = __program.nodes_ptr((node).file_index());
         if !nodes[node].flags.intersects(ast::NodeFlags::JSDOC)
             || !ast::is_type_reference_node(&nodes[node])
         {
@@ -13185,7 +13185,7 @@ impl Checker {
     ) -> SymbolId {
         let name = {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((type_reference).file_index());
+            let nodes = __program.nodes_ptr((type_reference).file_index());
             get_type_reference_name(type_reference, &nodes)
         };
         let Some(name) = name else {
@@ -13207,7 +13207,7 @@ impl Checker {
     /// `(c *Checker) getUnresolvedSymbolForEntityName` (checker.go:23626).
     pub(crate) fn get_unresolved_symbol_for_entity_name(&mut self, name: NodeId) -> SymbolId {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((name).file_index());
+        let nodes = __program.nodes_ptr((name).file_index());
         let identifier = match nodes[name].kind {
             ast::Kind::QualifiedName => nodes[name].as_qualified_name().right,
             ast::Kind::PropertyAccessExpression => nodes[name].name(),
@@ -13294,13 +13294,13 @@ impl Checker {
         if !type_parameters.is_empty() {
             let num_type_arguments = {
                 let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((node).file_index());
+                let nodes = __program.nodes_ptr((node).file_index());
                 nodes[node].type_arguments().map(|a| a.len()).unwrap_or(0)
             };
             let min_type_argument_count = self.get_min_type_argument_count(&type_parameters);
             let (is_js, missing_augments_tag) = {
                 let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((node).file_index());
+                let nodes = __program.nodes_ptr((node).file_index());
                 let is_js = ast::is_in_js_file(Some(node), &nodes);
                 let missing_augments_tag = is_js
                     && ast::is_expression_with_type_arguments(&nodes[node])
@@ -13347,7 +13347,7 @@ impl Checker {
             }
             if {
                 let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((node).file_index());
+                let nodes = __program.nodes_ptr((node).file_index());
                 nodes[node].kind == ast::Kind::TypeReference
             } && self
                 .is_deferred_type_reference_node(node, num_type_arguments != type_parameters.len())
@@ -13381,7 +13381,7 @@ impl Checker {
     pub(crate) fn get_type_arguments_from_node(&mut self, node: NodeId) -> Vec<TypeId> {
         let type_argument_nodes = {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((node).file_index());
+            let nodes = __program.nodes_ptr((node).file_index());
             nodes[node]
                 .type_arguments()
                 .map(|a| a.to_vec())
@@ -13401,7 +13401,7 @@ impl Checker {
     ) -> bool {
         let has_type_arguments = {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((node).file_index());
+            let nodes = __program.nodes_ptr((node).file_index());
             nodes[node].type_arguments().is_some_and(|a| !a.is_empty())
         };
         if has_type_arguments {
@@ -13409,7 +13409,7 @@ impl Checker {
                 Some(symbol) => self.symbol_to_string(symbol),
                 None => {
                     let __program = self.program.clone().expect("program");
-                    let nodes = __program.nodes((node).file_index());
+                    let nodes = __program.nodes_ptr((node).file_index());
                     let type_name = nodes[node].as_type_reference_node().type_name;
                     tsc_scanner::utilities::declaration_name_to_string(type_name, &nodes)
                 }
@@ -13437,7 +13437,7 @@ impl Checker {
         }
         if self.is_resolved_by_type_alias(node) {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((node).file_index());
+            let nodes = __program.nodes_ptr((node).file_index());
             match nodes[node].kind {
                 ast::Kind::ArrayType => {
                     return nodes[node]
@@ -13474,7 +13474,7 @@ impl Checker {
     /// of type aliases are eagerly resolved.
     pub(crate) fn is_resolved_by_type_alias(&mut self, node: NodeId) -> bool {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());
+        let nodes = __program.nodes_ptr((node).file_index());
         let Some(parent) = nodes[node].parent else {
             return false;
         };
@@ -13499,7 +13499,7 @@ impl Checker {
     /// of a type alias.
     pub(crate) fn may_resolve_type_alias(&mut self, node: NodeId) -> bool {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());
+        let nodes = __program.nodes_ptr((node).file_index());
         match nodes[node].kind {
             ast::Kind::TypeReference => {
                 let s = self.resolve_type_reference_name(node, ast::SymbolFlags::TYPE, false);
@@ -13812,7 +13812,7 @@ impl Checker {
         {
             let type_argument_nodes = {
                 let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((node).file_index());
+                let nodes = __program.nodes_ptr((node).file_index());
                 nodes[node]
                     .type_arguments()
                     .map(|a| a.to_vec())
@@ -13840,7 +13840,7 @@ impl Checker {
         if !type_parameters.is_empty() {
             let num_type_arguments = {
                 let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((node).file_index());
+                let nodes = __program.nodes_ptr((node).file_index());
                 nodes[node].type_arguments().map(|a| a.len()).unwrap_or(0)
             };
             let min_type_argument_count = self.get_min_type_argument_count(&type_parameters);
@@ -13881,7 +13881,7 @@ impl Checker {
                     self.get_type_arguments_for_alias_symbol(Some(new_alias_symbol));
             } else if {
                 let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((node).file_index());
+                let nodes = __program.nodes_ptr((node).file_index());
                 ast::is_type_reference_type(&nodes[node])
             } {
                 let alias_symbol = self.resolve_type_reference_name(
@@ -13948,7 +13948,7 @@ impl Checker {
             let decl = self.sym(symbol).value_declaration;
             decl.is_some_and(|d| {
                 let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((d).file_index());
+                let nodes = __program.nodes_ptr((d).file_index());
                 ast::is_in_js_file(Some(d), &nodes)
             })
         };
@@ -14003,7 +14003,7 @@ impl Checker {
     /// `(c *Checker) getAliasSymbolForTypeNode` (checker.go:24243).
     pub(crate) fn get_alias_symbol_for_type_node(&mut self, node: NodeId) -> Option<SymbolId> {
         let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());
+        let nodes = __program.nodes_ptr((node).file_index());
         let mut host = nodes[node].parent;
         while let Some(h) = host {
             if ast::is_parenthesized_type_node(&nodes[h])
@@ -14065,7 +14065,7 @@ impl Checker {
                     .iter()
                     .find(|&&d| {
                         let __program = self.program.clone().expect("program");
-                        let nodes = __program.nodes((d).file_index());
+                        let nodes = __program.nodes_ptr((d).file_index());
                         crate::utilities::is_type_alias(&nodes[d])
                     })
                     .copied()
@@ -14075,7 +14075,7 @@ impl Checker {
             };
             let type_node = {
                 let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((declaration).file_index());
+                let nodes = __program.nodes_ptr((declaration).file_index());
                 nodes[declaration].type_()
             };
             let mut t = type_node
@@ -14103,7 +14103,7 @@ impl Checker {
             } else {
                 let error_node = {
                     let __program = self.program.clone().expect("program");
-                    let nodes = __program.nodes((declaration).file_index());
+                    let nodes = __program.nodes_ptr((declaration).file_index());
                     nodes[declaration].name().or(Some(declaration))
                 };
                 let name = self.symbol_to_string(symbol);
@@ -14132,7 +14132,7 @@ impl Checker {
             for declaration in declarations {
                 let members = {
                     let __program = self.program.clone().expect("program");
-                    let nodes = __program.nodes((declaration).file_index());
+                    let nodes = __program.nodes_ptr((declaration).file_index());
                     if nodes[declaration].kind != ast::Kind::EnumDeclaration {
                         continue;
                     }
@@ -14144,7 +14144,7 @@ impl Checker {
                 for member in members {
                     let has_dynamic_name = {
                         let __program = self.program.clone().expect("program");
-                        let nodes = __program.nodes((member).file_index());
+                        let nodes = __program.nodes_ptr((member).file_index());
                         ast::has_dynamic_name(member, &nodes)
                     };
                     if !has_dynamic_name {
@@ -14203,7 +14203,7 @@ impl Checker {
     /// `(c *Checker) getEnumMemberValue` (checker.go:24446).
     pub(crate) fn get_enum_member_value(&mut self, node: NodeId) -> evaluator::Result {
         let __program = self.program.clone().expect("program");
-        let parent = __program.nodes((node).file_index())[node].parent;
+        let parent = __program.nodes_ptr((node).file_index())[node].parent;
         if let Some(parent) = parent {
             self.compute_enum_member_values(parent);
         }
@@ -14256,7 +14256,7 @@ impl Checker {
             let mut previous: Option<NodeId> = None;
             let members = {
                 let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((node).file_index());
+                let nodes = __program.nodes_ptr((node).file_index());
                 nodes[node]
                     .members()
                     .map(|m| m.to_vec())
@@ -14283,7 +14283,7 @@ impl Checker {
     ) -> evaluator::Result {
         {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((member).file_index());
+            let nodes = __program.nodes_ptr((member).file_index());
             let member_name = nodes[member].name();
             if let Some(member_name) = member_name {
                 if ast::is_computed_non_literal_name(&nodes[member_name], &nodes) {
@@ -14314,7 +14314,7 @@ impl Checker {
         }
         let (initializer, parent) = {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((member).file_index());
+            let nodes = __program.nodes_ptr((member).file_index());
             (nodes[member].initializer(), nodes[member].parent)
         };
         if initializer.is_some() {
@@ -14324,7 +14324,7 @@ impl Checker {
         // considered computed members (as opposed to having auto-incremented values).
         let parent_ambient_and_not_const = parent.is_some_and(|p| {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((p).file_index());
+            let nodes = __program.nodes_ptr((p).file_index());
             nodes[p].flags.intersects(ast::NodeFlags::AMBIENT) && !ast::is_enum_const(p, &nodes)
         });
         if parent_ambient_and_not_const {
@@ -14336,7 +14336,7 @@ impl Checker {
         // occurs if the immediately preceding member is not a constant enum member.
         let Some(auto_value) = auto_value else {
             let __program = self.program.clone().expect("program");
-            let member_name = __program.nodes((member).file_index())[member]
+            let member_name = __program.nodes_ptr((member).file_index())[member]
                 .name()
                 .or(Some(member));
             self.error(
@@ -14350,7 +14350,7 @@ impl Checker {
             if let Some(previous) = previous {
                 let prev_has_initializer = {
                     let __program = self.program.clone().expect("program");
-                    let nodes = __program.nodes((previous).file_index());
+                    let nodes = __program.nodes_ptr((previous).file_index());
                     nodes[previous].initializer().is_some()
                 };
                 if prev_has_initializer {
@@ -14359,7 +14359,7 @@ impl Checker {
                         || prev_value.resolved_other_files
                     {
                         let __program = self.program.clone().expect("program");
-                        let member_name = __program.nodes((member).file_index())[member]
+                        let member_name = __program.nodes_ptr((member).file_index())[member]
                             .name()
                             .or(Some(member));
                         self.error(
@@ -14386,7 +14386,7 @@ impl Checker {
     ) -> evaluator::Result {
         let (is_const_enum, initializer, parent) = {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((member).file_index());
+            let nodes = __program.nodes_ptr((member).file_index());
             let parent = nodes[member].parent;
             let is_const_enum = parent.is_some_and(|p| ast::is_enum_const(p, &nodes));
             (is_const_enum, nodes[member].initializer(), parent)
@@ -14396,7 +14396,7 @@ impl Checker {
         };
         let result = {
             let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((initializer).file_index());
+            let nodes = __program.nodes_ptr((initializer).file_index());
             self.evaluate_call(initializer, Some(member), &nodes)
         };
         match &result.value {
@@ -14418,7 +14418,7 @@ impl Checker {
                         if !result.is_syntactically_string {
                             let member_name = {
                                 let __program = self.program.clone().expect("program");
-                                let nodes = __program.nodes((member).file_index());
+                                let nodes = __program.nodes_ptr((member).file_index());
                                 let enum_name = parent
                                     .and_then(|p| nodes[p].name())
                                     .map(|n| nodes[n].text(&nodes).into_owned())
@@ -14448,7 +14448,7 @@ impl Checker {
                 } else {
                     let parent_is_ambient = parent.is_some_and(|p| {
                         let __program = self.program.clone().expect("program");
-                        let nodes = __program.nodes((p).file_index());
+                        let nodes = __program.nodes_ptr((p).file_index());
                         nodes[p].flags.intersects(ast::NodeFlags::AMBIENT)
                     });
                     if parent_is_ambient {
@@ -14557,7 +14557,7 @@ pub(crate) fn is_thisless(c: &mut Checker, symbol: SymbolId) -> bool {
         let declaration = declarations[0];
         if !declaration.is_none() {
             let __program = c.program.clone().expect("program");
-            let nodes = __program.nodes((declaration).file_index());
+            let nodes = __program.nodes_ptr((declaration).file_index());
             let kind = nodes[declaration].kind;
             if kind == ast::Kind::Parameter {
                 return is_thisless_variable_like_declaration(declaration, &nodes);
@@ -14806,7 +14806,7 @@ pub(crate) fn get_type_arguments(c: &mut Checker, t: TypeId) -> Vec<TypeId> {
     let mut type_arguments: Vec<TypeId> = Vec::new();
     if let Some(node) = node {
         let __program = c.program.clone().expect("program");
-        let kind = __program.nodes((node).file_index())[node].kind;
+        let kind = __program.nodes_ptr((node).file_index())[node].kind;
         match kind {
             ast::Kind::TypeReference => {
                 let outer = target
@@ -14830,7 +14830,7 @@ pub(crate) fn get_type_arguments(c: &mut Checker, t: TypeId) -> Vec<TypeId> {
             }
             ast::Kind::ArrayType => {
                 let __program = c.program.clone().expect("program");
-                let element_node = __program.nodes((node).file_index())[node]
+                let element_node = __program.nodes_ptr((node).file_index())[node]
                     .as_array_type_node()
                     .element_type;
                 let element = element_node
@@ -14840,7 +14840,7 @@ pub(crate) fn get_type_arguments(c: &mut Checker, t: TypeId) -> Vec<TypeId> {
             }
             ast::Kind::TupleType => {
                 let __program = c.program.clone().expect("program");
-                let element_nodes = __program.nodes((node).file_index())[node]
+                let element_nodes = __program.nodes_ptr((node).file_index())[node]
                     .elements()
                     .map(|e| e.to_vec())
                     .unwrap_or_default();
@@ -14957,7 +14957,7 @@ pub(crate) fn get_name_type_from_mapped_type(c: &mut Checker, t: TypeId) -> Opti
         (
             m.declaration.and_then(|d| {
                 let __program = c.program.clone().expect("program");
-                let d_nodes = __program.nodes((d).file_index());
+                let d_nodes = __program.nodes_ptr((d).file_index());
                 d_nodes[d].as_mapped_type_node().name_type
             }),
             m.object_type.mapper,
@@ -14988,7 +14988,7 @@ pub(crate) fn get_template_type_from_mapped_type(c: &mut Checker, t: TypeId) -> 
             (
                 m.declaration.and_then(|d| {
                     let __program = c.program.clone().expect("program");
-                    let d_nodes = __program.nodes((d).file_index());
+                    let d_nodes = __program.nodes_ptr((d).file_index());
                     d_nodes[d].as_mapped_type_node().type_
                 }),
                 m.object_type.mapper,
@@ -15128,13 +15128,13 @@ pub(crate) fn is_local_type_alias(c: &mut Checker, symbol: SymbolId) -> bool {
         let declarations = c.sym(symbol).declarations.clone();
         declarations.iter().copied().find(|&d| {
             let __program = c.program.clone().expect("program");
-            let nodes = __program.nodes((d).file_index());
+            let nodes = __program.nodes_ptr((d).file_index());
             crate::utilities::is_type_alias(&nodes[d])
         })
     };
     declaration.is_some_and(|d| {
         let __program = c.program.clone().expect("program");
-        let nodes = __program.nodes((d).file_index());
+        let nodes = __program.nodes_ptr((d).file_index());
         ast::get_containing_function(d, &nodes).is_some()
     })
 }
@@ -15205,7 +15205,7 @@ impl TupleNormalizer {
                     if spread_types.len() + self.types.len() >= 10_000 {
                         let message = if c.current_node.is_some_and(|n| {
                             let __program = c.program.clone().expect("program");
-                            let nodes = __program.nodes((n).file_index());
+                            let nodes = __program.nodes_ptr((n).file_index());
                             ast::is_part_of_type_node(n, &nodes)
                         }) {
                             &tsc_diagnostics::Type_produces_a_tuple_type_that_is_too_large_to_represent
@@ -15420,7 +15420,7 @@ fn write_generic_type_references(
 /// `isNotReplacableByMethod` (checker.go:16475).
 pub(crate) fn is_not_replacable_by_method(c: &Checker, decl: NodeId) -> bool {
     let __program = c.program.clone().expect("program");
-    let nodes = __program.nodes((decl).file_index());
+    let nodes = __program.nodes_ptr((decl).file_index());
     nodes[decl].symbol().map_or(true, |s| {
         !c.sym(s)
             .flags
@@ -15526,7 +15526,7 @@ pub(crate) fn type_parameter_contains_reference(
 ) -> bool {
     let _ = tp;
     let __program = c.program.clone().expect("program");
-    let nodes = __program.nodes((node).file_index());
+    let nodes = __program.nodes_ptr((node).file_index());
     match nodes[node].kind {
         ast::Kind::ThisType => return tp_is_this_type,
         ast::Kind::TypeReference => {
@@ -15567,7 +15567,7 @@ pub(crate) fn type_parameter_contains_reference(
                             .iter()
                             .any(|&d| {
                                 let __program = c.program.clone().expect("program");
-                                let d_nodes = __program.nodes((d).file_index());
+                                let d_nodes = __program.nodes_ptr((d).file_index());
                                 crate::utilities::is_node_descendant_of(d, tp_scope, &d_nodes)
                             })
                         {

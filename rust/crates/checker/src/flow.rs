@@ -275,8 +275,8 @@ impl Checker {
     /// from for reachability/post-super queries).
     fn set_flow_context(&self, f: &mut FlowState, context: NodeId) {
         if f.nodes.is_none() {
-            let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((context).file_index());
+            let __program = self.program.as_ref().expect("program");
+            let nodes = __program.nodes_ptr((context).file_index());
             f.file = ast::get_source_file_of_node(Some(context), &nodes);
             drop(nodes);
             f.nodes = Some(self.program_nodes_handle(context));
@@ -401,8 +401,8 @@ impl Checker {
         }
         let mut flow_node = flow_node;
         if flow_node.is_none() {
-            let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((reference).file_index());
+            let __program = self.program.as_ref().expect("program");
+            let nodes = __program.nodes_ptr((reference).file_index());
             flow_node = get_flow_node_of_node(&nodes, reference);
             if flow_node.is_none() {
                 return declared_type;
@@ -2549,8 +2549,8 @@ impl Checker {
         let Some(witnesses) = self.get_switch_clause_type_of_witnesses(switch_statement) else {
             return t;
         };
-        let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((switch_statement).file_index());
+        let __program = self.program.as_ref().expect("program");
+        let nodes = __program.nodes_ptr((switch_statement).file_index());
         let clauses: Rc<[NodeId]> = nodes[switch_statement]
             .as_switch_statement()
             .case_block
@@ -2693,8 +2693,8 @@ impl Checker {
                 .flags
                 .intersects(TypeFlags::UNION)
         {
-            let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((access).file_index());
+            let __program = self.program.as_ref().expect("program");
+            let nodes = __program.nodes_ptr((access).file_index());
             let (accessed_name, ok) = self.get_accessed_property_name(&nodes, access);
             if ok && !accessed_name.is_empty() && self.get_key_property_name(t) == accessed_name {
                 let switch_statement = data.switch_statement.expect("switch statement");
@@ -2714,8 +2714,8 @@ impl Checker {
                 }
             }
         }
-        let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((access).file_index());
+        let __program = self.program.as_ref().expect("program");
+        let nodes = __program.nodes_ptr((access).file_index());
         self.narrow_type_by_discriminant(t, access, &nodes, &mut |c: &mut Checker, t: TypeId| {
             c.narrow_type_by_switch_on_discriminant(t, data)
         })
@@ -3406,8 +3406,8 @@ impl Checker {
 
     /// `(c *Checker) reportFlowControlError` (flow.go).
     pub(crate) fn report_flow_control_error(&mut self, node: NodeId) {
-        let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());
+        let __program = self.program.as_ref().expect("program");
+        let nodes = __program.nodes_ptr((node).file_index());
         let block = ast::find_ancestor(
             Some(node),
             &nodes,
@@ -3631,8 +3631,8 @@ impl Checker {
         initial_type: TypeId,
         flow_container: Option<NodeId>,
     ) -> bool {
-        let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());
+        let __program = self.program.as_ref().expect("program");
+        let nodes = __program.nodes_ptr((node).file_index());
         match nodes[node].kind {
             Kind::Identifier | Kind::ThisKeyword => {
                 if nodes[node].kind == Kind::Identifier && !ast::is_this_in_type_query(node, &nodes)
@@ -3830,8 +3830,8 @@ impl Checker {
         // The declaration can live in another file's arena (e.g. `a.key`
         // resolving to a const in a.ts while `nodes` is b.ts's buffer) —
         // read it in its own arena (Go's pointers carry their arena).
-        let __program = self.program.clone().expect("program");
-        let decl_nodes = __program.nodes((declaration).file_index());
+        let __program = self.program.as_ref().expect("program");
+        let decl_nodes = __program.nodes_ptr((declaration).file_index());
         // We exclude binding elements because their initializers don't solely
         // determine their types and resolving full types can cause
         // circularities (see https://github.com/microsoft/TypeScript/issues/63192).
@@ -3938,8 +3938,8 @@ impl Checker {
                 self.symbol_arena.get_ref(symbol)
                     .value_declaration
                     .is_some_and(|d| {
-                        let __program = self.program.clone().expect("program");
-                        let decl_nodes = __program.nodes((d).file_index());
+                        let __program = self.program.as_ref().expect("program");
+                        let decl_nodes = __program.nodes_ptr((d).file_index());
                         ast::is_function_expression(&decl_nodes[d])
                     })
             }
@@ -4271,8 +4271,8 @@ impl Checker {
 
     /// `(c *Checker) computeExhaustiveSwitchStatement` (flow.go).
     pub(crate) fn compute_exhaustive_switch_statement(&mut self, node: NodeId) -> bool {
-        let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());
+        let __program = self.program.as_ref().expect("program");
+        let nodes = __program.nodes_ptr((node).file_index());
         let expression = nodes[node].expression();
         if expression.is_some_and(|e| ast::is_type_of_expression(&nodes[e])) {
             let type_of_expr = expression.unwrap();
@@ -4354,8 +4354,8 @@ impl Checker {
         node: NodeId,
     ) -> Option<Vec<String>> {
         if !self.switch_statement_links.get(node).witnesses_computed {
-            let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((node).file_index());
+            let __program = self.program.as_ref().expect("program");
+            let nodes = __program.nodes_ptr((node).file_index());
             let clauses: Rc<[NodeId]> = nodes[node]
                 .as_switch_statement()
                 .case_block
@@ -4413,8 +4413,8 @@ impl Checker {
     /// `(c *Checker) getSwitchClauseTypes` (flow.go).
     pub(crate) fn get_switch_clause_types(&mut self, node: NodeId) -> Vec<TypeId> {
         if !self.switch_statement_links.get(node).switch_types_computed {
-            let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((node).file_index());
+            let __program = self.program.as_ref().expect("program");
+            let nodes = __program.nodes_ptr((node).file_index());
             let clauses: Rc<[NodeId]> = nodes[node]
                 .as_switch_statement()
                 .case_block
@@ -4457,8 +4457,8 @@ impl Checker {
     pub(crate) fn get_effects_signature(&mut self, node: NodeId) -> Option<SignatureId> {
         let mut signature = self.signature_links.get(node).effects_signature;
         if signature.is_none() {
-            let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((node).file_index());
+            let __program = self.program.as_ref().expect("program");
+            let nodes = __program.nodes_ptr((node).file_index());
             // A call expression parented by an expression statement is a
             // potential assertion. Other call expressions are potential type
             // predicate function calls. In order to avoid triggering
@@ -4577,8 +4577,8 @@ impl Checker {
         node: NodeId,
         diagnostic: Option<DiagnosticRef>,
     ) -> Option<TypeId> {
-        let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());
+        let __program = self.program.as_ref().expect("program");
+        let nodes = __program.nodes_ptr((node).file_index());
         if nodes[node]
             .flags
             .intersects(ast::NodeFlags::IN_WITH_STATEMENT)
@@ -4683,8 +4683,8 @@ impl Checker {
             }
             let declaration = self.symbol_arena.get_ref(symbol).value_declaration;
             if let Some(declaration) = declaration {
-                let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((declaration).file_index());
+                let __program = self.program.as_ref().expect("program");
+                let nodes = __program.nodes_ptr((declaration).file_index());
                 if self.is_declaration_with_explicit_type_annotation(&nodes, declaration) {
                     return Some(self.get_type_of_symbol(symbol));
                 }
@@ -4784,8 +4784,8 @@ impl Checker {
 
     /// `(c *Checker) getExplicitThisType` (flow.go).
     pub(crate) fn get_explicit_this_type(&mut self, node: NodeId) -> Option<TypeId> {
-        let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());
+        let __program = self.program.as_ref().expect("program");
+        let nodes = __program.nodes_ptr((node).file_index());
         let container = ast::get_this_container(node, &nodes, false, false);
         if ast::is_function_like(Some(container), &nodes) {
             let signature = self.get_signature_from_declaration(container);
@@ -4816,8 +4816,8 @@ impl Checker {
 impl Checker {
     /// `(c *Checker) getInitialType` (flow.go).
     pub(crate) fn get_initial_type(&mut self, node: NodeId) -> TypeId {
-        let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());
+        let __program = self.program.as_ref().expect("program");
+        let nodes = __program.nodes_ptr((node).file_index());
         match nodes[node].kind {
             Kind::VariableDeclaration => self.get_initial_type_of_variable_declaration(node),
             Kind::BindingElement => self.get_initial_type_of_binding_element(node),
@@ -4827,8 +4827,8 @@ impl Checker {
 
     /// `(c *Checker) getInitialTypeOfVariableDeclaration` (flow.go).
     pub(crate) fn get_initial_type_of_variable_declaration(&mut self, node: NodeId) -> TypeId {
-        let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());
+        let __program = self.program.as_ref().expect("program");
+        let nodes = __program.nodes_ptr((node).file_index());
         if let Some(initializer) = nodes[node].initializer() {
             return self.get_type_of_initializer(initializer);
         }
@@ -4865,8 +4865,8 @@ impl Checker {
 
     /// `(c *Checker) getInitialTypeOfBindingElement` (flow.go).
     pub(crate) fn get_initial_type_of_binding_element(&mut self, node: NodeId) -> TypeId {
-        let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());
+        let __program = self.program.as_ref().expect("program");
+        let nodes = __program.nodes_ptr((node).file_index());
         let pattern = nodes[node].parent.expect("binding pattern");
         let declaration = nodes[pattern].parent.expect("binding declaration");
         let parent_type = self.get_initial_type(declaration);
@@ -4888,8 +4888,8 @@ impl Checker {
 
     /// `(c *Checker) getAssignedType` (flow.go).
     pub(crate) fn get_assigned_type(&mut self, node: NodeId) -> TypeId {
-        let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());
+        let __program = self.program.as_ref().expect("program");
+        let nodes = __program.nodes_ptr((node).file_index());
         let Some(parent) = nodes[node].parent else {
             return self.error_type;
         };
@@ -4912,8 +4912,8 @@ impl Checker {
 
     /// `(c *Checker) getAssignedTypeOfBinaryExpression` (flow.go).
     pub(crate) fn get_assigned_type_of_binary_expression(&mut self, node: NodeId) -> TypeId {
-        let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());
+        let __program = self.program.as_ref().expect("program");
+        let nodes = __program.nodes_ptr((node).file_index());
         let is_destructuring_default_assignment = nodes[node].parent.is_some_and(|p| {
             (ast::is_array_literal_expression(&nodes[p])
                 && self.is_destructuring_assignment_target(&nodes, p))
@@ -4937,8 +4937,8 @@ impl Checker {
         node: NodeId,
         element: NodeId,
     ) -> TypeId {
-        let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());
+        let __program = self.program.as_ref().expect("program");
+        let nodes = __program.nodes_ptr((node).file_index());
         let index = nodes[node]
             .elements()
             .and_then(|es| es.iter().position(|&e| e == element))
@@ -4985,8 +4985,8 @@ impl Checker {
 
     /// `(c *Checker) getAssignedTypeOfSpreadExpression` (flow.go).
     pub(crate) fn get_assigned_type_of_spread_expression(&mut self, node: NodeId) -> TypeId {
-        let __program = self.program.clone().expect("program");
-        let parent = __program.nodes((node).file_index())[node]
+        let __program = self.program.as_ref().expect("program");
+        let parent = __program.nodes_ptr((node).file_index())[node]
             .parent
             .expect("spread parent");
         let assigned = self.get_assigned_type(parent);
@@ -5006,8 +5006,8 @@ impl Checker {
 
     /// `(c *Checker) getAssignedTypeOfPropertyAssignment` (flow.go).
     pub(crate) fn get_assigned_type_of_property_assignment(&mut self, node: NodeId) -> TypeId {
-        let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());
+        let __program = self.program.as_ref().expect("program");
+        let nodes = __program.nodes_ptr((node).file_index());
         let parent = nodes[node].parent.expect("property assignment parent");
         let name = nodes[node].name();
         let assigned = self.get_assigned_type(parent);
@@ -5050,8 +5050,8 @@ impl Checker {
         node: NodeId,
     ) -> TypeId {
         let assigned = self.get_assigned_type_of_property_assignment(node);
-        let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());
+        let __program = self.program.as_ref().expect("program");
+        let nodes = __program.nodes_ptr((node).file_index());
         let default_expr = nodes[node]
             .as_shorthand_property_assignment()
             .object_assignment_initializer;
@@ -5257,12 +5257,12 @@ impl Checker {
         self.factory.set_file_index(old_file_index);
         // `reference.FlowNodeData().FlowNode = constructor.AsConstructorDeclaration().ReturnFlowNode`
         {
-            let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((constructor).file_index());
+            let __program = self.program.as_ref().expect("program");
+            let nodes = __program.nodes_ptr((constructor).file_index());
             let return_flow_node = nodes[constructor]
                 .as_constructor_declaration()
                 .return_flow_node;
-            let __program = self.program.clone().expect("program");
+            let __program = self.program.as_ref().expect("program");
             let mut arena = __program.nodes_mut(file_index);
             arena[reference]
                 .as_property_access_expression_mut()
@@ -5337,12 +5337,12 @@ impl Checker {
             };
             self.factory.set_file_index(old_file_index);
             {
-                let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((static_block).file_index());
+                let __program = self.program.as_ref().expect("program");
+                let nodes = __program.nodes_ptr((static_block).file_index());
                 let return_flow_node = nodes[static_block]
                     .as_class_static_block_declaration()
                     .return_flow_node;
-                let __program = self.program.clone().expect("program");
+                let __program = self.program.as_ref().expect("program");
                 let mut arena = __program.nodes_mut(file_index);
                 arena[reference]
                     .as_property_access_expression_mut()
@@ -5667,8 +5667,8 @@ impl Checker {
         let Some(location) = location else {
             return false;
         };
-        let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((location).file_index());
+        let __program = self.program.as_ref().expect("program");
+        let nodes = __program.nodes_ptr((location).file_index());
         last_assignment_pos < nodes[location].pos()
     }
 
@@ -5678,8 +5678,8 @@ impl Checker {
         let Some(value_declaration) = value_declaration else {
             return;
         };
-        let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((value_declaration).file_index());
+        let __program = self.program.as_ref().expect("program");
+        let nodes = __program.nodes_ptr((value_declaration).file_index());
         let parent = ast::find_ancestor(
             Some(value_declaration),
             &nodes,
@@ -5739,8 +5739,8 @@ impl Checker {
     /// position (this is more conservative than full control flow analysis,
     /// but requires only a single walk over the AST).
     pub(crate) fn mark_node_assignments_worker(&mut self, node: NodeId) -> bool {
-        let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());
+        let __program = self.program.as_ref().expect("program");
+        let nodes = __program.nodes_ptr((node).file_index());
         match nodes[node].kind {
             Kind::Identifier => {
                 let assignment_kind = crate::utilities::get_assignment_target_kind(node, &nodes);

@@ -1747,8 +1747,8 @@ impl Checker {
             .as_mapped_type()
             .declaration
             .expect("mapped type declaration");
-        let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((declaration).file_index());
+        let __program = self.program.as_ref().expect("program");
+        let nodes = __program.nodes_ptr((declaration).file_index());
         nodes[declaration].as_mapped_type_node().name_type.is_some()
     }
 
@@ -3131,8 +3131,8 @@ impl Checker {
                 .declarations
                 .clone();
             for d in declarations {
-                let __program = self.program.clone().expect("program");
-                let nodes = __program.nodes((d).file_index());
+                let __program = self.program.as_ref().expect("program");
+                let nodes = __program.nodes_ptr((d).file_index());
                 if ast::is_type_parameter_declaration(&nodes[d])
                     && nodes[d]
                         .as_type_parameter_declaration()
@@ -3295,7 +3295,7 @@ pub(crate) fn infer_from_intra_expression_sites(c: &mut Checker, n: InferenceCon
         let node = site.node.expect("intraExpressionInferenceSite.node");
         let contextual_type = {
             let __program = c.program.clone().expect("program");
-            let nodes = __program.nodes((node).file_index());
+            let nodes = __program.nodes_ptr((node).file_index());
             if ast::is_method_declaration(&nodes[node]) {
                 drop(nodes);
                 c.get_contextual_type_for_object_literal_method(

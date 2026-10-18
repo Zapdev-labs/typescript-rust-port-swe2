@@ -5207,6 +5207,11 @@ impl tsc_checker::checker_types::Program for Program {
     fn nodes(&self, file_index: u32) -> Rc<NodeArenaBuf> {
         Program::nodes(self, file_index)
     }
+    fn nodes_ptr(&self, file_index: u32) -> tsc_ast::ast::NodeListPtr {
+        tsc_ast::ast::NodeListPtr::from_raw(
+            self.arena_cell(file_index).0.borrow().0.get() as *const Vec<Node>,
+        )
+    }
     fn nodes_mut(&self, file_index: u32) -> ArenaMut {
         Program::nodes_mut(self, file_index)
     }

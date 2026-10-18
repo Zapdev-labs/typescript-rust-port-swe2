@@ -2879,6 +2879,43 @@ impl From<std::rc::Rc<NodeArenaBuf>> for NodeArenaBuf {
 /// mutation reproduces that exactly; appended nodes are also visible to
 /// snapshot holders (Go slice copies would not see them — a strict
 /// visibility improvement; consumers re-index per access anyway).
+/// PORT(perf): `Copy` `*const Vec<Node>` for zero-clone arena reads — the
+/// checker dereferences arena nodes millions of times; `Rc` snapshot
+/// traffic showed up in profiles (`Rc` clone/drop on every `nodes()`
+/// call). Soundness: the `NodeArenaBuf` `Rc` lives in the owning
+/// `Program`/resolver for the whole session, and `UnsafeCell` semantics
+/// mean readers observe in-place writes/appends — identical to
+/// [`TypePtr`].
+#[derive(Clone, Copy)]
+pub struct NodeListPtr(*const Vec<Node>);
+
+#[allow(unsafe_code)] // stable-address arena deref — see `NodeListPtr`
+impl std::ops::Deref for NodeListPtr {
+    type Target = Vec<Node>;
+    fn deref(&self) -> &Vec<Node> {
+        unsafe { &*self.0 }
+    }
+}
+
+impl NodeListPtr {
+    /// Caller must ensure the arena outlives all derefs — callers get this
+    /// from `Program::nodes_ptr`, which anchors on the arena `Rc`.
+    pub fn from_raw(p: *const Vec<Node>) -> Self {
+        Self(p)
+    }
+}
+
+/// Empty arena view — the `Vec` is a process-lifetime static, so `Default`
+/// yields a `NodeListPtr` that reads as `[]` forever (mirrors Go's nil-slice
+/// semantics where an unset arena reads empty).
+impl Default for NodeListPtr {
+    fn default() -> Self {
+        // `Vec<Node>` isn't `Sync` so no `static` — leak one per call; a
+        // few dozen-byte leaks total, mirroring Go's shared nil-slice.
+        NodeListPtr::from_raw(Box::leak(Box::new(Vec::new())))
+    }
+}
+
 pub struct ArenaCell(
     pub std::cell::RefCell<std::rc::Rc<NodeArenaBuf>>,
     /// Active [`ArenaMut`] writers — `cow()` panics on a second concurrent

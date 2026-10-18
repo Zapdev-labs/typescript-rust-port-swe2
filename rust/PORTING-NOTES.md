@@ -2598,3 +2598,23 @@ analysis. PGO: 0.67→0.44 wall (committed BENCH-checker.png updated).
 Next for more speed: get_flow_type_of_reference_ex internals —
 flow-graph node identity/comparison cost, shared-flow-type caching,
 Rc->arena for flow nodes. checker_a.rs:7485 + checker_b.rs:6725+.
+
+## checkpoint 24 — Rc-tax optimization pass (checker.ts .67 -> .51s)
+
+What landed (committed a2f6418b04 + this batch):
+- FlowState::flow_node_ref/flow_list_ref — `Ref`-anchored reads via
+  `Ref::map` on `ArenaCell.0.borrow()`; skips `Rc` snapshot + `ArenaRef`
+  wrapper per access. ~40 hot-loop sites migrated.
+- `Program::nodes_ptr` -> `ast::NodeListPtr` (Copy `*const Vec<Node>`,
+  `Deref` to Vec; unsafe inside ast impl). ~1,100 sites swapped off
+  `Rc<NodeArenaBuf>` snapshots. `ArenaView::Snapshot` sites keep `.nodes()`.
+- `self.program.clone()` -> `.as_ref()` where borrow doesn't cross
+  `&mut self` (~1,080 decls in checker_a/b/c/core/jsx/ls/compiler);
+  E0502 files keep `.clone()` on the decl (1 clone per fn, not per access).
+- `NodeListPtr: Default` via leaked `Box<Vec<Node>>` (Node not Sync).
+- `TSC_PPROF_DIR` env -> pprof cpuprofile.pb.gz (stop() before exit).
+
+Numbers (remote, release): wall .67 -> .52, check .405 -> .394.
+PGO build running (target-pgo). Remaining gap = distributed
+RefCell/dispatch cost + `get_flow_type_of_reference_ex` inner work —
+next: pprof on new binary to see what survived.

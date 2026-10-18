@@ -110,8 +110,8 @@ impl Checker {
     /// `(c *Checker) isDeclarationVisible`.
     pub(crate) fn is_declaration_visible(&mut self, node: NodeId) -> bool {
         {
-            let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((node).file_index());
+            let __program = self.program.as_ref().expect("program");
+            let nodes = __program.nodes_ptr((node).file_index());
             if !ast::is_parse_tree_node(&nodes[node]) {
                 return false;
             }
@@ -142,8 +142,8 @@ impl Checker {
 
     /// `(c *Checker) determineIfDeclarationIsVisible`.
     pub(crate) fn determine_if_declaration_is_visible(&mut self, node: NodeId) -> bool {
-        let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((node).file_index());
+        let __program = self.program.as_ref().expect("program");
+        let nodes = __program.nodes_ptr((node).file_index());
         match nodes[node].kind {
             ast::Kind::JSDocCallbackTag | ast::Kind::JSDocTypedefTag => {
                 // Top-level jsdoc type aliases are considered exported
@@ -296,8 +296,8 @@ impl Checker {
         should_compute_alias_to_make_visible: bool,
         live_nodes: Option<&[Node]>,
     ) -> SymbolAccessibilityResult {
-        let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((entity_name).file_index());
+        let __program = self.program.as_ref().expect("program");
+        let nodes = __program.nodes_ptr((entity_name).file_index());
         if !ast::is_parse_tree_node(&nodes[entity_name]) {
             return SymbolAccessibilityResult {
                 accessibility: SymbolAccessibility::NotAccessible,
@@ -384,8 +384,8 @@ impl Checker {
             .declaration_links
             .get(declaration)
             .is_visible = Tristate::True;
-        let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((declaration).file_index());
+        let __program = self.program.as_ref().expect("program");
+        let nodes = __program.nodes_ptr((declaration).file_index());
         let declaration_id = ast::get_node_id(&nodes[declaration]);
         aliases_to_make_visible_set
             .get_or_insert_with(FxHashMap::default)
@@ -407,8 +407,8 @@ impl Checker {
 
         let declarations = self.sym(symbol).declarations.clone();
         for declaration in declarations {
-            let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((declaration).file_index());
+            let __program = self.program.as_ref().expect("program");
+            let nodes = __program.nodes_ptr((declaration).file_index());
             if ast::is_identifier(&nodes[declaration]) {
                 continue;
             }
@@ -569,8 +569,8 @@ impl Checker {
         enclosing_declaration: Option<NodeId>,
     ) -> bool {
         {
-            let __program = self.program.clone().expect("program");
-            let nodes = __program.nodes((declaration).file_index());
+            let __program = self.program.as_ref().expect("program");
+            let nodes = __program.nodes_ptr((declaration).file_index());
             if !ast::is_parse_tree_node(&nodes[declaration]) {
                 return false;
             }
@@ -620,8 +620,8 @@ impl Checker {
     /// `(c *Checker) declaredParameterTypeContainsUndefined`.
     pub(crate) fn declared_parameter_type_contains_undefined(&mut self, parameter: NodeId) -> bool {
         // typeNode := getNonlocalEffectiveTypeAnnotationNode(parameter); // !!! JSDoc Support
-        let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((parameter).file_index());
+        let __program = self.program.as_ref().expect("program");
+        let nodes = __program.nodes_ptr((parameter).file_index());
         let Some(type_node) = nodes[parameter].type_() else {
             return false;
         };
@@ -640,8 +640,8 @@ impl Checker {
         &mut self,
         parameter: NodeId,
     ) -> bool {
-        let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((parameter).file_index());
+        let __program = self.program.as_ref().expect("program");
+        let nodes = __program.nodes_ptr((parameter).file_index());
         self.strict_null_checks
             && self.is_optional_parameter(parameter)
             && ( /*isJSDocParameterTag(parameter) ||*/ nodes[parameter].initializer().is_none())
@@ -658,8 +658,8 @@ impl Checker {
         parameter: NodeId,
         enclosing_declaration: Option<NodeId>,
     ) -> bool {
-        let __program = self.program.clone().expect("program");
-        let nodes = __program.nodes((parameter).file_index());
+        let __program = self.program.as_ref().expect("program");
+        let nodes = __program.nodes_ptr((parameter).file_index());
         if !self.strict_null_checks
             || self.is_optional_parameter(parameter)
             || /*isJSDocParameterTag(parameter) ||*/ nodes[parameter].initializer().is_none()
@@ -672,8 +672,8 @@ impl Checker {
             ast::ModifierFlags::PARAMETER_PROPERTY_MODIFIER,
         ) {
             return enclosing_declaration.is_some_and(|d| {
-                let __program = self.program.clone().expect("program");
-                let decl_nodes = __program.nodes((d).file_index());
+                let __program = self.program.as_ref().expect("program");
+                let decl_nodes = __program.nodes_ptr((d).file_index());
                 ast::is_function_like_declaration(Some(d), &decl_nodes)
             });
         }

@@ -395,6 +395,11 @@ impl tsc_checker::checker_types::Program for AliasResolver {
     fn nodes(&self, file_index: u32) -> Rc<ast::NodeArenaBuf> {
         self.leaked_arena(file_index).snapshot()
     }
+    fn nodes_ptr(&self, file_index: u32) -> ast::NodeListPtr {
+        ast::NodeListPtr::from_raw(
+            self.leaked_arena(file_index).0.borrow().0.get() as *const Vec<ast::Node>,
+        )
+    }
 
     /// Mutable arena access — copy-on-write via `ArenaMut`.
     fn nodes_mut(&self, file_index: u32) -> tsc_ast::ArenaMut {

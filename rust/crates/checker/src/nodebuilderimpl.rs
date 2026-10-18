@@ -8455,7 +8455,7 @@ impl Checker {
             return symbol_value_declaration(self, symbol);
         }
         symbol_declarations(self, symbol).into_iter().find(|&d| {
-            let __program = self.program.clone().expect("program");
+            let __program = self.program.as_ref().expect("program");
             let dn = crate::printer_util::arena_view(&__program, nodes, (d).file_index());
             if ast::is_interface_declaration(&dn[d]) {
                 return true;
@@ -8503,7 +8503,7 @@ impl Checker {
                 Some(p) => p,
                 None => return Vec::new(),
             };
-            let __program = self.program.clone().expect("program");
+            let __program = self.program.as_ref().expect("program");
             let kind = crate::printer_util::arena_view(&__program, nodes, (node).file_index())[node].kind;
             if !matches!(
                 kind,
@@ -8529,7 +8529,7 @@ impl Checker {
             let mut outer_type_parameters =
                 self.get_outer_type_parameters(node, include_this_types, nodes);
             {
-                let __program = self.program.clone().expect("program");
+                let __program = self.program.as_ref().expect("program");
                 let nn = crate::printer_util::arena_view(&__program, nodes, (node).file_index());
                 let is_fn_like = kind == Kind::FunctionExpression
                     || kind == Kind::ArrowFunction
@@ -8553,7 +8553,7 @@ impl Checker {
             }
             if kind == Kind::MappedType {
                 let mapped = {
-                    let __program = self.program.clone().expect("program");
+                    let __program = self.program.as_ref().expect("program");
                     let nn = crate::printer_util::arena_view(&__program, nodes, (node).file_index());
                     nn[node].as_mapped_type_node().type_parameter
                 };
@@ -8602,7 +8602,7 @@ impl Checker {
         nodes: &[ast::Node],) -> Vec<TypeId> {
         let mut result = Vec::new();
         let locals: Vec<SymbolId> = {
-            let __program = self.program.clone().expect("program");
+            let __program = self.program.as_ref().expect("program");
             let nn = crate::printer_util::arena_view(&__program, nodes, (node).file_index());
             nn[node]
                 .locals()
@@ -8648,7 +8648,7 @@ impl Checker {
         symbol: SymbolId,
         nodes: &[ast::Node],) -> Vec<TypeId> {
         for node in symbol_declarations(self, symbol) {
-            let __program = self.program.clone().expect("program");
+            let __program = self.program.as_ref().expect("program");
             let nn = crate::printer_util::arena_view(&__program, nodes, (node).file_index());
             let kind = nn[node].kind;
             if matches!(
@@ -8686,7 +8686,7 @@ impl Checker {
         node: NodeId,
         nodes: &[ast::Node],) -> Option<TypeId> {
         let (is_jsdoc, type_name_text, type_args) = {
-            let __program = self.program.clone().expect("program");
+            let __program = self.program.as_ref().expect("program");
             let nn = crate::printer_util::arena_view(&__program, nodes, (node).file_index());
             if !nn[node].flags.intersects(ast::NodeFlags::JSDOC)
                 || !ast::is_type_reference_node(&nn[node])

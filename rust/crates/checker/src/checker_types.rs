@@ -1731,6 +1731,10 @@ pub trait Program: Host {
     /// The handle observes in-place mutations and appends made afterwards
     /// (Go shared-heap semantics — see `ast::ArenaCell`).
     fn nodes(&self, file_index: u32) -> Rc<ast::NodeArenaBuf>;
+    /// PORT(perf): zero-copy arena access — `NodeListPtr` derefs to
+    /// `Vec<Node>`; the arena `Rc` lives in the owner (`Program`) for the
+    /// session, so derefs stay valid across later reads/appends.
+    fn nodes_ptr(&self, file_index: u32) -> ast::NodeListPtr;
     /// `nodes_mut` — mutable arena access for synthetic-node creation
     /// (factory-created synthetic expressions, flow nodes).
     ///
