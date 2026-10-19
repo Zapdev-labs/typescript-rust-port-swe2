@@ -119,7 +119,7 @@
     },
     "devDependencies": {
         "@types/node": "^22.20.1",
-        "tinybench": "^6.1.6",
+        "tinybench": "^6.2.2",
         "vscode-jsonrpc": "^9.0.2"
     }
 }
