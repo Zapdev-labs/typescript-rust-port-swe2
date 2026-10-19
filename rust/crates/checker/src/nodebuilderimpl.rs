@@ -388,7 +388,7 @@ fn declaration_symbol_name(c: &Checker, s: SymbolId, nodes: &[ast::Node]) -> Str
     let sym = &arena[s.index()];
     let view = match sym.value_declaration {
         Some(vd) => crate::printer_util::resolve_arena_for(
-            c.program.as_ref().expect("program"),
+            c.program.as_deref().expect("program"),
             nodes,
             vd,
         ),
@@ -937,7 +937,7 @@ impl<'a> NodeBuilderImpl<'a> {
             nodes: &[ast::Node],) -> Option<SymbolId> {
         let node = node?;
         let __program = c.program.clone().expect("program");
-        let n_nodes = crate::printer_util::arena_view(&__program, nodes, (node).file_index());
+        let n_nodes = crate::printer_util::arena_view(&*__program, nodes, (node).file_index());
         n_nodes[node].parent?;
         c.get_type_from_type_node(node);
         // call to ensure symbol is resolved
@@ -962,7 +962,7 @@ impl<'a> NodeBuilderImpl<'a> {
             return true;
         }
         let __program = c.program.clone().expect("program");
-        let e_nodes = crate::printer_util::arena_view(&__program, nodes, (existing).file_index());
+        let e_nodes = crate::printer_util::arena_view(&*__program, nodes, (existing).file_index());
         if !ast::is_type_reference_node(&e_nodes[existing]) {
             return true;
         }
@@ -1118,7 +1118,7 @@ impl<'a> NodeBuilderImpl<'a> {
         {
             if let Some(value_declaration) = symbol_value_declaration(c, symbol) {
                 let __program = c.program.clone().expect("program");
-                let dn = crate::printer_util::arena_view(&__program, nodes, (value_declaration).file_index());
+                let dn = crate::printer_util::arena_view(&*__program, nodes, (value_declaration).file_index());
                 let name = ast::get_name_of_declaration(Some(value_declaration), &dn);
                 if let Some(name) = name
                     && ast::is_computed_property_name(&dn[name])
@@ -1286,9 +1286,9 @@ impl<'a> NodeBuilderImpl<'a> {
                     let program = c.program.clone();
                     if let Some(program) = program.as_ref() {
                         let __program = c.program.clone().expect("program");
-                        let target_nodes = crate::printer_util::arena_view(&__program, nodes, (target_file).file_index());
+                        let target_nodes = crate::printer_util::arena_view(&*__program, nodes, (target_file).file_index());
                         let __program = c.program.clone().expect("program");
-                        let context_nodes = crate::printer_util::arena_view(&__program, nodes, (context_file).file_index());
+                        let context_nodes = crate::printer_util::arena_view(&*__program, nodes, (context_file).file_index());
                         let target_format = program.get_emit_module_format_of_file(
                             target_nodes[target_file].as_source_file(),
                         );
@@ -1329,8 +1329,8 @@ impl<'a> NodeBuilderImpl<'a> {
                     // with a different mode set
                     let context_format = context_file.and_then(|f| {
                         let __program = c.program.clone().expect("program");
-                        let fn_ = crate::printer_util::arena_view(&__program, nodes, (f).file_index());
-                        c.program.as_ref().map(|program| {
+                        let fn_ = crate::printer_util::arena_view(&*__program, nodes, (f).file_index());
+                        c.program.as_deref().map(|program| {
                             program.get_emit_module_format_of_file(fn_[f].as_source_file())
                         })
                     });
@@ -1517,7 +1517,7 @@ impl<'a> NodeBuilderImpl<'a> {
             let mut name: Option<NodeId> = None;
             for &d in &symbol_declarations(c, symbol) {
                 let __program = c.program.clone().expect("program");
-                let dn = crate::printer_util::arena_view(&__program, nodes, (d).file_index());
+                let dn = crate::printer_util::arena_view(&*__program, nodes, (d).file_index());
                 name = ast::get_name_of_declaration(Some(d), &dn);
                 if name.is_some() {
                     break;
@@ -1525,7 +1525,7 @@ impl<'a> NodeBuilderImpl<'a> {
             }
             if let Some(name) = name {
                 let __program = c.program.clone().expect("program");
-                let nn = crate::printer_util::arena_view(&__program, nodes, (name).file_index());
+                let nn = crate::printer_util::arena_view(&*__program, nodes, (name).file_index());
                 if ast::is_computed_property_name(&nn[name])
                     && is_entity_name_opt(nn[name].expression(), &nn)
                 {
@@ -1883,14 +1883,14 @@ impl<'a> NodeBuilderImpl<'a> {
                 || (self.ctx.enclosing_declaration.is_some() && {
                     let decl_binding = {
                                                 let __program = c.program.clone().expect("program");
-                        let dn0 = crate::printer_util::arena_view(&__program, nodes, (declarations[0]).file_index());;
+                        let dn0 = crate::printer_util::arena_view(&*__program, nodes, (declarations[0]).file_index());;
                         ast::find_ancestor(Some(declarations[0]), &dn0, &mut |n, nodes| {
                             is_default_binding_context(n, nodes)
                         })
                     };
                     let enclosing_binding = self.ctx.enclosing_declaration.and_then(|e| {
                                                 let __program = c.program.clone().expect("program");
-                        crate::printer_util::find_ancestor_resolved(&__program, nodes, Some(e), &mut |n, nodes| {
+                        crate::printer_util::find_ancestor_resolved(&*__program, nodes, Some(e), &mut |n, nodes| {
                             is_default_binding_context(n, nodes)
                         })
                     });
@@ -1903,7 +1903,7 @@ impl<'a> NodeBuilderImpl<'a> {
             // Try using a declaration with a name, first
             let name = declarations.iter().find_map(|&d| {
                 let __program = c.program.clone().expect("program");
-                let dn = crate::printer_util::arena_view(&__program, nodes, (d).file_index());
+                let dn = crate::printer_util::arena_view(&*__program, nodes, (d).file_index());
                 ast::get_name_of_declaration(Some(d), &dn)
             });
             if let Some(name) = name {
@@ -1912,7 +1912,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 //   return symbol.Name
                 // }
                 let __program = c.program.clone().expect("program");
-                let nn = crate::printer_util::arena_view(&__program, nodes, (name).file_index());
+                let nn = crate::printer_util::arena_view(&*__program, nodes, (name).file_index());
                 if ast::is_computed_property_name(&nn[name])
                     && !symbol_check_flags(c, symbol).intersects(ast::checkflags::CheckFlags::LATE)
                     && c.value_symbol_links.has(symbol)
@@ -1931,17 +1931,17 @@ impl<'a> NodeBuilderImpl<'a> {
             }
             let declaration = declarations[0]; // Declaration may be nameless, but we'll try anyway
             let __program = c.program.clone().expect("program");
-            let dn = crate::printer_util::arena_view(&__program, nodes, (declaration).file_index());
+            let dn = crate::printer_util::arena_view(&*__program, nodes, (declaration).file_index());
             if dn[declaration]
                 .parent
                 .is_some_and(|p| c.program_nodes_live(p, nodes)[p].kind == Kind::VariableDeclaration)
             {
                 let parent = dn[declaration].parent.unwrap();
                 let __program = c.program.clone().expect("program");
-                let parent_nodes = crate::printer_util::arena_view(&__program, nodes, (parent).file_index());
+                let parent_nodes = crate::printer_util::arena_view(&*__program, nodes, (parent).file_index());
                 let var_name = parent_nodes[parent].as_variable_declaration().name;
                 let __program = c.program.clone().expect("program");
-                let name_nodes = crate::printer_util::arena_view(&__program, nodes, (var_name.unwrap_or(parent)).file_index());
+                let name_nodes = crate::printer_util::arena_view(&*__program, nodes, (var_name.unwrap_or(parent)).file_index());
                 return scanner::utilities::declaration_name_to_string(var_name, &name_nodes);
             }
             if ast::is_class_expression(&dn[declaration])
@@ -2250,7 +2250,7 @@ impl<'a> NodeBuilderImpl<'a> {
             .most_original(self.ctx.enclosing_declaration);
         let original_module_specifier = enclosing_declaration.and_then(|d| {
             let __program = c.program.clone().expect("program");
-            let dn = crate::printer_util::arena_view(&__program, nodes, (d).file_index());
+            let dn = crate::printer_util::arena_view(&*__program, nodes, (d).file_index());
             if can_have_module_specifier(&dn[d]) {
                 try_get_module_specifier_from_declaration(d, &dn)
             } else {
@@ -2273,12 +2273,12 @@ impl<'a> NodeBuilderImpl<'a> {
         if file.is_none() {
             let declaration = symbol_declarations(c, symbol).iter().copied().find(|&d| {
                 let __program = c.program.clone().expect("program");
-                let dn = crate::printer_util::arena_view(&__program, nodes, (d).file_index());
+                let dn = crate::printer_util::arena_view(&*__program, nodes, (d).file_index());
                 ast::is_module_with_string_literal_name(&dn[d], &dn)
             });
             if let Some(declaration) = declaration {
                 let __program = c.program.clone().expect("program");
-                let dn = crate::printer_util::arena_view(&__program, nodes, (declaration).file_index());
+                let dn = crate::printer_util::arena_view(&*__program, nodes, (declaration).file_index());
                 let specifier = tsc_tspath::to_module_specifier(
                     &dn[dn[declaration].name().expect("module declaration name")].text(&dn),
                 );
@@ -2322,7 +2322,7 @@ impl<'a> NodeBuilderImpl<'a> {
             let specifier = module_file
                 .map(|f| {
                     let __program = c.program.clone().expect("program");
-                    let fn_ = crate::printer_util::arena_view(&__program, nodes, (f).file_index());
+                    let fn_ = crate::printer_util::arena_view(&*__program, nodes, (f).file_index());
                     tsc_tspath::to_module_specifier(fn_[f].as_source_file().file_name().as_string())
                 })
                 .unwrap_or_default();
@@ -2337,7 +2337,7 @@ impl<'a> NodeBuilderImpl<'a> {
         if resolution_mode == RESOLUTION_MODE_NONE && original_module_specifier.is_some() {
             let host = self.ctx.host.clone();
             let __program = c.program.clone().expect("program");
-            let fn_ = crate::printer_util::arena_view(&__program, nodes, (context_file).file_index());
+            let fn_ = crate::printer_util::arena_view(&*__program, nodes, (context_file).file_index());
             resolution_mode = host.as_ref().unwrap().get_mode_for_usage_location(
                 fn_[context_file].as_source_file(),
                 original_module_specifier.unwrap(),
@@ -2345,7 +2345,7 @@ impl<'a> NodeBuilderImpl<'a> {
         } else if resolution_mode == RESOLUTION_MODE_NONE {
             let host = self.ctx.host.clone();
             let __program = c.program.clone().expect("program");
-            let fn_ = crate::printer_util::arena_view(&__program, nodes, (context_file).file_index());
+            let fn_ = crate::printer_util::arena_view(&*__program, nodes, (context_file).file_index());
             resolution_mode = host
                 .as_ref()
                 .unwrap()
@@ -2354,7 +2354,7 @@ impl<'a> NodeBuilderImpl<'a> {
         let cache_key = tsc_module::ModeAwareCacheKey {
             name: {
                 let __program = c.program.clone().expect("program");
-                let fn_ = crate::printer_util::arena_view(&__program, nodes, (context_file).file_index());
+                let fn_ = crate::printer_util::arena_view(&*__program, nodes, (context_file).file_index());
                 fn_[context_file]
                     .as_source_file()
                     .path_key()
@@ -2398,7 +2398,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 .expect("NodeBuilderContext.host must be set for specifier generation"),
         );
         let __program = c.program.clone().expect("program");
-        let file_nodes = crate::printer_util::arena_view(&__program, nodes, (context_file).file_index());
+        let file_nodes = crate::printer_util::arena_view(&*__program, nodes, (context_file).file_index());
         let symbol_arena = c.symbol_arena_ptr();
         let symbol_arena_ref = symbol_arena.clone();
         let checker_adapter = CheckerShapeAdapter::new(&mut *c);
@@ -2406,11 +2406,13 @@ impl<'a> NodeBuilderImpl<'a> {
         // files' arenas — Go's single global heap hid this. `resolve`
         // routes a file index to its arena (live `nodes` buffer, registered
         // live arenas, or a program snapshot).
+        // `__program` above already cloned `c.program` before the adapter's
+        // `&mut c` borrow — reuse it (same Rc).
         let resolve_program = __program.clone();
         let resolve_nodes: &[ast::Node] = nodes;
         let resolve = move |fi: u32| {
             Some(
-                match crate::printer_util::arena_view(&resolve_program, resolve_nodes, fi) {
+                match crate::printer_util::arena_view(&crate::checker_types::ProgramPtr::from_rc(&resolve_program), resolve_nodes, fi) {
                     crate::printer_util::ArenaView::Snapshot(rc) => rc,
                     crate::printer_util::ArenaView::Working(s) => {
                         std::rc::Rc::new(ast::NodeArenaBuf::new(s.to_vec()))
@@ -2644,7 +2646,7 @@ impl<'a> NodeBuilderImpl<'a> {
                     ast::get_source_file_of_node(Some(mo), nodes) == Some(file)
                 } else {
                     let __program = c.program.clone().expect("program");
-                    let mo_nodes = crate::printer_util::arena_view(&__program, nodes, (mo).file_index());
+                    let mo_nodes = crate::printer_util::arena_view(&*__program, nodes, (mo).file_index());
                     ast::get_source_file_of_node(Some(mo), &mo_nodes) == Some(file)
                 }
             }
@@ -2659,7 +2661,7 @@ impl<'a> NodeBuilderImpl<'a> {
             )
         } else {
             let __program = c.program.clone().expect("program");
-            let range_nodes = crate::printer_util::arena_view(&__program, nodes, (range_).file_index());
+            let range_nodes = crate::printer_util::arena_view(&*__program, nodes, (range_).file_index());
             (
                 ast::node_is_synthesized(&range_nodes[range_]),
                 range_nodes[range_]
@@ -2713,7 +2715,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 self.ctx.enclosing_file == ast::get_source_file_of_node(Some(mo), nodes)
             } else {
                 let __program = c.program.clone().expect("program");
-                let mo_nodes = crate::printer_util::arena_view(&__program, nodes, (mo).file_index());
+                let mo_nodes = crate::printer_util::arena_view(&*__program, nodes, (mo).file_index());
                 self.ctx.enclosing_file == ast::get_source_file_of_node(Some(mo), &mo_nodes)
             }
         };
@@ -2722,7 +2724,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 nodes[location].loc
             } else {
                 let __program = c.program.clone().expect("program");
-                let loc_nodes = crate::printer_util::arena_view(&__program, nodes, (location).file_index());
+                let loc_nodes = crate::printer_util::arena_view(&*__program, nodes, (location).file_index());
                 loc_nodes[location].loc
             };
             nodes[range_].loc = loc;
@@ -2806,7 +2808,7 @@ impl<'a> NodeBuilderImpl<'a> {
         if !decls.is_empty() {
             let decl = decls[0];
             let __program = c.program.clone().expect("program");
-            let decl_nodes = crate::printer_util::arena_view(&__program, nodes, (decl).file_index());
+            let decl_nodes = crate::printer_util::arena_view(&*__program, nodes, (decl).file_index());
             if ast::is_type_parameter_declaration(&decl_nodes[decl]) {
                 result = self
                     .set_text_range(c, nodes, Some(result), decl_nodes[decl].name())
@@ -2905,7 +2907,7 @@ impl<'a> NodeBuilderImpl<'a> {
             let (readonly_kind, question_kind, name_type_present) = declaration
                 .map(|d| {
                     let __program = c.program.clone().expect("program");
-                    let dn = crate::printer_util::arena_view(&__program, nodes, (d).file_index());
+                    let dn = crate::printer_util::arena_view(&*__program, nodes, (d).file_index());
                     let md = dn[d].as_mapped_type_node();
                     (
                         md.readonly_token.map(|tok| dn[tok].kind),
@@ -3065,7 +3067,7 @@ impl<'a> NodeBuilderImpl<'a> {
             // resulting type stays homomorphic
             let mut raw_constraint_type_from_declaration = declaration.and_then(|d| {
                 let __program = c.program.clone().expect("program");
-                let dn = crate::printer_util::arena_view(&__program, nodes, (d).file_index());
+                let dn = crate::printer_util::arena_view(&*__program, nodes, (d).file_index());
                 let cn = dn[d]
                     .as_mapped_type_node()
                     .type_parameter
@@ -3311,7 +3313,7 @@ impl<'a> NodeBuilderImpl<'a> {
             && let Some(parameter_declaration) = parameter_declaration
         {
             let __program = c.program.clone().expect("program");
-            let pd_nodes = crate::printer_util::arena_view(&__program, nodes, (parameter_declaration).file_index());
+            let pd_nodes = crate::printer_util::arena_view(&*__program, nodes, (parameter_declaration).file_index());
             if ast::can_have_modifiers(&pd_nodes[parameter_declaration]) {
                 let originals: Vec<NodeId> = pd_nodes[parameter_declaration]
                     .modifier_nodes()
@@ -3333,7 +3335,7 @@ impl<'a> NodeBuilderImpl<'a> {
         }
         let is_rest = parameter_declaration.is_some_and(|d| {
             let __program = c.program.clone().expect("program");
-            let pd_nodes = crate::printer_util::arena_view(&__program, nodes, (d).file_index());
+            let pd_nodes = crate::printer_util::arena_view(&*__program, nodes, (d).file_index());
             is_rest_parameter(&pd_nodes, d)
         }) || symbol_check_flags(c, parameter_symbol)
             .intersects(ast::checkflags::CheckFlags::REST_PARAMETER);
@@ -3380,7 +3382,7 @@ impl<'a> NodeBuilderImpl<'a> {
     ) -> Option<NodeId> {
         let name = parameter_declaration.and_then(|d| {
             let __program = c.program.clone().expect("program");
-            let pd_nodes = crate::printer_util::arena_view(&__program, nodes, (d).file_index());
+            let pd_nodes = crate::printer_util::arena_view(&*__program, nodes, (d).file_index());
             pd_nodes[d].name()
         });
         let Some(name) = name else {
@@ -3391,7 +3393,7 @@ impl<'a> NodeBuilderImpl<'a> {
             ));
         };
         let __program = c.program.clone().expect("program");
-        let name_nodes = crate::printer_util::arena_view(&__program, nodes, (name).file_index());
+        let name_nodes = crate::printer_util::arena_view(&*__program, nodes, (name).file_index());
         match name_nodes[name].kind {
             Kind::Identifier => {
                 drop(name_nodes);
@@ -4135,7 +4137,7 @@ impl<'a> NodeBuilderImpl<'a> {
         }
         if let Some(declaration) = declaration {
             let __program = c.program.clone().expect("program");
-            let decl_nodes = crate::printer_util::arena_view(&__program, nodes, (declaration).file_index());
+            let decl_nodes = crate::printer_util::arena_view(&*__program, nodes, (declaration).file_index());
             if ast::is_in_js_file(Some(declaration), &decl_nodes) {
                 // !!! JSDoc Support — Go leaves this commented out as well.
             }
@@ -4171,7 +4173,7 @@ impl<'a> NodeBuilderImpl<'a> {
         let return_type;
         if let Some(declaration) = sig_declaration {
             let __program = c.program.clone().expect("program");
-            let decl_nodes = crate::printer_util::arena_view(&__program, nodes, (declaration).file_index());
+            let decl_nodes = crate::printer_util::arena_view(&*__program, nodes, (declaration).file_index());
             if !ast::node_is_synthesized(&decl_nodes[declaration]) {
                 let symbol = c.get_symbol_of_declaration(declaration);
                 return_type =
@@ -4196,7 +4198,7 @@ impl<'a> NodeBuilderImpl<'a> {
             {
                 let decl_nodes_is_synth = {
                     let __program = c.program.clone().expect("program");
-                    let decl_nodes = crate::printer_util::arena_view(&__program, nodes, (declaration).file_index());
+                    let decl_nodes = crate::printer_util::arena_view(&*__program, nodes, (declaration).file_index());
                     ast::node_is_synthesized(&decl_nodes[declaration])
                 };
                 if !decl_nodes_is_synth {
@@ -4205,7 +4207,7 @@ impl<'a> NodeBuilderImpl<'a> {
                         declaration_symbol.map(|s| self.add_symbol_type_to_context(s, return_type));
                     let pt = {
                         let __program = c.program.clone().expect("program");
-                        let decl_nodes = crate::printer_util::arena_view(&__program, nodes, (declaration).file_index());
+                        let decl_nodes = crate::printer_util::arena_view(&*__program, nodes, (declaration).file_index());
                         let symbols = c.symbol_arena_ptr();
                         self.pc
                             .get_return_type_of_signature(declaration, &decl_nodes, &symbols)
@@ -4279,7 +4281,7 @@ impl<'a> NodeBuilderImpl<'a> {
     fn is_trivially_serializable_computed_name(&mut self, c: &mut Checker, e: NodeId,
         nodes: &[ast::Node],) -> bool {
         let __program = c.program.clone().expect("program");
-        let e_nodes = crate::printer_util::arena_view(&__program, nodes, (e).file_index());
+        let e_nodes = crate::printer_util::arena_view(&*__program, nodes, (e).file_index());
         let shape_good = e_nodes[e].name().is_some_and(|name| {
             ast::is_computed_property_name(&e_nodes[name])
                 && e_nodes[name]
@@ -4327,7 +4329,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 let mut results: Vec<NodeId> = Vec::new();
                 for e in new_components {
                     let __program = c.program.clone().expect("program");
-                    let e_nodes = crate::printer_util::arena_view(&__program, nodes, (e).file_index());
+                    let e_nodes = crate::printer_util::arena_view(&*__program, nodes, (e).file_index());
                     let e_name = e_nodes[e].name();
                     let name = e_name.and_then(|n| self.reuse_node(c, nodes, n));
                     if let Some(name) = name {
@@ -4335,7 +4337,7 @@ impl<'a> NodeBuilderImpl<'a> {
                         // already checked it to paint references as used.
                         let expr = {
                             let __program = c.program.clone().expect("program");
-                            let e_nodes = crate::printer_util::arena_view(&__program, nodes, (e).file_index());
+                            let e_nodes = crate::printer_util::arena_view(&*__program, nodes, (e).file_index());
                             e_nodes[e_nodes[e].name().unwrap()].expression()
                         };
                         if let Some(expr) = expr {
@@ -4350,7 +4352,7 @@ impl<'a> NodeBuilderImpl<'a> {
                         };
                         let postfix_token = {
                             let __program = c.program.clone().expect("program");
-                            let e_nodes = crate::printer_util::arena_view(&__program, nodes, (e).file_index());
+                            let e_nodes = crate::printer_util::arena_view(&*__program, nodes, (e).file_index());
                             e_nodes[e]
                                 .postfix_token()
                                 .map(|p| self.deep_clone_node_in(c, nodes, p).unwrap_or(p))
@@ -4366,7 +4368,7 @@ impl<'a> NodeBuilderImpl<'a> {
                         } else {
                             let e_symbol = {
                                 let __program = c.program.clone().expect("program");
-                                let e_nodes = crate::printer_util::arena_view(&__program, nodes, (e).file_index());
+                                let e_nodes = crate::printer_util::arena_view(&*__program, nodes, (e).file_index());
                                 e_nodes[e].symbol()
                             };
                             let t = c.get_type_of_symbol(e_symbol.unwrap_or(SymbolId::NONE));
@@ -4494,7 +4496,7 @@ impl<'a> NodeBuilderImpl<'a> {
             if symbol.is_none() {
                 if let Some(declaration) = declaration {
                     let __program = c.program.clone().expect("program");
-                    let decl_nodes = crate::printer_util::arena_view(&__program, nodes, (declaration).file_index());
+                    let decl_nodes = crate::printer_util::arena_view(&*__program, nodes, (declaration).file_index());
                     if ast::is_variable_like(&decl_nodes[declaration]) {
                         t = c.get_type_for_variable_like_declaration(
                             declaration,
@@ -4533,7 +4535,7 @@ impl<'a> NodeBuilderImpl<'a> {
 
         let requires_adding_undefined = declaration.is_some_and(|d| {
             let __program = c.program.clone().expect("program");
-            let decl_nodes = crate::printer_util::arena_view(&__program, nodes, (d).file_index());
+            let decl_nodes = crate::printer_util::arena_view(&*__program, nodes, (d).file_index());
             (ast::is_parameter_declaration(&decl_nodes[d])
                 || ast::is_property_signature_declaration(&decl_nodes[d])
                 || ast::is_property_declaration(&decl_nodes[d]))
@@ -4542,7 +4544,7 @@ impl<'a> NodeBuilderImpl<'a> {
         let add_undefined_for_parameter = requires_adding_undefined
             && declaration.is_some_and(|d| {
                 let __program = c.program.clone().expect("program");
-                let decl_nodes = crate::printer_util::arena_view(&__program, nodes, (d).file_index());
+                let decl_nodes = crate::printer_util::arena_view(&*__program, nodes, (d).file_index());
                 ast::is_parameter_declaration(&decl_nodes[d])
             });
         let t = if add_undefined_for_parameter {
@@ -4560,7 +4562,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 || symbol.is_some_and(|sym| {
                     symbol_declarations(c, sym).iter().any(|&d| {
                         let __program = c.program.clone().expect("program");
-                        let d_nodes = crate::printer_util::arena_view(&__program, nodes, (d).file_index());
+                        let d_nodes = crate::printer_util::arena_view(&*__program, nodes, (d).file_index());
                         ast::get_source_file_of_node(Some(d), &d_nodes) == self.ctx.enclosing_file
                     })
                 }))
@@ -4577,7 +4579,7 @@ impl<'a> NodeBuilderImpl<'a> {
         {
             let declaration = declaration.unwrap();
             let __program = c.program.clone().expect("program");
-            let decl_nodes = crate::printer_util::arena_view(&__program, nodes, (declaration).file_index());
+            let decl_nodes = crate::printer_util::arena_view(&*__program, nodes, (declaration).file_index());
             let is_accessor_decl = ast::is_accessor(&decl_nodes[declaration]);
             if is_accessor_decl
                 || (ast::has_inferred_type(&decl_nodes[declaration])
@@ -4586,7 +4588,7 @@ impl<'a> NodeBuilderImpl<'a> {
             {
                 let remove = symbol.map(|s| self.add_symbol_type_to_context(s, t));
                 let __program = c.program.clone().expect("program");
-                let decl_nodes = crate::printer_util::arena_view(&__program, nodes, (declaration).file_index());
+                let decl_nodes = crate::printer_util::arena_view(&*__program, nodes, (declaration).file_index());
                 let symbols = c.symbol_arena_ptr();
                 let mut pt = if is_accessor_decl {
                     self.pc
@@ -4604,7 +4606,7 @@ impl<'a> NodeBuilderImpl<'a> {
                         .copied()
                         .find(|&d| {
                             let __program = c.program.clone().expect("program");
-                            let dn = crate::printer_util::arena_view(&__program, nodes, (d).file_index());
+                            let dn = crate::printer_util::arena_view(&*__program, nodes, (d).file_index());
                             has_type_annotation(d, &dn)
                         })
                 {
@@ -4612,7 +4614,7 @@ impl<'a> NodeBuilderImpl<'a> {
                     // system. The first one with an annotation supplies the
                     // type for the rest.
                     let __program = c.program.clone().expect("program");
-                    let dn = crate::printer_util::arena_view(&__program, nodes, (annotated_decl).file_index());
+                    let dn = crate::printer_util::arena_view(&*__program, nodes, (annotated_decl).file_index());
                     let symbols = c.symbol_arena_ptr();
                     pt = self
                         .pc
@@ -4621,7 +4623,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 let report_errors = !self.ctx.suppress_report_inference_fallback;
                 let is_optional_annotated = !requires_adding_undefined && {
                     let __program = c.program.clone().expect("program");
-                    let decl_nodes = crate::printer_util::arena_view(&__program, nodes, (declaration).file_index());
+                    let decl_nodes = crate::printer_util::arena_view(&*__program, nodes, (declaration).file_index());
                     let decl = &decl_nodes[declaration];
                     (ast::is_parameter_declaration(decl)
                         || ast::is_property_signature_declaration(decl)
@@ -4669,7 +4671,7 @@ impl<'a> NodeBuilderImpl<'a> {
                         } else {
                             let __program = c.program.clone().expect("program");
                             let decl_nodes = crate::printer_util::arena_view(
-                                &__program,
+                                &*__program,
                                 nodes,
                                 (declaration).file_index(),
                             );
@@ -4826,7 +4828,7 @@ impl<'a> NodeBuilderImpl<'a> {
     ) {
         // get symbol of the first identifier of the entityName
         let __program = c.program.clone().expect("program");
-        let expr_nodes = crate::printer_util::arena_view(&__program, nodes, (access_expression).file_index());
+        let expr_nodes = crate::printer_util::arena_view(&*__program, nodes, (access_expression).file_index());
         let first_identifier = ast::get_first_identifier(access_expression, &expr_nodes);
         let text = expr_nodes[first_identifier].text(&expr_nodes).into_owned();
         let name = c.resolve_name_via_binder_live(
@@ -4902,7 +4904,7 @@ impl<'a> NodeBuilderImpl<'a> {
     fn is_string_named(&mut self, c: &mut Checker, d: NodeId,
         nodes: &[ast::Node],) -> bool {
         let __program = c.program.clone().expect("program");
-        let d_nodes = crate::printer_util::arena_view(&__program, nodes, (d).file_index());
+        let d_nodes = crate::printer_util::arena_view(&*__program, nodes, (d).file_index());
         let Some(name) = ast::get_name_of_declaration(Some(d), &d_nodes) else {
             return false;
         };
@@ -4927,7 +4929,7 @@ impl<'a> NodeBuilderImpl<'a> {
     fn is_single_quoted_string_named(&mut self, c: &mut Checker, d: NodeId,
         nodes: &[ast::Node],) -> bool {
         let __program = c.program.clone().expect("program");
-        let d_nodes = crate::printer_util::arena_view(&__program, nodes, (d).file_index());
+        let d_nodes = crate::printer_util::arena_view(&*__program, nodes, (d).file_index());
         let Some(name) = ast::get_name_of_declaration(Some(d), &d_nodes) else {
             return false;
         };
@@ -4952,7 +4954,7 @@ impl<'a> NodeBuilderImpl<'a> {
         // the declaration.
         if let Some(value_declaration) = symbol_value_declaration(c, symbol) {
             let __program = c.program.clone().expect("program");
-            let decl_nodes = crate::printer_util::arena_view(&__program, nodes, (value_declaration).file_index());
+            let decl_nodes = crate::printer_util::arena_view(&*__program, nodes, (value_declaration).file_index());
             if let Some(decl_name) = decl_nodes[value_declaration].name()
                 && ast::is_private_identifier(&decl_nodes[decl_name])
             {
@@ -5125,7 +5127,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 let decl = declarations[0];
                 if c.has_late_bindable_name(decl) {
                     let __program = c.program.clone().expect("program");
-                    let decl_nodes = crate::printer_util::arena_view(&__program, nodes, (decl).file_index());
+                    let decl_nodes = crate::printer_util::arena_view(&*__program, nodes, (decl).file_index());
                     if ast::is_binary_expression(&decl_nodes[decl]) {
                         let name = ast::get_name_of_declaration(Some(decl), &decl_nodes);
                         if let Some(name) = name
@@ -5246,7 +5248,7 @@ impl<'a> NodeBuilderImpl<'a> {
                     .is_some_and(|p| symbol_flags(c, p).intersects(SymbolFlags::CLASS))
                     && prop_declaration.is_some_and(|prop_declaration| {
                         let __program = c.program.clone().expect("program");
-                        let pd_nodes = crate::printer_util::arena_view(&__program, nodes, (prop_declaration).file_index());
+                        let pd_nodes = crate::printer_util::arena_view(&*__program, nodes, (prop_declaration).file_index());
                         pd_nodes[prop_declaration]
                             .modifier_nodes()
                             .is_some_and(|ms| {
@@ -5716,7 +5718,7 @@ impl<'a> NodeBuilderImpl<'a> {
             )
             && symbol_declarations(c, symbol).iter().any(|&declaration| {
                 let __program = c.program.clone().expect("program");
-                let decl_nodes = crate::printer_util::arena_view(&__program, nodes, (declaration).file_index());
+                let decl_nodes = crate::printer_util::arena_view(&*__program, nodes, (declaration).file_index());
                 ast::is_static(&decl_nodes[declaration])
                     && !ast::get_name_of_declaration(Some(declaration), &decl_nodes)
                         .is_some_and(|n| c.is_late_bindable_index_signature(n))
@@ -5729,7 +5731,7 @@ impl<'a> NodeBuilderImpl<'a> {
             } else {
                 for declaration in symbol_declarations(c, symbol) {
                     let __program = c.program.clone().expect("program");
-                    let decl_nodes = crate::printer_util::arena_view(&__program, nodes, (declaration).file_index());
+                    let decl_nodes = crate::printer_util::arena_view(&*__program, nodes, (declaration).file_index());
                     let parent = decl_nodes[declaration].parent;
                     let parent_kind = parent.map(|p| decl_nodes[p].kind);
                     if parent_kind == Some(Kind::SourceFile)
@@ -5767,7 +5769,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 && let Some(value_declaration) = symbol_value_declaration(c, symbol)
             {
                 let __program = c.program.clone().expect("program");
-                let vd_nodes = crate::printer_util::arena_view(&__program, nodes, (value_declaration).file_index());
+                let vd_nodes = crate::printer_util::arena_view(&*__program, nodes, (value_declaration).file_index());
                 if vd_nodes[value_declaration].parent.is_some()
                     && vd_nodes[value_declaration].parent != self.ctx.enclosing_declaration
                 {
@@ -5825,7 +5827,7 @@ impl<'a> NodeBuilderImpl<'a> {
             && c.get_base_type_variable_of_class(symbol).is_none()
             && !(symbol_value_declaration(c, symbol).is_some_and(|vd| {
                 let __program = c.program.clone().expect("program");
-                let vd_nodes = crate::printer_util::arena_view(&__program, nodes, (vd).file_index());
+                let vd_nodes = crate::printer_util::arena_view(&*__program, nodes, (vd).file_index());
                 ast::is_class_like(Some(vd), &vd_nodes)
             }) && self
                 .ctx
@@ -5834,7 +5836,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 && {
                     let vd = symbol_value_declaration(c, symbol).unwrap();
                     let __program = c.program.clone().expect("program");
-                    let vd_nodes = crate::printer_util::arena_view(&__program, nodes, (vd).file_index());
+                    let vd_nodes = crate::printer_util::arena_view(&*__program, nodes, (vd).file_index());
                     !ast::is_class_declaration(&vd_nodes[vd])
                         || c.is_symbol_accessible(
                             Some(symbol),
@@ -5877,7 +5879,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 // comment for the `ErrAlias` example.
                 if existing.is_some_and(|e| {
                     let __program = c.program.clone().expect("program");
-                    let e_nodes = crate::printer_util::arena_view(&__program, nodes, (e).file_index());
+                    let e_nodes = crate::printer_util::arena_view(&*__program, nodes, (e).file_index());
                     ast::is_type_query_node(&e_nodes[e])
                 }) && self.get_type_from_type_node(c, existing.unwrap(), false, nodes) == Some(t)
                 {
@@ -5989,7 +5991,7 @@ impl<'a> NodeBuilderImpl<'a> {
             nodes: &[ast::Node],) -> Option<TypeId> {
         // !!! noMappedTypes optional param support
         let __program = c.program.clone().expect("program");
-        let node_nodes = crate::printer_util::arena_view(&__program, nodes, (node).file_index());
+        let node_nodes = crate::printer_util::arena_view(&*__program, nodes, (node).file_index());
         if node_nodes[node].parent.is_none() {
             return Some(c.error_type);
         }
@@ -6131,7 +6133,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 // root node's own arena.
                 let root_node = root_node.unwrap_or(NodeId::NONE);
                 let __program = c.program.clone().expect("program");
-                let rn = crate::printer_util::arena_view(&__program, nodes, (root_node).file_index());
+                let rn = crate::printer_util::arena_view(&*__program, nodes, (root_node).file_index());
                 (
                     rn[root_node].as_conditional_type_node().true_type,
                     rn[root_node].as_conditional_type_node().false_type,
@@ -6231,7 +6233,7 @@ impl<'a> NodeBuilderImpl<'a> {
         let host = tp.and_then(|tp| {
             // !!! JSDoc support — see Go comment.
             let __program = c.program.clone().expect("program");
-            let tp_nodes = crate::printer_util::arena_view(&__program, nodes, (tp).file_index());
+            let tp_nodes = crate::printer_util::arena_view(&*__program, nodes, (tp).file_index());
             tp_nodes[tp].parent
         });
         host.and_then(|host| c.get_symbol_of_node(host))
@@ -6410,7 +6412,7 @@ impl<'a> NodeBuilderImpl<'a> {
                 .and_then(|s| symbol_value_declaration(c, s))
                 .is_some_and(|vd| {
                     let __program = c.program.clone().expect("program");
-                    let vd_nodes = crate::printer_util::arena_view(&__program, nodes, (vd).file_index());
+                    let vd_nodes = crate::printer_util::arena_view(&*__program, nodes, (vd).file_index());
                     ast::is_class_like(Some(vd), &vd_nodes)
                 })
             && t_symbol.is_some_and(|s| {
@@ -6514,7 +6516,7 @@ impl<'a> NodeBuilderImpl<'a> {
                     let ref_node = __arena_ref_node.get(t).as_type_reference().node;
                     let ref_node_type_arguments_len = ref_node.and_then(|n| {
                         let __program = c.program.clone().expect("program");
-                        let nn = crate::printer_util::arena_view(&__program, nodes, (n).file_index());
+                        let nn = crate::printer_util::arena_view(&*__program, nodes, (n).file_index());
                         if ast::is_type_reference_node(&nn[n]) {
                             nn[n].type_arguments().map(|l| l.len())
                         } else {
@@ -7823,7 +7825,7 @@ fn get_name_from_index_info(c: &Checker, info: IndexInfoId,
         nodes: &[ast::Node],) -> String {
     if let Some(declaration) = c.index_info_arena.get(info).declaration {
         let __program = c.program.clone().expect("program");
-        let nodes = crate::printer_util::arena_view(&__program, nodes, (declaration).file_index());
+        let nodes = crate::printer_util::arena_view(&*__program, nodes, (declaration).file_index());
         if let Some(first_param) = nodes[declaration].parameters().and_then(|l| l.first()) {
             return scanner::utilities::declaration_name_to_string(
                 nodes[*first_param].name(),
@@ -7842,7 +7844,7 @@ fn get_mapped_type_modifiers_local(c: &Checker, t: TypeId,
         return MappedTypeModifiers::NONE;
     };
     let __program = c.program.clone().expect("program");
-    let nodes = crate::printer_util::arena_view(&__program, nodes, (declaration).file_index());
+    let nodes = crate::printer_util::arena_view(&*__program, nodes, (declaration).file_index());
     let declaration = &nodes[declaration];
     let mut modifiers = MappedTypeModifiers::NONE;
     if let Some(readonly_token) = declaration.as_mapped_type_node().readonly_token {
@@ -7876,7 +7878,7 @@ fn get_regular_type_of_expression(c: &mut Checker, expr: NodeId,
         nodes: &[ast::Node],) -> TypeId {
     let mut expr = expr;
     let __program = c.program.clone().expect("program");
-    let nodes = crate::printer_util::arena_view(&__program, nodes, (expr).file_index());
+    let nodes = crate::printer_util::arena_view(&*__program, nodes, (expr).file_index());
     if ast::is_right_side_of_qualified_name_or_property_access(expr, &nodes) {
         if let Some(parent) = nodes[expr].parent {
             expr = parent;
@@ -8156,7 +8158,7 @@ fn get_source_file_of_module_symbol(c: &Checker, symbol: SymbolId,
         // `GetNonAugmentationDeclaration`.
         declarations.iter().copied().find(|&d| {
             let __program = c.program.clone().expect("program");
-            let dn = crate::printer_util::arena_view(&__program, nodes, (d).file_index());
+            let dn = crate::printer_util::arena_view(&*__program, nodes, (d).file_index());
             !ast::is_external_module_augmentation(&dn[d], &dn)
                 && !ast::is_global_scope_augmentation(&dn[d])
         })
@@ -8343,7 +8345,7 @@ fn get_type_alias_for_type_literal(c: &mut Checker, t: TypeId,
         let declarations = symbol_declarations(c, symbol);
         if let Some(&decl) = declarations.first() {
             let __program = c.program.clone().expect("program");
-            let decl_nodes = crate::printer_util::arena_view(&__program, nodes, (decl).file_index());
+            let decl_nodes = crate::printer_util::arena_view(&*__program, nodes, (decl).file_index());
             let node = decl_nodes[decl]
                 .parent
                 .and_then(|p| ast::walk_up_parenthesized_types(p, &decl_nodes));
@@ -8388,7 +8390,7 @@ fn get_name_from_index_info_data(c: &Checker, index_info: &IndexInfo,
         nodes: &[ast::Node],) -> String {
     if let Some(declaration) = index_info.declaration {
         let __program = c.program.clone().expect("program");
-        let decl_nodes = crate::printer_util::arena_view(&__program, nodes, (declaration).file_index());
+        let decl_nodes = crate::printer_util::arena_view(&*__program, nodes, (declaration).file_index());
         if let Some(first_param) = decl_nodes[declaration].parameters().and_then(|l| l.first()) {
             return scanner::utilities::declaration_name_to_string(
                 decl_nodes[*first_param].name(),
@@ -8455,8 +8457,8 @@ impl Checker {
             return symbol_value_declaration(self, symbol);
         }
         symbol_declarations(self, symbol).into_iter().find(|&d| {
-            let __program = self.program.clone().expect("program");
-            let dn = crate::printer_util::arena_view(&__program, nodes, (d).file_index());
+            let __program = self.program_ptr();
+            let dn = crate::printer_util::arena_view(&*__program, nodes, (d).file_index());
             if ast::is_interface_declaration(&dn[d]) {
                 return true;
             }
@@ -8503,8 +8505,8 @@ impl Checker {
                 Some(p) => p,
                 None => return Vec::new(),
             };
-            let __program = self.program.clone().expect("program");
-            let kind = crate::printer_util::arena_view(&__program, nodes, (node).file_index())[node].kind;
+            let __program = self.program_ptr();
+            let kind = crate::printer_util::arena_view(&*__program, nodes, (node).file_index())[node].kind;
             if !matches!(
                 kind,
                 Kind::ClassDeclaration
@@ -8529,8 +8531,8 @@ impl Checker {
             let mut outer_type_parameters =
                 self.get_outer_type_parameters(node, include_this_types, nodes);
             {
-                let __program = self.program.clone().expect("program");
-                let nn = crate::printer_util::arena_view(&__program, nodes, (node).file_index());
+                let __program = self.program_ptr();
+                let nn = crate::printer_util::arena_view(&*__program, nodes, (node).file_index());
                 let is_fn_like = kind == Kind::FunctionExpression
                     || kind == Kind::ArrowFunction
                     || ast::is_object_literal_method(node, &nn);
@@ -8553,8 +8555,8 @@ impl Checker {
             }
             if kind == Kind::MappedType {
                 let mapped = {
-                    let __program = self.program.clone().expect("program");
-                    let nn = crate::printer_util::arena_view(&__program, nodes, (node).file_index());
+                    let __program = self.program_ptr();
+                    let nn = crate::printer_util::arena_view(&*__program, nodes, (node).file_index());
                     nn[node].as_mapped_type_node().type_parameter
                 };
                 if let Some(mapped) = mapped
@@ -8602,8 +8604,8 @@ impl Checker {
         nodes: &[ast::Node],) -> Vec<TypeId> {
         let mut result = Vec::new();
         let locals: Vec<SymbolId> = {
-            let __program = self.program.clone().expect("program");
-            let nn = crate::printer_util::arena_view(&__program, nodes, (node).file_index());
+            let __program = self.program_ptr();
+            let nn = crate::printer_util::arena_view(&*__program, nodes, (node).file_index());
             nn[node]
                 .locals()
                 .map(|l| l.values().copied().collect())
@@ -8621,7 +8623,7 @@ impl Checker {
                 &self.types,
                 &self.symbol_arena,
                 &self.type_mappers,
-                self.program.as_ref(),
+                self.program.as_deref(),
                 a,
                 b,
             )
@@ -8648,8 +8650,8 @@ impl Checker {
         symbol: SymbolId,
         nodes: &[ast::Node],) -> Vec<TypeId> {
         for node in symbol_declarations(self, symbol) {
-            let __program = self.program.clone().expect("program");
-            let nn = crate::printer_util::arena_view(&__program, nodes, (node).file_index());
+            let __program = self.program_ptr();
+            let nn = crate::printer_util::arena_view(&*__program, nodes, (node).file_index());
             let kind = nn[node].kind;
             if matches!(
                 kind,
@@ -8686,8 +8688,8 @@ impl Checker {
         node: NodeId,
         nodes: &[ast::Node],) -> Option<TypeId> {
         let (is_jsdoc, type_name_text, type_args) = {
-            let __program = self.program.clone().expect("program");
-            let nn = crate::printer_util::arena_view(&__program, nodes, (node).file_index());
+            let __program = self.program_ptr();
+            let nn = crate::printer_util::arena_view(&*__program, nodes, (node).file_index());
             if !nn[node].flags.intersects(ast::NodeFlags::JSDOC)
                 || !ast::is_type_reference_node(&nn[node])
             {

@@ -110,7 +110,7 @@ impl<'a> NodeBuilder<'a> {
             Some(decl) => {
                 let __program = c.program.clone().expect("program");
                 crate::printer_util::get_source_file_of_node_resolved(
-                    &__program,
+                    &*__program,
                     nodes,
                     Some(decl),
                 )
@@ -655,7 +655,7 @@ fn simplify_class_declaration(
         .copied()
         .filter(|&d| {
             let __program = c.program.clone().expect("program");
-            let dn = crate::printer_util::arena_view(&__program, nodes, (d).file_index());
+            let dn = crate::printer_util::arena_view(&*__program, nodes, (d).file_index());
             ast::is_class_like(Some(d), &dn)
         })
         .collect();
@@ -666,7 +666,7 @@ fn simplify_class_declaration(
     };
     let (modifiers, is_anonymous) = {
         let __program = c.program.clone().expect("program");
-        let dn = crate::printer_util::arena_view(&__program, nodes, (original_class_decl).file_index());
+        let dn = crate::printer_util::arena_view(&*__program, nodes, (original_class_decl).file_index());
         (
             dn[original_class_decl].modifier_flags()
                 & !(ast::ModifierFlags::EXPORT | ast::ModifierFlags::AMBIENT),
@@ -720,14 +720,14 @@ fn simplify_modifiers(
         .copied()
         .filter(|&d| {
             let __program = c.program.clone().expect("program");
-            let dn = crate::printer_util::arena_view(&__program, nodes, (d).file_index());
+            let dn = crate::printer_util::arena_view(&*__program, nodes, (d).file_index());
             is_decl_kind(&dn[d])
         })
         .collect();
     let decl_with_modifiers = decls.first().copied().unwrap_or(new_decl);
     let modifiers = {
         let __program = c.program.clone().expect("program");
-        let dn = crate::printer_util::arena_view(&__program, nodes, (decl_with_modifiers).file_index());
+        let dn = crate::printer_util::arena_view(&*__program, nodes, (decl_with_modifiers).file_index());
         dn[decl_with_modifiers].modifier_flags()
             & !(ast::ModifierFlags::EXPORT | ast::ModifierFlags::AMBIENT)
     };

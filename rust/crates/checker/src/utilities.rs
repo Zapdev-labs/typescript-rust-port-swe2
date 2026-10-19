@@ -576,7 +576,7 @@ impl Checker {
     /// `(c *Checker) isOptionalParameter` (checker/utilities.go).
     /// `!!! TODO: JSDoc support` — preserved from Go.
     pub(crate) fn is_optional_parameter(&mut self, node: NodeId) -> bool {
-        let __program = self.program.clone().expect("program");
+        let __program = self.program_ptr();
         let nodes = __program.nodes_ptr((node).file_index());
         if ast::is_parameter_declaration(&nodes[node])
             && nodes[node].question_token(&nodes).is_some()
@@ -628,7 +628,7 @@ impl Checker {
         let Some(node) = node else {
             return false;
         };
-        let __program = self.program.clone().expect("program");
+        let __program = self.program_ptr();
         let nodes = __program.nodes_ptr((node).file_index());
         let file = ast::get_source_file_of_node(Some(node), &nodes);
         if let Some(file) = file {
@@ -655,7 +655,7 @@ impl Checker {
                 let suggestion_has_no_extends_or_decorators = suggestion.is_none_or(|s| {
                     let value_declaration = self.symbol_arena.get_ref(s).value_declaration;
                     value_declaration.is_none_or(|vd| {
-                        let __program = self.program.clone().expect("program");
+                        let __program = self.program_ptr();
                         let vd_nodes = __program.nodes_ptr((vd).file_index());
                         !ast::is_class_like(Some(vd), &vd_nodes)
                             || ast::get_extends_heritage_clause_elements(&vd_nodes[vd], &vd_nodes)
@@ -668,7 +668,7 @@ impl Checker {
                 });
                 return !(declaration_file.is_some_and(|df| {
                     df != file && {
-                        let __program = self.program.clone().expect("program");
+                        let __program = self.program_ptr();
                         let df_nodes = __program.nodes_ptr((df).file_index());
                         ast::is_global_source_file(&df_nodes[df], &df_nodes)
                     }
@@ -796,7 +796,7 @@ pub fn compare_types(
     types: &TypeArena,
     symbols: &ast::SymbolArena,
     mappers: &TypeMapperArena,
-    program: Option<&Rc<dyn crate::checker_types::Program>>,
+    program: Option<&dyn crate::checker_types::Program>,
     t1: TypeId,
     t2: TypeId,
 ) -> i32 {
@@ -807,7 +807,7 @@ fn compare_types_opt(
     types: &TypeArena,
     symbols: &ast::SymbolArena,
     mappers: &TypeMapperArena,
-    program: Option<&Rc<dyn crate::checker_types::Program>>,
+    program: Option<&dyn crate::checker_types::Program>,
     t1: Option<TypeId>,
     t2: Option<TypeId>,
 ) -> i32 {
@@ -1266,7 +1266,7 @@ fn compare_type_names(
     types: &TypeArena,
     symbols: &ast::SymbolArena,
     mappers: &TypeMapperArena,
-    program: Option<&Rc<dyn crate::checker_types::Program>>,
+    program: Option<&dyn crate::checker_types::Program>,
     t1: TypeId,
     t2: TypeId,
 ) -> i32 {
@@ -1308,7 +1308,7 @@ fn compare_type_names(
 /// (program file order, then pos), then name, then symbol id.
 fn compare_symbols(
     symbols: &ast::SymbolArena,
-    program: Option<&Rc<dyn crate::checker_types::Program>>,
+    program: Option<&dyn crate::checker_types::Program>,
     s1: Option<SymbolId>,
     s2: Option<SymbolId>,
 ) -> i32 {
@@ -1370,7 +1370,7 @@ pub(crate) fn get_object_type_name(t: &crate::types::Type) -> Option<SymbolId> {
 
 /// `compareTupleTypes` — `elementInfos` field order.
 fn compare_tuple_types(
-    program: Option<&Rc<dyn crate::checker_types::Program>>,
+    program: Option<&dyn crate::checker_types::Program>,
     t1: &crate::types::TupleType,
     t2: &crate::types::TupleType,
 ) -> i32 {
@@ -1402,7 +1402,7 @@ fn compare_tuple_types(
 /// `compareElementLabels` — `n1 == nil → -1` (labels sort before named),
 /// then `strings.Compare(n1.Name().Text(), n2.Name().Text())`.
 fn compare_element_labels(
-    program: Option<&Rc<dyn crate::checker_types::Program>>,
+    program: Option<&dyn crate::checker_types::Program>,
     n1: Option<NodeId>,
     n2: Option<NodeId>,
 ) -> i32 {
@@ -1429,7 +1429,7 @@ fn compare_type_lists(
     types: &TypeArena,
     symbols: &ast::SymbolArena,
     mappers: &TypeMapperArena,
-    program: Option<&Rc<dyn crate::checker_types::Program>>,
+    program: Option<&dyn crate::checker_types::Program>,
     s1: &[TypeId],
     s2: &[TypeId],
 ) -> i32 {
@@ -1450,7 +1450,7 @@ fn compare_type_mappers(
     types: &TypeArena,
     symbols: &ast::SymbolArena,
     mappers: &TypeMapperArena,
-    program: Option<&Rc<dyn crate::checker_types::Program>>,
+    program: Option<&dyn crate::checker_types::Program>,
     m1: Option<TypeMapperId>,
     m2: Option<TypeMapperId>,
 ) -> i32 {
@@ -1520,7 +1520,7 @@ fn compare_type_mappers(
 fn compare_node_ids(
     n1: Option<NodeId>,
     n2: Option<NodeId>,
-    program: Option<&Rc<dyn crate::checker_types::Program>>,
+    program: Option<&dyn crate::checker_types::Program>,
 ) -> i32 {
     if n1 == n2 {
         return 0;
@@ -1816,7 +1816,7 @@ pub(crate) fn get_base_type_node_of_class(c: &Checker, t: TypeId) -> Option<Node
     let symbol = __arena_symbol.get(t).symbol?;
     let __program = c.program.clone().expect("program");
     let decl = ast::get_class_like_declaration_of_symbol_with(&*c.sym(symbol), |d| {
-        ast::is_class_like(Some(d), &__program.nodes_ptr(d.file_index()))
+        ast::is_class_like(Some(d), &*__program.nodes_ptr(d.file_index()))
     })?;
     let nodes = __program.nodes_ptr((decl).file_index());
 
@@ -3194,7 +3194,7 @@ impl Checker {
     pub(crate) fn is_parameter_or_mutable_local_variable(&mut self, symbol: SymbolId) -> bool {
         let value_declaration = self.sym(symbol).value_declaration;
         if let Some(value_declaration) = value_declaration {
-            let __program = self.program.clone().expect("program");
+            let __program = self.program_ptr();
             let nodes = __program.nodes_ptr((value_declaration).file_index());
             let declaration = ast::get_root_declaration(value_declaration, &nodes);
             let is_param_or_catch = ast::is_parameter_declaration(&nodes[declaration])
@@ -3215,7 +3215,7 @@ impl Checker {
     /// `(c *Checker) isMutableLocalVariableDeclaration` (utilities.go:1099).
     /// Returns true if symbol is a non-exported and non-global `let` variable.
     pub(crate) fn is_mutable_local_variable_declaration(&mut self, declaration: NodeId) -> bool {
-        let __program = self.program.clone().expect("program");
+        let __program = self.program_ptr();
         let nodes = __program.nodes_ptr((declaration).file_index());
         let Some(decl_list) = nodes[declaration].parent else {
             return false;

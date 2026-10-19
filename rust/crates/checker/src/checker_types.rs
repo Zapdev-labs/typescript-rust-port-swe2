@@ -1647,6 +1647,213 @@ pub trait Host: tsc_modulespecifiers::ModuleSpecifierGenerationHost {}
 /// Go interface hides arenas behind `*ast.Node`; here the per-file
 /// `Vec<ast::Node>` arenas must be reachable for `NodeId` derefs — wave-2
 /// may fold this into a richer program crate).
+/// PORT(perf): `Copy` `*const dyn Program` — `Checker::program` is an
+/// `Option<Rc<dyn Program>>` set once; the trait object address is stable
+/// for the checker's lifetime. `program.clone()` decls (~900 sites) were
+/// `Rc` refcount + drop churn in every checker hot path.
+#[derive(Clone, Copy)]
+pub struct ProgramPtr(*const dyn Program);
+
+#[allow(unsafe_code)] // stable `Rc` target — see `ProgramPtr`
+impl std::ops::Deref for ProgramPtr {
+    type Target = dyn Program;
+    fn deref(&self) -> &'static dyn Program {
+        unsafe { &*self.0 }
+    }
+}
+
+impl ProgramPtr {
+    /// Caller must guarantee the `Program` outlives all derefs — callers
+    /// get this from `Checker::program_ptr` which anchors on `self.program`.
+    pub fn from_dyn(p: *const dyn Program) -> Self {
+        Self(p)
+    }
+
+    /// `from_dyn` on an `Rc` handle — the `Rc` keeps the program alive, so
+    /// the ptr stays valid while the caller's handle does.
+    pub fn from_rc(rc: &Rc<dyn Program>) -> Self {
+        Self(std::rc::Rc::as_ptr(rc))
+    }
+}
+
+// PORT(perf): forwarding impls so `ProgramPtr` (Copy *const dyn Program)
+// satisfies the `Program`/`Host`/`ModuleSpecifierGenerationHost`/`OutputPathsHost`
+// bounds everywhere `Rc<dyn Program>` was used.
+impl tsc_outputpaths::OutputPathsHost for ProgramPtr {
+    #[allow(unsafe_code)]
+    fn common_source_directory(&self) -> RootedDirectoryPath {
+        unsafe { <dyn Program as tsc_outputpaths::OutputPathsHost>::common_source_directory(&*self.0) }
+    }
+    #[allow(unsafe_code)]
+    fn content_mapper_extensions(&self) -> &[String] {
+        unsafe { <dyn Program as tsc_outputpaths::OutputPathsHost>::content_mapper_extensions(&*self.0) }
+    }
+    #[allow(unsafe_code)]
+    fn case_sensitivity(&self) -> tsc_tspath::CaseSensitivity {
+        unsafe { <dyn Program as tsc_outputpaths::OutputPathsHost>::case_sensitivity(&*self.0) }
+    }
+}
+
+impl tsc_modulespecifiers::types::ModuleSpecifierGenerationHost for ProgramPtr {
+    #[allow(unsafe_code)]
+    fn get_symlink_cache(&self) -> Option<&tsc_symlinks::knownsymlinks::KnownSymlinks> {
+        unsafe { <dyn Program as tsc_modulespecifiers::types::ModuleSpecifierGenerationHost>::get_symlink_cache(&*self.0) }
+    }
+    #[allow(unsafe_code)]
+    fn get_global_typings_cache_location(&self) -> RootedDirectoryPath {
+        unsafe { <dyn Program as tsc_modulespecifiers::types::ModuleSpecifierGenerationHost>::get_global_typings_cache_location(&*self.0) }
+    }
+    #[allow(unsafe_code)]
+    fn base_directory(&self) -> RootedDirectoryPath {
+        unsafe { <dyn Program as tsc_modulespecifiers::types::ModuleSpecifierGenerationHost>::base_directory(&*self.0) }
+    }
+    #[allow(unsafe_code)]
+    fn get_project_reference_from_source(&self, path: &PathKey,) -> Option<std::sync::Arc<SourceOutputAndProjectReference>> {
+        unsafe { <dyn Program as tsc_modulespecifiers::types::ModuleSpecifierGenerationHost>::get_project_reference_from_source(&*self.0, path) }
+    }
+    #[allow(unsafe_code)]
+    fn get_redirect_targets(&self, path: &PathKey) -> Vec<RootedFilePath> {
+        unsafe { <dyn Program as tsc_modulespecifiers::types::ModuleSpecifierGenerationHost>::get_redirect_targets(&*self.0, path) }
+    }
+    #[allow(unsafe_code)]
+    fn get_source_of_project_reference_if_output_included(&self, file: &dyn HasFileName,) -> RootedFilePath {
+        unsafe { <dyn Program as tsc_modulespecifiers::types::ModuleSpecifierGenerationHost>::get_source_of_project_reference_if_output_included(&*self.0, file) }
+    }
+    #[allow(unsafe_code)]
+    fn file_exists(&self, path: &RootedFilePath) -> bool {
+        unsafe { <dyn Program as tsc_modulespecifiers::types::ModuleSpecifierGenerationHost>::file_exists(&*self.0, path) }
+    }
+    #[allow(unsafe_code)]
+    fn get_nearest_ancestor_directory_with_package_json(&self, dirname: &RootedDirectoryPath,) -> RootedDirectoryPath {
+        unsafe { <dyn Program as tsc_modulespecifiers::types::ModuleSpecifierGenerationHost>::get_nearest_ancestor_directory_with_package_json(&*self.0, dirname) }
+    }
+    #[allow(unsafe_code)]
+    fn get_package_json_info(&self, pkg_json_path: &RootedFilePath) -> Option<std::sync::Arc<tsc_packagejson::cache::InfoCacheEntry>> {
+        unsafe { <dyn Program as tsc_modulespecifiers::types::ModuleSpecifierGenerationHost>::get_package_json_info(&*self.0, pkg_json_path) }
+    }
+    #[allow(unsafe_code)]
+    fn get_default_resolution_mode_for_file(&self, file: &dyn HasFileName) -> tsc_core::compileroptions::ResolutionMode {
+        unsafe { <dyn Program as tsc_modulespecifiers::types::ModuleSpecifierGenerationHost>::get_default_resolution_mode_for_file(&*self.0, file) }
+    }
+    #[allow(unsafe_code)]
+    fn get_resolved_module_from_module_specifier(&self, file: &dyn HasFileName, module_specifier: NodeId,) -> Option<ResolvedModule> {
+        unsafe { <dyn Program as tsc_modulespecifiers::types::ModuleSpecifierGenerationHost>::get_resolved_module_from_module_specifier(&*self.0, file, module_specifier) }
+    }
+    #[allow(unsafe_code)]
+    fn get_mode_for_usage_location(&self, file: &dyn HasFileName, module_specifier: NodeId,) -> tsc_core::compileroptions::ResolutionMode {
+        unsafe { <dyn Program as tsc_modulespecifiers::types::ModuleSpecifierGenerationHost>::get_mode_for_usage_location(&*self.0, file, module_specifier) }
+    }
+}
+
+impl Host for ProgramPtr {}
+
+impl Program for ProgramPtr {
+    #[allow(unsafe_code)]
+    fn options(&self) -> Rc<CompilerOptions> {
+        unsafe { <dyn Program as Program>::options(&*self.0) }
+    }
+    #[allow(unsafe_code)]
+    fn source_files(&self) -> Vec<NodeId> {
+        unsafe { <dyn Program as Program>::source_files(&*self.0) }
+    }
+    #[allow(unsafe_code)]
+    fn file_rank(&self, source_file: NodeId) -> Option<usize> {
+        unsafe { <dyn Program as Program>::file_rank(&*self.0, source_file) }
+    }
+    #[allow(unsafe_code)]
+    fn bind_source_files(&self) {
+        unsafe { <dyn Program as Program>::bind_source_files(&*self.0) }
+    }
+    #[allow(unsafe_code)]
+    fn symbols(&self) -> ast::SymbolArena {
+        unsafe { <dyn Program as Program>::symbols(&*self.0) }
+    }
+    #[allow(unsafe_code)]
+    fn file_exists(&self, file_name: &RootedFilePath) -> bool {
+        unsafe { <dyn Program as Program>::file_exists(&*self.0, file_name) }
+    }
+    #[allow(unsafe_code)]
+    fn get_source_file_for_resolved_module(&self, resolved: &ResolvedModule) -> Option<NodeId> {
+        unsafe { <dyn Program as Program>::get_source_file_for_resolved_module(&*self.0, resolved) }
+    }
+    #[allow(unsafe_code)]
+    fn get_emit_module_format_of_file(&self, source_file: &dyn HasFileName,) -> tsc_core::options_generated::ModuleKind {
+        unsafe { <dyn Program as Program>::get_emit_module_format_of_file(&*self.0, source_file) }
+    }
+    #[allow(unsafe_code)]
+    fn get_emit_syntax_for_usage_location(&self, source_file: &dyn HasFileName, usage_location: NodeId,) -> tsc_core::compileroptions::ResolutionMode {
+        unsafe { <dyn Program as Program>::get_emit_syntax_for_usage_location(&*self.0, source_file, usage_location) }
+    }
+    #[allow(unsafe_code)]
+    fn get_implied_node_format_for_emit(&self, source_file: &dyn HasFileName,) -> tsc_core::options_generated::ModuleKind {
+        unsafe { <dyn Program as Program>::get_implied_node_format_for_emit(&*self.0, source_file) }
+    }
+    #[allow(unsafe_code)]
+    fn get_resolved_module(&self, current_source_file: &dyn HasFileName, module_reference: &str, mode: tsc_core::compileroptions::ResolutionMode,) -> Option<ResolvedModule> {
+        unsafe { <dyn Program as Program>::get_resolved_module(&*self.0, current_source_file, module_reference, mode) }
+    }
+    #[allow(unsafe_code)]
+    fn get_resolved_modules(&self) -> &FxHashMap<PathKey, ModeAwareCache<Option<ResolvedModule>>> {
+        unsafe { <dyn Program as Program>::get_resolved_modules(&*self.0) }
+    }
+    #[allow(unsafe_code)]
+    fn get_packages_map(&self) -> FxHashMap<String, bool> {
+        unsafe { <dyn Program as Program>::get_packages_map(&*self.0) }
+    }
+    #[allow(unsafe_code)]
+    fn get_source_file_meta_data(&self, path: &PathKey) -> ast::SourceFileMetaData {
+        unsafe { <dyn Program as Program>::get_source_file_meta_data(&*self.0, path) }
+    }
+    #[allow(unsafe_code)]
+    fn get_jsx_runtime_import_specifier(&self, path: &PathKey) -> (String, Option<NodeId>) {
+        unsafe { <dyn Program as Program>::get_jsx_runtime_import_specifier(&*self.0, path) }
+    }
+    #[allow(unsafe_code)]
+    fn get_import_helpers_import_specifier(&self, path: &PathKey) -> Option<NodeId> {
+        unsafe { <dyn Program as Program>::get_import_helpers_import_specifier(&*self.0, path) }
+    }
+    #[allow(unsafe_code)]
+    fn source_file_may_be_emitted(&self, source_file: NodeId, force_dts_emit: bool) -> bool {
+        unsafe { <dyn Program as Program>::source_file_may_be_emitted(&*self.0, source_file, force_dts_emit) }
+    }
+    #[allow(unsafe_code)]
+    fn is_source_file_default_library(&self, path: &PathKey) -> bool {
+        unsafe { <dyn Program as Program>::is_source_file_default_library(&*self.0, path) }
+    }
+    #[allow(unsafe_code)]
+    fn get_project_reference_from_output_dts(&self, path: &PathKey,) -> Option<std::sync::Arc<SourceOutputAndProjectReference>> {
+        unsafe { <dyn Program as Program>::get_project_reference_from_output_dts(&*self.0, path) }
+    }
+    #[allow(unsafe_code)]
+    fn get_redirect_for_resolution(&self, file: &dyn HasFileName,) -> Option<std::sync::Arc<ParsedCommandLine>> {
+        unsafe { <dyn Program as Program>::get_redirect_for_resolution(&*self.0, file) }
+    }
+    #[allow(unsafe_code)]
+    fn common_source_directory(&self) -> RootedDirectoryPath {
+        unsafe { <dyn Program as Program>::common_source_directory(&*self.0) }
+    }
+    #[allow(unsafe_code)]
+    fn nodes(&self, file_index: u32) -> Rc<ast::NodeArenaBuf> {
+        unsafe { <dyn Program as Program>::nodes(&*self.0, file_index) }
+    }
+    #[allow(unsafe_code)]
+    fn nodes_ptr(&self, file_index: u32) -> ast::NodeListPtr {
+        unsafe { <dyn Program as Program>::nodes_ptr(&*self.0, file_index) }
+    }
+    #[allow(unsafe_code)]
+    fn nodes_mut(&self, file_index: u32) -> tsc_ast::ast::ArenaMut {
+        unsafe { <dyn Program as Program>::nodes_mut(&*self.0, file_index) }
+    }
+    #[allow(unsafe_code)]
+    fn nodes_handle(&self, file_index: u32) -> Rc<tsc_ast::ast::ArenaCell> {
+        unsafe { <dyn Program as Program>::nodes_handle(&*self.0, file_index) }
+    }
+    #[allow(unsafe_code)]
+    fn nodes_handle_or_fallback(&self, file_index: u32) -> (u32, Rc<tsc_ast::ast::ArenaCell>) {
+        unsafe { <dyn Program as Program>::nodes_handle_or_fallback(&*self.0, file_index) }
+    }
+}
+
 pub trait Program: Host {
     /// `Options()`.
     fn options(&self) -> Rc<CompilerOptions>;
@@ -1752,3 +1959,4 @@ pub trait Program: Host {
         (file_index, self.nodes_handle(file_index))
     }
 }
+

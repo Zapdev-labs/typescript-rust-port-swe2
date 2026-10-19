@@ -166,7 +166,7 @@ pub(crate) fn subtree_clonable_in(buf: &[Node], root: NodeId) -> bool {
 /// destination arena's `file_index` while `work` is a different buffer with
 /// the same index). Falls back to `arena_view`'s fi-based selection.
 pub fn resolve_arena_for<'x>(
-    program: &std::rc::Rc<dyn crate::checker_types::Program>,
+    program: &dyn crate::checker_types::Program,
     work: &'x [Node],
     id: NodeId,
 ) -> ArenaView<'x> {
@@ -190,7 +190,7 @@ pub fn resolve_arena_for<'x>(
 /// mid-operation are visible to nested reads. Next, buffers registered via
 /// [`LiveArenaGuard`] are checked. Any other `fi` takes a normal snapshot.
 pub fn arena_view<'x>(
-    program: &std::rc::Rc<dyn crate::checker_types::Program>,
+    program: &dyn crate::checker_types::Program,
     work: &'x [Node],
     fi: u32,
 ) -> ArenaView<'x> {
@@ -209,7 +209,7 @@ pub fn checker_arena_view<'x>(
     work: &'x [Node],
     fi: u32,
 ) -> ArenaView<'x> {
-    arena_view(c.program.as_ref().expect("program"), work, fi)
+    arena_view(c.program.as_deref().expect("program"), work, fi)
 }
 
 /// `get_source_file_of_node` that tolerates cross-arena parent chains.
@@ -218,7 +218,7 @@ pub fn checker_arena_view<'x>(
 /// the pointer transparently). Each hop is re-resolved in its own arena;
 /// corrupt or foreign chains bail instead of reading garbage nodes.
 pub fn get_source_file_of_node_resolved(
-    program: &std::rc::Rc<dyn crate::checker_types::Program>,
+    program: &dyn crate::checker_types::Program,
     work: &[Node],
     mut node: Option<NodeId>,
 ) -> Option<NodeId> {
@@ -244,7 +244,7 @@ pub fn get_source_file_of_node_resolved(
 /// [`get_source_file_of_node_resolved`]. Each hop is re-resolved in its
 /// own arena before the callback runs.
 pub fn find_ancestor_resolved(
-    program: &std::rc::Rc<dyn crate::checker_types::Program>,
+    program: &dyn crate::checker_types::Program,
     work: &[Node],
     node: Option<NodeId>,
     callback: &mut dyn FnMut(&Node, &[Node]) -> bool,
@@ -677,7 +677,7 @@ impl Checker {
             .set_file_index(file_index);
         let mut nodes = tsc_ast::ast::ArenaAccess::new(&__arena_cell);
         let source_file = enclosing_declaration.and_then(|d| {
-            get_source_file_of_node_resolved(&program, &nodes, Some(d))
+            get_source_file_of_node_resolved(&crate::checker_types::ProgramPtr::from_rc(&program), &nodes, Some(d))
         });
         // `builder = nodeBuilder.SymbolToNode` / `SymbolToEntityName` —
         // runs before the printer is created because the printer holds
@@ -716,7 +716,7 @@ impl Checker {
         let symbols = symbol_arena.clone();
         // add neverAsciiEscape for GH#39027
         let enclosing_is_source_file = enclosing_declaration.is_some_and(|d| {
-            resolve_arena_for(&program, &nodes, d)[d].kind == ast::Kind::SourceFile
+            resolve_arena_for(&*program, &nodes, d)[d].kind == ast::Kind::SourceFile
         });
         let mut p = if enclosing_is_source_file {
             create_printer_with_remove_comments_omit_trailing_semicolon_never_ascii_escape(

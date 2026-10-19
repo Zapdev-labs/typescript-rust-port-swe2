@@ -1,6 +1,6 @@
 // Ported from tsc/internal/packagejson @ ec47d33c23e464a17cdf2475632cba629bee8763
 
-mod cache;
+pub mod cache;
 mod expected;
 mod exportsorimports;
 mod jsonvalue;

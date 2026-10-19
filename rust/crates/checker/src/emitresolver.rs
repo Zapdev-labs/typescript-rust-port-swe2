@@ -428,7 +428,7 @@ impl EmitResolver {
                     move |node| {
                         let mut c = c.try_borrow_mut().ok()?;
                         let __program = c.program.clone().expect("program");
-                        let nodes = crate::printer_util::arena_view(&__program, &[], (node).file_index());
+                        let nodes = crate::printer_util::arena_view(&*__program, &[], (node).file_index());
                         let (name, ok) = c.try_get_element_access_expression_name(&nodes, node);
                         ok.then_some(name)
                     }
@@ -439,7 +439,7 @@ impl EmitResolver {
                         let mut c = c.try_borrow_mut().ok()?;
                         let __program = c.program.clone()?;
                         let nodes =
-                            crate::printer_util::resolve_arena_for(&__program, &[], node);
+                            crate::printer_util::resolve_arena_for(&*__program, &[], node);
                         nodes.get(node.local_index() as usize).map(|n| n.kind)
                     }
                 })),
@@ -449,7 +449,7 @@ impl EmitResolver {
                         let mut c = c.try_borrow_mut().ok()?;
                         let __program = c.program.clone()?;
                         let nodes =
-                            crate::printer_util::resolve_arena_for(&__program, &[], node);
+                            crate::printer_util::resolve_arena_for(&*__program, &[], node);
                         nodes.get(node.local_index() as usize).cloned()
                     }
                 })),
@@ -544,7 +544,7 @@ impl EmitResolver {
                 // declaration arenas may differ per file — re-read through
                 // the declaration's own arena like Go derefs the pointer.
                 let __program = c.program.clone().expect("program");
-                let declaration_nodes = crate::printer_util::arena_view(&__program, nodes, (declaration).file_index());
+                let declaration_nodes = crate::printer_util::arena_view(&*__program, nodes, (declaration).file_index());
                 if ast::is_internal_module_import_equals_declaration(
                     &declaration_nodes[declaration],
                     &declaration_nodes,
@@ -628,7 +628,7 @@ impl EmitResolver {
         let arena = if crate::printer_util::buffer_resolves_id(&snap, orig) {
             crate::printer_util::ArenaView::Snapshot(snap)
         } else {
-            crate::printer_util::resolve_arena_for(&__program, nodes, orig)
+            crate::printer_util::resolve_arena_for(&*__program, nodes, orig)
         };
         let Some(orig_node) = arena.get(orig.local_index() as usize) else {
             return false;
@@ -643,7 +643,7 @@ impl EmitResolver {
             let value_declaration = c.symbol_arena.get_ref(p).value_declaration;
             value_declaration.is_some_and(|d| {
                 let __program = c.program.clone().expect("program");
-                let arena = crate::printer_util::resolve_arena_for(&__program, nodes, d);
+                let arena = crate::printer_util::resolve_arena_for(&*__program, nodes, d);
                 arena
                     .get(d.local_index() as usize)
                     .is_some_and(|n| ast::is_binary_expression(n))
@@ -728,7 +728,7 @@ impl EmitResolver {
             // merge may not have yet occurred, and the flags check below will
             // be missing flags that are added as a result of the merge.
             let __program = c.program.clone().expect("program");
-            let decl_nodes = crate::printer_util::arena_view(&__program, &[], (value_declaration).file_index());
+            let decl_nodes = crate::printer_util::arena_view(&*__program, &[], (value_declaration).file_index());
             if let Some(container) =
                 ast::get_source_file_of_node(Some(value_declaration), &decl_nodes)
             {
@@ -1223,7 +1223,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
     fn entity_name_texts(&self, e: NodeId, _nodes: &[Node]) -> Vec<String> {
         let c = self.checker.borrow();
         let program = c.program.clone().expect("program");
-        let arena = crate::printer_util::resolve_arena_for(&program, _nodes, e);
+        let arena = crate::printer_util::resolve_arena_for(&*program, _nodes, e);
         let mut stack = vec![e];
         let mut parts = Vec::new();
         while let Some(n) = stack.pop() {
@@ -1341,7 +1341,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
         let arena = if crate::printer_util::buffer_resolves_id(&snap, orig) {
             crate::printer_util::ArenaView::Snapshot(snap)
         } else {
-            crate::printer_util::resolve_arena_for(&program, nodes, orig)
+            crate::printer_util::resolve_arena_for(&*program, nodes, orig)
         };
         if let Some(mut c) = checker_try_lock(&self.checker) {
             return self.is_expando_function_declaration_impl(&mut c, node, nodes);
@@ -1404,7 +1404,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
                     let darena = if crate::printer_util::buffer_resolves_id(&dsnap, d) {
                         crate::printer_util::ArenaView::Snapshot(dsnap)
                     } else {
-                        crate::printer_util::resolve_arena_for(&program, &arena, d)
+                        crate::printer_util::resolve_arena_for(&*program, &arena, d)
                     };
                     darena
                         .get(d.local_index() as usize)
@@ -1506,7 +1506,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
                 if !declarations.is_empty() {
                     for d in declarations {
                         let __program = c.program.clone().expect("program");
-                        let decl_nodes = crate::printer_util::arena_view(&__program, nodes, (d).file_index());
+                        let decl_nodes = crate::printer_util::arena_view(&*__program, nodes, (d).file_index());
                         let decl_file = ast::get_source_file_of_node(Some(d), &decl_nodes);
                         if decl_file == Some(import_target) {
                             return true;
@@ -1762,7 +1762,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
         let arena = if crate::printer_util::buffer_resolves_id(&snap, orig) {
             crate::printer_util::ArenaView::Snapshot(snap)
         } else {
-            crate::printer_util::resolve_arena_for(&program, nodes, orig)
+            crate::printer_util::resolve_arena_for(&*program, nodes, orig)
         };
         let Some(node) = arena.get(orig.local_index() as usize) else {
             return false;
@@ -1856,7 +1856,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
                 let darena = if crate::printer_util::buffer_resolves_id(&dsnap, d) {
                     crate::printer_util::ArenaView::Snapshot(dsnap)
                 } else {
-                    crate::printer_util::resolve_arena_for(&program, &arena, d)
+                    crate::printer_util::resolve_arena_for(&*program, &arena, d)
                 };
                 darena
                     .get(d.local_index() as usize)
@@ -1907,7 +1907,7 @@ impl tsc_printer::EmitResolver for EmitResolver {
         let arena = if crate::printer_util::buffer_resolves_id(&snap, orig) {
             crate::printer_util::ArenaView::Snapshot(snap)
         } else {
-            crate::printer_util::resolve_arena_for(&program, nodes, orig)
+            crate::printer_util::resolve_arena_for(&*program, nodes, orig)
         };
         if let Some(c) = checker_try_lock(&self.checker) {
             let symbols = c.symbol_arena.snapshot();

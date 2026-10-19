@@ -293,7 +293,7 @@ impl<'h> LanguageService<'h> {
                 || trigger_reason_kind == SignatureHelpTriggerReasonKind::Invoked;
         let program_dyn: Rc<dyn checker_types::Program> = program.clone();
         let argument_info = get_containing_argument_info(
-            &program_dyn,
+            &checker_types::ProgramPtr::from_rc(&program_dyn),
             starting_token,
             source_file,
             &type_checker,
@@ -305,7 +305,7 @@ impl<'h> LanguageService<'h> {
             return None;
         };
         let candidate_info = get_candidate_or_type_info(
-            &program_dyn,
+            &checker_types::ProgramPtr::from_rc(&program_dyn),
             &argument_info,
             &type_checker,
             source_file,
@@ -1306,7 +1306,7 @@ fn get_expression_from_invocation(invocation: &Invocation) -> NodeId {
 
 /// `getContainingArgumentInfo`.
 fn get_containing_argument_info(
-    program: &Rc<dyn checker_types::Program>,
+    program: &dyn tsc_checker::checker_types::Program,
     node: NodeId,
     source_file: NodeId,
     checker: &Rc<RefCell<Checker>>,
@@ -1385,7 +1385,7 @@ fn get_containing_argument_info(
 
 /// `getImmediatelyContainingArgumentOrContextualParameterInfo`.
 fn get_immediately_containing_argument_or_contextual_parameter_info(
-    program: &Rc<dyn checker_types::Program>,
+    program: &dyn tsc_checker::checker_types::Program,
     node: NodeId,
     position: TextPos,
     source_file: NodeId,
@@ -1405,7 +1405,7 @@ fn get_immediately_containing_argument_or_contextual_parameter_info(
 
 /// `tryGetParameterInfo`.
 fn try_get_parameter_info(
-    program: &Rc<dyn checker_types::Program>,
+    program: &dyn tsc_checker::checker_types::Program,
     starting_token: NodeId,
     source_file: NodeId,
     c: &mut Checker,
@@ -1439,7 +1439,7 @@ fn try_get_parameter_info(
 }
 
 /// `getAdjustedNode`.
-fn get_adjusted_node(program: &Rc<dyn checker_types::Program>, node: NodeId, source_file: NodeId) -> NodeId {
+fn get_adjusted_node(program: &dyn tsc_checker::checker_types::Program, node: NodeId, source_file: NodeId) -> NodeId {
     let nodes = program.nodes(source_file.file_index());
     match nodes[node].kind {
         Kind::OpenParenToken | Kind::CommaToken => node,
@@ -1452,7 +1452,7 @@ fn get_adjusted_node(program: &Rc<dyn checker_types::Program>, node: NodeId, sou
 
 /// `getContextualSignatureLocationInfo`.
 fn get_contextual_signature_location_info(
-    program: &Rc<dyn checker_types::Program>,
+    program: &dyn tsc_checker::checker_types::Program,
     node: NodeId,
     source_file: NodeId,
     c: &mut Checker,
@@ -1543,7 +1543,7 @@ fn count_binary_expression_parameters(nodes: &[Node], root: NodeId) -> usize {
 
 /// `chooseBetterSymbol`.
 fn choose_better_symbol(
-    program: &Rc<dyn checker_types::Program>,
+    program: &dyn tsc_checker::checker_types::Program,
     cb: &mut Checker,
     s: Option<SymbolId>,
 ) -> Option<SymbolId> {
@@ -1568,7 +1568,7 @@ fn choose_better_symbol(
 /// (`_impl` suffix avoids a clash with the `pub(crate)` wrapper used by
 /// `completions.rs`).
 fn get_immediately_containing_argument_info_impl(
-    program: &Rc<dyn checker_types::Program>,
+    program: &dyn tsc_checker::checker_types::Program,
     node: NodeId,
     position: TextPos,
     source_file: NodeId,
@@ -1727,7 +1727,7 @@ fn get_argument_list_info_for_template(
     tag_expression: NodeId,
     argument_index: usize,
     source_file: NodeId,
-    program: &Rc<dyn checker_types::Program>,
+    program: &dyn tsc_checker::checker_types::Program,
 ) -> Option<ArgumentListInfo> {
     let mut argument_count = 1usize;
     let template = nodes[tag_expression].as_tagged_template_expression().template;
@@ -1769,7 +1769,7 @@ fn get_applicable_range_for_tagged_template(
     nodes: &[Node],
     tagged_template: NodeId,
     source_file: NodeId,
-    program: &Rc<dyn checker_types::Program>,
+    program: &dyn tsc_checker::checker_types::Program,
 ) -> TextRange {
     let template = nodes[tagged_template]
         .as_tagged_template_expression()
@@ -1817,7 +1817,7 @@ fn get_argument_index_for_template_piece(
     node: NodeId,
     position: TextPos,
     source_file: NodeId,
-    _program: &Rc<dyn checker_types::Program>,
+    _program: &dyn tsc_checker::checker_types::Program,
 ) -> usize {
     debug::assert_!(position >= nodes[node].loc.pos());
     if ast::is_template_literal_token(&nodes[node]) {
@@ -1835,7 +1835,7 @@ fn get_argument_index_for_template_piece(
 /// `getArgumentOrParameterListInfo` — `(list, index, count, span)`; the
 /// caller unwraps `info` for `list`.
 fn get_argument_or_parameter_list_info(
-    program: &Rc<dyn checker_types::Program>,
+    program: &dyn tsc_checker::checker_types::Program,
     node: NodeId,
     source_file: NodeId,
     c: &mut Checker,
@@ -1865,7 +1865,7 @@ fn get_argument_or_parameter_list_info(
 
 /// `getArgumentOrParameterListAndIndex`.
 fn get_argument_or_parameter_list_and_index(
-    program: &Rc<dyn checker_types::Program>,
+    program: &dyn tsc_checker::checker_types::Program,
     node: NodeId,
     source_file: NodeId,
     c: &mut Checker,
@@ -1912,7 +1912,7 @@ fn get_child_list_that_starts_with_opener_token(
 
 /// `getApplicableSpanForArguments`.
 fn get_applicable_span_for_arguments(
-    program: &Rc<dyn checker_types::Program>,
+    program: &dyn tsc_checker::checker_types::Program,
     argument_list: Option<&NodeList>,
     node: Option<NodeId>,
     source_file: NodeId,
@@ -1974,7 +1974,7 @@ fn get_spread_element_count(
 
 /// `getArgumentIndexOrCount`.
 fn get_argument_index_or_count(
-    program: &Rc<dyn checker_types::Program>,
+    program: &dyn tsc_checker::checker_types::Program,
     arguments: &[NodeId],
     node: Option<NodeId>,
     source_file: NodeId,
@@ -2023,7 +2023,7 @@ fn get_argument_index_or_count(
 
 /// `getTokenFromNodeList`.
 fn get_token_from_node_list(
-    program: &Rc<dyn checker_types::Program>,
+    program: &dyn tsc_checker::checker_types::Program,
     node_list: Option<&NodeList>,
     node_list_parent: Option<NodeId>,
     source_file: NodeId,
@@ -2080,7 +2080,7 @@ fn get_token_from_node_list(
 
 /// `getArgumentIndex`.
 fn get_argument_index(
-    program: &Rc<dyn checker_types::Program>,
+    program: &dyn tsc_checker::checker_types::Program,
     node: NodeId,
     arguments: Option<&NodeList>,
     source_file: NodeId,
@@ -2094,7 +2094,7 @@ fn get_argument_index(
 
 /// `getArgumentCount`.
 fn get_argument_count(
-    program: &Rc<dyn checker_types::Program>,
+    program: &dyn tsc_checker::checker_types::Program,
     node: NodeId,
     arguments: Option<&NodeList>,
     source_file: NodeId,
@@ -2121,7 +2121,7 @@ pub(crate) fn get_immediately_containing_argument_info(
     let _ = nodes;
     let program = type_checker.program.clone().expect("program");
     get_immediately_containing_argument_info_impl(
-        &program,
+        &checker_types::ProgramPtr::from_rc(&program),
         node,
         position,
         file,
@@ -2131,7 +2131,7 @@ pub(crate) fn get_immediately_containing_argument_info(
 
 /// `getCandidateOrTypeInfo`.
 fn get_candidate_or_type_info(
-    program: &Rc<dyn checker_types::Program>,
+    program: &dyn tsc_checker::checker_types::Program,
     argument_info: &ArgumentListInfo,
     c: &Rc<RefCell<Checker>>,
     source_file: NodeId,
@@ -2239,7 +2239,7 @@ fn get_candidate_or_type_info(
 
 /// `isSyntacticOwner`.
 fn is_syntactic_owner(
-    program: &Rc<dyn checker_types::Program>,
+    program: &dyn tsc_checker::checker_types::Program,
     starting_token: NodeId,
     node_invocation: &Invocation,
     source_file: NodeId,
@@ -2271,7 +2271,7 @@ fn is_syntactic_owner(
 
 /// `containsPrecedingToken`.
 fn contains_preceding_token(
-    program: &Rc<dyn checker_types::Program>,
+    program: &dyn tsc_checker::checker_types::Program,
     starting_token: NodeId,
     source_file: NodeId,
     container: NodeId,

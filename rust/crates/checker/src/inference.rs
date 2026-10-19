@@ -1747,7 +1747,7 @@ impl Checker {
             .as_mapped_type()
             .declaration
             .expect("mapped type declaration");
-        let __program = self.program.clone().expect("program");
+        let __program = self.program_ptr();
         let nodes = __program.nodes_ptr((declaration).file_index());
         nodes[declaration].as_mapped_type_node().name_type.is_some()
     }
@@ -3131,7 +3131,7 @@ impl Checker {
                 .declarations
                 .clone();
             for d in declarations {
-                let __program = self.program.clone().expect("program");
+                let __program = self.program_ptr();
                 let nodes = __program.nodes_ptr((d).file_index());
                 if ast::is_type_parameter_declaration(&nodes[d])
                     && nodes[d]
@@ -3165,7 +3165,7 @@ fn compare_types_and_depth(c: &mut Checker, t1: TypeId, t2: TypeId) -> i32 {
     if d1 != d2 {
         return d2 - d1; // Largest depth sorts first
     }
-    crate::utilities::compare_types(&c.types, &c.symbol_arena, &c.type_mappers, c.program.as_ref(), t1, t2)
+    crate::utilities::compare_types(&c.types, &c.symbol_arena, &c.type_mappers, c.program.as_deref(), t1, t2)
 }
 
 /// `getTypeDepth` (inference.go) — return the depth of the given type up to
